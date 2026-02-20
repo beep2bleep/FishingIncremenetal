@@ -360,8 +360,8 @@ function Get-LevelParams($level) {
   $dot = 2.6 * [math]::Pow(1.14, $i)
   $drop = 26.0 * [math]::Pow(1.35, $i)
   $power = 8.0 * [math]::Pow(1.12, $i)
-  $regular = if ($level -eq 1) { 36 } elseif ($level -eq 2) { 40 } elseif ($level -eq 3) { 118 } else { 152 + (28 * ($level - 4)) }
-  $bossHp = if ($level -eq 1) { $enemyHp * 22.0 } elseif ($level -eq 2) { $enemyHp * 22.0 } elseif ($level -eq 3) { $enemyHp * 92.0 } else { $enemyHp * (128.0 + 14.0 * ($level - 4)) }
+  $regular = if ($level -eq 1) { 36 } elseif ($level -eq 2) { 40 } elseif ($level -eq 3) { 132 } else { 152 + (28 * ($level - 4)) }
+  $bossHp = if ($level -eq 1) { $enemyHp * 22.0 } elseif ($level -eq 2) { $enemyHp * 22.0 } elseif ($level -eq 3) { $enemyHp * 62.0 } else { $enemyHp * (128.0 + 14.0 * ($level - 4)) }
   $bossDps = $enemyContact * 2.7
   $bossDrop = $drop * (90.0 + 16.0 * $level)
   @{
@@ -497,7 +497,7 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
 
   $hp = $stats.max_hp
   $runTime = 8.0
-  $maxRunTime = 145.0
+  $maxRunTime = if ($level -ge 3) { 165.0 } else { 145.0 }
   $regularKills = 0
   $bossSegKills = 0
   $currency = 0.0
@@ -610,7 +610,8 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
 
       Try-ActivateAbilities $state $stats ([ref]$abilityUses)
 
-      $segHp = $bossSegHp * (1.0 + 0.12 * ($seg - 1))
+      $segRamp = if ($level -ge 3) { 0.07 } else { 0.12 }
+      $segHp = $bossSegHp * (1.0 + $segRamp * ($seg - 1))
       $dps = $stats.total_dps * (1.0 + $stats.boss_damage_mult)
       if ($state.actives['act_archer'] -gt 0) { $dps += $stats.archer_dps * (0.55 + $stats.archer_pierce) }
       if ($state.actives['act_mage'] -gt 0) { $dps += $stats.mage_dps * 1.10 }
@@ -665,7 +666,7 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
 
 function Simulate-RunSmoothed($state, $level, $runIndex, $prevKills) {
   if (-not $state.levelDifficulty.ContainsKey($level)) {
-    $state.levelDifficulty[$level] = if ($level -eq 1) { 0.82 } elseif ($level -eq 2) { 0.75 } elseif ($level -eq 3) { 3.20 } else { 3.80 + 0.25 * ($level - 4) }
+    $state.levelDifficulty[$level] = if ($level -eq 1) { 0.82 } elseif ($level -eq 2) { 0.75 } elseif ($level -eq 3) { 2.72 } else { 3.80 + 0.25 * ($level - 4) }
   }
 
   $difficulty = [double]$state.levelDifficulty[$level]
@@ -674,7 +675,7 @@ function Simulate-RunSmoothed($state, $level, $runIndex, $prevKills) {
   $bestScore = 1e9
   $minDelta = 1
   $maxDelta = 3
-  $minDifficulty = if ($level -le 2) { 0.25 } elseif ($level -eq 3) { 2.00 } else { 2.40 }
+  $minDifficulty = if ($level -le 2) { 0.25 } elseif ($level -eq 3) { 1.85 } else { 2.40 }
   $maxDifficulty = if ($level -le 2) { 2.50 } else { 6.00 }
 
   # Snapshot mutable combat state so tuning iterations are apples-to-apples.
