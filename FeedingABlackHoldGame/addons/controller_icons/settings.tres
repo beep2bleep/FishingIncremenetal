@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ControllerSettings" load_steps=2 format=3 uid="uid://bq7pea0uio1n3"]
+
+[ext_resource type="Script" uid="uid://c2hjyrm57aow5" path="res://addons/controller_icons/ControllerSettings.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+custom_mapper = null
+custom_label_settings = null

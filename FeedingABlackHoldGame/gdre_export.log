@@ -1,0 +1,53 @@
+GDRE Tools v2.4.0
+Windows 10.0.26200, AMD Radeon RX 6800 XT, vulkan
+WARNING: Could not find embedded pck in EXE, found pck file, loading from: C:/Program Files (x86)/Steam/steamapps/common/A Game About Feeeding A Black Hole/A Game About Feeding A Black Hole.pck
+   at: GDRESettings::sort_and_validate_pck_files (modules\gdsdecomp\utility\gdre_settings.cpp:594)
+Opening file: C:/Program Files (x86)/Steam/steamapps/common/A Game About Feeeding A Black Hole/A Game About Feeding A Black Hole.pck
+Loaded 989 imported files
+Detected Engine Version: 4.6.0
+Detected Bytecode Revision: 4.5.0-stable (ebc36a7)
+Verified 2053 files, no errors detected!
+Extracted 2053 files, no errors detected!
+Recreating plugin configs...
+No plugin download url found for plugin godotsteam, hashes: 936889e332781b144634718ffe4fef6c
+Loading resource strings, this may take a while!!
+Resource strings loaded!
+Saved project config.
+
+
+********************************EXPORT REPORT********************************
+
+Totals:                                 
+Decompiled scripts:                     113
+Failed scripts:                         0
+Imported resources for export session:  989
+Successfully converted:                 989
+Lossy:                                  5
+Rewrote metadata:                       719
+Non-importable conversions:             0
+Not converted:                          0
+Failed conversions:                     0
+-------------
+
+
+
+
+---------------------------------IMPORTANT NOTES----------------------------------
+
+
+Translation Export Incomplete:
+Could not recover 2/282 keys for res://Art/Blackhole Translations - Sheet1.csv
+Could not recover 2/261 keys for res://Data/Blackhole Translations - Sheet1.csv
+
+
+
+
+------------------------------------------------------------------------------------
+
+Use Godot editor version 4.6.0 to edit the project.
+Note: the project may be using a custom version of Godot. Detection for this has not been implemented yet.
+If you find that you have many non-import errors upon opening the project 
+(i.e. scripts or shaders have many errors), use the original game's binary as the export template.
+
+*******************************************************************************
+

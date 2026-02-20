@@ -1,0 +1,127 @@
+[gd_scene load_steps=10 format=3 uid="uid://dslhbqlqdnwn6"]
+
+[ext_resource type="Script" uid="uid://chyxngh6eiutn" path="res://Electric.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://drrc7o7atsa0a" path="res://Tendril.tscn" id="2"]
+[ext_resource type="Shader" uid="uid://jjye5gn7xqn2" path="res://Tendril.gdshader" id="3"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ltlty"]
+resource_local_to_scene = true
+shader = ExtResource("3")
+shader_parameter/lightning_number = 2
+shader_parameter/amplitude = Vector2(2, 1)
+shader_parameter/offset = 0.45
+shader_parameter/thickness = 0.05
+shader_parameter/speed = -0.3
+shader_parameter/base_color = Color(0.837, 0.8773, 0.93, 1)
+shader_parameter/glow_thickness = 0.02
+shader_parameter/glow_color = Color(0, 0, 0, 1)
+shader_parameter/alpha = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_jfb7x"]
+resource_local_to_scene = true
+shader = ExtResource("3")
+shader_parameter/lightning_number = 2
+shader_parameter/amplitude = Vector2(2, 1)
+shader_parameter/offset = 0.45
+shader_parameter/thickness = 0.05
+shader_parameter/speed = -0.3
+shader_parameter/base_color = Color(0.837, 0.8773, 0.93, 1)
+shader_parameter/glow_thickness = 0.02
+shader_parameter/glow_color = Color(0, 0, 0, 1)
+shader_parameter/alpha = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4frgo"]
+resource_local_to_scene = true
+shader = ExtResource("3")
+shader_parameter/lightning_number = 2
+shader_parameter/amplitude = Vector2(2, 1)
+shader_parameter/offset = 0.45
+shader_parameter/thickness = 0.05
+shader_parameter/speed = -0.3
+shader_parameter/base_color = Color(0.837, 0.8773, 0.93, 1)
+shader_parameter/glow_thickness = 0.02
+shader_parameter/glow_color = Color(0, 0, 0, 1)
+shader_parameter/alpha = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_eh384"]
+resource_local_to_scene = true
+shader = ExtResource("3")
+shader_parameter/lightning_number = 2
+shader_parameter/amplitude = Vector2(2, 1)
+shader_parameter/offset = 0.45
+shader_parameter/thickness = 0.05
+shader_parameter/speed = -0.3
+shader_parameter/base_color = Color(0.837, 0.8773, 0.93, 1)
+shader_parameter/glow_thickness = 0.02
+shader_parameter/glow_color = Color(0, 0, 0, 1)
+shader_parameter/alpha = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_liykf"]
+resource_local_to_scene = true
+shader = ExtResource("3")
+shader_parameter/lightning_number = 2
+shader_parameter/amplitude = Vector2(2, 1)
+shader_parameter/offset = 0.45
+shader_parameter/thickness = 0.05
+shader_parameter/speed = -0.3
+shader_parameter/base_color = Color(0.837, 0.8773, 0.93, 1)
+shader_parameter/glow_thickness = 0.02
+shader_parameter/glow_color = Color(0, 0, 0, 1)
+shader_parameter/alpha = 1.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yg5nx"]
+resource_local_to_scene = true
+shader = ExtResource("3")
+shader_parameter/lightning_number = 2
+shader_parameter/amplitude = Vector2(2, 1)
+shader_parameter/offset = 0.45
+shader_parameter/thickness = 0.05
+shader_parameter/speed = -0.3
+shader_parameter/base_color = Color(0.837, 0.8773, 0.93, 1)
+shader_parameter/glow_thickness = 0.02
+shader_parameter/glow_color = Color(0, 0, 0, 1)
+shader_parameter/alpha = 1.0
+
+[node name="Electric" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Timer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.6
+one_shot = true
+autostart = true
+
+[node name="Tendrils" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Tendril" parent="Tendrils" instance=ExtResource("2")]
+unique_name_in_owner = true
+visible = false
+material = SubResource("ShaderMaterial_ltlty")
+
+[node name="Tendril2" parent="Tendrils" instance=ExtResource("2")]
+unique_name_in_owner = true
+visible = false
+material = SubResource("ShaderMaterial_jfb7x")
+
+[node name="Tendril3" parent="Tendrils" instance=ExtResource("2")]
+unique_name_in_owner = true
+visible = false
+material = SubResource("ShaderMaterial_4frgo")
+
+[node name="Tendril4" parent="Tendrils" instance=ExtResource("2")]
+unique_name_in_owner = true
+visible = false
+material = SubResource("ShaderMaterial_eh384")
+
+[node name="Tendril5" parent="Tendrils" instance=ExtResource("2")]
+unique_name_in_owner = true
+visible = false
+material = SubResource("ShaderMaterial_liykf")
+
+[node name="Tendril6" parent="Tendrils" instance=ExtResource("2")]
+unique_name_in_owner = true
+visible = false
+material = SubResource("ShaderMaterial_yg5nx")
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

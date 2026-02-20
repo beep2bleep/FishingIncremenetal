@@ -1,0 +1,120 @@
+[gd_scene load_steps=10 format=3 uid="uid://bdx0x3ukekrxv"]
+
+[ext_resource type="Script" uid="uid://djo1sgs8j1jek" path="res://SummaryScreenStat.gd" id="1"]
+[ext_resource type="StyleBox" uid="uid://b8krso0x3piut" path="res://Summary Panel Normal.tres" id="2"]
+[ext_resource type="StyleBox" uid="uid://cg7spw14ksifo" path="res://Summary Panel Highlight.tres" id="3"]
+[ext_resource type="Texture2D" uid="uid://cbtsnbvwe1182" path="res://Art/icon.svg" id="4"]
+[ext_resource type="Theme" uid="uid://dhlpfrladpxn2" path="res://Theme/Theme_Medium_Font.tres" id="5"]
+[ext_resource type="Theme" uid="uid://ulae55bx0fhs" path="res://Theme/Theme_Small_Font.tres" id="6"]
+[ext_resource type="PackedScene" uid="uid://qetgg583nnuo" path="res://CustomTweenComponent.tscn" id="7"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8reah"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gbybj"]
+bg_color = Color(0.686, 0.686, 0.7, 1)
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[node name="Summary Screen Stat" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 56)
+offset_right = 83.0
+offset_bottom = 56.0
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_8reah")
+script = ExtResource("1")
+normal_panel = ExtResource("2")
+highlight_panel = ExtResource("3")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="State Icon" type="TextureRect" parent="MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("4")
+expand_mode = 3
+stretch_mode = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="Stat Value" type="Label" parent="MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("5")
+text = "0"
+
+[node name="ToolTip" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 0
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="ToolTip"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 20.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/margin_bottom = 5
+
+[node name="PanelContainer" type="PanelContainer" parent="ToolTip/MarginContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_gbybj")
+
+[node name="MarginContainer" type="MarginContainer" parent="ToolTip/MarginContainer/PanelContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="Stat Name" type="Label" parent="ToolTip/MarginContainer/PanelContainer/MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("6")
+text = "Stat Name"
+horizontal_alignment = 1
+
+[node name="CustomTweenComponent" parent="." node_paths=PackedStringArray("base_node") instance=ExtResource("7")]
+unique_name_in_owner = true
+base_node = NodePath("..")
+duration = 0.2
+do_scale = true
+scale_amount = Vector2(1.05, 1.05)
+
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]

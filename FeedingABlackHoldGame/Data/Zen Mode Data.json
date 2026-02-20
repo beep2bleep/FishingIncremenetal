@@ -1,0 +1,59 @@
+{
+	"Base Mods Data": [
+		{
+			"type": "RUN_TIMER_BASE",
+			"value": 10.0
+		},
+		{
+			"type": "ASTEROIDS_TO_SPAWN",
+			"value": 110.0
+		},
+		{
+			"type": "MAX_ASTEROID_SIZE",
+			"value": 3.0
+		},
+		{
+			"type": "CLICK_AOE",
+			"value": 3.5
+		},
+		{
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"value": 3.0
+		},			
+		{
+			"type": "CLICK_RATE",
+			"value": 1.2
+		},		
+		{
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"value": 1.0
+		},
+	],
+	"Game Mode Config" : [
+		{
+			"type" : "ASTEROID_BASE_HEALTH",
+			"value" : 1
+		}
+	],
+	"Black Hole Tier Data": [
+		{
+			"epilogue": false,
+			"level_name_keys": [
+				"BLACK_HOLE_NAME_9"
+			],
+			"radius_end": 50.0,
+			"radius_start": 42.0,
+			"set_money_to_this_amount_on_finishing_tier": 0.0,
+			"xp_per_level": [
+				10000.0
+			],
+			"zoom": 1.1
+		}
+	],
+	
+	"cell_px": 32,
+	"cols": 100,
+	"rows": 50,
+	"start_x": -30,
+	"start_y": -30
+}

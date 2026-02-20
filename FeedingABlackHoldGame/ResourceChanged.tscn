@@ -1,0 +1,67 @@
+[gd_scene load_steps=10 format=3 uid="uid://cmvmhvd8euq0y"]
+
+[ext_resource type="Script" uid="uid://f621tegl7n42" path="res://ResourceChanged.gd" id="1"]
+[ext_resource type="Script" uid="uid://c4jb87v60hx5x" path="res://ResourceChangedArea2D.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://bf6ouwcc21ds7" path="res://Art/Matter Base Outline.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://d4k2v7k1qqrqo" path="res://Art/Matter Base.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://du4tuknh75yxa" path="res://Art/Matter 32.png" id="5"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_cm5jf"]
+radius = 18.0
+
+[sub_resource type="Curve" id="Curve_rpwcp"]
+_data = [Vector2(0, 0.679075), 0.0, -1.19291, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_mdc8i"]
+curve = SubResource("Curve_rpwcp")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_oded2"]
+particle_flag_disable_z = true
+gravity = Vector3(0, 0, 0)
+scale_curve = SubResource("CurveTexture_mdc8i")
+
+[node name="ResourceChanged" type="Node2D"]
+z_index = 1
+script = ExtResource("1")
+
+[node name="Pivot" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="ResourceChangedArea2D" type="Area2D" parent="Pivot" node_paths=PackedStringArray("root_node")]
+unique_name_in_owner = true
+collision_layer = 4
+collision_mask = 0
+input_pickable = false
+script = ExtResource("2")
+root_node = NodePath("../..")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Pivot/ResourceChangedArea2D"]
+shape = SubResource("CircleShape2D_cm5jf")
+
+[node name="ArtPivot" type="Node2D" parent="Pivot"]
+unique_name_in_owner = true
+
+[node name="MatterBaseOutline" type="Sprite2D" parent="Pivot/ArtPivot"]
+unique_name_in_owner = true
+modulate = Color(0.3234, 0.3234, 0.33, 1)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3")
+
+[node name="Icon" type="Sprite2D" parent="Pivot/ArtPivot"]
+unique_name_in_owner = true
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("4")
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="Pivot/ArtPivot/Icon"]
+unique_name_in_owner = true
+visible = false
+z_index = -1
+scale = Vector2(4, 4)
+emitting = false
+texture = ExtResource("5")
+lifetime = 0.33
+process_material = SubResource("ParticleProcessMaterial_oded2")
+
+[connection signal="mouse_entered" from="Pivot/ResourceChangedArea2D" to="." method="_on_resource_changed_area_2d_mouse_entered"]
+[connection signal="mouse_exited" from="Pivot/ResourceChangedArea2D" to="." method="_on_resource_changed_area_2d_mouse_exited"]

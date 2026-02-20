@@ -1,0 +1,200 @@
+{
+	"Base Mods Data": [
+		{
+			"type": "RUN_TIMER_BASE",
+			"value": 15.0
+		},
+		{
+			"type": "ASTEROIDS_TO_SPAWN",
+			"value": 20.0
+		}
+	],
+	"Black Hole Tier Data": [
+		{
+			"epilogue": false,
+			"level_name_keys": [
+				"BLACK_HOLE_NAME_0",
+				"BLACK_HOLE_NAME_5",
+				"BLACK_HOLE_NAME_9"
+			],
+			"radius_end": 50.0,
+			"radius_start": 10.0,
+			"set_money_to_this_amount_on_finishing_tier": 0.0,
+			"xp_per_level": [
+				60.0,
+				200.0,
+				735.0
+			],
+			"zoom": 1.0
+		}
+	],
+	"Upgrades": [
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "MAX_ASTEROID_SIZE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1.0,
+				"cost_scale": 230.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 4.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 8,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "RUN_TIMER_AMOUNT_ON_BLACK_HOLE_GROW",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1.0,
+				"cost_scale": 63.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 4.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 7,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "RUN_TIMER_BASE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1.0,
+				"cost_scale": 65.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 4.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 6,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1.0,
+				"cost_scale": 490.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 3.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 5,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1.0,
+				"cost_scale": 58.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 8.0,
+				"section": 99.0,
+				"value": 10.0
+			},
+			"x": 4,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1.0,
+				"cost_scale": 16.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 10.0,
+				"section": 99.0,
+				"value": 0.5
+			},
+			"x": 3,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1.0,
+				"cost_scale": 81.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 5.0,
+				"section": 99.0,
+				"value": 0.3
+			},
+			"x": 2,
+			"y": 0
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(0, 0)",
+				"cost": 1.0,
+				"cost_scale": 35.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 10.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 1,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1.0,
+				"cost_scale": 24.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 10.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 9,
+			"y": 0
+		}
+	],
+	"cell_px": 32,
+	"cols": 100,
+	"rows": 50,
+	"start_x": -30,
+	"start_y": -30
+}

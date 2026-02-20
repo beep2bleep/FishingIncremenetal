@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://qetgg583nnuo"]
+
+[ext_resource type="Script" uid="uid://yx7f53od2it7" path="res://CustomTweenComponent.gd" id="1"]
+
+[node name="CustomTweenComponent" type="Node"]
+script = ExtResource("1")

@@ -1,0 +1,33 @@
+[gd_scene load_steps=13 format=3 uid="uid://71vq0qlvc84e"]
+
+[ext_resource type="Script" uid="uid://36guds7kgnhp" path="res://FlairManager.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://ds08c741a5y1b" path="res://ObjectDestoryedParticles.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://b71m0e2nf2qec" path="res://Shockwave.tscn" id="3"]
+[ext_resource type="PackedScene" uid="uid://dlr8tmnr4gfsv" path="res://FloatingText.tscn" id="4"]
+[ext_resource type="PackedScene" uid="uid://2pbj8kae3rdg" path="res://Explosion.tscn" id="5"]
+[ext_resource type="PackedScene" uid="uid://dslhbqlqdnwn6" path="res://Electric.tscn" id="6"]
+[ext_resource type="PackedScene" uid="uid://bboodkd6bt1tf" path="res://Radioactive.tscn" id="7"]
+[ext_resource type="PackedScene" uid="uid://hlsilfv4fmfd" path="res://Moon.tscn" id="8"]
+[ext_resource type="PackedScene" uid="uid://ci7dgouuspb0s" path="res://FrozenShard.tscn" id="9"]
+[ext_resource type="PackedScene" uid="uid://c4vgwowxxvlkh" path="res://Laser.tscn" id="10"]
+[ext_resource type="PackedScene" uid="uid://vw6ho1bly7sm" path="res://Supernova.tscn" id="11"]
+[ext_resource type="PackedScene" uid="uid://b2wh2n2yuodpt" path="res://Fireball.tscn" id="12"]
+
+[node name="FlairManager" type="Node2D"]
+z_index = 1
+script = ExtResource("1")
+object_destroyed_parts_packed = ExtResource("2")
+shockwave_packed = ExtResource("3")
+floating_text_packed = ExtResource("4")
+explosion_packed = ExtResource("5")
+electric_packed = ExtResource("6")
+radioactive_packed = ExtResource("7")
+moon_packed = ExtResource("8")
+frozen_shard_packed = ExtResource("9")
+laser_packed = ExtResource("10")
+supernova_packed = ExtResource("11")
+fireball_packed = ExtResource("12")
+enable_damage_text = true
+
+[node name="FloatingText" type="CanvasLayer" parent="."]
+unique_name_in_owner = true

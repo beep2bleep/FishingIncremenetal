@@ -1,0 +1,48 @@
+[gd_scene load_steps=6 format=3 uid="uid://ds08c741a5y1b"]
+
+[ext_resource type="Texture2D" uid="uid://d4k2v7k1qqrqo" path="res://Art/Matter Base.png" id="1"]
+[ext_resource type="Script" uid="uid://dda8cue4hkm1d" path="res://ObjectDestoryedParticles.gd" id="2"]
+
+[sub_resource type="Curve" id="Curve_wb1cw"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.101911, 0.858515), 0.0, 0.0, 0, 0, Vector2(0.754777, 0.872705), 0.0, 0.0, 0, 0, Vector2(0.853503, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 5
+
+[sub_resource type="CurveTexture" id="CurveTexture_dexcg"]
+curve = SubResource("Curve_wb1cw")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_i6bqs"]
+resource_local_to_scene = true
+lifetime_randomness = 0.25
+particle_flag_disable_z = true
+particle_flag_damping_as_friction = true
+emission_shape = 1
+emission_sphere_radius = 16.0
+angle_min = -180.0
+angle_max = 180.0
+spread = 180.0
+initial_velocity_min = 50.0
+initial_velocity_max = 500.0
+gravity = Vector3(0, 0, 0)
+damping_min = 0.25
+damping_max = 1.5
+scale_min = 0.1
+scale_max = 0.25
+scale_curve = SubResource("CurveTexture_dexcg")
+
+[node name="ObjectDestroyedParticles" type="GPUParticles2D"]
+z_index = -1
+emitting = false
+amount = 32
+texture = ExtResource("1")
+lifetime = 0.8
+one_shot = true
+explosiveness = 1.0
+randomness = 0.5
+process_material = SubResource("ParticleProcessMaterial_i6bqs")
+script = ExtResource("2")
+
+[node name="Timer" type="Timer" parent="."]
+unique_name_in_owner = true
+one_shot = true
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

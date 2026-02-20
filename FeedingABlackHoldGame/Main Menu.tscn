@@ -1,0 +1,336 @@
+[gd_scene load_steps=19 format=3 uid="uid://dyqnxm08dkif8"]
+
+[ext_resource type="Script" uid="uid://cib78ftbwfk6f" path="res://Main Menu.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://1txuh2meyqfj" path="res://Build Label.tscn" id="2"]
+[ext_resource type="Texture2D" uid="uid://dayjws668e5cv" path="res://Art/Logo Base White.png" id="3"]
+[ext_resource type="Theme" uid="uid://ulae55bx0fhs" path="res://Theme/Theme_Small_Font.tres" id="4"]
+[ext_resource type="PackedScene" uid="uid://ds36c3qoqmf3y" path="res://Controller Glyph.tscn" id="5"]
+[ext_resource type="PackedScene" uid="uid://b5w1afldacdb1" path="res://CustomButton.tscn" id="6"]
+[ext_resource type="PackedScene" uid="uid://b0bx5ybu6bfpq" path="res://Game Modes Selector.tscn" id="7"]
+[ext_resource type="Theme" uid="uid://bxx07kmhw0oiv" path="res://Theme/Theme_Small_Medium_Font.tres" id="8"]
+[ext_resource type="StyleBox" uid="uid://bj1fytem4uuvy" path="res://Theme/Settings Panel.tres" id="9"]
+[ext_resource type="Theme" uid="uid://f0mobaom23an" path="res://Theme/Theme_Large_Font.tres" id="10"]
+[ext_resource type="PackedScene" uid="uid://dl3ia7dmya7fp" path="res://Settings.tscn" id="11"]
+[ext_resource type="Script" uid="uid://c36s4gjs5sv4r" path="res://addons/controller_icons/objects/ControllerIconTexture.gd" id="12"]
+[ext_resource type="Texture2D" uid="uid://bfvsjnywyisxq" path="res://Art/star_tiny.png" id="13"]
+[ext_resource type="Material" uid="uid://cgsnb64a4xmlg" path="res://Singletons/Background Particle Mats.tres" id="14"]
+[ext_resource type="PackedScene" uid="uid://clfcokk1jcg2q" path="res://Black Hole Art.tscn" id="15"]
+[ext_resource type="PackedScene" uid="uid://doav5t27dvtvd" path="res://ObjectManager.tscn" id="16"]
+[ext_resource type="AudioStream" uid="uid://0rfvn2v8pqmp" path="res://Audio/zapsplat_sound_design_whoosh_slow_mo_timewarp_001_106393.mp3" id="17"]
+
+[sub_resource type="Texture2D" id="Texture2D_buhl0"]
+script = ExtResource("12")
+path = "back"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[node name="MainMenu" type="Node2D"]
+script = ExtResource("1")
+
+[node name="CanvasLayer2" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer2"]
+unique_name_in_owner = true
+z_index = -1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.921569, 0.921569, 0.882353, 1)
+metadata/_edit_lock_ = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Build" parent="CanvasLayer" instance=ExtResource("2")]
+visible = false
+modulate = Color(1, 1, 1, 0.39215687)
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+offset_left = -190.0
+offset_top = -46.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="MarginContainer2" type="MarginContainer" parent="CanvasLayer"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -197.5
+offset_right = 560.0
+grow_vertical = 0
+size_flags_horizontal = 8
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Logo" type="TextureRect" parent="CanvasLayer/MarginContainer2"]
+unique_name_in_owner = true
+layout_mode = 2
+texture = ExtResource("3")
+expand_mode = 5
+stretch_mode = 5
+
+[node name="Main Menu Stuff" type="VBoxContainer" parent="CanvasLayer"]
+unique_name_in_owner = true
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -570.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/Main Menu Stuff"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 3
+theme = ExtResource("4")
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_constants/separation = 50
+alignment = 1
+
+[node name="VBoxContainer" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer" instance=ExtResource("5")]
+layout_mode = 2
+enabled = false
+
+[node name="Play" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer" node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 1
+text = "PLAY"
+alignment = 2
+icon_alignment = 1
+expand_icon = true
+enable_on_focus = true
+glyph_comp = NodePath("../Controller Glyph")
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer" instance=ExtResource("5")]
+layout_mode = 2
+enabled = false
+
+[node name="Settings" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer" node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 1
+text = "SETTINGS"
+alignment = 2
+icon_alignment = 1
+expand_icon = true
+enable_on_focus = true
+glyph_comp = NodePath("../Controller Glyph")
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer2" instance=ExtResource("5")]
+layout_mode = 2
+enabled = false
+
+[node name="Discord" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer2" node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 1
+text = "DISCORD"
+alignment = 2
+icon_alignment = 1
+expand_icon = true
+enable_on_focus = true
+glyph_comp = NodePath("../Controller Glyph")
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer3" instance=ExtResource("5")]
+layout_mode = 2
+enabled = false
+
+[node name="Press Kit" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer3" node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 1
+text = "PRESS KIT"
+alignment = 2
+icon_alignment = 1
+expand_icon = true
+enable_on_focus = true
+glyph_comp = NodePath("../Controller Glyph")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/HBoxContainer" instance=ExtResource("5")]
+layout_mode = 2
+enabled = false
+
+[node name="Quit" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/HBoxContainer" node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 1
+text = "QUIT"
+alignment = 2
+expand_icon = true
+enable_on_focus = true
+glyph_comp = NodePath("../Controller Glyph")
+
+[node name="Game Mode Screen" parent="CanvasLayer" instance=ExtResource("7")]
+unique_name_in_owner = true
+
+[node name="Setting Pannel" type="PanelContainer" parent="CanvasLayer"]
+unique_name_in_owner = true
+z_index = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -463.0
+grow_horizontal = 0
+grow_vertical = 2
+size_flags_vertical = 8
+theme = ExtResource("8")
+theme_override_styles/panel = ExtResource("9")
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/Setting Pannel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="MarginContainer2" type="MarginContainer" parent="CanvasLayer/Setting Pannel/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 25
+
+[node name="Label" type="Label" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("10")
+text = "SETTINGS"
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="Settings Comp" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer" instance=ExtResource("11")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_constants/separation = 5
+
+[node name="Controller Glyph" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer/HBoxContainer" instance=ExtResource("5")]
+layout_mode = 2
+texture = SubResource("Texture2D_buhl0")
+
+[node name="Hide Settings" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer/HBoxContainer" instance=ExtResource("6")]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_vertical = 1
+focus_neighbor_left = NodePath(".")
+focus_neighbor_right = NodePath(".")
+text = "BACK"
+icon_alignment = 1
+expand_icon = true
+
+[node name="Pivot" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="GPUParticles2D Light" type="GPUParticles2D" parent="Pivot"]
+unique_name_in_owner = true
+z_index = -1
+amount = 32
+texture = ExtResource("13")
+lifetime = 10.0
+preprocess = 10.0
+randomness = 0.5
+process_material = ExtResource("14")
+
+[node name="GPUParticles2D2 Dark" type="GPUParticles2D" parent="Pivot"]
+unique_name_in_owner = true
+z_index = -1
+amount = 32
+texture = ExtResource("13")
+lifetime = 10.0
+preprocess = 10.0
+randomness = 0.5
+process_material = ExtResource("14")
+
+[node name="Black Hole Art" parent="Pivot" instance=ExtResource("15")]
+unique_name_in_owner = true
+metadata/_edit_lock_ = true
+
+[node name="ObjectManager" parent="Pivot" instance=ExtResource("16")]
+unique_name_in_owner = true
+outer_radius = 400
+is_main_menu = true
+metadata/_edit_lock_ = true
+
+[node name="Camera2D" type="Camera2D" parent="."]
+unique_name_in_owner = true
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("17")
+volume_db = -25.0
+bus = &"Effects"
+
+[connection signal="pressed" from="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer/Play" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer/Settings" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer2/Discord" to="." method="_on_discord_pressed"]
+[connection signal="pressed" from="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer3/Press Kit" to="." method="_on_press_kit_pressed"]
+[connection signal="pressed" from="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/HBoxContainer/Quit" to="." method="_on_quit_pressed"]
+[connection signal="back" from="CanvasLayer/Game Mode Screen" to="." method="_on_game_mode_screen_back"]
+[connection signal="continue_game_mode" from="CanvasLayer/Game Mode Screen" to="." method="_on_game_mode_screen_continue_game_mode"]
+[connection signal="play_new_game_mode" from="CanvasLayer/Game Mode Screen" to="." method="_on_game_mode_screen_play_new_game_mode"]
+[connection signal="pressed" from="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer/HBoxContainer/Hide Settings" to="." method="_on_hide_settings_pressed"]

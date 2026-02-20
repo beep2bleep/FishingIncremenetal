@@ -1,0 +1,101 @@
+[gd_scene load_steps=10 format=3 uid="uid://bboodkd6bt1tf"]
+
+[ext_resource type="Script" uid="uid://dmasc2r0jqost" path="res://Radioactive.gd" id="1"]
+[ext_resource type="Shader" uid="uid://b8qpk3nghdtgs" path="res://Radioactive.gdshader" id="2"]
+[ext_resource type="Texture2D" uid="uid://bscrrmiu2lp7k" path="res://Art/Demo/smoke_04.png" id="3"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_b86vq"]
+resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ajk75"]
+resource_local_to_scene = true
+shader = ExtResource("2")
+shader_parameter/textureNoise = SubResource("NoiseTexture2D_b86vq")
+shader_parameter/radius = 0.499
+shader_parameter/effectControl = 0.602
+shader_parameter/burnSpeed = 0.1
+shader_parameter/shape = 0.0
+shader_parameter/color = Color(0.301961, 0.521569, 0.356863, 0.196078)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_id5q0"]
+resource_local_to_scene = true
+shader = ExtResource("2")
+shader_parameter/textureNoise = SubResource("NoiseTexture2D_b86vq")
+shader_parameter/radius = 0.513
+shader_parameter/effectControl = 0.602
+shader_parameter/burnSpeed = 0.11
+shader_parameter/shape = 0.0
+shader_parameter/color = Color(0.301961, 0.521569, 0.356863, 0.392157)
+
+[sub_resource type="Animation" id="Animation_678kn"]
+resource_name = "Animatwe"
+length = 20.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 20),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, -6.28319]
+}
+
+[sub_resource type="Animation" id="Animation_tpyjo"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_fo778"]
+_data = {
+&"Animatwe": SubResource("Animation_678kn"),
+&"RESET": SubResource("Animation_tpyjo")
+}
+
+[node name="Radioactive" type="Node2D"]
+z_index = 1
+script = ExtResource("1")
+
+[node name="Timer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 5.0
+one_shot = true
+
+[node name="DoT Timer" type="Timer" parent="."]
+
+[node name="Pivot" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Sprite2D2" type="Sprite2D" parent="Pivot"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_ajk75")
+rotation = -0.785398
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("3")
+
+[node name="Sprite2D" type="Sprite2D" parent="Pivot"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_id5q0")
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("3")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_fo778")
+}
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
+[connection signal="timeout" from="DoT Timer" to="." method="_on_do_t_timer_timeout"]

@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3 uid="uid://dirfusykbvhvw"]
+
+[ext_resource type="Theme" uid="uid://dl1181xufyebq" path="res://Theme/Theme.tres" id="1"]
+[ext_resource type="Script" uid="uid://bigsq2velfsmq" path="res://ResourceUI.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://d4k2v7k1qqrqo" path="res://Art/Matter Base.png" id="3"]
+
+[node name="ResourceUI" type="MarginContainer"]
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme = ExtResource("1")
+script = ExtResource("2")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Resource Value" type="Label" parent="HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("1")
+text = "0"
+
+[node name="Icon" type="TextureRect" parent="HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+texture = ExtResource("3")
+expand_mode = 3
+stretch_mode = 5

@@ -1,0 +1,72 @@
+{
+	"Upgrades": [
+		{
+			"connect_x": null, 
+			"connect_y": null,
+			"type": "Util.MODS value goes here",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 10050.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 2.0
+			},
+			"x": 1,
+			"y": 2
+		},
+	],
+	"Base Mods Data" : [
+		{
+			"type" : "CLICK_AOE",
+			"value" : 10.0
+		},
+	],
+
+	"Game Mode Config" : [
+		{
+			"type" : "ASTEROID_BASE_HEALTH",
+			"value" : 3
+		},
+		{
+			"type" : "ASTEROID_BASE_XP",
+			"value" : 1
+		},
+		{
+			"type" : "PLANET_BASE_HEALTH",
+			"value" : 150
+		},
+		{
+			"type" : "PLANET_BASE_XP",
+			"value" : 285000
+		}
+	],
+	"Black Hole Tier Data" : [
+		{
+			"xp_per_level" : [
+				8024365440, 10030456800, 12036548160, 13240202976, 13902213124,
+				14319279517, 14605665107, 14897778409, 15344711761, 15805053114,
+			],
+			"level_name_keys" : [
+				"BLACK_HOLE_NAME_10",
+				"BLACK_HOLE_NAME_11",
+				"BLACK_HOLE_NAME_12",
+				"BLACK_HOLE_NAME_13",
+				"BLACK_HOLE_NAME_14",
+				"BLACK_HOLE_NAME_15",
+				"BLACK_HOLE_NAME_16",
+				"BLACK_HOLE_NAME_17",
+				"BLACK_HOLE_NAME_18",
+				"BLACK_HOLE_NAME_19",
+			],
+			"set_money_to_this_amount_on_finishing_tier" : 100000000
+		}
+	],
+	"cell_px": 32,
+	"cols": 100,
+	"rows": 50,
+	"start_x": -30,
+	"start_y": -30
+}

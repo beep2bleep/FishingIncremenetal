@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="GameModeData" load_steps=3 format=3 uid="uid://bjjkpcrr1pr2v"]
+
+[ext_resource type="Texture2D" uid="uid://y43s2w2sov8o" path="res://Art/The Line.png" id="1"]
+[ext_resource type="Script" uid="uid://ftm4fwuq2swm" path="res://GameModeData.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+name_key = "THE_LINE"
+game_mode = 4
+description_key = "THE_LINE_DESCRIPTION"
+data_path = "res://Data/The Line Play Data.json"
+icon = ExtResource("1")
+coming_soon_date = 1765893600
+accent_color = Color(0.290196, 0.309804, 0.701961, 1)
+metadata/_custom_type_script = "uid://ftm4fwuq2swm"

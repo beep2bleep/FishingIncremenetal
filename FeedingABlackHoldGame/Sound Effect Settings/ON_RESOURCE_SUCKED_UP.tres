@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SoundEffectSettings" load_steps=3 format=3 uid="uid://dl3lkwdykirc1"]
+
+[ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
+[ext_resource type="AudioStream" uid="uid://cetugtvvk15j2" path="res://Audio/dice_tap.mp3" id="2"]
+
+[resource]
+script = ExtResource("1")
+limit = 5
+type = 4
+sound_effect = ExtResource("2")
+volume = -15
+pitch_scale = 1.0
+pitch_randomness = 0.0
+pitch_up_on_count_enabled = true
+pitch_up_amount_per_count = 0.03
+pitch_up_max_count = 10
+pitch_up_decay_rate = 0.15
+metadata/_custom_type_script = "uid://blskskrd6wv02"

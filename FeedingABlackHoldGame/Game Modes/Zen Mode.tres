@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="GameModeData" load_steps=3 format=3 uid="uid://mmjaq0nq6deo"]
+
+[ext_resource type="Texture2D" uid="uid://ji27cltw8iwu" path="res://Art/Zen Mode.png" id="1"]
+[ext_resource type="Script" uid="uid://ftm4fwuq2swm" path="res://GameModeData.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+name_key = "ZEN_MODE"
+game_mode = 6
+description_key = "ZEN_MODE_DESCRIPTION"
+data_path = "res://Data/Zen Mode Data.json"
+icon = ExtResource("1")
+coming_soon_date = 1766325600
+month = 1
+accent_color = Color(0.298039, 0.352941, 0.788235, 1)
+disable_session_timer = true
+end_run_disabled = true
+on_more_time_disabled = true
+metadata/_custom_type_script = "uid://ftm4fwuq2swm"

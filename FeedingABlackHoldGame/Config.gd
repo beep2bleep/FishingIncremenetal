@@ -1,0 +1,32 @@
+extends Node
+class_name Config
+
+var dict = {
+    Util.CONFIG_TYPES.ASTEROID_BASE_XP: 1, 
+    Util.CONFIG_TYPES.PLANET_BASE_XP: 285000, 
+    Util.CONFIG_TYPES.STAR_BASE_XP: 50000000000, 
+
+    Util.CONFIG_TYPES.ASTEROID_BASE_HEALTH: 3, 
+    Util.CONFIG_TYPES.PLANET_BASE_HEALTH: 150, 
+    Util.CONFIG_TYPES.STAR_BASE_HEALTH: 8000, 
+
+    Util.CONFIG_TYPES.ASTEROID_EXPONENT_FOR_XP_TIER: 6, 
+    Util.CONFIG_TYPES.PLANET_EXPONENT_FOR_XP_TIER: 3, 
+    Util.CONFIG_TYPES.STAR_EXPONENT_FOR_XP_TIER: 1.81, 
+
+    Util.CONFIG_TYPES.MAX_SUPERNOVA: 2.0, 
+    Util.CONFIG_TYPES.MIN_SPECIAL_STARS_PERCENT: 0.1, 
+    Util.CONFIG_TYPES.MAX_SPECIAL_STARS_PERCENT: 0.5, 
+
+    Util.CONFIG_TYPES.ASTEROIDS_TO_PREWARM: 200, 
+    Util.CONFIG_TYPES.PLANETS_TO_PREWARM: 150, 
+    Util.CONFIG_TYPES.STARS_TO_PREWARM: 50, 
+
+
+}
+
+func get_config(config_type: Util.CONFIG_TYPES):
+    return dict.get(config_type, null)
+
+func set_config(config_type: Util.CONFIG_TYPES, value):
+    dict[config_type] = value

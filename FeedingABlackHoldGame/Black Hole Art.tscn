@@ -1,0 +1,76 @@
+[gd_scene load_steps=13 format=3 uid="uid://clfcokk1jcg2q"]
+
+[ext_resource type="Script" uid="uid://chuff5u7nccr5" path="res://Black Hole Art.gd" id="1"]
+[ext_resource type="Shader" uid="uid://b7pnre46plghh" path="res://Space/Ring.gdshader" id="2"]
+[ext_resource type="Shader" uid="uid://dkul1gcvd7bhk" path="res://CircleProgress.gdshader" id="3"]
+[ext_resource type="Shader" uid="uid://bf86l68coiy0x" path="res://Circle.gdshader" id="4"]
+[ext_resource type="AudioStream" uid="uid://ba3bbkdb74k0d" path="res://Audio/cartoon_success_fanfair.mp3" id="5"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_ecqmv"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_itn2s"]
+noise = SubResource("FastNoiseLite_ecqmv")
+seamless = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_itn2s"]
+shader = ExtResource("2")
+shader_parameter/radius = 0.5
+shader_parameter/thickness = 0.5
+shader_parameter/color = Color(0.3234, 0.3234, 0.33, 1)
+shader_parameter/angular_speed = -1.0
+shader_parameter/radial_speed = 0.33
+shader_parameter/alpha = 0.5
+shader_parameter/noise = SubResource("NoiseTexture2D_itn2s")
+
+[sub_resource type="Gradient" id="Gradient_kts2q"]
+offsets = PackedFloat32Array(0)
+colors = PackedColorArray(0.3234, 0.3234, 0.33, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_pk0h4"]
+gradient = SubResource("Gradient_kts2q")
+width = 512
+height = 512
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lu0h0"]
+shader = ExtResource("3")
+shader_parameter/primary_color = Color(0.3234, 0.3234, 0.33, 1)
+shader_parameter/alpha = 0.32999999262384
+shader_parameter/value = 0.5550000263625
+shader_parameter/smooth_ = 0.125
+shader_parameter/width_in = 0.2
+shader_parameter/width_out = 0.85
+shader_parameter/border_width = 0.0
+shader_parameter/edge_smoothness = 0.004
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1cbet"]
+resource_local_to_scene = true
+shader = ExtResource("4")
+shader_parameter/radius = 0.2000000095
+shader_parameter/hole_color = Color(0.3234, 0.3234, 0.33, 1)
+
+[node name="Black Hole Art" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Maw Art" type="Sprite2D" parent="."]
+unique_name_in_owner = true
+z_index = -1
+material = SubResource("ShaderMaterial_itn2s")
+texture = SubResource("GradientTexture2D_pk0h4")
+
+[node name="Progress" type="Sprite2D" parent="."]
+unique_name_in_owner = true
+z_index = -1
+material = SubResource("ShaderMaterial_lu0h0")
+texture = SubResource("GradientTexture2D_pk0h4")
+
+[node name="Core" type="Sprite2D" parent="."]
+unique_name_in_owner = true
+z_index = 3
+material = SubResource("ShaderMaterial_1cbet")
+texture = SubResource("GradientTexture2D_pk0h4")
+metadata/_edit_lock_ = true
+
+[node name="Win Game Auido" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("5")
+volume_db = -15.0

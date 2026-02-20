@@ -1,0 +1,174 @@
+[gd_scene load_steps=4 format=3 uid="uid://cqlrg65orbe51"]
+
+[ext_resource type="Theme" uid="uid://dl1181xufyebq" path="res://Theme/Theme.tres" id="1"]
+[ext_resource type="Script" uid="uid://hkdmdxhdg05" path="res://Debugger.gd" id="2"]
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_62rn7"]
+color = Color(0.921569, 0.921569, 0.882353, 1)
+thickness = 8
+
+[node name="Debugger" type="PanelContainer"]
+process_mode = 3
+custom_minimum_size = Vector2(333, 0)
+offset_right = 40.0
+offset_bottom = 40.0
+theme = ExtResource("1")
+script = ExtResource("2")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+text = "Debugger"
+horizontal_alignment = 1
+
+[node name="FPS" type="Label" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "FPS: XX"
+horizontal_alignment = 1
+
+[node name="Unlock Next Section" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Unlock Next Section"
+
+[node name="Unlock Next Act" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Unlock Next Act"
+
+[node name="Speed" type="Label" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Speed: XXX"
+horizontal_alignment = 1
+
+[node name="Asteroid Timer Progress Bar" type="ProgressBar" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+show_percentage = false
+
+[node name="Asteroid Spawn Timer" type="Label" parent="MarginContainer/VBoxContainer/Asteroid Timer Progress Bar"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Asteroid Timer: XX"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Add Matter" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "+1k"
+
+[node name="Add Matter2" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "+$$$"
+
+[node name="End Run" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "End Run"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_62rn7")
+
+[node name="Clicker Damage" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "+1k Clicker Damage"
+
+[node name="HSeparator3" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_62rn7")
+
+[node name="Spawn UFO" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Spawn UFO
+"
+
+[node name="Spawn Comet" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Comet"
+
+[node name="Spawn Planet" type="Button" parent="MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+text = "Planet"
+
+[node name="Add Moon To Clicker" type="Button" parent="MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+text = "Add Moon To Clicker"
+
+[node name="HSeparator2" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_62rn7")
+
+[node name="Reset Steam Achi" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Reset Steam Achivements"
+
+[node name="Set Test Achi" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Get Test Achivement"
+
+[node name="HSeparator4" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_62rn7")
+
+[node name="Reset Matter" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Reset $"
+
+[node name="Level Up" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Level Up Black Hole"
+
+[node name="Add 10 Seconds" type="Button" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "+10 Seconds"
+
+[node name="Milestone" type="Button" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Finish Milestone
+"
+
+[node name="Game Over" type="Button" parent="MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Do Game Over
+"
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Unlock Next Section" to="." method="_on_unlock_next_branch_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Unlock Next Act" to="." method="_on_unlock_next_act_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Add Matter" to="." method="_on_add_matter_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Add Matter2" to="." method="_on_add_matter_2_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/End Run" to="." method="_on_end_run_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Clicker Damage" to="." method="_on_clicker_damage_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Spawn UFO" to="." method="_on_spawn_ufo_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Spawn Comet" to="." method="_on_spawn_comet_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Spawn Planet" to="." method="_on_spawn_planet_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Add Moon To Clicker" to="." method="_on_add_moon_to_clicker_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Reset Steam Achi" to="." method="_on_reset_steam_achi_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Set Test Achi" to="." method="_on_set_test_achi_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Reset Matter" to="." method="_on_reset_matter_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Level Up" to="." method="_on_level_up_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Add 10 Seconds" to="." method="_on_add_10_seconds_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Milestone" to="." method="_on_milestone_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Game Over" to="." method="_on_game_over_pressed"]

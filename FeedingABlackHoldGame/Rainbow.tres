@@ -1,0 +1,48 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://c7bedbqays2r7"]
+
+[sub_resource type="Shader" id="Shader_lj6xh"]
+resource_local_to_scene = true
+code = "shader_type canvas_item;
+
+render_mode blend_mix; // allows transparency blending
+
+uniform float strength: hint_range(0., 1.) = 0.5;
+uniform float speed: hint_range(0., 10.) = 0.5;
+uniform float angle: hint_range(0., 360.) = 0.;
+uniform float transparency: hint_range(0., 1.) = 0.5; // controls how see-through the effect is
+
+void fragment() {
+	float hue = UV.x * cos(radians(angle)) - UV.y * sin(radians(angle));
+	hue = fract(hue + fract(TIME * speed));
+
+	float x = 1. - abs(mod(hue / (1. / 6.), 2.) - 1.);
+	vec3 rainbow;
+	if (hue < 1. / 6.) {
+		rainbow = vec3(1., x, 0.);
+	} else if (hue < 1. / 3.) {
+		rainbow = vec3(x, 1., 0.);
+	} else if (hue < 0.5) {
+		rainbow = vec3(0, 1., x);
+	} else if (hue < 2. / 3.) {
+		rainbow = vec3(0., x, 1.);
+	} else if (hue < 5. / 6.) {
+		rainbow = vec3(x, 0., 1.);
+	} else {
+		rainbow = vec3(1., 0., x);
+	}
+
+	vec4 base_color = texture(TEXTURE, UV);
+	vec3 mixed = mix(base_color.rgb, rainbow, strength);
+
+	// Apply transparency so the sprite behind can show through
+	COLOR = vec4(mixed, base_color.a * (1.0 - transparency));
+}
+"
+
+[resource]
+resource_local_to_scene = true
+shader = SubResource("Shader_lj6xh")
+shader_parameter/strength = 0.5
+shader_parameter/speed = 0.400000019
+shader_parameter/angle = 0.0
+shader_parameter/transparency = 0.30000001425

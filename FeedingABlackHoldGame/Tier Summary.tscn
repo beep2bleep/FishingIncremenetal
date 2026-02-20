@@ -1,0 +1,394 @@
+[gd_scene load_steps=22 format=3 uid="uid://bmamashtjusvb"]
+
+[ext_resource type="Script" uid="uid://cr6ehe2l3j82h" path="res://TierSummary.gd" id="1"]
+[ext_resource type="Theme" uid="uid://fcmkyi7fg3b5" path="res://Theme/Theme_Very_Large_Font.tres" id="2"]
+[ext_resource type="StyleBox" uid="uid://dm8hlq85fctfk" path="res://Summary Panel Cont.tres" id="3"]
+[ext_resource type="Theme" uid="uid://dhlpfrladpxn2" path="res://Theme/Theme_Medium_Font.tres" id="4"]
+[ext_resource type="PackedScene" uid="uid://bdx0x3ukekrxv" path="res://SummaryScreenStat.tscn" id="5"]
+[ext_resource type="PackedScene" uid="uid://bpyvdwd3ehv8x" path="res://Resource Gained Summary.tscn" id="6"]
+[ext_resource type="Script" uid="uid://dqjuxvpc64x5r" path="res://SummaryMoneyPanel.gd" id="7"]
+[ext_resource type="StyleBox" uid="uid://cg7spw14ksifo" path="res://Summary Panel Highlight.tres" id="8"]
+[ext_resource type="PackedScene" uid="uid://dv47ipwa0yhh5" path="res://MoneyUI.tscn" id="9"]
+[ext_resource type="Theme" uid="uid://f0mobaom23an" path="res://Theme/Theme_Large_Font.tres" id="10"]
+[ext_resource type="PackedScene" uid="uid://qetgg583nnuo" path="res://CustomTweenComponent.tscn" id="11"]
+[ext_resource type="Theme" uid="uid://ulae55bx0fhs" path="res://Theme/Theme_Small_Font.tres" id="12"]
+[ext_resource type="PackedScene" uid="uid://ds36c3qoqmf3y" path="res://Controller Glyph.tscn" id="13"]
+[ext_resource type="Script" uid="uid://c36s4gjs5sv4r" path="res://addons/controller_icons/objects/ControllerIconTexture.gd" id="14"]
+[ext_resource type="PackedScene" uid="uid://b5w1afldacdb1" path="res://CustomButton.tscn" id="15"]
+[ext_resource type="AudioStream" uid="uid://c35j4p7q8dsf3" path="res://Audio/esm_victory_horns_alert_sound_fx_arcade_synth_musical_chord_bling_electronic_casino_kids_mobile_positive_achievement_score.mp3" id="16"]
+[ext_resource type="AudioStream" uid="uid://bjexi312ga1n5" path="res://Audio/sound_ex_machina_Button_Tick_Loop.mp3" id="17"]
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_t0k5i"]
+content_margin_left = 4.0
+content_margin_top = 0.0
+content_margin_right = 4.0
+content_margin_bottom = 0.0
+color = Color(0.443137, 0.443137, 0.45098, 1)
+thickness = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_j236x"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_c3hmd"]
+bg_color = Color(0.686, 0.686, 0.7, 1)
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="Texture2D" id="Texture2D_7e2je"]
+script = ExtResource("14")
+path = "upgrades"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[node name="Tier Summary" type="ColorRect"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.392157)
+script = ExtResource("1")
+metadata/_edit_lock_ = true
+
+[node name="MarginContainer3" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer3"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Title" type="RichTextLabel" parent="MarginContainer3/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("2")
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.19607843)
+theme_override_constants/shadow_outline_size = 4
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+bbcode_enabled = true
+text = "Milestone Reached!"
+fit_content = true
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="Vbox" type="VBoxContainer" parent="MarginContainer3/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 25
+alignment = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox"]
+layout_mode = 2
+theme_override_constants/separation = 25
+
+[node name="Money Stuff" type="PanelContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer"]
+custom_minimum_size = Vector2(330, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 8
+theme_override_styles/panel = ExtResource("3")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Milestone Name" type="Label" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer2"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("4")
+text = "Milestone Name Here"
+vertical_alignment = 1
+
+[node name="Milestone Numbers" type="Label" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer2"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+theme = ExtResource("4")
+text = "1/7"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2"]
+layout_mode = 2
+
+[node name="Stats" type="GridContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 3
+
+[node name="Total Money This Milestone" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/VBoxContainer/Stats" instance=ExtResource("5")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Damage This Milestone" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/VBoxContainer/Stats" instance=ExtResource("5")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Objects Destroyed This Milestone" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/VBoxContainer/Stats" instance=ExtResource("5")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2"]
+visible = false
+layout_mode = 2
+alignment = 1
+
+[node name="New Start Label" type="Label" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer3"]
+layout_mode = 2
+theme = ExtResource("4")
+text = "Start at"
+
+[node name="_" type="Label" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer3"]
+layout_mode = 2
+theme = ExtResource("4")
+text = ":"
+
+[node name="New Start Size Label" type="Label" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer3"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("4")
+text = "NEW SIZE HERE"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Stats" type="GridContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 3
+
+[node name="Asteroids Destroyed Hbox" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer/VBoxContainer/Stats" instance=ExtResource("5")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Asteroid" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer/VBoxContainer" instance=ExtResource("6")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="Planet" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer/VBoxContainer" instance=ExtResource("6")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="Star" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer/VBoxContainer" instance=ExtResource("6")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="Total" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer/VBoxContainer" instance=ExtResource("6")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+is_total = true
+
+[node name="Milestone2" type="Label" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/HBoxContainer/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme = ExtResource("4")
+text = "STATS COMING TO PLAYTEST SOON"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HSeparator3" type="HSeparator" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_t0k5i")
+
+[node name="Rewards Stuff" type="HBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+
+[node name="Reward Label" type="Label" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Rewards Stuff"]
+layout_mode = 2
+theme = ExtResource("4")
+text = "Completion Reward"
+
+[node name="_" type="Label" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Rewards Stuff"]
+layout_mode = 2
+theme = ExtResource("4")
+text = ":"
+
+[node name="Reward Amount" type="Label" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Rewards Stuff"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("4")
+text = "$50m"
+
+[node name="HSeparator2" type="HSeparator" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2"]
+visible = false
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_t0k5i")
+
+[node name="Money UI Panel" type="PanelContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_j236x")
+script = ExtResource("7")
+normal_panel = SubResource("StyleBoxFlat_j236x")
+highlight_panel = ExtResource("8")
+
+[node name="Moeny UI" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Money UI Panel" instance=ExtResource("9")]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("10")
+
+[node name="CustomTweenComponent" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Money UI Panel" node_paths=PackedStringArray("base_node") instance=ExtResource("11")]
+unique_name_in_owner = true
+base_node = NodePath("..")
+duration = 0.2
+do_scale = true
+scale_amount = Vector2(1.05, 1.05)
+
+[node name="ToolTip" type="Control" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Money UI Panel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 0
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Money UI Panel/ToolTip"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 20.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/margin_bottom = 5
+
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Money UI Panel/ToolTip/MarginContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_c3hmd")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Money UI Panel/ToolTip/MarginContainer/PanelContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="Text" type="Label" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Money UI Panel/ToolTip/MarginContainer/PanelContainer/MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("12")
+text = "Current Money"
+horizontal_alignment = 1
+
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(330, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = ExtResource("3")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/PanelContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/PanelContainer/MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+text = "STATS"
+horizontal_alignment = 1
+
+[node name="Stats VBox" type="VBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox"]
+layout_mode = 2
+
+[node name="PanelContainer2" type="PanelContainer" parent="MarginContainer3/VBoxContainer/Vbox/Stats VBox"]
+custom_minimum_size = Vector2(600, 0)
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_styles/panel = ExtResource("3")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer3/VBoxContainer/Vbox/Stats VBox/PanelContainer2"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Button Hbox" type="HBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox/Stats VBox/PanelContainer2/MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 5
+alignment = 1
+
+[node name="Controller Glyph" parent="MarginContainer3/VBoxContainer/Vbox/Stats VBox/PanelContainer2/MarginContainer/Button Hbox" instance=ExtResource("13")]
+layout_mode = 2
+texture = SubResource("Texture2D_7e2je")
+always_show = true
+enabled = false
+
+[node name="Upgrades" parent="MarginContainer3/VBoxContainer/Vbox/Stats VBox/PanelContainer2/MarginContainer/Button Hbox" instance=ExtResource("15")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 50)
+layout_mode = 2
+size_flags_horizontal = 7
+theme_override_font_sizes/font_size = 32
+
+[node name="TaDa Audio" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("16")
+volume_db = -15.0
+bus = &"Effects"
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("17")
+volume_db = -15.0
+bus = &"Effects"
+
+[connection signal="mouse_entered" from="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Money UI Panel" to="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Money UI Panel" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Money UI Panel" to="MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff/MarginContainer/VBoxContainer2/Money UI Panel" method="_on_mouse_exited"]
+[connection signal="pressed" from="MarginContainer3/VBoxContainer/Vbox/Stats VBox/PanelContainer2/MarginContainer/Button Hbox/Upgrades" to="." method="_on_upgrades_pressed"]

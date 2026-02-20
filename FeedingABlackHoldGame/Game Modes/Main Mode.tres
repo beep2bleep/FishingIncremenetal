@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="GameModeData" load_steps=3 format=3 uid="uid://csh384s7ptkp8"]
+
+[ext_resource type="Texture2D" uid="uid://v1fvdocwedx1" path="res://Art/Mods/BASE_DAMAGE_PER_CLICK.png" id="1"]
+[ext_resource type="Script" uid="uid://ftm4fwuq2swm" path="res://GameModeData.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+name_key = "MAIN_MODE"
+description_key = "MAIN_MODE_DESCRIPTION"
+data_path = "res://Data/Black Hole Data.json"
+icon = ExtResource("1")
+accent_color = Color(0.619608, 0.360784, 0.376471, 1)
+metadata/_custom_type_script = "uid://ftm4fwuq2swm"

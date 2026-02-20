@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://c5hd0a13m5oan"]
+
+[ext_resource type="Script" uid="uid://c7h37842o5syn" path="res://GlobalResorucesUI.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://dirfusykbvhvw" path="res://ResourceUI.tscn" id="2"]
+
+[node name="GlobalResorucesUI" type="HBoxContainer"]
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1")
+resource_types = [0]
+resource_ui_packed = ExtResource("2")

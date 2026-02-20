@@ -1,0 +1,896 @@
+{
+	"Black Hole Tier Data": [
+		{
+			"epilogue": false,
+			"level_name_keys": [
+				"BLACK_HOLE_NAME_0",
+				"BLACK_HOLE_NAME_1",
+				"BLACK_HOLE_NAME_2",
+				"BLACK_HOLE_NAME_3",
+				"BLACK_HOLE_NAME_4"
+			],
+			"radius_end": 50.0,
+			"radius_start": 10.0,
+			"set_money_to_this_amount_on_finishing_tier": 100000000.0,
+			"xp_per_level": [
+				100.0,
+				1000.0,
+				20000.0,
+				400000.0,
+				1250000.0
+			],
+			"zoom": 1.0
+		}
+	],
+	"Upgrades": [
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 100.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.5
+			},
+			"x": 0,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 10.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.5
+			},
+			"x": 1,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "RUN_TIMER_BASE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 10.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 5.0
+			},
+			"x": 0,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 10.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -1,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 200.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -2,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 5000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.5
+			},
+			"x": 0,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 200.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.5
+			},
+			"x": 2,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "RUN_TIMER_BASE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 200.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 5.0
+			},
+			"x": 0,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 50000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -3,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 500000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.5
+			},
+			"x": 0,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 50000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.5
+			},
+			"x": 3,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "RUN_TIMER_BASE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 100000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 5.0
+			},
+			"x": 0,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 30.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 20.0
+			},
+			"x": -1,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 30.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 20.0
+			},
+			"x": -1,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 30.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 20.0
+			},
+			"x": 1,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 30.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 20.0
+			},
+			"x": 1,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 300.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": -1,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 300.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 1,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 300.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": -1,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 300.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 1,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 300.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -2,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 300.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -2,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 300.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 2,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 300.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 2,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 15000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.125
+			},
+			"x": -2,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 15000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.125
+			},
+			"x": -1,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 25000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.125
+			},
+			"x": 1,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 25000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.125
+			},
+			"x": 2,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 100000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.125
+			},
+			"x": -1,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 100000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.125
+			},
+			"x": -2,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 100000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.125
+			},
+			"x": 1,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 100000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.125
+			},
+			"x": 2,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 100000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": -3,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 100000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": -3,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 15000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": -3,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 15000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": -3,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 25000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 3,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 25000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 3,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 100000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 3,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 100000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 3,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 50000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 50.0
+			},
+			"x": -3,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 50000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 50.0
+			},
+			"x": 3,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 200000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 50.0
+			},
+			"x": 3,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 200000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 50.0
+			},
+			"x": -3,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 1500.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": -2,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 1500.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": -2,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 1500.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": 2,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 1500.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": 2,
+			"y": 2
+		}
+	],
+	"cell_px": 32,
+	"cols": 100,
+	"rows": 50,
+	"start_x": -30,
+	"start_y": -30
+}

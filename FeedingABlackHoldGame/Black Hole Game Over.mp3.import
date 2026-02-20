@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bgyvgytymn6n8"
+path="res://.godot/imported/Black Hole Game Over.mp3-4af73c6cc585dbe67e40a663225d88a1.mp3str"
+
+[deps]
+
+source_file="res://Black Hole Game Over.mp3"
+dest_files=["res://.godot/imported/Black Hole Game Over.mp3-4af73c6cc585dbe67e40a663225d88a1.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0.0
+bpm=0.0
+beat_count=0
+bar_beats=4

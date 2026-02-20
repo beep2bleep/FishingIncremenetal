@@ -1,0 +1,573 @@
+[gd_scene load_steps=26 format=3 uid="uid://coylx8tcilypr"]
+
+[ext_resource type="Script" uid="uid://o2vpxgyxffmn" path="res://Space/Star.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://dljo016tu3yah" path="res://Space/Star 980.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://clnl4wlakiwo3" path="res://Art/Space/Large Circle.png" id="3"]
+[ext_resource type="PackedScene" uid="uid://qetgg583nnuo" path="res://CustomTweenComponent.tscn" id="4"]
+[ext_resource type="Shader" uid="uid://ds3db77367xg2" path="res://Space/Laser Star Effect.gdshader" id="5"]
+[ext_resource type="PackedScene" uid="uid://bmrl1633qfoop" path="res://HealthComponent.tscn" id="6"]
+[ext_resource type="Shader" uid="uid://cnie4edop410o" path="res://Space/Supernova.gdshader" id="7"]
+[ext_resource type="Texture2D" uid="uid://htiftikslcat" path="res://Art/Asteroid/pattern_03.png" id="8"]
+[ext_resource type="PackedScene" uid="uid://drrc7o7atsa0a" path="res://Tendril.tscn" id="9"]
+
+[sub_resource type="Animation" id="Animation_qox6c"]
+resource_name = "pop_in_planet"
+length = 0.4
+step = 0.05
+tracks/0/type = "method"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0.4),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [],
+"method": &"on_load"
+}]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Art:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.4),
+"transitions": PackedFloat32Array(-2, -2, -2),
+"update": 0,
+"values": [Vector2(1e-05, 1e-05), Vector2(1.1, 1.1), Vector2(1, 1)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_prj66"]
+_data = {
+&"pop_in_planet": SubResource("Animation_qox6c")
+}
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qr85q"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fsaia"]
+resource_local_to_scene = true
+shader = ExtResource("5")
+shader_parameter/maxLineWidth = 100.0
+shader_parameter/minLineWidth = 0.0
+shader_parameter/speed = 10.0
+shader_parameter/blockSize = 20.0
+shader_parameter/color = Color(0.619608, 0.360784, 0.376471, 1)
+shader_parameter/tolerance = 0.9990000128746
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7rqir"]
+shader = ExtResource("7")
+shader_parameter/color = Color(0.5, 1, 0.75, 1)
+shader_parameter/scale_factor = 1.0
+
+[sub_resource type="Animation" id="Animation_dkhus"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("..:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_k78rb"]
+resource_name = "SolarFlair"
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("..:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.6333333),
+"transitions": PackedFloat32Array(-2, -2),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(1.02, 1.02)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_5if38"]
+_data = {
+&"RESET": SubResource("Animation_dkhus"),
+&"SolarFlair": SubResource("Animation_k78rb")
+}
+
+[sub_resource type="Shader" id="Shader_5if38"]
+code = "shader_type canvas_item;
+
+// --- Uniforms --- //
+uniform vec2 speed = vec2(1.0, 0.0);
+uniform vec4 tint_color : source_color = vec4(1.0, 1.0, 1.0, 1.0); // New color control
+
+// --- Functions --- //
+void fragment() {
+	vec4 tex_color = texture(TEXTURE, mod(UV + TIME * speed, 1.0));
+	COLOR = tex_color * tint_color;
+}
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_a7fyh"]
+shader = SubResource("Shader_5if38")
+shader_parameter/speed = Vector2(0.1, 0)
+shader_parameter/tint_color = Color(0, 0, 0, 0.09803922)
+
+[sub_resource type="Shader" id="Shader_yad1x"]
+resource_local_to_scene = true
+code = "shader_type canvas_item;
+
+uniform int lightning_number = 5;
+uniform vec2 amplitude = vec2(2.0,1.0);
+uniform float offset = 0.45;
+uniform float thickness = 0.02;
+uniform float speed = 3.0;
+uniform vec4 base_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+uniform float glow_thickness = 0.08;
+uniform vec4 glow_color : source_color = vec4(0.2, 0, 0.8, 0.0);
+uniform float alpha : hint_range(0, 1) = 1.0;
+
+// plot function 
+float plot(vec2 st, float pct, float half_width){
+  return  smoothstep( pct-half_width, pct, st.y) -
+          smoothstep( pct, pct+half_width, st.y);
+}
+
+vec2 hash22(vec2 uv) {
+    uv = vec2(dot(uv, vec2(127.1,311.7)),
+              dot(uv, vec2(269.5,183.3)));
+    return 2.0 * fract(sin(uv) * 43758.5453123) - 1.0;
+}
+
+float noise(vec2 uv) {
+    vec2 iuv = floor(uv);
+    vec2 fuv = fract(uv);
+    vec2 blur = smoothstep(0.0, 1.0, fuv);
+    return mix(mix(dot(hash22(iuv + vec2(0.0,0.0)), fuv - vec2(0.0,0.0)),
+                   dot(hash22(iuv + vec2(1.0,0.0)), fuv - vec2(1.0,0.0)), blur.x),
+               mix(dot(hash22(iuv + vec2(0.0,1.0)), fuv - vec2(0.0,1.0)),
+                   dot(hash22(iuv + vec2(1.0,1.0)), fuv - vec2(1.0,1.0)), blur.x), blur.y) + 0.5;
+}
+
+float fbm(vec2 n) {
+    float total = 0.0, amp = 1.0;
+    for (int i = 0; i < 7; i++) {
+        total += noise(n) * amp;
+        n += n;
+        amp *= 0.5;
+    }
+    return total;
+}
+
+
+void fragment(){
+	vec2 uv = UV;
+	vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
+	
+	vec2 t ;
+	float y ;
+	float pct ;
+	float buffer;	
+	// add more lightning
+	for ( int i = 0; i < lightning_number; i++){
+		t = uv * amplitude + vec2(float(i), -float(i)) - TIME*speed;
+		y = fbm(t)*offset;
+		pct = plot(uv, y, thickness);
+		buffer = plot(uv, y, glow_thickness);
+		color += pct*base_color;
+		color += buffer*glow_color;
+	}
+	
+	color.a *= alpha;
+	COLOR = color;
+}"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dkhus"]
+resource_local_to_scene = true
+shader = SubResource("Shader_yad1x")
+shader_parameter/lightning_number = 2
+shader_parameter/amplitude = Vector2(2, 1)
+shader_parameter/offset = 0.45
+shader_parameter/thickness = 0.05
+shader_parameter/speed = -0.3
+shader_parameter/base_color = Color(1, 1, 1, 1)
+shader_parameter/glow_thickness = 0.05
+shader_parameter/glow_color = Color(0, 0, 0, 1)
+shader_parameter/alpha = 1.0
+
+[sub_resource type="Animation" id="Animation_5if38"]
+resource_name = "Laser Animation"
+length = 2.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Art/Base Art/Sprite2D Base:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0.26666668, 1.5),
+"transitions": PackedFloat32Array(-2, -2),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(0.95, 0.95)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Art/Base Art/Sprite2D Base2:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0.2, 1.6666667),
+"transitions": PackedFloat32Array(-2, -2),
+"update": 0,
+"values": [Vector2(0.9, 0.9), Vector2(0.8, 0.8)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Art/Base Art/Sprite2D Base3:scale")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0.099999994, 1.8333335),
+"transitions": PackedFloat32Array(-2, -2),
+"update": 0,
+"values": [Vector2(0.8, 0.8), Vector2(0.65, 0.65)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Art/Base Art/Sprite2D Base4:scale")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 2),
+"transitions": PackedFloat32Array(-2, -2),
+"update": 0,
+"values": [Vector2(0.7, 0.7), Vector2(0.5, 0.5)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Art/HealthComponent/Damage Art/Sprite2D Damage:scale")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0.26666668, 1.4666667),
+"transitions": PackedFloat32Array(-2, -2),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(0.95, 0.95)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Art/HealthComponent/Damage Art/Sprite2D Damage2:scale")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0.2, 1.6666667),
+"transitions": PackedFloat32Array(-2, -2),
+"update": 0,
+"values": [Vector2(0.9, 0.9), Vector2(0.8, 0.8)]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Art/HealthComponent/Damage Art/Sprite2D Damage3:scale")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0.1, 1.8333335),
+"transitions": PackedFloat32Array(-2, -2),
+"update": 0,
+"values": [Vector2(0.8, 0.8), Vector2(0.65, 0.65)]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Art/HealthComponent/Damage Art/Sprite2D Damage4:scale")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0, 2),
+"transitions": PackedFloat32Array(-2, -2),
+"update": 0,
+"values": [Vector2(0.7, 0.7), Vector2(0.5, 0.5)]
+}
+
+[sub_resource type="Animation" id="Animation_7rqir"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Art/Base Art/Sprite2D Base:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Art/Base Art/Sprite2D Base2:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0.9, 0.9)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Art/Base Art/Sprite2D Base3:scale")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0.8, 0.8)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Art/Base Art/Sprite2D Base4:scale")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0.7, 0.7)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Art/HealthComponent/Damage Art/Sprite2D Damage:scale")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Art/HealthComponent/Damage Art/Sprite2D Damage2:scale")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0.9, 0.9)]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Art/HealthComponent/Damage Art/Sprite2D Damage3:scale")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0.8, 0.8)]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Art/HealthComponent/Damage Art/Sprite2D Damage4:scale")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0.7, 0.7)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_7rqir"]
+_data = {
+&"Laser Animation": SubResource("Animation_5if38"),
+&"RESET": SubResource("Animation_7rqir")
+}
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_6kv1m"]
+radius = 469.63
+
+[node name="Star" type="Node2D" node_paths=PackedStringArray("health_component")]
+script = ExtResource("1")
+base_texture = ExtResource("2")
+laser_texture = ExtResource("3")
+health_component = NodePath("Art/HealthComponent")
+
+[node name="CustomTweenComponent" parent="." node_paths=PackedStringArray("base_node") instance=ExtResource("4")]
+unique_name_in_owner = true
+base_node = NodePath("../Art")
+do_scale = true
+do_rotation = true
+rotation_amount = 5
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+unique_name_in_owner = true
+libraries = {
+&"": SubResource("AnimationLibrary_prj66")
+}
+
+[node name="Art" type="Node2D" parent="."]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_qr85q")
+scale = Vector2(1e-05, 1e-05)
+
+[node name="Base Art" type="Node2D" parent="Art"]
+unique_name_in_owner = true
+
+[node name="Background Effect" type="Sprite2D" parent="Art/Base Art"]
+unique_name_in_owner = true
+visible = false
+material = SubResource("ShaderMaterial_fsaia")
+texture = ExtResource("3")
+
+[node name="Sprite2D Base" type="Sprite2D" parent="Art/Base Art"]
+unique_name_in_owner = true
+modulate = Color(0.76, 0.44080004, 0.46207997, 1)
+texture = ExtResource("2")
+
+[node name="Sprite2D Base 2" type="Sprite2D" parent="Art/Base Art/Sprite2D Base"]
+unique_name_in_owner = true
+visible = false
+self_modulate = Color(0.9, 0.9, 0.9, 1)
+z_index = -1
+rotation = 0.21816616
+scale = Vector2(1.085, 1.085)
+texture = ExtResource("2")
+
+[node name="Sprite2D Base2" type="Sprite2D" parent="Art/Base Art"]
+unique_name_in_owner = true
+modulate = Color(0.72, 0.41760004, 0.43776, 1)
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("2")
+
+[node name="Sprite2D Base3" type="Sprite2D" parent="Art/Base Art"]
+unique_name_in_owner = true
+modulate = Color(0.68, 0.39440003, 0.41344, 1)
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("2")
+
+[node name="Sprite2D Base4" type="Sprite2D" parent="Art/Base Art"]
+unique_name_in_owner = true
+modulate = Color(0.619608, 0.360784, 0.376471, 1)
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("2")
+
+[node name="Node2D" type="Node2D" parent="Art/Base Art"]
+
+[node name="HealthComponent" parent="Art" instance=ExtResource("6")]
+unique_name_in_owner = true
+clip_children = 1
+z_index = 0
+clip_contents = true
+custom_minimum_size = Vector2(0, 0)
+offset_left = -448.0
+offset_top = -449.0
+offset_right = 452.0
+offset_bottom = 451.0
+
+[node name="Damage Art" type="Node2D" parent="Art/HealthComponent"]
+unique_name_in_owner = true
+
+[node name="Sprite2D Damage" type="Sprite2D" parent="Art/HealthComponent/Damage Art"]
+unique_name_in_owner = true
+texture = ExtResource("2")
+
+[node name="Sprite2D Damage2" type="Sprite2D" parent="Art/HealthComponent/Damage Art"]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0.078431375)
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("2")
+
+[node name="Sprite2D Damage3" type="Sprite2D" parent="Art/HealthComponent/Damage Art"]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0.078431375)
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("2")
+
+[node name="Sprite2D Damage4" type="Sprite2D" parent="Art/HealthComponent/Damage Art"]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0.078431375)
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("2")
+
+[node name="Special Flair" type="Node2D" parent="Art"]
+unique_name_in_owner = true
+z_index = 1
+
+[node name="Supernova Pivot" type="Node2D" parent="Art/Special Flair"]
+unique_name_in_owner = true
+visible = false
+
+[node name="Supernova Effect" type="Sprite2D" parent="Art/Special Flair/Supernova Pivot"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_7rqir")
+scale = Vector2(1.68, 1.68)
+texture = ExtResource("3")
+
+[node name="SF AnimationPlayer" type="AnimationPlayer" parent="Art/Special Flair/Supernova Pivot"]
+unique_name_in_owner = true
+root_node = NodePath("../Supernova Effect")
+libraries = {
+&"": SubResource("AnimationLibrary_5if38")
+}
+
+[node name="Special Overlay" type="Polygon2D" parent="Art/Special Flair"]
+unique_name_in_owner = true
+texture_repeat = 2
+material = SubResource("ShaderMaterial_a7fyh")
+rotation = -0.7853982
+scale = Vector2(0.8677685, 0.8677685)
+antialiased = true
+texture = ExtResource("8")
+texture_scale = Vector2(0.4, 0.4)
+polygon = PackedVector2Array(-45.71429, -59.047626, 5.7142863, -64.76191, 41.904766, -57.142864, 84.12382, 24.200003, 10.371429, 80.66668, -46.09524, 59.923817, -77.20953, -3.4571433)
+
+[node name="Tendril" parent="Art" instance=ExtResource("9")]
+unique_name_in_owner = true
+visible = false
+material = SubResource("ShaderMaterial_dkhus")
+width = 300.0
+
+[node name="Label" type="Label" parent="Art"]
+unique_name_in_owner = true
+offset_left = -453.0
+offset_top = -136.0
+offset_right = 450.0
+offset_bottom = 137.0
+theme_override_font_sizes/font_size = 72
+text = "SUN"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AnimationPlayer2" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_7rqir")
+}
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_6kv1m")
+
+[connection signal="death_event" from="Art/HealthComponent" to="." method="_on_health_component_death_event"]

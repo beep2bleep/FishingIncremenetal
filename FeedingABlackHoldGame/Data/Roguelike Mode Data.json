@@ -1,0 +1,39 @@
+{
+	"Base Mods Data": [
+		{
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"value": 1.0
+		},		
+		{
+			"type": "CHANCE_TO_RESPAWN_PLANET_ON_BREAK",
+			"value": 1.0
+		},		
+		{
+			"type": "CHANCE_TO_RESPAWN_STAR_ON_BREAK",
+			"value": 1.0
+		},		
+	],
+	"Black Hole Tier Data": [
+		{
+			"forced_objects_to_spawn" : [10, 0, 0],
+			"forced_session_timer": 15,
+			"xp_per_level": [1.0],
+			"radius_start": 10.0,
+			"zoom": 1.0
+		},
+		
+		{
+			"forced_objects_to_spawn" : [15, 0, 0],
+			"forced_session_timer": 20,
+			"xp_per_level": [5.0],
+			"radius_start": 15.0,
+			"zoom": 1.0
+		}
+	],
+	
+	"cell_px": 32,
+	"cols": 100,
+	"rows": 50,
+	"start_x": -30,
+	"start_y": -30
+}

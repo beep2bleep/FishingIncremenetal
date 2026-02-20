@@ -1,0 +1,4455 @@
+{
+	"Upgrades": [
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 350.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.25
+			},
+			"x": 3,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 400.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 3.0
+			},
+			"x": 3,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 600.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.3
+			},
+			"x": 4,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 425.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.25
+			},
+			"x": 4,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 475.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 1.0
+			},
+			"x": 4,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 900.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.1
+			},
+			"x": 5,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 425.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.5
+			},
+			"x": 5,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 425.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.5
+			},
+			"x": 5,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1050.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.1
+			},
+			"x": 6,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_ADD_TIME_ON_ASTEROID_DESTROYED",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 450.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.05
+			},
+			"x": 5,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_ADD_TIME_ON_ASTEROID_DESTROYED",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 350.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.05
+			},
+			"x": 4,
+			"y": 0
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "RUN_TIMER_AMOUNT_ON_BLACK_HOLE_GROW",
+			"vars": {
+				"act": 1.0,
+				"connect": "(0, 0)",
+				"cost": 300.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 3.0
+			},
+			"x": 3,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1875.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 3.0
+			},
+			"x": 6,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 2000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.4
+			},
+			"x": 6,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.1
+			},
+			"x": 6,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 900.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.1
+			},
+			"x": 4,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 0.1
+			},
+			"x": 5,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 1050.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 3.0,
+				"value": 1.0
+			},
+			"x": 6,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 65.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 2.0,
+				"value": 0.25
+			},
+			"x": 6,
+			"y": -7
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 70.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 2.0,
+				"value": 0.5
+			},
+			"x": 7,
+			"y": -7
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 60.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 2.0,
+				"value": 0.1
+			},
+			"x": 7,
+			"y": -6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 60.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 2.0,
+				"value": 1.0
+			},
+			"x": 6,
+			"y": -6
+		},
+		{
+			"connect_x": 4,
+			"connect_y": -5,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 1.0,
+				"connect": "(4, -5)",
+				"cost": 60.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 2.0,
+				"value": 0.4
+			},
+			"x": 6,
+			"y": -5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 80.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 2.0,
+				"value": 2.0
+			},
+			"x": 7,
+			"y": -5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 60.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 0.25
+			},
+			"x": 4,
+			"y": -6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 50.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 1.0
+			},
+			"x": 3,
+			"y": -6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 40.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 0.25
+			},
+			"x": 3,
+			"y": -5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "MAX_ASTEROID_SIZE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 60.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 1.0
+			},
+			"x": 4,
+			"y": -5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "MAX_ASTEROID_SIZE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 20.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 1.0
+			},
+			"x": 2,
+			"y": -5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 20.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 0.1
+			},
+			"x": 1,
+			"y": -5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 30.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 0.25
+			},
+			"x": 0,
+			"y": -5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 25.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 55.0
+			},
+			"x": -1,
+			"y": -5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 7.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 1.5
+			},
+			"x": -1,
+			"y": -4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 7.0,
+				"cost_scale": 0.2,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 30.0
+			},
+			"x": 0,
+			"y": -4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 18.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 1.0
+			},
+			"x": 1,
+			"y": -4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 15.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 0.05
+			},
+			"x": 2,
+			"y": -4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 6.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 1.0
+			},
+			"x": 1,
+			"y": -3
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "RUN_TIMER_BASE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(0, 0)",
+				"cost": 2.0,
+				"cost_scale": 0.5,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 2.0
+			},
+			"x": 0,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 2.0,
+				"cost_scale": 0.5,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 1.0,
+				"value": 0.75
+			},
+			"x": -1,
+			"y": -3
+		},
+		{
+			"connect_x": 7,
+			"connect_y": -5,
+			"type": "COMET_SPAWN_CHANCE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(7, -5)",
+				"cost": 1000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 0.25
+			},
+			"x": 9,
+			"y": -5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_GOLDEN_BONUS_MONEY_SCALE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 280000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 150.0
+			},
+			"x": 9,
+			"y": -4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "MAX_PLANET_SIZE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 110000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 9,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 50000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 65.0
+			},
+			"x": 10,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_BONUS_DAMAGE_TO_PLANETS",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 30000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 30.0
+			},
+			"x": 10,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "PLANET_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 25000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.6
+			},
+			"x": 12,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 25000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 25.0
+			},
+			"x": 13,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "MAX_PLANET_SIZE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 25000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 11,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_CLIKCER_AOE_BUFF_SCALE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 25000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 12,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_SPAWN_CHANCE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 28000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 13,
+			"y": 1
+		},
+		{
+			"connect_x": 13,
+			"connect_y": 7,
+			"type": "NUMBER_OF_ASTEROIDS_INTO_PLANETS",
+			"vars": {
+				"act": 2.0,
+				"connect": "(13, 7)",
+				"cost": 25000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 52.0
+			},
+			"x": 13,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 100000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 5.0
+			},
+			"x": 6,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 85000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.15
+			},
+			"x": 5,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 80000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.05
+			},
+			"x": 4,
+			"y": 6
+		},
+		{
+			"connect_x": 2,
+			"connect_y": 5,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 1.0,
+				"connect": "(2, 5)",
+				"cost": 60000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.5
+			},
+			"x": 4,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 75000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.2
+			},
+			"x": 5,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 100000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.5
+			},
+			"x": 6,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ELECTRIC_CRIT_BONUS",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 40000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.25
+			},
+			"x": 2,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_CHANCE_TO_FORK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 40000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.2
+			},
+			"x": 1,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_CHANCE_TO_FORK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 30000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.2
+			},
+			"x": 1,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_ELECTRIC_MAX_CHAINS",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 30000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 1.0
+			},
+			"x": 2,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_ELECTRIC_MAX_CHAINS",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 25000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 1.0
+			},
+			"x": 2,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 30000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 2.0
+			},
+			"x": 0,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_ELECTRIC_DAMAGE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 20475.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 3.0
+			},
+			"x": 1,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 22000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 2.0
+			},
+			"x": 0,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ELECTRIC_CRIT_CHANCE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 20000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.2
+			},
+			"x": -1,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 10050.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.7
+			},
+			"x": -1,
+			"y": 3
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "CHANCE_TO_SPAWN_SPECIAL_ASTEROID_ELECTRIC",
+			"vars": {
+				"act": 1.0,
+				"connect": "(0, 0)",
+				"cost": 10000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.1
+			},
+			"x": 0,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_ELECTRIC_DAMAGE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 10050.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 2.0
+			},
+			"x": 1,
+			"y": 3
+		},
+		{
+			"connect_x": 6,
+			"connect_y": 0,
+			"type": "NUMBER_OF_ASTEROIDS_INTO_PLANETS",
+			"vars": {
+				"act": 2.0,
+				"connect": "(6, 0)",
+				"cost": 101000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 5.0
+			},
+			"x": 9,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "PLANET_DENSITY",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 100000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.1
+			},
+			"x": 9,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_CLIKCER_AOE_BUFF_SCALE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 50000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 9,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_CLIKCER_RATE_BUFF_SCALE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 40000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 9,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 250000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.5
+			},
+			"x": 7,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 425000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 6.0,
+				"value": 50.0
+			},
+			"x": 9,
+			"y": 4
+		},
+		{
+			"connect_x": 7,
+			"connect_y": 5,
+			"type": "CHANCE_TO_SPAWN_SPECIAL_ASTEROID_GOLDEN",
+			"vars": {
+				"act": 1.0,
+				"connect": "(7, 5)",
+				"cost": 450000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 9,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_GOLDEN_BONUS_MONEY_SCALE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 405000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.75
+			},
+			"x": 9,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_GOLDEN_CRIT_CHANCE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 450000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 10,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_GOLDEN_CRIT_BONUS_MONEY_SCALE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 540000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 10,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 545000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 6.0,
+				"value": 0.5
+			},
+			"x": 10,
+			"y": 7
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_GOLDEN_BONUS_MONEY_SCALE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 630000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.25
+			},
+			"x": 11,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 775000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 6.0,
+				"value": 1.5
+			},
+			"x": 11,
+			"y": 7
+		},
+		{
+			"connect_x": 11,
+			"connect_y": 10,
+			"type": "SPECIAL_ASTEROID_GOLDEN_CRIT_BONUS_MONEY_SCALE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(11, 10)",
+				"cost": 10000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 11,
+			"y": 8
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 6500000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 6.0,
+				"value": 15.0
+			},
+			"x": 12,
+			"y": 7
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_GOLDEN_CRIT_CHANCE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 10000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.15
+			},
+			"x": 12,
+			"y": 8
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 1.0,
+				"connect": "(-1, -1)",
+				"cost": 20000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 7.0,
+				"value": 3.0
+			},
+			"x": 13,
+			"y": 7
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 1500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 1.0
+			},
+			"x": -8,
+			"y": 5
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "SUPERNOVA_DAMAGE_PERCENT_CURRENT_HEALTH",
+			"vars": {
+				"act": 7.0,
+				"connect": "(0, 0)",
+				"cost": 1000000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.3
+			},
+			"x": -3,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "STAR_DENSITY",
+			"vars": {
+				"act": 7.0,
+				"connect": "(-1, -1)",
+				"cost": 700000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.5
+			},
+			"x": -3,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_CLIKCER_RATE_BUFF_SCALE",
+			"vars": {
+				"act": 7.0,
+				"connect": "(-1, -1)",
+				"cost": 300000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -4,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_BONUS_DAMAGE_TO_STAR",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 2600000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 2000.0
+			},
+			"x": -8,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "COMET_SPAWN_CHANCE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 2600000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.3
+			},
+			"x": -10,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_STAR_ON_BREAK",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 2600000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.15
+			},
+			"x": -9,
+			"y": 5
+		},
+		{
+			"connect_x": -4,
+			"connect_y": 6,
+			"type": "RUN_TIMER_BASE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-4, 6)",
+				"cost": 2600000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 10.0
+			},
+			"x": -8,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_STAR_ELECTRIC_DAMAGE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 2600000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 2000.0
+			},
+			"x": -9,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_STAR_ELECTRIC_CRIT_BONUS",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 2600000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 2.0
+			},
+			"x": -10,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 1500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.125
+			},
+			"x": -9,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_PLANET_ON_BREAK",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 2600000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.1
+			},
+			"x": -10,
+			"y": 6
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "NUMBER_OF_PLANETS_INTO_STARS",
+			"vars": {
+				"act": 8.0,
+				"connect": "(0, 0)",
+				"cost": 500000000000000.0,
+				"cost_scale": 0.2,
+				"demo_locked": false,
+				"epilogue": 1.0,
+				"max": 10.0,
+				"section": 99.0,
+				"value": 3.0
+			},
+			"x": -1,
+			"y": -1
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 8.0,
+				"connect": "(0, 0)",
+				"cost": 500000000000000.0,
+				"cost_scale": 0.18,
+				"demo_locked": 0.0,
+				"epilogue": 1.0,
+				"max": 10.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 1,
+			"y": -1
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 8.0,
+				"connect": "(0, 0)",
+				"cost": 500000000000000.0,
+				"cost_scale": 0.09,
+				"demo_locked": 0.0,
+				"epilogue": 1.0,
+				"max": 10.0,
+				"section": 99.0,
+				"value": 0.5
+			},
+			"x": 1,
+			"y": 1
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "STAR_DENSITY",
+			"vars": {
+				"act": 8.0,
+				"connect": "(0, 0)",
+				"cost": 500000000000000.0,
+				"cost_scale": 0.15,
+				"demo_locked": 0.0,
+				"epilogue": 1.0,
+				"max": 10.0,
+				"section": 99.0,
+				"value": 0.025
+			},
+			"x": -1,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_WIDTH_SCALE",
+			"vars": {
+				"act": 7.0,
+				"connect": "(-1, -1)",
+				"cost": 700000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -3,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SUPERNOVA_DAMAGE_PERCENT_CURRENT_HEALTH",
+			"vars": {
+				"act": 7.0,
+				"connect": "(-1, -1)",
+				"cost": 300000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": -4,
+			"y": 2
+		},
+		{
+			"connect_x": -4,
+			"connect_y": 6,
+			"type": "SUPERNOVA_RADIUS_SCALE",
+			"vars": {
+				"act": 7.0,
+				"connect": "(-4, 6)",
+				"cost": 300000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": -4,
+			"y": 3
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "NUMBER_OF_ASTEROIDS_INTO_PLANETS",
+			"vars": {
+				"act": 8.0,
+				"connect": "(0, 0)",
+				"cost": 500000000000000.0,
+				"cost_scale": 0.08,
+				"demo_locked": 0.0,
+				"epilogue": 1.0,
+				"max": 10.0,
+				"section": 99.0,
+				"value": 10.0
+			},
+			"x": -1,
+			"y": 0
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "MAX_STAR_SIZE",
+			"vars": {
+				"act": 8.0,
+				"connect": "(0, 0)",
+				"cost": 500000000000000.0,
+				"cost_scale": 0.15,
+				"demo_locked": 0.0,
+				"epilogue": 1.0,
+				"max": 10.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 0,
+			"y": 1
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "LASER_WIDTH_SCALE",
+			"vars": {
+				"act": 8.0,
+				"connect": "(0, 0)",
+				"cost": 500000000000000.0,
+				"cost_scale": 0.2,
+				"demo_locked": 0.0,
+				"epilogue": 1.0,
+				"max": 10.0,
+				"section": 99.0,
+				"value": 0.5
+			},
+			"x": 1,
+			"y": 0
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "SPECIAL_STAR_ELECTRIC_CRIT_BONUS",
+			"vars": {
+				"act": 8.0,
+				"connect": "(0, 0)",
+				"cost": 500000000000000.0,
+				"cost_scale": 0.09,
+				"demo_locked": 0.0,
+				"epilogue": 1.0,
+				"max": 10.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 0,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 1500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.125
+			},
+			"x": -8,
+			"y": 7
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 1500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -9,
+			"y": 7
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_STAR_ON_BREAK",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 1500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.15
+			},
+			"x": -10,
+			"y": 7
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_BUFF_DURATION",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 25000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 1.0
+			},
+			"x": 11,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_CLIKCER_AOE_BUFF_SCALE",
+			"vars": {
+				"act": 7.0,
+				"connect": "(-1, -1)",
+				"cost": 300000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.5
+			},
+			"x": -5,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "NUMBER_OF_PLANETS_INTO_STARS",
+			"vars": {
+				"act": 7.0,
+				"connect": "(-1, -1)",
+				"cost": 500000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 11.0
+			},
+			"x": -5,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "RUN_TIMER_BASE",
+			"vars": {
+				"act": 6.0,
+				"connect": "(-1, -1)",
+				"cost": 55000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 10.0
+			},
+			"x": -11,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "NUMBER_OF_PLANETS_INTO_STARS",
+			"vars": {
+				"act": 6.0,
+				"connect": "(-1, -1)",
+				"cost": 55000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 5.0
+			},
+			"x": -11,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_ADD_TIME_ON_STAR_DESTROYED",
+			"vars": {
+				"act": 6.0,
+				"connect": "(-1, -1)",
+				"cost": 55000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.5
+			},
+			"x": -10,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_DAMAGE",
+			"vars": {
+				"act": 6.0,
+				"connect": "(-1, -1)",
+				"cost": 55000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 4000.0
+			},
+			"x": -11,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 6.0,
+				"connect": "(-1, -1)",
+				"cost": 55000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 500.0
+			},
+			"x": -10,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "COMET_SPAWN_CHANCE",
+			"vars": {
+				"act": 6.0,
+				"connect": "(-1, -1)",
+				"cost": 55000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": -10,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 6.0,
+				"connect": "(-1, -1)",
+				"cost": 55000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": -9,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_WIDTH_SCALE",
+			"vars": {
+				"act": 7.0,
+				"connect": "(-1, -1)",
+				"cost": 300000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -5,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_CLIKCER_AOE_BUFF_SCALE",
+			"vars": {
+				"act": 7.0,
+				"connect": "(-1, -1)",
+				"cost": 300000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.5
+			},
+			"x": -4,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SUPERNOVA_DAMAGE_PERCENT_CURRENT_HEALTH",
+			"vars": {
+				"act": 7.0,
+				"connect": "(-1, -1)",
+				"cost": 300000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": -4,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SUPERNOVA_DAMAGE_PERCENT_CURRENT_HEALTH",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 45000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": -16,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SUPERNOVA_DAMAGE_PERCENT_CURRENT_HEALTH",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 45000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": -15,
+			"y": 2
+		},
+		{
+			"connect_x": -11,
+			"connect_y": 1,
+			"type": "STAR_DENSITY",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-11, 1)",
+				"cost": 50000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.5
+			},
+			"x": -15,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "COMET_SPAWN_CHANCE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 45000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": -16,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_STAR_SUPERNOVA_SPAWN_CHANCE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 45000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.1
+			},
+			"x": -17,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SUPERNOVA_DAMAGE_PERCENT_CURRENT_HEALTH",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 45000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.1
+			},
+			"x": -17,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SUPERNOVA_RADIUS_SCALE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 45000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.25
+			},
+			"x": -16,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "NUMBER_OF_PLANETS_INTO_STARS",
+			"vars": {
+				"act": 6.0,
+				"connect": "(-1, -1)",
+				"cost": 55000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 5.0
+			},
+			"x": -9,
+			"y": 2
+		},
+		{
+			"connect_x": -5,
+			"connect_y": 0,
+			"type": "STAR_DENSITY",
+			"vars": {
+				"act": 6.0,
+				"connect": "(-5, 0)",
+				"cost": 130000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.75
+			},
+			"x": -8,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_CRIT_BONUS",
+			"vars": {
+				"act": 6.0,
+				"connect": "(-1, -1)",
+				"cost": 55000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": -9,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_WIDTH_SCALE",
+			"vars": {
+				"act": 6.0,
+				"connect": "(-1, -1)",
+				"cost": 55000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": -8,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_ADD_TIME_ON_PLANET_DESTROYED",
+			"vars": {
+				"act": 6.0,
+				"connect": "(-1, -1)",
+				"cost": 55000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.85
+			},
+			"x": -8,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SUPERNOVA_RADIUS_SCALE",
+			"vars": {
+				"act": 7.0,
+				"connect": "(-1, -1)",
+				"cost": 300000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": -3,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "RUN_TIMER_BASE",
+			"vars": {
+				"act": 7.0,
+				"connect": "(-1, -1)",
+				"cost": 500000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 5.0
+			},
+			"x": -5,
+			"y": -1
+		},
+		{
+			"connect_x": 2,
+			"connect_y": 11,
+			"type": "SPECIAL_STAR_CHANCET_TO_SPAWN_ELECTRIC",
+			"vars": {
+				"act": 4.0,
+				"connect": "(2, 11)",
+				"cost": 1300000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.1
+			},
+			"x": 0,
+			"y": 11
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_STAR_ELECTRIC_CRIT_CHANCE",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.2
+			},
+			"x": 0,
+			"y": 12
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_STAR_ELECTRIC_DAMAGE",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 500.0
+			},
+			"x": 0,
+			"y": 10
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_STAR_CHANCE_TO_FORK",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.6
+			},
+			"x": -1,
+			"y": 10
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_STAR_ELECTRIC_MAX_CHAINS",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 1.0
+			},
+			"x": -1,
+			"y": 11
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.25
+			},
+			"x": -1,
+			"y": 12
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "MAX_STAR_SIZE",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 1.0
+			},
+			"x": -2,
+			"y": 10
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "NUMBER_OF_ASTEROIDS_INTO_PLANETS",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 70.0
+			},
+			"x": -2,
+			"y": 11
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 1.5
+			},
+			"x": -2,
+			"y": 12
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_CLIKCER_RATE_BUFF_SCALE",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1200000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.1
+			},
+			"x": -3,
+			"y": 11
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "STAR_DENSITY",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1400000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.3
+			},
+			"x": -4,
+			"y": 11
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_STAR_ON_BREAK",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1200000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.2
+			},
+			"x": -4,
+			"y": 10
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_BONUS_DAMAGE_TO_STAR",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1200000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 1000.0
+			},
+			"x": -3,
+			"y": 10
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "STAR_DENSITY",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 2400000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.5
+			},
+			"x": -4,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 900000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 350.0
+			},
+			"x": -3,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 900000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 200.0
+			},
+			"x": -4,
+			"y": 7
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "MAX_STAR_SIZE",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1700000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 1.0
+			},
+			"x": -3,
+			"y": 7
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_CLIKCER_AOE_BUFF_SCALE",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1200000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.1
+			},
+			"x": -4,
+			"y": 8
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 900000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 200.0
+			},
+			"x": -3,
+			"y": 8
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "STAR_DENSITY",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1200000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.75
+			},
+			"x": -4,
+			"y": 9
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "COMET_CHANCE_FOR_COMET_SHOWER",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1200000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.5
+			},
+			"x": -3,
+			"y": 9
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": -3,
+			"y": 12
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "NUMBER_OF_PLANETS_INTO_STARS",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 2600000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 2.0
+			},
+			"x": -11,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "STAR_DENSITY",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 1.25
+			},
+			"x": -11,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_STAR_LASER_SPAWN_CHANCE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.2
+			},
+			"x": -12,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_DAMAGE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 600.0
+			},
+			"x": -13,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_CRIT_BONUS",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 1.0
+			},
+			"x": -14,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_CRIT_CHANCE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.5
+			},
+			"x": -13,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_DAMAGE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 500.0
+			},
+			"x": -15,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_WIDTH_SCALE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.5
+			},
+			"x": -15,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_CRIT_BONUS",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -14,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_DAMAGE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 500.0
+			},
+			"x": -16,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 250.0
+			},
+			"x": -16,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_WIDTH_SCALE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.5
+			},
+			"x": -17,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_STAR_ELECTRIC_MAX_CHAINS",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 17000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 5.0
+			},
+			"x": -17,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_STAR_CHANCE_TO_FORK",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 15000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.15
+			},
+			"x": -18,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 15000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 1.0
+			},
+			"x": -18,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_BUFF_DURATION",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 15000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 3.0
+			},
+			"x": -19,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 15000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": -19,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_STAR_CHANCE_TO_FORK",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 15000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.15
+			},
+			"x": -20,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 15000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": -20,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SUPERNOVA_RADIUS_SCALE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 25000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.5
+			},
+			"x": -17,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 15000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.25
+			},
+			"x": -18,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "STAR_DENSITY",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 30000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.5
+			},
+			"x": -19,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_SPAWN_CHANCE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 135000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 10,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_BONUS_DAMAGE_TO_PLANETS",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 280000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 400.0
+			},
+			"x": 12,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "PLANET_DENSITY",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 420000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.05
+			},
+			"x": 11,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_PLANET_ON_BREAK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 160000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 12,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 160000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 200.0
+			},
+			"x": 11,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_BONUS_DAMAGE_TO_PLANETS",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 135000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 60.0
+			},
+			"x": 10,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_BUFF_DURATION",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 280000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 11,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "COMET_CRIT_BONUS_DAMAGE_BUFF_SCALE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 700000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 0.5
+			},
+			"x": 10,
+			"y": -5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "COMET_CRIT_CHANCE_BUFF_DURATION",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 700000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 3.0
+			},
+			"x": 9,
+			"y": -6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "PLANET_DENSITY",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 700000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 1.0
+			},
+			"x": 10,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 1900000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 200.0
+			},
+			"x": 13,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 30000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 1400.0
+			},
+			"x": -17,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 15000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.25
+			},
+			"x": -18,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_WIDTH_SCALE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 15000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -19,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_WIDTH_SCALE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.5
+			},
+			"x": -12,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_DAMAGE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 500.0
+			},
+			"x": -13,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_WIDTH_SCALE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.5
+			},
+			"x": -14,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 7500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 250.0
+			},
+			"x": -15,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "STAR_DENSITY",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 15000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 0.75
+			},
+			"x": -16,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "MOON_LIMIT_HARD_CAP",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 15000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 5.0,
+				"value": 5.0
+			},
+			"x": -17,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_WIDTH_SCALE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 15000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -18,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "LASER_DAMAGE",
+			"vars": {
+				"act": 5.0,
+				"connect": "(-1, -1)",
+				"cost": 17000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 800.0
+			},
+			"x": -19,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_STAR_ELECTRIC_MAX_CHAINS",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 500000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -4,
+			"y": 12
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_BONUS_DAMAGE_TO_PLANETS",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 27000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 60.0
+			},
+			"x": 13,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_GOLDEN_CRIT_CHANCE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 1900000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 0.35
+			},
+			"x": 15,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_BUFF_DURATION",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 1900000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 16,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "COMET_CHANCE_FOR_COMET_SHOWER",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 1900000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.01
+			},
+			"x": 16,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "PLANET_DENSITY",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 1800000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 1.0
+			},
+			"x": 15,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_GOLDEN_BONUS_MONEY_SCALE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 1900000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 150.0
+			},
+			"x": 15,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_GOLDEN_BONUS_MONEY_SCALE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 6000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 300.0
+			},
+			"x": 14,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 6000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 100.0
+			},
+			"x": 15,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "STAR_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1100000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 1.0
+			},
+			"x": 2,
+			"y": 12
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_ADD_TIME_ON_PLANET_DESTROYED",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1100000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.15
+			},
+			"x": 2,
+			"y": 11
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1100000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 500.0
+			},
+			"x": 2,
+			"y": 10
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_STAR_ON_BREAK",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.5
+			},
+			"x": 3,
+			"y": 10
+		},
+		{
+			"connect_x": 7,
+			"connect_y": 11,
+			"type": "NUMBER_OF_PLANETS_INTO_STARS",
+			"vars": {
+				"act": 4.0,
+				"connect": "(7, 11)",
+				"cost": 1000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 10.0
+			},
+			"x": 3,
+			"y": 11
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_ADD_TIME_ON_STAR_DESTROYED",
+			"vars": {
+				"act": 4.0,
+				"connect": "(-1, -1)",
+				"cost": 1000000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 4.0,
+				"value": 0.5
+			},
+			"x": 3,
+			"y": 12
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "PLANET_DENSITY",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 300000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 7,
+			"y": 11
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 90000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": 7,
+			"y": 10
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 90000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": 7,
+			"y": 12
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_CLIKCER_AOE_BUFF_SCALE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 90000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 8,
+			"y": 12
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 90000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.5
+			},
+			"x": 8,
+			"y": 11
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "COMET_CHANCE_FOR_COMET_SHOWER",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 90000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 8,
+			"y": 10
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 70000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 60.0
+			},
+			"x": 9,
+			"y": 10
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 70000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 9,
+			"y": 11
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 70000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 60.0
+			},
+			"x": 9,
+			"y": 12
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 60000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 10,
+			"y": 12
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "PLANET_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 60000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.3
+			},
+			"x": 10,
+			"y": 11
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_PLANET_ON_BREAK",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 60000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 10,
+			"y": 10
+		},
+		{
+			"connect_x": 15,
+			"connect_y": 10,
+			"type": "COMET_CHANCE_FOR_COMET_SHOWER",
+			"vars": {
+				"act": 3.0,
+				"connect": "(15, 10)",
+				"cost": 60000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 11,
+			"y": 10
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 60000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 150.0
+			},
+			"x": 11,
+			"y": 11
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_CLIKCER_AOE_BUFF_SCALE",
+			"vars": {
+				"act": 3.0,
+				"connect": "(-1, -1)",
+				"cost": 60000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 11,
+			"y": 12
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "PLANET_DENSITY",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 10000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 1.0
+			},
+			"x": 15,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_ELECTRIC_DAMAGE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 10000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 300.0
+			},
+			"x": 16,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ELECTRIC_CRIT_CHANCE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 10000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 0.2
+			},
+			"x": 16,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ELECTRIC_CRIT_BONUS",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 10000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 1.0
+			},
+			"x": 16,
+			"y": 7
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 20000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 150.0
+			},
+			"x": 15,
+			"y": 7
+		},
+		{
+			"connect_x": 15,
+			"connect_y": 7,
+			"type": "PLANET_DENSITY",
+			"vars": {
+				"act": 2.0,
+				"connect": "(15, 7)",
+				"cost": 40000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 1.0
+			},
+			"x": 15,
+			"y": 10
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "NUMBER_OF_ASTEROIDS_INTO_PLANETS",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 1900000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 5.0
+			},
+			"x": 14,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_PLANET_ON_BREAK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 25000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.6
+			},
+			"x": 14,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_PLANET_MOON_CLIKCER_RATE_BUFF_SCALE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 25000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 14,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 6000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 100.0
+			},
+			"x": 16,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_GOLDEN_CRIT_BONUS_MONEY_SCALE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 4000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 3.0
+			},
+			"x": 15,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_GOLDEN_CRIT_BONUS_MONEY_SCALE",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 6000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 3.0
+			},
+			"x": 16,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "PLANET_DENSITY",
+			"vars": {
+				"act": 2.0,
+				"connect": "(-1, -1)",
+				"cost": 6000000000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 9.0,
+				"value": 1.0
+			},
+			"x": 15,
+			"y": 4
+		}
+	],
+	"cell_px": 32,
+	"cols": 100,
+	"rows": 100,
+	"start_x": -30,
+	"start_y": -30
+}

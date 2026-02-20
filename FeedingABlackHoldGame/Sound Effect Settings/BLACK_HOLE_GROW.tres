@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SoundEffectSettings" load_steps=3 format=3 uid="uid://bta812gr33kre"]
+
+[ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
+[ext_resource type="AudioStream" uid="uid://b2fccycq52mct" path="res://Audio/zapsplat_multimedia_game_sound_clunk_generic_item_tone_003_49778.mp3" id="2"]
+
+[resource]
+script = ExtResource("1")
+limit = 3
+type = 6
+sound_effect = ExtResource("2")
+volume = -20
+taper_fall_off_curve = null
+metadata/_custom_type_script = "uid://blskskrd6wv02"

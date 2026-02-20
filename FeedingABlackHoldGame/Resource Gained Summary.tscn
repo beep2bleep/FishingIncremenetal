@@ -1,0 +1,168 @@
+[gd_scene load_steps=13 format=3 uid="uid://bpyvdwd3ehv8x"]
+
+[ext_resource type="Script" uid="uid://cofx2kd5bvsr8" path="res://ResourceGainedSummary.gd" id="1"]
+[ext_resource type="StyleBox" uid="uid://b8krso0x3piut" path="res://Summary Panel Normal.tres" id="2"]
+[ext_resource type="StyleBox" uid="uid://cg7spw14ksifo" path="res://Summary Panel Highlight.tres" id="3"]
+[ext_resource type="Texture2D" uid="uid://d4k2v7k1qqrqo" path="res://Art/Matter Base.png" id="4"]
+[ext_resource type="Theme" uid="uid://ulae55bx0fhs" path="res://Theme/Theme_Small_Font.tres" id="5"]
+[ext_resource type="Theme" uid="uid://dl1181xufyebq" path="res://Theme/Theme.tres" id="6"]
+[ext_resource type="Theme" uid="uid://dhlpfrladpxn2" path="res://Theme/Theme_Medium_Font.tres" id="7"]
+[ext_resource type="Texture2D" uid="uid://dbrs4v80meape" path="res://Art/locked.png" id="8"]
+[ext_resource type="PackedScene" uid="uid://dirfusykbvhvw" path="res://ResourceUI.tscn" id="9"]
+[ext_resource type="PackedScene" uid="uid://qetgg583nnuo" path="res://CustomTweenComponent.tscn" id="10"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7hmru"]
+bg_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_s175j"]
+bg_color = Color(0.686, 0.686, 0.7, 1)
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[node name="Resource Gained Summary" type="PanelContainer"]
+custom_minimum_size = Vector2(200, 0)
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_7hmru")
+script = ExtResource("1")
+normal_panel = ExtResource("2")
+highlight_panel = ExtResource("3")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="Icon" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
+unique_name_in_owner = true
+layout_mode = 2
+texture = ExtResource("4")
+expand_mode = 3
+stretch_mode = 4
+
+[node name="TYPE" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme = ExtResource("5")
+text = "TYPE"
+horizontal_alignment = 1
+
+[node name="Resource Value" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme = ExtResource("6")
+text = "0"
+
+[node name="MONEY" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("7")
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/shadow_outline_size = 1
+text = "$1234"
+horizontal_alignment = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="DOTS" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("5")
+theme_override_colors/font_color = Color(0.3234, 0.3234, 0.33, 1)
+text = ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
+clip_text = true
+text_overrun_behavior = 1
+
+[node name="Demo Locked Icon" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+visible = false
+modulate = Color(0.3234, 0.3234, 0.33, 1)
+layout_mode = 2
+size_flags_horizontal = 10
+texture = ExtResource("8")
+expand_mode = 3
+
+[node name="ResourceUI" parent="MarginContainer/VBoxContainer" instance=ExtResource("9")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 5
+
+[node name="ToolTip" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 0
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="ToolTip"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 20.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/margin_bottom = 5
+
+[node name="PanelContainer" type="PanelContainer" parent="ToolTip/MarginContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_s175j")
+
+[node name="MarginContainer" type="MarginContainer" parent="ToolTip/MarginContainer/PanelContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="Stat Name" type="Label" parent="ToolTip/MarginContainer/PanelContainer/MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("5")
+text = "Stat Name"
+horizontal_alignment = 1
+
+[node name="CustomTweenComponent" parent="." node_paths=PackedStringArray("base_node") instance=ExtResource("10")]
+unique_name_in_owner = true
+base_node = NodePath("..")
+duration = 0.2
+do_scale = true
+scale_amount = Vector2(1.05, 1.05)
+
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]

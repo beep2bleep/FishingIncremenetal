@@ -1,0 +1,40 @@
+[gd_scene load_steps=5 format=3 uid="uid://ds36c3qoqmf3y"]
+
+[ext_resource type="Script" uid="uid://c36s4gjs5sv4r" path="res://addons/controller_icons/objects/ControllerIconTexture.gd" id="1"]
+[ext_resource type="Script" uid="uid://dawifj8hju6ou" path="res://ControllerGlyp.gd" id="2"]
+
+[sub_resource type="Texture2D" id="Texture2D_5qh22"]
+script = ExtResource("1")
+path = "Grab"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5eyve"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.443137, 0.443137, 0.45098, 1)
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[node name="Controller Glyph" type="TextureRect"]
+z_index = 1
+texture = SubResource("Texture2D_5qh22")
+expand_mode = 3
+stretch_mode = 5
+script = ExtResource("2")
+
+[node name="Panel" type="Panel" parent="."]
+z_index = -1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_5eyve")

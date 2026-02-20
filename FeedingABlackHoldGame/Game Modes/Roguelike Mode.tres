@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="GameModeData" format=3 uid="uid://d217sgof3owuo"]
+
+[ext_resource type="Texture2D" uid="uid://bfvcqe7ydd810" path="res://Art/Mods/question.png" id="1"]
+[ext_resource type="Script" uid="uid://ftm4fwuq2swm" path="res://GameModeData.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+name_key = "ROGUELIKE_MODE"
+game_mode = 7
+game_mode_type = 1
+description_key = "ROGUELIKE_MODE_DESCRIPTION"
+data_path = "res://Data/Roguelike Mode Data.json"
+icon = ExtResource("1")
+coming_soon = true
+hide_in_demo = true
+accent_color = Color(0.921569, 0.921569, 0.882353, 1)
+upgrade_tree_grid_size = Vector2i(11, 11)
+node_cost_base = 10.0
+node_cost_pow_scale_per_node_bought = 1.2
+metadata/_custom_type_script = "uid://ftm4fwuq2swm"

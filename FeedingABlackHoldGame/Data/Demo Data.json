@@ -1,0 +1,1299 @@
+{
+	"Black Hole Tier Data": [
+		{
+			"epilogue": false,
+			"level_name_keys": [
+				"BLACK_HOLE_NAME_0",
+				"BLACK_HOLE_NAME_1",
+				"BLACK_HOLE_NAME_2",
+				"BLACK_HOLE_NAME_3",
+				"BLACK_HOLE_NAME_4",
+				"BLACK_HOLE_NAME_5",
+				"BLACK_HOLE_NAME_6",
+				"BLACK_HOLE_NAME_7",
+				"BLACK_HOLE_NAME_8",
+				"BLACK_HOLE_NAME_9"
+			],
+			"radius_end": 50.0,
+			"radius_start": 10.0,
+			"set_money_to_this_amount_on_finishing_tier": 0.0,
+			"xp_per_level": [
+				70.0,
+				420.0,
+				2520.0,
+				13000.0,
+				50720.0,
+				120000.0,
+				600000.0,
+				1100000.0,
+				1800000.0,
+				8200000.0
+			],
+			"zoom": 1.0
+		}
+	],
+	"Upgrades": [
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_ELECTRIC_DAMAGE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 10050.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 1,
+			"y": 2
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "CHANCE_TO_SPAWN_SPECIAL_ASTEROID_ELECTRIC",
+			"vars": {
+				"act": 99.0,
+				"connect": "(0, 0)",
+				"cost": 10000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 0,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_CHAIN_DISTANCE_SCALE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 10475.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": -1,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 10050.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 0,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_ELECTRIC_DAMAGE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 10475.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 1,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 12500.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 0,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_CHANCE_TO_FORK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 12500.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 1,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_ELECTRIC_MAX_CHAINS",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 12900.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 2,
+			"y": 3
+		},
+		{
+			"connect_x": 6,
+			"connect_y": 4,
+			"type": "SPECIAL_ASTEROID_ELECTRIC_MAX_CHAINS",
+			"vars": {
+				"act": 99.0,
+				"connect": "(6, 4)",
+				"cost": 13000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 2,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_CHANCE_TO_FORK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 12725.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 1,
+			"y": 5
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 2.0,
+				"cost_scale": 0.5,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.75
+			},
+			"x": -1,
+			"y": -2
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "RUN_TIMER_BASE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(0, 0)",
+				"cost": 2.0,
+				"cost_scale": 0.5,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 0,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 6.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 1,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 7.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.5
+			},
+			"x": -1,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 7.0,
+				"cost_scale": 0.2,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 30.0
+			},
+			"x": 0,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 18.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 1,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "EMPTY",
+			"vars": {
+				"connect": "(-1, -1)",
+				"cost": 15.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"max": 1.0,
+				"value": 0.05
+			},
+			"x": 2,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 20.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 55.0
+			},
+			"x": 0,
+			"y": -4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "MAX_ASTEROID_SIZE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 50.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 1,
+			"y": -4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 50.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.15
+			},
+			"x": 2,
+			"y": -4
+		},
+		{
+			"connect_x": 0,
+			"connect_y": 0,
+			"type": "RUN_TIMER_AMOUNT_ON_BLACK_HOLE_GROW",
+			"vars": {
+				"act": 99.0,
+				"connect": "(0, 0)",
+				"cost": 300.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 3.0
+			},
+			"x": 2,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 350.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": 3,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_ADD_TIME_ON_ASTEROID_DESTROYED",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 350.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.05
+			},
+			"x": 3,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 350.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 3,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 375.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 4,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 600.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 4,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_ADD_TIME_ON_ASTEROID_DESTROYED",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 450.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.05
+			},
+			"x": 4,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 425.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": 4,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 475.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 4,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 900.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 5,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 425.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": 5,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 500.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.35
+			},
+			"x": 5,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 425.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": 5,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 900.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 5,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 1000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 6,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_AOE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 1050.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 7,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 1000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 6,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 1050.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 7,
+			"y": -2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 55.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": 3,
+			"y": -4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 100.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.5
+			},
+			"x": 9,
+			"y": -4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 80.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.45
+			},
+			"x": 8,
+			"y": -4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_RADIOACTIVE_DURATION",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 25000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 8,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_RADIOACTIVE_DURATION",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 30000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 9,
+			"y": 3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_RADIOACTIVE_DOT",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 22000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 8,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_RADIOACTIVE_AOE_SCALE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 25000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 9,
+			"y": 4
+		},
+		{
+			"connect_x": 10,
+			"connect_y": 1,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 99.0,
+				"connect": "(10, 1)",
+				"cost": 50000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 10,
+			"y": 3
+		},
+		{
+			"connect_x": 8,
+			"connect_y": -4,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 1.0,
+				"connect": "(8, -4)",
+				"cost": 75.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": 4,
+			"y": -4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "SPECIAL_ASTEROID_RADIOACTIVE_DOT",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 22000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 2.0
+			},
+			"x": 7,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_SPAWN_SPECIAL_ASTEROID_RADIOACTIVE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 20000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.1
+			},
+			"x": 6,
+			"y": 4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICK_RATE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 25.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.25
+			},
+			"x": -1,
+			"y": -4
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 100.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.5
+			},
+			"x": 8,
+			"y": -3
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 100.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.45
+			},
+			"x": 9,
+			"y": -3
+		},
+		{
+			"connect_x": 10,
+			"connect_y": -1,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(10, -1)",
+				"cost": 100.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 3.0
+			},
+			"x": 10,
+			"y": -3
+		},
+		{
+			"connect_x": 9,
+			"connect_y": -4,
+			"type": "COMET_SPAWN_CHANCE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(9, -4)",
+				"cost": 1.0,
+				"cost_scale": 1.0,
+				"demo_locked": true,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 12,
+			"y": -4
+		},
+		{
+			"connect_x": 0,
+			"connect_y": -4,
+			"type": "PASSIVE_MONEY_PER_SECOND",
+			"vars": {
+				"act": 99.0,
+				"connect": "(0, -4)",
+				"cost": 1.0,
+				"cost_scale": 1.0,
+				"demo_locked": true,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 0,
+			"y": -6
+		},
+		{
+			"connect_x": 10,
+			"connect_y": 3,
+			"type": "SPECIAL_ASTEROID_GOLDEN_CRIT_CHANCE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(10, 3)",
+				"cost": 1.0,
+				"cost_scale": 1.0,
+				"demo_locked": 1.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 10,
+			"y": 6
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 2000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 3.0
+			},
+			"x": 7,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 2000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.35
+			},
+			"x": 7,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_BONUS",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 2000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 7,
+			"y": -1
+		},
+		{
+			"connect_x": 10,
+			"connect_y": 0,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 99.0,
+				"connect": "(10, 0)",
+				"cost": 4000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.45
+			},
+			"x": 8,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROID_DENSITY",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 10500.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.15
+			},
+			"x": -1,
+			"y": 2
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "BASE_DAMAGE_PER_CLICK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 1050000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 20.0
+			},
+			"x": 10,
+			"y": 0
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "ASTEROIDS_TO_SPAWN",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 1500000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 100.0
+			},
+			"x": 10,
+			"y": 1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 1100000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 0.2
+			},
+			"x": 10,
+			"y": -1
+		},
+		{
+			"connect_x": null,
+			"connect_y": null,
+			"type": "CLICKER_CRIT_CHANCE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(-1, -1)",
+				"cost": 2500000.0,
+				"cost_scale": 1.0,
+				"demo_locked": 0.0,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 11,
+			"y": 0
+		},
+		{
+			"connect_x": 11,
+			"connect_y": 0,
+			"type": "PLANETS_TO_SPAWN",
+			"vars": {
+				"act": 99.0,
+				"connect": "(11, 0)",
+				"cost": 1.0,
+				"cost_scale": 1.0,
+				"demo_locked": true,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 13,
+			"y": -2
+		},
+		{
+			"connect_x": 11,
+			"connect_y": 0,
+			"type": "SPECIAL_STAR_LASER_SPAWN_CHANCE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(11, 0)",
+				"cost": 1.0,
+				"cost_scale": 1.0,
+				"demo_locked": true,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 14,
+			"y": -1
+		},
+		{
+			"connect_x": 11,
+			"connect_y": 0,
+			"type": "SPECIAL_PLANET_MOON_SPAWN_CHANCE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(11, 0)",
+				"cost": 1.0,
+				"cost_scale": 1.0,
+				"demo_locked": true,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 14,
+			"y": 0
+		},
+		{
+			"connect_x": 11,
+			"connect_y": 0,
+			"type": "SPECIAL_STAR_SUPERNOVA_SPAWN_CHANCE",
+			"vars": {
+				"act": 99.0,
+				"connect": "(11, 0)",
+				"cost": 1.0,
+				"cost_scale": 1.0,
+				"demo_locked": true,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 14,
+			"y": 1
+		},
+		{
+			"connect_x": 11,
+			"connect_y": 0,
+			"type": "STARS_TO_SPAWN",
+			"vars": {
+				"act": 99.0,
+				"connect": "(11, 0)",
+				"cost": 1.0,
+				"cost_scale": 1.0,
+				"demo_locked": true,
+				"epilogue": 0.0,
+				"max": 1.0,
+				"section": 99.0,
+				"value": 1.0
+			},
+			"x": 13,
+			"y": 2
+		}
+	],
+	"cell_px": 32,
+	"cols": 100,
+	"rows": 100,
+	"start_x": -30,
+	"start_y": -30
+}

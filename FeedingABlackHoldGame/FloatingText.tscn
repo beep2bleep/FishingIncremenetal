@@ -1,0 +1,37 @@
+[gd_scene load_steps=5 format=3 uid="uid://dlr8tmnr4gfsv"]
+
+[ext_resource type="Theme" uid="uid://dl1181xufyebq" path="res://Theme/Theme.tres" id="1"]
+[ext_resource type="Script" uid="uid://ckmc8addhmjfs" path="res://FloatingText.gd" id="2"]
+[ext_resource type="Theme" uid="uid://dhlpfrladpxn2" path="res://Theme/Theme_Medium_Font.tres" id="3"]
+[ext_resource type="FontFile" uid="uid://b3pr0wiu2vksn" path="res://Theme/Exo2-Bold.ttf" id="4"]
+
+[node name="FloatingText" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+size_flags_horizontal = 4
+mouse_filter = 2
+theme = ExtResource("1")
+script = ExtResource("2")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -5.5
+offset_top = -12.5
+offset_right = 5.5
+offset_bottom = 12.5
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+theme = ExtResource("3")
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.352941)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/shadow_outline_size = 5
+theme_override_fonts/font = ExtResource("4")
+theme_override_font_sizes/font_size = 20
+text = "1"

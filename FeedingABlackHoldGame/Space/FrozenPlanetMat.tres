@@ -1,0 +1,29 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://cejsaej7lcx4e"]
+
+[ext_resource type="Shader" uid="uid://b7ogqurs1fx2" path="res://Space/FrozenEffect.gdshader" id="1"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_cee7v"]
+resource_local_to_scene = true
+noise_type = 0
+seed = 1055
+frequency = 0.0071
+fractal_octaves = 10
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_i02lu"]
+noise = SubResource("FastNoiseLite_cee7v")
+
+[resource]
+shader = ExtResource("1")
+shader_parameter/coverage_texture = SubResource("NoiseTexture2D_i02lu")
+shader_parameter/crack_texture = null
+shader_parameter/crack_normal = null
+shader_parameter/bump_normal = null
+shader_parameter/warp_normal = null
+shader_parameter/pointer = Vector2(0, 1)
+shader_parameter/coverage = 1.0330000490675
+shader_parameter/distort = 0.0
+shader_parameter/bumpiness = 0.2290000108775
+shader_parameter/crack_intensity = 0.0
+shader_parameter/diffusion = 0.0
+shader_parameter/tint_color = Color(1, 1, 1, 1)
+shader_parameter/tint_amount = 0.53200002527

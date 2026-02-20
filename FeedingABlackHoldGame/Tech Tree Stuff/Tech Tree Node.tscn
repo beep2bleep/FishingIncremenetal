@@ -1,0 +1,657 @@
+[gd_scene load_steps=26 format=3 uid="uid://cxy8io2wqwccr"]
+
+[ext_resource type="Script" uid="uid://br56oyotqw2h4" path="res://Tech Tree Stuff/TechTreeNode.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://dbrs4v80meape" path="res://Art/locked.png" id="2"]
+[ext_resource type="PackedScene" uid="uid://qetgg583nnuo" path="res://CustomTweenComponent.tscn" id="3"]
+[ext_resource type="Texture2D" uid="uid://bs60jqufnqgue" path="res://Art/Hexagon.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://da8n70owsmlhf" path="res://Art/Space/Circle 32.png" id="5"]
+[ext_resource type="Texture2D" uid="uid://c6puuqdi6eu44" path="res://Art/Circle.png" id="6"]
+[ext_resource type="Texture2D" uid="uid://bam4y74oqk12x" path="res://Art/Mods/RUN_TIMER_BASE.png" id="7"]
+[ext_resource type="Texture2D" uid="uid://bfvcqe7ydd810" path="res://Art/Mods/question.png" id="8"]
+[ext_resource type="Theme" uid="uid://dl1181xufyebq" path="res://Theme/Theme.tres" id="9"]
+[ext_resource type="StyleBox" uid="uid://bk8yp2c36tq7s" path="res://Theme/Panel UI.tres" id="10"]
+[ext_resource type="Theme" uid="uid://dhlpfrladpxn2" path="res://Theme/Theme_Medium_Font.tres" id="11"]
+[ext_resource type="Theme" uid="uid://f0mobaom23an" path="res://Theme/Theme_Large_Font.tres" id="12"]
+[ext_resource type="AudioStream" uid="uid://ci3sjch802mjw" path="res://Audio/zapsplat_foley_stick_medium_swing_in_air_whoosh_fast_001_110466.mp3" id="13"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_unrik"]
+bg_color = Color(0.921569, 0.921569, 0.882353, 1)
+border_width_left = 3
+border_width_top = 2
+border_width_right = 3
+border_width_bottom = 4
+border_color = Color(0.3234, 0.3234, 0.33, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q6dsb"]
+bg_color = Color(0.443137, 0.443137, 0.45098, 1)
+border_width_left = 3
+border_width_top = 2
+border_width_right = 3
+border_width_bottom = 4
+border_color = Color(0.3234, 0.3234, 0.33, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hkbtv"]
+bg_color = Color(0.82, 0.82, 0.7872, 0)
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mjcqm"]
+bg_color = Color(0.3234, 0.3234, 0.33, 1)
+border_width_left = 3
+border_width_top = 2
+border_width_right = 3
+border_width_bottom = 4
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nvg2j"]
+resource_local_to_scene = true
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 3
+border_width_top = 2
+border_width_right = 3
+border_width_bottom = 4
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="Animation" id="Animation_w2743"]
+resource_name = "On Complete"
+length = 0.6
+step = 0.05
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Art Pivot:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.25, 0.35118058, 0.6),
+"transitions": PackedFloat32Array(-2, -2, -2, -2, -2),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(0.9, 0.9), Vector2(1.3, 1.3), Vector2(1.3, 1.3), Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Art Pivot:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0.1, 0.15, 0.2, 0.25, 0.3, 0.35118058, 0.6),
+"transitions": PackedFloat32Array(-2, -2, -2, -2, -2, -2, -2),
+"update": 0,
+"values": [0.0, 0.17453292519943295, -0.17453292519943295, 0.08726646259971647, -0.0006809266, 0.0, 0.00073741475]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Art Pivot/Icon:visible")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0.35),
+"transitions": PackedFloat32Array(-2),
+"update": 1,
+"values": [true]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Art Pivot/Icon:modulate")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0.35, 0.6),
+"transitions": PackedFloat32Array(-2, -2),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Art Pivot/Visual Panel:scale")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0.35, 0.6),
+"transitions": PackedFloat32Array(-2, -2),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(0, 0)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Art Pivot/Icons/Mod Icon:scale")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0.35043195, 0.6),
+"transitions": PackedFloat32Array(-2, -2),
+"update": 0,
+"values": [Vector2(0.8, 0.8), Vector2(0.55, 0.55)]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Art Pivot/Icon:scale")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0.35, 0.5, 0.6),
+"transitions": PackedFloat32Array(-2, -2, -2),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(1.1, 1.1), Vector2(1, 1)]
+}
+tracks/7/type = "method"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath(".")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0.6),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [],
+"method": &"on_complete_anim_finished"
+}]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("Node Shrink Audio:playing")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0.3),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
+}
+
+[sub_resource type="Animation" id="Animation_5tef2"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Art Pivot:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Art Pivot:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Art Pivot/Icon:visible")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Art Pivot/Icon:modulate")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Art Pivot/Visual Panel:scale")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Art Pivot/Icons/Mod Icon:scale")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0.8, 0.8)]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Art Pivot/Icon:scale")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Node Shrink Audio:playing")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_wif1q"]
+_data = {
+&"On Complete": SubResource("Animation_w2743"),
+&"RESET": SubResource("Animation_5tef2")
+}
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_w2743"]
+bg_color = Color(0.82, 0.82, 0.7872, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+expand_margin_left = 7.0
+expand_margin_top = 7.0
+expand_margin_right = 7.0
+expand_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wif1q"]
+bg_color = Color(0.82, 0.82, 0.7872, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_604od"]
+resource_local_to_scene = true
+bg_color = Color(1, 1, 1, 1)
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_6sicy"]
+color = Color(0.443137, 0.443137, 0.45098, 1)
+grow_begin = 0.0
+grow_end = 0.0
+thickness = 2
+
+[node name="Tech Tree Node" type="Node2D"]
+script = ExtResource("1")
+available_can_pay_stylebox = SubResource("StyleBoxFlat_unrik")
+available_can_not_pay_stylebox = SubResource("StyleBoxFlat_q6dsb")
+complete_stylebox = SubResource("StyleBoxFlat_hkbtv")
+shadow_stylebox = SubResource("StyleBoxFlat_mjcqm")
+clicked_stylebox = SubResource("StyleBoxFlat_nvg2j")
+locked_texture = ExtResource("2")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+unique_name_in_owner = true
+libraries = {
+&"": SubResource("AnimationLibrary_wif1q")
+}
+
+[node name="CustomTweenComponent" parent="." node_paths=PackedStringArray("base_node") instance=ExtResource("3")]
+base_node = NodePath("../Art Pivot")
+duration = 0.2
+do_scale = true
+scale_amount = Vector2(1.2, 1.2)
+do_rotation = true
+rotation_amount = 5
+
+[node name="Center Sprite" type="Node2D" parent="."]
+unique_name_in_owner = true
+visible = false
+z_index = 2
+
+[node name="Hexagon" type="Sprite2D" parent="Center Sprite"]
+modulate = Color(0.360784, 0.619608, 0.423529, 1)
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("4")
+
+[node name="Hexagon2" type="Sprite2D" parent="Center Sprite"]
+modulate = Color(0.921569, 0.921569, 0.882353, 1)
+scale = Vector2(0.6, 0.6)
+texture = ExtResource("4")
+
+[node name="Sprite2D" type="Sprite2D" parent="Center Sprite"]
+unique_name_in_owner = true
+modulate = Color(0.3234, 0.3234, 0.33, 1)
+z_index = 2
+scale = Vector2(1.25, 1.25)
+texture = ExtResource("5")
+
+[node name="Art Pivot" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Click Mask" type="Button" parent="Art Pivot"]
+unique_name_in_owner = true
+z_index = 2
+custom_minimum_size = Vector2(64, 64)
+offset_left = -35.0
+offset_top = -35.0
+offset_right = 35.0
+offset_bottom = 35.0
+pivot_offset = Vector2(35, 35)
+theme_override_colors/icon_normal_color = Color(0.82, 0.82, 0.7872, 1)
+theme_override_colors/icon_focus_color = Color(0.3234, 0.3234, 0.33, 1)
+theme_override_colors/icon_pressed_color = Color(0.3234, 0.3234, 0.33, 1)
+theme_override_colors/icon_hover_color = Color(0.3234, 0.3234, 0.33, 1)
+theme_override_colors/icon_disabled_color = Color(0.82, 0.82, 0.7872, 1)
+theme_override_styles/focus = SubResource("StyleBoxFlat_w2743")
+flat = true
+
+[node name="Visual Panel" type="PanelContainer" parent="Art Pivot"]
+unique_name_in_owner = true
+z_index = 2
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -35.0
+offset_top = -35.0
+offset_right = 35.0
+offset_bottom = 35.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(35, 35)
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_wif1q")
+
+[node name="Icon" type="TextureRect" parent="Art Pivot"]
+unique_name_in_owner = true
+visible = false
+z_index = 2
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -26.0
+offset_top = -26.0
+offset_right = 26.0
+offset_bottom = 26.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("6")
+expand_mode = 3
+
+[node name="Icons" type="Node2D" parent="Art Pivot"]
+
+[node name="Mod Icon" type="Sprite2D" parent="Art Pivot/Icons"]
+unique_name_in_owner = true
+visible = false
+modulate = Color(0.3234, 0.3234, 0.33, 1)
+z_index = 2
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("7")
+
+[node name="Shadow Icon" type="Sprite2D" parent="Art Pivot/Icons"]
+unique_name_in_owner = true
+visible = false
+modulate = Color(0.443137, 0.443137, 0.45098, 1)
+z_index = 2
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("2")
+
+[node name="Random Icon" type="Sprite2D" parent="Art Pivot/Icons"]
+unique_name_in_owner = true
+visible = false
+modulate = Color(0.3234, 0.3234, 0.33, 1)
+z_index = 2
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("8")
+
+[node name="Tooltip Pivot" type="MarginContainer" parent="."]
+unique_name_in_owner = true
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="Tooltip CustomTweenComponent" parent="Tooltip Pivot" node_paths=PackedStringArray("base_node") instance=ExtResource("3")]
+base_node = NodePath("../Control/Tool Tip")
+duration = 0.2
+do_scale = true
+do_rotation = true
+rotation_amount = 5
+
+[node name="Control" type="Control" parent="Tooltip Pivot"]
+layout_mode = 2
+size_flags_vertical = 8
+mouse_filter = 2
+
+[node name="Tool Tip" type="PanelContainer" parent="Tooltip Pivot/Control"]
+unique_name_in_owner = true
+z_index = 4
+custom_minimum_size = Vector2(420, 100)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -210.0
+offset_top = -136.0
+offset_right = 210.0
+grow_horizontal = 2
+grow_vertical = 0
+size_flags_horizontal = 4
+size_flags_vertical = 8
+mouse_filter = 2
+theme = ExtResource("9")
+theme_override_styles/panel = ExtResource("10")
+
+[node name="Control" type="Control" parent="Tooltip Pivot/Control/Tool Tip"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 0
+mouse_filter = 2
+
+[node name="TitlePanel" type="PanelContainer" parent="Tooltip Pivot/Control/Tool Tip/Control"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.5
+offset_top = -22.0
+offset_right = 150.5
+offset_bottom = 22.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_604od")
+
+[node name="MarginContainer" type="MarginContainer" parent="Tooltip Pivot/Control/Tool Tip/Control/TitlePanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 5
+
+[node name="Node Type" type="Label" parent="Tooltip Pivot/Control/Tool Tip/Control/TitlePanel/MarginContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.921569, 0.921569, 0.882353, 1)
+text = "NODE TYPE"
+horizontal_alignment = 1
+autowrap_mode = 3
+uppercase = true
+
+[node name="MarginContainer" type="MarginContainer" parent="Tooltip Pivot/Control/Tool Tip"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 25
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer"]
+layout_mode = 2
+mouse_filter = 2
+alignment = 1
+
+[node name="Description" type="Label" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("11")
+theme_override_colors/font_color = Color(0.3234, 0.3234, 0.33, 1)
+text = "FROM -> TO"
+horizontal_alignment = 1
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="Upgrade Amount" type="Label" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer/VBoxContainer/HBoxContainer2"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("11")
+theme_override_colors/font_color = Color(0.443137, 0.443137, 0.45098, 1)
+theme_override_font_sizes/font_size = 22
+text = "(+1)"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_6sicy")
+
+[node name="HSeparator2" type="HSeparator" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_6sicy")
+
+[node name="Cost Hbox" type="HBoxContainer" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme = ExtResource("11")
+alignment = 1
+
+[node name="Cost" type="Label" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer/VBoxContainer/Cost Hbox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("12")
+theme_override_colors/font_color = Color(0.4176, 0.72, 0.4932, 1)
+theme_override_colors/font_shadow_color = Color(0.3234, 0.3234, 0.33, 1)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 1
+theme_override_constants/shadow_outline_size = 3
+text = "$5"
+horizontal_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 8
+mouse_filter = 2
+theme_override_constants/margin_left = 3
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 3
+
+[node name="Is Max" type="Label" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer/MarginContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme = ExtResource("11")
+text = "MAX"
+horizontal_alignment = 1
+
+[node name="Tier" type="Label" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer/MarginContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme = ExtResource("11")
+text = "0/1"
+horizontal_alignment = 1
+
+[node name="Node Shrink Audio" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("13")
+volume_db = -22.0
+bus = &"Effects"
+
+[connection signal="focus_entered" from="Art Pivot/Click Mask" to="." method="_on_click_mask_focus_entered"]
+[connection signal="focus_exited" from="Art Pivot/Click Mask" to="." method="_on_click_mask_focus_exited"]
+[connection signal="mouse_entered" from="Art Pivot/Click Mask" to="." method="_on_click_mask_mouse_entered"]
+[connection signal="mouse_exited" from="Art Pivot/Click Mask" to="." method="_on_click_mask_mouse_exited"]
+[connection signal="pressed" from="Art Pivot/Click Mask" to="." method="_on_click_mask_pressed"]
+[connection signal="mouse_entered" from="Art Pivot/Visual Panel" to="." method="_on_finished_mouse_entered"]
+[connection signal="mouse_exited" from="Art Pivot/Visual Panel" to="." method="_on_finished_mouse_exited"]

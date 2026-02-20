@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SoundEffectSettings" format=3 uid="uid://by5sks1y51t0u"]
+
+[ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
+[ext_resource type="AudioStream" uid="uid://dx6lotrv0uawa" path="res://Audio/golden.mp3" id="2"]
+
+[sub_resource type="Curve" id="Curve_rt7t4"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(1, 1), 1.4, 0.0, 0, 0]
+point_count = 2
+
+[resource]
+script = ExtResource("1")
+limit = 4
+type = 19
+sound_effect = ExtResource("2")
+volume = -20
+pitch_scale = 1.15
+taper_off_enabled = true
+taper_off_db_amount = 5.0
+play_limit_to_full_taper = 50
+taper_fall_off_curve = SubResource("Curve_rt7t4")
+metadata/_custom_type_script = "uid://blskskrd6wv02"

@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://wb4msy0yjqi"
+
+[deps]
+
+files=["res://Data/Blackhole Translations - Sheet1.en.translation", "res://Data/Blackhole Translations - Sheet1.ar.translation", "res://Data/Blackhole Translations - Sheet1.ca.translation", "res://Data/Blackhole Translations - Sheet1.cs.translation", "res://Data/Blackhole Translations - Sheet1.de.translation", "res://Data/Blackhole Translations - Sheet1.es.translation", "res://Data/Blackhole Translations - Sheet1.fr.translation", "res://Data/Blackhole Translations - Sheet1.he.translation", "res://Data/Blackhole Translations - Sheet1.id.translation", "res://Data/Blackhole Translations - Sheet1.it.translation", "res://Data/Blackhole Translations - Sheet1.ja.translation", "res://Data/Blackhole Translations - Sheet1.ko.translation", "res://Data/Blackhole Translations - Sheet1.pl.translation", "res://Data/Blackhole Translations - Sheet1.pt.translation", "res://Data/Blackhole Translations - Sheet1.ru.translation", "res://Data/Blackhole Translations - Sheet1.th.translation", "res://Data/Blackhole Translations - Sheet1.tr.translation", "res://Data/Blackhole Translations - Sheet1.vi.translation", "res://Data/Blackhole Translations - Sheet1.zh.translation"]
+
+source_file="res://Data/Blackhole Translations - Sheet1.csv"
+dest_files=["res://Data/Blackhole Translations - Sheet1.en.translation", "res://Data/Blackhole Translations - Sheet1.ar.translation", "res://Data/Blackhole Translations - Sheet1.ca.translation", "res://Data/Blackhole Translations - Sheet1.cs.translation", "res://Data/Blackhole Translations - Sheet1.de.translation", "res://Data/Blackhole Translations - Sheet1.es.translation", "res://Data/Blackhole Translations - Sheet1.fr.translation", "res://Data/Blackhole Translations - Sheet1.he.translation", "res://Data/Blackhole Translations - Sheet1.id.translation", "res://Data/Blackhole Translations - Sheet1.it.translation", "res://Data/Blackhole Translations - Sheet1.ja.translation", "res://Data/Blackhole Translations - Sheet1.ko.translation", "res://Data/Blackhole Translations - Sheet1.pl.translation", "res://Data/Blackhole Translations - Sheet1.pt.translation", "res://Data/Blackhole Translations - Sheet1.ru.translation", "res://Data/Blackhole Translations - Sheet1.th.translation", "res://Data/Blackhole Translations - Sheet1.tr.translation", "res://Data/Blackhole Translations - Sheet1.vi.translation", "res://Data/Blackhole Translations - Sheet1.zh.translation"]
+
+[params]
+
+compress=true
+delimiter=0

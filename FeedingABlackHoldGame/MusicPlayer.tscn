@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://q7eucljaitum"]
+
+[ext_resource type="AudioStream" uid="uid://dc6516tukbrr5" path="res://Audio/Main Music Playlist.tres" id="1"]
+[ext_resource type="Script" uid="uid://b3p4ac83wcttp" path="res://MusicPlayer.gd" id="2"]
+[ext_resource type="AudioStream" uid="uid://np7vjt4nvdo7" path="res://Audio/Music/Game Over Song.mp3" id="3"]
+
+[node name="MusicPlayer" type="AudioStreamPlayer"]
+process_mode = 3
+process_priority = 1
+stream = ExtResource("1")
+volume_db = -15.0
+bus = &"Music"
+playback_type = 1
+script = ExtResource("2")
+playlist = ExtResource("1")
+game_over_song = ExtResource("3")

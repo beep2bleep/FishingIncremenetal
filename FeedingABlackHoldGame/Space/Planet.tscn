@@ -1,0 +1,256 @@
+[gd_scene load_steps=20 format=3 uid="uid://b3gp50j1in7s0"]
+
+[ext_resource type="Script" uid="uid://cxqgcvrvlekat" path="res://Space/Planet.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://qetgg583nnuo" path="res://CustomTweenComponent.tscn" id="2"]
+[ext_resource type="Texture2D" uid="uid://c6puuqdi6eu44" path="res://Art/Circle.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://buh6hi1qse0ua" path="res://Art/Demo/noise08.png" id="4"]
+[ext_resource type="PackedScene" uid="uid://bmrl1633qfoop" path="res://HealthComponent.tscn" id="5"]
+[ext_resource type="Material" uid="uid://cejsaej7lcx4e" path="res://Space/FrozenPlanetMat.tres" id="6"]
+[ext_resource type="Shader" uid="uid://b6satcrr2f8g7" path="res://Golden.gdshader" id="7"]
+[ext_resource type="Texture2D" uid="uid://hudr3m6kn4c0" path="res://Art/Plat Colors.png" id="8"]
+[ext_resource type="Texture2D" uid="uid://htiftikslcat" path="res://Art/Asteroid/pattern_03.png" id="9"]
+
+[sub_resource type="Animation" id="Animation_qrhnj"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = false
+tracks/0/path = NodePath("Art:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = false
+tracks/1/path = NodePath(".:freeze")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
+}
+
+[sub_resource type="Animation" id="Animation_qox6c"]
+resource_name = "pop_in_planet"
+length = 0.4
+step = 0.05
+tracks/0/type = "method"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0.4),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [],
+"method": &"on_load"
+}]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Art:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.4),
+"transitions": PackedFloat32Array(-2, -2, -2),
+"update": 0,
+"values": [Vector2(1e-05, 1e-05), Vector2(1.1, 1.1), Vector2(1, 1)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath(".:freeze")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0.099999994),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_prj66"]
+_data = {
+&"RESET": SubResource("Animation_qrhnj"),
+&"pop_in_planet": SubResource("Animation_qox6c")
+}
+
+[sub_resource type="Animation" id="Animation_c2qsf"]
+resource_name = "Moon Orbit"
+length = 3.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Moons:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 6.283185307179586]
+}
+
+[sub_resource type="Animation" id="Animation_1giep"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Moons:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_cee7v"]
+_data = {
+&"Moon Orbit": SubResource("Animation_c2qsf"),
+&"RESET": SubResource("Animation_1giep")
+}
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_qr85q"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_76fdw"]
+resource_local_to_scene = true
+shader = ExtResource("7")
+shader_parameter/texture_to_scroll = ExtResource("8")
+shader_parameter/strength = 1.0
+shader_parameter/speed = 0.30000001425
+shader_parameter/angle = 0.0
+shader_parameter/transparency = 0.30000001425
+shader_parameter/tiling = Vector2(2, 2)
+shader_parameter/texture_scale = 2.0
+
+[sub_resource type="Shader" id="Shader_bm1up"]
+code = "shader_type canvas_item;
+
+// --- Uniforms --- //
+uniform vec2 speed = vec2(1.0, 0.0);
+uniform vec4 tint_color : source_color = vec4(1.0, 1.0, 1.0, 1.0); // New color control
+
+// --- Functions --- //
+void fragment() {
+	vec4 tex_color = texture(TEXTURE, mod(UV + TIME * speed, 1.0));
+	COLOR = tex_color * tint_color;
+}
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ops22"]
+shader = SubResource("Shader_bm1up")
+shader_parameter/speed = Vector2(0.2, 0)
+shader_parameter/tint_color = Color(0, 0, 0, 0.11764706)
+
+[node name="Planet" type="Node2D" node_paths=PackedStringArray("health_component")]
+script = ExtResource("1")
+health_component = NodePath("Art/HealthComponent")
+
+[node name="CustomTweenComponent" parent="." node_paths=PackedStringArray("base_node") instance=ExtResource("2")]
+unique_name_in_owner = true
+base_node = NodePath("../Art")
+do_scale = true
+do_rotation = true
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+unique_name_in_owner = true
+libraries = {
+&"": SubResource("AnimationLibrary_prj66")
+}
+
+[node name="AnimationPlayer2" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_cee7v")
+}
+autoplay = "Moon Orbit"
+
+[node name="Art" type="Node2D" parent="."]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_qr85q")
+
+[node name="Sprite2D Base" type="Sprite2D" parent="Art"]
+unique_name_in_owner = true
+modulate = Color(0.619608, 0.360784, 0.376471, 1)
+texture = ExtResource("3")
+
+[node name="Sprite2D Clouds" type="Sprite2D" parent="Art/Sprite2D Base"]
+unique_name_in_owner = true
+self_modulate = Color(0, 0, 0, 0.078431375)
+scale = Vector2(0.111, 0.111)
+texture = ExtResource("4")
+
+[node name="HealthComponent" parent="Art" instance=ExtResource("5")]
+unique_name_in_owner = true
+clip_children = 1
+z_index = 0
+clip_contents = true
+custom_minimum_size = Vector2(0, 0)
+offset_left = -53.0
+offset_top = -54.0
+offset_right = 56.0
+offset_bottom = 56.0
+
+[node name="Sprite2D Damage" type="Sprite2D" parent="Art/HealthComponent"]
+unique_name_in_owner = true
+texture = ExtResource("3")
+
+[node name="Sprite2D Clouds Damage" type="Sprite2D" parent="Art/HealthComponent/Sprite2D Damage"]
+unique_name_in_owner = true
+self_modulate = Color(0, 0, 0, 0.078431375)
+scale = Vector2(0.111, 0.111)
+texture = ExtResource("4")
+
+[node name="Special Flair" type="Node2D" parent="Art"]
+unique_name_in_owner = true
+
+[node name="ForzenEffect" type="Sprite2D" parent="Art/Special Flair"]
+unique_name_in_owner = true
+visible = false
+clip_children = 2
+scale = Vector2(1.1, 1.1)
+texture = ExtResource("3")
+
+[node name="FrozenShaderSprite" type="Sprite2D" parent="Art/Special Flair/ForzenEffect"]
+unique_name_in_owner = true
+material = ExtResource("6")
+position = Vector2(-3.6363635, -2.7272725)
+texture = ExtResource("3")
+
+[node name="Pinata Effect" type="Node2D" parent="Art/Special Flair"]
+unique_name_in_owner = true
+visible = false
+
+[node name="PinataShader" type="Sprite2D" parent="Art/Special Flair/Pinata Effect"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_76fdw")
+texture = ExtResource("3")
+
+[node name="Special Overlay" type="Polygon2D" parent="Art/Special Flair"]
+unique_name_in_owner = true
+texture_repeat = 2
+material = SubResource("ShaderMaterial_ops22")
+rotation = -0.7853982
+scale = Vector2(0.8677685, 0.8677685)
+antialiased = true
+texture = ExtResource("9")
+texture_scale = Vector2(3, 3)
+polygon = PackedVector2Array(-45.71429, -59.047626, 5.7142863, -64.76191, 41.904766, -57.142864, 84.12382, 24.200003, 10.371429, 80.66668, -46.09524, 59.923817, -77.20953, -3.4571433)
+
+[node name="Moons" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[connection signal="death_event" from="Art/HealthComponent" to="." method="_on_health_component_death_event"]

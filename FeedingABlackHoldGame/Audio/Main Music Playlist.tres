@@ -1,0 +1,25 @@
+[gd_resource type="AudioStreamPlaylist" load_steps=11 format=3 uid="uid://dc6516tukbrr5"]
+
+[ext_resource type="AudioStream" uid="uid://b02yfei8pypgi" path="res://Audio/Music/Track 1 (Trailer Song).mp3" id="1"]
+[ext_resource type="AudioStream" uid="uid://b5mucglcmsglb" path="res://Audio/Music/Lofi_Hip_Hop__BPM145.mp3" id="2"]
+[ext_resource type="AudioStream" uid="uid://delh4v6vaqekm" path="res://Audio/Music/BH_Ambient_1__BPM60.mp3" id="3"]
+[ext_resource type="AudioStream" uid="uid://dgeelp0gswsvy" path="res://Audio/Music/Drum_n_Bass_1.mp3" id="4"]
+[ext_resource type="AudioStream" uid="uid://cligontgr33nk" path="res://Audio/Music/Electronica__BPM110.mp3" id="5"]
+[ext_resource type="AudioStream" uid="uid://da5tgne32p011" path="res://Audio/Music/Reggae___Lofi_Hip_Hop__BPM75.mp3" id="6"]
+[ext_resource type="AudioStream" uid="uid://ckf1x5wyc1nex" path="res://Audio/Music/Drum_n_Bass_2.mp3" id="7"]
+[ext_resource type="AudioStream" uid="uid://cpbk7ml5oqthl" path="res://Audio/Music/Electronica_2__BPM130.mp3" id="8"]
+[ext_resource type="AudioStream" uid="uid://c0cepiwdnaoi6" path="res://Audio/Music/Reggaeton___Lofi_Hip_Hop__BPM90.wav" id="9"]
+[ext_resource type="AudioStream" uid="uid://t5gji1briqdx" path="res://Audio/Music/BH_Ambient_2__BPM88.mp3" id="10"]
+
+[resource]
+stream_count = 10
+stream_0 = ExtResource("1")
+stream_1 = ExtResource("2")
+stream_2 = ExtResource("3")
+stream_3 = ExtResource("4")
+stream_4 = ExtResource("5")
+stream_5 = ExtResource("6")
+stream_6 = ExtResource("7")
+stream_7 = ExtResource("8")
+stream_8 = ExtResource("9")
+stream_9 = ExtResource("10")

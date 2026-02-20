@@ -1,0 +1,15 @@
+[gd_scene load_steps=10 format=3 uid="uid://6sj1j646jtjc"]
+
+[ext_resource type="Script" uid="uid://dtcim8jw3kecd" path="res://ThemeManager.gd" id="1"]
+[ext_resource type="Theme" uid="uid://f0mobaom23an" path="res://Theme/Theme_Large_Font.tres" id="2"]
+[ext_resource type="Theme" uid="uid://dhlpfrladpxn2" path="res://Theme/Theme_Medium_Font.tres" id="3"]
+[ext_resource type="Theme" uid="uid://ulae55bx0fhs" path="res://Theme/Theme_Small_Font.tres" id="4"]
+[ext_resource type="Theme" uid="uid://bxx07kmhw0oiv" path="res://Theme/Theme_Small_Medium_Font.tres" id="5"]
+[ext_resource type="Theme" uid="uid://bobrs7sj7gdy3" path="res://Theme/Theme_Tiny_Font.tres" id="6"]
+[ext_resource type="Theme" uid="uid://fcmkyi7fg3b5" path="res://Theme/Theme_Very_Large_Font.tres" id="7"]
+[ext_resource type="Theme" uid="uid://dyklcre5xi6tl" path="res://Theme/Theme_Large_Medium_Font.tres" id="8"]
+[ext_resource type="Theme" uid="uid://dl1181xufyebq" path="res://Theme/Theme.tres" id="9"]
+
+[node name="ThemeManager" type="Node"]
+script = ExtResource("1")
+themes = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9")]

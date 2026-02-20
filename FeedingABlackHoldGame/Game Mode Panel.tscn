@@ -1,0 +1,191 @@
+[gd_scene load_steps=13 format=3 uid="uid://4j5ey3yf845e"]
+
+[ext_resource type="Script" uid="uid://b57wcawvdfjqp" path="res://GameModePanel.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://gka2f56xoe83" path="res://Art/Space/Circle 70.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://v1fvdocwedx1" path="res://Art/Mods/BASE_DAMAGE_PER_CLICK.png" id="3"]
+[ext_resource type="Theme" uid="uid://bxx07kmhw0oiv" path="res://Theme/Theme_Small_Medium_Font.tres" id="4"]
+[ext_resource type="Theme" uid="uid://ulae55bx0fhs" path="res://Theme/Theme_Small_Font.tres" id="5"]
+[ext_resource type="Theme" uid="uid://dyklcre5xi6tl" path="res://Theme/Theme_Large_Medium_Font.tres" id="6"]
+[ext_resource type="Texture2D" uid="uid://86j4ddhmbr87" path="res://Art/trophy.png" id="7"]
+[ext_resource type="AudioStream" uid="uid://ox6cfa7xprjj" path="res://Audio/zapsplat_cartoon_bubble_pop_003_40275.mp3" id="8"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ie2wx"]
+resource_local_to_scene = true
+bg_color = Color(0.32340002, 0.32340002, 0.33, 0)
+border_color = Color(0.22352941, 0.22352941, 0.23137255, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p8nf5"]
+resource_local_to_scene = true
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.619608, 0.360784, 0.376471, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_detail = 5
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_1toai"]
+content_margin_left = 4.0
+content_margin_top = 0.0
+content_margin_right = 4.0
+content_margin_bottom = 0.0
+color = Color(0.5, 0.5, 0.5, 0.5882353)
+thickness = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_geilw"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.22352941, 0.22352941, 0.23137255, 1)
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+corner_detail = 5
+
+[node name="GameModePanel" type="PanelContainer"]
+custom_minimum_size = Vector2(350, 400)
+offset_right = 350.0
+offset_bottom = 400.0
+pivot_offset = Vector2(150, 306)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_ie2wx")
+script = ExtResource("1")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = -1
+
+[node name="Top PanelContainer" type="PanelContainer" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_p8nf5")
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Top PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/Top PanelContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Top PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="VBoxContainer/Top PanelContainer/MarginContainer/VBoxContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="Circle" type="TextureRect" parent="VBoxContainer/Top PanelContainer/MarginContainer/VBoxContainer/MarginContainer/CenterContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+texture = ExtResource("2")
+stretch_mode = 5
+
+[node name="Mode Icon" type="TextureRect" parent="VBoxContainer/Top PanelContainer/MarginContainer/VBoxContainer/MarginContainer/CenterContainer"]
+unique_name_in_owner = true
+modulate = Color(0.619608, 0.360784, 0.376471, 1)
+layout_mode = 2
+texture = ExtResource("3")
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="VBoxContainer/Top PanelContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+modulate = Color(0.619608, 0.360784, 0.376471, 1)
+layout_mode = 2
+theme = ExtResource("4")
+text = "MODE NAME HERE"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer/Top PanelContainer/MarginContainer/VBoxContainer"]
+visible = false
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_1toai")
+
+[node name="Bottom PanelContainer" type="PanelContainer" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_geilw")
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Bottom PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="More Info" type="VBoxContainer" parent="VBoxContainer/Bottom PanelContainer/MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Description" type="Label" parent="VBoxContainer/Bottom PanelContainer/MarginContainer/More Info"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("5")
+text = "Description Here"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Coming Soon Date" type="Label" parent="VBoxContainer/Bottom PanelContainer/MarginContainer/More Info"]
+unique_name_in_owner = true
+modulate = Color(0.686, 0.686, 0.7, 1)
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("4")
+text = "Date Here"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="Beta" type="Label" parent="VBoxContainer/Bottom PanelContainer/MarginContainer/More Info"]
+unique_name_in_owner = true
+modulate = Color(0.686, 0.686, 0.7, 1)
+layout_mode = 2
+theme = ExtResource("6")
+text = "BETA"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+uppercase = true
+
+[node name="Completed" type="HBoxContainer" parent="VBoxContainer/Bottom PanelContainer/MarginContainer/More Info"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+alignment = 1
+
+[node name="Trophy Icon" type="TextureRect" parent="VBoxContainer/Bottom PanelContainer/MarginContainer/More Info/Completed"]
+unique_name_in_owner = true
+modulate = Color(0.619608, 0.360784, 0.376471, 1)
+layout_mode = 2
+texture = ExtResource("7")
+stretch_mode = 5
+
+[node name="Best Time" type="Label" parent="VBoxContainer/Bottom PanelContainer/MarginContainer/More Info/Completed"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("5")
+text = "01:42:52"
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("8")
+volume_db = -25.0
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 2
+focus_mode = 0
+flat = true
+
+[connection signal="resized" from="." to="." method="_on_resized"]
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]

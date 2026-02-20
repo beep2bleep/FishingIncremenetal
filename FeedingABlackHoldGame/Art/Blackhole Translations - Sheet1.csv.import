@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://5va8j2ofr3e0"
+
+[deps]
+
+files=["res://Art/Blackhole Translations - Sheet1.en.translation", "res://Art/Blackhole Translations - Sheet1.ca.translation", "res://Art/Blackhole Translations - Sheet1.cs.translation", "res://Art/Blackhole Translations - Sheet1.de.translation", "res://Art/Blackhole Translations - Sheet1.es.translation", "res://Art/Blackhole Translations - Sheet1.fr.translation", "res://Art/Blackhole Translations - Sheet1.id.translation", "res://Art/Blackhole Translations - Sheet1.it.translation", "res://Art/Blackhole Translations - Sheet1.ja.translation", "res://Art/Blackhole Translations - Sheet1.ko.translation", "res://Art/Blackhole Translations - Sheet1.pl.translation", "res://Art/Blackhole Translations - Sheet1.pt.translation", "res://Art/Blackhole Translations - Sheet1.ru.translation", "res://Art/Blackhole Translations - Sheet1.th.translation", "res://Art/Blackhole Translations - Sheet1.tr.translation", "res://Art/Blackhole Translations - Sheet1.vi.translation", "res://Art/Blackhole Translations - Sheet1.zh.translation"]
+
+source_file="res://Art/Blackhole Translations - Sheet1.csv"
+dest_files=["res://Art/Blackhole Translations - Sheet1.en.translation", "res://Art/Blackhole Translations - Sheet1.ca.translation", "res://Art/Blackhole Translations - Sheet1.cs.translation", "res://Art/Blackhole Translations - Sheet1.de.translation", "res://Art/Blackhole Translations - Sheet1.es.translation", "res://Art/Blackhole Translations - Sheet1.fr.translation", "res://Art/Blackhole Translations - Sheet1.id.translation", "res://Art/Blackhole Translations - Sheet1.it.translation", "res://Art/Blackhole Translations - Sheet1.ja.translation", "res://Art/Blackhole Translations - Sheet1.ko.translation", "res://Art/Blackhole Translations - Sheet1.pl.translation", "res://Art/Blackhole Translations - Sheet1.pt.translation", "res://Art/Blackhole Translations - Sheet1.ru.translation", "res://Art/Blackhole Translations - Sheet1.th.translation", "res://Art/Blackhole Translations - Sheet1.tr.translation", "res://Art/Blackhole Translations - Sheet1.vi.translation", "res://Art/Blackhole Translations - Sheet1.zh.translation"]
+
+[params]
+
+compress=true
+delimiter=0

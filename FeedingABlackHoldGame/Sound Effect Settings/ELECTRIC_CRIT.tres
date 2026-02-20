@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="SoundEffectSettings" format=3 uid="uid://67bnnj1qio3u"]
+
+[ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
+[ext_resource type="AudioStream" uid="uid://bhgaduufmco8j" path="res://Audio/zapsplat_sound_design_electricity_zap_spark_28906.mp3" id="2"]
+
+[sub_resource type="Curve" id="Curve_3hgvt"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(1, 1), 1.4, 0.0, 0, 0]
+point_count = 2
+
+[resource]
+script = ExtResource("1")
+limit = 2
+type = 11
+sound_effect = ExtResource("2")
+volume = -20
+pitch_scale = 1.25
+pitch_randomness = 0.1
+taper_off_enabled = true
+taper_off_db_amount = 6.0
+play_limit_to_full_taper = 100
+taper_fall_off_curve = SubResource("Curve_3hgvt")
+metadata/_custom_type_script = "uid://blskskrd6wv02"

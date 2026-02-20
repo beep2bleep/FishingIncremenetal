@@ -1,0 +1,52 @@
+[gd_scene load_steps=6 format=3 uid="uid://hlsilfv4fmfd"]
+
+[ext_resource type="Script" uid="uid://dssda8lwj0kem" path="res://Moon.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://c5f0p63m4s0io" path="res://Art/Moon.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://htiftikslcat" path="res://Art/Asteroid/pattern_03.png" id="3"]
+
+[sub_resource type="Shader" id="Shader_bm1up"]
+code = "shader_type canvas_item;
+
+// --- Uniforms --- //
+uniform vec2 speed = vec2(1.0, 0.0);
+uniform vec4 tint_color : source_color = vec4(1.0, 1.0, 1.0, 1.0); // New color control
+
+// --- Functions --- //
+void fragment() {
+	vec4 tex_color = texture(TEXTURE, mod(UV + TIME * speed, 1.0));
+	COLOR = tex_color * tint_color;
+}
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_heko4"]
+shader = SubResource("Shader_bm1up")
+shader_parameter/speed = Vector2(0.2, 0)
+shader_parameter/tint_color = Color(0, 0, 0, 0.078431375)
+
+[node name="Moon" type="Node2D"]
+z_index = 2
+script = ExtResource("1")
+
+[node name="Pivot" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Circle32" type="Sprite2D" parent="Pivot"]
+texture = ExtResource("2")
+
+[node name="Special Overlay" type="Polygon2D" parent="Pivot"]
+unique_name_in_owner = true
+texture_repeat = 2
+material = SubResource("ShaderMaterial_heko4")
+rotation = -0.7853982
+scale = Vector2(0.8677685, 0.8677685)
+antialiased = true
+texture = ExtResource("3")
+texture_scale = Vector2(6, 6)
+polygon = PackedVector2Array(-45.71429, -59.047626, 5.7142863, -64.76191, 41.904766, -57.142864, 84.12382, 24.200003, 10.371429, 80.66668, -46.09524, 59.923817, -77.20953, -3.4571433)
+
+[node name="Timer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 5.0
+one_shot = true
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

@@ -1,0 +1,81 @@
+[gd_scene load_steps=7 format=3 uid="uid://drrc7o7atsa0a"]
+
+[ext_resource type="Shader" uid="uid://jjye5gn7xqn2" path="res://Tendril.gdshader" id="1"]
+[ext_resource type="Script" uid="uid://so8h3xnyi6jl" path="res://Tendril.gd" id="2"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_htaqr"]
+resource_local_to_scene = true
+shader = ExtResource("1")
+shader_parameter/lightning_number = 2
+shader_parameter/amplitude = Vector2(2, 1)
+shader_parameter/offset = 0.45
+shader_parameter/thickness = 0.05
+shader_parameter/speed = -0.3
+shader_parameter/base_color = Color(0.837, 0.8773, 0.93, 1)
+shader_parameter/glow_thickness = 0.02
+shader_parameter/glow_color = Color(0, 0, 0, 1)
+shader_parameter/alpha = 1.0
+
+[sub_resource type="Animation" id="Animation_ccrrk"]
+resource_name = "Animation"
+length = 0.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0666667, 0.3, 0.4),
+"transitions": PackedFloat32Array(1, 0, 1, 1),
+"update": 0,
+"values": [Color(0, 0, 0, 1), Color(1.5, 1.5, 2, 1), Color(1.5, 1.5, 2, 1), Color(1, 1, 1, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:material:shader_parameter/alpha")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0.3, 0.4),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [1.0, 0.0]
+}
+
+[sub_resource type="Animation" id="Animation_26by8"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:material:shader_parameter/alpha")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [1.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_26by8"]
+_data = {
+&"Animation": SubResource("Animation_ccrrk"),
+&"RESET": SubResource("Animation_26by8")
+}
+
+[node name="Tendril" type="Line2D"]
+modulate = Color(0, 0, 0, 1)
+z_index = 2
+texture_repeat = 3
+material = SubResource("ShaderMaterial_htaqr")
+points = PackedVector2Array(609, 115, 48, 25, 242, 166)
+width = 100.0
+texture_mode = 1
+script = ExtResource("2")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_26by8")
+}

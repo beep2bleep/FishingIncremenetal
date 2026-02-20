@@ -1,0 +1,357 @@
+[gd_scene format=3 uid="uid://b0bx5ybu6bfpq"]
+
+[ext_resource type="Script" uid="uid://l4mcmcpjh5ji" path="res://GameModeScreen.gd" id="1"]
+[ext_resource type="Resource" uid="uid://csh384s7ptkp8" path="res://Game Modes/Main Mode.tres" id="2"]
+[ext_resource type="Resource" uid="uid://cbwq2534x7cpg" path="res://Game Modes/Quick Play Mode.tres" id="3"]
+[ext_resource type="Resource" uid="uid://bxt7ksj0rqem" path="res://Game Modes/Compact Mode.tres" id="4"]
+[ext_resource type="Resource" uid="uid://bjjkpcrr1pr2v" path="res://Game Modes/The Line Mode.tres" id="5"]
+[ext_resource type="Resource" uid="uid://mmjaq0nq6deo" path="res://Game Modes/Zen Mode.tres" id="6"]
+[ext_resource type="Resource" uid="uid://qskhill06bvd" path="res://Game Modes/Demo Mode.tres" id="7"]
+[ext_resource type="Resource" uid="uid://d217sgof3owuo" path="res://Game Modes/Roguelike Mode.tres" id="8"]
+[ext_resource type="Resource" uid="uid://by02aqol2qqs7" path="res://Game Modes/Giant Grid Mode.tres" id="9"]
+[ext_resource type="Resource" uid="uid://duqp4mu2wpl4r" path="res://Game Modes/Electric Clicker Mode.tres" id="10"]
+[ext_resource type="Resource" uid="uid://b4nwyoxleynnt" path="res://Game Modes/Idle Mode.tres" id="11"]
+[ext_resource type="Resource" uid="uid://b12unpkp4uk6m" path="res://Game Modes/Mode 9.tres" id="12"]
+[ext_resource type="Resource" uid="uid://cfloxft1vieef" path="res://Game Modes/Mode 10.tres" id="13"]
+[ext_resource type="PackedScene" uid="uid://4j5ey3yf845e" path="res://Game Mode Panel.tscn" id="14"]
+[ext_resource type="PackedScene" uid="uid://ds36c3qoqmf3y" path="res://Controller Glyph.tscn" id="15"]
+[ext_resource type="Script" uid="uid://c36s4gjs5sv4r" path="res://addons/controller_icons/objects/ControllerIconTexture.gd" id="16"]
+[ext_resource type="PackedScene" uid="uid://b5w1afldacdb1" path="res://CustomButton.tscn" id="17"]
+[ext_resource type="Theme" uid="uid://dyklcre5xi6tl" path="res://Theme/Theme_Large_Medium_Font.tres" id="18"]
+[ext_resource type="Theme" uid="uid://dhlpfrladpxn2" path="res://Theme/Theme_Medium_Font.tres" id="19"]
+
+[sub_resource type="Texture2D" id="Texture2D_5qh22"]
+script = ExtResource("16")
+path = "game_mode_left"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="Texture2D" id="Texture2D_l03fe"]
+script = ExtResource("16")
+path = "Grab"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="Texture2D" id="Texture2D_h8cvk"]
+script = ExtResource("16")
+path = "Grab"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="Texture2D" id="Texture2D_6sswj"]
+script = ExtResource("16")
+path = "game_mode_right"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="Texture2D" id="Texture2D_iyb1j"]
+script = ExtResource("16")
+path = "back"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gtv22"]
+bg_color = Color(0.22352941, 0.22352941, 0.23137255, 1)
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="Texture2D" id="Texture2D_gtv22"]
+script = ExtResource("16")
+path = "Grab"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="Texture2D" id="Texture2D_npi1e"]
+script = ExtResource("16")
+path = "Grab"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[node name="Game Mode Screen" type="Control" unique_id=1286564009]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+game_mode_datas = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13")]
+game_mode_panel_packed = ExtResource("14")
+mode_spacing = 42.0
+transition_duration = 0.5
+center_scale = 1.2
+side_scale = 1.0
+scale_falloff_distance = 1.0
+alpha_adjacent = 1.0
+alpha_far = 1.0
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=697742949]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.19607843)
+
+[node name="Modes MarginContainer" type="MarginContainer" parent="." unique_id=1427020405]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/margin_bottom = 0
+
+[node name="Modes" type="HBoxContainer" parent="Modes MarginContainer" unique_id=115952897]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Bottom Bar MC" type="MarginContainer" parent="." unique_id=1834115579]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -98.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="Bottom Bar MC" unique_id=327943962]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Bottom Bar MC/VBoxContainer2" unique_id=2012261754]
+layout_mode = 2
+
+[node name="VBoxContainer" type="HBoxContainer" parent="Bottom Bar MC/VBoxContainer2" unique_id=1025264669]
+layout_mode = 2
+theme_override_constants/separation = 25
+alignment = 1
+
+[node name="Prev Hbox" type="HBoxContainer" parent="Bottom Bar MC/VBoxContainer2/VBoxContainer" unique_id=1308956181]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="Continue Glyph" parent="Bottom Bar MC/VBoxContainer2/VBoxContainer/Prev Hbox" unique_id=1304714502 instance=ExtResource("15")]
+layout_mode = 2
+texture = SubResource("Texture2D_5qh22")
+
+[node name="Prev Mode" parent="Bottom Bar MC/VBoxContainer2/VBoxContainer/Prev Hbox" unique_id=1763137371 instance=ExtResource("17")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 2
+text = "PREVIOUS"
+
+[node name="Continue HBoxContainer" type="HBoxContainer" parent="Bottom Bar MC/VBoxContainer2/VBoxContainer" unique_id=738790813]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="Continue Glyph" parent="Bottom Bar MC/VBoxContainer2/VBoxContainer/Continue HBoxContainer" unique_id=714671563 instance=ExtResource("15")]
+unique_name_in_owner = true
+layout_mode = 2
+texture = SubResource("Texture2D_l03fe")
+enabled = false
+
+[node name="Continue" parent="Bottom Bar MC/VBoxContainer2/VBoxContainer/Continue HBoxContainer" unique_id=1059053010 node_paths=PackedStringArray("glyph_comp") instance=ExtResource("17")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+text = "CONTINUE"
+enable_on_focus = true
+glyph_comp = NodePath("../Continue Glyph")
+
+[node name="Play HBoxContainer2" type="HBoxContainer" parent="Bottom Bar MC/VBoxContainer2/VBoxContainer" unique_id=2892350]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 1
+
+[node name="Play Glyph" parent="Bottom Bar MC/VBoxContainer2/VBoxContainer/Play HBoxContainer2" unique_id=516918877 instance=ExtResource("15")]
+unique_name_in_owner = true
+layout_mode = 2
+texture = SubResource("Texture2D_h8cvk")
+enabled = false
+
+[node name="New Game" parent="Bottom Bar MC/VBoxContainer2/VBoxContainer/Play HBoxContainer2" unique_id=1593156624 node_paths=PackedStringArray("glyph_comp") instance=ExtResource("17")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+text = "PLAY"
+enable_on_focus = true
+glyph_comp = NodePath("../Play Glyph")
+
+[node name="Next Hbox" type="HBoxContainer" parent="Bottom Bar MC/VBoxContainer2/VBoxContainer" unique_id=413905734]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="Continue Glyph" parent="Bottom Bar MC/VBoxContainer2/VBoxContainer/Next Hbox" unique_id=2061446324 instance=ExtResource("15")]
+layout_mode = 2
+texture = SubResource("Texture2D_6sswj")
+
+[node name="Next Mode" parent="Bottom Bar MC/VBoxContainer2/VBoxContainer/Next Hbox" unique_id=525530016 instance=ExtResource("17")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+text = "NEXT"
+
+[node name="Back MarginContainer2" type="MarginContainer" parent="." unique_id=550484062]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -224.0
+offset_bottom = 93.0
+grow_horizontal = 0
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="Back MarginContainer2" unique_id=783158262]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="Back Glyph" parent="Back MarginContainer2/HBoxContainer3" unique_id=454584796 instance=ExtResource("15")]
+layout_mode = 2
+texture = SubResource("Texture2D_iyb1j")
+always_show = true
+
+[node name="Back to Menu" parent="Back MarginContainer2/HBoxContainer3" unique_id=1266746663 instance=ExtResource("17")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+text = "BACK"
+
+[node name="New Game Popup" type="ColorRect" parent="." unique_id=1087715674]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.39215687)
+
+[node name="PanelContainer2" type="PanelContainer" parent="New Game Popup" unique_id=643077903]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -197.0
+offset_top = -54.0
+offset_right = 197.0
+offset_bottom = 54.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_gtv22")
+
+[node name="MarginContainer" type="MarginContainer" parent="New Game Popup/PanelContainer2" unique_id=648189523]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="New Game Popup/PanelContainer2/MarginContainer" unique_id=444771992]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="New Game Popup/PanelContainer2/MarginContainer/VBoxContainer" unique_id=456413649]
+layout_mode = 2
+theme = ExtResource("18")
+text = "NEW_GAME_CONGIRM_TITLE"
+horizontal_alignment = 1
+
+[node name="Label2" type="Label" parent="New Game Popup/PanelContainer2/MarginContainer/VBoxContainer" unique_id=420292785]
+layout_mode = 2
+theme = ExtResource("19")
+text = "NEW_GAME_CONFRIM_LABEL"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="New Game Popup/PanelContainer2/MarginContainer/VBoxContainer" unique_id=744205057]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Play HBoxContainer2" type="HBoxContainer" parent="New Game Popup/PanelContainer2/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1750337853]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 1
+
+[node name="Glyph" parent="New Game Popup/PanelContainer2/MarginContainer/VBoxContainer/HBoxContainer/Play HBoxContainer2" unique_id=732458551 instance=ExtResource("15")]
+layout_mode = 2
+texture = SubResource("Texture2D_gtv22")
+enabled = false
+
+[node name="No  New Game" parent="New Game Popup/PanelContainer2/MarginContainer/VBoxContainer/HBoxContainer/Play HBoxContainer2" unique_id=2044165430 node_paths=PackedStringArray("glyph_comp") instance=ExtResource("17")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+focus_neighbor_left = NodePath("../../HBoxContainer3/Yes New Game")
+focus_neighbor_top = NodePath("../../HBoxContainer3/Yes New Game")
+focus_neighbor_right = NodePath("../../HBoxContainer3/Yes New Game")
+focus_neighbor_bottom = NodePath("../../HBoxContainer3/Yes New Game")
+focus_next = NodePath("../../HBoxContainer3/Yes New Game")
+focus_previous = NodePath("../../HBoxContainer3/Yes New Game")
+text = "NO"
+enable_on_focus = true
+glyph_comp = NodePath("../Glyph")
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="New Game Popup/PanelContainer2/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1641539421]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Glyph" parent="New Game Popup/PanelContainer2/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer3" unique_id=169739461 instance=ExtResource("15")]
+layout_mode = 2
+texture = SubResource("Texture2D_npi1e")
+enabled = false
+
+[node name="Yes New Game" parent="New Game Popup/PanelContainer2/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer3" unique_id=2045451101 node_paths=PackedStringArray("glyph_comp") instance=ExtResource("17")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+focus_neighbor_left = NodePath("../../Play HBoxContainer2/No  New Game")
+focus_neighbor_top = NodePath("../../Play HBoxContainer2/No  New Game")
+focus_neighbor_right = NodePath("../../Play HBoxContainer2/No  New Game")
+focus_neighbor_bottom = NodePath("../../Play HBoxContainer2/No  New Game")
+focus_next = NodePath("../../Play HBoxContainer2/No  New Game")
+focus_previous = NodePath("../../Play HBoxContainer2/No  New Game")
+text = "YES"
+enable_on_focus = true
+glyph_comp = NodePath("../Glyph")
+
+[connection signal="pressed" from="Bottom Bar MC/VBoxContainer2/VBoxContainer/Prev Hbox/Prev Mode" to="." method="_on_prev_mode_pressed"]
+[connection signal="pressed" from="Bottom Bar MC/VBoxContainer2/VBoxContainer/Continue HBoxContainer/Continue" to="." method="_on_continue_pressed"]
+[connection signal="pressed" from="Bottom Bar MC/VBoxContainer2/VBoxContainer/Play HBoxContainer2/New Game" to="." method="_on_new_game_pressed"]
+[connection signal="pressed" from="Bottom Bar MC/VBoxContainer2/VBoxContainer/Next Hbox/Next Mode" to="." method="_on_next_mode_pressed"]
+[connection signal="pressed" from="Back MarginContainer2/HBoxContainer3/Back to Menu" to="." method="_on_back_to_menu_pressed"]
+[connection signal="pressed" from="New Game Popup/PanelContainer2/MarginContainer/VBoxContainer/HBoxContainer/Play HBoxContainer2/No  New Game" to="." method="_on_no__new_game_pressed"]
+[connection signal="pressed" from="New Game Popup/PanelContainer2/MarginContainer/VBoxContainer/HBoxContainer/HBoxContainer3/Yes New Game" to="." method="_on_yes_new_game_pressed"]

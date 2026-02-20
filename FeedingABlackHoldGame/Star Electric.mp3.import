@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bhrbp5aljlqcv"
+path="res://.godot/imported/Star Electric.mp3-1584ca7eb2b43094054ffc45de3b280f.mp3str"
+
+[deps]
+
+source_file="res://Star Electric.mp3"
+dest_files=["res://.godot/imported/Star Electric.mp3-1584ca7eb2b43094054ffc45de3b280f.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0.0
+bpm=0.0
+beat_count=0
+bar_beats=4

@@ -1,0 +1,217 @@
+[gd_scene load_steps=109 format=3 uid="uid://givj5c74x6wa"]
+
+[ext_resource type="Script" uid="uid://c7pl42qp1u51g" path="res://Singletons/Refs.gd" id="1"]
+[ext_resource type="Resource" uid="uid://d0y2x6sx64gtt" path="res://Pallets/Light_Pallet.tres" id="2"]
+[ext_resource type="Texture2D" uid="uid://dysptdjklfkrj" path="res://Art/Mods/MONEY_PER_MATTER.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://csosj5i5dj75o" path="res://Art/Mods/CLICK_AOE.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://ck0owlnktffpu" path="res://Art/Mods/CLICK_RATE.png" id="5"]
+[ext_resource type="Texture2D" uid="uid://v1fvdocwedx1" path="res://Art/Mods/BASE_DAMAGE_PER_CLICK.png" id="6"]
+[ext_resource type="Texture2D" uid="uid://bam4y74oqk12x" path="res://Art/Mods/RUN_TIMER_BASE.png" id="7"]
+[ext_resource type="Texture2D" uid="uid://be68jqy548tvl" path="res://Art/Mods/RUN_TIMER_AMOUNT_ON_BLACK_HOLE_GROW.png" id="8"]
+[ext_resource type="Texture2D" uid="uid://bj6xug0isxoj" path="res://Art/Mods/MAX_ASTEROID_SIZE.png" id="9"]
+[ext_resource type="Texture2D" uid="uid://l80uispg0m6m" path="res://Art/Mods/CHANCE_TO_ADD_TIME_ON_ASTEROID_DESTROYED.png" id="10"]
+[ext_resource type="Texture2D" uid="uid://bx80tl2ueutdc" path="res://Art/Mods/ASTEROIDS_TO_SPAWN.png" id="11"]
+[ext_resource type="Texture2D" uid="uid://cw7es5l6vipb5" path="res://Art/Mods/ASTEROID_DENSITY.png" id="12"]
+[ext_resource type="Texture2D" uid="uid://c0w66idmu0mlf" path="res://Art/Mods/ASTEROIDS_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW .png" id="13"]
+[ext_resource type="Texture2D" uid="uid://b4fjrj18twvrl" path="res://Art/Mods/CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK.png" id="14"]
+[ext_resource type="Texture2D" uid="uid://dv2w0ttixfxtv" path="res://Art/Mods/CHANCE_TO_SPAWN_SPECIAL_ASTEROID_ELECTRIC.png" id="15"]
+[ext_resource type="Texture2D" uid="uid://eguvlyj14go7" path="res://Art/Mods/SPECIAL_ASTEROID_ELECTRIC_DAMAGE.png" id="16"]
+[ext_resource type="Texture2D" uid="uid://dpqhwipmvu5ww" path="res://Art/Mods/SPECIAL_ASTEROID_ELECTRIC_MAX_CHAINS.png" id="17"]
+[ext_resource type="Texture2D" uid="uid://b1ugrytgu3kv3" path="res://Art/Mods/SPECIAL_ASTEROID_CHANCE_TO_FORK.png" id="18"]
+[ext_resource type="Texture2D" uid="uid://dan1sbquls4xc" path="res://Art/Mods/SPECIAL_ASTEROID_CHAIN_DISTANCE_SCALE.png" id="19"]
+[ext_resource type="Texture2D" uid="uid://byxhxiqv5e8rv" path="res://Art/Mods/CHANCE_TO_SPAWN_SPECIAL_ASTEROID_RADIOACTIVE.png" id="20"]
+[ext_resource type="Texture2D" uid="uid://bfwr7lj6ecswq" path="res://Art/Mods/SPECIAL_ASTEROID_RADIOACTIVE_DOT.png" id="21"]
+[ext_resource type="Texture2D" uid="uid://dpektdbyvbj5v" path="res://Art/Mods/SPECIAL_ASTEROID_RADIOACTIVE_DURATION.png" id="22"]
+[ext_resource type="Texture2D" uid="uid://ci8vne478q642" path="res://Art/Mods/SPECIAL_ASTEROID_RADIOACTIVE_AOE_SCALE.png" id="23"]
+[ext_resource type="Texture2D" uid="uid://bu0osbvuudebg" path="res://Art/Mods/CRIT_CHANCE.png" id="24"]
+[ext_resource type="Texture2D" uid="uid://r5ii6wlxudk2" path="res://Art/Mods/CRIT_BONUS.png" id="25"]
+[ext_resource type="Texture2D" uid="uid://xfodo2ablpp7" path="res://Art/Mods/ELECTRIC_CRIT_CHANCE.png" id="26"]
+[ext_resource type="Texture2D" uid="uid://bkd3vr2dmvxgr" path="res://Art/Mods/ELECTRIC_CRIT_BONUS.png" id="27"]
+[ext_resource type="Texture2D" uid="uid://cakqxcw523g3c" path="res://Art/Mods/COMET_SPAWN_CHANCE.png" id="28"]
+[ext_resource type="Texture2D" uid="uid://c46oroso5sc3a" path="res://Art/Mods/BLACK_HOLE_MAX_SIZE_2.png" id="29"]
+[ext_resource type="Texture2D" uid="uid://ct5wi3kywcl7h" path="res://Art/Mods/PLANET_DENSITY.png" id="30"]
+[ext_resource type="Texture2D" uid="uid://b3gt58u8q7g0a" path="res://Art/Mods/CLICKER_BONUS_DAMAGE_TO_PLANETS.png" id="31"]
+[ext_resource type="Texture2D" uid="uid://dmk7eys6nqjrx" path="res://Art/Mods/NUMBER_OF_ASTEROIDS_INTO_PLANETS.png" id="32"]
+[ext_resource type="Texture2D" uid="uid://xfoa8emwlfnr" path="res://Art/Mods/MAX_PLANET_SIZE.png" id="33"]
+[ext_resource type="Texture2D" uid="uid://beqre85fdoj1q" path="res://Art/Mods/SPECIAL_PLANET_MOON_SPAWN_CHANCE.png" id="34"]
+[ext_resource type="Texture2D" uid="uid://d3kyxppcrmore" path="res://Art/Mods/SPECIAL_PLANET_MOON_CLIKCER_RATE_BUFF_SCALE.png" id="35"]
+[ext_resource type="Texture2D" uid="uid://bjrygbvorftf5" path="res://Art/Mods/SPECIAL_PLANET_MOON_CLIKCER_AOE_BUFF_SCALE.png" id="36"]
+[ext_resource type="Texture2D" uid="uid://cbdomhtyjpfbp" path="res://Art/Mods/COMET_CRIT_CHANCE_BUFF_DURATION.png" id="37"]
+[ext_resource type="Texture2D" uid="uid://dokhpofu1c7ys" path="res://Art/Mods/COMET_CRIT_CHANCE_BUFF_SCALE.png" id="38"]
+[ext_resource type="Texture2D" uid="uid://blrlu5rvvigto" path="res://Art/Mods/COMET_CRIT_BONUS_DAMAGE_BUFF_SCALE.png" id="39"]
+[ext_resource type="Texture2D" uid="uid://bowdyrawss7se" path="res://Art/Mods/CHANCE_TO_ADD_TIME_ON_PLANET_DESTROYED.png" id="40"]
+[ext_resource type="Texture2D" uid="uid://culvewcsgxkh1" path="res://Art/Mods/PLANET_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW.png" id="41"]
+[ext_resource type="Texture2D" uid="uid://dxycgkyn01376" path="res://Art/Mods/CHANCE_TO_RESPAWN_PLANET_ON_BREAK.png" id="42"]
+[ext_resource type="Texture2D" uid="uid://d18di4kssbv58" path="res://Art/Mods/SPECIAL_PLANET_ASTEROID_PINATA_SPAWN_CHANCE.png" id="43"]
+[ext_resource type="Texture2D" uid="uid://dj5tkb7ogi7y" path="res://Art/Mods/SPECIAL_PLANET_ASTEROID_PINATA_AMOUNT_OF_ASTEROID.png" id="44"]
+[ext_resource type="Texture2D" uid="uid://by6754ts2jarv" path="res://Art/Mods/COMET_CHANCE_FOR_COMET_SHOWER.png" id="45"]
+[ext_resource type="Texture2D" uid="uid://3nutipnwfnp5" path="res://Art/Mods/COMET_SHOWER_SIZE.png" id="46"]
+[ext_resource type="Texture2D" uid="uid://f38gqa3blpoi" path="res://Art/Mods/SPECIAL_ASTEROID_GOLDEN_BONUS_MONEY_SCALE.png" id="47"]
+[ext_resource type="Texture2D" uid="uid://bxjwofeyaeeok" path="res://Art/Mods/CHANCE_TO_SPAWN_SPECIAL_ASTEROID_GOLDEN.png" id="48"]
+[ext_resource type="Texture2D" uid="uid://dwu6i5mvtwns4" path="res://Art/Mods/SPECIAL_ASTEROID_GOLDEN_CRIT_CHANCE.png" id="49"]
+[ext_resource type="Texture2D" uid="uid://d0wbd4jwviut6" path="res://Art/Mods/SPECIAL_ASTEROID_GOLDEN_CRIT_BONUS_MONEY_SCALE.png" id="50"]
+[ext_resource type="Texture2D" uid="uid://ck381vu0kjq1g" path="res://Art/Mods/STAR_DENSITY.png" id="51"]
+[ext_resource type="Texture2D" uid="uid://b4whogrgeh7ae" path="res://Art/Mods/CLICKER_BONUS_DAMAGE_TO_STAR.png" id="52"]
+[ext_resource type="Texture2D" uid="uid://cqlo77ha3cl5w" path="res://Art/Mods/NUMBER_OF_PLANETS_INTO_STARS.png" id="53"]
+[ext_resource type="Texture2D" uid="uid://bqiclg676a5cv" path="res://Art/Mods/MAX_STAR_SIZE.png" id="54"]
+[ext_resource type="Texture2D" uid="uid://c0f0bqd04vbjq" path="res://Art/Mods/CHANCE_TO_ADD_TIME_ON_STAR_DESTROYED.png" id="55"]
+[ext_resource type="Texture2D" uid="uid://dwdulxdwrpqe3" path="res://Art/Mods/STAR_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW.png" id="56"]
+[ext_resource type="Texture2D" uid="uid://b7mglljhweb82" path="res://Art/Mods/CHANCE_TO_RESPAWN_STAR_ON_BREAK.png" id="57"]
+[ext_resource type="Texture2D" uid="uid://y144xhyvrm0y" path="res://Art/Mods/SPECIAL_STAR_LASER_SPAWN_CHANCE.png" id="58"]
+[ext_resource type="Texture2D" uid="uid://j4yemp4wy8b2" path="res://Art/Mods/LASER_DAMAGE.png" id="59"]
+[ext_resource type="Texture2D" uid="uid://bvyj0n3825umy" path="res://Art/Mods/LASER_WIDTH_SCALE.png" id="60"]
+[ext_resource type="Texture2D" uid="uid://cntq4iqekeo5w" path="res://Art/Mods/LASER_CRIT_CHANCE.png" id="61"]
+[ext_resource type="Texture2D" uid="uid://d1wolwsksof2q" path="res://Art/Mods/LASER_CRIT_BONUS.png" id="62"]
+[ext_resource type="Texture2D" uid="uid://cfpexax2bl3x3" path="res://Art/Mods/SPECIAL_STAR_SUPERNOVA_SPAWN_CHANCE.png" id="63"]
+[ext_resource type="Texture2D" uid="uid://b3t7t6g5j14vn" path="res://Art/Mods/SUPERNOVA_DAMAGE_PERCENT_CURRENT_HEALTH.png" id="64"]
+[ext_resource type="Texture2D" uid="uid://fwejdavquxnm" path="res://Art/Mods/SUPERNOVA_RADIUS_SCALE.png" id="65"]
+[ext_resource type="Texture2D" uid="uid://bvm28vtytf1dw" path="res://Art/Mods/MOON_LIMIT_HARD_CAP.png" id="66"]
+[ext_resource type="Texture2D" uid="uid://7ciuut4d70px" path="res://Art/Mods/SPECIAL_STAR_ELECTRIC_DAMAGE.png" id="67"]
+[ext_resource type="Texture2D" uid="uid://bosora3rsc6jo" path="res://Art/Mods/SPECIAL_STAR_ELECTRIC_MAX_CHAINS.png" id="68"]
+[ext_resource type="Texture2D" uid="uid://cpg4c6bdohohs" path="res://Art/Mods/SPECIAL_STAR_CHANCE_TO_FORK.png" id="69"]
+[ext_resource type="Texture2D" uid="uid://pnux7oxa7ymw" path="res://Art/Mods/SPECIAL_STAR_CHAIN_DISTANCE_SCALE.png" id="70"]
+[ext_resource type="Texture2D" uid="uid://cpts0c5wdyc1t" path="res://Art/Mods/SPECIAL_STAR_ELECTRIC_CRIT_CHANCE.png" id="71"]
+[ext_resource type="Texture2D" uid="uid://ckwrqy04nuiwa" path="res://Art/Mods/SPECIAL_STAR_ELECTRIC_CRIT_BONUS.png" id="72"]
+[ext_resource type="Texture2D" uid="uid://dp8ipf1yw4s7c" path="res://Art/Mods/SPECIAL_STAR_LASER_SPAWN_CHANCE_2.png" id="73"]
+[ext_resource type="Texture2D" uid="uid://du1nic5ggj2a4" path="res://Art/Mods/PLANETS_TO_SPAWN.png" id="74"]
+[ext_resource type="Texture2D" uid="uid://y6d2563lhaq2" path="res://Art/Mods/STARS_TO_SPAWN.png" id="75"]
+[ext_resource type="Texture2D" uid="uid://bpl630req72fv" path="res://Art/Mods/CLICKER_ELECTRIC_CLICKS_TO_START_WITH.png" id="76"]
+[ext_resource type="PackedScene" uid="uid://3ey4ti2j780a" path="res://Space/Asteroid.tscn" id="77"]
+[ext_resource type="PackedScene" uid="uid://b3gp50j1in7s0" path="res://Space/Planet.tscn" id="78"]
+[ext_resource type="PackedScene" uid="uid://coylx8tcilypr" path="res://Space/Star.tscn" id="79"]
+[ext_resource type="PackedScene" uid="uid://jihj2lwblq5n" path="res://Space/Comet.tscn" id="80"]
+[ext_resource type="PackedScene" uid="uid://cmvmhvd8euq0y" path="res://ResourceChanged.tscn" id="81"]
+[ext_resource type="PackedScene" uid="uid://cxy8io2wqwccr" path="res://Tech Tree Stuff/Tech Tree Node.tscn" id="82"]
+[ext_resource type="PackedScene" uid="uid://bxie42mrqp55d" path="res://Tech Tree Stuff/Tech Tree Line.tscn" id="83"]
+[ext_resource type="PackedScene" uid="uid://bk0bu7p5d0eqn" path="res://UFO.tscn" id="84"]
+[ext_resource type="PackedScene" uid="uid://ofxt6pd3tpt6" path="res://Upgrades Roguelike.tscn" id="85"]
+[ext_resource type="FontFile" uid="uid://b3pr0wiu2vksn" path="res://Theme/Exo2-Bold.ttf" id="86"]
+[ext_resource type="FontFile" uid="uid://djw363im2l6d" path="res://Theme/Exo2-BoldItalic.ttf" id="87"]
+[ext_resource type="FontFile" uid="uid://cv63dw5peeijb" path="res://Theme/Poppins-SemiBold.ttf" id="88"]
+[ext_resource type="FontFile" uid="uid://ddo8onuupejse" path="res://Theme/Poppins-Bold.ttf" id="89"]
+[ext_resource type="Texture2D" uid="uid://y0k4c4xy8dq8" path="res://Art/Demo/Asteroid Small.png" id="90"]
+[ext_resource type="Texture2D" uid="uid://cphtkj4xvd5sk" path="res://Art/Demo/UI/Planet Small.png" id="91"]
+[ext_resource type="Texture2D" uid="uid://ikkd5evxer6x" path="res://Art/Demo/Star Small.png" id="92"]
+[ext_resource type="Texture2D" uid="uid://dtj4ibnsckgb0" path="res://Art/Demo/Asteroid.png" id="93"]
+[ext_resource type="Texture2D" uid="uid://dofuh5qmx0xo1" path="res://Art/Demo/Planet.png" id="94"]
+[ext_resource type="Texture2D" uid="uid://dekqyhf72j7ot" path="res://Art/Demo/Star.png" id="95"]
+[ext_resource type="Texture2D" uid="uid://ti1ifn22o7lv" path="res://Art/Demo/Black Hole.png" id="96"]
+[ext_resource type="Texture2D" uid="uid://c2lk8ujnd6den" path="res://Art/Demo/Bomb.png" id="97"]
+[ext_resource type="Texture2D" uid="uid://bcwuarrywhyrp" path="res://Art/Demo/Electric.png" id="98"]
+[ext_resource type="Texture2D" uid="uid://c3ddcxwutals7" path="res://Art/Demo/Radioactive.png" id="99"]
+[ext_resource type="Texture2D" uid="uid://buh6hi1qse0ua" path="res://Art/Demo/noise08.png" id="100"]
+[ext_resource type="Texture2D" uid="uid://y0nh0g8ve7ln" path="res://Art/Demo/noise09.png" id="101"]
+[ext_resource type="Texture2D" uid="uid://grveb1qqldmp" path="res://Art/Demo/noise10.png" id="102"]
+[ext_resource type="Texture2D" uid="uid://c2m1iq3b6qgsj" path="res://Art/Demo/noise11.png" id="103"]
+[ext_resource type="Texture2D" uid="uid://btinmtf5y20s2" path="res://Art/Demo/noise12.png" id="104"]
+[ext_resource type="Texture2D" uid="uid://cm7wicao48ln2" path="res://Art/Demo/noise13.png" id="105"]
+[ext_resource type="Texture2D" uid="uid://c00ay41ss2jv7" path="res://Art/Demo/noise14.png" id="106"]
+[ext_resource type="Texture2D" uid="uid://lu552ilywnw7" path="res://Art/Demo/noise15.png" id="107"]
+[ext_resource type="Texture2D" uid="uid://dbrs4v80meape" path="res://Art/locked.png" id="108"]
+
+[node name="Refs" type="Node"]
+script = ExtResource("1")
+pallet = ExtResource("2")
+mod_textures = {
+1: ExtResource("3"),
+2: ExtResource("3"),
+3: ExtResource("4"),
+4: ExtResource("5"),
+5: ExtResource("6"),
+6: ExtResource("7"),
+7: ExtResource("8"),
+8: ExtResource("9"),
+9: ExtResource("10"),
+11: ExtResource("11"),
+12: ExtResource("12"),
+13: ExtResource("13"),
+14: ExtResource("14"),
+17: ExtResource("15"),
+18: ExtResource("16"),
+19: ExtResource("17"),
+20: ExtResource("18"),
+21: ExtResource("19"),
+22: ExtResource("20"),
+23: ExtResource("21"),
+24: ExtResource("22"),
+25: ExtResource("23"),
+26: ExtResource("24"),
+27: ExtResource("25"),
+28: ExtResource("26"),
+29: ExtResource("27"),
+30: ExtResource("28"),
+32: ExtResource("29"),
+34: ExtResource("30"),
+35: ExtResource("31"),
+36: ExtResource("32"),
+37: ExtResource("33"),
+38: ExtResource("34"),
+40: ExtResource("34"),
+41: ExtResource("35"),
+42: ExtResource("36"),
+50: ExtResource("37"),
+51: ExtResource("38"),
+55: ExtResource("39"),
+57: ExtResource("40"),
+59: ExtResource("41"),
+60: ExtResource("42"),
+61: ExtResource("43"),
+62: ExtResource("44"),
+64: ExtResource("45"),
+65: ExtResource("46"),
+69: ExtResource("47"),
+70: ExtResource("48"),
+71: ExtResource("49"),
+72: ExtResource("50"),
+77: ExtResource("51"),
+78: ExtResource("52"),
+79: ExtResource("53"),
+80: ExtResource("54"),
+81: ExtResource("55"),
+83: ExtResource("56"),
+84: ExtResource("57"),
+85: ExtResource("58"),
+86: ExtResource("59"),
+87: ExtResource("60"),
+88: ExtResource("61"),
+89: ExtResource("62"),
+90: ExtResource("63"),
+91: ExtResource("64"),
+92: ExtResource("65"),
+93: ExtResource("66"),
+99: ExtResource("67"),
+100: ExtResource("68"),
+101: ExtResource("69"),
+102: ExtResource("70"),
+103: ExtResource("71"),
+104: ExtResource("72"),
+105: ExtResource("73"),
+106: ExtResource("74"),
+107: ExtResource("75"),
+108: ExtResource("76")
+}
+packed_asteroid = ExtResource("77")
+packed_planet = ExtResource("78")
+packed_star = ExtResource("79")
+packed_comet = ExtResource("80")
+packed_resource_changed = ExtResource("81")
+packed_tech_tree_node = ExtResource("82")
+packed_tech_tree_line = ExtResource("83")
+packed_ufo = ExtResource("84")
+roguelike_screen_packed = ExtResource("85")
+damage_font = ExtResource("86")
+damage_crit_font = ExtResource("87")
+money_font = ExtResource("88")
+godlen_font = ExtResource("89")
+texture_matter_small = ExtResource("90")
+texture_planet_small = ExtResource("91")
+texture_sun_small = ExtResource("92")
+texture_matter = ExtResource("93")
+texture_planet = ExtResource("94")
+texture_star = ExtResource("95")
+texture_black_hole = ExtResource("96")
+texture_special_bomb = ExtResource("97")
+texture_special_electric = ExtResource("98")
+texture_special_radioactive = ExtResource("99")
+cloud_textures = [ExtResource("100"), ExtResource("101"), ExtResource("102"), ExtResource("103"), ExtResource("104"), ExtResource("105"), ExtResource("106"), ExtResource("107")]
+lock = ExtResource("108")

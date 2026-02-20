@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://cxdlrum1536e1"]
+
+[ext_resource type="Script" uid="uid://bupt471gcss2y" path="res://Minions/Tether.gd" id="1"]
+
+[node name="Tether" type="Line2D"]
+width = 6.0
+default_color = Color(0.443137, 0.443137, 0.45098, 1)
+script = ExtResource("1")
+
+[node name="RayCast2D" type="RayCast2D" parent="."]
+unique_name_in_owner = true
+collide_with_areas = true

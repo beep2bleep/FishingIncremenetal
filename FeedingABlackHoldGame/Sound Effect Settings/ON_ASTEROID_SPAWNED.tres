@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SoundEffectSettings" load_steps=3 format=3 uid="uid://qwt3dj4ambap"]
+
+[ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
+[ext_resource type="AudioStream" uid="uid://cetugtvvk15j2" path="res://Audio/dice_tap.mp3" id="2"]
+
+[resource]
+script = ExtResource("1")
+limit = 10
+type = 9
+sound_effect = ExtResource("2")
+volume = -15
+pitch_randomness = 0.1
+taper_fall_off_curve = null
+metadata/_custom_type_script = "uid://blskskrd6wv02"

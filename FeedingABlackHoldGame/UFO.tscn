@@ -1,0 +1,45 @@
+[gd_scene load_steps=8 format=3 uid="uid://bk0bu7p5d0eqn"]
+
+[ext_resource type="Script" uid="uid://b01dgxpn5fkd7" path="res://UFO.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://dhfkn0yrcnpt4" path="res://Minions/LineTrail.tscn" id="2"]
+[ext_resource type="Shader" uid="uid://jjye5gn7xqn2" path="res://Tendril.gdshader" id="3"]
+[ext_resource type="Texture2D" uid="uid://d1t02xo87btlr" path="res://Art/Player/Ship.png" id="4"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xyscg"]
+resource_local_to_scene = true
+shader = ExtResource("3")
+shader_parameter/lightning_number = 4
+shader_parameter/amplitude = Vector2(2, 1)
+shader_parameter/offset = 0.5
+shader_parameter/thickness = 0.05
+shader_parameter/speed = 1.0
+shader_parameter/base_color = Color(0.837, 0.8773, 0.93, 1)
+shader_parameter/glow_thickness = 0.035
+shader_parameter/glow_color = Color(0, 0, 0, 0.39215687)
+shader_parameter/alpha = 1.0
+
+[sub_resource type="Curve" id="Curve_4lsow"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1e-05, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.3439675), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="Gradient" id="Gradient_nu85q"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[node name="Ufo" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Line Trail" parent="." instance=ExtResource("2")]
+material = SubResource("ShaderMaterial_xyscg")
+position = Vector2(-117, -26)
+points = PackedVector2Array(106, 23, -17.899261, 24.376663, -254, 27)
+width = 100.0
+width_curve = SubResource("Curve_4lsow")
+gradient = SubResource("Gradient_nu85q")
+texture_mode = 1
+
+[node name="Pivot" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Ship Art" type="Sprite2D" parent="Pivot"]
+modulate = Color(0.443137, 0.443137, 0.45098, 1)
+texture = ExtResource("4")

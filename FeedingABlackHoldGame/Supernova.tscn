@@ -1,0 +1,70 @@
+[gd_scene load_steps=10 format=3 uid="uid://vw6ho1bly7sm"]
+
+[ext_resource type="Script" uid="uid://wjinprj8xstv" path="res://Supernova.gd" id="1"]
+[ext_resource type="Shader" uid="uid://cnie4edop410o" path="res://Space/Supernova.gdshader" id="2"]
+[ext_resource type="Texture2D" uid="uid://68rwe7nfmycw" path="res://Art/Space/Circle 400.png" id="3"]
+[ext_resource type="AudioStream" uid="uid://7aowclddouha" path="res://Audio/zapsplat_sound_design_hit_thud_into_descending_slowing_tail_slow_motion_001_65460.mp3" id="4"]
+[ext_resource type="AudioStream" uid="uid://ck565ylx77g0o" path="res://Audio/zapsplat_shockwave_designed_001_93120.mp3" id="5"]
+
+[sub_resource type="Animation" id="Animation_tgwgk"]
+length = 0.001
+
+[sub_resource type="Animation" id="Animation_y3ayh"]
+resource_name = "Supernova"
+length = 0.2
+tracks/0/type = "method"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0.2),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [],
+"method": &"deal_damage"
+}]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_c0y1x"]
+_data = {
+&"RESET": SubResource("Animation_tgwgk"),
+&"Supernova": SubResource("Animation_y3ayh")
+}
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_et1v0"]
+resource_local_to_scene = true
+shader = ExtResource("2")
+shader_parameter/color = Color(0.3234, 0.3234, 0.33, 1)
+shader_parameter/scale_factor = 3.0000001392401203
+
+[node name="Supernova" type="Node2D"]
+script = ExtResource("1")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_c0y1x")
+}
+
+[node name="Art Pivot" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Circle" type="Sprite2D" parent="Art Pivot"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_et1v0")
+scale = Vector2(6, 6)
+texture = ExtResource("3")
+
+[node name="Shrink AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("4")
+volume_db = -15.0
+bus = &"Effects"
+
+[node name="Explode" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("5")
+volume_db = -10.0
+pitch_scale = 1.1
+bus = &"Effects"

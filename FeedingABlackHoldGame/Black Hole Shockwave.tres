@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://yglpt6dxe3h3"]
+
+[ext_resource type="Shader" uid="uid://cl2732tifee1m" path="res://Singletons/Shockwave.gdshader" id="1"]
+
+[resource]
+resource_local_to_scene = true
+shader = ExtResource("1")
+shader_parameter/strength = 0.08
+shader_parameter/center = Vector2(0.5, 0.5)
+shader_parameter/radius = 0.0
+shader_parameter/aberration = 0.1
+shader_parameter/width = 0.0149999996205
+shader_parameter/feather = 0.030000001425

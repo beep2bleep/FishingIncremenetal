@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SoundEffectSettings" load_steps=3 format=3 uid="uid://b6ei7ku0bmh5k"]
+
+[ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
+[ext_resource type="AudioStream" uid="uid://dyxw5iq2xmvj" path="res://Audio/zapsplat_office_pen_biro_nib_tap_on_wood_001_33612.mp3" id="2"]
+
+[resource]
+script = ExtResource("1")
+type = 22
+sound_effect = ExtResource("2")
+volume = -20
+taper_fall_off_curve = null
+pitch_up_on_count_enabled = true
+pitch_up_amount_per_count = 0.05
+pitch_up_max_count = 10
+pitch_up_decay_rate = 0.25
+metadata/_custom_type_script = "uid://blskskrd6wv02"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GameModeData" load_steps=3 format=3 uid="uid://bxt7ksj0rqem"]
+
+[ext_resource type="Texture2D" uid="uid://cw7es5l6vipb5" path="res://Art/Mods/ASTEROID_DENSITY.png" id="1"]
+[ext_resource type="Script" uid="uid://ftm4fwuq2swm" path="res://GameModeData.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+name_key = "COMPACT_MODE"
+game_mode = 2
+description_key = "COMPACT_MODE_DESCRIPTION"
+data_path = "res://Data/Compact Data.json"
+icon = ExtResource("1")
+accent_color = Color(0.298039, 0.619608, 0.376471, 1)
+metadata/_custom_type_script = "uid://ftm4fwuq2swm"

@@ -1,0 +1,64 @@
+[gd_scene load_steps=5 format=3 uid="uid://c4vgwowxxvlkh"]
+
+[ext_resource type="Script" uid="uid://b5xuhibfcwi6r" path="res://Laser.gd" id="1"]
+
+[sub_resource type="Animation" id="Animation_y3ayh"]
+resource_name = "Laser"
+length = 0.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:default_color")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.033333335, 0.1, 0.3, 0.5),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 2),
+"update": 0,
+"values": [Color(0, 0, 0, 1), Color(1, 1, 1, 1), Color(0.619608, 0.360784, 0.376471, 1), Color(0.619608, 0.360784, 0.376471, 1), Color(1, 0, 0, 0)]
+}
+tracks/1/type = "method"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0.5),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [],
+"method": &"clean_up"
+}]
+}
+
+[sub_resource type="Animation" id="Animation_tgwgk"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:default_color")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 0, 0, 0.39215687)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_c0y1x"]
+_data = {
+&"Laser": SubResource("Animation_y3ayh"),
+&"RESET": SubResource("Animation_tgwgk")
+}
+
+[node name="Laser" type="Line2D"]
+points = PackedVector2Array(-19, 12, 508, 248)
+default_color = Color(1, 0, 0, 0.39215687)
+script = ExtResource("1")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_c0y1x")
+}

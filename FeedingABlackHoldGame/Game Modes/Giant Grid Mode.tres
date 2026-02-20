@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="GameModeData" load_steps=3 format=3 uid="uid://by02aqol2qqs7"]
+
+[ext_resource type="Texture2D" uid="uid://chsbnw7267jlf" path="res://Art/Giant Grid.png" id="1"]
+[ext_resource type="Script" uid="uid://ftm4fwuq2swm" path="res://GameModeData.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+name_key = "GIANT_GRID"
+game_mode = 5
+description_key = "GIANT_GRID_DESCRIPTION"
+data_path = "res://Art/Giant Grid.png"
+icon = ExtResource("1")
+coming_soon = true
+accent_color = Color(0.443137, 0.443137, 0.45098, 1)
+metadata/_custom_type_script = "uid://ftm4fwuq2swm"

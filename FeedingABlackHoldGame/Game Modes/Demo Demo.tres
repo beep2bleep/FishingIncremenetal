@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="GameModeData" load_steps=3 format=3 uid="uid://c2dkopdidua12"]
+
+[ext_resource type="Texture2D" uid="uid://j46l1lw3j3eu" path="res://Art/DAMAGE ICON.png" id="1"]
+[ext_resource type="Script" uid="uid://ftm4fwuq2swm" path="res://GameModeData.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+name_key = "DEMO_DEMO"
+game_mode = 9
+description_key = "DEMO_DEMO_DESCRIPTION"
+data_path = "res://Data/Full Release Demo Level.json"
+icon = ExtResource("1")
+is_for_demo = true
+accent_color = Color(0.619608, 0.360784, 0.376471, 1)
+metadata/_custom_type_script = "uid://ftm4fwuq2swm"

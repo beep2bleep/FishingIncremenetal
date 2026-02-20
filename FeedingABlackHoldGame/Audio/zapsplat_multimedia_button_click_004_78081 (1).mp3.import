@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://cpigduse20juq"
+path="res://.godot/imported/zapsplat_multimedia_button_click_004_78081 (1).mp3-57c38706eb44e36298dc54510694e0b9.mp3str"
+
+[deps]
+
+source_file="res://Audio/zapsplat_multimedia_button_click_004_78081 (1).mp3"
+dest_files=["res://.godot/imported/zapsplat_multimedia_button_click_004_78081 (1).mp3-57c38706eb44e36298dc54510694e0b9.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0.0
+bpm=0.0
+beat_count=0
+bar_beats=4

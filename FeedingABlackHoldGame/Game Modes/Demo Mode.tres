@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="GameModeData" load_steps=3 format=3 uid="uid://qskhill06bvd"]
+
+[ext_resource type="Texture2D" uid="uid://byxhxiqv5e8rv" path="res://Art/Mods/CHANCE_TO_SPAWN_SPECIAL_ASTEROID_RADIOACTIVE.png" id="1"]
+[ext_resource type="Script" uid="uid://ftm4fwuq2swm" path="res://GameModeData.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+name_key = "DEMO_MODE"
+game_mode = 8
+description_key = "DEMO_MODE_DESCRIPTION"
+data_path = "res://Data/Full Release Demo Level.json"
+icon = ExtResource("1")
+hide_in_demo = true
+accent_color = Color(0.48235294, 0.26666668, 0.7019608, 1)
+metadata/_custom_type_script = "uid://ftm4fwuq2swm"

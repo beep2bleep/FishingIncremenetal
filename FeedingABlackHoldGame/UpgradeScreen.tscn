@@ -1,0 +1,498 @@
+[gd_scene load_steps=34 format=3 uid="uid://byqm01o15l54s"]
+
+[ext_resource type="Script" uid="uid://d33w3gdnorjvq" path="res://UpgradeScreen.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://bfvsjnywyisxq" path="res://Art/star_tiny.png" id="2"]
+[ext_resource type="Material" uid="uid://cakm54wjwjrki" path="res://Upgrade Tree Particles.tres" id="3"]
+[ext_resource type="Shader" uid="uid://b7pnre46plghh" path="res://Space/Ring.gdshader" id="4"]
+[ext_resource type="PackedScene" uid="uid://57y3admkc7re" path="res://Tech Tree Stuff/Tech Tree.tscn" id="5"]
+[ext_resource type="PackedScene" uid="uid://cqlrg65orbe51" path="res://Debugger.tscn" id="6"]
+[ext_resource type="Theme" uid="uid://dl1181xufyebq" path="res://Theme/Theme.tres" id="7"]
+[ext_resource type="Script" uid="uid://c36s4gjs5sv4r" path="res://addons/controller_icons/objects/ControllerIconTexture.gd" id="8"]
+[ext_resource type="Theme" uid="uid://bxx07kmhw0oiv" path="res://Theme/Theme_Small_Medium_Font.tres" id="9"]
+[ext_resource type="Texture2D" uid="uid://bl272cu024xnc" path="res://Art/mouse_move.png" id="10"]
+[ext_resource type="Texture2D" uid="uid://gymsrqnwubcb" path="res://addons/controller_icons/assets/luna/playstation_dpad_none.png" id="11"]
+[ext_resource type="PackedScene" uid="uid://dv47ipwa0yhh5" path="res://MoneyUI.tscn" id="12"]
+[ext_resource type="PackedScene" uid="uid://ds36c3qoqmf3y" path="res://Controller Glyph.tscn" id="13"]
+[ext_resource type="PackedScene" uid="uid://b5w1afldacdb1" path="res://CustomButton.tscn" id="14"]
+[ext_resource type="Theme" uid="uid://f0mobaom23an" path="res://Theme/Theme_Large_Font.tres" id="15"]
+[ext_resource type="AudioStream" uid="uid://qbo4604fr8uj" path="res://Art/Level_Up_Sound_1.mp3" id="16"]
+[ext_resource type="AudioStream" uid="uid://bnuy2l0f83nih" path="res://Art/Level_Up_Sound_2.mp3" id="17"]
+[ext_resource type="AudioStream" uid="uid://x6ebtbv6nen6" path="res://Art/Level_Up_Sound_3.mp3" id="18"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_oxvjb"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_wxmar"]
+noise = SubResource("FastNoiseLite_oxvjb")
+seamless = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_h22ww"]
+shader = ExtResource("4")
+shader_parameter/radius = 0.5
+shader_parameter/thickness = 0.5
+shader_parameter/color = Color(0.3234, 0.3234, 0.33, 1)
+shader_parameter/angular_speed = -1.0
+shader_parameter/radial_speed = 0.33
+shader_parameter/alpha = 0.5
+shader_parameter/noise = SubResource("NoiseTexture2D_wxmar")
+
+[sub_resource type="Gradient" id="Gradient_ecqmv"]
+offsets = PackedFloat32Array(0)
+colors = PackedColorArray(0.3234, 0.3234, 0.33, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_i1n44"]
+gradient = SubResource("Gradient_ecqmv")
+width = 1000
+height = 1000
+
+[sub_resource type="Shader" id="Shader_w2gm2"]
+code = "shader_type canvas_item;
+
+uniform float vignette_intensity = 0.4;
+uniform float vignette_opacity : hint_range(0.0, 1.0) = 0.5;
+uniform vec4 vignette_rgb : source_color = vec4(0.0, 0.0, 0.0, 1.0);
+uniform sampler2D SCREEN_TEXTURE: hint_screen_texture, filter_linear_mipmap;
+
+float vignette(vec2 uv){
+	uv *= 1.0 - uv.xy;
+	float vignette = uv.x * uv.y * 15.0;
+	return pow(vignette, vignette_intensity * vignette_opacity);
+}
+
+void fragment(){
+	vec4 color = texture(SCREEN_TEXTURE, SCREEN_UV);
+	vec4 text = texture(TEXTURE, UV);
+
+	text.rgba *= (vignette_rgb.rgba);
+	text.rgba *= (1.0 - vignette(UV));
+
+	COLOR = vec4((text.rgb)*color.rgb,text.a);
+}"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_w4ccx"]
+shader = SubResource("Shader_w2gm2")
+shader_parameter/vignette_intensity = 0.1
+shader_parameter/vignette_opacity = 0.800000038
+shader_parameter/vignette_rgb = Color(0.443137, 0.443137, 0.45098, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ynmkx"]
+bg_color = Color(0.3234, 0.3234, 0.33, 1)
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+
+[sub_resource type="Texture2D" id="Texture2D_3ekk3"]
+script = ExtResource("8")
+path = "up"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="Texture2D" id="Texture2D_otxmk"]
+script = ExtResource("8")
+path = "left"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="Texture2D" id="Texture2D_j08ae"]
+script = ExtResource("8")
+path = "down"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="Texture2D" id="Texture2D_e6n0r"]
+script = ExtResource("8")
+path = "right"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="Texture2D" id="Texture2D_i1n44"]
+script = ExtResource("8")
+path = "Grab"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="Texture2D" id="Texture2D_h22ww"]
+script = ExtResource("8")
+path = "go again"
+custom_label_settings = null
+metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1ss27"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_color = Color(0.3234, 0.3234, 0.33, 1)
+
+[node name="UpgradeScreen" type="CanvasLayer"]
+layer = 3
+script = ExtResource("1")
+
+[node name="Click Mask" type="ColorRect" parent="."]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.921569, 0.921569, 0.882353, 1)
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+layer = 4
+follow_viewport_enabled = true
+
+[node name="Background Particles" type="Node2D" parent="CanvasLayer"]
+unique_name_in_owner = true
+
+[node name="GPUParticles2D Light" type="GPUParticles2D" parent="CanvasLayer/Background Particles"]
+unique_name_in_owner = true
+amount = 64
+texture = ExtResource("2")
+lifetime = 5.0
+preprocess = 10.0
+randomness = 0.5
+process_material = ExtResource("3")
+
+[node name="GPUParticles2D2 Dark" type="GPUParticles2D" parent="CanvasLayer/Background Particles"]
+unique_name_in_owner = true
+amount = 64
+texture = ExtResource("2")
+lifetime = 5.0
+preprocess = 10.0
+randomness = 0.5
+process_material = ExtResource("3")
+
+[node name="Maw Art" type="Sprite2D" parent="CanvasLayer/Background Particles"]
+unique_name_in_owner = true
+visible = false
+z_index = -1
+material = SubResource("ShaderMaterial_h22ww")
+texture = SubResource("GradientTexture2D_i1n44")
+
+[node name="Tech Tree" parent="CanvasLayer" instance=ExtResource("5")]
+unique_name_in_owner = true
+
+[node name="CanvasLayer2" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+layer = 4
+
+[node name="Debugger" parent="CanvasLayer2" instance=ExtResource("6")]
+visible = false
+offset_right = 333.0
+offset_bottom = 582.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer2"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Vignette Color Rect" type="ColorRect" parent="CanvasLayer2/VBoxContainer"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_w4ccx")
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="Bottom Bar" type="PanelContainer" parent="CanvasLayer2/VBoxContainer"]
+unique_name_in_owner = true
+z_index = 10
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ynmkx")
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar"]
+z_index = 5
+layout_mode = 2
+mouse_filter = 0
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 5
+
+[node name="Icons Coming Soon" type="Label" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 8
+theme = ExtResource("7")
+theme_override_colors/font_color = Color(0.443137, 0.443137, 0.45098, 1)
+text = "*Icons are coming soon™"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="Controls" type="HBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 50
+
+[node name="Pan Tree" type="VBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 8
+mouse_filter = 2
+theme_override_constants/separation = -5
+alignment = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Pan Tree"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = -5
+alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Pan Tree/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Pan Tree/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+mouse_filter = 2
+texture = SubResource("Texture2D_3ekk3")
+expand_mode = 5
+stretch_mode = 5
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Pan Tree/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = -5
+alignment = 1
+
+[node name="TextureRect2" type="TextureRect" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Pan Tree/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+mouse_filter = 2
+texture = SubResource("Texture2D_otxmk")
+expand_mode = 5
+stretch_mode = 5
+
+[node name="TextureRect3" type="TextureRect" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Pan Tree/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+mouse_filter = 2
+texture = SubResource("Texture2D_j08ae")
+expand_mode = 5
+stretch_mode = 5
+
+[node name="TextureRect4" type="TextureRect" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Pan Tree/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+mouse_filter = 2
+texture = SubResource("Texture2D_e6n0r")
+expand_mode = 5
+stretch_mode = 5
+
+[node name="Label2" type="Label" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Pan Tree"]
+layout_mode = 2
+size_flags_vertical = 7
+theme = ExtResource("9")
+text = "PAN TREE"
+horizontal_alignment = 1
+vertical_alignment = 2
+autowrap_mode = 3
+
+[node name="Mouse Drag Tree" type="VBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 8
+mouse_filter = 2
+theme_override_constants/separation = -5
+alignment = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Mouse Drag Tree"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = -5
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Mouse Drag Tree/HBoxContainer"]
+custom_minimum_size = Vector2(52, 52)
+layout_mode = 2
+mouse_filter = 2
+texture = SubResource("Texture2D_i1n44")
+expand_mode = 3
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Mouse Drag Tree/HBoxContainer"]
+layout_mode = 2
+text = "+"
+
+[node name="TextureRect2" type="TextureRect" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Mouse Drag Tree/HBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("10")
+expand_mode = 3
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Mouse Drag Tree"]
+layout_mode = 2
+size_flags_vertical = 7
+theme = ExtResource("9")
+text = "DRAG TREE"
+horizontal_alignment = 1
+vertical_alignment = 2
+autowrap_mode = 3
+
+[node name="Navigate DPAD" type="VBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 8
+mouse_filter = 2
+theme_override_constants/separation = -5
+alignment = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Navigate DPAD"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = -5
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Navigate DPAD/HBoxContainer"]
+custom_minimum_size = Vector2(52, 52)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("11")
+expand_mode = 3
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Navigate DPAD/HBoxContainer"]
+visible = false
+layout_mode = 2
+text = "+"
+
+[node name="TextureRect2" type="TextureRect" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Navigate DPAD/HBoxContainer"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("10")
+expand_mode = 3
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/Navigate DPAD"]
+layout_mode = 2
+size_flags_vertical = 6
+theme = ExtResource("9")
+text = "NAVIGATE"
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 8
+mouse_filter = 2
+theme_override_constants/separation = -5
+alignment = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/VBoxContainer2"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/VBoxContainer2/HBoxContainer"]
+custom_minimum_size = Vector2(52, 52)
+layout_mode = 2
+mouse_filter = 2
+texture = SubResource("Texture2D_i1n44")
+expand_mode = 3
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/Controls/VBoxContainer2"]
+layout_mode = 2
+size_flags_vertical = 7
+theme = ExtResource("9")
+text = "BUY UPGRADE"
+horizontal_alignment = 1
+vertical_alignment = 2
+autowrap_mode = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+mouse_filter = 0
+
+[node name="Moeny UI" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/MarginContainer/VBoxContainer" instance=ExtResource("12")]
+unique_name_in_owner = true
+z_index = 2
+layout_mode = 2
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="MarginContainer2" type="MarginContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/MarginContainer2"]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="Controller Glyph" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/MarginContainer2/HBoxContainer" instance=ExtResource("13")]
+layout_mode = 2
+texture = SubResource("Texture2D_h22ww")
+always_show = true
+enabled = false
+
+[node name="Go Again" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/MarginContainer2/HBoxContainer" instance=ExtResource("14")]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 1
+theme = ExtResource("15")
+text = "CONTINUE"
+
+[node name="Popup Layer" type="CanvasLayer" parent="."]
+unique_name_in_owner = true
+layer = 5
+
+[node name="Panel" type="Panel" parent="."]
+visible = false
+z_index = 11
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_1ss27")
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("16")
+volume_db = -20.0
+bus = &"Effects"
+
+[node name="AudioStreamPlayer2" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("17")
+volume_db = -19.0
+bus = &"Effects"
+
+[node name="AudioStreamPlayer3" type="AudioStreamPlayer" parent="."]
+unique_name_in_owner = true
+stream = ExtResource("18")
+volume_db = -18.0
+bus = &"Effects"
+
+[connection signal="gui_input" from="Click Mask" to="." method="_on_color_rect_gui_input"]
+[connection signal="selected_node_changed" from="CanvasLayer/Tech Tree" to="." method="_on_tech_tree_selected_node_changed"]
+[connection signal="pressed" from="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/MarginContainer2/HBoxContainer/Go Again" to="." method="_on_go_again_pressed"]

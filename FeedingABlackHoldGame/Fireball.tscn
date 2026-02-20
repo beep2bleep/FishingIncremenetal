@@ -1,0 +1,31 @@
+[gd_scene load_steps=6 format=3 uid="uid://b2wh2n2yuodpt"]
+
+[ext_resource type="Script" uid="uid://bdf5f8jw64jki" path="res://Fireball.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://dhfkn0yrcnpt4" path="res://Minions/LineTrail.tscn" id="2"]
+[ext_resource type="Texture2D" uid="uid://d1mrf55wehcgh" path="res://Art/Mods/Planet.png" id="3"]
+
+[sub_resource type="Curve" id="Curve_llehy"]
+_data = [Vector2(1e-05, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), -1.0000099, 0.0, 1, 0]
+point_count = 2
+
+[sub_resource type="Gradient" id="Gradient_llehy"]
+offsets = PackedFloat32Array(0.15, 0.5, 0.8, 1)
+colors = PackedColorArray(0.619608, 0.360784, 0.376471, 1, 0.788235, 0.478431, 0.298039, 1, 0.788235, 0.705882, 0.298039, 1, 0.79, 0.7083667, 0.30020002, 0)
+
+[node name="Fireball" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Line Trail" parent="." instance=ExtResource("2")]
+unique_name_in_owner = true
+points = PackedVector2Array(-3, -2, -469, 0)
+width = 80.0
+width_curve = SubResource("Curve_llehy")
+gradient = SubResource("Gradient_llehy")
+trail_duration = 0.33
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+unique_name_in_owner = true
+self_modulate = Color(0.619608, 0.360784, 0.376471, 1)
+position = Vector2(0, 2.3841858e-07)
+scale = Vector2(2, 2)
+texture = ExtResource("3")

@@ -1,0 +1,256 @@
+[gd_scene load_steps=14 format=3 uid="uid://jd3fk8xksboi"]
+
+[ext_resource type="Theme" uid="uid://f0mobaom23an" path="res://Theme/Theme_Large_Font.tres" id="1"]
+[ext_resource type="Script" uid="uid://b082p53uvrdtu" path="res://Controls.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://dymts87wtiitf" path="res://Art/Player/keyboard_w_outline.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://ct8musron12i7" path="res://Art/keyboard_a_outline.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://85w1b0575g2p" path="res://Art/keyboard_s_outline.png" id="5"]
+[ext_resource type="Texture2D" uid="uid://cpq4g5m1sn0n4" path="res://Art/keyboard_d_outline.png" id="6"]
+[ext_resource type="Theme" uid="uid://ulae55bx0fhs" path="res://Theme/Theme_Small_Font.tres" id="7"]
+[ext_resource type="Texture2D" uid="uid://m0u1aqvsie8k" path="res://Art/left.png" id="8"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o4rec"]
+bg_color = Color(0.82, 0.82, 0.7872, 0.588235)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.443137, 0.443137, 0.45098, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="Animation" id="Animation_j8ncr"]
+resource_name = "Fade IN"
+length = 0.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 0.5),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+tracks/1/type = "method"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0.5),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [true],
+"method": &"set_process_input"
+}]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath(".:visible")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
+}
+
+[sub_resource type="Animation" id="Animation_3dbxb"]
+resource_name = "Fade Out"
+length = 0.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(0.5, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+tracks/1/type = "method"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [false],
+"method": &"set_process_input"
+}]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath(".:visible")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0.5),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+
+[sub_resource type="Animation" id="Animation_pg25r"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:visible")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_3dbxb"]
+_data = {
+&"Fade IN": SubResource("Animation_j8ncr"),
+&"Fade Out": SubResource("Animation_3dbxb"),
+&"RESET": SubResource("Animation_pg25r")
+}
+
+[node name="Controls" type="MarginContainer"]
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -161.0
+offset_top = -158.0
+offset_right = 162.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme = ExtResource("1")
+script = ExtResource("2")
+
+[node name="Controls" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="PanelContainer" type="PanelContainer" parent="Controls"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_o4rec")
+
+[node name="MarginContainer" type="MarginContainer" parent="Controls/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Controls/PanelContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Controls/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme = ExtResource("1")
+theme_override_colors/font_color = Color(0.3234, 0.3234, 0.33, 1)
+text = "MINE"
+horizontal_alignment = 1
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="Controls/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Controls/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Controls/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="Controls/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3/VBoxContainer/HBoxContainer"]
+modulate = Color(0.3234, 0.3234, 0.33, 1)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("3")
+stretch_mode = 5
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Controls/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3/VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="TextureRect2" type="TextureRect" parent="Controls/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3/VBoxContainer/HBoxContainer2"]
+modulate = Color(0.3234, 0.3234, 0.33, 1)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("4")
+stretch_mode = 5
+
+[node name="TextureRect3" type="TextureRect" parent="Controls/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3/VBoxContainer/HBoxContainer2"]
+modulate = Color(0.3234, 0.3234, 0.33, 1)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("5")
+stretch_mode = 5
+
+[node name="TextureRect4" type="TextureRect" parent="Controls/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3/VBoxContainer/HBoxContainer2"]
+modulate = Color(0.3234, 0.3234, 0.33, 1)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("6")
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="Controls/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3"]
+visible = false
+layout_mode = 2
+theme = ExtResource("7")
+theme_override_colors/font_color = Color(0.3234, 0.3234, 0.33, 1)
+text = "OR"
+horizontal_alignment = 1
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="Controls/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="Controls/PanelContainer/MarginContainer/VBoxContainer/HBoxContainer3/HBoxContainer3"]
+modulate = Color(0.3234, 0.3234, 0.33, 1)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("8")
+stretch_mode = 5
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_3dbxb")
+}
+autoplay = "Fade IN"

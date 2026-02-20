@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SoundEffectSettings" format=3 uid="uid://duvymqc8s80lj"]
+
+[ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
+[ext_resource type="AudioStream" uid="uid://bhrbp5aljlqcv" path="res://Star Electric.mp3" id="2"]
+
+[sub_resource type="Curve" id="Curve_3hgvt"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(1, 1), 1.4, 0.0, 0, 0]
+point_count = 2
+
+[resource]
+script = ExtResource("1")
+limit = 3
+type = 26
+sound_effect = ExtResource("2")
+volume = -18
+pitch_scale = 1.1
+taper_off_enabled = true
+taper_off_db_amount = 4.0
+play_limit_to_full_taper = 25
+taper_fall_off_curve = SubResource("Curve_3hgvt")
+metadata/_custom_type_script = "uid://blskskrd6wv02"

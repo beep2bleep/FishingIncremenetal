@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://bk1xxmjx5m18s"]
+
+[ext_resource type="Shader" uid="uid://ds3db77367xg2" path="res://Space/Laser Star Effect.gdshader" id="1"]
+
+[resource]
+resource_local_to_scene = true
+shader = ExtResource("1")
+shader_parameter/maxLineWidth = 100.0
+shader_parameter/minLineWidth = 0.0
+shader_parameter/speed = 10.0
+shader_parameter/blockSize = 20.0
+shader_parameter/color = Color(0.619608, 0.360784, 0.376471, 1)
+shader_parameter/tolerance = 0.9990000128746

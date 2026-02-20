@@ -1,0 +1,21 @@
+[gd_scene load_steps=5 format=3 uid="uid://dj6et7gqll1qa"]
+
+[ext_resource type="Script" uid="uid://obh8figo1wnb" path="res://BlackHole.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://csskdoeyin7nn" path="res://LevelManager.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://clfcokk1jcg2q" path="res://Black Hole Art.tscn" id="3"]
+
+[sub_resource type="Curve" id="Curve_fwxnr"]
+_data = [Vector2(0, 0.32818025), 0.0, 0.0, 0, 0, Vector2(1, 1), 1.7677306, 0.0, 0, 0]
+point_count = 2
+
+[node name="Black Hole" type="Node2D"]
+script = ExtResource("1")
+size_curve = SubResource("Curve_fwxnr")
+
+[node name="LevelManager" parent="." instance=ExtResource("2")]
+unique_name_in_owner = true
+
+[node name="Black Hole Art" parent="." instance=ExtResource("3")]
+unique_name_in_owner = true
+
+[connection signal="updated" from="LevelManager" to="." method="_on_level_manager_updated"]

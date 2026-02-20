@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GameModeData" load_steps=3 format=3 uid="uid://cbwq2534x7cpg"]
+
+[ext_resource type="Texture2D" uid="uid://dv2w0ttixfxtv" path="res://Art/Mods/CHANCE_TO_SPAWN_SPECIAL_ASTEROID_ELECTRIC.png" id="1"]
+[ext_resource type="Script" uid="uid://ftm4fwuq2swm" path="res://GameModeData.gd" id="2"]
+
+[resource]
+script = ExtResource("2")
+name_key = "QUICK_PLAY"
+game_mode = 1
+description_key = "QUICK_PLAY_DESCRIPTION"
+data_path = "res://Data/Quick Play Data.json"
+icon = ExtResource("1")
+accent_color = Color(0.788235, 0.705882, 0.298039, 1)
+metadata/_custom_type_script = "uid://ftm4fwuq2swm"

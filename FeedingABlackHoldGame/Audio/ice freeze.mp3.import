@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dn1ch15s0dke0"
+path="res://.godot/imported/ice freeze.mp3-2bd710cd6dda3a0237c2ba9e58d50390.mp3str"
+
+[deps]
+
+source_file="res://Audio/ice freeze.mp3"
+dest_files=["res://.godot/imported/ice freeze.mp3-2bd710cd6dda3a0237c2ba9e58d50390.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0.0
+bpm=0.0
+beat_count=0
+bar_beats=4
