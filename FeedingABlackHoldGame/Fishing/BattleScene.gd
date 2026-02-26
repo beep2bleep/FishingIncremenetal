@@ -26,6 +26,10 @@ const DEFEAT_FALL_DURATION := 1.2
 const DEFEAT_FALL_ROT_SPEED := 1.8
 const BASE_POWER_REGEN_PER_SEC := 7.0
 const ACTIVE_CHARGE_PER_CLICK := 20.0
+const PLATFORMING_PACK_SPRITES := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites"
+const HERO_RENDER_SCALE := 0.72
+const ENEMY_RENDER_SCALE := 1.45
+const BOSS_RENDER_SCALE := ENEMY_RENDER_SCALE * 2.0
 const LEVEL_BG_THEMES := {
     1: {
         "sky_base": Color(0.08, 0.08, 0.2, 1.0),
@@ -470,35 +474,118 @@ func _make_atari_ground_texture(w: int, h: int, c1: Color, c2: Color, accent: Co
     return ImageTexture.create_from_image(img)
 
 func _setup_actor_sheets() -> void:
+    var character_base: String = PLATFORMING_PACK_SPRITES + "/Characters/Default"
+    var knight_visual: Dictionary = _make_pack_actor(
+        character_base + "/character_beige_walk_a.png",
+        character_base + "/character_beige_walk_b.png",
+        character_base + "/character_beige_hit.png",
+        HERO_FRAME_SIZE,
+        Color(0.25, 0.74, 0.98, 1.0),
+        "knight",
+        HERO_RENDER_SCALE
+    )
+    var archer_visual: Dictionary = _make_pack_actor(
+        character_base + "/character_green_walk_a.png",
+        character_base + "/character_green_walk_b.png",
+        character_base + "/character_green_hit.png",
+        HERO_FRAME_SIZE,
+        Color(0.99, 0.58, 0.17, 1.0),
+        "archer",
+        HERO_RENDER_SCALE
+    )
+    var guardian_visual: Dictionary = _make_pack_actor(
+        character_base + "/character_pink_walk_a.png",
+        character_base + "/character_pink_walk_b.png",
+        character_base + "/character_pink_hit.png",
+        HERO_FRAME_SIZE,
+        Color(0.28, 0.86, 0.41, 1.0),
+        "guardian",
+        HERO_RENDER_SCALE
+    )
+    var mage_visual: Dictionary = _make_pack_actor(
+        character_base + "/character_purple_walk_a.png",
+        character_base + "/character_purple_walk_b.png",
+        character_base + "/character_purple_hit.png",
+        HERO_FRAME_SIZE,
+        Color(0.86, 0.33, 0.35, 1.0),
+        "mage",
+        HERO_RENDER_SCALE
+    )
     hero_sheets = {
-        "knight": _make_actor_sheet(HERO_FRAME_SIZE, Color(0.25, 0.74, 0.98, 1.0), Color(0.92, 0.92, 0.92, 1.0), "knight", false),
-        "archer": _make_actor_sheet(HERO_FRAME_SIZE, Color(0.99, 0.58, 0.17, 1.0), Color(0.92, 0.92, 0.92, 1.0), "archer", false),
-        "guardian": _make_actor_sheet(HERO_FRAME_SIZE, Color(0.28, 0.86, 0.41, 1.0), Color(0.92, 0.92, 0.92, 1.0), "guardian", false),
-        "mage": _make_actor_sheet(HERO_FRAME_SIZE, Color(0.86, 0.33, 0.35, 1.0), Color(0.92, 0.92, 0.92, 1.0), "mage", false),
+        "knight": knight_visual,
+        "archer": archer_visual,
+        "guardian": guardian_visual,
+        "mage": mage_visual,
     }
+
+    var enemy_base: String = PLATFORMING_PACK_SPRITES + "/Enemies/Default"
+    var goblin_visual: Dictionary = _make_pack_actor(
+        enemy_base + "/snail_walk_a.png",
+        enemy_base + "/snail_walk_b.png",
+        enemy_base + "/snail_shell.png",
+        ENEMY_FRAME_SIZE,
+        Color(0.83, 0.23, 0.23, 1.0),
+        "goblin",
+        ENEMY_RENDER_SCALE,
+        true
+    )
+    var brute_visual: Dictionary = _make_pack_actor(
+        enemy_base + "/slime_fire_walk_a.png",
+        enemy_base + "/slime_fire_walk_b.png",
+        enemy_base + "/slime_fire_flat.png",
+        ENEMY_FRAME_SIZE,
+        Color(0.75, 0.16, 0.58, 1.0),
+        "brute",
+        ENEMY_RENDER_SCALE,
+        true
+    )
+    var flyer_visual: Dictionary = _make_pack_actor(
+        enemy_base + "/bee_a.png",
+        enemy_base + "/bee_b.png",
+        enemy_base + "/bee_rest.png",
+        ENEMY_FRAME_SIZE,
+        Color(0.93, 0.67, 0.21, 1.0),
+        "flyer",
+        ENEMY_RENDER_SCALE,
+        true
+    )
+    var boss_visual: Dictionary = _make_pack_actor(
+        enemy_base + "/worm_ring_move_a.png",
+        enemy_base + "/worm_ring_move_b.png",
+        enemy_base + "/worm_ring_rest.png",
+        BOSS_FRAME_SIZE,
+        Color(0.76, 0.27, 0.84, 1.0),
+        "boss",
+        BOSS_RENDER_SCALE,
+        true
+    )
 
     enemy_defs = {
         "goblin": {
-            "sheet": _make_actor_sheet(ENEMY_FRAME_SIZE, Color(0.83, 0.23, 0.23, 1.0), Color(0.92, 0.92, 0.92, 1.0), "goblin", true),
-            "frame": ENEMY_FRAME_SIZE,
+            "sheet": goblin_visual["sheet"],
+            "frame": goblin_visual["frame"],
+            "scale": ENEMY_RENDER_SCALE,
             "speed": 55.0,
             "coins": 10,
         },
         "brute": {
-            "sheet": _make_actor_sheet(ENEMY_FRAME_SIZE, Color(0.75, 0.16, 0.58, 1.0), Color(0.92, 0.92, 0.92, 1.0), "brute", true),
-            "frame": ENEMY_FRAME_SIZE,
+            "sheet": brute_visual["sheet"],
+            "frame": brute_visual["frame"],
+            "scale": ENEMY_RENDER_SCALE,
             "speed": 36.0,
             "coins": 16,
         },
         "flyer": {
-            "sheet": _make_actor_sheet(ENEMY_FRAME_SIZE, Color(0.93, 0.67, 0.21, 1.0), Color(0.92, 0.92, 0.92, 1.0), "flyer", true),
-            "frame": ENEMY_FRAME_SIZE,
+            "sheet": flyer_visual["sheet"],
+            "frame": flyer_visual["frame"],
+            "scale": ENEMY_RENDER_SCALE,
             "speed": 68.0,
             "coins": 14,
         },
         "boss": {
-            "sheet": _make_actor_sheet(BOSS_FRAME_SIZE, Color(0.76, 0.27, 0.84, 1.0), Color(0.92, 0.92, 0.92, 1.0), "boss", true),
-            "frame": BOSS_FRAME_SIZE,
+            "sheet": boss_visual["sheet"],
+            "frame": boss_visual["frame"],
+            "scale": BOSS_RENDER_SCALE,
             "speed": 22.0,
             "coins": 120,
         },
@@ -691,7 +778,8 @@ func _spawn_heroes() -> void:
         var hero_name: String = roster[i]
         var hero: CombatSprite = HERO_SCENE.instantiate()
         hero.position = Vector2(HERO_START_X - float(i) * 40.0, FLOOR_Y)
-        hero.setup(hero_sheets[hero_name], HERO_FRAME_SIZE, 3.8)
+        var hero_visual: Dictionary = hero_sheets[hero_name]
+        hero.setup(hero_visual["sheet"], hero_visual["frame"], float(hero_visual.get("scale", HERO_RENDER_SCALE)))
         hero.clicked.connect(_on_hero_clicked.bind(hero_name))
         hero_layer.add_child(hero)
         heroes.append(hero)
@@ -721,12 +809,13 @@ func _spawn_enemy_for_level(level_index: int) -> void:
 
     var enemy: CombatSprite = HERO_SCENE.instantiate()
     enemy.position = Vector2(_next_enemy_spawn_x(), FLOOR_Y)
-    enemy.setup(data["sheet"], data["frame"], 3.2)
+    var enemy_scale: float = float(data.get("scale", ENEMY_RENDER_SCALE))
+    enemy.setup(data["sheet"], data["frame"], enemy_scale)
     enemy_layer.add_child(enemy)
     enemies.append(enemy)
 
     var hp: float = float(lp["enemy_hp"]) * _enemy_hp_mult()
-    var bar_data: Dictionary = _add_health_bar(enemy, data["frame"], 3.2)
+    var bar_data: Dictionary = _add_health_bar(enemy, data["frame"], enemy_scale)
     var reward_mult: float = _level_reward_mult(level_index)
     enemy_data[enemy] = {
         "type": key,
@@ -747,12 +836,13 @@ func _spawn_boss_for_level(level_index: int) -> void:
 
     var enemy: CombatSprite = HERO_SCENE.instantiate()
     enemy.position = Vector2(_next_enemy_spawn_x() + 120.0, FLOOR_Y)
-    enemy.setup(data["sheet"], data["frame"], 4.4)
+    var boss_scale: float = float(data.get("scale", BOSS_RENDER_SCALE))
+    enemy.setup(data["sheet"], data["frame"], boss_scale)
     enemy_layer.add_child(enemy)
     enemies.append(enemy)
 
     var hp: float = float(lp["boss_hp"]) * _boss_hp_mult()
-    var bar_data: Dictionary = _add_health_bar(enemy, data["frame"], 4.4)
+    var bar_data: Dictionary = _add_health_bar(enemy, data["frame"], boss_scale)
     var reward_mult: float = _level_reward_mult(level_index)
     var boss_coin_value: int = max(1, int(round(float(data["coins"]) * reward_mult)))
     enemy_data[enemy] = {
@@ -769,6 +859,48 @@ func _spawn_boss_for_level(level_index: int) -> void:
         "attack_cd": 0.0,
         "bar_fill": bar_data["fill"],
         "bar_width": bar_data["width"],
+    }
+
+func _make_pack_actor(walk_a_path: String, walk_b_path: String, attack_path: String, fallback_frame: Vector2i, fallback_color: Color, fallback_archetype: String, scale_factor: float, facing_left: bool = false) -> Dictionary:
+    var composed: Dictionary = _compose_three_frame_sheet_from_files([walk_a_path, walk_b_path, attack_path])
+    if composed.size() > 0:
+        composed["scale"] = scale_factor
+        return composed
+    return {
+        "sheet": _make_actor_sheet(fallback_frame, fallback_color, Color(0.92, 0.92, 0.92, 1.0), fallback_archetype, facing_left),
+        "frame": fallback_frame,
+        "scale": scale_factor,
+    }
+
+func _compose_three_frame_sheet_from_files(frame_paths: Array[String]) -> Dictionary:
+    if frame_paths.size() != 3:
+        return {}
+
+    var frames: Array[Image] = []
+    var max_w: int = 0
+    var max_h: int = 0
+    for frame_path in frame_paths:
+        var img: Image = Image.new()
+        if img.load(frame_path) != OK:
+            return {}
+        frames.append(img)
+        max_w = max(max_w, img.get_width())
+        max_h = max(max_h, img.get_height())
+
+    if max_w <= 0 or max_h <= 0:
+        return {}
+
+    var sheet: Image = Image.create(max_w * 3, max_h, false, Image.FORMAT_RGBA8)
+    sheet.fill(Color(0, 0, 0, 0))
+    for i in range(3):
+        var src: Image = frames[i]
+        var dx: int = i * max_w + int((max_w - src.get_width()) / 2)
+        var dy: int = int((max_h - src.get_height()) / 2)
+        sheet.blit_rect(src, Rect2i(0, 0, src.get_width(), src.get_height()), Vector2i(dx, dy))
+
+    return {
+        "sheet": ImageTexture.create_from_image(sheet),
+        "frame": Vector2i(max_w, max_h),
     }
 
 func _add_health_bar(enemy: CombatSprite, frame_size: Vector2i, scale_factor: float) -> Dictionary:

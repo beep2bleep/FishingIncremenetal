@@ -55,6 +55,7 @@ static func apply_simulation_upgrades() -> void:
 
     var raw_upgrades: Array = upgrades_variant
     var grouped_upgrades: Array = _group_repeated_upgrades(raw_upgrades)
+    _sanitize_dependency_graph(grouped_upgrades)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
     var formatter: FishingUpgradeDB = FishingUpgradeDB.new()
 
@@ -176,6 +177,60 @@ static func _group_repeated_upgrades(raw_upgrades: Array) -> Array:
         grouped[i] = grouped_entry
 
     return grouped
+
+static func _sanitize_dependency_graph(grouped_upgrades: Array) -> void:
+    var id_to_entry: Dictionary = {}
+    var id_to_dep: Dictionary = {}
+
+    for entry_variant: Variant in grouped_upgrades:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var upgrade_id: String = str(entry.get("id", ""))
+        if upgrade_id == "":
+            continue
+        id_to_entry[upgrade_id] = entry
+        id_to_dep[upgrade_id] = str(entry.get("dependency", ""))
+
+    for upgrade_id_variant: Variant in id_to_dep.keys():
+        var upgrade_id: String = str(upgrade_id_variant)
+        var dep_id: String = str(id_to_dep.get(upgrade_id, ""))
+        if dep_id == "":
+            continue
+        if dep_id == upgrade_id or not id_to_entry.has(dep_id):
+            var invalid_entry: Dictionary = id_to_entry[upgrade_id]
+            invalid_entry["dependency"] = ""
+            id_to_entry[upgrade_id] = invalid_entry
+            id_to_dep[upgrade_id] = ""
+
+    for upgrade_id_variant: Variant in id_to_dep.keys():
+        var upgrade_id: String = str(upgrade_id_variant)
+        var seen: Dictionary = {}
+        var current: String = upgrade_id
+
+        while true:
+            var dep_id: String = str(id_to_dep.get(current, ""))
+            if dep_id == "":
+                break
+            if dep_id == upgrade_id or seen.has(dep_id):
+                var break_entry: Dictionary = id_to_entry[current]
+                break_entry["dependency"] = ""
+                id_to_entry[current] = break_entry
+                id_to_dep[current] = ""
+                break
+            seen[current] = true
+            current = dep_id
+            if not id_to_dep.has(current):
+                break
+
+    for i in range(grouped_upgrades.size()):
+        var entry_variant: Variant = grouped_upgrades[i]
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var upgrade_id: String = str(entry.get("id", ""))
+        if upgrade_id != "" and id_to_entry.has(upgrade_id):
+            grouped_upgrades[i] = id_to_entry[upgrade_id]
 
 static func _build_tree_layout(grouped_upgrades: Array) -> Dictionary:
     var id_to_cell: Dictionary = {}

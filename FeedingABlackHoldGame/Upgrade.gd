@@ -24,14 +24,17 @@ var sim_group_pos: int = 1
 
 var type: Util.NODE_TYPES = Util.NODE_TYPES.NORMAL
 
-var current_tier: int = 0:
+var _current_tier: int = 0
+var current_tier: int:
+    get:
+        return _current_tier
     set(new_tier):
-        var old_tier = current_tier
-        current_tier = min(new_tier, max_tier)
-        if old_tier < current_tier:
+        var old_tier = _current_tier
+        _current_tier = min(new_tier, max_tier)
+        if old_tier < _current_tier:
             Global.mods.change_mod(mod, value)
 
-        if current_tier > 0:
+        if _current_tier > 0:
             Global.game_mode_data_manager.unlocked_upgrades[cell] = to_dict()
 
 func has_tiers():

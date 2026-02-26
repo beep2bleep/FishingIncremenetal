@@ -1,16 +1,32 @@
 extends Line2D
 class_name TechTreeLine
+var _from_node: TechTreeNode = null
 var from_node: TechTreeNode:
+    get:
+        return _from_node
     set(new_value):
-        from_node = new_value
-        from_node.state_changed.connect(_on_node_state_changed)
+        if _from_node == new_value:
+            return
+        _from_node = new_value
+        if _from_node != null:
+            var state_changed_callable: Callable = Callable(self, "_on_node_state_changed")
+            if not _from_node.state_changed.is_connected(state_changed_callable):
+                _from_node.state_changed.connect(state_changed_callable)
         update_line()
 
 
+var _to_node: TechTreeNode = null
 var to_node: TechTreeNode:
+    get:
+        return _to_node
     set(new_value):
-        to_node = new_value
-        to_node.state_changed.connect(_on_node_state_changed)
+        if _to_node == new_value:
+            return
+        _to_node = new_value
+        if _to_node != null:
+            var state_changed_callable: Callable = Callable(self, "_on_node_state_changed")
+            if not _to_node.state_changed.is_connected(state_changed_callable):
+                _to_node.state_changed.connect(state_changed_callable)
         update_line()
 
 var is_animating: bool = false
@@ -80,15 +96,6 @@ func update_colors():
                 do_animate_show(self, from_node.position, to_node.position)
                 show()
 
-            if from_node.is_center_node or (from_node.upgrade and from_node.upgrade.current_tier >= 1):
-
-                if to_node.state == TechTreeNode.STATES.LOCKED or to_node.state == TechTreeNode.STATES.SHADOW:
-                    to_node.state = TechTreeNode.STATES.AVAILABLE
-
-
-            elif to_node.state == TechTreeNode.STATES.LOCKED:
-                to_node.state = TechTreeNode.STATES.SHADOW
-
 
 
     match to_node.state:
@@ -97,14 +104,6 @@ func update_colors():
             if visible == false:
                 do_animate_show(self, to_node.position, from_node.position)
                 show()
-
-            if to_node.is_center_node or (to_node.upgrade and to_node.upgrade.current_tier >= 1):
-
-                if from_node.state == TechTreeNode.STATES.LOCKED or from_node.state == TechTreeNode.STATES.SHADOW:
-                    from_node.state = TechTreeNode.STATES.AVAILABLE
-
-            elif from_node.state == TechTreeNode.STATES.LOCKED:
-                from_node.state = TechTreeNode.STATES.SHADOW
 
     if from_node.state == TechTreeNode.STATES.COMPLETE and to_node.state == TechTreeNode.STATES.COMPLETE:
 

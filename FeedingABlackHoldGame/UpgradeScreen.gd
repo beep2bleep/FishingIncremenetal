@@ -15,11 +15,16 @@ var zoom
 
 enum STATES{SHOWING_TREE, ROGULIKE}
 
-var state: STATES = STATES.SHOWING_TREE:
+var _state: int = STATES.SHOWING_TREE
+var state: int:
+    get:
+        return _state
     set(new_value):
-        state = new_value
+        if _state == new_value:
+            return
+        _state = new_value
 
-        match state:
+        match _state:
             STATES.SHOWING_TREE:
                 %"Bottom Bar".show()
             STATES.ROGULIKE:

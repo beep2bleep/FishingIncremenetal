@@ -32,10 +32,13 @@ var tech_tree: TechTree
 
 var cost
 
-var is_highlighted: bool = false:
+var _is_highlighted: bool = false
+var is_highlighted: bool:
+    get:
+        return _is_highlighted
     set(new_value):
 
-        if is_highlighted != new_value and new_value == true:
+        if _is_highlighted != new_value and new_value == true:
             AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER)
 
             custom_tween_component.do_tween(1.0)
@@ -45,13 +48,13 @@ var is_highlighted: bool = false:
             custom_tween_component.kill_tweens()
             custom_tween_component.reset()
 
-        is_highlighted = new_value
+        _is_highlighted = new_value
 
         if tech_tree:
             tech_tree.selected_node = self
 
         if state == STATES.AVAILABLE or state == STATES.COMPLETE and upgrade != null:
-            %"Tool Tip".visible = is_highlighted
+            %"Tool Tip".visible = _is_highlighted
             %"Tool Tip".pivot_offset = %"Tool Tip".size / 2.0
 
 
@@ -60,9 +63,12 @@ var is_highlighted: bool = false:
 
 
 
-var can_pay_cost: bool = false:
+var _can_pay_cost: bool = false
+var can_pay_cost: bool:
+    get:
+        return _can_pay_cost
     set(new_value):
-        can_pay_cost = new_value
+        _can_pay_cost = new_value
 
 
 
@@ -87,24 +93,27 @@ func do_pop_in():
 
 var is_setup = false
 
-var state: STATES = STATES.LOCKED:
+var _state: STATES = STATES.LOCKED
+var state: STATES:
+    get:
+        return _state
     set(new_state):
-        var old_state = state
+        var old_state = _state
 
         if is_epilgue_node() and Global.main and Global.main.epilogue == false:
             return
 
-        if state != new_state:
+        if _state != new_state:
             if old_state == STATES.LOCKED and Global.game_state == Util.GAME_STATES.UPGRADES:
                 do_pop_in()
 
-            state = new_state
+            _state = new_state
             if tech_tree:
-                if state == STATES.COMPLETE:
+                if _state == STATES.COMPLETE:
                     completed_index = tech_tree.next_completed_index
                     tech_tree.next_completed_index += 1
 
-                if state == STATES.AVAILABLE:
+                if _state == STATES.AVAILABLE:
                     tech_tree.active_nodes.append(self)
                 elif tech_tree.active_nodes.has(self):
                     tech_tree.active_nodes.erase(self)
@@ -112,19 +121,19 @@ var state: STATES = STATES.LOCKED:
 
 
 
-            if state == STATES.AVAILABLE:
+            if _state == STATES.AVAILABLE:
 
                 if tech_tree:
-                    tech_tree.update_connected_nodes_shadow(cell)
+                    tech_tree.call_deferred("update_connected_nodes_shadow", cell)
 
 
 
 
 
 
-            if state == STATES.COMPLETE:
+            if _state == STATES.COMPLETE:
                 if tech_tree:
-                    tech_tree.update_connected_nodes_available(cell)
+                    tech_tree.call_deferred("update_connected_nodes_available", cell)
 
                 unlocked.emit(self)
 
@@ -247,6 +256,8 @@ func _on_click_mask_pressed() -> void :
         tooltip_custom_tween_component.do_tween(1.0)
 
         upgrade.current_tier += 1
+        if upgrade.is_at_max():
+            state = STATES.COMPLETE
         state_changed.emit(self)
         update()
 
@@ -266,6 +277,8 @@ func unlock_node(target_tier = 1):
     if upgrade:
         for i in range(max(0, target_tier - upgrade.current_tier)):
             upgrade.current_tier += 1
+        if upgrade.is_at_max():
+            state = STATES.COMPLETE
         state_changed.emit(self)
     update()
 
@@ -318,7 +331,6 @@ func update():
     elif upgrade.is_at_max() == true:
         if upgrade.has_tiers():
             %"Is Max".show()
-        state = STATES.COMPLETE
         if using_sim_display:
             %Description.text = "%s\n%s" % [upgrade.sim_name, sim_effect_text]
             %"Upgrade Amount".text = "UNLOCKED"

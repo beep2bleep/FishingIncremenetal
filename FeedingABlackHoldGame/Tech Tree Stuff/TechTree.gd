@@ -39,6 +39,7 @@ signal selected_node_changed(new_selected_node: TechTreeNode)
 
 var node_search_range = 20
 var node_search_width = 5
+var use_grid_adjacency: bool = true
 
 func select_node_in_direction(dir_vec: Vector2):
     if selected_node == null:
@@ -129,6 +130,7 @@ var forced_connections_to_from = {}
 
 var center_node: TechTreeNode
 func setup():
+    use_grid_adjacency = not _is_simulation_upgrade_tree()
     center_node = Refs.packed_tech_tree_node.instantiate()
     %"Tech Nodes".add_child(center_node)
     center_node.is_center_node = true
@@ -221,9 +223,10 @@ func create_lines(from_cell):
         var from_node: TechTreeNode = node_dict[from_cell]
 
         var connected_cells = []
-        for vec in [Vector2(0, 1), Vector2(1, 0), Vector2(-1, 0), Vector2(0, -1)]:
-            if Global.game_mode_data_manager.upgrades.has(from_cell + vec):
-                connected_cells.append(from_cell + vec)
+        if use_grid_adjacency:
+            for vec in [Vector2(0, 1), Vector2(1, 0), Vector2(-1, 0), Vector2(0, -1)]:
+                if Global.game_mode_data_manager.upgrades.has(from_cell + vec):
+                    connected_cells.append(from_cell + vec)
 
         if from_node.upgrade and from_node.upgrade.forced_cell:
             connected_cells.append(from_node.upgrade.forced_cell)
@@ -251,9 +254,10 @@ func create_lines(from_cell):
 
 func get_all_connected_cells(from_cell: Vector2):
     var connected_cells = []
-    for vec in [Vector2(0, 1), Vector2(1, 0), Vector2(-1, 0), Vector2(0, -1)]:
-        if Global.game_mode_data_manager.upgrades.has(from_cell + vec):
-            connected_cells.append(from_cell + vec)
+    if use_grid_adjacency:
+        for vec in [Vector2(0, 1), Vector2(1, 0), Vector2(-1, 0), Vector2(0, -1)]:
+            if Global.game_mode_data_manager.upgrades.has(from_cell + vec):
+                connected_cells.append(from_cell + vec)
 
     if forced_connections_to_from.has(from_cell):
         connected_cells.append_array(forced_connections_to_from[from_cell])
@@ -275,14 +279,15 @@ func setup_nodes_from_data():
         if upgrade.forced_cell != null:
             node_with_forced_connections.append(node)
 
-        for vec in [Vector2(0, 1), Vector2(1, 0), Vector2(-1, 0), Vector2(0, -1)]:
-            if node_dict.has(node.cell + vec):
-                var new_line: TechTreeLine = Refs.packed_tech_tree_line.instantiate()
+        if use_grid_adjacency:
+            for vec in [Vector2(0, 1), Vector2(1, 0), Vector2(-1, 0), Vector2(0, -1)]:
+                if node_dict.has(node.cell + vec):
+                    var new_line: TechTreeLine = Refs.packed_tech_tree_line.instantiate()
 
-                new_line.from_node = node
-                new_line.to_node = node_dict[node.cell + vec]
+                    new_line.from_node = node
+                    new_line.to_node = node_dict[node.cell + vec]
 
-                %"Tech Lines".add_child(new_line)
+                    %"Tech Lines".add_child(new_line)
 
     center_node.state = TechTreeNode.STATES.COMPLETE
     selected_node = center_node
@@ -360,6 +365,15 @@ func generate_nodes_procedurally():
 func _on_node_state_changed(node: TechTreeNode):
     update_active()
     update_min_max_for_visible_nodes()
+
+func _is_simulation_upgrade_tree() -> bool:
+    for upgrade_variant: Variant in Global.game_mode_data_manager.upgrades.values():
+        if not (upgrade_variant is Upgrade):
+            continue
+        var upgrade: Upgrade = upgrade_variant
+        if upgrade.sim_name != "":
+            return true
+    return false
 
 func _on_node_selected(node: TechTreeNode):
     selected_node = node
