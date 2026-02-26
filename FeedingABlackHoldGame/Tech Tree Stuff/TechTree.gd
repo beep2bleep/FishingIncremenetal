@@ -176,6 +176,7 @@ func setup():
                 %"Tech Lines".add_child(new_line)
 
     setup_nodes_from_data()
+    _refresh_states_after_full_build()
 
 
 
@@ -317,6 +318,31 @@ func setup_nodes_from_data():
             new_line.to_node = node_dict[node.upgrade.forced_cell]
 
             %"Tech Lines".add_child(new_line)
+
+
+func _refresh_states_after_full_build() -> void:
+    update_connected_nodes_available(Vector2.ZERO)
+
+    for cell_variant: Variant in Global.game_mode_data_manager.unlocked_upgrades.keys():
+        if not (cell_variant is Vector2):
+            continue
+        var cell: Vector2 = cell_variant
+        if not node_dict.has(cell):
+            continue
+
+        var node: TechTreeNode = node_dict[cell]
+        var saved_variant: Variant = Global.game_mode_data_manager.unlocked_upgrades[cell]
+        if saved_variant is Dictionary:
+            var saved_data: Dictionary = saved_variant
+            if Global.current_game_mode_data.game_mode_type == Util.GAME_MODE_TYPE.ROGUELIKE:
+                node.upgrade.from_dict(cell, saved_data)
+            elif saved_data.has("teir"):
+                node.unlock_node(int(saved_data["teir"]))
+
+        if node.upgrade != null and node.upgrade.is_at_max():
+            node.state = TechTreeNode.STATES.COMPLETE
+
+        update_connected_nodes_available(cell)
 
 
 func generate_nodes_procedurally():

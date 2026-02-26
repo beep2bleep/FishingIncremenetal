@@ -237,6 +237,9 @@ func hide_screen():
 
 
 func _on_go_again_pressed() -> void :
+    if _is_simulation_upgrade_tree():
+        get_tree().change_scene_to_file(Util.PATH_FISHING_BATTLE)
+        return
     hide_screen()
 
 
@@ -246,3 +249,11 @@ func _on_tech_tree_selected_node_changed(new_selected_node: TechTreeNode) -> voi
             %"Tech Tree".tween_to_pos( - new_selected_node.position)
         else:
             %"Tech Tree".tween_to_pos(Vector2.ZERO)
+
+func _is_simulation_upgrade_tree() -> bool:
+    for upgrade_variant: Variant in Global.game_mode_data_manager.upgrades.values():
+        if upgrade_variant is Upgrade:
+            var upgrade: Upgrade = upgrade_variant
+            if upgrade.sim_name != "":
+                return true
+    return false

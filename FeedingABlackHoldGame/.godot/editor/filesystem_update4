@@ -1,0 +1,14 @@
+res://Main Menu.gd
+res://Fishing/BattleScene.gd
+res://Fishing/CoinPickup.gd
+res://Fishing/CombatSprite.gd
+res://Fishing/FishingUpgradeDB.gd
+res://Fishing/FishingUpgradeScene.gd
+res://Global.gd
+res://Singletons/Main.gd
+res://SaveHandler.gd
+res://Upgrade.gd
+res://Tech Tree Stuff/TechTreeNode.gd
+res://UpgradeScreen.gd
+res://Fishing/FishingUpgradeTreeAdapter.gd
+res://Tech Tree Stuff/TechTree.gd

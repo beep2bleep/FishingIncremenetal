@@ -5,6 +5,8 @@ var PATH_JSON_DATA = "res://Data/Black Hole Data.json"
 
 var PATH_MAIN = "res://Singletons/Main.tscn"
 var PATH_MAIN_MENU = "res://Main Menu.tscn"
+var PATH_FISHING_UPGRADES = "res://Fishing/FishingUpgradeScene.tscn"
+var PATH_FISHING_BATTLE = "res://Fishing/BattleScene.tscn"
 
 
 var dark_pallet = "res://Pallets/Dark_Pallet.tres"

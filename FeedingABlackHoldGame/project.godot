@@ -48,9 +48,12 @@ gdscript/warnings/unused_signal=0
 
 window/size/viewport_width=1920
 window/size/viewport_height=1080
-window/size/mode=3
 window/stretch/mode="canvas_items"
 mouse_cursor/custom_image="uid://dn32a26n8jhcq"
+
+[dotnet]
+
+project/assembly_name="A Game About Feeding A Black Hole"
 
 [editor_overrides]
 

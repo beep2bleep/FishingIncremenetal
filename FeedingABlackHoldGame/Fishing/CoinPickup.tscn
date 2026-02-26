@@ -1,0 +1,25 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Fishing/CoinPickup.gd" id="1"]
+
+[node name="CoinPickup" type="Area2D"]
+script = ExtResource("1")
+input_pickable = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_left = -8.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 8.0
+color = Color(1, 0.843137, 0.14902, 1)
+
+[node name="Label" type="Label" parent="."]
+offset_left = -10.0
+offset_top = -24.0
+offset_right = 28.0
+offset_bottom = -8.0
+text = "0"
+
+[connection signal="input_event" from="." to="." method="_on_input_event"]

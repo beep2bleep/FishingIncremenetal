@@ -17,6 +17,7 @@ var run_stats: RunStats
 const G = 100000.0
 
 var load_saved_run = true
+var start_in_upgrade_scene = false
 
 
 
@@ -37,6 +38,22 @@ func _ready():
 
     new_game()
 
+func ensure_default_game_mode_data():
+    if current_game_mode_data != null:
+        return
+
+    var mode_data := GameModeData.new()
+    mode_data.name_key = "main"
+    mode_data.game_mode = Util.GAME_MODES.MAIN
+    mode_data.game_mode_type = Util.GAME_MODE_TYPE.NORMAL
+    mode_data.description_key = "MAIN"
+    mode_data.data_path = Util.PATH_JSON_DATA
+    mode_data.disable_session_timer = false
+    mode_data.end_run_disabled = false
+    mode_data.on_more_time_disabled = false
+    mode_data.upgrade_tree_grid_size = Vector2i(25, 25)
+    current_game_mode_data = mode_data
+
 
 func update_input_stuff(input_type: ControllerIcons.InputType):
     match input_type:
@@ -51,6 +68,8 @@ func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: i
 
 
 func new_game():
+    ensure_default_game_mode_data()
+
     rng = RandomNumberGenerator.new()
     rng.randomize()
 

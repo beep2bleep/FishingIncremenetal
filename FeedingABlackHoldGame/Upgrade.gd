@@ -13,6 +13,13 @@ var demo_locked: int = 0
 var section: int = 0
 var act: int = 0
 var epilogue: int = 0
+var sim_key: String = ""
+var sim_name: String = ""
+var sim_description: String = ""
+var sim_icon: String = ""
+var sim_group: int = 0
+var sim_level: int = 1
+var sim_group_pos: int = 1
 
 var type: Util.NODE_TYPES = Util.NODE_TYPES.NORMAL
 
@@ -60,6 +67,13 @@ func to_dict() -> Dictionary:
         "section": section, 
         "act": act, 
         "epilogue": epilogue, 
+        "sim_key": sim_key, 
+        "sim_name": sim_name, 
+        "sim_description": sim_description, 
+        "sim_icon": sim_icon, 
+        "sim_group": sim_group, 
+        "sim_level": sim_level, 
+        "sim_group_pos": sim_group_pos, 
         "type": type, 
         "teir": current_tier
 }
@@ -88,6 +102,20 @@ func from_dict(cell_param: Vector2, data: Dictionary):
         act = data["act"]
     if data.has("epilogue"):
         epilogue = data["epilogue"]
+    if data.has("sim_key"):
+        sim_key = str(data["sim_key"])
+    if data.has("sim_name"):
+        sim_name = str(data["sim_name"])
+    if data.has("sim_description"):
+        sim_description = str(data["sim_description"])
+    if data.has("sim_icon"):
+        sim_icon = str(data["sim_icon"])
+    if data.has("sim_group"):
+        sim_group = int(data["sim_group"])
+    if data.has("sim_level"):
+        sim_level = int(data["sim_level"])
+    if data.has("sim_group_pos"):
+        sim_group_pos = int(data["sim_group_pos"])
     if data.has("type"):
         type = data["type"]
     if data.has("teir"):

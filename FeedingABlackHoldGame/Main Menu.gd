@@ -211,8 +211,10 @@ func _on_hide_game_modes_pressed() -> void :
 
 
 func _on_play_pressed() -> void :
-
-    state = STATES.GAME_MODE
+    Global.ensure_default_game_mode_data()
+    Global.start_in_upgrade_scene = true
+    Global.load_saved_run = false
+    get_tree().change_scene_to_file(Util.PATH_MAIN)
 
 
 func _on_game_mode_screen_back() -> void :
@@ -225,6 +227,7 @@ func _on_game_mode_screen_play_new_game_mode(game_mode_data: GameModeData) -> vo
     Global.new_game()
 
     Global.load_saved_run = false
+    Global.start_in_upgrade_scene = true
     SceneChanger.change_to_new_scene(Util.PATH_MAIN)
 
 
@@ -233,4 +236,5 @@ func _on_game_mode_screen_continue_game_mode(game_mode_data: GameModeData) -> vo
     Global.new_game()
 
     Global.load_saved_run = true
+    Global.start_in_upgrade_scene = true
     SceneChanger.change_to_new_scene(Util.PATH_MAIN)

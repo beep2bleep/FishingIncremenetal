@@ -9,6 +9,12 @@ $script:L4_BASE_REGULAR = if ($env:SIM_L4_BASE_REGULAR) { [int]$env:SIM_L4_BASE_
 $script:L2_BOSS_MULT = if ($env:SIM_L2_BOSS_MULT) { [double]$env:SIM_L2_BOSS_MULT } else { 24.0 }
 $script:L3_BOSS_MULT = if ($env:SIM_L3_BOSS_MULT) { [double]$env:SIM_L3_BOSS_MULT } else { 68.0 }
 $script:L4_BOSS_BASE_MULT = if ($env:SIM_L4_BOSS_BASE_MULT) { [double]$env:SIM_L4_BOSS_BASE_MULT } else { 86.0 }
+$script:WAVE_SIZE = if ($env:SIM_WAVE_SIZE) { [int]$env:SIM_WAVE_SIZE } else { 3 }
+$script:WAVE_FOLLOWUP_GAP_MULT = if ($env:SIM_WAVE_FOLLOWUP_GAP_MULT) { [double]$env:SIM_WAVE_FOLLOWUP_GAP_MULT } else { 0.35 }
+$script:ARCHER_PROJECTILE_DPS_MULT = if ($env:SIM_ARCHER_PROJECTILE_DPS_MULT) { [double]$env:SIM_ARCHER_PROJECTILE_DPS_MULT } else { 0.90 }
+$script:ARCHER_PROJECTILE_HIT_DELAY = if ($env:SIM_ARCHER_PROJECTILE_HIT_DELAY) { [double]$env:SIM_ARCHER_PROJECTILE_HIT_DELAY } else { 0.35 }
+$script:SIM_SCENARIO = if ($env:SIM_SCENARIO) { [string]$env:SIM_SCENARIO } else { 'baseline_v2' }
+$script:SIM_OUTPUT_SUFFIX = if ($env:SIM_OUTPUT_SUFFIX) { [string]$env:SIM_OUTPUT_SUFFIX } else { '' }
 
 function New-Upgrade($key, $name, $family, $cost, $reqs, $effects, $source) {
   [pscustomobject]@{
@@ -627,13 +633,21 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
     $speed = $stats.move_speed * (1.0 + $stats.target_swap_speed)
     if ($hp / $stats.max_hp -gt 0.70) { $speed *= (1.0 + $stats.high_hp_speed_mult) }
     $timeToContact = $lp.gap / [math]::Max(0.1, $speed)
+    if ($script:WAVE_SIZE -gt 1) {
+      $waveIndex = (($i - 1) % $script:WAVE_SIZE)
+      if ($waveIndex -gt 0) {
+        $timeToContact *= $script:WAVE_FOLLOWUP_GAP_MULT
+      }
+    }
 
-    $dps = $stats.total_dps
-    if ($state.actives['act_archer'] -gt 0) { $dps += $stats.archer_dps * (0.45 + $stats.archer_pierce) }
+    $archerBase = $stats.archer_dps * $script:ARCHER_PROJECTILE_DPS_MULT
+    $dps = ($stats.total_dps - $stats.archer_dps) + $archerBase
+    if ($state.actives['act_archer'] -gt 0) { $dps += $archerBase * (0.45 + $stats.archer_pierce) }
     if ($state.actives['act_mage'] -gt 0) { $dps += $stats.mage_dps * 0.90 }
     if ($state.actives['act_guardian'] -gt 0) { $dps += $stats.guardian_dps * 0.35 }
 
     $ttk = $enemyHp / [math]::Max(0.1, $dps)
+    if ($archerBase -gt 0.0) { $ttk += $script:ARCHER_PROJECTILE_HIT_DELAY }
     $contactTime = [math]::Max(0.0, $ttk - (0.22 + $stats.no_contact_speed_mult))
     $encTime = $timeToContact + $ttk
 
@@ -729,11 +743,13 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
 
       $segRamp = if ($level -ge 3) { 0.07 } else { 0.12 }
       $segHp = $bossSegHp * (1.0 + $segRamp * ($seg - 1))
-      $dps = $stats.total_dps * $bossDamageMult
-      if ($state.actives['act_archer'] -gt 0) { $dps += $stats.archer_dps * (0.55 + $stats.archer_pierce) }
+      $archerBase = $stats.archer_dps * $script:ARCHER_PROJECTILE_DPS_MULT
+      $dps = (($stats.total_dps - $stats.archer_dps) + $archerBase) * $bossDamageMult
+      if ($state.actives['act_archer'] -gt 0) { $dps += $archerBase * (0.55 + $stats.archer_pierce) }
       if ($state.actives['act_mage'] -gt 0) { $dps += $stats.mage_dps * 1.10 }
 
       $ttk = $segHp / [math]::Max(0.1, $dps)
+      if ($archerBase -gt 0.0) { $ttk += ($script:ARCHER_PROJECTILE_HIT_DELAY * 0.7) }
       if ($runTime + $ttk -gt $maxRunTime) {
         $ttk = $maxRunTime - $runTime
         if ($ttk -le 0) { break }
@@ -1001,12 +1017,18 @@ $out = [pscustomobject]@{
   runs = $runs
 }
 
-$jsonPath = 'c:\Godot Projects\FishingIncremental\simulation\simulation_results_2h_60upgrades.json'
+$suffix = $script:SIM_OUTPUT_SUFFIX
+if ([string]::IsNullOrWhiteSpace($suffix) -eq $false) {
+  if ($suffix.StartsWith('_') -eq $false) { $suffix = '_' + $suffix }
+}
+
+$jsonPath = "c:\Godot Projects\FishingIncremental\simulation\simulation_results_2h_60upgrades$suffix.json"
 ($out | ConvertTo-Json -Depth 8) | Set-Content -Path $jsonPath
 
 $md = New-Object System.Collections.Generic.List[string]
-$md.Add('# 2-Hour Simulation Run Report (Rebalanced 160 Skills)') | Out-Null
+$md.Add('# 2-Hour Simulation Run Report (Rebalanced 160 Skills, V2 Combat Rules)') | Out-Null
 $md.Add('') | Out-Null
+$md.Add("Scenario: $($script:SIM_SCENARIO)") | Out-Null
 $md.Add("Total time: $([math]::Round($totalTime,1)) sec") | Out-Null
 $md.Add("Total runs: $($runs.Count)") | Out-Null
 $md.Add("Runs without purchase: $noPurchase") | Out-Null
@@ -1021,7 +1043,7 @@ foreach ($r in $runs) {
   $uses = "$($r.uses_knight)/$($r.uses_archer)/$($r.uses_guardian)/$($r.uses_mage)"
   $md.Add("| $($r.run) | $($r.level) | $($r.run_time_s) | $($r.total_kills) | $($r.kill_delta) | $($r.regular_kills) | $($r.boss_segment_kills) | $($r.reached_boss) | $($r.boss_defeated) | $($r.earned) | $($r.wallet_before) | $($r.wallet_after_earn) | $($r.upgrades_bought) | $($r.upgrades_bought_count) | $($r.upgrade_cost) | $($r.wallet_after_spend) | $dps | $uses | $($r.difficulty) |") | Out-Null
 }
-$mdPath = 'c:\Godot Projects\FishingIncremental\simulation\simulation_run_report_2h_60upgrades.md'
+$mdPath = "c:\Godot Projects\FishingIncremental\simulation\simulation_run_report_2h_60upgrades$suffix.md"
 $md | Set-Content -Path $mdPath
 $price = New-Object System.Collections.Generic.List[string]
 $price.Add('# Upgrade Prices In Order (Milestone + Base 60 + Extra 100 + Core)') | Out-Null
@@ -1060,7 +1082,7 @@ foreach ($c in $coreDefs) {
   $price.Add("| $($c.key) | $([math]::Round($c.base,2)) * ($([math]::Round($c.growth,4)) ^ level) |") | Out-Null
 }
 
-$pricePath = 'c:\Godot Projects\FishingIncremental\simulation\upgrade_prices_in_order.md'
+$pricePath = "c:\Godot Projects\FishingIncremental\simulation\upgrade_prices_in_order$suffix.md"
 $price | Set-Content -Path $pricePath
 
 $ideas = New-Object System.Collections.Generic.List[string]

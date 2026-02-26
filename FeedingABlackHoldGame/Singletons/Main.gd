@@ -133,6 +133,13 @@ func _ready():
 
     %MoneyPerSecond.setup()
 
+    if Global.start_in_upgrade_scene:
+        FishingUpgradeTreeAdapter.apply_simulation_upgrades()
+        var current_money: float = Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY)
+        if current_money != 0.0:
+            Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, -current_money)
+        Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, SaveHandler.fishing_currency)
+
     %UpgradeScreen.setup()
     object_manager.on_new_game()
 
@@ -141,7 +148,12 @@ func _ready():
     %Clicker.loaded = true
     %Clicker.setup()
 
-    start_new_run()
+    if Global.start_in_upgrade_scene:
+        Global.start_in_upgrade_scene = false
+        Global.game_state = Util.GAME_STATES.UPGRADES
+        %UpgradeScreen.show_screen()
+    else:
+        start_new_run()
 
 
 func _on_black_hole_grew():

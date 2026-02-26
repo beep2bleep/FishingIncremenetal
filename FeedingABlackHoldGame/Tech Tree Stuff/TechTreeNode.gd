@@ -253,6 +253,12 @@ func _on_click_mask_pressed() -> void :
         if Global.main and Global.main.upgrade_screen:
             Global.main.upgrade_screen.on_node_unlocked(self)
 
+        if upgrade != null and upgrade.sim_key != "":
+            var new_amount: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
+            SaveHandler.fishing_currency = max(0, new_amount)
+            SaveHandler.unlock_fishing_upgrade(upgrade.sim_key, false)
+            SaveHandler.save_fishing_progress()
+
         SaveHandler.save_player_last_run()
 
 func unlock_node(target_tier = 1):
@@ -276,13 +282,25 @@ func update():
     %Tier.hide()
     %"Cost Hbox".hide()
     %HSeparator2.hide()
-    %"Node Type".text = tr(Util.MODS.find_key(upgrade.mod))
 
     %"Shadow Icon".hide()
     %"Random Icon".hide()
     %"Mod Icon".hide()
     %TitlePanel.show()
     %"Upgrade Amount".show()
+
+    var using_sim_display: bool = upgrade != null and upgrade.sim_name != ""
+    var sim_effect_text: String = ""
+    if using_sim_display:
+        sim_effect_text = upgrade.sim_description.strip_edges()
+        if sim_effect_text == "":
+            sim_effect_text = "Upgrade effect applied on unlock."
+    if using_sim_display:
+        %Description.text = "%s\n%s" % [upgrade.sim_name, sim_effect_text]
+        %"Node Type".text = upgrade.sim_icon if upgrade.sim_icon != "" else upgrade.sim_name.substr(0, 1)
+        %"Upgrade Amount".text = "UNLOCK"
+    else:
+        %"Node Type".text = tr(Util.MODS.find_key(upgrade.mod))
 
     if upgrade.type == Util.NODE_TYPES.ROGUELIKE_DUMMY:
         %Description.text = "CHOOSE AN UPGRADE"
@@ -300,9 +318,12 @@ func update():
         if upgrade.has_tiers():
             %"Is Max".show()
         state = STATES.COMPLETE
-        %Description.text = str("Currently: ", Global.mods.get_mod_value(upgrade.mod, Global.mods.get_mod(upgrade.mod)))
-
-        %"Upgrade Amount".text = str("$", Util.get_number_short_text(upgrade.get_cost()), " : ", Global.mods.get_mod_value(upgrade.mod, upgrade.get_current_teir_value(), true))
+        if using_sim_display:
+            %Description.text = "%s\n%s" % [upgrade.sim_name, sim_effect_text]
+            %"Upgrade Amount".text = "UNLOCKED"
+        else:
+            %Description.text = str("Currently: ", Global.mods.get_mod_value(upgrade.mod, Global.mods.get_mod(upgrade.mod)))
+            %"Upgrade Amount".text = str("$", Util.get_number_short_text(upgrade.get_cost()), " : ", Global.mods.get_mod_value(upgrade.mod, upgrade.get_current_teir_value(), true))
         %"Mod Icon".texture = Refs.mod_textures.get(upgrade.mod, null)
     else:
 
@@ -318,8 +339,12 @@ func update():
                 "MAX_TIER": str(upgrade.max_tier)
             })
 
-        %Description.text = Global.mods.get_from_to(upgrade.mod, upgrade.get_current_teir_value())
-        %"Upgrade Amount".text = str(Global.mods.get_mod_value(upgrade.mod, upgrade.get_current_teir_value(), true))
+        if using_sim_display:
+            %Description.text = "%s\n%s" % [upgrade.sim_name, sim_effect_text]
+            %"Upgrade Amount".text = "UNLOCK"
+        else:
+            %Description.text = Global.mods.get_from_to(upgrade.mod, upgrade.get_current_teir_value())
+            %"Upgrade Amount".text = str(Global.mods.get_mod_value(upgrade.mod, upgrade.get_current_teir_value(), true))
         %"Mod Icon".texture = Refs.mod_textures.get(upgrade.mod, null)
 
 

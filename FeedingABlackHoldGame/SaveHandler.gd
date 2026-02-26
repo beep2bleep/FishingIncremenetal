@@ -28,6 +28,7 @@ func _ready():
     load_local_settings()
 
     load_progression_data()
+    load_fishing_progress()
 
     if has_shown_pick_locale_first_time == false:
         if supported_locales.has(OS.get_locale_language()):
@@ -56,6 +57,7 @@ var player_last_run_file_location = "user://"
 var money: int
 var comet_show_session_cooldown: int
 var upgrades_unlocked_upgrades = {}
+var upgrades_in_use_mods = []
 var current_tier = 0
 var tier_stats = {
     "total_damage_this_tier": 0.0, 
@@ -66,6 +68,11 @@ var tier_stats = {
 var epilogue = false
 var run_time = 0.0
 var audio_run_plays = []
+
+func _get_active_save_file_name() -> String:
+    if Global.current_game_mode_data != null:
+        return Global.current_game_mode_data.get_save_file_name()
+    return "main_cloud_file.save"
 
 func has_old_save_data():
     return money != 0 and upgrades_unlocked_upgrades.keys().size() > 0
@@ -131,7 +138,7 @@ func load_progression_data():
         progression_data[int_key] = json_data[key]
 
 func save_player_last_run():
-    var actual_file_path = str(player_last_run_file_location, Global.current_game_mode_data.get_save_file_name())
+    var actual_file_path = str(player_last_run_file_location, _get_active_save_file_name())
 
     var save_data: Dictionary = {
         "last_save_time": Time.get_unix_time_from_system(), 
@@ -165,6 +172,11 @@ func save_player_last_run():
 
 
     save_data["upgrades_unlocked_cells"] = unlock_data
+    var in_use_mods = {}
+    for data in unlock_data:
+        if data.has("mod"):
+            in_use_mods[int(data["mod"])] = true
+    save_data["upgrades_in_use_mods"] = in_use_mods.keys()
 
 
     var save_audio_run_plays = []
@@ -182,7 +194,7 @@ func save_player_last_run():
     file.close()
 
 func load_player_last_run():
-    var actual_file_path = str(player_last_run_file_location, Global.current_game_mode_data.get_save_file_name())
+    var actual_file_path = str(player_last_run_file_location, _get_active_save_file_name())
 
     var json_data = Util.load_json_data_from_path(actual_file_path)
     if json_data == null:
@@ -199,6 +211,7 @@ func load_player_last_run():
         tier_stats = json_data["tier_stats"]
 
     upgrades_unlocked_upgrades = {}
+    upgrades_in_use_mods = []
     if json_data.has("upgrades_unlocked_cells"):
         for entry in json_data["upgrades_unlocked_cells"]:
             if entry.has("cell"):
@@ -210,6 +223,9 @@ func load_player_last_run():
                     var y = float(matches[1])
                     var cell = Vector2(x, y)
                     upgrades_unlocked_upgrades[cell] = entry
+    if json_data.has("upgrades_in_use_mods"):
+        for mod_value in json_data["upgrades_in_use_mods"]:
+            upgrades_in_use_mods.append(int(mod_value))
 
 
     audio_run_plays = {}
@@ -413,3 +429,62 @@ func update_controller_sensitivity(value):
     controller_sensitivity = value
 
     save_local_settings()
+
+
+var fishing_progress_file_path = "user://fishing_incremental_progress.save"
+var fishing_currency = 0
+var fishing_lifetime_coins = 0
+var fishing_unlocked_upgrades: Dictionary = {}
+var fishing_active_upgrades: Dictionary = {}
+var fishing_last_battle_summary: Dictionary = {}
+var fishing_next_battle_level := 1
+var fishing_max_unlocked_battle_level := 1
+
+func load_fishing_progress():
+    var json_data = Util.load_json_data_from_path(fishing_progress_file_path)
+    if json_data == null:
+        fishing_currency = 0
+        fishing_lifetime_coins = 0
+        fishing_unlocked_upgrades = {}
+        fishing_active_upgrades = {}
+        fishing_last_battle_summary = {}
+        fishing_next_battle_level = 1
+        fishing_max_unlocked_battle_level = 1
+        return
+
+    fishing_currency = int(json_data.get("currency", 0))
+    fishing_lifetime_coins = int(json_data.get("lifetime_coins", 0))
+    fishing_unlocked_upgrades = json_data.get("unlocked_upgrades", {})
+    fishing_active_upgrades = json_data.get("active_upgrades", {})
+    fishing_last_battle_summary = json_data.get("last_battle_summary", {})
+    fishing_next_battle_level = max(1, int(json_data.get("next_battle_level", 1)))
+    fishing_max_unlocked_battle_level = clamp(int(json_data.get("max_unlocked_battle_level", 1)), 1, 3)
+    fishing_next_battle_level = clamp(fishing_next_battle_level, 1, fishing_max_unlocked_battle_level)
+
+func save_fishing_progress():
+    var save_data = {
+        "currency": fishing_currency,
+        "lifetime_coins": fishing_lifetime_coins,
+        "unlocked_upgrades": fishing_unlocked_upgrades,
+        "active_upgrades": fishing_active_upgrades,
+        "last_battle_summary": fishing_last_battle_summary,
+        "next_battle_level": fishing_next_battle_level,
+        "max_unlocked_battle_level": fishing_max_unlocked_battle_level,
+    }
+    var file = FileAccess.open(fishing_progress_file_path, FileAccess.WRITE)
+    if file == null:
+        return
+    file.store_string(JSON.stringify(save_data))
+    file.close()
+
+func get_fishing_upgrade_level(key: String) -> int:
+    return int(fishing_unlocked_upgrades.get(key, 0))
+
+func has_fishing_upgrade(key: String) -> bool:
+    return get_fishing_upgrade_level(key) > 0
+
+func unlock_fishing_upgrade(key: String, repeatable: bool = false):
+    var new_level = 1 if not repeatable else get_fishing_upgrade_level(key) + 1
+    fishing_unlocked_upgrades[key] = new_level
+    fishing_active_upgrades[key] = true
+    save_fishing_progress()
