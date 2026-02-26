@@ -1,0 +1,3 @@
+
+# Don't commit Godot editor binaries
+Godot/*.exe
