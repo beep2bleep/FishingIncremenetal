@@ -25,6 +25,7 @@ func _run_campaign() -> void:
 	var current_level: int = 1
 	var boss_defeats: int = 0
 	var run_index: int = 0
+	var previous_kills: int = 0
 
 	while total_time < TARGET_SECONDS and run_index < MAX_RUNS:
 		run_index += 1
@@ -33,14 +34,19 @@ func _run_campaign() -> void:
 
 		var run_result: Dictionary = await _run_single_battle(run_index, current_level)
 		total_time += float(run_result.get("run_time_s", 0.0))
+		var kills: int = int(run_result.get("enemies_killed", 0))
+		run_result["kill_delta"] = kills - previous_kills
+		previous_kills = kills
 		results.append(run_result)
 
 		if bool(run_result.get("boss_defeated", false)):
 			boss_defeats += 1
 			current_level = min(3, current_level + 1)
 
-		var bought: Array[String] = _buy_affordable_upgrades()
-		run_result["upgrades_bought"] = bought
+		var buy_result: Dictionary = _buy_affordable_upgrades()
+		run_result["upgrades_bought"] = buy_result.get("keys", [])
+		run_result["upgrades_bought_count"] = int(buy_result.get("count", 0))
+		run_result["upgrade_cost"] = float(buy_result.get("cost", 0.0))
 		run_result["wallet_after_spend"] = _sh().fishing_currency
 		results[results.size() - 1] = run_result
 
@@ -66,6 +72,7 @@ func _run_campaign() -> void:
 	if out_file != null:
 		out_file.store_string(json_out)
 		out_file.close()
+	_write_markdown_report(summary)
 
 	print(json_out)
 	quit()
@@ -97,16 +104,20 @@ func _run_single_battle(run_index: int, level: int) -> Dictionary:
 		"run_time_s": run_time_s,
 		"enemies_killed": killed,
 		"boss_segments_broken": segments,
+		"reached_boss": segments > 0,
 		"boss_defeated": defeated,
 		"coins_gained": coins,
 		"wallet_before": wallet_before,
 		"wallet_after_earn": _sh().fishing_currency,
 		"upgrades_bought": [],
+		"upgrades_bought_count": 0,
+		"upgrade_cost": 0.0,
 		"wallet_after_spend": _sh().fishing_currency,
 	}
 
-func _buy_affordable_upgrades() -> Array[String]:
+func _buy_affordable_upgrades() -> Dictionary:
 	var bought: Array[String] = []
+	var total_cost: float = 0.0
 	var made_purchase: bool = true
 	while made_purchase:
 		made_purchase = false
@@ -119,9 +130,14 @@ func _buy_affordable_upgrades() -> Array[String]:
 			_sh().fishing_currency -= cost_i
 			_sh().unlock_fishing_upgrade(str(upgrade.get("key", "")), bool(upgrade.get("repeatable", false)))
 			bought.append(str(upgrade.get("id", "")))
+			total_cost += cost_i
 			made_purchase = true
 	_sh().save_fishing_progress()
-	return bought
+	return {
+		"keys": bought,
+		"count": bought.size(),
+		"cost": total_cost,
+	}
 
 func _can_buy_upgrade(upgrade: Dictionary) -> bool:
 	var key: String = str(upgrade.get("key", ""))
@@ -185,6 +201,63 @@ func _max_level_reached() -> int:
 	for run in results:
 		max_level = max(max_level, int(run.get("level", 1)))
 	return max_level
+
+func _write_markdown_report(summary: Dictionary) -> void:
+	var md: PackedStringArray = []
+	md.append("# 2-Hour BattleScene Infinite Simulation Report")
+	md.append("")
+	md.append("Source: battle scene runtime + infinite sim + in-run upgrade buying")
+	md.append("Date (UTC): %s" % str(summary.get("date_utc", "")))
+	md.append("Total time: %.1f sec" % float(summary.get("simulated_seconds", 0.0)))
+	md.append("Total runs: %d" % int(summary.get("total_runs", 0)))
+	md.append("Max level reached: %d" % int(summary.get("max_level_reached", 1)))
+	md.append("Boss defeats: %d" % int(summary.get("boss_defeats", 0)))
+	md.append("")
+	md.append("| Run | Level | Time (s) | Kills | Kills/s | Delta | Boss Seg | Reached Boss | Boss Defeated | Earned | Wallet Before | Wallet After Earn | Upgrades Bought | Count | Cost | Wallet After Spend |")
+	md.append("|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|---:|---:|")
+
+	for run_variant in summary.get("runs", []):
+		var run: Dictionary = run_variant
+		var run_time_s: float = float(run.get("run_time_s", 0.0))
+		var kills: int = int(run.get("enemies_killed", 0))
+		var kps: float = 0.0
+		if run_time_s > 0.0:
+			kps = float(kills) / run_time_s
+		var upgrades_arr: Array = run.get("upgrades_bought", [])
+		var upgrades_text: String = _join_upgrade_keys(upgrades_arr)
+		md.append(
+			"| %d | %d | %.1f | %d | %.3f | %d | %d | %s | %s | %d | %d | %d | %s | %d | %.1f | %d |" % [
+				int(run.get("run", 0)),
+				int(run.get("level", 1)),
+				run_time_s,
+				kills,
+				kps,
+				int(run.get("kill_delta", 0)),
+				int(run.get("boss_segments_broken", 0)),
+				str(run.get("reached_boss", false)),
+				str(run.get("boss_defeated", false)),
+				int(run.get("coins_gained", 0)),
+				int(run.get("wallet_before", 0)),
+				int(run.get("wallet_after_earn", 0)),
+				upgrades_text,
+				int(run.get("upgrades_bought_count", 0)),
+				float(run.get("upgrade_cost", 0.0)),
+				int(run.get("wallet_after_spend", 0)),
+			]
+		)
+
+	var md_out: String = "\n".join(md)
+	var md_path: String = ProjectSettings.globalize_path("res://simulation/simulation_run_report_2h_battlescene_infinite.md")
+	var md_file: FileAccess = FileAccess.open(md_path, FileAccess.WRITE)
+	if md_file != null:
+		md_file.store_string(md_out)
+		md_file.close()
+
+func _join_upgrade_keys(upgrades_arr: Array) -> String:
+	var out: PackedStringArray = []
+	for key_variant in upgrades_arr:
+		out.append(str(key_variant))
+	return "; ".join(out)
 
 func _sh() -> Node:
 	return root.get_node_or_null("/root/SaveHandler")
