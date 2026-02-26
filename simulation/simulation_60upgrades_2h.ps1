@@ -1,12 +1,21 @@
 $ErrorActionPreference = 'Stop'
-$script:COST_SCALE = 0.35
+$script:UPGRADE_COST_SCALE = if ($env:SIM_UPGRADE_SCALE) { [double]$env:SIM_UPGRADE_SCALE } else { 1.52 }
+$script:MILESTONE_COST_SCALE = 1.00
+$script:RUN_SURCHARGE_STEP = if ($env:SIM_RUN_SURCHARGE) { [double]$env:SIM_RUN_SURCHARGE } else { 0.10 }
+$script:CORE_BASE_SCALE = if ($env:SIM_CORE_BASE_SCALE) { [double]$env:SIM_CORE_BASE_SCALE } else { 1.00 }
+$script:L2_REGULAR = if ($env:SIM_L2_REGULAR) { [int]$env:SIM_L2_REGULAR } else { 44 }
+$script:L3_REGULAR = if ($env:SIM_L3_REGULAR) { [int]$env:SIM_L3_REGULAR } else { 84 }
+$script:L4_BASE_REGULAR = if ($env:SIM_L4_BASE_REGULAR) { [int]$env:SIM_L4_BASE_REGULAR } else { 92 }
+$script:L2_BOSS_MULT = if ($env:SIM_L2_BOSS_MULT) { [double]$env:SIM_L2_BOSS_MULT } else { 24.0 }
+$script:L3_BOSS_MULT = if ($env:SIM_L3_BOSS_MULT) { [double]$env:SIM_L3_BOSS_MULT } else { 68.0 }
+$script:L4_BOSS_BASE_MULT = if ($env:SIM_L4_BOSS_BASE_MULT) { [double]$env:SIM_L4_BOSS_BASE_MULT } else { 86.0 }
 
 function New-Upgrade($key, $name, $family, $cost, $reqs, $effects, $source) {
   [pscustomobject]@{
     key = $key
     name = $name
     family = $family
-    cost = [double]$cost * $script:COST_SCALE
+    cost = [double]$cost * $script:UPGRADE_COST_SCALE
     reqs = $reqs
     effects = $effects
     source = $source
@@ -248,24 +257,23 @@ function Build-Milestones {
 
 function Build-CoreDefs {
   $items = @(
-    [pscustomobject]@{ key='core_knight_damage'; base=68.0; growth=1.11; effect=@{ knight_damage_flat=0.9 } },
-    [pscustomobject]@{ key='core_knight_speed'; base=64.0; growth=1.11; effect=@{ knight_speed_mult=0.02 } },
-    [pscustomobject]@{ key='core_knight_active_cap'; base=72.0; growth=1.12; effect=@{ knight_active_cap=0.03 } },
-    [pscustomobject]@{ key='core_archer_damage'; base=74.0; growth=1.11; effect=@{ archer_damage_flat=0.8 } },
-    [pscustomobject]@{ key='core_archer_speed'; base=70.0; growth=1.11; effect=@{ archer_speed_mult=0.02 } },
-    [pscustomobject]@{ key='core_archer_active_cap'; base=76.0; growth=1.12; effect=@{ archer_active_cap=0.03 } },
-    [pscustomobject]@{ key='core_guardian_damage'; base=84.0; growth=1.12; effect=@{ guardian_damage_flat=0.9 } },
-    [pscustomobject]@{ key='core_guardian_speed'; base=82.0; growth=1.12; effect=@{ guardian_speed_mult=0.02 } },
-    [pscustomobject]@{ key='core_guardian_active_cap'; base=90.0; growth=1.13; effect=@{ guardian_active_cap=0.03 } },
-    [pscustomobject]@{ key='core_mage_damage'; base=92.0; growth=1.12; effect=@{ mage_damage_flat=1.1 } },
-    [pscustomobject]@{ key='core_mage_speed'; base=88.0; growth=1.12; effect=@{ mage_speed_mult=0.02 } },
-    [pscustomobject]@{ key='core_mage_active_cap'; base=96.0; growth=1.13; effect=@{ mage_active_cap=0.03 } },
-    [pscustomobject]@{ key='core_armor'; base=72.0; growth=1.11; effect=@{ armor_general=0.008 } },
-    [pscustomobject]@{ key='core_density'; base=80.0; growth=1.12; effect=@{ enemy_count_mult=0.008 } },
-    [pscustomobject]@{ key='core_drop'; base=78.0; growth=1.11; effect=@{ drop_mult=0.01 } },
-    [pscustomobject]@{ key='core_power'; base=82.0; growth=1.12; effect=@{ power_gain_mult=0.012; power_cap_flat=1.5 } }
+    [pscustomobject]@{ key='core_knight_damage'; base=(360.0 * $script:CORE_BASE_SCALE); growth=1.34; effect=@{ knight_damage_flat=1 } },
+    [pscustomobject]@{ key='core_knight_speed'; base=(350.0 * $script:CORE_BASE_SCALE); growth=1.34; effect=@{ knight_attack_rate_flat=1 } },
+    [pscustomobject]@{ key='core_knight_active_cap'; base=(380.0 * $script:CORE_BASE_SCALE); growth=1.35; effect=@{ knight_active_cap=1 } },
+    [pscustomobject]@{ key='core_archer_damage'; base=(400.0 * $script:CORE_BASE_SCALE); growth=1.34; effect=@{ archer_damage_flat=1 } },
+    [pscustomobject]@{ key='core_archer_speed'; base=(390.0 * $script:CORE_BASE_SCALE); growth=1.34; effect=@{ archer_attack_rate_flat=1 } },
+    [pscustomobject]@{ key='core_archer_active_cap'; base=(420.0 * $script:CORE_BASE_SCALE); growth=1.35; effect=@{ archer_active_cap=1 } },
+    [pscustomobject]@{ key='core_guardian_damage'; base=(450.0 * $script:CORE_BASE_SCALE); growth=1.35; effect=@{ guardian_damage_flat=1 } },
+    [pscustomobject]@{ key='core_guardian_speed'; base=(440.0 * $script:CORE_BASE_SCALE); growth=1.35; effect=@{ guardian_attack_rate_flat=1 } },
+    [pscustomobject]@{ key='core_guardian_active_cap'; base=(470.0 * $script:CORE_BASE_SCALE); growth=1.36; effect=@{ guardian_active_cap=1 } },
+    [pscustomobject]@{ key='core_mage_damage'; base=(490.0 * $script:CORE_BASE_SCALE); growth=1.35; effect=@{ mage_damage_flat=1 } },
+    [pscustomobject]@{ key='core_mage_speed'; base=(480.0 * $script:CORE_BASE_SCALE); growth=1.35; effect=@{ mage_attack_rate_flat=1 } },
+    [pscustomobject]@{ key='core_mage_active_cap'; base=(510.0 * $script:CORE_BASE_SCALE); growth=1.36; effect=@{ mage_active_cap=1 } },
+    [pscustomobject]@{ key='core_armor'; base=(370.0 * $script:CORE_BASE_SCALE); growth=1.34; effect=@{ armor_flat=1 } },
+    [pscustomobject]@{ key='core_density'; base=(400.0 * $script:CORE_BASE_SCALE); growth=1.35; effect=@{ enemy_count_flat=1 } },
+    [pscustomobject]@{ key='core_drop'; base=(390.0 * $script:CORE_BASE_SCALE); growth=1.34; effect=@{ drop_flat=1 } },
+    [pscustomobject]@{ key='core_power'; base=(410.0 * $script:CORE_BASE_SCALE); growth=1.35; effect=@{ power_gain_flat=1; power_cap_flat=1 } }
   )
-  foreach ($c in $items) { $c.base = Scale-Cost $c.base }
   return $items
 }
 function Milestone-Available($state, $m) {
@@ -360,8 +368,9 @@ function Get-LevelParams($level) {
   $dot = 2.6 * [math]::Pow(1.14, $i)
   $drop = 26.0 * [math]::Pow(1.35, $i)
   $power = 8.0 * [math]::Pow(1.12, $i)
-  $regular = if ($level -eq 1) { 36 } elseif ($level -eq 2) { 40 } elseif ($level -eq 3) { 132 } else { 152 + (28 * ($level - 4)) }
-  $bossHp = if ($level -eq 1) { $enemyHp * 22.0 } elseif ($level -eq 2) { $enemyHp * 22.0 } elseif ($level -eq 3) { $enemyHp * 62.0 } else { $enemyHp * (128.0 + 14.0 * ($level - 4)) }
+  # Tune progression so each level takes more runs to clear than the previous one.
+  $regular = if ($level -eq 1) { 36 } elseif ($level -eq 2) { $script:L2_REGULAR } elseif ($level -eq 3) { $script:L3_REGULAR } else { $script:L4_BASE_REGULAR + (22 * ($level - 4)) }
+  $bossHp = if ($level -eq 1) { $enemyHp * 22.0 } elseif ($level -eq 2) { $enemyHp * $script:L2_BOSS_MULT } elseif ($level -eq 3) { $enemyHp * $script:L3_BOSS_MULT } else { $enemyHp * ($script:L4_BOSS_BASE_MULT + 12.0 * ($level - 4)) }
   $bossDps = $enemyContact * 2.7
   $bossDrop = $drop * (90.0 + 16.0 * $level)
   @{
@@ -381,38 +390,73 @@ function Get-LevelParams($level) {
 function Get-CombatStats($state) {
   $m = $state.mods
 
-  $knightBaseDmg = 8.6 + (Get-Mod $m 'knight_damage_flat' 0)
-  $knightAtk = 1.05 * (1.0 + (Get-Mod $m 'knight_speed_mult' 0))
-  $knightDps = $knightBaseDmg * $knightAtk * (1.0 + (Get-Mod $m 'knight_damage_mult' 0))
+  $knightBaseDmg = 1 + [int][math]::Floor((Get-Mod $m 'knight_damage_flat' 0))
+  $knightAtk = 1 + [int][math]::Floor((Get-Mod $m 'knight_attack_rate_flat' 0))
+  $knightBaseDmg += [int][math]::Round((Get-Mod $m 'knight_damage_mult' 0) * 10.0, 0)
+  $knightAtk += [int][math]::Round((Get-Mod $m 'knight_speed_mult' 0) * 10.0, 0)
+  $knightBaseDmg = [math]::Max(1, $knightBaseDmg)
+  $knightAtk = [math]::Max(1, $knightAtk)
+  $knightDps = [double]($knightBaseDmg * $knightAtk)
 
   $archerDps = 0.0
   if ($state.flags.archer_unlocked) {
-    $aDmg = 7.8 + (Get-Mod $m 'archer_damage_flat' 0)
-    $aAtk = 0.95 * (1.0 + (Get-Mod $m 'archer_speed_mult' 0))
-    $archerDps = $aDmg * $aAtk * (1.0 + (Get-Mod $m 'archer_damage_mult' 0))
+    $aDmg = 1 + [int][math]::Floor((Get-Mod $m 'archer_damage_flat' 0))
+    $aAtk = 1 + [int][math]::Floor((Get-Mod $m 'archer_attack_rate_flat' 0))
+    $aDmg += [int][math]::Round((Get-Mod $m 'archer_damage_mult' 0) * 10.0, 0)
+    $aAtk += [int][math]::Round((Get-Mod $m 'archer_speed_mult' 0) * 10.0, 0)
+    $aDmg = [math]::Max(1, $aDmg)
+    $aAtk = [math]::Max(1, $aAtk)
+    $archerDps = [double]($aDmg * $aAtk)
   }
 
   $guardianDps = 0.0
   if ($state.flags.guardian_unlocked) {
-    $gDmg = 10.2 + (Get-Mod $m 'guardian_damage_flat' 0)
-    $gAtk = 0.74 * (1.0 + (Get-Mod $m 'guardian_speed_mult' 0))
-    $guardianDps = $gDmg * $gAtk * (1.0 + (Get-Mod $m 'guardian_damage_mult' 0))
+    $gDmg = 1 + [int][math]::Floor((Get-Mod $m 'guardian_damage_flat' 0))
+    $gAtk = 1 + [int][math]::Floor((Get-Mod $m 'guardian_attack_rate_flat' 0))
+    $gDmg += [int][math]::Round((Get-Mod $m 'guardian_damage_mult' 0) * 10.0, 0)
+    $gAtk += [int][math]::Round((Get-Mod $m 'guardian_speed_mult' 0) * 10.0, 0)
+    $gDmg = [math]::Max(1, $gDmg)
+    $gAtk = [math]::Max(1, $gAtk)
+    $guardianDps = [double]($gDmg * $gAtk)
   }
 
   $mageDps = 0.0
   if ($state.flags.mage_unlocked) {
-    $mDmg = 11.0 + (Get-Mod $m 'mage_damage_flat' 0)
-    $mAtk = 0.80 * (1.0 + (Get-Mod $m 'mage_speed_mult' 0))
-    $mageDps = $mDmg * $mAtk * (1.0 + (Get-Mod $m 'mage_damage_mult' 0))
+    $mDmg = 1 + [int][math]::Floor((Get-Mod $m 'mage_damage_flat' 0))
+    $mAtk = 1 + [int][math]::Floor((Get-Mod $m 'mage_attack_rate_flat' 0))
+    $mDmg += [int][math]::Round((Get-Mod $m 'mage_damage_mult' 0) * 10.0, 0)
+    $mAtk += [int][math]::Round((Get-Mod $m 'mage_speed_mult' 0) * 10.0, 0)
+    $mDmg = [math]::Max(1, $mDmg)
+    $mAtk = [math]::Max(1, $mAtk)
+    $mageDps = [double]($mDmg * $mAtk)
   }
 
   if ($state.flags.auto_attack_unlocked) {
-    $knightDps += (4.0 + (Get-Mod $m 'auto_attack_flat' 0))
+    $knightDps += [math]::Max(1.0, [math]::Round((Get-Mod $m 'auto_attack_flat' 0), 0))
   }
 
-  $moveSpeed = 2.35 * (1.0 + (Get-Mod $m 'move_speed_mult' 0))
-  $maxHp = 112.0 * (1.0 + (Get-Mod $m 'max_hp_mult' 0))
-  $armor = [math]::Min(0.88, (Get-Mod $m 'armor_general' 0))
+  $moveSpeed = 2 + [int][math]::Round((Get-Mod $m 'move_speed_mult' 0) * 20.0, 0)
+  $maxHp = 100 + [int][math]::Round((Get-Mod $m 'max_hp_mult' 0) * 100.0, 0)
+  $armorPct = [int][math]::Round((Get-Mod $m 'armor_general' 0) * 100.0, 0)
+  $flatArmor = [math]::Max(0.0, [math]::Round((Get-Mod $m 'armor_flat' 0), 0))
+  $dotReductionPct = [int][math]::Round((Get-Mod $m 'dot_taken_reduction' 0) * 100.0, 0)
+  $contactReductionPct = [int][math]::Round((Get-Mod $m 'contact_taken_reduction' 0) * 100.0, 0)
+  $enemyContactPct = [int][math]::Round((Get-Mod $m 'enemy_contact_mult' 0) * 100.0, 0)
+  $enemyCountPct = [int][math]::Round((Get-Mod $m 'enemy_count_mult' 0) * 100.0, 0)
+  $dropPct = [int][math]::Round((Get-Mod $m 'drop_mult' 0) * 100.0, 0)
+  $cursorValuePct = [int][math]::Round((Get-Mod $m 'cursor_value_mult' 0) * 100.0, 0)
+  $eliteValuePct = [int][math]::Round((Get-Mod $m 'elite_value_mult' 0) * 100.0, 0)
+  $powerGainPct = [int][math]::Round((Get-Mod $m 'power_gain_mult' 0) * 100.0, 0)
+  $cooldownPct = [int][math]::Round((Get-Mod $m 'cooldown_mult' 0) * 100.0, 0)
+  $activeDurationPct = [int][math]::Round((Get-Mod $m 'active_duration_all' 0) * 100.0, 0)
+  $bossArmorPct = [int][math]::Round((Get-Mod $m 'boss_armor' 0) * 100.0, 0)
+  $bossHpReductionPct = [int][math]::Round((Get-Mod $m 'boss_hp_reduction' 0) * 100.0, 0)
+  $bossContactReductionPct = [int][math]::Round((Get-Mod $m 'boss_contact_reduction' 0) * 100.0, 0)
+  $bossDamagePct = [int][math]::Round((Get-Mod $m 'boss_damage_mult' 0) * 100.0, 0)
+  $bossDropPct = [int][math]::Round((Get-Mod $m 'boss_drop_mult' 0) * 100.0, 0)
+  $reachRewardPct = [int][math]::Round((Get-Mod $m 'reach_reward_mult' 0) * 100.0, 0)
+  $bossRewardPct = [int][math]::Round((Get-Mod $m 'boss_reward_mult' 0) * 100.0, 0)
+  $dropPer10KillsPct = [int][math]::Round((Get-Mod $m 'drop_per_10kills' 0) * 100.0, 0)
 
   $cursorShare = 0.60 + (Get-Mod $m 'cursor_share_bonus' 0)
   $heroShare = 0.30 + (Get-Mod $m 'hero_collect_bonus' 0)
@@ -427,26 +471,29 @@ function Get-CombatStats($state) {
   @{
     knight_dps=$knightDps; archer_dps=$archerDps; guardian_dps=$guardianDps; mage_dps=$mageDps
     total_dps=($knightDps + $archerDps + $guardianDps + $mageDps)
-    move_speed=$moveSpeed; max_hp=$maxHp; armor=$armor
-    dot_reduction=(Get-Mod $m 'dot_taken_reduction' 0)
-    contact_reduction=(Get-Mod $m 'contact_taken_reduction' 0)
-    enemy_contact_mult=(1.0 + (Get-Mod $m 'enemy_contact_mult' 0)); enemy_count_mult=(1.0 + (Get-Mod $m 'enemy_count_mult' 0))
-    drop_mult=(1.0 + (Get-Mod $m 'drop_mult' 0)); cursor_share=$cursorShare; hero_share=$heroShare; miss_share=$missShare
-    cursor_value_mult=(1.0 + (Get-Mod $m 'cursor_value_mult' 0)); elite_count=[int](Get-Mod $m 'elite_count' 0); elite_value_mult=(1.0 + (Get-Mod $m 'elite_value_mult' 0))
-    power_gain_mult=(1.0 + (Get-Mod $m 'power_gain_mult' 0)); power_cap=(50.0 + (Get-Mod $m 'power_cap_flat' 0))
-    cooldown_mult=[math]::Max(0.55, (1.0 + (Get-Mod $m 'cooldown_mult' 0))); active_duration_all=(1.0 + (Get-Mod $m 'active_duration_all' 0))
+    move_speed=$moveSpeed; max_hp=$maxHp; armor_pct=$armorPct
+    dot_reduction_pct=$dotReductionPct
+    contact_reduction_pct=$contactReductionPct
+    enemy_contact_pct=$enemyContactPct; enemy_count_pct=$enemyCountPct
+    drop_pct=$dropPct; cursor_share=$cursorShare; hero_share=$heroShare; miss_share=$missShare
+    cursor_value_pct=$cursorValuePct; elite_count=[int](Get-Mod $m 'elite_count' 0); elite_value_pct=$eliteValuePct
+    power_gain_pct=$powerGainPct; power_gain_flat=(Get-Mod $m 'power_gain_flat' 0); power_cap=(50.0 + (Get-Mod $m 'power_cap_flat' 0))
+    cooldown_pct=$cooldownPct; active_duration_pct=$activeDurationPct
     knight_vamp_bonus=(Get-Mod $m 'knight_vamp_bonus' 0); knight_active_armor=(Get-Mod $m 'knight_active_armor' 0)
     archer_pierce=(Get-Mod $m 'archer_pierce' 0); power_refund=(Get-Mod $m 'power_refund' 0); overflow_drop=(Get-Mod $m 'overflow_drop' 0)
-    cooldown_tick_bonus=(Get-Mod $m 'cooldown_tick_bonus' 0); boss_armor=(Get-Mod $m 'boss_armor' 0); boss_hp_reduction=(Get-Mod $m 'boss_hp_reduction' 0)
-    boss_contact_reduction=(Get-Mod $m 'boss_contact_reduction' 0); boss_damage_mult=(Get-Mod $m 'boss_damage_mult' 0)
-    boss_drop_mult=(1.0 + (Get-Mod $m 'boss_drop_mult' 0)); wallet_interest=(Get-Mod $m 'wallet_interest' 0)
-    reach_reward_mult=(Get-Mod $m 'reach_reward_mult' 0); boss_reward_mult=(Get-Mod $m 'boss_reward_mult' 0); drop_per_10kills=(Get-Mod $m 'drop_per_10kills' 0)
+    cooldown_tick_bonus=(Get-Mod $m 'cooldown_tick_bonus' 0); boss_armor_pct=$bossArmorPct; boss_hp_reduction_pct=$bossHpReductionPct
+    boss_contact_reduction_pct=$bossContactReductionPct; boss_damage_pct=$bossDamagePct
+    boss_drop_pct=$bossDropPct; wallet_interest=(Get-Mod $m 'wallet_interest' 0)
+    reach_reward_pct=$reachRewardPct; boss_reward_pct=$bossRewardPct; drop_per_10kills_pct=$dropPer10KillsPct
     target_swap_speed=(Get-Mod $m 'target_swap_speed' 0); no_contact_speed_mult=(Get-Mod $m 'no_contact_speed_mult' 0)
     kill_speed_mult=(Get-Mod $m 'kill_speed_mult' 0); high_hp_speed_mult=(Get-Mod $m 'high_hp_speed_mult' 0); early_mitigation=(Get-Mod $m 'early_mitigation' 0)
     knight_active_cap=(Get-Mod $m 'knight_active_cap' 0); archer_active_cap=(Get-Mod $m 'archer_active_cap' 0); guardian_active_cap=(Get-Mod $m 'guardian_active_cap' 0); mage_active_cap=(Get-Mod $m 'mage_active_cap' 0)
     knight_active_duration=(Get-Mod $m 'knight_active_duration' 0); archer_active_duration=(Get-Mod $m 'archer_active_duration' 0)
     guardian_active_duration=(Get-Mod $m 'guardian_active_duration' 0); mage_active_duration=(Get-Mod $m 'mage_active_duration' 0)
     active_power_eff=(Get-Mod $m 'active_power_eff' 0)
+    armor_flat=$flatArmor
+    drop_flat=(Get-Mod $m 'drop_flat' 0)
+    enemy_count_flat=(Get-Mod $m 'enemy_count_flat' 0)
   }
 }
 function Try-ActivateAbilities($state, $stats, [ref]$abilityUses) {
@@ -457,17 +504,23 @@ function Try-ActivateAbilities($state, $stats, [ref]$abilityUses) {
     @{ name='mage'; flag='mage_active_unlocked'; cost=30.0; cd=19.0; dur=5.5 }
   )
 
-  foreach ($d in $defs) {
+  # Rotate activation order so one unit does not always consume power first.
+  $start = 0
+  if ($defs.Count -gt 0) { $start = $state.totalActiveCasts % $defs.Count }
+  $ordered = @()
+  for ($i = 0; $i -lt $defs.Count; $i++) { $ordered += $defs[($start + $i) % $defs.Count] }
+
+  foreach ($d in $ordered) {
     if (-not $state.flags[$d.flag]) { continue }
     $cdKey = "cd_$($d.name)"
     $actKey = "act_$($d.name)"
-    $cap = 1.0 + (Get-Mod $stats "$($d.name)_active_cap" 0)
+    $cap = 1.0 + (0.10 * (Get-Mod $stats "$($d.name)_active_cap" 0))
     $cost = [math]::Max(5.0, $d.cost * (1.0 - $stats.active_power_eff * 0.5))
     if ($state.cooldowns[$cdKey] -le 0.0 -and $state.power -ge $cost) {
       $state.power -= $cost
       $extraDur = Get-Mod $stats "$($d.name)_active_duration" 0
-      $state.actives[$actKey] = ($d.dur + $extraDur) * $stats.active_duration_all * (1.0 + 0.5 * $cap)
-      $state.cooldowns[$cdKey] = $d.cd * $stats.cooldown_mult
+      $state.actives[$actKey] = ($d.dur + $extraDur) * (1.0 + ($stats.active_duration_pct / 100.0)) * (1.0 + 0.5 * $cap)
+      $state.cooldowns[$cdKey] = $d.cd * [math]::Max(0.55, (1.0 + ($stats.cooldown_pct / 100.0)))
       $abilityUses.Value[$d.name] += 1
       $state.totalActiveCasts += 1
       if ($stats.power_refund -gt 0 -and ($state.totalActiveCasts % 4 -eq 0)) {
@@ -475,6 +528,29 @@ function Try-ActivateAbilities($state, $stats, [ref]$abilityUses) {
       }
     }
   }
+}
+
+function Get-AbilityPowerDemandPerSecond($state, $stats) {
+  $defs = @(
+    @{ name='knight'; flag='knight_active_unlocked'; cost=18.0; cd=13.0 },
+    @{ name='archer'; flag='archer_active_unlocked'; cost=22.0; cd=15.0 },
+    @{ name='guardian'; flag='guardian_active_unlocked'; cost=26.0; cd=17.0 },
+    @{ name='mage'; flag='mage_active_unlocked'; cost=30.0; cd=19.0 }
+  )
+
+  $cdMult = [math]::Max(0.55, (1.0 + ($stats.cooldown_pct / 100.0)))
+  $costMult = [math]::Max(0.5, (1.0 - ($stats.active_power_eff * 0.5)))
+  $demand = 0.0
+
+  foreach ($d in $defs) {
+    if (-not $state.flags[$d.flag]) { continue }
+    $cost = [math]::Max(5.0, $d.cost * $costMult)
+    $cd = [math]::Max(1.0, $d.cd * $cdMult)
+    $demand += ($cost / $cd)
+  }
+
+  # Small headroom to absorb encounter timing jitter while keeping power near-empty.
+  return $demand * 1.08
 }
 
 function Tick-AbilityTimers($state, $dt, $stats) {
@@ -494,6 +570,24 @@ function Tick-AbilityTimers($state, $dt, $stats) {
 function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
   $lp = Get-LevelParams $level
   $stats = Get-CombatStats $state
+  $enemyCountMult = 1.0 + ($stats.enemy_count_pct / 100.0)
+  $enemyContactMult = 1.0 + ($stats.enemy_contact_pct / 100.0)
+  $dropMultBase = 1.0 + ($stats.drop_pct / 100.0)
+  $cursorValueMult = 1.0 + ($stats.cursor_value_pct / 100.0)
+  $eliteValueMult = 1.0 + ($stats.elite_value_pct / 100.0)
+  $powerGainMult = 1.0 + ($stats.power_gain_pct / 100.0)
+  $bossDropMult = 1.0 + ($stats.boss_drop_pct / 100.0)
+  $reachRewardMult = 1.0 + ($stats.reach_reward_pct / 100.0)
+  $bossRewardMult = 1.0 + ($stats.boss_reward_pct / 100.0)
+  $dropPer10Kills = $stats.drop_per_10kills_pct / 100.0
+  $armorBase = [math]::Min(0.88, [math]::Max(0.0, $stats.armor_pct / 100.0))
+  $dotReduction = [math]::Min(0.90, [math]::Max(0.0, $stats.dot_reduction_pct / 100.0))
+  $contactReduction = [math]::Min(0.90, [math]::Max(0.0, $stats.contact_reduction_pct / 100.0))
+  $bossArmorBonus = $stats.boss_armor_pct / 100.0
+  $bossHpReduction = [math]::Min(0.80, [math]::Max(0.0, $stats.boss_hp_reduction_pct / 100.0))
+  $bossContactReduction = [math]::Min(0.90, [math]::Max(0.0, $stats.boss_contact_reduction_pct / 100.0))
+  $bossDamageMult = 1.0 + ($stats.boss_damage_pct / 100.0)
+  $abilityPowerDemandPerSecond = Get-AbilityPowerDemandPerSecond $state $stats
 
   $hp = $stats.max_hp
   $runTime = 8.0
@@ -508,9 +602,9 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
   $abilityUses = @{ knight=0; archer=0; guardian=0; mage=0 }
 
   # Path length to boss is level-defined; density should increase pressure/reward, not move the boss farther away.
-  $regularCount = [math]::Max(12, [int][math]::Round($lp.regular_count))
-  $densityPressureMult = 1.0 + (($stats.enemy_count_mult - 1.0) * 0.30)
-  $densityRewardMult = 1.0 + (($stats.enemy_count_mult - 1.0) * 0.65)
+  $regularCount = [math]::Max(12, [int][math]::Round($lp.regular_count + $stats.enemy_count_flat))
+  $densityPressureMult = 1.0 + (($enemyCountMult - 1.0) * 0.30)
+  $densityRewardMult = 1.0 + (($enemyCountMult - 1.0) * 0.65)
   $eliteCount = [math]::Min($regularCount, $stats.elite_count)
 
   for ($i = 1; $i -le $regularCount; $i++) {
@@ -520,14 +614,14 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
 
     $depthHpMult = (1.0 + 0.028 * $i)
     $depthDmgMult = (1.0 + 0.022 * $i)
-    $enemyHp = $lp.enemy_hp * $difficultyScalar * $depthHpMult
-    $enemyDps = $lp.enemy_contact * $difficultyScalar * $depthDmgMult * $stats.enemy_contact_mult * $densityPressureMult
-    $drop = $lp.drop * (1.0 + 0.012 * $i) * $densityRewardMult
+    $enemyHp = [math]::Round($lp.enemy_hp * $difficultyScalar * $depthHpMult, 0)
+    $enemyDps = [math]::Round($lp.enemy_contact * $difficultyScalar * $depthDmgMult * $enemyContactMult * $densityPressureMult, 0)
+    $drop = [math]::Round(($lp.drop * (1.0 + 0.012 * $i) * $densityRewardMult) + $stats.drop_flat, 0)
 
     if ($i -le $eliteCount) {
       $enemyHp *= 1.45
       $enemyDps *= 1.18
-      $drop *= (2.2 * $stats.elite_value_mult)
+      $drop *= (2.2 * $eliteValueMult)
     }
 
     $speed = $stats.move_speed * (1.0 + $stats.target_swap_speed)
@@ -549,13 +643,14 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
       $contactTime = [math]::Min($contactTime, $encTime)
     }
 
-    $armor = $stats.armor
+    $armor = $armorBase
     if ($runTime -lt 8.0) { $armor = [math]::Min(0.92, $armor + $stats.early_mitigation) }
     if ($state.actives['act_guardian'] -gt 0) { $armor = [math]::Min(0.92, $armor + 0.20) }
     if ($state.actives['act_knight'] -gt 0) { $armor = [math]::Min(0.92, $armor + $stats.knight_active_armor) }
 
-    $dotTaken = $lp.dot_dps * $difficultyScalar * $encTime * (1.0 - $armor) * (1.0 - $stats.dot_reduction)
-    $contactTaken = $enemyDps * $contactTime * (1.0 - $armor) * (1.0 - $stats.contact_reduction)
+    $dotTaken = $lp.dot_dps * $difficultyScalar * $encTime * (1.0 - $armor) * (1.0 - $dotReduction)
+    $effectiveContactDps = [math]::Max(0.0, $enemyDps - $stats.armor_flat)
+    $contactTaken = $effectiveContactDps * $contactTime * (1.0 - $armor) * (1.0 - $contactReduction)
     $incoming = $dotTaken + $contactTaken
 
     $heal = 0.0
@@ -577,10 +672,10 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
     Tick-AbilityTimers $state $encTime $stats
 
     $regularKills += 1
-    $dropMultRuntime = $stats.drop_mult + ($stats.drop_per_10kills * [math]::Floor($regularKills / 10.0)) + $state.runOverflowDrop
-    $dropVal = $drop * $dropMultRuntime
+    $dropMultRuntime = $dropMultBase + ($dropPer10Kills * [math]::Floor($regularKills / 10.0)) + $state.runOverflowDrop
+    $dropVal = [math]::Round($drop * $dropMultRuntime, 0)
 
-    $cursorGain = $dropVal * $stats.cursor_share * $stats.cursor_value_mult
+    $cursorGain = $dropVal * $stats.cursor_share * $cursorValueMult
     $heroGain = $dropVal * $stats.hero_share
     $missGain = $dropVal * $stats.miss_share
     $cursor += $cursorGain
@@ -588,7 +683,9 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
     $missed += $missGain
     $currency += ($cursorGain + $heroGain)
 
-    $powerGain = $lp.power * $stats.power_gain_mult
+    $basePowerGain = ($lp.power * $powerGainMult) + $stats.power_gain_flat
+    $abilityNeedPerKill = $abilityPowerDemandPerSecond * $encTime
+    $powerGain = [math]::Round([math]::Max($basePowerGain, $abilityNeedPerKill), 0)
     $newPower = $state.power + $powerGain
     if ($newPower -gt $stats.power_cap -and $stats.overflow_drop -gt 0) {
       $overflow = $newPower - $stats.power_cap
@@ -596,12 +693,32 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
     }
     $state.power = [math]::Min($stats.power_cap, $newPower)
   }
+
+  # Ensure every run has at least baseline forward progress.
+  if ($regularKills -eq 0) {
+    $regularKills = 1
+    $runTime = [math]::Max($runTime, 15.0)
+    $baseDrop = [math]::Round($lp.drop + $stats.drop_flat, 0)
+    $baseDropValue = [math]::Round($baseDrop * $dropMultBase, 0)
+    $cursorGain = $baseDropValue * $stats.cursor_share * $cursorValueMult
+    $heroGain = $baseDropValue * $stats.hero_share
+    $missGain = $baseDropValue * $stats.miss_share
+    $currency += ($cursorGain + $heroGain)
+    $cursor += $cursorGain
+    $hero += $heroGain
+    $missed += $missGain
+    $basePowerGain = ($lp.power * $powerGainMult) + $stats.power_gain_flat
+    $abilityNeedPerKill = $abilityPowerDemandPerSecond * 15.0
+    $powerGain = [math]::Round([math]::Max($basePowerGain, $abilityNeedPerKill), 0)
+    $state.power = [math]::Min($stats.power_cap, $state.power + $powerGain)
+  }
+
   $reachedBoss = ($regularKills -ge $regularCount)
   $bossDefeated = $false
 
   if ($reachedBoss -and $hp -gt 0 -and $runTime -lt $maxRunTime) {
     $state.flags.boss_seen = $true
-    $bossHpTotal = $lp.boss_hp * $difficultyScalar * (1.0 - $stats.boss_hp_reduction)
+    $bossHpTotal = $lp.boss_hp * $difficultyScalar * (1.0 - $bossHpReduction)
     $bossSegHp = $bossHpTotal / 8.0
     $bossDps = $lp.boss_dps * $difficultyScalar
 
@@ -612,7 +729,7 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
 
       $segRamp = if ($level -ge 3) { 0.07 } else { 0.12 }
       $segHp = $bossSegHp * (1.0 + $segRamp * ($seg - 1))
-      $dps = $stats.total_dps * (1.0 + $stats.boss_damage_mult)
+      $dps = $stats.total_dps * $bossDamageMult
       if ($state.actives['act_archer'] -gt 0) { $dps += $stats.archer_dps * (0.55 + $stats.archer_pierce) }
       if ($state.actives['act_mage'] -gt 0) { $dps += $stats.mage_dps * 1.10 }
 
@@ -622,11 +739,11 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
         if ($ttk -le 0) { break }
       }
 
-      $armor = [math]::Min(0.95, $stats.armor + $stats.boss_armor + (Get-Mod $state.mods 'boss_ally_armor' 0))
+      $armor = [math]::Min(0.95, $armorBase + $bossArmorBonus + (Get-Mod $state.mods 'boss_ally_armor' 0))
       if ($state.actives['act_guardian'] -gt 0) { $armor = [math]::Min(0.95, $armor + 0.16) }
       if ($state.actives['act_knight'] -gt 0) { $armor = [math]::Min(0.95, $armor + $stats.knight_active_armor) }
 
-      $incoming = $bossDps * $ttk * (1.0 - $armor) * (1.0 - $stats.boss_contact_reduction)
+      $incoming = $bossDps * $ttk * (1.0 - $armor) * (1.0 - $bossContactReduction)
       if ($incoming -ge $hp) {
         $frac = $hp / [math]::Max(0.1, $incoming)
         $partial = $ttk * $frac
@@ -640,9 +757,9 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
       Tick-AbilityTimers $state $ttk $stats
 
       $bossSegKills += 1
-      $portion = ($lp.boss_drop * $stats.boss_drop_mult) / 10.0
+      $portion = ($lp.boss_drop * $bossDropMult) / 10.0
       $segReward = if ($seg -lt 8) { $portion } else { $portion * 3.0 }
-      $segDrop = $segReward * $stats.drop_mult
+      $segDrop = $segReward * $dropMultBase
       $currency += $segDrop * ($stats.cursor_share + $stats.hero_share)
 
       $state.power = [math]::Min($stats.power_cap, $state.power + ($lp.power * 2.2))
@@ -651,8 +768,8 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
     if ($bossSegKills -eq 8) { $bossDefeated = $true }
   }
 
-  if ($reachedBoss) { $currency *= (1.0 + $stats.reach_reward_mult) }
-  if ($bossDefeated) { $currency *= (1.0 + $stats.boss_reward_mult) }
+  if ($reachedBoss) { $currency *= $reachRewardMult }
+  if ($bossDefeated) { $currency *= $bossRewardMult }
 
   [pscustomobject]@{
     level = $level; run_time_s = [math]::Round($runTime, 1); regular_kills = $regularKills; boss_segment_kills = $bossSegKills
@@ -666,7 +783,7 @@ function Simulate-CombatCore($state, $level, $runIndex, $difficultyScalar) {
 
 function Simulate-RunSmoothed($state, $level, $runIndex, $prevKills) {
   if (-not $state.levelDifficulty.ContainsKey($level)) {
-    $state.levelDifficulty[$level] = if ($level -eq 1) { 0.82 } elseif ($level -eq 2) { 0.75 } elseif ($level -eq 3) { 2.72 } else { 3.80 + 0.25 * ($level - 4) }
+    $state.levelDifficulty[$level] = if ($level -eq 1) { 0.60 } elseif ($level -eq 2) { 0.95 } elseif ($level -eq 3) { 1.20 } else { 1.45 + 0.20 * ($level - 4) }
   }
 
   $difficulty = [double]$state.levelDifficulty[$level]
@@ -675,8 +792,8 @@ function Simulate-RunSmoothed($state, $level, $runIndex, $prevKills) {
   $bestScore = 1e9
   $minDelta = 1
   $maxDelta = 3
-  $minDifficulty = if ($level -le 2) { 0.25 } elseif ($level -eq 3) { 1.85 } else { 2.40 }
-  $maxDifficulty = if ($level -le 2) { 2.50 } else { 6.00 }
+  $minDifficulty = if ($level -eq 1) { 0.15 } elseif ($level -eq 2) { 0.35 } elseif ($level -eq 3) { 0.60 } else { 0.85 }
+  $maxDifficulty = if ($level -le 2) { 2.80 } else { 3.80 }
 
   # Snapshot mutable combat state so tuning iterations are apples-to-apples.
   $savedPower = [double]$state.power
@@ -727,13 +844,15 @@ function Simulate-RunSmoothed($state, $level, $runIndex, $prevKills) {
 }
 
 function Scale-Cost($cost) {
-  return [math]::Round(([double]$cost * $script:COST_SCALE), 1)
+  return [math]::Round(([double]$cost * $script:MILESTONE_COST_SCALE), 1)
 }
 
 function Buy-UpgradesForRun($state, $runIndex, $milestones, $baseUpgrades, $extraUpgrades, $coreDefs) {
   $purchases = New-Object System.Collections.Generic.List[object]
   $guard = 0
-  while ($guard -lt 200) {
+  $runPurchaseCount = 0
+  $runSurchargeStep = $script:RUN_SURCHARGE_STEP
+  while ($guard -lt 300) {
     $guard += 1
     $p = Buy-Milestone $state $milestones
     if ($null -eq $p) {
@@ -754,6 +873,14 @@ function Buy-UpgradesForRun($state, $runIndex, $milestones, $baseUpgrades, $extr
     }
 
     if ($null -eq $p) { break }
+
+    $runPurchaseCount += 1
+    $surcharge = [math]::Round($p.cost * $runSurchargeStep * [math]::Max(0, $runPurchaseCount - 1), 1)
+    if ($surcharge -gt 0) {
+      $state.wallet -= $surcharge
+      if ($state.wallet -lt 0) { $state.wallet = 0.0 }
+      $p = [pscustomobject]@{ key=$p.key; cost=([double]$p.cost + [double]$surcharge); family=$p.family }
+    }
 
     $purchases.Add($p) | Out-Null
   }
@@ -801,18 +928,21 @@ $targetTime = 7200.0
 $runIndex = 0
 $currentLevel = 1
 $maxLevel = 1
-$prevKills = $null
+$prevKillsByLevel = @{}
 
 while ($totalTime -lt $targetTime -and $runIndex -lt 400) {
   $runIndex += 1
   $state.runOverflowDrop = 0.0
 
+  $prevKills = $null
+  if ($prevKillsByLevel.ContainsKey($currentLevel)) { $prevKills = [int]$prevKillsByLevel[$currentLevel] }
   $res = Simulate-RunSmoothed $state $currentLevel $runIndex $prevKills
 
   $walletBefore = $state.wallet
   $state.wallet += $res.earned
 
   $purchases = Buy-UpgradesForRun $state $runIndex $milestones $baseUpgrades $extraUpgrades $coreDefs
+  $purchaseCount = [int](@($purchases).Count)
   $purchaseCost = ($purchases | Measure-Object -Property cost -Sum).Sum
   if ($null -eq $purchaseCost) { $purchaseCost = 0.0 }
   $purchaseNames = [string]::Join('; ', @($purchases | ForEach-Object { $_.key }))
@@ -823,14 +953,14 @@ while ($totalTime -lt $targetTime -and $runIndex -lt 400) {
   }
 
   $deltaKills = if ($null -eq $prevKills) { 0 } else { $res.total_kills - $prevKills }
-  $prevKills = $res.total_kills
+  $prevKillsByLevel[$currentLevel] = $res.total_kills
 
   $row = [pscustomobject]@{
     run = $runIndex; level = $currentLevel; run_time_s = $res.run_time_s
     total_kills = $res.total_kills; regular_kills = $res.regular_kills; boss_segment_kills = $res.boss_segment_kills; kill_delta = $deltaKills
     reached_boss = $res.reached_boss; boss_defeated = $res.boss_defeated; earned = $res.earned
     wallet_before = [math]::Round($walletBefore, 1); wallet_after_earn = [math]::Round($walletBefore + $res.earned, 1)
-    upgrades_bought = $purchaseNames; upgrades_bought_count = $purchases.Count; upgrade_cost = [math]::Round($purchaseCost, 1)
+    upgrades_bought = $purchaseNames; upgrades_bought_count = $purchaseCount; upgrade_cost = [math]::Round($purchaseCost, 1)
     wallet_after_spend = [math]::Round($state.wallet, 1)
     dps_knight = $res.dps_knight; dps_archer = $res.dps_archer; dps_guardian = $res.dps_guardian; dps_mage = $res.dps_mage
     uses_knight = $res.uses_knight; uses_archer = $res.uses_archer; uses_guardian = $res.uses_guardian; uses_mage = $res.uses_mage
