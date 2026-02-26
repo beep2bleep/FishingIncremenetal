@@ -488,3 +488,9 @@ func unlock_fishing_upgrade(key: String, repeatable: bool = false):
     fishing_unlocked_upgrades[key] = new_level
     fishing_active_upgrades[key] = true
     save_fishing_progress()
+
+func set_fishing_upgrade_level(key: String, level: int) -> void:
+    var safe_level: int = max(0, level)
+    fishing_unlocked_upgrades[key] = safe_level
+    fishing_active_upgrades[key] = safe_level > 0
+    save_fishing_progress()

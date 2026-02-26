@@ -50,6 +50,8 @@ func _init() -> void:
     var arr = data.get("upgrades", [])
     for item in arr:
         var node: Dictionary = item
+        node = node.duplicate(true)
+        node["icon"] = _resolve_icon(node)
         nodes.append(node)
         node_by_id[node.get("id", "")] = node
 
@@ -225,6 +227,52 @@ func _humanize_name(name_text: String) -> String:
             continue
         words[i] = words[i].substr(0, 1).to_upper() + words[i].substr(1)
     return " ".join(words)
+
+func _resolve_icon(node: Dictionary) -> String:
+    var raw_icon: String = str(node.get("icon", "")).strip_edges()
+    if raw_icon != "" and raw_icon != "?":
+        return raw_icon.substr(0, 1)
+    return _fallback_icon_for_key(str(node.get("key", "")))
+
+func _fallback_icon_for_key(key: String) -> String:
+    var lower: String = key.to_lower()
+    if lower.begins_with("core_"):
+        return "C"
+    if lower.begins_with("extra_skill_"):
+        var family: String = _extra_skill_family(lower)
+        match family:
+            "ECON":
+                return "E"
+            "DENS":
+                return "D"
+            "SURV":
+                return "S"
+            "MOVE":
+                return "M"
+            "POWR":
+                return "P"
+            "ACTV":
+                return "A"
+            "BOSS":
+                return "B"
+            _:
+                return "T"
+    if lower.begins_with("recruit_"):
+        return "H"
+    if lower.find("boss") != -1:
+        return "B"
+    if lower.find("power") != -1 or lower.find("active") != -1:
+        return "P"
+    if lower.find("armor") != -1 or lower.find("plate") != -1 or lower.find("fortify") != -1:
+        return "S"
+    if lower.find("drop") != -1 or lower.find("coin") != -1 or lower.find("salvage") != -1 or lower.find("magnet") != -1:
+        return "E"
+    if lower.find("damage") != -1 or lower.find("speed") != -1:
+        return "D"
+    var fallback: String = lower.strip_edges()
+    if fallback == "":
+        return "U"
+    return fallback.substr(0, 1).to_upper()
 
 func _extra_skill_name(key: String) -> String:
     var n: int = int(key.trim_prefix("extra_skill_"))

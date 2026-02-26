@@ -7,9 +7,7 @@ var to_node: Node
 var to_state
 
 func _ready() -> void :
-
-
-    $AnimationPlayer.speed_scale = 1.33
+    $AnimationPlayer.speed_scale = 8.0 if OS.has_feature("editor") else 1.33
 
 
     SignalBus.pallet_updated.connect(_on_pallet_updated)

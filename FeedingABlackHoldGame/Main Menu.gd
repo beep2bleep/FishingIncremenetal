@@ -214,7 +214,7 @@ func _on_play_pressed() -> void :
     Global.ensure_default_game_mode_data()
     Global.start_in_upgrade_scene = true
     Global.load_saved_run = false
-    get_tree().change_scene_to_file(Util.PATH_MAIN)
+    SceneChanger.change_to_new_scene(Util.PATH_MAIN)
 
 
 func _on_game_mode_screen_back() -> void :

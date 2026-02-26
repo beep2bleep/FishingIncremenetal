@@ -12,3 +12,6 @@ res://Tech Tree Stuff/TechTreeNode.gd
 res://UpgradeScreen.gd
 res://Fishing/FishingUpgradeTreeAdapter.gd
 res://Tech Tree Stuff/TechTree.gd
+res://simulation/run_battle_scene_campaign.gd
+res://Pallets/Light_Pallet.tres
+res://SceneChanger.gd

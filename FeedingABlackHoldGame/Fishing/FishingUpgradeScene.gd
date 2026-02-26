@@ -15,6 +15,9 @@ var currency_label: Label
 var info_label: Label
 var tree_layer: Control
 var hovered_node_id: String = ""
+var editor_add_currency_button: Button
+var editor_reset_progress_button: Button
+var editor_add_amount: int = 1000
 
 func _ready() -> void:
     currency_label = get_node_or_null("%CurrencyLabel")
@@ -29,11 +32,14 @@ func _ready() -> void:
     if tree_layer == null:
         tree_layer = get_node_or_null("ScrollContainer/TreeLayer")
     scroll_container = get_node_or_null("ScrollContainer")
+    editor_add_currency_button = get_node_or_null("EditorAddCurrency")
+    editor_reset_progress_button = get_node_or_null("EditorResetProgress")
 
-    if currency_label == null or info_label == null or tree_layer == null or scroll_container == null:
+    if currency_label == null or info_label == null or tree_layer == null or scroll_container == null or editor_add_currency_button == null or editor_reset_progress_button == null:
         push_error("FishingUpgradeScene is missing required UI nodes.")
         return
 
+    _setup_editor_buttons()
     set_process_unhandled_input(true)
     set_process(true)
     _build_tree()
@@ -115,6 +121,8 @@ func _next_spiral(state: Dictionary) -> Vector2i:
 
 func _refresh_ui() -> void:
     currency_label.text = "Currency: %d" % SaveHandler.fishing_currency
+    if editor_add_currency_button != null:
+        editor_add_currency_button.text = "Add $%d (Editor)" % editor_add_amount
     var unlocked_count: int = SaveHandler.fishing_unlocked_upgrades.keys().size()
     var base_info: String = "Unlocked: %d / %d  |  Tree expands from center in 4 directions (drag/WASD/arrows)." % [unlocked_count, db.nodes.size()]
     if hovered_node_id != "" and db.node_by_id.has(hovered_node_id):
@@ -182,10 +190,42 @@ func _get_node_state_text(node: Dictionary) -> String:
     return "Locked (dependency not met)"
 
 func _on_start_battle_pressed() -> void:
-    get_tree().change_scene_to_file("res://Fishing/BattleScene.tscn")
+    SceneChanger.change_to_new_scene("res://Fishing/BattleScene.tscn")
 
 func _on_main_menu_pressed() -> void:
-    get_tree().change_scene_to_file(Util.PATH_MAIN_MENU)
+    SceneChanger.change_to_new_scene(Util.PATH_MAIN_MENU)
+
+func _setup_editor_buttons() -> void:
+    var editor_mode: bool = OS.has_feature("editor")
+    editor_add_currency_button.visible = editor_mode
+    editor_reset_progress_button.visible = editor_mode
+    editor_add_currency_button.disabled = not editor_mode
+    editor_reset_progress_button.disabled = not editor_mode
+    editor_add_amount = 1000
+    if editor_mode:
+        editor_add_currency_button.text = "Add $%d (Editor)" % editor_add_amount
+
+func _on_editor_add_currency_pressed() -> void:
+    if not OS.has_feature("editor"):
+        return
+    SaveHandler.fishing_currency += editor_add_amount
+    SaveHandler.save_fishing_progress()
+    editor_add_amount *= 2
+    _refresh_ui()
+
+func _on_editor_reset_progress_pressed() -> void:
+    if not OS.has_feature("editor"):
+        return
+    SaveHandler.fishing_currency = 0
+    SaveHandler.fishing_lifetime_coins = 0
+    SaveHandler.fishing_unlocked_upgrades = {}
+    SaveHandler.fishing_active_upgrades = {}
+    SaveHandler.fishing_last_battle_summary = {}
+    SaveHandler.fishing_next_battle_level = 1
+    SaveHandler.fishing_max_unlocked_battle_level = 1
+    SaveHandler.save_fishing_progress()
+    editor_add_amount = 1000
+    _refresh_ui()
 
 func _center_scroll() -> void:
     var viewport_size: Vector2 = scroll_container.size

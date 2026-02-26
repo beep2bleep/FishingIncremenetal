@@ -22,6 +22,10 @@ const EXTRA_ZOOM_IN_FACTOR := 5.0
 const HERO_FORMATION_SPACING := 56.0
 const ENEMY_FORMATION_SPACING := 84.0
 const BOSS_SEGMENTS := 8
+const DEFEAT_FALL_DURATION := 1.2
+const DEFEAT_FALL_ROT_SPEED := 1.8
+const BASE_POWER_REGEN_PER_SEC := 7.0
+const ACTIVE_CHARGE_PER_CLICK := 20.0
 const LEVEL_BG_THEMES := {
     1: {
         "sky_base": Color(0.08, 0.08, 0.2, 1.0),
@@ -77,7 +81,7 @@ var summary_panel: Panel
 var summary_label: Label
 var speed_button: Button
 var infinite_sim_button: Button
-var level_select_button: OptionButton
+var level_choice_dialog: ConfirmationDialog
 
 var heroes: Array[CombatSprite] = []
 var hero_data: Dictionary = {}
@@ -129,6 +133,7 @@ var suppress_floating_text: bool = false
 var hero_glow_timers: Dictionary = {}
 var post_battle_sweep_time: float = 0.0
 var summary_finalized: bool = false
+var defeat_anim_time: float = 0.0
 
 func _ready() -> void:
     if not _bind_nodes():
@@ -136,13 +141,13 @@ func _ready() -> void:
         return
 
     _setup_actor_sheets()
-    current_level = clamp(SaveHandler.fishing_next_battle_level, 1, _max_selectable_level())
+    current_level = clamp(SaveHandler.fishing_next_battle_level, 1, _max_unlocked_level())
     _rebuild_battle_mods()
     _setup_visuals()
     _spawn_heroes()
-    _setup_level_selector()
-    _setup_editor_speed_button()
     summary_panel.hide()
+    _setup_editor_speed_button()
+    _update_speed_button_enabled_state()
     _update_ui()
 
 func _exit_tree() -> void:
@@ -167,9 +172,9 @@ func _bind_nodes() -> bool:
     currency_label = get_node_or_null("CanvasLayer/CurrencyLabel")
     speed_button = get_node_or_null("CanvasLayer/SpeedButton")
     infinite_sim_button = get_node_or_null("CanvasLayer/InfiniteSimButton")
-    level_select_button = get_node_or_null("CanvasLayer/LevelSelectButton")
     summary_panel = get_node_or_null("CanvasLayer/SummaryPanel")
     summary_label = get_node_or_null("CanvasLayer/SummaryPanel/SummaryLabel")
+    level_choice_dialog = get_node_or_null("CanvasLayer/LevelChoiceDialog")
     var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
 
     if world != null:
@@ -212,68 +217,17 @@ func _bind_nodes() -> bool:
         world.add_child(damage_text_layer)
         world.move_child(damage_text_layer, world.get_child_count() - 1)
 
-    if level_select_button == null and canvas_layer != null:
-        level_select_button = OptionButton.new()
-        level_select_button.name = "LevelSelectButton"
-        level_select_button.offset_left = 472.0
-        level_select_button.offset_top = 100.0
-        level_select_button.offset_right = 660.0
-        level_select_button.offset_bottom = 144.0
-        canvas_layer.add_child(level_select_button)
+    if level_choice_dialog == null and canvas_layer != null:
+        level_choice_dialog = ConfirmationDialog.new()
+        level_choice_dialog.name = "LevelChoiceDialog"
+        level_choice_dialog.title = "Choose Battle Level"
+        level_choice_dialog.dialog_text = "Choose your next battle level."
+        level_choice_dialog.get_ok_button().hide()
+        canvas_layer.add_child(level_choice_dialog)
+    if level_choice_dialog != null and not level_choice_dialog.custom_action.is_connected(_on_level_choice_action):
+        level_choice_dialog.custom_action.connect(_on_level_choice_action)
 
-    return world != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and ground != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and currency_label != null and speed_button != null and infinite_sim_button != null and level_select_button != null and summary_panel != null and summary_label != null
-
-func _setup_level_selector() -> void:
-    if level_select_button == null:
-        return
-    var max_level: int = _max_selectable_level()
-    level_select_button.clear()
-    level_select_button.add_item("Level 1")
-    if max_level >= 2:
-        level_select_button.add_item("Level 2")
-    if max_level >= 3:
-        level_select_button.add_item("Level 3")
-    if not level_select_button.item_selected.is_connected(_on_level_select_item_selected):
-        level_select_button.item_selected.connect(_on_level_select_item_selected)
-    current_level = clamp(current_level, 1, max_level)
-    level_select_button.select(current_level - 1)
-    level_select_button.disabled = false
-
-func _on_level_select_item_selected(index: int) -> void:
-    var selected_level: int = clamp(index + 1, 1, _max_selectable_level())
-    SaveHandler.fishing_next_battle_level = selected_level
-    SaveHandler.save_fishing_progress()
-    _restart_battle_at_level(selected_level)
-
-func _restart_battle_at_level(level_index: int) -> void:
-    current_level = clamp(level_index, 1, 3)
-    player_health = 300.0
-    power = 0.0
-    shield_time = 0.0
-    enemies_killed = 0
-    coins_gained = 0
-    boss_segments_broken = 0
-    regular_spawned = 0
-    regular_killed = 0
-    boss_spawned = false
-    boss_alive = false
-    spawn_timer = 0.0
-    spawn_group_remaining = 0
-    sim_accumulator = 0.0
-    battle_completed = false
-    battle_victory = false
-    summary_finalized = false
-    suppress_floating_text = false
-    post_battle_sweep_time = 0.0
-    hero_glow_timers.clear()
-    active_cooldowns.clear()
-    _clear_battle_entities()
-    _reset_heroes_to_start()
-    if summary_panel != null:
-        summary_panel.hide()
-    _apply_level_background(current_level)
-    _update_speed_button_enabled_state()
-    _update_ui()
+    return world != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and ground != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and currency_label != null and speed_button != null and infinite_sim_button != null and summary_panel != null and summary_label != null and level_choice_dialog != null
 
 func _clear_battle_entities() -> void:
     for arrow_data_variant in arrows:
@@ -381,7 +335,10 @@ func _run_infinite_simulation() -> void:
     if not battle_completed and player_health <= 0.0 and not summary_panel.visible:
         _end_battle(false)
     if battle_completed and not summary_finalized:
-        _run_post_battle_sweep_instant()
+        if battle_victory:
+            _run_post_battle_sweep_instant()
+        else:
+            _run_defeat_pose_instant()
 
     last_sim_steps = step_count
     last_sim_seconds = float(step_count) * SIM_STEP
@@ -415,12 +372,7 @@ func _try_auto_cast_active(hero_name: String) -> bool:
     if cooldown_remaining > 0.0:
         return false
 
-    var unlock_key: String = {
-        "knight": "knight_vamp_unlock",
-        "archer": "archer_pierce_unlock",
-        "guardian": "guardian_fortify_unlock",
-        "mage": "mage_storm_unlock",
-    }.get(hero_name, "")
+    var unlock_key: String = _active_unlock_key(hero_name)
     if unlock_key == "" or not SaveHandler.has_fishing_upgrade(unlock_key):
         return false
 
@@ -428,7 +380,11 @@ func _try_auto_cast_active(hero_name: String) -> bool:
     if not is_instance_valid(hero):
         return false
 
-    _on_hero_clicked(hero, hero_name, true)
+    var active_cost: float = _active_cost()
+    if power < active_cost:
+        return false
+    power -= active_cost
+    _execute_hero_active(hero, hero_name, true)
     active_cooldowns[hero_name] = float(ACTIVE_COOLDOWNS.get(hero_name, 15.0)) * _active_cooldown_mult()
     return true
 
@@ -643,7 +599,10 @@ func _process(delta: float) -> void:
     _update_hero_glow(delta)
     if battle_completed:
         if not summary_finalized:
-            _run_post_battle_sweep(delta)
+            if battle_victory:
+                _run_post_battle_sweep(delta)
+            else:
+                _run_defeat_pose(delta)
             _update_ui()
         return
     if summary_panel.visible:
@@ -671,6 +630,7 @@ func _process(delta: float) -> void:
 
 func _simulate_step(delta: float, skip_visual_updates: bool = false) -> void:
     _apply_level_background(current_level)
+    _gain_power(BASE_POWER_REGEN_PER_SEC * _power_gain_mult() * delta)
     _spawn_loop(delta)
     _update_heroes(delta)
     _update_enemies(delta)
@@ -747,7 +707,12 @@ func _spawn_heroes() -> void:
             "range": 4000.0 if hero_name == "archer" else 120.0,
             "cooldown": 0.0,
             "walk_speed": 80.0 * _walk_speed_mult(),
+            "active_charge": 0.0,
+            "active_bar_back": null,
+            "active_bar_fill": null,
+            "active_bar_width": 0.0,
         }
+        _add_hero_active_bar(hero)
 
 func _spawn_enemy_for_level(level_index: int) -> void:
     var key: String = str(LEVEL_ENEMY_TYPE.get(level_index, "goblin"))
@@ -828,6 +793,7 @@ func _update_heroes(delta: float) -> void:
         if not is_instance_valid(hero):
             continue
         var h: Dictionary = hero_data[hero]
+        _update_hero_active_bar(hero, h)
         h["cooldown"] = max(0.0, float(h["cooldown"]) - delta)
         var hero_name: String = str(h["name"])
         var should_catch_up: bool = hero_name == "archer" and hero.position.x < frontline_x - HERO_FORMATION_SPACING
@@ -849,7 +815,7 @@ func _update_heroes(delta: float) -> void:
         elif float(h["cooldown"]) <= 0.0:
             h["cooldown"] = 1.0 / max(0.1, float(h["speed"]))
             if hero_name == "archer":
-                _spawn_arrow(hero.position + Vector2(28.0, -24.0), target, float(h["damage"]))
+                _spawn_arrow(hero.position + Vector2(28.0, -12.0), target, float(h["damage"]))
             else:
                 _damage_enemy(target, float(h["damage"]))
             hero.trigger_attack()
@@ -1098,8 +1064,7 @@ func _kill_enemy(enemy: CombatSprite) -> void:
     if not bool(e.get("is_boss", false)):
         _spawn_coin(enemy.position, int(e["coins"]))
 
-    power = min(_max_power(), power + 4.0)
-    power = min(_max_power(), power + (4.0 * (_power_gain_mult() - 1.0)))
+    _gain_power(4.0 * _power_gain_mult())
     enemies_killed += 1
 
     if bool(e["is_boss"]):
@@ -1171,27 +1136,103 @@ func _max_power() -> float:
     return cap
 
 func _on_hero_clicked(hero: CombatSprite, hero_name: String, skip_anim: bool = false) -> void:
-    var unlock_key: String = {
+    var unlock_key: String = _active_unlock_key(hero_name)
+    if unlock_key == "" or not SaveHandler.has_fishing_upgrade(unlock_key):
+        return
+    if not hero_data.has(hero):
+        return
+    var h: Dictionary = hero_data[hero]
+    var active_cost: float = _active_cost()
+    var charge: float = float(h.get("active_charge", 0.0))
+    var to_charge: float = min(ACTIVE_CHARGE_PER_CLICK, power, max(0.0, active_cost - charge))
+    if to_charge > 0.0:
+        power -= to_charge
+        charge += to_charge
+        h["active_charge"] = charge
+        _update_hero_active_bar(hero, h)
+
+    var cooldown_remaining: float = float(active_cooldowns.get(hero_name, 0.0))
+    if charge + 0.001 < active_cost or cooldown_remaining > 0.0:
+        hero_data[hero] = h
+        return
+
+    h["active_charge"] = max(0.0, charge - active_cost)
+    _update_hero_active_bar(hero, h)
+    hero_data[hero] = h
+    _execute_hero_active(hero, hero_name, skip_anim)
+    active_cooldowns[hero_name] = float(ACTIVE_COOLDOWNS.get(hero_name, 15.0)) * _active_cooldown_mult()
+
+func _gain_power(amount: float) -> void:
+    if amount <= 0.0:
+        return
+    power = min(_max_power(), power + amount)
+
+func _active_unlock_key(hero_name: String) -> String:
+    return {
         "knight": "knight_vamp_unlock",
         "archer": "archer_pierce_unlock",
         "guardian": "guardian_fortify_unlock",
         "mage": "mage_storm_unlock",
     }.get(hero_name, "")
 
-    if unlock_key == "" or not SaveHandler.has_fishing_upgrade(unlock_key):
+func _add_hero_active_bar(hero: CombatSprite) -> void:
+    if not is_instance_valid(hero) or not hero_data.has(hero):
         return
-    var active_cost: float = _active_cost()
-    if power < active_cost:
+    var bar_back: ColorRect = ColorRect.new()
+    bar_back.color = Color(0.08, 0.08, 0.08, 0.85)
+    bar_back.position = Vector2(-22.0, -122.0)
+    bar_back.size = Vector2(44.0, 6.0)
+    bar_back.visible = false
+    hero.add_child(bar_back)
+
+    var bar_fill: ColorRect = ColorRect.new()
+    bar_fill.color = Color(0.25, 0.95, 0.45, 1.0)
+    bar_fill.position = Vector2.ZERO
+    bar_fill.size = bar_back.size
+    bar_back.add_child(bar_fill)
+
+    var h: Dictionary = hero_data[hero]
+    h["active_bar_back"] = bar_back
+    h["active_bar_fill"] = bar_fill
+    h["active_bar_width"] = bar_back.size.x
+    hero_data[hero] = h
+    _update_hero_active_bar(hero, h)
+
+func _update_hero_active_bar(hero: CombatSprite, h: Dictionary) -> void:
+    if not is_instance_valid(hero):
+        return
+    var hero_name: String = str(h.get("name", ""))
+    var unlock_key: String = _active_unlock_key(hero_name)
+    var unlocked: bool = unlock_key != "" and SaveHandler.has_fishing_upgrade(unlock_key)
+
+    var bar_back: ColorRect = h.get("active_bar_back", null)
+    var bar_fill: ColorRect = h.get("active_bar_fill", null)
+    if not is_instance_valid(bar_back) or not is_instance_valid(bar_fill):
         return
 
-    power -= active_cost
+    bar_back.visible = unlocked and not battle_completed
+    if not unlocked:
+        bar_fill.size.x = 0.0
+        return
+
+    var active_cost: float = max(1.0, _active_cost())
+    var charge: float = clamp(float(h.get("active_charge", 0.0)), 0.0, active_cost)
+    var pct: float = charge / active_cost
+    var full_width: float = float(h.get("active_bar_width", 44.0))
+    bar_fill.size.x = full_width * pct
+
+func _execute_hero_active(hero: CombatSprite, hero_name: String, skip_anim: bool) -> void:
     _trigger_hero_glow(hero)
     if not skip_anim:
         hero.trigger_attack()
 
     match hero_name:
         "knight":
+            var before_hp: float = player_health
             player_health = min(300.0, player_health + 45.0)
+            var healed: float = max(0.0, player_health - before_hp)
+            if healed > 0.0:
+                _spawn_floating_heal_text(hero.position + Vector2(randf_range(-10.0, 10.0), -130.0), healed)
             var target: CombatSprite = _nearest_enemy(hero.position)
             if target != null:
                 _damage_enemy(target, 80.0)
@@ -1227,7 +1268,7 @@ func _level_reward_mult(level_index: int) -> float:
             return 4.4
     return 1.0
 
-func _max_selectable_level() -> int:
+func _max_unlocked_level() -> int:
     return clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, 3)
 
 func _rebuild_battle_mods() -> void:
@@ -1404,12 +1445,12 @@ func _update_hero_damage_float(delta: float) -> void:
     hero_damage_accum = 0.0
     hero_damage_timer = 0.2
 
-func _spawn_floating_damage_text(world_pos: Vector2, amount: float, color: Color) -> void:
+func _spawn_floating_damage_text(world_pos: Vector2, amount: float, color: Color, prefix: String = "-") -> void:
     if damage_text_layer == null or suppress_floating_text:
         return
     var value: int = max(1, int(round(amount)))
     var label: Label = Label.new()
-    label.text = "-%d" % value
+    label.text = "%s%d" % [prefix, value]
     label.position = world_pos
     label.modulate = color
     label.z_index = 100
@@ -1420,6 +1461,9 @@ func _spawn_floating_damage_text(world_pos: Vector2, amount: float, color: Color
         "ttl": 1.0,
         "speed": 30.0 + randf_range(0.0, 20.0),
     })
+
+func _spawn_floating_heal_text(world_pos: Vector2, amount: float) -> void:
+    _spawn_floating_damage_text(world_pos, amount, Color(0.36, 0.95, 0.46, 1.0), "+")
 
 func _update_floating_damage_texts(delta: float) -> void:
     for i in range(floating_damage_texts.size() - 1, -1, -1):
@@ -1455,7 +1499,6 @@ func _on_boss_defeated() -> void:
     if current_level >= int(SaveHandler.fishing_max_unlocked_battle_level) and current_level < 3:
         SaveHandler.fishing_max_unlocked_battle_level = current_level + 1
         SaveHandler.fishing_next_battle_level = SaveHandler.fishing_max_unlocked_battle_level
-        _setup_level_selector()
     _end_battle(true)
 
 func _end_battle(victory: bool) -> void:
@@ -1465,8 +1508,14 @@ func _end_battle(victory: bool) -> void:
     battle_victory = victory
     summary_finalized = false
     post_battle_sweep_time = 2.8
+    defeat_anim_time = 0.0
+    if not victory:
+        _start_defeat_pose()
     if suppress_floating_text:
-        _run_post_battle_sweep_instant()
+        if battle_victory:
+            _run_post_battle_sweep_instant()
+        else:
+            _run_defeat_pose_instant()
 
 func _run_post_battle_sweep(delta: float) -> void:
     if summary_finalized:
@@ -1497,6 +1546,54 @@ func _run_post_battle_sweep_instant() -> void:
         if coins.is_empty():
             break
         _run_post_battle_sweep(SIM_STEP)
+    _finalize_battle_summary()
+
+func _start_defeat_pose() -> void:
+    for arrow_data_variant in arrows:
+        var arrow_data: Dictionary = arrow_data_variant
+        var arrow_sprite: Sprite2D = arrow_data.get("sprite", null)
+        if is_instance_valid(arrow_sprite):
+            arrow_sprite.queue_free()
+    arrows.clear()
+
+    for hero in heroes:
+        if not is_instance_valid(hero):
+            continue
+        if hero.has_method("set_defeated"):
+            hero.set_defeated()
+    for enemy in enemies:
+        if not is_instance_valid(enemy):
+            continue
+        if enemy.has_method("set_defeated"):
+            enemy.set_defeated()
+
+func _run_defeat_pose(delta: float) -> void:
+    if summary_finalized:
+        return
+    defeat_anim_time += delta
+
+    for hero in heroes:
+        if not is_instance_valid(hero):
+            continue
+        hero.rotation = lerp_angle(hero.rotation, PI * 0.5, min(1.0, delta * DEFEAT_FALL_ROT_SPEED))
+
+    for enemy in enemies:
+        if not is_instance_valid(enemy):
+            continue
+        enemy.rotation = lerp_angle(enemy.rotation, -PI * 0.5, min(1.0, delta * DEFEAT_FALL_ROT_SPEED))
+
+    if defeat_anim_time >= DEFEAT_FALL_DURATION:
+        _finalize_battle_summary()
+
+func _run_defeat_pose_instant() -> void:
+    if summary_finalized:
+        return
+    for hero in heroes:
+        if is_instance_valid(hero):
+            hero.rotation = PI * 0.5
+    for enemy in enemies:
+        if is_instance_valid(enemy):
+            enemy.rotation = -PI * 0.5
     _finalize_battle_summary()
 
 func _finalize_battle_summary() -> void:
@@ -1538,7 +1635,39 @@ func _update_hero_glow(delta: float) -> void:
         hero.modulate = Color(pulse, pulse, 1.0, 1.0)
 
 func _on_continue_button_pressed() -> void:
+    var max_level: int = _max_unlocked_level()
+    if max_level <= 1:
+        _set_next_battle_level_and_exit(1)
+        return
+    _show_level_choice_dialog(max_level)
+
+func _show_level_choice_dialog(max_level: int) -> void:
+    if level_choice_dialog == null:
+        _set_next_battle_level_and_exit(1)
+        return
+
+    level_choice_dialog.dialog_text = "You unlocked new battle levels by defeating bosses.\nChoose your next level."
+    for child in level_choice_dialog.get_children():
+        if child is Button and child.name.begins_with("LevelChoiceButton"):
+            child.free()
+
+    for level in range(1, max_level + 1):
+        var button: Button = level_choice_dialog.add_button("Level %d" % level, true, "level_%d" % level)
+        button.name = "LevelChoiceButton%d" % level
+
+    level_choice_dialog.popup_centered()
+
+func _on_level_choice_action(action: StringName) -> void:
+    var action_text: String = str(action)
+    if not action_text.begins_with("level_"):
+        return
+    var level: int = int(action_text.trim_prefix("level_"))
+    _set_next_battle_level_and_exit(level)
+
+func _set_next_battle_level_and_exit(level: int) -> void:
+    SaveHandler.fishing_next_battle_level = clamp(level, 1, _max_unlocked_level())
+    SaveHandler.save_fishing_progress()
     Global.ensure_default_game_mode_data()
     Global.start_in_upgrade_scene = true
     Global.load_saved_run = false
-    get_tree().change_scene_to_file(Util.PATH_MAIN)
+    SceneChanger.change_to_new_scene(Util.PATH_MAIN)

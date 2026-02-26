@@ -8,6 +8,7 @@ var value
 var max_tier: int = 1
 var base_cost: int
 var cost_scale: float
+var tier_costs: Array = []
 var forced_cell
 var demo_locked: int = 0
 var section: int = 0
@@ -37,6 +38,8 @@ func has_tiers():
     return max_tier > 1
 
 func get_cost():
+    if tier_costs.size() > 0 and current_tier < tier_costs.size():
+        return float(tier_costs[current_tier])
     if has_tiers():
         return base_cost + (current_tier * base_cost * cost_scale)
     else:
@@ -62,6 +65,7 @@ func to_dict() -> Dictionary:
         "max_tier": max_tier, 
         "base_cost": base_cost, 
         "cost_scale": cost_scale, 
+        "tier_costs": tier_costs, 
         "forced_cell": forced_cell, 
         "demo_locked": demo_locked, 
         "section": section, 
@@ -92,6 +96,8 @@ func from_dict(cell_param: Vector2, data: Dictionary):
         base_cost = data["base_cost"]
     if data.has("cost_scale"):
         cost_scale = data["cost_scale"]
+    if data.has("tier_costs") and data["tier_costs"] is Array:
+        tier_costs = data["tier_costs"]
     if data.has("forced_cell"):
         forced_cell = data["forced_cell"]
     if data.has("demo_locked"):

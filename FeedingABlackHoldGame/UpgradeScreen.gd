@@ -238,7 +238,7 @@ func hide_screen():
 
 func _on_go_again_pressed() -> void :
     if _is_simulation_upgrade_tree():
-        get_tree().change_scene_to_file(Util.PATH_FISHING_BATTLE)
+        SceneChanger.change_to_new_scene(Util.PATH_FISHING_BATTLE)
         return
     hide_screen()
 

@@ -7,6 +7,7 @@ signal clicked(sprite: CombatSprite)
 @onready var collider: CollisionShape2D = $CollisionShape2D
 
 var is_attacking := false
+var is_defeated := false
 
 func _ensure_nodes() -> bool:
     if sprite == null:
@@ -49,17 +50,33 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0) -> void:
     collider.shape = circle
 
 func set_walking() -> void:
-    if is_attacking:
+    if is_attacking or is_defeated:
         return
     if sprite.animation != "walk":
         sprite.play("walk")
 
 func trigger_attack() -> void:
+    if is_defeated:
+        return
     is_attacking = true
     sprite.play("attack")
     await sprite.animation_finished
+    if is_defeated:
+        is_attacking = false
+        return
     is_attacking = false
     sprite.play("walk")
+
+func set_defeated() -> void:
+    if not _ensure_nodes():
+        return
+    is_defeated = true
+    is_attacking = false
+    if sprite.sprite_frames != null and sprite.sprite_frames.has_animation("walk"):
+        sprite.play("walk")
+    sprite.stop()
+    if collider != null:
+        collider.disabled = true
 
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:

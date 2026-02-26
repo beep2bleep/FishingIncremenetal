@@ -174,15 +174,15 @@ func update_panel():
         STATES.SHADOW:
             %"Visual Panel".add_theme_stylebox_override("panel", shadow_stylebox)
         STATES.AVAILABLE:
-            %Cost.add_theme_color_override("font_color", Refs.pallet.money_color if can_pay_cost else Refs.pallet.red)
+            %Cost.add_theme_color_override("font_color", Refs.pallet.money_color if can_pay_cost else _get_theme_dark_color())
 
             %"Visual Panel".add_theme_stylebox_override("panel", available_can_pay_stylebox if can_pay_cost else available_can_not_pay_stylebox)
 
             if upgrade:
-                title_panel_style_box.bg_color = Refs.get_act_light_color(upgrade.act) if can_pay_cost else Refs.pallet.red
+                title_panel_style_box.bg_color = Refs.get_act_light_color(upgrade.act) if can_pay_cost else _get_theme_dark_color()
 
             else:
-                title_panel_style_box.bg_color = Refs.pallet.act_1_light if can_pay_cost else Refs.pallet.red
+                title_panel_style_box.bg_color = Refs.pallet.act_1_light if can_pay_cost else _get_theme_dark_color()
 
         STATES.COMPLETE:
             %Icon.show()
@@ -222,7 +222,7 @@ func _on_pallet_state_changed():
 
 
 func update_colors():
-    %Cost.add_theme_color_override("font_color", Refs.pallet.money_color if can_pay_cost else Refs.pallet.red)
+    %Cost.add_theme_color_override("font_color", Refs.pallet.money_color if can_pay_cost else _get_theme_dark_color())
     %Cost.add_theme_font_override("font", Refs.money_font)
 
 
@@ -256,7 +256,8 @@ func _on_click_mask_pressed() -> void :
         if upgrade != null and upgrade.sim_key != "":
             var new_amount: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
             SaveHandler.fishing_currency = max(0, new_amount)
-            SaveHandler.unlock_fishing_upgrade(upgrade.sim_key, false)
+            var target_level: int = int(upgrade.sim_level) + int(upgrade.current_tier) - 1
+            SaveHandler.set_fishing_upgrade_level(upgrade.sim_key, max(1, target_level))
             SaveHandler.save_fishing_progress()
 
         SaveHandler.save_player_last_run()
@@ -399,9 +400,14 @@ func update_can_pay_cost():
     if upgrade and upgrade.demo_locked == 1:
         check = false
 
-    %Cost.add_theme_color_override("font_color", Refs.pallet.green if check else Refs.pallet.red)
+    %Cost.add_theme_color_override("font_color", Refs.pallet.green if check else _get_theme_dark_color())
 
     can_pay_cost = check
+
+func _get_theme_dark_color() -> Color:
+    if upgrade != null:
+        return Refs.get_act_dark_color(upgrade.act)
+    return Refs.pallet.act_1_dark
 
 
 func keep_tooltip_on_screen(control_node: Control):

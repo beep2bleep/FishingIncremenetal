@@ -13,20 +13,26 @@ var cell_spacing = Vector2(96, 96)
 
 var active_nodes = []
 
-var next_completed_index = 0:
+var _next_completed_index: int = 0
+var next_completed_index: int:
+    get:
+        return _next_completed_index
     set(new_value):
-        next_completed_index = new_value
-
-        update_active()
+        _next_completed_index = new_value
 
 
 @onready var pivot: Node2D = %Pivot
 
 
+var _selected_node: TechTreeNode = null
 var selected_node: TechTreeNode:
+    get:
+        return _selected_node
     set(new_value):
-        selected_node = new_value
-        selected_node_changed.emit(selected_node)
+        if _selected_node == new_value:
+            return
+        _selected_node = new_value
+        selected_node_changed.emit(_selected_node)
 
 signal selected_node_changed(new_selected_node: TechTreeNode)
 
@@ -145,38 +151,9 @@ func setup():
             forced_connections_to_from[upgrade.forced_cell].append(upgrade.cell)
 
 
-    for cell in Global.game_mode_data_manager.unlocked_upgrades.keys():
-        var new_node: TechTreeNode = create_new_tech_tree_node(cell)
-        if new_node == null:
-            continue
-
-        if Global.current_game_mode_data.game_mode_type == Util.GAME_MODE_TYPE.ROGUELIKE:
-            new_node.upgrade.from_dict(cell, Global.game_mode_data_manager.unlocked_upgrades[cell])
-        elif Global.game_mode_data_manager.unlocked_upgrades[cell].has("teir"):
-            new_node.unlock_node(Global.game_mode_data_manager.unlocked_upgrades[cell]["teir"])
-
-        if new_node.upgrade.is_at_max():
-            new_node.state = new_node.STATES.COMPLETE
-
-        update_connected_nodes_available(cell)
-
-
-    update_connected_nodes_available(Vector2.ZERO)
-    center_node.state == TechTreeNode.STATES.COMPLETE
-    create_lines(Vector2.ZERO)
-
-    if forced_connections_to_from.has(Vector2.ZERO):
-        for connected_cell in forced_connections_to_from[Vector2.ZERO]:
-            if node_dict.has(connected_cell):
-                var new_line: TechTreeLine = Refs.packed_tech_tree_line.instantiate()
-
-                new_line.from_node = node_dict[connected_cell]
-                new_line.to_node = center_node
-
-                %"Tech Lines".add_child(new_line)
-
     setup_nodes_from_data()
     _refresh_states_after_full_build()
+    update_active()
 
 
 
@@ -199,7 +176,7 @@ func update_connected_nodes_available(from_cell: Vector2):
         else:
             node = node_dict[connected_cell]
 
-        if node != null and node.state == TechTreeNode.STATES.LOCKED or node.state == TechTreeNode.STATES.SHADOW:
+        if node != null and (node.state == TechTreeNode.STATES.LOCKED or node.state == TechTreeNode.STATES.SHADOW):
             node.state = TechTreeNode.STATES.AVAILABLE
 
 
@@ -381,7 +358,7 @@ func generate_nodes_procedurally():
 
 
 func _on_node_state_changed(node: TechTreeNode):
-
+    update_active()
     update_min_max_for_visible_nodes()
 
 func _on_node_selected(node: TechTreeNode):
