@@ -54,9 +54,12 @@ static func apply_simulation_upgrades() -> void:
     var raw_upgrades: Array = upgrades_variant
     var grouped_upgrades: Array = _group_repeated_upgrades(raw_upgrades)
     _retarget_dependencies_to_hubs(grouped_upgrades)
+    _enforce_required_prerequisites(grouped_upgrades)
     _enforce_max_children_per_node(grouped_upgrades, MAX_CHILDREN_PER_NODE)
+    _enforce_required_prerequisites(grouped_upgrades)
     _sanitize_dependency_graph(grouped_upgrades)
     _flatten_linear_dependency_chains(grouped_upgrades, MAX_CHILDREN_PER_NODE)
+    _enforce_required_prerequisites(grouped_upgrades)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
     var formatter: FishingUpgradeDB = FishingUpgradeDB.new()
 
@@ -330,6 +333,97 @@ static func _hero_unlock_key(hero: String) -> String:
         _:
             return ""
 
+static func _required_unlock_key_for_upgrade(key: String) -> String:
+    var lower: String = key.to_lower()
+    if lower == "" or lower == "__center__":
+        return ""
+
+    if lower.find("archer") >= 0 and not lower.begins_with("recruit_archer"):
+        if lower.find("pierce") >= 0 or lower.find("drill") >= 0 or lower.find("piercing") >= 0:
+            return "archer_pierce_unlock"
+        return "recruit_archer"
+
+    if lower.find("mage") >= 0 and not lower.begins_with("recruit_mage"):
+        if lower.find("storm") >= 0 or lower.find("sigil") >= 0:
+            return "mage_storm_unlock"
+        return "recruit_mage"
+
+    if lower.find("guardian") >= 0 and not lower.begins_with("recruit_guardian"):
+        if lower.find("fortify") >= 0 or lower.find("bulwark") >= 0:
+            return "guardian_fortify_unlock"
+        return "recruit_guardian"
+
+    if (lower.find("vamp") >= 0 or lower.find("bloodline") >= 0) and not lower.begins_with("knight_vamp_unlock"):
+        return "knight_vamp_unlock"
+
+    if (lower.find("cursor") >= 0 or lower.find("pickup") >= 0 or lower.find("magnet") >= 0 or lower.find("lens") >= 0) and lower != "cursor_pickup_unlock":
+        return "cursor_pickup_unlock"
+
+    if (lower.find("reservoir") >= 0 or lower.find("invocation") >= 0 or lower.find("channel") >= 0) and lower != "power_harvest_unlock":
+        return "power_harvest_unlock"
+
+    return ""
+
+static func _enforce_required_prerequisites(grouped_upgrades: Array) -> void:
+    var key_to_primary_id: Dictionary = {}
+    var id_to_entry: Dictionary = {}
+    var id_to_dep: Dictionary = {}
+
+    for entry_variant: Variant in grouped_upgrades:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var entry_id: String = str(entry.get("id", ""))
+        var key: String = str(entry.get("key", ""))
+        if entry_id == "":
+            continue
+        id_to_entry[entry_id] = entry
+        id_to_dep[entry_id] = str(entry.get("dependency", ""))
+        if key != "" and not key_to_primary_id.has(key):
+            key_to_primary_id[key] = entry_id
+
+    for id_variant: Variant in id_to_entry.keys():
+        var entry_id: String = str(id_variant)
+        var entry: Dictionary = id_to_entry[entry_id]
+        var key: String = str(entry.get("key", ""))
+        var required_key: String = _required_unlock_key_for_upgrade(key)
+        if required_key == "" or not key_to_primary_id.has(required_key):
+            continue
+        var required_id: String = str(key_to_primary_id[required_key])
+        if required_id == "" or required_id == entry_id:
+            continue
+        if _dependency_reaches_target(id_to_dep, entry_id, required_id):
+            continue
+        entry["dependency"] = required_id
+        id_to_entry[entry_id] = entry
+        id_to_dep[entry_id] = required_id
+
+    for i in range(grouped_upgrades.size()):
+        var entry_variant: Variant = grouped_upgrades[i]
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var entry_id: String = str(entry.get("id", ""))
+        if entry_id != "" and id_to_entry.has(entry_id):
+            grouped_upgrades[i] = id_to_entry[entry_id]
+
+static func _dependency_reaches_target(id_to_dep: Dictionary, from_id: String, target_id: String) -> bool:
+    if from_id == "" or target_id == "":
+        return false
+    var current: String = from_id
+    var visited: Dictionary = {}
+    while id_to_dep.has(current):
+        var dep_id: String = str(id_to_dep.get(current, ""))
+        if dep_id == "" or dep_id == "__CENTER__":
+            return false
+        if dep_id == target_id:
+            return true
+        if visited.has(dep_id):
+            return false
+        visited[dep_id] = true
+        current = dep_id
+    return false
+
 static func _enforce_max_children_per_node(grouped_upgrades: Array, max_children: int) -> void:
     if max_children <= 0:
         return
@@ -403,19 +497,7 @@ static func _enforce_max_children_per_node(grouped_upgrades: Array, max_children
                 break
 
             if new_parent == "":
-                var global_parent: String = ""
-                for candidate_variant: Variant in id_to_entry.keys():
-                    var candidate_id: String = str(candidate_variant)
-                    if candidate_id == "" or candidate_id == overflow_id:
-                        continue
-                    var global_children: int = int(child_count.get(candidate_id, 0))
-                    if global_children < max_children:
-                        global_parent = candidate_id
-                        break
-                if global_parent != "":
-                    new_parent = global_parent
-                else:
-                    new_parent = dep_id
+                new_parent = dep_id
 
             var entry_to_move: Dictionary = id_to_entry[overflow_id]
             entry_to_move["dependency"] = new_parent
@@ -465,9 +547,9 @@ static func _sanitize_dependency_graph(grouped_upgrades: Array) -> void:
             continue
         if dep_id == upgrade_id or not id_to_entry.has(dep_id):
             var invalid_entry: Dictionary = id_to_entry[upgrade_id]
-            invalid_entry["dependency"] = ""
+            invalid_entry["dependency"] = "__CENTER__"
             id_to_entry[upgrade_id] = invalid_entry
-            id_to_dep[upgrade_id] = ""
+            id_to_dep[upgrade_id] = "__CENTER__"
 
     for upgrade_id_variant: Variant in id_to_dep.keys():
         var upgrade_id: String = str(upgrade_id_variant)
@@ -482,14 +564,22 @@ static func _sanitize_dependency_graph(grouped_upgrades: Array) -> void:
                 break
             if dep_id == upgrade_id or seen.has(dep_id):
                 var break_entry: Dictionary = id_to_entry[current]
-                break_entry["dependency"] = ""
+                break_entry["dependency"] = "__CENTER__"
                 id_to_entry[current] = break_entry
-                id_to_dep[current] = ""
+                id_to_dep[current] = "__CENTER__"
                 break
             seen[current] = true
             current = dep_id
             if not id_to_dep.has(current):
                 break
+
+    for upgrade_id_variant: Variant in id_to_dep.keys():
+        var upgrade_id: String = str(upgrade_id_variant)
+        if str(id_to_dep.get(upgrade_id, "")) == "":
+            var root_entry: Dictionary = id_to_entry[upgrade_id]
+            root_entry["dependency"] = "__CENTER__"
+            id_to_entry[upgrade_id] = root_entry
+            id_to_dep[upgrade_id] = "__CENTER__"
 
     for i in range(grouped_upgrades.size()):
         var entry_variant: Variant = grouped_upgrades[i]
@@ -585,8 +675,10 @@ static func _flatten_linear_dependency_chains(grouped_upgrades: Array, max_child
 static func _build_tree_layout(grouped_upgrades: Array) -> Dictionary:
     var id_to_cell: Dictionary = {}
     var used_cells: Dictionary = {}
+    used_cells[Vector2.ZERO] = true
     var root_counts: Dictionary = {}
     var parent_child_counts: Dictionary = {}
+    var placed_edges: Array[Dictionary] = []
     var pending_by_id: Dictionary = {}
     for entry_variant: Variant in grouped_upgrades:
         if entry_variant is Dictionary:
@@ -624,21 +716,18 @@ static func _build_tree_layout(grouped_upgrades: Array) -> Dictionary:
                 var parent_cell: Vector2 = id_to_cell[dep_id]
                 var child_index: int = int(parent_child_counts.get(dep_id, 0))
                 parent_child_counts[dep_id] = child_index + 1
-                cell = _find_free_adjacent_layout_cell(parent_cell, branch, child_index, used_cells)
-                if cell == INVALID_LAYOUT_CELL:
-                    var target: Vector2 = _compute_child_target(parent_cell, dir, child_index)
-                    cell = _find_free_layout_cell_cardinal(target, dir, used_cells)
+                cell = _find_layout_cell_for_child(parent_cell, branch, child_index, used_cells, placed_edges)
             else:
                 var branch_count: int = int(root_counts.get(branch, 0))
                 root_counts[branch] = branch_count + 1
-                cell = _find_free_adjacent_layout_cell(Vector2.ZERO, branch, branch_count, used_cells)
-                if cell == INVALID_LAYOUT_CELL:
-                    var distance: int = 1 + (branch_count * 2)
-                    var target: Vector2 = dir * distance
-                    cell = _find_free_layout_cell_cardinal(target, dir, used_cells)
+                cell = _find_layout_cell_for_root(branch, branch_count, used_cells, placed_edges)
 
             id_to_cell[upgrade_id] = cell
             used_cells[cell] = true
+            if dep_id != "":
+                var from_cell: Vector2 = cell
+                var to_cell: Vector2 = Vector2.ZERO if dep_id == "__CENTER__" else id_to_cell[dep_id]
+                placed_edges.append({"a": from_cell, "b": to_cell})
             pending_by_id.erase(upgrade_id)
             placed_any = true
 
@@ -663,6 +752,145 @@ static func _find_free_adjacent_layout_cell(parent_cell: Vector2, preferred_bran
             return candidate
     return INVALID_LAYOUT_CELL
 
+static func _find_layout_cell_for_child(parent_cell: Vector2, preferred_branch: int, child_index: int, used_cells: Dictionary, placed_edges: Array) -> Vector2:
+    var branch_order: Array[int] = _branch_order_for_child(preferred_branch, child_index)
+    for branch_variant: Variant in branch_order:
+        var b: int = int(branch_variant)
+        var candidate: Vector2 = parent_cell + LAYOUT_DIRS[b]
+        if used_cells.has(candidate):
+            continue
+        if not _is_strictly_outward(candidate, parent_cell):
+            continue
+        if _edge_is_clean(candidate, parent_cell, used_cells, placed_edges):
+            return candidate
+
+    var target: Vector2 = _compute_child_target(parent_cell, LAYOUT_DIRS[preferred_branch], child_index)
+    var candidates: Array[Vector2] = _candidate_cells_cardinal(target, LAYOUT_DIRS[preferred_branch], 10)
+    for candidate_variant: Variant in candidates:
+        var candidate: Vector2 = candidate_variant
+        if used_cells.has(candidate):
+            continue
+        if not _is_strictly_outward(candidate, parent_cell):
+            continue
+        if _edge_is_clean(candidate, parent_cell, used_cells, placed_edges):
+            return candidate
+    # Final fallback: march outward along preferred branch direction only.
+    var dir: Vector2 = LAYOUT_DIRS[preferred_branch]
+    for step in range(1, 512):
+        var candidate: Vector2 = parent_cell + dir * step
+        if used_cells.has(candidate):
+            continue
+        if not _is_strictly_outward(candidate, parent_cell):
+            continue
+        if _edge_is_clean(candidate, parent_cell, used_cells, placed_edges):
+            return candidate
+
+    # Last-resort sweep around growing manhattan rings, still requiring outward + clean edge.
+    var parent_dist: int = _core_distance(parent_cell)
+    for ring in range(parent_dist + 1, parent_dist + 256):
+        for x in range(-ring, ring + 1):
+            var y_abs: int = ring - abs(x)
+            var c1: Vector2 = Vector2(x, y_abs)
+            var c2: Vector2 = Vector2(x, -y_abs)
+            for candidate in [c1, c2]:
+                if used_cells.has(candidate):
+                    continue
+                if not _is_strictly_outward(candidate, parent_cell):
+                    continue
+                if _edge_is_clean(candidate, parent_cell, used_cells, placed_edges):
+                    return candidate
+
+    return _find_free_layout_cell_cardinal(parent_cell + dir * 2, dir, used_cells)
+
+static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cells: Dictionary, placed_edges: Array) -> Vector2:
+    var dir: Vector2 = LAYOUT_DIRS[branch]
+    var target: Vector2 = _compute_root_target(dir, branch_count)
+    var candidates: Array[Vector2] = _candidate_cells_cardinal(target, dir, 10)
+    for candidate_variant: Variant in candidates:
+        var candidate: Vector2 = candidate_variant
+        if used_cells.has(candidate):
+            continue
+        if not _is_valid_root_cell(candidate):
+            continue
+        if _edge_is_clean(candidate, Vector2.ZERO, used_cells, placed_edges):
+            return candidate
+    var fallback: Vector2 = _find_free_layout_cell_cardinal(target, dir, used_cells)
+    if _is_valid_root_cell(fallback) and _edge_is_clean(fallback, Vector2.ZERO, used_cells, placed_edges):
+        return fallback
+    for step in range(2, 128):
+        var candidate: Vector2 = dir * step
+        if used_cells.has(candidate):
+            continue
+        if not _is_valid_root_cell(candidate):
+            continue
+        if _edge_is_clean(candidate, Vector2.ZERO, used_cells, placed_edges):
+            return candidate
+    return dir * 2
+
+static func _candidate_cells_cardinal(target: Vector2, dir: Vector2, max_step: int) -> Array[Vector2]:
+    var out: Array[Vector2] = []
+    out.append(target)
+    for step in range(1, max_step + 1):
+        out.append(target + dir * step)
+        out.append(target - dir * step)
+    return out
+
+static func _edge_is_clean(a: Vector2, b: Vector2, used_cells: Dictionary, placed_edges: Array) -> bool:
+    if not _segment_clear_of_nodes(a, b, used_cells):
+        return false
+    if _segment_intersects_edges(a, b, placed_edges):
+        return false
+    return true
+
+static func _segment_clear_of_nodes(a: Vector2, b: Vector2, used_cells: Dictionary) -> bool:
+    for point_variant: Variant in used_cells.keys():
+        if not (point_variant is Vector2):
+            continue
+        var p: Vector2 = point_variant
+        if p == a or p == b:
+            continue
+        if _point_on_segment(p, a, b):
+            return false
+    return true
+
+static func _segment_intersects_edges(a: Vector2, b: Vector2, placed_edges: Array) -> bool:
+    for edge_variant: Variant in placed_edges:
+        if not (edge_variant is Dictionary):
+            continue
+        var edge: Dictionary = edge_variant
+        var c: Vector2 = edge.get("a", Vector2.ZERO)
+        var d: Vector2 = edge.get("b", Vector2.ZERO)
+        if _shares_endpoint(a, b, c, d):
+            continue
+        if Geometry2D.segment_intersects_segment(a, b, c, d) != null:
+            return true
+    return false
+
+static func _shares_endpoint(a: Vector2, b: Vector2, c: Vector2, d: Vector2) -> bool:
+    return a == c or a == d or b == c or b == d
+
+static func _point_on_segment(p: Vector2, a: Vector2, b: Vector2) -> bool:
+    var ab: Vector2 = b - a
+    var ap: Vector2 = p - a
+    var cross: float = abs(ab.cross(ap))
+    if cross > 0.0001:
+        return false
+    var dot_val: float = ap.dot(ab)
+    if dot_val < 0.0:
+        return false
+    if dot_val > ab.length_squared():
+        return false
+    return true
+
+static func _core_distance(cell: Vector2) -> int:
+    return abs(int(cell.x)) + abs(int(cell.y))
+
+static func _is_strictly_outward(candidate: Vector2, parent_cell: Vector2) -> bool:
+    return _core_distance(candidate) > _core_distance(parent_cell)
+
+static func _is_valid_root_cell(candidate: Vector2) -> bool:
+    return candidate != Vector2.ZERO and _core_distance(candidate) >= 2
+
 static func _branch_order_for_child(preferred_branch: int, index_seed: int) -> Array[int]:
     var p: int = ((preferred_branch % LAYOUT_DIRS.size()) + LAYOUT_DIRS.size()) % LAYOUT_DIRS.size()
     var base: Array[int] = [
@@ -678,6 +906,14 @@ static func _branch_order_for_child(preferred_branch: int, index_seed: int) -> A
     for i in range(base.size()):
         ordered.append(base[(i + rotation) % base.size()])
     return ordered
+
+static func _compute_root_target(main_dir: Vector2, branch_count: int) -> Vector2:
+    var lane_pattern: Array[int] = [0, 1, -1]
+    var lane: int = lane_pattern[branch_count % lane_pattern.size()]
+    var ring: int = int(branch_count / lane_pattern.size())
+    var forward: int = 2 + ring * 2
+    var perp: Vector2 = _perpendicular_dir(main_dir)
+    return (main_dir * forward) + (perp * lane)
 
 static func _find_free_layout_cell_cardinal(target: Vector2, dir: Vector2, used_cells: Dictionary) -> Vector2:
     if not used_cells.has(target):

@@ -31,7 +31,7 @@ const PLATFORMING_BG_DEFAULT := PLATFORMING_PACK_SPRITES + "/Backgrounds/Default
 const PLATFORMING_TILES_DEFAULT := PLATFORMING_PACK_SPRITES + "/Tiles/Default"
 const HERO_RENDER_SCALE := 0.72
 const ENEMY_RENDER_SCALE := HERO_RENDER_SCALE
-const BOSS_RENDER_SCALE := HERO_RENDER_SCALE
+const BOSS_RENDER_SCALE := HERO_RENDER_SCALE * 1.45
 const LEVEL_BG_PACK := {
     1: {
         "sky": "background_solid_sky.png",
@@ -495,9 +495,9 @@ func _apply_level_background(level_index: int) -> void:
     var t: Dictionary = LEVEL_BG_THEMES[level_key]
 
     bg_deep.texture = _make_atari_sky_texture(256, 120, t["sky_base"], t["sky_star_a"], t["sky_star_b"])
-    bg_far.texture = _make_atari_horizon_texture(256, 128, t["far"], t["sky_star_a"], 28)
-    bg_mid.texture = _make_atari_horizon_texture(256, 128, t["mid"], t["sky_star_a"], 22)
-    bg_near.texture = _make_atari_horizon_texture(256, 128, t["near"], t["sky_star_a"], 18)
+    bg_far.texture = _make_atari_horizon_texture(256, 128, t["far"], t["sky_star_a"], 28, 10)
+    bg_mid.texture = _make_atari_horizon_texture(256, 128, t["mid"], t["sky_star_a"], 22, 18)
+    bg_near.texture = _make_atari_horizon_texture(256, 128, t["near"], t["sky_star_a"], 18, 28)
     ground.texture = _make_atari_ground_texture(256, 96, t["ground_a"], t["ground_b"], t["ground_accent"])
 
 func _load_pack_texture(path: String) -> Texture2D:
@@ -592,13 +592,15 @@ func _make_atari_sky_texture(w: int, h: int, base_color: Color, star_a: Color, s
                 img.set_pixel(x, y, star_b)
     return ImageTexture.create_from_image(img)
 
-func _make_atari_horizon_texture(w: int, h: int, body_color: Color, accent_color: Color, segment: int) -> ImageTexture:
+func _make_atari_horizon_texture(w: int, h: int, body_color: Color, accent_color: Color, segment: int, peak_height: int) -> ImageTexture:
     var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
     img.fill(Color(0, 0, 0, 0))
-    var baseline: int = int(h * 0.72)
+    var baseline: int = int(h * 0.78)
+    var safe_segment: int = max(2, segment)
+    var safe_peak: int = max(4, peak_height)
     for x in range(w):
-        var step: int = int((x / max(2, segment)) % 4)
-        var top: int = baseline - (step * max(2, segment / 4))
+        var step: int = int((x / safe_segment) % 4)
+        var top: int = baseline - int(round((float(step) / 3.0) * float(safe_peak)))
         for y in range(top, h):
             img.set_pixel(x, y, body_color)
             if y == top and (x % 3 == 0):
@@ -923,7 +925,7 @@ func _spawn_heroes() -> void:
         var hero: CombatSprite = HERO_SCENE.instantiate()
         hero.position = Vector2(HERO_START_X - float(i) * 40.0, FLOOR_Y)
         var hero_visual: Dictionary = hero_sheets[hero_name]
-        hero.setup(hero_visual["sheet"], hero_visual["frame"], float(hero_visual.get("scale", HERO_RENDER_SCALE)))
+        hero.setup(hero_visual["sheet"], hero_visual["frame"], float(hero_visual.get("scale", HERO_RENDER_SCALE)), hero_name)
         hero.clicked.connect(_on_hero_clicked.bind(hero_name))
         hero_layer.add_child(hero)
         heroes.append(hero)
