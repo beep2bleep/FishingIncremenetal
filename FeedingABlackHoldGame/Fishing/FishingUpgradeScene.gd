@@ -17,6 +17,7 @@ var tree_layer: Control
 var hovered_node_id: String = ""
 var editor_add_currency_button: Button
 var editor_reset_progress_button: Button
+var unlock_all_upgrades_button: Button
 var editor_add_amount: int = 1000
 
 func _ready() -> void:
@@ -34,8 +35,9 @@ func _ready() -> void:
     scroll_container = get_node_or_null("ScrollContainer")
     editor_add_currency_button = get_node_or_null("EditorAddCurrency")
     editor_reset_progress_button = get_node_or_null("EditorResetProgress")
+    unlock_all_upgrades_button = get_node_or_null("UnlockAllUpgrades")
 
-    if currency_label == null or info_label == null or tree_layer == null or scroll_container == null or editor_add_currency_button == null or editor_reset_progress_button == null:
+    if currency_label == null or info_label == null or tree_layer == null or scroll_container == null or editor_add_currency_button == null or editor_reset_progress_button == null or unlock_all_upgrades_button == null:
         push_error("FishingUpgradeScene is missing required UI nodes.")
         return
 
@@ -198,12 +200,16 @@ func _on_main_menu_pressed() -> void:
 func _setup_editor_buttons() -> void:
     var editor_mode: bool = OS.has_feature("editor")
     editor_add_currency_button.visible = editor_mode
-    editor_reset_progress_button.visible = editor_mode
+    editor_reset_progress_button.visible = true
+    unlock_all_upgrades_button.visible = true
     editor_add_currency_button.disabled = not editor_mode
-    editor_reset_progress_button.disabled = not editor_mode
+    editor_reset_progress_button.disabled = false
+    unlock_all_upgrades_button.disabled = false
     editor_add_amount = 1000
     if editor_mode:
         editor_add_currency_button.text = "Add $%d (Editor)" % editor_add_amount
+    if editor_reset_progress_button != null:
+        editor_reset_progress_button.text = "Reset Save"
 
 func _on_editor_add_currency_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -214,17 +220,31 @@ func _on_editor_add_currency_pressed() -> void:
     _refresh_ui()
 
 func _on_editor_reset_progress_pressed() -> void:
-    if not OS.has_feature("editor"):
-        return
-    SaveHandler.fishing_currency = 0
-    SaveHandler.fishing_lifetime_coins = 0
-    SaveHandler.fishing_unlocked_upgrades = {}
-    SaveHandler.fishing_active_upgrades = {}
-    SaveHandler.fishing_last_battle_summary = {}
-    SaveHandler.fishing_next_battle_level = 1
-    SaveHandler.fishing_max_unlocked_battle_level = 1
+    SaveHandler.reset_fishing_progress()
     SaveHandler.save_fishing_progress()
     editor_add_amount = 1000
+    _refresh_ui()
+
+func _on_unlock_all_upgrades_pressed() -> void:
+    var max_level_by_key: Dictionary = {}
+    for node_variant in db.nodes:
+        var node: Dictionary = node_variant
+        var key: String = str(node.get("key", ""))
+        if key == "":
+            continue
+        var level: int = int(node.get("level", 1))
+        if not max_level_by_key.has(key) or level > int(max_level_by_key[key]):
+            max_level_by_key[key] = level
+
+    SaveHandler.fishing_unlocked_upgrades = {}
+    SaveHandler.fishing_active_upgrades = {}
+    for key_variant in max_level_by_key.keys():
+        var key: String = str(key_variant)
+        var level: int = int(max_level_by_key[key_variant])
+        SaveHandler.fishing_unlocked_upgrades[key] = level
+        SaveHandler.fishing_active_upgrades[key] = true
+
+    SaveHandler.save_fishing_progress()
     _refresh_ui()
 
 func _center_scroll() -> void:

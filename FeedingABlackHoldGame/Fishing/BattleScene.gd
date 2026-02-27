@@ -28,8 +28,8 @@ const BASE_POWER_REGEN_PER_SEC := 7.0
 const ACTIVE_CHARGE_PER_CLICK := 20.0
 const PLATFORMING_PACK_SPRITES := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites"
 const HERO_RENDER_SCALE := 0.72
-const ENEMY_RENDER_SCALE := 1.45
-const BOSS_RENDER_SCALE := ENEMY_RENDER_SCALE * 2.0
+const ENEMY_RENDER_SCALE := HERO_RENDER_SCALE
+const BOSS_RENDER_SCALE := HERO_RENDER_SCALE
 const LEVEL_BG_THEMES := {
     1: {
         "sky_base": Color(0.08, 0.08, 0.2, 1.0),
@@ -1767,11 +1767,7 @@ func _update_hero_glow(delta: float) -> void:
         hero.modulate = Color(pulse, pulse, 1.0, 1.0)
 
 func _on_continue_button_pressed() -> void:
-    var max_level: int = _max_unlocked_level()
-    if max_level <= 1:
-        _set_next_battle_level_and_exit(1)
-        return
-    _show_level_choice_dialog(max_level)
+    _set_next_battle_level_and_exit(current_level)
 
 func _show_level_choice_dialog(max_level: int) -> void:
     if level_choice_dialog == null:

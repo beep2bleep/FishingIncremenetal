@@ -122,11 +122,15 @@ func get_description(node: Dictionary) -> String:
     if key.begins_with("extra_skill_"):
         return _describe_extra_skill(key)
 
+    var specific_effect: String = _describe_key_effect(key)
+    if specific_effect != "":
+        return specific_effect
+
     var family_desc: String = _infer_family_description(key)
     if family_desc != "":
         return family_desc
 
-    return "Improves this upgrade path and your overall run strength."
+    return "Improves run combat effectiveness by boosting hero output, uptime, durability, or reward conversion on this branch."
 
 func _describe_core_upgrade(key: String, level: int) -> String:
     if key == "core_armor":
@@ -173,23 +177,45 @@ func _describe_extra_skill(key: String) -> String:
     var family: String = _extra_skill_family(key)
     match family:
         "ECON":
-            return "Improves economy stats (drop value, pickup efficiency, or reward conversion)."
+            return "Increases combat reward efficiency so each kill converts into more useful coin and stronger next-run upgrades."
         "DENS":
-            return "Increases enemy pressure and spawn value to raise run income ceiling."
+            return "Raises enemy density/pressure so your DPS kills more targets per second and increases coin-per-minute ceiling."
         "SURV":
-            return "Improves survivability (armor, contact reduction, DoT reduction, or max HP)."
+            return "Improves survivability (armor/contact/DoT mitigation) so the team survives deeper waves and reaches bosses more often."
         "MOVE":
-            return "Improves traversal and retarget tempo for faster frontline progress."
+            return "Improves formation movement and retarget tempo so heroes spend less time repositioning and more time dealing damage."
         "POWR":
-            return "Improves power gain/cap/refund so actives are available more often."
+            return "Improves power generation/cap/refund so actives trigger earlier and more frequently in each run."
         "ACTV":
-            return "Improves active uptime (duration, cooldown, or cooldown tick rate)."
+            return "Improves active uptime (duration and cooldown cadence), increasing burst windows and sustained team DPS."
         "BOSS":
-            return "Improves boss-phase performance (armor, damage, drops, or boss HP reduction)."
+            return "Improves boss-phase effectiveness (damage throughput, mitigation, or reward scaling) to clear more boss segments."
         "TEAM":
-            return "Improves hero-specific stats or active caps across the team."
+            return "Improves hero-specific combat stats and active ceilings, increasing total squad damage and consistency."
         _:
-            return "Pattern-generated extra skill that boosts run performance."
+            return "Boosts combat scaling for this branch and improves clear speed against enemies and boss phases."
+
+func _describe_key_effect(key: String) -> String:
+    var lower: String = key.to_lower()
+    if lower.find("damage") >= 0:
+        return "Increases direct damage output so enemies die faster and runs convert into more kills and coins."
+    if lower.find("speed") >= 0 or lower.find("cadence") >= 0:
+        return "Increases attack cadence, raising sustained DPS and reducing time-to-kill on waves and bosses."
+    if lower.find("armor") >= 0 or lower.find("plate") >= 0 or lower.find("fortify") >= 0 or lower.find("hemostasis") >= 0:
+        return "Reduces incoming damage so the team survives longer and reaches higher-value encounters."
+    if lower.find("power") >= 0 or lower.find("reservoir") >= 0 or lower.find("invocation") >= 0 or lower.find("active") >= 0:
+        return "Improves active ability economy (gain/cap/cooldown), increasing burst damage uptime."
+    if lower.find("boss") >= 0 or lower.find("segment") >= 0:
+        return "Improves boss progression by increasing boss damage throughput, mitigation, or boss reward efficiency."
+    if lower.find("drop") >= 0 or lower.find("pickup") >= 0 or lower.find("coin") >= 0 or lower.find("salvage") >= 0:
+        return "Increases coin conversion from combat so each run funds stronger upgrades and faster future clears."
+    if lower.find("density") >= 0 or lower.find("horde") >= 0 or lower.find("wave") >= 0 or lower.find("crowd") >= 0:
+        return "Increases target availability so high DPS builds can secure more kills per minute."
+    if lower.find("move") >= 0 or lower.find("march") >= 0 or lower.find("sprint") >= 0 or lower.find("route") >= 0:
+        return "Improves combat pacing by reducing downtime between engagements and keeping the frontline active."
+    if lower.find("archer") >= 0 or lower.find("knight") >= 0 or lower.find("guardian") >= 0 or lower.find("mage") >= 0:
+        return "Improves hero combat contribution and synergy, increasing total squad effectiveness."
+    return ""
 
 func _extra_skill_family(key: String) -> String:
     var n: int = int(key.trim_prefix("extra_skill_"))

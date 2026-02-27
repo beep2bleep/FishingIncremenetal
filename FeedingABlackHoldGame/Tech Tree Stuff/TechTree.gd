@@ -40,6 +40,7 @@ signal selected_node_changed(new_selected_node: TechTreeNode)
 var node_search_range = 20
 var node_search_width = 5
 var use_grid_adjacency: bool = true
+var requirement_hint_node: TechTreeNode = null
 
 func select_node_in_direction(dir_vec: Vector2):
     if selected_node == null:
@@ -182,16 +183,30 @@ func update_connected_nodes_available(from_cell: Vector2):
             node.state = TechTreeNode.STATES.AVAILABLE
 
 
-func update_connected_nodes_shadow(from_cell: Vector2):
-    for connected_cell in get_all_connected_cells(from_cell):
-        var node: TechTreeNode
-        if node_dict.has(connected_cell) == false:
-            node = create_new_tech_tree_node(connected_cell)
-        else:
-            node = node_dict[connected_cell]
+func update_connected_nodes_shadow(from_cell: Vector2, depth: int = 1):
+    var frontier: Array[Vector2] = [from_cell]
+    var visited: Dictionary = {from_cell: true}
+    var remaining_depth: int = max(1, depth)
+    while remaining_depth > 0 and not frontier.is_empty():
+        var next_frontier: Array[Vector2] = []
+        for source_cell in frontier:
+            for connected_cell in get_all_connected_cells(source_cell):
+                if visited.has(connected_cell):
+                    continue
+                visited[connected_cell] = true
 
-        if node != null and node.state == TechTreeNode.STATES.LOCKED:
-            node.state = TechTreeNode.STATES.SHADOW
+                var node: TechTreeNode
+                if node_dict.has(connected_cell) == false:
+                    node = create_new_tech_tree_node(connected_cell)
+                else:
+                    node = node_dict[connected_cell]
+
+                if node != null and node.state == TechTreeNode.STATES.LOCKED:
+                    node.state = TechTreeNode.STATES.SHADOW
+
+                next_frontier.append(connected_cell)
+        frontier = next_frontier
+        remaining_depth -= 1
 
 
 
@@ -365,6 +380,41 @@ func generate_nodes_procedurally():
 func _on_node_state_changed(node: TechTreeNode):
     update_active()
     update_min_max_for_visible_nodes()
+
+func get_unlock_requirement_node(target_cell: Vector2) -> TechTreeNode:
+    if not node_dict.has(target_cell):
+        return null
+    var target_node: TechTreeNode = node_dict[target_cell]
+    if target_node == null:
+        return null
+    if target_node.upgrade != null and target_node.upgrade.forced_cell != null:
+        var forced_cell: Vector2 = target_node.upgrade.forced_cell
+        if node_dict.has(forced_cell):
+            var forced_node: TechTreeNode = node_dict[forced_cell]
+            if forced_node != null and forced_node.state != TechTreeNode.STATES.COMPLETE:
+                return forced_node
+    for connected_cell in get_all_connected_cells(target_cell):
+        if not node_dict.has(connected_cell):
+            continue
+        var candidate: TechTreeNode = node_dict[connected_cell]
+        if candidate != null and candidate.state != TechTreeNode.STATES.COMPLETE:
+            return candidate
+    return null
+
+func set_requirement_hint_for(source_node: TechTreeNode, enabled: bool) -> void:
+    if requirement_hint_node != null and is_instance_valid(requirement_hint_node):
+        requirement_hint_node.set_locked_requirement_highlight(false)
+    requirement_hint_node = null
+
+    if not enabled or source_node == null:
+        return
+    var required_node: TechTreeNode = get_unlock_requirement_node(source_node.cell)
+    if required_node == null or not is_instance_valid(required_node):
+        return
+    if required_node == source_node:
+        return
+    requirement_hint_node = required_node
+    requirement_hint_node.set_locked_requirement_highlight(true)
 
 func _is_simulation_upgrade_tree() -> bool:
     for upgrade_variant: Variant in Global.game_mode_data_manager.upgrades.values():

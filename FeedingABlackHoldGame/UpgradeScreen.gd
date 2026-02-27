@@ -3,6 +3,11 @@ extends CanvasLayer
 class_name UpgradeScreen
 
 var is_active = false
+var editor_add_cash_amount: int = 1000
+var editor_cash_controls: HBoxContainer
+var editor_add_cash_button: Button
+var editor_reset_add_button: Button
+var battle_level_choice_dialog: ConfirmationDialog
 
 
 var dragging = false
@@ -48,6 +53,8 @@ func _ready() -> void :
     set_process(false)
 
     update_colors()
+    _setup_editor_cash_controls()
+    _setup_battle_level_choice_dialog()
     hide()
 
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):
@@ -243,7 +250,11 @@ func hide_screen():
 
 func _on_go_again_pressed() -> void :
     if _is_simulation_upgrade_tree():
-        SceneChanger.change_to_new_scene(Util.PATH_FISHING_BATTLE)
+        var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, 3)
+        if max_level <= 1:
+            _launch_battle_at_level(1)
+        else:
+            _show_battle_level_choice_dialog(max_level)
         return
     hide_screen()
 
@@ -262,3 +273,99 @@ func _is_simulation_upgrade_tree() -> bool:
             if upgrade.sim_name != "":
                 return true
     return false
+
+func _setup_battle_level_choice_dialog() -> void:
+    var parent_layer: CanvasLayer = %CanvasLayer2
+    if parent_layer == null:
+        return
+    battle_level_choice_dialog = parent_layer.get_node_or_null("BattleLevelChoiceDialog")
+    if battle_level_choice_dialog == null:
+        battle_level_choice_dialog = ConfirmationDialog.new()
+        battle_level_choice_dialog.name = "BattleLevelChoiceDialog"
+        battle_level_choice_dialog.title = "Choose Battle Level"
+        battle_level_choice_dialog.get_ok_button().hide()
+        parent_layer.add_child(battle_level_choice_dialog)
+    if not battle_level_choice_dialog.custom_action.is_connected(_on_battle_level_choice_action):
+        battle_level_choice_dialog.custom_action.connect(_on_battle_level_choice_action)
+
+func _show_battle_level_choice_dialog(max_level: int) -> void:
+    if battle_level_choice_dialog == null:
+        _launch_battle_at_level(clamp(SaveHandler.fishing_next_battle_level, 1, max_level))
+        return
+
+    battle_level_choice_dialog.dialog_text = "Select the battle level to run."
+    for child in battle_level_choice_dialog.get_children():
+        if child is Button and child.name.begins_with("BattleLevelChoiceButton"):
+            child.queue_free()
+
+    for level in range(1, max_level + 1):
+        var button: Button = battle_level_choice_dialog.add_button("Level %d" % level, true, "level_%d" % level)
+        button.name = "BattleLevelChoiceButton%d" % level
+
+    battle_level_choice_dialog.popup_centered()
+
+func _on_battle_level_choice_action(action: StringName) -> void:
+    var action_text: String = str(action)
+    if not action_text.begins_with("level_"):
+        return
+    var level: int = int(action_text.trim_prefix("level_"))
+    _launch_battle_at_level(level)
+
+func _launch_battle_at_level(level: int) -> void:
+    var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, 3)
+    SaveHandler.fishing_next_battle_level = clamp(level, 1, max_level)
+    SaveHandler.save_fishing_progress()
+    SceneChanger.change_to_new_scene(Util.PATH_FISHING_BATTLE)
+
+func _setup_editor_cash_controls() -> void:
+    if not OS.has_feature("editor"):
+        return
+    if editor_cash_controls != null and is_instance_valid(editor_cash_controls):
+        return
+
+    editor_cash_controls = HBoxContainer.new()
+    editor_cash_controls.name = "EditorCashControls"
+    editor_cash_controls.anchor_left = 1.0
+    editor_cash_controls.anchor_top = 0.0
+    editor_cash_controls.anchor_right = 1.0
+    editor_cash_controls.anchor_bottom = 0.0
+    editor_cash_controls.offset_left = -520.0
+    editor_cash_controls.offset_top = 12.0
+    editor_cash_controls.offset_right = -12.0
+    editor_cash_controls.offset_bottom = 56.0
+    editor_cash_controls.alignment = BoxContainer.ALIGNMENT_END
+    editor_cash_controls.z_index = 200
+    editor_cash_controls.mouse_filter = Control.MOUSE_FILTER_STOP
+
+    editor_add_cash_button = Button.new()
+    editor_add_cash_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    editor_add_cash_button.pressed.connect(_on_editor_add_cash_pressed)
+    editor_cash_controls.add_child(editor_add_cash_button)
+
+    editor_reset_add_button = Button.new()
+    editor_reset_add_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    editor_reset_add_button.text = "Reset Add"
+    editor_reset_add_button.pressed.connect(_on_editor_reset_add_pressed)
+    editor_cash_controls.add_child(editor_reset_add_button)
+
+    %CanvasLayer2.add_child(editor_cash_controls)
+    _refresh_editor_cash_button_text()
+
+func _refresh_editor_cash_button_text() -> void:
+    if editor_add_cash_button == null:
+        return
+    editor_add_cash_button.text = "Add $%d (Editor)" % editor_add_cash_amount
+
+func _on_editor_add_cash_pressed() -> void:
+    if not OS.has_feature("editor"):
+        return
+    Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, editor_add_cash_amount)
+    editor_add_cash_amount *= 2
+    _refresh_editor_cash_button_text()
+    update()
+
+func _on_editor_reset_add_pressed() -> void:
+    if not OS.has_feature("editor"):
+        return
+    editor_add_cash_amount = 1000
+    _refresh_editor_cash_button_text()

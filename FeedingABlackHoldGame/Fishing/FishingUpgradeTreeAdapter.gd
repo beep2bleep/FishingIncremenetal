@@ -3,16 +3,14 @@ class_name FishingUpgradeTreeAdapter
 
 const DATA_PATH: String = "res://Data/FishingUpgradeData.json"
 const GROUPED_TIER_MAX := 5
+const MAX_CHILDREN_PER_NODE := 4
 const LAYOUT_DIRS: Array[Vector2] = [
     Vector2.RIGHT,
-    Vector2.LEFT,
     Vector2.UP,
+    Vector2.LEFT,
     Vector2.DOWN,
-    Vector2(1, -1),
-    Vector2(-1, -1),
-    Vector2(1, 1),
-    Vector2(-1, 1),
 ]
+const INVALID_LAYOUT_CELL := Vector2(2147483647, 2147483647)
 const ICON_MODS: Array[int] = [
     Util.MODS.BASE_DAMAGE_PER_CLICK,
     Util.MODS.CLICK_RATE,
@@ -55,6 +53,8 @@ static func apply_simulation_upgrades() -> void:
 
     var raw_upgrades: Array = upgrades_variant
     var grouped_upgrades: Array = _group_repeated_upgrades(raw_upgrades)
+    _retarget_dependencies_to_hubs(grouped_upgrades)
+    _enforce_max_children_per_node(grouped_upgrades, MAX_CHILDREN_PER_NODE)
     _sanitize_dependency_graph(grouped_upgrades)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
     var formatter: FishingUpgradeDB = FishingUpgradeDB.new()
@@ -102,7 +102,9 @@ static func apply_simulation_upgrades() -> void:
         var dep_variant: Variant = entry.get("dependency", null)
         if dep_variant != null:
             var dep_id: String = str(dep_variant)
-            if dep_id != "" and id_to_cell.has(dep_id):
+            if dep_id == "__CENTER__":
+                upgrade.forced_cell = Vector2.ZERO
+            elif dep_id != "" and id_to_cell.has(dep_id):
                 upgrade.forced_cell = id_to_cell[dep_id]
 
         Global.game_mode_data_manager.upgrades[upgrade.cell] = upgrade
@@ -139,6 +141,7 @@ static func _group_repeated_upgrades(raw_upgrades: Array) -> Array:
 
         var chunk_index: int = 0
         var cursor: int = 0
+        var previous_group_id: String = ""
         while cursor < key_entries.size():
             var first: Dictionary = key_entries[cursor]
             var chunk_size: int = min(GROUPED_TIER_MAX, key_entries.size() - cursor)
@@ -160,8 +163,9 @@ static func _group_repeated_upgrades(raw_upgrades: Array) -> Array:
             grouped_entry["tier_costs"] = tier_costs
             grouped_entry["cost"] = float(tier_costs[0]) if tier_costs.size() > 0 else float(first.get("cost", 0.0))
             grouped_entry["level"] = int(first.get("level", 1))
-            grouped_entry["dependency"] = str(first.get("dependency", ""))
+            grouped_entry["dependency"] = previous_group_id if previous_group_id != "" else str(first.get("dependency", ""))
             grouped.append(grouped_entry)
+            previous_group_id = group_id
 
             chunk_index += 1
             cursor += chunk_size
@@ -176,7 +180,253 @@ static func _group_repeated_upgrades(raw_upgrades: Array) -> Array:
             grouped_entry["dependency"] = str(raw_id_to_group_id[dep_id])
         grouped[i] = grouped_entry
 
+    for i in range(grouped.size()):
+        var grouped_entry_variant: Variant = grouped[i]
+        if not (grouped_entry_variant is Dictionary):
+            continue
+        var grouped_entry: Dictionary = grouped_entry_variant
+        var dep_id: String = str(grouped_entry.get("dependency", ""))
+        if dep_id == "":
+            grouped_entry["dependency"] = "__CENTER__"
+            grouped[i] = grouped_entry
+
     return grouped
+
+static func _retarget_dependencies_to_hubs(grouped_upgrades: Array) -> void:
+    var key_to_primary_id: Dictionary = {}
+    var key_to_entries: Dictionary = {}
+    for entry_variant: Variant in grouped_upgrades:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var key: String = str(entry.get("key", ""))
+        var entry_id: String = str(entry.get("id", ""))
+        if key == "" or entry_id == "":
+            continue
+        if not key_to_primary_id.has(key):
+            key_to_primary_id[key] = entry_id
+        if not key_to_entries.has(key):
+            key_to_entries[key] = []
+        var arr: Array = key_to_entries[key]
+        arr.append(entry)
+        key_to_entries[key] = arr
+
+    for i in range(grouped_upgrades.size()):
+        var entry_variant: Variant = grouped_upgrades[i]
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var key: String = str(entry.get("key", ""))
+        var entry_id: String = str(entry.get("id", ""))
+        if key == "" or entry_id == "":
+            continue
+
+        var dep_key: String = _select_hub_dependency_key(key, key_to_primary_id)
+        if dep_key == "":
+            entry["dependency"] = "__CENTER__"
+        elif key_to_primary_id.has(dep_key):
+            entry["dependency"] = str(key_to_primary_id[dep_key])
+        else:
+            entry["dependency"] = "__CENTER__"
+
+        # Avoid accidental self-dependency if a key resolves to its own primary entry.
+        if str(entry.get("dependency", "")) == entry_id:
+            entry["dependency"] = "__CENTER__"
+
+        grouped_upgrades[i] = entry
+
+static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionary) -> String:
+    var lower: String = key.to_lower()
+    var hero: String = _hero_from_key(lower)
+
+    if lower.begins_with("core_") or lower.begins_with("recruit_"):
+        return ""
+
+    if lower.ends_with("_unlock"):
+        if hero != "":
+            var recruit_key: String = "recruit_%s" % hero
+            if key_to_primary_id.has(recruit_key):
+                return recruit_key
+        return ""
+
+    if lower.begins_with("extra_skill_"):
+        if key_to_primary_id.has("core_power"):
+            return "core_power"
+        return ""
+
+    if hero != "":
+        var hero_unlock_key: String = _hero_unlock_key(hero)
+        var hero_core_damage_key: String = "core_%s_damage" % hero
+        if key_to_primary_id.has(hero_unlock_key):
+            return hero_unlock_key
+        if key_to_primary_id.has(hero_core_damage_key):
+            return hero_core_damage_key
+        var recruit_key: String = "recruit_%s" % hero
+        if key_to_primary_id.has(recruit_key):
+            return recruit_key
+        return ""
+
+    var theme_act: int = _theme_act_for_key(key)
+    match theme_act:
+        THEME_DAMAGE_ACT:
+            if key_to_primary_id.has("core_knight_damage"):
+                return "core_knight_damage"
+        THEME_UTILITY_ECON_ACT:
+            if key_to_primary_id.has("core_drop"):
+                return "core_drop"
+            if key_to_primary_id.has("cursor_pickup_unlock"):
+                return "cursor_pickup_unlock"
+        THEME_DEFENSE_SURVIVAL_ACT:
+            if key_to_primary_id.has("core_armor"):
+                return "core_armor"
+        THEME_POWER_ACTIVE_ACT:
+            if key_to_primary_id.has("core_power"):
+                return "core_power"
+            if key_to_primary_id.has("power_harvest_unlock"):
+                return "power_harvest_unlock"
+        THEME_BOSS_DENSITY_ACT:
+            if key_to_primary_id.has("core_density"):
+                return "core_density"
+        THEME_MISC_TEAM_ACT:
+            if key_to_primary_id.has("auto_attack_unlock"):
+                return "auto_attack_unlock"
+    return ""
+
+static func _hero_from_key(lower_key: String) -> String:
+    if lower_key.find("archer") >= 0:
+        return "archer"
+    if lower_key.find("guardian") >= 0:
+        return "guardian"
+    if lower_key.find("mage") >= 0:
+        return "mage"
+    if lower_key.find("knight") >= 0:
+        return "knight"
+    return ""
+
+static func _hero_unlock_key(hero: String) -> String:
+    match hero:
+        "archer":
+            return "archer_pierce_unlock"
+        "guardian":
+            return "guardian_fortify_unlock"
+        "mage":
+            return "mage_storm_unlock"
+        "knight":
+            return "knight_vamp_unlock"
+        _:
+            return ""
+
+static func _enforce_max_children_per_node(grouped_upgrades: Array, max_children: int) -> void:
+    if max_children <= 0:
+        return
+
+    var id_to_entry: Dictionary = {}
+    var children_by_dep: Dictionary = {}
+    var child_count: Dictionary = {}
+    for entry_variant: Variant in grouped_upgrades:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var entry_id: String = str(entry.get("id", ""))
+        if entry_id == "":
+            continue
+        id_to_entry[entry_id] = entry
+        var dep_id: String = str(entry.get("dependency", ""))
+        if dep_id == "":
+            continue
+        if not children_by_dep.has(dep_id):
+            children_by_dep[dep_id] = []
+        var dep_children: Array = children_by_dep[dep_id]
+        dep_children.append(entry_id)
+        children_by_dep[dep_id] = dep_children
+        child_count[dep_id] = int(child_count.get(dep_id, 0)) + 1
+
+    var dep_ids: Array = children_by_dep.keys()
+    dep_ids.sort()
+    for dep_variant: Variant in dep_ids:
+        var dep_id: String = str(dep_variant)
+        var dep_children: Array = children_by_dep.get(dep_id, [])
+        if dep_children.size() <= max_children:
+            continue
+
+        dep_children.sort_custom(func(a: Variant, b: Variant) -> bool:
+            var a_id: String = str(a)
+            var b_id: String = str(b)
+            var a_entry: Dictionary = id_to_entry.get(a_id, {})
+            var b_entry: Dictionary = id_to_entry.get(b_id, {})
+            return float(a_entry.get("cost", 0.0)) < float(b_entry.get("cost", 0.0))
+        )
+
+        var keep_children: Array = dep_children.slice(0, max_children)
+        var overflow_children: Array = dep_children.slice(max_children)
+        child_count[dep_id] = max_children
+        children_by_dep[dep_id] = keep_children
+
+        var candidate_parents: Array = keep_children.duplicate()
+        var candidate_index: int = 0
+
+        for overflow_variant: Variant in overflow_children:
+            var overflow_id: String = str(overflow_variant)
+            if overflow_id == "":
+                continue
+            if not id_to_entry.has(overflow_id):
+                continue
+
+            var new_parent: String = ""
+            var attempts: int = 0
+            while candidate_parents.size() > 0 and attempts < candidate_parents.size():
+                if candidate_index >= candidate_parents.size():
+                    candidate_index = 0
+                var candidate: String = str(candidate_parents[candidate_index])
+                candidate_index += 1
+                attempts += 1
+                if candidate == "" or candidate == overflow_id:
+                    continue
+                var current_children: int = int(child_count.get(candidate, 0))
+                if current_children >= max_children:
+                    continue
+                new_parent = candidate
+                break
+
+            if new_parent == "":
+                var global_parent: String = ""
+                for candidate_variant: Variant in id_to_entry.keys():
+                    var candidate_id: String = str(candidate_variant)
+                    if candidate_id == "" or candidate_id == overflow_id:
+                        continue
+                    var global_children: int = int(child_count.get(candidate_id, 0))
+                    if global_children < max_children:
+                        global_parent = candidate_id
+                        break
+                if global_parent != "":
+                    new_parent = global_parent
+                else:
+                    new_parent = dep_id
+
+            var entry_to_move: Dictionary = id_to_entry[overflow_id]
+            entry_to_move["dependency"] = new_parent
+            id_to_entry[overflow_id] = entry_to_move
+
+            child_count[new_parent] = int(child_count.get(new_parent, 0)) + 1
+            if not children_by_dep.has(new_parent):
+                children_by_dep[new_parent] = []
+            var new_parent_children: Array = children_by_dep[new_parent]
+            new_parent_children.append(overflow_id)
+            children_by_dep[new_parent] = new_parent_children
+
+            if not candidate_parents.has(overflow_id):
+                candidate_parents.append(overflow_id)
+
+    for i in range(grouped_upgrades.size()):
+        var entry_variant: Variant = grouped_upgrades[i]
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var entry_id: String = str(entry.get("id", ""))
+        if entry_id == "":
+            continue
+        if id_to_entry.has(entry_id):
+            grouped_upgrades[i] = id_to_entry[entry_id]
 
 static func _sanitize_dependency_graph(grouped_upgrades: Array) -> void:
     var id_to_entry: Dictionary = {}
@@ -197,6 +447,8 @@ static func _sanitize_dependency_graph(grouped_upgrades: Array) -> void:
         var dep_id: String = str(id_to_dep.get(upgrade_id, ""))
         if dep_id == "":
             continue
+        if dep_id == "__CENTER__":
+            continue
         if dep_id == upgrade_id or not id_to_entry.has(dep_id):
             var invalid_entry: Dictionary = id_to_entry[upgrade_id]
             invalid_entry["dependency"] = ""
@@ -211,6 +463,8 @@ static func _sanitize_dependency_graph(grouped_upgrades: Array) -> void:
         while true:
             var dep_id: String = str(id_to_dep.get(current, ""))
             if dep_id == "":
+                break
+            if dep_id == "__CENTER__":
                 break
             if dep_id == upgrade_id or seen.has(dep_id):
                 var break_entry: Dictionary = id_to_entry[current]
@@ -236,51 +490,151 @@ static func _build_tree_layout(grouped_upgrades: Array) -> Dictionary:
     var id_to_cell: Dictionary = {}
     var used_cells: Dictionary = {}
     var root_counts: Dictionary = {}
-
+    var parent_child_counts: Dictionary = {}
+    var pending_by_id: Dictionary = {}
     for entry_variant: Variant in grouped_upgrades:
-        if not (entry_variant is Dictionary):
+        if entry_variant is Dictionary:
+            var entry: Dictionary = entry_variant
+            var upgrade_id: String = str(entry.get("id", ""))
+            if upgrade_id != "":
+                pending_by_id[upgrade_id] = entry
+
+    while not pending_by_id.is_empty():
+        var ids: Array = pending_by_id.keys()
+        ids.sort_custom(func(a: Variant, b: Variant) -> bool:
+            var a_entry: Dictionary = pending_by_id[str(a)]
+            var b_entry: Dictionary = pending_by_id[str(b)]
+            return float(a_entry.get("cost", 0.0)) < float(b_entry.get("cost", 0.0))
+        )
+        var placed_any: bool = false
+        for id_variant: Variant in ids:
+            var upgrade_id: String = str(id_variant)
+            if not pending_by_id.has(upgrade_id):
+                continue
+            var entry: Dictionary = pending_by_id[upgrade_id]
+            var dep_id: String = str(entry.get("dependency", ""))
+            if dep_id != "" and dep_id != "__CENTER__" and not id_to_cell.has(dep_id):
+                continue
+
+            var key: String = str(entry.get("key", ""))
+            var preferred_branch: int = _branch_for_key(key)
+            var branch: int = preferred_branch
+            if dep_id == "" or dep_id == "__CENTER__":
+                branch = _choose_root_branch(preferred_branch, root_counts)
+            var dir: Vector2 = LAYOUT_DIRS[branch]
+            var cell: Vector2 = INVALID_LAYOUT_CELL
+
+            if dep_id != "" and dep_id != "__CENTER__":
+                var parent_cell: Vector2 = id_to_cell[dep_id]
+                var child_index: int = int(parent_child_counts.get(dep_id, 0))
+                parent_child_counts[dep_id] = child_index + 1
+                cell = _find_free_adjacent_layout_cell(parent_cell, branch, child_index, used_cells)
+                if cell == INVALID_LAYOUT_CELL:
+                    var target: Vector2 = _compute_child_target(parent_cell, dir, child_index)
+                    cell = _find_free_layout_cell_cardinal(target, dir, used_cells)
+            else:
+                var branch_count: int = int(root_counts.get(branch, 0))
+                root_counts[branch] = branch_count + 1
+                cell = _find_free_adjacent_layout_cell(Vector2.ZERO, branch, branch_count, used_cells)
+                if cell == INVALID_LAYOUT_CELL:
+                    var distance: int = 1 + (branch_count * 2)
+                    var target: Vector2 = dir * distance
+                    cell = _find_free_layout_cell_cardinal(target, dir, used_cells)
+
+            id_to_cell[upgrade_id] = cell
+            used_cells[cell] = true
+            pending_by_id.erase(upgrade_id)
+            placed_any = true
+
+        if placed_any:
             continue
-        var entry: Dictionary = entry_variant
-        var upgrade_id: String = str(entry.get("id", ""))
-        if upgrade_id == "":
-            continue
 
-        var key: String = str(entry.get("key", ""))
-        var branch: int = _branch_for_key(key)
-        var dir: Vector2 = LAYOUT_DIRS[branch]
-        var dep_id: String = str(entry.get("dependency", ""))
-
-        var target: Vector2
-        if dep_id != "" and id_to_cell.has(dep_id):
-            var parent_cell: Vector2 = id_to_cell[dep_id]
-            target = parent_cell + dir
-        else:
-            var branch_count: int = int(root_counts.get(branch, 0))
-            var ring: int = 1 + int(branch_count / 2)
-            target = dir * ring
-            root_counts[branch] = branch_count + 1
-
-        var cell: Vector2 = _find_free_layout_cell(target, used_cells)
-
-        id_to_cell[upgrade_id] = cell
-        used_cells[cell] = true
+        var first_id: String = str(ids[0])
+        var forced_entry: Dictionary = pending_by_id[first_id]
+        forced_entry["dependency"] = ""
+        pending_by_id[first_id] = forced_entry
 
     return id_to_cell
 
-static func _find_free_layout_cell(target: Vector2, used_cells: Dictionary) -> Vector2:
+static func _find_free_adjacent_layout_cell(parent_cell: Vector2, preferred_branch: int, index_seed: int, used_cells: Dictionary) -> Vector2:
+    var branch_order: Array[int] = _branch_order_for_child(preferred_branch, index_seed)
+    for branch_variant: Variant in branch_order:
+        var branch: int = int(branch_variant)
+        if branch < 0 or branch >= LAYOUT_DIRS.size():
+            continue
+        var candidate: Vector2 = parent_cell + LAYOUT_DIRS[branch]
+        if not used_cells.has(candidate):
+            return candidate
+    return INVALID_LAYOUT_CELL
+
+static func _branch_order_for_child(preferred_branch: int, index_seed: int) -> Array[int]:
+    var p: int = ((preferred_branch % LAYOUT_DIRS.size()) + LAYOUT_DIRS.size()) % LAYOUT_DIRS.size()
+    var base: Array[int] = [
+        p,
+        (p + 1) % LAYOUT_DIRS.size(),
+        (p + 3) % LAYOUT_DIRS.size(),
+        (p + 2) % LAYOUT_DIRS.size(),
+    ]
+    var rotation: int = 0
+    if base.size() > 0:
+        rotation = int(abs(index_seed)) % base.size()
+    var ordered: Array[int] = []
+    for i in range(base.size()):
+        ordered.append(base[(i + rotation) % base.size()])
+    return ordered
+
+static func _find_free_layout_cell_cardinal(target: Vector2, dir: Vector2, used_cells: Dictionary) -> Vector2:
     if not used_cells.has(target):
         return target
-    for radius in range(1, 6):
-        for y in range(-radius, radius + 1):
-            for x in range(-radius, radius + 1):
-                var candidate: Vector2 = target + Vector2(x, y)
-                if used_cells.has(candidate):
-                    continue
+    for step in range(1, 8):
+        var candidates: Array[Vector2] = [
+            target + dir * step,
+            target - dir * step,
+        ]
+        for candidate in candidates:
+            if not used_cells.has(candidate):
                 return candidate
     var fallback: Vector2 = target
     while used_cells.has(fallback):
-        fallback += Vector2.RIGHT
+        fallback += dir
     return fallback
+
+static func _choose_root_branch(preferred_branch: int, root_counts: Dictionary) -> int:
+    var min_count: int = 2147483647
+    for i in range(LAYOUT_DIRS.size()):
+        var count: int = int(root_counts.get(i, 0))
+        if count < min_count:
+            min_count = count
+
+    var candidates: Array[int] = []
+    for i in range(LAYOUT_DIRS.size()):
+        var count: int = int(root_counts.get(i, 0))
+        if count == min_count:
+            candidates.append(i)
+
+    if candidates.has(preferred_branch):
+        return preferred_branch
+    if candidates.is_empty():
+        return preferred_branch
+    return candidates[0]
+
+static func _compute_child_target(parent_cell: Vector2, main_dir: Vector2, child_index: int) -> Vector2:
+    var forward: int = 1 + int(child_index / 6)
+    var lane_index: int = child_index % 6
+    var lateral_unit: int = _lateral_from_lane(lane_index)
+    var perp: Vector2 = _perpendicular_dir(main_dir)
+    return parent_cell + (main_dir * forward) + (perp * lateral_unit)
+
+static func _lateral_from_lane(lane_index: int) -> int:
+    var lanes: Array[int] = [0, 1, -1, 2, -2, 3]
+    if lane_index >= 0 and lane_index < lanes.size():
+        return lanes[lane_index]
+    return 0
+
+static func _perpendicular_dir(main_dir: Vector2) -> Vector2:
+    if main_dir == Vector2.RIGHT or main_dir == Vector2.LEFT:
+        return Vector2.UP
+    return Vector2.RIGHT
 
 static func _branch_for_key(key: String) -> int:
     var theme_act: int = _theme_act_for_key(key)
@@ -288,17 +642,17 @@ static func _branch_for_key(key: String) -> int:
         THEME_HERO_UNLOCK_ACT:
             return 0
         THEME_DAMAGE_ACT:
-            return 1
+            return 0
         THEME_UTILITY_ECON_ACT:
-            return 2
-        THEME_DEFENSE_SURVIVAL_ACT:
             return 3
+        THEME_DEFENSE_SURVIVAL_ACT:
+            return 2
         THEME_POWER_ACTIVE_ACT:
-            return 4
+            return 1
         THEME_BOSS_DENSITY_ACT:
-            return 5
+            return 3
         THEME_MISC_TEAM_ACT:
-            return 6
+            return 2
 
     var lower: String = key.to_lower()
     var hash_val: int = 0

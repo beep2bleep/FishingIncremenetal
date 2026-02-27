@@ -66,7 +66,15 @@ offset_left = 312.0
 offset_top = 96.0
 offset_right = 640.0
 offset_bottom = 136.0
-text = "Reset Save (Editor)"
+text = "Reset Save"
+
+[node name="UnlockAllUpgrades" type="Button" parent="."]
+layout_mode = 1
+offset_left = 652.0
+offset_top = 96.0
+offset_right = 980.0
+offset_bottom = 136.0
+text = "Unlock All Upgrades"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="."]
 layout_mode = 1
@@ -102,3 +110,4 @@ text = ""
 [connection signal="pressed" from="MainMenu" to="." method="_on_main_menu_pressed"]
 [connection signal="pressed" from="EditorAddCurrency" to="." method="_on_editor_add_currency_pressed"]
 [connection signal="pressed" from="EditorResetProgress" to="." method="_on_editor_reset_progress_pressed"]
+[connection signal="pressed" from="UnlockAllUpgrades" to="." method="_on_unlock_all_upgrades_pressed"]

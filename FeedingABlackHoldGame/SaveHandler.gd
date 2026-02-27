@@ -440,16 +440,19 @@ var fishing_last_battle_summary: Dictionary = {}
 var fishing_next_battle_level := 1
 var fishing_max_unlocked_battle_level := 1
 
+func reset_fishing_progress() -> void:
+    fishing_currency = 0
+    fishing_lifetime_coins = 0
+    fishing_unlocked_upgrades = {}
+    fishing_active_upgrades = {}
+    fishing_last_battle_summary = {}
+    fishing_next_battle_level = 1
+    fishing_max_unlocked_battle_level = 1
+
 func load_fishing_progress():
     var json_data = Util.load_json_data_from_path(fishing_progress_file_path)
     if json_data == null:
-        fishing_currency = 0
-        fishing_lifetime_coins = 0
-        fishing_unlocked_upgrades = {}
-        fishing_active_upgrades = {}
-        fishing_last_battle_summary = {}
-        fishing_next_battle_level = 1
-        fishing_max_unlocked_battle_level = 1
+        reset_fishing_progress()
         return
 
     fishing_currency = int(json_data.get("currency", 0))

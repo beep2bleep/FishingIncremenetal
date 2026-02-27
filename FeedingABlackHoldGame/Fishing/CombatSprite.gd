@@ -34,11 +34,12 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0) -> void:
 
     frames.add_animation("attack")
     frames.set_animation_loop("attack", false)
-    frames.set_animation_speed("attack", 10.0)
-    var atk := AtlasTexture.new()
-    atk.atlas = sheet
-    atk.region = Rect2i(Vector2i(frame_size.x * 2, 0), frame_size)
-    frames.add_frame("attack", atk)
+    frames.set_animation_speed("attack", 14.0)
+    for i in [2, 1, 2]:
+        var atk := AtlasTexture.new()
+        atk.atlas = sheet
+        atk.region = Rect2i(Vector2i(frame_size.x * i, 0), frame_size)
+        frames.add_frame("attack", atk)
 
     sprite.sprite_frames = frames
     sprite.play("walk")
@@ -56,7 +57,7 @@ func set_walking() -> void:
         sprite.play("walk")
 
 func trigger_attack() -> void:
-    if is_defeated:
+    if is_defeated or is_attacking:
         return
     is_attacking = true
     sprite.play("attack")

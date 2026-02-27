@@ -52,8 +52,10 @@ var is_highlighted: bool:
 
         if tech_tree:
             tech_tree.selected_node = self
+            var show_requirement_hint: bool = _is_highlighted and state == STATES.SHADOW
+            tech_tree.set_requirement_hint_for(self, show_requirement_hint)
 
-        if state == STATES.AVAILABLE or state == STATES.COMPLETE and upgrade != null:
+        if (state == STATES.AVAILABLE or state == STATES.COMPLETE or state == STATES.SHADOW) and upgrade != null:
             %"Tool Tip".visible = _is_highlighted
             %"Tool Tip".pivot_offset = %"Tool Tip".size / 2.0
 
@@ -94,6 +96,7 @@ func do_pop_in():
 var is_setup = false
 
 var _state: STATES = STATES.LOCKED
+var locked_requirement_highlighted: bool = false
 var state: STATES:
     get:
         return _state
@@ -124,7 +127,7 @@ var state: STATES:
             if _state == STATES.AVAILABLE:
 
                 if tech_tree:
-                    tech_tree.call_deferred("update_connected_nodes_shadow", cell)
+                    tech_tree.call_deferred("update_connected_nodes_shadow", cell, 2)
 
 
 
@@ -179,6 +182,19 @@ func _on_mod_changed(type: Util.MODS, old_value, new_value):
 
 
 func update_panel():
+    if locked_requirement_highlighted:
+        var base_style: StyleBox = %"Visual Panel".get_theme_stylebox("panel")
+        var hint_style: StyleBoxFlat = StyleBoxFlat.new()
+        if base_style is StyleBoxFlat:
+            hint_style = (base_style as StyleBoxFlat).duplicate(true)
+        hint_style.border_width_left = max(2, hint_style.border_width_left)
+        hint_style.border_width_top = max(2, hint_style.border_width_top)
+        hint_style.border_width_right = max(2, hint_style.border_width_right)
+        hint_style.border_width_bottom = max(2, hint_style.border_width_bottom)
+        hint_style.border_color = Color(1.0, 0.25, 0.25, 0.55)
+        %"Visual Panel".add_theme_stylebox_override("panel", hint_style)
+        return
+
     match state:
         STATES.SHADOW:
             %"Visual Panel".add_theme_stylebox_override("panel", shadow_stylebox)
@@ -256,6 +272,8 @@ func _on_click_mask_pressed() -> void :
         tooltip_custom_tween_component.do_tween(1.0)
 
         upgrade.current_tier += 1
+        if upgrade.sim_name != "" and upgrade.current_tier >= 1 and tech_tree:
+            tech_tree.call_deferred("update_connected_nodes_available", cell)
         if upgrade.is_at_max():
             state = STATES.COMPLETE
         state_changed.emit(self)
@@ -272,6 +290,23 @@ func _on_click_mask_pressed() -> void :
             SaveHandler.save_fishing_progress()
 
         SaveHandler.save_player_last_run()
+
+func set_locked_requirement_highlight(active: bool) -> void:
+    locked_requirement_highlighted = active
+    update_panel()
+
+func _get_unlock_requirement_text() -> String:
+    if tech_tree == null:
+        return ""
+    var required_node: TechTreeNode = tech_tree.get_unlock_requirement_node(cell)
+    if required_node == null:
+        return ""
+    if required_node.upgrade == null:
+        return ""
+    var required_name: String = required_node.upgrade.sim_name.strip_edges()
+    if required_name == "":
+        required_name = "the required upgrade"
+    return "LOCKED: Requires %s." % required_name
 
 func unlock_node(target_tier = 1):
     if upgrade:
@@ -305,10 +340,13 @@ func update():
 
     var using_sim_display: bool = upgrade != null and upgrade.sim_name != ""
     var sim_effect_text: String = ""
+    var locked_requirement_text: String = _get_unlock_requirement_text() if state == STATES.SHADOW else ""
     if using_sim_display:
         sim_effect_text = upgrade.sim_description.strip_edges()
         if sim_effect_text == "":
             sim_effect_text = "Upgrade effect applied on unlock."
+        if locked_requirement_text != "":
+            sim_effect_text += "\n" + locked_requirement_text
     if using_sim_display:
         %Description.text = "%s\n%s" % [upgrade.sim_name, sim_effect_text]
         %"Node Type".text = upgrade.sim_icon if upgrade.sim_icon != "" else upgrade.sim_name.substr(0, 1)
@@ -371,6 +409,8 @@ func update():
 
     if state == STATES.AVAILABLE and can_pay_cost == true:
         %"Click Mask".disabled = false
+    elif state == STATES.SHADOW or state == STATES.COMPLETE:
+        %"Click Mask".disabled = false
     else:
         %"Click Mask".disabled = true
 
@@ -383,6 +423,7 @@ func update():
             %"Shadow Icon".show()
             %Sprite2D.hide()
             %"Mod Icon".hide()
+            %"Click Mask".show()
         STATES.AVAILABLE:
             if upgrade and upgrade.type == Util.NODE_TYPES.ROGUELIKE_DUMMY:
                 %"Random Icon".show()
@@ -394,6 +435,7 @@ func update():
         STATES.COMPLETE:
             %Sprite2D.show()
             %"Mod Icon".show()
+            %"Click Mask".show()
             show()
 
 
