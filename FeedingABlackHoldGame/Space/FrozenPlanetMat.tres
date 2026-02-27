@@ -15,10 +15,6 @@ noise = SubResource("FastNoiseLite_cee7v")
 [resource]
 shader = ExtResource("1")
 shader_parameter/coverage_texture = SubResource("NoiseTexture2D_i02lu")
-shader_parameter/crack_texture = null
-shader_parameter/crack_normal = null
-shader_parameter/bump_normal = null
-shader_parameter/warp_normal = null
 shader_parameter/pointer = Vector2(0, 1)
 shader_parameter/coverage = 1.0330000490675
 shader_parameter/distort = 0.0

@@ -1093,7 +1093,10 @@ func _update_heroes(delta: float) -> void:
         elif float(h["cooldown"]) <= 0.0:
             h["cooldown"] = 1.0 / max(0.1, float(h["speed"]))
             if hero_name == "archer":
-                _spawn_arrow(hero.position + Vector2(28.0, -12.0), target, float(h["damage"]))
+                var arrow_spawn: Vector2 = hero.position + Vector2(28.0, -8.0)
+                if hero.has_method("get_projectile_spawn_point"):
+                    arrow_spawn = hero.call("get_projectile_spawn_point")
+                _spawn_arrow(arrow_spawn, target, float(h["damage"]))
             else:
                 _damage_enemy(target, float(h["damage"]))
             hero.trigger_attack()

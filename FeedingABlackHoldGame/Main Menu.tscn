@@ -1,7 +1,8 @@
-[gd_scene load_steps=19 format=3 uid="uid://dyqnxm08dkif8"]
+[gd_scene format=3 uid="uid://dyqnxm08dkif8"]
 
 [ext_resource type="Script" uid="uid://cib78ftbwfk6f" path="res://Main Menu.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://1txuh2meyqfj" path="res://Build Label.tscn" id="2"]
+[ext_resource type="Script" uid="uid://bkxi24h1nf7kk" path="res://Fishing/FishingUpgradeScene.gd" id="2_0q8yv"]
 [ext_resource type="Texture2D" uid="uid://dayjws668e5cv" path="res://Art/Logo Base White.png" id="3"]
 [ext_resource type="Theme" uid="uid://ulae55bx0fhs" path="res://Theme/Theme_Small_Font.tres" id="4"]
 [ext_resource type="PackedScene" uid="uid://ds36c3qoqmf3y" path="res://Controller Glyph.tscn" id="5"]
@@ -19,18 +20,19 @@
 [ext_resource type="AudioStream" uid="uid://0rfvn2v8pqmp" path="res://Audio/zapsplat_sound_design_whoosh_slow_mo_timewarp_001_106393.mp3" id="17"]
 
 [sub_resource type="Texture2D" id="Texture2D_buhl0"]
+resource_local_to_scene = false
+resource_name = ""
 script = ExtResource("12")
 path = "back"
-custom_label_settings = null
 metadata/_custom_type_script = "uid://c36s4gjs5sv4r"
 
-[node name="MainMenu" type="Node2D"]
+[node name="MainMenu" type="Node2D" unique_id=892866770]
 script = ExtResource("1")
 
-[node name="CanvasLayer2" type="CanvasLayer" parent="."]
+[node name="CanvasLayer2" type="CanvasLayer" parent="." unique_id=175063312]
 layer = -1
 
-[node name="ColorRect" type="ColorRect" parent="CanvasLayer2"]
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer2" unique_id=1458641646]
 unique_name_in_owner = true
 z_index = -1
 anchors_preset = 15
@@ -39,11 +41,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.921569, 0.921569, 0.882353, 1)
+script = ExtResource("2_0q8yv")
 metadata/_edit_lock_ = true
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1178964486]
 
-[node name="Build" parent="CanvasLayer" instance=ExtResource("2")]
+[node name="Build" parent="CanvasLayer" unique_id=97323658 instance=ExtResource("2")]
 visible = false
 modulate = Color(1, 1, 1, 0.39215687)
 anchors_preset = 3
@@ -58,7 +61,7 @@ theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 5
 theme_override_constants/margin_bottom = 5
 
-[node name="MarginContainer2" type="MarginContainer" parent="CanvasLayer"]
+[node name="MarginContainer2" type="MarginContainer" parent="CanvasLayer" unique_id=623134268]
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -69,14 +72,14 @@ size_flags_horizontal = 8
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="Logo" type="TextureRect" parent="CanvasLayer/MarginContainer2"]
+[node name="Logo" type="TextureRect" parent="CanvasLayer/MarginContainer2" unique_id=1458295618]
 unique_name_in_owner = true
 layout_mode = 2
 texture = ExtResource("3")
 expand_mode = 5
 stretch_mode = 5
 
-[node name="Main Menu Stuff" type="VBoxContainer" parent="CanvasLayer"]
+[node name="Main Menu Stuff" type="VBoxContainer" parent="CanvasLayer" unique_id=341119867]
 unique_name_in_owner = true
 anchors_preset = 11
 anchor_left = 1.0
@@ -86,7 +89,7 @@ offset_left = -570.0
 grow_horizontal = 0
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/Main Menu Stuff"]
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/Main Menu Stuff" unique_id=1151877850]
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 3
@@ -95,22 +98,22 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer" unique_id=1971553369]
 layout_mode = 2
 size_flags_horizontal = 8
 theme_override_constants/separation = 50
 alignment = 1
 
-[node name="VBoxContainer" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer"]
+[node name="VBoxContainer" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer" unique_id=1699573946]
 layout_mode = 2
 theme_override_constants/separation = 5
 alignment = 2
 
-[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer" instance=ExtResource("5")]
+[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer" unique_id=175222243 instance=ExtResource("5")]
 layout_mode = 2
 enabled = false
 
-[node name="Play" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer" node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
+[node name="Play" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer" unique_id=1580618882 node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
@@ -123,21 +126,21 @@ expand_icon = true
 enable_on_focus = true
 glyph_comp = NodePath("../Controller Glyph")
 
-[node name="VBoxContainer2" type="VBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer"]
+[node name="VBoxContainer2" type="VBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer" unique_id=1943968828]
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2" unique_id=1603434493]
 layout_mode = 2
 theme_override_constants/separation = 5
 alignment = 2
 
-[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer" instance=ExtResource("5")]
+[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer" unique_id=780922382 instance=ExtResource("5")]
 layout_mode = 2
 enabled = false
 
-[node name="Settings" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer" node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
+[node name="Settings" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer" unique_id=334516432 node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
@@ -150,16 +153,16 @@ expand_icon = true
 enable_on_focus = true
 glyph_comp = NodePath("../Controller Glyph")
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2" unique_id=1950149369]
 layout_mode = 2
 theme_override_constants/separation = 5
 alignment = 2
 
-[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer2" instance=ExtResource("5")]
+[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer2" unique_id=1908951548 instance=ExtResource("5")]
 layout_mode = 2
 enabled = false
 
-[node name="Discord" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer2" node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
+[node name="Discord" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer2" unique_id=1390680650 node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
@@ -172,16 +175,16 @@ expand_icon = true
 enable_on_focus = true
 glyph_comp = NodePath("../Controller Glyph")
 
-[node name="HBoxContainer3" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2"]
+[node name="HBoxContainer3" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2" unique_id=762250152]
 layout_mode = 2
 theme_override_constants/separation = 5
 alignment = 2
 
-[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer3" instance=ExtResource("5")]
+[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer3" unique_id=1295806517 instance=ExtResource("5")]
 layout_mode = 2
 enabled = false
 
-[node name="Press Kit" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer3" node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
+[node name="Press Kit" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2/HBoxContainer3" unique_id=750999092 node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
@@ -194,16 +197,16 @@ expand_icon = true
 enable_on_focus = true
 glyph_comp = NodePath("../Controller Glyph")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer" unique_id=460952808]
 layout_mode = 2
 theme_override_constants/separation = 5
 alignment = 2
 
-[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/HBoxContainer" instance=ExtResource("5")]
+[node name="Controller Glyph" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1179111702 instance=ExtResource("5")]
 layout_mode = 2
 enabled = false
 
-[node name="Quit" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/HBoxContainer" node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
+[node name="Quit" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/HBoxContainer" unique_id=595341640 node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
@@ -215,10 +218,10 @@ expand_icon = true
 enable_on_focus = true
 glyph_comp = NodePath("../Controller Glyph")
 
-[node name="Game Mode Screen" parent="CanvasLayer" instance=ExtResource("7")]
+[node name="Game Mode Screen" parent="CanvasLayer" unique_id=507656353 instance=ExtResource("7")]
 unique_name_in_owner = true
 
-[node name="Setting Pannel" type="PanelContainer" parent="CanvasLayer"]
+[node name="Setting Pannel" type="PanelContainer" parent="CanvasLayer" unique_id=2071513029]
 unique_name_in_owner = true
 z_index = 1
 anchors_preset = 11
@@ -232,14 +235,14 @@ size_flags_vertical = 8
 theme = ExtResource("8")
 theme_override_styles/panel = ExtResource("9")
 
-[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/Setting Pannel"]
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/Setting Pannel" unique_id=862140311]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="MarginContainer2" type="MarginContainer" parent="CanvasLayer/Setting Pannel/MarginContainer"]
+[node name="MarginContainer2" type="MarginContainer" parent="CanvasLayer/Setting Pannel/MarginContainer" unique_id=1781487101]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/margin_left = 10
@@ -247,33 +250,33 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2" unique_id=1648788641]
 layout_mode = 2
 theme_override_constants/separation = 25
 
-[node name="Label" type="Label" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer"]
+[node name="Label" type="Label" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer" unique_id=110206664]
 layout_mode = 2
 theme = ExtResource("10")
 text = "SETTINGS"
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="Settings Comp" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer" instance=ExtResource("11")]
+[node name="Settings Comp" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer" unique_id=1115689133 instance=ExtResource("11")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer" unique_id=1446423858]
 layout_mode = 2
 size_flags_horizontal = 8
 theme_override_constants/separation = 5
 
-[node name="Controller Glyph" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer/HBoxContainer" instance=ExtResource("5")]
+[node name="Controller Glyph" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer/HBoxContainer" unique_id=1757061101 instance=ExtResource("5")]
 layout_mode = 2
 texture = SubResource("Texture2D_buhl0")
 
-[node name="Hide Settings" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer/HBoxContainer" instance=ExtResource("6")]
+[node name="Hide Settings" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer/HBoxContainer" unique_id=1579752034 instance=ExtResource("6")]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_vertical = 1
@@ -283,20 +286,10 @@ text = "BACK"
 icon_alignment = 1
 expand_icon = true
 
-[node name="Pivot" type="Node2D" parent="."]
+[node name="Pivot" type="Node2D" parent="." unique_id=2055434077]
 unique_name_in_owner = true
 
-[node name="GPUParticles2D Light" type="GPUParticles2D" parent="Pivot"]
-unique_name_in_owner = true
-z_index = -1
-amount = 32
-texture = ExtResource("13")
-lifetime = 10.0
-preprocess = 10.0
-randomness = 0.5
-process_material = ExtResource("14")
-
-[node name="GPUParticles2D2 Dark" type="GPUParticles2D" parent="Pivot"]
+[node name="GPUParticles2D Light" type="GPUParticles2D" parent="Pivot" unique_id=520482812]
 unique_name_in_owner = true
 z_index = -1
 amount = 32
@@ -306,20 +299,30 @@ preprocess = 10.0
 randomness = 0.5
 process_material = ExtResource("14")
 
-[node name="Black Hole Art" parent="Pivot" instance=ExtResource("15")]
+[node name="GPUParticles2D2 Dark" type="GPUParticles2D" parent="Pivot" unique_id=178251322]
+unique_name_in_owner = true
+z_index = -1
+amount = 32
+texture = ExtResource("13")
+lifetime = 10.0
+preprocess = 10.0
+randomness = 0.5
+process_material = ExtResource("14")
+
+[node name="Black Hole Art" parent="Pivot" unique_id=1285995095 instance=ExtResource("15")]
 unique_name_in_owner = true
 metadata/_edit_lock_ = true
 
-[node name="ObjectManager" parent="Pivot" instance=ExtResource("16")]
+[node name="ObjectManager" parent="Pivot" unique_id=1573829412 instance=ExtResource("16")]
 unique_name_in_owner = true
 outer_radius = 400
 is_main_menu = true
 metadata/_edit_lock_ = true
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=14810266]
 unique_name_in_owner = true
 
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1474508584]
 unique_name_in_owner = true
 stream = ExtResource("17")
 volume_db = -25.0

@@ -11,6 +11,11 @@ var is_attacking := false
 var is_defeated := false
 var base_sprite_scale: Vector2 = Vector2.ONE
 var weapon_type: String = ""
+var weapon_idle_offset: Vector2 = Vector2.ZERO
+var weapon_float_phase: float = 0.0
+var weapon_float_speed: float = 2.8
+var weapon_float_amp: float = 2.2
+var weapon_attack_tween: Tween = null
 
 func _ensure_nodes() -> bool:
     if sprite == null:
@@ -63,7 +68,10 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := 
 
     weapon_type = str(role)
     _setup_weapon_visual(weapon_type, frame_size, scale_factor)
-    weapon_layer.visible = false
+    weapon_layer.visible = weapon_layer.get_child_count() > 0
+    weapon_layer.rotation = 0.0
+    weapon_float_phase = randf() * TAU
+    set_process(true)
 
 func set_walking() -> void:
     if is_attacking or is_defeated:
@@ -75,16 +83,15 @@ func trigger_attack() -> void:
     if is_defeated or is_attacking:
         return
     is_attacking = true
-    _show_attack_weapon(true)
+    _play_weapon_attack_motion()
     _play_attack_telegraph()
     sprite.play("attack")
     await sprite.animation_finished
     if is_defeated:
         is_attacking = false
-        _show_attack_weapon(false)
+        _stop_weapon_tween()
         return
     is_attacking = false
-    _show_attack_weapon(false)
     sprite.play("walk")
     sprite.scale = base_sprite_scale
     sprite.modulate = Color(1.0, 1.0, 1.0, 1.0)
@@ -94,7 +101,7 @@ func set_defeated() -> void:
         return
     is_defeated = true
     is_attacking = false
-    _show_attack_weapon(false)
+    _stop_weapon_tween()
     if sprite.sprite_frames != null and sprite.sprite_frames.has_animation("walk"):
         sprite.play("walk")
     sprite.stop()
@@ -104,6 +111,15 @@ func set_defeated() -> void:
 func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
         clicked.emit(self)
+
+func _process(delta: float) -> void:
+    if weapon_layer == null or weapon_layer.get_child_count() == 0:
+        return
+    if is_defeated:
+        return
+    weapon_float_phase += delta * weapon_float_speed
+    var bob_y: float = sin(weapon_float_phase) * weapon_float_amp
+    weapon_layer.position = weapon_idle_offset + Vector2(0.0, bob_y)
 
 func _setup_weapon_visual(role: String, frame_size: Vector2i, scale_factor: float) -> void:
     if weapon_layer == null:
@@ -115,9 +131,11 @@ func _setup_weapon_visual(role: String, frame_size: Vector2i, scale_factor: floa
     if lower == "knight":
         _add_line(weapon_layer, [Vector2(12, -20), Vector2(28, -28)], 2.1 * scale_factor, Color(0.88, 0.9, 0.95, 1.0))
         _add_line(weapon_layer, [Vector2(10, -18), Vector2(16, -14)], 2.1 * scale_factor, Color(0.5, 0.35, 0.18, 1.0))
+        weapon_idle_offset = Vector2(8, -2)
     elif lower == "archer":
         _add_line(weapon_layer, [Vector2(10, -24), Vector2(18, -30), Vector2(24, -24), Vector2(18, -18), Vector2(10, -24)], 1.8 * scale_factor, Color(0.58, 0.4, 0.2, 1.0))
         _add_line(weapon_layer, [Vector2(10, -24), Vector2(24, -24)], 1.3 * scale_factor, Color(0.92, 0.92, 0.92, 1.0))
+        weapon_idle_offset = Vector2(8, -1)
     elif lower == "guardian":
         var shield: Polygon2D = Polygon2D.new()
         shield.polygon = PackedVector2Array([Vector2(12, -30), Vector2(24, -24), Vector2(24, -10), Vector2(12, -4), Vector2(0, -10), Vector2(0, -24)])
@@ -125,6 +143,7 @@ func _setup_weapon_visual(role: String, frame_size: Vector2i, scale_factor: floa
         shield.scale = Vector2.ONE * (0.65 * scale_factor)
         weapon_layer.add_child(shield)
         _add_line(weapon_layer, [Vector2(8, -17), Vector2(16, -17)], 1.8 * scale_factor, Color(0.85, 0.92, 0.98, 1.0))
+        weapon_idle_offset = Vector2(8, 0)
     elif lower == "mage":
         _add_line(weapon_layer, [Vector2(10, -28), Vector2(22, -12)], 1.9 * scale_factor, Color(0.58, 0.42, 0.22, 1.0))
         var orb: Polygon2D = Polygon2D.new()
@@ -132,6 +151,9 @@ func _setup_weapon_visual(role: String, frame_size: Vector2i, scale_factor: floa
         orb.color = Color(0.7, 0.32, 0.95, 1.0)
         orb.scale = Vector2.ONE * (0.75 * scale_factor)
         weapon_layer.add_child(orb)
+        weapon_idle_offset = Vector2(8, -2)
+    else:
+        weapon_idle_offset = Vector2.ZERO
 
 func _add_line(parent: Node, points: Array[Vector2], width: float, color: Color) -> void:
     var line: Line2D = Line2D.new()
@@ -144,13 +166,47 @@ func _add_line(parent: Node, points: Array[Vector2], width: float, color: Color)
     line.points = PackedVector2Array(points)
     parent.add_child(line)
 
-func _show_attack_weapon(show_weapon: bool) -> void:
-    if weapon_layer == null:
+func get_projectile_spawn_point() -> Vector2:
+    # Anchor around center of the floating bow for archer projectiles.
+    if weapon_layer != null and weapon_type.to_lower() == "archer" and weapon_layer.get_child_count() > 0:
+        return weapon_layer.global_position + Vector2(20.0, -20.0)
+    return global_position + Vector2(26.0, -12.0)
+
+func _stop_weapon_tween() -> void:
+    if weapon_attack_tween != null:
+        weapon_attack_tween.kill()
+        weapon_attack_tween = null
+    if weapon_layer != null:
+        weapon_layer.rotation = 0.0
+
+func _play_weapon_attack_motion() -> void:
+    if weapon_layer == null or weapon_layer.get_child_count() == 0:
         return
-    if weapon_layer.get_child_count() == 0:
-        weapon_layer.visible = false
-        return
-    weapon_layer.visible = show_weapon
+    _stop_weapon_tween()
+    var lower: String = weapon_type.to_lower()
+    weapon_attack_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    match lower:
+        "archer":
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", -0.35, 0.06)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.28, 0.08)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.0, 0.08)
+        "knight":
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", -0.95, 0.08)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.45, 0.1)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.0, 0.12)
+        "guardian":
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.42, 0.08)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", -0.22, 0.08)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.0, 0.1)
+        "mage":
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", -0.5, 0.08)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.24, 0.09)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.0, 0.1)
+        _:
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.0, 0.06)
+    weapon_attack_tween.finished.connect(func() -> void:
+        weapon_attack_tween = null
+    )
 
 func _play_attack_telegraph() -> void:
     if sprite == null:

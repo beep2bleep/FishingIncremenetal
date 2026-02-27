@@ -1,18 +1,1 @@
-res://Main Menu.gd
-res://Fishing/BattleScene.gd
-res://Fishing/CoinPickup.gd
-res://Fishing/CombatSprite.gd
-res://Fishing/FishingUpgradeDB.gd
-res://Fishing/FishingUpgradeScene.gd
-res://Global.gd
-res://Singletons/Main.gd
-res://SaveHandler.gd
-res://Upgrade.gd
-res://Tech Tree Stuff/TechTreeNode.gd
-res://UpgradeScreen.gd
 res://Fishing/FishingUpgradeTreeAdapter.gd
-res://Tech Tree Stuff/TechTree.gd
-res://simulation/run_battle_scene_campaign.gd
-res://Pallets/Light_Pallet.tres
-res://SceneChanger.gd
-res://Tech Tree Stuff/TechTreeLine.gd

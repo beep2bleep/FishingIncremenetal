@@ -60,6 +60,9 @@ static func apply_simulation_upgrades() -> void:
     _sanitize_dependency_graph(grouped_upgrades)
     _flatten_linear_dependency_chains(grouped_upgrades, MAX_CHILDREN_PER_NODE)
     _enforce_required_prerequisites(grouped_upgrades)
+    _sanitize_dependency_graph(grouped_upgrades)
+    if OS.has_feature("editor"):
+        _validate_dependencies_reach_center(grouped_upgrades)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
     var formatter: FishingUpgradeDB = FishingUpgradeDB.new()
 
@@ -678,7 +681,6 @@ static func _build_tree_layout(grouped_upgrades: Array) -> Dictionary:
     used_cells[Vector2.ZERO] = true
     var root_counts: Dictionary = {}
     var parent_child_counts: Dictionary = {}
-    var placed_edges: Array[Dictionary] = []
     var pending_by_id: Dictionary = {}
     for entry_variant: Variant in grouped_upgrades:
         if entry_variant is Dictionary:
@@ -716,18 +718,14 @@ static func _build_tree_layout(grouped_upgrades: Array) -> Dictionary:
                 var parent_cell: Vector2 = id_to_cell[dep_id]
                 var child_index: int = int(parent_child_counts.get(dep_id, 0))
                 parent_child_counts[dep_id] = child_index + 1
-                cell = _find_layout_cell_for_child(parent_cell, branch, child_index, used_cells, placed_edges)
+                cell = _find_layout_cell_for_child(parent_cell, branch, child_index, used_cells)
             else:
                 var branch_count: int = int(root_counts.get(branch, 0))
                 root_counts[branch] = branch_count + 1
-                cell = _find_layout_cell_for_root(branch, branch_count, used_cells, placed_edges)
+                cell = _find_layout_cell_for_root(branch, branch_count, used_cells)
 
             id_to_cell[upgrade_id] = cell
             used_cells[cell] = true
-            if dep_id != "":
-                var from_cell: Vector2 = cell
-                var to_cell: Vector2 = Vector2.ZERO if dep_id == "__CENTER__" else id_to_cell[dep_id]
-                placed_edges.append({"a": from_cell, "b": to_cell})
             pending_by_id.erase(upgrade_id)
             placed_any = true
 
@@ -752,57 +750,27 @@ static func _find_free_adjacent_layout_cell(parent_cell: Vector2, preferred_bran
             return candidate
     return INVALID_LAYOUT_CELL
 
-static func _find_layout_cell_for_child(parent_cell: Vector2, preferred_branch: int, child_index: int, used_cells: Dictionary, placed_edges: Array) -> Vector2:
-    var branch_order: Array[int] = _branch_order_for_child(preferred_branch, child_index)
-    for branch_variant: Variant in branch_order:
-        var b: int = int(branch_variant)
-        var candidate: Vector2 = parent_cell + LAYOUT_DIRS[b]
-        if used_cells.has(candidate):
-            continue
-        if not _is_strictly_outward(candidate, parent_cell):
-            continue
-        if _edge_is_clean(candidate, parent_cell, used_cells, placed_edges):
+static func _find_layout_cell_for_child(parent_cell: Vector2, preferred_branch: int, child_index: int, used_cells: Dictionary) -> Vector2:
+    var preferred_dir: Vector2 = LAYOUT_DIRS[preferred_branch]
+    var main_dir: Vector2 = _outward_dir_for_parent(parent_cell, preferred_dir)
+    var perp: Vector2 = _perpendicular_dir(main_dir)
+    # Fan children around the forward direction while still progressing outward.
+    var lane_order: Array[int] = [0, 1, -1, 2, -2, 3, -3]
+    var lane_rotation: int = int(abs(child_index)) % lane_order.size()
+    for step in range(1, 96):
+        for i in range(lane_order.size()):
+            var lane: int = lane_order[(i + lane_rotation) % lane_order.size()]
+            var candidate: Vector2 = parent_cell + (main_dir * step) + (perp * lane)
+            if used_cells.has(candidate):
+                continue
+            if not _is_child_direction_allowed(parent_cell, candidate, main_dir):
+                continue
+            if not _is_child_distance_allowed(parent_cell, candidate):
+                continue
             return candidate
+    return _find_free_layout_cell_cardinal(parent_cell + (main_dir * 2), main_dir, used_cells)
 
-    var target: Vector2 = _compute_child_target(parent_cell, LAYOUT_DIRS[preferred_branch], child_index)
-    var candidates: Array[Vector2] = _candidate_cells_cardinal(target, LAYOUT_DIRS[preferred_branch], 10)
-    for candidate_variant: Variant in candidates:
-        var candidate: Vector2 = candidate_variant
-        if used_cells.has(candidate):
-            continue
-        if not _is_strictly_outward(candidate, parent_cell):
-            continue
-        if _edge_is_clean(candidate, parent_cell, used_cells, placed_edges):
-            return candidate
-    # Final fallback: march outward along preferred branch direction only.
-    var dir: Vector2 = LAYOUT_DIRS[preferred_branch]
-    for step in range(1, 512):
-        var candidate: Vector2 = parent_cell + dir * step
-        if used_cells.has(candidate):
-            continue
-        if not _is_strictly_outward(candidate, parent_cell):
-            continue
-        if _edge_is_clean(candidate, parent_cell, used_cells, placed_edges):
-            return candidate
-
-    # Last-resort sweep around growing manhattan rings, still requiring outward + clean edge.
-    var parent_dist: int = _core_distance(parent_cell)
-    for ring in range(parent_dist + 1, parent_dist + 256):
-        for x in range(-ring, ring + 1):
-            var y_abs: int = ring - abs(x)
-            var c1: Vector2 = Vector2(x, y_abs)
-            var c2: Vector2 = Vector2(x, -y_abs)
-            for candidate in [c1, c2]:
-                if used_cells.has(candidate):
-                    continue
-                if not _is_strictly_outward(candidate, parent_cell):
-                    continue
-                if _edge_is_clean(candidate, parent_cell, used_cells, placed_edges):
-                    return candidate
-
-    return _find_free_layout_cell_cardinal(parent_cell + dir * 2, dir, used_cells)
-
-static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cells: Dictionary, placed_edges: Array) -> Vector2:
+static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cells: Dictionary) -> Vector2:
     var dir: Vector2 = LAYOUT_DIRS[branch]
     var target: Vector2 = _compute_root_target(dir, branch_count)
     var candidates: Array[Vector2] = _candidate_cells_cardinal(target, dir, 10)
@@ -810,22 +778,8 @@ static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cell
         var candidate: Vector2 = candidate_variant
         if used_cells.has(candidate):
             continue
-        if not _is_valid_root_cell(candidate):
-            continue
-        if _edge_is_clean(candidate, Vector2.ZERO, used_cells, placed_edges):
-            return candidate
-    var fallback: Vector2 = _find_free_layout_cell_cardinal(target, dir, used_cells)
-    if _is_valid_root_cell(fallback) and _edge_is_clean(fallback, Vector2.ZERO, used_cells, placed_edges):
-        return fallback
-    for step in range(2, 128):
-        var candidate: Vector2 = dir * step
-        if used_cells.has(candidate):
-            continue
-        if not _is_valid_root_cell(candidate):
-            continue
-        if _edge_is_clean(candidate, Vector2.ZERO, used_cells, placed_edges):
-            return candidate
-    return dir * 2
+        return candidate
+    return _find_free_layout_cell_cardinal(target, dir, used_cells)
 
 static func _candidate_cells_cardinal(target: Vector2, dir: Vector2, max_step: int) -> Array[Vector2]:
     var out: Array[Vector2] = []
@@ -882,22 +836,55 @@ static func _point_on_segment(p: Vector2, a: Vector2, b: Vector2) -> bool:
         return false
     return true
 
-static func _core_distance(cell: Vector2) -> int:
-    return abs(int(cell.x)) + abs(int(cell.y))
+static func _validate_dependencies_reach_center(grouped_upgrades: Array) -> void:
+    var id_to_dep: Dictionary = {}
+    for entry_variant: Variant in grouped_upgrades:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var entry_id: String = str(entry.get("id", ""))
+        if entry_id == "":
+            continue
+        id_to_dep[entry_id] = str(entry.get("dependency", ""))
 
-static func _is_strictly_outward(candidate: Vector2, parent_cell: Vector2) -> bool:
-    return _core_distance(candidate) > _core_distance(parent_cell)
+    var unreachable: Array[String] = []
+    for id_variant: Variant in id_to_dep.keys():
+        var start_id: String = str(id_variant)
+        var current: String = start_id
+        var seen: Dictionary = {}
+        var reached_center: bool = false
+        var safety: int = 0
+        while safety < 10000:
+            safety += 1
+            var dep_id: String = str(id_to_dep.get(current, ""))
+            if dep_id == "__CENTER__":
+                reached_center = true
+                break
+            if dep_id == "":
+                break
+            if seen.has(dep_id):
+                break
+            seen[dep_id] = true
+            if not id_to_dep.has(dep_id):
+                break
+            current = dep_id
+        if not reached_center:
+            unreachable.append(start_id)
 
-static func _is_valid_root_cell(candidate: Vector2) -> bool:
-    return candidate != Vector2.ZERO and _core_distance(candidate) >= 2
+    if unreachable.is_empty():
+        return
+
+    var sample: Array[String] = unreachable.slice(0, min(10, unreachable.size()))
+    push_error("FishingUpgradeTreeAdapter validation failed: dependencies not connected to __CENTER__. Count=%d Sample=%s" % [unreachable.size(), sample])
+    assert(false, "Dependency graph validation failed in editor.")
 
 static func _branch_order_for_child(preferred_branch: int, index_seed: int) -> Array[int]:
     var p: int = ((preferred_branch % LAYOUT_DIRS.size()) + LAYOUT_DIRS.size()) % LAYOUT_DIRS.size()
+    # Allow forward + side branches only; never include direct opposite direction.
     var base: Array[int] = [
         p,
         (p + 1) % LAYOUT_DIRS.size(),
         (p + 3) % LAYOUT_DIRS.size(),
-        (p + 2) % LAYOUT_DIRS.size(),
     ]
     var rotation: int = 0
     if base.size() > 0:
@@ -906,6 +893,33 @@ static func _branch_order_for_child(preferred_branch: int, index_seed: int) -> A
     for i in range(base.size()):
         ordered.append(base[(i + rotation) % base.size()])
     return ordered
+
+static func _is_child_direction_allowed(parent_cell: Vector2, child_cell: Vector2, main_dir: Vector2) -> bool:
+    var delta: Vector2 = child_cell - parent_cell
+    return delta.dot(main_dir) > 0.0
+
+static func _is_child_distance_allowed(parent_cell: Vector2, child_cell: Vector2) -> bool:
+    var parent_dist: int = abs(int(parent_cell.x)) + abs(int(parent_cell.y))
+    var child_dist: int = abs(int(child_cell.x)) + abs(int(child_cell.y))
+    if child_dist < parent_dist:
+        return false
+    return child_cell.length_squared() >= parent_cell.length_squared()
+
+static func _outward_dir_for_parent(parent_cell: Vector2, fallback_dir: Vector2) -> Vector2:
+    if parent_cell == Vector2.ZERO:
+        return fallback_dir
+
+    var ax: float = abs(parent_cell.x)
+    var ay: float = abs(parent_cell.y)
+    if ax > ay:
+        return Vector2(sign(parent_cell.x), 0.0)
+    if ay > ax:
+        return Vector2(0.0, sign(parent_cell.y))
+
+    # Tie-breaker for diagonals: keep consistency with branch preference.
+    if fallback_dir == Vector2.RIGHT or fallback_dir == Vector2.LEFT:
+        return Vector2(sign(parent_cell.x), 0.0)
+    return Vector2(0.0, sign(parent_cell.y))
 
 static func _compute_root_target(main_dir: Vector2, branch_count: int) -> Vector2:
     var lane_pattern: Array[int] = [0, 1, -1]
