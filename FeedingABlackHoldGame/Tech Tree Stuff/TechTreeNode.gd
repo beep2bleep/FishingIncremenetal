@@ -55,9 +55,11 @@ var is_highlighted: bool:
             var show_requirement_hint: bool = _is_highlighted and state == STATES.SHADOW
             tech_tree.set_requirement_hint_for(self, show_requirement_hint)
 
-        if (state == STATES.AVAILABLE or state == STATES.COMPLETE or state == STATES.SHADOW) and upgrade != null:
+        if (state == STATES.AVAILABLE or state == STATES.COMPLETE) and upgrade != null:
             %"Tool Tip".visible = _is_highlighted
             %"Tool Tip".pivot_offset = %"Tool Tip".size / 2.0
+        else:
+            %"Tool Tip".visible = false
 
 
 
@@ -127,7 +129,7 @@ var state: STATES:
             if _state == STATES.AVAILABLE:
 
                 if tech_tree:
-                    tech_tree.call_deferred("update_connected_nodes_shadow", cell, 2)
+                    tech_tree.call_deferred("update_connected_nodes_shadow", cell, 1)
 
 
 
@@ -340,13 +342,10 @@ func update():
 
     var using_sim_display: bool = upgrade != null and upgrade.sim_name != ""
     var sim_effect_text: String = ""
-    var locked_requirement_text: String = _get_unlock_requirement_text() if state == STATES.SHADOW else ""
     if using_sim_display:
         sim_effect_text = upgrade.sim_description.strip_edges()
         if sim_effect_text == "":
             sim_effect_text = "Upgrade effect applied on unlock."
-        if locked_requirement_text != "":
-            sim_effect_text += "\n" + locked_requirement_text
     if using_sim_display:
         %Description.text = "%s\n%s" % [upgrade.sim_name, sim_effect_text]
         %"Node Type".text = upgrade.sim_icon if upgrade.sim_icon != "" else upgrade.sim_name.substr(0, 1)

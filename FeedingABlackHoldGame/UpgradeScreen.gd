@@ -7,6 +7,8 @@ var editor_add_cash_amount: int = 1000
 var editor_cash_controls: HBoxContainer
 var editor_add_cash_button: Button
 var editor_reset_add_button: Button
+var editor_reset_all_button: Button
+var editor_unlock_all_button: Button
 var battle_level_choice_dialog: ConfirmationDialog
 
 
@@ -348,6 +350,18 @@ func _setup_editor_cash_controls() -> void:
     editor_reset_add_button.pressed.connect(_on_editor_reset_add_pressed)
     editor_cash_controls.add_child(editor_reset_add_button)
 
+    editor_reset_all_button = Button.new()
+    editor_reset_all_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    editor_reset_all_button.text = "Reset All (Editor)"
+    editor_reset_all_button.pressed.connect(_on_editor_reset_all_pressed)
+    editor_cash_controls.add_child(editor_reset_all_button)
+
+    editor_unlock_all_button = Button.new()
+    editor_unlock_all_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    editor_unlock_all_button.text = "Unlock All (Editor)"
+    editor_unlock_all_button.pressed.connect(_on_editor_unlock_all_pressed)
+    editor_cash_controls.add_child(editor_unlock_all_button)
+
     %CanvasLayer2.add_child(editor_cash_controls)
     _refresh_editor_cash_button_text()
 
@@ -369,3 +383,93 @@ func _on_editor_reset_add_pressed() -> void:
         return
     editor_add_cash_amount = 1000
     _refresh_editor_cash_button_text()
+
+func _on_editor_reset_all_pressed() -> void:
+    if not OS.has_feature("editor"):
+        return
+
+    SaveHandler.reset_fishing_progress()
+    SaveHandler.save_fishing_progress()
+    editor_add_cash_amount = 1000
+    _refresh_editor_cash_button_text()
+
+    if Global.global_resoruce_manager != null:
+        Global.global_resoruce_manager.reset_resource_amount(Util.RESOURCE_TYPES.MONEY)
+
+    _reload_simulation_upgrade_tree_from_save()
+    update()
+
+func _on_editor_unlock_all_pressed() -> void:
+    if not OS.has_feature("editor"):
+        return
+    if not _is_simulation_upgrade_tree():
+        return
+
+    var max_level_by_key: Dictionary = {}
+    for upgrade_variant: Variant in Global.game_mode_data_manager.upgrades.values():
+        if not (upgrade_variant is Upgrade):
+            continue
+        var upgrade: Upgrade = upgrade_variant
+        if upgrade.sim_key == "":
+            continue
+        var max_level: int = int(upgrade.sim_level) + int(upgrade.max_tier) - 1
+        var prev_level: int = int(max_level_by_key.get(upgrade.sim_key, 0))
+        if max_level > prev_level:
+            max_level_by_key[upgrade.sim_key] = max_level
+
+    SaveHandler.fishing_unlocked_upgrades = {}
+    SaveHandler.fishing_active_upgrades = {}
+    for key_variant: Variant in max_level_by_key.keys():
+        var key: String = str(key_variant)
+        var level: int = int(max_level_by_key[key])
+        SaveHandler.fishing_unlocked_upgrades[key] = level
+        SaveHandler.fishing_active_upgrades[key] = true
+    SaveHandler.fishing_max_unlocked_battle_level = 3
+    SaveHandler.fishing_next_battle_level = 3
+    SaveHandler.save_fishing_progress()
+
+    _reload_simulation_upgrade_tree_from_save()
+    update()
+
+func _reload_simulation_upgrade_tree_from_save() -> void:
+    if tech_tree == null:
+        return
+    if not _is_simulation_upgrade_tree():
+        return
+
+    FishingUpgradeTreeAdapter.apply_simulation_upgrades()
+
+    var current_money: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
+    var target_money: int = int(SaveHandler.fishing_currency)
+    if current_money != target_money:
+        Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, target_money - current_money)
+
+    _clear_tech_tree_runtime()
+    tech_tree.setup()
+    tech_tree.update_active()
+
+func _clear_tech_tree_runtime() -> void:
+    if tech_tree.has_method("kill_tween"):
+        tech_tree.call("kill_tween")
+    tech_tree.pivot.position = Vector2.ZERO
+    tech_tree.node_dict = {}
+    tech_tree.active_nodes = []
+    tech_tree.forced_connections_to_from = {}
+    tech_tree.next_completed_index = 0
+    tech_tree.selected_node = null
+    tech_tree.center_node = null
+    tech_tree.requirement_hint_node = null
+    tech_tree.min_x = 0
+    tech_tree.max_x = 0
+    tech_tree.min_y = 0
+    tech_tree.max_y = 0
+
+    var lines_container: Node = tech_tree.get_node_or_null("Pivot/Tech Lines")
+    if lines_container != null:
+        for child in lines_container.get_children():
+            child.queue_free()
+
+    var nodes_container: Node = tech_tree.get_node_or_null("Pivot/Tech Nodes")
+    if nodes_container != null:
+        for child in nodes_container.get_children():
+            child.queue_free()

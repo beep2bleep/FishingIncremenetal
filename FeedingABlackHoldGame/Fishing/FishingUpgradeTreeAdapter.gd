@@ -56,6 +56,7 @@ static func apply_simulation_upgrades() -> void:
     _retarget_dependencies_to_hubs(grouped_upgrades)
     _enforce_max_children_per_node(grouped_upgrades, MAX_CHILDREN_PER_NODE)
     _sanitize_dependency_graph(grouped_upgrades)
+    _flatten_linear_dependency_chains(grouped_upgrades, MAX_CHILDREN_PER_NODE)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
     var formatter: FishingUpgradeDB = FishingUpgradeDB.new()
 
@@ -238,15 +239,23 @@ static func _retarget_dependencies_to_hubs(grouped_upgrades: Array) -> void:
 static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionary) -> String:
     var lower: String = key.to_lower()
     var hero: String = _hero_from_key(lower)
+    var gated_hero: bool = hero == "archer" or hero == "guardian" or hero == "mage"
+    var recruit_key_for_hero: String = "recruit_%s" % hero if hero != "" else ""
+    var hero_unlock_key: String = _hero_unlock_key(hero) if hero != "" else ""
 
     if lower.begins_with("core_") or lower.begins_with("recruit_"):
+        if lower.begins_with("recruit_"):
+            return ""
+        if gated_hero and recruit_key_for_hero != "" and key_to_primary_id.has(recruit_key_for_hero):
+            return recruit_key_for_hero
         return ""
 
     if lower.ends_with("_unlock"):
+        if gated_hero and recruit_key_for_hero != "" and key_to_primary_id.has(recruit_key_for_hero):
+            return recruit_key_for_hero
         if hero != "":
-            var recruit_key: String = "recruit_%s" % hero
-            if key_to_primary_id.has(recruit_key):
-                return recruit_key
+            if key_to_primary_id.has(recruit_key_for_hero):
+                return recruit_key_for_hero
         return ""
 
     if lower.begins_with("extra_skill_"):
@@ -255,15 +264,20 @@ static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionar
         return ""
 
     if hero != "":
-        var hero_unlock_key: String = _hero_unlock_key(hero)
+        if gated_hero:
+            if hero_unlock_key != "" and key_to_primary_id.has(hero_unlock_key):
+                return hero_unlock_key
+            if recruit_key_for_hero != "" and key_to_primary_id.has(recruit_key_for_hero):
+                return recruit_key_for_hero
+            return ""
+
         var hero_core_damage_key: String = "core_%s_damage" % hero
         if key_to_primary_id.has(hero_unlock_key):
             return hero_unlock_key
         if key_to_primary_id.has(hero_core_damage_key):
             return hero_core_damage_key
-        var recruit_key: String = "recruit_%s" % hero
-        if key_to_primary_id.has(recruit_key):
-            return recruit_key
+        if key_to_primary_id.has(recruit_key_for_hero):
+            return recruit_key_for_hero
         return ""
 
     var theme_act: int = _theme_act_for_key(key)
@@ -485,6 +499,88 @@ static func _sanitize_dependency_graph(grouped_upgrades: Array) -> void:
         var upgrade_id: String = str(entry.get("id", ""))
         if upgrade_id != "" and id_to_entry.has(upgrade_id):
             grouped_upgrades[i] = id_to_entry[upgrade_id]
+
+static func _flatten_linear_dependency_chains(grouped_upgrades: Array, max_children: int) -> void:
+    if max_children <= 1:
+        return
+
+    var id_to_entry: Dictionary = {}
+    var children_by_dep: Dictionary = {}
+
+    for entry_variant: Variant in grouped_upgrades:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var entry_id: String = str(entry.get("id", ""))
+        if entry_id == "":
+            continue
+        id_to_entry[entry_id] = entry
+        var dep_id: String = str(entry.get("dependency", ""))
+        if dep_id == "":
+            continue
+        if not children_by_dep.has(dep_id):
+            children_by_dep[dep_id] = []
+        var dep_children: Array = children_by_dep[dep_id]
+        dep_children.append(entry_id)
+        children_by_dep[dep_id] = dep_children
+
+    for parent_variant: Variant in children_by_dep.keys():
+        var parent_id: String = str(parent_variant)
+        var direct_children: Array = children_by_dep.get(parent_id, [])
+        if direct_children.size() != 1:
+            continue
+
+        var chain: Array[String] = []
+        var cursor: String = str(direct_children[0])
+        while cursor != "" and id_to_entry.has(cursor):
+            chain.append(cursor)
+            var next_children: Array = children_by_dep.get(cursor, [])
+            if next_children.size() != 1:
+                break
+            cursor = str(next_children[0])
+
+        if chain.size() < 4:
+            continue
+
+        var slots_remaining: int = max_children - int(direct_children.size())
+        if slots_remaining <= 0:
+            continue
+
+        for i in range(1, chain.size()):
+            if slots_remaining <= 0:
+                break
+            var node_id: String = chain[i]
+            var node_entry: Dictionary = id_to_entry.get(node_id, {})
+            if node_entry.is_empty():
+                continue
+
+            var old_dep: String = str(node_entry.get("dependency", ""))
+            if old_dep == parent_id:
+                continue
+
+            if old_dep != "" and children_by_dep.has(old_dep):
+                var old_children: Array = children_by_dep[old_dep]
+                old_children.erase(node_id)
+                children_by_dep[old_dep] = old_children
+
+            node_entry["dependency"] = parent_id
+            id_to_entry[node_id] = node_entry
+            if not children_by_dep.has(parent_id):
+                children_by_dep[parent_id] = []
+            var parent_children: Array = children_by_dep[parent_id]
+            if not parent_children.has(node_id):
+                parent_children.append(node_id)
+                children_by_dep[parent_id] = parent_children
+                slots_remaining -= 1
+
+    for i in range(grouped_upgrades.size()):
+        var entry_variant: Variant = grouped_upgrades[i]
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var entry_id: String = str(entry.get("id", ""))
+        if entry_id != "" and id_to_entry.has(entry_id):
+            grouped_upgrades[i] = id_to_entry[entry_id]
 
 static func _build_tree_layout(grouped_upgrades: Array) -> Dictionary:
     var id_to_cell: Dictionary = {}

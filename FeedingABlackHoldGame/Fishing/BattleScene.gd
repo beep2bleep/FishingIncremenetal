@@ -27,9 +27,40 @@ const DEFEAT_FALL_ROT_SPEED := 1.8
 const BASE_POWER_REGEN_PER_SEC := 7.0
 const ACTIVE_CHARGE_PER_CLICK := 20.0
 const PLATFORMING_PACK_SPRITES := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites"
+const PLATFORMING_BG_DEFAULT := PLATFORMING_PACK_SPRITES + "/Backgrounds/Default"
+const PLATFORMING_TILES_DEFAULT := PLATFORMING_PACK_SPRITES + "/Tiles/Default"
 const HERO_RENDER_SCALE := 0.72
 const ENEMY_RENDER_SCALE := HERO_RENDER_SCALE
 const BOSS_RENDER_SCALE := HERO_RENDER_SCALE
+const LEVEL_BG_PACK := {
+    1: {
+        "sky": "background_solid_sky.png",
+        "far": "background_fade_hills.png",
+        "mid": "background_color_hills.png",
+        "near_deco": ["hill_top.png", "bush.png", "grass.png"],
+        "ground_top": "terrain_grass_horizontal_middle.png",
+        "ground_fill": "terrain_dirt_block_center.png",
+        "ground_deco": ["grass.png", "bush.png"],
+    },
+    2: {
+        "sky": "background_solid_sand.png",
+        "far": "background_fade_desert.png",
+        "mid": "background_color_desert.png",
+        "near_deco": ["cactus.png", "rock.png", "hill.png"],
+        "ground_top": "terrain_sand_horizontal_middle.png",
+        "ground_fill": "terrain_sand_block_center.png",
+        "ground_deco": ["cactus.png", "rock.png"],
+    },
+    3: {
+        "sky": "background_solid_cloud.png",
+        "far": "background_fade_mushrooms.png",
+        "mid": "background_color_mushrooms.png",
+        "near_deco": ["mushroom_red.png", "mushroom_brown.png", "hill_top_smile.png"],
+        "ground_top": "terrain_purple_horizontal_middle.png",
+        "ground_fill": "terrain_purple_block_center.png",
+        "ground_deco": ["mushroom_red.png", "mushroom_brown.png", "grass_purple.png"],
+    },
+}
 const LEVEL_BG_THEMES := {
     1: {
         "sky_base": Color(0.08, 0.08, 0.2, 1.0),
@@ -138,6 +169,7 @@ var hero_glow_timers: Dictionary = {}
 var post_battle_sweep_time: float = 0.0
 var summary_finalized: bool = false
 var defeat_anim_time: float = 0.0
+var pack_texture_cache: Dictionary = {}
 
 func _ready() -> void:
     if not _bind_nodes():
@@ -408,6 +440,7 @@ func _setup_visuals() -> void:
 
     for sprite in [bg_deep, bg_far, bg_mid, bg_near, ground]:
         sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+        sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
         sprite.region_enabled = true
         sprite.centered = true
 
@@ -422,13 +455,43 @@ func _setup_visuals() -> void:
     bg_mid.position = Vector2(0, 430)
     bg_near.position = Vector2(0, 545)
     ground.position = Vector2(0, 760)
+    _apply_parallax_depth_scales()
     _apply_level_background(current_level)
+
+func _apply_parallax_depth_scales() -> void:
+    # Farther layers are rendered smaller to reinforce depth.
+    bg_deep.scale = Vector2(0.42, 0.42)
+    bg_far.scale = Vector2(0.62, 0.62)
+    bg_mid.scale = Vector2(0.82, 0.82)
+    bg_near.scale = Vector2(1.0, 1.0)
+    ground.scale = Vector2(1.0, 1.0)
 
 func _apply_level_background(level_index: int) -> void:
     var level_key: int = clamp(level_index, 1, 3)
     if level_key == displayed_bg_level:
         return
     displayed_bg_level = level_key
+    var pack_theme: Dictionary = LEVEL_BG_PACK.get(level_key, {})
+    if not pack_theme.is_empty():
+        var sky_tex: Texture2D = _load_pack_texture(PLATFORMING_BG_DEFAULT + "/" + str(pack_theme.get("sky", "")))
+        var far_tex: Texture2D = _load_pack_texture(PLATFORMING_BG_DEFAULT + "/" + str(pack_theme.get("far", "")))
+        var mid_tex: Texture2D = _load_pack_texture(PLATFORMING_BG_DEFAULT + "/" + str(pack_theme.get("mid", "")))
+        var near_tex: Texture2D = _make_pack_deco_strip_texture(640, 128, pack_theme.get("near_deco", []))
+        var ground_tex: Texture2D = _make_pack_ground_texture(640, 144, pack_theme)
+
+        if sky_tex != null and far_tex != null and mid_tex != null and near_tex != null and ground_tex != null:
+            bg_deep.texture = sky_tex
+            bg_far.texture = far_tex
+            bg_mid.texture = mid_tex
+            bg_near.texture = near_tex
+            ground.texture = ground_tex
+            bg_deep.region_rect = Rect2(0, 0, 80000, float(max(64, sky_tex.get_height())))
+            bg_far.region_rect = Rect2(0, 0, 80000, float(max(64, far_tex.get_height())))
+            bg_mid.region_rect = Rect2(0, 0, 80000, float(max(64, mid_tex.get_height())))
+            bg_near.region_rect = Rect2(0, 0, 80000, float(max(64, near_tex.get_height())))
+            ground.region_rect = Rect2(0, 0, 80000, float(max(96, ground_tex.get_height())))
+            return
+
     var t: Dictionary = LEVEL_BG_THEMES[level_key]
 
     bg_deep.texture = _make_atari_sky_texture(256, 120, t["sky_base"], t["sky_star_a"], t["sky_star_b"])
@@ -436,6 +499,87 @@ func _apply_level_background(level_index: int) -> void:
     bg_mid.texture = _make_atari_horizon_texture(256, 128, t["mid"], t["sky_star_a"], 22)
     bg_near.texture = _make_atari_horizon_texture(256, 128, t["near"], t["sky_star_a"], 18)
     ground.texture = _make_atari_ground_texture(256, 96, t["ground_a"], t["ground_b"], t["ground_accent"])
+
+func _load_pack_texture(path: String) -> Texture2D:
+    if path == "":
+        return null
+    if pack_texture_cache.has(path):
+        return pack_texture_cache[path]
+    var img: Image = Image.load_from_file(path)
+    if img == null or img.is_empty():
+        return null
+    var tex: ImageTexture = ImageTexture.create_from_image(img)
+    pack_texture_cache[path] = tex
+    return tex
+
+func _load_pack_image(path: String) -> Image:
+    var img: Image = Image.load_from_file(path)
+    if img == null or img.is_empty():
+        return null
+    if img.get_format() != Image.FORMAT_RGBA8:
+        img.convert(Image.FORMAT_RGBA8)
+    return img
+
+func _make_pack_ground_texture(w: int, h: int, theme: Dictionary) -> Texture2D:
+    var top_path: String = PLATFORMING_TILES_DEFAULT + "/" + str(theme.get("ground_top", ""))
+    var fill_path: String = PLATFORMING_TILES_DEFAULT + "/" + str(theme.get("ground_fill", ""))
+    var top_tile: Image = _load_pack_image(top_path)
+    var fill_tile: Image = _load_pack_image(fill_path)
+    if top_tile == null or fill_tile == null:
+        return null
+
+    var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
+    img.fill(Color(0, 0, 0, 0))
+    var tile_w: int = max(1, top_tile.get_width())
+    var tile_h: int = max(1, top_tile.get_height())
+    var fill_w: int = max(1, fill_tile.get_width())
+    var fill_h: int = max(1, fill_tile.get_height())
+
+    for x in range(0, w, tile_w):
+        img.blit_rect(top_tile, Rect2i(0, 0, tile_w, tile_h), Vector2i(x, 0))
+    for y in range(tile_h, h, fill_h):
+        for x in range(0, w, fill_w):
+            img.blit_rect(fill_tile, Rect2i(0, 0, fill_w, fill_h), Vector2i(x, y))
+
+    var deco_list_variant: Variant = theme.get("ground_deco", [])
+    if deco_list_variant is Array:
+        var deco_list: Array = deco_list_variant
+        for x in range(24, w - 24, 64):
+            if deco_list.is_empty():
+                break
+            var idx: int = int((x / 64) % deco_list.size())
+            var deco_name: String = str(deco_list[idx])
+            var deco_img: Image = _load_pack_image(PLATFORMING_TILES_DEFAULT + "/" + deco_name)
+            if deco_img == null:
+                continue
+            var px: int = clamp(x + int(randf_range(-8.0, 8.0)), 0, max(0, w - deco_img.get_width()))
+            var py: int = max(0, tile_h - deco_img.get_height() + 2)
+            img.blit_rect(deco_img, Rect2i(0, 0, deco_img.get_width(), deco_img.get_height()), Vector2i(px, py))
+
+    return ImageTexture.create_from_image(img)
+
+func _make_pack_deco_strip_texture(w: int, h: int, deco_names_variant: Variant) -> Texture2D:
+    var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
+    img.fill(Color(0, 0, 0, 0))
+    if not (deco_names_variant is Array):
+        return ImageTexture.create_from_image(img)
+
+    var deco_names: Array = deco_names_variant
+    if deco_names.is_empty():
+        return ImageTexture.create_from_image(img)
+
+    for x in range(0, w, 72):
+        var idx: int = int((x / 72) % deco_names.size())
+        var deco_name: String = str(deco_names[idx])
+        var deco_img: Image = _load_pack_image(PLATFORMING_TILES_DEFAULT + "/" + deco_name)
+        if deco_img == null:
+            continue
+        var y_jitter: int = int((x / 24) % 3) * 2
+        var px: int = clamp(x + int(randf_range(-6.0, 6.0)), 0, max(0, w - deco_img.get_width()))
+        var py: int = max(0, h - deco_img.get_height() - 6 - y_jitter)
+        img.blit_rect(deco_img, Rect2i(0, 0, deco_img.get_width(), deco_img.get_height()), Vector2i(px, py))
+
+    return ImageTexture.create_from_image(img)
 
 func _make_atari_sky_texture(w: int, h: int, base_color: Color, star_a: Color, star_b: Color) -> ImageTexture:
     var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
