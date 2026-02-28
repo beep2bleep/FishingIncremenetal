@@ -222,7 +222,7 @@ func update_panel():
 func on_complete_anim_finished():
     %"Mod Icon".modulate = Refs.pallet.shadow
     %"Visual Panel".add_theme_stylebox_override("panel", complete_stylebox)
-    %"Mod Icon".scale = Vector2(0.55, 0.55)
+    %"Mod Icon".scale = Vector2(0.44, 0.44)
 
 func setup(upgarde: Upgrade, _tech_tree: TechTree):
     is_setup = true
@@ -348,7 +348,7 @@ func update():
             sim_effect_text = "Upgrade effect applied on unlock."
     if using_sim_display:
         %Description.text = "%s\n%s" % [upgrade.sim_name, sim_effect_text]
-        %"Node Type".text = upgrade.sim_icon if upgrade.sim_icon != "" else upgrade.sim_name.substr(0, 1)
+        %"Node Type".text = _get_sim_icon_fallback_text()
         %"Upgrade Amount".text = "UNLOCK"
     else:
         %"Node Type".text = tr(Util.MODS.find_key(upgrade.mod))
@@ -374,7 +374,7 @@ func update():
         else:
             %Description.text = str("Currently: ", Global.mods.get_mod_value(upgrade.mod, Global.mods.get_mod(upgrade.mod)))
             %"Upgrade Amount".text = str("$", Util.get_number_short_text(upgrade.get_cost()), " : ", Global.mods.get_mod_value(upgrade.mod, upgrade.get_current_teir_value(), true))
-        %"Mod Icon".texture = Refs.mod_textures.get(upgrade.mod, null)
+        %"Mod Icon".texture = _get_upgrade_icon_texture()
     else:
 
         %"Cost Hbox".show()
@@ -395,7 +395,7 @@ func update():
         else:
             %Description.text = Global.mods.get_from_to(upgrade.mod, upgrade.get_current_teir_value())
             %"Upgrade Amount".text = str(Global.mods.get_mod_value(upgrade.mod, upgrade.get_current_teir_value(), true))
-        %"Mod Icon".texture = Refs.mod_textures.get(upgrade.mod, null)
+        %"Mod Icon".texture = _get_upgrade_icon_texture()
 
 
     cost = upgrade.get_cost()
@@ -461,6 +461,35 @@ func _get_theme_dark_color() -> Color:
     if upgrade != null:
         return Refs.get_act_dark_color(upgrade.act)
     return Refs.pallet.act_1_dark
+
+func _is_texture_icon_path(icon_value: String) -> bool:
+    var trimmed: String = icon_value.strip_edges()
+    if trimmed == "":
+        return false
+    var lower: String = trimmed.to_lower()
+    return lower.begins_with("res://") \
+        or lower.ends_with(".png") \
+        or lower.ends_with(".svg") \
+        or lower.ends_with(".webp") \
+        or lower.ends_with(".jpg") \
+        or lower.ends_with(".jpeg")
+
+func _get_upgrade_icon_texture() -> Texture2D:
+    if upgrade != null and upgrade.sim_icon != "":
+        if _is_texture_icon_path(upgrade.sim_icon):
+            var loaded: Resource = load(upgrade.sim_icon)
+            if loaded is Texture2D:
+                return loaded
+    return Refs.mod_textures.get(upgrade.mod, null)
+
+func _get_sim_icon_fallback_text() -> String:
+    if upgrade == null:
+        return ""
+    if upgrade.sim_icon != "" and !_is_texture_icon_path(upgrade.sim_icon):
+        return upgrade.sim_icon.substr(0, 1)
+    if upgrade.sim_name != "":
+        return upgrade.sim_name.substr(0, 1)
+    return ""
 
 
 func keep_tooltip_on_screen(control_node: Control):

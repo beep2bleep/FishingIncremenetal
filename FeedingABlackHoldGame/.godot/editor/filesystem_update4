@@ -1,1 +1,5 @@
 res://Fishing/FishingUpgradeTreeAdapter.gd
+res://Fishing/FishingUpgradeDB.gd
+res://Fishing/CombatSprite.gd
+res://Tech Tree Stuff/Tech Tree Node.tscn
+res://Tech Tree Stuff/TechTreeNode.gd

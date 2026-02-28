@@ -1105,7 +1105,7 @@ static func _extra_skill_theme_act(lower_key: String) -> int:
 static func _resolve_icon(entry: Dictionary, key: String) -> String:
     var raw_icon: String = str(entry.get("icon", "")).strip_edges()
     if raw_icon != "":
-        return raw_icon.substr(0, 1)
+        return raw_icon
     return _fallback_icon_for_key(key)
 
 static func _fallback_icon_for_key(key: String) -> String:

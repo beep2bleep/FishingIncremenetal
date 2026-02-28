@@ -257,7 +257,7 @@ func _humanize_name(name_text: String) -> String:
 func _resolve_icon(node: Dictionary) -> String:
     var raw_icon: String = str(node.get("icon", "")).strip_edges()
     if raw_icon != "" and raw_icon != "?":
-        return raw_icon.substr(0, 1)
+        return raw_icon
     return _fallback_icon_for_key(str(node.get("key", "")))
 
 func _fallback_icon_for_key(key: String) -> String:

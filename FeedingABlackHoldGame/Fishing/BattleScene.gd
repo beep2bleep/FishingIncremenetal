@@ -24,8 +24,25 @@ const ENEMY_FORMATION_SPACING := 84.0
 const BOSS_SEGMENTS := 8
 const DEFEAT_FALL_DURATION := 1.2
 const DEFEAT_FALL_ROT_SPEED := 1.8
+const BG_DEEP_BASE_Y := 220.0
+const BG_FAR_BASE_Y := 305.0
+const BG_MID_BASE_Y := 430.0
+const BG_NEAR_BASE_Y := 545.0
+const GROUND_BASE_Y := 760.0
 const BASE_POWER_REGEN_PER_SEC := 7.0
 const ACTIVE_CHARGE_PER_CLICK := 20.0
+const UPGRADE_EFFECT_TUNE := {
+    "damage": 0.3,
+    "speed": 0.3,
+    "walk": 0.38,
+    "armor": 0.4,
+    "coin": 0.42,
+    "power_gain": 0.46,
+    "power_cap": 0.5,
+    "active_cost": 0.42,
+    "active_cd": 0.42,
+    "enemy_count": 0.3,
+}
 const PLATFORMING_PACK_SPRITES := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites"
 const PLATFORMING_BG_DEFAULT := PLATFORMING_PACK_SPRITES + "/Backgrounds/Default"
 const PLATFORMING_TILES_DEFAULT := PLATFORMING_PACK_SPRITES + "/Tiles/Default"
@@ -140,6 +157,10 @@ var boss_spawned: bool = false
 var boss_alive: bool = false
 var spawn_timer: float = 0.0
 var spawn_group_remaining: int = 0
+var spawn_group_size: int = 0
+var spawn_group_spawned: int = 0
+var spawn_group_anchor_x: float = 0.0
+var spawn_group_spacing: float = 84.0
 var sim_accumulator: float = 0.0
 var battle_completed: bool = false
 var battle_victory: bool = false
@@ -363,8 +384,6 @@ func _run_infinite_simulation() -> void:
     var max_steps: int = 1_000_000
     var step_count: int = 0
     while player_health > 0.0 and not battle_completed and step_count < max_steps:
-        _update_active_cooldowns(SIM_STEP)
-        _auto_use_hero_actives()
         _simulate_step(SIM_STEP, true)
         step_count += 1
 
@@ -450,27 +469,29 @@ func _setup_visuals() -> void:
     bg_near.region_rect = Rect2(0, 0, 80000, 560)
     ground.region_rect = Rect2(0, 0, 80000, 360)
 
-    bg_deep.position = Vector2(0, 220)
-    bg_far.position = Vector2(0, 305)
-    bg_mid.position = Vector2(0, 430)
-    bg_near.position = Vector2(0, 545)
-    ground.position = Vector2(0, 760)
-    _apply_parallax_depth_scales()
     _apply_level_background(current_level)
+    _apply_parallax_depth_scales()
 
 func _apply_parallax_depth_scales() -> void:
-    # Farther layers are rendered smaller to reinforce depth.
-    bg_deep.scale = Vector2(0.42, 0.42)
-    bg_far.scale = Vector2(0.62, 0.62)
-    bg_mid.scale = Vector2(0.82, 0.82)
-    bg_near.scale = Vector2(1.0, 1.0)
+    # This scene is 2D. Depth is faked by shrinking farther layers and lifting them up.
+    bg_deep.scale = Vector2(0.28, 0.28)
+    bg_far.scale = Vector2(0.46, 0.46)
+    bg_mid.scale = Vector2(0.68, 0.68)
+    bg_near.scale = Vector2(0.9, 0.9)
     ground.scale = Vector2(1.0, 1.0)
+
+    bg_deep.position.y = BG_DEEP_BASE_Y - 110.0
+    bg_far.position.y = BG_FAR_BASE_Y - 68.0
+    bg_mid.position.y = BG_MID_BASE_Y - 32.0
+    bg_near.position.y = BG_NEAR_BASE_Y - 10.0
+    ground.position.y = GROUND_BASE_Y
 
 func _apply_level_background(level_index: int) -> void:
     var level_key: int = clamp(level_index, 1, 3)
     if level_key == displayed_bg_level:
         return
     displayed_bg_level = level_key
+    var t: Dictionary = LEVEL_BG_THEMES[level_key]
     var pack_theme: Dictionary = LEVEL_BG_PACK.get(level_key, {})
     if not pack_theme.is_empty():
         var sky_tex: Texture2D = _load_pack_texture(PLATFORMING_BG_DEFAULT + "/" + str(pack_theme.get("sky", "")))
@@ -490,15 +511,33 @@ func _apply_level_background(level_index: int) -> void:
             bg_mid.region_rect = Rect2(0, 0, 80000, float(max(64, mid_tex.get_height())))
             bg_near.region_rect = Rect2(0, 0, 80000, float(max(64, near_tex.get_height())))
             ground.region_rect = Rect2(0, 0, 80000, float(max(96, ground_tex.get_height())))
+            _apply_level_layer_colors(t)
+            _apply_parallax_depth_scales()
             return
-
-    var t: Dictionary = LEVEL_BG_THEMES[level_key]
 
     bg_deep.texture = _make_atari_sky_texture(256, 120, t["sky_base"], t["sky_star_a"], t["sky_star_b"])
     bg_far.texture = _make_atari_horizon_texture(256, 128, t["far"], t["sky_star_a"], 28, 10)
     bg_mid.texture = _make_atari_horizon_texture(256, 128, t["mid"], t["sky_star_a"], 22, 18)
     bg_near.texture = _make_atari_horizon_texture(256, 128, t["near"], t["sky_star_a"], 18, 28)
     ground.texture = _make_atari_ground_texture(256, 96, t["ground_a"], t["ground_b"], t["ground_accent"])
+    _apply_level_layer_colors({})
+    _apply_parallax_depth_scales()
+
+func _apply_level_layer_colors(theme: Dictionary) -> void:
+    if theme.is_empty():
+        bg_deep.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        bg_far.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        bg_mid.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        bg_near.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        ground.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        return
+
+    # Preserve source texture alpha while restoring per-level palette tinting.
+    bg_deep.modulate = Color(theme["sky_base"]) * Color(1.08, 1.08, 1.08, 1.0)
+    bg_far.modulate = Color(theme["far"]) * Color(1.02, 1.02, 1.02, 1.0)
+    bg_mid.modulate = Color(theme["mid"]) * Color(1.0, 1.0, 1.0, 1.0)
+    bg_near.modulate = Color(theme["near"]) * Color(0.95, 0.95, 0.95, 1.0)
+    ground.modulate = Color(theme["ground_a"]) * Color(1.0, 1.0, 1.0, 1.0)
 
 func _load_pack_texture(path: String) -> Texture2D:
     if path == "":
@@ -863,6 +902,8 @@ func _process(delta: float) -> void:
 
 func _simulate_step(delta: float, skip_visual_updates: bool = false) -> void:
     _apply_level_background(current_level)
+    _update_active_cooldowns(delta)
+    _auto_use_hero_actives()
     _gain_power(BASE_POWER_REGEN_PER_SEC * _power_gain_mult() * delta)
     _spawn_loop(delta)
     _update_heroes(delta)
@@ -894,14 +935,22 @@ func _spawn_loop(delta: float) -> void:
     if regular_spawned < regular_count:
         if spawn_group_remaining <= 0:
             var remaining: int = regular_count - regular_spawned
-            spawn_group_remaining = min(3, remaining)
-        _spawn_enemy_for_level(current_level)
+            spawn_group_size = randi_range(1, min(3, remaining))
+            spawn_group_remaining = spawn_group_size
+            spawn_group_spawned = 0
+            spawn_group_spacing = randf_range(70.0, 104.0)
+            spawn_group_anchor_x = _next_enemy_spawn_x() + randf_range(180.0, 360.0)
+
+        var local_jitter: float = randf_range(-12.0, 12.0)
+        var spawn_x: float = spawn_group_anchor_x + float(spawn_group_spawned) * spawn_group_spacing + local_jitter
+        _spawn_enemy_for_level(current_level, spawn_x)
         regular_spawned += 1
+        spawn_group_spawned += 1
         spawn_group_remaining -= 1
         if spawn_group_remaining > 0:
-            spawn_timer = 0.2
+            spawn_timer = randf_range(0.2, 0.34)
         else:
-            spawn_timer = 1.4
+            spawn_timer = randf_range(1.2, 1.9)
         return
 
     if not boss_spawned:
@@ -933,6 +982,10 @@ func _spawn_heroes() -> void:
         var damage: float = 12.0 + 3.0 * float(SaveHandler.get_fishing_upgrade_level("core_%s_damage" % hero_name))
         var speed: float = 1.2 + 0.16 * float(SaveHandler.get_fishing_upgrade_level("core_%s_speed" % hero_name))
         damage *= _hero_damage_mult(hero_name)
+        if hero_name == "archer":
+            damage *= 0.33333334
+        elif hero_name == "knight":
+            damage *= 1.2
         speed *= _hero_speed_mult(hero_name)
         hero_data[hero] = {
             "name": hero_name,
@@ -948,13 +1001,14 @@ func _spawn_heroes() -> void:
         }
         _add_hero_active_bar(hero)
 
-func _spawn_enemy_for_level(level_index: int) -> void:
+func _spawn_enemy_for_level(level_index: int, spawn_x_override: float = NAN) -> void:
     var key: String = str(LEVEL_ENEMY_TYPE.get(level_index, "goblin"))
     var lp: Dictionary = _level_params(level_index)
     var data: Dictionary = enemy_defs[key]
 
     var enemy: CombatSprite = HERO_SCENE.instantiate()
-    enemy.position = Vector2(_next_enemy_spawn_x(), FLOOR_Y)
+    var spawn_x: float = spawn_x_override if not is_nan(spawn_x_override) else _next_enemy_spawn_x()
+    enemy.position = Vector2(spawn_x, FLOOR_Y)
     var enemy_scale: float = float(data.get("scale", ENEMY_RENDER_SCALE))
     enemy.setup(data["sheet"], data["frame"], enemy_scale)
     enemy_layer.add_child(enemy)
@@ -1211,6 +1265,14 @@ func _update_enemies(delta: float) -> void:
         armor_scale *= 0.4
 
     var frontline_x: float = _frontline_x()
+    var alive_sorted: Array[CombatSprite] = []
+    for enemy in enemies:
+        if is_instance_valid(enemy):
+            alive_sorted.append(enemy)
+    alive_sorted.sort_custom(func(a: CombatSprite, b: CombatSprite): return a.position.x < b.position.x)
+    var behind_map: Dictionary = {}
+    for i in range(alive_sorted.size() - 1):
+        behind_map[alive_sorted[i]] = alive_sorted[i + 1]
 
     for enemy in enemies:
         if not is_instance_valid(enemy):
@@ -1223,10 +1285,23 @@ func _update_enemies(delta: float) -> void:
             enemy.position.x -= float(e["speed"]) * delta
             enemy.set_walking()
         else:
-            _apply_player_damage(float(e["contact_dps"]) * armor_scale * delta, enemy.position + Vector2(0.0, -90.0))
+            var total_contact_dps: float = float(e["contact_dps"])
+            var behind_enemy: CombatSprite = behind_map.get(enemy, null)
+            if is_instance_valid(behind_enemy):
+                var push_gap: float = behind_enemy.position.x - enemy.position.x
+                if push_gap <= ENEMY_FORMATION_SPACING * 1.05:
+                    var behind_data: Dictionary = enemy_data.get(behind_enemy, {})
+                    var behind_contact: float = float(behind_data.get("contact_dps", e["contact_dps"]))
+                    total_contact_dps += behind_contact * 0.5
+            _apply_player_damage(total_contact_dps * armor_scale * delta, enemy.position + Vector2(0.0, -90.0))
             if float(e["attack_cd"]) <= 0.0:
                 e["attack_cd"] = 0.75
                 enemy.trigger_attack()
+                var behind_enemy_attack: CombatSprite = behind_map.get(enemy, null)
+                if is_instance_valid(behind_enemy_attack):
+                    var behind_gap: float = behind_enemy_attack.position.x - enemy.position.x
+                    if behind_gap <= ENEMY_FORMATION_SPACING * 1.05:
+                        behind_enemy_attack.trigger_attack()
 
         _update_enemy_health_bar(e)
         enemy_data[enemy] = e
@@ -1578,6 +1653,23 @@ func _rebuild_battle_mods() -> void:
         var level: int = int(unlocked[key_variant])
         _apply_upgrade_key_modifiers(key, level)
 
+    # Global tuning pass to keep run-over-run gains incremental.
+    battle_mods["damage_mult_all"] = 1.0 + (float(battle_mods["damage_mult_all"]) - 1.0) * float(UPGRADE_EFFECT_TUNE["damage"])
+    battle_mods["speed_mult_all"] = 1.0 + (float(battle_mods["speed_mult_all"]) - 1.0) * float(UPGRADE_EFFECT_TUNE["speed"])
+    battle_mods["walk_speed_mult"] = 1.0 + (float(battle_mods["walk_speed_mult"]) - 1.0) * float(UPGRADE_EFFECT_TUNE["walk"])
+    battle_mods["coin_mult"] = 1.0 + (float(battle_mods["coin_mult"]) - 1.0) * float(UPGRADE_EFFECT_TUNE["coin"])
+    battle_mods["power_gain_mult"] = 1.0 + (float(battle_mods["power_gain_mult"]) - 1.0) * float(UPGRADE_EFFECT_TUNE["power_gain"])
+    battle_mods["power_cap_bonus"] = float(battle_mods["power_cap_bonus"]) * float(UPGRADE_EFFECT_TUNE["power_cap"])
+    battle_mods["armor_bonus"] = float(battle_mods["armor_bonus"]) * float(UPGRADE_EFFECT_TUNE["armor"])
+    battle_mods["enemy_count_mult"] = 1.0 + (float(battle_mods["enemy_count_mult"]) - 1.0) * float(UPGRADE_EFFECT_TUNE["enemy_count"])
+
+    var active_cost_reduction: float = 1.0 - float(battle_mods["active_cost_mult"])
+    battle_mods["active_cost_mult"] = 1.0 - active_cost_reduction * float(UPGRADE_EFFECT_TUNE["active_cost"])
+    battle_mods["active_cost_mult"] = clamp(float(battle_mods["active_cost_mult"]), 0.55, 1.0)
+    var active_cd_reduction: float = 1.0 - float(battle_mods["active_cd_mult"])
+    battle_mods["active_cd_mult"] = 1.0 - active_cd_reduction * float(UPGRADE_EFFECT_TUNE["active_cd"])
+    battle_mods["active_cd_mult"] = clamp(float(battle_mods["active_cd_mult"]), 0.65, 1.0)
+
 func _apply_upgrade_key_modifiers(key: String, level: int) -> void:
     if level <= 0:
         return
@@ -1700,7 +1792,7 @@ func _enemy_count_mult() -> float:
     return float(battle_mods.get("enemy_count_mult", 1.0))
 
 func _active_cost() -> float:
-    return max(24.0, 80.0 * float(battle_mods.get("active_cost_mult", 1.0)))
+    return max(20.0, 60.0 * float(battle_mods.get("active_cost_mult", 1.0)))
 
 func _active_cooldown_mult() -> float:
     return float(battle_mods.get("active_cd_mult", 1.0))

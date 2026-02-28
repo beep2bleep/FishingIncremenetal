@@ -11,11 +11,14 @@ var is_attacking := false
 var is_defeated := false
 var base_sprite_scale: Vector2 = Vector2.ONE
 var weapon_type: String = ""
+var weapon_base_offset: Vector2 = Vector2.ZERO
 var weapon_idle_offset: Vector2 = Vector2.ZERO
 var weapon_float_phase: float = 0.0
 var weapon_float_speed: float = 2.8
 var weapon_float_amp: float = 2.2
 var weapon_attack_tween: Tween = null
+const WEAPON_SCALE_RATIO: float = 3.0
+const WEAPON_HEIGHT_RATIO: float = -3.0
 
 func _ensure_nodes() -> bool:
     if sprite == null:
@@ -67,6 +70,10 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := 
     collider.shape = circle
 
     weapon_type = str(role)
+    var hero_size: Vector2 = Vector2(float(frame_size.x), float(frame_size.y)) * scale_factor
+    weapon_base_offset = Vector2(hero_size.x * 0.12, -hero_size.y * WEAPON_HEIGHT_RATIO)
+    weapon_layer.scale = Vector2.ONE * (scale_factor * WEAPON_SCALE_RATIO)
+    weapon_float_amp = 2.2 * scale_factor
     _setup_weapon_visual(weapon_type, frame_size, scale_factor)
     weapon_layer.visible = weapon_layer.get_child_count() > 0
     weapon_layer.rotation = 0.0
@@ -119,7 +126,7 @@ func _process(delta: float) -> void:
         return
     weapon_float_phase += delta * weapon_float_speed
     var bob_y: float = sin(weapon_float_phase) * weapon_float_amp
-    weapon_layer.position = weapon_idle_offset + Vector2(0.0, bob_y)
+    weapon_layer.position = weapon_base_offset + weapon_idle_offset + Vector2(0.0, bob_y)
 
 func _setup_weapon_visual(role: String, frame_size: Vector2i, scale_factor: float) -> void:
     if weapon_layer == null:
@@ -129,29 +136,29 @@ func _setup_weapon_visual(role: String, frame_size: Vector2i, scale_factor: floa
 
     var lower: String = role.to_lower()
     if lower == "knight":
-        _add_line(weapon_layer, [Vector2(12, -20), Vector2(28, -28)], 2.1 * scale_factor, Color(0.88, 0.9, 0.95, 1.0))
-        _add_line(weapon_layer, [Vector2(10, -18), Vector2(16, -14)], 2.1 * scale_factor, Color(0.5, 0.35, 0.18, 1.0))
-        weapon_idle_offset = Vector2(8, -2)
+        _add_line(weapon_layer, [Vector2(12, -20), Vector2(28, -28)], 2.1, Color(0.88, 0.9, 0.95, 1.0))
+        _add_line(weapon_layer, [Vector2(10, -18), Vector2(16, -14)], 2.1, Color(0.5, 0.35, 0.18, 1.0))
+        weapon_idle_offset = Vector2(4, 2)
     elif lower == "archer":
-        _add_line(weapon_layer, [Vector2(10, -24), Vector2(18, -30), Vector2(24, -24), Vector2(18, -18), Vector2(10, -24)], 1.8 * scale_factor, Color(0.58, 0.4, 0.2, 1.0))
-        _add_line(weapon_layer, [Vector2(10, -24), Vector2(24, -24)], 1.3 * scale_factor, Color(0.92, 0.92, 0.92, 1.0))
-        weapon_idle_offset = Vector2(8, -1)
+        _add_line(weapon_layer, [Vector2(10, -24), Vector2(18, -30), Vector2(24, -24), Vector2(18, -18), Vector2(10, -24)], 1.8, Color(0.58, 0.4, 0.2, 1.0))
+        _add_line(weapon_layer, [Vector2(10, -24), Vector2(24, -24)], 1.3, Color(0.92, 0.92, 0.92, 1.0))
+        weapon_idle_offset = Vector2(3, 3)
     elif lower == "guardian":
         var shield: Polygon2D = Polygon2D.new()
         shield.polygon = PackedVector2Array([Vector2(12, -30), Vector2(24, -24), Vector2(24, -10), Vector2(12, -4), Vector2(0, -10), Vector2(0, -24)])
         shield.color = Color(0.34, 0.6, 0.85, 1.0)
-        shield.scale = Vector2.ONE * (0.65 * scale_factor)
+        shield.scale = Vector2.ONE * 0.65
         weapon_layer.add_child(shield)
-        _add_line(weapon_layer, [Vector2(8, -17), Vector2(16, -17)], 1.8 * scale_factor, Color(0.85, 0.92, 0.98, 1.0))
-        weapon_idle_offset = Vector2(8, 0)
+        _add_line(weapon_layer, [Vector2(8, -17), Vector2(16, -17)], 1.8, Color(0.85, 0.92, 0.98, 1.0))
+        weapon_idle_offset = Vector2(4, 4)
     elif lower == "mage":
-        _add_line(weapon_layer, [Vector2(10, -28), Vector2(22, -12)], 1.9 * scale_factor, Color(0.58, 0.42, 0.22, 1.0))
+        _add_line(weapon_layer, [Vector2(10, -28), Vector2(22, -12)], 1.9, Color(0.58, 0.42, 0.22, 1.0))
         var orb: Polygon2D = Polygon2D.new()
         orb.polygon = PackedVector2Array([Vector2(20, -32), Vector2(24, -28), Vector2(20, -24), Vector2(16, -28)])
         orb.color = Color(0.7, 0.32, 0.95, 1.0)
-        orb.scale = Vector2.ONE * (0.75 * scale_factor)
+        orb.scale = Vector2.ONE * 0.75
         weapon_layer.add_child(orb)
-        weapon_idle_offset = Vector2(8, -2)
+        weapon_idle_offset = Vector2(4, 2)
     else:
         weapon_idle_offset = Vector2.ZERO
 
@@ -211,8 +218,19 @@ func _play_weapon_attack_motion() -> void:
 func _play_attack_telegraph() -> void:
     if sprite == null:
         return
+    var base_pos: Vector2 = position
     var tween: Tween = create_tween().set_parallel(true)
     tween.tween_property(sprite, "scale", base_sprite_scale * 1.16, 0.06).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-    tween.tween_property(sprite, "modulate", Color(1.35, 1.35, 1.1, 1.0), 0.06).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_OUT)
+    tween.tween_property(sprite, "modulate", Color(1.45, 1.45, 1.2, 1.0), 0.05).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_OUT)
+    tween.chain().tween_property(sprite, "modulate", Color(0.78, 0.78, 0.78, 1.0), 0.04).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
+    tween.chain().tween_property(sprite, "modulate", Color(1.25, 1.25, 1.1, 1.0), 0.04).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
+    tween.chain().tween_property(sprite, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+    var shake: Tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    shake.tween_property(self, "position", base_pos + Vector2(3.0, 0.0), 0.025)
+    shake.tween_property(self, "position", base_pos + Vector2(-3.0, 0.0), 0.03)
+    shake.tween_property(self, "position", base_pos + Vector2(2.0, 0.0), 0.03)
+    shake.tween_property(self, "position", base_pos + Vector2(-2.0, 0.0), 0.03)
+    shake.tween_property(self, "position", base_pos, 0.03)
+
     tween.chain().tween_property(sprite, "scale", base_sprite_scale, 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-    tween.parallel().tween_property(sprite, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
