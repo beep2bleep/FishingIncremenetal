@@ -471,11 +471,29 @@ func _run_infinite_simulation() -> void:
 
 func _update_active_cooldowns(delta: float) -> void:
     for key in active_cooldowns.keys():
-        active_cooldowns[key] = max(0.0, float(active_cooldowns[key]) - delta)
+        var prev_val: float = float(active_cooldowns[key])
+        var new_val: float = max(0.0, prev_val - delta)
+        active_cooldowns[key] = new_val
+        # If a cooldown just finished, clear any stored player charge so
+        # the player must click again to build charge (but keep sim auto-use).
+        if prev_val > 0.0 and new_val <= 0.0 and not in_infinite_simulation:
+            # find any hero with this name and reset their active charge
+            for hero in heroes:
+                if not is_instance_valid(hero):
+                    continue
+                var h: Dictionary = hero_data.get(hero, {})
+                if str(h.get("name", "")) == str(key):
+                    h["active_charge"] = 0.0
+                    hero_data[hero] = h
 
 func _auto_use_hero_actives() -> void:
+    # Only auto-use abilities during infinite simulation (sim infinity).
+    if not in_infinite_simulation:
+        return
+
     if power < _active_cost():
         return
+
     for hero_name in ["guardian", "archer", "mage", "knight"]:
         if power < _active_cost():
             break

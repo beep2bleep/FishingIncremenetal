@@ -1,0 +1,6 @@
+{
+	"note": "Apply this multiplier to upgrade costs in progression sims to target a level 3 boss clear between 1 and 2 hours with roughly one impactful upgrade per run.",
+	"recommended_price_mult": -1.0,
+	"target_max_seconds": 7200.0,
+	"target_min_seconds": 3600.0
+}

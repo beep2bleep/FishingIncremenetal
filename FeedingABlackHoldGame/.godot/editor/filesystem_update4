@@ -2,3 +2,6 @@ res://Fishing/CombatSprite.gd
 res://Fishing/BattleScene.gd
 res://SaveHandler.gd
 res://Fishing/CoinPickup.gd
+res://SceneChanger.gd
+res://Fishing/FishingUpgradeDB.gd
+res://simulation/run_20_guided_l3_boss_progression.gd
