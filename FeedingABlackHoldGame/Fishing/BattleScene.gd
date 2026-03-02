@@ -1709,6 +1709,9 @@ func _kill_enemy(enemy: CombatSprite) -> void:
 
     enemies.erase(enemy)
     enemy_data.erase(enemy)
+    # Play enemy defeat / shoot SFX
+    if Engine.has_singleton("AudioManager"):
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER)
     enemy.queue_free()
 
 func _spawn_coin(pos: Vector2, value: int) -> void:
@@ -1807,6 +1810,10 @@ func _on_coin_collected(coin: CoinPickup, by_cursor: bool) -> void:
     var amount: int = int(coin.value)
     if collected_by_cursor:
         amount = int(round(float(amount) * _cursor_bonus_mult()))
+
+    # Play coin pickup SFX
+    if Engine.has_singleton("AudioManager"):
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_RESOURCE_SUCKED_UP)
 
     SaveHandler.fishing_currency += amount
     SaveHandler.fishing_lifetime_coins += amount
@@ -1935,6 +1942,9 @@ func _update_hero_active_bar(hero: CombatSprite, h: Dictionary) -> void:
 
 func _execute_hero_active(hero: CombatSprite, hero_name: String, skip_anim: bool) -> void:
     _trigger_hero_glow(hero)
+    # Play chime when a hero's powerup ability starts
+    if Engine.has_singleton("AudioManager"):
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_POP_IN)
     if not skip_anim:
         hero.trigger_attack()
 

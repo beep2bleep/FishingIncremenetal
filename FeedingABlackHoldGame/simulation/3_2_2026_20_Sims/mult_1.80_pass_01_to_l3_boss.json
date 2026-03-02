@@ -1,8 +1,8 @@
 {
-	"avg_kill_delta_per_run": 0.157894736842105,
-	"avg_upgrades_per_run": 0.0,
-	"final_currency": 4260,
-	"level3_boss_defeated": false,
+	"avg_kill_delta_per_run": 0.234042553191489,
+	"avg_upgrades_per_run": 0.91578947368421,
+	"final_currency": 140556,
+	"level3_boss_defeated": true,
 	"pass": "pass_01",
 	"price_mult": 1.8,
 	"runs": [
@@ -15,319 +15,1693 @@
 			"level": 1,
 			"run": 1,
 			"run_time_s": 86.25,
-			"upgrade_cost": 0.0,
-			"upgrades_bought": [],
-			"upgrades_bought_count": 0,
+			"upgrade_cost": 207.0,
+			"upgrades_bought": [
+				"cursor_pickup_unlock"
+			],
+			"upgrades_bought_count": 1,
 			"wallet_after_earn": 210,
-			"wallet_after_spend": 210,
+			"wallet_after_spend": 3,
 			"wallet_before": 0
 		},
 		{
 			"boss_defeated": false,
 			"boss_segments_broken": 0,
-			"coins_gained": 240,
+			"coins_gained": 345,
 			"enemies_killed": 24,
 			"kill_delta": 3,
 			"level": 1,
 			"run": 2,
 			"run_time_s": 123.283333333333,
-			"upgrade_cost": 0.0,
-			"upgrades_bought": [],
-			"upgrades_bought_count": 0,
-			"wallet_after_earn": 450,
-			"wallet_after_spend": 450,
-			"wallet_before": 210
+			"upgrade_cost": 180.0,
+			"upgrades_bought": [
+				"recruit_archer"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 348,
+			"wallet_after_spend": 168,
+			"wallet_before": 3
 		},
 		{
 			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 200,
-			"enemies_killed": 22,
-			"kill_delta": -2,
+			"boss_segments_broken": 2,
+			"coins_gained": 245,
+			"enemies_killed": 24,
+			"kill_delta": 0,
 			"level": 1,
 			"run": 3,
-			"run_time_s": 92.8166666666667,
-			"upgrade_cost": 0.0,
-			"upgrades_bought": [],
-			"upgrades_bought_count": 0,
-			"wallet_after_earn": 650,
-			"wallet_after_spend": 650,
-			"wallet_before": 450
+			"run_time_s": 102.866666666667,
+			"upgrade_cost": 126.0,
+			"upgrades_bought": [
+				"auto_attack_unlock"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 413,
+			"wallet_after_spend": 287,
+			"wallet_before": 168
 		},
 		{
 			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 240,
+			"boss_segments_broken": 2,
+			"coins_gained": 180,
 			"enemies_killed": 24,
-			"kill_delta": 2,
+			"kill_delta": 0,
 			"level": 1,
 			"run": 4,
-			"run_time_s": 101.583333333333,
+			"run_time_s": 98.9833333333333,
 			"upgrade_cost": 0.0,
 			"upgrades_bought": [],
 			"upgrades_bought_count": 0,
-			"wallet_after_earn": 890,
-			"wallet_after_spend": 890,
-			"wallet_before": 650
+			"wallet_after_earn": 467,
+			"wallet_after_spend": 467,
+			"wallet_before": 287
 		},
 		{
 			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 230,
-			"enemies_killed": 23,
-			"kill_delta": -1,
+			"boss_segments_broken": 2,
+			"coins_gained": 155,
+			"enemies_killed": 24,
+			"kill_delta": 0,
 			"level": 1,
 			"run": 5,
-			"run_time_s": 89.75,
-			"upgrade_cost": 0.0,
-			"upgrades_bought": [],
-			"upgrades_bought_count": 0,
-			"wallet_after_earn": 1120,
-			"wallet_after_spend": 1120,
-			"wallet_before": 890
+			"run_time_s": 96.4166666666667,
+			"upgrade_cost": 576.0,
+			"upgrades_bought": [
+				"knight_vamp_unlock"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 622,
+			"wallet_after_spend": 46,
+			"wallet_before": 467
 		},
 		{
 			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 170,
-			"enemies_killed": 17,
-			"kill_delta": -6,
+			"boss_segments_broken": 4,
+			"coins_gained": 195,
+			"enemies_killed": 24,
+			"kill_delta": 0,
 			"level": 1,
 			"run": 6,
-			"run_time_s": 74.2833333333333,
+			"run_time_s": 104.733333333333,
 			"upgrade_cost": 0.0,
 			"upgrades_bought": [],
 			"upgrades_bought_count": 0,
-			"wallet_after_earn": 1290,
-			"wallet_after_spend": 1290,
-			"wallet_before": 1120
+			"wallet_after_earn": 241,
+			"wallet_after_spend": 241,
+			"wallet_before": 46
 		},
 		{
 			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 230,
-			"enemies_killed": 23,
-			"kill_delta": 6,
+			"boss_segments_broken": 5,
+			"coins_gained": 175,
+			"enemies_killed": 24,
+			"kill_delta": 0,
 			"level": 1,
 			"run": 7,
-			"run_time_s": 90.1333333333333,
-			"upgrade_cost": 0.0,
-			"upgrades_bought": [],
-			"upgrades_bought_count": 0,
-			"wallet_after_earn": 1520,
-			"wallet_after_spend": 1520,
-			"wallet_before": 1290
+			"run_time_s": 100.766666666667,
+			"upgrade_cost": 328.0,
+			"upgrades_bought": [
+				"salvage_hooks"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 416,
+			"wallet_after_spend": 88,
+			"wallet_before": 241
 		},
 		{
 			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 240,
+			"boss_segments_broken": 5,
+			"coins_gained": 200,
 			"enemies_killed": 24,
-			"kill_delta": 1,
+			"kill_delta": 0,
 			"level": 1,
 			"run": 8,
-			"run_time_s": 119.916666666667,
+			"run_time_s": 101.116666666667,
 			"upgrade_cost": 0.0,
 			"upgrades_bought": [],
 			"upgrades_bought_count": 0,
-			"wallet_after_earn": 1760,
-			"wallet_after_spend": 1760,
-			"wallet_before": 1520
+			"wallet_after_earn": 288,
+			"wallet_after_spend": 288,
+			"wallet_before": 88
 		},
 		{
 			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 230,
-			"enemies_killed": 23,
-			"kill_delta": -1,
+			"boss_segments_broken": 4,
+			"coins_gained": 260,
+			"enemies_killed": 24,
+			"kill_delta": 0,
 			"level": 1,
 			"run": 9,
-			"run_time_s": 91.4333333333333,
+			"run_time_s": 97.2666666666667,
 			"upgrade_cost": 0.0,
 			"upgrades_bought": [],
 			"upgrades_bought_count": 0,
-			"wallet_after_earn": 1990,
-			"wallet_after_spend": 1990,
-			"wallet_before": 1760
+			"wallet_after_earn": 548,
+			"wallet_after_spend": 548,
+			"wallet_before": 288
 		},
 		{
 			"boss_defeated": false,
-			"boss_segments_broken": 0,
+			"boss_segments_broken": 5,
 			"coins_gained": 190,
-			"enemies_killed": 19,
-			"kill_delta": -4,
+			"enemies_killed": 24,
+			"kill_delta": 0,
 			"level": 1,
 			"run": 10,
-			"run_time_s": 78.8833333333333,
-			"upgrade_cost": 0.0,
-			"upgrades_bought": [],
-			"upgrades_bought_count": 0,
-			"wallet_after_earn": 2180,
-			"wallet_after_spend": 2180,
-			"wallet_before": 1990
+			"run_time_s": 103.133333333333,
+			"upgrade_cost": 648.0,
+			"upgrades_bought": [
+				"archer_pierce_unlock"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 738,
+			"wallet_after_spend": 90,
+			"wallet_before": 548
 		},
 		{
 			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 240,
+			"boss_segments_broken": 6,
+			"coins_gained": 175,
 			"enemies_killed": 24,
-			"kill_delta": 5,
+			"kill_delta": 0,
 			"level": 1,
 			"run": 11,
-			"run_time_s": 112.216666666667,
+			"run_time_s": 95.2,
 			"upgrade_cost": 0.0,
 			"upgrades_bought": [],
 			"upgrades_bought_count": 0,
-			"wallet_after_earn": 2420,
-			"wallet_after_spend": 2420,
-			"wallet_before": 2180
+			"wallet_after_earn": 265,
+			"wallet_after_spend": 265,
+			"wallet_before": 90
 		},
 		{
 			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 110,
-			"enemies_killed": 11,
-			"kill_delta": -13,
+			"boss_segments_broken": 6,
+			"coins_gained": 190,
+			"enemies_killed": 24,
+			"kill_delta": 0,
 			"level": 1,
 			"run": 12,
-			"run_time_s": 47.65,
+			"run_time_s": 93.55,
 			"upgrade_cost": 0.0,
 			"upgrades_bought": [],
 			"upgrades_bought_count": 0,
-			"wallet_after_earn": 2530,
-			"wallet_after_spend": 2530,
-			"wallet_before": 2420
+			"wallet_after_earn": 455,
+			"wallet_after_spend": 455,
+			"wallet_before": 265
 		},
 		{
 			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 210,
-			"enemies_killed": 21,
-			"kill_delta": 10,
+			"boss_segments_broken": 6,
+			"coins_gained": 160,
+			"enemies_killed": 24,
+			"kill_delta": 0,
 			"level": 1,
 			"run": 13,
-			"run_time_s": 86.5,
+			"run_time_s": 90.3,
 			"upgrade_cost": 0.0,
 			"upgrades_bought": [],
 			"upgrades_bought_count": 0,
-			"wallet_after_earn": 2740,
-			"wallet_after_spend": 2740,
-			"wallet_before": 2530
+			"wallet_after_earn": 615,
+			"wallet_after_spend": 615,
+			"wallet_before": 455
 		},
 		{
 			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 230,
-			"enemies_killed": 23,
-			"kill_delta": 2,
+			"boss_segments_broken": 6,
+			"coins_gained": 170,
+			"enemies_killed": 24,
+			"kill_delta": 0,
 			"level": 1,
 			"run": 14,
-			"run_time_s": 91.3833333333333,
-			"upgrade_cost": 0.0,
-			"upgrades_bought": [],
-			"upgrades_bought_count": 0,
-			"wallet_after_earn": 2970,
-			"wallet_after_spend": 2970,
-			"wallet_before": 2740
+			"run_time_s": 97.0,
+			"upgrade_cost": 702.0,
+			"upgrades_bought": [
+				"power_harvest_unlock"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 785,
+			"wallet_after_spend": 83,
+			"wallet_before": 615
 		},
 		{
-			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 200,
-			"enemies_killed": 20,
-			"kill_delta": -3,
+			"boss_defeated": true,
+			"boss_segments_broken": 8,
+			"coins_gained": 170,
+			"enemies_killed": 25,
+			"kill_delta": 1,
 			"level": 1,
 			"run": 15,
-			"run_time_s": 81.9333333333333,
+			"run_time_s": 100.516666666667,
 			"upgrade_cost": 0.0,
 			"upgrades_bought": [],
 			"upgrades_bought_count": 0,
-			"wallet_after_earn": 3170,
-			"wallet_after_spend": 3170,
-			"wallet_before": 2970
+			"wallet_after_earn": 253,
+			"wallet_after_spend": 253,
+			"wallet_before": 83
 		},
 		{
-			"boss_defeated": false,
-			"boss_segments_broken": 0,
-			"coins_gained": 200,
-			"enemies_killed": 20,
-			"kill_delta": 0,
-			"level": 1,
+			"boss_defeated": true,
+			"boss_segments_broken": 8,
+			"coins_gained": 828,
+			"enemies_killed": 33,
+			"kill_delta": 8,
+			"level": 2,
 			"run": 16,
-			"run_time_s": 81.3166666666667,
-			"upgrade_cost": 0.0,
-			"upgrades_bought": [],
-			"upgrades_bought_count": 0,
-			"wallet_after_earn": 3370,
-			"wallet_after_spend": 3370,
-			"wallet_before": 3170
+			"run_time_s": 170.783333333333,
+			"upgrade_cost": 342.0,
+			"upgrades_bought": [
+				"trail_boots"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 1081,
+			"wallet_after_spend": 739,
+			"wallet_before": 253
 		},
 		{
 			"boss_defeated": false,
 			"boss_segments_broken": 0,
-			"coins_gained": 200,
-			"enemies_killed": 20,
-			"kill_delta": 0,
-			"level": 1,
+			"coins_gained": 504,
+			"enemies_killed": 4,
+			"kill_delta": -29,
+			"level": 3,
 			"run": 17,
-			"run_time_s": 81.9666666666667,
-			"upgrade_cost": 0.0,
-			"upgrades_bought": [],
-			"upgrades_bought_count": 0,
-			"wallet_after_earn": 3570,
-			"wallet_after_spend": 3570,
-			"wallet_before": 3370
+			"run_time_s": 25.6333333333333,
+			"upgrade_cost": 356.0,
+			"upgrades_bought": [
+				"encroaching_horde"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 1243,
+			"wallet_after_spend": 887,
+			"wallet_before": 739
 		},
 		{
 			"boss_defeated": false,
 			"boss_segments_broken": 0,
-			"coins_gained": 220,
-			"enemies_killed": 22,
-			"kill_delta": 2,
-			"level": 1,
+			"coins_gained": 2142,
+			"enemies_killed": 18,
+			"kill_delta": 14,
+			"level": 3,
 			"run": 18,
-			"run_time_s": 88.2,
-			"upgrade_cost": 0.0,
-			"upgrades_bought": [],
-			"upgrades_bought_count": 0,
-			"wallet_after_earn": 3790,
-			"wallet_after_spend": 3790,
-			"wallet_before": 3570
+			"run_time_s": 84.6666666666667,
+			"upgrade_cost": 383.0,
+			"upgrades_bought": [
+				"reinforced_plates"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 3029,
+			"wallet_after_spend": 2646,
+			"wallet_before": 887
 		},
 		{
 			"boss_defeated": false,
 			"boss_segments_broken": 0,
-			"coins_gained": 230,
-			"enemies_killed": 23,
-			"kill_delta": 1,
-			"level": 1,
+			"coins_gained": 567,
+			"enemies_killed": 5,
+			"kill_delta": -13,
+			"level": 3,
 			"run": 19,
-			"run_time_s": 91.3166666666667,
-			"upgrade_cost": 0.0,
-			"upgrades_bought": [],
-			"upgrades_bought_count": 0,
-			"wallet_after_earn": 4020,
-			"wallet_after_spend": 4020,
-			"wallet_before": 3790
+			"run_time_s": 30.1333333333333,
+			"upgrade_cost": 1224.0,
+			"upgrades_bought": [
+				"recruit_guardian"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 3213,
+			"wallet_after_spend": 1989,
+			"wallet_before": 2646
 		},
 		{
 			"boss_defeated": false,
 			"boss_segments_broken": 0,
-			"coins_gained": 240,
-			"enemies_killed": 24,
-			"kill_delta": 1,
-			"level": 1,
+			"coins_gained": 3465,
+			"enemies_killed": 29,
+			"kill_delta": 24,
+			"level": 3,
 			"run": 20,
-			"run_time_s": 119.483333333333,
-			"upgrade_cost": 0.0,
-			"upgrades_bought": [],
-			"upgrades_bought_count": 0,
-			"wallet_after_earn": 4260,
-			"wallet_after_spend": 4260,
-			"wallet_before": 4020
+			"run_time_s": 131.216666666667,
+			"upgrade_cost": 1116.0,
+			"upgrades_bought": [
+				"guardian_fortify_unlock"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 5454,
+			"wallet_after_spend": 4338,
+			"wallet_before": 1989
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 504,
+			"enemies_killed": 4,
+			"kill_delta": -25,
+			"level": 3,
+			"run": 21,
+			"run_time_s": 28.4666666666667,
+			"upgrade_cost": 397.0,
+			"upgrades_bought": [
+				"field_magnet"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 4842,
+			"wallet_after_spend": 4445,
+			"wallet_before": 4338
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3439,
+			"enemies_killed": 27,
+			"kill_delta": 23,
+			"level": 3,
+			"run": 22,
+			"run_time_s": 125.816666666667,
+			"upgrade_cost": 438.0,
+			"upgrades_bought": [
+				"condensed_cores_60"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 7884,
+			"wallet_after_spend": 7446,
+			"wallet_before": 4445
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 568,
+			"enemies_killed": 4,
+			"kill_delta": -23,
+			"level": 3,
+			"run": 23,
+			"run_time_s": 27.5,
+			"upgrade_cost": 465.0,
+			"upgrades_bought": [
+				"focused_breathing_60"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 8014,
+			"wallet_after_spend": 7549,
+			"wallet_before": 7446
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 710,
+			"enemies_killed": 5,
+			"kill_delta": 1,
+			"level": 3,
+			"run": 24,
+			"run_time_s": 33.7833333333333,
+			"upgrade_cost": 520.0,
+			"upgrades_bought": [
+				"supply_lenses"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 8259,
+			"wallet_after_spend": 7739,
+			"wallet_before": 7549
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3349,
+			"enemies_killed": 23,
+			"kill_delta": 18,
+			"level": 3,
+			"run": 25,
+			"run_time_s": 110.933333333333,
+			"upgrade_cost": 575.0,
+			"upgrades_bought": [
+				"knight_bloodline_1_60"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 11088,
+			"wallet_after_spend": 10513,
+			"wallet_before": 7739
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 790,
+			"enemies_killed": 5,
+			"kill_delta": -18,
+			"level": 3,
+			"run": 26,
+			"run_time_s": 34.85,
+			"upgrade_cost": 1764.0,
+			"upgrades_bought": [
+				"recruit_mage"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 11303,
+			"wallet_after_spend": 9539,
+			"wallet_before": 10513
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 632,
+			"enemies_killed": 4,
+			"kill_delta": -1,
+			"level": 3,
+			"run": 27,
+			"run_time_s": 27.4666666666667,
+			"upgrade_cost": 1584.0,
+			"upgrades_bought": [
+				"mage_storm_unlock"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 10171,
+			"wallet_after_spend": 8587,
+			"wallet_before": 9539
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 1264,
+			"enemies_killed": 8,
+			"kill_delta": 4,
+			"level": 3,
+			"run": 28,
+			"run_time_s": 41.0833333333333,
+			"upgrade_cost": 575.0,
+			"upgrades_bought": [
+				"stride_rhythm"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 9851,
+			"wallet_after_spend": 9276,
+			"wallet_before": 8587
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 537,
+			"enemies_killed": 4,
+			"kill_delta": -4,
+			"level": 3,
+			"run": 29,
+			"run_time_s": 26.65,
+			"upgrade_cost": 588.0,
+			"upgrades_bought": [
+				"wave_bringer_1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 9813,
+			"wallet_after_spend": 9225,
+			"wallet_before": 9276
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 948,
+			"enemies_killed": 6,
+			"kill_delta": 2,
+			"level": 3,
+			"run": 30,
+			"run_time_s": 34.65,
+			"upgrade_cost": 629.0,
+			"upgrades_bought": [
+				"impact_weave"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 10173,
+			"wallet_after_spend": 9544,
+			"wallet_before": 9225
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 537,
+			"enemies_killed": 4,
+			"kill_delta": -2,
+			"level": 3,
+			"run": 31,
+			"run_time_s": 25.8333333333333,
+			"upgrade_cost": 630.0,
+			"upgrades_bought": [
+				"core_knight_speed__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 10081,
+			"wallet_after_spend": 9451,
+			"wallet_before": 9544
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 1801,
+			"enemies_killed": 12,
+			"kill_delta": 8,
+			"level": 3,
+			"run": 32,
+			"run_time_s": 58.5166666666667,
+			"upgrade_cost": 648.0,
+			"upgrades_bought": [
+				"core_knight_damage__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 11252,
+			"wallet_after_spend": 10604,
+			"wallet_before": 9451
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2812,
+			"enemies_killed": 19,
+			"kill_delta": 7,
+			"level": 3,
+			"run": 33,
+			"run_time_s": 67.4833333333333,
+			"upgrade_cost": 657.0,
+			"upgrades_bought": [
+				"power_reservoir_1_60"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 13416,
+			"wallet_after_spend": 12759,
+			"wallet_before": 10604
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 1927,
+			"enemies_killed": 14,
+			"kill_delta": -5,
+			"level": 3,
+			"run": 34,
+			"run_time_s": 51.7666666666667,
+			"upgrade_cost": 666.0,
+			"upgrades_bought": [
+				"core_armor__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 14686,
+			"wallet_after_spend": 14020,
+			"wallet_before": 12759
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2433,
+			"enemies_killed": 16,
+			"kill_delta": 2,
+			"level": 3,
+			"run": 35,
+			"run_time_s": 61.2333333333333,
+			"upgrade_cost": 684.0,
+			"upgrades_bought": [
+				"core_knight_active_cap__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 16453,
+			"wallet_after_spend": 15769,
+			"wallet_before": 14020
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2433,
+			"enemies_killed": 16,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 36,
+			"run_time_s": 59.0333333333333,
+			"upgrade_cost": 684.0,
+			"upgrades_bought": [
+				"quick_invocation_1_60"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 18202,
+			"wallet_after_spend": 17518,
+			"wallet_before": 15769
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 1327,
+			"enemies_killed": 9,
+			"kill_delta": -7,
+			"level": 3,
+			"run": 37,
+			"run_time_s": 34.45,
+			"upgrade_cost": 702.0,
+			"upgrades_bought": [
+				"core_archer_speed__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 18845,
+			"wallet_after_spend": 18143,
+			"wallet_before": 17518
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2275,
+			"enemies_killed": 15,
+			"kill_delta": 6,
+			"level": 3,
+			"run": 38,
+			"run_time_s": 51.7166666666667,
+			"upgrade_cost": 702.0,
+			"upgrades_bought": [
+				"core_drop__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 20418,
+			"wallet_after_spend": 19716,
+			"wallet_before": 18143
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3300,
+			"enemies_killed": 20,
+			"kill_delta": 5,
+			"level": 3,
+			"run": 39,
+			"run_time_s": 69.3833333333333,
+			"upgrade_cost": 941.0,
+			"upgrades_bought": [
+				"core_drop__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 23016,
+			"wallet_after_spend": 22075,
+			"wallet_before": 19716
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2733,
+			"enemies_killed": 17,
+			"kill_delta": -3,
+			"level": 3,
+			"run": 40,
+			"run_time_s": 63.05,
+			"upgrade_cost": 1261.0,
+			"upgrades_bought": [
+				"core_drop__L3"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 24808,
+			"wallet_after_spend": 23547,
+			"wallet_before": 22075
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 1440,
+			"enemies_killed": 8,
+			"kill_delta": -9,
+			"level": 3,
+			"run": 41,
+			"run_time_s": 35.2833333333333,
+			"upgrade_cost": 1689.0,
+			"upgrades_bought": [
+				"core_drop__L4"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 24987,
+			"wallet_after_spend": 23298,
+			"wallet_before": 23547
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3233,
+			"enemies_killed": 19,
+			"kill_delta": 11,
+			"level": 3,
+			"run": 42,
+			"run_time_s": 63.8166666666667,
+			"upgrade_cost": 941.0,
+			"upgrades_bought": [
+				"core_archer_speed__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 26531,
+			"wallet_after_spend": 25590,
+			"wallet_before": 23298
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 4136,
+			"enemies_killed": 22,
+			"kill_delta": 3,
+			"level": 3,
+			"run": 43,
+			"run_time_s": 74.4666666666667,
+			"upgrade_cost": 602.0,
+			"upgrades_bought": [
+				"boss_stance_60"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 29726,
+			"wallet_after_spend": 29124,
+			"wallet_before": 25590
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 1165,
+			"enemies_killed": 8,
+			"kill_delta": -14,
+			"level": 3,
+			"run": 44,
+			"run_time_s": 32.9666666666667,
+			"upgrade_cost": 720.0,
+			"upgrades_bought": [
+				"core_archer_damage__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 30289,
+			"wallet_after_spend": 29569,
+			"wallet_before": 29124
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 1955,
+			"enemies_killed": 12,
+			"kill_delta": 4,
+			"level": 3,
+			"run": 45,
+			"run_time_s": 40.5833333333333,
+			"upgrade_cost": 965.0,
+			"upgrades_bought": [
+				"core_archer_damage__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 31524,
+			"wallet_after_spend": 30559,
+			"wallet_before": 29569
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3609,
+			"enemies_killed": 21,
+			"kill_delta": 9,
+			"level": 3,
+			"run": 46,
+			"run_time_s": 75.0833333333333,
+			"upgrade_cost": 1293.0,
+			"upgrades_bought": [
+				"core_archer_damage__L3"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 34168,
+			"wallet_after_spend": 32875,
+			"wallet_before": 30559
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3384,
+			"enemies_killed": 18,
+			"kill_delta": -3,
+			"level": 3,
+			"run": 47,
+			"run_time_s": 54.5666666666667,
+			"upgrade_cost": 1732.0,
+			"upgrades_bought": [
+				"core_archer_damage__L4"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 36259,
+			"wallet_after_spend": 34527,
+			"wallet_before": 32875
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3346,
+			"enemies_killed": 19,
+			"kill_delta": 1,
+			"level": 3,
+			"run": 48,
+			"run_time_s": 57.3666666666667,
+			"upgrade_cost": 720.0,
+			"upgrades_bought": [
+				"core_density__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 37873,
+			"wallet_after_spend": 37153,
+			"wallet_before": 34527
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2736,
+			"enemies_killed": 18,
+			"kill_delta": -1,
+			"level": 3,
+			"run": 49,
+			"run_time_s": 58.5166666666667,
+			"upgrade_cost": 972.0,
+			"upgrades_bought": [
+				"core_density__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 39889,
+			"wallet_after_spend": 38917,
+			"wallet_before": 37153
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2812,
+			"enemies_killed": 21,
+			"kill_delta": 3,
+			"level": 3,
+			"run": 50,
+			"run_time_s": 65.7833333333333,
+			"upgrade_cost": 738.0,
+			"upgrades_bought": [
+				"core_power__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 41729,
+			"wallet_after_spend": 40991,
+			"wallet_before": 38917
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3192,
+			"enemies_killed": 18,
+			"kill_delta": -3,
+			"level": 3,
+			"run": 51,
+			"run_time_s": 55.7333333333333,
+			"upgrade_cost": 996.0,
+			"upgrades_bought": [
+				"core_power__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 44183,
+			"wallet_after_spend": 43187,
+			"wallet_before": 40991
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3952,
+			"enemies_killed": 27,
+			"kill_delta": 9,
+			"level": 3,
+			"run": 52,
+			"run_time_s": 78.8833333333333,
+			"upgrade_cost": 1345.0,
+			"upgrades_bought": [
+				"core_power__L3"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 47139,
+			"wallet_after_spend": 45794,
+			"wallet_before": 43187
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 5092,
+			"enemies_killed": 29,
+			"kill_delta": 2,
+			"level": 3,
+			"run": 53,
+			"run_time_s": 82.4666666666667,
+			"upgrade_cost": 739.0,
+			"upgrades_bought": [
+				"scrap_broker"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 50886,
+			"wallet_after_spend": 50147,
+			"wallet_before": 45794
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3686,
+			"enemies_killed": 25,
+			"kill_delta": -4,
+			"level": 3,
+			"run": 54,
+			"run_time_s": 73.9666666666667,
+			"upgrade_cost": 756.0,
+			"upgrades_bought": [
+				"core_archer_active_cap__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 53833,
+			"wallet_after_spend": 53077,
+			"wallet_before": 50147
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3800,
+			"enemies_killed": 26,
+			"kill_delta": 1,
+			"level": 3,
+			"run": 55,
+			"run_time_s": 77.8333333333333,
+			"upgrade_cost": 763.0,
+			"upgrades_bought": [
+				"extra_skill_001"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 56877,
+			"wallet_after_spend": 56114,
+			"wallet_before": 53077
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3821,
+			"enemies_killed": 28,
+			"kill_delta": 2,
+			"level": 3,
+			"run": 56,
+			"run_time_s": 79.4,
+			"upgrade_cost": 780.0,
+			"upgrades_bought": [
+				"line_pressure_1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 59935,
+			"wallet_after_spend": 59155,
+			"wallet_before": 56114
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 4670,
+			"enemies_killed": 32,
+			"kill_delta": 4,
+			"level": 3,
+			"run": 57,
+			"run_time_s": 86.6,
+			"upgrade_cost": 792.0,
+			"upgrades_bought": [
+				"core_guardian_speed__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 63825,
+			"wallet_after_spend": 63033,
+			"wallet_before": 59155
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3705,
+			"enemies_killed": 23,
+			"kill_delta": -9,
+			"level": 3,
+			"run": 58,
+			"run_time_s": 66.6333333333333,
+			"upgrade_cost": 793.0,
+			"upgrades_bought": [
+				"boss_readiness_60"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 66738,
+			"wallet_after_spend": 65945,
+			"wallet_before": 63033
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3049,
+			"enemies_killed": 29,
+			"kill_delta": 6,
+			"level": 3,
+			"run": 59,
+			"run_time_s": 80.1333333333333,
+			"upgrade_cost": 807.0,
+			"upgrades_bought": [
+				"momentum_carry"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 68994,
+			"wallet_after_spend": 68187,
+			"wallet_before": 65945
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3667,
+			"enemies_killed": 25,
+			"kill_delta": -4,
+			"level": 3,
+			"run": 60,
+			"run_time_s": 71.7666666666667,
+			"upgrade_cost": 810.0,
+			"upgrades_bought": [
+				"core_guardian_damage__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 71854,
+			"wallet_after_spend": 71044,
+			"wallet_before": 68187
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3937,
+			"enemies_killed": 28,
+			"kill_delta": 3,
+			"level": 3,
+			"run": 61,
+			"run_time_s": 81.0333333333333,
+			"upgrade_cost": 816.0,
+			"upgrades_bought": [
+				"extra_skill_002"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 74981,
+			"wallet_after_spend": 74165,
+			"wallet_before": 71044
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2978,
+			"enemies_killed": 42,
+			"kill_delta": 14,
+			"level": 3,
+			"run": 62,
+			"run_time_s": 123.566666666667,
+			"upgrade_cost": 821.0,
+			"upgrades_bought": [
+				"hemostasis_mesh"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 77143,
+			"wallet_after_spend": 76322,
+			"wallet_before": 74165
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 4154,
+			"enemies_killed": 28,
+			"kill_delta": -14,
+			"level": 3,
+			"run": 63,
+			"run_time_s": 81.4166666666667,
+			"upgrade_cost": 846.0,
+			"upgrades_bought": [
+				"core_guardian_active_cap__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 80476,
+			"wallet_after_spend": 79630,
+			"wallet_before": 76322
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3332,
+			"enemies_killed": 25,
+			"kill_delta": -3,
+			"level": 3,
+			"run": 64,
+			"run_time_s": 71.1,
+			"upgrade_cost": 844.0,
+			"upgrades_bought": [
+				"core_knight_speed__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 82962,
+			"wallet_after_spend": 82118,
+			"wallet_before": 79630
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2704,
+			"enemies_killed": 32,
+			"kill_delta": 7,
+			"level": 3,
+			"run": 65,
+			"run_time_s": 88.7833333333333,
+			"upgrade_cost": 864.0,
+			"upgrades_bought": [
+				"core_mage_speed__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 84822,
+			"wallet_after_spend": 83958,
+			"wallet_before": 82118
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3958,
+			"enemies_killed": 31,
+			"kill_delta": -1,
+			"level": 3,
+			"run": 66,
+			"run_time_s": 82.1833333333333,
+			"upgrade_cost": 868.0,
+			"upgrades_bought": [
+				"extra_skill_003"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 87916,
+			"wallet_after_spend": 87048,
+			"wallet_before": 83958
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3762,
+			"enemies_killed": 33,
+			"kill_delta": 2,
+			"level": 3,
+			"run": 67,
+			"run_time_s": 86.1666666666667,
+			"upgrade_cost": 1166.0,
+			"upgrades_bought": [
+				"core_mage_speed__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 90810,
+			"wallet_after_spend": 89644,
+			"wallet_before": 87048
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3880,
+			"enemies_killed": 39,
+			"kill_delta": 6,
+			"level": 3,
+			"run": 68,
+			"run_time_s": 101.216666666667,
+			"upgrade_cost": 868.0,
+			"upgrades_bought": [
+				"core_knight_damage__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 93524,
+			"wallet_after_spend": 92656,
+			"wallet_before": 89644
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3448,
+			"enemies_killed": 42,
+			"kill_delta": 3,
+			"level": 3,
+			"run": 69,
+			"run_time_s": 129.916666666667,
+			"upgrade_cost": 876.0,
+			"upgrades_bought": [
+				"extended_channel_1_60"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 96104,
+			"wallet_after_spend": 95228,
+			"wallet_before": 92656
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2430,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 70,
+			"run_time_s": 131.766666666667,
+			"upgrade_cost": 882.0,
+			"upgrades_bought": [
+				"core_mage_damage__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 97658,
+			"wallet_after_spend": 96776,
+			"wallet_before": 95228
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3488,
+			"enemies_killed": 41,
+			"kill_delta": -1,
+			"level": 3,
+			"run": 71,
+			"run_time_s": 100.55,
+			"upgrade_cost": 892.0,
+			"upgrades_bought": [
+				"core_armor__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 100264,
+			"wallet_after_spend": 99372,
+			"wallet_before": 96776
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3174,
+			"enemies_killed": 42,
+			"kill_delta": 1,
+			"level": 3,
+			"run": 72,
+			"run_time_s": 112.1,
+			"upgrade_cost": 1196.0,
+			"upgrades_bought": [
+				"core_armor__L3"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 102546,
+			"wallet_after_spend": 101350,
+			"wallet_before": 99372
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3174,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 73,
+			"run_time_s": 125.383333333333,
+			"upgrade_cost": 903.0,
+			"upgrades_bought": [
+				"overflow_capture"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 104524,
+			"wallet_after_spend": 103621,
+			"wallet_before": 101350
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 3,
+			"coins_gained": 2234,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 74,
+			"run_time_s": 145.133333333333,
+			"upgrade_cost": 918.0,
+			"upgrades_bought": [
+				"core_mage_active_cap__L1"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 105855,
+			"wallet_after_spend": 104937,
+			"wallet_before": 103621
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 1,
+			"coins_gained": 2430,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 75,
+			"run_time_s": 139.416666666667,
+			"upgrade_cost": 921.0,
+			"upgrades_bought": [
+				"extra_skill_004"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 107367,
+			"wallet_after_spend": 106446,
+			"wallet_before": 104937
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2704,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 76,
+			"run_time_s": 125.75,
+			"upgrade_cost": 923.0,
+			"upgrades_bought": [
+				"core_knight_active_cap__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 109150,
+			"wallet_after_spend": 108227,
+			"wallet_before": 106446
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 2,
+			"coins_gained": 2586,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 77,
+			"run_time_s": 138.3,
+			"upgrade_cost": 930.0,
+			"upgrades_bought": [
+				"taxonomy_scanner"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 110813,
+			"wallet_after_spend": 109883,
+			"wallet_before": 108227
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2586,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 78,
+			"run_time_s": 122.633333333333,
+			"upgrade_cost": 973.0,
+			"upgrades_bought": [
+				"extra_skill_005"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 112469,
+			"wallet_after_spend": 111496,
+			"wallet_before": 109883
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 3,
+			"coins_gained": 3174,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 79,
+			"run_time_s": 141.766666666667,
+			"upgrade_cost": 985.0,
+			"upgrades_bought": [
+				"archer_drill_1_60"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 114670,
+			"wallet_after_spend": 113685,
+			"wallet_before": 111496
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 2,
+			"coins_gained": 2234,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 80,
+			"run_time_s": 140.35,
+			"upgrade_cost": 985.0,
+			"upgrades_bought": [
+				"route_memory"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 115919,
+			"wallet_after_spend": 114934,
+			"wallet_before": 113685
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 2,
+			"coins_gained": 2430,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 81,
+			"run_time_s": 142.816666666667,
+			"upgrade_cost": 1012.0,
+			"upgrades_bought": [
+				"boss_fracture_study_60"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 117364,
+			"wallet_after_spend": 116352,
+			"wallet_before": 114934
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 2,
+			"coins_gained": 3405,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 82,
+			"run_time_s": 134.866666666667,
+			"upgrade_cost": 1012.0,
+			"upgrades_bought": [
+				"shock_padding"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 119757,
+			"wallet_after_spend": 118745,
+			"wallet_before": 116352
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 1,
+			"coins_gained": 3326,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 83,
+			"run_time_s": 132.483333333333,
+			"upgrade_cost": 1026.0,
+			"upgrades_bought": [
+				"extra_skill_006"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 122071,
+			"wallet_after_spend": 121045,
+			"wallet_before": 118745
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2296,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 84,
+			"run_time_s": 123.116666666667,
+			"upgrade_cost": 1067.0,
+			"upgrades_bought": [
+				"crowd_ecology"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 123341,
+			"wallet_after_spend": 122274,
+			"wallet_before": 121045
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 2574,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 85,
+			"run_time_s": 128.9,
+			"upgrade_cost": 1079.0,
+			"upgrades_bought": [
+				"extra_skill_007"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 124848,
+			"wallet_after_spend": 123769,
+			"wallet_before": 122274
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 3247,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 86,
+			"run_time_s": 123.35,
+			"upgrade_cost": 1122.0,
+			"upgrades_bought": [
+				"archer_piercing_geometry_60"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 127016,
+			"wallet_after_spend": 125894,
+			"wallet_before": 123769
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 0,
+			"coins_gained": 4118,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 87,
+			"run_time_s": 126.416666666667,
+			"upgrade_cost": 1021.0,
+			"upgrades_bought": [
+				"core_archer_active_cap__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 130012,
+			"wallet_after_spend": 128991,
+			"wallet_before": 125894
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 3,
+			"coins_gained": 2732,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 88,
+			"run_time_s": 138.316666666667,
+			"upgrade_cost": 1069.0,
+			"upgrades_bought": [
+				"core_guardian_speed__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 131723,
+			"wallet_after_spend": 130654,
+			"wallet_before": 128991
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 3,
+			"coins_gained": 2455,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 89,
+			"run_time_s": 140.75,
+			"upgrade_cost": 1094.0,
+			"upgrades_bought": [
+				"core_guardian_damage__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 133109,
+			"wallet_after_spend": 132015,
+			"wallet_before": 130654
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 6,
+			"coins_gained": 2574,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 90,
+			"run_time_s": 149.65,
+			"upgrade_cost": 1122.0,
+			"upgrades_bought": [
+				"power_reservoir_2_60"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 134589,
+			"wallet_after_spend": 133467,
+			"wallet_before": 132015
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 3,
+			"coins_gained": 2178,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 91,
+			"run_time_s": 143.933333333333,
+			"upgrade_cost": 1131.0,
+			"upgrades_bought": [
+				"core_knight_speed__L3"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 135645,
+			"wallet_after_spend": 134514,
+			"wallet_before": 133467
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 4,
+			"coins_gained": 2573,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 92,
+			"run_time_s": 140.55,
+			"upgrade_cost": 1131.0,
+			"upgrades_bought": [
+				"extra_skill_008"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 137087,
+			"wallet_after_spend": 135956,
+			"wallet_before": 134514
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 6,
+			"coins_gained": 3049,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 93,
+			"run_time_s": 141.933333333333,
+			"upgrade_cost": 1151.0,
+			"upgrades_bought": [
+				"core_guardian_active_cap__L2"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 139005,
+			"wallet_after_spend": 137854,
+			"wallet_before": 135956
+		},
+		{
+			"boss_defeated": false,
+			"boss_segments_broken": 3,
+			"coins_gained": 2851,
+			"enemies_killed": 42,
+			"kill_delta": 0,
+			"level": 3,
+			"run": 94,
+			"run_time_s": 133.433333333333,
+			"upgrade_cost": 1164.0,
+			"upgrades_bought": [
+				"core_knight_damage__L3"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 140705,
+			"wallet_after_spend": 139541,
+			"wallet_before": 137854
+		},
+		{
+			"boss_defeated": true,
+			"boss_segments_broken": 8,
+			"coins_gained": 2574,
+			"enemies_killed": 43,
+			"kill_delta": 1,
+			"level": 3,
+			"run": 95,
+			"run_time_s": 138.5,
+			"upgrade_cost": 1559.0,
+			"upgrades_bought": [
+				"core_knight_damage__L4"
+			],
+			"upgrades_bought_count": 1,
+			"wallet_after_earn": 142115,
+			"wallet_after_spend": 140556,
+			"wallet_before": 139541
 		}
 	],
-	"runs_to_l3_boss_clear": 20,
+	"runs_to_l3_boss_clear": 95,
 	"seed": 1101,
-	"total_time_s_to_l3_boss_clear": 1830.3
+	"total_time_s_to_l3_boss_clear": 8586.88333333334
 }

@@ -9,9 +9,9 @@ var to_state
 const BASE_TRANSITION_ANIM_DURATION: float = 1.0
 const LOAD_TIME_SMOOTHING: float = 0.35
 
-@export var scene_change_min_duration: float = 1.1
-@export var scene_change_max_duration: float = 3.5
-@export var node_transition_duration: float = 0.9
+@export var scene_change_min_duration: float = 1.8
+@export var scene_change_max_duration: float = 5.0
+@export var node_transition_duration: float = 1.6
 
 var estimated_scene_load_seconds: float = 0.35
 var scene_change_started_msec: int = 0

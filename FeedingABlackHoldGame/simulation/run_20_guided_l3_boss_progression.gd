@@ -155,6 +155,21 @@ func _buy_single_best_upgrade(price_mult: float) -> Dictionary:
 			best_score = score
 			best_cost = cost_i
 
+	# Fallback: when no effectiveness data (or no positive score), buy cheapest affordable upgrade.
+	if best_id == "":
+		var fallback_cost: int = 2147483647
+		for upgrade in upgrades:
+			if not _can_buy_upgrade(upgrade):
+				continue
+			var id: String = str(upgrade.get("id", ""))
+			var cost_i: int = int(round(float(upgrade.get("cost", 0.0)) * price_mult))
+			if int(_sh().fishing_currency) < cost_i:
+				continue
+			if cost_i < fallback_cost:
+				best_id = id
+				best_cost = cost_i
+				fallback_cost = cost_i
+
 	if best_id == "":
 		return {"keys": [], "count": 0, "cost": 0.0}
 
@@ -218,14 +233,17 @@ func _load_upgrade_data() -> void:
 
 func _load_effectiveness_data() -> void:
 	effectiveness_by_id.clear()
-	if not FileAccess.file_exists(EFFECTIVENESS_PATH):
-		push_error("Guided progression: effectiveness file not found at %s" % EFFECTIVENESS_PATH)
+	var abs_path: String = ProjectSettings.globalize_path(EFFECTIVENESS_PATH)
+	if not FileAccess.file_exists(abs_path):
+		push_warning("Guided progression: effectiveness file not found at %s; will use cheapest-affordable fallback." % abs_path)
 		return
-	var raw: String = FileAccess.get_file_as_string(EFFECTIVENESS_PATH)
+	var raw: String = FileAccess.get_file_as_string(abs_path)
 	if raw == "":
+		push_warning("Guided progression: effectiveness file empty; will use cheapest-affordable fallback.")
 		return
 	var parsed = JSON.parse_string(raw)
 	if parsed == null or not (parsed is Dictionary):
+		push_warning("Guided progression: failed to parse effectiveness JSON; will use cheapest-affordable fallback.")
 		return
 	var dict_sim: Dictionary = parsed
 	var rows_variant: Variant = dict_sim.get("upgrades", [])

@@ -1,6 +1,9 @@
 extends Node2D
 class_name MainMenu
 
+const HERO_SCENE: PackedScene = preload("res://Fishing/CombatSprite.tscn")
+const PLATFORMING_PACK_SPRITES := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites"
+
 
 enum STATES{MENU, SETTINGS, GAME_MODE}
 
@@ -114,6 +117,65 @@ func _ready():
     SignalBus.pallet_updated.connect(_on_pallet_updated)
 
     update_color()
+
+    # Replace Black Hole Art with a simple hero/enemy showcase and update title
+    var pivot = get_node_or_null("Pivot")
+    if pivot:
+        var black_hole = pivot.get_node_or_null("Black Hole Art")
+        if black_hole:
+            black_hole.queue_free()
+
+        var showcase = Node2D.new()
+        showcase.name = "StartShowcase"
+        pivot.add_child(showcase)
+
+        # Compose and add a knight hero
+        var character_base: String = PLATFORMING_PACK_SPRITES + "/Characters/Default"
+        var knight_visual: Dictionary = _make_pack_actor(
+            character_base + "/character_beige_walk_a.png",
+            character_base + "/character_beige_walk_b.png",
+            character_base + "/character_beige_hit.png",
+            Vector2i(24, 24),
+            Color(0.25, 0.74, 0.98, 1.0),
+            "knight",
+            0.72
+        )
+        if knight_visual.size() > 0:
+            var hero: CombatSprite = HERO_SCENE.instantiate()
+            hero.position = Vector2(-80, 520)
+            hero.setup(knight_visual["sheet"], knight_visual["frame"], float(knight_visual.get("scale", 0.72)), "knight")
+            showcase.add_child(hero)
+
+        # Compose and add a goblin enemy for contrast
+        var enemy_base: String = PLATFORMING_PACK_SPRITES + "/Enemies/Default"
+        var goblin_visual: Dictionary = _make_pack_actor(
+            enemy_base + "/snail_walk_a.png",
+            enemy_base + "/snail_walk_b.png",
+            enemy_base + "/snail_shell.png",
+            Vector2i(24, 24),
+            Color(0.83, 0.23, 0.23, 1.0),
+            "goblin",
+            0.72
+        )
+        if goblin_visual.size() > 0:
+            var enemy: CombatSprite = HERO_SCENE.instantiate()
+            enemy.position = Vector2(80, 520)
+            enemy.setup(goblin_visual["sheet"], goblin_visual["frame"], float(goblin_visual.get("scale", 0.72)))
+            showcase.add_child(enemy)
+
+    # Replace the logo with the new marketable title
+    var logo_node = get_node_or_null("CanvasLayer/MarginContainer2/Logo")
+    if logo_node:
+        logo_node.visible = false
+        var title_label: Label = Label.new()
+        title_label.text = "Vanguard: Idle Auto‑Battler"
+        title_label.align = Label.ALIGN_CENTER
+        title_label.valign = Label.VALIGN_CENTER
+        title_label.percent_visible = 1.0
+        title_label.rect_position = Vector2(-300, -180)
+        title_label.rect_size = Vector2(600, 100)
+        title_label.add_theme_font_override("font", %MarginContainer.get_theme().get_font("font")) if %MarginContainer and %MarginContainer.get_theme() != null else null
+        get_node("CanvasLayer").add_child(title_label)
 
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):
     update_input(input_type)
