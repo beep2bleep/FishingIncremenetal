@@ -1,5 +1,5 @@
 72322a848ab928aa5c89f0cb78209805
-::res://::1772305057
+::res://::1772340077
 AudioManager.gd::GDScript::4941860340453525065::1771452238::0::1::::<>Node<><>0<>0<><>::
 AudioManager.tscn::PackedScene::54465495702579191::1771452236::0::1::::<><><>0<>0<><>::uid://ccn4yn1d40xhh::::res://AudioManager.gd<>uid://blskskrd6wv02::::res://SoundEffectSettings.gd<>uid://dosb4necd57xd::::res://Sound Effect Settings/ON_ASTEROID_CLICKED.tres<>uid://b6qikoefluxvw::::res://Space/PLANET_HIT.tres<>uid://cljx0x06xwjv7::::res://Space/CLICK_HIT_NOTHING.tres<>uid://c4fm5w1x7k2fc::::res://Sound Effect Settings/ON_CLICKER_CRIT.tres<>uid://ym60vk45o62o::::res://Sound Effect Settings/TECH_TREE_NODE_HOVER.tres<>uid://cvhnupy4e3wxq::::res://Sound Effect Settings/TECH_TREE_NODE_CLICK.tres<>uid://bot5cscnl8syv::::res://Sound Effect Settings/ON_ASTEROID_DESTORY.tres<>uid://bta812gr33kre::::res://Sound Effect Settings/BLACK_HOLE_GROW.tres<>uid://dj56fnehm30as::::res://Sound Effect Settings/ELECTRIC.tres<>uid://btkxxf55qk555::::res://Sound Effect Settings/RADIOACTIVE_DOT.tres<>uid://67bnnj1qio3u::::res://Sound Effect Settings/ELECTRIC_CRIT.tres<>uid://bhhh52e7k2wb6::::res://Sound Effect Settings/FROZEN_PLANET_BREAK.tres<>uid://dg4m6bqnrcvq7::::res://Space/FORZEN_SHARD_IMPACT.tres<>uid://djd56ybvh24lu::::res://Space/PINATA_BREAK.tres<>uid://dbin7ecq76xf3::::res://Sound Effect Settings/PLANET_BREAK.tres<>uid://cs7l4k0hlwr3n::::res://Sound Effect Settings/ON_GOLDEN_BREAK.tres<>uid://by5sks1y51t0u::::res://Sound Effect Settings/ON_GOLDEN_BREAK_CRIT.tres<>uid://nx1cf4uokqgg::::res://Sound Effect Settings/ON_LASER.tres<>uid://cqxh5x06dry0w::::res://Sound Effect Settings/ON_LASER_CRIT.tres<>uid://b6ei7ku0bmh5k::::res://MOON.tres<>uid://btnexa0it15aj::::res://Sound Effect Settings/COMET.tres<>uid://dm66mxrxleap8::::res://Sound Effect Settings/SUPERNOVA.tres<>uid://wq2ig7kus4lt::::res://Sound Effect Settings/ELECTRIC_STAR.tres<>uid://duvymqc8s80lj::::res://Sound Effect Settings/ELECTRIC_STAR_CRIT.tres<>uid://b7lcm8xohssax::::res://Space/STAR_HIT.tres<>uid://cwsbg7078rsdp::::res://Space/STAR_DESTROYED.tres<>uid://ctiwlftq42vj0::::res://Sound Effect Settings/BLACK_HOLE_COLLAPSE.tres<>uid://sldv4bvsooaa::::res://Sound Effect Settings/BLACK_HOLE_GROW_MILESTONE.tres<>uid://x4t6mgva646k::::res://TECH_TREE_NODE_POP_IN.tres<>uid://c3jqq33opwpve::::res://Audio/Swipe.mp3<>uid://ccktdpcucgwh::::res://Sound Effect Settings/BUTTON_CLICK.tres<>uid://dh6dtu8aapieu::::res://Audio/bong_001.mp3
 Black Hole Art.gd::GDScript::5305764949934961224::1771452237::0::1::::BlackHoleArt<>Node2D<><>0<>0<><>::
@@ -576,7 +576,7 @@ ControllerIconPathSelector.gd::GDScript::4639057401788628707::1771452238::0::1::
 ControllerIconPathSelector.tscn::PackedScene::7740199033976191904::1771452238::0::1::::<><><>0<>0<><>::uid://b7dguk4mcwuhv::::res://addons/controller_icons/objects/ControllerIconPathSelector.gd<>uid://bituity863qe4::::res://addons/controller_icons/objects/path_selection/input_action.tscn<>uid://b3lplrf2w6kh7::::res://addons/controller_icons/objects/path_selection/joypad_path.tscn<>uid://d2ow6e2ba86b6::::res://addons/controller_icons/objects/path_selection/specific_path.tscn
 ControllerIconPathSelectorPopup.gd::GDScript::3975337224000428866::1771452237::0::1::::<>ConfirmationDialog<><>0<>1<><>::
 ControllerIconPathSelectorPopup.tscn::PackedScene::565621815148288384::1771452236::0::1::::<><><>0<>0<><>::uid://bwvxhudu0v8re::::res://addons/controller_icons/objects/ControllerIconPathSelectorPopup.gd<>uid://dijn7haax0boi::::res://addons/controller_icons/objects/ControllerIconPathSelector.tscn
-ControllerIconTexture.gd::GDScript::6803269723422001327::1771452236::0::1::::ControllerIconTexture<>Texture2D<><>0<>1<><>::
+ControllerIconTexture.gd::GDScript::6803269723422001327::1771452236::0::1::::ControllerIconTexture<>Texture2D<>res://addons/controller_icons/objects/controller_texture_icon.svg<>0<>1<><>::
 controller_texture_icon.svg::CompressedTexture2D::9200245899294600450::1771452237::1771452237::1::::<><><>0<>0<>2161ed8426de6df3a6a647307f06c346<>res://.godot/imported/controller_texture_icon.svg-c7feb059f1c41a49e9f62f5b03706d01.ctex::
 Sprite3D.gd::GDScript::127972899411661757::1771452236::0::1::::ControllerSprite3D<>Sprite3D<><>0<>1<><>::
 Sprite.gd::GDScript::4553762298088175708::1771452237::0::1::::ControllerSprite2D<>Sprite2D<><>0<>1<><>::
@@ -590,7 +590,7 @@ SpecificPathSelector.gd::GDScript::380687174288731736::1771452238::0::1::::<>Pan
 specific_path.tscn::PackedScene::9084653503164816549::1771452237::0::1::::<><><>0<>0<><>::uid://fon4kvuwavsa::::res://addons/controller_icons/objects/path_selection/SpecificPathSelector.gd
 ::res://addons/godotsteam/::1771538360
 godotsteam.gdextension::GDExtension::3788084473021594519::1771452236::0::1::::<><><>0<>0<><>::
-::res://addons/godotsteam/win64/::1772305053
+::res://addons/godotsteam/win64/::1772340074
 ::res://Art/::1771563715
 arrow_basic_w.png::CompressedTexture2D::4607398237885463803::1771452238::1771452238::1::::<><><>0<>0<>be03f0fa1c33405c13a84590ede5c5f4<>res://.godot/imported/arrow_basic_w.png-75079d670cab77b0305e97011464d47d.ctex::
 arrow_decorative_e.png::CompressedTexture2D::8867109142316125157::1771452238::1771452238::1::::<><><>0<>0<>cd1f7692c8c1bc2b8a417c94c401e6c7<>res://.godot/imported/arrow_decorative_e.png-c007a2a0a7906740267f94694fc414dc.ctex::
@@ -972,17 +972,17 @@ Showcase.tscn::PackedScene::2366688178393324741::1771452237::0::1::::<><><>0<>0<
 index.apple-touch-icon.png::CompressedTexture2D::1541724962292501447::1771452238::1771452238::1::::<><><>0<>0<>41dfc75a5137bc437a35f6efcff06e69<>res://.godot/imported/index.apple-touch-icon.png-bec44240503e0edb75d852ab0cc26d58.ctex::
 index.icon.png::CompressedTexture2D::3629862721479476427::1771452237::1771452237::1::::<><><>0<>0<>64d064f87bed16ce4524098ab042ac08<>res://.godot/imported/index.icon.png-8466b9836b3b13bcc45e53125321ef39.ctex::
 index.png::CompressedTexture2D::6576296408970124353::1771452237::1771452237::1::::<><><>0<>0<>96b31aa0d9e43f0196fda92504b9b964<>res://.godot/imported/index.png-d03311572afeb237347e3aea48014cb0.ctex::
-::res://Fishing/::1772304456
+::res://Fishing/::1772305777
 BattleScene.gd::GDScript::256483395540075428::1772304645::0::1::::<>Node2D<><>0<>0<><>::
 BattleScene.tscn::PackedScene::-1::1772138709::0::1::::<><><>0<>0<><>::res://Fishing/BattleScene.gd
 CoinPickup.gd::GDScript::4293323117044076259::1772141458::0::1::::CoinPickup<>Area2D<><>0<>0<><>::
 CoinPickup.tscn::PackedScene::-1::1772129712::0::1::::<><><>0<>0<><>::res://Fishing/CoinPickup.gd
-CombatSprite.gd::GDScript::9222949183729968108::1772288230::0::1::::CombatSprite<>Area2D<><>0<>0<><>::
+CombatSprite.gd::GDScript::9222949183729968108::1772306072::0::1::::CombatSprite<>Area2D<><>0<>0<><>::
 CombatSprite.tscn::PackedScene::-1::1772129712::0::1::::<><><>0<>0<><>::res://Fishing/CombatSprite.gd
 FishingUpgradeDB.gd::GDScript::6085080326067041982::1772305313::0::1::::FishingUpgradeDB<>RefCounted<><>0<>0<><>::
 FishingUpgradeScene.gd::GDScript::3136325295984075990::1772150544::0::1::::<>Control<><>0<>0<><>::
 FishingUpgradeScene.tscn::PackedScene::-1::1772150533::0::1::::<><><>0<>0<><>::res://Fishing/FishingUpgradeScene.gd
-FishingUpgradeTreeAdapter.gd::GDScript::2001329543834468694::1772305373::0::1::::FishingUpgradeTreeAdapter<>RefCounted<><>0<>0<><>::
+FishingUpgradeTreeAdapter.gd::GDScript::2001329543834468694::1772306021::0::1::::FishingUpgradeTreeAdapter<>RefCounted<><>0<>0<><>::
 ::res://Game Modes/::1771538361
 Compact Mode.tres::Resource/GameModeData::118880853731921676::1771452237::0::1::::<><><>0<>0<><>::uid://ftm4fwuq2swm::::res://GameModeData.gd<>uid://cw7es5l6vipb5::::res://Art/Mods/ASTEROID_DENSITY.png
 Demo Demo.tres::Resource/GameModeData::6674766242770533791::1771452238::0::1::::<><><>0<>0<><>::uid://ftm4fwuq2swm::::res://GameModeData.gd<>uid://j46l1lw3j3eu::::res://Art/DAMAGE ICON.png
@@ -997,7 +997,7 @@ Quick Play Mode.tres::Resource/GameModeData::4889467830237896732::1771452236::0:
 Roguelike Mode.tres::Resource/GameModeData::9110010076003080286::1771452238::0::1::::<><><>0<>0<><>::uid://ftm4fwuq2swm::::res://GameModeData.gd<>uid://bfvcqe7ydd810::::res://Art/Mods/question.png
 The Line Mode.tres::Resource/GameModeData::3037333765174301031::1771452237::0::1::::<><><>0<>0<><>::uid://ftm4fwuq2swm::::res://GameModeData.gd<>uid://y43s2w2sov8o::::res://Art/The Line.png
 Zen Mode.tres::Resource/GameModeData::867585989246980730::1771452237::0::1::::<><><>0<>0<><>::uid://ftm4fwuq2swm::::res://GameModeData.gd<>uid://ji27cltw8iwu::::res://Art/Zen Mode.png
-::res://generatedicon/::1772304881
+::res://generatedicon/::1772305382
 archer_drill_1_60.png::CompressedTexture2D::2948423410834905268::1772305369::1772305382::1::::<><><>0<>0<>cd83838d2ba51be00bf8680f21e73ea2<>res://.godot/imported/archer_drill_1_60.png-b846a7173a9a65220fb4147cb85b9eb5.ctex::
 archer_drill_2_60.png::CompressedTexture2D::3013748531690634288::1772305369::1772305382::1::::<><><>0<>0<>ff19d3435db11021af705104d1bb9049<>res://.godot/imported/archer_drill_2_60.png-d2f6012d5bd94c4e426e52610cfc9b2b.ctex::
 archer_pierce_unlock.png::CompressedTexture2D::1354323432054171351::1772305368::1772305382::1::::<><><>0<>0<>47474164ed86e32428b95175380d7274<>res://.godot/imported/archer_pierce_unlock.png-108b46c106a269b9d51164681ade3e2d.ctex::
@@ -1302,11 +1302,11 @@ Supernova.gdshader::Shader::5702106228092534688::1771452236::0::1::::<><><>0<>0<
 TextureOverlay.gdshader::Shader::4290976622088999832::1771452236::0::1::::<><><>0<>0<><>::
 ::res://Tech Tree Stuff/::1771538362
 Tech Tree Line.tscn::PackedScene::4017575202857147663::1771452237::0::1::::<><><>0<>0<><>::uid://bw4umcd6vxwt5::::res://Tech Tree Stuff/TechTreeLine.gd
-Tech Tree Node.tscn::PackedScene::6438748562329363085::1771452236::0::1::::<><><>0<>0<><>::uid://br56oyotqw2h4::::res://Tech Tree Stuff/TechTreeNode.gd<>uid://dbrs4v80meape::::res://Art/locked.png<>uid://qetgg583nnuo::::res://CustomTweenComponent.tscn<>uid://bs60jqufnqgue::::res://Art/Hexagon.png<>uid://da8n70owsmlhf::::res://Art/Space/Circle 32.png<>uid://c6puuqdi6eu44::::res://Art/Circle.png<>uid://bam4y74oqk12x::::res://Art/Mods/RUN_TIMER_BASE.png<>uid://bfvcqe7ydd810::::res://Art/Mods/question.png<>uid://dl1181xufyebq::::res://Theme/Theme.tres<>uid://bk8yp2c36tq7s::::res://Theme/Panel UI.tres<>uid://dhlpfrladpxn2::::res://Theme/Theme_Medium_Font.tres<>uid://f0mobaom23an::::res://Theme/Theme_Large_Font.tres<>uid://ci3sjch802mjw::::res://Audio/zapsplat_foley_stick_medium_swing_in_air_whoosh_fast_001_110466.mp3
+Tech Tree Node.tscn::PackedScene::6438748562329363085::1772305716::0::1::::<><><>0<>0<><>::uid://br56oyotqw2h4::::res://Tech Tree Stuff/TechTreeNode.gd<>uid://dbrs4v80meape::::res://Art/locked.png<>uid://qetgg583nnuo::::res://CustomTweenComponent.tscn<>uid://bs60jqufnqgue::::res://Art/Hexagon.png<>uid://da8n70owsmlhf::::res://Art/Space/Circle 32.png<>uid://c6puuqdi6eu44::::res://Art/Circle.png<>uid://bam4y74oqk12x::::res://Art/Mods/RUN_TIMER_BASE.png<>uid://bfvcqe7ydd810::::res://Art/Mods/question.png<>uid://dl1181xufyebq::::res://Theme/Theme.tres<>uid://bk8yp2c36tq7s::::res://Theme/Panel UI.tres<>uid://dhlpfrladpxn2::::res://Theme/Theme_Medium_Font.tres<>uid://f0mobaom23an::::res://Theme/Theme_Large_Font.tres<>uid://ci3sjch802mjw::::res://Audio/zapsplat_foley_stick_medium_swing_in_air_whoosh_fast_001_110466.mp3
 Tech Tree.tscn::PackedScene::2173232612519734454::1771452236::0::1::::<><><>0<>0<><>::uid://oep2oe05rsbw::::res://Tech Tree Stuff/TechTree.gd
 TechTree.gd::GDScript::991861035958406024::1772149814::0::1::::TechTree<>Node2D<><>0<>0<><>::
 TechTreeLine.gd::GDScript::3991678079098339876::1772148364::0::1::::TechTreeLine<>Line2D<><>0<>0<><>::
-TechTreeNode.gd::GDScript::3643470869125089671::1772304859::0::1::::TechTreeNode<>Node2D<><>0<>0<><>::
+TechTreeNode.gd::GDScript::3643470869125089671::1772305711::0::1::::TechTreeNode<>Node2D<><>0<>0<><>::
 ::res://Theme/::1772213298
 Custom Button Normal.tres::StyleBoxFlat::8913850023045260590::1771452237::0::1::::<><><>0<>0<><>::
 Custom Button Red.tres::StyleBoxFlat::1537214756695853041::1771452237::0::1::::<><><>0<>0<><>::

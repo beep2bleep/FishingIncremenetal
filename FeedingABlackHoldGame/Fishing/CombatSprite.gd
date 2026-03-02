@@ -18,7 +18,11 @@ var weapon_float_speed: float = 2.8
 var weapon_float_amp: float = 2.2
 var weapon_attack_tween: Tween = null
 const WEAPON_SCALE_RATIO: float = 3.0
-const WEAPON_HEIGHT_RATIO: float = -3.0
+const WEAPON_TARGET_X_RATIO: float = 0.55
+const WEAPON_TARGET_Y_RATIO: float = 0.0
+const WEAPON_LOCAL_ANCHOR: Vector2 = Vector2(18.0, -20.0)
+const WEAPON_LEFT_NUDGE_LOCAL: float = 2.0
+const ARCHER_BOW_CENTER_LOCAL: Vector2 = Vector2(17.0, -24.0)
 
 func _ensure_nodes() -> bool:
     if sprite == null:
@@ -71,8 +75,11 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := 
 
     weapon_type = str(role)
     var hero_size: Vector2 = Vector2(float(frame_size.x), float(frame_size.y)) * scale_factor
-    weapon_base_offset = Vector2(hero_size.x * 0.12, -hero_size.y * WEAPON_HEIGHT_RATIO)
-    weapon_layer.scale = Vector2.ONE * (scale_factor * WEAPON_SCALE_RATIO)
+    var weapon_world_scale: float = scale_factor * WEAPON_SCALE_RATIO
+    var target_point: Vector2 = Vector2(hero_size.x * WEAPON_TARGET_X_RATIO, -hero_size.y * WEAPON_TARGET_Y_RATIO)
+    target_point.x -= WEAPON_LEFT_NUDGE_LOCAL * weapon_world_scale
+    weapon_base_offset = target_point - (WEAPON_LOCAL_ANCHOR * weapon_world_scale)
+    weapon_layer.scale = Vector2.ONE * weapon_world_scale
     weapon_float_amp = 2.2 * scale_factor
     _setup_weapon_visual(weapon_type, frame_size, scale_factor)
     weapon_layer.visible = weapon_layer.get_child_count() > 0
@@ -174,9 +181,9 @@ func _add_line(parent: Node, points: Array[Vector2], width: float, color: Color)
     parent.add_child(line)
 
 func get_projectile_spawn_point() -> Vector2:
-    # Anchor around center of the floating bow for archer projectiles.
+    # Spawn arrows from the bow center in world space.
     if weapon_layer != null and weapon_type.to_lower() == "archer" and weapon_layer.get_child_count() > 0:
-        return weapon_layer.global_position + Vector2(20.0, -20.0)
+        return weapon_layer.to_global(ARCHER_BOW_CENTER_LOCAL)
     return global_position + Vector2(26.0, -12.0)
 
 func _stop_weapon_tween() -> void:

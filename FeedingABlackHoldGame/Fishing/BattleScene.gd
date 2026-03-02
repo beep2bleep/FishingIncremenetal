@@ -14,14 +14,16 @@ const LEVEL_ENEMY_TYPE := {
 }
 
 const FLOOR_Y := 640.0
-const HERO_START_X := -520.0
+const HERO_START_X := -511.5
 const HERO_SCROLL_ANCHOR_SCREEN_X_FACTOR := 0.08
 const CONTACT_RANGE := 48.0
 const SIM_STEP := 1.0 / 60.0
 const EXTRA_ZOOM_IN_FACTOR := 5.0
-const HERO_FORMATION_SPACING := 56.0
+const HERO_FORMATION_SPACING := 64.5
 const ENEMY_FORMATION_SPACING := 84.0
 const BOSS_SEGMENTS := 8
+const COIN_DESPAWN_MARGIN_X := 240.0
+const COIN_DESPAWN_MARGIN_Y := 220.0
 const DEFEAT_FALL_DURATION := 1.2
 const DEFEAT_FALL_ROT_SPEED := 1.8
 const BG_DEEP_BASE_Y := 220.0
@@ -133,6 +135,7 @@ var summary_panel: Panel
 var summary_label: Label
 var speed_button: Button
 var infinite_sim_button: Button
+var exit_battle_button: Button
 var level_choice_dialog: ConfirmationDialog
 
 var heroes: Array[CombatSprite] = []
@@ -229,6 +232,7 @@ func _bind_nodes() -> bool:
     currency_label = get_node_or_null("CanvasLayer/CurrencyLabel")
     speed_button = get_node_or_null("CanvasLayer/SpeedButton")
     infinite_sim_button = get_node_or_null("CanvasLayer/InfiniteSimButton")
+    exit_battle_button = get_node_or_null("CanvasLayer/ExitBattleButton")
     summary_panel = get_node_or_null("CanvasLayer/SummaryPanel")
     summary_label = get_node_or_null("CanvasLayer/SummaryPanel/SummaryLabel")
     level_choice_dialog = get_node_or_null("CanvasLayer/LevelChoiceDialog")
@@ -284,7 +288,7 @@ func _bind_nodes() -> bool:
     if level_choice_dialog != null and not level_choice_dialog.custom_action.is_connected(_on_level_choice_action):
         level_choice_dialog.custom_action.connect(_on_level_choice_action)
 
-    return world != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and ground != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and currency_label != null and speed_button != null and infinite_sim_button != null and summary_panel != null and summary_label != null and level_choice_dialog != null
+    return world != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and ground != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and currency_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and summary_panel != null and summary_label != null and level_choice_dialog != null
 
 func _clear_battle_entities() -> void:
     for arrow_data_variant in arrows:
@@ -319,7 +323,7 @@ func _reset_heroes_to_start() -> void:
         var hero: CombatSprite = heroes[i]
         if not is_instance_valid(hero):
             continue
-        hero.position = Vector2(HERO_START_X - float(i) * 40.0, FLOOR_Y)
+        hero.position = Vector2(HERO_START_X - float(i) * HERO_FORMATION_SPACING, FLOOR_Y)
         hero.modulate = Color(1.0, 1.0, 1.0, 1.0)
         hero.set_walking()
         if hero_data.has(hero):
@@ -342,11 +346,12 @@ func _setup_editor_speed_button() -> void:
         infinite_sim_button.hide()
 
 func _update_speed_button_enabled_state() -> void:
-    if speed_button == null or infinite_sim_button == null:
+    if speed_button == null or infinite_sim_button == null or exit_battle_button == null:
         return
     var disabled: bool = summary_panel != null and summary_panel.visible
     speed_button.disabled = disabled
     infinite_sim_button.disabled = disabled
+    exit_battle_button.disabled = disabled
 
 func _update_speed_button_text() -> void:
     if speed_button == null:
@@ -365,12 +370,20 @@ func _on_infinite_sim_button_pressed() -> void:
         return
     _run_infinite_simulation()
 
+func _on_exit_battle_button_pressed() -> void:
+    if battle_completed or summary_finalized:
+        return
+    _end_battle(false)
+    if not summary_finalized:
+        _run_defeat_pose_instant()
+
 func _run_infinite_simulation() -> void:
     if summary_panel.visible or battle_completed:
         return
-    if speed_button != null and infinite_sim_button != null:
+    if speed_button != null and infinite_sim_button != null and exit_battle_button != null:
         speed_button.disabled = true
         infinite_sim_button.disabled = true
+        exit_battle_button.disabled = true
 
     var was_world_visible: bool = world.visible
     world.visible = false
@@ -400,10 +413,11 @@ func _run_infinite_simulation() -> void:
 
     world.visible = was_world_visible
     suppress_floating_text = false
-    if speed_button != null and infinite_sim_button != null:
+    if speed_button != null and infinite_sim_button != null and exit_battle_button != null:
         speed_index = 0
         speed_button.disabled = false
         infinite_sim_button.disabled = false
+        exit_battle_button.disabled = false
     Engine.time_scale = SPEED_STEPS[speed_index]
     _update_speed_button_text()
     _update_ui()
@@ -474,16 +488,16 @@ func _setup_visuals() -> void:
 
 func _apply_parallax_depth_scales() -> void:
     # This scene is 2D. Depth is faked by shrinking farther layers and lifting them up.
-    bg_deep.scale = Vector2(0.28, 0.28)
-    bg_far.scale = Vector2(0.46, 0.46)
-    bg_mid.scale = Vector2(0.68, 0.68)
-    bg_near.scale = Vector2(0.9, 0.9)
+    bg_deep.scale = Vector2(0.18, 0.18)
+    bg_far.scale = Vector2(0.32, 0.32)
+    bg_mid.scale = Vector2(0.52, 0.52)
+    bg_near.scale = Vector2(0.76, 0.76)
     ground.scale = Vector2(1.0, 1.0)
 
-    bg_deep.position.y = BG_DEEP_BASE_Y - 110.0
-    bg_far.position.y = BG_FAR_BASE_Y - 68.0
-    bg_mid.position.y = BG_MID_BASE_Y - 32.0
-    bg_near.position.y = BG_NEAR_BASE_Y - 10.0
+    bg_deep.position.y = BG_DEEP_BASE_Y - 140.0
+    bg_far.position.y = BG_FAR_BASE_Y - 92.0
+    bg_mid.position.y = BG_MID_BASE_Y - 50.0
+    bg_near.position.y = BG_NEAR_BASE_Y - 20.0
     ground.position.y = GROUND_BASE_Y
 
 func _apply_level_background(level_index: int) -> void:
@@ -972,7 +986,7 @@ func _spawn_heroes() -> void:
     for i in range(roster.size()):
         var hero_name: String = roster[i]
         var hero: CombatSprite = HERO_SCENE.instantiate()
-        hero.position = Vector2(HERO_START_X - float(i) * 40.0, FLOOR_Y)
+        hero.position = Vector2(HERO_START_X - float(i) * HERO_FORMATION_SPACING, FLOOR_Y)
         var hero_visual: Dictionary = hero_sheets[hero_name]
         hero.setup(hero_visual["sheet"], hero_visual["frame"], float(hero_visual.get("scale", HERO_RENDER_SCALE)), hero_name)
         hero.clicked.connect(_on_hero_clicked.bind(hero_name))
@@ -1435,9 +1449,9 @@ func _kill_enemy(enemy: CombatSprite) -> void:
 
 func _spawn_coin(pos: Vector2, value: int) -> void:
     var coin: CoinPickup = COIN_SCENE.instantiate()
-    coin.position = pos + Vector2(randf_range(-8.0, 8.0), randf_range(-10.0, 4.0))
-    var launch_vx: float = randf_range(-55.0, 240.0)
-    var launch_vy: float = randf_range(-360.0, -190.0)
+    coin.position = pos + Vector2(randf_range(-24.0, 24.0), randf_range(-26.0, 14.0))
+    var launch_vx: float = randf_range(-460.0, 460.0)
+    var launch_vy: float = randf_range(-720.0, -210.0)
     coin.launch(Vector2(launch_vx, launch_vy), FLOOR_Y + 12.0)
     coin.value = max(1, int(round(float(value) * _coin_mult())))
     coin.collected.connect(_on_coin_collected)
@@ -1445,9 +1459,20 @@ func _spawn_coin(pos: Vector2, value: int) -> void:
     coins.append(coin)
 
 func _update_coins() -> void:
+    var viewport_size: Vector2 = get_viewport_rect().size
+    var half_w: float = viewport_size.x * 0.5
+    var half_h: float = viewport_size.y * 0.5
+    var min_x: float = camera_2d.position.x - half_w - COIN_DESPAWN_MARGIN_X
+    var max_x: float = camera_2d.position.x + half_w + COIN_DESPAWN_MARGIN_X
+    var min_y: float = camera_2d.position.y - half_h - COIN_DESPAWN_MARGIN_Y
+    var max_y: float = camera_2d.position.y + half_h + COIN_DESPAWN_MARGIN_Y
     for coin in coins.duplicate():
         if not is_instance_valid(coin):
             coins.erase(coin)
+            continue
+        if coin.position.x < min_x or coin.position.x > max_x or coin.position.y < min_y or coin.position.y > max_y:
+            coins.erase(coin)
+            coin.queue_free()
             continue
         for hero in heroes:
             if is_instance_valid(hero) and hero.position.distance_to(coin.position) <= 70.0:

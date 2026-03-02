@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://Fishing/BattleScene.gd" id="1"]
+[ext_resource type="PackedScene" path="res://CustomButton.tscn" id="2"]
 
 [node name="BattleScene" type="Node2D"]
 script = ExtResource("1")
@@ -56,6 +57,13 @@ offset_right = 460.0
 offset_bottom = 144.0
 text = "Sim Infinity"
 
+[node name="ExitBattleButton" parent="CanvasLayer" instance=ExtResource("2")]
+offset_left = 1020.0
+offset_top = 20.0
+offset_right = 1256.0
+offset_bottom = 64.0
+text = "EXIT BATTLE"
+
 [node name="SummaryPanel" type="Panel" parent="CanvasLayer"]
 offset_left = 640.0
 offset_top = 280.0
@@ -79,3 +87,4 @@ text = "Continue"
 [connection signal="pressed" from="CanvasLayer/SummaryPanel/ContinueButton" to="." method="_on_continue_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/SpeedButton" to="." method="_on_speed_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/InfiniteSimButton" to="." method="_on_infinite_sim_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/ExitBattleButton" to="." method="_on_exit_battle_button_pressed"]
