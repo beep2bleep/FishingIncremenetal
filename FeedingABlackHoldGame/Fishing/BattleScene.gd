@@ -24,12 +24,21 @@ const ENEMY_FORMATION_SPACING := 84.0
 const BOSS_SEGMENTS := 8
 const COIN_DESPAWN_MARGIN_X := 240.0
 const COIN_DESPAWN_MARGIN_Y := 220.0
+const HERO_COIN_PICKUP_DELAY := 0.12
+const COIN_LAUNCH_MAX_HEIGHT_SCREENS := 2.0
+const COIN_LAUNCH_MIN_SPEED_RATIO := 0.16
+const COIN_LAUNCH_AWAY_MAX_DEG := 65.0
+const COIN_LAUNCH_TOWARD_MAX_DEG := 3.0
+const COIN_LAUNCH_TOWARD_CHANCE := 0.06
+const INFINITE_SIM_CURSOR_COLLECT_SHARE := 0.90
 const DEFEAT_FALL_DURATION := 1.2
 const DEFEAT_FALL_ROT_SPEED := 1.8
 const BG_DEEP_BASE_Y := 220.0
 const BG_FAR_BASE_Y := 305.0
 const BG_MID_BASE_Y := 430.0
 const BG_NEAR_BASE_Y := 545.0
+const BG_OVERLAY_BASE_Y := 520.0
+const PLAY_AREA_OVERLAY_BASE_Y := 620.0
 const GROUND_BASE_Y := 760.0
 const BASE_POWER_REGEN_PER_SEC := 7.0
 const ACTIVE_CHARGE_PER_CLICK := 20.0
@@ -121,7 +130,10 @@ var bg_deep: Sprite2D
 var bg_far: Sprite2D
 var bg_mid: Sprite2D
 var bg_near: Sprite2D
+var bg_overlay: Sprite2D
+var play_area_overlay: Sprite2D
 var ground: Sprite2D
+var ground_overlay: Sprite2D
 var hero_layer: Node2D
 var projectile_layer: Node2D
 var enemy_layer: Node2D
@@ -143,6 +155,7 @@ var hero_data: Dictionary = {}
 var enemies: Array[CombatSprite] = []
 var enemy_data: Dictionary = {}
 var coins: Array[CoinPickup] = []
+var coin_ages: Dictionary = {}
 var arrows: Array[Dictionary] = []
 
 var player_health: float = 300.0
@@ -151,6 +164,7 @@ var shield_time: float = 0.0
 
 var enemies_killed: int = 0
 var coins_gained: int = 0
+var in_infinite_simulation: bool = false
 var boss_segments_broken: int = 0
 
 var current_level: int = 1
@@ -175,6 +189,13 @@ const ACTIVE_COOLDOWNS := {
     "guardian": 17.0,
     "mage": 19.0,
 }
+const ACTIVE_DURATIONS := {
+    "knight": 2.4,
+    "archer": 2.2,
+    "guardian": 3.0,
+    "mage": 2.6,
+}
+const HERO_CLICK_RADIUS := 44.0
 var speed_index: int = 0
 var arrow_texture: Texture2D
 var hero_sheets: Dictionary = {}
@@ -220,7 +241,10 @@ func _bind_nodes() -> bool:
     bg_far = get_node_or_null("World/BGFar")
     bg_mid = get_node_or_null("World/BGMid")
     bg_near = get_node_or_null("World/BGNear")
+    bg_overlay = get_node_or_null("World/BGOverlay")
+    play_area_overlay = get_node_or_null("World/PlayAreaOverlay")
     ground = get_node_or_null("World/Ground")
+    ground_overlay = get_node_or_null("World/GroundOverlay")
     hero_layer = get_node_or_null("World/HeroLayer")
     projectile_layer = get_node_or_null("World/ProjectileLayer")
     enemy_layer = get_node_or_null("World/EnemyLayer")
@@ -255,16 +279,31 @@ func _bind_nodes() -> bool:
             bg_near = Sprite2D.new()
             bg_near.name = "BGNear"
             world.add_child(bg_near)
+        if bg_overlay == null:
+            bg_overlay = Sprite2D.new()
+            bg_overlay.name = "BGOverlay"
+            world.add_child(bg_overlay)
+        if play_area_overlay == null:
+            play_area_overlay = Sprite2D.new()
+            play_area_overlay.name = "PlayAreaOverlay"
+            world.add_child(play_area_overlay)
         if ground == null:
             ground = Sprite2D.new()
             ground.name = "Ground"
             world.add_child(ground)
+        if ground_overlay == null:
+            ground_overlay = Sprite2D.new()
+            ground_overlay.name = "GroundOverlay"
+            world.add_child(ground_overlay)
 
         world.move_child(bg_deep, 0)
         world.move_child(bg_far, 1)
         world.move_child(bg_mid, 2)
         world.move_child(bg_near, 3)
-        world.move_child(ground, 4)
+        world.move_child(bg_overlay, 4)
+        world.move_child(play_area_overlay, 5)
+        world.move_child(ground, 6)
+        world.move_child(ground_overlay, 7)
 
     if projectile_layer == null and world != null:
         projectile_layer = Node2D.new()
@@ -288,7 +327,7 @@ func _bind_nodes() -> bool:
     if level_choice_dialog != null and not level_choice_dialog.custom_action.is_connected(_on_level_choice_action):
         level_choice_dialog.custom_action.connect(_on_level_choice_action)
 
-    return world != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and ground != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and currency_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and summary_panel != null and summary_label != null and level_choice_dialog != null
+    return world != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and bg_overlay != null and play_area_overlay != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and currency_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and summary_panel != null and summary_label != null and level_choice_dialog != null
 
 func _clear_battle_entities() -> void:
     for arrow_data_variant in arrows:
@@ -308,6 +347,7 @@ func _clear_battle_entities() -> void:
         if is_instance_valid(coin):
             coin.queue_free()
     coins.clear()
+    coin_ages.clear()
 
     for item_variant in floating_damage_texts:
         var item: Dictionary = item_variant
@@ -329,6 +369,10 @@ func _reset_heroes_to_start() -> void:
         if hero_data.has(hero):
             var h: Dictionary = hero_data[hero]
             h["cooldown"] = 0.0
+            h["active_charge"] = 0.0
+            h["active_time_remaining"] = 0.0
+            h["active_time_total"] = 0.0
+            h["active_cooldown_total"] = 0.0
             hero_data[hero] = h
 
 func _setup_editor_speed_button() -> void:
@@ -390,6 +434,7 @@ func _run_infinite_simulation() -> void:
     Engine.time_scale = 1.0
     sim_accumulator = 0.0
     suppress_floating_text = true
+    in_infinite_simulation = true
     active_cooldowns.clear()
     for key in ACTIVE_COOLDOWNS.keys():
         active_cooldowns[key] = 0.0
@@ -413,6 +458,7 @@ func _run_infinite_simulation() -> void:
 
     world.visible = was_world_visible
     suppress_floating_text = false
+    in_infinite_simulation = false
     if speed_button != null and infinite_sim_button != null and exit_battle_button != null:
         speed_index = 0
         speed_button.disabled = false
@@ -471,7 +517,7 @@ func _setup_visuals() -> void:
     camera_2d.position = Vector2(0, FLOOR_Y - 120.0)
     arrow_texture = _make_arrow_texture()
 
-    for sprite in [bg_deep, bg_far, bg_mid, bg_near, ground]:
+    for sprite in [bg_deep, bg_far, bg_mid, bg_near, bg_overlay, play_area_overlay, ground, ground_overlay]:
         sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
         sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
         sprite.region_enabled = true
@@ -481,7 +527,10 @@ func _setup_visuals() -> void:
     bg_far.region_rect = Rect2(0, 0, 80000, 440)
     bg_mid.region_rect = Rect2(0, 0, 80000, 500)
     bg_near.region_rect = Rect2(0, 0, 80000, 560)
+    bg_overlay.region_rect = Rect2(0, 0, 80000, 560)
+    play_area_overlay.region_rect = Rect2(0, 0, 80000, 280)
     ground.region_rect = Rect2(0, 0, 80000, 360)
+    ground_overlay.region_rect = Rect2(0, 0, 80000, 220)
 
     _apply_level_background(current_level)
     _apply_parallax_depth_scales()
@@ -492,21 +541,27 @@ func _apply_parallax_depth_scales() -> void:
     bg_far.scale = Vector2(0.32, 0.32)
     bg_mid.scale = Vector2(0.52, 0.52)
     bg_near.scale = Vector2(0.76, 0.76)
+    bg_overlay.scale = Vector2(0.72, 0.72)
+    play_area_overlay.scale = Vector2(0.95, 1.0)
     ground.scale = Vector2(1.0, 1.0)
+    ground_overlay.scale = Vector2(1.0, 1.0)
 
     bg_deep.position.y = BG_DEEP_BASE_Y - 140.0
     bg_far.position.y = BG_FAR_BASE_Y - 92.0
     bg_mid.position.y = BG_MID_BASE_Y - 50.0
     bg_near.position.y = BG_NEAR_BASE_Y - 20.0
+    bg_overlay.position.y = BG_OVERLAY_BASE_Y
+    play_area_overlay.position.y = PLAY_AREA_OVERLAY_BASE_Y
     ground.position.y = GROUND_BASE_Y
+    ground_overlay.position.y = GROUND_BASE_Y - 12.0
 
 func _apply_level_background(level_index: int) -> void:
-    var level_key: int = clamp(level_index, 1, 3)
+    var level_key: int = max(1, level_index)
     if level_key == displayed_bg_level:
         return
     displayed_bg_level = level_key
-    var t: Dictionary = LEVEL_BG_THEMES[level_key]
-    var pack_theme: Dictionary = LEVEL_BG_PACK.get(level_key, {})
+    var t: Dictionary = _theme_for_level(level_key)
+    var pack_theme: Dictionary = _pack_theme_for_level(level_key)
     if not pack_theme.is_empty():
         var sky_tex: Texture2D = _load_pack_texture(PLATFORMING_BG_DEFAULT + "/" + str(pack_theme.get("sky", "")))
         var far_tex: Texture2D = _load_pack_texture(PLATFORMING_BG_DEFAULT + "/" + str(pack_theme.get("far", "")))
@@ -519,12 +574,18 @@ func _apply_level_background(level_index: int) -> void:
             bg_far.texture = far_tex
             bg_mid.texture = mid_tex
             bg_near.texture = near_tex
+            bg_overlay.texture = _make_background_overlay_texture(480, 220, t)
+            play_area_overlay.texture = _make_play_area_overlay_texture(480, 180, t)
             ground.texture = ground_tex
+            ground_overlay.texture = _make_ground_overlay_texture(480, 120, t)
             bg_deep.region_rect = Rect2(0, 0, 80000, float(max(64, sky_tex.get_height())))
             bg_far.region_rect = Rect2(0, 0, 80000, float(max(64, far_tex.get_height())))
             bg_mid.region_rect = Rect2(0, 0, 80000, float(max(64, mid_tex.get_height())))
             bg_near.region_rect = Rect2(0, 0, 80000, float(max(64, near_tex.get_height())))
+            bg_overlay.region_rect = Rect2(0, 0, 80000, float(max(120, bg_overlay.texture.get_height())))
+            play_area_overlay.region_rect = Rect2(0, 0, 80000, float(max(120, play_area_overlay.texture.get_height())))
             ground.region_rect = Rect2(0, 0, 80000, float(max(96, ground_tex.get_height())))
+            ground_overlay.region_rect = Rect2(0, 0, 80000, float(max(80, ground_overlay.texture.get_height())))
             _apply_level_layer_colors(t)
             _apply_parallax_depth_scales()
             return
@@ -533,8 +594,11 @@ func _apply_level_background(level_index: int) -> void:
     bg_far.texture = _make_atari_horizon_texture(256, 128, t["far"], t["sky_star_a"], 28, 10)
     bg_mid.texture = _make_atari_horizon_texture(256, 128, t["mid"], t["sky_star_a"], 22, 18)
     bg_near.texture = _make_atari_horizon_texture(256, 128, t["near"], t["sky_star_a"], 18, 28)
+    bg_overlay.texture = _make_background_overlay_texture(256, 160, t)
+    play_area_overlay.texture = _make_play_area_overlay_texture(256, 140, t)
     ground.texture = _make_atari_ground_texture(256, 96, t["ground_a"], t["ground_b"], t["ground_accent"])
-    _apply_level_layer_colors({})
+    ground_overlay.texture = _make_ground_overlay_texture(256, 110, t)
+    _apply_level_layer_colors(t)
     _apply_parallax_depth_scales()
 
 func _apply_level_layer_colors(theme: Dictionary) -> void:
@@ -543,7 +607,10 @@ func _apply_level_layer_colors(theme: Dictionary) -> void:
         bg_far.modulate = Color(1.0, 1.0, 1.0, 1.0)
         bg_mid.modulate = Color(1.0, 1.0, 1.0, 1.0)
         bg_near.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        bg_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        play_area_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
         ground.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        ground_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return
 
     # Preserve source texture alpha while restoring per-level palette tinting.
@@ -551,7 +618,110 @@ func _apply_level_layer_colors(theme: Dictionary) -> void:
     bg_far.modulate = Color(theme["far"]) * Color(1.02, 1.02, 1.02, 1.0)
     bg_mid.modulate = Color(theme["mid"]) * Color(1.0, 1.0, 1.0, 1.0)
     bg_near.modulate = Color(theme["near"]) * Color(0.95, 0.95, 0.95, 1.0)
+    bg_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
+    play_area_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
     ground.modulate = Color(theme["ground_a"]) * Color(1.0, 1.0, 1.0, 1.0)
+    ground_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
+
+func _pack_theme_for_level(level_index: int) -> Dictionary:
+    var keys: Array = LEVEL_BG_PACK.keys()
+    if keys.is_empty():
+        return {}
+    keys.sort()
+    var idx: int = (max(1, level_index) - 1) % keys.size()
+    var key: int = int(keys[idx])
+    return LEVEL_BG_PACK.get(key, {})
+
+func _theme_for_level(level_index: int) -> Dictionary:
+    var keys: Array = LEVEL_BG_THEMES.keys()
+    if keys.is_empty():
+        return {}
+    keys.sort()
+    var base_idx: int = (max(1, level_index) - 1) % keys.size()
+    var base_key: int = int(keys[base_idx])
+    var base_theme: Dictionary = LEVEL_BG_THEMES.get(base_key, {})
+    if level_index <= keys.size():
+        return base_theme.duplicate(true)
+
+    var seed: float = float(level_index - 1)
+    var out_theme: Dictionary = {}
+    var color_keys: Array[String] = [
+        "sky_base",
+        "sky_star_a",
+        "sky_star_b",
+        "far",
+        "mid",
+        "near",
+        "ground_a",
+        "ground_b",
+        "ground_accent",
+    ]
+    for i in range(color_keys.size()):
+        var ck: String = color_keys[i]
+        var src: Color = Color(base_theme.get(ck, Color.WHITE))
+        var hue_shift: float = 0.025 * seed
+        var sat_mul: float = 0.9 + 0.07 * sin(seed * 0.63 + float(i) * 0.6)
+        var val_mul: float = 0.88 + 0.14 * cos(seed * 0.41 + float(i) * 0.75)
+        var out_color: Color = Color.from_hsv(
+            fposmod(src.h + hue_shift, 1.0),
+            clamp(src.s * sat_mul, 0.14, 1.0),
+            clamp(src.v * val_mul, 0.12, 1.0),
+            src.a
+        )
+        out_theme[ck] = out_color
+    return out_theme
+
+func _make_background_overlay_texture(w: int, h: int, theme: Dictionary) -> ImageTexture:
+    var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
+    var sky: Color = Color(theme.get("sky_base", Color(0.1, 0.1, 0.2, 1.0)))
+    var near: Color = Color(theme.get("near", Color(0.3, 0.4, 0.5, 1.0)))
+    var line: Color = Color(theme.get("sky_star_a", Color(0.95, 0.95, 0.95, 1.0)))
+    for y in range(h):
+        var blend: float = float(y) / max(1.0, float(h - 1))
+        var row: Color = sky.lerp(near, blend * 0.55)
+        row.a = 0.08 + 0.12 * blend
+        for x in range(w):
+            img.set_pixel(x, y, row)
+    for y in range(10, h, 20):
+        for x in range(w):
+            if ((x + y * 3) % 7) != 0:
+                continue
+            img.set_pixel(x, y, Color(line.r, line.g, line.b, 0.28))
+    return ImageTexture.create_from_image(img)
+
+func _make_play_area_overlay_texture(w: int, h: int, theme: Dictionary) -> ImageTexture:
+    var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
+    var far: Color = Color(theme.get("far", Color(0.2, 0.3, 0.4, 1.0)))
+    var accent: Color = Color(theme.get("ground_accent", Color(0.95, 0.95, 0.95, 1.0)))
+    img.fill(Color(far.r, far.g, far.b, 0.06))
+    var top_line_y: int = 8
+    var bottom_line_y: int = h - 10
+    for x in range(w):
+        img.set_pixel(x, top_line_y, Color(accent.r, accent.g, accent.b, 0.34))
+        img.set_pixel(x, bottom_line_y, Color(accent.r, accent.g, accent.b, 0.26))
+    for y in range(20, h - 14, 24):
+        for x in range(w):
+            if ((x + y) % 11) == 0:
+                img.set_pixel(x, y, Color(accent.r, accent.g, accent.b, 0.14))
+    return ImageTexture.create_from_image(img)
+
+func _make_ground_overlay_texture(w: int, h: int, theme: Dictionary) -> ImageTexture:
+    var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
+    var g1: Color = Color(theme.get("ground_a", Color(0.42, 0.3, 0.16, 1.0)))
+    var g2: Color = Color(theme.get("ground_b", Color(0.26, 0.18, 0.1, 1.0)))
+    var accent: Color = Color(theme.get("ground_accent", Color(0.9, 0.9, 0.9, 1.0)))
+    for y in range(h):
+        var blend: float = float(y) / max(1.0, float(h - 1))
+        var row: Color = g1.lerp(g2, blend)
+        row.a = 0.14 + blend * 0.22
+        for x in range(w):
+            var px: Color = row
+            if y == 3:
+                px = Color(accent.r, accent.g, accent.b, 0.72)
+            elif (y % 12) == 0 and (x % 5) == 0:
+                px = Color(accent.r, accent.g, accent.b, 0.2)
+            img.set_pixel(x, y, px)
+    return ImageTexture.create_from_image(img)
 
 func _load_pack_texture(path: String) -> Texture2D:
     if path == "":
@@ -914,6 +1084,36 @@ func _process(delta: float) -> void:
 
     _update_ui()
 
+func _unhandled_input(event: InputEvent) -> void:
+    if battle_completed:
+        return
+    if summary_panel != null and summary_panel.visible:
+        return
+    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+        var clicked_hero: CombatSprite = _find_clicked_hero(get_global_mouse_position())
+        if clicked_hero == null:
+            return
+        var h: Dictionary = hero_data.get(clicked_hero, {})
+        var hero_name: String = str(h.get("name", ""))
+        if hero_name == "":
+            return
+        _on_hero_clicked(clicked_hero, hero_name)
+        get_viewport().set_input_as_handled()
+
+func _find_clicked_hero(world_pos: Vector2) -> CombatSprite:
+    var best: CombatSprite = null
+    var best_dsq: float = HERO_CLICK_RADIUS * HERO_CLICK_RADIUS
+    for hero in heroes:
+        if not is_instance_valid(hero):
+            continue
+        if hero.is_defeated:
+            continue
+        var d_sq: float = hero.global_position.distance_squared_to(world_pos)
+        if d_sq <= best_dsq:
+            best_dsq = d_sq
+            best = hero
+    return best
+
 func _simulate_step(delta: float, skip_visual_updates: bool = false) -> void:
     _apply_level_background(current_level)
     _update_active_cooldowns(delta)
@@ -923,7 +1123,7 @@ func _simulate_step(delta: float, skip_visual_updates: bool = false) -> void:
     _update_heroes(delta)
     _update_enemies(delta)
     _update_arrows(delta)
-    _update_coins()
+    _update_coins(delta)
     if not skip_visual_updates:
         _update_camera_and_parallax()
 
@@ -1009,6 +1209,9 @@ func _spawn_heroes() -> void:
             "cooldown": 0.0,
             "walk_speed": 80.0 * _walk_speed_mult(),
             "active_charge": 0.0,
+            "active_time_remaining": 0.0,
+            "active_time_total": 0.0,
+            "active_cooldown_total": 0.0,
             "active_bar_back": null,
             "active_bar_fill": null,
             "active_bar_width": 0.0,
@@ -1139,6 +1342,7 @@ func _update_heroes(delta: float) -> void:
         if not is_instance_valid(hero):
             continue
         var h: Dictionary = hero_data[hero]
+        h["active_time_remaining"] = max(0.0, float(h.get("active_time_remaining", 0.0)) - delta)
         _update_hero_active_bar(hero, h)
         h["cooldown"] = max(0.0, float(h["cooldown"]) - delta)
         var hero_name: String = str(h["name"])
@@ -1160,13 +1364,26 @@ func _update_heroes(delta: float) -> void:
             hero.set_walking()
         elif float(h["cooldown"]) <= 0.0:
             h["cooldown"] = 1.0 / max(0.1, float(h["speed"]))
+            var attack_damage: float = float(h["damage"])
+            var active_remaining: float = float(h.get("active_time_remaining", 0.0))
+            if active_remaining > 0.0:
+                match hero_name:
+                    "knight":
+                        attack_damage *= 1.35
+                    "archer":
+                        attack_damage *= 1.8
+                    "mage":
+                        attack_damage *= 1.55
             if hero_name == "archer":
                 var arrow_spawn: Vector2 = hero.position + Vector2(28.0, -8.0)
                 if hero.has_method("get_projectile_spawn_point"):
                     arrow_spawn = hero.call("get_projectile_spawn_point")
-                _spawn_arrow(arrow_spawn, target, float(h["damage"]))
+                _spawn_arrow(arrow_spawn, target, attack_damage)
             else:
-                _damage_enemy(target, float(h["damage"]))
+                _damage_enemy(target, attack_damage)
+                if hero_name == "knight" and active_remaining > 0.0:
+                    # Knight active: convert part of dealt damage to healing while active.
+                    player_health = min(300.0, player_health + attack_damage * 0.18)
             hero.trigger_attack()
 
         hero_data[hero] = h
@@ -1294,16 +1511,19 @@ func _update_enemies(delta: float) -> void:
         var e: Dictionary = enemy_data[enemy]
         e["attack_cd"] = max(0.0, float(e["attack_cd"]) - delta)
 
-        var colliding: bool = enemy.position.x <= frontline_x + CONTACT_RANGE
+        var contact_front_x: float = frontline_x + _enemy_contact_reach(enemy)
+        var colliding: bool = enemy.position.x <= contact_front_x
         if not colliding:
-            enemy.position.x -= float(e["speed"]) * delta
+            var moved_x: float = enemy.position.x - float(e["speed"]) * delta
+            enemy.position.x = max(contact_front_x, moved_x)
             enemy.set_walking()
         else:
             var total_contact_dps: float = float(e["contact_dps"])
             var behind_enemy: CombatSprite = behind_map.get(enemy, null)
             if is_instance_valid(behind_enemy):
                 var push_gap: float = behind_enemy.position.x - enemy.position.x
-                if push_gap <= ENEMY_FORMATION_SPACING * 1.05:
+                var support_gap: float = _enemy_pair_spacing(enemy, behind_enemy)
+                if push_gap <= support_gap * 1.05:
                     var behind_data: Dictionary = enemy_data.get(behind_enemy, {})
                     var behind_contact: float = float(behind_data.get("contact_dps", e["contact_dps"]))
                     total_contact_dps += behind_contact * 0.5
@@ -1314,7 +1534,8 @@ func _update_enemies(delta: float) -> void:
                 var behind_enemy_attack: CombatSprite = behind_map.get(enemy, null)
                 if is_instance_valid(behind_enemy_attack):
                     var behind_gap: float = behind_enemy_attack.position.x - enemy.position.x
-                    if behind_gap <= ENEMY_FORMATION_SPACING * 1.05:
+                    var attack_support_gap: float = _enemy_pair_spacing(enemy, behind_enemy_attack)
+                    if behind_gap <= attack_support_gap * 1.05:
                         behind_enemy_attack.trigger_attack()
 
         _update_enemy_health_bar(e)
@@ -1336,9 +1557,31 @@ func _enforce_enemy_formation() -> void:
     for i in range(1, alive.size()):
         var lead: CombatSprite = alive[i - 1]
         var trailing: CombatSprite = alive[i]
-        var min_x: float = lead.position.x + ENEMY_FORMATION_SPACING
+        var min_x: float = lead.position.x + _enemy_pair_spacing(lead, trailing)
         if trailing.position.x < min_x:
             trailing.position.x = min_x
+
+func _enemy_contact_reach(enemy: CombatSprite) -> float:
+    return max(6.0, _enemy_body_width(enemy) * 0.5)
+
+func _enemy_pair_spacing(front_enemy: CombatSprite, back_enemy: CombatSprite) -> float:
+    var front_width: float = _enemy_body_width(front_enemy)
+    var back_width: float = _enemy_body_width(back_enemy)
+    return max(8.0, (front_width + back_width) * 0.5)
+
+func _enemy_body_width(enemy: CombatSprite) -> float:
+    if not is_instance_valid(enemy):
+        return ENEMY_FORMATION_SPACING
+    if enemy.collider != null and enemy.collider.shape is CircleShape2D:
+        var circle: CircleShape2D = enemy.collider.shape as CircleShape2D
+        if circle != null:
+            return max(12.0, circle.radius * 2.0)
+    if enemy.sprite != null and enemy.sprite.sprite_frames != null:
+        var frame_tex: Texture2D = enemy.sprite.sprite_frames.get_frame_texture("walk", 0)
+        if frame_tex != null:
+            var frame_w: float = float(frame_tex.get_width())
+            return max(12.0, frame_w * enemy.base_sprite_scale.x * 0.9)
+    return ENEMY_FORMATION_SPACING
 
 func _update_enemy_health_bar(e: Dictionary) -> void:
     var bar_fill: ColorRect = e.get("bar_fill", null)
@@ -1362,7 +1605,10 @@ func _update_camera_and_parallax() -> void:
     bg_far.position.x = camera_2d.position.x * 0.22
     bg_mid.position.x = camera_2d.position.x * 0.42
     bg_near.position.x = camera_2d.position.x * 0.66
+    bg_overlay.position.x = camera_2d.position.x * 0.58
+    play_area_overlay.position.x = camera_2d.position.x * 0.78
     ground.position.x = camera_2d.position.x * 0.9
+    ground_overlay.position.x = camera_2d.position.x * 0.9
 
 func _nearest_enemy(from_pos: Vector2) -> CombatSprite:
     var best: CombatSprite = null
@@ -1450,15 +1696,51 @@ func _kill_enemy(enemy: CombatSprite) -> void:
 func _spawn_coin(pos: Vector2, value: int) -> void:
     var coin: CoinPickup = COIN_SCENE.instantiate()
     coin.position = pos + Vector2(randf_range(-24.0, 24.0), randf_range(-26.0, 14.0))
-    var launch_vx: float = randf_range(-460.0, 460.0)
-    var launch_vy: float = randf_range(-720.0, -210.0)
-    coin.launch(Vector2(launch_vx, launch_vy), FLOOR_Y + 12.0)
+    var gravity: float = max(1.0, float(coin.flight_gravity))
+    var screen_height: float = max(1.0, get_viewport_rect().size.y)
+    var max_height_px: float = screen_height * COIN_LAUNCH_MAX_HEIGHT_SCREENS
+    var max_speed: float = sqrt(2.0 * gravity * max_height_px)
+    var min_speed: float = max_speed * COIN_LAUNCH_MIN_SPEED_RATIO
+    var launch_speed: float = randf_range(min_speed, max_speed)
+
+    var nearest_hero_x: float = _nearest_hero_x(coin.position.x)
+    var away_sign: float = sign(coin.position.x - nearest_hero_x)
+    if is_zero_approx(away_sign):
+        away_sign = 1.0
+
+    var toward_roll: bool = randf() < COIN_LAUNCH_TOWARD_CHANCE
+    var lateral_sign: float = away_sign if not toward_roll else -away_sign
+    var deviation_deg: float = 0.0
+    if toward_roll:
+        deviation_deg = randf_range(0.0, COIN_LAUNCH_TOWARD_MAX_DEG)
+    else:
+        deviation_deg = randf_range(0.0, COIN_LAUNCH_AWAY_MAX_DEG)
+    var theta: float = deg_to_rad(deviation_deg)
+    var launch_dir: Vector2 = Vector2(sin(theta) * lateral_sign, -cos(theta))
+    coin.launch(launch_dir * launch_speed, FLOOR_Y + 12.0)
     coin.value = max(1, int(round(float(value) * _coin_mult())))
     coin.collected.connect(_on_coin_collected)
     coin_layer.add_child(coin)
     coins.append(coin)
+    coin_ages[coin] = 0.0
 
-func _update_coins() -> void:
+func _nearest_hero_x(from_x: float) -> float:
+    var found: bool = false
+    var nearest_x: float = from_x
+    var nearest_dist: float = INF
+    for hero in heroes:
+        if not is_instance_valid(hero):
+            continue
+        var d: float = absf(hero.position.x - from_x)
+        if d < nearest_dist:
+            nearest_dist = d
+            nearest_x = hero.position.x
+            found = true
+    if found:
+        return nearest_x
+    return _frontline_x()
+
+func _update_coins(delta: float) -> void:
     var viewport_size: Vector2 = get_viewport_rect().size
     var half_w: float = viewport_size.x * 0.5
     var half_h: float = viewport_size.y * 0.5
@@ -1469,10 +1751,16 @@ func _update_coins() -> void:
     for coin in coins.duplicate():
         if not is_instance_valid(coin):
             coins.erase(coin)
+            coin_ages.erase(coin)
             continue
+        var coin_age: float = float(coin_ages.get(coin, 0.0)) + max(0.0, delta)
+        coin_ages[coin] = coin_age
         if coin.position.x < min_x or coin.position.x > max_x or coin.position.y < min_y or coin.position.y > max_y:
             coins.erase(coin)
+            coin_ages.erase(coin)
             coin.queue_free()
+            continue
+        if coin_age < HERO_COIN_PICKUP_DELAY:
             continue
         for hero in heroes:
             if is_instance_valid(hero) and hero.position.distance_to(coin.position) <= 70.0:
@@ -1495,8 +1783,11 @@ func _cursor_bonus_mult() -> float:
 func _on_coin_collected(coin: CoinPickup, by_cursor: bool) -> void:
     if not is_instance_valid(coin):
         return
+    var collected_by_cursor: bool = by_cursor
+    if in_infinite_simulation:
+        collected_by_cursor = randf() < INFINITE_SIM_CURSOR_COLLECT_SHARE
     var amount: int = int(coin.value)
-    if by_cursor:
+    if collected_by_cursor:
         amount = int(round(float(amount) * _cursor_bonus_mult()))
 
     SaveHandler.fishing_currency += amount
@@ -1505,6 +1796,7 @@ func _on_coin_collected(coin: CoinPickup, by_cursor: bool) -> void:
     coins_gained += amount
 
     coins.erase(coin)
+    coin_ages.erase(coin)
     coin.queue_free()
 
 func _max_power() -> float:
@@ -1523,6 +1815,11 @@ func _on_hero_clicked(hero: CombatSprite, hero_name: String, skip_anim: bool = f
     if not hero_data.has(hero):
         return
     var h: Dictionary = hero_data[hero]
+    var cooldown_remaining: float = float(active_cooldowns.get(hero_name, 0.0))
+    if cooldown_remaining > 0.0:
+        hero_data[hero] = h
+        return
+
     var active_cost: float = _active_cost()
     var charge: float = float(h.get("active_charge", 0.0))
     var to_charge: float = min(ACTIVE_CHARGE_PER_CLICK, power, max(0.0, active_cost - charge))
@@ -1532,16 +1829,16 @@ func _on_hero_clicked(hero: CombatSprite, hero_name: String, skip_anim: bool = f
         h["active_charge"] = charge
         _update_hero_active_bar(hero, h)
 
-    var cooldown_remaining: float = float(active_cooldowns.get(hero_name, 0.0))
-    if charge + 0.001 < active_cost or cooldown_remaining > 0.0:
+    if charge + 0.001 < active_cost:
         hero_data[hero] = h
         return
 
     h["active_charge"] = max(0.0, charge - active_cost)
+    h["active_cooldown_total"] = float(ACTIVE_COOLDOWNS.get(hero_name, 15.0)) * _active_cooldown_mult()
     _update_hero_active_bar(hero, h)
     hero_data[hero] = h
     _execute_hero_active(hero, hero_name, skip_anim)
-    active_cooldowns[hero_name] = float(ACTIVE_COOLDOWNS.get(hero_name, 15.0)) * _active_cooldown_mult()
+    active_cooldowns[hero_name] = float(h.get("active_cooldown_total", 0.0))
 
 func _gain_power(amount: float) -> void:
     if amount <= 0.0:
@@ -1596,36 +1893,63 @@ func _update_hero_active_bar(hero: CombatSprite, h: Dictionary) -> void:
         bar_fill.size.x = 0.0
         return
 
+    var full_width: float = float(h.get("active_bar_width", 44.0))
+    var active_remaining: float = max(0.0, float(h.get("active_time_remaining", 0.0)))
+    var active_total: float = max(0.001, float(h.get("active_time_total", 0.0)))
+    if active_remaining > 0.0:
+        bar_fill.color = Color(0.25, 0.95, 0.45, 1.0)
+        bar_fill.size.x = full_width * clamp(active_remaining / active_total, 0.0, 1.0)
+        return
+
+    var cooldown_remaining: float = float(active_cooldowns.get(hero_name, 0.0))
+    if cooldown_remaining > 0.0:
+        var cooldown_total: float = max(0.001, float(h.get("active_cooldown_total", cooldown_remaining)))
+        var cooldown_pct: float = clamp(cooldown_remaining / cooldown_total, 0.0, 1.0)
+        var pulse_t: float = 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) * 0.01)
+        bar_fill.color = Color(0.05, 0.05, 0.05, 1.0).lerp(Color(1.0, 0.12, 0.72, 1.0), pulse_t)
+        bar_fill.size.x = full_width * cooldown_pct
+        return
+
     var active_cost: float = max(1.0, _active_cost())
     var charge: float = clamp(float(h.get("active_charge", 0.0)), 0.0, active_cost)
-    var pct: float = charge / active_cost
-    var full_width: float = float(h.get("active_bar_width", 44.0))
-    bar_fill.size.x = full_width * pct
+    bar_fill.color = Color(0.25, 0.95, 0.45, 1.0)
+    bar_fill.size.x = full_width * (charge / active_cost)
 
 func _execute_hero_active(hero: CombatSprite, hero_name: String, skip_anim: bool) -> void:
     _trigger_hero_glow(hero)
     if not skip_anim:
         hero.trigger_attack()
 
+    var h: Dictionary = hero_data.get(hero, {})
+    var active_duration: float = _active_duration(hero_name)
+    if active_duration > 0.0 and not h.is_empty():
+        h["active_time_total"] = active_duration
+        h["active_time_remaining"] = active_duration
+        hero_data[hero] = h
+
     match hero_name:
         "knight":
             var before_hp: float = player_health
-            player_health = min(300.0, player_health + 45.0)
+            player_health = min(300.0, player_health + 14.0)
             var healed: float = max(0.0, player_health - before_hp)
             if healed > 0.0:
                 _spawn_floating_heal_text(hero.position + Vector2(randf_range(-10.0, 10.0), -130.0), healed)
+        "archer":
             var target: CombatSprite = _nearest_enemy(hero.position)
             if target != null:
-                _damage_enemy(target, 80.0)
-        "archer":
-            for enemy in enemies:
-                _damage_enemy(enemy, 55.0)
+                _damage_enemy(target, 45.0)
         "guardian":
-            shield_time = 4.0
+            shield_time = max(shield_time, active_duration)
         "mage":
             for enemy in enemies:
                 if is_instance_valid(enemy) and hero.position.distance_to(enemy.position) < 520.0:
                     _damage_enemy(enemy, 85.0)
+
+func _active_duration(hero_name: String) -> float:
+    var base: float = float(ACTIVE_DURATIONS.get(hero_name, 2.0))
+    # As active/cadence upgrades reduce cooldown, also grant modest duration scaling.
+    var cd_improvement: float = max(0.0, 1.0 - _active_cooldown_mult())
+    return base + (cd_improvement * 2.2)
 
 func _level_params(level_index: int) -> Dictionary:
     var lv: int = level_index - 1
@@ -1930,7 +2254,7 @@ func _run_post_battle_sweep(delta: float) -> void:
     for coin in coins:
         if is_instance_valid(coin):
             coin.attract_to(attract_target, 1800.0, delta)
-    _update_coins()
+    _update_coins(delta)
 
     post_battle_sweep_time -= delta
     if coins.is_empty() or post_battle_sweep_time <= 0.0:
@@ -2000,7 +2324,12 @@ func _finalize_battle_summary() -> void:
     summary_finalized = true
     summary_panel.show()
     var title: String = "Victory!" if battle_victory else "Defeated."
-    summary_label.text = "%s\nLevel: %d\nEnemies killed: %d\nBoss segments: %d\nCoins gained: %d" % [title, current_level, enemies_killed, boss_segments_broken, coins_gained]
+    var summary_text: String = "%s\nLevel: %d\nEnemies killed: %d\nBoss segments: %d\nCoins gained: %d" % [title, current_level, enemies_killed, boss_segments_broken, coins_gained]
+    var is_first_l3_boss_clear: bool = battle_victory and current_level == 3 and not SaveHandler.fishing_l3_boss_thank_you_shown
+    if is_first_l3_boss_clear:
+        summary_text += "\n\nthanks for playing my game this was created by a single developer, please leave feedback if you would like more content.\nCredits:\nCreator: Beep2Bleep."
+        SaveHandler.fishing_l3_boss_thank_you_shown = true
+    summary_label.text = summary_text
     SaveHandler.fishing_last_battle_summary = {
         "victory": battle_victory,
         "level": current_level,

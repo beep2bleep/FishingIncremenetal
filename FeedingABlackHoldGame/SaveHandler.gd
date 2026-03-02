@@ -439,6 +439,7 @@ var fishing_active_upgrades: Dictionary = {}
 var fishing_last_battle_summary: Dictionary = {}
 var fishing_next_battle_level := 1
 var fishing_max_unlocked_battle_level := 1
+var fishing_l3_boss_thank_you_shown := false
 
 func reset_fishing_progress() -> void:
     fishing_currency = 0
@@ -448,6 +449,7 @@ func reset_fishing_progress() -> void:
     fishing_last_battle_summary = {}
     fishing_next_battle_level = 1
     fishing_max_unlocked_battle_level = 1
+    fishing_l3_boss_thank_you_shown = false
 
 func load_fishing_progress():
     var json_data = Util.load_json_data_from_path(fishing_progress_file_path)
@@ -463,6 +465,7 @@ func load_fishing_progress():
     fishing_next_battle_level = max(1, int(json_data.get("next_battle_level", 1)))
     fishing_max_unlocked_battle_level = clamp(int(json_data.get("max_unlocked_battle_level", 1)), 1, 3)
     fishing_next_battle_level = clamp(fishing_next_battle_level, 1, fishing_max_unlocked_battle_level)
+    fishing_l3_boss_thank_you_shown = bool(json_data.get("l3_boss_thank_you_shown", false))
 
 func save_fishing_progress():
     var save_data = {
@@ -473,6 +476,7 @@ func save_fishing_progress():
         "last_battle_summary": fishing_last_battle_summary,
         "next_battle_level": fishing_next_battle_level,
         "max_unlocked_battle_level": fishing_max_unlocked_battle_level,
+        "l3_boss_thank_you_shown": fishing_l3_boss_thank_you_shown,
     }
     var file = FileAccess.open(fishing_progress_file_path, FileAccess.WRITE)
     if file == null:

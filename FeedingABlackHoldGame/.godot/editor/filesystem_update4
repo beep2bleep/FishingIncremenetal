@@ -1,2 +1,4 @@
 res://Fishing/CombatSprite.gd
 res://Fishing/BattleScene.gd
+res://SaveHandler.gd
+res://Fishing/CoinPickup.gd
