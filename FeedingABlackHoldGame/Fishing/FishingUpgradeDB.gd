@@ -18,7 +18,7 @@ const FAMILY_DESCRIPTIONS := {
 const SPECIFIC_DESCRIPTIONS := {
     "cursor_pickup_unlock": "Unlocks cursor pickup bonuses so cursor-collected coins are worth more.",
     "recruit_archer": "Adds the Archer hero to your combat lineup.",
-    "auto_attack_unlock": "Unlocks automatic attack support for your team.",
+    "auto_attack_unlock": "Unlocks Tactical Telemetry: reveals enemies remaining during battle using the blue progress HUD.",
     "knight_vamp_unlock": "Unlocks the Knight active and improves life steal sustain.",
     "archer_pierce_unlock": "Unlocks the Archer active with piercing attack coverage.",
     "power_harvest_unlock": "Unlocks stronger power generation from combat and pickups.",
@@ -30,7 +30,7 @@ const SPECIFIC_DESCRIPTIONS := {
 const SPECIFIC_NAMES := {
     "cursor_pickup_unlock": "Cursor Pickup Unlock",
     "recruit_archer": "Recruit Archer",
-    "auto_attack_unlock": "Auto Attack Unlock",
+    "auto_attack_unlock": "Tactical Telemetry",
     "knight_vamp_unlock": "Knight Vampirism Unlock",
     "archer_pierce_unlock": "Archer Pierce Unlock",
     "power_harvest_unlock": "Power Harvest Unlock",

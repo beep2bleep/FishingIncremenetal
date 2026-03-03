@@ -146,21 +146,16 @@ func _ready():
         enemy_sprite.scale = Vector2(1.6, 1.6)
         showcase.add_child(enemy_sprite)
 
-    # Replace the logo with the new marketable title
     var logo_node = get_node_or_null("CanvasLayer/MarginContainer2/Logo")
     if logo_node:
         logo_node.visible = false
-        var title_label: Label = Label.new()
-        title_label.text = "Vanguard: Idle Auto‑Battler"
-        title_label.horizontal_alignment = 1
-        title_label.vertical_alignment = 1
-        # Position and size using Control-friendly properties
-        title_label.position = get_viewport_rect().size * 0.5 + Vector2(0, -180)
-        title_label.custom_minimum_size = Vector2(600, 100)
-        # Apply a project font if available
-        if Refs.money_font != null:
-            title_label.add_theme_font_override("font", Refs.money_font)
-        get_node("CanvasLayer").add_child(title_label)
+    if has_node("%MainTitle"):
+        %MainTitle.text = "VANGUARD: IDLE AUTO-BATTLER"
+    if has_node("%Discord"):
+        %Discord.disabled = true
+    if has_node("%Press Kit"):
+        %"Press Kit".disabled = true
+
 
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):
     update_input(input_type)
@@ -180,6 +175,8 @@ func update_color():
     %ColorRect.color = Refs.pallet.background
 
     %Logo.modulate = Refs.pallet.text_base_color
+    if has_node("%MainTitle"):
+        %MainTitle.modulate = Refs.pallet.text_base_color
     var color_light = Refs.pallet.background
     color_light.v *= 1.05
     %"GPUParticles2D Light".modulate = color_light
@@ -261,7 +258,7 @@ func _on_play_pressed() -> void :
     Global.ensure_default_game_mode_data()
     Global.start_in_upgrade_scene = true
     Global.load_saved_run = false
-    SceneChanger.change_to_new_scene(Util.PATH_MAIN)
+    SceneChanger.change_to_new_scene(Util.PATH_MAIN, null, 0.2)
 
 
 func _on_game_mode_screen_back() -> void :
@@ -275,7 +272,7 @@ func _on_game_mode_screen_play_new_game_mode(game_mode_data: GameModeData) -> vo
 
     Global.load_saved_run = false
     Global.start_in_upgrade_scene = true
-    SceneChanger.change_to_new_scene(Util.PATH_MAIN)
+    SceneChanger.change_to_new_scene(Util.PATH_MAIN, null, 0.2)
 
 
 func _on_game_mode_screen_continue_game_mode(game_mode_data: GameModeData) -> void :
@@ -284,4 +281,4 @@ func _on_game_mode_screen_continue_game_mode(game_mode_data: GameModeData) -> vo
 
     Global.load_saved_run = true
     Global.start_in_upgrade_scene = true
-    SceneChanger.change_to_new_scene(Util.PATH_MAIN)
+    SceneChanger.change_to_new_scene(Util.PATH_MAIN, null, 0.2)

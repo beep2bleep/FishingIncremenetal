@@ -78,6 +78,21 @@ layout_mode = 2
 texture = ExtResource("3")
 expand_mode = 5
 stretch_mode = 5
+visible = false
+
+[node name="MainTitle" type="Label" parent="CanvasLayer" unique_id=1511654321]
+unique_name_in_owner = true
+anchors_preset = 10
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -640.0
+offset_top = 48.0
+offset_right = 640.0
+offset_bottom = 188.0
+theme = ExtResource("10")
+text = "VANGUARD: IDLE AUTO-BATTLER"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Main Menu Stuff" type="VBoxContainer" parent="CanvasLayer" unique_id=341119867]
 unique_name_in_owner = true
@@ -174,6 +189,7 @@ icon_alignment = 1
 expand_icon = true
 enable_on_focus = true
 glyph_comp = NodePath("../Controller Glyph")
+disabled = true
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer/VBoxContainer2" unique_id=762250152]
 layout_mode = 2
@@ -196,6 +212,7 @@ icon_alignment = 1
 expand_icon = true
 enable_on_focus = true
 glyph_comp = NodePath("../Controller Glyph")
+disabled = true
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/Main Menu Stuff/MarginContainer/VBoxContainer" unique_id=460952808]
 layout_mode = 2

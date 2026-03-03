@@ -16,8 +16,8 @@ var run_stats: RunStats
 
 const G = 100000.0
 
-var load_saved_run = true
-var start_in_upgrade_scene = false
+var load_saved_run = false
+var start_in_upgrade_scene = true
 
 
 

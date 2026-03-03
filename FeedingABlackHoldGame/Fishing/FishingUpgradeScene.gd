@@ -30,13 +30,16 @@ var hover_title: Label
 var hover_meta: Label
 var hover_desc: Label
 var hover_cost: Label
+var start_battle_button: Button
 var line_layer: Node2D
 var hovered_node_id: String = ""
 var editor_add_currency_button: Button
 var editor_reset_progress_button: Button
 var unlock_all_upgrades_button: Button
 var editor_add_amount: int = 1000
+var last_currency_displayed: int = -1
 var rng := RandomNumberGenerator.new()
+var icon_cache: Dictionary = {}
 
 var node_style_complete: StyleBoxFlat
 var node_style_available: StyleBoxFlat
@@ -74,6 +77,7 @@ func _ready() -> void:
     hover_cost = get_node_or_null("%HoverCost")
     if hover_cost == null:
         hover_cost = get_node_or_null("HoverCard/CardMargin/CardVBox/HoverCost")
+    start_battle_button = get_node_or_null("TopActions/StartBattle")
     editor_add_currency_button = get_node_or_null("EditorAddCurrency")
     if editor_add_currency_button == null:
         editor_add_currency_button = get_node_or_null("EditorRow/EditorAddCurrency")
@@ -210,6 +214,7 @@ func _next_spiral(state: Dictionary) -> Vector2i:
     return Vector2i(int(state["x"]), int(state["y"]))
 
 func _refresh_ui() -> void:
+    last_currency_displayed = SaveHandler.fishing_currency
     currency_label.text = "o %d" % SaveHandler.fishing_currency
     if editor_add_currency_button != null:
         editor_add_currency_button.text = "Add $%d (Editor)" % editor_add_amount
@@ -221,6 +226,10 @@ func _refresh_ui() -> void:
         info_label.text = "%s  |  %s (%s)" % [base_info, db.get_display_name(hovered_node), state_text]
     else:
         info_label.text = base_info
+    if start_battle_button != null:
+        var can_start_battle: bool = SaveHandler.has_fishing_upgrade("cursor_pickup_unlock")
+        start_battle_button.disabled = not can_start_battle
+        start_battle_button.tooltip_text = "" if can_start_battle else "Unlock Cursor Pickup Unlock to start battles."
 
     for node in db.nodes:
         var node_id: String = str(node.get("id", ""))
@@ -284,6 +293,10 @@ func _get_node_state_text(node: Dictionary) -> String:
     return "Locked (dependency not met)"
 
 func _on_start_battle_pressed() -> void:
+    if not SaveHandler.has_fishing_upgrade("cursor_pickup_unlock"):
+        if info_label != null:
+            info_label.text = "Unlock Cursor Pickup Unlock before starting battle."
+        return
     SceneChanger.change_to_new_scene("res://Fishing/BattleScene.tscn")
 
 func _on_main_menu_pressed() -> void:
@@ -347,6 +360,8 @@ func _center_scroll() -> void:
 func _process(delta: float) -> void:
     if scroll_container == null:
         return
+    if SaveHandler.fishing_currency != last_currency_displayed:
+        _refresh_ui()
     var input_vec: Vector2 = Vector2(
         Input.get_axis("left", "right"),
         Input.get_axis("up", "down")
@@ -497,6 +512,8 @@ func _refresh_starfield() -> void:
 
 func _resolve_icon_text(node: Dictionary) -> String:
     var key: String = str(node.get("key", "")).to_lower()
+    if key == "auto_attack_unlock":
+        return "EN"
     if key.find("recruit") >= 0:
         return "H+"
     if key.find("unlock") >= 0:
@@ -526,7 +543,14 @@ func _resolve_icon_text(node: Dictionary) -> String:
     return "+"
 
 func _resolve_node_icon_texture(node: Dictionary) -> Texture2D:
-    return null
+    var icon_path: String = str(node.get("icon", "")).strip_edges()
+    if icon_path == "" or not icon_path.begins_with("res://"):
+        return null
+    if icon_cache.has(icon_path):
+        return icon_cache[icon_path]
+    var texture: Texture2D = load(icon_path)
+    icon_cache[icon_path] = texture
+    return texture
 
 func _build_connection_lines() -> void:
     if line_layer == null:

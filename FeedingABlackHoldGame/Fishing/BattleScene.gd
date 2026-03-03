@@ -233,6 +233,7 @@ func _ready() -> void:
     _rebuild_battle_mods()
     _setup_visuals()
     _spawn_heroes()
+    _style_battle_summary_ui()
     summary_panel.hide()
     _setup_editor_speed_button()
     _update_speed_button_enabled_state()
@@ -1074,7 +1075,7 @@ func _process(delta: float) -> void:
                 _run_post_battle_sweep(delta)
             else:
                 _run_defeat_pose(delta)
-            _update_ui()
+        _update_ui()
         return
     if summary_panel.visible:
         return
@@ -1220,7 +1221,7 @@ func _spawn_heroes() -> void:
             "name": hero_name,
             "damage": damage,
             "speed": speed,
-            "range": 4000.0 if hero_name == "archer" else 120.0,
+            "range": _hero_attack_range(hero_name),
             "cooldown": 0.0,
             "walk_speed": 80.0 * _walk_speed_mult(),
             "active_charge": 0.0,
@@ -1725,7 +1726,8 @@ func _kill_enemy(enemy: CombatSprite) -> void:
     enemy_data.erase(enemy)
     # Play enemy defeat / shoot SFX
     if Engine.has_singleton("AudioManager"):
-        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER)
+        print("[AUDIO] Enemy defeated - playing BUTTON_CLICK")
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
     enemy.queue_free()
 
 func _spawn_coin(pos: Vector2, value: int) -> void:
@@ -1783,15 +1785,17 @@ func _update_coins(delta: float) -> void:
     var max_x: float = camera_2d.position.x + half_w + COIN_DESPAWN_MARGIN_X
     var min_y: float = camera_2d.position.y - half_h - COIN_DESPAWN_MARGIN_Y
     var max_y: float = camera_2d.position.y + half_h + COIN_DESPAWN_MARGIN_Y
-    for coin in coins.duplicate():
+    # Iterate backwards to safely remove items
+    for i in range(coins.size() - 1, -1, -1):
+        var coin = coins[i]
         if not is_instance_valid(coin):
-            coins.erase(coin)
+            coins.remove_at(i)
             coin_ages.erase(coin)
             continue
         var coin_age: float = float(coin_ages.get(coin, 0.0)) + max(0.0, delta)
         coin_ages[coin] = coin_age
         if coin.position.x < min_x or coin.position.x > max_x or coin.position.y < min_y or coin.position.y > max_y:
-            coins.erase(coin)
+            coins.remove_at(i)
             coin_ages.erase(coin)
             coin.queue_free()
             continue
@@ -1825,18 +1829,26 @@ func _on_coin_collected(coin: CoinPickup, by_cursor: bool) -> void:
     if collected_by_cursor:
         amount = int(round(float(amount) * _cursor_bonus_mult()))
 
-    # Play coin pickup SFX
+    # Play coin pickup SFX - use 2D positional audio
     if Engine.has_singleton("AudioManager"):
-        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_RESOURCE_SUCKED_UP)
+        print("[AUDIO] Coin collected - playing 2D audio at coin position")
+        AudioManager.create_2d_audio_at_location(coin.position, SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 
     SaveHandler.fishing_currency += amount
     SaveHandler.fishing_lifetime_coins += amount
     SaveHandler.save_fishing_progress()
     coins_gained += amount
 
-    coins.erase(coin)
+    # Remove from array using indexed removal
+    for i in range(coins.size()):
+        if coins[i] == coin:
+            coins.remove_at(i)
+            break
     coin_ages.erase(coin)
     coin.queue_free()
+    if battle_completed:
+        _update_ui()
+        _refresh_battle_summary_text()
 
 func _max_power() -> float:
     var cap: float = 100.0
@@ -2075,8 +2087,6 @@ func _apply_upgrade_key_modifiers(key: String, level: int) -> void:
         battle_mods["enemy_count_mult"] = float(battle_mods["enemy_count_mult"]) + 0.05 * level
         battle_mods["coin_mult"] = float(battle_mods["coin_mult"]) + 0.02 * level
 
-    if key == "auto_attack_unlock":
-        battle_mods["damage_mult_all"] = float(battle_mods["damage_mult_all"]) + 0.06
     if key == "archer_pierce_unlock":
         battle_mods["damage_mult_all"] = float(battle_mods["damage_mult_all"]) + 0.04
     if key == "knight_vamp_unlock":
@@ -2151,9 +2161,23 @@ func _hero_damage_mult(hero_name: String) -> float:
 
 func _hero_speed_mult(hero_name: String) -> float:
     var mult: float = float(battle_mods.get("speed_mult_all", 1.0))
-    if hero_name == "knight" and SaveHandler.has_fishing_upgrade("auto_attack_unlock"):
-        mult += 0.08
     return mult
+
+func _hero_attack_range(hero_name: String) -> float:
+    if hero_name == "archer":
+        return 4000.0
+    if hero_name == "knight":
+        return CONTACT_RANGE
+    return 120.0
+
+func _has_enemy_counter_unlock() -> bool:
+    return SaveHandler.has_fishing_upgrade("auto_attack_unlock")
+
+func _has_any_active_power_unlock() -> bool:
+    return SaveHandler.has_fishing_upgrade("knight_vamp_unlock") \
+        or SaveHandler.has_fishing_upgrade("archer_pierce_unlock") \
+        or SaveHandler.has_fishing_upgrade("guardian_fortify_unlock") \
+        or SaveHandler.has_fishing_upgrade("mage_storm_unlock")
 
 func _walk_speed_mult() -> float:
     return float(battle_mods.get("walk_speed_mult", 1.0))
@@ -2263,6 +2287,9 @@ func _update_ui() -> void:
 
     var max_power_val: float = max(1.0, _max_power())
     var power_now: float = clamp(power, 0.0, max_power_val)
+    var show_power_hud: bool = _has_any_active_power_unlock()
+    power_bar.visible = show_power_hud
+    power_value_label.visible = show_power_hud
     power_bar.max_value = max_power_val
     power_bar.value = power_now
     power_value_label.text = "%d / %d" % [int(round(power_now)), int(round(max_power_val))]
@@ -2270,9 +2297,13 @@ func _update_ui() -> void:
     var level_params: Dictionary = _level_params(current_level)
     var exp_total: int = int(level_params.get("regular_count", 0)) + BOSS_SEGMENTS
     var exp_now: int = min(exp_total, regular_killed + boss_segments_broken)
+    var exp_remaining: int = max(0, exp_total - exp_now)
+    var show_enemy_counter_hud: bool = _has_enemy_counter_unlock()
+    experience_bar.visible = show_enemy_counter_hud
+    experience_value_label.visible = show_enemy_counter_hud
     experience_bar.max_value = max(1, exp_total)
-    experience_bar.value = exp_now
-    experience_value_label.text = "%d / %d" % [exp_now, exp_total]
+    experience_bar.value = exp_remaining
+    experience_value_label.text = "Enemies Remaining: %d" % exp_remaining
 
     currency_label.text = "Currency: %d" % SaveHandler.fishing_currency
 
@@ -2282,6 +2313,10 @@ func _on_boss_defeated() -> void:
     if current_level >= int(SaveHandler.fishing_max_unlocked_battle_level) and current_level < 3:
         SaveHandler.fishing_max_unlocked_battle_level = current_level + 1
         SaveHandler.fishing_next_battle_level = SaveHandler.fishing_max_unlocked_battle_level
+    # Boss defeated sound
+    if Engine.has_singleton("AudioManager"):
+        print("[AUDIO] Boss defeated - playing BUTTON_CLICK")
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
     _end_battle(true)
 
 func _end_battle(victory: bool) -> void:
@@ -2297,6 +2332,10 @@ func _end_battle(victory: bool) -> void:
     _refresh_battle_summary_text()
     _update_speed_button_enabled_state()
     if not victory:
+        # Play defeat SFX
+        if Engine.has_singleton("AudioManager"):
+            print("[AUDIO] Player defeated - playing BUTTON_CLICK")
+            AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
         _start_defeat_pose()
     if suppress_floating_text:
         if battle_victory:
@@ -2385,19 +2424,69 @@ func _run_defeat_pose_instant() -> void:
     _finalize_battle_summary()
 
 func _build_battle_summary_text(is_live: bool) -> String:
-    var title: String = "Victory!" if battle_victory else "Defeated."
-    var summary_text: String = "%s\nLevel: %d\nEnemies killed: %d\nBoss segments: %d\nCoins gained: %d" % [title, current_level, enemies_killed, boss_segments_broken, coins_gained]
+    var title: String = "VICTORY" if battle_victory else "DEFEAT"
+    var summary_text: String = "BATTLE OVER  |  %s\n\nLevel: %d\nEnemies defeated: %d\nBoss segments broken: %d\nCoins gained this run: %d\nGold total: %d" % [
+        title,
+        current_level,
+        enemies_killed,
+        boss_segments_broken,
+        coins_gained,
+        SaveHandler.fishing_currency,
+    ]
     if is_live and battle_victory and not coins.is_empty():
-        summary_text += "\nSweeping pickups..."
+        summary_text += "\nCollecting remaining loot..."
     var is_first_l3_boss_clear: bool = battle_victory and current_level == 3 and not SaveHandler.fishing_l3_boss_thank_you_shown
     if is_first_l3_boss_clear:
-        summary_text += "\n\nthanks for playing my game this was created by a single developer, please leave feedback if you would like more content.\nCredits:\nCreator: Beep2Bleep."
+        summary_text += "\n\nThanks for playing.\nThis game was created by a single developer.\nPlease leave feedback if you would like more content.\nCredits:\nCreator: Beep2Bleep."
     return summary_text
 
 func _refresh_battle_summary_text() -> void:
     if summary_label == null:
         return
     summary_label.text = _build_battle_summary_text(not summary_finalized)
+
+func _style_battle_summary_ui() -> void:
+    if summary_panel == null or summary_label == null or continue_button == null:
+        return
+
+    var panel_style := StyleBoxFlat.new()
+    panel_style.bg_color = Color(0.027, 0.047, 0.102, 0.96)
+    panel_style.border_color = Color(0.129, 0.8, 1.0, 1.0)
+    panel_style.border_width_left = 3
+    panel_style.border_width_top = 3
+    panel_style.border_width_right = 3
+    panel_style.border_width_bottom = 3
+    panel_style.corner_radius_top_left = 6
+    panel_style.corner_radius_top_right = 6
+    panel_style.corner_radius_bottom_left = 6
+    panel_style.corner_radius_bottom_right = 6
+    summary_panel.add_theme_stylebox_override("panel", panel_style)
+
+    summary_label.add_theme_color_override("font_color", Color(0.92, 0.97, 1.0, 1.0))
+    summary_label.add_theme_font_size_override("font_size", 32)
+    summary_label.autowrap_mode = 2
+    summary_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+    summary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+
+    var normal := StyleBoxFlat.new()
+    normal.bg_color = Color(0.05, 0.14, 0.4, 0.96)
+    normal.border_color = Color(0.89, 0.92, 0.99, 1.0)
+    normal.border_width_left = 2
+    normal.border_width_top = 2
+    normal.border_width_right = 2
+    normal.border_width_bottom = 2
+    normal.corner_radius_top_left = 4
+    normal.corner_radius_top_right = 4
+    normal.corner_radius_bottom_left = 4
+    normal.corner_radius_bottom_right = 4
+    var hover := normal.duplicate(true)
+    hover.bg_color = Color(0.08, 0.22, 0.55, 0.98)
+
+    continue_button.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0, 1.0))
+    continue_button.add_theme_font_size_override("font_size", 26)
+    continue_button.add_theme_stylebox_override("normal", normal)
+    continue_button.add_theme_stylebox_override("hover", hover)
+    continue_button.add_theme_stylebox_override("pressed", hover)
 
 func _finalize_battle_summary() -> void:
     if summary_finalized:
@@ -2442,6 +2531,10 @@ func _update_hero_glow(delta: float) -> void:
 func _on_continue_button_pressed() -> void:
     if not summary_finalized:
         return
+    # Play continue button click audio
+    if Engine.has_singleton("AudioManager"):
+        print("[AUDIO] Continue button pressed - playing BUTTON_CLICK")
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
     _set_next_battle_level_and_exit(current_level)
 
 func _show_level_choice_dialog(max_level: int) -> void:

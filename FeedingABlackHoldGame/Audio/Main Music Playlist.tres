@@ -1,6 +1,6 @@
 [gd_resource type="AudioStreamPlaylist" load_steps=11 format=3 uid="uid://dc6516tukbrr5"]
 
-[ext_resource type="AudioStream" uid="uid://b02yfei8pypgi" path="res://Audio/Music/Track 1 (Trailer Song).mp3" id="1"]
+[ext_resource type="AudioStream" path="res://Audio/Music/7 - Phat Phrog Studio - Hellfire Tempest - Carnage Cabaret - LOOP.wav" id="1"]
 [ext_resource type="AudioStream" uid="uid://b5mucglcmsglb" path="res://Audio/Music/Lofi_Hip_Hop__BPM145.mp3" id="2"]
 [ext_resource type="AudioStream" uid="uid://delh4v6vaqekm" path="res://Audio/Music/BH_Ambient_1__BPM60.mp3" id="3"]
 [ext_resource type="AudioStream" uid="uid://dgeelp0gswsvy" path="res://Audio/Music/Drum_n_Bass_1.mp3" id="4"]

@@ -58,7 +58,7 @@ GameModeDataManager.gd::GDScript::3637843324744986905::1771452238::0::1::::GameM
 GameModePanel.gd::GDScript::4559485461336714955::1771452238::0::1::::GameModePanel<>PanelContainer<><>0<>0<><>::
 GameModeScreen.gd::GDScript::832677044450776154::1771452237::0::1::::GameModeScreen<>Control<><>0<>0<><>::
 gdre_export.log::TextFile::-1::1771452244::0::1::::<><><>0<>0<><>::
-Global.gd::GDScript::6508223261549157088::1772131152::0::1::::<>Node<><>0<>0<><>::
+Global.gd::GDScript::6508223261549157088::1772563042::0::1::::<>Node<><>0<>0<><>::
 GlobalResorucesUI.gd::GDScript::7035094008600623221::1771452237::0::1::::GlobalResourceUI<>Control<><>0<>0<><>::
 GlobalResourceChangedEventData.gd::GDScript::4206346972077001806::1771452237::0::1::::GlobalResourceChangedEventData<>Resource<><>0<>0<><>::
 GlobalResourceManager.gd::GDScript::8439936606318611835::1771452238::0::1::::GlobalResourceManager<>Resource<><>0<>0<><>::
@@ -73,8 +73,8 @@ Level Up Flair.tscn::PackedScene::830628376155535166::1771452236::0::1::::<><><>
 LevelManager.gd::GDScript::1934529133201092198::1771452237::0::1::::LevelManager<>Node<><>0<>0<><>::
 LevelManager.tscn::PackedScene::6074012622361049263::1771452237::0::1::::<><><>0<>0<><>::uid://2tdoaqsor0cw::::res://LevelManager.gd
 LevelManagerUpdatedData.gd::GDScript::769372220966087706::1771452237::0::1::::LevelManagerUpdatedData<>Resource<><>0<>0<><>::
-Main Menu.gd::GDScript::5338418661254987955::1772491736::0::1::::MainMenu<>Node2D<><>0<>0<><>::
-Main Menu.tscn::PackedScene::8877655407026906059::1772213298::0::1::::<><><>0<>0<><>::uid://cib78ftbwfk6f::::res://Main Menu.gd<>uid://1txuh2meyqfj::::res://Build Label.tscn<>uid://bkxi24h1nf7kk::::res://Fishing/FishingUpgradeScene.gd<>uid://dayjws668e5cv::::res://Art/Logo Base White.png<>uid://ulae55bx0fhs::::res://Theme/Theme_Small_Font.tres<>uid://ds36c3qoqmf3y::::res://Controller Glyph.tscn<>uid://b5w1afldacdb1::::res://CustomButton.tscn<>uid://b0bx5ybu6bfpq::::res://Game Modes Selector.tscn<>uid://bxx07kmhw0oiv::::res://Theme/Theme_Small_Medium_Font.tres<>uid://bj1fytem4uuvy::::res://Theme/Settings Panel.tres<>uid://f0mobaom23an::::res://Theme/Theme_Large_Font.tres<>uid://dl3ia7dmya7fp::::res://Settings.tscn<>uid://c36s4gjs5sv4r::::res://addons/controller_icons/objects/ControllerIconTexture.gd<>uid://bfvsjnywyisxq::::res://Art/star_tiny.png<>uid://cgsnb64a4xmlg::::res://Singletons/Background Particle Mats.tres<>uid://clfcokk1jcg2q::::res://Black Hole Art.tscn<>uid://doav5t27dvtvd::::res://ObjectManager.tscn<>uid://0rfvn2v8pqmp::::res://Audio/zapsplat_sound_design_whoosh_slow_mo_timewarp_001_106393.mp3
+Main Menu.gd::GDScript::5338418661254987955::1772563122::0::1::::MainMenu<>Node2D<><>0<>0<><>::
+Main Menu.tscn::PackedScene::8877655407026906059::1772562740::0::1::::<><><>0<>0<><>::uid://cib78ftbwfk6f::::res://Main Menu.gd<>uid://1txuh2meyqfj::::res://Build Label.tscn<>uid://bkxi24h1nf7kk::::res://Fishing/FishingUpgradeScene.gd<>uid://dayjws668e5cv::::res://Art/Logo Base White.png<>uid://ulae55bx0fhs::::res://Theme/Theme_Small_Font.tres<>uid://ds36c3qoqmf3y::::res://Controller Glyph.tscn<>uid://b5w1afldacdb1::::res://CustomButton.tscn<>uid://b0bx5ybu6bfpq::::res://Game Modes Selector.tscn<>uid://bxx07kmhw0oiv::::res://Theme/Theme_Small_Medium_Font.tres<>uid://bj1fytem4uuvy::::res://Theme/Settings Panel.tres<>uid://f0mobaom23an::::res://Theme/Theme_Large_Font.tres<>uid://dl3ia7dmya7fp::::res://Settings.tscn<>uid://c36s4gjs5sv4r::::res://addons/controller_icons/objects/ControllerIconTexture.gd<>uid://bfvsjnywyisxq::::res://Art/star_tiny.png<>uid://cgsnb64a4xmlg::::res://Singletons/Background Particle Mats.tres<>uid://clfcokk1jcg2q::::res://Black Hole Art.tscn<>uid://doav5t27dvtvd::::res://ObjectManager.tscn<>uid://0rfvn2v8pqmp::::res://Audio/zapsplat_sound_design_whoosh_slow_mo_timewarp_001_106393.mp3
 MatterPerSecond.gd::GDScript::7920184246017113290::1771452236::0::1::::<>Timer<><>0<>0<><>::
 MatterPerSecond.tscn::PackedScene::3364736975274773591::1771452237::0::1::::<><><>0<>0<><>::uid://dk3ujowc43m6m::::res://MatterPerSecond.gd
 Mods.gd::GDScript::2929711871118208472::1771452237::0::1::::Mods<>Node<><>0<>0<><>::
@@ -108,8 +108,8 @@ ResourcePool.tscn::PackedScene::7159077690144963747::1771452237::0::1::::<><><>0
 ResourceUI.gd::GDScript::2961440628661999240::1771452237::0::1::::ResourceUI<>MarginContainer<><>0<>0<><>::
 ResourceUI.tscn::PackedScene::7756207505796642036::1771452237::0::1::::<><><>0<>0<><>::uid://dl1181xufyebq::::res://Theme/Theme.tres<>uid://bigsq2velfsmq::::res://ResourceUI.gd<>uid://d4k2v7k1qqrqo::::res://Art/Matter Base.png
 RunStats.gd::GDScript::222614423203901843::1771452238::0::1::::RunStats<>Node<><>0<>0<><>::
-SaveHandler.gd::GDScript::4669741451367116382::1772472531::0::1::::<>Node<><>0<>0<><>::
-SceneChanger.gd::GDScript::3502683103198790099::1772482870::0::1::::<>CanvasLayer<><>0<>0<><>::
+SaveHandler.gd::GDScript::4669741451367116382::1772561301::0::1::::<>Node<><>0<>0<><>::
+SceneChanger.gd::GDScript::3502683103198790099::1772563116::0::1::::<>CanvasLayer<><>0<>0<><>::
 SceneChanger.tscn::PackedScene::4398013615665441147::1771452237::0::1::::<><><>0<>0<><>::uid://bp5yxc45ns2d8::::res://SceneChanger.gd<>uid://ptpqlsgqmxqd::::res://UniversalTransitionShader.gdshader<>uid://0rfvn2v8pqmp::::res://Audio/zapsplat_sound_design_whoosh_slow_mo_timewarp_001_106393.mp3
 SessionStats.gd::GDScript::2666886161867304457::1771452238::0::1::::SessionStats<>Node<><>0<>0<><>::
 Settings.gd::GDScript::1653488516621991655::1771452238::0::1::::Settings<>VBoxContainer<><>0<>0<><>::
@@ -708,7 +708,7 @@ Zen Mode.png::CompressedTexture2D::649911241917949224::1771452238::1771452238::1
 Asteroid Base.png::CompressedTexture2D::8649222950536063543::1771452238::1771452238::1::::<><><>0<>0<>a1aa520cd8bc6b93671c5863e5eec934<>res://.godot/imported/Asteroid Base.png-45881ffa437176226da4b8fa72e2e81c.ctex::
 pattern_03.png::CompressedTexture2D::531040758485949651::1771452237::1771452237::1::::<><><>0<>0<>3e0ac9dcb5c5279cfc51a37b733a55c6<>res://.godot/imported/pattern_03.png-a8216ebdd7831a26699ca6fac970e5d3.ctex::
 pattern_0011.png::CompressedTexture2D::3930870985773882563::1771452238::1771452238::1::::<><><>0<>0<>01f16c4d8cdd7982b8358ebf0e8e243b<>res://.godot/imported/pattern_0011.png-d72744e59f8f4c5fe9540f234f0e6433.ctex::
-::res://Art/CombatSprites/::1772129500
+::res://Art/CombatSprites/::1772559532
 enemy_boss.png::CompressedTexture2D::8639762018729868076::1772559245::1772559532::1::::<><><>0<>0<>5ecb73dd58b6db10cf91a04c8a32d83b<>res://.godot/imported/enemy_boss.png-34ec2271f47b15435222115c3bd07b87.ctex::
 enemy_brute.png::CompressedTexture2D::5165810818568637516::1772559245::1772559532::1::::<><><>0<>0<>645873e8a453967b2d6a4f79fde2f21a<>res://.godot/imported/enemy_brute.png-ecaf26d0aa775500189df2479cc68d16.ctex::
 enemy_flyer.png::CompressedTexture2D::4734200553673462420::1772559245::1772559532::1::::<><><>0<>0<>cc600fb7b183fc951497edfd003308ab<>res://.godot/imported/enemy_flyer.png-697928ef623cca4d5bac2e53cb769cdc.ctex::
@@ -876,7 +876,7 @@ Laser.mp3::AudioStreamMP3::5645196120396819031::1771452238::1771452238::1::::<><
 little_robot_sound_factory_Jingle_Win_Synth_01.mp3::AudioStreamMP3::2307333919020381096::1771452236::1771452236::1::::<><><>0<>0<>9bb4ace27d709a84bb58adeb1877f73a<>res://.godot/imported/little_robot_sound_factory_Jingle_Win_Synth_01.mp3-cc774fbb9e3dec06c68c34c4ec6dd465.mp3str::
 lvl_up_sound.mp3::AudioStreamMP3::2750767729986927890::1771452238::1771452238::1::::<><><>0<>0<>907ad0045c7d3fe4d37880b512afb54b<>res://.godot/imported/lvl_up_sound.mp3-854178b0e165ce759fd7eff7eb2ffc14.mp3str::
 lvl_up_sound_2.mp3::AudioStreamMP3::4277963142839481931::1771452236::1771452236::1::::<><><>0<>0<>ad64bc1d6028ea3988f21cfb8ffc79b0<>res://.godot/imported/lvl_up_sound_2.mp3-2189bd740996b853867f537fbbda588a.mp3str::
-Main Music Playlist.tres::AudioStreamPlaylist::7365505047653011980::1771452238::0::1::::<><><>0<>0<><>::uid://b02yfei8pypgi::::res://Audio/Music/Track 1 (Trailer Song).mp3<>uid://b5mucglcmsglb::::res://Audio/Music/Lofi_Hip_Hop__BPM145.mp3<>uid://delh4v6vaqekm::::res://Audio/Music/BH_Ambient_1__BPM60.mp3<>uid://dgeelp0gswsvy::::res://Audio/Music/Drum_n_Bass_1.mp3<>uid://cligontgr33nk::::res://Audio/Music/Electronica__BPM110.mp3<>uid://da5tgne32p011::::res://Audio/Music/Reggae___Lofi_Hip_Hop__BPM75.mp3<>uid://ckf1x5wyc1nex::::res://Audio/Music/Drum_n_Bass_2.mp3<>uid://cpbk7ml5oqthl::::res://Audio/Music/Electronica_2__BPM130.mp3<>uid://c0cepiwdnaoi6::::res://Audio/Music/Reggaeton___Lofi_Hip_Hop__BPM90.wav<>uid://t5gji1briqdx::::res://Audio/Music/BH_Ambient_2__BPM88.mp3
+Main Music Playlist.tres::AudioStreamPlaylist::7365505047653011980::1772563642::0::1::::<><><>0<>0<><>::uid://b02yfei8pypgi::::res://Audio/Music/Track 1 (Trailer Song).mp3<>uid://b5mucglcmsglb::::res://Audio/Music/Lofi_Hip_Hop__BPM145.mp3<>uid://delh4v6vaqekm::::res://Audio/Music/BH_Ambient_1__BPM60.mp3<>uid://dgeelp0gswsvy::::res://Audio/Music/Drum_n_Bass_1.mp3<>uid://cligontgr33nk::::res://Audio/Music/Electronica__BPM110.mp3<>uid://da5tgne32p011::::res://Audio/Music/Reggae___Lofi_Hip_Hop__BPM75.mp3<>uid://ckf1x5wyc1nex::::res://Audio/Music/Drum_n_Bass_2.mp3<>uid://cpbk7ml5oqthl::::res://Audio/Music/Electronica_2__BPM130.mp3<>uid://c0cepiwdnaoi6::::res://Audio/Music/Reggaeton___Lofi_Hip_Hop__BPM90.wav<>uid://t5gji1briqdx::::res://Audio/Music/BH_Ambient_2__BPM88.mp3
 Marble_OnCollide.mp3::AudioStreamMP3::1345558208822433756::1771452238::1771452238::1::::<><><>0<>0<>bb208f38b951e63a9ae6dfbd8b2786ed<>res://.godot/imported/Marble_OnCollide.mp3-3b19930da8185670e09edd0e6db8b36c.mp3str::
 robot_land_metal_tray.mp3::AudioStreamMP3::7490255668666296031::1771452236::1771452236::1::::<><><>0<>0<>e2438ddf33472c54fd40b42573ad6229<>res://.godot/imported/robot_land_metal_tray.mp3-70230a2594632907336f8955c0cd834a.mp3str::
 skyclad_sound_gong_sound_design_muffled_low_heavy_ponderous_262.mp3::AudioStreamMP3::3287528484914111274::1771452238::1771452238::1::::<><><>0<>0<>134706fb2d6cdca7c13a495d83005f8e<>res://.godot/imported/skyclad_sound_gong_sound_design_muffled_low_heavy_ponderous_262.mp3-61ab40b717332b565120cf65842dad45.mp3str::
@@ -919,7 +919,8 @@ zapsplat_shockwave_designed_002_93121.mp3::AudioStreamMP3::6961263233661048223::
 zapsplat_sound_design_electricity_zap_spark_28906.mp3::AudioStreamMP3::2890135294671801363::1771452237::1771452237::1::::<><><>0<>0<>a70ed594224f86ed1204c4b4e1ac61f8<>res://.godot/imported/zapsplat_sound_design_electricity_zap_spark_28906.mp3-8ef5d4b2ce061bc24ae73b33ce9f71ca.mp3str::
 zapsplat_sound_design_hit_thud_into_descending_slowing_tail_slow_motion_001_65460.mp3::AudioStreamMP3::2246932443962112254::1771452237::1771452237::1::::<><><>0<>0<>e3f108ed80d9353706d1f1dd0db3af42<>res://.godot/imported/zapsplat_sound_design_hit_thud_into_descending_slowing_tail_slow_motion_001_65460.mp3-2810e2338b283de6af328912e4411779.mp3str::
 zapsplat_sound_design_whoosh_slow_mo_timewarp_001_106393.mp3::AudioStreamMP3::1790157324917783503::1771452236::1771452236::1::::<><><>0<>0<>3af48300751e0ea0b54625b55f906c36<>res://.godot/imported/zapsplat_sound_design_whoosh_slow_mo_timewarp_001_106393.mp3-06605e85eb627d180c911920e76de920.mp3str::
-::res://Audio/Music/::1771538361
+::res://Audio/Music/::1772563638
+7 - Phat Phrog Studio - Hellfire Tempest - Carnage Cabaret - LOOP.wav::AudioStreamWAV::7111288454719991361::1769114471::1772563702::1::::<><><>0<>0<>d956f1023f0d5bd38ea6cebd12cbef6b<>res://.godot/imported/7 - Phat Phrog Studio - Hellfire Tempest - Carnage Cabaret - LOOP.wav-17e57271330ca1605ea37c22c5ceffd8.sample::
 BH_Ambient_1__BPM60.mp3::AudioStreamMP3::7463203539732765136::1771452237::1771452237::1::::<><><>0<>0<>d254643111eaf8ce6a8a91c6e0a567f4<>res://.godot/imported/BH_Ambient_1__BPM60.mp3-353bada22fa5397dff14e875eadd85a1.mp3str::
 BH_Ambient_2__BPM88.mp3::AudioStreamMP3::1395900196266353581::1771452238::1771452238::1::::<><><>0<>0<>944940f20924efbaeac31ac1bbe22941<>res://.godot/imported/BH_Ambient_2__BPM88.mp3-ce241abd72db5cec08997eda729dbe87.mp3str::
 Drum_n_Bass_1.mp3::AudioStreamMP3::7588915962395671674::1771452238::1771452238::1::::<><><>0<>0<>976440f2f6d7ffc33a796f6b75690547<>res://.godot/imported/Drum_n_Bass_1.mp3-614dc241da67ab07f1b5b74363c609bb.mp3str::
@@ -956,7 +957,7 @@ Blackhole Translations - Sheet1.zh.translation::OptimizedTranslation::8522813440
 Compact Data.json::JSON::-1::1771452236::0::1::::<><><>0<>0<><>::
 Demo Data.json::JSON::-1::1771452236::0::1::::<><><>0<>0<><>::
 Example Black Hole Data.json::JSON::-1::1771452236::0::1::::<><><>0<>0<><>::
-FishingUpgradeData.json::JSON::-1::1772304820::0::1::::<><><>0<>0<><>::
+FishingUpgradeData.json::JSON::-1::1772563614::0::1::::<><><>0<>0<><>::
 Full Release Demo Level.json::JSON::-1::1771452236::0::1::::<><><>0<>0<><>::
 Quick Play Data.json::JSON::-1::1771452236::0::1::::<><><>0<>0<><>::
 Roguelike Mode Data.json::JSON::-1::1771452236::0::1::::<><><>0<>0<><>::
@@ -973,14 +974,14 @@ index.apple-touch-icon.png::CompressedTexture2D::1541724962292501447::1771452238
 index.icon.png::CompressedTexture2D::3629862721479476427::1771452237::1771452237::1::::<><><>0<>0<>64d064f87bed16ce4524098ab042ac08<>res://.godot/imported/index.icon.png-8466b9836b3b13bcc45e53125321ef39.ctex::
 index.png::CompressedTexture2D::6576296408970124353::1771452237::1771452237::1::::<><><>0<>0<>96b31aa0d9e43f0196fda92504b9b964<>res://.godot/imported/index.png-d03311572afeb237347e3aea48014cb0.ctex::
 ::res://Fishing/::1772305777
-BattleScene.gd::GDScript::256483395540075428::1772559289::0::1::::<>Node2D<><>0<>0<><>::
-BattleScene.tscn::PackedScene::-1::1772559326::0::1::::<><><>0<>0<><>::res://Fishing/BattleScene.gd
+BattleScene.gd::GDScript::256483395540075428::1772563635::0::1::::<>Node2D<><>0<>0<><>::
+BattleScene.tscn::PackedScene::-1::1772560157::0::1::::<><><>0<>0<><>::res://Fishing/BattleScene.gd
 CoinPickup.gd::GDScript::4293323117044076259::1772476594::0::1::::CoinPickup<>Area2D<><>0<>0<><>::
 CoinPickup.tscn::PackedScene::-1::1772129712::0::1::::<><><>0<>0<><>::res://Fishing/CoinPickup.gd
-CombatSprite.gd::GDScript::9222949183729968108::1772471659::0::1::::CombatSprite<>Area2D<><>0<>0<><>::
+CombatSprite.gd::GDScript::9222949183729968108::1772563641::0::1::::CombatSprite<>Area2D<><>0<>0<><>::
 CombatSprite.tscn::PackedScene::-1::1772129712::0::1::::<><><>0<>0<><>::res://Fishing/CombatSprite.gd
-FishingUpgradeDB.gd::GDScript::6085080326067041982::1772479375::0::1::::FishingUpgradeDB<>RefCounted<><>0<>0<><>::
-FishingUpgradeScene.gd::GDScript::3136325295984075990::1772559450::0::1::::<>Control<><>0<>0<><>::
+FishingUpgradeDB.gd::GDScript::6085080326067041982::1772563610::0::1::::FishingUpgradeDB<>RefCounted<><>0<>0<><>::
+FishingUpgradeScene.gd::GDScript::3136325295984075990::1772563620::0::1::::<>Control<><>0<>0<><>::
 FishingUpgradeScene.tscn::PackedScene::-1::1772559158::0::1::::<><><>0<>0<><>::res://Fishing/FishingUpgradeScene.gd
 FishingUpgradeTreeAdapter.gd::GDScript::2001329543834468694::1772306021::0::1::::FishingUpgradeTreeAdapter<>RefCounted<><>0<>0<><>::
 ::res://Game Modes/::1771538361

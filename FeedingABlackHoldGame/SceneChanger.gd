@@ -9,11 +9,12 @@ var to_state
 const BASE_TRANSITION_ANIM_DURATION: float = 1.0
 const LOAD_TIME_SMOOTHING: float = 0.35
 
-@export var scene_change_min_duration: float = 1.8
-@export var scene_change_max_duration: float = 5.0
-@export var node_transition_duration: float = 1.6
+@export var scene_change_min_duration: float = 0.55
+@export var scene_change_max_duration: float = 1.6
+@export var node_transition_duration: float = 0.65
+@export var transition_speed_multiplier: float = 1.2
 
-var estimated_scene_load_seconds: float = 0.35
+var estimated_scene_load_seconds: float = 0.22
 var scene_change_started_msec: int = 0
 
 func _ready() -> void :
@@ -30,10 +31,16 @@ func _on_pallet_updated():
 func update_color():
     %ColorRect.color = Refs.pallet.black_hole_dark
 
-func change_to_new_scene(path, _to_state = null):
+func change_to_new_scene(path, _to_state = null, duration_override: float = -1.0):
     new_scene_path = path
     to_state = _to_state
-    var estimated_total_duration: float = clamp(estimated_scene_load_seconds * 2.0, scene_change_min_duration, scene_change_max_duration)
+    var estimated_total_duration: float = duration_override
+    if estimated_total_duration <= 0.0:
+        estimated_total_duration = clamp(
+            estimated_scene_load_seconds * 1.2 + 0.12,
+            scene_change_min_duration,
+            scene_change_max_duration
+        )
     _apply_transition_speed(estimated_total_duration)
     $AudioStreamPlayer.play()
     $AnimationPlayer.play("Change Scene")
@@ -105,6 +112,7 @@ func _capture_scene_load_time(previous_scene: Node) -> void :
 
 func _apply_transition_speed(duration_seconds: float) -> void :
     var speed: float = BASE_TRANSITION_ANIM_DURATION / max(duration_seconds, 0.01)
+    speed *= max(0.1, transition_speed_multiplier)
 
     # Keep transitions snappy in-editor while preserving runtime tuning in builds.
     if OS.has_feature("editor"):

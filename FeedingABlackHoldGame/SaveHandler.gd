@@ -432,7 +432,8 @@ func update_controller_sensitivity(value):
 
 
 var fishing_progress_file_path = "user://fishing_incremental_progress.save"
-var fishing_currency = 0
+const STARTING_FISHING_CURRENCY := 10
+var fishing_currency = STARTING_FISHING_CURRENCY
 var fishing_lifetime_coins = 0
 var fishing_unlocked_upgrades: Dictionary = {}
 var fishing_active_upgrades: Dictionary = {}
@@ -442,7 +443,7 @@ var fishing_max_unlocked_battle_level := 1
 var fishing_l3_boss_thank_you_shown := false
 
 func reset_fishing_progress() -> void:
-    fishing_currency = 0
+    fishing_currency = STARTING_FISHING_CURRENCY
     fishing_lifetime_coins = 0
     fishing_unlocked_upgrades = {}
     fishing_active_upgrades = {}
@@ -457,7 +458,7 @@ func load_fishing_progress():
         reset_fishing_progress()
         return
 
-    fishing_currency = int(json_data.get("currency", 0))
+    fishing_currency = int(json_data.get("currency", STARTING_FISHING_CURRENCY))
     fishing_lifetime_coins = int(json_data.get("lifetime_coins", 0))
     fishing_unlocked_upgrades = json_data.get("unlocked_upgrades", {})
     fishing_active_upgrades = json_data.get("active_upgrades", {})
@@ -466,6 +467,10 @@ func load_fishing_progress():
     fishing_max_unlocked_battle_level = clamp(int(json_data.get("max_unlocked_battle_level", 1)), 1, 3)
     fishing_next_battle_level = clamp(fishing_next_battle_level, 1, fishing_max_unlocked_battle_level)
     fishing_l3_boss_thank_you_shown = bool(json_data.get("l3_boss_thank_you_shown", false))
+    # Migration/first-run guard: old saves may have written currency=0 for an otherwise untouched profile.
+    if fishing_currency <= 0 and fishing_lifetime_coins <= 0 and fishing_unlocked_upgrades.is_empty():
+        fishing_currency = STARTING_FISHING_CURRENCY
+        save_fishing_progress()
 
 func save_fishing_progress():
     var save_data = {
