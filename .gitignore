@@ -5,3 +5,4 @@ Godot/*.exe
 # Ignore build output and project-specific Godot configs
 /Build/
 /FeedingABlackHoldGame/.godot/
+FeedingABlackHoldGame/.godot/
