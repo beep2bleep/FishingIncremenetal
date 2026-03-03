@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="400" viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#222"/>
+      <stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="400" fill="#0b0b0f"/>
+  <g transform="translate(60,40)">
+    <circle cx="160" cy="160" r="140" fill="url(#g)" stroke="#444" stroke-width="4" />
+    <g fill="#fff" font-family="Segoe UI, Roboto, Arial, sans-serif" font-weight="700">
+      <text x="340" y="140" font-size="48">Feeding A</text>
+      <text x="340" y="220" font-size="80" fill="#ffd166">Black Hole</text>
+    </g>
+  </g>
+</svg>

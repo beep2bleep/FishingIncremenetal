@@ -47,7 +47,7 @@ var statistics: Dictionary = {
 var achievements: Dictionary = {}
 
 func is_steam_deck():
-    return Steam.isSteamRunningOnSteamDeck()
+    return false
 
 func _ready():
     for key in ACHIVEMENTS.keys():
@@ -60,15 +60,8 @@ func _ready():
 
 
 func initialize_steam() -> void :
-    if not Engine.has_singleton("Steam"):
-        print_debug("This version somehow is missing Steamworks. Shutting down.")
-        steamworks_error.emit("This version somehow is missing Steamworks! Check your log files to find out more.")
-        return
-
-    if not Steam.isSteamRunning():
-        print_debug("Steam is not running. Shutting down.")
-        steamworks_error.emit("Steam is not running. Check your log files to find out more.")
-        return
+    print_debug("Steam integration disabled")
+    return
 
 
     var initialize_data: Dictionary = Steam.steamInitEx(app_id, true)
@@ -89,82 +82,27 @@ func initialize_steam() -> void :
 
 
 func load_steam_stats() -> void :
-    for this_stat in statistics.keys():
-        var steam_stat: int = Steam.getStatInt(this_stat)
-
-        if statistics[this_stat] > steam_stat:
-            print_debug("Stat mismatch; local value is higher (%s), replacing Steam value (%s)" % [statistics[this_stat], steam_stat])
-            set_statistic(this_stat, statistics[this_stat])
-        elif statistics[this_stat] < steam_stat:
-            print_debug("Stat mismatch; local value is lower (%s), replacing with Steam value (%s)" % [statistics[this_stat], steam_stat])
-            set_statistic(this_stat, steam_stat)
-        else:
-            print_debug("Steam stat matches local file: %s" % this_stat)
-    print_debug("Steam statistics loaded")
+    print_debug("Steam integration disabled - skipping load_steam_stats")
+    return
 
 
 func load_steam_achievements() -> void :
-    for key in achievements.keys():
-
-
-        var steam_achievement: Dictionary = Steam.getAchievement(key)
-
-        if not steam_achievement["ret"]:
-            print_debug("Steam does not have this achievement, defaulting to local value: %s" % key)
-            continue
-
-        if achievements[key] == steam_achievement["achieved"]:
-            print_debug("Steam achievements match local file, skipping: %s" % key)
-            continue
-
-        set_achievement(key)
-    print_debug("Steam achievements loaded")
+    print_debug("Steam integration disabled - skipping load_steam_achievements")
+    return
 
 
 func set_achievement(achivement, store_now = true) -> bool:
-    var this_achievement = ACHIVEMENTS.find_key(achivement)
-    if this_achievement != null:
-        achivement = ACHIVEMENTS.find_key(achivement)
-
-    if not achievements.has(achivement):
-        print_debug("This achievement does not exist locally: %s" % achivement)
-        return false
-
-    if achievements[achivement] == true:
-        print_debug("This achievement is already unlocked: %s" % achivement)
-        return false
-
-    achievements[achivement] = true
-
-    if not Steam.setAchievement(achivement):
-        print_debug("Failed to set achievement: %s" % achivement)
-        return false
-
-    print_debug("Set achievement: %s" % achivement)
-
-    if store_now == true:
-        store_steam_data()
-        return false
-
-    return true
+    print_debug("Steam integration disabled - skipping set_achievement: %s" % achivement)
+    return false
 
 
 
 
 func set_statistic(this_stat: String, new_value: int = 1) -> void :
-    if not statistics.has(this_stat):
-        print_debug("This statistic does not exist locally: %s" % this_stat)
-        return
-    statistics[this_stat] += new_value
-
-    if not Steam.setStatInt(this_stat, statistics[this_stat]):
-        print_debug("Failed to set stat %s to: %s" % [this_stat, statistics[this_stat]])
-        return
-
-    print_debug("Set statistics %s succesfully: %s" % [this_stat, statistics[this_stat]])
+    print_debug("Steam integration disabled - skipping set_statistic: %s" % this_stat)
+    return
 
 
 func store_steam_data() -> void :
-    if not Steam.storeStats():
-        print_debug("Failed to store data on Steam, should be stored locally")
-    print_debug("Data successfully sent to Steam")
+    print_debug("Steam integration disabled - skipping store_steam_data")
+    return

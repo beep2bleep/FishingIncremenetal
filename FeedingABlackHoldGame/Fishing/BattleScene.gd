@@ -14,7 +14,7 @@ const LEVEL_ENEMY_TYPE := {
 }
 
 const FLOOR_Y := 640.0
-const HERO_START_X := -415.5
+const HERO_START_X := -100.0
 const HERO_SCROLL_ANCHOR_SCREEN_X_FACTOR := 0.08
 const CONTACT_RANGE := 48.0
 const SIM_STEP := 1.0 / 60.0
@@ -2040,7 +2040,9 @@ func _execute_hero_active(hero: CombatSprite, hero_name: String, skip_anim: bool
                 var arrow_spawn: Vector2 = hero.position + Vector2(28.0, -8.0)
                 if hero.has_method("get_projectile_spawn_point"):
                     arrow_spawn = hero.call("get_projectile_spawn_point")
-                _spawn_arrow(arrow_spawn, target, 45.0, true)
+                # use hero's actual damage value (with active multiplier applied during normal attacks)
+                var pierce_damage: float = float(h.get("damage", 4.0))
+                _spawn_arrow(arrow_spawn, target, pierce_damage, true)
         "guardian":
             shield_time = max(shield_time, active_duration)
         "mage":
@@ -2213,18 +2215,12 @@ func _hero_speed_mult(hero_name: String) -> float:
     return mult
 
 func _hero_attack_range(hero_name: String) -> float:
-    # archer is effectively infinite range (projectiles handle the actual targeting)
     if hero_name == "archer":
         return 4000.0
-    # knight must touch the enemy
     if hero_name == "knight":
         return CONTACT_RANGE
-    # guardian is a melee follower but should be able to reach enemies just
-    # behind the front line; give it a bit more range than default to ensure
-    # it actually gets into striking distance.
     if hero_name == "guardian":
-        return 300.0
-    # default for mage (and any others) remains short
+        return 200.0
     return 120.0
 
 func _has_enemy_counter_unlock() -> bool:

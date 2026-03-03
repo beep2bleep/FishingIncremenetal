@@ -1,0 +1,33 @@
+Title: Feeding A Black Hole
+
+Short description:
+Feed the void — fling planets, harvest mass, and grow an ever-hungry black hole in this incremental arcade experience.
+
+Long description:
+Feeding A Black Hole is an incremental / clicker-action hybrid where you fling celestial bodies into a hungry black hole to increase its mass, unlock upgrades, and discover chaotic cosmic events. Fast to pick up with deep upgrade trees, emergent combos, and charming pixel-art effects.
+
+Features:
+- Physicsy fling mechanics mixed with incremental upgrades
+- Unlockable upgrade tree and prestige-like resets
+- Chaotic events and random rare objects
+- Crisp audio feedback and particle effects
+- Single-player, local experience optimized for quick sessions
+
+Controls:
+- Mouse: click & drag to aim and fling
+- Keyboard: Space to quick-fling (configurable)
+
+System Requirements (est.):
+- Windows 10+, 64-bit
+- 2 GB RAM
+- 200 MB disk
+- Graphics: integrated GPU OK
+
+Contact / Links:
+- Developer: [Your Name]
+- Email: your@email.example
+- Website / itch page: (to be filled)
+
+Notes for itch:
+- Suggested tags: "Clicker", "Incremental", "Casual", "Singleplayer", "Arcade", "Physics"
+- Put a short trailer/gif at top and 3-6 screenshots below the description.

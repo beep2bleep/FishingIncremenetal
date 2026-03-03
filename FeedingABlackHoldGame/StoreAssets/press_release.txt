@@ -1,0 +1,17 @@
+Press Release — Feeding A Black Hole (v1.0)
+
+Headline:
+Feeding A Black Hole — A tiny arcade-incremental where you fling planets into oblivion.
+
+Summary:
+Today we launch "Feeding A Black Hole" — a compact physics-fling incremental with a deep upgrade tree, rare events, and addictive feedback loops. Players aim, fling, and build mass to unlock new mechanics.
+
+Contact:
+Developer: [Your Name]
+Email: your@email.example
+
+Notes to press:
+- Available platforms: Windows
+- Build: Godot export (Windows)
+- Trailer: link here
+- Key features: physics-based flinging, upgrade tree, emergent events

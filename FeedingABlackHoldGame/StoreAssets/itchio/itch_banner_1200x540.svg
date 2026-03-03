@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="540" viewBox="0 0 1200 540" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="540" fill="#05050a" />
+  <defs>
+    <radialGradient id="hole" cx="50%" cy="45%" r="40%">
+      <stop offset="0%" stop-color="#000000"/>
+      <stop offset="60%" stop-color="#111214"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+  <g>
+    <circle cx="400" cy="270" r="200" fill="url(#hole)" stroke="#222" stroke-width="8"/>
+    <text x="680" y="220" font-family="Segoe UI, Roboto, Arial" font-size="52" fill="#fff" font-weight="700">Feeding A</text>
+    <text x="680" y="300" font-family="Segoe UI, Roboto, Arial" font-size="96" fill="#ffd166" font-weight="900">Black Hole</text>
+    <text x="680" y="380" font-family="Segoe UI, Roboto, Arial" font-size="20" fill="#cfcfcf">Fling, feed, upgrade — grow the void.</text>
+  </g>
+</svg>
