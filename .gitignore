@@ -1,3 +1,7 @@
 
 # Don't commit Godot editor binaries
 Godot/*.exe
+
+# Ignore build output and project-specific Godot configs
+/Build/
+/FeedingABlackHoldGame/.godot/
