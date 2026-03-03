@@ -65,6 +65,7 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := 
 
     sprite.sprite_frames = frames
     sprite.play("walk")
+    sprite.centered = true  # ensure the visual is drawn around the node's position
     sprite.scale = Vector2.ONE * scale_factor
     base_sprite_scale = sprite.scale
     sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST

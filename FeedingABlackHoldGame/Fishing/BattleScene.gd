@@ -14,7 +14,7 @@ const LEVEL_ENEMY_TYPE := {
 }
 
 const FLOOR_Y := 640.0
-const HERO_START_X := -511.5
+const HERO_START_X := -415.5
 const HERO_SCROLL_ANCHOR_SCREEN_X_FACTOR := 0.08
 const CONTACT_RANGE := 48.0
 const SIM_STEP := 1.0 / 60.0
@@ -58,6 +58,14 @@ const PLATFORMING_PACK_SPRITES := "C:/Godot Projects/FishingIncremental/Platform
 const PLATFORMING_BG_DEFAULT := PLATFORMING_PACK_SPRITES + "/Backgrounds/Default"
 const PLATFORMING_TILES_DEFAULT := PLATFORMING_PACK_SPRITES + "/Tiles/Default"
 const HERO_RENDER_SCALE := 4.0
+
+# helper to play sound effects safely; autoload AudioManager isn't considered an
+# engine singleton so Engine.has_singleton() returns false.  Simply check the
+# global variable instead.
+func _play_sfx(type: SoundEffectSettings.SOUND_EFFECT_TYPE) -> void:
+    if AudioManager != null:
+        AudioManager.create_audio(type)
+
 const ENEMY_RENDER_SCALE := 2.0
 const BOSS_RENDER_SCALE := ENEMY_RENDER_SCALE * 1.45
 const LEVEL_BG_PACK := {
@@ -378,7 +386,7 @@ func _reset_heroes_to_start() -> void:
         var hero: CombatSprite = heroes[i]
         if not is_instance_valid(hero):
             continue
-        hero.position = Vector2(HERO_START_X - float(i) * HERO_FORMATION_SPACING, FLOOR_Y)
+        hero.position = Vector2(HERO_START_X + HERO_FRAME_SIZE.x * HERO_RENDER_SCALE - float(i) * HERO_FORMATION_SPACING, FLOOR_Y)
         hero.modulate = Color(1.0, 1.0, 1.0, 1.0)
         hero.set_walking()
         if hero_data.has(hero):
@@ -1202,7 +1210,7 @@ func _spawn_heroes() -> void:
     for i in range(roster.size()):
         var hero_name: String = roster[i]
         var hero: CombatSprite = HERO_SCENE.instantiate()
-        hero.position = Vector2(HERO_START_X - float(i) * HERO_FORMATION_SPACING, FLOOR_Y)
+        hero.position = Vector2(HERO_START_X + HERO_FRAME_SIZE.x * HERO_RENDER_SCALE - float(i) * HERO_FORMATION_SPACING, FLOOR_Y)
         var hero_visual: Dictionary = hero_sheets[hero_name]
         hero.setup(hero_visual["sheet"], hero_visual["frame"], float(hero_visual.get("scale", HERO_RENDER_SCALE)), hero_name)
         hero.clicked.connect(_on_hero_clicked.bind(hero_name))
@@ -1411,7 +1419,9 @@ func _update_heroes(delta: float) -> void:
                 var arrow_spawn: Vector2 = hero.position + Vector2(28.0, -8.0)
                 if hero.has_method("get_projectile_spawn_point"):
                     arrow_spawn = hero.call("get_projectile_spawn_point")
-                _spawn_arrow(arrow_spawn, target, attack_damage)
+                # determine whether the arrow should pierce based on the archer's active state
+                var pierce_arrow: bool = active_remaining > 0.0
+                _spawn_arrow(arrow_spawn, target, attack_damage, pierce_arrow)
             else:
                 _damage_enemy(target, attack_damage)
                 if hero_name == "knight" and active_remaining > 0.0:
@@ -1444,7 +1454,7 @@ func _enforce_hero_formation() -> void:
         var max_x: float = prev.position.x - HERO_FORMATION_SPACING
         hero.position.x = min(hero.position.x, max_x)
 
-func _spawn_arrow(from_pos: Vector2, target_enemy: CombatSprite, damage: float) -> void:
+func _spawn_arrow(from_pos: Vector2, target_enemy: CombatSprite, damage: float, pierce: bool=false) -> void:
     if projectile_layer == null or arrow_texture == null:
         return
     if not is_instance_valid(target_enemy):
@@ -1470,7 +1480,11 @@ func _spawn_arrow(from_pos: Vector2, target_enemy: CombatSprite, damage: float) 
         "target_pos": target_pos,
         "damage": damage,
         "speed": 420.0,
-        "ttl": 4.0,
+        # piercing arrows linger longer so they can cross the whole battlefield
+        "ttl": (8.0 if pierce else 4.0),
+        "pierce": pierce,
+        # keep track of enemies already struck so piercing shots don't hit them multiple times
+        "hit_ids": [],
     })
 
 func _update_arrows(delta: float) -> void:
@@ -1487,41 +1501,72 @@ func _update_arrows(delta: float) -> void:
             arrows.remove_at(i)
             continue
 
-        var target_enemy: CombatSprite = null
-        var target_id: int = int(arrow.get("target_id", 0))
-        if target_id > 0:
-            var target_obj: Object = instance_from_id(target_id)
-            if target_obj != null and is_instance_valid(target_obj):
-                target_enemy = target_obj as CombatSprite
-        if not is_instance_valid(target_enemy):
-            target_enemy = _nearest_enemy(sprite.position)
-            if is_instance_valid(target_enemy):
-                arrow["target_id"] = target_enemy.get_instance_id()
-        var target_pos: Vector2 = arrow.get("target_pos", sprite.position)
-        if is_instance_valid(target_enemy):
-            target_pos = target_enemy.position + Vector2(0.0, -18.0)
-        elif target_pos == sprite.position:
-            sprite.queue_free()
-            arrows.remove_at(i)
-            continue
-
+        var is_piercing: bool = bool(arrow.get("pierce", false))
         var dir: Vector2 = arrow.get("dir", Vector2.RIGHT)
         var speed: float = float(arrow.get("speed", 420.0))
-        var to_target: Vector2 = target_pos - sprite.position
-        if to_target.length() > 4.0:
-            dir = to_target.normalized()
-        sprite.rotation = dir.angle()
-        sprite.position += dir * speed * delta
 
-        arrow["dir"] = dir
-        arrow["ttl"] = ttl
-        arrows[i] = arrow
-
-        if sprite.position.distance_to(target_pos) <= 22.0:
+        if not is_piercing:
+            # non-piercing arrows home in on a target as before
+            var target_enemy: CombatSprite = null
+            var target_id: int = int(arrow.get("target_id", 0))
+            if target_id > 0:
+                var target_obj: Object = instance_from_id(target_id)
+                if target_obj != null and is_instance_valid(target_obj):
+                    target_enemy = target_obj as CombatSprite
+            if not is_instance_valid(target_enemy):
+                target_enemy = _nearest_enemy(sprite.position)
+                if is_instance_valid(target_enemy):
+                    arrow["target_id"] = target_enemy.get_instance_id()
+            var target_pos: Vector2 = arrow.get("target_pos", sprite.position)
             if is_instance_valid(target_enemy):
-                _damage_enemy(target_enemy, float(arrow.get("damage", 0.0)))
-            sprite.queue_free()
-            arrows.remove_at(i)
+                target_pos = target_enemy.position + Vector2(0.0, -18.0)
+            elif target_pos == sprite.position:
+                sprite.queue_free()
+                arrows.remove_at(i)
+                continue
+
+            var to_target: Vector2 = target_pos - sprite.position
+            if to_target.length() > 4.0:
+                dir = to_target.normalized()
+            sprite.rotation = dir.angle()
+            sprite.position += dir * speed * delta
+
+            arrow["dir"] = dir
+            arrow["ttl"] = ttl
+            arrows[i] = arrow
+
+            if sprite.position.distance_to(target_pos) <= 22.0:
+                if is_instance_valid(target_enemy):
+                    var tid: int = target_enemy.get_instance_id()
+                    var hit_ids: Array = arrow.get("hit_ids", [])
+                    if not hit_ids.has(tid):
+                        _damage_enemy(target_enemy, float(arrow.get("damage", 0.0)))
+                        hit_ids.append(tid)
+                        arrow["hit_ids"] = hit_ids
+                # non-piercing always expire on hit
+                sprite.queue_free()
+                arrows.remove_at(i)
+            continue
+        else:
+            # piercing arrow: maintain its direction and check every enemy along its path
+            sprite.rotation = dir.angle()
+            sprite.position += dir * speed * delta
+            arrow["ttl"] = ttl
+            arrows[i] = arrow
+
+            # collision with any enemy not yet struck
+            for enemy in enemies:
+                if is_instance_valid(enemy):
+                    var tid2: int = enemy.get_instance_id()
+                    var hit_ids2: Array = arrow.get("hit_ids", [])
+                    if not hit_ids2.has(tid2):
+                        var enemy_pos: Vector2 = enemy.position + Vector2(0.0, -18.0)
+                        if sprite.position.distance_to(enemy_pos) <= 22.0:
+                            _damage_enemy(enemy, float(arrow.get("damage", 0.0)))
+                            hit_ids2.append(tid2)
+                            arrow["hit_ids"] = hit_ids2
+            # continue flying until ttl expires
+            continue
 
 func _update_enemies(delta: float) -> void:
     var armor_scale: float = _player_armor_scale()
@@ -1707,6 +1752,7 @@ func _award_boss_segments(enemy: CombatSprite, e: Dictionary, prev_hp: float) ->
     boss_segments_broken += newly_broken
 
 func _kill_enemy(enemy: CombatSprite) -> void:
+    print("DEBUG: _kill_enemy() called")
     if not enemy_data.has(enemy):
         return
     var e: Dictionary = enemy_data[enemy]
@@ -1725,9 +1771,9 @@ func _kill_enemy(enemy: CombatSprite) -> void:
     enemies.erase(enemy)
     enemy_data.erase(enemy)
     # Play enemy defeat / shoot SFX
-    if Engine.has_singleton("AudioManager"):
-        print("[AUDIO] Enemy defeated - playing BUTTON_CLICK")
-        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+    # AudioManager is available as a global autoload, not an engine singleton
+    print("[AUDIO] Enemy defeated - playing BUTTON_CLICK")
+    _play_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
     enemy.queue_free()
 
 func _spawn_coin(pos: Vector2, value: int) -> void:
@@ -1820,6 +1866,7 @@ func _cursor_bonus_mult() -> float:
     return mult
 
 func _on_coin_collected(coin: CoinPickup, by_cursor: bool) -> void:
+    print("DEBUG: _on_coin_collected() called")
     if not is_instance_valid(coin):
         return
     var collected_by_cursor: bool = by_cursor
@@ -1830,9 +1877,8 @@ func _on_coin_collected(coin: CoinPickup, by_cursor: bool) -> void:
         amount = int(round(float(amount) * _cursor_bonus_mult()))
 
     # Play coin pickup SFX - use 2D positional audio
-    if Engine.has_singleton("AudioManager"):
-        print("[AUDIO] Coin collected - playing 2D audio at coin position")
-        AudioManager.create_2d_audio_at_location(coin.position, SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+    print("[AUDIO] Coin collected - playing 2D audio at coin position")
+    AudioManager.create_2d_audio_at_location(coin.position, SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 
     SaveHandler.fishing_currency += amount
     SaveHandler.fishing_lifetime_coins += amount
@@ -1969,8 +2015,7 @@ func _update_hero_active_bar(hero: CombatSprite, h: Dictionary) -> void:
 func _execute_hero_active(hero: CombatSprite, hero_name: String, skip_anim: bool) -> void:
     _trigger_hero_glow(hero)
     # Play chime when a hero's powerup ability starts
-    if Engine.has_singleton("AudioManager"):
-        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_POP_IN)
+    _play_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_POP_IN)
     if not skip_anim:
         hero.trigger_attack()
 
@@ -1989,9 +2034,13 @@ func _execute_hero_active(hero: CombatSprite, hero_name: String, skip_anim: bool
             if healed > 0.0:
                 _spawn_floating_heal_text(hero.position + Vector2(randf_range(-10.0, 10.0), -130.0), healed)
         "archer":
+            # fire a special pierce projectile as the active ability
             var target: CombatSprite = _nearest_enemy(hero.position)
             if target != null:
-                _damage_enemy(target, 45.0)
+                var arrow_spawn: Vector2 = hero.position + Vector2(28.0, -8.0)
+                if hero.has_method("get_projectile_spawn_point"):
+                    arrow_spawn = hero.call("get_projectile_spawn_point")
+                _spawn_arrow(arrow_spawn, target, 45.0, true)
         "guardian":
             shield_time = max(shield_time, active_duration)
         "mage":
@@ -2164,10 +2213,18 @@ func _hero_speed_mult(hero_name: String) -> float:
     return mult
 
 func _hero_attack_range(hero_name: String) -> float:
+    # archer is effectively infinite range (projectiles handle the actual targeting)
     if hero_name == "archer":
         return 4000.0
+    # knight must touch the enemy
     if hero_name == "knight":
         return CONTACT_RANGE
+    # guardian is a melee follower but should be able to reach enemies just
+    # behind the front line; give it a bit more range than default to ensure
+    # it actually gets into striking distance.
+    if hero_name == "guardian":
+        return 300.0
+    # default for mage (and any others) remains short
     return 120.0
 
 func _has_enemy_counter_unlock() -> bool:
@@ -2308,18 +2365,19 @@ func _update_ui() -> void:
     currency_label.text = "Currency: %d" % SaveHandler.fishing_currency
 
 func _on_boss_defeated() -> void:
+    print("DEBUG: _on_boss_defeated() called")
     if battle_completed:
         return
     if current_level >= int(SaveHandler.fishing_max_unlocked_battle_level) and current_level < 3:
         SaveHandler.fishing_max_unlocked_battle_level = current_level + 1
         SaveHandler.fishing_next_battle_level = SaveHandler.fishing_max_unlocked_battle_level
     # Boss defeated sound
-    if Engine.has_singleton("AudioManager"):
-        print("[AUDIO] Boss defeated - playing BUTTON_CLICK")
-        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+    print("[AUDIO] Boss defeated - playing BUTTON_CLICK")
+    _play_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
     _end_battle(true)
 
 func _end_battle(victory: bool) -> void:
+    print("DEBUG: _end_battle() called with victory=" + str(victory))
     if battle_completed:
         return
     battle_completed = true
@@ -2333,9 +2391,8 @@ func _end_battle(victory: bool) -> void:
     _update_speed_button_enabled_state()
     if not victory:
         # Play defeat SFX
-        if Engine.has_singleton("AudioManager"):
-            print("[AUDIO] Player defeated - playing BUTTON_CLICK")
-            AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+        print("[AUDIO] Player defeated - playing BUTTON_CLICK")
+        _play_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
         _start_defeat_pose()
     if suppress_floating_text:
         if battle_victory:
@@ -2529,12 +2586,12 @@ func _update_hero_glow(delta: float) -> void:
         hero.modulate = Color(pulse, pulse, 1.0, 1.0)
 
 func _on_continue_button_pressed() -> void:
+    print("DEBUG: _on_continue_button_pressed() called")
     if not summary_finalized:
         return
     # Play continue button click audio
-    if Engine.has_singleton("AudioManager"):
-        print("[AUDIO] Continue button pressed - playing BUTTON_CLICK")
-        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+    print("[AUDIO] Continue button pressed - playing BUTTON_CLICK")
+    _play_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
     _set_next_battle_level_and_exit(current_level)
 
 func _show_level_choice_dialog(max_level: int) -> void:
