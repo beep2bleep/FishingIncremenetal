@@ -57,9 +57,9 @@ const UPGRADE_EFFECT_TUNE := {
 const PLATFORMING_PACK_SPRITES := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites"
 const PLATFORMING_BG_DEFAULT := PLATFORMING_PACK_SPRITES + "/Backgrounds/Default"
 const PLATFORMING_TILES_DEFAULT := PLATFORMING_PACK_SPRITES + "/Tiles/Default"
-const HERO_RENDER_SCALE := 0.72
-const ENEMY_RENDER_SCALE := HERO_RENDER_SCALE
-const BOSS_RENDER_SCALE := HERO_RENDER_SCALE * 1.45
+const HERO_RENDER_SCALE := 4.0
+const ENEMY_RENDER_SCALE := 2.0
+const BOSS_RENDER_SCALE := ENEMY_RENDER_SCALE * 1.45
 const LEVEL_BG_PACK := {
     1: {
         "sky": "background_solid_sky.png",
@@ -142,9 +142,16 @@ var damage_text_layer: Node2D
 var camera_2d: Camera2D
 
 var health_label: Label
+var health_bar: ProgressBar
+var experience_bar: ProgressBar
+var power_bar: ProgressBar
+var health_value_label: Label
+var experience_value_label: Label
+var power_value_label: Label
 var currency_label: Label
 var summary_panel: Panel
 var summary_label: Label
+var continue_button: Button
 var speed_button: Button
 var infinite_sim_button: Button
 var exit_battle_button: Button
@@ -252,13 +259,20 @@ func _bind_nodes() -> bool:
     damage_text_layer = get_node_or_null("World/DamageTextLayer")
     camera_2d = get_node_or_null("Camera2D")
 
-    health_label = get_node_or_null("CanvasLayer/HealthLabel")
+    health_label = get_node_or_null("CanvasLayer/LevelLabel")
+    health_bar = get_node_or_null("CanvasLayer/HealthBar")
+    experience_bar = get_node_or_null("CanvasLayer/ExperienceBar")
+    power_bar = get_node_or_null("CanvasLayer/PowerBar")
+    health_value_label = get_node_or_null("CanvasLayer/HealthValueLabel")
+    experience_value_label = get_node_or_null("CanvasLayer/ExperienceValueLabel")
+    power_value_label = get_node_or_null("CanvasLayer/PowerValueLabel")
     currency_label = get_node_or_null("CanvasLayer/CurrencyLabel")
     speed_button = get_node_or_null("CanvasLayer/SpeedButton")
     infinite_sim_button = get_node_or_null("CanvasLayer/InfiniteSimButton")
     exit_battle_button = get_node_or_null("CanvasLayer/ExitBattleButton")
     summary_panel = get_node_or_null("CanvasLayer/SummaryPanel")
     summary_label = get_node_or_null("CanvasLayer/SummaryPanel/SummaryLabel")
+    continue_button = get_node_or_null("CanvasLayer/SummaryPanel/ContinueButton")
     level_choice_dialog = get_node_or_null("CanvasLayer/LevelChoiceDialog")
     var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
 
@@ -327,7 +341,7 @@ func _bind_nodes() -> bool:
     if level_choice_dialog != null and not level_choice_dialog.custom_action.is_connected(_on_level_choice_action):
         level_choice_dialog.custom_action.connect(_on_level_choice_action)
 
-    return world != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and bg_overlay != null and play_area_overlay != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and currency_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and summary_panel != null and summary_label != null and level_choice_dialog != null
+    return world != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and bg_overlay != null and play_area_overlay != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and health_bar != null and experience_bar != null and power_bar != null and health_value_label != null and experience_value_label != null and power_value_label != null and currency_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and summary_panel != null and summary_label != null and continue_button != null and level_choice_dialog != null
 
 func _clear_battle_entities() -> void:
     for arrow_data_variant in arrows:
@@ -861,38 +875,30 @@ func _make_atari_ground_texture(w: int, h: int, c1: Color, c2: Color, accent: Co
     return ImageTexture.create_from_image(img)
 
 func _setup_actor_sheets() -> void:
-    var character_base: String = PLATFORMING_PACK_SPRITES + "/Characters/Default"
-    var knight_visual: Dictionary = _make_pack_actor(
-        character_base + "/character_beige_walk_a.png",
-        character_base + "/character_beige_walk_b.png",
-        character_base + "/character_beige_hit.png",
+    var combat_base: String = "res://Art/CombatSprites"
+    var knight_visual: Dictionary = _make_asset_actor(
+        combat_base + "/hero_knight.png",
         HERO_FRAME_SIZE,
         Color(0.25, 0.74, 0.98, 1.0),
         "knight",
         HERO_RENDER_SCALE
     )
-    var archer_visual: Dictionary = _make_pack_actor(
-        character_base + "/character_green_walk_a.png",
-        character_base + "/character_green_walk_b.png",
-        character_base + "/character_green_hit.png",
+    var archer_visual: Dictionary = _make_asset_actor(
+        combat_base + "/hero_archer.png",
         HERO_FRAME_SIZE,
         Color(0.99, 0.58, 0.17, 1.0),
         "archer",
         HERO_RENDER_SCALE
     )
-    var guardian_visual: Dictionary = _make_pack_actor(
-        character_base + "/character_pink_walk_a.png",
-        character_base + "/character_pink_walk_b.png",
-        character_base + "/character_pink_hit.png",
+    var guardian_visual: Dictionary = _make_asset_actor(
+        combat_base + "/hero_guardian.png",
         HERO_FRAME_SIZE,
         Color(0.28, 0.86, 0.41, 1.0),
         "guardian",
         HERO_RENDER_SCALE
     )
-    var mage_visual: Dictionary = _make_pack_actor(
-        character_base + "/character_purple_walk_a.png",
-        character_base + "/character_purple_walk_b.png",
-        character_base + "/character_purple_hit.png",
+    var mage_visual: Dictionary = _make_asset_actor(
+        combat_base + "/hero_mage.png",
         HERO_FRAME_SIZE,
         Color(0.86, 0.33, 0.35, 1.0),
         "mage",
@@ -905,41 +911,32 @@ func _setup_actor_sheets() -> void:
         "mage": mage_visual,
     }
 
-    var enemy_base: String = PLATFORMING_PACK_SPRITES + "/Enemies/Default"
-    var goblin_visual: Dictionary = _make_pack_actor(
-        enemy_base + "/snail_walk_a.png",
-        enemy_base + "/snail_walk_b.png",
-        enemy_base + "/snail_shell.png",
+    var goblin_visual: Dictionary = _make_asset_actor(
+        combat_base + "/enemy_goblin.png",
         ENEMY_FRAME_SIZE,
         Color(0.83, 0.23, 0.23, 1.0),
         "goblin",
         ENEMY_RENDER_SCALE,
         true
     )
-    var brute_visual: Dictionary = _make_pack_actor(
-        enemy_base + "/slime_fire_walk_a.png",
-        enemy_base + "/slime_fire_walk_b.png",
-        enemy_base + "/slime_fire_flat.png",
+    var brute_visual: Dictionary = _make_asset_actor(
+        combat_base + "/enemy_brute.png",
         ENEMY_FRAME_SIZE,
         Color(0.75, 0.16, 0.58, 1.0),
         "brute",
         ENEMY_RENDER_SCALE,
         true
     )
-    var flyer_visual: Dictionary = _make_pack_actor(
-        enemy_base + "/bee_a.png",
-        enemy_base + "/bee_b.png",
-        enemy_base + "/bee_rest.png",
+    var flyer_visual: Dictionary = _make_asset_actor(
+        combat_base + "/enemy_flyer.png",
         ENEMY_FRAME_SIZE,
         Color(0.93, 0.67, 0.21, 1.0),
         "flyer",
         ENEMY_RENDER_SCALE,
         true
     )
-    var boss_visual: Dictionary = _make_pack_actor(
-        enemy_base + "/worm_ring_move_a.png",
-        enemy_base + "/worm_ring_move_b.png",
-        enemy_base + "/worm_ring_rest.png",
+    var boss_visual: Dictionary = _make_asset_actor(
+        combat_base + "/enemy_boss.png",
         BOSS_FRAME_SIZE,
         Color(0.76, 0.27, 0.84, 1.0),
         "boss",
@@ -1294,6 +1291,23 @@ func _spawn_boss_for_level(level_index: int) -> void:
         "attack_cd": 0.0,
         "bar_fill": bar_data["fill"],
         "bar_width": bar_data["width"],
+    }
+
+func _make_asset_actor(sheet_path: String, fallback_frame: Vector2i, fallback_color: Color, fallback_archetype: String, scale_factor: float, facing_left: bool = false) -> Dictionary:
+    var loaded: Texture2D = load(sheet_path) as Texture2D
+    if loaded != null:
+        var frame_w: int = loaded.get_width() / 3
+        var frame_h: int = loaded.get_height()
+        if frame_w > 0 and frame_w * 3 == loaded.get_width() and frame_h > 0:
+            return {
+                "sheet": loaded,
+                "frame": Vector2i(frame_w, frame_h),
+                "scale": scale_factor,
+            }
+    return {
+        "sheet": _make_actor_sheet(fallback_frame, fallback_color, Color(0.92, 0.92, 0.92, 1.0), fallback_archetype, facing_left),
+        "frame": fallback_frame,
+        "scale": scale_factor,
     }
 
 func _make_pack_actor(walk_a_path: String, walk_b_path: String, attack_path: String, fallback_frame: Vector2i, fallback_color: Color, fallback_archetype: String, scale_factor: float, facing_left: bool = false) -> Dictionary:
@@ -2240,7 +2254,26 @@ func _player_armor_scale() -> float:
     return base
 
 func _update_ui() -> void:
-    health_label.text = "L%d  Health: %d   Power: %d/%d" % [current_level, int(max(0.0, player_health)), int(power), int(_max_power())]
+    var max_health: float = 300.0
+    var health_now: float = clamp(player_health, 0.0, max_health)
+    health_label.text = "LEVEL %d" % current_level
+    health_bar.max_value = max_health
+    health_bar.value = health_now
+    health_value_label.text = "%d / %d" % [int(round(health_now)), int(round(max_health))]
+
+    var max_power_val: float = max(1.0, _max_power())
+    var power_now: float = clamp(power, 0.0, max_power_val)
+    power_bar.max_value = max_power_val
+    power_bar.value = power_now
+    power_value_label.text = "%d / %d" % [int(round(power_now)), int(round(max_power_val))]
+
+    var level_params: Dictionary = _level_params(current_level)
+    var exp_total: int = int(level_params.get("regular_count", 0)) + BOSS_SEGMENTS
+    var exp_now: int = min(exp_total, regular_killed + boss_segments_broken)
+    experience_bar.max_value = max(1, exp_total)
+    experience_bar.value = exp_now
+    experience_value_label.text = "%d / %d" % [exp_now, exp_total]
+
     currency_label.text = "Currency: %d" % SaveHandler.fishing_currency
 
 func _on_boss_defeated() -> void:
@@ -2259,6 +2292,10 @@ func _end_battle(victory: bool) -> void:
     summary_finalized = false
     post_battle_sweep_time = 2.8
     defeat_anim_time = 0.0
+    summary_panel.show()
+    continue_button.hide()
+    _refresh_battle_summary_text()
+    _update_speed_button_enabled_state()
     if not victory:
         _start_defeat_pose()
     if suppress_floating_text:
@@ -2283,6 +2320,7 @@ func _run_post_battle_sweep(delta: float) -> void:
         if is_instance_valid(coin):
             coin.attract_to(attract_target, 1800.0, delta)
     _update_coins(delta)
+    _refresh_battle_summary_text()
 
     post_battle_sweep_time -= delta
     if coins.is_empty() or post_battle_sweep_time <= 0.0:
@@ -2346,18 +2384,30 @@ func _run_defeat_pose_instant() -> void:
             enemy.rotation = -PI * 0.5
     _finalize_battle_summary()
 
+func _build_battle_summary_text(is_live: bool) -> String:
+    var title: String = "Victory!" if battle_victory else "Defeated."
+    var summary_text: String = "%s\nLevel: %d\nEnemies killed: %d\nBoss segments: %d\nCoins gained: %d" % [title, current_level, enemies_killed, boss_segments_broken, coins_gained]
+    if is_live and battle_victory and not coins.is_empty():
+        summary_text += "\nSweeping pickups..."
+    var is_first_l3_boss_clear: bool = battle_victory and current_level == 3 and not SaveHandler.fishing_l3_boss_thank_you_shown
+    if is_first_l3_boss_clear:
+        summary_text += "\n\nthanks for playing my game this was created by a single developer, please leave feedback if you would like more content.\nCredits:\nCreator: Beep2Bleep."
+    return summary_text
+
+func _refresh_battle_summary_text() -> void:
+    if summary_label == null:
+        return
+    summary_label.text = _build_battle_summary_text(not summary_finalized)
+
 func _finalize_battle_summary() -> void:
     if summary_finalized:
         return
     summary_finalized = true
     summary_panel.show()
-    var title: String = "Victory!" if battle_victory else "Defeated."
-    var summary_text: String = "%s\nLevel: %d\nEnemies killed: %d\nBoss segments: %d\nCoins gained: %d" % [title, current_level, enemies_killed, boss_segments_broken, coins_gained]
-    var is_first_l3_boss_clear: bool = battle_victory and current_level == 3 and not SaveHandler.fishing_l3_boss_thank_you_shown
-    if is_first_l3_boss_clear:
-        summary_text += "\n\nthanks for playing my game this was created by a single developer, please leave feedback if you would like more content.\nCredits:\nCreator: Beep2Bleep."
+    continue_button.show()
+    _refresh_battle_summary_text()
+    if battle_victory and current_level == 3 and not SaveHandler.fishing_l3_boss_thank_you_shown:
         SaveHandler.fishing_l3_boss_thank_you_shown = true
-    summary_label.text = summary_text
     SaveHandler.fishing_last_battle_summary = {
         "victory": battle_victory,
         "level": current_level,
@@ -2390,6 +2440,8 @@ func _update_hero_glow(delta: float) -> void:
         hero.modulate = Color(pulse, pulse, 1.0, 1.0)
 
 func _on_continue_button_pressed() -> void:
+    if not summary_finalized:
+        return
     _set_next_battle_level_and_exit(current_level)
 
 func _show_level_choice_dialog(max_level: int) -> void:

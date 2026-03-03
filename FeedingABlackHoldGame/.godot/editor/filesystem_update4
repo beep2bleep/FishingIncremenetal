@@ -5,3 +5,5 @@ res://Fishing/CoinPickup.gd
 res://SceneChanger.gd
 res://Fishing/FishingUpgradeDB.gd
 res://simulation/run_20_guided_l3_boss_progression.gd
+res://Main Menu.gd
+res://Fishing/FishingUpgradeScene.gd

@@ -129,39 +129,22 @@ func _ready():
         showcase.name = "StartShowcase"
         pivot.add_child(showcase)
 
-        # Compose and add a knight hero
-        var character_base: String = PLATFORMING_PACK_SPRITES + "/Characters/Default"
-        var knight_visual: Dictionary = _make_pack_actor(
-            character_base + "/character_beige_walk_a.png",
-            character_base + "/character_beige_walk_b.png",
-            character_base + "/character_beige_hit.png",
-            Vector2i(24, 24),
-            Color(0.25, 0.74, 0.98, 1.0),
-            "knight",
-            0.72
-        )
-        if knight_visual.size() > 0:
-            var hero: CombatSprite = HERO_SCENE.instantiate()
-            hero.position = Vector2(-80, 520)
-            hero.setup(knight_visual["sheet"], knight_visual["frame"], float(knight_visual.get("scale", 0.72)), "knight")
-            showcase.add_child(hero)
+        # Add simple hero/enemy placeholders instead of composing sheets here
+        var hero_sprite: Sprite2D = Sprite2D.new()
+        var hero_tex = load("res://Art/Logo Base White.png")
+        if hero_tex != null:
+            hero_sprite.texture = hero_tex
+        hero_sprite.position = Vector2(-80, 520)
+        hero_sprite.scale = Vector2(0.6, 0.6)
+        showcase.add_child(hero_sprite)
 
-        # Compose and add a goblin enemy for contrast
-        var enemy_base: String = PLATFORMING_PACK_SPRITES + "/Enemies/Default"
-        var goblin_visual: Dictionary = _make_pack_actor(
-            enemy_base + "/snail_walk_a.png",
-            enemy_base + "/snail_walk_b.png",
-            enemy_base + "/snail_shell.png",
-            Vector2i(24, 24),
-            Color(0.83, 0.23, 0.23, 1.0),
-            "goblin",
-            0.72
-        )
-        if goblin_visual.size() > 0:
-            var enemy: CombatSprite = HERO_SCENE.instantiate()
-            enemy.position = Vector2(80, 520)
-            enemy.setup(goblin_visual["sheet"], goblin_visual["frame"], float(goblin_visual.get("scale", 0.72)))
-            showcase.add_child(enemy)
+        var enemy_sprite: Sprite2D = Sprite2D.new()
+        var enemy_tex = load("res://Art/star_tiny.png")
+        if enemy_tex != null:
+            enemy_sprite.texture = enemy_tex
+        enemy_sprite.position = Vector2(80, 520)
+        enemy_sprite.scale = Vector2(1.6, 1.6)
+        showcase.add_child(enemy_sprite)
 
     # Replace the logo with the new marketable title
     var logo_node = get_node_or_null("CanvasLayer/MarginContainer2/Logo")
@@ -169,12 +152,14 @@ func _ready():
         logo_node.visible = false
         var title_label: Label = Label.new()
         title_label.text = "Vanguard: Idle Auto‑Battler"
-        title_label.align = Label.ALIGN_CENTER
-        title_label.valign = Label.VALIGN_CENTER
-        title_label.percent_visible = 1.0
-        title_label.rect_position = Vector2(-300, -180)
-        title_label.rect_size = Vector2(600, 100)
-        title_label.add_theme_font_override("font", %MarginContainer.get_theme().get_font("font")) if %MarginContainer and %MarginContainer.get_theme() != null else null
+        title_label.horizontal_alignment = 1
+        title_label.vertical_alignment = 1
+        # Position and size using Control-friendly properties
+        title_label.position = get_viewport_rect().size * 0.5 + Vector2(0, -180)
+        title_label.custom_minimum_size = Vector2(600, 100)
+        # Apply a project font if available
+        if Refs.money_font != null:
+            title_label.add_theme_font_override("font", Refs.money_font)
         get_node("CanvasLayer").add_child(title_label)
 
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):

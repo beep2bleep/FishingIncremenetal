@@ -18,62 +18,98 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.08, 0.08, 0.1, 1)
+color = Color(0.03, 0.035, 0.05, 1)
 
-[node name="Title" type="Label" parent="."]
+[node name="Stars" type="Control" parent="." unique_name_in_owner=true]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopTabsPanel" type="PanelContainer" parent="."]
 layout_mode = 1
 offset_left = 24.0
+offset_top = 16.0
+offset_right = 760.0
+offset_bottom = 74.0
+
+[node name="TopTabs" type="HBoxContainer" parent="TopTabsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SkillTreeTab" type="Button" parent="TopTabsPanel/TopTabs"]
+layout_mode = 2
+text = "Skill Tree"
+disabled = true
+
+[node name="MilestonesTab" type="Button" parent="TopTabsPanel/TopTabs"]
+layout_mode = 2
+text = "Milestones"
+disabled = true
+
+[node name="PerksTab" type="Button" parent="TopTabsPanel/TopTabs"]
+layout_mode = 2
+text = "Perks"
+disabled = true
+
+[node name="CurrencyPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+offset_left = 24.0
+offset_top = 84.0
+offset_right = 300.0
+offset_bottom = 148.0
+
+[node name="CurrencyLabel" type="Label" parent="CurrencyPanel" unique_name_in_owner=true]
+layout_mode = 2
+text = "o 0"
+
+[node name="TopActions" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -560.0
 offset_top = 20.0
-offset_right = 600.0
-offset_bottom = 56.0
-text = "Fishing Upgrade Grid"
-
-[node name="CurrencyLabel" type="Label" parent="." unique_name_in_owner=true]
-layout_mode = 1
-offset_left = 24.0
-offset_top = 60.0
-offset_right = 420.0
-offset_bottom = 92.0
-text = "Currency: 0"
-
-[node name="StartBattle" type="Button" parent="."]
-layout_mode = 1
-offset_left = 1550.0
-offset_top = 24.0
-offset_right = 1880.0
+offset_right = -24.0
 offset_bottom = 70.0
+grow_horizontal = 0
+alignment = 2
+theme_override_constants/separation = 10
+
+[node name="StartBattle" type="Button" parent="TopActions"]
+layout_mode = 2
+custom_minimum_size = Vector2(250, 0)
 text = "Start Battle"
 
-[node name="MainMenu" type="Button" parent="."]
-layout_mode = 1
-offset_left = 1550.0
-offset_top = 76.0
-offset_right = 1880.0
-offset_bottom = 122.0
+[node name="MainMenu" type="Button" parent="TopActions"]
+layout_mode = 2
+custom_minimum_size = Vector2(250, 0)
 text = "Main Menu"
 
-[node name="EditorAddCurrency" type="Button" parent="."]
+[node name="EditorRow" type="HBoxContainer" parent="."]
 layout_mode = 1
 offset_left = 24.0
-offset_top = 96.0
-offset_right = 300.0
-offset_bottom = 136.0
+offset_top = 156.0
+offset_right = 980.0
+offset_bottom = 204.0
+theme_override_constants/separation = 10
+
+[node name="EditorAddCurrency" type="Button" parent="EditorRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(220, 0)
 text = "Add $1000 (Editor)"
 
-[node name="EditorResetProgress" type="Button" parent="."]
-layout_mode = 1
-offset_left = 312.0
-offset_top = 96.0
-offset_right = 640.0
-offset_bottom = 136.0
+[node name="EditorResetProgress" type="Button" parent="EditorRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(220, 0)
 text = "Reset Save"
 
-[node name="UnlockAllUpgrades" type="Button" parent="."]
-layout_mode = 1
-offset_left = 652.0
-offset_top = 96.0
-offset_right = 980.0
-offset_bottom = 136.0
+[node name="UnlockAllUpgrades" type="Button" parent="EditorRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(220, 0)
 text = "Unlock All Upgrades"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="."]
@@ -82,15 +118,56 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 20.0
-offset_top = 110.0
+offset_top = 214.0
 offset_right = -20.0
-offset_bottom = -60.0
+offset_bottom = -120.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="TreeLayer" type="Control" parent="ScrollContainer" unique_name_in_owner=true]
 layout_mode = 2
-custom_minimum_size = Vector2(2600, 2200)
+custom_minimum_size = Vector2(4800, 4800)
+
+[node name="HoverCard" type="PanelContainer" parent="." unique_name_in_owner=true]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 430.0
+offset_top = -280.0
+offset_right = -430.0
+offset_bottom = -124.0
+grow_horizontal = 2
+
+[node name="CardMargin" type="MarginContainer" parent="HoverCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="CardVBox" type="VBoxContainer" parent="HoverCard/CardMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HoverTitle" type="Label" parent="HoverCard/CardMargin/CardVBox" unique_name_in_owner=true]
+layout_mode = 2
+text = "Upgrade Name"
+
+[node name="HoverMeta" type="Label" parent="HoverCard/CardMargin/CardVBox" unique_name_in_owner=true]
+layout_mode = 2
+text = "State | Dependency"
+
+[node name="HoverDesc" type="Label" parent="HoverCard/CardMargin/CardVBox" unique_name_in_owner=true]
+layout_mode = 2
+autowrap_mode = 2
+text = "Description"
+
+[node name="HoverCost" type="Label" parent="HoverCard/CardMargin/CardVBox" unique_name_in_owner=true]
+layout_mode = 2
+text = "Cost: $0"
 
 [node name="InfoLabel" type="Label" parent="." unique_name_in_owner=true]
 layout_mode = 1
@@ -99,15 +176,15 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 20.0
-offset_top = -50.0
+offset_top = -46.0
 offset_right = -20.0
 offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 0
 text = ""
 
-[connection signal="pressed" from="StartBattle" to="." method="_on_start_battle_pressed"]
-[connection signal="pressed" from="MainMenu" to="." method="_on_main_menu_pressed"]
-[connection signal="pressed" from="EditorAddCurrency" to="." method="_on_editor_add_currency_pressed"]
-[connection signal="pressed" from="EditorResetProgress" to="." method="_on_editor_reset_progress_pressed"]
-[connection signal="pressed" from="UnlockAllUpgrades" to="." method="_on_unlock_all_upgrades_pressed"]
+[connection signal="pressed" from="TopActions/StartBattle" to="." method="_on_start_battle_pressed"]
+[connection signal="pressed" from="TopActions/MainMenu" to="." method="_on_main_menu_pressed"]
+[connection signal="pressed" from="EditorRow/EditorAddCurrency" to="." method="_on_editor_add_currency_pressed"]
+[connection signal="pressed" from="EditorRow/EditorResetProgress" to="." method="_on_editor_reset_progress_pressed"]
+[connection signal="pressed" from="EditorRow/UnlockAllUpgrades" to="." method="_on_unlock_all_upgrades_pressed"]

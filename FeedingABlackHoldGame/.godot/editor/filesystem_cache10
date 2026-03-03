@@ -1,5 +1,5 @@
 72322a848ab928aa5c89f0cb78209805
-::res://::1772340077
+::res://::1772559240
 AudioManager.gd::GDScript::4941860340453525065::1771452238::0::1::::<>Node<><>0<>0<><>::
 AudioManager.tscn::PackedScene::54465495702579191::1771452236::0::1::::<><><>0<>0<><>::uid://ccn4yn1d40xhh::::res://AudioManager.gd<>uid://blskskrd6wv02::::res://SoundEffectSettings.gd<>uid://dosb4necd57xd::::res://Sound Effect Settings/ON_ASTEROID_CLICKED.tres<>uid://b6qikoefluxvw::::res://Space/PLANET_HIT.tres<>uid://cljx0x06xwjv7::::res://Space/CLICK_HIT_NOTHING.tres<>uid://c4fm5w1x7k2fc::::res://Sound Effect Settings/ON_CLICKER_CRIT.tres<>uid://ym60vk45o62o::::res://Sound Effect Settings/TECH_TREE_NODE_HOVER.tres<>uid://cvhnupy4e3wxq::::res://Sound Effect Settings/TECH_TREE_NODE_CLICK.tres<>uid://bot5cscnl8syv::::res://Sound Effect Settings/ON_ASTEROID_DESTORY.tres<>uid://bta812gr33kre::::res://Sound Effect Settings/BLACK_HOLE_GROW.tres<>uid://dj56fnehm30as::::res://Sound Effect Settings/ELECTRIC.tres<>uid://btkxxf55qk555::::res://Sound Effect Settings/RADIOACTIVE_DOT.tres<>uid://67bnnj1qio3u::::res://Sound Effect Settings/ELECTRIC_CRIT.tres<>uid://bhhh52e7k2wb6::::res://Sound Effect Settings/FROZEN_PLANET_BREAK.tres<>uid://dg4m6bqnrcvq7::::res://Space/FORZEN_SHARD_IMPACT.tres<>uid://djd56ybvh24lu::::res://Space/PINATA_BREAK.tres<>uid://dbin7ecq76xf3::::res://Sound Effect Settings/PLANET_BREAK.tres<>uid://cs7l4k0hlwr3n::::res://Sound Effect Settings/ON_GOLDEN_BREAK.tres<>uid://by5sks1y51t0u::::res://Sound Effect Settings/ON_GOLDEN_BREAK_CRIT.tres<>uid://nx1cf4uokqgg::::res://Sound Effect Settings/ON_LASER.tres<>uid://cqxh5x06dry0w::::res://Sound Effect Settings/ON_LASER_CRIT.tres<>uid://b6ei7ku0bmh5k::::res://MOON.tres<>uid://btnexa0it15aj::::res://Sound Effect Settings/COMET.tres<>uid://dm66mxrxleap8::::res://Sound Effect Settings/SUPERNOVA.tres<>uid://wq2ig7kus4lt::::res://Sound Effect Settings/ELECTRIC_STAR.tres<>uid://duvymqc8s80lj::::res://Sound Effect Settings/ELECTRIC_STAR_CRIT.tres<>uid://b7lcm8xohssax::::res://Space/STAR_HIT.tres<>uid://cwsbg7078rsdp::::res://Space/STAR_DESTROYED.tres<>uid://ctiwlftq42vj0::::res://Sound Effect Settings/BLACK_HOLE_COLLAPSE.tres<>uid://sldv4bvsooaa::::res://Sound Effect Settings/BLACK_HOLE_GROW_MILESTONE.tres<>uid://x4t6mgva646k::::res://TECH_TREE_NODE_POP_IN.tres<>uid://c3jqq33opwpve::::res://Audio/Swipe.mp3<>uid://ccktdpcucgwh::::res://Sound Effect Settings/BUTTON_CLICK.tres<>uid://dh6dtu8aapieu::::res://Audio/bong_001.mp3
 Black Hole Art.gd::GDScript::5305764949934961224::1771452237::0::1::::BlackHoleArt<>Node2D<><>0<>0<><>::
@@ -73,7 +73,7 @@ Level Up Flair.tscn::PackedScene::830628376155535166::1771452236::0::1::::<><><>
 LevelManager.gd::GDScript::1934529133201092198::1771452237::0::1::::LevelManager<>Node<><>0<>0<><>::
 LevelManager.tscn::PackedScene::6074012622361049263::1771452237::0::1::::<><><>0<>0<><>::uid://2tdoaqsor0cw::::res://LevelManager.gd
 LevelManagerUpdatedData.gd::GDScript::769372220966087706::1771452237::0::1::::LevelManagerUpdatedData<>Resource<><>0<>0<><>::
-Main Menu.gd::GDScript::5338418661254987955::1772144589::0::1::::MainMenu<>Node2D<><>0<>0<><>::
+Main Menu.gd::GDScript::5338418661254987955::1772491736::0::1::::MainMenu<>Node2D<><>0<>0<><>::
 Main Menu.tscn::PackedScene::8877655407026906059::1772213298::0::1::::<><><>0<>0<><>::uid://cib78ftbwfk6f::::res://Main Menu.gd<>uid://1txuh2meyqfj::::res://Build Label.tscn<>uid://bkxi24h1nf7kk::::res://Fishing/FishingUpgradeScene.gd<>uid://dayjws668e5cv::::res://Art/Logo Base White.png<>uid://ulae55bx0fhs::::res://Theme/Theme_Small_Font.tres<>uid://ds36c3qoqmf3y::::res://Controller Glyph.tscn<>uid://b5w1afldacdb1::::res://CustomButton.tscn<>uid://b0bx5ybu6bfpq::::res://Game Modes Selector.tscn<>uid://bxx07kmhw0oiv::::res://Theme/Theme_Small_Medium_Font.tres<>uid://bj1fytem4uuvy::::res://Theme/Settings Panel.tres<>uid://f0mobaom23an::::res://Theme/Theme_Large_Font.tres<>uid://dl3ia7dmya7fp::::res://Settings.tscn<>uid://c36s4gjs5sv4r::::res://addons/controller_icons/objects/ControllerIconTexture.gd<>uid://bfvsjnywyisxq::::res://Art/star_tiny.png<>uid://cgsnb64a4xmlg::::res://Singletons/Background Particle Mats.tres<>uid://clfcokk1jcg2q::::res://Black Hole Art.tscn<>uid://doav5t27dvtvd::::res://ObjectManager.tscn<>uid://0rfvn2v8pqmp::::res://Audio/zapsplat_sound_design_whoosh_slow_mo_timewarp_001_106393.mp3
 MatterPerSecond.gd::GDScript::7920184246017113290::1771452236::0::1::::<>Timer<><>0<>0<><>::
 MatterPerSecond.tscn::PackedScene::3364736975274773591::1771452237::0::1::::<><><>0<>0<><>::uid://dk3ujowc43m6m::::res://MatterPerSecond.gd
@@ -108,8 +108,8 @@ ResourcePool.tscn::PackedScene::7159077690144963747::1771452237::0::1::::<><><>0
 ResourceUI.gd::GDScript::2961440628661999240::1771452237::0::1::::ResourceUI<>MarginContainer<><>0<>0<><>::
 ResourceUI.tscn::PackedScene::7756207505796642036::1771452237::0::1::::<><><>0<>0<><>::uid://dl1181xufyebq::::res://Theme/Theme.tres<>uid://bigsq2velfsmq::::res://ResourceUI.gd<>uid://d4k2v7k1qqrqo::::res://Art/Matter Base.png
 RunStats.gd::GDScript::222614423203901843::1771452238::0::1::::RunStats<>Node<><>0<>0<><>::
-SaveHandler.gd::GDScript::4669741451367116382::1772150494::0::1::::<>Node<><>0<>0<><>::
-SceneChanger.gd::GDScript::3502683103198790099::1772144569::0::1::::<>CanvasLayer<><>0<>0<><>::
+SaveHandler.gd::GDScript::4669741451367116382::1772472531::0::1::::<>Node<><>0<>0<><>::
+SceneChanger.gd::GDScript::3502683103198790099::1772482870::0::1::::<>CanvasLayer<><>0<>0<><>::
 SceneChanger.tscn::PackedScene::4398013615665441147::1771452237::0::1::::<><><>0<>0<><>::uid://bp5yxc45ns2d8::::res://SceneChanger.gd<>uid://ptpqlsgqmxqd::::res://UniversalTransitionShader.gdshader<>uid://0rfvn2v8pqmp::::res://Audio/zapsplat_sound_design_whoosh_slow_mo_timewarp_001_106393.mp3
 SessionStats.gd::GDScript::2666886161867304457::1771452238::0::1::::SessionStats<>Node<><>0<>0<><>::
 Settings.gd::GDScript::1653488516621991655::1771452238::0::1::::Settings<>VBoxContainer<><>0<>0<><>::
@@ -576,7 +576,7 @@ ControllerIconPathSelector.gd::GDScript::4639057401788628707::1771452238::0::1::
 ControllerIconPathSelector.tscn::PackedScene::7740199033976191904::1771452238::0::1::::<><><>0<>0<><>::uid://b7dguk4mcwuhv::::res://addons/controller_icons/objects/ControllerIconPathSelector.gd<>uid://bituity863qe4::::res://addons/controller_icons/objects/path_selection/input_action.tscn<>uid://b3lplrf2w6kh7::::res://addons/controller_icons/objects/path_selection/joypad_path.tscn<>uid://d2ow6e2ba86b6::::res://addons/controller_icons/objects/path_selection/specific_path.tscn
 ControllerIconPathSelectorPopup.gd::GDScript::3975337224000428866::1771452237::0::1::::<>ConfirmationDialog<><>0<>1<><>::
 ControllerIconPathSelectorPopup.tscn::PackedScene::565621815148288384::1771452236::0::1::::<><><>0<>0<><>::uid://bwvxhudu0v8re::::res://addons/controller_icons/objects/ControllerIconPathSelectorPopup.gd<>uid://dijn7haax0boi::::res://addons/controller_icons/objects/ControllerIconPathSelector.tscn
-ControllerIconTexture.gd::GDScript::6803269723422001327::1771452236::0::1::::ControllerIconTexture<>Texture2D<>res://addons/controller_icons/objects/controller_texture_icon.svg<>0<>1<><>::
+ControllerIconTexture.gd::GDScript::6803269723422001327::1771452236::0::1::::ControllerIconTexture<>Texture2D<><>0<>1<><>::
 controller_texture_icon.svg::CompressedTexture2D::9200245899294600450::1771452237::1771452237::1::::<><><>0<>0<>2161ed8426de6df3a6a647307f06c346<>res://.godot/imported/controller_texture_icon.svg-c7feb059f1c41a49e9f62f5b03706d01.ctex::
 Sprite3D.gd::GDScript::127972899411661757::1771452236::0::1::::ControllerSprite3D<>Sprite3D<><>0<>1<><>::
 Sprite.gd::GDScript::4553762298088175708::1771452237::0::1::::ControllerSprite2D<>Sprite2D<><>0<>1<><>::
@@ -709,14 +709,14 @@ Asteroid Base.png::CompressedTexture2D::8649222950536063543::1771452238::1771452
 pattern_03.png::CompressedTexture2D::531040758485949651::1771452237::1771452237::1::::<><><>0<>0<>3e0ac9dcb5c5279cfc51a37b733a55c6<>res://.godot/imported/pattern_03.png-a8216ebdd7831a26699ca6fac970e5d3.ctex::
 pattern_0011.png::CompressedTexture2D::3930870985773882563::1771452238::1771452238::1::::<><><>0<>0<>01f16c4d8cdd7982b8358ebf0e8e243b<>res://.godot/imported/pattern_0011.png-d72744e59f8f4c5fe9540f234f0e6433.ctex::
 ::res://Art/CombatSprites/::1772129500
-enemy_boss.png::CompressedTexture2D::8639762018729868076::1771563720::1772129500::1::::<><><>0<>0<>5ecb73dd58b6db10cf91a04c8a32d83b<>res://.godot/imported/enemy_boss.png-34ec2271f47b15435222115c3bd07b87.ctex::
-enemy_brute.png::CompressedTexture2D::5165810818568637516::1771563720::1772129500::1::::<><><>0<>0<>645873e8a453967b2d6a4f79fde2f21a<>res://.godot/imported/enemy_brute.png-ecaf26d0aa775500189df2479cc68d16.ctex::
-enemy_flyer.png::CompressedTexture2D::4734200553673462420::1771563720::1772129500::1::::<><><>0<>0<>cc600fb7b183fc951497edfd003308ab<>res://.godot/imported/enemy_flyer.png-697928ef623cca4d5bac2e53cb769cdc.ctex::
-enemy_goblin.png::CompressedTexture2D::1063209796502120086::1771563720::1772129500::1::::<><><>0<>0<>c8d14cc541f2184e53fe513744a7fa82<>res://.godot/imported/enemy_goblin.png-6c05f5e090bf79b12e564cae3afa0a7c.ctex::
-hero_archer.png::CompressedTexture2D::8538271424674551736::1771563720::1772129500::1::::<><><>0<>0<>a6048fef7cffcd5c8466af450f43698b<>res://.godot/imported/hero_archer.png-4a63f8c432cf01065e01900bee5351f3.ctex::
-hero_guardian.png::CompressedTexture2D::912047695467507835::1771563720::1772129500::1::::<><><>0<>0<>91db9e8af6e4bef7d6251300861b6828<>res://.godot/imported/hero_guardian.png-5f277dd04b697b2f2a6934c9d8402992.ctex::
-hero_knight.png::CompressedTexture2D::8711220978544268635::1771563720::1772129500::1::::<><><>0<>0<>8a225362db964268ad344a8c7c015f82<>res://.godot/imported/hero_knight.png-32efc5573a4612fee988f5bef80a9911.ctex::
-hero_mage.png::CompressedTexture2D::8113471887090939917::1771563720::1772129500::1::::<><><>0<>0<>8731bae40e8922a135af35b9ec04eb6b<>res://.godot/imported/hero_mage.png-91fca02571eb70c32e7a8ed4512eb0d1.ctex::
+enemy_boss.png::CompressedTexture2D::8639762018729868076::1772559245::1772559532::1::::<><><>0<>0<>5ecb73dd58b6db10cf91a04c8a32d83b<>res://.godot/imported/enemy_boss.png-34ec2271f47b15435222115c3bd07b87.ctex::
+enemy_brute.png::CompressedTexture2D::5165810818568637516::1772559245::1772559532::1::::<><><>0<>0<>645873e8a453967b2d6a4f79fde2f21a<>res://.godot/imported/enemy_brute.png-ecaf26d0aa775500189df2479cc68d16.ctex::
+enemy_flyer.png::CompressedTexture2D::4734200553673462420::1772559245::1772559532::1::::<><><>0<>0<>cc600fb7b183fc951497edfd003308ab<>res://.godot/imported/enemy_flyer.png-697928ef623cca4d5bac2e53cb769cdc.ctex::
+enemy_goblin.png::CompressedTexture2D::1063209796502120086::1772559245::1772559532::1::::<><><>0<>0<>c8d14cc541f2184e53fe513744a7fa82<>res://.godot/imported/enemy_goblin.png-6c05f5e090bf79b12e564cae3afa0a7c.ctex::
+hero_archer.png::CompressedTexture2D::8538271424674551736::1772559245::1772559532::1::::<><><>0<>0<>a6048fef7cffcd5c8466af450f43698b<>res://.godot/imported/hero_archer.png-4a63f8c432cf01065e01900bee5351f3.ctex::
+hero_guardian.png::CompressedTexture2D::912047695467507835::1772559245::1772559532::1::::<><><>0<>0<>91db9e8af6e4bef7d6251300861b6828<>res://.godot/imported/hero_guardian.png-5f277dd04b697b2f2a6934c9d8402992.ctex::
+hero_knight.png::CompressedTexture2D::8711220978544268635::1772559245::1772559532::1::::<><><>0<>0<>8a225362db964268ad344a8c7c015f82<>res://.godot/imported/hero_knight.png-32efc5573a4612fee988f5bef80a9911.ctex::
+hero_mage.png::CompressedTexture2D::8113471887090939917::1772559245::1772559532::1::::<><><>0<>0<>8731bae40e8922a135af35b9ec04eb6b<>res://.godot/imported/hero_mage.png-91fca02571eb70c32e7a8ed4512eb0d1.ctex::
 README.md::TextFile::-1::1771563720::0::1::::<><><>0<>0<><>::
 ::res://Art/Demo/::1771538361
 Asteroid Small.png::CompressedTexture2D::1736800800039594485::1771452238::1771452238::1::::<><><>0<>0<>12445acac18658f419ba9049ea0cf51c<>res://.godot/imported/Asteroid Small.png-4d13be795a0d9818da075b98bafc0618.ctex::
@@ -973,15 +973,15 @@ index.apple-touch-icon.png::CompressedTexture2D::1541724962292501447::1771452238
 index.icon.png::CompressedTexture2D::3629862721479476427::1771452237::1771452237::1::::<><><>0<>0<>64d064f87bed16ce4524098ab042ac08<>res://.godot/imported/index.icon.png-8466b9836b3b13bcc45e53125321ef39.ctex::
 index.png::CompressedTexture2D::6576296408970124353::1771452237::1771452237::1::::<><><>0<>0<>96b31aa0d9e43f0196fda92504b9b964<>res://.godot/imported/index.png-d03311572afeb237347e3aea48014cb0.ctex::
 ::res://Fishing/::1772305777
-BattleScene.gd::GDScript::256483395540075428::1772304645::0::1::::<>Node2D<><>0<>0<><>::
-BattleScene.tscn::PackedScene::-1::1772138709::0::1::::<><><>0<>0<><>::res://Fishing/BattleScene.gd
-CoinPickup.gd::GDScript::4293323117044076259::1772141458::0::1::::CoinPickup<>Area2D<><>0<>0<><>::
+BattleScene.gd::GDScript::256483395540075428::1772559289::0::1::::<>Node2D<><>0<>0<><>::
+BattleScene.tscn::PackedScene::-1::1772559326::0::1::::<><><>0<>0<><>::res://Fishing/BattleScene.gd
+CoinPickup.gd::GDScript::4293323117044076259::1772476594::0::1::::CoinPickup<>Area2D<><>0<>0<><>::
 CoinPickup.tscn::PackedScene::-1::1772129712::0::1::::<><><>0<>0<><>::res://Fishing/CoinPickup.gd
-CombatSprite.gd::GDScript::9222949183729968108::1772306072::0::1::::CombatSprite<>Area2D<><>0<>0<><>::
+CombatSprite.gd::GDScript::9222949183729968108::1772471659::0::1::::CombatSprite<>Area2D<><>0<>0<><>::
 CombatSprite.tscn::PackedScene::-1::1772129712::0::1::::<><><>0<>0<><>::res://Fishing/CombatSprite.gd
-FishingUpgradeDB.gd::GDScript::6085080326067041982::1772305313::0::1::::FishingUpgradeDB<>RefCounted<><>0<>0<><>::
-FishingUpgradeScene.gd::GDScript::3136325295984075990::1772150544::0::1::::<>Control<><>0<>0<><>::
-FishingUpgradeScene.tscn::PackedScene::-1::1772150533::0::1::::<><><>0<>0<><>::res://Fishing/FishingUpgradeScene.gd
+FishingUpgradeDB.gd::GDScript::6085080326067041982::1772479375::0::1::::FishingUpgradeDB<>RefCounted<><>0<>0<><>::
+FishingUpgradeScene.gd::GDScript::3136325295984075990::1772559450::0::1::::<>Control<><>0<>0<><>::
+FishingUpgradeScene.tscn::PackedScene::-1::1772559158::0::1::::<><><>0<>0<><>::res://Fishing/FishingUpgradeScene.gd
 FishingUpgradeTreeAdapter.gd::GDScript::2001329543834468694::1772306021::0::1::::FishingUpgradeTreeAdapter<>RefCounted<><>0<>0<><>::
 ::res://Game Modes/::1771538361
 Compact Mode.tres::Resource/GameModeData::118880853731921676::1771452237::0::1::::<><><>0<>0<><>::uid://ftm4fwuq2swm::::res://GameModeData.gd<>uid://cw7es5l6vipb5::::res://Art/Mods/ASTEROID_DENSITY.png
@@ -1195,12 +1195,44 @@ Dark_Pallet.tres::Resource/Pallet::1955070886951577034::1772143666::0::1::::<><>
 Light_Pallet.tres::Resource/Pallet::8965210297309977065::1772213298::0::1::::<><><>0<>0<><>::uid://biycbce31fxq1::::res://Pallets/Pallet.gd
 Pallet.gd::GDScript::2997599831207310814::1771452238::0::1::::Pallet<>Resource<><>0<>0<><>::
 Refs.tscn::PackedScene::438940793137653360::1771452236::0::1::::<><><>0<>0<><>::uid://c7pl42qp1u51g::::res://Singletons/Refs.gd<>uid://d0y2x6sx64gtt::::res://Pallets/Light_Pallet.tres<>uid://dysptdjklfkrj::::res://Art/Mods/MONEY_PER_MATTER.png<>uid://csosj5i5dj75o::::res://Art/Mods/CLICK_AOE.png<>uid://ck0owlnktffpu::::res://Art/Mods/CLICK_RATE.png<>uid://v1fvdocwedx1::::res://Art/Mods/BASE_DAMAGE_PER_CLICK.png<>uid://bam4y74oqk12x::::res://Art/Mods/RUN_TIMER_BASE.png<>uid://be68jqy548tvl::::res://Art/Mods/RUN_TIMER_AMOUNT_ON_BLACK_HOLE_GROW.png<>uid://bj6xug0isxoj::::res://Art/Mods/MAX_ASTEROID_SIZE.png<>uid://l80uispg0m6m::::res://Art/Mods/CHANCE_TO_ADD_TIME_ON_ASTEROID_DESTROYED.png<>uid://bx80tl2ueutdc::::res://Art/Mods/ASTEROIDS_TO_SPAWN.png<>uid://cw7es5l6vipb5::::res://Art/Mods/ASTEROID_DENSITY.png<>uid://c0w66idmu0mlf::::res://Art/Mods/ASTEROIDS_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW .png<>uid://b4fjrj18twvrl::::res://Art/Mods/CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK.png<>uid://dv2w0ttixfxtv::::res://Art/Mods/CHANCE_TO_SPAWN_SPECIAL_ASTEROID_ELECTRIC.png<>uid://eguvlyj14go7::::res://Art/Mods/SPECIAL_ASTEROID_ELECTRIC_DAMAGE.png<>uid://dpqhwipmvu5ww::::res://Art/Mods/SPECIAL_ASTEROID_ELECTRIC_MAX_CHAINS.png<>uid://b1ugrytgu3kv3::::res://Art/Mods/SPECIAL_ASTEROID_CHANCE_TO_FORK.png<>uid://dan1sbquls4xc::::res://Art/Mods/SPECIAL_ASTEROID_CHAIN_DISTANCE_SCALE.png<>uid://byxhxiqv5e8rv::::res://Art/Mods/CHANCE_TO_SPAWN_SPECIAL_ASTEROID_RADIOACTIVE.png<>uid://bfwr7lj6ecswq::::res://Art/Mods/SPECIAL_ASTEROID_RADIOACTIVE_DOT.png<>uid://dpektdbyvbj5v::::res://Art/Mods/SPECIAL_ASTEROID_RADIOACTIVE_DURATION.png<>uid://ci8vne478q642::::res://Art/Mods/SPECIAL_ASTEROID_RADIOACTIVE_AOE_SCALE.png<>uid://bu0osbvuudebg::::res://Art/Mods/CRIT_CHANCE.png<>uid://r5ii6wlxudk2::::res://Art/Mods/CRIT_BONUS.png<>uid://xfodo2ablpp7::::res://Art/Mods/ELECTRIC_CRIT_CHANCE.png<>uid://bkd3vr2dmvxgr::::res://Art/Mods/ELECTRIC_CRIT_BONUS.png<>uid://cakqxcw523g3c::::res://Art/Mods/COMET_SPAWN_CHANCE.png<>uid://c46oroso5sc3a::::res://Art/Mods/BLACK_HOLE_MAX_SIZE_2.png<>uid://ct5wi3kywcl7h::::res://Art/Mods/PLANET_DENSITY.png<>uid://b3gt58u8q7g0a::::res://Art/Mods/CLICKER_BONUS_DAMAGE_TO_PLANETS.png<>uid://dmk7eys6nqjrx::::res://Art/Mods/NUMBER_OF_ASTEROIDS_INTO_PLANETS.png<>uid://xfoa8emwlfnr::::res://Art/Mods/MAX_PLANET_SIZE.png<>uid://beqre85fdoj1q::::res://Art/Mods/SPECIAL_PLANET_MOON_SPAWN_CHANCE.png<>uid://d3kyxppcrmore::::res://Art/Mods/SPECIAL_PLANET_MOON_CLIKCER_RATE_BUFF_SCALE.png<>uid://bjrygbvorftf5::::res://Art/Mods/SPECIAL_PLANET_MOON_CLIKCER_AOE_BUFF_SCALE.png<>uid://cbdomhtyjpfbp::::res://Art/Mods/COMET_CRIT_CHANCE_BUFF_DURATION.png<>uid://dokhpofu1c7ys::::res://Art/Mods/COMET_CRIT_CHANCE_BUFF_SCALE.png<>uid://blrlu5rvvigto::::res://Art/Mods/COMET_CRIT_BONUS_DAMAGE_BUFF_SCALE.png<>uid://bowdyrawss7se::::res://Art/Mods/CHANCE_TO_ADD_TIME_ON_PLANET_DESTROYED.png<>uid://culvewcsgxkh1::::res://Art/Mods/PLANET_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW.png<>uid://dxycgkyn01376::::res://Art/Mods/CHANCE_TO_RESPAWN_PLANET_ON_BREAK.png<>uid://d18di4kssbv58::::res://Art/Mods/SPECIAL_PLANET_ASTEROID_PINATA_SPAWN_CHANCE.png<>uid://dj5tkb7ogi7y::::res://Art/Mods/SPECIAL_PLANET_ASTEROID_PINATA_AMOUNT_OF_ASTEROID.png<>uid://by6754ts2jarv::::res://Art/Mods/COMET_CHANCE_FOR_COMET_SHOWER.png<>uid://3nutipnwfnp5::::res://Art/Mods/COMET_SHOWER_SIZE.png<>uid://f38gqa3blpoi::::res://Art/Mods/SPECIAL_ASTEROID_GOLDEN_BONUS_MONEY_SCALE.png<>uid://bxjwofeyaeeok::::res://Art/Mods/CHANCE_TO_SPAWN_SPECIAL_ASTEROID_GOLDEN.png<>uid://dwu6i5mvtwns4::::res://Art/Mods/SPECIAL_ASTEROID_GOLDEN_CRIT_CHANCE.png<>uid://d0wbd4jwviut6::::res://Art/Mods/SPECIAL_ASTEROID_GOLDEN_CRIT_BONUS_MONEY_SCALE.png<>uid://ck381vu0kjq1g::::res://Art/Mods/STAR_DENSITY.png<>uid://b4whogrgeh7ae::::res://Art/Mods/CLICKER_BONUS_DAMAGE_TO_STAR.png<>uid://cqlo77ha3cl5w::::res://Art/Mods/NUMBER_OF_PLANETS_INTO_STARS.png<>uid://bqiclg676a5cv::::res://Art/Mods/MAX_STAR_SIZE.png<>uid://c0f0bqd04vbjq::::res://Art/Mods/CHANCE_TO_ADD_TIME_ON_STAR_DESTROYED.png<>uid://dwdulxdwrpqe3::::res://Art/Mods/STAR_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW.png<>uid://b7mglljhweb82::::res://Art/Mods/CHANCE_TO_RESPAWN_STAR_ON_BREAK.png<>uid://y144xhyvrm0y::::res://Art/Mods/SPECIAL_STAR_LASER_SPAWN_CHANCE.png<>uid://j4yemp4wy8b2::::res://Art/Mods/LASER_DAMAGE.png<>uid://bvyj0n3825umy::::res://Art/Mods/LASER_WIDTH_SCALE.png<>uid://cntq4iqekeo5w::::res://Art/Mods/LASER_CRIT_CHANCE.png<>uid://d1wolwsksof2q::::res://Art/Mods/LASER_CRIT_BONUS.png<>uid://cfpexax2bl3x3::::res://Art/Mods/SPECIAL_STAR_SUPERNOVA_SPAWN_CHANCE.png<>uid://b3t7t6g5j14vn::::res://Art/Mods/SUPERNOVA_DAMAGE_PERCENT_CURRENT_HEALTH.png<>uid://fwejdavquxnm::::res://Art/Mods/SUPERNOVA_RADIUS_SCALE.png<>uid://bvm28vtytf1dw::::res://Art/Mods/MOON_LIMIT_HARD_CAP.png<>uid://7ciuut4d70px::::res://Art/Mods/SPECIAL_STAR_ELECTRIC_DAMAGE.png<>uid://bosora3rsc6jo::::res://Art/Mods/SPECIAL_STAR_ELECTRIC_MAX_CHAINS.png<>uid://cpg4c6bdohohs::::res://Art/Mods/SPECIAL_STAR_CHANCE_TO_FORK.png<>uid://pnux7oxa7ymw::::res://Art/Mods/SPECIAL_STAR_CHAIN_DISTANCE_SCALE.png<>uid://cpts0c5wdyc1t::::res://Art/Mods/SPECIAL_STAR_ELECTRIC_CRIT_CHANCE.png<>uid://ckwrqy04nuiwa::::res://Art/Mods/SPECIAL_STAR_ELECTRIC_CRIT_BONUS.png<>uid://dp8ipf1yw4s7c::::res://Art/Mods/SPECIAL_STAR_LASER_SPAWN_CHANCE_2.png<>uid://du1nic5ggj2a4::::res://Art/Mods/PLANETS_TO_SPAWN.png<>uid://y6d2563lhaq2::::res://Art/Mods/STARS_TO_SPAWN.png<>uid://bpl630req72fv::::res://Art/Mods/CLICKER_ELECTRIC_CLICKS_TO_START_WITH.png<>uid://3ey4ti2j780a::::res://Space/Asteroid.tscn<>uid://b3gp50j1in7s0::::res://Space/Planet.tscn<>uid://coylx8tcilypr::::res://Space/Star.tscn<>uid://jihj2lwblq5n::::res://Space/Comet.tscn<>uid://cmvmhvd8euq0y::::res://ResourceChanged.tscn<>uid://cxy8io2wqwccr::::res://Tech Tree Stuff/Tech Tree Node.tscn<>uid://bxie42mrqp55d::::res://Tech Tree Stuff/Tech Tree Line.tscn<>uid://bk0bu7p5d0eqn::::res://UFO.tscn<>uid://ofxt6pd3tpt6::::res://Upgrades Roguelike.tscn<>uid://b3pr0wiu2vksn::::res://Theme/Exo2-Bold.ttf<>uid://djw363im2l6d::::res://Theme/Exo2-BoldItalic.ttf<>uid://cv63dw5peeijb::::res://Theme/Poppins-SemiBold.ttf<>uid://ddo8onuupejse::::res://Theme/Poppins-Bold.ttf<>uid://y0k4c4xy8dq8::::res://Art/Demo/Asteroid Small.png<>uid://cphtkj4xvd5sk::::res://Art/Demo/UI/Planet Small.png<>uid://ikkd5evxer6x::::res://Art/Demo/Star Small.png<>uid://dtj4ibnsckgb0::::res://Art/Demo/Asteroid.png<>uid://dofuh5qmx0xo1::::res://Art/Demo/Planet.png<>uid://dekqyhf72j7ot::::res://Art/Demo/Star.png<>uid://ti1ifn22o7lv::::res://Art/Demo/Black Hole.png<>uid://c2lk8ujnd6den::::res://Art/Demo/Bomb.png<>uid://bcwuarrywhyrp::::res://Art/Demo/Electric.png<>uid://c3ddcxwutals7::::res://Art/Demo/Radioactive.png<>uid://buh6hi1qse0ua::::res://Art/Demo/noise08.png<>uid://y0nh0g8ve7ln::::res://Art/Demo/noise09.png<>uid://grveb1qqldmp::::res://Art/Demo/noise10.png<>uid://c2m1iq3b6qgsj::::res://Art/Demo/noise11.png<>uid://btinmtf5y20s2::::res://Art/Demo/noise12.png<>uid://cm7wicao48ln2::::res://Art/Demo/noise13.png<>uid://c00ay41ss2jv7::::res://Art/Demo/noise14.png<>uid://lu552ilywnw7::::res://Art/Demo/noise15.png<>uid://dbrs4v80meape::::res://Art/locked.png
-::res://simulation/::1772303837
+::res://simulation/::1772480425
 run_20_battle_scene_passes.gd::GDScript::2458486502381060502::1772288330::0::1::::<>SceneTree<><>0<>0<><>::
+run_20_guided_l3_boss_progression.gd::GDScript::8807295354335144911::1772483426::0::1::::<>SceneTree<><>0<>0<><>::
 run_battle_scene_campaign.gd::GDScript::6300532447623887611::1772142263::0::1::::<>SceneTree<><>0<>0<><>::
 run_to_level3_boss_passes.gd::GDScript::94550482771226983::1772303805::0::1::::<>SceneTree<><>0<>0<><>::
+run_upgrade_effectiveness_scan.gd::GDScript::3616239466687957615::1772478073::0::1::::<>SceneTree<><>0<>0<><>::
 simulation_results_2h_battlescene_progression.json::JSON::-1::1772142263::0::1::::<><><>0<>0<><>::
 simulation_run_report_2h_battlescene_infinite.md::TextFile::-1::1772142263::0::1::::<><><>0<>0<><>::
+::res://simulation/3_2_2026_20_Sims/::1772480153
+guided_l3_overview.md::TextFile::-1::1772484989::0::1::::<><><>0<>0<><>::
+guided_l3_pricing_recommendation.json::JSON::-1::1772484989::0::1::::<><><>0<>0<><>::
+guided_l3_pricing_recommendation.md::TextFile::-1::1772484989::0::1::::<><><>0<>0<><>::
+mult_1.80_pass_01_to_l3_boss.json::JSON::-1::1772483576::0::1::::<><><>0<>0<><>::
+mult_1.80_pass_01_to_l3_boss.md::TextFile::-1::1772483576::0::1::::<><><>0<>0<><>::
+mult_1.80_pass_02_to_l3_boss.json::JSON::-1::1772483728::0::1::::<><><>0<>0<><>::
+mult_1.80_pass_02_to_l3_boss.md::TextFile::-1::1772483728::0::1::::<><><>0<>0<><>::
+mult_1.80_pass_03_to_l3_boss.json::JSON::-1::1772483884::0::1::::<><><>0<>0<><>::
+mult_1.80_pass_03_to_l3_boss.md::TextFile::-1::1772483884::0::1::::<><><>0<>0<><>::
+mult_2.00_pass_01_to_l3_boss.json::JSON::-1::1772484036::0::1::::<><><>0<>0<><>::
+mult_2.00_pass_01_to_l3_boss.md::TextFile::-1::1772484036::0::1::::<><><>0<>0<><>::
+mult_2.00_pass_02_to_l3_boss.json::JSON::-1::1772484185::0::1::::<><><>0<>0<><>::
+mult_2.00_pass_02_to_l3_boss.md::TextFile::-1::1772484185::0::1::::<><><>0<>0<><>::
+mult_2.00_pass_03_to_l3_boss.json::JSON::-1::1772484333::0::1::::<><><>0<>0<><>::
+mult_2.00_pass_03_to_l3_boss.md::TextFile::-1::1772484333::0::1::::<><><>0<>0<><>::
+mult_2.15_pass_01_to_l3_boss.json::JSON::-1::1772484454::0::1::::<><><>0<>0<><>::
+mult_2.15_pass_01_to_l3_boss.md::TextFile::-1::1772484454::0::1::::<><><>0<>0<><>::
+mult_2.15_pass_02_to_l3_boss.json::JSON::-1::1772484561::0::1::::<><><>0<>0<><>::
+mult_2.15_pass_02_to_l3_boss.md::TextFile::-1::1772484561::0::1::::<><><>0<>0<><>::
+mult_2.15_pass_03_to_l3_boss.json::JSON::-1::1772484668::0::1::::<><><>0<>0<><>::
+mult_2.15_pass_03_to_l3_boss.md::TextFile::-1::1772484668::0::1::::<><><>0<>0<><>::
+mult_2.30_pass_01_to_l3_boss.json::JSON::-1::1772484776::0::1::::<><><>0<>0<><>::
+mult_2.30_pass_01_to_l3_boss.md::TextFile::-1::1772484776::0::1::::<><><>0<>0<><>::
+mult_2.30_pass_02_to_l3_boss.json::JSON::-1::1772484887::0::1::::<><><>0<>0<><>::
+mult_2.30_pass_02_to_l3_boss.md::TextFile::-1::1772484887::0::1::::<><><>0<>0<><>::
+mult_2.30_pass_03_to_l3_boss.json::JSON::-1::1772484989::0::1::::<><><>0<>0<><>::
+mult_2.30_pass_03_to_l3_boss.md::TextFile::-1::1772484989::0::1::::<><><>0<>0<><>::
+upgrade_effectiveness.json::JSON::-1::1772481092::0::1::::<><><>0<>0<><>::
+upgrade_effectiveness_report.md::TextFile::-1::1772481092::0::1::::<><><>0<>0<><>::
 ::res://simulation/20_run_simluations/::1772304258
 overview.md::TextFile::-1::1772288375::0::1::::<><><>0<>0<><>::
 overview_to_l3_boss.md::TextFile::-1::1772304258::0::1::::<><><>0<>0<><>::
@@ -1330,3 +1362,4 @@ Theme_Small_Medium_Font.tres::Theme::4049820390054939877::1771452237::0::1::::<>
 Theme_Tiny_Font.tres::Theme::3372194914552538024::1771452238::0::1::::<><><>0<>0<><>::uid://bc8es25q4ro3p::::res://Theme/Montserrat-SemiBold.ttf
 Theme_Very_Large_Font.tres::Theme::355820709930250288::1771452237::0::1::::<><><>0<>0<><>::uid://bc8es25q4ro3p::::res://Theme/Montserrat-SemiBold.ttf
 White Panel.tres::StyleBoxFlat::8703519484331057780::1771452238::0::1::::<><><>0<>0<><>::
+::res://tools/::1772559240

@@ -1,7 +1,40 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://Fishing/BattleScene.gd" id="1"]
 [ext_resource type="PackedScene" path="res://CustomButton.tscn" id="2"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_bg"]
+bg_color = Color(0.027451, 0.0470588, 0.101961, 0.95)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.129412, 0.8, 1, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_health"]
+bg_color = Color(0.94902, 0.223529, 0.329412, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_exp"]
+bg_color = Color(0.262745, 0.678431, 1, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_power"]
+bg_color = Color(0.956863, 0.815686, 0.14902, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [node name="BattleScene" type="Node2D"]
 script = ExtResource("1")
@@ -29,32 +62,85 @@ current = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
-[node name="HealthLabel" type="Label" parent="CanvasLayer"]
+[node name="LevelLabel" type="Label" parent="CanvasLayer"]
 offset_left = 24.0
 offset_top = 20.0
-offset_right = 900.0
-offset_bottom = 52.0
-text = "Health: 300"
+offset_right = 540.0
+offset_bottom = 66.0
+theme_override_font_sizes/font_size = 34
+text = "LEVEL 1"
+
+[node name="HealthValueLabel" type="Label" parent="CanvasLayer"]
+offset_left = 24.0
+offset_top = 66.0
+offset_right = 540.0
+offset_bottom = 100.0
+theme_override_font_sizes/font_size = 28
+text = "300 / 300"
+
+[node name="HealthBar" type="ProgressBar" parent="CanvasLayer"]
+offset_left = 24.0
+offset_top = 104.0
+offset_right = 600.0
+offset_bottom = 140.0
+theme_override_styles/background = SubResource("StyleBoxFlat_hud_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hud_health")
+show_percentage = false
+
+[node name="ExperienceValueLabel" type="Label" parent="CanvasLayer"]
+offset_left = 24.0
+offset_top = 144.0
+offset_right = 540.0
+offset_bottom = 172.0
+theme_override_font_sizes/font_size = 24
+text = "EXP 0 / 32"
+
+[node name="ExperienceBar" type="ProgressBar" parent="CanvasLayer"]
+offset_left = 24.0
+offset_top = 176.0
+offset_right = 600.0
+offset_bottom = 204.0
+theme_override_styles/background = SubResource("StyleBoxFlat_hud_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hud_exp")
+show_percentage = false
+
+[node name="PowerValueLabel" type="Label" parent="CanvasLayer"]
+offset_left = 24.0
+offset_top = 210.0
+offset_right = 540.0
+offset_bottom = 244.0
+theme_override_font_sizes/font_size = 28
+text = "0 / 0"
+
+[node name="PowerBar" type="ProgressBar" parent="CanvasLayer"]
+offset_left = 24.0
+offset_top = 248.0
+offset_right = 600.0
+offset_bottom = 284.0
+theme_override_styles/background = SubResource("StyleBoxFlat_hud_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hud_power")
+show_percentage = false
 
 [node name="CurrencyLabel" type="Label" parent="CanvasLayer"]
 offset_left = 24.0
-offset_top = 56.0
+offset_top = 290.0
 offset_right = 600.0
-offset_bottom = 88.0
+offset_bottom = 318.0
+theme_override_font_sizes/font_size = 24
 text = "Currency: 0"
 
 [node name="SpeedButton" type="Button" parent="CanvasLayer"]
 offset_left = 24.0
-offset_top = 100.0
+offset_top = 332.0
 offset_right = 220.0
-offset_bottom = 144.0
+offset_bottom = 376.0
 text = "Speed x1"
 
 [node name="InfiniteSimButton" type="Button" parent="CanvasLayer"]
 offset_left = 232.0
-offset_top = 100.0
+offset_top = 332.0
 offset_right = 460.0
-offset_bottom = 144.0
+offset_bottom = 376.0
 text = "Sim Infinity"
 
 [node name="ExitBattleButton" parent="CanvasLayer" instance=ExtResource("2")]
