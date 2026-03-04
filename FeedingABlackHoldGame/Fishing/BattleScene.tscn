@@ -129,19 +129,36 @@ offset_bottom = 318.0
 theme_override_font_sizes/font_size = 24
 text = "Currency: 0"
 
+[node name="ClockPanel" type="PanelContainer" parent="CanvasLayer"]
+offset_left = 24.0
+offset_top = 324.0
+offset_right = 300.0
+offset_bottom = 388.0
+
+[node name="ClockLabel" type="Label" parent="CanvasLayer/ClockPanel"]
+text = "Clock: 00:00:00"
+
 [node name="SpeedButton" type="Button" parent="CanvasLayer"]
 offset_left = 24.0
-offset_top = 332.0
+offset_top = 396.0
 offset_right = 220.0
-offset_bottom = 376.0
+offset_bottom = 440.0
 text = "Speed x1"
 
 [node name="InfiniteSimButton" type="Button" parent="CanvasLayer"]
 offset_left = 232.0
-offset_top = 332.0
+offset_top = 396.0
 offset_right = 460.0
-offset_bottom = 376.0
+offset_bottom = 440.0
 text = "Sim Infinity"
+
+[node name="SpawnUfoButton" type="Button" parent="CanvasLayer"]
+visible = false
+offset_left = 24.0
+offset_top = 446.0
+offset_right = 220.0
+offset_bottom = 490.0
+text = "Spawn UFO"
 
 [node name="ExitBattleButton" parent="CanvasLayer" instance=ExtResource("2")]
 offset_left = 1020.0
@@ -149,6 +166,13 @@ offset_top = 20.0
 offset_right = 1256.0
 offset_bottom = 64.0
 text = "EXIT BATTLE"
+
+[node name="MuteButton" type="Button" parent="CanvasLayer"]
+offset_left = 956.0
+offset_top = 20.0
+offset_right = 1008.0
+offset_bottom = 64.0
+text = ""
 
 [node name="SummaryPanel" type="Panel" parent="CanvasLayer"]
 offset_left = 560.0
@@ -174,4 +198,6 @@ text = "Continue"
 [connection signal="pressed" from="CanvasLayer/SummaryPanel/ContinueButton" to="." method="_on_continue_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/SpeedButton" to="." method="_on_speed_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/InfiniteSimButton" to="." method="_on_infinite_sim_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/SpawnUfoButton" to="." method="_on_spawn_ufo_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/ExitBattleButton" to="." method="_on_exit_battle_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/MuteButton" to="." method="_on_mute_button_pressed"]

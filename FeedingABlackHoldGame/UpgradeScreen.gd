@@ -10,6 +10,9 @@ var editor_reset_add_button: Button
 var editor_reset_all_button: Button
 var editor_unlock_all_button: Button
 var battle_level_choice_dialog: ConfirmationDialog
+var mute_button: Button
+var speaker_icon_on: Texture2D
+var speaker_icon_off: Texture2D
 
 
 var dragging = false
@@ -57,6 +60,7 @@ func _ready() -> void :
     update_colors()
     _setup_editor_cash_controls()
     _setup_battle_level_choice_dialog()
+    _setup_mute_button()
     hide()
 
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):
@@ -203,6 +207,7 @@ func show_screen():
 
 
     update_input(ControllerIcons.get_last_input_type())
+    _refresh_mute_button_icon()
 
     nodes_unlocked_this_session = 0
 
@@ -473,3 +478,98 @@ func _clear_tech_tree_runtime() -> void:
     if nodes_container != null:
         for child in nodes_container.get_children():
             child.queue_free()
+
+func _setup_mute_button() -> void:
+    mute_button = get_node_or_null("%MuteButton")
+    if mute_button == null:
+        return
+    speaker_icon_on = _make_speaker_icon_texture(false)
+    speaker_icon_off = _make_speaker_icon_texture(true)
+    mute_button.text = ""
+    mute_button.focus_mode = Control.FOCUS_NONE
+    mute_button.custom_minimum_size = Vector2(56, 44)
+    _style_mute_button()
+    _refresh_mute_button_icon()
+
+func _style_mute_button() -> void:
+    if mute_button == null:
+        return
+    var normal := StyleBoxFlat.new()
+    normal.bg_color = Color(0.08, 0.1, 0.16, 0.96)
+    normal.border_color = Color(0.88, 0.92, 1.0, 1.0)
+    normal.border_width_left = 2
+    normal.border_width_top = 2
+    normal.border_width_right = 2
+    normal.border_width_bottom = 2
+    normal.corner_radius_top_left = 4
+    normal.corner_radius_top_right = 4
+    normal.corner_radius_bottom_left = 4
+    normal.corner_radius_bottom_right = 4
+    var hover := normal.duplicate(true)
+    hover.bg_color = Color(0.14, 0.18, 0.26, 0.98)
+    mute_button.add_theme_stylebox_override("normal", normal)
+    mute_button.add_theme_stylebox_override("hover", hover)
+    mute_button.add_theme_stylebox_override("pressed", hover)
+
+func _refresh_mute_button_icon() -> void:
+    if mute_button == null:
+        return
+    mute_button.icon = speaker_icon_off if SaveHandler.audio_muted else speaker_icon_on
+    mute_button.tooltip_text = "Unmute all audio" if SaveHandler.audio_muted else "Mute all audio"
+
+func _on_mute_button_pressed() -> void:
+    SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
+    _refresh_mute_button_icon()
+
+func _make_speaker_icon_texture(is_muted: bool) -> ImageTexture:
+    var image := Image.create(40, 40, false, Image.FORMAT_RGBA8)
+    image.fill(Color(0, 0, 0, 0))
+    var speaker_color := Color(0.93, 0.97, 1.0, 1.0)
+    _draw_rect_pixels(image, Rect2i(7, 14, 7, 12), speaker_color)
+    _draw_triangle_right(image, Vector2i(14, 20), 11, 9, speaker_color)
+    if is_muted:
+        _draw_thick_line(image, Vector2i(21, 10), Vector2i(34, 30), Color(1.0, 0.2, 0.2, 1.0), 2)
+        _draw_thick_line(image, Vector2i(34, 10), Vector2i(21, 30), Color(1.0, 0.2, 0.2, 1.0), 2)
+    else:
+        _draw_arc_ring(image, Vector2i(20, 20), 8, 11, PI * -0.42, PI * 0.42, speaker_color)
+        _draw_arc_ring(image, Vector2i(20, 20), 12, 15, PI * -0.42, PI * 0.42, speaker_color)
+    return ImageTexture.create_from_image(image)
+
+func _draw_rect_pixels(image: Image, rect: Rect2i, color: Color) -> void:
+    for x in range(rect.position.x, rect.position.x + rect.size.x):
+        for y in range(rect.position.y, rect.position.y + rect.size.y):
+            image.set_pixel(x, y, color)
+
+func _draw_triangle_right(image: Image, center: Vector2i, width: int, half_height: int, color: Color) -> void:
+    for i in range(width):
+        var x: int = center.x + i
+        var y_top: int = center.y - int(round(float(half_height) * (1.0 - float(i) / float(width))))
+        var y_bottom: int = center.y + int(round(float(half_height) * (1.0 - float(i) / float(width))))
+        for y in range(y_top, y_bottom + 1):
+            image.set_pixel(x, y, color)
+
+func _draw_thick_line(image: Image, start: Vector2i, finish: Vector2i, color: Color, thickness: int) -> void:
+    var steps: int = maxi(abs(finish.x - start.x), abs(finish.y - start.y))
+    if steps <= 0:
+        image.set_pixel(start.x, start.y, color)
+        return
+    for i in range(steps + 1):
+        var t: float = float(i) / float(steps)
+        var x: int = int(round(lerpf(float(start.x), float(finish.x), t)))
+        var y: int = int(round(lerpf(float(start.y), float(finish.y), t)))
+        for ox in range(-thickness, thickness + 1):
+            for oy in range(-thickness, thickness + 1):
+                if abs(ox) + abs(oy) <= thickness + 1:
+                    image.set_pixel(x + ox, y + oy, color)
+
+func _draw_arc_ring(image: Image, center: Vector2i, inner_radius: int, outer_radius: int, start_angle: float, end_angle: float, color: Color) -> void:
+    for x in range(image.get_width()):
+        for y in range(image.get_height()):
+            var px: float = float(x - center.x)
+            var py: float = float(y - center.y)
+            var angle: float = atan2(py, px)
+            if angle < start_angle or angle > end_angle:
+                continue
+            var dist_sq: float = px * px + py * py
+            if dist_sq >= float(inner_radius * inner_radius) and dist_sq <= float(outer_radius * outer_radius):
+                image.set_pixel(x, y, color)

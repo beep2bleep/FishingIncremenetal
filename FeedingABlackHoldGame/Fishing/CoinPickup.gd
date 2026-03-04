@@ -9,6 +9,7 @@ const CURSOR_PICKUP_RADIUS := 30.0
 @export var flight_air_drag := 0.985
 @export var flight_max_fall_speed := 900.0
 @export var floor_y := 670.0
+@export var physics_radius := 9.0
 
 @onready var label: Label = $Label
 @onready var collider: CollisionShape2D = $CollisionShape2D

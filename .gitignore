@@ -7,3 +7,6 @@ Godot/*.exe
 
 # ignore all Godot project config directories
 **/.godot/
+
+# Ignore Godot export package files
+*.pck

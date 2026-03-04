@@ -444,6 +444,14 @@ func get_run_start_camera_zoom():
 func start_new_run():
     var duration = 2.0
 
+    _track_ga_event(
+        "run:start",
+        {
+            "mode": "main",
+            "tier_index": Global.black_hole.level_manager.current_tier_index if Global.black_hole else -1
+        }
+    )
+
     Global.game_state = Util.GAME_STATES.START_OF_SESSION
 
     var tween = create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
@@ -509,6 +517,13 @@ func do_end_of_run():
 
 func update_steam_stats():
     pass
+
+func _track_ga_event(event_id: String, fields: Dictionary = {}) -> void:
+    var ga_manager: Node = get_node_or_null("/root/GameAnalytics")
+    if ga_manager == null:
+        ga_manager = get_node_or_null("/root/GameAnalyticsManager")
+    if ga_manager != null:
+        ga_manager.call("track_design_event", event_id, null, fields)
 
 
 

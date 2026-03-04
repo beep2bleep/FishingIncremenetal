@@ -176,6 +176,21 @@ visible = false
 offset_right = 333.0
 offset_bottom = 582.0
 
+[node name="MuteButton" type="Button" parent="CanvasLayer2"]
+unique_name_in_owner = true
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -76.0
+offset_top = 16.0
+offset_right = -20.0
+offset_bottom = 60.0
+grow_horizontal = 0
+z_index = 30
+focus_mode = 0
+text = ""
+flat = true
+
 [node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer2"]
 anchors_preset = 15
 anchor_right = 1.0
@@ -496,3 +511,4 @@ bus = &"Effects"
 [connection signal="gui_input" from="Click Mask" to="." method="_on_color_rect_gui_input"]
 [connection signal="selected_node_changed" from="CanvasLayer/Tech Tree" to="." method="_on_tech_tree_selected_node_changed"]
 [connection signal="pressed" from="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/MarginContainer2/HBoxContainer/Go Again" to="." method="_on_go_again_pressed"]
+[connection signal="pressed" from="CanvasLayer2/MuteButton" to="." method="_on_mute_button_pressed"]

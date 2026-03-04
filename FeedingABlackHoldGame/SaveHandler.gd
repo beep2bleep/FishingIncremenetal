@@ -47,6 +47,7 @@ func set_audio():
     AudioServer.set_bus_volume_db(0, main_volume)
     AudioServer.set_bus_volume_db(1, music_volume)
     AudioServer.set_bus_volume_db(2, effect_volume)
+    apply_audio_mute()
 
 
 
@@ -261,6 +262,7 @@ var black_hole_pulse = true
 var black_hole_particles = true
 var controller_sensitivity = 1.0
 var run_timer = false
+var audio_muted = false
 
 
 
@@ -297,6 +299,7 @@ func save_local_settings():
     save_data["black_hole_particles"] = black_hole_particles
     save_data["run_timer"] = run_timer
     save_data["controller_sensitivity"] = controller_sensitivity
+    save_data["audio_muted"] = audio_muted
     var file = FileAccess.open(local_settings_file_path, FileAccess.WRITE)
     file.store_string(str(save_data))
     file.close()
@@ -323,6 +326,18 @@ func load_local_settings():
         first_time_load = bool(json_data["first_time_load"]) if json_data.has("first_time_load") else false
         black_hole_particles = bool(json_data["black_hole_particles"]) if json_data.has("black_hole_particles") else true
         controller_sensitivity = float(json_data["controller_sensitivity"]) if json_data.has("controller_sensitivity") else 1.0
+        audio_muted = bool(json_data["audio_muted"]) if json_data.has("audio_muted") else false
+
+func apply_audio_mute() -> void:
+    var master_bus_index: int = AudioServer.get_bus_index("Master")
+    if master_bus_index < 0:
+        master_bus_index = 0
+    AudioServer.set_bus_mute(master_bus_index, audio_muted)
+
+func update_audio_muted(value: bool) -> void:
+    audio_muted = value
+    apply_audio_mute()
+    save_local_settings()
 
 func update_first_time_load(value):
     first_time_load = value
@@ -441,6 +456,10 @@ var fishing_last_battle_summary: Dictionary = {}
 var fishing_next_battle_level := 1
 var fishing_max_unlocked_battle_level := 1
 var fishing_l3_boss_thank_you_shown := false
+var fishing_run_clock_seconds := 0.0
+var fishing_l3_boss_clear_clock_seconds := -1.0
+var fishing_first_boss_clear_levels: Dictionary = {}
+var fishing_ufo_spawn_timer_remaining := -1.0
 
 func reset_fishing_progress() -> void:
     fishing_currency = STARTING_FISHING_CURRENCY
@@ -451,6 +470,10 @@ func reset_fishing_progress() -> void:
     fishing_next_battle_level = 1
     fishing_max_unlocked_battle_level = 1
     fishing_l3_boss_thank_you_shown = false
+    fishing_run_clock_seconds = 0.0
+    fishing_l3_boss_clear_clock_seconds = -1.0
+    fishing_first_boss_clear_levels = {}
+    fishing_ufo_spawn_timer_remaining = -1.0
 
 func load_fishing_progress():
     var json_data = Util.load_json_data_from_path(fishing_progress_file_path)
@@ -467,6 +490,15 @@ func load_fishing_progress():
     fishing_max_unlocked_battle_level = clamp(int(json_data.get("max_unlocked_battle_level", 1)), 1, 3)
     fishing_next_battle_level = clamp(fishing_next_battle_level, 1, fishing_max_unlocked_battle_level)
     fishing_l3_boss_thank_you_shown = bool(json_data.get("l3_boss_thank_you_shown", false))
+    fishing_run_clock_seconds = max(0.0, float(json_data.get("run_clock_seconds", 0.0)))
+    fishing_l3_boss_clear_clock_seconds = float(json_data.get("l3_boss_clear_clock_seconds", -1.0))
+    fishing_first_boss_clear_levels = json_data.get("first_boss_clear_levels", {})
+    fishing_ufo_spawn_timer_remaining = float(json_data.get("ufo_spawn_timer_remaining", -1.0))
+    if fishing_first_boss_clear_levels.is_empty():
+        for level in range(1, fishing_max_unlocked_battle_level):
+            fishing_first_boss_clear_levels[str(level)] = true
+        if fishing_l3_boss_clear_clock_seconds >= 0.0:
+            fishing_first_boss_clear_levels["3"] = true
     # Migration/first-run guard: old saves may have written currency=0 for an otherwise untouched profile.
     if fishing_currency <= 0 and fishing_lifetime_coins <= 0 and fishing_unlocked_upgrades.is_empty():
         fishing_currency = STARTING_FISHING_CURRENCY
@@ -482,6 +514,10 @@ func save_fishing_progress():
         "next_battle_level": fishing_next_battle_level,
         "max_unlocked_battle_level": fishing_max_unlocked_battle_level,
         "l3_boss_thank_you_shown": fishing_l3_boss_thank_you_shown,
+        "run_clock_seconds": fishing_run_clock_seconds,
+        "l3_boss_clear_clock_seconds": fishing_l3_boss_clear_clock_seconds,
+        "first_boss_clear_levels": fishing_first_boss_clear_levels,
+        "ufo_spawn_timer_remaining": fishing_ufo_spawn_timer_remaining,
     }
     var file = FileAccess.open(fishing_progress_file_path, FileAccess.WRITE)
     if file == null:

@@ -22,6 +22,8 @@ var node_grid_pos: Dictionary = {}
 var drag_panning := false
 
 var currency_label: Label
+var clock_panel: PanelContainer
+var clock_label: Label
 var info_label: Label
 var tree_layer: Control
 var stars_layer: Control
@@ -31,6 +33,7 @@ var hover_meta: Label
 var hover_desc: Label
 var hover_cost: Label
 var start_battle_button: Button
+var mute_button: Button
 var line_layer: Node2D
 var hovered_node_id: String = ""
 var editor_add_currency_button: Button
@@ -40,6 +43,8 @@ var editor_add_amount: int = 1000
 var last_currency_displayed: int = -1
 var rng := RandomNumberGenerator.new()
 var icon_cache: Dictionary = {}
+var speaker_icon_on: Texture2D
+var speaker_icon_off: Texture2D
 
 var node_style_complete: StyleBoxFlat
 var node_style_available: StyleBoxFlat
@@ -50,6 +55,12 @@ func _ready() -> void:
     currency_label = get_node_or_null("%CurrencyLabel")
     if currency_label == null:
         currency_label = get_node_or_null("CurrencyLabel")
+    clock_panel = get_node_or_null("%ClockPanel")
+    if clock_panel == null:
+        clock_panel = get_node_or_null("ClockPanel")
+    clock_label = get_node_or_null("%ClockLabel")
+    if clock_label == null:
+        clock_label = get_node_or_null("ClockPanel/ClockLabel")
 
     info_label = get_node_or_null("%InfoLabel")
     if info_label == null:
@@ -78,6 +89,7 @@ func _ready() -> void:
     if hover_cost == null:
         hover_cost = get_node_or_null("HoverCard/CardMargin/CardVBox/HoverCost")
     start_battle_button = get_node_or_null("TopActions/StartBattle")
+    mute_button = get_node_or_null("TopActions/MuteButton")
     editor_add_currency_button = get_node_or_null("EditorAddCurrency")
     if editor_add_currency_button == null:
         editor_add_currency_button = get_node_or_null("EditorRow/EditorAddCurrency")
@@ -97,6 +109,7 @@ func _ready() -> void:
 
     _build_styles()
     _style_shell_ui()
+    _setup_mute_button()
     _refresh_starfield()
     _setup_editor_buttons()
     set_process_unhandled_input(true)
@@ -216,6 +229,7 @@ func _next_spiral(state: Dictionary) -> Vector2i:
 func _refresh_ui() -> void:
     last_currency_displayed = SaveHandler.fishing_currency
     currency_label.text = "o %d" % SaveHandler.fishing_currency
+    _refresh_clock_label()
     if editor_add_currency_button != null:
         editor_add_currency_button.text = "Add $%d (Editor)" % editor_add_amount
     var unlocked_count: int = SaveHandler.fishing_unlocked_upgrades.keys().size()
@@ -258,7 +272,20 @@ func _refresh_ui() -> void:
 func _on_upgrade_pressed(node_id: String) -> void:
     if not db.node_by_id.has(node_id):
         return
-    if db.buy(db.node_by_id[node_id]):
+    var node: Dictionary = db.node_by_id[node_id]
+    if db.buy(node):
+        var upgrade_key: String = str(node.get("key", ""))
+        var level: int = int(node.get("level", 1))
+        var cost: int = int(round(float(node.get("cost", 0.0))))
+        _track_ga_event(
+            "upgrade:purchase",
+            {
+                "upgrade_key": upgrade_key,
+                "upgrade_level": level,
+                "upgrade_cost": cost,
+                "node_id": node_id
+            }
+        )
         _refresh_ui()
 
 func _on_upgrade_hovered(node_id: String) -> void:
@@ -297,7 +324,21 @@ func _on_start_battle_pressed() -> void:
         if info_label != null:
             info_label.text = "Unlock Cursor Pickup Unlock before starting battle."
         return
+    _track_ga_event(
+        "run:start",
+        {
+            "mode": "fishing_battle",
+            "unlocked_upgrades": SaveHandler.fishing_unlocked_upgrades.size()
+        }
+    )
     SceneChanger.change_to_new_scene("res://Fishing/BattleScene.tscn")
+
+func _track_ga_event(event_id: String, fields: Dictionary = {}) -> void:
+    var ga_manager: Node = get_node_or_null("/root/GameAnalytics")
+    if ga_manager == null:
+        ga_manager = get_node_or_null("/root/GameAnalyticsManager")
+    if ga_manager != null:
+        ga_manager.call("track_design_event", event_id, null, fields)
 
 func _on_main_menu_pressed() -> void:
     SceneChanger.change_to_new_scene(Util.PATH_MAIN_MENU)
@@ -360,6 +401,7 @@ func _center_scroll() -> void:
 func _process(delta: float) -> void:
     if scroll_container == null:
         return
+    _refresh_clock_label()
     if SaveHandler.fishing_currency != last_currency_displayed:
         _refresh_ui()
     var input_vec: Vector2 = Vector2(
@@ -378,6 +420,10 @@ func _unhandled_input(event: InputEvent) -> void:
     elif event is InputEventMouseMotion and drag_panning:
         scroll_container.scroll_horizontal = int(max(0, scroll_container.scroll_horizontal - event.relative.x))
         scroll_container.scroll_vertical = int(max(0, scroll_container.scroll_vertical - event.relative.y))
+
+func _refresh_clock_label() -> void:
+    if clock_label != null:
+        clock_label.text = "Clock: %s" % Util.format_time(SaveHandler.fishing_run_clock_seconds)
 
 func _notification(what: int) -> void:
     if what == NOTIFICATION_RESIZED:
@@ -422,13 +468,14 @@ func _style_shell_ui() -> void:
     panel_style.border_width_right = 2
     panel_style.border_width_bottom = 2
 
-    for panel_path in ["TopTabsPanel", "CurrencyPanel", "HoverCard"]:
+    for panel_path in ["TopTabsPanel", "CurrencyPanel", "ClockPanel", "HoverCard"]:
         var panel := get_node_or_null(panel_path)
         if panel is PanelContainer:
             (panel as PanelContainer).add_theme_stylebox_override("panel", panel_style)
 
     var labels: Array = [
         get_node_or_null("%CurrencyLabel"),
+        get_node_or_null("%ClockLabel"),
         get_node_or_null("%InfoLabel"),
         get_node_or_null("%HoverTitle"),
         get_node_or_null("%HoverMeta"),
@@ -450,6 +497,7 @@ func _style_shell_ui() -> void:
             _style_header_button(btn as Button)
 
     for btn_path in [
+        "TopActions/MuteButton",
         "TopActions/StartBattle",
         "TopActions/MainMenu",
         "EditorRow/EditorAddCurrency",
@@ -459,6 +507,26 @@ func _style_shell_ui() -> void:
         var any_btn := get_node_or_null(btn_path)
         if any_btn is Button:
             _style_action_button(any_btn as Button)
+
+func _setup_mute_button() -> void:
+    if mute_button == null:
+        return
+    speaker_icon_on = _make_speaker_icon_texture(false)
+    speaker_icon_off = _make_speaker_icon_texture(true)
+    mute_button.text = ""
+    mute_button.focus_mode = Control.FOCUS_NONE
+    mute_button.custom_minimum_size = Vector2(62, 0)
+    _refresh_mute_button_icon()
+
+func _refresh_mute_button_icon() -> void:
+    if mute_button == null:
+        return
+    mute_button.icon = speaker_icon_off if SaveHandler.audio_muted else speaker_icon_on
+    mute_button.tooltip_text = "Unmute all audio" if SaveHandler.audio_muted else "Mute all audio"
+
+func _on_mute_button_pressed() -> void:
+    SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
+    _refresh_mute_button_icon()
 
 func _style_header_button(button: Button) -> void:
     button.add_theme_color_override("font_color", Color(0.9, 0.96, 1.0, 0.95))
@@ -551,6 +619,59 @@ func _resolve_node_icon_texture(node: Dictionary) -> Texture2D:
     var texture: Texture2D = load(icon_path)
     icon_cache[icon_path] = texture
     return texture
+
+func _make_speaker_icon_texture(is_muted: bool) -> ImageTexture:
+    var image := Image.create(40, 40, false, Image.FORMAT_RGBA8)
+    image.fill(Color(0, 0, 0, 0))
+    var speaker_color := Color(0.93, 0.97, 1.0, 1.0)
+    _draw_rect_pixels(image, Rect2i(7, 14, 7, 12), speaker_color)
+    _draw_triangle_right(image, Vector2i(14, 20), 11, 9, speaker_color)
+    if is_muted:
+        _draw_thick_line(image, Vector2i(21, 10), Vector2i(34, 30), Color(1.0, 0.2, 0.2, 1.0), 2)
+        _draw_thick_line(image, Vector2i(34, 10), Vector2i(21, 30), Color(1.0, 0.2, 0.2, 1.0), 2)
+    else:
+        _draw_arc_ring(image, Vector2i(20, 20), 8, 11, PI * -0.42, PI * 0.42, speaker_color)
+        _draw_arc_ring(image, Vector2i(20, 20), 12, 15, PI * -0.42, PI * 0.42, speaker_color)
+    return ImageTexture.create_from_image(image)
+
+func _draw_rect_pixels(image: Image, rect: Rect2i, color: Color) -> void:
+    for x in range(rect.position.x, rect.position.x + rect.size.x):
+        for y in range(rect.position.y, rect.position.y + rect.size.y):
+            image.set_pixel(x, y, color)
+
+func _draw_triangle_right(image: Image, center: Vector2i, width: int, half_height: int, color: Color) -> void:
+    for i in range(width):
+        var x: int = center.x + i
+        var y_top: int = center.y - int(round(float(half_height) * (1.0 - float(i) / float(width))))
+        var y_bottom: int = center.y + int(round(float(half_height) * (1.0 - float(i) / float(width))))
+        for y in range(y_top, y_bottom + 1):
+            image.set_pixel(x, y, color)
+
+func _draw_thick_line(image: Image, start: Vector2i, finish: Vector2i, color: Color, thickness: int) -> void:
+    var steps: int = maxi(abs(finish.x - start.x), abs(finish.y - start.y))
+    if steps <= 0:
+        image.set_pixel(start.x, start.y, color)
+        return
+    for i in range(steps + 1):
+        var t: float = float(i) / float(steps)
+        var x: int = int(round(lerpf(float(start.x), float(finish.x), t)))
+        var y: int = int(round(lerpf(float(start.y), float(finish.y), t)))
+        for ox in range(-thickness, thickness + 1):
+            for oy in range(-thickness, thickness + 1):
+                if abs(ox) + abs(oy) <= thickness + 1:
+                    image.set_pixel(x + ox, y + oy, color)
+
+func _draw_arc_ring(image: Image, center: Vector2i, inner_radius: int, outer_radius: int, start_angle: float, end_angle: float, color: Color) -> void:
+    for x in range(image.get_width()):
+        for y in range(image.get_height()):
+            var px: float = float(x - center.x)
+            var py: float = float(y - center.y)
+            var angle: float = atan2(py, px)
+            if angle < start_angle or angle > end_angle:
+                continue
+            var dist_sq: float = px * px + py * py
+            if dist_sq >= float(inner_radius * inner_radius) and dist_sq <= float(outer_radius * outer_radius):
+                image.set_pixel(x, y, color)
 
 func _build_connection_lines() -> void:
     if line_layer == null:

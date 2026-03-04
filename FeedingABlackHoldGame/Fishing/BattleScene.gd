@@ -14,8 +14,8 @@ const LEVEL_ENEMY_TYPE := {
 }
 
 const FLOOR_Y := 640.0
-const HERO_START_X := -100.0
-const HERO_SCROLL_ANCHOR_SCREEN_X_FACTOR := 0.08
+const HERO_START_X := -40.0
+const HERO_SCROLL_ANCHOR_SCREEN_X_FACTOR := 0.2
 const CONTACT_RANGE := 48.0
 const SIM_STEP := 1.0 / 60.0
 const EXTRA_ZOOM_IN_FACTOR := 5.0
@@ -30,7 +30,21 @@ const COIN_LAUNCH_MIN_SPEED_RATIO := 0.16
 const COIN_LAUNCH_AWAY_MAX_DEG := 65.0
 const COIN_LAUNCH_TOWARD_MAX_DEG := 3.0
 const COIN_LAUNCH_TOWARD_CHANCE := 0.06
+const ENEMY_COIN_VALUE_MULT := 1.5
+const SPLIT_REWARD_MIN_COINS := 2
+const SPLIT_REWARD_MAX_COINS := 6
+const COIN_COLLISION_RESTITUTION := 0.7
 const INFINITE_SIM_CURSOR_COLLECT_SHARE := 0.90
+const UFO_SPAWN_MIN_SECONDS := 90.0
+const UFO_SPAWN_MAX_SECONDS := 180.0
+const UFO_TRAVEL_SECONDS := 10.0
+const UFO_REWARD_ENEMY_MULT := 4
+const UFO_REWARD_MIN_ENEMY_WORTH := 3
+const UFO_REWARD_MAX_ENEMY_WORTH := 6
+const UFO_COIN_PATH_OFFSET := 32.0
+const UFO_SPAWN_MARGIN_X := 220.0
+const UFO_ALTITUDE_MIN := 70.0
+const UFO_ALTITUDE_MAX := 190.0
 const DEFEAT_FALL_DURATION := 1.2
 const DEFEAT_FALL_ROT_SPEED := 1.8
 const BG_DEEP_BASE_Y := 220.0
@@ -157,12 +171,16 @@ var health_value_label: Label
 var experience_value_label: Label
 var power_value_label: Label
 var currency_label: Label
+var clock_panel: PanelContainer
+var clock_label: Label
 var summary_panel: Panel
 var summary_label: Label
 var continue_button: Button
 var speed_button: Button
 var infinite_sim_button: Button
 var exit_battle_button: Button
+var spawn_ufo_button: Button
+var mute_button: Button
 var level_choice_dialog: ConfirmationDialog
 
 var heroes: Array[CombatSprite] = []
@@ -210,7 +228,7 @@ const ACTIVE_DURATIONS := {
     "guardian": 3.0,
     "mage": 2.6,
 }
-const HERO_CLICK_RADIUS := 44.0
+const HERO_CLICK_RADIUS := 56.0
 var speed_index: int = 0
 var arrow_texture: Texture2D
 var hero_sheets: Dictionary = {}
@@ -230,6 +248,11 @@ var post_battle_sweep_time: float = 0.0
 var summary_finalized: bool = false
 var defeat_anim_time: float = 0.0
 var pack_texture_cache: Dictionary = {}
+var run_clock_save_accum: float = 0.0
+var speaker_icon_on: Texture2D
+var speaker_icon_off: Texture2D
+var active_ufo: UfoBonus = null
+var ufo_spawn_timer: float = 0.0
 
 func _ready() -> void:
     if not _bind_nodes():
@@ -241,13 +264,17 @@ func _ready() -> void:
     _rebuild_battle_mods()
     _setup_visuals()
     _spawn_heroes()
+    _style_clock_ui()
     _style_battle_summary_ui()
+    _setup_mute_button()
     summary_panel.hide()
     _setup_editor_speed_button()
+    _restore_or_reset_ufo_spawn_timer()
     _update_speed_button_enabled_state()
     _update_ui()
 
 func _exit_tree() -> void:
+    SaveHandler.save_fishing_progress()
     if OS.has_feature("editor"):
         Engine.time_scale = 1.0
 
@@ -276,9 +303,13 @@ func _bind_nodes() -> bool:
     experience_value_label = get_node_or_null("CanvasLayer/ExperienceValueLabel")
     power_value_label = get_node_or_null("CanvasLayer/PowerValueLabel")
     currency_label = get_node_or_null("CanvasLayer/CurrencyLabel")
+    clock_panel = get_node_or_null("CanvasLayer/ClockPanel")
+    clock_label = get_node_or_null("CanvasLayer/ClockPanel/ClockLabel")
     speed_button = get_node_or_null("CanvasLayer/SpeedButton")
     infinite_sim_button = get_node_or_null("CanvasLayer/InfiniteSimButton")
     exit_battle_button = get_node_or_null("CanvasLayer/ExitBattleButton")
+    spawn_ufo_button = get_node_or_null("CanvasLayer/SpawnUfoButton")
+    mute_button = get_node_or_null("CanvasLayer/MuteButton")
     summary_panel = get_node_or_null("CanvasLayer/SummaryPanel")
     summary_label = get_node_or_null("CanvasLayer/SummaryPanel/SummaryLabel")
     continue_button = get_node_or_null("CanvasLayer/SummaryPanel/ContinueButton")
@@ -350,7 +381,7 @@ func _bind_nodes() -> bool:
     if level_choice_dialog != null and not level_choice_dialog.custom_action.is_connected(_on_level_choice_action):
         level_choice_dialog.custom_action.connect(_on_level_choice_action)
 
-    return world != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and bg_overlay != null and play_area_overlay != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and health_bar != null and experience_bar != null and power_bar != null and health_value_label != null and experience_value_label != null and power_value_label != null and currency_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and summary_panel != null and summary_label != null and continue_button != null and level_choice_dialog != null
+    return world != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and bg_overlay != null and play_area_overlay != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and health_bar != null and experience_bar != null and power_bar != null and health_value_label != null and experience_value_label != null and power_value_label != null and currency_label != null and clock_panel != null and clock_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and mute_button != null and summary_panel != null and summary_label != null and continue_button != null and level_choice_dialog != null
 
 func _clear_battle_entities() -> void:
     for arrow_data_variant in arrows:
@@ -371,6 +402,9 @@ func _clear_battle_entities() -> void:
             coin.queue_free()
     coins.clear()
     coin_ages.clear()
+    if is_instance_valid(active_ufo):
+        active_ufo.queue_free()
+    active_ufo = null
 
     for item_variant in floating_damage_texts:
         var item: Dictionary = item_variant
@@ -404,6 +438,8 @@ func _setup_editor_speed_button() -> void:
     if OS.has_feature("editor"):
         speed_button.show()
         infinite_sim_button.show()
+        if spawn_ufo_button != null:
+            spawn_ufo_button.show()
         speed_index = 0
         Engine.time_scale = SPEED_STEPS[speed_index]
         _update_speed_button_text()
@@ -411,6 +447,8 @@ func _setup_editor_speed_button() -> void:
     else:
         speed_button.hide()
         infinite_sim_button.hide()
+        if spawn_ufo_button != null:
+            spawn_ufo_button.hide()
 
 func _update_speed_button_enabled_state() -> void:
     if speed_button == null or infinite_sim_button == null or exit_battle_button == null:
@@ -419,6 +457,8 @@ func _update_speed_button_enabled_state() -> void:
     speed_button.disabled = disabled
     infinite_sim_button.disabled = disabled
     exit_battle_button.disabled = disabled
+    if spawn_ufo_button != null:
+        spawn_ufo_button.disabled = disabled or battle_completed
 
 func _update_speed_button_text() -> void:
     if speed_button == null:
@@ -437,6 +477,13 @@ func _on_infinite_sim_button_pressed() -> void:
         return
     _run_infinite_simulation()
 
+func _on_spawn_ufo_button_pressed() -> void:
+    if not OS.has_feature("editor"):
+        return
+    if battle_completed or (summary_panel != null and summary_panel.visible):
+        return
+    _spawn_ufo(true)
+
 func _on_exit_battle_button_pressed() -> void:
     if battle_completed or summary_finalized:
         return
@@ -451,6 +498,8 @@ func _run_infinite_simulation() -> void:
         speed_button.disabled = true
         infinite_sim_button.disabled = true
         exit_battle_button.disabled = true
+        if spawn_ufo_button != null:
+            spawn_ufo_button.disabled = true
 
     var was_world_visible: bool = world.visible
     world.visible = false
@@ -478,6 +527,9 @@ func _run_infinite_simulation() -> void:
 
     last_sim_steps = step_count
     last_sim_seconds = float(step_count) * SIM_STEP
+    if last_sim_seconds > 0.0:
+        SaveHandler.fishing_run_clock_seconds += last_sim_seconds
+        SaveHandler.save_fishing_progress()
 
     world.visible = was_world_visible
     suppress_floating_text = false
@@ -487,6 +539,8 @@ func _run_infinite_simulation() -> void:
         speed_button.disabled = false
         infinite_sim_button.disabled = false
         exit_battle_button.disabled = false
+        if spawn_ufo_button != null:
+            spawn_ufo_button.disabled = false
     Engine.time_scale = SPEED_STEPS[speed_index]
     _update_speed_button_text()
     _update_ui()
@@ -1139,7 +1193,9 @@ func _find_clicked_hero(world_pos: Vector2) -> CombatSprite:
     return best
 
 func _simulate_step(delta: float, skip_visual_updates: bool = false) -> void:
+    _advance_run_clock(delta)
     _apply_level_background(current_level)
+    _update_ufo_event(delta)
     _update_active_cooldowns(delta)
     _auto_use_hero_actives()
     _gain_power(BASE_POWER_REGEN_PER_SEC * _power_gain_mult() * delta)
@@ -1265,7 +1321,7 @@ func _spawn_enemy_for_level(level_index: int, spawn_x_override: float = NAN) -> 
         "hp_max": hp,
         "speed": float(data["speed"]),
         "contact_dps": float(lp["enemy_contact_dps"]) * _enemy_contact_mult(),
-        "coins": max(1, int(round(float(data["coins"]) * reward_mult))),
+        "coins": max(1, int(round(float(data["coins"]) * reward_mult * ENEMY_COIN_VALUE_MULT))),
         "attack_cd": 0.0,
         "bar_fill": bar_data["fill"],
         "bar_width": bar_data["width"],
@@ -1285,7 +1341,7 @@ func _spawn_boss_for_level(level_index: int) -> void:
     var hp: float = float(lp["boss_hp"]) * _boss_hp_mult()
     var bar_data: Dictionary = _add_health_bar(enemy, data["frame"], boss_scale)
     var reward_mult: float = _level_reward_mult(level_index)
-    var boss_coin_value: int = max(1, int(round(float(data["coins"]) * reward_mult)))
+    var boss_coin_value: int = max(1, int(round(float(data["coins"]) * reward_mult * ENEMY_COIN_VALUE_MULT)))
     enemy_data[enemy] = {
         "type": "boss",
         "is_boss": true,
@@ -1424,9 +1480,6 @@ func _update_heroes(delta: float) -> void:
                 _spawn_arrow(arrow_spawn, target, attack_damage, pierce_arrow)
             else:
                 _damage_enemy(target, attack_damage)
-                if hero_name == "knight" and active_remaining > 0.0:
-                    # Knight active: convert part of dealt damage to healing while active.
-                    player_health = min(300.0, player_health + attack_damage * 0.18)
             hero.trigger_attack()
 
         hero_data[hero] = h
@@ -1726,12 +1779,33 @@ func _damage_enemy(enemy: CombatSprite, amount: float) -> void:
     var e: Dictionary = enemy_data[enemy]
     var prev_hp: float = float(e["hp"])
     e["hp"] = prev_hp - amount
+    var dealt_damage: float = max(0.0, min(amount, prev_hp))
+    _apply_knight_vamp_heal(dealt_damage, enemy.position + Vector2(randf_range(-10.0, 10.0), -130.0))
     _spawn_floating_damage_text(enemy.position + Vector2(randf_range(-14.0, 14.0), -120.0), amount, Color(1.0, 0.84, 0.56, 1.0))
     if bool(e.get("is_boss", false)):
         _award_boss_segments(enemy, e, prev_hp)
     enemy_data[enemy] = e
     if float(e["hp"]) <= 0.0:
         _kill_enemy(enemy)
+
+func _is_knight_active() -> bool:
+    for hero in heroes:
+        if not is_instance_valid(hero) or not hero_data.has(hero):
+            continue
+        var h: Dictionary = hero_data[hero]
+        if str(h.get("name", "")) != "knight":
+            continue
+        return float(h.get("active_time_remaining", 0.0)) > 0.0
+    return false
+
+func _apply_knight_vamp_heal(damage_dealt: float, heal_text_world_pos: Vector2) -> void:
+    if damage_dealt <= 0.0 or not _is_knight_active():
+        return
+    var before_hp: float = player_health
+    player_health = min(300.0, player_health + damage_dealt * 0.18)
+    var healed: float = max(0.0, player_health - before_hp)
+    if healed > 0.0:
+        _spawn_floating_heal_text(heal_text_world_pos, healed)
 
 func _award_boss_segments(enemy: CombatSprite, e: Dictionary, prev_hp: float) -> void:
     var hp_max: float = max(1.0, float(e.get("hp_max", 1.0)))
@@ -1747,7 +1821,7 @@ func _award_boss_segments(enemy: CombatSprite, e: Dictionary, prev_hp: float) ->
 
     var reward_each: int = int(e.get("segment_reward", 1))
     for i in range(newly_broken):
-        _spawn_coin(enemy.position + Vector2(0.0, -16.0), reward_each)
+        _spawn_scaled_coin(enemy.position + Vector2(0.0, -16.0), reward_each)
     e["segments_broken"] = int(e.get("segments_broken", 0)) + newly_broken
     boss_segments_broken += newly_broken
 
@@ -1757,7 +1831,7 @@ func _kill_enemy(enemy: CombatSprite) -> void:
         return
     var e: Dictionary = enemy_data[enemy]
     if not bool(e.get("is_boss", false)):
-        _spawn_coin(enemy.position, int(e["coins"]))
+        _spawn_split_coin_reward(enemy.position, int(e["coins"]))
 
     _gain_power(4.0 * _power_gain_mult())
     enemies_killed += 1
@@ -1776,9 +1850,42 @@ func _kill_enemy(enemy: CombatSprite) -> void:
     _play_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
     enemy.queue_free()
 
-func _spawn_coin(pos: Vector2, value: int) -> void:
+func _spawn_scaled_coin(pos: Vector2, base_value: int) -> void:
+    var scaled_value: int = max(1, int(round(float(base_value) * _coin_mult())))
+    _spawn_coin(pos, scaled_value)
+
+func _spawn_split_coin_reward(pos: Vector2, base_total_value: int) -> void:
+    var total_value: int = max(1, int(round(float(base_total_value) * _coin_mult())))
+    var coin_count: int = randi_range(SPLIT_REWARD_MIN_COINS, SPLIT_REWARD_MAX_COINS)
+    coin_count = min(coin_count, total_value)
+    var split_values: Array[int] = _split_int_value(total_value, coin_count)
+    for split_value in split_values:
+        _spawn_coin(pos, split_value)
+
+func _split_int_value(total: int, count: int) -> Array[int]:
+    var safe_total: int = max(1, total)
+    var safe_count: int = max(1, count)
+    safe_count = min(safe_count, safe_total)
+    var values: Array[int] = []
+    var base_value: int = safe_total / safe_count
+    var remainder: int = safe_total % safe_count
+    for i in range(safe_count):
+        values.append(base_value)
+    var indexes: Array[int] = []
+    for i in range(safe_count):
+        indexes.append(i)
+    indexes.shuffle()
+    for i in range(remainder):
+        values[indexes[i]] += 1
+    return values
+
+func _spawn_coin(pos: Vector2, value: int, force_full_circle: bool = false, spawn_offset: Vector2 = Vector2.ZERO) -> void:
     var coin: CoinPickup = COIN_SCENE.instantiate()
-    coin.position = pos + Vector2(randf_range(-24.0, 24.0), randf_range(-26.0, 14.0))
+    var spawn_jitter: Vector2 = Vector2(randf_range(-24.0, 24.0), randf_range(-26.0, 14.0))
+    if force_full_circle and spawn_offset.length() > 0.0:
+        # Keep UFO coin spew offset down-path so hover pickup cannot trigger instantly.
+        spawn_jitter = Vector2(0.0, randf_range(-14.0, 14.0))
+    coin.position = pos + spawn_offset + spawn_jitter
     var gravity: float = max(1.0, float(coin.flight_gravity))
     var screen_height: float = max(1.0, get_viewport_rect().size.y)
     var max_height_px: float = screen_height * COIN_LAUNCH_MAX_HEIGHT_SCREENS
@@ -1786,22 +1893,26 @@ func _spawn_coin(pos: Vector2, value: int) -> void:
     var min_speed: float = max_speed * COIN_LAUNCH_MIN_SPEED_RATIO
     var launch_speed: float = randf_range(min_speed, max_speed)
 
-    var nearest_hero_x: float = _nearest_hero_x(coin.position.x)
-    var away_sign: float = sign(coin.position.x - nearest_hero_x)
-    if is_zero_approx(away_sign):
-        away_sign = 1.0
-
-    var toward_roll: bool = randf() < COIN_LAUNCH_TOWARD_CHANCE
-    var lateral_sign: float = away_sign if not toward_roll else -away_sign
-    var deviation_deg: float = 0.0
-    if toward_roll:
-        deviation_deg = randf_range(0.0, COIN_LAUNCH_TOWARD_MAX_DEG)
+    var launch_dir: Vector2
+    if force_full_circle:
+        launch_dir = Vector2.RIGHT.rotated(randf() * TAU)
     else:
-        deviation_deg = randf_range(0.0, COIN_LAUNCH_AWAY_MAX_DEG)
-    var theta: float = deg_to_rad(deviation_deg)
-    var launch_dir: Vector2 = Vector2(sin(theta) * lateral_sign, -cos(theta))
+        var nearest_hero_x: float = _nearest_hero_x(coin.position.x)
+        var away_sign: float = sign(coin.position.x - nearest_hero_x)
+        if is_zero_approx(away_sign):
+            away_sign = 1.0
+
+        var toward_roll: bool = randf() < COIN_LAUNCH_TOWARD_CHANCE
+        var lateral_sign: float = away_sign if not toward_roll else -away_sign
+        var deviation_deg: float = 0.0
+        if toward_roll:
+            deviation_deg = randf_range(0.0, COIN_LAUNCH_TOWARD_MAX_DEG)
+        else:
+            deviation_deg = randf_range(0.0, COIN_LAUNCH_AWAY_MAX_DEG)
+        var theta: float = deg_to_rad(deviation_deg)
+        launch_dir = Vector2(sin(theta) * lateral_sign, -cos(theta))
     coin.launch(launch_dir * launch_speed, FLOOR_Y + 12.0)
-    coin.value = max(1, int(round(float(value) * _coin_mult())))
+    coin.value = max(1, value)
     coin.collected.connect(_on_coin_collected)
     coin_layer.add_child(coin)
     coins.append(coin)
@@ -1824,6 +1935,7 @@ func _nearest_hero_x(from_x: float) -> float:
     return _frontline_x()
 
 func _update_coins(delta: float) -> void:
+    _resolve_coin_collisions()
     var viewport_size: Vector2 = get_viewport_rect().size
     var half_w: float = viewport_size.x * 0.5
     var half_h: float = viewport_size.y * 0.5
@@ -1851,6 +1963,40 @@ func _update_coins(delta: float) -> void:
             if is_instance_valid(hero) and hero.position.distance_to(coin.position) <= 70.0:
                 coin.collect_by_hero()
                 break
+
+func _resolve_coin_collisions() -> void:
+    var coin_count: int = coins.size()
+    if coin_count <= 1:
+        return
+    for i in range(coin_count):
+        var coin_a: CoinPickup = coins[i]
+        if not is_instance_valid(coin_a):
+            continue
+        for j in range(i + 1, coin_count):
+            var coin_b: CoinPickup = coins[j]
+            if not is_instance_valid(coin_b):
+                continue
+            var radius_sum: float = max(2.0, coin_a.physics_radius + coin_b.physics_radius)
+            var offset: Vector2 = coin_b.position - coin_a.position
+            var dist: float = offset.length()
+            if dist >= radius_sum:
+                continue
+            var normal: Vector2 = Vector2.RIGHT
+            if dist > 0.001:
+                normal = offset / dist
+            else:
+                normal = Vector2.from_angle(randf() * TAU)
+            var penetration: float = radius_sum - dist
+            coin_a.position -= normal * penetration * 0.5
+            coin_b.position += normal * penetration * 0.5
+
+            var relative_velocity: Vector2 = coin_b.velocity - coin_a.velocity
+            var speed_along_normal: float = relative_velocity.dot(normal)
+            if speed_along_normal >= 0.0:
+                continue
+            var impulse: float = -(1.0 + COIN_COLLISION_RESTITUTION) * speed_along_normal * 0.5
+            coin_a.velocity -= normal * impulse
+            coin_b.velocity += normal * impulse
 
 func _cursor_bonus_mult() -> float:
     var mult: float = 1.0
@@ -1895,6 +2041,97 @@ func _on_coin_collected(coin: CoinPickup, by_cursor: bool) -> void:
     if battle_completed:
         _update_ui()
         _refresh_battle_summary_text()
+
+func _restore_or_reset_ufo_spawn_timer() -> void:
+    var saved_remaining: float = float(SaveHandler.fishing_ufo_spawn_timer_remaining)
+    if saved_remaining > 0.0:
+        ufo_spawn_timer = saved_remaining
+    else:
+        _reset_ufo_spawn_timer()
+
+func _reset_ufo_spawn_timer() -> void:
+    ufo_spawn_timer = randf_range(UFO_SPAWN_MIN_SECONDS, UFO_SPAWN_MAX_SECONDS)
+    SaveHandler.fishing_ufo_spawn_timer_remaining = ufo_spawn_timer
+
+func _update_ufo_event(delta: float) -> void:
+    if battle_completed or summary_panel.visible:
+        return
+    if in_infinite_simulation:
+        return
+    if is_instance_valid(active_ufo):
+        return
+    var speed_mult: float = _speed_multiplier_for_runtime()
+    var safe_engine_scale: float = max(0.001, Engine.time_scale)
+    var adjusted_delta: float = (max(0.0, delta) / safe_engine_scale) * speed_mult
+    ufo_spawn_timer -= adjusted_delta
+    SaveHandler.fishing_ufo_spawn_timer_remaining = ufo_spawn_timer
+    if ufo_spawn_timer <= 0.0:
+        _spawn_ufo(false)
+
+func _spawn_ufo(is_manual: bool) -> void:
+    if is_instance_valid(active_ufo):
+        return
+    if world == null:
+        return
+    var ufo := UfoBonus.new()
+    if ufo == null:
+        return
+    var viewport_size: Vector2 = get_viewport_rect().size
+    var half_w: float = viewport_size.x * 0.5
+    var half_h: float = viewport_size.y * 0.5
+    var spawn_from_left: bool = randf() < 0.5
+    var start_x: float = camera_2d.position.x - half_w - UFO_SPAWN_MARGIN_X
+    var end_x: float = camera_2d.position.x + half_w + UFO_SPAWN_MARGIN_X
+    if not spawn_from_left:
+        start_x = camera_2d.position.x + half_w + UFO_SPAWN_MARGIN_X
+        end_x = camera_2d.position.x - half_w - UFO_SPAWN_MARGIN_X
+    var y: float = camera_2d.position.y - half_h + randf_range(UFO_ALTITUDE_MIN, UFO_ALTITUDE_MAX)
+    ufo.configure(start_x, end_x, y, UFO_TRAVEL_SECONDS, _ufo_reward_value())
+    ufo.collected.connect(_on_ufo_collected)
+    ufo.tree_exited.connect(_on_ufo_exited.bind(ufo))
+    coin_layer.add_child(ufo)
+    active_ufo = ufo
+    _reset_ufo_spawn_timer()
+    if is_manual:
+        print("DEBUG: Manual UFO spawned.")
+
+func _speed_multiplier_for_runtime() -> float:
+    if OS.has_feature("editor"):
+        var safe_idx: int = clamp(speed_index, 0, SPEED_STEPS.size() - 1)
+        return SPEED_STEPS[safe_idx]
+    return 1.0
+
+func _on_ufo_collected(ufo: UfoBonus) -> void:
+    if not is_instance_valid(ufo):
+        return
+    var worth_count: int = randi_range(UFO_REWARD_MIN_ENEMY_WORTH, UFO_REWARD_MAX_ENEMY_WORTH)
+    var per_enemy_value: int = max(1, int(round(float(ufo.reward_value) / float(UFO_REWARD_ENEMY_MULT))))
+    var total_amount: int = max(1, per_enemy_value * worth_count)
+    var split_values: Array[int] = _split_int_value(total_amount, worth_count)
+    var path_sign: float = sign(ufo.direction_sign)
+    if is_zero_approx(path_sign):
+        path_sign = 1.0
+    var spawn_offset: Vector2 = Vector2(path_sign * UFO_COIN_PATH_OFFSET, 0.0)
+    for split_value in split_values:
+        _spawn_coin(ufo.position, split_value, true, spawn_offset)
+    AudioManager.create_2d_audio_at_location(ufo.position, SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+    _spawn_floating_damage_text(ufo.position + Vector2(0.0, -48.0), total_amount, Color(0.55, 0.94, 1.0, 1.0), "+")
+    if active_ufo == ufo:
+        active_ufo = null
+
+func _on_ufo_exited(ufo: UfoBonus) -> void:
+    if active_ufo == ufo:
+        active_ufo = null
+
+func _ufo_reward_value() -> int:
+    var key: String = str(LEVEL_ENEMY_TYPE.get(current_level, "goblin"))
+    var data: Dictionary = enemy_defs.get(key, enemy_defs.get("goblin", {}))
+    var base_enemy_value: int = max(
+        1,
+        int(round(float(data.get("coins", 10)) * _level_reward_mult(current_level) * ENEMY_COIN_VALUE_MULT))
+    )
+    var scaled_enemy_value: int = max(1, int(round(float(base_enemy_value) * _coin_mult())))
+    return scaled_enemy_value * UFO_REWARD_ENEMY_MULT
 
 func _max_power() -> float:
     var cap: float = 100.0
@@ -2028,11 +2265,7 @@ func _execute_hero_active(hero: CombatSprite, hero_name: String, skip_anim: bool
 
     match hero_name:
         "knight":
-            var before_hp: float = player_health
-            player_health = min(300.0, player_health + 14.0)
-            var healed: float = max(0.0, player_health - before_hp)
-            if healed > 0.0:
-                _spawn_floating_heal_text(hero.position + Vector2(randf_range(-10.0, 10.0), -130.0), healed)
+            pass
         "archer":
             # fire a special pierce projectile as the active ability
             var target: CombatSprite = _nearest_enemy(hero.position)
@@ -2359,18 +2592,40 @@ func _update_ui() -> void:
     experience_value_label.text = "Enemies Remaining: %d" % exp_remaining
 
     currency_label.text = "Currency: %d" % SaveHandler.fishing_currency
+    clock_label.text = "Clock: %s" % Util.format_time(SaveHandler.fishing_run_clock_seconds)
 
 func _on_boss_defeated() -> void:
     print("DEBUG: _on_boss_defeated() called")
     if battle_completed:
         return
+    _track_first_boss_clear_event(current_level)
     if current_level >= int(SaveHandler.fishing_max_unlocked_battle_level) and current_level < 3:
         SaveHandler.fishing_max_unlocked_battle_level = current_level + 1
         SaveHandler.fishing_next_battle_level = SaveHandler.fishing_max_unlocked_battle_level
     # Boss defeated sound
     print("[AUDIO] Boss defeated - playing BUTTON_CLICK")
     _play_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+    if current_level == 3:
+        SaveHandler.fishing_l3_boss_clear_clock_seconds = SaveHandler.fishing_run_clock_seconds
+        SaveHandler.save_fishing_progress()
     _end_battle(true)
+
+func _track_first_boss_clear_event(level: int) -> void:
+    if level <= 0:
+        return
+    var level_key: String = str(level)
+    if bool(SaveHandler.fishing_first_boss_clear_levels.get(level_key, false)):
+        return
+    SaveHandler.fishing_first_boss_clear_levels[level_key] = true
+    _track_ga_event(
+        "boss:first_clear:level_%d" % level,
+        {
+            "level": level,
+            "game_time_seconds": SaveHandler.fishing_run_clock_seconds,
+            "game_time_formatted": Util.format_time(SaveHandler.fishing_run_clock_seconds),
+        }
+    )
+    SaveHandler.save_fishing_progress()
 
 func _end_battle(victory: bool) -> void:
     print("DEBUG: _end_battle() called with victory=" + str(victory))
@@ -2381,6 +2636,9 @@ func _end_battle(victory: bool) -> void:
     summary_finalized = false
     post_battle_sweep_time = 2.8
     defeat_anim_time = 0.0
+    if is_instance_valid(active_ufo):
+        active_ufo.queue_free()
+    active_ufo = null
     summary_panel.show()
     continue_button.hide()
     _refresh_battle_summary_text()
@@ -2491,7 +2749,63 @@ func _build_battle_summary_text(is_live: bool) -> String:
     var is_first_l3_boss_clear: bool = battle_victory and current_level == 3 and not SaveHandler.fishing_l3_boss_thank_you_shown
     if is_first_l3_boss_clear:
         summary_text += "\n\nThanks for playing.\nThis game was created by a single developer.\nPlease leave feedback if you would like more content.\nCredits:\nCreator: Beep2Bleep."
+    if battle_victory and current_level == 3 and SaveHandler.fishing_l3_boss_clear_clock_seconds >= 0.0:
+        summary_text += "\n\nLevel 3 clear time: %s" % Util.format_time(SaveHandler.fishing_l3_boss_clear_clock_seconds)
     return summary_text
+
+func _style_clock_ui() -> void:
+    if clock_panel == null or clock_label == null:
+        return
+    var panel_style := StyleBoxFlat.new()
+    panel_style.bg_color = Color(0.04, 0.05, 0.09, 0.92)
+    panel_style.border_color = Color(0.8, 0.85, 1.0, 0.9)
+    panel_style.border_width_left = 2
+    panel_style.border_width_top = 2
+    panel_style.border_width_right = 2
+    panel_style.border_width_bottom = 2
+    clock_panel.add_theme_stylebox_override("panel", panel_style)
+    clock_label.add_theme_color_override("font_color", Color(0.94, 0.94, 0.98, 1.0))
+
+func _setup_mute_button() -> void:
+    if mute_button == null:
+        return
+    speaker_icon_on = _make_speaker_icon_texture(false)
+    speaker_icon_off = _make_speaker_icon_texture(true)
+    mute_button.text = ""
+    mute_button.focus_mode = Control.FOCUS_NONE
+    mute_button.custom_minimum_size = Vector2(56, 44)
+    _style_mute_button()
+    _refresh_mute_button_icon()
+
+func _style_mute_button() -> void:
+    if mute_button == null:
+        return
+    var normal := StyleBoxFlat.new()
+    normal.bg_color = Color(0.05, 0.14, 0.4, 0.96)
+    normal.border_color = Color(0.89, 0.92, 0.99, 1.0)
+    normal.border_width_left = 2
+    normal.border_width_top = 2
+    normal.border_width_right = 2
+    normal.border_width_bottom = 2
+    normal.corner_radius_top_left = 4
+    normal.corner_radius_top_right = 4
+    normal.corner_radius_bottom_left = 4
+    normal.corner_radius_bottom_right = 4
+    var hover := normal.duplicate(true)
+    hover.bg_color = Color(0.08, 0.22, 0.55, 0.98)
+    mute_button.add_theme_stylebox_override("normal", normal)
+    mute_button.add_theme_stylebox_override("hover", hover)
+    mute_button.add_theme_stylebox_override("pressed", hover)
+
+func _refresh_mute_button_icon() -> void:
+    if mute_button == null:
+        return
+    mute_button.icon = speaker_icon_off if SaveHandler.audio_muted else speaker_icon_on
+    mute_button.tooltip_text = "Unmute all audio" if SaveHandler.audio_muted else "Mute all audio"
+
+func _on_mute_button_pressed() -> void:
+    SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
+    _refresh_mute_button_icon()
 
 func _refresh_battle_summary_text() -> void:
     if summary_label == null:
@@ -2556,9 +2870,28 @@ func _finalize_battle_summary() -> void:
         "enemies_killed": enemies_killed,
         "boss_segments_broken": boss_segments_broken,
         "coins_gained": coins_gained,
+        "run_clock_seconds": SaveHandler.fishing_run_clock_seconds,
+        "l3_boss_clear_clock_seconds": SaveHandler.fishing_l3_boss_clear_clock_seconds,
     }
     SaveHandler.save_fishing_progress()
     _update_speed_button_enabled_state()
+
+func _advance_run_clock(delta: float) -> void:
+    if delta <= 0.0:
+        return
+    if in_infinite_simulation:
+        return
+    var speed_mult: float = 1.0
+    if OS.has_feature("editor"):
+        var safe_idx: int = clamp(speed_index, 0, SPEED_STEPS.size() - 1)
+        speed_mult = SPEED_STEPS[safe_idx]
+    var safe_engine_scale: float = max(0.001, Engine.time_scale)
+    var adjusted_delta: float = (delta / safe_engine_scale) * speed_mult
+    SaveHandler.fishing_run_clock_seconds += adjusted_delta
+    run_clock_save_accum += delta
+    if run_clock_save_accum >= 1.0:
+        run_clock_save_accum = 0.0
+        SaveHandler.save_fishing_progress()
 
 func _trigger_hero_glow(hero: CombatSprite) -> void:
     if not is_instance_valid(hero):
@@ -2620,3 +2953,63 @@ func _set_next_battle_level_and_exit(level: int) -> void:
     Global.start_in_upgrade_scene = true
     Global.load_saved_run = false
     SceneChanger.change_to_new_scene(Util.PATH_MAIN)
+
+func _track_ga_event(event_id: String, fields: Dictionary = {}) -> void:
+    var ga_manager: Node = get_node_or_null("/root/GameAnalytics")
+    if ga_manager == null:
+        ga_manager = get_node_or_null("/root/GameAnalyticsManager")
+    if ga_manager != null:
+        ga_manager.call("track_design_event", event_id, null, fields)
+
+func _make_speaker_icon_texture(is_muted: bool) -> ImageTexture:
+    var image := Image.create(40, 40, false, Image.FORMAT_RGBA8)
+    image.fill(Color(0, 0, 0, 0))
+    var speaker_color := Color(0.93, 0.97, 1.0, 1.0)
+    _draw_rect_pixels(image, Rect2i(7, 14, 7, 12), speaker_color)
+    _draw_triangle_right(image, Vector2i(14, 20), 11, 9, speaker_color)
+    if is_muted:
+        _draw_thick_line(image, Vector2i(21, 10), Vector2i(34, 30), Color(1.0, 0.2, 0.2, 1.0), 2)
+        _draw_thick_line(image, Vector2i(34, 10), Vector2i(21, 30), Color(1.0, 0.2, 0.2, 1.0), 2)
+    else:
+        _draw_arc_ring(image, Vector2i(20, 20), 8, 11, PI * -0.42, PI * 0.42, speaker_color)
+        _draw_arc_ring(image, Vector2i(20, 20), 12, 15, PI * -0.42, PI * 0.42, speaker_color)
+    return ImageTexture.create_from_image(image)
+
+func _draw_rect_pixels(image: Image, rect: Rect2i, color: Color) -> void:
+    for x in range(rect.position.x, rect.position.x + rect.size.x):
+        for y in range(rect.position.y, rect.position.y + rect.size.y):
+            image.set_pixel(x, y, color)
+
+func _draw_triangle_right(image: Image, center: Vector2i, width: int, half_height: int, color: Color) -> void:
+    for i in range(width):
+        var x: int = center.x + i
+        var y_top: int = center.y - int(round(float(half_height) * (1.0 - float(i) / float(width))))
+        var y_bottom: int = center.y + int(round(float(half_height) * (1.0 - float(i) / float(width))))
+        for y in range(y_top, y_bottom + 1):
+            image.set_pixel(x, y, color)
+
+func _draw_thick_line(image: Image, start: Vector2i, finish: Vector2i, color: Color, thickness: int) -> void:
+    var steps: int = maxi(abs(finish.x - start.x), abs(finish.y - start.y))
+    if steps <= 0:
+        image.set_pixel(start.x, start.y, color)
+        return
+    for i in range(steps + 1):
+        var t: float = float(i) / float(steps)
+        var x: int = int(round(lerpf(float(start.x), float(finish.x), t)))
+        var y: int = int(round(lerpf(float(start.y), float(finish.y), t)))
+        for ox in range(-thickness, thickness + 1):
+            for oy in range(-thickness, thickness + 1):
+                if abs(ox) + abs(oy) <= thickness + 1:
+                    image.set_pixel(x + ox, y + oy, color)
+
+func _draw_arc_ring(image: Image, center: Vector2i, inner_radius: int, outer_radius: int, start_angle: float, end_angle: float, color: Color) -> void:
+    for x in range(image.get_width()):
+        for y in range(image.get_height()):
+            var px: float = float(x - center.x)
+            var py: float = float(y - center.y)
+            var angle: float = atan2(py, px)
+            if angle < start_angle or angle > end_angle:
+                continue
+            var dist_sq: float = px * px + py * py
+            if dist_sq >= float(inner_radius * inner_radius) and dist_sq <= float(outer_radius * outer_radius):
+                image.set_pixel(x, y, color)

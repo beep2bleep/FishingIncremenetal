@@ -14,7 +14,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="A Game About Feeding A Black Hole"
+config/name="Vanguard - Idle Auto Battler"
 run/main_scene="res://Singletons/Main.tscn"
 config/use_custom_user_dir=true
 config/custom_user_dir_name="A Game About Feeding A Black Hole"
@@ -38,6 +38,7 @@ MusicPlayer="*res://MusicPlayer.tscn"
 FlairManager="*res://FlairManager.tscn"
 SteamHandler="*res://SteamHandler.gd"
 ThemeManager="*res://ThemeManager.tscn"
+GameAnalytics="*res://GameAnalyticsManager.gd"
 
 [debug]
 
@@ -67,6 +68,13 @@ enabled=PackedStringArray("res://addons/controller_icons/plugin.cfg")
 
 Build="v1.3.1"
 Demo=false
+
+[gameanalytics]
+
+build="v1.3.1"
+game_key="de9707a68cd6fe69f19a31bf0c9efc3a"
+secret_key="705c5804eacaa943ebf386f91feec118cf4a01f2"
+info_log=true
 
 [input]
 

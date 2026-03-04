@@ -66,6 +66,17 @@ offset_bottom = 148.0
 layout_mode = 2
 text = "o 0"
 
+[node name="ClockPanel" type="PanelContainer" parent="." unique_name_in_owner=true]
+layout_mode = 1
+offset_left = 312.0
+offset_top = 84.0
+offset_right = 588.0
+offset_bottom = 148.0
+
+[node name="ClockLabel" type="Label" parent="ClockPanel" unique_name_in_owner=true]
+layout_mode = 2
+text = "Clock: 00:00:00"
+
 [node name="TopActions" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 10
@@ -78,6 +89,11 @@ offset_bottom = 70.0
 grow_horizontal = 0
 alignment = 2
 theme_override_constants/separation = 10
+
+[node name="MuteButton" type="Button" parent="TopActions"]
+layout_mode = 2
+custom_minimum_size = Vector2(62, 0)
+text = ""
 
 [node name="StartBattle" type="Button" parent="TopActions"]
 layout_mode = 2
@@ -185,6 +201,7 @@ text = ""
 
 [connection signal="pressed" from="TopActions/StartBattle" to="." method="_on_start_battle_pressed"]
 [connection signal="pressed" from="TopActions/MainMenu" to="." method="_on_main_menu_pressed"]
+[connection signal="pressed" from="TopActions/MuteButton" to="." method="_on_mute_button_pressed"]
 [connection signal="pressed" from="EditorRow/EditorAddCurrency" to="." method="_on_editor_add_currency_pressed"]
 [connection signal="pressed" from="EditorRow/EditorResetProgress" to="." method="_on_editor_reset_progress_pressed"]
 [connection signal="pressed" from="EditorRow/UnlockAllUpgrades" to="." method="_on_unlock_all_upgrades_pressed"]
