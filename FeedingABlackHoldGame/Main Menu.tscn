@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://cib78ftbwfk6f" path="res://Main Menu.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://1txuh2meyqfj" path="res://Build Label.tscn" id="2"]
-[ext_resource type="Script" uid="uid://bkxi24h1nf7kk" path="res://Fishing/FishingUpgradeScene.gd" id="2_0q8yv"]
 [ext_resource type="Texture2D" uid="uid://dayjws668e5cv" path="res://Art/Logo Base White.png" id="3"]
 [ext_resource type="Theme" uid="uid://ulae55bx0fhs" path="res://Theme/Theme_Small_Font.tres" id="4"]
 [ext_resource type="PackedScene" uid="uid://ds36c3qoqmf3y" path="res://Controller Glyph.tscn" id="5"]
@@ -41,7 +40,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.921569, 0.921569, 0.882353, 1)
-script = ExtResource("2_0q8yv")
 metadata/_edit_lock_ = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1178964486]

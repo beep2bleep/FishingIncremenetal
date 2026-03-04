@@ -1,8 +1,8 @@
 {
     "generated_from":  "simulation_results_2h_60upgrades.json + upgrade_prices_in_order.md",
     "grouping":  "repeatable upgrades are split into dependency groups of 5 levels",
-    "total_nodes":  282,
-    "unique_upgrades":  180,
+    "total_nodes":  285,
+    "unique_upgrades":  181,
     "upgrades":  [
                      {
                          "id":  "cursor_pickup_unlock",
@@ -51,6 +51,54 @@
                          "group_pos":  1,
                          "grid_x":  4,
                          "grid_y":  0
+                     },
+                     {
+                         "id":  "battle_speed_unlock__L1",
+                         "key":  "battle_speed_unlock",
+                         "level":  1,
+                         "is_level_node":  true,
+                         "name":  "BATTLE SPEED CONTROL L1",
+                         "icon":  "res://generatedicon/cadence_lock.png",
+                         "cost":  1000,
+                         "repeatable":  true,
+                         "growth":  1,
+                         "dependency":  "auto_attack_unlock",
+                         "group":  1,
+                         "group_pos":  1,
+                         "grid_x":  5,
+                         "grid_y":  1
+                     },
+                     {
+                         "id":  "battle_speed_unlock__L2",
+                         "key":  "battle_speed_unlock",
+                         "level":  2,
+                         "is_level_node":  true,
+                         "name":  "BATTLE SPEED CONTROL L2",
+                         "icon":  "res://generatedicon/cadence_lock.png",
+                         "cost":  3000,
+                         "repeatable":  true,
+                         "growth":  1,
+                         "dependency":  "battle_speed_unlock__L1",
+                         "group":  1,
+                         "group_pos":  2,
+                         "grid_x":  6,
+                         "grid_y":  1
+                     },
+                     {
+                         "id":  "battle_speed_unlock__L3",
+                         "key":  "battle_speed_unlock",
+                         "level":  3,
+                         "is_level_node":  true,
+                         "name":  "BATTLE SPEED CONTROL L3",
+                         "icon":  "res://generatedicon/cadence_lock.png",
+                         "cost":  10000,
+                         "repeatable":  true,
+                         "growth":  1,
+                         "dependency":  "battle_speed_unlock__L2",
+                         "group":  1,
+                         "group_pos":  3,
+                         "grid_x":  7,
+                         "grid_y":  1
                      },
                      {
                          "id":  "knight_vamp_unlock",

@@ -178,14 +178,14 @@ offset_bottom = 582.0
 
 [node name="MuteButton" type="Button" parent="CanvasLayer2"]
 unique_name_in_owner = true
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -76.0
+anchors_preset = 10
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -28.0
 offset_top = 16.0
-offset_right = -20.0
+offset_right = 28.0
 offset_bottom = 60.0
-grow_horizontal = 0
+grow_horizontal = 2
 z_index = 30
 focus_mode = 0
 text = ""

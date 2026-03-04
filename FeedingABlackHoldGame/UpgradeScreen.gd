@@ -7,10 +7,11 @@ var editor_add_cash_amount: int = 1000
 var editor_cash_controls: HBoxContainer
 var editor_add_cash_button: Button
 var editor_reset_add_button: Button
-var editor_reset_all_button: Button
 var editor_unlock_all_button: Button
 var battle_level_choice_dialog: ConfirmationDialog
+var reset_progress_confirm_dialog: ConfirmationDialog
 var mute_button: Button
+var reset_progress_button: Button
 var speaker_icon_on: Texture2D
 var speaker_icon_off: Texture2D
 
@@ -60,6 +61,7 @@ func _ready() -> void :
     update_colors()
     _setup_editor_cash_controls()
     _setup_battle_level_choice_dialog()
+    _setup_reset_progress_controls()
     _setup_mute_button()
     hide()
 
@@ -355,12 +357,6 @@ func _setup_editor_cash_controls() -> void:
     editor_reset_add_button.pressed.connect(_on_editor_reset_add_pressed)
     editor_cash_controls.add_child(editor_reset_add_button)
 
-    editor_reset_all_button = Button.new()
-    editor_reset_all_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-    editor_reset_all_button.text = "Reset All (Editor)"
-    editor_reset_all_button.pressed.connect(_on_editor_reset_all_pressed)
-    editor_cash_controls.add_child(editor_reset_all_button)
-
     editor_unlock_all_button = Button.new()
     editor_unlock_all_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
     editor_unlock_all_button.text = "Unlock All (Editor)"
@@ -389,10 +385,47 @@ func _on_editor_reset_add_pressed() -> void:
     editor_add_cash_amount = 1000
     _refresh_editor_cash_button_text()
 
-func _on_editor_reset_all_pressed() -> void:
-    if not OS.has_feature("editor"):
+func _setup_reset_progress_controls() -> void:
+    if reset_progress_button != null and is_instance_valid(reset_progress_button):
         return
+    reset_progress_button = Button.new()
+    reset_progress_button.name = "ResetProgressButton"
+    reset_progress_button.anchor_left = 0.0
+    reset_progress_button.anchor_top = 0.0
+    reset_progress_button.anchor_right = 0.0
+    reset_progress_button.anchor_bottom = 0.0
+    reset_progress_button.offset_left = 16.0
+    reset_progress_button.offset_top = 16.0
+    reset_progress_button.offset_right = 296.0
+    reset_progress_button.offset_bottom = 60.0
+    reset_progress_button.z_index = 210
+    reset_progress_button.focus_mode = Control.FOCUS_NONE
+    reset_progress_button.text = "Reset Progress"
+    reset_progress_button.pressed.connect(_on_reset_progress_button_pressed)
+    %CanvasLayer2.add_child(reset_progress_button)
 
+    reset_progress_confirm_dialog = ConfirmationDialog.new()
+    reset_progress_confirm_dialog.name = "ResetProgressConfirmDialog"
+    reset_progress_confirm_dialog.title = "Confirm Reset"
+    reset_progress_confirm_dialog.dialog_text = "You will reset your time, currency, and upgrades. Would you like to continue?"
+    reset_progress_confirm_dialog.confirmed.connect(_on_reset_progress_confirmed)
+    var ok_button: Button = reset_progress_confirm_dialog.get_ok_button()
+    if ok_button != null:
+        ok_button.text = "Yes"
+    var cancel_button: Button = reset_progress_confirm_dialog.get_cancel_button()
+    if cancel_button != null:
+        cancel_button.text = "No"
+    %CanvasLayer2.add_child(reset_progress_confirm_dialog)
+
+func _on_reset_progress_button_pressed() -> void:
+    if reset_progress_confirm_dialog == null:
+        return
+    reset_progress_confirm_dialog.popup_centered()
+
+func _on_reset_progress_confirmed() -> void:
+    _perform_progress_reset()
+
+func _perform_progress_reset() -> void:
     SaveHandler.reset_fishing_progress()
     SaveHandler.save_fishing_progress()
     editor_add_cash_amount = 1000

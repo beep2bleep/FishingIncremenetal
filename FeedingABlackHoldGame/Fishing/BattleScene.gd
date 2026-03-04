@@ -216,6 +216,8 @@ var battle_completed: bool = false
 var battle_victory: bool = false
 
 const SPEED_STEPS: Array[float] = [1.0, 2.0, 4.0, 8.0, 16.0]
+const SPEED_UNLOCK_KEY := "battle_speed_unlock"
+const MAX_RELEASE_SPEED_LEVEL := 3
 const ACTIVE_COOLDOWNS := {
     "knight": 13.0,
     "archer": 15.0,
@@ -253,6 +255,9 @@ var speaker_icon_on: Texture2D
 var speaker_icon_off: Texture2D
 var active_ufo: UfoBonus = null
 var ufo_spawn_timer: float = 0.0
+var summary_panel_base_layout: Rect2 = Rect2()
+var summary_label_base_layout: Rect2 = Rect2()
+var continue_button_base_layout: Rect2 = Rect2()
 
 func _ready() -> void:
     if not _bind_nodes():
@@ -266,17 +271,17 @@ func _ready() -> void:
     _spawn_heroes()
     _style_clock_ui()
     _style_battle_summary_ui()
+    _cache_battle_summary_layout()
     _setup_mute_button()
     summary_panel.hide()
-    _setup_editor_speed_button()
+    _setup_speed_controls()
     _restore_or_reset_ufo_spawn_timer()
     _update_speed_button_enabled_state()
     _update_ui()
 
 func _exit_tree() -> void:
     SaveHandler.save_fishing_progress()
-    if OS.has_feature("editor"):
-        Engine.time_scale = 1.0
+    Engine.time_scale = 1.0
 
 func _bind_nodes() -> bool:
     world = get_node_or_null("World")
@@ -432,7 +437,7 @@ func _reset_heroes_to_start() -> void:
             h["active_cooldown_total"] = 0.0
             hero_data[hero] = h
 
-func _setup_editor_speed_button() -> void:
+func _setup_speed_controls() -> void:
     if speed_button == null or infinite_sim_button == null:
         return
     if OS.has_feature("editor"):
@@ -445,10 +450,16 @@ func _setup_editor_speed_button() -> void:
         _update_speed_button_text()
         _update_speed_button_enabled_state()
     else:
-        speed_button.hide()
         infinite_sim_button.hide()
         if spawn_ufo_button != null:
             spawn_ufo_button.hide()
+        speed_index = 0
+        Engine.time_scale = SPEED_STEPS[speed_index]
+        if _max_available_speed_index() > 0:
+            speed_button.show()
+            _update_speed_button_text()
+        else:
+            speed_button.hide()
 
 func _update_speed_button_enabled_state() -> void:
     if speed_button == null or infinite_sim_button == null or exit_battle_button == null:
@@ -466,9 +477,12 @@ func _update_speed_button_text() -> void:
     speed_button.text = "Speed x%d" % int(SPEED_STEPS[speed_index])
 
 func _on_speed_button_pressed() -> void:
-    if not OS.has_feature("editor"):
+    var max_index: int = _max_available_speed_index()
+    if max_index <= 0:
         return
-    speed_index = (speed_index + 1) % SPEED_STEPS.size()
+    speed_index += 1
+    if speed_index > max_index:
+        speed_index = 0
     Engine.time_scale = SPEED_STEPS[speed_index]
     _update_speed_button_text()
 
@@ -528,7 +542,6 @@ func _run_infinite_simulation() -> void:
     last_sim_steps = step_count
     last_sim_seconds = float(step_count) * SIM_STEP
     if last_sim_seconds > 0.0:
-        SaveHandler.fishing_run_clock_seconds += last_sim_seconds
         SaveHandler.save_fishing_progress()
 
     world.visible = was_world_visible
@@ -2096,10 +2109,14 @@ func _spawn_ufo(is_manual: bool) -> void:
         print("DEBUG: Manual UFO spawned.")
 
 func _speed_multiplier_for_runtime() -> float:
+    var safe_idx: int = clamp(speed_index, 0, _max_available_speed_index())
+    return SPEED_STEPS[safe_idx]
+
+func _max_available_speed_index() -> int:
     if OS.has_feature("editor"):
-        var safe_idx: int = clamp(speed_index, 0, SPEED_STEPS.size() - 1)
-        return SPEED_STEPS[safe_idx]
-    return 1.0
+        return SPEED_STEPS.size() - 1
+    var speed_unlock_level: int = SaveHandler.get_fishing_upgrade_level(SPEED_UNLOCK_KEY)
+    return clamp(speed_unlock_level, 0, MAX_RELEASE_SPEED_LEVEL)
 
 func _on_ufo_collected(ufo: UfoBonus) -> void:
     if not is_instance_valid(ufo):
@@ -2639,6 +2656,7 @@ func _end_battle(victory: bool) -> void:
     if is_instance_valid(active_ufo):
         active_ufo.queue_free()
     active_ufo = null
+    _apply_battle_summary_layout(Vector2(1.5, 1.8) if _is_first_l3_boss_clear() else Vector2.ONE)
     summary_panel.show()
     continue_button.hide()
     _refresh_battle_summary_text()
@@ -2746,12 +2764,53 @@ func _build_battle_summary_text(is_live: bool) -> String:
     ]
     if is_live and battle_victory and not coins.is_empty():
         summary_text += "\nCollecting remaining loot..."
-    var is_first_l3_boss_clear: bool = battle_victory and current_level == 3 and not SaveHandler.fishing_l3_boss_thank_you_shown
+    var is_first_l3_boss_clear: bool = _is_first_l3_boss_clear()
     if is_first_l3_boss_clear:
-        summary_text += "\n\nThanks for playing.\nThis game was created by a single developer.\nPlease leave feedback if you would like more content.\nCredits:\nCreator: Beep2Bleep."
+        summary_text += "\n\nThanks for playing.\nThis game was created by a single developer.\nPlease leave feedback or email to web@beep2bleep.com if you would like more content.\nCreator: Beep2Bleep."
     if battle_victory and current_level == 3 and SaveHandler.fishing_l3_boss_clear_clock_seconds >= 0.0:
         summary_text += "\n\nLevel 3 clear time: %s" % Util.format_time(SaveHandler.fishing_l3_boss_clear_clock_seconds)
     return summary_text
+
+func _is_first_l3_boss_clear() -> bool:
+    return battle_victory and current_level == 3 and not SaveHandler.fishing_l3_boss_thank_you_shown
+
+func _rect_from_control_offsets(control: Control) -> Rect2:
+    var left: float = control.offset_left
+    var top: float = control.offset_top
+    var right: float = control.offset_right
+    var bottom: float = control.offset_bottom
+    return Rect2(Vector2(left, top), Vector2(right - left, bottom - top))
+
+func _set_control_offsets_from_rect(control: Control, rect: Rect2) -> void:
+    control.offset_left = rect.position.x
+    control.offset_top = rect.position.y
+    control.offset_right = rect.position.x + rect.size.x
+    control.offset_bottom = rect.position.y + rect.size.y
+
+func _cache_battle_summary_layout() -> void:
+    if summary_panel == null or summary_label == null or continue_button == null:
+        return
+    summary_panel_base_layout = _rect_from_control_offsets(summary_panel)
+    summary_label_base_layout = _rect_from_control_offsets(summary_label)
+    continue_button_base_layout = _rect_from_control_offsets(continue_button)
+
+func _apply_battle_summary_layout(scale: Vector2) -> void:
+    if summary_panel == null or summary_label == null or continue_button == null:
+        return
+    if summary_panel_base_layout.size == Vector2.ZERO:
+        _cache_battle_summary_layout()
+    var safe_scale := Vector2(max(0.1, scale.x), max(0.1, scale.y))
+
+    var base_center: Vector2 = summary_panel_base_layout.position + (summary_panel_base_layout.size * 0.5)
+    var scaled_panel_size: Vector2 = summary_panel_base_layout.size * safe_scale
+    var scaled_panel_rect := Rect2(base_center - (scaled_panel_size * 0.5), scaled_panel_size)
+    _set_control_offsets_from_rect(summary_panel, scaled_panel_rect)
+
+    var scaled_label_rect := Rect2(summary_label_base_layout.position * safe_scale, summary_label_base_layout.size * safe_scale)
+    _set_control_offsets_from_rect(summary_label, scaled_label_rect)
+
+    var scaled_button_rect := Rect2(continue_button_base_layout.position * safe_scale, continue_button_base_layout.size * safe_scale)
+    _set_control_offsets_from_rect(continue_button, scaled_button_rect)
 
 func _style_clock_ui() -> void:
     if clock_panel == null or clock_label == null:
@@ -2879,15 +2938,12 @@ func _finalize_battle_summary() -> void:
 func _advance_run_clock(delta: float) -> void:
     if delta <= 0.0:
         return
-    if in_infinite_simulation:
-        return
-    var speed_mult: float = 1.0
-    if OS.has_feature("editor"):
-        var safe_idx: int = clamp(speed_index, 0, SPEED_STEPS.size() - 1)
-        speed_mult = SPEED_STEPS[safe_idx]
+    var speed_mult: float = _speed_multiplier_for_runtime()
     var safe_engine_scale: float = max(0.001, Engine.time_scale)
     var adjusted_delta: float = (delta / safe_engine_scale) * speed_mult
     SaveHandler.fishing_run_clock_seconds += adjusted_delta
+    if in_infinite_simulation:
+        return
     run_clock_save_accum += delta
     if run_clock_save_accum >= 1.0:
         run_clock_save_accum = 0.0
