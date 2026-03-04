@@ -10,6 +10,7 @@ signal clicked(sprite: CombatSprite)
 var is_attacking := false
 var is_defeated := false
 var base_sprite_scale: Vector2 = Vector2.ONE
+var base_sprite_modulate: Color = Color(1.0, 1.0, 1.0, 1.0)
 var weapon_type: String = ""
 var weapon_base_offset: Vector2 = Vector2.ZERO
 var weapon_idle_offset: Vector2 = Vector2.ZERO
@@ -67,6 +68,7 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := 
     sprite.play("walk")
     sprite.centered = true  # ensure the visual is drawn around the node's position
     sprite.scale = Vector2.ONE * scale_factor
+    sprite.modulate = base_sprite_modulate
     base_sprite_scale = sprite.scale
     sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
@@ -109,7 +111,12 @@ func trigger_attack() -> void:
     is_attacking = false
     sprite.play("walk")
     sprite.scale = base_sprite_scale
-    sprite.modulate = Color(1.0, 1.0, 1.0, 1.0)
+    sprite.modulate = base_sprite_modulate
+
+func set_sprite_tint(tint: Color) -> void:
+    base_sprite_modulate = tint
+    if sprite != null:
+        sprite.modulate = base_sprite_modulate
 
 func set_defeated() -> void:
     if not _ensure_nodes():
@@ -232,7 +239,7 @@ func _play_attack_telegraph() -> void:
     tween.tween_property(sprite, "modulate", Color(1.45, 1.45, 1.2, 1.0), 0.05).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_OUT)
     tween.chain().tween_property(sprite, "modulate", Color(0.78, 0.78, 0.78, 1.0), 0.04).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
     tween.chain().tween_property(sprite, "modulate", Color(1.25, 1.25, 1.1, 1.0), 0.04).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
-    tween.chain().tween_property(sprite, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+    tween.chain().tween_property(sprite, "modulate", base_sprite_modulate, 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
     var shake: Tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
     shake.tween_property(self, "position", base_pos + Vector2(3.0, 0.0), 0.025)

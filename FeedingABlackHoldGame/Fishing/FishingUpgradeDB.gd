@@ -24,9 +24,9 @@ const SPECIFIC_DESCRIPTIONS := {
     "archer_pierce_unlock": "Unlocks the Archer active with piercing attack coverage.",
     "power_harvest_unlock": "Unlocks stronger power generation from combat and pickups.",
     "recruit_guardian": "Adds the Guardian hero to your combat lineup.",
-    "guardian_fortify_unlock": "Unlocks the Guardian active and boosts defensive uptime.",
+    "guardian_fortify_unlock": "Unlocks the Guardian active: grants a Limited-Time Fortify that reduces incoming damage.",
     "recruit_mage": "Adds the Mage hero to your combat lineup.",
-    "mage_storm_unlock": "Unlocks the Mage active and improves storm damage output.",
+    "mage_storm_unlock": "Unlocks the Mage active: while active, the storm repeatedly damages all enemies on screen.",
 }
 const SPECIFIC_NAMES := {
     "cursor_pickup_unlock": "Cursor Pickup Unlock",
