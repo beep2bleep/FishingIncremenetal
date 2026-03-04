@@ -261,7 +261,7 @@ var screen_shake = true
 var black_hole_pulse = true
 var black_hole_particles = true
 var controller_sensitivity = 1.0
-var run_timer = false
+var run_timer = true
 var audio_muted = false
 
 
@@ -322,7 +322,7 @@ func load_local_settings():
         shuffle_music = bool(json_data["shuffle_music"]) if json_data.has("shuffle_music") else false
         screen_shake = bool(json_data["screen_shake"]) if json_data.has("screen_shake") else true
         black_hole_pulse = bool(json_data["black_hole_pulse"]) if json_data.has("black_hole_pulse") else true
-        run_timer = bool(json_data["run_timer"]) if json_data.has("run_timer") else false
+        run_timer = bool(json_data["run_timer"]) if json_data.has("run_timer") else true
         first_time_load = bool(json_data["first_time_load"]) if json_data.has("first_time_load") else false
         black_hole_particles = bool(json_data["black_hole_particles"]) if json_data.has("black_hole_particles") else true
         controller_sensitivity = float(json_data["controller_sensitivity"]) if json_data.has("controller_sensitivity") else 1.0

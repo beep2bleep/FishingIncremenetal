@@ -21,6 +21,7 @@ const SIM_STEP := 1.0 / 60.0
 const EXTRA_ZOOM_IN_FACTOR := 5.0
 const HERO_FORMATION_SPACING := 64.5
 const ENEMY_FORMATION_SPACING := 84.0
+const ENEMY_OPENING_RUSH_MULT := 5.0
 const BOSS_SEGMENTS := 8
 const COIN_DESPAWN_MARGIN_X := 240.0
 const COIN_DESPAWN_MARGIN_Y := 220.0
@@ -30,7 +31,7 @@ const COIN_LAUNCH_MIN_SPEED_RATIO := 0.16
 const COIN_LAUNCH_AWAY_MAX_DEG := 65.0
 const COIN_LAUNCH_TOWARD_MAX_DEG := 3.0
 const COIN_LAUNCH_TOWARD_CHANCE := 0.06
-const ENEMY_COIN_VALUE_MULT := 1.5
+const ENEMY_COIN_VALUE_MULT := 3.0
 const SPLIT_REWARD_MIN_COINS := 2
 const SPLIT_REWARD_MAX_COINS := 6
 const COIN_COLLISION_RESTITUTION := 0.7
@@ -71,7 +72,24 @@ const UPGRADE_EFFECT_TUNE := {
 const PLATFORMING_PACK_SPRITES := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites"
 const PLATFORMING_BG_DEFAULT := PLATFORMING_PACK_SPRITES + "/Backgrounds/Default"
 const PLATFORMING_TILES_DEFAULT := PLATFORMING_PACK_SPRITES + "/Tiles/Default"
+const PLATFORMING_ENEMY_DOUBLE_DIR := PLATFORMING_PACK_SPRITES + "/Enemies/Double"
+const ENEMY_POOL_PER_LEVEL := 4
+const ENEMY_DOUBLE_EXCLUDED_PREFIXES: Array[String] = [
+    "fish_purple",
+    "frog_",
+    "frog",
+    "block_",
+    "block",
+    "barnacle",
+    "slime_",
+]
 const HERO_RENDER_SCALE := 4.0
+const ELITE_ENEMY_CHANCE := 0.05
+const ELITE_ENEMY_MULT := 2.0
+const MULTI_SPAWN_DOUBLE_CHANCE := 0.05
+const MULTI_SPAWN_TRIPLE_CHANCE := 0.05
+const MULTI_SPAWN_STACK_OFFSET_X := 14.0
+const STACKED_ENEMY_SPACING_MULT := 0.42
 
 # helper to play sound effects safely; autoload AudioManager isn't considered an
 # engine singleton so Engine.has_singleton() returns false.  Simply check the
@@ -80,8 +98,8 @@ func _play_sfx(type: SoundEffectSettings.SOUND_EFFECT_TYPE) -> void:
     if AudioManager != null:
         AudioManager.create_audio(type)
 
-const ENEMY_RENDER_SCALE := 2.0
-const BOSS_RENDER_SCALE := ENEMY_RENDER_SCALE * 1.45
+const ENEMY_RENDER_SCALE := 0.4
+const BOSS_RENDER_SCALE := 2.9
 const LEVEL_BG_PACK := {
     1: {
         "sky": "background_solid_sky.png",
@@ -148,6 +166,8 @@ const LEVEL_BG_THEMES := {
 }
 
 var world: Node2D
+var bg_base_sky: Sprite2D
+var bg_base_ground: Sprite2D
 var bg_deep: Sprite2D
 var bg_far: Sprite2D
 var bg_mid: Sprite2D
@@ -211,9 +231,11 @@ var spawn_group_size: int = 0
 var spawn_group_spawned: int = 0
 var spawn_group_anchor_x: float = 0.0
 var spawn_group_spacing: float = 84.0
+var next_enemy_stack_id: int = 1
 var sim_accumulator: float = 0.0
 var battle_completed: bool = false
 var battle_victory: bool = false
+var enemy_opening_rush_active: bool = true
 
 const SPEED_STEPS: Array[float] = [1.0, 2.0, 4.0, 8.0, 16.0]
 const SPEED_UNLOCK_KEY := "battle_speed_unlock"
@@ -235,6 +257,7 @@ var speed_index: int = 0
 var arrow_texture: Texture2D
 var hero_sheets: Dictionary = {}
 var enemy_defs: Dictionary = {}
+var level_enemy_pools: Dictionary = {}
 var active_cooldowns: Dictionary = {}
 var battle_mods: Dictionary = {}
 var last_sim_steps: int = 0
@@ -258,6 +281,7 @@ var ufo_spawn_timer: float = 0.0
 var summary_panel_base_layout: Rect2 = Rect2()
 var summary_label_base_layout: Rect2 = Rect2()
 var continue_button_base_layout: Rect2 = Rect2()
+var base_fill_texture: Texture2D
 
 func _ready() -> void:
     if not _bind_nodes():
@@ -285,6 +309,8 @@ func _exit_tree() -> void:
 
 func _bind_nodes() -> bool:
     world = get_node_or_null("World")
+    bg_base_sky = get_node_or_null("World/BGBaseSky")
+    bg_base_ground = get_node_or_null("World/BGBaseGround")
     bg_deep = get_node_or_null("World/BGDeep")
     bg_far = get_node_or_null("World/BGFar")
     bg_mid = get_node_or_null("World/BGMid")
@@ -322,6 +348,14 @@ func _bind_nodes() -> bool:
     var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
 
     if world != null:
+        if bg_base_sky == null:
+            bg_base_sky = Sprite2D.new()
+            bg_base_sky.name = "BGBaseSky"
+            world.add_child(bg_base_sky)
+        if bg_base_ground == null:
+            bg_base_ground = Sprite2D.new()
+            bg_base_ground.name = "BGBaseGround"
+            world.add_child(bg_base_ground)
         if bg_deep == null:
             bg_deep = Sprite2D.new()
             bg_deep.name = "BGDeep"
@@ -355,14 +389,16 @@ func _bind_nodes() -> bool:
             ground_overlay.name = "GroundOverlay"
             world.add_child(ground_overlay)
 
-        world.move_child(bg_deep, 0)
-        world.move_child(bg_far, 1)
-        world.move_child(bg_mid, 2)
-        world.move_child(bg_near, 3)
-        world.move_child(bg_overlay, 4)
-        world.move_child(play_area_overlay, 5)
-        world.move_child(ground, 6)
-        world.move_child(ground_overlay, 7)
+        world.move_child(bg_base_sky, 0)
+        world.move_child(bg_base_ground, 1)
+        world.move_child(bg_deep, 2)
+        world.move_child(bg_far, 3)
+        world.move_child(bg_mid, 4)
+        world.move_child(bg_near, 5)
+        world.move_child(bg_overlay, 6)
+        world.move_child(play_area_overlay, 7)
+        world.move_child(ground, 8)
+        world.move_child(ground_overlay, 9)
 
     if projectile_layer == null and world != null:
         projectile_layer = Node2D.new()
@@ -386,7 +422,7 @@ func _bind_nodes() -> bool:
     if level_choice_dialog != null and not level_choice_dialog.custom_action.is_connected(_on_level_choice_action):
         level_choice_dialog.custom_action.connect(_on_level_choice_action)
 
-    return world != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and bg_overlay != null and play_area_overlay != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and health_bar != null and experience_bar != null and power_bar != null and health_value_label != null and experience_value_label != null and power_value_label != null and currency_label != null and clock_panel != null and clock_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and mute_button != null and summary_panel != null and summary_label != null and continue_button != null and level_choice_dialog != null
+    return world != null and bg_base_sky != null and bg_base_ground != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and bg_overlay != null and play_area_overlay != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and health_bar != null and experience_bar != null and power_bar != null and health_value_label != null and experience_value_label != null and power_value_label != null and currency_label != null and clock_panel != null and clock_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and mute_button != null and summary_panel != null and summary_label != null and continue_button != null and level_choice_dialog != null
 
 func _clear_battle_entities() -> void:
     for arrow_data_variant in arrows:
@@ -419,6 +455,8 @@ func _clear_battle_entities() -> void:
     floating_damage_texts.clear()
     hero_damage_accum = 0.0
     hero_damage_timer = 0.0
+    enemy_opening_rush_active = true
+    next_enemy_stack_id = 1
 
 func _reset_heroes_to_start() -> void:
     for i in range(heroes.size()):
@@ -624,12 +662,20 @@ func _setup_visuals() -> void:
     camera_2d.zoom = Vector2(0.2, 0.2) * EXTRA_ZOOM_IN_FACTOR
     camera_2d.position = Vector2(0, FLOOR_Y - 120.0)
     arrow_texture = _make_arrow_texture()
+    base_fill_texture = _make_base_fill_texture()
 
-    for sprite in [bg_deep, bg_far, bg_mid, bg_near, bg_overlay, play_area_overlay, ground, ground_overlay]:
+    for sprite in [bg_base_sky, bg_base_ground, bg_deep, bg_far, bg_mid, bg_near, bg_overlay, play_area_overlay, ground, ground_overlay]:
         sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
         sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
         sprite.region_enabled = true
         sprite.centered = true
+
+    bg_base_sky.texture = base_fill_texture
+    bg_base_ground.texture = base_fill_texture
+    bg_base_sky.region_rect = Rect2(0, 0, 80000, FLOOR_Y + 200.0)
+    bg_base_ground.region_rect = Rect2(0, 0, 80000, 1200.0)
+    bg_base_sky.position = Vector2(0.0, (FLOOR_Y + 200.0) * 0.5 - 200.0)
+    bg_base_ground.position = Vector2(0.0, FLOOR_Y + 600.0)
 
     bg_deep.region_rect = Rect2(0, 0, 80000, 400)
     bg_far.region_rect = Rect2(0, 0, 80000, 440)
@@ -642,6 +688,11 @@ func _setup_visuals() -> void:
 
     _apply_level_background(current_level)
     _apply_parallax_depth_scales()
+
+func _make_base_fill_texture() -> Texture2D:
+    var img := Image.create(1, 1, false, Image.FORMAT_RGBA8)
+    img.fill(Color(1.0, 1.0, 1.0, 1.0))
+    return ImageTexture.create_from_image(img)
 
 func _apply_parallax_depth_scales() -> void:
     # This scene is 2D. Depth is faked by shrinking farther layers and lifting them up.
@@ -711,6 +762,8 @@ func _apply_level_background(level_index: int) -> void:
 
 func _apply_level_layer_colors(theme: Dictionary) -> void:
     if theme.is_empty():
+        bg_base_sky.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        bg_base_ground.modulate = Color(1.0, 1.0, 1.0, 1.0)
         bg_deep.modulate = Color(1.0, 1.0, 1.0, 1.0)
         bg_far.modulate = Color(1.0, 1.0, 1.0, 1.0)
         bg_mid.modulate = Color(1.0, 1.0, 1.0, 1.0)
@@ -721,15 +774,19 @@ func _apply_level_layer_colors(theme: Dictionary) -> void:
         ground_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return
 
-    # Preserve source texture alpha while restoring per-level palette tinting.
-    bg_deep.modulate = Color(theme["sky_base"]) * Color(1.08, 1.08, 1.08, 1.0)
-    bg_far.modulate = Color(theme["far"]) * Color(1.02, 1.02, 1.02, 1.0)
-    bg_mid.modulate = Color(theme["mid"]) * Color(1.0, 1.0, 1.0, 1.0)
-    bg_near.modulate = Color(theme["near"]) * Color(0.95, 0.95, 0.95, 1.0)
-    bg_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
-    play_area_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
-    ground.modulate = Color(theme["ground_a"]) * Color(1.0, 1.0, 1.0, 1.0)
-    ground_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
+    # Keep each level's hue identity, but keep values darker so white HUD text stays readable.
+    bg_deep.modulate = Color(theme["sky_base"]).lerp(Color(0.08, 0.1, 0.14, 1.0), 0.22)
+    bg_far.modulate = Color(theme["far"]).lerp(Color(0.08, 0.1, 0.14, 1.0), 0.26)
+    bg_mid.modulate = Color(theme["mid"]).lerp(Color(0.08, 0.1, 0.14, 1.0), 0.28)
+    bg_near.modulate = Color(theme["near"]).lerp(Color(0.08, 0.1, 0.14, 1.0), 0.3)
+    bg_overlay.modulate = Color(theme["far"]).lerp(Color(0.03, 0.04, 0.06, 1.0), 0.72)
+    play_area_overlay.modulate = Color(theme["mid"]).lerp(Color(0.02, 0.03, 0.05, 1.0), 0.78)
+    ground.modulate = Color(theme["ground_a"]).lerp(Color(0.11, 0.09, 0.08, 1.0), 0.2)
+    ground_overlay.modulate = Color(theme["ground_b"]).lerp(Color(0.06, 0.05, 0.05, 1.0), 0.5)
+
+    # Fill any uncovered camera space: sky above heroes, ground below heroes.
+    bg_base_sky.modulate = bg_deep.modulate
+    bg_base_ground.modulate = ground.modulate
 
 func _pack_theme_for_level(level_index: int) -> Dictionary:
     var keys: Array = LEVEL_BG_PACK.keys()
@@ -779,6 +836,10 @@ func _theme_for_level(level_index: int) -> Dictionary:
         out_theme[ck] = out_color
     return out_theme
 
+func _enemy_tint_for_level(level_index: int) -> Color:
+    var theme: Dictionary = _theme_for_level(level_index)
+    return Color(theme.get("sky_base", Color(1.0, 1.0, 1.0, 1.0)))
+
 func _make_background_overlay_texture(w: int, h: int, theme: Dictionary) -> ImageTexture:
     var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
     var sky: Color = Color(theme.get("sky_base", Color(0.1, 0.1, 0.2, 1.0)))
@@ -801,16 +862,16 @@ func _make_play_area_overlay_texture(w: int, h: int, theme: Dictionary) -> Image
     var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
     var far: Color = Color(theme.get("far", Color(0.2, 0.3, 0.4, 1.0)))
     var accent: Color = Color(theme.get("ground_accent", Color(0.95, 0.95, 0.95, 1.0)))
-    img.fill(Color(far.r, far.g, far.b, 0.06))
+    img.fill(Color(far.r, far.g, far.b, 0.14))
     var top_line_y: int = 8
     var bottom_line_y: int = h - 10
     for x in range(w):
-        img.set_pixel(x, top_line_y, Color(accent.r, accent.g, accent.b, 0.34))
-        img.set_pixel(x, bottom_line_y, Color(accent.r, accent.g, accent.b, 0.26))
+        img.set_pixel(x, top_line_y, Color(accent.r, accent.g, accent.b, 0.2))
+        img.set_pixel(x, bottom_line_y, Color(accent.r, accent.g, accent.b, 0.16))
     for y in range(20, h - 14, 24):
         for x in range(w):
             if ((x + y) % 11) == 0:
-                img.set_pixel(x, y, Color(accent.r, accent.g, accent.b, 0.14))
+                img.set_pixel(x, y, Color(accent.r, accent.g, accent.b, 0.08))
     return ImageTexture.create_from_image(img)
 
 func _make_ground_overlay_texture(w: int, h: int, theme: Dictionary) -> ImageTexture:
@@ -1050,6 +1111,174 @@ func _setup_actor_sheets() -> void:
             "coins": 120,
         },
     }
+    var pack_enemy_keys: Array[String] = _append_pack_double_enemy_defs()
+    _assign_level_enemy_pools(pack_enemy_keys)
+
+func _append_pack_double_enemy_defs() -> Array[String]:
+    var frame_map: Dictionary = _build_pack_double_enemy_frame_map()
+    if frame_map.is_empty():
+        return []
+
+    var created_keys: Array[String] = []
+    var base_names: Array = frame_map.keys()
+    base_names.sort()
+    for base_name_variant in base_names:
+        var base_name: String = str(base_name_variant)
+        var entry: Dictionary = frame_map[base_name]
+        var walk_a_path: String = str(entry.get("walk_a", ""))
+        var walk_b_path: String = str(entry.get("walk_b", ""))
+        var rest_path: String = str(entry.get("rest", ""))
+
+        if walk_a_path == "":
+            walk_a_path = rest_path if rest_path != "" else walk_b_path
+        if walk_b_path == "":
+            walk_b_path = rest_path if rest_path != "" else walk_a_path
+        if rest_path == "":
+            rest_path = walk_b_path if walk_b_path != "" else walk_a_path
+        if walk_a_path == "" or walk_b_path == "" or rest_path == "":
+            continue
+
+        var visual: Dictionary = _make_pack_actor(
+            walk_a_path,
+            walk_b_path,
+            rest_path,
+            ENEMY_FRAME_SIZE,
+            Color(0.83, 0.23, 0.23, 1.0),
+            "goblin",
+            ENEMY_RENDER_SCALE,
+            true
+        )
+        var enemy_key: String = "double_%s" % base_name
+        enemy_defs[enemy_key] = {
+            "sheet": visual["sheet"],
+            "frame": visual["frame"],
+            "scale": float(visual.get("scale", ENEMY_RENDER_SCALE)),
+            "speed": _double_enemy_speed(base_name),
+            "coins": _double_enemy_coins(base_name),
+        }
+        created_keys.append(enemy_key)
+
+    return created_keys
+
+func _build_pack_double_enemy_frame_map() -> Dictionary:
+    var frame_map: Dictionary = {}
+    var files: PackedStringArray = DirAccess.get_files_at(PLATFORMING_ENEMY_DOUBLE_DIR)
+    if files.is_empty():
+        return frame_map
+
+    for file_name in files:
+        var lower_file: String = file_name.to_lower()
+        if not lower_file.ends_with(".png"):
+            continue
+        var stem: String = lower_file.get_basename()
+        var base_name: String = _strip_pack_enemy_variant_suffix(stem)
+        if base_name == "" or not _is_pack_enemy_allowed(base_name):
+            continue
+
+        var frame_kind: String = _classify_pack_enemy_frame_kind(stem)
+        if frame_kind == "":
+            continue
+
+        var data: Dictionary = frame_map.get(base_name, {
+            "walk_a": "",
+            "walk_b": "",
+            "rest": "",
+        })
+        if str(data.get(frame_kind, "")) == "":
+            data[frame_kind] = PLATFORMING_ENEMY_DOUBLE_DIR + "/" + file_name
+        frame_map[base_name] = data
+
+    return frame_map
+
+func _strip_pack_enemy_variant_suffix(name: String) -> String:
+    var suffixes: Array[String] = [
+        "_walk_a",
+        "_walk_b",
+        "_swim_a",
+        "_swim_b",
+        "_move_a",
+        "_move_b",
+        "_attack_rest",
+        "_attack_a",
+        "_attack_b",
+        "_rest",
+        "_idle",
+        "_jump",
+        "_fall",
+        "_fly",
+        "_flat",
+        "_shell",
+        "_up",
+        "_down",
+        "_a",
+        "_b",
+    ]
+    for suffix in suffixes:
+        if name.ends_with(suffix):
+            return name.substr(0, name.length() - suffix.length())
+    return name
+
+func _classify_pack_enemy_frame_kind(name: String) -> String:
+    if name.ends_with("_walk_a") or name.ends_with("_swim_a") or name.ends_with("_move_a") or name.ends_with("_attack_a") or name.ends_with("_a"):
+        return "walk_a"
+    if name.ends_with("_walk_b") or name.ends_with("_swim_b") or name.ends_with("_move_b") or name.ends_with("_attack_b") or name.ends_with("_b"):
+        return "walk_b"
+    if name.ends_with("_rest") or name.ends_with("_idle") or name.ends_with("_attack_rest") or name.ends_with("_shell") or name.ends_with("_fly") or name.ends_with("_jump") or name.ends_with("_fall") or name.ends_with("_flat") or name.ends_with("_up") or name.ends_with("_down"):
+        return "rest"
+    return ""
+
+func _is_pack_enemy_allowed(base_name: String) -> bool:
+    var lower: String = base_name.to_lower()
+    for blocked_prefix in ENEMY_DOUBLE_EXCLUDED_PREFIXES:
+        if lower.begins_with(blocked_prefix):
+            return false
+    return true
+
+func _assign_level_enemy_pools(candidate_keys: Array[String]) -> void:
+    var source: Array[String] = candidate_keys.duplicate()
+    if source.is_empty():
+        source = ["goblin", "brute", "flyer"]
+    level_enemy_pools.clear()
+    for level_index in [1, 2, 3]:
+        level_enemy_pools[level_index] = _pick_random_enemy_subset(source, ENEMY_POOL_PER_LEVEL)
+
+func _pick_random_enemy_subset(source: Array[String], count: int) -> Array[String]:
+    var bag: Array[String] = source.duplicate()
+    bag.shuffle()
+    var limit: int = min(count, bag.size())
+    var result: Array[String] = []
+    for i in range(limit):
+        result.append(str(bag[i]))
+    return result
+
+func _enemy_key_for_level(level_index: int) -> String:
+    var pool_variant = level_enemy_pools.get(level_index, [])
+    var pool: Array = pool_variant
+    if pool.is_empty():
+        return str(LEVEL_ENEMY_TYPE.get(level_index, "goblin"))
+    return str(pool[randi() % pool.size()])
+
+func _double_enemy_speed(base_name: String) -> float:
+    var lower: String = base_name.to_lower()
+    if lower.find("snail") >= 0 or lower.find("worm") >= 0:
+        return 36.0
+    if lower.find("fish") >= 0 or lower.find("bee") >= 0 or lower.find("fly") >= 0 or lower.find("ladybug") >= 0:
+        return 68.0
+    if lower.find("saw") >= 0:
+        return 62.0
+    if lower.find("mouse") >= 0:
+        return 55.0
+    return 55.0
+
+func _double_enemy_coins(base_name: String) -> int:
+    var lower: String = base_name.to_lower()
+    if lower.find("saw") >= 0:
+        return 16
+    if lower.find("snail") >= 0 or lower.find("worm") >= 0:
+        return 15
+    if lower.find("fish") >= 0 or lower.find("bee") >= 0 or lower.find("fly") >= 0 or lower.find("ladybug") >= 0:
+        return 14
+    return 12
 
 func _make_actor_sheet(frame_size: Vector2i, body_color: Color, accent_color: Color, archetype: String, facing_left: bool) -> ImageTexture:
     var img: Image = Image.create(frame_size.x * 3, frame_size.y, false, Image.FORMAT_RGBA8)
@@ -1250,7 +1479,7 @@ func _spawn_loop(delta: float) -> void:
 
         var local_jitter: float = randf_range(-12.0, 12.0)
         var spawn_x: float = spawn_group_anchor_x + float(spawn_group_spawned) * spawn_group_spacing + local_jitter
-        _spawn_enemy_for_level(current_level, spawn_x)
+        _spawn_enemy_cluster_for_level(current_level, spawn_x)
         regular_spawned += 1
         spawn_group_spawned += 1
         spawn_group_remaining -= 1
@@ -1266,6 +1495,24 @@ func _spawn_loop(delta: float) -> void:
         boss_alive = true
         spawn_timer = 2.0
         return
+
+func _roll_multi_spawn_count() -> int:
+    var roll: float = randf()
+    if roll < MULTI_SPAWN_TRIPLE_CHANCE:
+        return 3
+    if roll < MULTI_SPAWN_TRIPLE_CHANCE + MULTI_SPAWN_DOUBLE_CHANCE:
+        return 2
+    return 1
+
+func _spawn_enemy_cluster_for_level(level_index: int, spawn_x: float) -> void:
+    var spawn_count: int = _roll_multi_spawn_count()
+    var stack_id: int = 0
+    if spawn_count > 1:
+        stack_id = next_enemy_stack_id
+        next_enemy_stack_id += 1
+    for i in range(spawn_count):
+        var stacked_x: float = spawn_x + float(i) * MULTI_SPAWN_STACK_OFFSET_X
+        _spawn_enemy_for_level(level_index, stacked_x, stack_id)
 
 func _spawn_heroes() -> void:
     var roster: Array[String] = ["knight"]
@@ -1311,29 +1558,33 @@ func _spawn_heroes() -> void:
         }
         _add_hero_active_bar(hero)
 
-func _spawn_enemy_for_level(level_index: int, spawn_x_override: float = NAN) -> void:
-    var key: String = str(LEVEL_ENEMY_TYPE.get(level_index, "goblin"))
+func _spawn_enemy_for_level(level_index: int, spawn_x_override: float = NAN, stack_id: int = 0) -> void:
+    var key: String = _enemy_key_for_level(level_index)
     var lp: Dictionary = _level_params(level_index)
     var data: Dictionary = enemy_defs[key]
+    var elite_mult: float = _roll_enemy_variant_multiplier()
 
     var enemy: CombatSprite = HERO_SCENE.instantiate()
     var spawn_x: float = spawn_x_override if not is_nan(spawn_x_override) else _next_enemy_spawn_x()
     enemy.position = Vector2(spawn_x, FLOOR_Y)
-    var enemy_scale: float = float(data.get("scale", ENEMY_RENDER_SCALE))
+    enemy.modulate = _enemy_tint_for_level(level_index)
+    var enemy_scale: float = float(data.get("scale", ENEMY_RENDER_SCALE)) * elite_mult
     enemy.setup(data["sheet"], data["frame"], enemy_scale)
     enemy_layer.add_child(enemy)
     enemies.append(enemy)
 
-    var hp: float = float(lp["enemy_hp"]) * _enemy_hp_mult()
+    var hp: float = float(lp["enemy_hp"]) * _enemy_hp_mult() * elite_mult
     var bar_data: Dictionary = _add_health_bar(enemy, data["frame"], enemy_scale)
     var reward_mult: float = _level_reward_mult(level_index)
     enemy_data[enemy] = {
         "type": key,
         "is_boss": false,
+        "is_elite": elite_mult > 1.0,
+        "stack_id": stack_id,
         "hp": hp,
         "hp_max": hp,
         "speed": float(data["speed"]),
-        "contact_dps": float(lp["enemy_contact_dps"]) * _enemy_contact_mult(),
+        "contact_dps": float(lp["enemy_contact_dps"]) * _enemy_contact_mult() * elite_mult,
         "coins": max(1, int(round(float(data["coins"]) * reward_mult * ENEMY_COIN_VALUE_MULT))),
         "attack_cd": 0.0,
         "bar_fill": bar_data["fill"],
@@ -1346,6 +1597,7 @@ func _spawn_boss_for_level(level_index: int) -> void:
 
     var enemy: CombatSprite = HERO_SCENE.instantiate()
     enemy.position = Vector2(_next_enemy_spawn_x() + 120.0, FLOOR_Y)
+    enemy.modulate = _enemy_tint_for_level(level_index)
     var boss_scale: float = float(data.get("scale", BOSS_RENDER_SCALE))
     enemy.setup(data["sheet"], data["frame"], boss_scale)
     enemy_layer.add_child(enemy)
@@ -1358,6 +1610,8 @@ func _spawn_boss_for_level(level_index: int) -> void:
     enemy_data[enemy] = {
         "type": "boss",
         "is_boss": true,
+        "is_elite": false,
+        "stack_id": 0,
         "hp": hp,
         "hp_max": hp,
         "segments_total": BOSS_SEGMENTS,
@@ -1370,6 +1624,9 @@ func _spawn_boss_for_level(level_index: int) -> void:
         "bar_fill": bar_data["fill"],
         "bar_width": bar_data["width"],
     }
+
+func _roll_enemy_variant_multiplier() -> float:
+    return ELITE_ENEMY_MULT if randf() < ELITE_ENEMY_CHANCE else 1.0
 
 func _make_asset_actor(sheet_path: String, fallback_frame: Vector2i, fallback_color: Color, fallback_archetype: String, scale_factor: float, facing_left: bool = false) -> Dictionary:
     var loaded: Texture2D = load(sheet_path) as Texture2D
@@ -1658,10 +1915,15 @@ func _update_enemies(delta: float) -> void:
         var contact_front_x: float = frontline_x + _enemy_contact_reach(enemy)
         var colliding: bool = enemy.position.x <= contact_front_x
         if not colliding:
-            var moved_x: float = enemy.position.x - float(e["speed"]) * delta
+            var move_mult: float = ENEMY_OPENING_RUSH_MULT if enemy_opening_rush_active else 1.0
+            var moved_x: float = enemy.position.x - float(e["speed"]) * move_mult * delta
             enemy.position.x = max(contact_front_x, moved_x)
             enemy.set_walking()
+            if enemy_opening_rush_active and enemy.position.x <= contact_front_x:
+                enemy_opening_rush_active = false
         else:
+            if enemy_opening_rush_active:
+                enemy_opening_rush_active = false
             var total_contact_dps: float = float(e["contact_dps"])
             var behind_enemy: CombatSprite = behind_map.get(enemy, null)
             if is_instance_valid(behind_enemy):
@@ -1711,7 +1973,13 @@ func _enemy_contact_reach(enemy: CombatSprite) -> float:
 func _enemy_pair_spacing(front_enemy: CombatSprite, back_enemy: CombatSprite) -> float:
     var front_width: float = _enemy_body_width(front_enemy)
     var back_width: float = _enemy_body_width(back_enemy)
-    return max(8.0, (front_width + back_width) * 0.5)
+    var base_spacing: float = max(8.0, (front_width + back_width) * 0.5)
+    if enemy_data.has(front_enemy) and enemy_data.has(back_enemy):
+        var front_stack_id: int = int(enemy_data[front_enemy].get("stack_id", 0))
+        var back_stack_id: int = int(enemy_data[back_enemy].get("stack_id", 0))
+        if front_stack_id != 0 and front_stack_id == back_stack_id:
+            return max(8.0, base_spacing * STACKED_ENEMY_SPACING_MULT)
+    return base_spacing
 
 func _enemy_body_width(enemy: CombatSprite) -> float:
     if not is_instance_valid(enemy):
@@ -1965,7 +2233,11 @@ func _update_coins(delta: float) -> void:
             continue
         var coin_age: float = float(coin_ages.get(coin, 0.0)) + max(0.0, delta)
         coin_ages[coin] = coin_age
-        if coin.position.x < min_x or coin.position.x > max_x or coin.position.y < min_y or coin.position.y > max_y:
+        if coin.position.y < min_y:
+            coin.position.y = min_y
+            if coin.velocity.y < 0.0:
+                coin.velocity.y = 0.0
+        if coin.position.x < min_x or coin.position.x > max_x or coin.position.y > max_y:
             coins.remove_at(i)
             coin_ages.erase(coin)
             coin.queue_free()
@@ -2141,7 +2413,7 @@ func _on_ufo_exited(ufo: UfoBonus) -> void:
         active_ufo = null
 
 func _ufo_reward_value() -> int:
-    var key: String = str(LEVEL_ENEMY_TYPE.get(current_level, "goblin"))
+    var key: String = _enemy_key_for_level(current_level)
     var data: Dictionary = enemy_defs.get(key, enemy_defs.get("goblin", {}))
     var base_enemy_value: int = max(
         1,
@@ -2208,7 +2480,7 @@ func _add_hero_active_bar(hero: CombatSprite) -> void:
     if not is_instance_valid(hero) or not hero_data.has(hero):
         return
     var bar_back: ColorRect = ColorRect.new()
-    bar_back.color = Color(0.08, 0.08, 0.08, 0.85)
+    bar_back.color = Color(0.2, 0.2, 0.2, 0.85)
     bar_back.position = Vector2(-22.0, -122.0)
     bar_back.size = Vector2(44.0, 6.0)
     bar_back.visible = false

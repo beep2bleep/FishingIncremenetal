@@ -3,6 +3,10 @@ class_name CoinPickup
 
 signal collected(coin: CoinPickup, by_cursor: bool)
 const CURSOR_PICKUP_RADIUS := 30.0
+const COIN_GOLD_TEXTURE_PATH := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites/Tiles/Double/coin_gold.png"
+const COIN_GOLD_SIDE_TEXTURE_PATH := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites/Tiles/Double/coin_gold_side.png"
+const COIN_ANIM_FPS := 10.0
+const COIN_ANIM_FRAME_TIME := 1.0 / COIN_ANIM_FPS
 
 @export var value := 10
 @export var flight_gravity := 980.0
@@ -13,13 +17,23 @@ const CURSOR_PICKUP_RADIUS := 30.0
 
 @onready var label: Label = $Label
 @onready var collider: CollisionShape2D = $CollisionShape2D
+@onready var legacy_rect: ColorRect = get_node_or_null("ColorRect")
 
 var velocity := Vector2.ZERO
 var settled := false
 var collected_once := false
+var coin_gold_texture: Texture2D = null
+var coin_gold_side_texture: Texture2D = null
+var coin_anim_timer: float = 0.0
+var coin_anim_phase: int = 0
 
 func _ready() -> void:
     label.hide()
+    if legacy_rect != null:
+        legacy_rect.hide()
+    coin_gold_texture = load(COIN_GOLD_TEXTURE_PATH) as Texture2D
+    coin_gold_side_texture = load(COIN_GOLD_SIDE_TEXTURE_PATH) as Texture2D
+    texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     var circle := CircleShape2D.new()
     circle.radius = CURSOR_PICKUP_RADIUS
     collider.shape = circle
@@ -34,6 +48,7 @@ func launch(initial_velocity: Vector2, floor_level: float) -> void:
     settled = false
 
 func _physics_process(delta: float) -> void:
+    _update_coin_animation(delta)
     _check_cursor_hover_collect()
 
     if settled:
@@ -48,7 +63,22 @@ func _physics_process(delta: float) -> void:
         velocity = Vector2.ZERO
         settled = true
 
+func _update_coin_animation(delta: float) -> void:
+    coin_anim_timer += delta
+    var frame_advanced: bool = false
+    while coin_anim_timer >= COIN_ANIM_FRAME_TIME:
+        coin_anim_timer -= COIN_ANIM_FRAME_TIME
+        coin_anim_phase = (coin_anim_phase + 1) % 3
+        frame_advanced = true
+    if frame_advanced:
+        queue_redraw()
+
 func _draw() -> void:
+    var frame_texture: Texture2D = coin_gold_side_texture if coin_anim_phase == 2 else coin_gold_texture
+    if frame_texture != null:
+        var size: Vector2 = frame_texture.get_size()
+        draw_texture(frame_texture, -size * 0.5)
+        return
     draw_circle(Vector2.ZERO, 9.0, Color(0.95, 0.78, 0.16, 1.0))
     draw_circle(Vector2(-2.0, -2.0), 4.0, Color(1.0, 0.92, 0.45, 1.0))
 

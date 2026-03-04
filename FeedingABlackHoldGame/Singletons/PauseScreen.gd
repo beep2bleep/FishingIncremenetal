@@ -87,13 +87,6 @@ func _on_go_to_upgrades_pressed() -> void :
     Global.main.session_timer = 0
 
 
-func _on_main_menu_pressed() -> void :
-    Global.game_state = Util.GAME_STATES.MAIN_MENU
-    SaveHandler.save_player_last_run()
-    get_tree().paused = false
-    SceneChanger.change_to_new_scene(Util.PATH_MAIN_MENU)
-
-
 var is_showing_settings = false
 func _on_hide_settings_button_up() -> void :
     is_showing_settings = false

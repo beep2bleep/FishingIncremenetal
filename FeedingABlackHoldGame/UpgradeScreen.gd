@@ -2,6 +2,10 @@ extends CanvasLayer
 
 class_name UpgradeScreen
 
+const CURSOR_PICKUP_UNLOCK_KEY := "cursor_pickup_unlock"
+const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
+const GO_AGAIN_DISABLED_HINT := "You must unlock an upgrade before starting."
+
 var is_active = false
 var editor_add_cash_amount: int = 1000
 var editor_cash_controls: HBoxContainer
@@ -11,7 +15,13 @@ var editor_unlock_all_button: Button
 var battle_level_choice_dialog: ConfirmationDialog
 var reset_progress_confirm_dialog: ConfirmationDialog
 var mute_button: Button
+var settings_button: Button
+var settings_panel: PanelContainer
+var settings_content: Settings
 var reset_progress_button: Button
+var go_again_button: Button
+var continue_locked_panel: PanelContainer
+var continue_locked_label: Label
 var speaker_icon_on: Texture2D
 var speaker_icon_off: Texture2D
 
@@ -63,6 +73,10 @@ func _ready() -> void :
     _setup_battle_level_choice_dialog()
     _setup_reset_progress_controls()
     _setup_mute_button()
+    _setup_settings_controls()
+    go_again_button = get_node_or_null("%Go Again")
+    _setup_continue_locked_dialog()
+    _update_go_again_button_state()
     hide()
 
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):
@@ -71,6 +85,14 @@ func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: i
 
 func _input(event: InputEvent) -> void :
     if Global.game_state == Util.GAME_STATES.UPGRADES:
+        if _is_continue_locked_open():
+            if event.is_action_pressed("escape") or event.is_action_pressed("back") or event.is_action_pressed("ui_accept"):
+                _hide_continue_locked_panel()
+            return
+        if _is_settings_open():
+            if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+                _hide_settings_panel()
+            return
         if event.is_action_pressed("go again"):
             _on_go_again_pressed()
 
@@ -180,6 +202,7 @@ func on_node_unlocked(node: TechTreeNode):
                 pass
 
     check_upgrade_tree_achivements()
+    _update_go_again_button_state()
 
 
 func update_input(input_type):
@@ -205,11 +228,13 @@ func show_screen():
 
     %CanvasLayer.show()
     %CanvasLayer2.show()
+    _hide_settings_panel()
 
 
 
     update_input(ControllerIcons.get_last_input_type())
     _refresh_mute_button_icon()
+    _update_go_again_button_state()
 
     nodes_unlocked_this_session = 0
 
@@ -255,9 +280,14 @@ func hide_screen():
     is_active = false
     %CanvasLayer.hide()
     %CanvasLayer2.hide()
+    _hide_continue_locked_panel()
 
 
 func _on_go_again_pressed() -> void :
+    if not _can_continue_to_battle():
+        _show_continue_locked_dialog()
+        _update_go_again_button_state()
+        return
     if _is_simulation_upgrade_tree():
         var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, 3)
         if max_level <= 1:
@@ -436,6 +466,7 @@ func _perform_progress_reset() -> void:
 
     _reload_simulation_upgrade_tree_from_save()
     update()
+    _update_go_again_button_state()
 
 func _on_editor_unlock_all_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -485,6 +516,7 @@ func _reload_simulation_upgrade_tree_from_save() -> void:
     _clear_tech_tree_runtime()
     tech_tree.setup()
     tech_tree.update_active()
+    _update_go_again_button_state()
 
 func _clear_tech_tree_runtime() -> void:
     if tech_tree.has_method("kill_tween"):
@@ -521,11 +553,174 @@ func _setup_mute_button() -> void:
     mute_button.text = ""
     mute_button.focus_mode = Control.FOCUS_NONE
     mute_button.custom_minimum_size = Vector2(56, 44)
-    _style_mute_button()
+    _style_utility_button(mute_button)
     _refresh_mute_button_icon()
 
-func _style_mute_button() -> void:
-    if mute_button == null:
+func _setup_settings_controls() -> void:
+    if settings_button != null and is_instance_valid(settings_button):
+        return
+    settings_button = Button.new()
+    settings_button.name = "SettingsButton"
+    settings_button.anchor_left = 1.0
+    settings_button.anchor_top = 0.0
+    settings_button.anchor_right = 1.0
+    settings_button.anchor_bottom = 0.0
+    settings_button.offset_left = -156.0
+    settings_button.offset_top = 48.0
+    settings_button.offset_right = -72.0
+    settings_button.offset_bottom = 92.0
+    settings_button.z_index = 210
+    settings_button.focus_mode = Control.FOCUS_NONE
+    settings_button.text = "Settings"
+    settings_button.pressed.connect(_on_settings_button_pressed)
+    _style_utility_button(settings_button)
+    %CanvasLayer2.add_child(settings_button)
+
+    settings_panel = PanelContainer.new()
+    settings_panel.name = "UpgradeSettingsPanel"
+    settings_panel.anchor_left = 0.5
+    settings_panel.anchor_top = 0.5
+    settings_panel.anchor_right = 0.5
+    settings_panel.anchor_bottom = 0.5
+    settings_panel.offset_left = -280.0
+    settings_panel.offset_top = -320.0
+    settings_panel.offset_right = 280.0
+    settings_panel.offset_bottom = 320.0
+    settings_panel.z_index = 220
+    settings_panel.visible = false
+    settings_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+    _style_utility_button_panel(settings_panel)
+    %CanvasLayer2.add_child(settings_panel)
+
+    var margin: MarginContainer = MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 12)
+    margin.add_theme_constant_override("margin_top", 12)
+    margin.add_theme_constant_override("margin_right", 12)
+    margin.add_theme_constant_override("margin_bottom", 12)
+    settings_panel.add_child(margin)
+
+    var vbox: VBoxContainer = VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 12)
+    margin.add_child(vbox)
+
+    var title: Label = Label.new()
+    title.text = "SETTINGS"
+    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    vbox.add_child(title)
+
+    settings_content = SETTINGS_SCENE.instantiate() as Settings
+    if settings_content != null:
+        settings_content.name = "SettingsContent"
+        vbox.add_child(settings_content)
+
+    var close_button: Button = Button.new()
+    close_button.name = "SettingsCloseButton"
+    close_button.text = "BACK"
+    close_button.focus_mode = Control.FOCUS_NONE
+    close_button.pressed.connect(_on_settings_close_pressed)
+    vbox.add_child(close_button)
+
+func _is_settings_open() -> bool:
+    return settings_panel != null and is_instance_valid(settings_panel) and settings_panel.visible
+
+func _on_settings_button_pressed() -> void:
+    if settings_content != null:
+        settings_content.show_screen()
+    if settings_panel != null:
+        settings_panel.show()
+
+func _on_settings_close_pressed() -> void:
+    _hide_settings_panel()
+
+func _hide_settings_panel() -> void:
+    if settings_panel != null and is_instance_valid(settings_panel):
+        settings_panel.hide()
+
+func _can_continue_to_battle() -> bool:
+    if not _is_simulation_upgrade_tree():
+        return true
+    return SaveHandler.has_fishing_upgrade(CURSOR_PICKUP_UNLOCK_KEY)
+
+func _update_go_again_button_state() -> void:
+    if go_again_button == null:
+        return
+    var can_continue: bool = _can_continue_to_battle()
+    go_again_button.disabled = false
+    go_again_button.tooltip_text = "" if can_continue else GO_AGAIN_DISABLED_HINT
+    go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0) if can_continue else Color(0.7, 0.7, 0.7, 1.0)
+
+func _setup_continue_locked_dialog() -> void:
+    var parent_layer: CanvasLayer = %CanvasLayer2
+    if parent_layer == null:
+        return
+    continue_locked_panel = PanelContainer.new()
+    continue_locked_panel.name = "ContinueLockedPanel"
+    continue_locked_panel.anchor_left = 0.5
+    continue_locked_panel.anchor_top = 0.5
+    continue_locked_panel.anchor_right = 0.5
+    continue_locked_panel.anchor_bottom = 0.5
+    continue_locked_panel.offset_left = -290.0
+    continue_locked_panel.offset_top = -120.0
+    continue_locked_panel.offset_right = 290.0
+    continue_locked_panel.offset_bottom = 120.0
+    continue_locked_panel.z_index = 230
+    continue_locked_panel.visible = false
+    continue_locked_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+    _style_utility_button_panel(continue_locked_panel)
+    parent_layer.add_child(continue_locked_panel)
+
+    var margin: MarginContainer = MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 16)
+    margin.add_theme_constant_override("margin_top", 16)
+    margin.add_theme_constant_override("margin_right", 16)
+    margin.add_theme_constant_override("margin_bottom", 16)
+    continue_locked_panel.add_child(margin)
+
+    var vbox: VBoxContainer = VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 14)
+    margin.add_child(vbox)
+
+    var title: Label = Label.new()
+    title.text = "CONTINUE LOCKED"
+    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    vbox.add_child(title)
+
+    continue_locked_label = Label.new()
+    continue_locked_label.text = GO_AGAIN_DISABLED_HINT
+    continue_locked_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    continue_locked_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    continue_locked_label.custom_minimum_size = Vector2(500, 0)
+    vbox.add_child(continue_locked_label)
+
+    var ok_button: Button = Button.new()
+    ok_button.name = "ContinueLockedOkButton"
+    ok_button.text = "OK"
+    ok_button.focus_mode = Control.FOCUS_ALL
+    ok_button.pressed.connect(_hide_continue_locked_panel)
+    _style_utility_button(ok_button)
+    vbox.add_child(ok_button)
+
+func _show_continue_locked_dialog() -> void:
+    if continue_locked_panel == null:
+        return
+    if _is_settings_open():
+        _hide_settings_panel()
+    if continue_locked_panel.visible:
+        return
+    continue_locked_panel.show()
+    var ok_button: Button = continue_locked_panel.get_node_or_null("MarginContainer/VBoxContainer/ContinueLockedOkButton")
+    if ok_button != null:
+        ok_button.grab_focus()
+
+func _hide_continue_locked_panel() -> void:
+    if continue_locked_panel != null and is_instance_valid(continue_locked_panel):
+        continue_locked_panel.hide()
+
+func _is_continue_locked_open() -> bool:
+    return continue_locked_panel != null and is_instance_valid(continue_locked_panel) and continue_locked_panel.visible
+
+func _style_utility_button(button: Button) -> void:
+    if button == null:
         return
     var normal := StyleBoxFlat.new()
     normal.bg_color = Color(0.08, 0.1, 0.16, 0.96)
@@ -540,9 +735,25 @@ func _style_mute_button() -> void:
     normal.corner_radius_bottom_right = 4
     var hover := normal.duplicate(true)
     hover.bg_color = Color(0.14, 0.18, 0.26, 0.98)
-    mute_button.add_theme_stylebox_override("normal", normal)
-    mute_button.add_theme_stylebox_override("hover", hover)
-    mute_button.add_theme_stylebox_override("pressed", hover)
+    button.add_theme_stylebox_override("normal", normal)
+    button.add_theme_stylebox_override("hover", hover)
+    button.add_theme_stylebox_override("pressed", hover)
+
+func _style_utility_button_panel(panel: PanelContainer) -> void:
+    if panel == null:
+        return
+    var box := StyleBoxFlat.new()
+    box.bg_color = Color(0.04, 0.06, 0.1, 0.98)
+    box.border_color = Color(0.88, 0.92, 1.0, 1.0)
+    box.border_width_left = 2
+    box.border_width_top = 2
+    box.border_width_right = 2
+    box.border_width_bottom = 2
+    box.corner_radius_top_left = 6
+    box.corner_radius_top_right = 6
+    box.corner_radius_bottom_left = 6
+    box.corner_radius_bottom_right = 6
+    panel.add_theme_stylebox_override("panel", box)
 
 func _refresh_mute_button_icon() -> void:
     if mute_button == null:

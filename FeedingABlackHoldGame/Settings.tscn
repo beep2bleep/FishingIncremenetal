@@ -51,28 +51,6 @@ theme_override_constants/h_separation = 25
 theme_override_constants/v_separation = 10
 columns = 2
 
-[node name="Dark Mode" type="Label" parent="GridContainer"]
-layout_mode = 2
-text = "DARK_MODE"
-
-[node name="CenterContainer2" type="CenterContainer" parent="GridContainer"]
-layout_mode = 2
-
-[node name="Dark Mode CheckButton" type="CheckBox" parent="GridContainer/CenterContainer2"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="Run Timer Text" type="Label" parent="GridContainer"]
-layout_mode = 2
-text = "RUN_TIMER"
-
-[node name="CenterContainer8" type="CenterContainer" parent="GridContainer"]
-layout_mode = 2
-
-[node name="Run Timer Checkbutton" type="CheckBox" parent="GridContainer/CenterContainer8"]
-unique_name_in_owner = true
-layout_mode = 2
-
 [node name="Sound Effects" type="Label" parent="GridContainer"]
 layout_mode = 2
 text = "MAIN VOLUME"
@@ -126,14 +104,6 @@ text = "SHUFFLE_MUSIC"
 layout_mode = 2
 
 [node name="Shuffle Music CheckButton" type="CheckBox" parent="GridContainer/CenterContainer5"]
-layout_mode = 2
-
-[node name="Language" type="Label" parent="GridContainer"]
-layout_mode = 2
-text = "LANGUAGE"
-
-[node name="Language Dropdown" type="OptionButton" parent="GridContainer"]
-unique_name_in_owner = true
 layout_mode = 2
 
 [node name="Screen Mode" type="Label" parent="GridContainer"]
@@ -228,68 +198,10 @@ text = ""
 icon = ExtResource("6")
 expand_icon = true
 
-[node name="Money Text" type="Label" parent="GridContainer"]
-layout_mode = 2
-text = "MONEY_TEXT"
-
-[node name="CenterContainer4" type="CenterContainer" parent="GridContainer"]
-layout_mode = 2
-
-[node name="Monet Text CheckButton" type="CheckBox" parent="GridContainer/CenterContainer4"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="Damage Text" type="Label" parent="GridContainer"]
-layout_mode = 2
-text = "DAMAGE_TEXT"
-
-[node name="CenterContainer3" type="CenterContainer" parent="GridContainer"]
-layout_mode = 2
-
-[node name="Damage Text CheckButton" type="CheckBox" parent="GridContainer/CenterContainer3"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="Screen Shake Text" type="Label" parent="GridContainer"]
-layout_mode = 2
-text = "SCREEN_SHAKE"
-
-[node name="CenterContainer6" type="CenterContainer" parent="GridContainer"]
-layout_mode = 2
-
-[node name="Screen Shake CheckButton" type="CheckBox" parent="GridContainer/CenterContainer6"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="Black Hole Pulse Text" type="Label" parent="GridContainer"]
-layout_mode = 2
-text = "BLACK_HOLE_PULSE"
-
-[node name="CenterContainer7" type="CenterContainer" parent="GridContainer"]
-layout_mode = 2
-
-[node name="Black Hole CheckButton" type="CheckBox" parent="GridContainer/CenterContainer7"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="Black Hole Particles" type="Label" parent="GridContainer"]
-layout_mode = 2
-text = "BLACK_HOLE_PARTICLES"
-
-[node name="CenterContainer10" type="CenterContainer" parent="GridContainer"]
-layout_mode = 2
-
-[node name="Black Hole Particles CheckButton" type="CheckBox" parent="GridContainer/CenterContainer10"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[connection signal="toggled" from="GridContainer/CenterContainer2/Dark Mode CheckButton" to="." method="_on_dark_mode_check_button_toggled"]
-[connection signal="toggled" from="GridContainer/CenterContainer8/Run Timer Checkbutton" to="." method="_on_run_timer_checkbutton_toggled"]
 [connection signal="value_changed" from="GridContainer/Main Volume" to="." method="_on_main_volume_value_changed"]
 [connection signal="value_changed" from="GridContainer/Effect Volume Slider" to="." method="_on_effect_volume_slider_value_changed"]
 [connection signal="value_changed" from="GridContainer/Music Volume" to="." method="_on_music_volume_value_changed"]
 [connection signal="toggled" from="GridContainer/CenterContainer5/Shuffle Music CheckButton" to="." method="_on_shuffle_music_check_button_toggled"]
-[connection signal="item_selected" from="GridContainer/Language Dropdown" to="." method="_on_language_dropdown_item_selected"]
 [connection signal="item_selected" from="GridContainer/Screen Mode Dropdown" to="." method="_on_screen_mode_dropdown_item_selected"]
 [connection signal="item_selected" from="GridContainer/FPS Dropdown" to="." method="_on_fps_dropdown_item_selected"]
 [connection signal="toggled" from="GridContainer/CenterContainer/V Sync Enabled" to="." method="_on_v_sync_enabled_toggled"]
@@ -297,8 +209,3 @@ layout_mode = 2
 [connection signal="pressed" from="GridContainer/HBoxContainer2/Text Larger" to="." method="_on_text_larger_pressed"]
 [connection signal="pressed" from="GridContainer/HBoxContainer3/Sens Down" to="." method="_on_sens_down_pressed"]
 [connection signal="pressed" from="GridContainer/HBoxContainer3/Sens Up" to="." method="_on_sens_up_pressed"]
-[connection signal="toggled" from="GridContainer/CenterContainer4/Monet Text CheckButton" to="." method="_on_monet_text_check_button_toggled"]
-[connection signal="toggled" from="GridContainer/CenterContainer3/Damage Text CheckButton" to="." method="_on_damage_text_check_button_toggled"]
-[connection signal="toggled" from="GridContainer/CenterContainer6/Screen Shake CheckButton" to="." method="_on_screen_shake_check_button_toggled"]
-[connection signal="toggled" from="GridContainer/CenterContainer7/Black Hole CheckButton" to="." method="_on_black_hole_check_button_toggled"]
-[connection signal="toggled" from="GridContainer/CenterContainer10/Black Hole Particles CheckButton" to="." method="_on_black_hole_particles_check_button_toggled"]
