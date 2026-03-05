@@ -69,10 +69,65 @@ const UPGRADE_EFFECT_TUNE := {
     "active_cd": 0.42,
     "enemy_count": 0.3,
 }
-const PLATFORMING_PACK_SPRITES := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites"
+const PLATFORMING_PACK_SPRITES := "res://PlatformingPack/Sprites"
 const PLATFORMING_BG_DEFAULT := PLATFORMING_PACK_SPRITES + "/Backgrounds/Default"
 const PLATFORMING_TILES_DEFAULT := PLATFORMING_PACK_SPRITES + "/Tiles/Default"
 const PLATFORMING_ENEMY_DOUBLE_DIR := PLATFORMING_PACK_SPRITES + "/Enemies/Double"
+const PACK_BG_TEXTURES := {
+    "background_solid_sky.png": preload("res://PlatformingPack/Sprites/Backgrounds/Default/background_solid_sky.png"),
+    "background_fade_hills.png": preload("res://PlatformingPack/Sprites/Backgrounds/Default/background_fade_hills.png"),
+    "background_color_hills.png": preload("res://PlatformingPack/Sprites/Backgrounds/Default/background_color_hills.png"),
+    "background_solid_sand.png": preload("res://PlatformingPack/Sprites/Backgrounds/Default/background_solid_sand.png"),
+    "background_fade_desert.png": preload("res://PlatformingPack/Sprites/Backgrounds/Default/background_fade_desert.png"),
+    "background_color_desert.png": preload("res://PlatformingPack/Sprites/Backgrounds/Default/background_color_desert.png"),
+    "background_solid_cloud.png": preload("res://PlatformingPack/Sprites/Backgrounds/Default/background_solid_cloud.png"),
+    "background_fade_mushrooms.png": preload("res://PlatformingPack/Sprites/Backgrounds/Default/background_fade_mushrooms.png"),
+    "background_color_mushrooms.png": preload("res://PlatformingPack/Sprites/Backgrounds/Default/background_color_mushrooms.png"),
+}
+const PACK_TILE_TEXTURES := {
+    "hill_top.png": preload("res://PlatformingPack/Sprites/Tiles/Default/hill_top.png"),
+    "bush.png": preload("res://PlatformingPack/Sprites/Tiles/Default/bush.png"),
+    "grass.png": preload("res://PlatformingPack/Sprites/Tiles/Default/grass.png"),
+    "cactus.png": preload("res://PlatformingPack/Sprites/Tiles/Default/cactus.png"),
+    "rock.png": preload("res://PlatformingPack/Sprites/Tiles/Default/rock.png"),
+    "hill.png": preload("res://PlatformingPack/Sprites/Tiles/Default/hill.png"),
+    "mushroom_red.png": preload("res://PlatformingPack/Sprites/Tiles/Default/mushroom_red.png"),
+    "mushroom_brown.png": preload("res://PlatformingPack/Sprites/Tiles/Default/mushroom_brown.png"),
+    "hill_top_smile.png": preload("res://PlatformingPack/Sprites/Tiles/Default/hill_top_smile.png"),
+    "terrain_grass_horizontal_middle.png": preload("res://PlatformingPack/Sprites/Tiles/Default/terrain_grass_horizontal_middle.png"),
+    "terrain_sand_horizontal_middle.png": preload("res://PlatformingPack/Sprites/Tiles/Default/terrain_sand_horizontal_middle.png"),
+    "terrain_purple_horizontal_middle.png": preload("res://PlatformingPack/Sprites/Tiles/Default/terrain_purple_horizontal_middle.png"),
+    "terrain_dirt_block_center.png": preload("res://PlatformingPack/Sprites/Tiles/Default/terrain_dirt_block_center.png"),
+    "terrain_sand_block_center.png": preload("res://PlatformingPack/Sprites/Tiles/Default/terrain_sand_block_center.png"),
+    "terrain_purple_block_center.png": preload("res://PlatformingPack/Sprites/Tiles/Default/terrain_purple_block_center.png"),
+    "grass_purple.png": preload("res://PlatformingPack/Sprites/Tiles/Default/grass_purple.png"),
+}
+const PACK_ENEMY_WEB_VARIANTS := [
+    {
+        "key": "double_bee",
+        "walk_a": preload("res://PlatformingPack/Sprites/Enemies/Double/bee_a.png"),
+        "walk_b": preload("res://PlatformingPack/Sprites/Enemies/Double/bee_b.png"),
+        "rest": preload("res://PlatformingPack/Sprites/Enemies/Double/bee_rest.png"),
+        "speed": 68.0,
+        "coins": 14,
+    },
+    {
+        "key": "double_fly",
+        "walk_a": preload("res://PlatformingPack/Sprites/Enemies/Double/fly_a.png"),
+        "walk_b": preload("res://PlatformingPack/Sprites/Enemies/Double/fly_b.png"),
+        "rest": preload("res://PlatformingPack/Sprites/Enemies/Double/fly_rest.png"),
+        "speed": 68.0,
+        "coins": 14,
+    },
+    {
+        "key": "double_mouse",
+        "walk_a": preload("res://PlatformingPack/Sprites/Enemies/Double/mouse_walk_a.png"),
+        "walk_b": preload("res://PlatformingPack/Sprites/Enemies/Double/mouse_walk_b.png"),
+        "rest": preload("res://PlatformingPack/Sprites/Enemies/Double/mouse_rest.png"),
+        "speed": 55.0,
+        "coins": 12,
+    },
+]
 const ENEMY_POOL_PER_LEVEL := 4
 const ENEMY_DOUBLE_EXCLUDED_PREFIXES: Array[String] = [
     "fish_purple",
@@ -90,6 +145,17 @@ const MULTI_SPAWN_DOUBLE_CHANCE := 0.05
 const MULTI_SPAWN_TRIPLE_CHANCE := 0.05
 const MULTI_SPAWN_STACK_OFFSET_X := 14.0
 const STACKED_ENEMY_SPACING_MULT := 0.42
+const COIN_FLOAT_TEXT_COLOR := Color(1.0, 0.843137, 0.14902, 1.0)
+const FLOATING_DAMAGE_NUMBER_SETTINGS := {
+    "ttl": 1.0,
+    "speed_min": 30.0,
+    "speed_max": 50.0,
+}
+const FLOATING_CURRENCY_NUMBER_SETTINGS := {
+    "ttl": 1.0,
+    "speed_min": 24.0,
+    "speed_max": 42.0,
+}
 
 # helper to play sound effects safely; autoload AudioManager isn't considered an
 # engine singleton so Engine.has_singleton() returns false.  Simply check the
@@ -100,6 +166,8 @@ func _play_sfx(type: SoundEffectSettings.SOUND_EFFECT_TYPE) -> void:
 
 const ENEMY_RENDER_SCALE := 0.4
 const BOSS_RENDER_SCALE := 2.9
+const ENEMY_TARGET_WORLD_WIDTH := 52.0
+const BOSS_TARGET_WORLD_WIDTH := 140.0
 const LEVEL_BG_PACK := {
     1: {
         "sky": "background_solid_sky.png",
@@ -264,6 +332,7 @@ var arrow_texture: Texture2D
 var hero_sheets: Dictionary = {}
 var enemy_defs: Dictionary = {}
 var level_enemy_pools: Dictionary = {}
+var using_pack_background_assets: bool = false
 var active_cooldowns: Dictionary = {}
 var battle_mods: Dictionary = {}
 var last_sim_steps: int = 0
@@ -712,14 +781,25 @@ func _make_base_fill_texture() -> Texture2D:
 
 func _apply_parallax_depth_scales() -> void:
     # This scene is 2D. Depth is faked by shrinking farther layers and lifting them up.
-    bg_deep.scale = Vector2(0.18, 0.18)
-    bg_far.scale = Vector2(0.32, 0.32)
-    bg_mid.scale = Vector2(0.52, 0.52)
-    bg_near.scale = Vector2(0.76, 0.76)
-    bg_overlay.scale = Vector2(0.72, 0.72)
-    play_area_overlay.scale = Vector2(0.95, 1.0)
-    ground.scale = Vector2(1.0, 1.0)
-    ground_overlay.scale = Vector2(1.0, 1.0)
+    if using_pack_background_assets:
+        bg_deep.scale = Vector2(0.18, 0.18)
+        bg_far.scale = Vector2(0.32, 0.32)
+        bg_mid.scale = Vector2(0.52, 0.52)
+        bg_near.scale = Vector2(0.76, 0.76)
+        bg_overlay.scale = Vector2(0.72, 0.72)
+        play_area_overlay.scale = Vector2(0.95, 1.0)
+        ground.scale = Vector2(1.0, 1.0)
+        ground_overlay.scale = Vector2(1.0, 1.0)
+    else:
+        # Fallback composition if pack textures are unavailable.
+        bg_deep.scale = Vector2(1.35, 1.35)
+        bg_far.scale = Vector2(1.75, 1.75)
+        bg_mid.scale = Vector2(2.25, 2.25)
+        bg_near.scale = Vector2(2.8, 2.8)
+        bg_overlay.scale = Vector2(2.5, 2.4)
+        play_area_overlay.scale = Vector2(2.4, 1.4)
+        ground.scale = Vector2(2.6, 1.8)
+        ground_overlay.scale = Vector2(2.6, 1.8)
 
     bg_deep.position.y = BG_DEEP_BASE_Y - 140.0
     bg_far.position.y = BG_FAR_BASE_Y - 92.0
@@ -745,6 +825,7 @@ func _apply_level_background(level_index: int) -> void:
         var ground_tex: Texture2D = _make_pack_ground_texture(640, 144, pack_theme)
 
         if sky_tex != null and far_tex != null and mid_tex != null and near_tex != null and ground_tex != null:
+            using_pack_background_assets = true
             bg_deep.texture = sky_tex
             bg_far.texture = far_tex
             bg_mid.texture = mid_tex
@@ -765,6 +846,7 @@ func _apply_level_background(level_index: int) -> void:
             _apply_parallax_depth_scales()
             return
 
+    using_pack_background_assets = false
     bg_deep.texture = _make_atari_sky_texture(256, 120, t["sky_base"], t["sky_star_a"], t["sky_star_b"])
     bg_far.texture = _make_atari_horizon_texture(256, 128, t["far"], t["sky_star_a"], 28, 10)
     bg_mid.texture = _make_atari_horizon_texture(256, 128, t["mid"], t["sky_star_a"], 22, 18)
@@ -914,15 +996,29 @@ func _load_pack_texture(path: String) -> Texture2D:
         return null
     if pack_texture_cache.has(path):
         return pack_texture_cache[path]
-    var img: Image = Image.load_from_file(path)
-    if img == null or img.is_empty():
+    var file_name: String = path.get_file()
+    if PACK_BG_TEXTURES.has(file_name):
+        var cached_bg: Texture2D = PACK_BG_TEXTURES[file_name]
+        pack_texture_cache[path] = cached_bg
+        return cached_bg
+    var tex: Texture2D = load(path) as Texture2D
+    if tex == null:
         return null
-    var tex: ImageTexture = ImageTexture.create_from_image(img)
     pack_texture_cache[path] = tex
     return tex
 
 func _load_pack_image(path: String) -> Image:
-    var img: Image = Image.load_from_file(path)
+    var file_name: String = path.get_file()
+    var tex: Texture2D = null
+    if PACK_TILE_TEXTURES.has(file_name):
+        tex = PACK_TILE_TEXTURES[file_name]
+    elif PACK_BG_TEXTURES.has(file_name):
+        tex = PACK_BG_TEXTURES[file_name]
+    else:
+        tex = load(path) as Texture2D
+    if tex == null:
+        return null
+    var img: Image = tex.get_image()
     if img == null or img.is_empty():
         return null
     if img.get_format() != Image.FORMAT_RGBA8:
@@ -1102,33 +1198,33 @@ func _setup_actor_sheets() -> void:
         "goblin": {
             "sheet": goblin_visual["sheet"],
             "frame": goblin_visual["frame"],
-            "scale": ENEMY_RENDER_SCALE,
+            "scale": _normalized_render_scale(goblin_visual["frame"], ENEMY_RENDER_SCALE, ENEMY_TARGET_WORLD_WIDTH),
             "speed": 55.0,
             "coins": 10,
         },
         "brute": {
             "sheet": brute_visual["sheet"],
             "frame": brute_visual["frame"],
-            "scale": ENEMY_RENDER_SCALE,
+            "scale": _normalized_render_scale(brute_visual["frame"], ENEMY_RENDER_SCALE, ENEMY_TARGET_WORLD_WIDTH),
             "speed": 36.0,
             "coins": 16,
         },
         "flyer": {
             "sheet": flyer_visual["sheet"],
             "frame": flyer_visual["frame"],
-            "scale": ENEMY_RENDER_SCALE,
+            "scale": _normalized_render_scale(flyer_visual["frame"], ENEMY_RENDER_SCALE, ENEMY_TARGET_WORLD_WIDTH),
             "speed": 68.0,
             "coins": 14,
         },
         "boss": {
             "sheet": boss_visual["sheet"],
             "frame": boss_visual["frame"],
-            "scale": BOSS_RENDER_SCALE,
+            "scale": _normalized_render_scale(boss_visual["frame"], BOSS_RENDER_SCALE, BOSS_TARGET_WORLD_WIDTH),
             "speed": 22.0,
             "coins": 120,
         },
     }
-    var pack_enemy_keys: Array[String] = _append_pack_double_enemy_defs()
+    var pack_enemy_keys: Array[String] = _append_pack_enemy_defs_from_constants()
     _assign_level_enemy_pools(pack_enemy_keys)
 
 func _append_pack_double_enemy_defs() -> Array[String]:
@@ -1169,13 +1265,43 @@ func _append_pack_double_enemy_defs() -> Array[String]:
         enemy_defs[enemy_key] = {
             "sheet": visual["sheet"],
             "frame": visual["frame"],
-            "scale": float(visual.get("scale", ENEMY_RENDER_SCALE)),
+            "scale": _normalized_render_scale(visual["frame"], float(visual.get("scale", ENEMY_RENDER_SCALE)), ENEMY_TARGET_WORLD_WIDTH),
             "speed": _double_enemy_speed(base_name),
             "coins": _double_enemy_coins(base_name),
         }
         created_keys.append(enemy_key)
 
     return created_keys
+
+func _append_pack_enemy_defs_from_constants() -> Array[String]:
+    var created_keys: Array[String] = []
+    for variant in PACK_ENEMY_WEB_VARIANTS:
+        var visual: Dictionary = _make_pack_actor_from_textures(
+            variant["walk_a"],
+            variant["walk_b"],
+            variant["rest"],
+            ENEMY_FRAME_SIZE,
+            Color(0.83, 0.23, 0.23, 1.0),
+            "goblin",
+            ENEMY_RENDER_SCALE,
+            true
+        )
+        var enemy_key: String = str(variant["key"])
+        enemy_defs[enemy_key] = {
+            "sheet": visual["sheet"],
+            "frame": visual["frame"],
+            "scale": _normalized_render_scale(visual["frame"], float(visual.get("scale", ENEMY_RENDER_SCALE)), ENEMY_TARGET_WORLD_WIDTH),
+            "speed": float(variant["speed"]),
+            "coins": int(variant["coins"]),
+        }
+        created_keys.append(enemy_key)
+    return created_keys
+
+func _normalized_render_scale(frame_size: Vector2i, fallback_scale: float, target_world_width: float) -> float:
+    if frame_size.x <= 0:
+        return fallback_scale
+    var width := frame_size.x
+    return max(0.05, target_world_width / float(width))
 
 func _build_pack_double_enemy_frame_map() -> Dictionary:
     var frame_map: Dictionary = {}
@@ -1677,6 +1803,17 @@ func _make_pack_actor(walk_a_path: String, walk_b_path: String, attack_path: Str
         "scale": scale_factor,
     }
 
+func _make_pack_actor_from_textures(walk_a_tex: Texture2D, walk_b_tex: Texture2D, attack_tex: Texture2D, fallback_frame: Vector2i, fallback_color: Color, fallback_archetype: String, scale_factor: float, facing_left: bool = false) -> Dictionary:
+    var composed: Dictionary = _compose_three_frame_sheet_from_textures([walk_a_tex, walk_b_tex, attack_tex])
+    if composed.size() > 0:
+        composed["scale"] = scale_factor
+        return composed
+    return {
+        "sheet": _make_actor_sheet(fallback_frame, fallback_color, Color(0.92, 0.92, 0.92, 1.0), fallback_archetype, facing_left),
+        "frame": fallback_frame,
+        "scale": scale_factor,
+    }
+
 func _compose_three_frame_sheet_from_files(frame_paths: Array[String]) -> Dictionary:
     if frame_paths.size() != 3:
         return {}
@@ -1685,9 +1822,45 @@ func _compose_three_frame_sheet_from_files(frame_paths: Array[String]) -> Dictio
     var max_w: int = 0
     var max_h: int = 0
     for frame_path in frame_paths:
-        var img: Image = Image.new()
-        if img.load(frame_path) != OK:
+        var img: Image = _load_pack_image(str(frame_path))
+        if img == null or img.is_empty():
             return {}
+        frames.append(img)
+        max_w = max(max_w, img.get_width())
+        max_h = max(max_h, img.get_height())
+
+    if max_w <= 0 or max_h <= 0:
+        return {}
+
+    var sheet: Image = Image.create(max_w * 3, max_h, false, Image.FORMAT_RGBA8)
+    sheet.fill(Color(0, 0, 0, 0))
+    for i in range(3):
+        var src: Image = frames[i]
+        var dx: int = i * max_w + int((max_w - src.get_width()) / 2)
+        var dy: int = int((max_h - src.get_height()) / 2)
+        sheet.blit_rect(src, Rect2i(0, 0, src.get_width(), src.get_height()), Vector2i(dx, dy))
+
+    return {
+        "sheet": ImageTexture.create_from_image(sheet),
+        "frame": Vector2i(max_w, max_h),
+    }
+
+func _compose_three_frame_sheet_from_textures(frame_textures: Array) -> Dictionary:
+    if frame_textures.size() != 3:
+        return {}
+
+    var frames: Array[Image] = []
+    var max_w: int = 0
+    var max_h: int = 0
+    for tex_variant in frame_textures:
+        var tex: Texture2D = tex_variant
+        if tex == null:
+            return {}
+        var img: Image = tex.get_image()
+        if img == null or img.is_empty():
+            return {}
+        if img.get_format() != Image.FORMAT_RGBA8:
+            img.convert(Image.FORMAT_RGBA8)
         frames.append(img)
         max_w = max(max_w, img.get_width())
         max_h = max(max_h, img.get_height())
@@ -2521,6 +2694,7 @@ func _on_coin_collected(coin: CoinPickup, by_cursor: bool) -> void:
     SaveHandler.fishing_lifetime_coins += amount
     SaveHandler.save_fishing_progress()
     coins_gained += amount
+    _spawn_floating_currency_text(coin.position + Vector2(randf_range(-10.0, 10.0), -20.0), amount)
 
     # Remove from array using indexed removal
     for i in range(coins.size()):
@@ -3016,6 +3190,12 @@ func _update_hero_damage_float(delta: float) -> void:
     hero_damage_timer = 0.2
 
 func _spawn_floating_damage_text(world_pos: Vector2, amount: float, color: Color, prefix: String = "-") -> void:
+    _spawn_floating_number_text(world_pos, amount, color, prefix, FLOATING_DAMAGE_NUMBER_SETTINGS)
+
+func _spawn_floating_currency_text(world_pos: Vector2, amount: float) -> void:
+    _spawn_floating_number_text(world_pos, amount, COIN_FLOAT_TEXT_COLOR, "+", FLOATING_CURRENCY_NUMBER_SETTINGS)
+
+func _spawn_floating_number_text(world_pos: Vector2, amount: float, color: Color, prefix: String, settings: Dictionary) -> void:
     if damage_text_layer == null or suppress_floating_text:
         return
     var value: int = max(1, int(round(amount)))
@@ -3026,10 +3206,18 @@ func _spawn_floating_damage_text(world_pos: Vector2, amount: float, color: Color
     label.z_index = 100
     label.top_level = false
     damage_text_layer.add_child(label)
+    var ttl: float = max(0.05, float(settings.get("ttl", 1.0)))
+    var speed_min: float = float(settings.get("speed_min", 30.0))
+    var speed_max: float = float(settings.get("speed_max", 50.0))
+    if speed_max < speed_min:
+        var tmp: float = speed_min
+        speed_min = speed_max
+        speed_max = tmp
     floating_damage_texts.append({
         "label": label,
-        "ttl": 1.0,
-        "speed": 30.0 + randf_range(0.0, 20.0),
+        "ttl": ttl,
+        "ttl_max": ttl,
+        "speed": randf_range(speed_min, speed_max),
     })
 
 func _spawn_floating_heal_text(world_pos: Vector2, amount: float) -> void:
@@ -3049,7 +3237,8 @@ func _update_floating_damage_texts(delta: float) -> void:
             continue
         label.position.y -= float(item.get("speed", 36.0)) * delta
         var c: Color = label.modulate
-        c.a = clamp(ttl / 1.0, 0.0, 1.0)
+        var ttl_max: float = max(0.001, float(item.get("ttl_max", 1.0)))
+        c.a = clamp(ttl / ttl_max, 0.0, 1.0)
         label.modulate = c
         item["ttl"] = ttl
         floating_damage_texts[i] = item
