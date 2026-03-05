@@ -317,8 +317,8 @@ func load_local_settings():
         fps_limit = int(json_data["fps_limit"]) if json_data.has("fps_limit") else 144
         has_shown_pick_locale_first_time = bool(json_data["has_shown_pick_locale_first_time"]) if json_data.has("has_shown_pick_locale_first_time") else false
         dark_mode = bool(json_data["dark_mode"]) if json_data.has("dark_mode") else false
-        damage_text = bool(json_data["damage_text"]) if json_data.has("damage_text") else true
-        money_text = bool(json_data["money_text"]) if json_data.has("money_text") else true
+        damage_text = _load_bool_local_setting(json_data, "damage_text", true)
+        money_text = _load_bool_local_setting(json_data, "money_text", true)
         shuffle_music = bool(json_data["shuffle_music"]) if json_data.has("shuffle_music") else false
         screen_shake = bool(json_data["screen_shake"]) if json_data.has("screen_shake") else true
         black_hole_pulse = bool(json_data["black_hole_pulse"]) if json_data.has("black_hole_pulse") else true
@@ -327,6 +327,28 @@ func load_local_settings():
         black_hole_particles = bool(json_data["black_hole_particles"]) if json_data.has("black_hole_particles") else true
         controller_sensitivity = float(json_data["controller_sensitivity"]) if json_data.has("controller_sensitivity") else 1.0
         audio_muted = bool(json_data["audio_muted"]) if json_data.has("audio_muted") else false
+    else:
+        # First run / missing settings file: floating text should default on.
+        damage_text = true
+        money_text = true
+
+func _load_bool_local_setting(data: Dictionary, key: String, default_value: bool) -> bool:
+    if not data.has(key):
+        return default_value
+    var raw_value: Variant = data[key]
+    if raw_value is bool:
+        return raw_value
+    if raw_value is int:
+        return int(raw_value) != 0
+    if raw_value is float:
+        return not is_zero_approx(float(raw_value))
+    if raw_value is String:
+        var normalized: String = String(raw_value).strip_edges().to_lower()
+        if normalized == "true" or normalized == "1" or normalized == "yes" or normalized == "on":
+            return true
+        if normalized == "false" or normalized == "0" or normalized == "no" or normalized == "off" or normalized == "":
+            return false
+    return default_value
 
 func apply_audio_mute() -> void:
     var master_bus_index: int = AudioServer.get_bus_index("Master")

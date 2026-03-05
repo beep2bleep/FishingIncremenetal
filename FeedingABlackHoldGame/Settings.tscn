@@ -106,6 +106,28 @@ layout_mode = 2
 [node name="Shuffle Music CheckButton" type="CheckBox" parent="GridContainer/CenterContainer5"]
 layout_mode = 2
 
+[node name="Floating Currency Text" type="Label" parent="GridContainer"]
+layout_mode = 2
+text = "MONEY_TEXT"
+
+[node name="CenterContainer9" type="CenterContainer" parent="GridContainer"]
+layout_mode = 2
+
+[node name="Floating Currency CheckButton" type="CheckBox" parent="GridContainer/CenterContainer9"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Floating Damage Text" type="Label" parent="GridContainer"]
+layout_mode = 2
+text = "DAMAGE_TEXT"
+
+[node name="CenterContainer10" type="CenterContainer" parent="GridContainer"]
+layout_mode = 2
+
+[node name="Floating Damage CheckButton" type="CheckBox" parent="GridContainer/CenterContainer10"]
+unique_name_in_owner = true
+layout_mode = 2
+
 [node name="Screen Mode" type="Label" parent="GridContainer"]
 layout_mode = 2
 text = "SCREEN MODE"
@@ -202,6 +224,8 @@ expand_icon = true
 [connection signal="value_changed" from="GridContainer/Effect Volume Slider" to="." method="_on_effect_volume_slider_value_changed"]
 [connection signal="value_changed" from="GridContainer/Music Volume" to="." method="_on_music_volume_value_changed"]
 [connection signal="toggled" from="GridContainer/CenterContainer5/Shuffle Music CheckButton" to="." method="_on_shuffle_music_check_button_toggled"]
+[connection signal="toggled" from="GridContainer/CenterContainer9/Floating Currency CheckButton" to="." method="_on_floating_currency_check_button_toggled"]
+[connection signal="toggled" from="GridContainer/CenterContainer10/Floating Damage CheckButton" to="." method="_on_floating_damage_check_button_toggled"]
 [connection signal="item_selected" from="GridContainer/Screen Mode Dropdown" to="." method="_on_screen_mode_dropdown_item_selected"]
 [connection signal="item_selected" from="GridContainer/FPS Dropdown" to="." method="_on_fps_dropdown_item_selected"]
 [connection signal="toggled" from="GridContainer/CenterContainer/V Sync Enabled" to="." method="_on_v_sync_enabled_toggled"]

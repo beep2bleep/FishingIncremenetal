@@ -1,0 +1,84 @@
+Planned Upgrade Tree (ASCII Draft Only)
+Source: Data/FishingUpgradeData.json
+Status: Planning only. No dependency data changed.
+
+Assumptions used in this draft:
+- "Temporal Tempo" maps to `battle_speed_unlock` (displayed in DB as Temporal Throttle).
+- "Unlock Tactical Telemetry" maps to `auto_attack_unlock`.
+- Root can have >4 children. All non-root branches are kept <=4 children by using branch hubs.
+- Branch hubs are planning placeholders; implementation can use existing nodes as hub anchors.
+
+ROOT
+|-- Cursor Collector (`cursor_pickup_unlock`)
+|   |-- Coin Economy Hub
+|   |   |-- `salvage_hooks` -> `salvage_hooks_2`
+|   |   |-- `field_magnet` -> `supply_lenses` -> `collector_drone` -> `scrap_broker` -> `market_routing` -> `run_yield_matrix`
+|   |   |-- `core_drop__L1` -> ... -> `core_drop__L8`
+|   |   `-- Extra Skill ECON family chain (n = 1,9,17,...)
+|   `-- Movement Hub
+|       |-- `trail_boots` -> `stride_rhythm` -> `route_memory` -> `pathline_sprint`
+|       |-- `quickstep_chain` -> `long_march`
+|       |-- `momentum_carry`
+|       `-- Extra Skill MOVE family chain (n = 4,12,20,...)
+|
+|-- Knight Vampirism Unlock (`knight_vamp_unlock`)
+|   |-- `knight_bloodline_1_60` -> `knight_bloodline_2_60`
+|   |-- `core_knight_speed__L1` -> ... -> `core_knight_speed__L8`
+|   |-- `core_knight_damage__L1` -> ... -> `core_knight_damage__L8`
+|   `-- `core_knight_active_cap__L1` -> ... -> `core_knight_active_cap__L8`
+|
+|-- Unlock Archer (`recruit_archer`)
+|   |-- Archer Pierce Unlock (`archer_pierce_unlock`) [direct child]
+|   |   |-- `archer_piercing_geometry_60`
+|   |   `-- `archer_drill_1_60` -> `archer_drill_2_60`
+|   |-- `core_archer_speed__L1` -> ... -> `core_archer_speed__L8`
+|   |-- `core_archer_damage__L1` -> ... -> `core_archer_damage__L8`
+|   `-- `core_archer_active_cap__L1` -> ... -> `core_archer_active_cap__L7`
+|
+|-- Unlock Guardian (`recruit_guardian`)
+|   |-- Guardian Fortify Unlock (`guardian_fortify_unlock`) [direct child]
+|   |   `-- `guardian_bulwark_1_60` -> `guardian_bulwark_2_60`
+|   |-- `core_guardian_speed__L1` -> ... -> `core_guardian_speed__L7`
+|   |-- `core_guardian_damage__L1` -> ... -> `core_guardian_damage__L7`
+|   `-- `core_guardian_active_cap__L1` -> ... -> `core_guardian_active_cap__L7`
+|
+|-- Unlock Mage (`recruit_mage`)
+|   |-- Mage Storm Unlock (`mage_storm_unlock`) [direct child]
+|   |   `-- `mage_sigil_1_60` -> `mage_sigil_2_60`
+|   |-- `core_mage_speed__L1` -> ... -> `core_mage_speed__L7`
+|   |-- `core_mage_damage__L1` -> ... -> `core_mage_damage__L7`
+|   `-- `core_mage_active_cap__L1` -> ... -> `core_mage_active_cap__L6`
+|
+|-- Temporal Tempo (`battle_speed_unlock__L1`)
+|   |-- `battle_speed_unlock__L2` -> `battle_speed_unlock__L3`
+|   |-- `core_armor__L1` -> ... -> `core_armor__L8`
+|   |-- Mitigation Chain
+|   |   `-- `reinforced_plates` -> `layered_carapace` -> `shock_padding` -> `dot_deflector` -> `front_compression` -> `hemostasis_mesh` -> `shock_sink`
+|   `-- Extra Skill SURV family chain (n = 3,11,19,...)
+|
+`-- Unlock Tactical Telemetry (`auto_attack_unlock`)
+    |-- Enemy Count / Pressure Hub
+    |   |-- `encroaching_horde` -> `wave_bringer_1` -> `wave_bringer_2` -> `crowd_ecology` -> `pressure_ladder`
+    |   |-- `taxonomy_scanner`
+    |   |-- `core_density__L1` -> ... -> `core_density__L7`
+    |   `-- Extra Skill DENS family chain (n = 2,10,18,...)
+    |-- Power Generation Hub
+    |   |-- `power_harvest_unlock` -> `condensed_cores_60` -> `condensed_cores_2_60`
+    |   |-- `power_reservoir_1_60` -> `power_reservoir_2_60` -> `power_reservoir_3_60`
+    |   |-- `core_power__L1` -> ... -> `core_power__L7`
+    |   `-- `power_echo` -> `overclock_window` -> `overflow_capture` -> `quick_invocation_1_60` -> `quick_invocation_2_60` -> `extended_channel_1_60` -> `extended_channel_2_60` -> `cadence_lock`
+    |-- Active Uptime Hub
+    |   `-- Extra Skill ACTV family chain (n = 6,14,22,...)
+    `-- Boss Utility Hub
+        |-- `boss_stance_60` -> `boss_readiness_60` -> `boss_pattern_map` -> `boss_fracture_study_60` -> `boss_bastion` -> `boss_armor_mesh_60` -> `boss_rend_protocol`
+        `-- Extra Skill BOSS family chain (n = 7,15,23,...)
+
+TEAM extra skill distribution plan (to avoid >4 children and no backtracking):
+- Knight branch gets TEAM extras with n = 8,40,72,...
+- Archer branch gets TEAM extras with n = 16,48,80,...
+- Guardian branch gets TEAM extras with n = 24,56,88,...
+- Mage branch gets TEAM extras with n = 32,64,94,...
+
+Validation target for implementation phase:
+- No node except ROOT has >4 direct children.
+- No dependency backtracks (edges only move forward away from ROOT).

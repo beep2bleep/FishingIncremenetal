@@ -3190,9 +3190,13 @@ func _update_hero_damage_float(delta: float) -> void:
     hero_damage_timer = 0.2
 
 func _spawn_floating_damage_text(world_pos: Vector2, amount: float, color: Color, prefix: String = "-") -> void:
+    if not SaveHandler.damage_text:
+        return
     _spawn_floating_number_text(world_pos, amount, color, prefix, FLOATING_DAMAGE_NUMBER_SETTINGS)
 
 func _spawn_floating_currency_text(world_pos: Vector2, amount: float) -> void:
+    if not SaveHandler.money_text:
+        return
     _spawn_floating_number_text(world_pos, amount, COIN_FLOAT_TEXT_COLOR, "+", FLOATING_CURRENCY_NUMBER_SETTINGS)
 
 func _spawn_floating_number_text(world_pos: Vector2, amount: float, color: Color, prefix: String, settings: Dictionary) -> void:

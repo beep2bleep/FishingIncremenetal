@@ -32,6 +32,8 @@ func _ready():
     ctrl_sense = SaveHandler.controller_sensitivity
 
     %"V Sync Enabled".button_pressed = SaveHandler.vsync_enabled
+    %"Floating Currency CheckButton".button_pressed = SaveHandler.money_text
+    %"Floating Damage CheckButton".button_pressed = SaveHandler.damage_text
     
 
     text_scale = SaveHandler.text_scale
@@ -94,6 +96,16 @@ func _on_music_volume_value_changed(value: float) -> void :
 
 func _on_shuffle_music_check_button_toggled(toggled_on: bool) -> void :
     SaveHandler.update_shuffle_music(toggled_on)
+    if visible:
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+
+func _on_floating_currency_check_button_toggled(toggled_on: bool) -> void :
+    SaveHandler.update_floating_money_text(toggled_on)
+    if visible:
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+
+func _on_floating_damage_check_button_toggled(toggled_on: bool) -> void :
+    SaveHandler.update_floating_damage_text(toggled_on)
     if visible:
         AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 
