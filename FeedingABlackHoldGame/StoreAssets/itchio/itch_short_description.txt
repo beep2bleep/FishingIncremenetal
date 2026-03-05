@@ -1,0 +1,3 @@
+Vanguard - Idle Auto Battle
+
+A progression-heavy idle auto battler where your squad fights continuously and your timing decisions decide each push.

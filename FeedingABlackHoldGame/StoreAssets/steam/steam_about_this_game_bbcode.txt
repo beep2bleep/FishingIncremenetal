@@ -1,0 +1,35 @@
+[h1]Vanguard - Idle Auto Battle[/h1]
+
+Your team fights automatically. Your decisions determine how far it goes.
+
+Vanguard - Idle Auto Battle combines real-time auto combat with persistent incremental progression. Build your lineup, trigger hero actives at key moments, and convert every run into lasting power.
+
+[h2]What You Do[/h2]
+[list]
+[*]Recruit and develop a multi-role hero squad
+[*]Manage power economy for high-impact active abilities
+[*]Push through escalating waves into boss phases
+[*]Invest run rewards into permanent upgrades
+[*]Refine your build for faster and safer clears
+[/list]
+
+[h2]Key Features[/h2]
+[list]
+[*]Auto battle combat loop with meaningful tactical decisions
+[*]Four heroes with distinct play patterns and active powers
+[*]Boss fights with segment-style progression pressure
+[*]Persistent upgrade systems across offense, defense, and economy
+[*]Session-friendly progression pacing with speed control support
+[*]Single-player progression built for repeat runs and optimization
+[/list]
+
+[h2]Why It Is Addictive[/h2]
+Every run gives clear growth. Every upgrade changes performance. Every active timing choice can rescue a push or accelerate a snowball. You are always one optimization away from a bigger clear.
+
+[h2]Best For Players Who Enjoy[/h2]
+[list]
+[*]Auto battlers
+[*]Idle and incremental progression
+[*]Build optimization and scaling loops
+[*]PvE strategy with low mechanical overhead
+[/list]

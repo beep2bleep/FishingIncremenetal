@@ -1,0 +1,26 @@
+Asset Manifest
+
+Steam templates:
+- templates/steam_header_capsule_920x430.svg
+- templates/steam_small_capsule_462x174.svg
+- templates/steam_main_capsule_1232x706.svg
+- templates/steam_vertical_capsule_748x896.svg
+- templates/steam_library_capsule_600x900.svg
+- templates/steam_library_hero_3840x1240.svg
+
+itch.io templates:
+- templates/itch_cover_1200x900.svg
+- templates/itch_banner_1200x540.svg
+- templates/itch_screenshot_1920x1080.svg
+
+Ready-to-paste copy files:
+- steam/steam_short_description.txt
+- steam/steam_short_description_options.txt
+- steam/steam_about_this_game_plain.txt
+- steam/steam_about_this_game_bbcode.txt
+- itchio/itch_short_description.txt
+- itchio/itch_short_description_options.txt
+- itchio/itch_long_description.md
+- common/headlines.txt
+- common/short_summaries.txt
+- common/long_description_master.md

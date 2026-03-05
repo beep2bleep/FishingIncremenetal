@@ -1,0 +1,13 @@
+Vanguard - Idle Auto Battle is a progression-first strategy auto battler.
+
+Your team battles on its own. You drive the outcome by shaping upgrades, managing power economy, and triggering active abilities at the right time.
+
+Build a multi-hero lineup, scale through escalating waves, and break boss phases for bigger payouts. Then reinvest every run into permanent growth to accelerate the next one.
+
+Features:
+- Auto battle combat with meaningful tactical decisions
+- Four heroes with distinct roles and active powers
+- Boss encounters with segment-style progression pressure
+- Persistent upgrades across offense, defense, and economy
+- Session-friendly pacing with deep long-run optimization
+- Single-player PvE progression loop built for repeat runs

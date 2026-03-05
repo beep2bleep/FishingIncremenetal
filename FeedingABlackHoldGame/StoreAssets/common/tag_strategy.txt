@@ -1,0 +1,20 @@
+Tags and Category Strategy
+
+Primary Tags
+- Auto Battler
+- Idle
+- Incremental
+- Strategy
+- Singleplayer
+
+Secondary Tags
+- Simulation
+- Casual Strategy
+- Progression
+- PvE
+- Indie
+
+Positioning Notes
+- Lead with "auto battle + meaningful decisions" to avoid pure idle expectations.
+- Emphasize persistent progression and build optimization.
+- Highlight boss phases and active ability timing for tactical depth.

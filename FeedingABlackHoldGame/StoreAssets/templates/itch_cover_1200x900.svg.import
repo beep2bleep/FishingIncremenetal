@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://y81pd8uxthc"
-path="res://.godot/imported/steam_header_616x353.svg-ab4d5981df8ec9d1b90d9bc645ee752c.ctex"
+uid="uid://nxv6ljfh2j65"
+path="res://.godot/imported/itch_cover_1200x900.svg-9d96f367dbc93cce5c518459a9bd2296.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://StoreAssets/steam/steam_header_616x353.svg"
-dest_files=["res://.godot/imported/steam_header_616x353.svg-ab4d5981df8ec9d1b90d9bc645ee752c.ctex"]
+source_file="res://StoreAssets/templates/itch_cover_1200x900.svg"
+dest_files=["res://.godot/imported/itch_cover_1200x900.svg-9d96f367dbc93cce5c518459a9bd2296.ctex"]
 
 [params]
 

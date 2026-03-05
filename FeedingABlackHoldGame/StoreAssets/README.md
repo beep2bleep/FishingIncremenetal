@@ -1,25 +1,38 @@
-Store asset pack for uploading to itch.io and Steam.
+# Store Assets Pack: Vanguard - Idle Auto Battle
 
-What I created:
-- SVG logos and banners (editable vector placeholders)
-- Screenshot placeholders (SVG)
-- Text files: `itch_description.txt`, `steam_description.txt`, `press_release.txt`, `credits.txt`
+This folder was rebuilt from scratch for the current game positioning.
 
-How to export to PNG (Windows):
+## What this pack includes
+- `common/`: shared marketing copy and positioning
+- `steam/`: Steam specific copy and submission checklist
+- `itchio/`: itch.io specific copy and page plan
+- `templates/`: fresh SVG placeholders for required or recommended graphics
 
-Using ImageMagick (magick):
-magick convert -background none input.svg -resize WIDTHxHEIGHT output.png
+## Product positioning used
+Vanguard - Idle Auto Battle is positioned as an auto battler + idle progression game with tactical active abilities, boss phases, and a long-tail upgrade tree.
 
-Using Inkscape (new CLI):
-inkscape input.svg --export-filename=output.png --export-width=WIDTH --export-height=HEIGHT
+Gameplay hooks used from project code:
+- Auto battle loop with frontline pressure and formation pacing
+- Four heroes with unique roles and activatable powers (Knight, Archer, Guardian, Mage)
+- Currency and power economy with click interaction and active timing decisions
+- Boss phases with segment progress and payout moments
+- Meta progression through layered upgrades and unlock chains
+- Optional speed controls and long session progression support
+- Random bonus events (UFO reward moments)
 
-Recommended sizes (examples):
-- itch header/banner: 1200x540, 960x540
-- itch thumbnail: 512x512
-- steam header: 616x353
-- steam capsule small: 231x87
-- steam capsule main: 464x181
-- steam hero: 1920x620 (optional)
-- screenshots: 1280x720 or 1920x1080
+## Platform references used
+- Steamworks Graphical Assets - Overview:
+  https://partner.steamgames.com/doc/store/assets?l=english
+- Steamworks Store Page Written Description:
+  https://partner.steamgames.com/doc/store/page/description
+- Steamworks Graphical Asset Rules:
+  https://partner.steamgames.com/doc/store/assets/rules
+- itch.io Creator Quality Guidelines:
+  https://itch.io/docs/creators/quality-guidelines
+- itch.io Designing your page:
+  https://itch.io/docs/creators/design
 
-Place exported PNGs into the same folders (`itchio` / `steam`) before uploading.
+## Notes
+- Steam sizes in this pack use the current post-2024 dimensions listed in Steamworks docs.
+- itch.io does not enforce one strict image size set in the referenced docs; this pack uses practical high-resolution templates.
+- Replace all placeholder art with final branded assets before upload.

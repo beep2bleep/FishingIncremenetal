@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://i6j20wt0do0t"
-path="res://.godot/imported/itch_banner_1200x540.svg-b404e7dd93351b86cba1c495fa891bc7.ctex"
+uid="uid://7f34bg0q7qpv"
+path="res://.godot/imported/steam_vertical_capsule_748x896.svg-4e807db9a04c13744b1e7d5aeb012c4b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://StoreAssets/itchio/itch_banner_1200x540.svg"
-dest_files=["res://.godot/imported/itch_banner_1200x540.svg-b404e7dd93351b86cba1c495fa891bc7.ctex"]
+source_file="res://StoreAssets/templates/steam_vertical_capsule_748x896.svg"
+dest_files=["res://.godot/imported/steam_vertical_capsule_748x896.svg-4e807db9a04c13744b1e7d5aeb012c4b.ctex"]
 
 [params]
 

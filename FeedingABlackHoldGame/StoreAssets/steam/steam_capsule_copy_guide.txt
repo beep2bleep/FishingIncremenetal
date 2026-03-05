@@ -1,0 +1,25 @@
+Steam Capsule Copy Direction
+
+Game Name Lockup:
+Vanguard - Idle Auto Battle
+
+Primary capsule text (short, optional depending on visual clutter):
+- Idle Auto Battle
+- Squad Progression Strategy
+- Build, Trigger, Dominate
+
+Visual priorities by asset:
+- Main Capsule (1232x706): hero lineup + enemy pressure + clear title lockup
+- Header Capsule (920x430): title readability first, one combat focal point
+- Small Capsule (462x174): strongest contrast and title legibility only
+- Vertical Capsule (748x896): strongest character showcase + clear genre read
+
+Do:
+- Keep text minimal and readable at small scale
+- Show real gameplay tone (heroes + enemies + action)
+- Use one consistent palette and logo treatment
+
+Do not:
+- Add dense feature text blocks
+- Overpromise modes not in the build
+- Use unrelated art styles between capsules

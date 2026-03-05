@@ -1,0 +1,3 @@
+Vanguard - Idle Auto Battle
+
+An idle auto battler where your squad fights continuously while you optimize upgrades, trigger hero actives, and break through boss phases.
