@@ -896,7 +896,7 @@ static func _build_tree_layout(grouped_upgrades: Array) -> Dictionary:
             else:
                 var branch_count: int = int(root_counts.get(branch, 0))
                 root_counts[branch] = branch_count + 1
-                cell = _find_layout_cell_for_root(branch, branch_count, used_cells)
+                cell = _find_layout_cell_for_root(branch, branch_count, used_cells, key)
 
             id_to_cell[upgrade_id] = cell
             used_cells[cell] = true
@@ -944,9 +944,13 @@ static func _find_layout_cell_for_child(parent_cell: Vector2, preferred_branch: 
             return candidate
     return _find_free_layout_cell_cardinal(parent_cell + (main_dir * 2), main_dir, used_cells)
 
-static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cells: Dictionary) -> Vector2:
+static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cells: Dictionary, key: String = "") -> Vector2:
     var dir: Vector2 = LAYOUT_DIRS[branch]
     var target: Vector2 = _compute_root_target(dir, branch_count)
+    # Keep Recruit Mage anchored in the lower-left quadrant.
+    if key == "recruit_mage":
+        dir = Vector2.LEFT
+        target = Vector2(-8, -7)
     var candidates: Array[Vector2] = _candidate_cells_cardinal(target, dir, 24)
     for candidate_variant: Variant in candidates:
         var candidate: Vector2 = candidate_variant
