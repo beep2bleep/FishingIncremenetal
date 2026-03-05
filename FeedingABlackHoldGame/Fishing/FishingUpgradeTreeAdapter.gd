@@ -249,24 +249,37 @@ static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionar
     var recruit_key_for_hero: String = "recruit_%s" % hero if hero != "" else ""
     var hero_unlock_key: String = _hero_unlock_key(hero) if hero != "" else ""
 
+    if lower == "cursor_pickup_unlock" \
+    or lower == "knight_vamp_unlock" \
+    or lower == "auto_attack_unlock" \
+    or lower == "battle_speed_unlock" \
+    or lower.begins_with("recruit_"):
+        return ""
+
+    if lower.begins_with("extra_skill_"):
+        return _extra_skill_dependency_key(lower, key_to_primary_id)
+
     if lower.begins_with("core_") or lower.begins_with("recruit_"):
-        if lower.begins_with("recruit_"):
-            return ""
+        if lower == "core_drop" and key_to_primary_id.has("cursor_pickup_unlock"):
+            return "cursor_pickup_unlock"
+        if lower == "core_armor" and key_to_primary_id.has("battle_speed_unlock"):
+            return "battle_speed_unlock"
+        if (lower == "core_density" or lower == "core_power") and key_to_primary_id.has("auto_attack_unlock"):
+            return "auto_attack_unlock"
+        if hero == "knight" and key_to_primary_id.has("knight_vamp_unlock"):
+            return "knight_vamp_unlock"
         if gated_hero and recruit_key_for_hero != "" and key_to_primary_id.has(recruit_key_for_hero):
             return recruit_key_for_hero
         return ""
 
     if lower.ends_with("_unlock"):
+        if lower == "power_harvest_unlock" and key_to_primary_id.has("auto_attack_unlock"):
+            return "auto_attack_unlock"
         if gated_hero and recruit_key_for_hero != "" and key_to_primary_id.has(recruit_key_for_hero):
             return recruit_key_for_hero
         if hero != "":
             if key_to_primary_id.has(recruit_key_for_hero):
                 return recruit_key_for_hero
-        return ""
-
-    if lower.begins_with("extra_skill_"):
-        if key_to_primary_id.has("core_power"):
-            return "core_power"
         return ""
 
     if hero != "":
@@ -277,6 +290,9 @@ static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionar
                 return recruit_key_for_hero
             return ""
 
+        if key_to_primary_id.has("knight_vamp_unlock"):
+            return "knight_vamp_unlock"
+
         var hero_core_damage_key: String = "core_%s_damage" % hero
         if key_to_primary_id.has(hero_unlock_key):
             return hero_unlock_key
@@ -284,6 +300,48 @@ static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionar
             return hero_core_damage_key
         if key_to_primary_id.has(recruit_key_for_hero):
             return recruit_key_for_hero
+        return ""
+
+    if _is_enemy_pressure_key(lower):
+        if key_to_primary_id.has("core_density"):
+            return "core_density"
+        if key_to_primary_id.has("auto_attack_unlock"):
+            return "auto_attack_unlock"
+        return ""
+
+    if _is_power_generation_key(lower):
+        if key_to_primary_id.has("core_power"):
+            return "core_power"
+        if key_to_primary_id.has("power_harvest_unlock"):
+            return "power_harvest_unlock"
+        if key_to_primary_id.has("auto_attack_unlock"):
+            return "auto_attack_unlock"
+        return ""
+
+    if _is_global_mitigation_key(lower):
+        if key_to_primary_id.has("core_armor"):
+            return "core_armor"
+        if key_to_primary_id.has("battle_speed_unlock"):
+            return "battle_speed_unlock"
+        return ""
+
+    if lower == "trail_boots":
+        if key_to_primary_id.has("cursor_pickup_unlock"):
+            return "cursor_pickup_unlock"
+        return ""
+
+    if _is_movement_key(lower):
+        if key_to_primary_id.has("trail_boots"):
+            return "trail_boots"
+        if key_to_primary_id.has("cursor_pickup_unlock"):
+            return "cursor_pickup_unlock"
+        return ""
+
+    if _is_cursor_coin_key(lower):
+        if key_to_primary_id.has("core_drop"):
+            return "core_drop"
+        if key_to_primary_id.has("cursor_pickup_unlock"):
+            return "cursor_pickup_unlock"
         return ""
 
     var theme_act: int = _theme_act_for_key(key)
@@ -311,6 +369,122 @@ static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionar
             if key_to_primary_id.has("auto_attack_unlock"):
                 return "auto_attack_unlock"
     return ""
+
+static func _extra_skill_dependency_key(lower_key: String, key_to_primary_id: Dictionary) -> String:
+    var n: int = _extra_skill_index(lower_key)
+    if n <= 0:
+        if key_to_primary_id.has("auto_attack_unlock"):
+            return "auto_attack_unlock"
+        return ""
+    var family_index: int = (n - 1) % EXTRA_SKILL_THEME_CYCLE.size()
+    match family_index:
+        0: # ECON
+            if key_to_primary_id.has("core_drop"):
+                return "core_drop"
+            if key_to_primary_id.has("cursor_pickup_unlock"):
+                return "cursor_pickup_unlock"
+        1: # DENS
+            if key_to_primary_id.has("core_density"):
+                return "core_density"
+            if key_to_primary_id.has("auto_attack_unlock"):
+                return "auto_attack_unlock"
+        2: # SURV
+            if key_to_primary_id.has("core_armor"):
+                return "core_armor"
+            if key_to_primary_id.has("battle_speed_unlock"):
+                return "battle_speed_unlock"
+        3: # MOVE
+            if key_to_primary_id.has("trail_boots"):
+                return "trail_boots"
+            if key_to_primary_id.has("cursor_pickup_unlock"):
+                return "cursor_pickup_unlock"
+        4: # POWR
+            if key_to_primary_id.has("core_power"):
+                return "core_power"
+            if key_to_primary_id.has("auto_attack_unlock"):
+                return "auto_attack_unlock"
+        5: # ACTV
+            if key_to_primary_id.has("core_power"):
+                return "core_power"
+            if key_to_primary_id.has("auto_attack_unlock"):
+                return "auto_attack_unlock"
+        6: # BOSS
+            if key_to_primary_id.has("core_density"):
+                return "core_density"
+            if key_to_primary_id.has("auto_attack_unlock"):
+                return "auto_attack_unlock"
+        7: # TEAM
+            if key_to_primary_id.has("knight_vamp_unlock"):
+                return "knight_vamp_unlock"
+            if key_to_primary_id.has("recruit_archer"):
+                return "recruit_archer"
+            if key_to_primary_id.has("recruit_guardian"):
+                return "recruit_guardian"
+            if key_to_primary_id.has("recruit_mage"):
+                return "recruit_mage"
+    if key_to_primary_id.has("auto_attack_unlock"):
+        return "auto_attack_unlock"
+    return ""
+
+static func _extra_skill_index(lower_key: String) -> int:
+    if not lower_key.begins_with("extra_skill_"):
+        return -1
+    return int(lower_key.trim_prefix("extra_skill_"))
+
+static func _is_cursor_coin_key(lower_key: String) -> bool:
+    return lower_key.find("cursor") >= 0 \
+    or lower_key.find("pickup") >= 0 \
+    or lower_key.find("coin") >= 0 \
+    or lower_key.find("drop") >= 0 \
+    or lower_key.find("salvage") >= 0 \
+    or lower_key.find("magnet") >= 0 \
+    or lower_key.find("lens") >= 0 \
+    or lower_key.find("collector") >= 0 \
+    or lower_key.find("broker") >= 0 \
+    or lower_key.find("market") >= 0 \
+    or lower_key.find("yield") >= 0
+
+static func _is_movement_key(lower_key: String) -> bool:
+    return lower_key.find("move") >= 0 \
+    or lower_key.find("trail") >= 0 \
+    or lower_key.find("stride") >= 0 \
+    or lower_key.find("route") >= 0 \
+    or lower_key.find("pathline") >= 0 \
+    or lower_key.find("quickstep") >= 0 \
+    or lower_key.find("momentum") >= 0 \
+    or lower_key.find("march") >= 0 \
+    or lower_key.find("sprint") >= 0
+
+static func _is_power_generation_key(lower_key: String) -> bool:
+    return lower_key.find("power") >= 0 \
+    or lower_key.find("reservoir") >= 0 \
+    or lower_key.find("condensed") >= 0 \
+    or lower_key.find("echo") >= 0 \
+    or lower_key.find("overclock") >= 0 \
+    or lower_key.find("overflow") >= 0 \
+    or lower_key.find("invocation") >= 0 \
+    or lower_key.find("channel") >= 0 \
+    or lower_key.find("cadence") >= 0
+
+static func _is_enemy_pressure_key(lower_key: String) -> bool:
+    return lower_key.find("enemy") >= 0 \
+    or lower_key.find("horde") >= 0 \
+    or lower_key.find("density") >= 0 \
+    or lower_key.find("wave") >= 0 \
+    or lower_key.find("crowd") >= 0 \
+    or lower_key.find("pressure") >= 0 \
+    or lower_key.find("taxonomy") >= 0
+
+static func _is_global_mitigation_key(lower_key: String) -> bool:
+    if lower_key.find("guardian") >= 0:
+        return false
+    return lower_key.find("armor") >= 0 \
+    or lower_key.find("plate") >= 0 \
+    or lower_key.find("carapace") >= 0 \
+    or lower_key.find("shock") >= 0 \
+    or lower_key.find("deflector") >= 0 \
+    or lower_key.find("hemostasis") >= 0 \
+    or lower_key.find("front_compression") >= 0
 
 static func _hero_from_key(lower_key: String) -> String:
     if lower_key.find("archer") >= 0:
@@ -773,7 +947,7 @@ static func _find_layout_cell_for_child(parent_cell: Vector2, preferred_branch: 
 static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cells: Dictionary) -> Vector2:
     var dir: Vector2 = LAYOUT_DIRS[branch]
     var target: Vector2 = _compute_root_target(dir, branch_count)
-    var candidates: Array[Vector2] = _candidate_cells_cardinal(target, dir, 10)
+    var candidates: Array[Vector2] = _candidate_cells_cardinal(target, dir, 24)
     for candidate_variant: Variant in candidates:
         var candidate: Vector2 = candidate_variant
         if used_cells.has(candidate):
@@ -784,8 +958,10 @@ static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cell
 static func _candidate_cells_cardinal(target: Vector2, dir: Vector2, max_step: int) -> Array[Vector2]:
     var out: Array[Vector2] = []
     out.append(target)
+    # Favor moving farther away from center before trying inward fallback.
     for step in range(1, max_step + 1):
         out.append(target + dir * step)
+    for step in range(1, max_step + 1):
         out.append(target - dir * step)
     return out
 
@@ -922,10 +1098,11 @@ static func _outward_dir_for_parent(parent_cell: Vector2, fallback_dir: Vector2)
     return Vector2(0.0, sign(parent_cell.y))
 
 static func _compute_root_target(main_dir: Vector2, branch_count: int) -> Vector2:
-    var lane_pattern: Array[int] = [0, 1, -1]
+    # Keep first-hop branches well separated near center to avoid crossing lines.
+    var lane_pattern: Array[int] = [0, 4, -4, 8, -8, 12, -12]
     var lane: int = lane_pattern[branch_count % lane_pattern.size()]
     var ring: int = int(branch_count / lane_pattern.size())
-    var forward: int = 2 + ring * 2
+    var forward: int = 6 + ring * 4
     var perp: Vector2 = _perpendicular_dir(main_dir)
     return (main_dir * forward) + (perp * lane)
 
