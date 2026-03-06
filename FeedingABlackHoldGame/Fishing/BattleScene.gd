@@ -56,6 +56,7 @@ const BG_NEAR_BASE_Y := 545.0
 const BG_OVERLAY_BASE_Y := 520.0
 const PLAY_AREA_OVERLAY_BASE_Y := 620.0
 const GROUND_BASE_Y := 760.0
+const BG_DEBUG_STEP := 8.0
 const BASE_POWER_REGEN_PER_SEC := 7.0
 const ACTIVE_CHARGE_PER_CLICK := 20.0
 const UPGRADE_EFFECT_TUNE := {
@@ -276,6 +277,7 @@ var settings_content: Settings
 var fullscreen_button: Button
 var touch_input_button: Button
 var level_choice_dialog: ConfirmationDialog
+var bg_debug_panel: PanelContainer
 
 var heroes: Array[CombatSprite] = []
 var hero_data: Dictionary = {}
@@ -394,6 +396,7 @@ func _ready() -> void:
     _setup_fullscreen_button()
     _setup_touch_input_button()
     _layout_battle_utility_buttons()
+    _setup_background_debug_controls()
     summary_panel.hide()
     _setup_speed_controls()
     _restore_or_reset_ufo_spawn_timer()
@@ -415,6 +418,11 @@ func _layout_battle_utility_buttons() -> void:
         exit_battle_button.offset_top = 164.0
         exit_battle_button.offset_right = 1256.0
         exit_battle_button.offset_bottom = 228.0
+    if bg_debug_panel != null:
+        bg_debug_panel.offset_left = 960.0
+        bg_debug_panel.offset_top = 244.0
+        bg_debug_panel.offset_right = 1256.0
+        bg_debug_panel.offset_bottom = 920.0
 
 func _exit_tree() -> void:
     SaveHandler.save_fishing_progress()
@@ -620,6 +628,129 @@ func _setup_speed_controls() -> void:
             _update_speed_button_text()
         else:
             speed_button.hide()
+
+func _setup_background_debug_controls() -> void:
+    if not OS.has_feature("editor"):
+        if bg_debug_panel != null:
+            bg_debug_panel.hide()
+        return
+
+    var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
+    if canvas_layer == null:
+        return
+
+    if bg_debug_panel == null:
+        bg_debug_panel = PanelContainer.new()
+        bg_debug_panel.name = "BackgroundDebugPanel"
+        canvas_layer.add_child(bg_debug_panel)
+
+        var root_margin := MarginContainer.new()
+        root_margin.add_theme_constant_override("margin_left", 10)
+        root_margin.add_theme_constant_override("margin_top", 10)
+        root_margin.add_theme_constant_override("margin_right", 10)
+        root_margin.add_theme_constant_override("margin_bottom", 10)
+        bg_debug_panel.add_child(root_margin)
+
+        var root_vbox := VBoxContainer.new()
+        root_vbox.add_theme_constant_override("separation", 6)
+        root_margin.add_child(root_vbox)
+
+        var title := Label.new()
+        title.text = "BG Y Debug"
+        title.add_theme_font_size_override("font_size", 20)
+        root_vbox.add_child(title)
+
+        var step_label := Label.new()
+        step_label.text = "Step %.0f px" % BG_DEBUG_STEP
+        step_label.add_theme_font_size_override("font_size", 14)
+        root_vbox.add_child(step_label)
+
+        for target in _background_debug_targets():
+            var row := HBoxContainer.new()
+            row.add_theme_constant_override("separation", 6)
+            root_vbox.add_child(row)
+
+            var name_label := Label.new()
+            name_label.text = str(target.get("label", "Layer"))
+            name_label.custom_minimum_size = Vector2(136.0, 0.0)
+            row.add_child(name_label)
+
+            var up_button := Button.new()
+            up_button.text = "Up"
+            up_button.custom_minimum_size = Vector2(60.0, 36.0)
+            up_button.pressed.connect(_on_background_debug_adjust_pressed.bind(str(target.get("key", "")), -BG_DEBUG_STEP))
+            row.add_child(up_button)
+
+            var down_button := Button.new()
+            down_button.text = "Down"
+            down_button.custom_minimum_size = Vector2(60.0, 36.0)
+            down_button.pressed.connect(_on_background_debug_adjust_pressed.bind(str(target.get("key", "")), BG_DEBUG_STEP))
+            row.add_child(down_button)
+
+    bg_debug_panel.show()
+    _layout_battle_utility_buttons()
+    _log_background_layer_positions("Initial")
+
+func _background_debug_targets() -> Array[Dictionary]:
+    return [
+        {"key": "bg_base_sky", "label": "Base Sky"},
+        {"key": "bg_base_ground", "label": "Base Ground"},
+        {"key": "bg_deep", "label": "BG Deep"},
+        {"key": "bg_far", "label": "BG Far"},
+        {"key": "bg_mid", "label": "BG Mid"},
+        {"key": "bg_near", "label": "BG Near"},
+        {"key": "bg_overlay", "label": "BG Overlay"},
+        {"key": "play_area_overlay", "label": "Play Overlay"},
+        {"key": "ground", "label": "Ground"},
+        {"key": "ground_overlay", "label": "Ground Overlay"},
+    ]
+
+func _background_node_for_key(key: String) -> Node2D:
+    match key:
+        "bg_base_sky":
+            return bg_base_sky
+        "bg_base_ground":
+            return bg_base_ground
+        "bg_deep":
+            return bg_deep
+        "bg_far":
+            return bg_far
+        "bg_mid":
+            return bg_mid
+        "bg_near":
+            return bg_near
+        "bg_overlay":
+            return bg_overlay
+        "play_area_overlay":
+            return play_area_overlay
+        "ground":
+            return ground
+        "ground_overlay":
+            return ground_overlay
+        _:
+            return null
+
+func _on_background_debug_adjust_pressed(layer_key: String, delta_y: float) -> void:
+    var target: Node2D = _background_node_for_key(layer_key)
+    if target == null:
+        push_warning("Missing background debug target: %s" % layer_key)
+        return
+    target.position.y += delta_y
+    _log_background_layer_positions("Moved %s by %.0f" % [layer_key, delta_y])
+
+func _log_background_layer_positions(reason: String = "") -> void:
+    var lines: PackedStringArray = []
+    if reason != "":
+        lines.append("[Battle BG Debug] %s" % reason)
+    for target in _background_debug_targets():
+        var key: String = str(target.get("key", ""))
+        var label: String = str(target.get("label", key))
+        var node: Node2D = _background_node_for_key(key)
+        if node == null:
+            lines.append("%s: <missing>" % label)
+            continue
+        lines.append("%s: %.1f" % [label, node.position.y])
+    print("\n".join(lines))
 
 func _update_speed_button_enabled_state() -> void:
     if speed_button == null or infinite_sim_button == null or exit_battle_button == null:

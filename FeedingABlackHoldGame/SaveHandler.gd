@@ -253,7 +253,7 @@ var vsync_enabled: bool = true
 var locale = "en"
 var fps_limit = 144
 var has_shown_pick_locale_first_time = false
-var dark_mode = false
+var dark_mode = true
 var money_text = true
 var damage_text = true
 var shuffle_music = false
@@ -318,7 +318,7 @@ func load_local_settings():
         locale = json_data["locale"] if json_data.has("locale") else "en"
         fps_limit = int(json_data["fps_limit"]) if json_data.has("fps_limit") else 144
         has_shown_pick_locale_first_time = bool(json_data["has_shown_pick_locale_first_time"]) if json_data.has("has_shown_pick_locale_first_time") else false
-        dark_mode = bool(json_data["dark_mode"]) if json_data.has("dark_mode") else false
+        dark_mode = bool(json_data["dark_mode"]) if json_data.has("dark_mode") else true
         damage_text = _load_bool_local_setting(json_data, "damage_text", true)
         money_text = _load_bool_local_setting(json_data, "money_text", true)
         shuffle_music = bool(json_data["shuffle_music"]) if json_data.has("shuffle_music") else false

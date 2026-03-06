@@ -35,6 +35,8 @@ var is_center_node = false
 var tech_tree: TechTree
 
 var cost
+var allow_complete_animation: bool = false
+var is_complete_animating: bool = false
 
 var _is_highlighted: bool = false
 var is_highlighted: bool:
@@ -146,13 +148,17 @@ var state: STATES:
 
                 unlocked.emit(self)
 
-                if Global.game_state == Util.GAME_STATES.UPGRADES:
+                if Global.game_state == Util.GAME_STATES.UPGRADES and allow_complete_animation:
+                    is_complete_animating = true
                     %"Visual Panel".add_theme_stylebox_override("panel", clicked_stylebox)
                     clicked_stylebox.bg_color = Refs.get_act_light_color(upgrade.act if upgrade else 1)
                     clicked_stylebox.border_color = Refs.get_act_light_color(upgrade.act if upgrade else 1)
+                    %"Visual Panel".scale = Vector2.ONE
                     %AnimationPlayer.play("On Complete")
                 else:
+                    is_complete_animating = false
                     on_complete_anim_finished()
+                allow_complete_animation = false
 
             state_changed.emit(self)
             update()
@@ -215,8 +221,12 @@ func update_panel():
 
     match state:
         STATES.SHADOW:
+            %"Click Mask".modulate.a = 1.0
+            %"Visual Panel".scale = Vector2.ONE
             %"Visual Panel".add_theme_stylebox_override("panel", shadow_stylebox)
         STATES.AVAILABLE:
+            %"Click Mask".modulate.a = 1.0
+            %"Visual Panel".scale = Vector2.ONE
             %Cost.add_theme_color_override("font_color", Refs.pallet.money_color if can_pay_cost else _get_theme_dark_color())
 
             %"Visual Panel".add_theme_stylebox_override("panel", available_can_pay_stylebox if can_pay_cost else available_can_not_pay_stylebox)
@@ -234,10 +244,18 @@ func update_panel():
             if upgrade:
                 title_panel_style_box.bg_color = Refs.get_act_dark_color(upgrade.act)
 
+            if is_complete_animating:
+                return
+
+            %"Visual Panel".add_theme_stylebox_override("panel", complete_stylebox)
+            %"Visual Panel".scale = Vector2.ZERO
+
 
 func on_complete_anim_finished():
+    is_complete_animating = false
     %"Mod Icon".modulate = Refs.pallet.shadow
     %"Visual Panel".add_theme_stylebox_override("panel", complete_stylebox)
+    %"Visual Panel".scale = Vector2.ZERO
     %"Mod Icon".scale = Vector2(0.44, 0.44)
 
 func setup(upgarde: Upgrade, _tech_tree: TechTree):
@@ -304,6 +322,7 @@ func _purchase_upgrade() -> void:
     if upgrade.sim_name != "" and upgrade.current_tier >= 1 and tech_tree:
         tech_tree.call_deferred("update_connected_nodes_available", cell)
     if upgrade.is_at_max():
+        allow_complete_animation = true
         state = STATES.COMPLETE
     state_changed.emit(self)
     update()
@@ -383,9 +402,10 @@ func _update_partial_fill_visual() -> void:
 
     var progress: float = get_visual_progress_ratio()
     var should_show: bool = not is_center_node \
-        and state in [STATES.AVAILABLE, STATES.COMPLETE] \
+        and state == STATES.AVAILABLE \
         and upgrade != null \
         and upgrade.max_tier > 1 \
+        and not upgrade.is_at_max() \
         and progress > 0.0
 
     partial_fill.visible = should_show
