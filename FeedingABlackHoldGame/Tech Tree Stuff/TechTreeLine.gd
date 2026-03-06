@@ -124,26 +124,15 @@ func _update_over_line_visual() -> void:
         %"Over Line".hide()
         return
 
-    var start_node: TechTreeNode = null
-    var end_node: TechTreeNode = null
+    var start_node: TechTreeNode = _get_parent_node()
+    var end_node: TechTreeNode = _get_child_node()
     var progress: float = 0.0
 
-    if from_node.state == TechTreeNode.STATES.COMPLETE and to_node.state == TechTreeNode.STATES.COMPLETE:
-        if from_node.completed_index <= to_node.completed_index:
-            start_node = from_node
-            end_node = to_node
-        else:
-            start_node = to_node
-            end_node = from_node
-        progress = 1.0
-    elif from_node.state == TechTreeNode.STATES.COMPLETE:
-        start_node = from_node
-        end_node = to_node
-        progress = to_node.get_visual_progress_ratio()
-    elif to_node.state == TechTreeNode.STATES.COMPLETE:
-        start_node = to_node
-        end_node = from_node
-        progress = from_node.get_visual_progress_ratio()
+    if start_node == null or end_node == null:
+        %"Over Line".hide()
+        return
+
+    progress = end_node.get_visual_progress_ratio()
 
     if start_node == null or end_node == null or progress <= MIN_PROGRESS_TO_DRAW:
         %"Over Line".hide()
@@ -161,3 +150,27 @@ func _get_progress_color(target_node: TechTreeNode) -> Color:
     if target_node != null and target_node.upgrade != null:
         return Refs.get_act_light_color(target_node.upgrade.act)
     return Refs.get_act_light_color(1)
+
+func _get_parent_node() -> TechTreeNode:
+    var from_depth: int = _get_node_depth(from_node)
+    var to_depth: int = _get_node_depth(to_node)
+
+    if from_depth < to_depth:
+        return from_node
+    if to_depth < from_depth:
+        return to_node
+
+    if from_node.get_visual_progress_ratio() <= to_node.get_visual_progress_ratio():
+        return from_node
+    return to_node
+
+func _get_child_node() -> TechTreeNode:
+    var parent_node: TechTreeNode = _get_parent_node()
+    if parent_node == from_node:
+        return to_node
+    return from_node
+
+func _get_node_depth(node: TechTreeNode) -> int:
+    if node == null or node.tech_tree == null:
+        return 999999
+    return node.tech_tree.get_cell_depth(node.cell)

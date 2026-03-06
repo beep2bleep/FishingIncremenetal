@@ -367,7 +367,15 @@ func get_visual_progress_ratio() -> float:
         return 1.0 if state == STATES.COMPLETE else 0.0
     if upgrade.max_tier <= 1:
         return 1.0 if state == STATES.COMPLETE else 0.0
-    return clamp(float(upgrade.current_tier) / float(upgrade.max_tier), 0.0, 1.0)
+    if upgrade.current_tier <= 0:
+        return 0.0
+    if upgrade.current_tier >= upgrade.max_tier:
+        return 1.0
+    return clamp(
+        0.5 + (0.5 * (float(upgrade.current_tier - 1) / float(upgrade.max_tier - 1))),
+        0.0,
+        1.0
+    )
 
 func _update_partial_fill_visual() -> void:
     if partial_fill == null:

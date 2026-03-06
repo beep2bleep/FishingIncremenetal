@@ -401,6 +401,29 @@ func get_unlock_requirement_node(target_cell: Vector2) -> TechTreeNode:
             return candidate
     return null
 
+func get_cell_depth(target_cell: Vector2) -> int:
+    if target_cell == Vector2.ZERO:
+        return 0
+
+    var frontier: Array[Vector2] = [Vector2.ZERO]
+    var visited: Dictionary = {Vector2.ZERO: true}
+    var depth: int = 0
+
+    while not frontier.is_empty():
+        var next_frontier: Array[Vector2] = []
+        for cell_in_frontier in frontier:
+            if cell_in_frontier == target_cell:
+                return depth
+            for connected_cell in get_all_connected_cells(cell_in_frontier):
+                if visited.has(connected_cell):
+                    continue
+                visited[connected_cell] = true
+                next_frontier.append(connected_cell)
+        frontier = next_frontier
+        depth += 1
+
+    return 999999
+
 func set_requirement_hint_for(source_node: TechTreeNode, enabled: bool) -> void:
     if requirement_hint_node != null and is_instance_valid(requirement_hint_node):
         requirement_hint_node.set_locked_requirement_highlight(false)
