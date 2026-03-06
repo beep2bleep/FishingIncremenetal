@@ -1,5 +1,7 @@
 extends Line2D
 class_name TechTreeLine
+
+const MIN_PROGRESS_TO_DRAW: float = 0.001
 var _from_node: TechTreeNode = null
 var from_node: TechTreeNode:
     get:
@@ -57,6 +59,8 @@ func update_line():
     if to_node != null:
         add_point(to_node.position)
 
+    _update_over_line_visual()
+
 
 func do_animate_show(line_2d: Line2D, start_pos: Vector2, end_pos: Vector2):
     line_2d.clear_points()
@@ -82,9 +86,14 @@ func do_animate_show(line_2d: Line2D, start_pos: Vector2, end_pos: Vector2):
 
 
 func update_colors():
+    if from_node == null or to_node == null:
+        %"Over Line".hide()
+        return
+
     if Global.main and Global.main.epilogue == false:
         if from_node.is_epilgue_node() or to_node.is_epilgue_node():
             hide()
+            %"Over Line".hide()
             return
     match from_node.state:
 
@@ -104,19 +113,51 @@ func update_colors():
             if visible == false:
                 do_animate_show(self, to_node.position, from_node.position)
                 show()
-
-    if from_node.state == TechTreeNode.STATES.COMPLETE and to_node.state == TechTreeNode.STATES.COMPLETE:
-
-        if from_node.completed_index < to_node.completed_index:
-            do_animate_show( %"Over Line", from_node.position, to_node.position)
-        else:
-            do_animate_show( %"Over Line", to_node.position, from_node.position)
-
-        if to_node.upgrade:
-            %"Over Line".default_color = Refs.get_act_light_color(to_node.upgrade.act)
-        else:
-            %"Over Line".default_color = Refs.get_act_light_color(1)
+    _update_over_line_visual()
 
 
 func _on_node_state_changed(node):
     update_colors()
+
+func _update_over_line_visual() -> void:
+    if from_node == null or to_node == null:
+        %"Over Line".hide()
+        return
+
+    var start_node: TechTreeNode = null
+    var end_node: TechTreeNode = null
+    var progress: float = 0.0
+
+    if from_node.state == TechTreeNode.STATES.COMPLETE and to_node.state == TechTreeNode.STATES.COMPLETE:
+        if from_node.completed_index <= to_node.completed_index:
+            start_node = from_node
+            end_node = to_node
+        else:
+            start_node = to_node
+            end_node = from_node
+        progress = 1.0
+    elif from_node.state == TechTreeNode.STATES.COMPLETE:
+        start_node = from_node
+        end_node = to_node
+        progress = to_node.get_visual_progress_ratio()
+    elif to_node.state == TechTreeNode.STATES.COMPLETE:
+        start_node = to_node
+        end_node = from_node
+        progress = from_node.get_visual_progress_ratio()
+
+    if start_node == null or end_node == null or progress <= MIN_PROGRESS_TO_DRAW:
+        %"Over Line".hide()
+        return
+
+    var end_pos: Vector2 = start_node.position.lerp(end_node.position, clamp(progress, 0.0, 1.0))
+    %"Over Line".clear_points()
+    %"Over Line".position = Vector2.ZERO
+    %"Over Line".add_point(start_node.position)
+    %"Over Line".add_point(end_pos)
+    %"Over Line".default_color = _get_progress_color(end_node)
+    %"Over Line".show()
+
+func _get_progress_color(target_node: TechTreeNode) -> Color:
+    if target_node != null and target_node.upgrade != null:
+        return Refs.get_act_light_color(target_node.upgrade.act)
+    return Refs.get_act_light_color(1)

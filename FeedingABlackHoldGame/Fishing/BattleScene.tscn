@@ -132,24 +132,27 @@ text = "Currency: 0"
 [node name="ClockPanel" type="PanelContainer" parent="CanvasLayer"]
 offset_left = 24.0
 offset_top = 324.0
-offset_right = 300.0
-offset_bottom = 388.0
+offset_right = 360.0
+offset_bottom = 404.0
 
 [node name="ClockLabel" type="Label" parent="CanvasLayer/ClockPanel"]
+theme_override_font_sizes/font_size = 42
 text = "Clock: 00:00:00"
 
 [node name="SpeedButton" type="Button" parent="CanvasLayer"]
 offset_left = 24.0
 offset_top = 396.0
-offset_right = 220.0
-offset_bottom = 440.0
+offset_right = 416.0
+offset_bottom = 484.0
+theme_override_font_sizes/font_size = 32
 text = "Speed x1"
 
 [node name="InfiniteSimButton" type="Button" parent="CanvasLayer"]
-offset_left = 232.0
+offset_left = 428.0
 offset_top = 396.0
-offset_right = 460.0
-offset_bottom = 440.0
+offset_right = 884.0
+offset_bottom = 484.0
+theme_override_font_sizes/font_size = 32
 text = "Sim Infinity"
 
 [node name="SpawnUfoButton" type="Button" parent="CanvasLayer"]

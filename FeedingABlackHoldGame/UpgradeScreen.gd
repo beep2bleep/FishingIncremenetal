@@ -5,6 +5,11 @@ class_name UpgradeScreen
 const CURSOR_PICKUP_UNLOCK_KEY := "cursor_pickup_unlock"
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const GO_AGAIN_DISABLED_HINT := "You must unlock an upgrade before starting."
+const BATTLE_LEVEL_CHOICE_DIALOG_SIZE := Vector2(600.0, 450.0)
+const BATTLE_LEVEL_CHOICE_DIALOG_FONT_SIZE := 24
+const BATTLE_LEVEL_CHOICE_DIALOG_TITLE_SIZE := 36
+const BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE := 72
+const BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT := 180.0
 
 var is_active = false
 var editor_add_cash_amount: int = 1000
@@ -16,6 +21,8 @@ var battle_level_choice_dialog: ConfirmationDialog
 var reset_progress_confirm_dialog: ConfirmationDialog
 var mute_button: Button
 var settings_button: Button
+var fullscreen_button: Button
+var touch_input_button: Button
 var settings_panel: PanelContainer
 var settings_content: Settings
 var reset_progress_button: Button
@@ -24,6 +31,8 @@ var continue_locked_panel: PanelContainer
 var continue_locked_label: Label
 var speaker_icon_on: Texture2D
 var speaker_icon_off: Texture2D
+var fullscreen_icon_on: Texture2D
+var fullscreen_icon_off: Texture2D
 
 
 var dragging = false
@@ -56,6 +65,7 @@ var state: int:
 func _ready() -> void :
     SignalBus.pallet_updated.connect(_on_pallet_updated)
     SignalBus.global_resource_changed.connect(_on_global_resource_changed)
+    SignalBus.settings_updated.connect(_on_settings_updated)
 
     ControllerIcons.input_type_changed.connect(_on_input_type_changed)
 
@@ -74,6 +84,8 @@ func _ready() -> void :
     _setup_reset_progress_controls()
     _setup_mute_button()
     _setup_settings_controls()
+    _setup_fullscreen_button()
+    _setup_touch_input_button()
     go_again_button = get_node_or_null("%Go Again")
     _setup_continue_locked_dialog()
     _update_go_again_button_state()
@@ -120,6 +132,12 @@ func update():
 
 func _on_pallet_updated():
     update_colors()
+
+func _on_settings_updated() -> void:
+    _refresh_touch_input_button()
+    _refresh_fullscreen_button_icon()
+    if settings_content != null:
+        settings_content.refresh_from_save()
 
 
 func update_colors():
@@ -234,6 +252,8 @@ func show_screen():
 
     update_input(ControllerIcons.get_last_input_type())
     _refresh_mute_button_icon()
+    _refresh_fullscreen_button_icon()
+    _refresh_touch_input_button()
     _update_go_again_button_state()
 
     nodes_unlocked_this_session = 0
@@ -323,7 +343,9 @@ func _setup_battle_level_choice_dialog() -> void:
         battle_level_choice_dialog.name = "BattleLevelChoiceDialog"
         battle_level_choice_dialog.title = "Choose Battle Level"
         battle_level_choice_dialog.get_ok_button().hide()
+        battle_level_choice_dialog.get_cancel_button().hide()
         parent_layer.add_child(battle_level_choice_dialog)
+    _style_battle_level_choice_dialog()
     if not battle_level_choice_dialog.custom_action.is_connected(_on_battle_level_choice_action):
         battle_level_choice_dialog.custom_action.connect(_on_battle_level_choice_action)
 
@@ -332,16 +354,10 @@ func _show_battle_level_choice_dialog(max_level: int) -> void:
         _launch_battle_at_level(clamp(SaveHandler.fishing_next_battle_level, 1, max_level))
         return
 
-    battle_level_choice_dialog.dialog_text = "Select the battle level to run."
-    for child in battle_level_choice_dialog.get_children():
-        if child is Button and child.name.begins_with("BattleLevelChoiceButton"):
-            child.queue_free()
-
-    for level in range(1, max_level + 1):
-        var button: Button = battle_level_choice_dialog.add_button("Level %d" % level, true, "level_%d" % level)
-        button.name = "BattleLevelChoiceButton%d" % level
-
-    battle_level_choice_dialog.popup_centered()
+    battle_level_choice_dialog.dialog_text = ""
+    _rebuild_battle_level_choice_dialog_content(max_level)
+    _style_battle_level_choice_dialog()
+    battle_level_choice_dialog.popup_centered(BATTLE_LEVEL_CHOICE_DIALOG_SIZE)
 
 func _on_battle_level_choice_action(action: StringName) -> void:
     var action_text: String = str(action)
@@ -349,6 +365,72 @@ func _on_battle_level_choice_action(action: StringName) -> void:
         return
     var level: int = int(action_text.trim_prefix("level_"))
     _launch_battle_at_level(level)
+
+func _style_battle_level_choice_dialog() -> void:
+    if battle_level_choice_dialog == null:
+        return
+    battle_level_choice_dialog.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_FONT_SIZE)
+    battle_level_choice_dialog.add_theme_font_size_override("title_font_size", BATTLE_LEVEL_CHOICE_DIALOG_TITLE_SIZE)
+    battle_level_choice_dialog.min_size = BATTLE_LEVEL_CHOICE_DIALOG_SIZE
+    for child in battle_level_choice_dialog.get_children():
+        if child is Label:
+            child.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_FONT_SIZE)
+            child.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
+    if battle_level_choice_dialog == null:
+        return
+    var existing: Control = battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent")
+    if existing != null:
+        existing.queue_free()
+
+    var margin := MarginContainer.new()
+    margin.name = "BattleLevelChoiceContent"
+    margin.anchor_left = 0.0
+    margin.anchor_top = 0.0
+    margin.anchor_right = 1.0
+    margin.anchor_bottom = 1.0
+    margin.offset_left = 24.0
+    margin.offset_top = 24.0
+    margin.offset_right = -24.0
+    margin.offset_bottom = -24.0
+    battle_level_choice_dialog.add_child(margin)
+
+    var vbox := VBoxContainer.new()
+    vbox.anchor_left = 0.0
+    vbox.anchor_top = 0.0
+    vbox.anchor_right = 1.0
+    vbox.anchor_bottom = 1.0
+    vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    vbox.add_theme_constant_override("separation", 16)
+    margin.add_child(vbox)
+
+    for level in range(1, max_level + 1):
+        var button := Button.new()
+        button.name = "BattleLevelChoiceButton%d" % level
+        button.text = "Level %d" % level
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+        button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
+        button.pressed.connect(_on_battle_level_choice_button_pressed.bind(level))
+        vbox.add_child(button)
+
+    var cancel_button := Button.new()
+    cancel_button.name = "BattleLevelChoiceCancelButton"
+    cancel_button.text = "Cancel"
+    cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    cancel_button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+    cancel_button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
+    cancel_button.pressed.connect(_on_battle_level_choice_cancel_pressed)
+    vbox.add_child(cancel_button)
+
+func _on_battle_level_choice_button_pressed(level: int) -> void:
+    _launch_battle_at_level(level)
+
+func _on_battle_level_choice_cancel_pressed() -> void:
+    if battle_level_choice_dialog != null:
+        battle_level_choice_dialog.hide()
 
 func _launch_battle_at_level(level: int) -> void:
     var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, 3)
@@ -552,7 +634,14 @@ func _setup_mute_button() -> void:
     speaker_icon_off = _make_speaker_icon_texture(true)
     mute_button.text = ""
     mute_button.focus_mode = Control.FOCUS_NONE
-    mute_button.custom_minimum_size = Vector2(56, 44)
+    mute_button.offset_left = -84.0
+    mute_button.offset_right = 84.0
+    mute_button.offset_top = 16.0
+    mute_button.offset_bottom = 148.0
+    mute_button.custom_minimum_size = Vector2(168, 132)
+    mute_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    mute_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+    mute_button.expand_icon = true
     _style_utility_button(mute_button)
     _refresh_mute_button_icon()
 
@@ -565,27 +654,29 @@ func _setup_settings_controls() -> void:
     settings_button.anchor_top = 0.0
     settings_button.anchor_right = 1.0
     settings_button.anchor_bottom = 0.0
-    settings_button.offset_left = -156.0
-    settings_button.offset_top = 48.0
-    settings_button.offset_right = -72.0
-    settings_button.offset_bottom = 92.0
+    settings_button.offset_left = -184.0
+    settings_button.offset_top = 16.0
+    settings_button.offset_right = -16.0
+    settings_button.offset_bottom = 104.0
     settings_button.z_index = 210
     settings_button.focus_mode = Control.FOCUS_NONE
     settings_button.text = "Settings"
+    settings_button.custom_minimum_size = Vector2(168, 88)
+    settings_button.add_theme_font_size_override("font_size", 26)
     settings_button.pressed.connect(_on_settings_button_pressed)
     _style_utility_button(settings_button)
     %CanvasLayer2.add_child(settings_button)
 
     settings_panel = PanelContainer.new()
     settings_panel.name = "UpgradeSettingsPanel"
-    settings_panel.anchor_left = 0.5
-    settings_panel.anchor_top = 0.5
-    settings_panel.anchor_right = 0.5
-    settings_panel.anchor_bottom = 0.5
-    settings_panel.offset_left = -280.0
-    settings_panel.offset_top = -320.0
-    settings_panel.offset_right = 280.0
-    settings_panel.offset_bottom = 320.0
+    settings_panel.anchor_left = 0.0
+    settings_panel.anchor_top = 0.0
+    settings_panel.anchor_right = 1.0
+    settings_panel.anchor_bottom = 1.0
+    settings_panel.offset_left = 16.0
+    settings_panel.offset_top = 16.0
+    settings_panel.offset_right = -16.0
+    settings_panel.offset_bottom = -16.0
     settings_panel.z_index = 220
     settings_panel.visible = false
     settings_panel.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -601,24 +692,82 @@ func _setup_settings_controls() -> void:
 
     var vbox: VBoxContainer = VBoxContainer.new()
     vbox.add_theme_constant_override("separation", 12)
+    vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
     margin.add_child(vbox)
 
     var title: Label = Label.new()
     title.text = "SETTINGS"
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    title.add_theme_font_size_override("font_size", 46)
     vbox.add_child(title)
 
     settings_content = SETTINGS_SCENE.instantiate() as Settings
     if settings_content != null:
         settings_content.name = "SettingsContent"
+        settings_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        settings_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        settings_content.scale = Vector2(1.7, 1.7)
         vbox.add_child(settings_content)
 
     var close_button: Button = Button.new()
     close_button.name = "SettingsCloseButton"
     close_button.text = "BACK"
     close_button.focus_mode = Control.FOCUS_NONE
+    close_button.custom_minimum_size = Vector2(0, 150)
+    close_button.add_theme_font_size_override("font_size", 34)
     close_button.pressed.connect(_on_settings_close_pressed)
+    _style_utility_button(close_button)
     vbox.add_child(close_button)
+
+func _setup_fullscreen_button() -> void:
+    if fullscreen_button != null and is_instance_valid(fullscreen_button):
+        return
+    fullscreen_button = Button.new()
+    fullscreen_button.name = "FullscreenButton"
+    fullscreen_button.anchor_left = 0.0
+    fullscreen_button.anchor_top = 0.0
+    fullscreen_button.anchor_right = 0.0
+    fullscreen_button.anchor_bottom = 0.0
+    fullscreen_button.offset_left = 16.0
+    fullscreen_button.offset_top = 72.0
+    fullscreen_button.offset_right = 104.0
+    fullscreen_button.offset_bottom = 160.0
+    fullscreen_button.z_index = 210
+    fullscreen_button.focus_mode = Control.FOCUS_NONE
+    fullscreen_button.text = ""
+    fullscreen_button.custom_minimum_size = Vector2(88, 88)
+    fullscreen_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    fullscreen_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+    fullscreen_button.expand_icon = true
+    fullscreen_button.pressed.connect(_on_fullscreen_button_pressed)
+    _style_utility_button(fullscreen_button)
+    %CanvasLayer2.add_child(fullscreen_button)
+    fullscreen_icon_on = _make_fullscreen_icon_texture(true)
+    fullscreen_icon_off = _make_fullscreen_icon_texture(false)
+    _refresh_fullscreen_button_icon()
+
+func _setup_touch_input_button() -> void:
+    if touch_input_button != null and is_instance_valid(touch_input_button):
+        return
+    touch_input_button = Button.new()
+    touch_input_button.name = "TouchInputButton"
+    touch_input_button.anchor_left = 1.0
+    touch_input_button.anchor_top = 0.0
+    touch_input_button.anchor_right = 1.0
+    touch_input_button.anchor_bottom = 0.0
+    touch_input_button.offset_left = -256.0
+    touch_input_button.offset_top = 112.0
+    touch_input_button.offset_right = -16.0
+    touch_input_button.offset_bottom = 200.0
+    touch_input_button.z_index = 210
+    touch_input_button.focus_mode = Control.FOCUS_NONE
+    touch_input_button.custom_minimum_size = Vector2(240, 88)
+    touch_input_button.add_theme_font_size_override("font_size", 26)
+    touch_input_button.pressed.connect(_on_touch_input_button_pressed)
+    _style_utility_button(touch_input_button)
+    %CanvasLayer2.add_child(touch_input_button)
+    _refresh_touch_input_button()
 
 func _is_settings_open() -> bool:
     return settings_panel != null and is_instance_valid(settings_panel) and settings_panel.visible
@@ -626,6 +775,7 @@ func _is_settings_open() -> bool:
 func _on_settings_button_pressed() -> void:
     if settings_content != null:
         settings_content.show_screen()
+        settings_content.refresh_from_save()
     if settings_panel != null:
         settings_panel.show()
 
@@ -765,18 +915,69 @@ func _on_mute_button_pressed() -> void:
     SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
     _refresh_mute_button_icon()
 
+func _refresh_fullscreen_button_icon() -> void:
+    if fullscreen_button == null:
+        return
+    var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+    fullscreen_button.icon = fullscreen_icon_on if is_fullscreen else fullscreen_icon_off
+    fullscreen_button.tooltip_text = "Exit fullscreen" if is_fullscreen else "Enter fullscreen"
+
+func _on_fullscreen_button_pressed() -> void:
+    var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+    SaveHandler.update_screen_mode(
+        SaveHandler.SCREEN_MODES.WINDOWED if is_fullscreen else SaveHandler.SCREEN_MODES.FULL_SCREEN
+    )
+    _refresh_fullscreen_button_icon()
+    if settings_content != null:
+        settings_content.refresh_from_save()
+
+func _refresh_touch_input_button() -> void:
+    if touch_input_button == null:
+        return
+    touch_input_button.text = "Touch Input" if SaveHandler.touch_input_mode else "Mouse Input"
+
+func _on_touch_input_button_pressed() -> void:
+    SaveHandler.update_touch_input_mode(not SaveHandler.touch_input_mode)
+    _refresh_touch_input_button()
+    if settings_content != null:
+        settings_content.refresh_from_save()
+
+func _make_fullscreen_icon_texture(is_fullscreen: bool) -> ImageTexture:
+    var image := Image.create(80, 80, false, Image.FORMAT_RGBA8)
+    image.fill(Color(0, 0, 0, 0))
+    var line_color := Color(0.93, 0.97, 1.0, 1.0)
+    if is_fullscreen:
+        _draw_rect_pixels(image, Rect2i(12, 12, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(12, 12, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(48, 12, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(62, 12, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(12, 62, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(12, 48, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(48, 62, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(62, 48, 6, 20), line_color)
+    else:
+        _draw_rect_pixels(image, Rect2i(24, 12, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(12, 24, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(50, 12, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(48, 24, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(24, 48, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(12, 50, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(50, 48, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(48, 50, 20, 6), line_color)
+    return ImageTexture.create_from_image(image)
+
 func _make_speaker_icon_texture(is_muted: bool) -> ImageTexture:
-    var image := Image.create(40, 40, false, Image.FORMAT_RGBA8)
+    var image := Image.create(80, 80, false, Image.FORMAT_RGBA8)
     image.fill(Color(0, 0, 0, 0))
     var speaker_color := Color(0.93, 0.97, 1.0, 1.0)
-    _draw_rect_pixels(image, Rect2i(7, 14, 7, 12), speaker_color)
-    _draw_triangle_right(image, Vector2i(14, 20), 11, 9, speaker_color)
+    _draw_rect_pixels(image, Rect2i(14, 28, 14, 24), speaker_color)
+    _draw_triangle_right(image, Vector2i(28, 40), 22, 18, speaker_color)
     if is_muted:
-        _draw_thick_line(image, Vector2i(21, 10), Vector2i(34, 30), Color(1.0, 0.2, 0.2, 1.0), 2)
-        _draw_thick_line(image, Vector2i(34, 10), Vector2i(21, 30), Color(1.0, 0.2, 0.2, 1.0), 2)
+        _draw_thick_line(image, Vector2i(42, 20), Vector2i(68, 60), Color(1.0, 0.2, 0.2, 1.0), 4)
+        _draw_thick_line(image, Vector2i(68, 20), Vector2i(42, 60), Color(1.0, 0.2, 0.2, 1.0), 4)
     else:
-        _draw_arc_ring(image, Vector2i(20, 20), 8, 11, PI * -0.42, PI * 0.42, speaker_color)
-        _draw_arc_ring(image, Vector2i(20, 20), 12, 15, PI * -0.42, PI * 0.42, speaker_color)
+        _draw_arc_ring(image, Vector2i(40, 40), 16, 22, PI * -0.42, PI * 0.42, speaker_color)
+        _draw_arc_ring(image, Vector2i(40, 40), 24, 30, PI * -0.42, PI * 0.42, speaker_color)
     return ImageTexture.create_from_image(image)
 
 func _draw_rect_pixels(image: Image, rect: Rect2i, color: Color) -> void:

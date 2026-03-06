@@ -1,12 +1,15 @@
 extends Node2D
 class_name TechTreeNode
 
+const PARTIAL_FILL_ALPHA: float = 0.42
+
 signal state_changed
 signal selected(node: TechTreeNode)
 signal unlocked(node: TechTreeNode)
 
 @onready var custom_tween_component: CustomTweenComponent = $CustomTweenComponent
 @onready var tooltip_custom_tween_component: CustomTweenComponent = $"Tooltip Pivot/Tooltip CustomTweenComponent"
+@onready var partial_fill: Panel = %"Partial Fill"
 
 @export var available_can_pay_stylebox: StyleBoxFlat
 @export var available_can_not_pay_stylebox: StyleBoxFlat
@@ -19,6 +22,7 @@ signal unlocked(node: TechTreeNode)
 @onready var click_mask: Button = %"Click Mask"
 
 var completed_index = 0
+var touch_buy_button: Button
 
 enum STATES{LOCKED, AVAILABLE, COMPLETE, SHADOW}
 
@@ -155,16 +159,28 @@ var state: STATES:
 
 
 var title_panel_style_box: StyleBoxFlat
+var partial_fill_style_box: StyleBoxFlat
 
 func _ready():
     hover_focus_style_box = %"Click Mask".get_theme_stylebox("hover")
     title_panel_style_box = %TitlePanel.get_theme_stylebox("panel")
+    var base_fill_style: StyleBox = partial_fill.get_theme_stylebox("panel")
+    if base_fill_style is StyleBoxFlat:
+        partial_fill_style_box = (base_fill_style as StyleBoxFlat).duplicate(true)
+    else:
+        partial_fill_style_box = StyleBoxFlat.new()
+    partial_fill_style_box.border_width_left = 0
+    partial_fill_style_box.border_width_top = 0
+    partial_fill_style_box.border_width_right = 0
+    partial_fill_style_box.border_width_bottom = 0
+    partial_fill.add_theme_stylebox_override("panel", partial_fill_style_box)
     SignalBus.pallet_updated.connect(update_colors)
     SignalBus.mod_changed.connect(_on_mod_changed)
     SignalBus.epilogue_started.connect(_on_epilogue_started)
 
 
     %"Tool Tip".pivot_offset = %"Tool Tip".size / 2.0
+    _setup_touch_buy_button()
 
     SignalBus.settings_updated.connect(_on_settings_updated)
 
@@ -261,37 +277,64 @@ func update_colors():
     if upgrade:
         %Icon.self_modulate = Refs.get_act_light_color(upgrade.act)
 
+    _update_partial_fill_visual()
+
 
 
 
 func _on_click_mask_pressed() -> void :
     if state == STATES.AVAILABLE and can_pay_cost == true:
+        if SaveHandler.touch_input_mode:
+            is_highlighted = true
+            %"Click Mask".grab_focus()
+            update()
+            return
+        _purchase_upgrade()
 
-        Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, - cost)
+func _purchase_upgrade() -> void:
+    if state != STATES.AVAILABLE or not can_pay_cost:
+        return
+    Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, - cost)
 
-        custom_tween_component.do_rotation = true
-        custom_tween_component.do_tween(1.0)
-        tooltip_custom_tween_component.do_tween(1.0)
+    custom_tween_component.do_rotation = true
+    custom_tween_component.do_tween(1.0)
+    tooltip_custom_tween_component.do_tween(1.0)
 
-        upgrade.current_tier += 1
-        if upgrade.sim_name != "" and upgrade.current_tier >= 1 and tech_tree:
-            tech_tree.call_deferred("update_connected_nodes_available", cell)
-        if upgrade.is_at_max():
-            state = STATES.COMPLETE
-        state_changed.emit(self)
-        update()
+    upgrade.current_tier += 1
+    if upgrade.sim_name != "" and upgrade.current_tier >= 1 and tech_tree:
+        tech_tree.call_deferred("update_connected_nodes_available", cell)
+    if upgrade.is_at_max():
+        state = STATES.COMPLETE
+    state_changed.emit(self)
+    update()
 
-        if Global.main and Global.main.upgrade_screen:
-            Global.main.upgrade_screen.on_node_unlocked(self)
+    if Global.main and Global.main.upgrade_screen:
+        Global.main.upgrade_screen.on_node_unlocked(self)
 
-        if upgrade != null and upgrade.sim_key != "":
-            var new_amount: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
-            SaveHandler.fishing_currency = max(0, new_amount)
-            var target_level: int = int(upgrade.sim_level) + int(upgrade.current_tier) - 1
-            SaveHandler.set_fishing_upgrade_level(upgrade.sim_key, max(1, target_level))
-            SaveHandler.save_fishing_progress()
+    if upgrade != null and upgrade.sim_key != "":
+        var new_amount: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
+        SaveHandler.fishing_currency = max(0, new_amount)
+        var target_level: int = int(upgrade.sim_level) + int(upgrade.current_tier) - 1
+        SaveHandler.set_fishing_upgrade_level(upgrade.sim_key, max(1, target_level))
+        SaveHandler.save_fishing_progress()
 
-        SaveHandler.save_player_last_run()
+    SaveHandler.save_player_last_run()
+
+func _setup_touch_buy_button() -> void:
+    var container: VBoxContainer = %"Tool Tip".get_node_or_null("MarginContainer/VBoxContainer")
+    if container == null:
+        return
+    touch_buy_button = Button.new()
+    touch_buy_button.name = "TouchBuyButton"
+    touch_buy_button.text = "BUY"
+    touch_buy_button.focus_mode = Control.FOCUS_NONE
+    touch_buy_button.custom_minimum_size = Vector2(0, 112)
+    touch_buy_button.visible = false
+    touch_buy_button.pressed.connect(_on_touch_buy_button_pressed)
+    container.add_child(touch_buy_button)
+
+func _on_touch_buy_button_pressed() -> void:
+    _purchase_upgrade()
 
 func set_locked_requirement_highlight(active: bool) -> void:
     locked_requirement_highlighted = active
@@ -318,6 +361,34 @@ func unlock_node(target_tier = 1):
             state = STATES.COMPLETE
         state_changed.emit(self)
     update()
+
+func get_visual_progress_ratio() -> float:
+    if upgrade == null:
+        return 1.0 if state == STATES.COMPLETE else 0.0
+    if upgrade.max_tier <= 1:
+        return 1.0 if state == STATES.COMPLETE else 0.0
+    return clamp(float(upgrade.current_tier) / float(upgrade.max_tier), 0.0, 1.0)
+
+func _update_partial_fill_visual() -> void:
+    if partial_fill == null:
+        return
+
+    var progress: float = get_visual_progress_ratio()
+    var should_show: bool = not is_center_node \
+        and state in [STATES.AVAILABLE, STATES.COMPLETE] \
+        and upgrade != null \
+        and upgrade.max_tier > 1 \
+        and progress > 0.0
+
+    partial_fill.visible = should_show
+    if not should_show:
+        partial_fill.scale = Vector2.ONE
+        return
+
+    var fill_color: Color = Refs.get_act_light_color(upgrade.act)
+    fill_color.a = PARTIAL_FILL_ALPHA
+    partial_fill_style_box.bg_color = fill_color
+    partial_fill.scale = Vector2(clamp(progress, 0.0, 1.0), 1.0)
 
 
 
@@ -439,9 +510,22 @@ func update():
 
 
     keep_tooltip_on_screen( %"Tool Tip")
+    _update_touch_buy_button()
 
     update_colors()
     update_panel()
+
+func _update_touch_buy_button() -> void:
+    if touch_buy_button == null:
+        return
+    var show_touch_buy: bool = SaveHandler.touch_input_mode \
+        and _is_highlighted \
+        and state == STATES.AVAILABLE \
+        and can_pay_cost \
+        and upgrade != null \
+        and upgrade.type != Util.NODE_TYPES.ROGUELIKE_DUMMY
+    touch_buy_button.visible = show_touch_buy
+    touch_buy_button.disabled = not show_touch_buy
 
 
 

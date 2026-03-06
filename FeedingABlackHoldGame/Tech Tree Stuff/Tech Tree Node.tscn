@@ -417,6 +417,17 @@ pivot_offset = Vector2(35, 35)
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_wif1q")
 
+[node name="Partial Fill" type="Panel" parent="Art Pivot/Visual Panel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(62, 58)
+layout_mode = 0
+offset_left = 3.0
+offset_top = 2.0
+offset_right = 65.0
+offset_bottom = 60.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_604od")
+
 [node name="Icon" type="TextureRect" parent="Art Pivot"]
 unique_name_in_owner = true
 visible = false

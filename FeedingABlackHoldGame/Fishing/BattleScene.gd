@@ -2,6 +2,7 @@ extends Node2D
 
 const HERO_SCENE: PackedScene = preload("res://Fishing/CombatSprite.tscn")
 const COIN_SCENE: PackedScene = preload("res://Fishing/CoinPickup.tscn")
+const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 
 const HERO_FRAME_SIZE := Vector2i(24, 24)
 const ENEMY_FRAME_SIZE := Vector2i(24, 24)
@@ -269,6 +270,11 @@ var infinite_sim_button: Button
 var exit_battle_button: Button
 var spawn_ufo_button: Button
 var mute_button: Button
+var settings_button: Button
+var settings_panel: PanelContainer
+var settings_content: Settings
+var fullscreen_button: Button
+var touch_input_button: Button
 var level_choice_dialog: ConfirmationDialog
 
 var heroes: Array[CombatSprite] = []
@@ -327,6 +333,11 @@ const MAGE_IDLE_STRIKE_MULT := 4.0
 const MAGE_ACTIVE_TICK_DAMAGE_MULT := 0.5
 const ARCHER_NO_TARGET_ADVANCE_MULT := 5.0
 const HERO_CLICK_RADIUS := 56.0
+const TOUCH_CAMERA_ZOOM_MULT := 2.5
+const LEVEL_CHOICE_DIALOG_SIZE := Vector2(1200.0, 900.0)
+const LEVEL_CHOICE_DIALOG_FONT_SIZE := 32
+const LEVEL_CHOICE_DIALOG_TITLE_SIZE := 48
+const LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT := 96.0
 var speed_index: int = 0
 var arrow_texture: Texture2D
 var hero_sheets: Dictionary = {}
@@ -351,11 +362,14 @@ var pack_texture_cache: Dictionary = {}
 var run_clock_save_accum: float = 0.0
 var speaker_icon_on: Texture2D
 var speaker_icon_off: Texture2D
+var fullscreen_icon_on: Texture2D
+var fullscreen_icon_off: Texture2D
 var active_ufo: UfoBonus = null
 var ufo_spawn_timer: float = 0.0
 var summary_panel_base_layout: Rect2 = Rect2()
 var summary_label_base_layout: Rect2 = Rect2()
 var continue_button_base_layout: Rect2 = Rect2()
+var touch_camera_left_shift: float = 500.0
 var base_fill_texture: Texture2D
 var mage_pending_strikes: Array[Dictionary] = []
 var enemy_mark_timers: Dictionary = {}
@@ -366,6 +380,7 @@ func _ready() -> void:
         push_error("BattleScene is missing required nodes.")
         return
 
+    SignalBus.settings_updated.connect(_on_settings_updated)
     _setup_actor_sheets()
     current_level = clamp(SaveHandler.fishing_next_battle_level, 1, _max_unlocked_level())
     _rebuild_battle_mods()
@@ -375,11 +390,31 @@ func _ready() -> void:
     _style_battle_summary_ui()
     _cache_battle_summary_layout()
     _setup_mute_button()
+    _setup_settings_controls()
+    _setup_fullscreen_button()
+    _setup_touch_input_button()
+    _layout_battle_utility_buttons()
     summary_panel.hide()
     _setup_speed_controls()
     _restore_or_reset_ufo_spawn_timer()
     _update_speed_button_enabled_state()
+    _refresh_fullscreen_button_icon()
+    _refresh_touch_input_button()
     _update_ui()
+
+func _layout_battle_utility_buttons() -> void:
+    var viewport_width: float = get_viewport_rect().size.x
+    var fullscreen_shift_x: float = viewport_width * 0.1
+    if fullscreen_button != null:
+        fullscreen_button.offset_left = 24.0 + fullscreen_shift_x
+        fullscreen_button.offset_top = 20.0
+        fullscreen_button.offset_right = 112.0 + fullscreen_shift_x
+        fullscreen_button.offset_bottom = 108.0
+    if exit_battle_button != null:
+        exit_battle_button.offset_left = 960.0
+        exit_battle_button.offset_top = 164.0
+        exit_battle_button.offset_right = 1256.0
+        exit_battle_button.offset_bottom = 228.0
 
 func _exit_tree() -> void:
     SaveHandler.save_fishing_progress()
@@ -497,6 +532,7 @@ func _bind_nodes() -> bool:
         level_choice_dialog.dialog_text = "Choose your next battle level."
         level_choice_dialog.get_ok_button().hide()
         canvas_layer.add_child(level_choice_dialog)
+    _style_level_choice_dialog(level_choice_dialog)
     if level_choice_dialog != null and not level_choice_dialog.custom_action.is_connected(_on_level_choice_action):
         level_choice_dialog.custom_action.connect(_on_level_choice_action)
 
@@ -563,6 +599,7 @@ func _reset_heroes_to_start() -> void:
 func _setup_speed_controls() -> void:
     if speed_button == null or infinite_sim_button == null:
         return
+    _style_speed_controls()
     if OS.has_feature("editor"):
         speed_button.show()
         infinite_sim_button.show()
@@ -744,7 +781,7 @@ func _get_hero_by_name(hero_name: String) -> CombatSprite:
     return null
 
 func _setup_visuals() -> void:
-    camera_2d.zoom = Vector2(0.2, 0.2) * EXTRA_ZOOM_IN_FACTOR
+    _apply_touch_input_camera_zoom()
     camera_2d.position = Vector2(0, FLOOR_Y - 120.0)
     arrow_texture = _make_arrow_texture()
     base_fill_texture = _make_base_fill_texture()
@@ -1553,16 +1590,33 @@ func _unhandled_input(event: InputEvent) -> void:
         return
     if summary_panel != null and summary_panel.visible:
         return
-    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-        var clicked_hero: CombatSprite = _find_clicked_hero(get_global_mouse_position())
-        if clicked_hero == null:
-            return
-        var h: Dictionary = hero_data.get(clicked_hero, {})
-        var hero_name: String = str(h.get("name", ""))
-        if hero_name == "":
-            return
-        _on_hero_clicked(clicked_hero, hero_name)
+    if _is_settings_open():
+        if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+            _hide_settings_panel()
+        return
+    if SaveHandler.touch_input_mode:
+        if event is InputEventScreenTouch and event.pressed:
+            _try_activate_hero_from_world_pos(_screen_to_world_pos(event.position))
+            get_viewport().set_input_as_handled()
+        elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+            _try_activate_hero_from_world_pos(get_global_mouse_position())
+            get_viewport().set_input_as_handled()
+    elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+        _try_activate_hero_from_world_pos(get_global_mouse_position())
         get_viewport().set_input_as_handled()
+
+func _try_activate_hero_from_world_pos(world_pos: Vector2) -> void:
+    var clicked_hero: CombatSprite = _find_clicked_hero(world_pos)
+    if clicked_hero == null:
+        return
+    var h: Dictionary = hero_data.get(clicked_hero, {})
+    var hero_name: String = str(h.get("name", ""))
+    if hero_name == "":
+        return
+    _on_hero_clicked(clicked_hero, hero_name)
+
+func _screen_to_world_pos(screen_pos: Vector2) -> Vector2:
+    return get_viewport().get_canvas_transform().affine_inverse() * screen_pos
 
 func _find_clicked_hero(world_pos: Vector2) -> CombatSprite:
     var best: CombatSprite = null
@@ -2241,6 +2295,8 @@ func _update_camera_and_parallax() -> void:
 
     var viewport_w: float = get_viewport_rect().size.x
     var anchor_x_world: float = leader.position.x + viewport_w * (0.5 - HERO_SCROLL_ANCHOR_SCREEN_X_FACTOR)
+    if SaveHandler.touch_input_mode:
+        anchor_x_world -= touch_camera_left_shift
     camera_2d.position.x = anchor_x_world
 
     bg_deep.position.x = camera_2d.position.x * 0.08
@@ -2328,27 +2384,28 @@ func _damage_enemies_on_screen(amount: float) -> void:
 func _queue_mage_marked_strike(enemy: CombatSprite, damage: float) -> void:
     if not is_instance_valid(enemy) or damage <= 0.0:
         return
+    var enemy_id: int = enemy.get_instance_id()
     mage_pending_strikes.append({
-        "target_id": enemy.get_instance_id(),
+        "target_id": enemy_id,
         "time_left": MAGE_IDLE_STRIKE_WINDUP,
         "damage": damage,
     })
-    var existing: float = float(enemy_mark_timers.get(enemy, 0.0))
-    enemy_mark_timers[enemy] = max(existing, MAGE_IDLE_STRIKE_WINDUP)
+    var existing: float = float(enemy_mark_timers.get(enemy_id, 0.0))
+    enemy_mark_timers[enemy_id] = max(existing, MAGE_IDLE_STRIKE_WINDUP)
 
 func _update_mage_pending_strikes(delta: float) -> void:
     var marked_keys: Array = enemy_mark_timers.keys().duplicate()
     for i in range(marked_keys.size() - 1, -1, -1):
-        var enemy_key_variant = marked_keys[i]
-        var enemy_key: CombatSprite = enemy_key_variant as CombatSprite
-        if not is_instance_valid(enemy_key):
-            enemy_mark_timers.erase(enemy_key_variant)
+        var enemy_id: int = int(marked_keys[i])
+        var enemy_obj: Object = instance_from_id(enemy_id)
+        if enemy_obj == null or not is_instance_valid(enemy_obj):
+            enemy_mark_timers.erase(enemy_id)
             continue
-        var remaining: float = max(0.0, float(enemy_mark_timers[enemy_key_variant]) - delta)
+        var remaining: float = max(0.0, float(enemy_mark_timers[enemy_id]) - delta)
         if remaining <= 0.0:
-            enemy_mark_timers.erase(enemy_key_variant)
+            enemy_mark_timers.erase(enemy_id)
         else:
-            enemy_mark_timers[enemy_key_variant] = remaining
+            enemy_mark_timers[enemy_id] = remaining
 
     for i in range(mage_pending_strikes.size() - 1, -1, -1):
         var pending: Dictionary = mage_pending_strikes[i]
@@ -2390,7 +2447,7 @@ func _update_active_visual_effects(_delta: float) -> void:
     for enemy in enemies:
         if not is_instance_valid(enemy):
             continue
-        var mark_remaining: float = max(0.0, float(enemy_mark_timers.get(enemy, 0.0)))
+        var mark_remaining: float = max(0.0, float(enemy_mark_timers.get(enemy.get_instance_id(), 0.0)))
         var mage_intensity: float = pulse if mage_active and _is_world_pos_on_screen(enemy.position) else 0.0
         var mark_intensity: float = 0.0
         if mark_remaining > 0.0:
@@ -2490,6 +2547,7 @@ func _kill_enemy(enemy: CombatSprite) -> void:
     if not enemy_data.has(enemy):
         return
     var e: Dictionary = enemy_data[enemy]
+    var enemy_id: int = enemy.get_instance_id()
     if not bool(e.get("is_boss", false)):
         _spawn_split_coin_reward(enemy.position, int(e["coins"]))
 
@@ -2504,6 +2562,10 @@ func _kill_enemy(enemy: CombatSprite) -> void:
 
     enemies.erase(enemy)
     enemy_data.erase(enemy)
+    enemy_mark_timers.erase(enemy_id)
+    for i in range(mage_pending_strikes.size() - 1, -1, -1):
+        if int(mage_pending_strikes[i].get("target_id", 0)) == enemy_id:
+            mage_pending_strikes.remove_at(i)
     # Play enemy defeat / shoot SFX
     # AudioManager is available as a global autoload, not an engine singleton
     print("[AUDIO] Enemy defeated - playing BUTTON_CLICK")
@@ -3495,7 +3557,21 @@ func _style_clock_ui() -> void:
     panel_style.border_width_right = 2
     panel_style.border_width_bottom = 2
     clock_panel.add_theme_stylebox_override("panel", panel_style)
+    clock_panel.custom_minimum_size = Vector2(0.0, 80.0)
     clock_label.add_theme_color_override("font_color", Color(0.94, 0.94, 0.98, 1.0))
+    clock_label.add_theme_font_size_override("font_size", 42)
+    clock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    clock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    clock_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    clock_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+func _style_speed_controls() -> void:
+    if speed_button == null or infinite_sim_button == null:
+        return
+    speed_button.custom_minimum_size = Vector2(392.0, 88.0)
+    infinite_sim_button.custom_minimum_size = Vector2(456.0, 88.0)
+    speed_button.add_theme_font_size_override("font_size", 32)
+    infinite_sim_button.add_theme_font_size_override("font_size", 32)
 
 func _setup_mute_button() -> void:
     if mute_button == null:
@@ -3504,12 +3580,24 @@ func _setup_mute_button() -> void:
     speaker_icon_off = _make_speaker_icon_texture(true)
     mute_button.text = ""
     mute_button.focus_mode = Control.FOCUS_NONE
-    mute_button.custom_minimum_size = Vector2(56, 44)
+    mute_button.offset_left = 896.0
+    mute_button.offset_top = 20.0
+    mute_button.offset_right = 1064.0
+    mute_button.offset_bottom = 152.0
+    mute_button.custom_minimum_size = Vector2(168, 132)
+    mute_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    mute_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+    mute_button.expand_icon = true
     _style_mute_button()
     _refresh_mute_button_icon()
 
 func _style_mute_button() -> void:
     if mute_button == null:
+        return
+    _style_mute_like_button(mute_button)
+
+func _style_mute_like_button(button: Button) -> void:
+    if button == null:
         return
     var normal := StyleBoxFlat.new()
     normal.bg_color = Color(0.05, 0.14, 0.4, 0.96)
@@ -3524,9 +3612,25 @@ func _style_mute_button() -> void:
     normal.corner_radius_bottom_right = 4
     var hover := normal.duplicate(true)
     hover.bg_color = Color(0.08, 0.22, 0.55, 0.98)
-    mute_button.add_theme_stylebox_override("normal", normal)
-    mute_button.add_theme_stylebox_override("hover", hover)
-    mute_button.add_theme_stylebox_override("pressed", hover)
+    button.add_theme_stylebox_override("normal", normal)
+    button.add_theme_stylebox_override("hover", hover)
+    button.add_theme_stylebox_override("pressed", hover)
+
+func _style_utility_panel(panel: PanelContainer) -> void:
+    if panel == null:
+        return
+    var box := StyleBoxFlat.new()
+    box.bg_color = Color(0.04, 0.06, 0.1, 0.98)
+    box.border_color = Color(0.88, 0.92, 1.0, 1.0)
+    box.border_width_left = 2
+    box.border_width_top = 2
+    box.border_width_right = 2
+    box.border_width_bottom = 2
+    box.corner_radius_top_left = 6
+    box.corner_radius_top_right = 6
+    box.corner_radius_bottom_left = 6
+    box.corner_radius_bottom_right = 6
+    panel.add_theme_stylebox_override("panel", box)
 
 func _refresh_mute_button_icon() -> void:
     if mute_button == null:
@@ -3537,6 +3641,219 @@ func _refresh_mute_button_icon() -> void:
 func _on_mute_button_pressed() -> void:
     SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
     _refresh_mute_button_icon()
+
+func _setup_settings_controls() -> void:
+    if settings_button != null and is_instance_valid(settings_button):
+        return
+    var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
+    if canvas_layer == null:
+        return
+
+    settings_button = Button.new()
+    settings_button.name = "SettingsButton"
+    settings_button.anchor_left = 1.0
+    settings_button.anchor_top = 0.0
+    settings_button.anchor_right = 1.0
+    settings_button.anchor_bottom = 0.0
+    settings_button.offset_left = -184.0
+    settings_button.offset_top = 20.0
+    settings_button.offset_right = -16.0
+    settings_button.offset_bottom = 108.0
+    settings_button.z_index = 30
+    settings_button.focus_mode = Control.FOCUS_NONE
+    settings_button.text = "Settings"
+    settings_button.custom_minimum_size = Vector2(168, 88)
+    settings_button.add_theme_font_size_override("font_size", 26)
+    settings_button.pressed.connect(_on_settings_button_pressed)
+    _style_mute_like_button(settings_button)
+    canvas_layer.add_child(settings_button)
+
+    settings_panel = PanelContainer.new()
+    settings_panel.name = "BattleSettingsPanel"
+    settings_panel.anchor_left = 0.0
+    settings_panel.anchor_top = 0.0
+    settings_panel.anchor_right = 1.0
+    settings_panel.anchor_bottom = 1.0
+    settings_panel.offset_left = 16.0
+    settings_panel.offset_top = 16.0
+    settings_panel.offset_right = -16.0
+    settings_panel.offset_bottom = -16.0
+    settings_panel.z_index = 60
+    settings_panel.visible = false
+    settings_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+    _style_utility_panel(settings_panel)
+    canvas_layer.add_child(settings_panel)
+
+    var margin := MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 12)
+    margin.add_theme_constant_override("margin_top", 12)
+    margin.add_theme_constant_override("margin_right", 12)
+    margin.add_theme_constant_override("margin_bottom", 12)
+    settings_panel.add_child(margin)
+
+    var vbox := VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 12)
+    vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    margin.add_child(vbox)
+
+    var title := Label.new()
+    title.text = "SETTINGS"
+    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    title.add_theme_font_size_override("font_size", 46)
+    vbox.add_child(title)
+
+    settings_content = SETTINGS_SCENE.instantiate() as Settings
+    if settings_content != null:
+        settings_content.name = "SettingsContent"
+        settings_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        settings_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        settings_content.scale = Vector2(1.7, 1.7)
+        vbox.add_child(settings_content)
+
+    var close_button := Button.new()
+    close_button.name = "SettingsCloseButton"
+    close_button.text = "BACK"
+    close_button.focus_mode = Control.FOCUS_NONE
+    close_button.custom_minimum_size = Vector2(0, 150)
+    close_button.add_theme_font_size_override("font_size", 34)
+    close_button.pressed.connect(_on_settings_close_pressed)
+    _style_mute_like_button(close_button)
+    vbox.add_child(close_button)
+
+func _setup_fullscreen_button() -> void:
+    if fullscreen_button != null and is_instance_valid(fullscreen_button):
+        return
+    var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
+    if canvas_layer == null:
+        return
+    fullscreen_button = Button.new()
+    fullscreen_button.name = "FullscreenButton"
+    fullscreen_button.offset_left = 24.0
+    fullscreen_button.offset_top = 20.0
+    fullscreen_button.offset_right = 112.0
+    fullscreen_button.offset_bottom = 108.0
+    fullscreen_button.z_index = 30
+    fullscreen_button.focus_mode = Control.FOCUS_NONE
+    fullscreen_button.text = ""
+    fullscreen_button.custom_minimum_size = Vector2(88, 88)
+    fullscreen_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    fullscreen_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+    fullscreen_button.expand_icon = true
+    fullscreen_button.pressed.connect(_on_fullscreen_button_pressed)
+    _style_mute_like_button(fullscreen_button)
+    canvas_layer.add_child(fullscreen_button)
+    fullscreen_icon_on = _make_fullscreen_icon_texture(true)
+    fullscreen_icon_off = _make_fullscreen_icon_texture(false)
+
+func _setup_touch_input_button() -> void:
+    if touch_input_button != null and is_instance_valid(touch_input_button):
+        return
+    var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
+    if canvas_layer == null:
+        return
+    touch_input_button = Button.new()
+    touch_input_button.name = "TouchInputButton"
+    touch_input_button.anchor_left = 1.0
+    touch_input_button.anchor_top = 0.0
+    touch_input_button.anchor_right = 1.0
+    touch_input_button.anchor_bottom = 0.0
+    touch_input_button.offset_left = -256.0
+    touch_input_button.offset_top = 244.0
+    touch_input_button.offset_right = -16.0
+    touch_input_button.offset_bottom = 332.0
+    touch_input_button.z_index = 30
+    touch_input_button.focus_mode = Control.FOCUS_NONE
+    touch_input_button.custom_minimum_size = Vector2(240, 88)
+    touch_input_button.add_theme_font_size_override("font_size", 26)
+    touch_input_button.pressed.connect(_on_touch_input_button_pressed)
+    _style_mute_like_button(touch_input_button)
+    canvas_layer.add_child(touch_input_button)
+
+func _refresh_fullscreen_button_icon() -> void:
+    if fullscreen_button == null:
+        return
+    var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+    fullscreen_button.icon = fullscreen_icon_on if is_fullscreen else fullscreen_icon_off
+    fullscreen_button.tooltip_text = "Exit fullscreen" if is_fullscreen else "Enter fullscreen"
+
+func _on_fullscreen_button_pressed() -> void:
+    var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+    SaveHandler.update_screen_mode(
+        SaveHandler.SCREEN_MODES.WINDOWED if is_fullscreen else SaveHandler.SCREEN_MODES.FULL_SCREEN
+    )
+    _refresh_fullscreen_button_icon()
+    if settings_content != null:
+        settings_content.refresh_from_save()
+
+func _refresh_touch_input_button() -> void:
+    if touch_input_button == null:
+        return
+    touch_input_button.text = "Touch Input" if SaveHandler.touch_input_mode else "Mouse Input"
+
+func _on_touch_input_button_pressed() -> void:
+    SaveHandler.update_touch_input_mode(not SaveHandler.touch_input_mode)
+    _refresh_touch_input_button()
+    _apply_touch_input_camera_zoom()
+    if settings_content != null:
+        settings_content.refresh_from_save()
+
+func _is_settings_open() -> bool:
+    return settings_panel != null and is_instance_valid(settings_panel) and settings_panel.visible
+
+func _on_settings_button_pressed() -> void:
+    if settings_content != null:
+        settings_content.show_screen()
+        settings_content.refresh_from_save()
+    if settings_panel != null:
+        settings_panel.show()
+
+func _on_settings_close_pressed() -> void:
+    _hide_settings_panel()
+
+func _hide_settings_panel() -> void:
+    if settings_panel != null and is_instance_valid(settings_panel):
+        settings_panel.hide()
+
+func _on_settings_updated() -> void:
+    _refresh_touch_input_button()
+    _refresh_fullscreen_button_icon()
+    _apply_touch_input_camera_zoom()
+
+func _apply_touch_input_camera_zoom() -> void:
+    if camera_2d == null:
+        return
+    var base_zoom := Vector2(0.2, 0.2) * EXTRA_ZOOM_IN_FACTOR
+    camera_2d.zoom = base_zoom * TOUCH_CAMERA_ZOOM_MULT if SaveHandler.touch_input_mode else base_zoom
+
+func _make_fullscreen_icon_texture(is_fullscreen: bool) -> ImageTexture:
+    var image := Image.create(80, 80, false, Image.FORMAT_RGBA8)
+    image.fill(Color(0, 0, 0, 0))
+    var line_color := Color(0.93, 0.97, 1.0, 1.0)
+    if is_fullscreen:
+        _draw_icon_rect(image, Rect2i(12, 12, 20, 6), line_color)
+        _draw_icon_rect(image, Rect2i(12, 12, 6, 20), line_color)
+        _draw_icon_rect(image, Rect2i(48, 12, 20, 6), line_color)
+        _draw_icon_rect(image, Rect2i(62, 12, 6, 20), line_color)
+        _draw_icon_rect(image, Rect2i(12, 62, 20, 6), line_color)
+        _draw_icon_rect(image, Rect2i(12, 48, 6, 20), line_color)
+        _draw_icon_rect(image, Rect2i(48, 62, 20, 6), line_color)
+        _draw_icon_rect(image, Rect2i(62, 48, 6, 20), line_color)
+    else:
+        _draw_icon_rect(image, Rect2i(24, 12, 6, 20), line_color)
+        _draw_icon_rect(image, Rect2i(12, 24, 20, 6), line_color)
+        _draw_icon_rect(image, Rect2i(50, 12, 6, 20), line_color)
+        _draw_icon_rect(image, Rect2i(48, 24, 20, 6), line_color)
+        _draw_icon_rect(image, Rect2i(24, 48, 6, 20), line_color)
+        _draw_icon_rect(image, Rect2i(12, 50, 20, 6), line_color)
+        _draw_icon_rect(image, Rect2i(50, 48, 6, 20), line_color)
+        _draw_icon_rect(image, Rect2i(48, 50, 20, 6), line_color)
+    return ImageTexture.create_from_image(image)
+
+func _draw_icon_rect(image: Image, rect: Rect2i, color: Color) -> void:
+    for x in range(rect.position.x, rect.position.x + rect.size.x):
+        for y in range(rect.position.y, rect.position.y + rect.size.y):
+            image.set_pixel(x, y, color)
 
 func _refresh_battle_summary_text() -> void:
     if summary_label == null:
@@ -3665,7 +3982,8 @@ func _show_level_choice_dialog(max_level: int) -> void:
         var button: Button = level_choice_dialog.add_button("Level %d" % level, true, "level_%d" % level)
         button.name = "LevelChoiceButton%d" % level
 
-    level_choice_dialog.popup_centered()
+    _style_level_choice_dialog(level_choice_dialog)
+    level_choice_dialog.popup_centered(LEVEL_CHOICE_DIALOG_SIZE)
 
 func _on_level_choice_action(action: StringName) -> void:
     var action_text: String = str(action)
@@ -3673,6 +3991,19 @@ func _on_level_choice_action(action: StringName) -> void:
         return
     var level: int = int(action_text.trim_prefix("level_"))
     _set_next_battle_level_and_exit(level)
+
+func _style_level_choice_dialog(dialog: ConfirmationDialog) -> void:
+    if dialog == null:
+        return
+    dialog.add_theme_font_size_override("font_size", LEVEL_CHOICE_DIALOG_FONT_SIZE)
+    dialog.add_theme_font_size_override("title_font_size", LEVEL_CHOICE_DIALOG_TITLE_SIZE)
+    dialog.min_size = LEVEL_CHOICE_DIALOG_SIZE
+    for child in dialog.get_children():
+        if child is Button:
+            child.add_theme_font_size_override("font_size", LEVEL_CHOICE_DIALOG_FONT_SIZE)
+            child.custom_minimum_size = Vector2(0.0, LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+        elif child is Label:
+            child.add_theme_font_size_override("font_size", LEVEL_CHOICE_DIALOG_FONT_SIZE)
 
 func _set_next_battle_level_and_exit(level: int) -> void:
     SaveHandler.fishing_next_battle_level = clamp(level, 1, _max_unlocked_level())
@@ -3690,17 +4021,17 @@ func _track_ga_event(event_id: String, fields: Dictionary = {}) -> void:
         ga_manager.call("track_design_event", event_id, null, fields)
 
 func _make_speaker_icon_texture(is_muted: bool) -> ImageTexture:
-    var image := Image.create(40, 40, false, Image.FORMAT_RGBA8)
+    var image := Image.create(80, 80, false, Image.FORMAT_RGBA8)
     image.fill(Color(0, 0, 0, 0))
     var speaker_color := Color(0.93, 0.97, 1.0, 1.0)
-    _draw_rect_pixels(image, Rect2i(7, 14, 7, 12), speaker_color)
-    _draw_triangle_right(image, Vector2i(14, 20), 11, 9, speaker_color)
+    _draw_rect_pixels(image, Rect2i(14, 28, 14, 24), speaker_color)
+    _draw_triangle_right(image, Vector2i(28, 40), 22, 18, speaker_color)
     if is_muted:
-        _draw_thick_line(image, Vector2i(21, 10), Vector2i(34, 30), Color(1.0, 0.2, 0.2, 1.0), 2)
-        _draw_thick_line(image, Vector2i(34, 10), Vector2i(21, 30), Color(1.0, 0.2, 0.2, 1.0), 2)
+        _draw_thick_line(image, Vector2i(42, 20), Vector2i(68, 60), Color(1.0, 0.2, 0.2, 1.0), 4)
+        _draw_thick_line(image, Vector2i(68, 20), Vector2i(42, 60), Color(1.0, 0.2, 0.2, 1.0), 4)
     else:
-        _draw_arc_ring(image, Vector2i(20, 20), 8, 11, PI * -0.42, PI * 0.42, speaker_color)
-        _draw_arc_ring(image, Vector2i(20, 20), 12, 15, PI * -0.42, PI * 0.42, speaker_color)
+        _draw_arc_ring(image, Vector2i(40, 40), 16, 22, PI * -0.42, PI * 0.42, speaker_color)
+        _draw_arc_ring(image, Vector2i(40, 40), 24, 30, PI * -0.42, PI * 0.42, speaker_color)
     return ImageTexture.create_from_image(image)
 
 func _draw_rect_pixels(image: Image, rect: Rect2i, color: Color) -> void:

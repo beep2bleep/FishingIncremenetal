@@ -16,8 +16,10 @@ var fps_limits: Dictionary = {
         144: "144", 
         240: "240"
     }
+var _is_refreshing: bool = false
 
 func show_screen():
+    refresh_from_save()
     %"Main Volume".grab_focus()
 
     pass
@@ -26,22 +28,26 @@ func show_screen():
 func _ready():
     hide()
 
+    populate_window_mode_list()
+    populate_fps_list()
+    refresh_from_save()
+
+    show()
+
+func refresh_from_save() -> void:
+    _is_refreshing = true
     %"Music Volume".value = SaveHandler.music_volume
     %"Main Volume".value = SaveHandler.main_volume
     %"Effect Volume Slider".value = SaveHandler.effect_volume
     ctrl_sense = SaveHandler.controller_sensitivity
-
     %"V Sync Enabled".button_pressed = SaveHandler.vsync_enabled
     %"Floating Currency CheckButton".button_pressed = SaveHandler.money_text
     %"Floating Damage CheckButton".button_pressed = SaveHandler.damage_text
-    
-
+    %"Touch Input CheckButton".button_pressed = SaveHandler.touch_input_mode
     text_scale = SaveHandler.text_scale
-
-    populate_window_mode_list()
-    populate_fps_list()
-
-    show()
+    _refresh_window_mode_selection()
+    _refresh_fps_selection()
+    _is_refreshing = false
 
 
 func populate_window_mode_list():
@@ -61,21 +67,37 @@ func populate_fps_list():
             %"FPS Dropdown".select(index)
         index += 1
 
+func _refresh_window_mode_selection() -> void:
+    var index := 0
+    for r in screen_modes.keys():
+        if r == SaveHandler.screen_mode:
+            %"Screen Mode Dropdown".select(index)
+            return
+        index += 1
+
+func _refresh_fps_selection() -> void:
+    var index := 0
+    for r in fps_limits.keys():
+        if r == SaveHandler.fps_limit:
+            %"FPS Dropdown".select(index)
+            return
+        index += 1
+
 
 func _on_screen_mode_dropdown_item_selected(index: int) -> void :
     SaveHandler.update_screen_mode(screen_modes.keys()[index])
-    if visible:
+    if visible and not _is_refreshing:
         AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 
 func _on_fps_dropdown_item_selected(index: int) -> void :
     SaveHandler.update_fps_limit(fps_limits.keys()[index])
-    if visible:
+    if visible and not _is_refreshing:
         AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 
 func _on_v_sync_enabled_toggled(toggled_on: bool) -> void :
     SaveHandler.update_vysnc(toggled_on)
     DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if SaveHandler.vsync_enabled else DisplayServer.VSYNC_DISABLED)
-    if visible:
+    if visible and not _is_refreshing:
         AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 
 func _on_main_volume_value_changed(value: float) -> void :
@@ -96,17 +118,22 @@ func _on_music_volume_value_changed(value: float) -> void :
 
 func _on_shuffle_music_check_button_toggled(toggled_on: bool) -> void :
     SaveHandler.update_shuffle_music(toggled_on)
-    if visible:
+    if visible and not _is_refreshing:
         AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 
 func _on_floating_currency_check_button_toggled(toggled_on: bool) -> void :
     SaveHandler.update_floating_money_text(toggled_on)
-    if visible:
+    if visible and not _is_refreshing:
         AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 
 func _on_floating_damage_check_button_toggled(toggled_on: bool) -> void :
     SaveHandler.update_floating_damage_text(toggled_on)
-    if visible:
+    if visible and not _is_refreshing:
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+
+func _on_touch_input_check_button_toggled(toggled_on: bool) -> void:
+    SaveHandler.update_touch_input_mode(toggled_on)
+    if visible and not _is_refreshing:
         AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 
 
@@ -124,7 +151,8 @@ var text_scale = 1.0:
         text_scale = snapped(clamp(0.5, new_value, 1.5), 0.1)
         %"Text Size Label".text = str(int(text_scale * 100), "%")
         ThemeManager.text_scale = text_scale
-        SignalBus.settings_updated.emit()
+        if not _is_refreshing:
+            SignalBus.settings_updated.emit()
 
 
 
@@ -142,7 +170,8 @@ var ctrl_sense = 1.0:
     set(new_value):
         ctrl_sense = snapped(clamp(0.1, new_value, 10.0), 0.1)
         %"Contr Sens Label".text = str(int(ctrl_sense * 100), "%")
-        SaveHandler.update_controller_sensitivity(ctrl_sense)
+        if not _is_refreshing:
+            SaveHandler.update_controller_sensitivity(ctrl_sense)
 
 
 func _on_sens_down_pressed() -> void :
