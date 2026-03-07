@@ -12,6 +12,7 @@ var current_game_mode_data: GameModeData
 var session_stats: SessionStats
 var tier_stats: TierStats
 var run_stats: RunStats
+var cached_upgrade_tech_tree: Node = null
 
 
 const G = 100000.0
@@ -69,6 +70,7 @@ func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: i
 
 func new_game():
     ensure_default_game_mode_data()
+    clear_upgrade_tree_cache()
 
     rng = RandomNumberGenerator.new()
     rng.randomize()
@@ -85,6 +87,11 @@ func new_game():
 
     if current_game_mode_data != null:
         game_mode_data_manager.load_game_mode_data(current_game_mode_data)
+
+func clear_upgrade_tree_cache() -> void:
+    if cached_upgrade_tech_tree != null and is_instance_valid(cached_upgrade_tech_tree):
+        cached_upgrade_tech_tree.queue_free()
+    cached_upgrade_tech_tree = null
 
 
 func update_mouse():

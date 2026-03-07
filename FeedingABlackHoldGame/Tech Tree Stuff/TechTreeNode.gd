@@ -675,13 +675,21 @@ func _position_tooltip() -> void:
     %"Tool Tip".reset_size()
 
     var total_tooltip_size = Vector2( %"Tool Tip".size.x, %"Tool Tip".size.y + %TitlePanel.size.y - 22)
+    var main_node: Node = Global.main
+    var main_camera: Camera2D = null
+    if is_instance_valid(main_node):
+        main_camera = main_node.get_node_or_null("Camera2D") as Camera2D
 
 
     %"Tool Tip".position.x = - total_tooltip_size.x / 2.0
 
 
 
-    if Util.get_node2d_viewport_position(self, Global.main.camera_2d).y - total_tooltip_size.y - TOOLTIP_VERTICAL_GAP < 0:
+    var tooltip_anchor_y: float = global_position.y
+    if is_instance_valid(main_camera):
+        tooltip_anchor_y = Util.get_node2d_viewport_position(self, main_camera).y
+
+    if tooltip_anchor_y - total_tooltip_size.y - TOOLTIP_VERTICAL_GAP < 0:
         %"Tool Tip".position.y = 35.0 + TOOLTIP_VERTICAL_GAP
     else:
         %"Tool Tip".position.y = - %"Tool Tip".size.y - TOOLTIP_VERTICAL_GAP

@@ -375,11 +375,17 @@ const ACTIVE_DURATIONS := {
     "guardian": 3.0,
     "mage": 2.6,
 }
-const MAGE_ACTIVE_TICK_SECONDS := 1.0
-const MAGE_IDLE_STRIKE_COOLDOWN := 4.0
-const MAGE_IDLE_STRIKE_WINDUP := 0.2
+const MAGE_BASE_SPEED := 1.2
+const MAGE_BASE_ATTACK_INTERVAL := 4.0
+const MAGE_IDLE_STRIKE_WINDUP := 1.0
 const MAGE_IDLE_STRIKE_MULT := 4.0
 const MAGE_ACTIVE_TICK_DAMAGE_MULT := 0.5
+const MAGE_ACTIVE_SPEED_MULT := 4.0
+const MAGE_HIT_FLASH_DURATION := 0.1
+const MAGE_HIT_FLASH_BLEND := 0.7
+const MAGE_LIGHTNING_DURATION := 0.1
+const MAGE_MARK_TINT_START := 0.5
+const MAGE_MARK_TINT_END := 1.0
 const ARCHER_NO_TARGET_ADVANCE_MULT := 5.0
 const HERO_CLICK_RADIUS := 56.0
 const TOUCH_CAMERA_ZOOM_MULT := 2.5
@@ -665,8 +671,8 @@ func _reset_heroes_to_start() -> void:
             h["active_time_remaining"] = 0.0
             h["active_time_total"] = 0.0
             h["active_cooldown_total"] = 0.0
-            h["mage_active_tick"] = MAGE_ACTIVE_TICK_SECONDS
-            h["mage_idle_mark_cd"] = MAGE_IDLE_STRIKE_COOLDOWN
+            h["mage_active_tick"] = _mage_attack_interval(h)
+            h["mage_idle_mark_cd"] = _mage_attack_interval(h)
             hero_data[hero] = h
 
 func _setup_speed_controls() -> void:
@@ -2092,8 +2098,8 @@ func _spawn_heroes() -> void:
             "active_bar_back": null,
             "active_bar_fill": null,
             "active_bar_width": 0.0,
-            "mage_active_tick": MAGE_ACTIVE_TICK_SECONDS,
-            "mage_idle_mark_cd": MAGE_IDLE_STRIKE_COOLDOWN,
+            "mage_active_tick": (MAGE_BASE_ATTACK_INTERVAL * MAGE_BASE_SPEED) / max(0.1, speed),
+            "mage_idle_mark_cd": (MAGE_BASE_ATTACK_INTERVAL * MAGE_BASE_SPEED) / max(0.1, speed),
         }
         _add_hero_active_bar(hero)
 
@@ -2305,7 +2311,7 @@ func _update_heroes(delta: float) -> void:
         if hero_name == "archer":
             target = _nearest_enemy_on_screen(hero.position)
         elif hero_name == "mage":
-            target = _nearest_enemy_on_screen(hero.position)
+            target = _nearest_enemy_in_touch_camera_area(hero.position)
         if target == null:
             var no_target_mult: float = ARCHER_NO_TARGET_ADVANCE_MULT if hero_name == "archer" else 1.0
             hero.position.x += float(h["walk_speed"]) * no_target_mult * delta
@@ -2323,10 +2329,11 @@ func _update_heroes(delta: float) -> void:
         if hero_name == "mage":
             var active_remaining: float = float(h.get("active_time_remaining", 0.0))
             if active_remaining > 0.0:
-                var mage_tick: float = float(h.get("mage_active_tick", MAGE_ACTIVE_TICK_SECONDS)) - delta
+                var mage_tick_interval: float = _mage_attack_interval(h)
+                var mage_tick: float = float(h.get("mage_active_tick", mage_tick_interval)) - delta
                 while mage_tick <= 0.0:
-                    _damage_enemies_on_screen(float(h.get("damage", 0.0)) * MAGE_ACTIVE_TICK_DAMAGE_MULT)
-                    mage_tick += MAGE_ACTIVE_TICK_SECONDS
+                    _damage_enemies_in_touch_camera_area(float(h.get("damage", 0.0)) * MAGE_ACTIVE_TICK_DAMAGE_MULT, true)
+                    mage_tick += mage_tick_interval
                 h["mage_active_tick"] = mage_tick
                 if dist > float(h["range"]):
                     hero.position.x += float(h["walk_speed"]) * delta
@@ -2334,14 +2341,14 @@ func _update_heroes(delta: float) -> void:
                 else:
                     hero.set_walking()
             else:
-                var mage_idle_cd: float = max(0.0, float(h.get("mage_idle_mark_cd", MAGE_IDLE_STRIKE_COOLDOWN)) - delta)
+                var mage_interval: float = _mage_attack_interval(h)
+                var mage_idle_cd: float = max(0.0, float(h.get("mage_idle_mark_cd", mage_interval)) - delta)
                 h["mage_idle_mark_cd"] = mage_idle_cd
                 if mage_idle_cd <= 0.0:
-                    var random_enemy: CombatSprite = _random_enemy_on_screen()
+                    var random_enemy: CombatSprite = _random_enemy_in_touch_camera_area()
                     if is_instance_valid(random_enemy):
-                        h["mage_idle_mark_cd"] = MAGE_IDLE_STRIKE_COOLDOWN
+                        h["mage_idle_mark_cd"] = mage_interval
                         _queue_mage_marked_strike(random_enemy, float(h.get("damage", 0.0)) * MAGE_IDLE_STRIKE_MULT)
-                        hero.trigger_attack()
                 if dist > float(h["range"]):
                     hero.position.x += float(h["walk_speed"]) * delta
                     hero.set_walking()
@@ -2731,7 +2738,10 @@ func _touch_camera_world_rect() -> Rect2:
         var leader: CombatSprite = heroes[0]
         if is_instance_valid(leader):
             center_x = leader.position.x + viewport_size.x * (0.5 - HERO_SCROLL_ANCHOR_SCREEN_X_FACTOR) - touch_camera_left_shift
-    var size: Vector2 = Vector2(viewport_size.x * touch_zoom.x, viewport_size.y * touch_zoom.y)
+    var size: Vector2 = Vector2(
+        viewport_size.x / max(0.001, touch_zoom.x),
+        viewport_size.y / max(0.001, touch_zoom.y)
+    )
     return Rect2(Vector2(center_x, camera_2d.position.y) - size * 0.5, size)
 
 func _enemy_world_rect(enemy: CombatSprite) -> Rect2:
@@ -2788,6 +2798,47 @@ func _random_enemy_on_screen() -> CombatSprite:
         return null
     return visible[randi() % visible.size()]
 
+func _enemies_in_touch_camera_area() -> Array[CombatSprite]:
+    var visible: Array[CombatSprite] = []
+    var touch_area: Rect2 = _touch_camera_world_rect()
+    if touch_area.size.x <= 0.0 or touch_area.size.y <= 0.0:
+        return visible
+    for enemy in enemies:
+        if not is_instance_valid(enemy):
+            continue
+        if _enemy_world_rect(enemy).intersects(touch_area):
+            visible.append(enemy)
+    return visible
+
+func _nearest_enemy_in_touch_camera_area(from_pos: Vector2) -> CombatSprite:
+    var best: CombatSprite = null
+    var best_dist: float = INF
+    for enemy in _enemies_in_touch_camera_area():
+        var d: float = from_pos.distance_to(enemy.position)
+        if d < best_dist:
+            best_dist = d
+            best = enemy
+    return best
+
+func _random_enemy_in_touch_camera_area() -> CombatSprite:
+    var visible: Array[CombatSprite] = _enemies_in_touch_camera_area()
+    if visible.is_empty():
+        return null
+    return visible[randi() % visible.size()]
+
+func _random_enemy_in_touch_camera_area_excluding(excluded_ids: Array[int]) -> CombatSprite:
+    var excluded: Dictionary = {}
+    for enemy_id in excluded_ids:
+        excluded[int(enemy_id)] = true
+    var visible: Array[CombatSprite] = []
+    for enemy in _enemies_in_touch_camera_area():
+        if excluded.has(enemy.get_instance_id()):
+            continue
+        visible.append(enemy)
+    if visible.is_empty():
+        return null
+    return visible[randi() % visible.size()]
+
 func _damage_all_enemies(amount: float) -> void:
     if amount <= 0.0:
         return
@@ -2805,19 +2856,43 @@ func _damage_enemies_on_screen(amount: float) -> void:
     for enemy in targets:
         _damage_enemy(enemy, amount)
 
+func _damage_enemies_in_touch_camera_area(amount: float, is_mage_attack: bool = false) -> void:
+    if amount <= 0.0:
+        return
+    var targets: Array[CombatSprite] = _enemies_in_touch_camera_area()
+    for enemy in targets:
+        _damage_enemy(enemy, amount, is_mage_attack)
+
 func _queue_mage_marked_strike(enemy: CombatSprite, damage: float) -> void:
     if not is_instance_valid(enemy) or damage <= 0.0:
         return
     var enemy_id: int = enemy.get_instance_id()
+    var windup: float = _mage_strike_windup()
     mage_pending_strikes.append({
         "target_id": enemy_id,
-        "time_left": MAGE_IDLE_STRIKE_WINDUP,
+        "time_left": windup,
         "damage": damage,
     })
     var existing: float = float(enemy_mark_timers.get(enemy_id, 0.0))
-    enemy_mark_timers[enemy_id] = max(existing, MAGE_IDLE_STRIKE_WINDUP)
+    enemy_mark_timers[enemy_id] = max(existing, windup)
+    _trigger_mage_attack_animation(0.5)
+
+func _queue_mage_followup_strike(excluded_ids: Array[int], damage: float) -> void:
+    var next_enemy: CombatSprite = _random_enemy_in_touch_camera_area_excluding(excluded_ids)
+    if is_instance_valid(next_enemy):
+        _queue_mage_marked_strike(next_enemy, damage)
+
+func _trigger_mage_attack_animation(strength: float = 1.0) -> void:
+    for hero in heroes:
+        if not is_instance_valid(hero) or not hero_data.has(hero):
+            continue
+        var h: Dictionary = hero_data[hero]
+        if str(h.get("name", "")) == "mage":
+            hero.trigger_attack(strength, true)
+            return
 
 func _update_mage_pending_strikes(delta: float) -> void:
+    var mage_time_scale: float = _mage_attack_time_scale()
     var marked_keys: Array = enemy_mark_timers.keys().duplicate()
     for i in range(marked_keys.size() - 1, -1, -1):
         var enemy_id: int = int(marked_keys[i])
@@ -2825,7 +2900,7 @@ func _update_mage_pending_strikes(delta: float) -> void:
         if enemy_obj == null or not is_instance_valid(enemy_obj):
             enemy_mark_timers.erase(enemy_id)
             continue
-        var remaining: float = max(0.0, float(enemy_mark_timers[enemy_id]) - delta)
+        var remaining: float = max(0.0, float(enemy_mark_timers[enemy_id]) - delta * mage_time_scale)
         if remaining <= 0.0:
             enemy_mark_timers.erase(enemy_id)
         else:
@@ -2833,7 +2908,7 @@ func _update_mage_pending_strikes(delta: float) -> void:
 
     for i in range(mage_pending_strikes.size() - 1, -1, -1):
         var pending: Dictionary = mage_pending_strikes[i]
-        var remaining_hit_time: float = float(pending.get("time_left", 0.0)) - delta
+        var remaining_hit_time: float = float(pending.get("time_left", 0.0)) - delta * mage_time_scale
         pending["time_left"] = remaining_hit_time
         if remaining_hit_time > 0.0:
             mage_pending_strikes[i] = pending
@@ -2841,15 +2916,92 @@ func _update_mage_pending_strikes(delta: float) -> void:
 
         var target_id: int = int(pending.get("target_id", 0))
         var target_obj: Object = instance_from_id(target_id)
-        if target_obj != null and is_instance_valid(target_obj):
-            var target_enemy: CombatSprite = target_obj as CombatSprite
-            if is_instance_valid(target_enemy):
-                _damage_enemy(target_enemy, float(pending.get("damage", 0.0)))
+        if target_obj == null or not is_instance_valid(target_obj):
+            mage_pending_strikes.remove_at(i)
+            _queue_mage_followup_strike([target_id], float(pending.get("damage", 0.0)))
+            continue
+
+        var target_enemy: CombatSprite = target_obj as CombatSprite
+        if not is_instance_valid(target_enemy) or not enemy_data.has(target_enemy):
+            mage_pending_strikes.remove_at(i)
+            _queue_mage_followup_strike([target_id], float(pending.get("damage", 0.0)))
+            continue
+
+        if float(enemy_mark_timers.get(target_id, 0.0)) > 0.0 and float(enemy_data.get(target_enemy, {}).get("hp", 0.0)) <= 0.0:
+            mage_pending_strikes.remove_at(i)
+            _queue_mage_followup_strike([target_id], float(pending.get("damage", 0.0)))
+            continue
+
+        if is_instance_valid(target_enemy):
+            _trigger_mage_attack_animation(1.0)
+            _damage_enemy(target_enemy, float(pending.get("damage", 0.0)), true)
         mage_pending_strikes.remove_at(i)
+
+func _mage_attack_interval(hero_state: Dictionary) -> float:
+    return ((MAGE_BASE_ATTACK_INTERVAL * MAGE_BASE_SPEED) / max(0.1, float(hero_state.get("speed", 1.0)))) / _mage_attack_time_scale(hero_state)
+
+func _mage_strike_windup(hero_state: Dictionary = {}) -> float:
+    return MAGE_IDLE_STRIKE_WINDUP / _mage_attack_time_scale(hero_state)
+
+func _mage_attack_time_scale(hero_state: Dictionary = {}) -> float:
+    if not hero_state.is_empty():
+        return MAGE_ACTIVE_SPEED_MULT if float(hero_state.get("active_time_remaining", 0.0)) > 0.0 else 1.0
+    return MAGE_ACTIVE_SPEED_MULT if _is_hero_active("mage") else 1.0
+
+func _flash_enemy_red(enemy: CombatSprite) -> void:
+    if not is_instance_valid(enemy):
+        return
+    var base_modulate: Color = enemy.self_modulate
+    var flash_modulate: Color = base_modulate.lerp(Color(1.0, 0.0, 0.0, base_modulate.a), MAGE_HIT_FLASH_BLEND)
+    var tween: Tween = create_tween()
+    tween.tween_property(enemy, "self_modulate", flash_modulate, 0.01).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_OUT)
+    tween.tween_interval(MAGE_HIT_FLASH_DURATION - 0.02)
+    tween.tween_property(enemy, "self_modulate", base_modulate, 0.01).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN)
+
+func _spawn_mage_lightning_bolt(world_pos: Vector2) -> void:
+    if damage_text_layer == null:
+        return
+    var bolt: Node2D = Node2D.new()
+    bolt.position = world_pos + Vector2(0.0, -82.0)
+
+    var core: Line2D = Line2D.new()
+    core.width = 5.0
+    core.default_color = Color(1.0, 0.15, 0.15, 1.0)
+    core.antialiased = false
+    core.begin_cap_mode = Line2D.LINE_CAP_ROUND
+    core.end_cap_mode = Line2D.LINE_CAP_ROUND
+    core.points = PackedVector2Array([
+        Vector2(-2.0, -14.0),
+        Vector2(6.0, -5.0),
+        Vector2(0.0, -5.0),
+        Vector2(7.0, 8.0),
+        Vector2(-7.0, 1.0),
+        Vector2(-1.0, 1.0),
+        Vector2(-8.0, 14.0),
+    ])
+    bolt.add_child(core)
+
+    var glow: Line2D = Line2D.new()
+    glow.width = 9.0
+    glow.default_color = Color(1.0, 0.45, 0.45, 0.35)
+    glow.antialiased = false
+    glow.begin_cap_mode = Line2D.LINE_CAP_ROUND
+    glow.end_cap_mode = Line2D.LINE_CAP_ROUND
+    glow.points = core.points
+    bolt.add_child(glow)
+
+    damage_text_layer.add_child(bolt)
+    var tween: Tween = create_tween()
+    tween.set_parallel(true)
+    tween.tween_property(bolt, "scale", Vector2.ONE * 1.1, MAGE_LIGHTNING_DURATION)
+    tween.tween_property(bolt, "modulate:a", 0.0, MAGE_LIGHTNING_DURATION)
+    tween.finished.connect(func() -> void:
+        if is_instance_valid(bolt):
+            bolt.queue_free()
+    )
 
 func _update_active_visual_effects(_delta: float) -> void:
     var guardian_active: bool = false if battle_completed else _is_hero_active("guardian")
-    var mage_active: bool = false if battle_completed else _is_hero_active("mage")
     var pulse: float = 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) * 0.012)
 
     if guardian_active:
@@ -2872,16 +3024,16 @@ func _update_active_visual_effects(_delta: float) -> void:
         if not is_instance_valid(enemy):
             continue
         var mark_remaining: float = max(0.0, float(enemy_mark_timers.get(enemy.get_instance_id(), 0.0)))
-        var mage_intensity: float = pulse if mage_active and _is_world_pos_on_screen(enemy.position) else 0.0
         var mark_intensity: float = 0.0
+        var mark_windup: float = max(0.001, _mage_strike_windup())
         if mark_remaining > 0.0:
-            var mark_phase: float = 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) * 0.045)
-            mark_intensity = clamp((mark_remaining / MAGE_IDLE_STRIKE_WINDUP) * mark_phase, 0.0, 1.0)
-        var glow: float = clamp(max(mage_intensity, mark_intensity), 0.0, 1.0)
-        if glow <= 0.0:
+            mark_intensity = clamp(1.0 - (mark_remaining / mark_windup), 0.0, 1.0)
+        if mark_intensity <= 0.0:
             enemy.modulate = Color(1.0, 1.0, 1.0, 1.0)
         else:
-            enemy.modulate = Color(1.0 + 0.34 * glow, 1.0 - 0.6 * glow, 1.0 - 0.6 * glow, 1.0)
+            var mark_tint_strength: float = lerpf(MAGE_MARK_TINT_START, MAGE_MARK_TINT_END, mark_intensity)
+            var mark_color: Color = Color(1.0, 1.0, 1.0, 1.0).lerp(Color(1.0, 0.0, 0.0, 1.0), mark_tint_strength)
+            enemy.modulate = mark_color
 
 func _is_hero_active(hero_name: String) -> bool:
     for hero in heroes:
@@ -2914,13 +3066,16 @@ func _next_enemy_spawn_x() -> float:
         spawn_x = max(spawn_x, max_existing_x + ENEMY_FORMATION_SPACING)
     return spawn_x
 
-func _damage_enemy(enemy: CombatSprite, amount: float) -> void:
+func _damage_enemy(enemy: CombatSprite, amount: float, is_mage_attack: bool = false) -> bool:
     if not is_instance_valid(enemy) or not enemy_data.has(enemy):
-        return
+        return false
     var e: Dictionary = enemy_data[enemy]
     var prev_hp: float = float(e["hp"])
     e["hp"] = prev_hp - amount
     var dealt_damage: float = max(0.0, min(amount, prev_hp))
+    if is_mage_attack and dealt_damage > 0.0:
+        _flash_enemy_red(enemy)
+        _spawn_mage_lightning_bolt(enemy.position)
     _apply_knight_vamp_heal(dealt_damage, enemy.position + Vector2(randf_range(-10.0, 10.0), -130.0))
     _spawn_floating_damage_text(enemy.position + Vector2(randf_range(-14.0, 14.0), -120.0), amount, Color(1.0, 0.84, 0.56, 1.0))
     if bool(e.get("is_boss", false)):
@@ -2928,6 +3083,8 @@ func _damage_enemy(enemy: CombatSprite, amount: float) -> void:
     enemy_data[enemy] = e
     if float(e["hp"]) <= 0.0:
         _kill_enemy(enemy)
+        return true
+    return false
 
 func _is_knight_active() -> bool:
     for hero in heroes:
@@ -3429,8 +3586,8 @@ func _execute_hero_active(hero: CombatSprite, hero_name: String, skip_anim: bool
         h["active_time_total"] = active_duration
         h["active_time_remaining"] = active_duration
         if hero_name == "mage":
-            h["mage_active_tick"] = MAGE_ACTIVE_TICK_SECONDS
-            h["mage_idle_mark_cd"] = MAGE_IDLE_STRIKE_COOLDOWN
+            h["mage_active_tick"] = _mage_attack_interval(h)
+            h["mage_idle_mark_cd"] = _mage_attack_interval(h)
         hero_data[hero] = h
 
     match hero_name:

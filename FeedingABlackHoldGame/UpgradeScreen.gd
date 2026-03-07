@@ -73,7 +73,7 @@ func _ready() -> void :
     SignalBus.settings_updated.connect(_on_settings_updated)
 
     ControllerIcons.input_type_changed.connect(_on_input_type_changed)
-    tech_tree.build_completed.connect(_on_tech_tree_build_completed)
+    _bind_tech_tree(tech_tree)
     get_viewport().size_changed.connect(_on_viewport_size_changed)
 
 
@@ -104,6 +104,47 @@ func _on_tech_tree_build_completed() -> void:
     update_input(ControllerIcons.get_last_input_type())
     _update_go_again_button_state()
 
+func _bind_tech_tree(new_tree: TechTree) -> void:
+    tech_tree = new_tree
+    if tech_tree != null and not tech_tree.build_completed.is_connected(_on_tech_tree_build_completed):
+        tech_tree.build_completed.connect(_on_tech_tree_build_completed)
+
+func _restore_cached_tech_tree_if_available() -> void:
+    if Global.cached_upgrade_tech_tree == null:
+        return
+    if not (Global.cached_upgrade_tech_tree is TechTree):
+        Global.clear_upgrade_tree_cache()
+        return
+
+    var cached_tree: TechTree = Global.cached_upgrade_tech_tree
+    Global.cached_upgrade_tech_tree = null
+
+    if tech_tree != null and tech_tree != cached_tree and is_instance_valid(tech_tree):
+        tech_tree.queue_free()
+
+    if cached_tree.get_parent() != null:
+        cached_tree.get_parent().remove_child(cached_tree)
+    %CanvasLayer.add_child(cached_tree)
+    cached_tree.name = "Tech Tree"
+    cached_tree.visible = true
+    cached_tree.set_process(true)
+    cached_tree.set_process_input(true)
+    cached_tree.set_process_unhandled_input(true)
+    _bind_tech_tree(cached_tree)
+    tree_initialized = true
+
+func _cache_tech_tree_for_reuse() -> void:
+    if not _is_simulation_upgrade_tree() or tech_tree == null or not is_instance_valid(tech_tree):
+        return
+    if tech_tree.get_parent() != null:
+        tech_tree.get_parent().remove_child(tech_tree)
+    tech_tree.visible = false
+    tech_tree.set_process(false)
+    tech_tree.set_process_input(false)
+    tech_tree.set_process_unhandled_input(false)
+    Global.add_child(tech_tree)
+    Global.cached_upgrade_tech_tree = tech_tree
+
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):
     if is_active == true:
         update_input(input_type)
@@ -133,6 +174,7 @@ func _input(event: InputEvent) -> void :
 
 func setup():
     prefers_simulation_tree = Global.start_in_upgrade_scene
+    _restore_cached_tech_tree_if_available()
     if prefers_simulation_tree:
         return
     _ensure_tree_initialized()
@@ -143,7 +185,9 @@ func _on_global_resource_changed(event_data: GlobalResourceChangedEventData):
         update()
 
 func update():
-    %"Tech Tree".update_active()
+    if tech_tree == null or not is_instance_valid(tech_tree):
+        return
+    tech_tree.update_active()
 
 
 func _on_pallet_updated():
@@ -176,18 +220,18 @@ func _process(delta: float) -> void :
                 var direction = Vector2(Input.get_axis("right", "left"), Input.get_axis("down", "up")).normalized()
 
                 if direction != Vector2.ZERO:
-                    %"Tech Tree".move_tech_tree(direction * scroll_speed * delta)
+                    tech_tree.move_tech_tree(direction * scroll_speed * delta)
 
             ControllerIcons.InputType.CONTROLLER:
 
                 if Input.is_action_just_pressed("ui_left"):
-                    %"Tech Tree".select_node_in_direction(Vector2.LEFT)
+                    tech_tree.select_node_in_direction(Vector2.LEFT)
                 elif Input.is_action_just_pressed("ui_right"):
-                    %"Tech Tree".select_node_in_direction(Vector2.RIGHT)
+                    tech_tree.select_node_in_direction(Vector2.RIGHT)
                 elif Input.is_action_just_pressed("ui_up"):
-                    %"Tech Tree".select_node_in_direction(Vector2.UP)
+                    tech_tree.select_node_in_direction(Vector2.UP)
                 elif Input.is_action_just_pressed("ui_down"):
-                    %"Tech Tree".select_node_in_direction(Vector2.DOWN)
+                    tech_tree.select_node_in_direction(Vector2.DOWN)
 
 
 
@@ -201,7 +245,7 @@ func _on_color_rect_gui_input(event: InputEvent) -> void :
         dragging = false
 
     if dragging and event is InputEventMouseMotion:
-        %"Tech Tree".move_tech_tree(event.relative)
+        tech_tree.move_tech_tree(event.relative)
 
 
 
@@ -252,8 +296,8 @@ func update_input(input_type):
                 %"Mouse Drag Tree".hide()
 
                 if tech_tree.selected_node != null:
-                    %"Tech Tree".selected_node.click_mask.grab_focus()
-                    _on_tech_tree_selected_node_changed( %"Tech Tree".selected_node)
+                    tech_tree.selected_node.click_mask.grab_focus()
+                    _on_tech_tree_selected_node_changed(tech_tree.selected_node)
 
 
 
@@ -478,6 +522,7 @@ func _launch_battle_at_level(level: int) -> void:
     var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, 3)
     SaveHandler.fishing_next_battle_level = clamp(level, 1, max_level)
     SaveHandler.save_fishing_progress()
+    _cache_tech_tree_for_reuse()
     SceneChanger.change_to_new_scene(Util.PATH_FISHING_BATTLE)
 
 func _setup_editor_cash_controls() -> void:
@@ -635,6 +680,8 @@ func _reload_simulation_upgrade_tree_from_save() -> void:
     _update_go_again_button_state()
 
 func _clear_tech_tree_runtime() -> void:
+    if Global.cached_upgrade_tech_tree == tech_tree:
+        Global.cached_upgrade_tech_tree = null
     if tech_tree.has_method("kill_tween"):
         tech_tree.call("kill_tween")
     tech_tree.pivot.position = Vector2.ZERO
