@@ -22,7 +22,9 @@ const SIM_STEP := 1.0 / 60.0
 const EXTRA_ZOOM_IN_FACTOR := 5.0
 const HERO_FORMATION_SPACING := 64.5
 const ENEMY_FORMATION_SPACING := 84.0
+const MAX_STACKED_CONTACT_ATTACKERS := 4
 const ENEMY_OPENING_RUSH_MULT := 5.0
+const ENEMY_OFFSCREEN_SPEEDUP_MAX_MULT := 8.0
 const BOSS_SEGMENTS := 8
 const COIN_DESPAWN_MARGIN_X := 240.0
 const COIN_DESPAWN_MARGIN_Y := 220.0
@@ -45,18 +47,61 @@ const UFO_REWARD_MIN_ENEMY_WORTH := 3
 const UFO_REWARD_MAX_ENEMY_WORTH := 6
 const UFO_COIN_PATH_OFFSET := 32.0
 const UFO_SPAWN_MARGIN_X := 220.0
-const UFO_ALTITUDE_MIN := 70.0
-const UFO_ALTITUDE_MAX := 190.0
+const UFO_CLOUD_OFFSET_MIN := 28.0
+const UFO_CLOUD_OFFSET_MAX := 92.0
 const DEFEAT_FALL_DURATION := 1.2
 const DEFEAT_FALL_ROT_SPEED := 1.8
-const BG_DEEP_BASE_Y := 220.0
-const BG_FAR_BASE_Y := 305.0
-const BG_MID_BASE_Y := 430.0
-const BG_NEAR_BASE_Y := 545.0
-const BG_OVERLAY_BASE_Y := 520.0
-const PLAY_AREA_OVERLAY_BASE_Y := 620.0
-const GROUND_BASE_Y := 760.0
+const BG_BASE_SKY_Y := 220.0
+const BG_BASE_GROUND_Y := 1240.0
+const BG_DEEP_BASE_Y := -16.0
+const CLOUD_FAR_BASE_Y := 52.0
+const CLOUD_MID_BASE_Y := 40.0
+const CLOUD_NEAR_BASE_Y := 30.0
+const BG_FAR_BASE_Y := 581.0
+const BG_MID_BASE_Y := 612.0
+const BG_NEAR_BASE_Y := 637.0
+const GROUND_BASE_Y := 752.0
+const GROUND_OVERLAY_BASE_Y := 740.0
 const BG_DEBUG_STEP := 8.0
+const MOUSE_LAYOUT_PROFILE := {
+    "bg_base_sky": 220.0,
+    "bg_base_ground": 1240.0,
+    "bg_deep": -16.0,
+    "cloud_far": 52.0,
+    "bg_far": 581.0,
+    "cloud_mid": 40.0,
+    "bg_mid": 612.0,
+    "cloud_near": 30.0,
+    "bg_near": 637.0,
+    "ground": 752.0,
+    "ground_overlay": 740.0,
+    "coin_landing_y": 676.0,
+}
+const TOUCH_LAYOUT_PROFILE := {
+    "bg_base_sky": 220.0,
+    "bg_base_ground": 1240.0,
+    "bg_deep": -16.0,
+    "cloud_far": 324.0,
+    "bg_far": 581.0,
+    "cloud_mid": 320.0,
+    "bg_mid": 612.0,
+    "cloud_near": 310.0,
+    "bg_near": 637.0,
+    "ground": 752.0,
+    "ground_overlay": 740.0,
+    "coin_landing_y": 676.0,
+}
+const LEVEL_3_LAYOUT_OVERRIDE := {
+    "bg_base_sky": 220.0,
+    "bg_base_ground": 1240.0,
+    "bg_deep": -16.0,
+    "bg_far": 541.0,
+    "bg_mid": 572.0,
+    "bg_near": 581.0,
+    "ground": 696.0,
+    "ground_overlay": 740.0,
+    "coin_landing_y": 676.0,
+}
 const BASE_POWER_REGEN_PER_SEC := 7.0
 const ACTIVE_CHARGE_PER_CLICK := 20.0
 const UPGRADE_EFFECT_TUNE := {
@@ -239,11 +284,12 @@ var world: Node2D
 var bg_base_sky: Sprite2D
 var bg_base_ground: Sprite2D
 var bg_deep: Sprite2D
+var cloud_far: Sprite2D
+var cloud_mid: Sprite2D
+var cloud_near: Sprite2D
 var bg_far: Sprite2D
 var bg_mid: Sprite2D
 var bg_near: Sprite2D
-var bg_overlay: Sprite2D
-var play_area_overlay: Sprite2D
 var ground: Sprite2D
 var ground_overlay: Sprite2D
 var hero_layer: Node2D
@@ -361,6 +407,7 @@ var post_battle_sweep_time: float = 0.0
 var summary_finalized: bool = false
 var defeat_anim_time: float = 0.0
 var pack_texture_cache: Dictionary = {}
+var coin_landing_y: float = 676.0
 var run_clock_save_accum: float = 0.0
 var speaker_icon_on: Texture2D
 var speaker_icon_off: Texture2D
@@ -377,6 +424,9 @@ var mage_pending_strikes: Array[Dictionary] = []
 var enemy_mark_timers: Dictionary = {}
 var guardian_glow_was_active: bool = false
 
+func _should_show_editor_only_touch_toggle() -> bool:
+    return OS.has_feature("editor")
+
 func _ready() -> void:
     if not _bind_nodes():
         push_error("BattleScene is missing required nodes.")
@@ -387,6 +437,7 @@ func _ready() -> void:
     current_level = clamp(SaveHandler.fishing_next_battle_level, 1, _max_unlocked_level())
     _rebuild_battle_mods()
     _setup_visuals()
+    _apply_background_layout_for_input_mode("Loaded %s layout" % ("touch" if SaveHandler.touch_input_mode else "mouse"))
     _spawn_heroes()
     _style_clock_ui()
     _style_battle_summary_ui()
@@ -433,11 +484,12 @@ func _bind_nodes() -> bool:
     bg_base_sky = get_node_or_null("World/BGBaseSky")
     bg_base_ground = get_node_or_null("World/BGBaseGround")
     bg_deep = get_node_or_null("World/BGDeep")
+    cloud_far = get_node_or_null("World/CloudFar")
+    cloud_mid = get_node_or_null("World/CloudMid")
+    cloud_near = get_node_or_null("World/CloudNear")
     bg_far = get_node_or_null("World/BGFar")
     bg_mid = get_node_or_null("World/BGMid")
     bg_near = get_node_or_null("World/BGNear")
-    bg_overlay = get_node_or_null("World/BGOverlay")
-    play_area_overlay = get_node_or_null("World/PlayAreaOverlay")
     ground = get_node_or_null("World/Ground")
     ground_overlay = get_node_or_null("World/GroundOverlay")
     hero_layer = get_node_or_null("World/HeroLayer")
@@ -481,6 +533,18 @@ func _bind_nodes() -> bool:
             bg_deep = Sprite2D.new()
             bg_deep.name = "BGDeep"
             world.add_child(bg_deep)
+        if cloud_far == null:
+            cloud_far = Sprite2D.new()
+            cloud_far.name = "CloudFar"
+            world.add_child(cloud_far)
+        if cloud_mid == null:
+            cloud_mid = Sprite2D.new()
+            cloud_mid.name = "CloudMid"
+            world.add_child(cloud_mid)
+        if cloud_near == null:
+            cloud_near = Sprite2D.new()
+            cloud_near.name = "CloudNear"
+            world.add_child(cloud_near)
         if bg_far == null:
             bg_far = Sprite2D.new()
             bg_far.name = "BGFar"
@@ -493,14 +557,6 @@ func _bind_nodes() -> bool:
             bg_near = Sprite2D.new()
             bg_near.name = "BGNear"
             world.add_child(bg_near)
-        if bg_overlay == null:
-            bg_overlay = Sprite2D.new()
-            bg_overlay.name = "BGOverlay"
-            world.add_child(bg_overlay)
-        if play_area_overlay == null:
-            play_area_overlay = Sprite2D.new()
-            play_area_overlay.name = "PlayAreaOverlay"
-            world.add_child(play_area_overlay)
         if ground == null:
             ground = Sprite2D.new()
             ground.name = "Ground"
@@ -513,13 +569,21 @@ func _bind_nodes() -> bool:
         world.move_child(bg_base_sky, 0)
         world.move_child(bg_base_ground, 1)
         world.move_child(bg_deep, 2)
-        world.move_child(bg_far, 3)
-        world.move_child(bg_mid, 4)
-        world.move_child(bg_near, 5)
-        world.move_child(bg_overlay, 6)
-        world.move_child(play_area_overlay, 7)
-        world.move_child(ground, 8)
-        world.move_child(ground_overlay, 9)
+        world.move_child(cloud_far, 3)
+        world.move_child(bg_far, 4)
+        world.move_child(cloud_mid, 5)
+        world.move_child(bg_mid, 6)
+        world.move_child(cloud_near, 7)
+        world.move_child(bg_near, 8)
+        world.move_child(ground, 9)
+        world.move_child(ground_overlay, 10)
+
+        var old_bg_overlay: Node = world.get_node_or_null("BGOverlay")
+        if old_bg_overlay != null:
+            old_bg_overlay.queue_free()
+        var old_play_overlay: Node = world.get_node_or_null("PlayAreaOverlay")
+        if old_play_overlay != null:
+            old_play_overlay.queue_free()
 
     if projectile_layer == null and world != null:
         projectile_layer = Node2D.new()
@@ -544,7 +608,7 @@ func _bind_nodes() -> bool:
     if level_choice_dialog != null and not level_choice_dialog.custom_action.is_connected(_on_level_choice_action):
         level_choice_dialog.custom_action.connect(_on_level_choice_action)
 
-    return world != null and bg_base_sky != null and bg_base_ground != null and bg_deep != null and bg_far != null and bg_mid != null and bg_near != null and bg_overlay != null and play_area_overlay != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and health_bar != null and experience_bar != null and power_bar != null and health_value_label != null and experience_value_label != null and power_value_label != null and currency_label != null and clock_panel != null and clock_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and mute_button != null and summary_panel != null and summary_label != null and continue_button != null and level_choice_dialog != null
+    return world != null and bg_base_sky != null and bg_base_ground != null and bg_deep != null and cloud_far != null and cloud_mid != null and cloud_near != null and bg_far != null and bg_mid != null and bg_near != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and health_bar != null and experience_bar != null and power_bar != null and health_value_label != null and experience_value_label != null and power_value_label != null and currency_label != null and clock_panel != null and clock_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and mute_button != null and summary_panel != null and summary_label != null and continue_button != null and level_choice_dialog != null
 
 func _clear_battle_entities() -> void:
     for arrow_data_variant in arrows:
@@ -696,13 +760,15 @@ func _background_debug_targets() -> Array[Dictionary]:
         {"key": "bg_base_sky", "label": "Base Sky"},
         {"key": "bg_base_ground", "label": "Base Ground"},
         {"key": "bg_deep", "label": "BG Deep"},
+        {"key": "cloud_far", "label": "Cloud Far"},
         {"key": "bg_far", "label": "BG Far"},
+        {"key": "cloud_mid", "label": "Cloud Mid"},
         {"key": "bg_mid", "label": "BG Mid"},
+        {"key": "cloud_near", "label": "Cloud Near"},
         {"key": "bg_near", "label": "BG Near"},
-        {"key": "bg_overlay", "label": "BG Overlay"},
-        {"key": "play_area_overlay", "label": "Play Overlay"},
         {"key": "ground", "label": "Ground"},
         {"key": "ground_overlay", "label": "Ground Overlay"},
+        {"key": "coin_landing_y", "label": "Coin Landing"},
     ]
 
 func _background_node_for_key(key: String) -> Node2D:
@@ -713,16 +779,18 @@ func _background_node_for_key(key: String) -> Node2D:
             return bg_base_ground
         "bg_deep":
             return bg_deep
+        "cloud_far":
+            return cloud_far
         "bg_far":
             return bg_far
+        "cloud_mid":
+            return cloud_mid
         "bg_mid":
             return bg_mid
+        "cloud_near":
+            return cloud_near
         "bg_near":
             return bg_near
-        "bg_overlay":
-            return bg_overlay
-        "play_area_overlay":
-            return play_area_overlay
         "ground":
             return ground
         "ground_overlay":
@@ -731,6 +799,10 @@ func _background_node_for_key(key: String) -> Node2D:
             return null
 
 func _on_background_debug_adjust_pressed(layer_key: String, delta_y: float) -> void:
+    if layer_key == "coin_landing_y":
+        coin_landing_y += delta_y
+        _log_background_layer_positions("Moved %s by %.0f" % [layer_key, delta_y])
+        return
     var target: Node2D = _background_node_for_key(layer_key)
     if target == null:
         push_warning("Missing background debug target: %s" % layer_key)
@@ -745,6 +817,9 @@ func _log_background_layer_positions(reason: String = "") -> void:
     for target in _background_debug_targets():
         var key: String = str(target.get("key", ""))
         var label: String = str(target.get("label", key))
+        if key == "coin_landing_y":
+            lines.append("%s: %.1f" % [label, coin_landing_y])
+            continue
         var node: Node2D = _background_node_for_key(key)
         if node == null:
             lines.append("%s: <missing>" % label)
@@ -917,7 +992,7 @@ func _setup_visuals() -> void:
     arrow_texture = _make_arrow_texture()
     base_fill_texture = _make_base_fill_texture()
 
-    for sprite in [bg_base_sky, bg_base_ground, bg_deep, bg_far, bg_mid, bg_near, bg_overlay, play_area_overlay, ground, ground_overlay]:
+    for sprite in [bg_base_sky, bg_base_ground, bg_deep, cloud_far, bg_far, cloud_mid, bg_mid, cloud_near, bg_near, ground, ground_overlay]:
         sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
         sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
         sprite.region_enabled = true
@@ -927,15 +1002,16 @@ func _setup_visuals() -> void:
     bg_base_ground.texture = base_fill_texture
     bg_base_sky.region_rect = Rect2(0, 0, 80000, FLOOR_Y + 200.0)
     bg_base_ground.region_rect = Rect2(0, 0, 80000, 1200.0)
-    bg_base_sky.position = Vector2(0.0, (FLOOR_Y + 200.0) * 0.5 - 200.0)
-    bg_base_ground.position = Vector2(0.0, FLOOR_Y + 600.0)
+    bg_base_sky.position = Vector2(0.0, BG_BASE_SKY_Y)
+    bg_base_ground.position = Vector2(0.0, BG_BASE_GROUND_Y)
 
     bg_deep.region_rect = Rect2(0, 0, 80000, 400)
+    cloud_far.region_rect = Rect2(0, 0, 80000, 220)
     bg_far.region_rect = Rect2(0, 0, 80000, 440)
+    cloud_mid.region_rect = Rect2(0, 0, 80000, 220)
     bg_mid.region_rect = Rect2(0, 0, 80000, 500)
+    cloud_near.region_rect = Rect2(0, 0, 80000, 240)
     bg_near.region_rect = Rect2(0, 0, 80000, 560)
-    bg_overlay.region_rect = Rect2(0, 0, 80000, 560)
-    play_area_overlay.region_rect = Rect2(0, 0, 80000, 280)
     ground.region_rect = Rect2(0, 0, 80000, 360)
     ground_overlay.region_rect = Rect2(0, 0, 80000, 220)
 
@@ -951,32 +1027,51 @@ func _apply_parallax_depth_scales() -> void:
     # This scene is 2D. Depth is faked by shrinking farther layers and lifting them up.
     if using_pack_background_assets:
         bg_deep.scale = Vector2(0.18, 0.18)
+        cloud_far.scale = Vector2(0.32, 0.32)
         bg_far.scale = Vector2(0.32, 0.32)
+        cloud_mid.scale = Vector2(0.52, 0.52)
         bg_mid.scale = Vector2(0.52, 0.52)
+        cloud_near.scale = Vector2(0.76, 0.76)
         bg_near.scale = Vector2(0.76, 0.76)
-        bg_overlay.scale = Vector2(0.72, 0.72)
-        play_area_overlay.scale = Vector2(0.95, 1.0)
         ground.scale = Vector2(1.0, 1.0)
         ground_overlay.scale = Vector2(1.0, 1.0)
     else:
         # Fallback composition if pack textures are unavailable.
         bg_deep.scale = Vector2(1.35, 1.35)
+        cloud_far.scale = Vector2(1.75, 1.75)
         bg_far.scale = Vector2(1.75, 1.75)
+        cloud_mid.scale = Vector2(2.25, 2.25)
         bg_mid.scale = Vector2(2.25, 2.25)
+        cloud_near.scale = Vector2(2.8, 2.8)
         bg_near.scale = Vector2(2.8, 2.8)
-        bg_overlay.scale = Vector2(2.5, 2.4)
-        play_area_overlay.scale = Vector2(2.4, 1.4)
         ground.scale = Vector2(2.6, 1.8)
         ground_overlay.scale = Vector2(2.6, 1.8)
 
-    bg_deep.position.y = BG_DEEP_BASE_Y - 140.0
-    bg_far.position.y = BG_FAR_BASE_Y - 92.0
-    bg_mid.position.y = BG_MID_BASE_Y - 50.0
-    bg_near.position.y = BG_NEAR_BASE_Y - 20.0
-    bg_overlay.position.y = BG_OVERLAY_BASE_Y
-    play_area_overlay.position.y = PLAY_AREA_OVERLAY_BASE_Y
-    ground.position.y = GROUND_BASE_Y
-    ground_overlay.position.y = GROUND_BASE_Y - 12.0
+    _apply_background_layout_for_input_mode()
+
+func _layout_profile_for_current_input_mode() -> Dictionary:
+    var layout: Dictionary = (TOUCH_LAYOUT_PROFILE if SaveHandler.touch_input_mode else MOUSE_LAYOUT_PROFILE).duplicate(true)
+    if current_level == 3:
+        for key in LEVEL_3_LAYOUT_OVERRIDE.keys():
+            layout[key] = LEVEL_3_LAYOUT_OVERRIDE[key]
+    return layout
+
+func _apply_background_layout_for_input_mode(log_reason: String = "") -> void:
+    var layout: Dictionary = _layout_profile_for_current_input_mode()
+    bg_base_sky.position.y = float(layout.get("bg_base_sky", BG_BASE_SKY_Y))
+    bg_base_ground.position.y = float(layout.get("bg_base_ground", BG_BASE_GROUND_Y))
+    bg_deep.position.y = float(layout.get("bg_deep", BG_DEEP_BASE_Y))
+    cloud_far.position.y = float(layout.get("cloud_far", CLOUD_FAR_BASE_Y))
+    bg_far.position.y = float(layout.get("bg_far", BG_FAR_BASE_Y))
+    cloud_mid.position.y = float(layout.get("cloud_mid", CLOUD_MID_BASE_Y))
+    bg_mid.position.y = float(layout.get("bg_mid", BG_MID_BASE_Y))
+    cloud_near.position.y = float(layout.get("cloud_near", CLOUD_NEAR_BASE_Y))
+    bg_near.position.y = float(layout.get("bg_near", BG_NEAR_BASE_Y))
+    ground.position.y = float(layout.get("ground", GROUND_BASE_Y))
+    ground_overlay.position.y = float(layout.get("ground_overlay", GROUND_OVERLAY_BASE_Y))
+    coin_landing_y = float(layout.get("coin_landing_y", coin_landing_y))
+    if log_reason != "":
+        _log_background_layer_positions(log_reason)
 
 func _apply_level_background(level_index: int) -> void:
     var level_key: int = max(1, level_index)
@@ -991,23 +1086,28 @@ func _apply_level_background(level_index: int) -> void:
         var mid_tex: Texture2D = _load_pack_texture(PLATFORMING_BG_DEFAULT + "/" + str(pack_theme.get("mid", "")))
         var near_tex: Texture2D = _make_pack_deco_strip_texture(640, 128, pack_theme.get("near_deco", []))
         var ground_tex: Texture2D = _make_pack_ground_texture(640, 144, pack_theme)
+        var cloud_far_tex: Texture2D = _make_cloud_band_texture(512, 96, 6, 0.26, 0.65)
+        var cloud_mid_tex: Texture2D = _make_cloud_band_texture(512, 96, 8, 0.36, 0.88)
+        var cloud_near_tex: Texture2D = _make_cloud_band_texture(512, 112, 10, 0.48, 1.0)
 
-        if sky_tex != null and far_tex != null and mid_tex != null and near_tex != null and ground_tex != null:
+        if sky_tex != null and far_tex != null and mid_tex != null and near_tex != null and ground_tex != null and cloud_far_tex != null and cloud_mid_tex != null and cloud_near_tex != null:
             using_pack_background_assets = true
             bg_deep.texture = sky_tex
-            bg_far.texture = far_tex
-            bg_mid.texture = mid_tex
+            cloud_far.texture = cloud_far_tex
+            bg_far.texture = _make_background_texture_transparent_above_ground(far_tex)
+            cloud_mid.texture = cloud_mid_tex
+            bg_mid.texture = _make_background_texture_transparent_above_ground(mid_tex)
+            cloud_near.texture = cloud_near_tex
             bg_near.texture = near_tex
-            bg_overlay.texture = _make_background_overlay_texture(480, 220, t)
-            play_area_overlay.texture = _make_play_area_overlay_texture(480, 180, t)
             ground.texture = ground_tex
             ground_overlay.texture = _make_ground_overlay_texture(480, 120, t)
             bg_deep.region_rect = Rect2(0, 0, 80000, float(max(64, sky_tex.get_height())))
-            bg_far.region_rect = Rect2(0, 0, 80000, float(max(64, far_tex.get_height())))
-            bg_mid.region_rect = Rect2(0, 0, 80000, float(max(64, mid_tex.get_height())))
+            cloud_far.region_rect = Rect2(0, 0, 80000, float(max(64, cloud_far.texture.get_height())))
+            bg_far.region_rect = Rect2(0, 0, 80000, float(max(64, bg_far.texture.get_height())))
+            cloud_mid.region_rect = Rect2(0, 0, 80000, float(max(64, cloud_mid.texture.get_height())))
+            bg_mid.region_rect = Rect2(0, 0, 80000, float(max(64, bg_mid.texture.get_height())))
+            cloud_near.region_rect = Rect2(0, 0, 80000, float(max(64, cloud_near.texture.get_height())))
             bg_near.region_rect = Rect2(0, 0, 80000, float(max(64, near_tex.get_height())))
-            bg_overlay.region_rect = Rect2(0, 0, 80000, float(max(120, bg_overlay.texture.get_height())))
-            play_area_overlay.region_rect = Rect2(0, 0, 80000, float(max(120, play_area_overlay.texture.get_height())))
             ground.region_rect = Rect2(0, 0, 80000, float(max(96, ground_tex.get_height())))
             ground_overlay.region_rect = Rect2(0, 0, 80000, float(max(80, ground_overlay.texture.get_height())))
             _apply_level_layer_colors(t)
@@ -1016,11 +1116,12 @@ func _apply_level_background(level_index: int) -> void:
 
     using_pack_background_assets = false
     bg_deep.texture = _make_atari_sky_texture(256, 120, t["sky_base"], t["sky_star_a"], t["sky_star_b"])
-    bg_far.texture = _make_atari_horizon_texture(256, 128, t["far"], t["sky_star_a"], 28, 10)
-    bg_mid.texture = _make_atari_horizon_texture(256, 128, t["mid"], t["sky_star_a"], 22, 18)
+    cloud_far.texture = _make_cloud_band_texture(256, 88, 5, 0.28, 0.65)
+    bg_far.texture = _make_horizon_silhouette_texture(256, 128, t["far"], t["sky_star_a"], 28, 10)
+    cloud_mid.texture = _make_cloud_band_texture(256, 96, 7, 0.36, 0.85)
+    bg_mid.texture = _make_horizon_silhouette_texture(256, 128, t["mid"], t["sky_star_a"], 22, 18)
+    cloud_near.texture = _make_cloud_band_texture(256, 104, 9, 0.48, 1.0)
     bg_near.texture = _make_atari_horizon_texture(256, 128, t["near"], t["sky_star_a"], 18, 28)
-    bg_overlay.texture = _make_background_overlay_texture(256, 160, t)
-    play_area_overlay.texture = _make_play_area_overlay_texture(256, 140, t)
     ground.texture = _make_atari_ground_texture(256, 96, t["ground_a"], t["ground_b"], t["ground_accent"])
     ground_overlay.texture = _make_ground_overlay_texture(256, 110, t)
     _apply_level_layer_colors(t)
@@ -1031,22 +1132,24 @@ func _apply_level_layer_colors(theme: Dictionary) -> void:
         bg_base_sky.modulate = Color(1.0, 1.0, 1.0, 1.0)
         bg_base_ground.modulate = Color(1.0, 1.0, 1.0, 1.0)
         bg_deep.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        cloud_far.modulate = Color(1.0, 1.0, 1.0, 1.0)
         bg_far.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        cloud_mid.modulate = Color(1.0, 1.0, 1.0, 1.0)
         bg_mid.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        cloud_near.modulate = Color(1.0, 1.0, 1.0, 1.0)
         bg_near.modulate = Color(1.0, 1.0, 1.0, 1.0)
-        bg_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
-        play_area_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
         ground.modulate = Color(1.0, 1.0, 1.0, 1.0)
         ground_overlay.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return
 
     # Keep each level's hue identity, but keep values darker so white HUD text stays readable.
     bg_deep.modulate = Color(theme["sky_base"]).lerp(Color(0.08, 0.1, 0.14, 1.0), 0.22)
+    cloud_far.modulate = Color(theme["sky_star_a"]).lerp(Color(1.0, 1.0, 1.0, 1.0), 0.25)
     bg_far.modulate = Color(theme["far"]).lerp(Color(0.08, 0.1, 0.14, 1.0), 0.26)
+    cloud_mid.modulate = Color(theme["sky_star_a"]).lerp(Color(theme["sky_star_b"]), 0.18)
     bg_mid.modulate = Color(theme["mid"]).lerp(Color(0.08, 0.1, 0.14, 1.0), 0.28)
+    cloud_near.modulate = Color(theme["sky_star_a"]).lerp(Color(theme["near"]), 0.16)
     bg_near.modulate = Color(theme["near"]).lerp(Color(0.08, 0.1, 0.14, 1.0), 0.3)
-    bg_overlay.modulate = Color(theme["far"]).lerp(Color(0.03, 0.04, 0.06, 1.0), 0.72)
-    play_area_overlay.modulate = Color(theme["mid"]).lerp(Color(0.02, 0.03, 0.05, 1.0), 0.78)
     ground.modulate = Color(theme["ground_a"]).lerp(Color(0.11, 0.09, 0.08, 1.0), 0.2)
     ground_overlay.modulate = Color(theme["ground_b"]).lerp(Color(0.06, 0.05, 0.05, 1.0), 0.5)
 
@@ -1125,6 +1228,23 @@ func _make_background_overlay_texture(w: int, h: int, theme: Dictionary) -> Imag
             img.set_pixel(x, y, Color(line.r, line.g, line.b, 0.28))
     return ImageTexture.create_from_image(img)
 
+func _make_horizon_silhouette_texture(w: int, h: int, base_color: Color, accent: Color, stripe_height: int, noise_step: int) -> ImageTexture:
+    var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
+    img.fill(Color(0.0, 0.0, 0.0, 0.0))
+    var horizon_y: int = int(h * 0.48)
+    for x in range(w):
+        var ridge_height: int = horizon_y + int(sin(float(x) * 0.09) * 7.0) + int(cos(float(x) * 0.03) * 12.0)
+        for y in range(clamp(ridge_height, 0, h - 1), h):
+            var blend: float = float(y - ridge_height) / max(1.0, float(h - ridge_height - 1))
+            var row_color: Color = base_color.lerp(accent, 0.08 + blend * 0.12)
+            row_color.a = 1.0
+            if ((x + y) % max(2, noise_step)) == 0:
+                row_color = row_color.lerp(accent, 0.12)
+            if stripe_height > 0 and ((y - ridge_height) % stripe_height) == 0:
+                row_color = row_color.darkened(0.08)
+            img.set_pixel(x, y, row_color)
+    return ImageTexture.create_from_image(img)
+
 func _make_play_area_overlay_texture(w: int, h: int, theme: Dictionary) -> ImageTexture:
     var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
     var far: Color = Color(theme.get("far", Color(0.2, 0.3, 0.4, 1.0)))
@@ -1141,6 +1261,63 @@ func _make_play_area_overlay_texture(w: int, h: int, theme: Dictionary) -> Image
                 img.set_pixel(x, y, Color(accent.r, accent.g, accent.b, 0.08))
     return ImageTexture.create_from_image(img)
 
+func _make_cloud_band_texture(w: int, h: int, cluster_count: int, alpha_strength: float, brightness: float) -> ImageTexture:
+    var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
+    img.fill(Color(0.0, 0.0, 0.0, 0.0))
+    var puff_color := Color(brightness, brightness, brightness, 1.0)
+    for i in range(cluster_count):
+        var center_x: int = int((float(i) + 0.5) * float(w) / float(cluster_count) + sin(float(i) * 1.7) * 18.0)
+        var center_y: int = int(h * (0.35 + 0.2 * sin(float(i) * 0.9)))
+        var puff_count: int = 3 + (i % 3)
+        for puff_index in range(puff_count):
+            var puff_x: int = center_x + int((puff_index - puff_count / 2.0) * 18.0)
+            var puff_y: int = center_y + int(cos(float(puff_index) * 1.3 + float(i)) * 6.0)
+            var radius_x: int = 18 + ((i + puff_index) % 3) * 10
+            var radius_y: int = 10 + ((i + puff_index * 2) % 3) * 6
+            _draw_soft_ellipse_tiled_x(img, puff_x, puff_y, radius_x, radius_y, puff_color, alpha_strength)
+        _draw_soft_ellipse_tiled_x(img, center_x, center_y + 8, 42, 12, puff_color, alpha_strength * 0.72)
+    return ImageTexture.create_from_image(img)
+
+func _draw_soft_ellipse_tiled_x(img: Image, center_x: int, center_y: int, radius_x: int, radius_y: int, color: Color, alpha_strength: float) -> void:
+    var min_x: int = center_x - radius_x - 1
+    var max_x: int = center_x + radius_x + 1
+    var min_y: int = max(0, center_y - radius_y - 1)
+    var max_y: int = min(img.get_height() - 1, center_y + radius_y + 1)
+    var width: int = img.get_width()
+    for y in range(min_y, max_y + 1):
+        for x in range(min_x, max_x + 1):
+            var dx: float = float(x - center_x) / max(1.0, float(radius_x))
+            var dy: float = float(y - center_y) / max(1.0, float(radius_y))
+            var dist_sq: float = dx * dx + dy * dy
+            if dist_sq > 1.0:
+                continue
+            var alpha: float = (1.0 - dist_sq) * alpha_strength
+            var wrapped_x: int = posmod(x, width)
+            var prev: Color = img.get_pixel(wrapped_x, y)
+            var next_alpha: float = clamp(prev.a + alpha, 0.0, 1.0)
+            var next_color: Color = color
+            next_color.a = next_alpha
+            img.set_pixel(wrapped_x, y, next_color)
+
+func _make_background_texture_transparent_above_ground(texture: Texture2D) -> Texture2D:
+    if texture == null:
+        return null
+    var img: Image = texture.get_image()
+    if img == null:
+        return texture
+    img.convert(Image.FORMAT_RGBA8)
+    var key_color: Color = img.get_pixel(0, 0)
+    for y in range(img.get_height()):
+        for x in range(img.get_width()):
+            var pixel: Color = img.get_pixel(x, y)
+            if _is_near_color(pixel, key_color, 0.08):
+                pixel.a = 0.0
+                img.set_pixel(x, y, pixel)
+    return ImageTexture.create_from_image(img)
+
+func _is_near_color(a: Color, b: Color, tolerance: float) -> bool:
+    return absf(a.r - b.r) <= tolerance and absf(a.g - b.g) <= tolerance and absf(a.b - b.b) <= tolerance
+
 func _make_ground_overlay_texture(w: int, h: int, theme: Dictionary) -> ImageTexture:
     var img: Image = Image.create(w, h, false, Image.FORMAT_RGBA8)
     var g1: Color = Color(theme.get("ground_a", Color(0.42, 0.3, 0.16, 1.0)))
@@ -1149,13 +1326,11 @@ func _make_ground_overlay_texture(w: int, h: int, theme: Dictionary) -> ImageTex
     for y in range(h):
         var blend: float = float(y) / max(1.0, float(h - 1))
         var row: Color = g1.lerp(g2, blend)
-        row.a = 0.14 + blend * 0.22
+        row.a = 0.06 + blend * 0.14
         for x in range(w):
             var px: Color = row
-            if y == 3:
-                px = Color(accent.r, accent.g, accent.b, 0.72)
-            elif (y % 12) == 0 and (x % 5) == 0:
-                px = Color(accent.r, accent.g, accent.b, 0.2)
+            if y > 12 and (y % 14) == 0 and (x % 7) == 0:
+                px = Color(accent.r, accent.g, accent.b, 0.08)
             img.set_pixel(x, y, px)
     return ImageTexture.create_from_image(img)
 
@@ -1213,21 +1388,6 @@ func _make_pack_ground_texture(w: int, h: int, theme: Dictionary) -> Texture2D:
     for y in range(tile_h, h, fill_h):
         for x in range(0, w, fill_w):
             img.blit_rect(fill_tile, Rect2i(0, 0, fill_w, fill_h), Vector2i(x, y))
-
-    var deco_list_variant: Variant = theme.get("ground_deco", [])
-    if deco_list_variant is Array:
-        var deco_list: Array = deco_list_variant
-        for x in range(24, w - 24, 64):
-            if deco_list.is_empty():
-                break
-            var idx: int = int((x / 64) % deco_list.size())
-            var deco_name: String = str(deco_list[idx])
-            var deco_img: Image = _load_pack_image(PLATFORMING_TILES_DEFAULT + "/" + deco_name)
-            if deco_img == null:
-                continue
-            var px: int = clamp(x + int(randf_range(-8.0, 8.0)), 0, max(0, w - deco_img.get_width()))
-            var py: int = max(0, tile_h - deco_img.get_height() + 2)
-            img.blit_rect(deco_img, Rect2i(0, 0, deco_img.get_width(), deco_img.get_height()), Vector2i(px, py))
 
     return ImageTexture.create_from_image(img)
 
@@ -2317,8 +2477,10 @@ func _update_enemies(delta: float) -> void:
         if is_instance_valid(enemy):
             alive_sorted.append(enemy)
     alive_sorted.sort_custom(func(a: CombatSprite, b: CombatSprite): return a.position.x < b.position.x)
+    var front_map: Dictionary = {}
     var behind_map: Dictionary = {}
     for i in range(alive_sorted.size() - 1):
+        front_map[alive_sorted[i + 1]] = alive_sorted[i]
         behind_map[alive_sorted[i]] = alive_sorted[i + 1]
 
     for enemy in enemies:
@@ -2330,7 +2492,9 @@ func _update_enemies(delta: float) -> void:
         var contact_front_x: float = frontline_x + _enemy_contact_reach(enemy)
         var colliding: bool = enemy.position.x <= contact_front_x
         if not colliding:
-            var move_mult: float = ENEMY_OPENING_RUSH_MULT if enemy_opening_rush_active else 1.0
+            var move_mult: float = _enemy_offscreen_speed_mult(enemy)
+            if enemy_opening_rush_active:
+                move_mult *= ENEMY_OPENING_RUSH_MULT
             var moved_x: float = enemy.position.x - float(e["speed"]) * move_mult * delta
             enemy.position.x = max(contact_front_x, moved_x)
             enemy.set_walking()
@@ -2339,25 +2503,19 @@ func _update_enemies(delta: float) -> void:
         else:
             if enemy_opening_rush_active:
                 enemy_opening_rush_active = false
-            var total_contact_dps: float = float(e["contact_dps"])
-            var behind_enemy: CombatSprite = behind_map.get(enemy, null)
-            if is_instance_valid(behind_enemy):
-                var push_gap: float = behind_enemy.position.x - enemy.position.x
-                var support_gap: float = _enemy_pair_spacing(enemy, behind_enemy)
-                if push_gap <= support_gap * 1.05:
-                    var behind_data: Dictionary = enemy_data.get(behind_enemy, {})
-                    var behind_contact: float = float(behind_data.get("contact_dps", e["contact_dps"]))
-                    total_contact_dps += behind_contact * 0.5
-            _apply_player_damage(total_contact_dps * armor_scale * delta, enemy.position + Vector2(0.0, -90.0))
-            if float(e["attack_cd"]) <= 0.0:
-                e["attack_cd"] = 0.75
-                enemy.trigger_attack()
-                var behind_enemy_attack: CombatSprite = behind_map.get(enemy, null)
-                if is_instance_valid(behind_enemy_attack):
-                    var behind_gap: float = behind_enemy_attack.position.x - enemy.position.x
-                    var attack_support_gap: float = _enemy_pair_spacing(enemy, behind_enemy_attack)
-                    if behind_gap <= attack_support_gap * 1.05:
-                        behind_enemy_attack.trigger_attack()
+            if _is_leading_contact_attacker(enemy, frontline_x, front_map):
+                var attackers: Array[CombatSprite] = _get_contact_attackers(enemy, behind_map)
+                var total_contact_dps: float = 0.0
+                for attacker in attackers:
+                    var attacker_data: Dictionary = enemy_data.get(attacker, {})
+                    total_contact_dps += float(attacker_data.get("contact_dps", e["contact_dps"]))
+                    if float(attacker_data.get("attack_cd", 0.0)) <= 0.0:
+                        attacker_data["attack_cd"] = 0.75
+                        attacker.trigger_attack()
+                        enemy_data[attacker] = attacker_data
+                        if attacker == enemy:
+                            e = attacker_data
+                _apply_player_damage(total_contact_dps * armor_scale * delta, enemy.position + Vector2(0.0, -90.0))
 
         _update_enemy_health_bar(e)
         enemy_data[enemy] = e
@@ -2384,6 +2542,36 @@ func _enforce_enemy_formation() -> void:
 
 func _enemy_contact_reach(enemy: CombatSprite) -> float:
     return max(6.0, _enemy_body_width(enemy) * 0.5)
+
+func _is_leading_contact_attacker(enemy: CombatSprite, frontline_x: float, front_map: Dictionary) -> bool:
+    var front_enemy: CombatSprite = front_map.get(enemy, null)
+    if not is_instance_valid(front_enemy):
+        return true
+    var front_contact_x: float = frontline_x + _enemy_contact_reach(front_enemy)
+    if front_enemy.position.x > front_contact_x:
+        return true
+    return not _enemies_are_stacked_for_contact(front_enemy, enemy)
+
+func _get_contact_attackers(front_enemy: CombatSprite, behind_map: Dictionary) -> Array[CombatSprite]:
+    var attackers: Array[CombatSprite] = []
+    attackers.append(front_enemy)
+    var current: CombatSprite = front_enemy
+    while attackers.size() < MAX_STACKED_CONTACT_ATTACKERS:
+        var behind_enemy: CombatSprite = behind_map.get(current, null)
+        if not is_instance_valid(behind_enemy):
+            break
+        if not _enemies_are_stacked_for_contact(current, behind_enemy):
+            break
+        attackers.append(behind_enemy)
+        current = behind_enemy
+    return attackers
+
+func _enemies_are_stacked_for_contact(front_enemy: CombatSprite, back_enemy: CombatSprite) -> bool:
+    if not is_instance_valid(front_enemy) or not is_instance_valid(back_enemy):
+        return false
+    var gap: float = back_enemy.position.x - front_enemy.position.x
+    var support_gap: float = _enemy_pair_spacing(front_enemy, back_enemy)
+    return gap <= support_gap * 1.05
 
 func _enemy_pair_spacing(front_enemy: CombatSprite, back_enemy: CombatSprite) -> float:
     var front_width: float = _enemy_body_width(front_enemy)
@@ -2431,11 +2619,12 @@ func _update_camera_and_parallax() -> void:
     camera_2d.position.x = anchor_x_world
 
     bg_deep.position.x = camera_2d.position.x * 0.08
+    cloud_far.position.x = camera_2d.position.x * 0.22
     bg_far.position.x = camera_2d.position.x * 0.22
+    cloud_mid.position.x = camera_2d.position.x * 0.42
     bg_mid.position.x = camera_2d.position.x * 0.42
+    cloud_near.position.x = camera_2d.position.x * 0.66
     bg_near.position.x = camera_2d.position.x * 0.66
-    bg_overlay.position.x = camera_2d.position.x * 0.58
-    play_area_overlay.position.x = camera_2d.position.x * 0.78
     ground.position.x = camera_2d.position.x * 0.9
     ground_overlay.position.x = camera_2d.position.x * 0.9
 
@@ -2459,6 +2648,26 @@ func _random_enemy() -> CombatSprite:
     if alive.is_empty():
         return null
     return alive[randi() % alive.size()]
+
+func _enemy_offscreen_speed_mult(enemy: CombatSprite) -> float:
+    if not is_instance_valid(enemy) or camera_2d == null:
+        return 1.0
+    var viewport_rect: Rect2 = get_viewport_rect()
+    if viewport_rect.size.x <= 0.0 or viewport_rect.size.y <= 0.0:
+        return 1.0
+    var screen_pos: Vector2 = get_viewport().get_canvas_transform() * enemy.position
+    var body_half_width_px: float = _enemy_body_width(enemy) * camera_2d.zoom.x * 0.5
+    var body_half_height_px: float = _enemy_body_width(enemy) * camera_2d.zoom.y * 0.5
+    var overflow_left: float = max(0.0, body_half_width_px - screen_pos.x)
+    var overflow_right: float = max(0.0, screen_pos.x + body_half_width_px - viewport_rect.size.x)
+    var overflow_top: float = max(0.0, body_half_height_px - screen_pos.y)
+    var overflow_bottom: float = max(0.0, screen_pos.y + body_half_height_px - viewport_rect.size.y)
+    var overflow: float = max(max(overflow_left, overflow_right), max(overflow_top, overflow_bottom))
+    if overflow <= 0.0:
+        return 1.0
+    var ramp_distance: float = max(1.0, viewport_rect.size.x)
+    var t: float = clamp(overflow / ramp_distance, 0.0, 1.0)
+    return lerpf(1.0, ENEMY_OFFSCREEN_SPEEDUP_MAX_MULT, t)
 
 func _is_world_pos_on_screen(world_pos: Vector2) -> bool:
     var viewport_rect: Rect2 = get_viewport_rect()
@@ -2764,7 +2973,7 @@ func _spawn_coin(pos: Vector2, value: int, force_full_circle: bool = false, spaw
             deviation_deg = randf_range(0.0, COIN_LAUNCH_AWAY_MAX_DEG)
         var theta: float = deg_to_rad(deviation_deg)
         launch_dir = Vector2(sin(theta) * lateral_sign, -cos(theta))
-    coin.launch(launch_dir * launch_speed, FLOOR_Y + 12.0)
+    coin.launch(launch_dir * launch_speed, coin_landing_y)
     coin.value = max(1, value)
     coin.collected.connect(_on_coin_collected)
     coin_layer.add_child(coin)
@@ -2943,7 +3152,7 @@ func _spawn_ufo(is_manual: bool) -> void:
     if not spawn_from_left:
         start_x = camera_2d.position.x + half_w + UFO_SPAWN_MARGIN_X
         end_x = camera_2d.position.x - half_w - UFO_SPAWN_MARGIN_X
-    var y: float = camera_2d.position.y - half_h + randf_range(UFO_ALTITUDE_MIN, UFO_ALTITUDE_MAX)
+    var y: float = _ufo_spawn_y_for_current_layout(camera_2d.position.y - half_h)
     ufo.configure(start_x, end_x, y, UFO_TRAVEL_SECONDS, _ufo_reward_value())
     ufo.collected.connect(_on_ufo_collected)
     ufo.tree_exited.connect(_on_ufo_exited.bind(ufo))
@@ -2952,6 +3161,18 @@ func _spawn_ufo(is_manual: bool) -> void:
     _reset_ufo_spawn_timer()
     if is_manual:
         print("DEBUG: Manual UFO spawned.")
+
+func _ufo_spawn_y_for_current_layout(top_of_viewport_y: float) -> float:
+    var cloud_band_bottom: float = maxf(
+        maxf(cloud_far.position.y if cloud_far != null else CLOUD_FAR_BASE_Y, cloud_mid.position.y if cloud_mid != null else CLOUD_MID_BASE_Y),
+        cloud_near.position.y if cloud_near != null else CLOUD_NEAR_BASE_Y
+    )
+    var min_y: float = cloud_band_bottom + UFO_CLOUD_OFFSET_MIN
+    var max_y: float = cloud_band_bottom + UFO_CLOUD_OFFSET_MAX
+    var viewport_bottom_limit: float = top_of_viewport_y + get_viewport_rect().size.y * 0.42
+    min_y = minf(min_y, viewport_bottom_limit)
+    max_y = minf(maxf(min_y, max_y), viewport_bottom_limit)
+    return randf_range(min_y, max_y)
 
 func _speed_multiplier_for_runtime() -> float:
     var safe_idx: int = clamp(speed_index, 0, _max_available_speed_index())
@@ -3878,6 +4099,8 @@ func _setup_fullscreen_button() -> void:
     fullscreen_icon_off = _make_fullscreen_icon_texture(false)
 
 func _setup_touch_input_button() -> void:
+    if not _should_show_editor_only_touch_toggle():
+        return
     if touch_input_button != null and is_instance_valid(touch_input_button):
         return
     var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
@@ -3926,6 +4149,7 @@ func _on_touch_input_button_pressed() -> void:
     SaveHandler.update_touch_input_mode(not SaveHandler.touch_input_mode)
     _refresh_touch_input_button()
     _apply_touch_input_camera_zoom()
+    _apply_background_layout_for_input_mode("Switched to %s layout" % ("touch" if SaveHandler.touch_input_mode else "mouse"))
     if settings_content != null:
         settings_content.refresh_from_save()
 
@@ -3950,6 +4174,7 @@ func _on_settings_updated() -> void:
     _refresh_touch_input_button()
     _refresh_fullscreen_button_icon()
     _apply_touch_input_camera_zoom()
+    _apply_background_layout_for_input_mode("Applied %s layout" % ("touch" if SaveHandler.touch_input_mode else "mouse"))
 
 func _apply_touch_input_camera_zoom() -> void:
     if camera_2d == null:

@@ -34,6 +34,8 @@ var speaker_icon_off: Texture2D
 var fullscreen_icon_on: Texture2D
 var fullscreen_icon_off: Texture2D
 
+func _should_show_editor_only_touch_toggle() -> bool:
+    return OS.has_feature("editor")
 
 var dragging = false
 var scroll_speed = 500
@@ -41,6 +43,8 @@ var scroll_speed = 500
 var zoom
 
 @onready var tech_tree: TechTree = %"Tech Tree"
+var tree_initialized: bool = false
+var prefers_simulation_tree: bool = false
 
 
 enum STATES{SHOWING_TREE, ROGULIKE}
@@ -68,6 +72,7 @@ func _ready() -> void :
     SignalBus.settings_updated.connect(_on_settings_updated)
 
     ControllerIcons.input_type_changed.connect(_on_input_type_changed)
+    tech_tree.build_completed.connect(_on_tech_tree_build_completed)
 
 
 
@@ -90,6 +95,12 @@ func _ready() -> void :
     _setup_continue_locked_dialog()
     _update_go_again_button_state()
     hide()
+
+func _on_tech_tree_build_completed() -> void:
+    if not is_active:
+        return
+    update_input(ControllerIcons.get_last_input_type())
+    _update_go_again_button_state()
 
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):
     if is_active == true:
@@ -119,7 +130,10 @@ func _input(event: InputEvent) -> void :
 
 
 func setup():
-    %"Tech Tree".setup()
+    prefers_simulation_tree = Global.start_in_upgrade_scene
+    if prefers_simulation_tree:
+        return
+    _ensure_tree_initialized()
 
 
 func _on_global_resource_changed(event_data: GlobalResourceChangedEventData):
@@ -242,6 +256,7 @@ func update_input(input_type):
 
 
 func show_screen():
+    _ensure_tree_initialized()
     is_active = true
 
     %CanvasLayer.show()
@@ -332,6 +347,31 @@ func _is_simulation_upgrade_tree() -> bool:
             if upgrade.sim_name != "":
                 return true
     return false
+
+func _is_simulation_upgrade_tree_requested() -> bool:
+    return prefers_simulation_tree
+
+func _ensure_tree_initialized(force_rebuild: bool = false) -> void:
+    if tech_tree == null:
+        return
+
+    if force_rebuild and tree_initialized:
+        _clear_tech_tree_runtime()
+        tree_initialized = false
+
+    if tree_initialized:
+        return
+
+    if _is_simulation_upgrade_tree_requested() or _is_simulation_upgrade_tree():
+        FishingUpgradeTreeAdapter.apply_simulation_upgrades()
+
+        var current_money: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
+        var target_money: int = int(SaveHandler.fishing_currency)
+        if current_money != target_money:
+            Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, target_money - current_money)
+
+    tech_tree.setup()
+    tree_initialized = true
 
 func _setup_battle_level_choice_dialog() -> void:
     var parent_layer: CanvasLayer = %CanvasLayer2
@@ -588,15 +628,7 @@ func _reload_simulation_upgrade_tree_from_save() -> void:
     if not _is_simulation_upgrade_tree():
         return
 
-    FishingUpgradeTreeAdapter.apply_simulation_upgrades()
-
-    var current_money: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
-    var target_money: int = int(SaveHandler.fishing_currency)
-    if current_money != target_money:
-        Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, target_money - current_money)
-
-    _clear_tech_tree_runtime()
-    tech_tree.setup()
+    _ensure_tree_initialized(true)
     tech_tree.update_active()
     _update_go_again_button_state()
 
@@ -615,6 +647,13 @@ func _clear_tech_tree_runtime() -> void:
     tech_tree.max_x = 0
     tech_tree.min_y = 0
     tech_tree.max_y = 0
+    tech_tree.depth_by_cell = {}
+    tech_tree.build_in_progress = false
+    tech_tree.set_process(false)
+    tech_tree._batched_upgrade_queue = []
+    tech_tree._batched_line_cells = []
+    tech_tree._batched_forced_nodes = []
+    tech_tree._build_stage = ""
 
     var lines_container: Node = tech_tree.get_node_or_null("Pivot/Tech Lines")
     if lines_container != null:
@@ -625,6 +664,7 @@ func _clear_tech_tree_runtime() -> void:
     if nodes_container != null:
         for child in nodes_container.get_children():
             child.queue_free()
+    tree_initialized = false
 
 func _setup_mute_button() -> void:
     mute_button = get_node_or_null("%MuteButton")
@@ -748,6 +788,8 @@ func _setup_fullscreen_button() -> void:
     _refresh_fullscreen_button_icon()
 
 func _setup_touch_input_button() -> void:
+    if not _should_show_editor_only_touch_toggle():
+        return
     if touch_input_button != null and is_instance_valid(touch_input_button):
         return
     touch_input_button = Button.new()

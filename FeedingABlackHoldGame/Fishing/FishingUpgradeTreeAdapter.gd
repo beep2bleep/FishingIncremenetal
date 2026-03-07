@@ -38,9 +38,10 @@ const EXTRA_SKILL_THEME_CYCLE: Array[int] = [
     THEME_BOSS_DENSITY_ACT, # BOSS
     THEME_MISC_TEAM_ACT, # TEAM
 ]
+static var _cached_json_data: Dictionary = {}
 
 static func apply_simulation_upgrades() -> void:
-    var json_variant: Variant = Util.load_json_data_from_path(DATA_PATH)
+    var json_variant: Variant = _get_cached_json_data()
     if not (json_variant is Dictionary):
         push_error("FishingUpgradeTreeAdapter: failed to read " + DATA_PATH)
         return
@@ -64,7 +65,7 @@ static func apply_simulation_upgrades() -> void:
     if OS.has_feature("editor"):
         _validate_dependencies_reach_center(grouped_upgrades)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
-    var formatter: FishingUpgradeDB = FishingUpgradeDB.new()
+    var formatter: FishingUpgradeDB = FishingUpgradeDB.new(json_data)
 
     Global.game_mode_data_manager.upgrades = {}
     Global.game_mode_data_manager.unlocked_upgrades = {}
@@ -121,6 +122,13 @@ static func apply_simulation_upgrades() -> void:
             var unlocked_tiers: int = clamp(owned_level - upgrade.sim_level + 1, 0, upgrade.max_tier)
             upgrade.current_tier = unlocked_tiers
             Global.game_mode_data_manager.unlocked_upgrades[upgrade.cell] = upgrade.to_dict()
+
+static func _get_cached_json_data() -> Dictionary:
+    if _cached_json_data.is_empty():
+        var loaded: Variant = FishingUpgradeDB.get_cached_data()
+        if loaded is Dictionary:
+            _cached_json_data = loaded
+    return _cached_json_data
 
 static func _group_repeated_upgrades(raw_upgrades: Array) -> Array:
     var by_key: Dictionary = {}

@@ -45,9 +45,12 @@ const SPECIFIC_NAMES := {
 var nodes: Array[Dictionary] = []
 var node_by_id: Dictionary = {}
 var sim_notes_by_id: Dictionary = {}
+static var _cached_data: Dictionary = {}
 
-func _init() -> void:
-    var data = Util.load_json_data_from_path(DATA_PATH)
+func _init(data_override: Variant = null) -> void:
+    var data: Variant = data_override
+    if not (data is Dictionary):
+        data = get_cached_data()
     if data == null:
         return
     var arr = data.get("upgrades", [])
@@ -79,6 +82,13 @@ func _init() -> void:
                         if row_id == "":
                             continue
                         sim_notes_by_id[row_id] = row
+
+static func get_cached_data() -> Dictionary:
+    if _cached_data.is_empty():
+        var loaded: Variant = Util.load_json_data_from_path(DATA_PATH)
+        if loaded is Dictionary:
+            _cached_data = loaded
+    return _cached_data
 
 func is_owned(node: Dictionary) -> bool:
     return SaveHandler.get_fishing_upgrade_level(str(node.get("key", ""))) >= int(node.get("level", 1))
@@ -142,7 +152,7 @@ func get_description(node: Dictionary) -> String:
     if key == "battle_speed_unlock":
         var level: int = int(node.get("level", 1))
         if level <= 1:
-            return _with_editor_note(node, "Unlocks the Speed button for release builds and enables 2x battle speed.")
+            return _with_editor_note(node, "Unlocks the Speed button and enables battle speed selection, upgrade for more options.")
         if level == 2:
             return _with_editor_note(node, "Upgrades the Speed button to include 4x battle speed.")
         return _with_editor_note(node, "Upgrades the Speed button to include 8x battle speed.")

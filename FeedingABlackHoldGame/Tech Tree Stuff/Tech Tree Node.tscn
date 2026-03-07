@@ -513,7 +513,7 @@ grow_horizontal = 2
 grow_vertical = 0
 size_flags_horizontal = 4
 size_flags_vertical = 8
-mouse_filter = 2
+mouse_filter = 0
 theme = ExtResource("9")
 theme_override_styles/panel = ExtResource("10")
 
@@ -664,5 +664,7 @@ bus = &"Effects"
 [connection signal="mouse_entered" from="Art Pivot/Click Mask" to="." method="_on_click_mask_mouse_entered"]
 [connection signal="mouse_exited" from="Art Pivot/Click Mask" to="." method="_on_click_mask_mouse_exited"]
 [connection signal="pressed" from="Art Pivot/Click Mask" to="." method="_on_click_mask_pressed"]
+[connection signal="mouse_entered" from="Tooltip Pivot/Control/Tool Tip" to="." method="_on_tooltip_mouse_entered"]
+[connection signal="mouse_exited" from="Tooltip Pivot/Control/Tool Tip" to="." method="_on_tooltip_mouse_exited"]
 [connection signal="mouse_entered" from="Art Pivot/Visual Panel" to="." method="_on_finished_mouse_entered"]
 [connection signal="mouse_exited" from="Art Pivot/Visual Panel" to="." method="_on_finished_mouse_exited"]
