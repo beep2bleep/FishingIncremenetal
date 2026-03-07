@@ -10,6 +10,7 @@ const BATTLE_LEVEL_CHOICE_DIALOG_FONT_SIZE := 24
 const BATTLE_LEVEL_CHOICE_DIALOG_TITLE_SIZE := 36
 const BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE := 72
 const BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT := 180.0
+const UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO := 0.05
 
 var is_active = false
 var editor_add_cash_amount: int = 1000
@@ -73,6 +74,7 @@ func _ready() -> void :
 
     ControllerIcons.input_type_changed.connect(_on_input_type_changed)
     tech_tree.build_completed.connect(_on_tech_tree_build_completed)
+    get_viewport().size_changed.connect(_on_viewport_size_changed)
 
 
 
@@ -706,6 +708,7 @@ func _setup_settings_controls() -> void:
     settings_button.pressed.connect(_on_settings_button_pressed)
     _style_utility_button(settings_button)
     %CanvasLayer2.add_child(settings_button)
+    _update_upgrade_top_button_positions()
 
     settings_panel = PanelContainer.new()
     settings_panel.name = "UpgradeSettingsPanel"
@@ -809,7 +812,23 @@ func _setup_touch_input_button() -> void:
     touch_input_button.pressed.connect(_on_touch_input_button_pressed)
     _style_utility_button(touch_input_button)
     %CanvasLayer2.add_child(touch_input_button)
+    _update_upgrade_top_button_positions()
     _refresh_touch_input_button()
+
+func _update_upgrade_top_button_positions() -> void:
+    var viewport: Viewport = get_viewport()
+    if viewport == null:
+        return
+    var vertical_shift := viewport.get_visible_rect().size.y * UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO
+    if settings_button != null and is_instance_valid(settings_button):
+        settings_button.offset_top = 16.0 + vertical_shift
+        settings_button.offset_bottom = 104.0 + vertical_shift
+    if touch_input_button != null and is_instance_valid(touch_input_button):
+        touch_input_button.offset_top = 112.0 + vertical_shift
+        touch_input_button.offset_bottom = 200.0 + vertical_shift
+
+func _on_viewport_size_changed() -> void:
+    _update_upgrade_top_button_positions()
 
 func _is_settings_open() -> bool:
     return settings_panel != null and is_instance_valid(settings_panel) and settings_panel.visible

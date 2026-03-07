@@ -24,7 +24,7 @@ const HERO_FORMATION_SPACING := 64.5
 const ENEMY_FORMATION_SPACING := 84.0
 const MAX_STACKED_CONTACT_ATTACKERS := 4
 const ENEMY_OPENING_RUSH_MULT := 5.0
-const ENEMY_OFFSCREEN_SPEEDUP_MAX_MULT := 8.0
+const ENEMY_OFFSCREEN_SPEEDUP_MAX_MULT := 10.0
 const BOSS_SEGMENTS := 8
 const COIN_DESPAWN_MARGIN_X := 240.0
 const COIN_DESPAWN_MARGIN_Y := 220.0
@@ -324,6 +324,7 @@ var fullscreen_button: Button
 var touch_input_button: Button
 var level_choice_dialog: ConfirmationDialog
 var bg_debug_panel: PanelContainer
+var touch_zone_debug_label: Label
 
 var heroes: Array[CombatSprite] = []
 var hero_data: Dictionary = {}
@@ -729,6 +730,11 @@ func _setup_background_debug_controls() -> void:
         step_label.add_theme_font_size_override("font_size", 14)
         root_vbox.add_child(step_label)
 
+        touch_zone_debug_label = Label.new()
+        touch_zone_debug_label.text = "Touch Zone Enemies: 0"
+        touch_zone_debug_label.add_theme_font_size_override("font_size", 14)
+        root_vbox.add_child(touch_zone_debug_label)
+
         for target in _background_debug_targets():
             var row := HBoxContainer.new()
             row.add_theme_constant_override("separation", 6)
@@ -841,6 +847,14 @@ func _update_speed_button_text() -> void:
     if speed_button == null:
         return
     speed_button.text = "Speed x%d" % int(SPEED_STEPS[speed_index])
+
+func _update_touch_camera_debug() -> void:
+    queue_redraw()
+    if touch_zone_debug_label == null:
+        return
+    var touch_area: Rect2 = _touch_camera_world_rect()
+    var count: int = _enemy_count_in_touch_camera_area(touch_area)
+    touch_zone_debug_label.text = "Touch Zone Enemies: %d" % count
 
 func _on_speed_button_pressed() -> void:
     var max_index: int = _max_available_speed_index()
@@ -1841,6 +1855,8 @@ func _make_arrow_texture() -> ImageTexture:
     return ImageTexture.create_from_image(img)
 
 func _process(delta: float) -> void:
+    if OS.has_feature("editor"):
+        _update_touch_camera_debug()
     _update_floating_damage_texts(delta)
     _update_hero_damage_float(delta)
     _update_hero_glow(delta)
@@ -1875,6 +1891,15 @@ func _process(delta: float) -> void:
             return
 
     _update_ui()
+
+func _draw() -> void:
+    if not OS.has_feature("editor") or camera_2d == null:
+        return
+    var touch_area: Rect2 = _touch_camera_world_rect()
+    if touch_area.size.x <= 0.0 or touch_area.size.y <= 0.0:
+        return
+    draw_rect(touch_area, Color(0.18, 0.9, 0.95, 0.10), true)
+    draw_rect(touch_area, Color(0.18, 0.9, 0.95, 0.9), false, 4.0)
 
 func _unhandled_input(event: InputEvent) -> void:
     if battle_completed:
@@ -1951,6 +1976,12 @@ func _simulate_step(delta: float, skip_visual_updates: bool = false) -> void:
 func _spawn_loop(delta: float) -> void:
     if battle_completed:
         return
+    if _should_spawn_boss_immediately():
+        _spawn_boss_for_level(current_level)
+        boss_spawned = true
+        boss_alive = true
+        spawn_timer = 2.0
+        return
     spawn_timer -= delta
     if spawn_timer > 0.0:
         return
@@ -1985,6 +2016,22 @@ func _spawn_loop(delta: float) -> void:
         boss_alive = true
         spawn_timer = 2.0
         return
+
+func _should_spawn_boss_immediately() -> bool:
+    if boss_spawned or battle_completed:
+        return false
+    var lp: Dictionary = _level_params(current_level)
+    var regular_count: int = int(lp["regular_count"])
+    if regular_spawned < regular_count:
+        return false
+    return _living_enemy_count() <= 0
+
+func _living_enemy_count() -> int:
+    var count: int = 0
+    for enemy in enemies:
+        if is_instance_valid(enemy):
+            count += 1
+    return count
 
 func _roll_multi_spawn_count() -> int:
     var roll: float = randf()
@@ -2652,22 +2699,59 @@ func _random_enemy() -> CombatSprite:
 func _enemy_offscreen_speed_mult(enemy: CombatSprite) -> float:
     if not is_instance_valid(enemy) or camera_2d == null:
         return 1.0
-    var viewport_rect: Rect2 = get_viewport_rect()
-    if viewport_rect.size.x <= 0.0 or viewport_rect.size.y <= 0.0:
+    var touch_area: Rect2 = _touch_camera_world_rect()
+    if touch_area.size.x <= 0.0 or touch_area.size.y <= 0.0:
         return 1.0
-    var screen_pos: Vector2 = get_viewport().get_canvas_transform() * enemy.position
-    var body_half_width_px: float = _enemy_body_width(enemy) * camera_2d.zoom.x * 0.5
-    var body_half_height_px: float = _enemy_body_width(enemy) * camera_2d.zoom.y * 0.5
-    var overflow_left: float = max(0.0, body_half_width_px - screen_pos.x)
-    var overflow_right: float = max(0.0, screen_pos.x + body_half_width_px - viewport_rect.size.x)
-    var overflow_top: float = max(0.0, body_half_height_px - screen_pos.y)
-    var overflow_bottom: float = max(0.0, screen_pos.y + body_half_height_px - viewport_rect.size.y)
+    var enemy_rect: Rect2 = _enemy_world_rect(enemy)
+    var inside_count: int = _enemy_count_in_touch_camera_area(touch_area)
+    if inside_count <= 0:
+        return ENEMY_OFFSCREEN_SPEEDUP_MAX_MULT if not enemy_rect.intersects(touch_area) else 1.0
+    var overflow_left: float = max(0.0, touch_area.position.x - enemy_rect.end.x)
+    var overflow_right: float = max(0.0, enemy_rect.position.x - touch_area.end.x)
+    var overflow_top: float = max(0.0, touch_area.position.y - enemy_rect.end.y)
+    var overflow_bottom: float = max(0.0, enemy_rect.position.y - touch_area.end.y)
     var overflow: float = max(max(overflow_left, overflow_right), max(overflow_top, overflow_bottom))
     if overflow <= 0.0:
         return 1.0
-    var ramp_distance: float = max(1.0, viewport_rect.size.x)
+    var ramp_distance: float = max(1.0, touch_area.size.x)
     var t: float = clamp(overflow / ramp_distance, 0.0, 1.0)
     return lerpf(1.0, ENEMY_OFFSCREEN_SPEEDUP_MAX_MULT, t)
+
+func _touch_camera_world_rect() -> Rect2:
+    var viewport_size: Vector2 = get_viewport_rect().size
+    if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+        return Rect2()
+    var touch_zoom: Vector2 = Vector2(0.2, 0.2) * EXTRA_ZOOM_IN_FACTOR * TOUCH_CAMERA_ZOOM_MULT
+    var center_x: float = camera_2d.position.x
+    if SaveHandler.touch_input_mode:
+        center_x = camera_2d.position.x
+    else:
+        center_x -= touch_camera_left_shift
+    if not heroes.is_empty():
+        var leader: CombatSprite = heroes[0]
+        if is_instance_valid(leader):
+            center_x = leader.position.x + viewport_size.x * (0.5 - HERO_SCROLL_ANCHOR_SCREEN_X_FACTOR) - touch_camera_left_shift
+    var size: Vector2 = Vector2(viewport_size.x * touch_zoom.x, viewport_size.y * touch_zoom.y)
+    return Rect2(Vector2(center_x, camera_2d.position.y) - size * 0.5, size)
+
+func _enemy_world_rect(enemy: CombatSprite) -> Rect2:
+    var body_half_width: float = _enemy_body_width(enemy) * 0.5
+    var body_half_height: float = _enemy_body_width(enemy) * 0.5
+    return Rect2(
+        enemy.position - Vector2(body_half_width, body_half_height),
+        Vector2(body_half_width * 2.0, body_half_height * 2.0)
+    )
+
+func _enemy_count_in_touch_camera_area(touch_area: Rect2) -> int:
+    if touch_area.size.x <= 0.0 or touch_area.size.y <= 0.0:
+        return 0
+    var count: int = 0
+    for visible_enemy in enemies:
+        if not is_instance_valid(visible_enemy):
+            continue
+        if _enemy_world_rect(visible_enemy).intersects(touch_area):
+            count += 1
+    return count
 
 func _is_world_pos_on_screen(world_pos: Vector2) -> bool:
     var viewport_rect: Rect2 = get_viewport_rect()
