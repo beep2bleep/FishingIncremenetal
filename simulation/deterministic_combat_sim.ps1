@@ -265,7 +265,7 @@ function Resolve-Encounter(
 
     $archerDps = 0.0
     if ($stats.has_archer -and $distance -le ($stats.archer_range + ($(if ($activeTimers.archer_pierce -gt 0.0) { 2.0 } else { 0.0 })))) {
-      $archerDps = $stats.archer_dps * ($(if ($activeTimers.archer_pierce -gt 0.0) { 2.2 } else { 1.0 }))
+      $archerDps = $stats.archer_dps * ($(if ($activeTimers.archer_pierce -gt 0.0) { 2.0 } else { 1.0 }))
     }
 
     $guardianDps = 0.0

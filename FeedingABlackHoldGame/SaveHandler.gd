@@ -492,6 +492,7 @@ var fishing_run_clock_seconds := 0.0
 var fishing_l3_boss_clear_clock_seconds := -1.0
 var fishing_first_boss_clear_levels: Dictionary = {}
 var fishing_ufo_spawn_timer_remaining := -1.0
+var fishing_battle_speed_index := 0
 
 func reset_fishing_progress() -> void:
     fishing_currency = STARTING_FISHING_CURRENCY
@@ -506,6 +507,7 @@ func reset_fishing_progress() -> void:
     fishing_l3_boss_clear_clock_seconds = -1.0
     fishing_first_boss_clear_levels = {}
     fishing_ufo_spawn_timer_remaining = -1.0
+    fishing_battle_speed_index = 0
 
 func load_fishing_progress():
     var json_data = Util.load_json_data_from_path(fishing_progress_file_path)
@@ -526,6 +528,7 @@ func load_fishing_progress():
     fishing_l3_boss_clear_clock_seconds = float(json_data.get("l3_boss_clear_clock_seconds", -1.0))
     fishing_first_boss_clear_levels = json_data.get("first_boss_clear_levels", {})
     fishing_ufo_spawn_timer_remaining = float(json_data.get("ufo_spawn_timer_remaining", -1.0))
+    fishing_battle_speed_index = max(0, int(json_data.get("battle_speed_index", 0)))
     if fishing_first_boss_clear_levels.is_empty():
         for level in range(1, fishing_max_unlocked_battle_level):
             fishing_first_boss_clear_levels[str(level)] = true
@@ -550,6 +553,7 @@ func save_fishing_progress():
         "l3_boss_clear_clock_seconds": fishing_l3_boss_clear_clock_seconds,
         "first_boss_clear_levels": fishing_first_boss_clear_levels,
         "ufo_spawn_timer_remaining": fishing_ufo_spawn_timer_remaining,
+        "battle_speed_index": fishing_battle_speed_index,
     }
     var file = FileAccess.open(fishing_progress_file_path, FileAccess.WRITE)
     if file == null:

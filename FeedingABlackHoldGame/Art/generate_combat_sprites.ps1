@@ -74,27 +74,74 @@ function Draw-HeroBase($bmp, [int]$ox, $p, [int]$pose) {
 
 function Draw-HeroWeapon($bmp, [int]$ox, $p, [string]$weapon, [switch]$Attack) {
   $ol = $p.outline; $trim = $p.trim
+  $steelLight = C 232 238 246
+  $steelMid = C 176 188 212
+  $wood = C 132 90 56
+  $string = C 244 232 186
 
   if ($weapon -eq 'sword') {
     if ($Attack) {
-      HLine $bmp ($ox+18) 10 5 $ol
-      HLine $bmp ($ox+19) 9 4 $trim
-      PRect $bmp ($ox+17) 10 1 2 $trim
+      # Forward slash pose with a broad blade, visible guard, and grip.
+      Set-Pixel $bmp ($ox+18) 11 $ol
+      Set-Pixel $bmp ($ox+19) 10 $ol
+      Set-Pixel $bmp ($ox+20) 9 $ol
+      Set-Pixel $bmp ($ox+21) 8 $ol
+      Set-Pixel $bmp ($ox+22) 7 $ol
+      Set-Pixel $bmp ($ox+23) 6 $ol
+
+      Set-Pixel $bmp ($ox+18) 12 $ol
+      Set-Pixel $bmp ($ox+19) 11 $steelMid
+      Set-Pixel $bmp ($ox+20) 10 $steelLight
+      Set-Pixel $bmp ($ox+21) 9 $steelLight
+      Set-Pixel $bmp ($ox+22) 8 $steelMid
+      Set-Pixel $bmp ($ox+23) 7 $steelLight
+
+      Set-Pixel $bmp ($ox+17) 13 $trim
+      HLine $bmp ($ox+18) 13 2 $wood
+      Set-Pixel $bmp ($ox+20) 13 $trim
+      Set-Pixel $bmp ($ox+18) 14 $wood
+      Set-Pixel $bmp ($ox+19) 14 $ol
     } else {
-      HLine $bmp ($ox+18) 12 4 $ol
-      HLine $bmp ($ox+19) 11 3 $trim
+      # Ready pose keeps the sword visible instead of collapsing into a line.
+      Set-Pixel $bmp ($ox+18) 12 $ol
+      Set-Pixel $bmp ($ox+19) 11 $ol
+      Set-Pixel $bmp ($ox+20) 10 $ol
+      Set-Pixel $bmp ($ox+21) 9 $ol
+      Set-Pixel $bmp ($ox+19) 12 $steelMid
+      Set-Pixel $bmp ($ox+20) 11 $steelLight
+      Set-Pixel $bmp ($ox+21) 10 $steelMid
+      Set-Pixel $bmp ($ox+17) 13 $trim
+      Set-Pixel $bmp ($ox+18) 13 $wood
+      Set-Pixel $bmp ($ox+19) 13 $trim
+      Set-Pixel $bmp ($ox+18) 14 $ol
     }
   }
   elseif ($weapon -eq 'bow') {
     if ($Attack) {
-      VLine $bmp ($ox+20) 8 8 $trim
-      VLine $bmp ($ox+19) 8 8 $ol
+      # Drawn bow with visible limbs, taut string, and arrow.
+      Set-Pixel $bmp ($ox+18) 8 $ol
+      VLine $bmp ($ox+19) 9 6 $wood
+      Set-Pixel $bmp ($ox+18) 15 $ol
+      Set-Pixel $bmp ($ox+20) 9 $trim
+      Set-Pixel $bmp ($ox+20) 14 $trim
+      Set-Pixel $bmp ($ox+21) 10 $string
+      Set-Pixel $bmp ($ox+21) 11 $string
+      Set-Pixel $bmp ($ox+21) 12 $string
+      Set-Pixel $bmp ($ox+21) 13 $string
       HLine $bmp ($ox+14) 12 6 $ol
-      Set-Pixel $bmp ($ox+21) 10 $ol
-      Set-Pixel $bmp ($ox+21) 14 $ol
+      HLine $bmp ($ox+15) 11 5 $steelMid
+      Set-Pixel $bmp ($ox+14) 12 $trim
+      Set-Pixel $bmp ($ox+20) 12 $trim
     } else {
-      VLine $bmp ($ox+19) 9 7 $trim
-      VLine $bmp ($ox+18) 9 7 $ol
+      # Idle bow has a curved silhouette and visible string.
+      Set-Pixel $bmp ($ox+18) 9 $ol
+      VLine $bmp ($ox+19) 10 5 $wood
+      Set-Pixel $bmp ($ox+18) 15 $ol
+      Set-Pixel $bmp ($ox+20) 10 $trim
+      Set-Pixel $bmp ($ox+20) 14 $trim
+      Set-Pixel $bmp ($ox+21) 11 $string
+      Set-Pixel $bmp ($ox+21) 12 $string
+      Set-Pixel $bmp ($ox+21) 13 $string
     }
   }
   elseif ($weapon -eq 'shield') {

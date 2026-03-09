@@ -6,6 +6,9 @@
 script = ExtResource("1")
 input_pickable = true
 
+[node name="BackingSprite" type="AnimatedSprite2D" parent="."]
+z_index = -1
+
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

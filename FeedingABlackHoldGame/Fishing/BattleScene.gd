@@ -51,6 +51,7 @@ const UFO_CLOUD_OFFSET_MIN := 28.0
 const UFO_CLOUD_OFFSET_MAX := 92.0
 const DEFEAT_FALL_DURATION := 1.2
 const DEFEAT_FALL_ROT_SPEED := 1.8
+const ARROW_KILL_GRAVITY_SCALE := 1.0 / 3.0
 const BG_BASE_SKY_Y := 220.0
 const BG_BASE_GROUND_Y := 1240.0
 const BG_DEEP_BASE_Y := -16.0
@@ -430,6 +431,7 @@ var base_fill_texture: Texture2D
 var mage_pending_strikes: Array[Dictionary] = []
 var enemy_mark_timers: Dictionary = {}
 var guardian_glow_was_active: bool = false
+var battle_scene_unadjusted_seconds: float = 0.0
 
 func _should_show_editor_only_touch_toggle() -> bool:
     return OS.has_feature("editor")
@@ -679,21 +681,21 @@ func _setup_speed_controls() -> void:
     if speed_button == null or infinite_sim_button == null:
         return
     _style_speed_controls()
+    if not speed_button.gui_input.is_connected(_on_speed_button_gui_input):
+        speed_button.gui_input.connect(_on_speed_button_gui_input)
     if OS.has_feature("editor"):
         speed_button.show()
         infinite_sim_button.show()
         if spawn_ufo_button != null:
             spawn_ufo_button.show()
-        speed_index = 0
-        Engine.time_scale = SPEED_STEPS[speed_index]
+        _apply_speed_index(SaveHandler.fishing_battle_speed_index, true)
         _update_speed_button_text()
         _update_speed_button_enabled_state()
     else:
         infinite_sim_button.hide()
         if spawn_ufo_button != null:
             spawn_ufo_button.hide()
-        speed_index = 0
-        Engine.time_scale = SPEED_STEPS[speed_index]
+        _apply_speed_index(SaveHandler.fishing_battle_speed_index, true)
         if _max_available_speed_index() > 0:
             speed_button.show()
             _update_speed_button_text()
@@ -866,11 +868,22 @@ func _on_speed_button_pressed() -> void:
     var max_index: int = _max_available_speed_index()
     if max_index <= 0:
         return
-    speed_index += 1
-    if speed_index > max_index:
-        speed_index = 0
-    Engine.time_scale = SPEED_STEPS[speed_index]
-    _update_speed_button_text()
+    var next_index: int = speed_index + 1
+    if next_index > max_index:
+        next_index = 0
+    _apply_speed_index(next_index, true)
+
+func _on_speed_button_gui_input(event: InputEvent) -> void:
+    var mouse_event: InputEventMouseButton = event as InputEventMouseButton
+    if mouse_event == null:
+        return
+    if not mouse_event.pressed or mouse_event.button_index != MOUSE_BUTTON_RIGHT:
+        return
+    var max_index: int = _max_available_speed_index()
+    if max_index <= 0:
+        return
+    _apply_speed_index(max(0, speed_index - 1), true)
+    get_viewport().set_input_as_handled()
 
 func _on_infinite_sim_button_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -934,14 +947,12 @@ func _run_infinite_simulation() -> void:
     suppress_floating_text = false
     in_infinite_simulation = false
     if speed_button != null and infinite_sim_button != null and exit_battle_button != null:
-        speed_index = 0
         speed_button.disabled = false
         infinite_sim_button.disabled = false
         exit_battle_button.disabled = false
         if spawn_ufo_button != null:
             spawn_ufo_button.disabled = false
-    Engine.time_scale = SPEED_STEPS[speed_index]
-    _update_speed_button_text()
+    _apply_speed_index(SaveHandler.fishing_battle_speed_index, false)
     _update_ui()
     _update_speed_button_enabled_state()
 
@@ -1878,6 +1889,9 @@ func _process(delta: float) -> void:
     if summary_panel.visible:
         return
 
+    var safe_engine_scale: float = max(0.001, Engine.time_scale)
+    battle_scene_unadjusted_seconds += max(0.0, delta) / safe_engine_scale
+
     sim_accumulator += delta
     var sim_steps: int = 0
     while sim_accumulator >= SIM_STEP and sim_steps < 240:
@@ -2035,7 +2049,7 @@ func _should_spawn_boss_immediately() -> bool:
 func _living_enemy_count() -> int:
     var count: int = 0
     for enemy in enemies:
-        if is_instance_valid(enemy):
+        if _is_enemy_targetable(enemy):
             count += 1
     return count
 
@@ -2072,6 +2086,7 @@ func _spawn_heroes() -> void:
         hero.position = Vector2(HERO_START_X + HERO_FRAME_SIZE.x * HERO_RENDER_SCALE - float(i) * HERO_FORMATION_SPACING, FLOOR_Y)
         var hero_visual: Dictionary = hero_sheets[hero_name]
         hero.setup(hero_visual["sheet"], hero_visual["frame"], float(hero_visual.get("scale", HERO_RENDER_SCALE)), hero_name)
+        hero.set_sway_range(-5.0, 5.0)
         hero.clicked.connect(_on_hero_clicked.bind(hero_name))
         hero_layer.add_child(hero)
         heroes.append(hero)
@@ -2114,6 +2129,7 @@ func _spawn_enemy_for_level(level_index: int, spawn_x_override: float = NAN, sta
     enemy.position = Vector2(spawn_x, FLOOR_Y)
     var enemy_scale: float = float(data.get("scale", ENEMY_RENDER_SCALE)) * elite_mult
     enemy.setup(data["sheet"], data["frame"], enemy_scale)
+    enemy.set_sway_range(-5.0, 5.0)
     enemy.set_sprite_tint(_enemy_tint_for_level(level_index))
     enemy_layer.add_child(enemy)
     enemies.append(enemy)
@@ -2132,8 +2148,10 @@ func _spawn_enemy_for_level(level_index: int, spawn_x_override: float = NAN, sta
         "contact_dps": float(lp["enemy_contact_dps"]) * _enemy_contact_mult() * elite_mult,
         "coins": max(1, int(round(float(data["coins"]) * reward_mult * ENEMY_COIN_VALUE_MULT))),
         "attack_cd": 0.0,
+        "bar_back": bar_data["back"],
         "bar_fill": bar_data["fill"],
         "bar_width": bar_data["width"],
+        "bar_offset": bar_data["offset"],
     }
 
 func _spawn_boss_for_level(level_index: int) -> void:
@@ -2144,6 +2162,7 @@ func _spawn_boss_for_level(level_index: int) -> void:
     enemy.position = Vector2(_next_enemy_spawn_x() + 120.0, FLOOR_Y)
     var boss_scale: float = float(data.get("scale", BOSS_RENDER_SCALE))
     enemy.setup(data["sheet"], data["frame"], boss_scale)
+    enemy.set_sway_range(-5.0, 5.0)
     enemy.set_sprite_tint(_enemy_tint_for_level(level_index))
     enemy_layer.add_child(enemy)
     enemies.append(enemy)
@@ -2166,8 +2185,10 @@ func _spawn_boss_for_level(level_index: int) -> void:
         "contact_dps": float(lp["boss_contact_dps"]) * _enemy_contact_mult() * _boss_contact_mult(),
         "coins": boss_coin_value,
         "attack_cd": 0.0,
+        "bar_back": bar_data["back"],
         "bar_fill": bar_data["fill"],
         "bar_width": bar_data["width"],
+        "bar_offset": bar_data["offset"],
     }
 
 func _roll_enemy_variant_multiplier() -> float:
@@ -2283,8 +2304,10 @@ func _add_health_bar(enemy: CombatSprite, frame_size: Vector2i, scale_factor: fl
     var bar_width: float = max(28.0, float(frame_size.x) * scale_factor * 0.82)
     var back: ColorRect = ColorRect.new()
     back.color = Color(0.1, 0.1, 0.1, 0.9)
-    back.position = Vector2(-bar_width * 0.5, -float(frame_size.y) * scale_factor - 24.0)
+    var bar_offset := Vector2(-bar_width * 0.5, -float(frame_size.y) * scale_factor - 24.0)
+    back.position = bar_offset
     back.size = Vector2(bar_width, 10)
+    back.top_level = true
     enemy.add_child(back)
 
     var fill: ColorRect = ColorRect.new()
@@ -2293,7 +2316,12 @@ func _add_health_bar(enemy: CombatSprite, frame_size: Vector2i, scale_factor: fl
     fill.size = back.size
     back.add_child(fill)
 
-    return {"fill": fill, "width": bar_width}
+    return {
+        "back": back,
+        "fill": fill,
+        "width": bar_width,
+        "offset": bar_offset,
+    }
 
 func _update_heroes(delta: float) -> void:
     var frontline_x: float = _frontline_x()
@@ -2369,7 +2397,7 @@ func _update_heroes(delta: float) -> void:
                     "knight":
                         attack_damage *= 1.35
                     "archer":
-                        attack_damage *= 1.8
+                        attack_damage *= 2.0
             if hero_name == "archer":
                 var arrow_spawn: Vector2 = hero.position + Vector2(28.0, -8.0)
                 if hero.has_method("get_projectile_spawn_point"):
@@ -2492,7 +2520,7 @@ func _update_arrows(delta: float) -> void:
                     var tid: int = target_enemy.get_instance_id()
                     var hit_ids: Array = arrow.get("hit_ids", [])
                     if not hit_ids.has(tid):
-                        _damage_enemy(target_enemy, float(arrow.get("damage", 0.0)))
+                        _damage_enemy(target_enemy, float(arrow.get("damage", 0.0)), false, "archer_arrow")
                         hit_ids.append(tid)
                         arrow["hit_ids"] = hit_ids
                 # non-piercing always expire on hit
@@ -2514,7 +2542,7 @@ func _update_arrows(delta: float) -> void:
                     if not hit_ids2.has(tid2):
                         var enemy_pos: Vector2 = enemy.position + Vector2(0.0, -18.0)
                         if sprite.position.distance_to(enemy_pos) <= 22.0:
-                            _damage_enemy(enemy, float(arrow.get("damage", 0.0)))
+                            _damage_enemy(enemy, float(arrow.get("damage", 0.0)), false, "archer_pierce")
                             hit_ids2.append(tid2)
                             arrow["hit_ids"] = hit_ids2
             # continue flying until ttl expires
@@ -2528,7 +2556,7 @@ func _update_enemies(delta: float) -> void:
     var frontline_x: float = _frontline_x()
     var alive_sorted: Array[CombatSprite] = []
     for enemy in enemies:
-        if is_instance_valid(enemy):
+        if _is_enemy_targetable(enemy):
             alive_sorted.append(enemy)
     alive_sorted.sort_custom(func(a: CombatSprite, b: CombatSprite): return a.position.x < b.position.x)
     var front_map: Dictionary = {}
@@ -2541,6 +2569,16 @@ func _update_enemies(delta: float) -> void:
         if not is_instance_valid(enemy):
             continue
         var e: Dictionary = enemy_data[enemy]
+        if bool(e.get("defeated_falling", false)):
+            var gravity: float = float(ProjectSettings.get_setting("physics/2d/default_gravity", 980.0)) * ARROW_KILL_GRAVITY_SCALE
+            e["fall_velocity_y"] = float(e.get("fall_velocity_y", 0.0)) + gravity * delta
+            enemy.position.y += float(e["fall_velocity_y"]) * delta
+            enemy.rotation = lerp_angle(enemy.rotation, PI * 0.5, min(1.0, delta * DEFEAT_FALL_ROT_SPEED * 2.0))
+            if enemy.position.y > _character_feet_y():
+                _despawn_enemy(enemy)
+                continue
+            enemy_data[enemy] = e
+            continue
         e["attack_cd"] = max(0.0, float(e["attack_cd"]) - delta)
 
         var contact_front_x: float = frontline_x + _enemy_contact_reach(enemy)
@@ -2571,7 +2609,7 @@ func _update_enemies(delta: float) -> void:
                             e = attacker_data
                 _apply_player_damage(total_contact_dps * armor_scale * delta, enemy.position + Vector2(0.0, -90.0))
 
-        _update_enemy_health_bar(e)
+        _update_enemy_health_bar(enemy, e)
         enemy_data[enemy] = e
 
     _enforce_enemy_formation()
@@ -2579,7 +2617,7 @@ func _update_enemies(delta: float) -> void:
 func _enforce_enemy_formation() -> void:
     var alive: Array[CombatSprite] = []
     for enemy in enemies:
-        if is_instance_valid(enemy):
+        if is_instance_valid(enemy) and _is_enemy_targetable(enemy):
             alive.append(enemy)
 
     if alive.size() <= 1:
@@ -2652,10 +2690,12 @@ func _enemy_body_width(enemy: CombatSprite) -> float:
             return max(12.0, frame_w * enemy.base_sprite_scale.x * 0.9)
     return ENEMY_FORMATION_SPACING
 
-func _update_enemy_health_bar(e: Dictionary) -> void:
+func _update_enemy_health_bar(enemy: CombatSprite, e: Dictionary) -> void:
+    var bar_back: ColorRect = e.get("bar_back", null)
     var bar_fill: ColorRect = e.get("bar_fill", null)
-    if bar_fill == null:
+    if not is_instance_valid(enemy) or not is_instance_valid(bar_back) or not is_instance_valid(bar_fill):
         return
+    bar_back.global_position = enemy.global_position + e.get("bar_offset", Vector2.ZERO)
     var pct: float = clamp(float(e["hp"]) / max(1.0, float(e["hp_max"])), 0.0, 1.0)
     bar_fill.size.x = float(e.get("bar_width", 84.0)) * pct
 
@@ -2686,7 +2726,7 @@ func _nearest_enemy(from_pos: Vector2) -> CombatSprite:
     var best: CombatSprite = null
     var best_dist: float = INF
     for enemy in enemies:
-        if not is_instance_valid(enemy):
+        if not _is_enemy_targetable(enemy):
             continue
         var d: float = from_pos.distance_to(enemy.position)
         if d < best_dist:
@@ -2697,7 +2737,7 @@ func _nearest_enemy(from_pos: Vector2) -> CombatSprite:
 func _random_enemy() -> CombatSprite:
     var alive: Array[CombatSprite] = []
     for enemy in enemies:
-        if is_instance_valid(enemy):
+        if _is_enemy_targetable(enemy):
             alive.append(enemy)
     if alive.is_empty():
         return null
@@ -2748,7 +2788,7 @@ func _enemy_count_in_touch_camera_area(touch_area: Rect2) -> int:
         return 0
     var count: int = 0
     for visible_enemy in enemies:
-        if not is_instance_valid(visible_enemy):
+        if not _is_enemy_targetable(visible_enemy):
             continue
         if _enemy_world_rect(visible_enemy).intersects(touch_area):
             count += 1
@@ -2763,7 +2803,7 @@ func _is_world_pos_on_screen(world_pos: Vector2) -> bool:
 func _enemies_on_screen() -> Array[CombatSprite]:
     var visible: Array[CombatSprite] = []
     for enemy in enemies:
-        if not is_instance_valid(enemy):
+        if not _is_enemy_targetable(enemy):
             continue
         if _is_world_pos_on_screen(enemy.position):
             visible.append(enemy)
@@ -2773,7 +2813,7 @@ func _nearest_enemy_on_screen(from_pos: Vector2) -> CombatSprite:
     var best: CombatSprite = null
     var best_dist: float = INF
     for enemy in enemies:
-        if not is_instance_valid(enemy):
+        if not _is_enemy_targetable(enemy):
             continue
         if not _is_world_pos_on_screen(enemy.position):
             continue
@@ -2795,7 +2835,7 @@ func _enemies_in_touch_camera_area() -> Array[CombatSprite]:
     if touch_area.size.x <= 0.0 or touch_area.size.y <= 0.0:
         return visible
     for enemy in enemies:
-        if not is_instance_valid(enemy):
+        if not _is_enemy_targetable(enemy):
             continue
         if _enemy_world_rect(enemy).intersects(touch_area):
             visible.append(enemy)
@@ -2835,7 +2875,7 @@ func _damage_all_enemies(amount: float) -> void:
         return
     var targets: Array[CombatSprite] = []
     for enemy in enemies:
-        if is_instance_valid(enemy):
+        if _is_enemy_targetable(enemy):
             targets.append(enemy)
     for enemy in targets:
         _damage_enemy(enemy, amount)
@@ -3057,10 +3097,12 @@ func _next_enemy_spawn_x() -> float:
         spawn_x = max(spawn_x, max_existing_x + ENEMY_FORMATION_SPACING)
     return spawn_x
 
-func _damage_enemy(enemy: CombatSprite, amount: float, is_mage_attack: bool = false) -> bool:
+func _damage_enemy(enemy: CombatSprite, amount: float, is_mage_attack: bool = false, kill_source: String = "") -> bool:
     if not is_instance_valid(enemy) or not enemy_data.has(enemy):
         return false
     var e: Dictionary = enemy_data[enemy]
+    if bool(e.get("defeated_falling", false)):
+        return false
     var prev_hp: float = float(e["hp"])
     e["hp"] = prev_hp - amount
     var dealt_damage: float = max(0.0, min(amount, prev_hp))
@@ -3073,7 +3115,7 @@ func _damage_enemy(enemy: CombatSprite, amount: float, is_mage_attack: bool = fa
         _award_boss_segments(enemy, e, prev_hp)
     enemy_data[enemy] = e
     if float(e["hp"]) <= 0.0:
-        _kill_enemy(enemy)
+        _kill_enemy(enemy, kill_source)
         return true
     return false
 
@@ -3114,7 +3156,7 @@ func _award_boss_segments(enemy: CombatSprite, e: Dictionary, prev_hp: float) ->
     e["segments_broken"] = int(e.get("segments_broken", 0)) + newly_broken
     boss_segments_broken += newly_broken
 
-func _kill_enemy(enemy: CombatSprite) -> void:
+func _kill_enemy(enemy: CombatSprite, kill_source: String = "") -> void:
     print("DEBUG: _kill_enemy() called")
     if not enemy_data.has(enemy):
         return
@@ -3132,8 +3174,6 @@ func _kill_enemy(enemy: CombatSprite) -> void:
     else:
         regular_killed += 1
 
-    enemies.erase(enemy)
-    enemy_data.erase(enemy)
     enemy_mark_timers.erase(enemy_id)
     for i in range(mage_pending_strikes.size() - 1, -1, -1):
         if int(mage_pending_strikes[i].get("target_id", 0)) == enemy_id:
@@ -3142,7 +3182,63 @@ func _kill_enemy(enemy: CombatSprite) -> void:
     # AudioManager is available as a global autoload, not an engine singleton
     print("[AUDIO] Enemy defeated - playing BUTTON_CLICK")
     _play_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+    if kill_source == "archer_arrow" and not bool(e.get("is_boss", false)):
+        _start_enemy_arrow_fall(enemy, e)
+        return
+    _despawn_enemy(enemy)
+
+func _start_enemy_arrow_fall(enemy: CombatSprite, e: Dictionary) -> void:
+    enemy.set_defeated()
+    _clear_enemy_health_bar(e)
+    e["defeated_falling"] = true
+    e["fall_velocity_y"] = 0.0
+    enemy_data[enemy] = e
+
+func _clear_enemy_health_bar(e: Dictionary) -> void:
+    var back: ColorRect = e.get("bar_back", null)
+    var fill: ColorRect = e.get("bar_fill", null)
+    if is_instance_valid(fill):
+        fill.queue_free()
+    if is_instance_valid(back):
+        back.queue_free()
+    e["bar_back"] = null
+    e["bar_fill"] = null
+
+func _despawn_enemy(enemy: CombatSprite) -> void:
+    if not is_instance_valid(enemy):
+        return
+    enemies.erase(enemy)
+    if enemy_data.has(enemy):
+        var e: Dictionary = enemy_data[enemy]
+        _clear_enemy_health_bar(e)
+        enemy_data.erase(enemy)
     enemy.queue_free()
+
+func _is_enemy_targetable(enemy: CombatSprite) -> bool:
+    if not is_instance_valid(enemy) or not enemy_data.has(enemy):
+        return false
+    return not bool(enemy_data[enemy].get("defeated_falling", false))
+
+func _combat_sprite_half_height(sprite: CombatSprite) -> float:
+    if not is_instance_valid(sprite):
+        return 0.0
+    if sprite.collider != null and sprite.collider.shape is CircleShape2D:
+        var circle: CircleShape2D = sprite.collider.shape as CircleShape2D
+        if circle != null:
+            return max(6.0, circle.radius)
+    if sprite.sprite != null and sprite.sprite.sprite_frames != null:
+        var frame_tex: Texture2D = sprite.sprite.sprite_frames.get_frame_texture("walk", 0)
+        if frame_tex != null:
+            return max(6.0, float(frame_tex.get_height()) * sprite.base_sprite_scale.y * 0.5)
+    return 12.0
+
+func _character_feet_y() -> float:
+    var feet_y: float = FLOOR_Y
+    for hero in heroes:
+        if not is_instance_valid(hero):
+            continue
+        feet_y = max(feet_y, hero.position.y + _combat_sprite_half_height(hero))
+    return feet_y
 
 func _spawn_scaled_coin(pos: Vector2, base_value: int) -> void:
     var scaled_value: int = max(1, int(round(float(base_value) * _coin_mult())))
@@ -3185,7 +3281,7 @@ func _spawn_coin(pos: Vector2, value: int, force_full_circle: bool = false, spaw
     var max_height_px: float = screen_height * COIN_LAUNCH_MAX_HEIGHT_SCREENS
     var max_speed: float = sqrt(2.0 * gravity * max_height_px)
     var min_speed: float = max_speed * COIN_LAUNCH_MIN_SPEED_RATIO
-    var launch_speed: float = randf_range(min_speed, max_speed)
+    var launch_speed: float = randf_range(min_speed, max_speed) * 0.5
 
     var launch_dir: Vector2
     if force_full_circle:
@@ -3410,6 +3506,15 @@ func _speed_multiplier_for_runtime() -> float:
     var safe_idx: int = clamp(speed_index, 0, _max_available_speed_index())
     return SPEED_STEPS[safe_idx]
 
+func _apply_speed_index(new_index: int, persist: bool) -> void:
+    var clamped_index: int = clamp(new_index, 0, _max_available_speed_index())
+    speed_index = clamped_index
+    Engine.time_scale = SPEED_STEPS[speed_index]
+    _update_speed_button_text()
+    if persist and SaveHandler.fishing_battle_speed_index != speed_index:
+        SaveHandler.fishing_battle_speed_index = speed_index
+        SaveHandler.save_fishing_progress()
+
 func _max_available_speed_index() -> int:
     if OS.has_feature("editor"):
         return SPEED_STEPS.size() - 1
@@ -3507,9 +3612,11 @@ func _add_hero_active_bar(hero: CombatSprite) -> void:
         return
     var bar_back: ColorRect = ColorRect.new()
     bar_back.color = Color(0.2, 0.2, 0.2, 0.85)
-    bar_back.position = Vector2(-22.0, -122.0)
+    var bar_offset := Vector2(-22.0, -122.0)
+    bar_back.position = bar_offset
     bar_back.size = Vector2(44.0, 6.0)
     bar_back.visible = false
+    bar_back.top_level = true
     hero.add_child(bar_back)
 
     var bar_fill: ColorRect = ColorRect.new()
@@ -3522,6 +3629,7 @@ func _add_hero_active_bar(hero: CombatSprite) -> void:
     h["active_bar_back"] = bar_back
     h["active_bar_fill"] = bar_fill
     h["active_bar_width"] = bar_back.size.x
+    h["active_bar_offset"] = bar_offset
     hero_data[hero] = h
     _update_hero_active_bar(hero, h)
 
@@ -3537,6 +3645,7 @@ func _update_hero_active_bar(hero: CombatSprite, h: Dictionary) -> void:
     if not is_instance_valid(bar_back) or not is_instance_valid(bar_fill):
         return
 
+    bar_back.global_position = hero.global_position + h.get("active_bar_offset", Vector2.ZERO)
     bar_back.visible = unlocked and not battle_completed
     if not unlocked:
         bar_fill.size.x = 0.0
@@ -3951,6 +4060,7 @@ func _track_first_boss_clear_event(level: int) -> void:
     var level_key: String = str(level)
     if bool(SaveHandler.fishing_first_boss_clear_levels.get(level_key, false)):
         return
+    var app_clock_seconds: float = float(Time.get_ticks_msec()) / 1000.0
     SaveHandler.fishing_first_boss_clear_levels[level_key] = true
     _track_ga_event(
         "boss:first_clear:level_%d" % level,
@@ -3958,6 +4068,10 @@ func _track_first_boss_clear_event(level: int) -> void:
             "level": level,
             "game_time_seconds": SaveHandler.fishing_run_clock_seconds,
             "game_time_formatted": Util.format_time(SaveHandler.fishing_run_clock_seconds),
+            "clock_time_seconds": app_clock_seconds,
+            "clock_time_formatted": Util.format_time(app_clock_seconds),
+            "battle_scene_unadjusted_seconds": battle_scene_unadjusted_seconds,
+            "battle_scene_unadjusted_formatted": Util.format_time(battle_scene_unadjusted_seconds),
         }
     )
     SaveHandler.save_fishing_progress()

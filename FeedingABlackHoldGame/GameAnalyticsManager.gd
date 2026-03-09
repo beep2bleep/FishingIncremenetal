@@ -15,6 +15,7 @@ var _user_id := ""
 var _session_id := ""
 var _session_num := 0
 var _server_ts_offset := 0
+var _first_game_start_sent := false
 
 var _platform := "windows"
 var _os_version := ""
@@ -110,6 +111,7 @@ func _start_session() -> void:
     _save_state()
     _send_init()
     _send_user_start_event()
+    _send_first_game_start_event()
 
 func _send_init() -> void:
     var payload: Dictionary = {
@@ -125,6 +127,13 @@ func _send_init() -> void:
 func _send_user_start_event() -> void:
     var user_event: Dictionary = _base_event_payload("user")
     _enqueue_event(user_event)
+
+func _send_first_game_start_event() -> void:
+    if _first_game_start_sent:
+        return
+    _first_game_start_sent = true
+    _save_state()
+    track_design_event("game:first_start")
 
 func _enqueue_event(event: Dictionary) -> void:
     if not _enabled:
@@ -228,6 +237,7 @@ func _load_or_create_state() -> void:
     if err == OK:
         _user_id = str(cfg.get_value("ga", "user_id", ""))
         _session_num = int(cfg.get_value("ga", "session_num", 0))
+        _first_game_start_sent = bool(cfg.get_value("ga", "first_game_start_sent", false))
     if _user_id == "":
         _user_id = _new_uuid_v4()
     _session_num = maxi(0, _session_num) + 1
@@ -238,6 +248,7 @@ func _save_state() -> void:
     var cfg := ConfigFile.new()
     cfg.set_value("ga", "user_id", _user_id)
     cfg.set_value("ga", "session_num", _session_num)
+    cfg.set_value("ga", "first_game_start_sent", _first_game_start_sent)
     cfg.save(STATE_PATH)
 
 func _new_uuid_v4() -> String:

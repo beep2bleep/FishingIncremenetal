@@ -3,6 +3,15 @@ class_name CombatSprite
 
 signal clicked(sprite: CombatSprite)
 
+const ROTATION_SWAY_INTERVAL: float = 2.5
+const ROTATION_SWAY_MIN_DEGREES: float = -5.0
+const ROTATION_SWAY_MAX_DEGREES: float = 5.0
+const BACKING_OFFSET: Vector2 = Vector2(8.0, 6.0)
+const BACKING_OFFSET_SCALE_MULT: float = 0.35
+const BACKING_SCALE_BONUS: float = 0.14
+const BACKING_TINT: Color = Color(1.0, 1.0, 1.0, 0.95)
+
+@onready var backing_sprite: AnimatedSprite2D = get_node_or_null("BackingSprite")
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var collider: CollisionShape2D = $CollisionShape2D
 @onready var weapon_layer: Node2D = get_node_or_null("WeaponLayer")
@@ -19,6 +28,9 @@ var weapon_float_speed: float = 2.8
 var weapon_float_amp: float = 2.2
 var weapon_attack_tween: Tween = null
 var weapon_attack_base_offset: Vector2 = Vector2.ZERO
+var sway_tween: Tween = null
+var sway_min_degrees: float = ROTATION_SWAY_MIN_DEGREES
+var sway_max_degrees: float = ROTATION_SWAY_MAX_DEGREES
 var attack_reset_token: int = 0
 const WEAPON_SCALE_RATIO: float = 0.75
 const WEAPON_TARGET_X_RATIO: float = 0.55
@@ -28,6 +40,14 @@ const WEAPON_LEFT_NUDGE_LOCAL: float = 2.0
 const ARCHER_BOW_CENTER_LOCAL: Vector2 = Vector2(17.0, -24.0)
 
 func _ensure_nodes() -> bool:
+    if backing_sprite == null:
+        backing_sprite = get_node_or_null("BackingSprite")
+    if backing_sprite == null:
+        backing_sprite = AnimatedSprite2D.new()
+        backing_sprite.name = "BackingSprite"
+        backing_sprite.z_index = -1
+        add_child(backing_sprite)
+        move_child(backing_sprite, 0)
     if sprite == null:
         sprite = get_node_or_null("AnimatedSprite2D")
     if collider == null:
@@ -39,11 +59,11 @@ func _ensure_nodes() -> bool:
         weapon_layer.name = "WeaponLayer"
         add_child(weapon_layer)
         weapon_layer.position = Vector2.ZERO
-    return sprite != null and collider != null and weapon_layer != null
+    return backing_sprite != null and sprite != null and collider != null and weapon_layer != null
 
 func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := "") -> void:
     if not _ensure_nodes():
-        push_error("CombatSprite is missing AnimatedSprite2D or CollisionShape2D.")
+        push_error("CombatSprite is missing AnimatedSprite2D, BackingSprite, or CollisionShape2D.")
         return
 
     var frames := SpriteFrames.new()
@@ -67,12 +87,18 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := 
         frames.add_frame("attack", atk)
 
     sprite.sprite_frames = frames
-    sprite.play("walk")
-    sprite.centered = true  # ensure the visual is drawn around the node's position
+    backing_sprite.sprite_frames = frames
+    _sync_sprite_stack("walk")
+    sprite.centered = true
+    backing_sprite.centered = true
     sprite.scale = Vector2.ONE * scale_factor
+    backing_sprite.scale = Vector2.ONE * (scale_factor + BACKING_SCALE_BONUS)
+    backing_sprite.position = BACKING_OFFSET * max(1.0, scale_factor * BACKING_OFFSET_SCALE_MULT)
     sprite.modulate = base_sprite_modulate
+    backing_sprite.modulate = BACKING_TINT
     base_sprite_scale = sprite.scale
     sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    backing_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
     var circle := CircleShape2D.new()
     circle.radius = max(10.0, float(frame_size.x) * 0.45 * scale_factor)
@@ -90,13 +116,14 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := 
     weapon_layer.visible = weapon_layer.get_child_count() > 0
     weapon_layer.rotation = 0.0
     weapon_float_phase = randf() * TAU
+    _start_sway_motion()
     set_process(true)
 
 func set_walking() -> void:
     if is_attacking or is_defeated:
         return
     if sprite.animation != "walk":
-        sprite.play("walk")
+        _sync_sprite_stack("walk")
 
 func trigger_attack(strength: float = 1.0, force_restart: bool = false) -> void:
     if is_defeated:
@@ -109,7 +136,7 @@ func trigger_attack(strength: float = 1.0, force_restart: bool = false) -> void:
     var attack_strength: float = clamp(strength, 0.0, 1.0)
     _play_weapon_attack_motion(attack_strength)
     _play_attack_telegraph(attack_strength)
-    sprite.play("attack")
+    _sync_sprite_stack("attack")
     await get_tree().create_timer(_attack_animation_duration()).timeout
     if reset_token != attack_reset_token:
         return
@@ -118,8 +145,9 @@ func trigger_attack(strength: float = 1.0, force_restart: bool = false) -> void:
         _stop_weapon_tween()
         return
     is_attacking = false
-    sprite.play("walk")
+    _sync_sprite_stack("walk")
     sprite.scale = base_sprite_scale
+    backing_sprite.scale = base_sprite_scale + Vector2.ONE * BACKING_SCALE_BONUS
     sprite.modulate = base_sprite_modulate
 
 func set_sprite_tint(tint: Color) -> void:
@@ -127,15 +155,23 @@ func set_sprite_tint(tint: Color) -> void:
     if sprite != null:
         sprite.modulate = base_sprite_modulate
 
+func set_sway_range(min_degrees: float, max_degrees: float) -> void:
+    sway_min_degrees = minf(min_degrees, max_degrees)
+    sway_max_degrees = maxf(min_degrees, max_degrees)
+    if not is_defeated:
+        _start_sway_motion()
+
 func set_defeated() -> void:
     if not _ensure_nodes():
         return
     is_defeated = true
     is_attacking = false
+    _stop_sway_motion()
     _stop_weapon_tween()
     if sprite.sprite_frames != null and sprite.sprite_frames.has_animation("walk"):
-        sprite.play("walk")
+        _sync_sprite_stack("walk")
     sprite.stop()
+    backing_sprite.stop()
     if collider != null:
         collider.disabled = true
 
@@ -198,6 +234,35 @@ func _add_line(parent: Node, points: Array[Vector2], width: float, color: Color)
     line.end_cap_mode = Line2D.LINE_CAP_ROUND
     line.points = PackedVector2Array(points)
     parent.add_child(line)
+
+func _sync_sprite_stack(animation_name: String) -> void:
+    if sprite == null or backing_sprite == null:
+        return
+    sprite.play(animation_name)
+    backing_sprite.play(animation_name)
+    backing_sprite.frame = sprite.frame
+    backing_sprite.frame_progress = sprite.frame_progress
+
+func _start_sway_motion() -> void:
+    _stop_sway_motion()
+    _queue_next_sway_target()
+
+func _stop_sway_motion() -> void:
+    if sway_tween != null:
+        sway_tween.kill()
+        sway_tween = null
+    rotation_degrees = 0.0
+
+func _queue_next_sway_target() -> void:
+    if is_defeated:
+        return
+    var next_rotation: float = randf_range(sway_min_degrees, sway_max_degrees)
+    sway_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    sway_tween.tween_property(self, "rotation_degrees", next_rotation, ROTATION_SWAY_INTERVAL)
+    sway_tween.finished.connect(func() -> void:
+        sway_tween = null
+        _queue_next_sway_target()
+    )
 
 func get_projectile_spawn_point() -> Vector2:
     # Spawn arrows from the bow center in world space.
