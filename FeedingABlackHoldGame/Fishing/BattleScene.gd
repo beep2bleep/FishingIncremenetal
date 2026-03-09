@@ -337,7 +337,8 @@ var coins: Array[CoinPickup] = []
 var coin_ages: Dictionary = {}
 var arrows: Array[Dictionary] = []
 
-var player_health: float = 300.0
+const BASE_PLAYER_HEALTH := 100.0
+var player_health: float = 100.0
 var power: float = 0.0
 var shield_time: float = 0.0
 
@@ -459,6 +460,7 @@ func _ready() -> void:
     _setup_actor_sheets()
     current_level = clamp(SaveHandler.fishing_next_battle_level, 1, _max_unlocked_level())
     _rebuild_battle_mods()
+    player_health = _max_health()
     _setup_visuals()
     _apply_background_layout_for_input_mode("Loaded %s layout" % ("touch" if SaveHandler.touch_input_mode else "mouse"))
     _spawn_heroes()
@@ -3150,7 +3152,7 @@ func _apply_knight_vamp_heal(damage_dealt: float, heal_text_world_pos: Vector2) 
     if damage_dealt <= 0.0 or not _is_knight_active():
         return
     var before_hp: float = player_health
-    player_health = min(300.0, player_health + damage_dealt * 0.18)
+    player_health = min(_max_health(), player_health + damage_dealt * 0.18)
     var healed: float = max(0.0, player_health - before_hp)
     if healed > 0.0:
         _spawn_floating_heal_text(heal_text_world_pos, healed)
@@ -3424,21 +3426,18 @@ func _cursor_bonus_mult() -> float:
     return mult
 
 func _base_coin_bonus() -> int:
-    return _hero_coin_gain_level()
-
-func _hero_coin_gain_level() -> int:
-    var count: int = 0
-    for key in ["hero_coin_gain_1", "hero_coin_gain_2", "hero_coin_gain_3", "hero_coin_gain_4"]:
-        if SaveHandler.has_fishing_upgrade(key):
-            count += 1
-    return count
+    var level: int = SaveHandler.get_fishing_upgrade_level("hero_coin_gain")
+    if level <= 0:
+        return 0
+    var total: int = 0
+    for node_index in range(5):
+        var tiers: int = clampi(level - node_index * 5, 0, 5)
+        if tiers > 0:
+            total += (int(pow(3, tiers)) - 1) / 2
+    return total
 
 func _cursor_capture_bonus_level() -> int:
-    var count: int = 0
-    for key in ["cursor_capture_gain_1", "cursor_capture_gain_2", "cursor_capture_gain_3", "cursor_capture_gain_4"]:
-        if SaveHandler.has_fishing_upgrade(key):
-            count += 1
-    return count
+    return SaveHandler.get_fishing_upgrade_level("cursor_capture_gain")
 
 func _on_coin_collected(coin: CoinPickup, by_cursor: bool) -> void:
     print("DEBUG: _on_coin_collected() called")
@@ -3587,6 +3586,10 @@ func _ufo_reward_value() -> int:
     )
     var scaled_enemy_value: int = max(1, int(round(float(base_enemy_value) * _coin_mult())))
     return scaled_enemy_value * UFO_REWARD_ENEMY_MULT
+
+func _max_health() -> float:
+    var base: float = BASE_PLAYER_HEALTH + float(battle_mods.get("health_bonus_flat", 0.0))
+    return base * float(battle_mods.get("health_mult", 1.0))
 
 func _max_power() -> float:
     var cap: float = 100.0
@@ -3743,11 +3746,14 @@ func _active_duration(hero_name: String) -> float:
     var base: float = float(ACTIVE_DURATIONS.get(hero_name, 2.0))
     # As active/cadence upgrades reduce cooldown, also grant modest duration scaling.
     var cd_improvement: float = max(0.0, 1.0 - _active_cooldown_mult())
-    return base + (cd_improvement * 2.2)
+    var duration: float = base + (cd_improvement * 2.2)
+    return duration * float(battle_mods.get("active_duration_mult", 1.0))
 
 func _level_params(level_index: int) -> Dictionary:
     var lv: int = level_index - 1
-    var regular_count: int = int(round((24 + 8 * lv) * _enemy_count_mult()))
+    # Cap base count at level-3 amount (40); after that only +1 per level.
+    var base_count: int = 40 + (lv - 2) if lv > 2 else (24 + 8 * lv)
+    var regular_count: int = int(round(base_count * _enemy_count_mult()))
     return {
         "regular_count": max(8, regular_count),
         "enemy_hp": 45.0 * pow(1.60, lv),
@@ -3785,6 +3791,10 @@ func _rebuild_battle_mods() -> void:
         "dot_flat_damage_reduction": 0.0,
         "boss_flat_damage_reduction": 0.0,
         "enemy_count_mult": 1.0,
+        "health_bonus_flat": 0.0,
+        "health_mult": 1.0,
+        "active_duration_mult": 1.0,
+        "active_cost_extra_mult": 1.0,
     }
 
     var unlocked: Dictionary = SaveHandler.fishing_unlocked_upgrades
@@ -3816,16 +3826,35 @@ func _apply_upgrade_key_modifiers(key: String, level: int) -> void:
     if level <= 0:
         return
 
+    if key == "vitality_foundation":
+        battle_mods["health_bonus_flat"] = float(battle_mods["health_bonus_flat"]) + 50.0
+        return
+    if key == "vitality_hitpoints":
+        battle_mods["health_mult"] = pow(1.2, level)
+        return
+    if key == "vitality_power":
+        battle_mods["power_gain_mult"] = float(battle_mods["power_gain_mult"]) + 0.05 * level
+        battle_mods["power_cap_bonus"] = float(battle_mods["power_cap_bonus"]) + 5.0 * level
+        return
+    if key == "vitality_channel":
+        battle_mods["active_duration_mult"] = 1.0 + 0.05 * level
+        battle_mods["active_cost_extra_mult"] = 1.0 + 0.05 * level
+        return
+
     if key == "core_armor":
         return
+    # Armor: 5 tracks per type (core_armor_enemy_1..5, core_armor_dot_1..5, core_armor_boss_1..5), 3x effect per level
     if key.begins_with("core_armor_enemy_"):
-        battle_mods["enemy_flat_damage_reduction"] = float(battle_mods["enemy_flat_damage_reduction"]) + 1.0 * level
+        var total: float = (pow(3, level + 1) - 3.0) / 2.0 if level >= 1 else 0.0
+        battle_mods["enemy_flat_damage_reduction"] = float(battle_mods["enemy_flat_damage_reduction"]) + total
         return
     if key.begins_with("core_armor_dot_"):
-        battle_mods["dot_flat_damage_reduction"] = float(battle_mods["dot_flat_damage_reduction"]) + 1.0 * level
+        var total: float = (pow(3, level + 1) - 3.0) / 2.0 if level >= 1 else 0.0
+        battle_mods["dot_flat_damage_reduction"] = float(battle_mods["dot_flat_damage_reduction"]) + total
         return
     if key.begins_with("core_armor_boss_"):
-        battle_mods["boss_flat_damage_reduction"] = float(battle_mods["boss_flat_damage_reduction"]) + 3.0 * level
+        var total: float = (pow(3, level + 2) - 9.0) / 2.0 if level >= 1 else 0.0
+        battle_mods["boss_flat_damage_reduction"] = float(battle_mods["boss_flat_damage_reduction"]) + total
         return
 
     if key == "core_power":
@@ -4077,7 +4106,7 @@ func _player_armor_scale() -> float:
     return max(0.45, 1.0 - float(battle_mods.get("armor_bonus", 0.0)))
 
 func _update_ui() -> void:
-    var max_health: float = 300.0
+    var max_health: float = _max_health()
     var health_now: float = clamp(player_health, 0.0, max_health)
     health_label.text = "LEVEL %d" % current_level
     health_bar.max_value = max_health

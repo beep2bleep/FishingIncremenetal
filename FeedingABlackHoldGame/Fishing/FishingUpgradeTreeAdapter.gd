@@ -125,6 +125,9 @@ static func apply_simulation_upgrades() -> void:
             upgrade.current_tier = unlocked_tiers
             Global.game_mode_data_manager.unlocked_upgrades[upgrade.cell] = upgrade.to_dict()
 
+static func clear_cached_json_data() -> void:
+    _cached_json_data = {}
+
 static func _get_cached_json_data() -> Dictionary:
     if _cached_json_data.is_empty():
         var loaded: Variant = FishingUpgradeDB.get_cached_data()
@@ -234,6 +237,12 @@ static func _party_parent_key(key: String) -> String:
         _:
             return ""
 
+static func _group_number_from_id(entry_id: String) -> int:
+    var idx: int = entry_id.find("__G")
+    if idx < 0:
+        return 0
+    return int(entry_id.substr(idx + 3)) if entry_id.length() > idx + 3 else 0
+
 static func _retarget_dependencies_to_hubs(grouped_upgrades: Array) -> void:
     var key_to_primary_id: Dictionary = {}
     var key_to_entries: Dictionary = {}
@@ -253,6 +262,13 @@ static func _retarget_dependencies_to_hubs(grouped_upgrades: Array) -> void:
         arr.append(entry)
         key_to_entries[key] = arr
 
+    # Sort each key's entries by group number so G1, G2, G3... are in order (escalating chains).
+    for k in key_to_entries:
+        var arr: Array = key_to_entries[k]
+        arr.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+            return _group_number_from_id(str(a.get("id", ""))) < _group_number_from_id(str(b.get("id", "")))
+        )
+
     for i in range(grouped_upgrades.size()):
         var entry_variant: Variant = grouped_upgrades[i]
         if not (entry_variant is Dictionary):
@@ -263,13 +279,25 @@ static func _retarget_dependencies_to_hubs(grouped_upgrades: Array) -> void:
         if key == "" or entry_id == "":
             continue
 
-        var dep_key: String = _select_hub_dependency_key(key, key_to_primary_id)
-        if dep_key == "":
-            entry["dependency"] = "__CENTER__"
-        elif key_to_primary_id.has(dep_key):
-            entry["dependency"] = str(key_to_primary_id[dep_key])
+        var entries_for_key: Array = key_to_entries.get(key, [])
+        var chain_index: int = -1
+        for j in range(entries_for_key.size()):
+            if str(entries_for_key[j].get("id", "")) == entry_id:
+                chain_index = j
+                break
+
+        # Escalating upgrades (multiple groups for same key): each group depends on the previous group.
+        if chain_index > 0:
+            var prev_id: String = str(entries_for_key[chain_index - 1].get("id", ""))
+            entry["dependency"] = prev_id
         else:
-            entry["dependency"] = "__CENTER__"
+            var dep_key: String = _select_hub_dependency_key(key, key_to_primary_id)
+            if dep_key == "":
+                entry["dependency"] = "__CENTER__"
+            elif key_to_primary_id.has(dep_key):
+                entry["dependency"] = str(key_to_primary_id[dep_key])
+            else:
+                entry["dependency"] = "__CENTER__"
 
         # Avoid accidental self-dependency if a key resolves to its own primary entry.
         if str(entry.get("dependency", "")) == entry_id:
@@ -1037,16 +1065,17 @@ static func _find_layout_cell_for_child(parent_cell: Vector2, preferred_branch: 
 static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cells: Dictionary, key: String = "") -> Vector2:
     var dir: Vector2 = LAYOUT_DIRS[branch]
     var target: Vector2 = _compute_root_target(dir, branch_count)
+    # Root branches brought in by 3 from previous positions.
     var fixed_root_targets := {
-        "knight_vamp_unlock": Vector2(0, -6),
-        "recruit_archer": Vector2(6, -2),
-        "cursor_pickup_unlock": Vector2(6, 2),
-        "auto_attack_unlock": Vector2(0, 6),
-        "core_armor": Vector2(-6, 4),
-        "party_damage_boost": Vector2(-6, 0),
-        "recruit_guardian": Vector2(-6, -4),
-        "recruit_mage": Vector2(-2, -6),
-        "battle_speed_unlock": Vector2(2, -6),
+        "knight_vamp_unlock": Vector2(0, -3),
+        "recruit_archer": Vector2(3, -2),
+        "cursor_pickup_unlock": Vector2(3, 2),
+        "auto_attack_unlock": Vector2(0, 3),
+        "core_armor": Vector2(-3, 4),
+        "party_damage_boost": Vector2(-4, 0),
+        "recruit_guardian": Vector2(-3, 0),
+        "recruit_mage": Vector2(-2, -3),
+        "battle_speed_unlock": Vector2(2, -3),
     }
     if fixed_root_targets.has(key):
         target = fixed_root_targets[key]
@@ -1202,11 +1231,11 @@ static func _outward_dir_for_parent(parent_cell: Vector2, fallback_dir: Vector2)
     return Vector2(0.0, sign(parent_cell.y))
 
 static func _compute_root_target(main_dir: Vector2, branch_count: int) -> Vector2:
-    # Keep first-hop branches well separated near center to avoid crossing lines.
+    # Keep first-hop branches well separated near center to avoid crossing lines. (Brought in by 3 from center.)
     var lane_pattern: Array[int] = [0, 4, -4, 8, -8, 12, -12]
     var lane: int = lane_pattern[branch_count % lane_pattern.size()]
     var ring: int = int(branch_count / lane_pattern.size())
-    var forward: int = 6 + ring * 4
+    var forward: int = 3 + ring * 4
     var perp: Vector2 = _perpendicular_dir(main_dir)
     return (main_dir * forward) + (perp * lane)
 

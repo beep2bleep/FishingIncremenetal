@@ -15,25 +15,27 @@ Total UI upgrade nodes: 212
 * [Cyan #40B2CD] Cursor Capture III
 * [Gold #D8BE42] Hero Coin Gain IV
 * [Cyan #40B2CD] Cursor Capture IV
+* [Gold #D8BE42] Hero Coin Gain V
+* [Cyan #40B2CD] Cursor Capture V
 * [Green #4D9E60] Recruit Archer
 * [Red #D75252] Tactical Telemetry
 * [Red #D75252] Temporal Throttle
 * [Red #D75252] Knight Vampirism Unlock
-* [Cyan #40B2CD] Salvage Hooks
+<!-- * [Cyan #40B2CD] Salvage Hooks -->
 * [Red #D75252] Archer Pierce Unlock
 * [Purple #A966D8] Power Harvest Unlock
 * [Blue #5282E0] Reinforced Plates
 * [Green #4D9E60] Recruit Guardian
 * [Blue #5282E0] Guardian Fortify Unlock
-* [Cyan #40B2CD] Field Magnet
-* [Purple #A966D8] Condensed Cores
+<!-- * [Cyan #40B2CD] Field Magnet
+<!-- * [Purple #A966D8] Condensed Cores
 * [Cyan #40B2CD] Focused Breathing
-* [Cyan #40B2CD] Supply Lenses
+* [Cyan #40B2CD] Supply Lenses -->
 * [Green #4D9E60] Recruit Mage
 * [Red #D75252] Mage Storm Unlock
-* [Cyan #40B2CD] Stride Rhythm
+<!-- * [Cyan #40B2CD] Stride Rhythm
 * [Red #D75252] Wave Bringer 1
-* [Red #D75252] Impact Weave
+* [Red #D75252] Impact Weave -->
 * [Red #D75252] Knight Speed I
 * [Red #D75252] Knight Speed II
 * [Red #D75252] Knight Speed III
@@ -42,7 +44,7 @@ Total UI upgrade nodes: 212
 * [Red #D75252] Knight Damage II
 * [Red #D75252] Knight Damage III
 * [Red #D75252] Knight Damage IV
-* [Purple #A966D8] Power Reservoir 1
+<!-- * [Purple #A966D8] Power Reservoir 1 -->
 * [Blue #5282E0] Core Armor
 * [Blue #5282E0] Core Armor Enemy I
 * [Blue #5282E0] Core Armor Enemy II
@@ -59,47 +61,47 @@ Total UI upgrade nodes: 212
 * [Blue #5282E0] Core Armor Boss III
 * [Blue #5282E0] Core Armor Boss IV
 * [Blue #5282E0] Core Armor Boss V
-* [Purple #A966D8] Quick Invocation 1
+<!-- * [Purple #A966D8] Quick Invocation 1 -->
 * [Red #D75252] Archer Speed I
 * [Red #D75252] Archer Speed II
 * [Red #D75252] Archer Speed III
 * [Red #D75252] Archer Speed IV
 * [Cyan #40B2CD] Core Drop
 * [Cyan #40B2CD] Core Drop
-* [Orange #E78A3D] Boss Stance
+<!-- * [Orange #E78A3D] Boss Stance -->
 * [Red #D75252] Archer Damage I
 * [Red #D75252] Archer Damage II
 * [Red #D75252] Archer Damage III
 * [Red #D75252] Archer Damage IV
-* [Purple #A966D8] Core Power
-* [Purple #A966D8] Core Power
-* [Cyan #40B2CD] Scrap Broker
-* [Cyan #40B2CD] Adaptive Circuit 1
-* [Red #D75252] Line Pressure 1
+<!-- * [Purple #A966D8] Core Power
+* [Purple #A966D8] Core Power -->
+<!-- * [Cyan #40B2CD] Scrap Broker
+* [Cyan #40B2CD] Adaptive Circuit 1 -->
+<!-- * [Red #D75252] Line Pressure 1 -->
 * [Red #D75252] Guardian Speed I
 * [Red #D75252] Guardian Speed II
 * [Red #D75252] Guardian Speed III
 * [Red #D75252] Guardian Speed IV
-* [Orange #E78A3D] Boss Readiness
+<!-- * [Orange #E78A3D] Boss Readiness -->
 * [Red #D75252] Guardian Damage I
 * [Red #D75252] Guardian Damage II
 * [Red #D75252] Guardian Damage III
 * [Red #D75252] Guardian Damage IV
-* [Blue #5282E0] Hemostasis Mesh
+<!-- * [Blue #5282E0] Hemostasis Mesh -->
 * [Red #D75252] Mage Speed I
 * [Red #D75252] Mage Speed II
 * [Red #D75252] Mage Speed III
 * [Red #D75252] Mage Speed IV
-* [Blue #5282E0] Iron Ledger 3
-* [Purple #A966D8] Extended Channel 1
+<!-- * [Blue #5282E0] Iron Ledger 3
+* [Purple #A966D8] Extended Channel 1 -->
 * [Red #D75252] Mage Damage I
 * [Red #D75252] Mage Damage II
 * [Red #D75252] Mage Damage III
 * [Red #D75252] Mage Damage IV
-* [Cyan #40B2CD] Overflow Capture
+<!-- * [Cyan #40B2CD] Overflow Capture
 * [Cyan #40B2CD] Solar Spine 4
-* [Cyan #40B2CD] Taxonomy Scanner
-* [Purple #A966D8] Echo Burst 5
+* [Cyan #40B2CD] Taxonomy Scanner -->
+<!-- * [Purple #A966D8] Echo Burst 5
 * [Cyan #40B2CD] Route Memory
 * [Orange #E78A3D] Boss Fracture Study
 * [Blue #5282E0] Shock Padding
@@ -217,4 +219,4 @@ Total UI upgrade nodes: 212
 * [Blue #5282E0] Adaptive Circuit 91
 * [Cyan #40B2CD] Fractal Relay 92
 * [Purple #A966D8] Iron Ledger 93
-* [Purple #A966D8] Solar Spine 94
+* [Purple #A966D8] Solar Spine 94 -->

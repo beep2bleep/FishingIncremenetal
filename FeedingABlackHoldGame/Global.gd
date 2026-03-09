@@ -92,6 +92,8 @@ func clear_upgrade_tree_cache() -> void:
     if cached_upgrade_tech_tree != null and is_instance_valid(cached_upgrade_tech_tree):
         cached_upgrade_tech_tree.queue_free()
     cached_upgrade_tech_tree = null
+    FishingUpgradeDB.clear_cached_data()
+    FishingUpgradeTreeAdapter.clear_cached_json_data()
 
 
 func update_mouse():

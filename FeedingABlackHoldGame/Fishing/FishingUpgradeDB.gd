@@ -20,14 +20,6 @@ const FAMILY_DESCRIPTIONS := {
 }
 const SPECIFIC_DESCRIPTIONS := {
     "cursor_pickup_unlock": "Unlocks cursor pickup bonuses so cursor-collected coins are worth more.",
-    "hero_coin_gain_1": "Increase the base coin value by +1 when heroes walk over coins or the cursor captures them.",
-    "hero_coin_gain_2": "Increase the base coin value by another +1 when heroes walk over coins or the cursor captures them.",
-    "hero_coin_gain_3": "Increase the base coin value by another +1 when heroes walk over coins or the cursor captures them.",
-    "hero_coin_gain_4": "Increase the base coin value by another +1 when heroes walk over coins or the cursor captures them.",
-    "cursor_capture_gain_1": "Increase cursor-captured coin value by +25%.",
-    "cursor_capture_gain_2": "Increase cursor-captured coin value by another +25%.",
-    "cursor_capture_gain_3": "Increase cursor-captured coin value by another +25%.",
-    "cursor_capture_gain_4": "Increase cursor-captured coin value by another +25%.",
     "recruit_archer": "Adds the Archer hero to your combat lineup.",
     "auto_attack_unlock": "Unlocks Tactical Telemetry: reveals enemies remaining during battle using the blue progress HUD.",
     "battle_speed_unlock": "Unlocks battle speed control in non-editor builds. Buy levels to unlock 2x, then 4x, then 8x speed.",
@@ -46,14 +38,6 @@ const SPECIFIC_DESCRIPTIONS := {
 }
 const SPECIFIC_NAMES := {
     "cursor_pickup_unlock": "Cursor Pickup Unlock",
-    "hero_coin_gain_1": "Hero Coin Gain I",
-    "hero_coin_gain_2": "Hero Coin Gain II",
-    "hero_coin_gain_3": "Hero Coin Gain III",
-    "hero_coin_gain_4": "Hero Coin Gain IV",
-    "cursor_capture_gain_1": "Cursor Capture I",
-    "cursor_capture_gain_2": "Cursor Capture II",
-    "cursor_capture_gain_3": "Cursor Capture III",
-    "cursor_capture_gain_4": "Cursor Capture IV",
     "recruit_archer": "Recruit Archer",
     "auto_attack_unlock": "Tactical Telemetry",
     "battle_speed_unlock": "Temporal Throttle",
@@ -112,11 +96,14 @@ func _init(data_override: Variant = null) -> void:
                             continue
                         sim_notes_by_id[row_id] = row
 
+static func clear_cached_data() -> void:
+    _cached_data = {}
+
 static func get_cached_data() -> Dictionary:
     if _cached_data.is_empty():
         var loaded: Variant = Util.load_json_data_from_path(DATA_PATH)
         if loaded is Dictionary:
-            _cached_data = _filter_removed_tactical_telemetry_upgrades(loaded)
+            _cached_data = loaded
     return _cached_data
 
 static func is_removed_tactical_telemetry_upgrade_key(key: String) -> bool:
@@ -254,6 +241,10 @@ func get_display_name(node: Dictionary) -> String:
     var key: String = str(node.get("key", ""))
     var level: int = int(node.get("level", 1))
 
+    if key == "hero_coin_gain":
+        return "Hero Coin Gain " + _roman((level - 1) / 5 + 1)
+    if key == "cursor_capture_gain":
+        return "Cursor Capture " + _roman((level - 1) / 5 + 1)
     if SPECIFIC_NAMES.has(key):
         return SPECIFIC_NAMES[key]
     if key.begins_with("extra_skill_"):
@@ -282,6 +273,10 @@ func get_description(node: Dictionary) -> String:
         if level == 2:
             return _with_editor_note(node, "Upgrades the Speed button to include 4x battle speed.")
         return _with_editor_note(node, "Upgrades the Speed button to include 8x battle speed.")
+    if key == "hero_coin_gain":
+        return _with_editor_note(node, "Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier in this node).")
+    if key == "cursor_capture_gain":
+        return _with_editor_note(node, "Increase cursor-captured coin value by +25% per tier (5 tiers per node).")
     if SPECIFIC_DESCRIPTIONS.has(key):
         return _with_editor_note(node, SPECIFIC_DESCRIPTIONS[key])
 
@@ -322,13 +317,16 @@ func _with_editor_note(node: Dictionary, base: String) -> String:
 
 func _describe_core_upgrade(key: String, level: int) -> String:
     if key == "core_armor":
-        return "Unlocks the Core Armor branch with fixed damage reduction paths for enemies, DOT, and boss damage."
+        return "Unlocks the Core Armor branch: three paths that reduce enemy, DOT, and boss damage taken."
     if key.begins_with("core_armor_enemy_"):
-        return "Reduce regular enemy contact damage taken by 1."
+        var total: int = int((pow(3, level + 1) - 3) / 2) if level >= 1 else 0
+        return "Reduces regular enemy contact damage taken by %d (3x per level, cumulative over %d purchases)." % [total, level]
     if key.begins_with("core_armor_dot_"):
-        return "Reduce damage-over-time taken by 1."
+        var total: int = int((pow(3, level + 1) - 3) / 2) if level >= 1 else 0
+        return "Reduces damage-over-time taken by %d (3x per level, cumulative over %d purchases)." % [total, level]
     if key.begins_with("core_armor_boss_"):
-        return "Reduce boss damage taken by 3."
+        var total: int = int((pow(3, level + 2) - 9) / 2) if level >= 1 else 0
+        return "Reduces boss damage taken by %d (3x per level, cumulative over %d purchases)." % [total, level]
     if key == "core_density":
         return "Increase enemy density by ~5% per level (and coin rewards by ~2% per level) for higher potential rewards."
     if key == "core_drop":
@@ -515,36 +513,15 @@ func _extra_skill_name(key: String) -> String:
 func _core_name(key: String, level: int = 1) -> String:
     if key == "core_armor":
         return "Core Armor"
-    if key == "core_armor_enemy_1":
-        return "Core Armor Enemy I"
-    if key == "core_armor_enemy_2":
-        return "Core Armor Enemy II"
-    if key == "core_armor_enemy_3":
-        return "Core Armor Enemy III"
-    if key == "core_armor_enemy_4":
-        return "Core Armor Enemy IV"
-    if key == "core_armor_enemy_5":
-        return "Core Armor Enemy V"
-    if key == "core_armor_dot_1":
-        return "Core Armor DOT I"
-    if key == "core_armor_dot_2":
-        return "Core Armor DOT II"
-    if key == "core_armor_dot_3":
-        return "Core Armor DOT III"
-    if key == "core_armor_dot_4":
-        return "Core Armor DOT IV"
-    if key == "core_armor_dot_5":
-        return "Core Armor DOT V"
-    if key == "core_armor_boss_1":
-        return "Core Armor Boss I"
-    if key == "core_armor_boss_2":
-        return "Core Armor Boss II"
-    if key == "core_armor_boss_3":
-        return "Core Armor Boss III"
-    if key == "core_armor_boss_4":
-        return "Core Armor Boss IV"
-    if key == "core_armor_boss_5":
-        return "Core Armor Boss V"
+    if key.begins_with("core_armor_enemy_"):
+        var track: String = key.trim_prefix("core_armor_enemy_")
+        return "Core Armor Enemy %s %s" % [track, _roman(level)]
+    if key.begins_with("core_armor_dot_"):
+        var track: String = key.trim_prefix("core_armor_dot_")
+        return "Core Armor DOT %s %s" % [track, _roman(level)]
+    if key.begins_with("core_armor_boss_"):
+        var track: String = key.trim_prefix("core_armor_boss_")
+        return "Core Armor Boss %s %s" % [track, _roman(level)]
     if key == "core_density":
         return "Core Density"
     if key == "core_drop":

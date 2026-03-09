@@ -529,6 +529,7 @@ func load_fishing_progress():
     fishing_lifetime_coins = int(json_data.get("lifetime_coins", 0))
     fishing_unlocked_upgrades = json_data.get("unlocked_upgrades", {})
     fishing_active_upgrades = json_data.get("active_upgrades", {})
+    _migrate_armor_upgrade_keys()
     fishing_last_battle_summary = json_data.get("last_battle_summary", {})
     fishing_next_battle_level = max(1, int(json_data.get("next_battle_level", 1)))
     fishing_max_unlocked_battle_level = clamp(int(json_data.get("max_unlocked_battle_level", 1)), 1, MAX_FISHING_BATTLE_LEVEL)
@@ -570,6 +571,22 @@ func save_fishing_progress():
         return
     file.store_string(JSON.stringify(save_data))
     file.close()
+
+func _migrate_armor_upgrade_keys() -> void:
+    # Migrate old single key (core_armor_enemy etc.) to track 1 (core_armor_enemy_1) so progress is preserved.
+    var changed: bool = false
+    for branch in ["enemy", "dot", "boss"]:
+        var old_key: String = "core_armor_%s" % branch
+        var track1_key: String = "core_armor_%s_1" % branch
+        var level: int = int(fishing_unlocked_upgrades.get(old_key, 0))
+        if level > 0:
+            fishing_unlocked_upgrades[track1_key] = level
+            fishing_active_upgrades[track1_key] = true
+            fishing_unlocked_upgrades.erase(old_key)
+            fishing_active_upgrades.erase(old_key)
+            changed = true
+    if changed:
+        save_fishing_progress()
 
 func get_fishing_upgrade_level(key: String) -> int:
     return int(fishing_unlocked_upgrades.get(key, 0))
