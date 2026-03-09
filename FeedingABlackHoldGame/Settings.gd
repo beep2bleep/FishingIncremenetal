@@ -18,9 +18,6 @@ var fps_limits: Dictionary = {
     }
 var _is_refreshing: bool = false
 
-func _should_show_editor_only_touch_toggle() -> bool:
-    return OS.has_feature("editor")
-
 func show_screen():
     refresh_from_save()
     %"Main Volume".grab_focus()
@@ -33,19 +30,24 @@ func _ready():
 
     populate_window_mode_list()
     populate_fps_list()
-    _refresh_editor_only_control_visibility()
+    _refresh_hidden_control_visibility()
     refresh_from_save()
 
     show()
 
-func _refresh_editor_only_control_visibility() -> void:
-    var is_editor: bool = _should_show_editor_only_touch_toggle()
+func _refresh_hidden_control_visibility() -> void:
     var touch_input_label: Label = get_node_or_null("GridContainer/Touch Input")
     if touch_input_label != null:
-        touch_input_label.visible = is_editor
+        touch_input_label.visible = false
     var touch_input_container: CenterContainer = get_node_or_null("GridContainer/CenterContainer11")
     if touch_input_container != null:
-        touch_input_container.visible = is_editor
+        touch_input_container.visible = false
+    var controller_sensitivity_label: Label = get_node_or_null("GridContainer/Ctrl Sens")
+    if controller_sensitivity_label != null:
+        controller_sensitivity_label.visible = false
+    var controller_sensitivity_container: HBoxContainer = get_node_or_null("GridContainer/HBoxContainer3")
+    if controller_sensitivity_container != null:
+        controller_sensitivity_container.visible = false
 
 func refresh_from_save() -> void:
     _is_refreshing = true
@@ -56,8 +58,7 @@ func refresh_from_save() -> void:
     %"V Sync Enabled".button_pressed = SaveHandler.vsync_enabled
     %"Floating Currency CheckButton".button_pressed = SaveHandler.money_text
     %"Floating Damage CheckButton".button_pressed = SaveHandler.damage_text
-    if _should_show_editor_only_touch_toggle():
-        %"Touch Input CheckButton".button_pressed = SaveHandler.touch_input_mode
+    %"Confirm Upgrade Purchase CheckButton".button_pressed = SaveHandler.confirm_upgrade_purchase
     text_scale = SaveHandler.text_scale
     _refresh_window_mode_selection()
     _refresh_fps_selection()
@@ -142,6 +143,11 @@ func _on_floating_currency_check_button_toggled(toggled_on: bool) -> void :
 
 func _on_floating_damage_check_button_toggled(toggled_on: bool) -> void :
     SaveHandler.update_floating_damage_text(toggled_on)
+    if visible and not _is_refreshing:
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+
+func _on_confirm_upgrade_purchase_check_button_toggled(toggled_on: bool) -> void:
+    SaveHandler.update_confirm_upgrade_purchase(toggled_on)
     if visible and not _is_refreshing:
         AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 

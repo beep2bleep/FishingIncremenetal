@@ -821,11 +821,11 @@ func _setup_mute_button() -> void:
     speaker_icon_off = _make_speaker_icon_texture(true)
     mute_button.text = ""
     mute_button.focus_mode = Control.FOCUS_NONE
-    mute_button.offset_left = -84.0
-    mute_button.offset_right = 84.0
+    mute_button.offset_left = -42.0
+    mute_button.offset_right = 42.0
     mute_button.offset_top = 16.0
-    mute_button.offset_bottom = 148.0
-    mute_button.custom_minimum_size = Vector2(168, 132)
+    mute_button.offset_bottom = 82.0
+    mute_button.custom_minimum_size = Vector2(84, 66)
     mute_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
     mute_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
     mute_button.expand_icon = true
@@ -919,12 +919,12 @@ func _setup_fullscreen_button() -> void:
     fullscreen_button.anchor_bottom = 0.0
     fullscreen_button.offset_left = 16.0
     fullscreen_button.offset_top = 72.0
-    fullscreen_button.offset_right = 104.0
-    fullscreen_button.offset_bottom = 160.0
+    fullscreen_button.offset_right = 60.0
+    fullscreen_button.offset_bottom = 116.0
     fullscreen_button.z_index = 210
     fullscreen_button.focus_mode = Control.FOCUS_NONE
     fullscreen_button.text = ""
-    fullscreen_button.custom_minimum_size = Vector2(88, 88)
+    fullscreen_button.custom_minimum_size = Vector2(44, 44)
     fullscreen_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
     fullscreen_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
     fullscreen_button.expand_icon = true
@@ -1140,10 +1140,10 @@ func _on_fullscreen_button_pressed() -> void:
 func _refresh_touch_input_button() -> void:
     if touch_input_button == null:
         return
-    touch_input_button.text = "Touch Input" if SaveHandler.touch_input_mode else "Mouse Input"
+    touch_input_button.text = "Confirm Upgrade Purchase: ON" if SaveHandler.confirm_upgrade_purchase else "Confirm Upgrade Purchase: OFF"
 
 func _on_touch_input_button_pressed() -> void:
-    SaveHandler.update_touch_input_mode(not SaveHandler.touch_input_mode)
+    SaveHandler.update_confirm_upgrade_purchase(not SaveHandler.confirm_upgrade_purchase)
     _refresh_touch_input_button()
     if settings_content != null:
         settings_content.refresh_from_save()

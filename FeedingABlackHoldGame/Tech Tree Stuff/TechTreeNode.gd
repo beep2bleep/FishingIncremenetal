@@ -5,6 +5,7 @@ const PARTIAL_FILL_ALPHA: float = 0.42
 const TOOLTIP_CLOSE_DELAY: float = 0.0
 const COMPLETE_TOOLTIP_LIFETIME: float = 1.0
 const TOOLTIP_VERTICAL_GAP: float = 0.0
+const MOUSE_TOOLTIP_EXTRA_OFFSET: float = 18.0
 const TOOLTIP_GROUP: StringName = &"tech_tree_tooltips"
 static var _icon_texture_cache: Dictionary = {}
 
@@ -232,7 +233,10 @@ func _process(_delta: float) -> void:
         return
     if %"Tool Tip".modulate.a < 1.0:
         return
-    if not cursor_over_node and not cursor_over_tooltip:
+    if SaveHandler.confirm_upgrade_purchase:
+        if not cursor_over_node and not cursor_over_tooltip:
+            _force_close_tooltip()
+    elif not cursor_over_node:
         _force_close_tooltip()
     _refresh_runtime_tracking()
 
@@ -343,7 +347,7 @@ func update_colors():
 
 func _on_click_mask_pressed() -> void :
     if state == STATES.AVAILABLE and can_pay_cost == true:
-        if SaveHandler.touch_input_mode:
+        if SaveHandler.confirm_upgrade_purchase:
             is_highlighted = true
             %"Click Mask".grab_focus()
             update()
@@ -586,7 +590,8 @@ func update():
 func _update_touch_buy_button() -> void:
     if touch_buy_button == null:
         return
-    var show_touch_buy: bool = _is_highlighted \
+    var show_touch_buy: bool = SaveHandler.confirm_upgrade_purchase \
+        and _is_highlighted \
         and state == STATES.AVAILABLE \
         and can_pay_cost \
         and upgrade != null \
@@ -675,6 +680,9 @@ func _position_tooltip() -> void:
     %"Tool Tip".reset_size()
 
     var total_tooltip_size = Vector2( %"Tool Tip".size.x, %"Tool Tip".size.y + %TitlePanel.size.y - 22)
+    var tooltip_vertical_gap: float = TOOLTIP_VERTICAL_GAP
+    if not SaveHandler.confirm_upgrade_purchase:
+        tooltip_vertical_gap += MOUSE_TOOLTIP_EXTRA_OFFSET
     var main_node: Node = Global.main
     var main_camera: Camera2D = null
     if is_instance_valid(main_node):
@@ -689,10 +697,10 @@ func _position_tooltip() -> void:
     if is_instance_valid(main_camera):
         tooltip_anchor_y = Util.get_node2d_viewport_position(self, main_camera).y
 
-    if tooltip_anchor_y - total_tooltip_size.y - TOOLTIP_VERTICAL_GAP < 0:
-        %"Tool Tip".position.y = 35.0 + TOOLTIP_VERTICAL_GAP
+    if tooltip_anchor_y - total_tooltip_size.y - tooltip_vertical_gap < 0:
+        %"Tool Tip".position.y = 35.0 + tooltip_vertical_gap
     else:
-        %"Tool Tip".position.y = - %"Tool Tip".size.y - TOOLTIP_VERTICAL_GAP
+        %"Tool Tip".position.y = - %"Tool Tip".size.y - tooltip_vertical_gap
 
 func _queue_tooltip_close() -> void:
     if _is_cursor_over_any_tooltip_or_node():

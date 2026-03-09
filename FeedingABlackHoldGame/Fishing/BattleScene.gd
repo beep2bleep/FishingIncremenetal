@@ -378,6 +378,15 @@ const ACTIVE_DURATIONS := {
     "guardian": 3.0,
     "mage": 2.6,
 }
+const HERO_BASE_DAMAGE := {
+    "knight": 14.4,
+    "archer": 4.0,
+    "guardian": 12.0,
+    "mage": 12.0,
+}
+const HERO_BASE_ATTACK_SPEED := 1.2
+const HERO_SPEED_BONUS_PER_NODE: Array[float] = [0.04, 0.08, 0.12, 0.24]
+const HERO_DAMAGE_MULT_PER_NODE: Array[float] = [1.36, 1.52, 1.68, 1.84]
 const MAGE_BASE_SPEED := 1.2
 const MAGE_BASE_ATTACK_INTERVAL := 4.0
 const MAGE_IDLE_STRIKE_WINDUP := 1.0
@@ -476,8 +485,8 @@ func _layout_battle_utility_buttons() -> void:
     if fullscreen_button != null:
         fullscreen_button.offset_left = 24.0 + fullscreen_shift_x
         fullscreen_button.offset_top = 20.0
-        fullscreen_button.offset_right = 112.0 + fullscreen_shift_x
-        fullscreen_button.offset_bottom = 108.0
+        fullscreen_button.offset_right = 68.0 + fullscreen_shift_x
+        fullscreen_button.offset_bottom = 64.0
     if exit_battle_button != null:
         exit_battle_button.offset_left = 960.0
         exit_battle_button.offset_top = 164.0
@@ -2000,7 +2009,9 @@ func _simulate_step(delta: float, skip_visual_updates: bool = false) -> void:
     var armor_scale: float = _player_armor_scale()
     if shield_time > 0.0:
         armor_scale *= 0.4
-    _apply_player_damage(float(lp["dot_dps"]) * _enemy_dot_mult() * armor_scale * delta, Vector2(_frontline_x() - 20.0, FLOOR_Y - 140.0))
+    var dot_damage_per_second: float = float(lp["dot_dps"]) * _enemy_dot_mult() * armor_scale
+    dot_damage_per_second = max(0.0, dot_damage_per_second - _player_dot_damage_block())
+    _apply_player_damage(dot_damage_per_second * delta, Vector2(_frontline_x() - 20.0, FLOOR_Y - 140.0))
 
 func _spawn_loop(delta: float) -> void:
     if battle_completed:
@@ -2100,14 +2111,8 @@ func _spawn_heroes() -> void:
         hero_layer.add_child(hero)
         heroes.append(hero)
 
-        var damage: float = 12.0 + 3.0 * float(SaveHandler.get_fishing_upgrade_level("core_%s_damage" % hero_name))
-        var speed: float = 1.2 + 0.16 * float(SaveHandler.get_fishing_upgrade_level("core_%s_speed" % hero_name))
-        damage *= _hero_damage_mult(hero_name)
-        if hero_name == "archer":
-            damage *= 0.33333334
-        elif hero_name == "knight":
-            damage *= 1.2
-        speed *= _hero_speed_mult(hero_name)
+        var damage: float = _hero_base_damage(hero_name) * _hero_damage_mult(hero_name)
+        var speed: float = _hero_attack_speed(hero_name) * _hero_speed_mult(hero_name)
         hero_data[hero] = {
             "name": hero_name,
             "damage": damage,
@@ -2616,7 +2621,10 @@ func _update_enemies(delta: float) -> void:
                         enemy_data[attacker] = attacker_data
                         if attacker == enemy:
                             e = attacker_data
-                _apply_player_damage(total_contact_dps * armor_scale * delta, enemy.position + Vector2(0.0, -90.0))
+                var contact_damage_per_second: float = total_contact_dps * armor_scale
+                var flat_block: float = _player_boss_damage_block() if bool(e.get("is_boss", false)) else _player_enemy_damage_block()
+                contact_damage_per_second = max(0.0, contact_damage_per_second - flat_block)
+                _apply_player_damage(contact_damage_per_second * delta, enemy.position + Vector2(0.0, -90.0))
 
         _update_enemy_health_bar(enemy, e)
         enemy_data[enemy] = e
@@ -3411,8 +3419,26 @@ func _cursor_bonus_mult() -> float:
         mult += 0.2
     if SaveHandler.has_fishing_upgrade("supply_lenses"):
         mult += 0.2
+    mult += 0.25 * float(_cursor_capture_bonus_level())
     mult += float(battle_mods.get("cursor_bonus", 0.0))
     return mult
+
+func _base_coin_bonus() -> int:
+    return _hero_coin_gain_level()
+
+func _hero_coin_gain_level() -> int:
+    var count: int = 0
+    for key in ["hero_coin_gain_1", "hero_coin_gain_2", "hero_coin_gain_3", "hero_coin_gain_4"]:
+        if SaveHandler.has_fishing_upgrade(key):
+            count += 1
+    return count
+
+func _cursor_capture_bonus_level() -> int:
+    var count: int = 0
+    for key in ["cursor_capture_gain_1", "cursor_capture_gain_2", "cursor_capture_gain_3", "cursor_capture_gain_4"]:
+        if SaveHandler.has_fishing_upgrade(key):
+            count += 1
+    return count
 
 func _on_coin_collected(coin: CoinPickup, by_cursor: bool) -> void:
     print("DEBUG: _on_coin_collected() called")
@@ -3421,7 +3447,7 @@ func _on_coin_collected(coin: CoinPickup, by_cursor: bool) -> void:
     var collected_by_cursor: bool = by_cursor
     if in_infinite_simulation:
         collected_by_cursor = randf() < INFINITE_SIM_CURSOR_COLLECT_SHARE
-    var amount: int = int(coin.value)
+    var amount: int = int(coin.value) + _base_coin_bonus()
     if collected_by_cursor:
         amount = int(round(float(amount) * _cursor_bonus_mult()))
 
@@ -3564,10 +3590,6 @@ func _ufo_reward_value() -> int:
 
 func _max_power() -> float:
     var cap: float = 100.0
-    cap += 10.0 * float(SaveHandler.get_fishing_upgrade_level("core_knight_active_cap"))
-    cap += 10.0 * float(SaveHandler.get_fishing_upgrade_level("core_archer_active_cap"))
-    cap += 10.0 * float(SaveHandler.get_fishing_upgrade_level("core_guardian_active_cap"))
-    cap += 10.0 * float(SaveHandler.get_fishing_upgrade_level("core_mage_active_cap"))
     cap += float(battle_mods.get("power_cap_bonus", 0.0))
     return cap
 
@@ -3751,7 +3773,7 @@ func _rebuild_battle_mods() -> void:
         "enemy_contact_mult": 1.0,
         "enemy_dot_mult": 1.0,
         "boss_hp_mult": 1.0,
-        "boss_contact_mult": 1.0,
+        "boss_contact_mult": 3.0,
         "coin_mult": 1.0,
         "cursor_bonus": 0.0,
         "power_gain_mult": 1.0,
@@ -3759,12 +3781,17 @@ func _rebuild_battle_mods() -> void:
         "active_cost_mult": 1.0,
         "active_cd_mult": 1.0,
         "armor_bonus": 0.0,
+        "enemy_flat_damage_reduction": 0.0,
+        "dot_flat_damage_reduction": 0.0,
+        "boss_flat_damage_reduction": 0.0,
         "enemy_count_mult": 1.0,
     }
 
     var unlocked: Dictionary = SaveHandler.fishing_unlocked_upgrades
     for key_variant in unlocked.keys():
         var key: String = str(key_variant)
+        if FishingUpgradeDB.is_removed_tactical_telemetry_upgrade_key(key):
+            continue
         var level: int = int(unlocked[key_variant])
         _apply_upgrade_key_modifiers(key, level)
 
@@ -3787,6 +3814,18 @@ func _rebuild_battle_mods() -> void:
 
 func _apply_upgrade_key_modifiers(key: String, level: int) -> void:
     if level <= 0:
+        return
+
+    if key == "core_armor":
+        return
+    if key.begins_with("core_armor_enemy_"):
+        battle_mods["enemy_flat_damage_reduction"] = float(battle_mods["enemy_flat_damage_reduction"]) + 1.0 * level
+        return
+    if key.begins_with("core_armor_dot_"):
+        battle_mods["dot_flat_damage_reduction"] = float(battle_mods["dot_flat_damage_reduction"]) + 1.0 * level
+        return
+    if key.begins_with("core_armor_boss_"):
+        battle_mods["boss_flat_damage_reduction"] = float(battle_mods["boss_flat_damage_reduction"]) + 3.0 * level
         return
 
     if key == "core_power":
@@ -3812,9 +3851,6 @@ func _apply_upgrade_key_modifiers(key: String, level: int) -> void:
         _apply_extra_skill_family_bonus(int(key.trim_prefix("extra_skill_")))
         return
 
-    if key.find("knight") != -1 or key.find("archer") != -1 or key.find("guardian") != -1 or key.find("mage") != -1:
-        battle_mods["damage_mult_all"] = float(battle_mods["damage_mult_all"]) + 0.012 * level
-        battle_mods["speed_mult_all"] = float(battle_mods["speed_mult_all"]) + 0.009 * level
     if key.find("speed") != -1 or key.find("stride") != -1 or key.find("route") != -1 or key.find("march") != -1 or key.find("quick") != -1:
         battle_mods["walk_speed_mult"] = float(battle_mods["walk_speed_mult"]) + 0.012 * level
     if key.find("armor") != -1 or key.find("plate") != -1 or key.find("carapace") != -1 or key.find("shock") != -1 or key.find("hemostasis") != -1:
@@ -3864,7 +3900,7 @@ func _apply_extra_skill_family_bonus(index: int) -> void:
             battle_mods["speed_mult_all"] = float(battle_mods["speed_mult_all"]) + 0.003
 
 func _hero_damage_mult(hero_name: String) -> float:
-    var mult: float = float(battle_mods.get("damage_mult_all", 1.0))
+    var mult: float = float(battle_mods.get("damage_mult_all", 1.0)) * _hero_damage_upgrade_mult(hero_name)
     if hero_name == "archer" and SaveHandler.has_fishing_upgrade("archer_pierce_unlock"):
         mult += 0.08
     if hero_name == "mage" and SaveHandler.has_fishing_upgrade("mage_storm_unlock"):
@@ -3873,6 +3909,29 @@ func _hero_damage_mult(hero_name: String) -> float:
 
 func _hero_speed_mult(hero_name: String) -> float:
     var mult: float = float(battle_mods.get("speed_mult_all", 1.0))
+    return mult
+
+func _hero_base_damage(hero_name: String) -> float:
+    return float(HERO_BASE_DAMAGE.get(hero_name, 12.0))
+
+func _hero_attack_speed(hero_name: String) -> float:
+    return HERO_BASE_ATTACK_SPEED + _hero_speed_upgrade_bonus(hero_name)
+
+func _hero_speed_upgrade_bonus(hero_name: String) -> float:
+    var level: int = SaveHandler.get_fishing_upgrade_level("core_%s_speed" % hero_name)
+    var bonus: float = 0.0
+    for i in range(HERO_SPEED_BONUS_PER_NODE.size()):
+        var tiers_in_node: int = clamp(level - i * 5, 0, 5)
+        bonus += float(tiers_in_node) * HERO_SPEED_BONUS_PER_NODE[i]
+    return bonus
+
+func _hero_damage_upgrade_mult(hero_name: String) -> float:
+    var level: int = SaveHandler.get_fishing_upgrade_level("core_%s_damage" % hero_name)
+    var mult: float = 1.0
+    for i in range(HERO_DAMAGE_MULT_PER_NODE.size()):
+        var tiers_in_node: int = clamp(level - i * 5, 0, 5)
+        if tiers_in_node > 0:
+            mult *= pow(HERO_DAMAGE_MULT_PER_NODE[i], tiers_in_node)
     return mult
 
 func _hero_attack_range(hero_name: String) -> float:
@@ -3934,6 +3993,15 @@ func _apply_player_damage(amount: float, world_pos: Vector2) -> void:
         return
     hero_damage_accum += amount
     hero_damage_pos = world_pos
+
+func _player_enemy_damage_block() -> float:
+    return float(battle_mods.get("enemy_flat_damage_reduction", 0.0))
+
+func _player_dot_damage_block() -> float:
+    return float(battle_mods.get("dot_flat_damage_reduction", 0.0))
+
+func _player_boss_damage_block() -> float:
+    return float(battle_mods.get("boss_flat_damage_reduction", 0.0))
 
 func _update_hero_damage_float(delta: float) -> void:
     if suppress_floating_text:
@@ -4006,9 +4074,7 @@ func _update_floating_damage_texts(delta: float) -> void:
         floating_damage_texts[i] = item
 
 func _player_armor_scale() -> float:
-    var base: float = 1.0 - min(0.75, 0.035 * float(SaveHandler.get_fishing_upgrade_level("core_armor")))
-    base *= max(0.45, 1.0 - float(battle_mods.get("armor_bonus", 0.0)))
-    return base
+    return max(0.45, 1.0 - float(battle_mods.get("armor_bonus", 0.0)))
 
 func _update_ui() -> void:
     var max_health: float = 300.0
@@ -4283,9 +4349,9 @@ func _setup_mute_button() -> void:
     mute_button.focus_mode = Control.FOCUS_NONE
     mute_button.offset_left = 896.0
     mute_button.offset_top = 20.0
-    mute_button.offset_right = 1064.0
-    mute_button.offset_bottom = 152.0
-    mute_button.custom_minimum_size = Vector2(168, 132)
+    mute_button.offset_right = 980.0
+    mute_button.offset_bottom = 86.0
+    mute_button.custom_minimum_size = Vector2(84, 66)
     mute_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
     mute_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
     mute_button.expand_icon = true
@@ -4432,12 +4498,12 @@ func _setup_fullscreen_button() -> void:
     fullscreen_button.name = "FullscreenButton"
     fullscreen_button.offset_left = 24.0
     fullscreen_button.offset_top = 20.0
-    fullscreen_button.offset_right = 112.0
-    fullscreen_button.offset_bottom = 108.0
+    fullscreen_button.offset_right = 68.0
+    fullscreen_button.offset_bottom = 64.0
     fullscreen_button.z_index = 30
     fullscreen_button.focus_mode = Control.FOCUS_NONE
     fullscreen_button.text = ""
-    fullscreen_button.custom_minimum_size = Vector2(88, 88)
+    fullscreen_button.custom_minimum_size = Vector2(44, 44)
     fullscreen_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
     fullscreen_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
     fullscreen_button.expand_icon = true
@@ -4492,13 +4558,11 @@ func _on_fullscreen_button_pressed() -> void:
 func _refresh_touch_input_button() -> void:
     if touch_input_button == null:
         return
-    touch_input_button.text = "Touch Input" if SaveHandler.touch_input_mode else "Mouse Input"
+    touch_input_button.text = "Confirm Upgrade Purchase: ON" if SaveHandler.confirm_upgrade_purchase else "Confirm Upgrade Purchase: OFF"
 
 func _on_touch_input_button_pressed() -> void:
-    SaveHandler.update_touch_input_mode(not SaveHandler.touch_input_mode)
+    SaveHandler.update_confirm_upgrade_purchase(not SaveHandler.confirm_upgrade_purchase)
     _refresh_touch_input_button()
-    _apply_touch_input_camera_zoom()
-    _apply_background_layout_for_input_mode("Switched to %s layout" % ("touch" if SaveHandler.touch_input_mode else "mouse"))
     if settings_content != null:
         settings_content.refresh_from_save()
 

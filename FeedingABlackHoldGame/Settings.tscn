@@ -128,6 +128,17 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 
+[node name="Confirm Upgrade Purchase Text" type="Label" parent="GridContainer"]
+layout_mode = 2
+text = "Confirm Upgrade Purchase - Best for Touch"
+
+[node name="CenterContainer12" type="CenterContainer" parent="GridContainer"]
+layout_mode = 2
+
+[node name="Confirm Upgrade Purchase CheckButton" type="CheckBox" parent="GridContainer/CenterContainer12"]
+unique_name_in_owner = true
+layout_mode = 2
+
 [node name="Touch Input" type="Label" parent="GridContainer"]
 layout_mode = 2
 text = "TOUCH INPUT"
@@ -237,6 +248,7 @@ expand_icon = true
 [connection signal="toggled" from="GridContainer/CenterContainer5/Shuffle Music CheckButton" to="." method="_on_shuffle_music_check_button_toggled"]
 [connection signal="toggled" from="GridContainer/CenterContainer9/Floating Currency CheckButton" to="." method="_on_floating_currency_check_button_toggled"]
 [connection signal="toggled" from="GridContainer/CenterContainer10/Floating Damage CheckButton" to="." method="_on_floating_damage_check_button_toggled"]
+[connection signal="toggled" from="GridContainer/CenterContainer12/Confirm Upgrade Purchase CheckButton" to="." method="_on_confirm_upgrade_purchase_check_button_toggled"]
 [connection signal="toggled" from="GridContainer/CenterContainer11/Touch Input CheckButton" to="." method="_on_touch_input_check_button_toggled"]
 [connection signal="item_selected" from="GridContainer/Screen Mode Dropdown" to="." method="_on_screen_mode_dropdown_item_selected"]
 [connection signal="item_selected" from="GridContainer/FPS Dropdown" to="." method="_on_fps_dropdown_item_selected"]

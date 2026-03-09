@@ -264,6 +264,7 @@ var controller_sensitivity = 1.0
 var run_timer = true
 var audio_muted = false
 var touch_input_mode = true
+var confirm_upgrade_purchase = false
 
 
 
@@ -302,6 +303,7 @@ func save_local_settings():
     save_data["controller_sensitivity"] = controller_sensitivity
     save_data["audio_muted"] = audio_muted
     save_data["touch_input_mode"] = touch_input_mode
+    save_data["confirm_upgrade_purchase"] = confirm_upgrade_purchase
     var file = FileAccess.open(local_settings_file_path, FileAccess.WRITE)
     file.store_string(str(save_data))
     file.close()
@@ -330,11 +332,13 @@ func load_local_settings():
         controller_sensitivity = float(json_data["controller_sensitivity"]) if json_data.has("controller_sensitivity") else 1.0
         audio_muted = bool(json_data["audio_muted"]) if json_data.has("audio_muted") else false
         touch_input_mode = _load_bool_local_setting(json_data, "touch_input_mode", true)
+        confirm_upgrade_purchase = _load_bool_local_setting(json_data, "confirm_upgrade_purchase", touch_input_mode)
     else:
         # First run / missing settings file: floating text should default on.
         damage_text = true
         money_text = true
         touch_input_mode = true
+        confirm_upgrade_purchase = false
 
 func _load_bool_local_setting(data: Dictionary, key: String, default_value: bool) -> bool:
     if not data.has(key):
@@ -474,6 +478,11 @@ func update_controller_sensitivity(value):
 
 func update_touch_input_mode(value: bool) -> void:
     touch_input_mode = value
+    SignalBus.settings_updated.emit()
+    save_local_settings()
+
+func update_confirm_upgrade_purchase(value: bool) -> void:
+    confirm_upgrade_purchase = value
     SignalBus.settings_updated.emit()
     save_local_settings()
 

@@ -5,6 +5,9 @@ const DATA_PATH := "res://Data/FishingUpgradeData.json"
 const EXTRA_FAMILY_ORDER: Array[String] = ["ECON", "DENS", "SURV", "MOVE", "POWR", "ACTV", "BOSS", "TEAM"]
 const EXTRA_NAME_A: Array[String] = ["Adaptive", "Fractal", "Iron", "Solar", "Echo", "Rift", "Pulse", "Aegis", "Vector", "Nova"]
 const EXTRA_NAME_B: Array[String] = ["Circuit", "Relay", "Ledger", "Spine", "Burst", "Anchor", "Lattice", "Compass", "Engine", "Matrix"]
+const HERO_CORE_TIERS_PER_NODE := 5
+const HERO_SPEED_NODE_BONUS: Array[float] = [0.04, 0.08, 0.12, 0.24]
+const HERO_DAMAGE_NODE_PCT: Array[int] = [36, 52, 68, 84]
 const FAMILY_DESCRIPTIONS := {
     "ECON": "Improves income conversion and pickup efficiency.",
     "DENS": "Increases enemy pressure to raise total reward ceiling.",
@@ -17,6 +20,14 @@ const FAMILY_DESCRIPTIONS := {
 }
 const SPECIFIC_DESCRIPTIONS := {
     "cursor_pickup_unlock": "Unlocks cursor pickup bonuses so cursor-collected coins are worth more.",
+    "hero_coin_gain_1": "Increase the base coin value by +1 when heroes walk over coins or the cursor captures them.",
+    "hero_coin_gain_2": "Increase the base coin value by another +1 when heroes walk over coins or the cursor captures them.",
+    "hero_coin_gain_3": "Increase the base coin value by another +1 when heroes walk over coins or the cursor captures them.",
+    "hero_coin_gain_4": "Increase the base coin value by another +1 when heroes walk over coins or the cursor captures them.",
+    "cursor_capture_gain_1": "Increase cursor-captured coin value by +25%.",
+    "cursor_capture_gain_2": "Increase cursor-captured coin value by another +25%.",
+    "cursor_capture_gain_3": "Increase cursor-captured coin value by another +25%.",
+    "cursor_capture_gain_4": "Increase cursor-captured coin value by another +25%.",
     "recruit_archer": "Adds the Archer hero to your combat lineup.",
     "auto_attack_unlock": "Unlocks Tactical Telemetry: reveals enemies remaining during battle using the blue progress HUD.",
     "battle_speed_unlock": "Unlocks battle speed control in non-editor builds. Buy levels to unlock 2x, then 4x, then 8x speed.",
@@ -27,9 +38,22 @@ const SPECIFIC_DESCRIPTIONS := {
     "guardian_fortify_unlock": "Unlocks the Guardian active: grants a Limited-Time Fortify that reduces incoming damage.",
     "recruit_mage": "Adds the Mage hero to your combat lineup.",
     "mage_storm_unlock": "Unlocks the Mage active: while active, the storm repeatedly damages all enemies on screen.",
+    "party_damage_boost": "Increases all party damage by 8% per level.",
+    "party_battle_standard": "Increases all party damage by 12% per level.",
+    "party_war_drums": "Increases all party damage by 16% per level.",
+    "party_execution_doctrine": "Increases all party damage by 20% per level.",
+    "party_apex_overdrive": "Increases all party damage by 25% per level.",
 }
 const SPECIFIC_NAMES := {
     "cursor_pickup_unlock": "Cursor Pickup Unlock",
+    "hero_coin_gain_1": "Hero Coin Gain I",
+    "hero_coin_gain_2": "Hero Coin Gain II",
+    "hero_coin_gain_3": "Hero Coin Gain III",
+    "hero_coin_gain_4": "Hero Coin Gain IV",
+    "cursor_capture_gain_1": "Cursor Capture I",
+    "cursor_capture_gain_2": "Cursor Capture II",
+    "cursor_capture_gain_3": "Cursor Capture III",
+    "cursor_capture_gain_4": "Cursor Capture IV",
     "recruit_archer": "Recruit Archer",
     "auto_attack_unlock": "Tactical Telemetry",
     "battle_speed_unlock": "Temporal Throttle",
@@ -40,6 +64,11 @@ const SPECIFIC_NAMES := {
     "guardian_fortify_unlock": "Guardian Fortify Unlock",
     "recruit_mage": "Recruit Mage",
     "mage_storm_unlock": "Mage Storm Unlock",
+    "party_damage_boost": "Party Power",
+    "party_battle_standard": "Battle Standard",
+    "party_war_drums": "War Drums",
+    "party_execution_doctrine": "Execution Doctrine",
+    "party_apex_overdrive": "Apex Overdrive",
 }
 
 var nodes: Array[Dictionary] = []
@@ -87,8 +116,105 @@ static func get_cached_data() -> Dictionary:
     if _cached_data.is_empty():
         var loaded: Variant = Util.load_json_data_from_path(DATA_PATH)
         if loaded is Dictionary:
-            _cached_data = loaded
+            _cached_data = _filter_removed_tactical_telemetry_upgrades(loaded)
     return _cached_data
+
+static func is_removed_tactical_telemetry_upgrade_key(key: String) -> bool:
+    if key == "core_density":
+        return true
+    if key.begins_with("extra_skill_"):
+        var index: int = int(key.trim_prefix("extra_skill_"))
+        if index > 0:
+            var family: int = posmod(index - 1, EXTRA_FAMILY_ORDER.size())
+            return family == 1 or family == 3
+
+    var lower_key: String = key.to_lower()
+    return _is_removed_walk_speed_key(lower_key) or _is_removed_enemy_count_key(lower_key)
+
+static func _is_removed_walk_speed_key(lower_key: String) -> bool:
+    return lower_key.find("trail") != -1 \
+        or lower_key.find("stride") != -1 \
+        or lower_key.find("route") != -1 \
+        or lower_key.find("pathline") != -1 \
+        or lower_key.find("quickstep") != -1 \
+        or lower_key.find("momentum") != -1 \
+        or lower_key.find("march") != -1 \
+        or lower_key.find("sprint") != -1
+
+static func _is_removed_enemy_count_key(lower_key: String) -> bool:
+    return lower_key.find("horde") != -1 \
+        or lower_key.find("wave") != -1 \
+        or lower_key.find("crowd") != -1 \
+        or lower_key.find("pressure") != -1
+
+static func _filter_removed_tactical_telemetry_upgrades(data: Dictionary) -> Dictionary:
+    var filtered: Dictionary = data.duplicate(true)
+    var upgrades_variant: Variant = filtered.get("upgrades", [])
+    if not (upgrades_variant is Array):
+        return filtered
+
+    var upgrades: Array = upgrades_variant
+    var children_by_id: Dictionary = {}
+    for entry_variant in upgrades:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var dep_id: String = str(entry.get("dependency", ""))
+        var entry_id: String = str(entry.get("id", ""))
+        if dep_id == "" or entry_id == "":
+            continue
+        if not children_by_id.has(dep_id):
+            children_by_id[dep_id] = []
+        var child_ids: Array = children_by_id[dep_id]
+        child_ids.append(entry_id)
+        children_by_id[dep_id] = child_ids
+
+    var tactical_descendants: Dictionary = {}
+    var frontier: Array[String] = ["auto_attack_unlock"]
+    while not frontier.is_empty():
+        var current_id: String = frontier.pop_back()
+        var child_variants: Array = children_by_id.get(current_id, [])
+        for child_variant in child_variants:
+            var child_id: String = str(child_variant)
+            if tactical_descendants.has(child_id):
+                continue
+            tactical_descendants[child_id] = true
+            frontier.append(child_id)
+
+    var removed_ids: Dictionary = {}
+    var removed_parent_by_id: Dictionary = {}
+    for entry_variant in upgrades:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var entry_id: String = str(entry.get("id", ""))
+        var key: String = str(entry.get("key", ""))
+        if not tactical_descendants.has(entry_id):
+            continue
+        if not is_removed_tactical_telemetry_upgrade_key(key):
+            continue
+        removed_ids[entry_id] = true
+        removed_parent_by_id[entry_id] = str(entry.get("dependency", ""))
+
+    var sanitized_upgrades: Array[Dictionary] = []
+    for entry_variant in upgrades:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var entry_id: String = str(entry.get("id", ""))
+        if removed_ids.has(entry_id):
+            continue
+
+        var sanitized_entry: Dictionary = entry.duplicate(true)
+        var dep_id: String = str(sanitized_entry.get("dependency", ""))
+        while dep_id != "" and removed_ids.has(dep_id):
+            dep_id = str(removed_parent_by_id.get(dep_id, ""))
+        sanitized_entry["dependency"] = dep_id if dep_id != "" else null
+        sanitized_upgrades.append(sanitized_entry)
+
+    filtered["upgrades"] = sanitized_upgrades
+    filtered["total_nodes"] = sanitized_upgrades.size()
+    return filtered
 
 func is_owned(node: Dictionary) -> bool:
     return SaveHandler.get_fishing_upgrade_level(str(node.get("key", ""))) >= int(node.get("level", 1))
@@ -133,7 +259,7 @@ func get_display_name(node: Dictionary) -> String:
     if key.begins_with("extra_skill_"):
         return _extra_skill_name(key)
     if key.begins_with("core_"):
-        return _core_name(key)
+        return _core_name(key, level)
 
     var clean_key: String = key
     if clean_key.ends_with("_60"):
@@ -196,42 +322,47 @@ func _with_editor_note(node: Dictionary, base: String) -> String:
 
 func _describe_core_upgrade(key: String, level: int) -> String:
     if key == "core_armor":
-        return "Increase armor by 1 step (roughly -3.5% incoming damage per level, up to 75% mitigation cap)."
+        return "Unlocks the Core Armor branch with fixed damage reduction paths for enemies, DOT, and boss damage."
+    if key.begins_with("core_armor_enemy_"):
+        return "Reduce regular enemy contact damage taken by 1."
+    if key.begins_with("core_armor_dot_"):
+        return "Reduce damage-over-time taken by 1."
+    if key.begins_with("core_armor_boss_"):
+        return "Reduce boss damage taken by 3."
     if key == "core_density":
         return "Increase enemy density by ~5% per level (and coin rewards by ~2% per level) for higher potential rewards."
     if key == "core_drop":
         return "Increase coin drop value scaling by +8% per level."
     if key == "core_power":
         return "Increase power gain by +12% per level, power cap by +8, and reduce active power cost by about 2% per level."
+    if key == "party_damage_boost":
+        return "Increase all party damage by 8% per level."
 
-    if key.find("knight") != -1:
+    var hero_name: String = _hero_core_name(key)
+    if hero_name != "":
+        var node_index: int = _hero_core_node_index(level)
         if key.find("damage") != -1:
-            return "Increase Knight damage (+3 per level)."
+            var pct: int = HERO_DAMAGE_NODE_PCT[node_index]
+            var tier_start: int = node_index * HERO_CORE_TIERS_PER_NODE + 1
+            var tier_end: int = tier_start + HERO_CORE_TIERS_PER_NODE - 1
+            return "Tiers %d-%d: +%d%% %s damage per purchase (x%.2f each buy). Full branch exceeds 10000x base damage." % [
+                tier_start,
+                tier_end,
+                pct,
+                hero_name,
+                1.0 + float(pct) / 100.0,
+            ]
         if key.find("speed") != -1:
-            return "Increase Knight attack speed (+0.16 attacks/sec per level)."
-        if key.find("active_cap") != -1:
-            return "Increase Knight active power cap (+10 cap per level)."
-    if key.find("archer") != -1:
-        if key.find("damage") != -1:
-            return "Increase Archer damage (+3 per level)."
-        if key.find("speed") != -1:
-            return "Increase Archer attack speed (+0.16 attacks/sec per level)."
-        if key.find("active_cap") != -1:
-            return "Increase Archer active power cap (+10 cap per level)."
-    if key.find("guardian") != -1:
-        if key.find("damage") != -1:
-            return "Increase Guardian damage (+3 per level)."
-        if key.find("speed") != -1:
-            return "Increase Guardian attack speed (+0.16 attacks/sec per level)."
-        if key.find("active_cap") != -1:
-            return "Increase Guardian active power cap (+10 cap per level)."
-    if key.find("mage") != -1:
-        if key.find("damage") != -1:
-            return "Increase Mage damage (+3 per level)."
-        if key.find("speed") != -1:
-            return "Increase Mage attack speed (+0.16 attacks/sec per level)."
-        if key.find("active_cap") != -1:
-            return "Increase Mage active power cap (+10 cap per level)."
+            var speed_bonus: float = HERO_SPEED_NODE_BONUS[node_index]
+            var tier_start_speed: int = node_index * HERO_CORE_TIERS_PER_NODE + 1
+            var tier_end_speed: int = tier_start_speed + HERO_CORE_TIERS_PER_NODE - 1
+            return "Tiers %d-%d: +%.2f attacks/sec for %s per purchase (+%.2f attacks/sec across this node). Full branch reaches 3.00x base attack rate." % [
+                tier_start_speed,
+                tier_end_speed,
+                speed_bonus,
+                hero_name,
+                speed_bonus * HERO_CORE_TIERS_PER_NODE,
+            ]
 
     return "Increase this core stat scaling (Level %d)." % level
 
@@ -259,6 +390,16 @@ func _describe_extra_skill(key: String) -> String:
 
 func _describe_key_effect(key: String) -> String:
     var lower: String = key.to_lower()
+    if lower.find("party_damage_boost") >= 0:
+        return "Increases all party damage by 8% per level."
+    if lower.find("party_battle_standard") >= 0:
+        return "Increases all party damage by 12% per level."
+    if lower.find("party_war_drums") >= 0:
+        return "Increases all party damage by 16% per level."
+    if lower.find("party_execution_doctrine") >= 0:
+        return "Increases all party damage by 20% per level."
+    if lower.find("party_apex_overdrive") >= 0:
+        return "Increases all party damage by 25% per level."
     if lower.find("damage") >= 0:
         return "Increases direct damage output (typically about +1.2%–1.5% total team DPS per level before global tuning)."
     if lower.find("speed") >= 0 or lower.find("cadence") >= 0:
@@ -371,15 +512,52 @@ func _extra_skill_name(key: String) -> String:
     var idx: int = (n - 1) % EXTRA_NAME_A.size()
     return "%s %s %d" % [EXTRA_NAME_A[idx], EXTRA_NAME_B[idx], n]
 
-func _core_name(key: String) -> String:
+func _core_name(key: String, level: int = 1) -> String:
     if key == "core_armor":
         return "Core Armor"
+    if key == "core_armor_enemy_1":
+        return "Core Armor Enemy I"
+    if key == "core_armor_enemy_2":
+        return "Core Armor Enemy II"
+    if key == "core_armor_enemy_3":
+        return "Core Armor Enemy III"
+    if key == "core_armor_enemy_4":
+        return "Core Armor Enemy IV"
+    if key == "core_armor_enemy_5":
+        return "Core Armor Enemy V"
+    if key == "core_armor_dot_1":
+        return "Core Armor DOT I"
+    if key == "core_armor_dot_2":
+        return "Core Armor DOT II"
+    if key == "core_armor_dot_3":
+        return "Core Armor DOT III"
+    if key == "core_armor_dot_4":
+        return "Core Armor DOT IV"
+    if key == "core_armor_dot_5":
+        return "Core Armor DOT V"
+    if key == "core_armor_boss_1":
+        return "Core Armor Boss I"
+    if key == "core_armor_boss_2":
+        return "Core Armor Boss II"
+    if key == "core_armor_boss_3":
+        return "Core Armor Boss III"
+    if key == "core_armor_boss_4":
+        return "Core Armor Boss IV"
+    if key == "core_armor_boss_5":
+        return "Core Armor Boss V"
     if key == "core_density":
         return "Core Density"
     if key == "core_drop":
         return "Core Drop"
     if key == "core_power":
         return "Core Power"
+    var hero_name: String = _hero_core_name(key)
+    if hero_name != "":
+        var node_tier: String = _roman(_hero_core_node_index(level) + 1)
+        if key.find("damage") != -1:
+            return "%s Damage %s" % [hero_name, node_tier]
+        if key.find("speed") != -1:
+            return "%s Speed %s" % [hero_name, node_tier]
     if key.find("knight") != -1 and key.find("damage") != -1:
         return "Core Knight Damage"
     if key.find("knight") != -1 and key.find("speed") != -1:
@@ -405,6 +583,20 @@ func _core_name(key: String) -> String:
     if key.find("mage") != -1 and key.find("active_cap") != -1:
         return "Core Mage Active Cap"
     return _humanize_name(key)
+
+func _hero_core_name(key: String) -> String:
+    if key.find("knight") != -1:
+        return "Knight"
+    if key.find("archer") != -1:
+        return "Archer"
+    if key.find("guardian") != -1:
+        return "Guardian"
+    if key.find("mage") != -1:
+        return "Mage"
+    return ""
+
+func _hero_core_node_index(level: int) -> int:
+    return clampi((max(level, 1) - 1) / HERO_CORE_TIERS_PER_NODE, 0, HERO_DAMAGE_NODE_PCT.size() - 1)
 
 func _roman(value: int) -> String:
     match value:

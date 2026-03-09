@@ -62,6 +62,8 @@ static func apply_simulation_upgrades() -> void:
     _flatten_linear_dependency_chains(grouped_upgrades, MAX_CHILDREN_PER_NODE)
     _enforce_required_prerequisites(grouped_upgrades)
     _sanitize_dependency_graph(grouped_upgrades)
+    _enforce_branch_anchors(grouped_upgrades)
+    _sanitize_dependency_graph(grouped_upgrades)
     if OS.has_feature("editor"):
         _validate_dependencies_reach_center(grouped_upgrades)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
@@ -157,9 +159,12 @@ static func _group_repeated_upgrades(raw_upgrades: Array) -> Array:
         var chunk_index: int = 0
         var cursor: int = 0
         var previous_group_id: String = ""
+        var chunk_limit: int = GROUPED_TIER_MAX
+        if _should_keep_key_as_single_root_node(key):
+            chunk_limit = key_entries.size()
         while cursor < key_entries.size():
             var first: Dictionary = key_entries[cursor]
-            var chunk_size: int = min(GROUPED_TIER_MAX, key_entries.size() - cursor)
+            var chunk_size: int = min(chunk_limit, key_entries.size() - cursor)
             var chunk: Array = []
             for i in range(chunk_size):
                 chunk.append(key_entries[cursor + i])
@@ -207,6 +212,28 @@ static func _group_repeated_upgrades(raw_upgrades: Array) -> Array:
 
     return grouped
 
+static func _should_keep_key_as_single_root_node(key: String) -> bool:
+    match key:
+        "battle_speed_unlock", "core_armor":
+            return true
+        _:
+            return false
+
+static func _party_parent_key(key: String) -> String:
+    match key:
+        "party_damage_boost":
+            return ""
+        "party_battle_standard":
+            return "party_damage_boost"
+        "party_war_drums":
+            return "party_battle_standard"
+        "party_execution_doctrine":
+            return "party_war_drums"
+        "party_apex_overdrive":
+            return "party_execution_doctrine"
+        _:
+            return ""
+
 static func _retarget_dependencies_to_hubs(grouped_upgrades: Array) -> void:
     var key_to_primary_id: Dictionary = {}
     var key_to_entries: Dictionary = {}
@@ -253,59 +280,66 @@ static func _retarget_dependencies_to_hubs(grouped_upgrades: Array) -> void:
 static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionary) -> String:
     var lower: String = key.to_lower()
     var hero: String = _hero_from_key(lower)
-    var gated_hero: bool = hero == "archer" or hero == "guardian" or hero == "mage"
     var recruit_key_for_hero: String = "recruit_%s" % hero if hero != "" else ""
-    var hero_unlock_key: String = _hero_unlock_key(hero) if hero != "" else ""
+    var party_parent_key: String = _party_parent_key(lower)
+
+    if party_parent_key != "":
+        if key_to_primary_id.has(party_parent_key):
+            return party_parent_key
+        return ""
 
     if lower == "cursor_pickup_unlock" \
     or lower == "knight_vamp_unlock" \
     or lower == "auto_attack_unlock" \
     or lower == "battle_speed_unlock" \
+    or lower == "core_armor" \
+    or lower == "party_damage_boost" \
     or lower.begins_with("recruit_"):
         return ""
 
     if lower.begins_with("extra_skill_"):
         return _extra_skill_dependency_key(lower, key_to_primary_id)
 
-    if lower.begins_with("core_") or lower.begins_with("recruit_"):
+    if lower.begins_with("core_armor_") and key_to_primary_id.has("core_armor"):
+        return "core_armor"
+
+    if lower.begins_with("core_"):
         if lower == "core_drop" and key_to_primary_id.has("cursor_pickup_unlock"):
             return "cursor_pickup_unlock"
-        if lower == "core_armor" and key_to_primary_id.has("battle_speed_unlock"):
-            return "battle_speed_unlock"
         if (lower == "core_density" or lower == "core_power") and key_to_primary_id.has("auto_attack_unlock"):
             return "auto_attack_unlock"
-        if hero == "knight" and key_to_primary_id.has("knight_vamp_unlock"):
-            return "knight_vamp_unlock"
-        if gated_hero and recruit_key_for_hero != "" and key_to_primary_id.has(recruit_key_for_hero):
+        var active_key: String = _hero_unlock_key(hero)
+        if active_key != "" and key_to_primary_id.has(active_key):
+            return active_key
+        if hero != "" and recruit_key_for_hero != "" and key_to_primary_id.has(recruit_key_for_hero):
             return recruit_key_for_hero
         return ""
 
     if lower.ends_with("_unlock"):
         if lower == "power_harvest_unlock" and key_to_primary_id.has("auto_attack_unlock"):
             return "auto_attack_unlock"
-        if gated_hero and recruit_key_for_hero != "" and key_to_primary_id.has(recruit_key_for_hero):
+        if hero != "" and recruit_key_for_hero != "" and key_to_primary_id.has(recruit_key_for_hero):
             return recruit_key_for_hero
-        if hero != "":
-            if key_to_primary_id.has(recruit_key_for_hero):
-                return recruit_key_for_hero
+        return ""
+
+    if lower == "impact_weave":
+        if key_to_primary_id.has("knight_vamp_unlock"):
+            return "knight_vamp_unlock"
+        return ""
+
+    if lower == "line_pressure_1":
+        if key_to_primary_id.has("recruit_guardian"):
+            return "recruit_guardian"
+        return ""
+
+    if lower == "focused_breathing_60":
+        if key_to_primary_id.has("auto_attack_unlock"):
+            return "auto_attack_unlock"
         return ""
 
     if hero != "":
-        if gated_hero:
-            if hero_unlock_key != "" and key_to_primary_id.has(hero_unlock_key):
-                return hero_unlock_key
-            if recruit_key_for_hero != "" and key_to_primary_id.has(recruit_key_for_hero):
-                return recruit_key_for_hero
-            return ""
-
-        if key_to_primary_id.has("knight_vamp_unlock"):
+        if hero == "knight" and key_to_primary_id.has("knight_vamp_unlock"):
             return "knight_vamp_unlock"
-
-        var hero_core_damage_key: String = "core_%s_damage" % hero
-        if key_to_primary_id.has(hero_unlock_key):
-            return hero_unlock_key
-        if key_to_primary_id.has(hero_core_damage_key):
-            return hero_core_damage_key
         if key_to_primary_id.has(recruit_key_for_hero):
             return recruit_key_for_hero
         return ""
@@ -329,8 +363,6 @@ static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionar
     if _is_global_mitigation_key(lower):
         if key_to_primary_id.has("core_armor"):
             return "core_armor"
-        if key_to_primary_id.has("battle_speed_unlock"):
-            return "battle_speed_unlock"
         return ""
 
     if lower == "trail_boots":
@@ -374,15 +406,15 @@ static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionar
             if key_to_primary_id.has("core_density"):
                 return "core_density"
         THEME_MISC_TEAM_ACT:
-            if key_to_primary_id.has("auto_attack_unlock"):
-                return "auto_attack_unlock"
+            if key_to_primary_id.has("party_damage_boost"):
+                return "party_damage_boost"
     return ""
 
 static func _extra_skill_dependency_key(lower_key: String, key_to_primary_id: Dictionary) -> String:
     var n: int = _extra_skill_index(lower_key)
     if n <= 0:
-        if key_to_primary_id.has("auto_attack_unlock"):
-            return "auto_attack_unlock"
+        if key_to_primary_id.has("party_damage_boost"):
+            return "party_damage_boost"
         return ""
     var family_index: int = (n - 1) % EXTRA_SKILL_THEME_CYCLE.size()
     match family_index:
@@ -399,11 +431,7 @@ static func _extra_skill_dependency_key(lower_key: String, key_to_primary_id: Di
         2: # SURV
             if key_to_primary_id.has("core_armor"):
                 return "core_armor"
-            if key_to_primary_id.has("battle_speed_unlock"):
-                return "battle_speed_unlock"
         3: # MOVE
-            if key_to_primary_id.has("trail_boots"):
-                return "trail_boots"
             if key_to_primary_id.has("cursor_pickup_unlock"):
                 return "cursor_pickup_unlock"
         4: # POWR
@@ -422,16 +450,10 @@ static func _extra_skill_dependency_key(lower_key: String, key_to_primary_id: Di
             if key_to_primary_id.has("auto_attack_unlock"):
                 return "auto_attack_unlock"
         7: # TEAM
-            if key_to_primary_id.has("knight_vamp_unlock"):
-                return "knight_vamp_unlock"
-            if key_to_primary_id.has("recruit_archer"):
-                return "recruit_archer"
-            if key_to_primary_id.has("recruit_guardian"):
-                return "recruit_guardian"
-            if key_to_primary_id.has("recruit_mage"):
-                return "recruit_mage"
-    if key_to_primary_id.has("auto_attack_unlock"):
-        return "auto_attack_unlock"
+            if key_to_primary_id.has("party_damage_boost"):
+                return "party_damage_boost"
+    if key_to_primary_id.has("party_damage_boost"):
+        return "party_damage_boost"
     return ""
 
 static func _extra_skill_index(lower_key: String) -> int:
@@ -492,7 +514,8 @@ static func _is_global_mitigation_key(lower_key: String) -> bool:
     or lower_key.find("shock") >= 0 \
     or lower_key.find("deflector") >= 0 \
     or lower_key.find("hemostasis") >= 0 \
-    or lower_key.find("front_compression") >= 0
+    or lower_key.find("front_compression") >= 0 \
+    or lower_key.find("dot") >= 0
 
 static func _hero_from_key(lower_key: String) -> String:
     if lower_key.find("archer") >= 0:
@@ -609,6 +632,63 @@ static func _dependency_reaches_target(id_to_dep: Dictionary, from_id: String, t
         current = dep_id
     return false
 
+static func _enforce_branch_anchors(grouped_upgrades: Array) -> void:
+    var key_to_primary_id: Dictionary = {}
+    for entry_variant: Variant in grouped_upgrades:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var key: String = str(entry.get("key", ""))
+        var entry_id: String = str(entry.get("id", ""))
+        if key == "" or entry_id == "":
+            continue
+        if not key_to_primary_id.has(key):
+            key_to_primary_id[key] = entry_id
+
+    for i in range(grouped_upgrades.size()):
+        var entry_variant: Variant = grouped_upgrades[i]
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var key: String = str(entry.get("key", ""))
+        var entry_id: String = str(entry.get("id", ""))
+        if key == "" or entry_id == "":
+            continue
+        if str(key_to_primary_id.get(key, "")) != entry_id:
+            continue
+
+        var forced_dep: String = ""
+        match key:
+            "party_damage_boost":
+                forced_dep = "__CENTER__"
+            "party_battle_standard":
+                forced_dep = str(key_to_primary_id.get("party_damage_boost", ""))
+            "party_war_drums":
+                forced_dep = str(key_to_primary_id.get("party_battle_standard", ""))
+            "party_execution_doctrine":
+                forced_dep = str(key_to_primary_id.get("party_war_drums", ""))
+            "party_apex_overdrive":
+                forced_dep = str(key_to_primary_id.get("party_execution_doctrine", ""))
+            "core_knight_damage", "core_knight_speed":
+                forced_dep = str(key_to_primary_id.get("knight_vamp_unlock", ""))
+            "core_guardian_damage", "core_guardian_speed":
+                forced_dep = str(key_to_primary_id.get("guardian_fortify_unlock", ""))
+            "core_archer_damage", "core_archer_speed":
+                forced_dep = str(key_to_primary_id.get("archer_pierce_unlock", ""))
+            "core_mage_damage", "core_mage_speed":
+                forced_dep = str(key_to_primary_id.get("mage_storm_unlock", ""))
+            "core_drop", "trail_boots":
+                forced_dep = str(key_to_primary_id.get("cursor_pickup_unlock", ""))
+            "core_density", "core_power", "power_harvest_unlock", "focused_breathing_60":
+                forced_dep = str(key_to_primary_id.get("auto_attack_unlock", ""))
+            "core_armor":
+                forced_dep = "__CENTER__"
+
+        if forced_dep == "":
+            continue
+        entry["dependency"] = forced_dep
+        grouped_upgrades[i] = entry
+
 static func _enforce_max_children_per_node(grouped_upgrades: Array, max_children: int) -> void:
     if max_children <= 0:
         return
@@ -638,6 +718,8 @@ static func _enforce_max_children_per_node(grouped_upgrades: Array, max_children
     dep_ids.sort()
     for dep_variant: Variant in dep_ids:
         var dep_id: String = str(dep_variant)
+        if dep_id == "__CENTER__":
+            continue
         var dep_children: Array = children_by_dep.get(dep_id, [])
         if dep_children.size() <= max_children:
             continue
@@ -955,10 +1037,20 @@ static func _find_layout_cell_for_child(parent_cell: Vector2, preferred_branch: 
 static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cells: Dictionary, key: String = "") -> Vector2:
     var dir: Vector2 = LAYOUT_DIRS[branch]
     var target: Vector2 = _compute_root_target(dir, branch_count)
-    # Keep Recruit Mage anchored in the lower-left quadrant.
-    if key == "recruit_mage":
-        dir = Vector2.LEFT
-        target = Vector2(-8, -7)
+    var fixed_root_targets := {
+        "knight_vamp_unlock": Vector2(0, -6),
+        "recruit_archer": Vector2(6, -2),
+        "cursor_pickup_unlock": Vector2(6, 2),
+        "auto_attack_unlock": Vector2(0, 6),
+        "core_armor": Vector2(-6, 4),
+        "party_damage_boost": Vector2(-6, 0),
+        "recruit_guardian": Vector2(-6, -4),
+        "recruit_mage": Vector2(-2, -6),
+        "battle_speed_unlock": Vector2(2, -6),
+    }
+    if fixed_root_targets.has(key):
+        target = fixed_root_targets[key]
+        dir = target.normalized().round()
     var candidates: Array[Vector2] = _candidate_cells_cardinal(target, dir, 24)
     for candidate_variant: Variant in candidates:
         var candidate: Vector2 = candidate_variant
