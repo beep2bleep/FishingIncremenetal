@@ -1016,13 +1016,19 @@ func _try_auto_cast_active(hero_name: String) -> bool:
     var hero: CombatSprite = _get_hero_by_name(hero_name)
     if not is_instance_valid(hero):
         return false
+    var h: Dictionary = hero_data.get(hero, {})
+    if float(h.get("active_time_remaining", 0.0)) > 0.0:
+        return false
 
     var active_cost: float = _active_cost()
     if power < active_cost:
         return false
     power -= active_cost
-    _execute_hero_active(hero, hero_name, true)
-    active_cooldowns[hero_name] = float(ACTIVE_COOLDOWNS.get(hero_name, 15.0)) * _active_cooldown_mult()
+    h["active_cooldown_total"] = float(ACTIVE_COOLDOWNS.get(hero_name, 15.0)) * _active_cooldown_mult()
+    hero_data[hero] = h
+    var active_duration: float = _execute_hero_active(hero, hero_name, true)
+    if active_duration <= 0.0:
+        active_cooldowns[hero_name] = float(h.get("active_cooldown_total", 0.0))
     return true
 
 func _get_hero_by_name(hero_name: String) -> CombatSprite:
@@ -2345,10 +2351,13 @@ func _update_heroes(delta: float) -> void:
         if not is_instance_valid(hero):
             continue
         var h: Dictionary = hero_data[hero]
-        h["active_time_remaining"] = max(0.0, float(h.get("active_time_remaining", 0.0)) - delta)
+        var hero_name: String = str(h["name"])
+        var prev_active_remaining: float = max(0.0, float(h.get("active_time_remaining", 0.0)))
+        h["active_time_remaining"] = max(0.0, prev_active_remaining - delta)
+        if prev_active_remaining > 0.0 and float(h.get("active_time_remaining", 0.0)) <= 0.0:
+            active_cooldowns[hero_name] = float(h.get("active_cooldown_total", 0.0))
         _update_hero_active_bar(hero, h)
         h["cooldown"] = max(0.0, float(h["cooldown"]) - delta)
-        var hero_name: String = str(h["name"])
         var should_catch_up: bool = hero_name == "archer" and hero.position.x < frontline_x - HERO_FORMATION_SPACING
 
         var target: CombatSprite = _nearest_enemy(hero.position)
@@ -3430,7 +3439,7 @@ func _hero_coin_mult() -> float:
     var level: int = SaveHandler.get_fishing_upgrade_level("hero_coin_gain")
     if level <= 0:
         return 1.0
-    # Hero Coin Gain: +20% per level, exponential over 25 levels
+    # Hero Coin Gain: +20% per level, exponential over 20 levels
     return pow(1.20, float(level))
 
 func _cursor_capture_bonus_level() -> int:
@@ -3592,6 +3601,7 @@ func _max_power() -> float:
     var cap: float = 100.0
     cap += float(battle_mods.get("power_cap_bonus", 0.0))
     cap *= float(battle_mods.get("power_cap_mult", 1.0))
+    cap *= float(battle_mods.get("vitality_power_cap_mult", 1.0))
     return cap
 
 func _on_hero_clicked(hero: CombatSprite, hero_name: String, skip_anim: bool = false) -> void:
@@ -3601,6 +3611,9 @@ func _on_hero_clicked(hero: CombatSprite, hero_name: String, skip_anim: bool = f
     if not hero_data.has(hero):
         return
     var h: Dictionary = hero_data[hero]
+    if float(h.get("active_time_remaining", 0.0)) > 0.0:
+        hero_data[hero] = h
+        return
     var cooldown_remaining: float = float(active_cooldowns.get(hero_name, 0.0))
     if cooldown_remaining > 0.0:
         hero_data[hero] = h
@@ -3608,7 +3621,8 @@ func _on_hero_clicked(hero: CombatSprite, hero_name: String, skip_anim: bool = f
 
     var active_cost: float = _active_cost()
     var charge: float = float(h.get("active_charge", 0.0))
-    var to_charge: float = min(ACTIVE_CHARGE_PER_CLICK, power, max(0.0, active_cost - charge))
+    var charge_per_click: float = ACTIVE_CHARGE_PER_CLICK * float(battle_mods.get("active_charge_per_click_mult", 1.0))
+    var to_charge: float = min(charge_per_click, power, max(0.0, active_cost - charge))
     if to_charge > 0.0:
         power -= to_charge
         charge += to_charge
@@ -3623,8 +3637,9 @@ func _on_hero_clicked(hero: CombatSprite, hero_name: String, skip_anim: bool = f
     h["active_cooldown_total"] = float(ACTIVE_COOLDOWNS.get(hero_name, 15.0)) * _active_cooldown_mult()
     _update_hero_active_bar(hero, h)
     hero_data[hero] = h
-    _execute_hero_active(hero, hero_name, skip_anim)
-    active_cooldowns[hero_name] = float(h.get("active_cooldown_total", 0.0))
+    var active_duration: float = _execute_hero_active(hero, hero_name, skip_anim)
+    if active_duration <= 0.0:
+        active_cooldowns[hero_name] = float(h.get("active_cooldown_total", 0.0))
 
 func _gain_power(amount: float) -> void:
     if amount <= 0.0:
@@ -3705,7 +3720,7 @@ func _update_hero_active_bar(hero: CombatSprite, h: Dictionary) -> void:
     bar_fill.color = Color(0.25, 0.95, 0.45, 1.0)
     bar_fill.size.x = full_width * (charge / active_cost)
 
-func _execute_hero_active(hero: CombatSprite, hero_name: String, skip_anim: bool) -> void:
+func _execute_hero_active(hero: CombatSprite, hero_name: String, skip_anim: bool) -> float:
     _trigger_hero_glow(hero)
     # Play chime when a hero's powerup ability starts
     _play_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_POP_IN)
@@ -3739,6 +3754,7 @@ func _execute_hero_active(hero: CombatSprite, hero_name: String, skip_anim: bool
             shield_time = max(shield_time, active_duration)
         "mage":
             pass
+    return active_duration
 
 func _active_duration(hero_name: String) -> float:
     var base: float = float(ACTIVE_DURATIONS.get(hero_name, 2.0))
@@ -3781,8 +3797,10 @@ func _rebuild_battle_mods() -> void:
         "coin_mult": 1.0,
         "cursor_bonus": 0.0,
         "power_gain_mult": 1.0,
+        "vitality_power_gain_mult": 1.0,
         "power_cap_bonus": 0.0,
         "power_cap_mult": 1.0,
+        "vitality_power_cap_mult": 1.0,
         "active_cost_mult": 1.0,
         "active_cd_mult": 1.0,
         "armor_bonus": 0.0,
@@ -3794,6 +3812,7 @@ func _rebuild_battle_mods() -> void:
         "health_mult": 1.0,
         "active_duration_mult": 1.0,
         "active_cost_extra_mult": 1.0,
+        "active_charge_per_click_mult": 1.0,
     }
 
     var unlocked: Dictionary = SaveHandler.fishing_unlocked_upgrades
@@ -3833,30 +3852,62 @@ func _apply_upgrade_key_modifiers(key: String, level: int) -> void:
         battle_mods["health_mult"] = pow(1.2, level)
         return
     if key == "vitality_power":
-        battle_mods["power_gain_mult"] = float(battle_mods["power_gain_mult"]) * pow(1.05, level)
-        battle_mods["power_cap_mult"] = float(battle_mods["power_cap_mult"]) * pow(1.05, level)
+        battle_mods["vitality_power_gain_mult"] = float(battle_mods["vitality_power_gain_mult"]) * pow(1.05, level)
+        battle_mods["vitality_power_cap_mult"] = float(battle_mods["vitality_power_cap_mult"]) * pow(1.05, level)
         return
     if key == "vitality_channel":
         battle_mods["active_duration_mult"] = float(battle_mods["active_duration_mult"]) * pow(1.05, level)
         battle_mods["active_cost_extra_mult"] = float(battle_mods["active_cost_extra_mult"]) * pow(1.05, level)
+        battle_mods["active_charge_per_click_mult"] = float(battle_mods["active_charge_per_click_mult"]) * pow(1.05, level)
         return
 
     if key == "core_armor":
         return
-    # Armor: 5 tracks per type (core_armor_enemy_1..5, core_armor_dot_1..5, core_armor_boss_1..5), 3x effect per level
+    # Armor: 5 tracks per type. Enemy contact uses 4/16/64/256/1024 per track level,
+    # DoT keeps the existing 3x curve, and boss uses fixed track values per level.
     if key.begins_with("core_armor_enemy_"):
-        var total: float = (pow(3, level + 1) - 3.0) / 2.0 if level >= 1 else 0.0
+        var total: float = (pow(4, level + 1) - 4.0) / 3.0 if level >= 1 else 0.0
         battle_mods["enemy_flat_damage_reduction"] = float(battle_mods["enemy_flat_damage_reduction"]) + total
         return
     if key.begins_with("core_armor_dot_"):
         var track: int = int(key.trim_prefix("core_armor_dot_"))
-        var max_level: int = 5 if track <= 3 else (4 if track == 4 else 3)  # Tracks 1-3: 5 levels; 4: 4 levels; 5: 3 levels
+        var per_level_block: float = 0.0
+        var max_level: int = 0
+        match track:
+            1:
+                per_level_block = 3.0
+                max_level = 5
+            2:
+                per_level_block = 9.0
+                max_level = 5
+            3:
+                per_level_block = 27.0
+                max_level = 5
+            4:
+                per_level_block = 81.0
+                max_level = 3
+            _:
+                per_level_block = 0.0
+                max_level = 0
         var effective_level: int = mini(level, max_level)
-        var total: float = (pow(3, effective_level + 1) - 3.0) / 2.0 if effective_level >= 1 else 0.0
+        var total: float = per_level_block * effective_level
         battle_mods["dot_flat_damage_reduction"] = float(battle_mods["dot_flat_damage_reduction"]) + total
         return
     if key.begins_with("core_armor_boss_"):
-        var total: float = (pow(3, level + 2) - 9.0) / 2.0 if level >= 1 else 0.0
+        var boss_track: int = int(key.trim_prefix("core_armor_boss_"))
+        var per_level_block_boss: float = 0.0
+        match boss_track:
+            1:
+                per_level_block_boss = 25.0
+            2:
+                per_level_block_boss = 100.0
+            3:
+                per_level_block_boss = 400.0
+            4:
+                per_level_block_boss = 1600.0
+            5:
+                per_level_block_boss = 10750.0
+        var total: float = per_level_block_boss * level
         battle_mods["boss_flat_damage_reduction"] = float(battle_mods["boss_flat_damage_reduction"]) + total
         return
 
@@ -4006,7 +4057,7 @@ func _coin_mult() -> float:
     return float(battle_mods.get("coin_mult", 1.0))
 
 func _power_gain_mult() -> float:
-    return float(battle_mods.get("power_gain_mult", 1.0))
+    return float(battle_mods.get("power_gain_mult", 1.0)) * float(battle_mods.get("vitality_power_gain_mult", 1.0))
 
 func _enemy_count_mult() -> float:
     return float(battle_mods.get("enemy_count_mult", 1.0))
@@ -4144,6 +4195,7 @@ func _on_boss_defeated() -> void:
     print("DEBUG: _on_boss_defeated() called")
     if battle_completed:
         return
+    _track_level_completion_event(current_level)
     _track_first_boss_clear_event(current_level)
     if current_level >= int(SaveHandler.fishing_max_unlocked_battle_level) and current_level < SaveHandler.MAX_FISHING_BATTLE_LEVEL:
         SaveHandler.fishing_max_unlocked_battle_level = current_level + 1
@@ -4155,6 +4207,26 @@ func _on_boss_defeated() -> void:
         SaveHandler.fishing_l3_boss_clear_clock_seconds = SaveHandler.fishing_run_clock_seconds
         SaveHandler.save_fishing_progress()
     _end_battle(true)
+
+func _track_level_completion_event(level: int) -> void:
+    if level <= 0 or level > SaveHandler.MAX_FISHING_BATTLE_LEVEL:
+        return
+    var level_key: String = str(level)
+    var is_first_clear: bool = not bool(SaveHandler.fishing_first_boss_clear_levels.get(level_key, false))
+    var app_clock_seconds: float = float(Time.get_ticks_msec()) / 1000.0
+    _track_ga_event(
+        "level:complete:level_%d" % level,
+        {
+            "level": level,
+            "first_clear": is_first_clear,
+            "game_time_seconds": SaveHandler.fishing_run_clock_seconds,
+            "game_time_formatted": Util.format_time(SaveHandler.fishing_run_clock_seconds),
+            "clock_time_seconds": app_clock_seconds,
+            "clock_time_formatted": Util.format_time(app_clock_seconds),
+            "battle_scene_unadjusted_seconds": battle_scene_unadjusted_seconds,
+            "battle_scene_unadjusted_formatted": Util.format_time(battle_scene_unadjusted_seconds),
+        }
+    )
 
 func _track_first_boss_clear_event(level: int) -> void:
     if level <= 0:
@@ -4190,7 +4262,7 @@ func _end_battle(victory: bool) -> void:
     if is_instance_valid(active_ufo):
         active_ufo.queue_free()
     active_ufo = null
-    _apply_battle_summary_layout(Vector2(1.5, 1.8) if _is_first_l3_boss_clear() else Vector2.ONE)
+    _apply_battle_summary_layout(Vector2(1.5, 1.8) if _is_first_level_20_clear() else Vector2.ONE)
     summary_panel.show()
     continue_button.hide()
     _refresh_battle_summary_text()
@@ -4298,15 +4370,15 @@ func _build_battle_summary_text(is_live: bool) -> String:
     ]
     if is_live and battle_victory and not coins.is_empty():
         summary_text += "\nCollecting remaining loot..."
-    var is_first_l3_boss_clear: bool = _is_first_l3_boss_clear()
-    if is_first_l3_boss_clear:
-        summary_text += "\n\nThanks for playing.\nThis game was created by a single developer.\nPlease leave feedback or email to web@beep2bleep.com if you would like more content.\nCreator: Beep2Bleep."
+    var is_first_level_20_clear: bool = _is_first_level_20_clear()
+    if is_first_level_20_clear:
+        summary_text += "\n\nCongratulations on beating level 20!\nLevel 20 clear time: %s\nThanks for playing.\nThis game was created by a single developer.\nPlease leave feedback or email to web@beep2bleep.com if you would like more content.\nCreator: Beep2Bleep." % Util.format_time(SaveHandler.fishing_run_clock_seconds)
     if battle_victory and current_level == 3 and SaveHandler.fishing_l3_boss_clear_clock_seconds >= 0.0:
         summary_text += "\n\nLevel 3 clear time: %s" % Util.format_time(SaveHandler.fishing_l3_boss_clear_clock_seconds)
     return summary_text
 
-func _is_first_l3_boss_clear() -> bool:
-    return battle_victory and current_level == 3 and not SaveHandler.fishing_l3_boss_thank_you_shown
+func _is_first_level_20_clear() -> bool:
+    return battle_victory and current_level == 20 and not SaveHandler.fishing_l3_boss_thank_you_shown
 
 func _rect_from_control_offsets(control: Control) -> Rect2:
     var left: float = control.offset_left
@@ -4712,7 +4784,7 @@ func _finalize_battle_summary() -> void:
     summary_panel.show()
     continue_button.show()
     _refresh_battle_summary_text()
-    if battle_victory and current_level == 3 and not SaveHandler.fishing_l3_boss_thank_you_shown:
+    if battle_victory and current_level == 20 and not SaveHandler.fishing_l3_boss_thank_you_shown:
         SaveHandler.fishing_l3_boss_thank_you_shown = true
     SaveHandler.fishing_last_battle_summary = {
         "victory": battle_victory,

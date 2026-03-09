@@ -37,7 +37,7 @@ const SPECIFIC_NAMES = {
 
 const SPECIFIC_DESCRIPTIONS = {
   cursor_pickup_unlock: "Unlocks cursor pickup bonuses so cursor-collected coins are worth more.",
-  hero_coin_gain: "Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.",
+  hero_coin_gain: "Multiplies coin value by +20% per level (exponential over 20 levels). Applies to coins collected by heroes or cursor.",
   cursor_capture_gain: "Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).",
   recruit_archer: "Adds the Archer hero to your combat lineup.",
   auto_attack_unlock: "Unlocks Tactical Telemetry: reveals enemies remaining during battle using the blue progress HUD.",
@@ -57,7 +57,7 @@ const SPECIFIC_DESCRIPTIONS = {
   vitality_foundation: "Unlocks the Vitality tree: +50 max Health. From here you can invest in Hitpoints, Power, or Channel time.",
   vitality_hitpoints: "Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.",
   vitality_power: "Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.",
-  vitality_channel: "Increases active ability channel (duration) by 5% per level, but also increases the power cost to activate per character by 5% per level. Lets actives run longer at a higher activation cost. Cost scales 3x per track depth.",
+  vitality_channel: "Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.",
 };
 
 const THEME_COLORS = {
@@ -148,16 +148,18 @@ function getDescription(entry) {
   if (key.startsWith("core_")) {
     if (key === "core_armor") return "Unlocks the Core Armor branch: three paths that reduce enemy, DOT, and boss damage taken.";
     if (key.startsWith("core_armor_enemy_")) {
-      const total = level >= 1 ? Math.floor((Math.pow(3, level + 1) - 3) / 2) : 0;
-      return `Reduces regular enemy contact damage taken by ${total} (3x per level, cumulative over ${level} purchases). Cost 6x per level.`;
+      const addAmount = level >= 1 ? Math.floor(Math.pow(3, level)) : 0;
+      return `Reduces regular enemy contact damage by ${addAmount} damage per second.`;
     }
     if (key.startsWith("core_armor_dot_")) {
-      const total = level >= 1 ? Math.floor((Math.pow(3, level + 1) - 3) / 2) : 0;
-      return `Reduces damage-over-time taken by ${total} (3x per level, cumulative over ${level} purchases). Cost 6x per level.`;
+      const track = parseInt(key.replace("core_armor_dot_", ""), 10) || 1;
+      const addAmount = track === 1 ? 3 : track === 2 ? 9 : track === 3 ? 27 : track === 4 ? 81 : 0;
+      return `Reduces damage-over-time by ${addAmount} damage per second.`;
     }
     if (key.startsWith("core_armor_boss_")) {
-      const total = level >= 1 ? Math.floor((Math.pow(3, level + 2) - 9) / 2) : 0;
-      return `Reduces boss damage taken by ${total} (3x per level, cumulative over ${level} purchases). Cost 6x per level.`;
+      const track = parseInt(key.replace("core_armor_boss_", ""), 10) || 1;
+      const addAmount = track === 1 ? 25 : track === 2 ? 100 : track === 3 ? 400 : track === 4 ? 1600 : track === 5 ? 10750 : 0;
+      return `Blocks ${addAmount} boss contact damage per second.`;
     }
     if (key === "core_drop") return "Increase coin drop value scaling by +8% per level.";
     if (key === "core_power") return "Increase power gain by +12% per level, power cap by +8, and reduce active power cost by about 2% per level.";

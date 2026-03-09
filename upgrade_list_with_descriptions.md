@@ -4,7 +4,7 @@ All upgrades currently in the tree, with theme color and a short description of 
 
 Theme colors: Green `#4D9E60`, Red `#D75252`, Cyan `#40B2CD`, Blue `#5282E0`, Purple `#A966D8`, Orange `#E78A3D`, Gold `#D8BE42`.
 
-Total upgrade nodes: 306
+Total upgrade nodes: 375
 
 * [Cyan #40B2CD] **Cursor Pickup Unlock**
   Unlocks cursor pickup bonuses so cursor-collected coins are worth more.
@@ -316,229 +316,208 @@ Total upgrade nodes: 306
   Unlocks the Core Armor branch: three paths that reduce enemy, DOT, and boss damage taken.
 
 * [Blue #5282E0] **Core Armor Enemy 1 I**
-  Reduces regular enemy contact damage taken by 3 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 3 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 1 II**
-  Reduces regular enemy contact damage taken by 12 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 9 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 1 III**
-  Reduces regular enemy contact damage taken by 39 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 27 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 1 IV**
-  Reduces regular enemy contact damage taken by 120 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 81 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 1 V**
-  Reduces regular enemy contact damage taken by 363 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 243 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 2 I**
-  Reduces regular enemy contact damage taken by 3 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 3 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 2 II**
-  Reduces regular enemy contact damage taken by 12 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 9 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 2 III**
-  Reduces regular enemy contact damage taken by 39 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 27 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 2 IV**
-  Reduces regular enemy contact damage taken by 120 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 81 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 2 V**
-  Reduces regular enemy contact damage taken by 363 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 243 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 3 I**
-  Reduces regular enemy contact damage taken by 3 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 3 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 3 II**
-  Reduces regular enemy contact damage taken by 12 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 9 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 3 III**
-  Reduces regular enemy contact damage taken by 39 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 27 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 3 IV**
-  Reduces regular enemy contact damage taken by 120 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 81 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 3 V**
-  Reduces regular enemy contact damage taken by 363 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 243 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 4 I**
-  Reduces regular enemy contact damage taken by 3 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 3 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 4 II**
-  Reduces regular enemy contact damage taken by 12 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 9 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 4 III**
-  Reduces regular enemy contact damage taken by 39 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 27 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 4 IV**
-  Reduces regular enemy contact damage taken by 120 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 81 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 4 V**
-  Reduces regular enemy contact damage taken by 363 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 243 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 5 I**
-  Reduces regular enemy contact damage taken by 3 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 3 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 5 II**
-  Reduces regular enemy contact damage taken by 12 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 9 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 5 III**
-  Reduces regular enemy contact damage taken by 39 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 27 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 5 IV**
-  Reduces regular enemy contact damage taken by 120 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 81 damage per second.
 
 * [Blue #5282E0] **Core Armor Enemy 5 V**
-  Reduces regular enemy contact damage taken by 363 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Reduces regular enemy contact damage by 243 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 1 I**
-  Reduces damage-over-time taken by 3 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Reduces damage-over-time by 3 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 1 II**
-  Reduces damage-over-time taken by 12 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Reduces damage-over-time by 3 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 1 III**
-  Reduces damage-over-time taken by 39 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Reduces damage-over-time by 3 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 1 IV**
-  Reduces damage-over-time taken by 120 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Reduces damage-over-time by 3 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 1 V**
-  Reduces damage-over-time taken by 363 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Reduces damage-over-time by 3 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 2 I**
-  Reduces damage-over-time taken by 3 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Reduces damage-over-time by 9 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 2 II**
-  Reduces damage-over-time taken by 12 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Reduces damage-over-time by 9 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 2 III**
-  Reduces damage-over-time taken by 39 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Reduces damage-over-time by 9 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 2 IV**
-  Reduces damage-over-time taken by 120 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Reduces damage-over-time by 9 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 2 V**
-  Reduces damage-over-time taken by 363 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Reduces damage-over-time by 9 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 3 I**
-  Reduces damage-over-time taken by 3 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Reduces damage-over-time by 27 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 3 II**
-  Reduces damage-over-time taken by 12 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Reduces damage-over-time by 27 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 3 III**
-  Reduces damage-over-time taken by 39 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Reduces damage-over-time by 27 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 3 IV**
-  Reduces damage-over-time taken by 120 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Reduces damage-over-time by 27 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 3 V**
-  Reduces damage-over-time taken by 363 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Reduces damage-over-time by 27 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 4 I**
-  Reduces damage-over-time taken by 3 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Reduces damage-over-time by 81 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 4 II**
-  Reduces damage-over-time taken by 12 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Reduces damage-over-time by 81 damage per second.
 
 * [Blue #5282E0] **Core Armor DOT 4 III**
-  Reduces damage-over-time taken by 39 (3x per level, cumulative over 3 purchases). Cost 6x per level.
-
-* [Blue #5282E0] **Core Armor DOT 4 IV**
-  Reduces damage-over-time taken by 120 (3x per level, cumulative over 4 purchases). Cost 6x per level.
-
-* [Blue #5282E0] **Core Armor DOT 4 V**
-  Reduces damage-over-time taken by 363 (3x per level, cumulative over 5 purchases). Cost 6x per level.
-
-* [Blue #5282E0] **Core Armor DOT 5 I**
-  Reduces damage-over-time taken by 3 (3x per level, cumulative over 1 purchases). Cost 6x per level.
-
-* [Blue #5282E0] **Core Armor DOT 5 II**
-  Reduces damage-over-time taken by 12 (3x per level, cumulative over 2 purchases). Cost 6x per level.
-
-* [Blue #5282E0] **Core Armor DOT 5 III**
-  Reduces damage-over-time taken by 39 (3x per level, cumulative over 3 purchases). Cost 6x per level.
-
-* [Blue #5282E0] **Core Armor DOT 5 IV**
-  Reduces damage-over-time taken by 120 (3x per level, cumulative over 4 purchases). Cost 6x per level.
-
-* [Blue #5282E0] **Core Armor DOT 5 V**
-  Reduces damage-over-time taken by 363 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Reduces damage-over-time by 81 damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 1 I**
-  Reduces boss damage taken by 9 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Blocks 25 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 1 II**
-  Reduces boss damage taken by 36 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Blocks 25 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 1 III**
-  Reduces boss damage taken by 117 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Blocks 25 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 1 IV**
-  Reduces boss damage taken by 360 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Blocks 25 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 1 V**
-  Reduces boss damage taken by 1089 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Blocks 25 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 2 I**
-  Reduces boss damage taken by 9 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Blocks 100 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 2 II**
-  Reduces boss damage taken by 36 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Blocks 100 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 2 III**
-  Reduces boss damage taken by 117 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Blocks 100 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 2 IV**
-  Reduces boss damage taken by 360 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Blocks 100 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 2 V**
-  Reduces boss damage taken by 1089 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Blocks 100 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 3 I**
-  Reduces boss damage taken by 9 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Blocks 400 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 3 II**
-  Reduces boss damage taken by 36 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Blocks 400 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 3 III**
-  Reduces boss damage taken by 117 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Blocks 400 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 3 IV**
-  Reduces boss damage taken by 360 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Blocks 400 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 3 V**
-  Reduces boss damage taken by 1089 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Blocks 400 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 4 I**
-  Reduces boss damage taken by 9 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Blocks 1600 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 4 II**
-  Reduces boss damage taken by 36 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Blocks 1600 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 4 III**
-  Reduces boss damage taken by 117 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Blocks 1600 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 4 IV**
-  Reduces boss damage taken by 360 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Blocks 1600 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 4 V**
-  Reduces boss damage taken by 1089 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Blocks 1600 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 5 I**
-  Reduces boss damage taken by 9 (3x per level, cumulative over 1 purchases). Cost 6x per level.
+  Blocks 10750 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 5 II**
-  Reduces boss damage taken by 36 (3x per level, cumulative over 2 purchases). Cost 6x per level.
+  Blocks 10750 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 5 III**
-  Reduces boss damage taken by 117 (3x per level, cumulative over 3 purchases). Cost 6x per level.
+  Blocks 10750 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 5 IV**
-  Reduces boss damage taken by 360 (3x per level, cumulative over 4 purchases). Cost 6x per level.
+  Blocks 10750 boss contact damage per second.
 
 * [Blue #5282E0] **Core Armor Boss 5 V**
-  Reduces boss damage taken by 1089 (3x per level, cumulative over 5 purchases). Cost 6x per level.
+  Blocks 10750 boss contact damage per second.
 
 * [Red #D75252] **Archer Speed I**
   Increases attack cadence (typically about +0.9%–1.2% faster attacks per level before global tuning).
@@ -923,3 +902,231 @@ Total upgrade nodes: 306
 
 * [Red #D75252] **Mage Damage IV**
   Increases direct damage output (typically about +1.2%–1.5% total team DPS per level before global tuning).
+
+* [Blue #5282E0] **Vitality Foundation**
+  Unlocks the Vitality tree: +50 max Health. From here you can invest in Hitpoints, Power, or Channel time.
+
+* [Blue #5282E0] **Vitality Hitpoints I**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints I**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints I**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints I**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints I**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints II**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints II**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints II**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints II**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints II**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints III**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints III**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints III**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints III**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints III**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints IV**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints IV**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints IV**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints IV**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints IV**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints V**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints V**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints V**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints V**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Blue #5282E0] **Vitality Hitpoints V**
+  Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.
+
+* [Purple #A966D8] **Vitality Power I**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power I**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power I**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power I**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power I**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power II**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power II**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power II**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power II**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power II**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power III**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power III**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power III**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power III**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power III**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power IV**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power IV**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power IV**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power IV**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power IV**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power V**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power V**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power V**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power V**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Power V**
+  Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel I**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel I**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel I**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel I**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel I**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel II**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel II**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel II**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel II**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel II**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel III**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel III**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel III**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel III**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel III**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel IV**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel IV**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel IV**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel IV**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel IV**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel V**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel V**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel V**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel V**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.
+
+* [Purple #A966D8] **Vitality Channel V**
+  Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.

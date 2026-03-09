@@ -292,19 +292,50 @@ static func _retarget_dependencies_to_hubs(grouped_upgrades: Array) -> void:
             var prev_id: String = str(entries_for_key[chain_index - 1].get("id", ""))
             entry["dependency"] = prev_id
         else:
-            var dep_key: String = _select_hub_dependency_key(key, key_to_primary_id)
-            if dep_key == "":
-                entry["dependency"] = "__CENTER__"
-            elif key_to_primary_id.has(dep_key):
-                entry["dependency"] = str(key_to_primary_id[dep_key])
+            # Armor tracks 2–5: L1 depends on previous track's last node (I → II → III → IV → V).
+            var armor_dep: String = _armor_track_dependency(key, key_to_entries)
+            if armor_dep != "":
+                entry["dependency"] = armor_dep
             else:
-                entry["dependency"] = "__CENTER__"
+                var dep_key: String = _select_hub_dependency_key(key, key_to_primary_id)
+                if dep_key == "":
+                    entry["dependency"] = "__CENTER__"
+                elif key_to_primary_id.has(dep_key):
+                    entry["dependency"] = str(key_to_primary_id[dep_key])
+                else:
+                    entry["dependency"] = "__CENTER__"
 
         # Avoid accidental self-dependency if a key resolves to its own primary entry.
         if str(entry.get("dependency", "")) == entry_id:
             entry["dependency"] = "__CENTER__"
 
         grouped_upgrades[i] = entry
+
+# For armor track keys (core_armor_enemy_N, core_armor_dot_N, core_armor_boss_N) with N >= 2,
+# returns the previous track's last grouped node id so track order is I -> II -> III -> IV -> V.
+static func _armor_track_dependency(key: String, key_to_entries: Dictionary) -> String:
+    var lower: String = key.to_lower()
+    var prefix: String = ""
+    var track: int = 0
+    if lower.begins_with("core_armor_enemy_"):
+        prefix = "core_armor_enemy_"
+    elif lower.begins_with("core_armor_dot_"):
+        prefix = "core_armor_dot_"
+    elif lower.begins_with("core_armor_boss_"):
+        prefix = "core_armor_boss_"
+    else:
+        return ""
+    track = int(lower.trim_prefix(prefix)) if lower.length() > prefix.length() else 0
+    if track <= 1:
+        return ""
+    var prev_key: String = "%s%d" % [prefix, track - 1]
+    var prev_entries: Array = key_to_entries.get(prev_key, [])
+    if prev_entries.is_empty():
+        return ""
+    prev_entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+        return _group_number_from_id(str(a.get("id", ""))) < _group_number_from_id(str(b.get("id", "")))
+    )
+    return str(prev_entries[prev_entries.size() - 1].get("id", ""))
 
 static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionary) -> String:
     var lower: String = key.to_lower()
@@ -927,6 +958,20 @@ static func _sanitize_dependency_graph(grouped_upgrades: Array) -> void:
         if upgrade_id != "" and id_to_entry.has(upgrade_id):
             grouped_upgrades[i] = id_to_entry[upgrade_id]
 
+static func _is_armor_track_key(key: String) -> bool:
+    var lower: String = key.to_lower()
+    return lower.begins_with("core_armor_enemy_") or lower.begins_with("core_armor_dot_") or lower.begins_with("core_armor_boss_")
+
+static func _is_armor_track_chain(parent_id: String, chain: Array, id_to_entry: Dictionary) -> bool:
+    var parent_entry: Dictionary = id_to_entry.get(parent_id, {})
+    if parent_entry.is_empty() or not _is_armor_track_key(str(parent_entry.get("key", ""))):
+        return false
+    for node_id_variant in chain:
+        var node_entry: Dictionary = id_to_entry.get(str(node_id_variant), {})
+        if node_entry.is_empty() or not _is_armor_track_key(str(node_entry.get("key", ""))):
+            return false
+    return true
+
 static func _flatten_linear_dependency_chains(grouped_upgrades: Array, max_children: int) -> void:
     if max_children <= 1:
         return
@@ -967,6 +1012,10 @@ static func _flatten_linear_dependency_chains(grouped_upgrades: Array, max_child
             cursor = str(next_children[0])
 
         if chain.size() < 4:
+            continue
+
+        # Keep armor tracks as a direct chain I -> II -> III -> IV -> V; do not flatten.
+        if _is_armor_track_chain(parent_id, chain, id_to_entry):
             continue
 
         var slots_remaining: int = max_children - int(direct_children.size())

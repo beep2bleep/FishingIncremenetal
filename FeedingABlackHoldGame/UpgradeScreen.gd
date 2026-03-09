@@ -2,7 +2,6 @@ extends CanvasLayer
 
 class_name UpgradeScreen
 
-const CURSOR_PICKUP_UNLOCK_KEY := "cursor_pickup_unlock"
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const GO_AGAIN_DISABLED_HINT := "You must unlock an upgrade before starting."
 const BATTLE_LEVEL_CHOICE_DIALOG_SIZE := Vector2(600.0, 450.0)
@@ -995,7 +994,7 @@ func _hide_settings_panel() -> void:
 func _can_continue_to_battle() -> bool:
     if not _is_simulation_upgrade_tree():
         return true
-    return SaveHandler.has_fishing_upgrade(CURSOR_PICKUP_UNLOCK_KEY)
+    return SaveHandler.has_any_fishing_upgrade()
 
 func _update_go_again_button_state() -> void:
     if go_again_button == null:

@@ -282,7 +282,7 @@ func get_description(node: Dictionary) -> String:
             return _with_editor_note(node, "Upgrades the Speed button to include 4x battle speed.")
         return _with_editor_note(node, "Upgrades the Speed button to include 8x battle speed.")
     if key == "hero_coin_gain":
-        return _with_editor_note(node, "Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.")
+        return _with_editor_note(node, "Multiplies coin value by +20% per level (exponential over 20 levels). Applies to coins collected by heroes or cursor.")
     if key == "cursor_capture_gain":
         return _with_editor_note(node, "Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).")
     if key == "vitality_hitpoints":
@@ -290,12 +290,12 @@ func get_description(node: Dictionary) -> String:
     if key == "vitality_power":
         return _with_editor_note(node, "Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.")
     if key == "vitality_channel":
-        return _with_editor_note(node, "Increases active ability channel (duration) by 5% per level, but also increases the power cost to activate per character by 5% per level. Lets actives run longer at a higher activation cost. Cost scales 3x per track depth.")
+        return _with_editor_note(node, "Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.")
     if SPECIFIC_DESCRIPTIONS.has(key):
         return _with_editor_note(node, SPECIFIC_DESCRIPTIONS[key])
 
     if key.begins_with("core_"):
-        return _with_editor_note(node, _describe_core_upgrade(key, int(node.get("level", 1))))
+        return _with_editor_note(node, _describe_core_upgrade(node))
     if key.begins_with("extra_skill_"):
         return _with_editor_note(node, _describe_extra_skill(key))
 
@@ -329,21 +329,43 @@ func _with_editor_note(node: Dictionary, base: String) -> String:
     ]
     return "%s\n\n%s" % [base, editor_line]
 
-func _describe_core_upgrade(key: String, level: int) -> String:
+func _describe_core_upgrade(node: Dictionary) -> String:
+    var key: String = str(node.get("key", ""))
+    var level: int = int(node.get("level", 1))
     if key == "core_armor":
         return "Unlocks the Core Armor branch: three paths that reduce enemy, DOT, and boss damage taken."
     if key.begins_with("core_armor_enemy_"):
-        var total: int = int((pow(3, level + 1) - 3) / 2) if level >= 1 else 0
-        return "Reduces regular enemy contact damage taken by %d (3x per level, cumulative over %d purchases)." % [total, level]
+        var enemy_track: int = int(key.trim_prefix("core_armor_enemy_"))
+        var enemy_per_level_block: int = int(pow(4, enemy_track))
+        return "Reduces regular enemy contact damage by %d." % enemy_per_level_block
     if key.begins_with("core_armor_dot_"):
         var track: int = int(key.trim_prefix("core_armor_dot_"))
-        var max_level: int = 5 if track <= 3 else (4 if track == 4 else 3)  # Tracks 1-3: 5 levels; 4: 4 levels; 5: 3 levels
-        var effective_level: int = mini(level, max_level)
-        var total: int = int((pow(3, effective_level + 1) - 3) / 2) if effective_level >= 1 else 0
-        return "Reduces damage-over-time taken by %d (3x per level, cumulative over %d purchases)." % [total, effective_level]
+        var per_level_block: int = 0
+        match track:
+            1:
+                per_level_block = 3
+            2:
+                per_level_block = 9
+            3:
+                per_level_block = 27
+            4:
+                per_level_block = 81
+        return "Reduces damage-over-time by %d damage per second." % per_level_block
     if key.begins_with("core_armor_boss_"):
-        var total: int = int((pow(3, level + 2) - 9) / 2) if level >= 1 else 0
-        return "Reduces boss damage taken by %d (3x per level, cumulative over %d purchases)." % [total, level]
+        var boss_track: int = int(key.trim_prefix("core_armor_boss_"))
+        var boss_per_level_block: int = 0
+        match boss_track:
+            1:
+                boss_per_level_block = 25
+            2:
+                boss_per_level_block = 100
+            3:
+                boss_per_level_block = 400
+            4:
+                boss_per_level_block = 1600
+            5:
+                boss_per_level_block = 10750
+        return "Blocks %d boss contact damage per purchase in this node, %d total when fully upgraded." % [boss_per_level_block, boss_per_level_block * 5]
     if key == "core_density":
         return "Increase enemy density by ~5% per level (and coin rewards by ~2% per level) for higher potential rewards."
     if key == "core_drop":
@@ -462,6 +484,37 @@ func _infer_family_description(key: String) -> String:
         return FAMILY_DESCRIPTIONS["TEAM"]
     return ""
 
+func _armor_purchase_amounts(start_level: int, purchase_count: int, armor_type: String) -> Array[int]:
+    var amounts: Array[int] = []
+    for i in range(max(0, purchase_count)):
+        var current_level: int = start_level + i
+        if current_level <= 0:
+            continue
+        var amount: int = 0
+        match armor_type:
+            "enemy":
+                amount = int(pow(4, current_level))
+            "boss":
+                amount = int(25 * pow(4, current_level - 1))
+            _:
+                amount = int(pow(3, current_level))
+        amounts.append(amount)
+    return amounts
+
+func _join_int_list(values: Array[int]) -> String:
+    if values.is_empty():
+        return "0"
+    var text_values: PackedStringArray = []
+    for value in values:
+        text_values.append(str(value))
+    if text_values.size() == 1:
+        return text_values[0]
+    if text_values.size() == 2:
+        return "%s and %s" % [text_values[0], text_values[1]]
+    var last_value: String = text_values[text_values.size() - 1]
+    text_values.remove_at(text_values.size() - 1)
+    return "%s, and %s" % [", ".join(text_values), last_value]
+
 func _humanize_name(name_text: String) -> String:
     var text: String = name_text.strip_edges()
     if text == "":
@@ -531,11 +584,14 @@ func _core_name(key: String, level: int = 1) -> String:
     if key == "core_armor":
         return "Core Armor"
     if key.begins_with("core_armor_enemy_"):
-        return "Contact Armor " + _roman(level)
+        var track: int = int(key.trim_prefix("core_armor_enemy_"))
+        return "Contact Armor " + _roman(track)
     if key.begins_with("core_armor_dot_"):
-        return "DoT Armor " + _roman(level)
+        var track: int = int(key.trim_prefix("core_armor_dot_"))
+        return "DoT Armor " + _roman(track)
     if key.begins_with("core_armor_boss_"):
-        return "Boss Armor " + _roman(level)
+        var track: int = int(key.trim_prefix("core_armor_boss_"))
+        return "Boss Armor " + _roman(track)
     if key == "core_density":
         return "Core Density"
     if key == "core_drop":

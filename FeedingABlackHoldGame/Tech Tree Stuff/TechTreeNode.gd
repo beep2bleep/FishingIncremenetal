@@ -5,6 +5,7 @@ const PARTIAL_FILL_ALPHA: float = 0.42
 const TOOLTIP_CLOSE_DELAY: float = 0.0
 const COMPLETE_TOOLTIP_LIFETIME: float = 1.0
 const TOOLTIP_VERTICAL_GAP: float = 0.0
+const TOOLTIP_SCREEN_HEIGHT_OFFSET_RATIO: float = 0.03
 const MOUSE_TOOLTIP_EXTRA_OFFSET: float = 18.0
 const TOOLTIP_GROUP: StringName = &"tech_tree_tooltips"
 static var _icon_texture_cache: Dictionary = {}
@@ -53,8 +54,6 @@ var tooltip_layout_request_id: int = 0
 var tooltip_close_request_id: int = 0
 var cached_node_hover_rect: Rect2 = Rect2()
 var cached_tooltip_hover_rect: Rect2 = Rect2()
-var node_hover_debug_overlay: ColorRect
-var tooltip_hover_debug_overlay: ColorRect
 var is_highlighted: bool:
     get:
         return _is_highlighted
@@ -184,7 +183,6 @@ func _ready():
     add_to_group(TOOLTIP_GROUP)
     set_process(false)
     set_process_unhandled_input(false)
-    _setup_hover_debug_overlays()
     hover_focus_style_box = %"Click Mask".get_theme_stylebox("hover")
     title_panel_style_box = %TitlePanel.get_theme_stylebox("panel")
     var base_fill_style: StyleBox = partial_fill.get_theme_stylebox("panel")
@@ -615,7 +613,6 @@ func _refresh_tooltip_visibility() -> void:
     tooltip.show()
     _position_tooltip()
     tooltip.pivot_offset = tooltip.size / 2.0
-    _refresh_hover_debug_overlays()
     tooltip.modulate.a = 1.0
     _update_hover_regions()
     _refresh_popup_priority_locks()
@@ -683,6 +680,7 @@ func _position_tooltip() -> void:
     var tooltip_vertical_gap: float = TOOLTIP_VERTICAL_GAP
     if not SaveHandler.confirm_upgrade_purchase:
         tooltip_vertical_gap += MOUSE_TOOLTIP_EXTRA_OFFSET
+    var extra_screen_offset: float = get_viewport_rect().size.y * TOOLTIP_SCREEN_HEIGHT_OFFSET_RATIO
     var main_node: Node = Global.main
     var main_camera: Camera2D = null
     if is_instance_valid(main_node):
@@ -698,9 +696,9 @@ func _position_tooltip() -> void:
         tooltip_anchor_y = Util.get_node2d_viewport_position(self, main_camera).y
 
     if tooltip_anchor_y - total_tooltip_size.y - tooltip_vertical_gap < 0:
-        %"Tool Tip".position.y = 35.0 + tooltip_vertical_gap
+        %"Tool Tip".position.y = 35.0 + tooltip_vertical_gap + extra_screen_offset
     else:
-        %"Tool Tip".position.y = - %"Tool Tip".size.y - tooltip_vertical_gap
+        %"Tool Tip".position.y = - %"Tool Tip".size.y - tooltip_vertical_gap - extra_screen_offset
 
 func _queue_tooltip_close() -> void:
     if _is_cursor_over_any_tooltip_or_node():
@@ -893,23 +891,6 @@ func _point_in_control_rect(control: Control, screen_position: Vector2) -> bool:
         return false
     return control.get_global_rect().has_point(screen_position)
 
-func _setup_hover_debug_overlays() -> void:
-    node_hover_debug_overlay = ColorRect.new()
-    node_hover_debug_overlay.name = "NodeHoverDebugOverlay"
-    node_hover_debug_overlay.top_level = true
-    node_hover_debug_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    node_hover_debug_overlay.color = Color(0.15, 0.85, 0.35, 0.18)
-    node_hover_debug_overlay.visible = false
-    add_child(node_hover_debug_overlay)
-
-    tooltip_hover_debug_overlay = ColorRect.new()
-    tooltip_hover_debug_overlay.name = "TooltipHoverDebugOverlay"
-    tooltip_hover_debug_overlay.top_level = true
-    tooltip_hover_debug_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    tooltip_hover_debug_overlay.color = Color(0.2, 0.45, 1.0, 0.18)
-    tooltip_hover_debug_overlay.visible = false
-    add_child(tooltip_hover_debug_overlay)
-
 func _update_hover_regions() -> void:
     if click_mask != null and is_instance_valid(click_mask) and click_mask.visible:
         cached_node_hover_rect = click_mask.get_global_rect()
@@ -920,21 +901,6 @@ func _update_hover_regions() -> void:
         cached_tooltip_hover_rect = %"Tool Tip".get_global_rect()
     else:
         cached_tooltip_hover_rect = Rect2()
-
-    _refresh_hover_debug_overlays()
-
-func _refresh_hover_debug_overlays() -> void:
-    if node_hover_debug_overlay != null:
-        node_hover_debug_overlay.visible = _is_highlighted
-        if node_hover_debug_overlay.visible:
-            node_hover_debug_overlay.global_position = cached_node_hover_rect.position
-            node_hover_debug_overlay.size = cached_node_hover_rect.size
-
-    if tooltip_hover_debug_overlay != null:
-        tooltip_hover_debug_overlay.visible = %"Tool Tip".visible
-        if tooltip_hover_debug_overlay.visible:
-            tooltip_hover_debug_overlay.global_position = cached_tooltip_hover_rect.position
-            tooltip_hover_debug_overlay.size = cached_tooltip_hover_rect.size
 
 func _is_any_tooltip_open() -> bool:
     for node: Node in get_tree().get_nodes_in_group(TOOLTIP_GROUP):

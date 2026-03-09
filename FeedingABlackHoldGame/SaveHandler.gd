@@ -598,6 +598,12 @@ func get_fishing_upgrade_level(key: String) -> int:
 func has_fishing_upgrade(key: String) -> bool:
     return get_fishing_upgrade_level(key) > 0
 
+func has_any_fishing_upgrade() -> bool:
+    for level in fishing_unlocked_upgrades.values():
+        if int(level) > 0:
+            return true
+    return false
+
 func unlock_fishing_upgrade(key: String, repeatable: bool = false):
     var new_level = 1 if not repeatable else get_fishing_upgrade_level(key) + 1
     fishing_unlocked_upgrades[key] = new_level
