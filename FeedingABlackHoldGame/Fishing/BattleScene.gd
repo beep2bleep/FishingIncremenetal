@@ -1747,7 +1747,10 @@ func _assign_level_enemy_pools(candidate_keys: Array[String]) -> void:
     if source.is_empty():
         source = ["goblin", "brute", "flyer"]
     level_enemy_pools.clear()
-    for level_index in [1, 2, 3]:
+    for level_index_variant in LEVEL_ENEMY_TYPE.keys():
+        var level_index: int = int(level_index_variant)
+        level_enemy_pools[level_index] = [str(LEVEL_ENEMY_TYPE[level_index])]
+    for level_index in range(4, SaveHandler.MAX_FISHING_BATTLE_LEVEL + 1):
         level_enemy_pools[level_index] = _pick_random_enemy_subset(source, ENEMY_POOL_PER_LEVEL)
 
 func _pick_random_enemy_subset(source: Array[String], count: int) -> Array[String]:
