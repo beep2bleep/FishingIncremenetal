@@ -4009,7 +4009,8 @@ func _enemy_count_mult() -> float:
     return float(battle_mods.get("enemy_count_mult", 1.0))
 
 func _active_cost() -> float:
-    return max(20.0, 60.0 * float(battle_mods.get("active_cost_mult", 1.0)))
+    var base: float = max(20.0, 60.0 * float(battle_mods.get("active_cost_mult", 1.0)))
+    return base * float(battle_mods.get("active_cost_extra_mult", 1.0))
 
 func _active_cooldown_mult() -> float:
     return float(battle_mods.get("active_cd_mult", 1.0))

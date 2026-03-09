@@ -32,6 +32,7 @@ const SPECIFIC_NAMES = {
   party_war_drums: "War Drums",
   party_execution_doctrine: "Execution Doctrine",
   party_apex_overdrive: "Apex Overdrive",
+  vitality_foundation: "Vitality Foundation",
 };
 
 const SPECIFIC_DESCRIPTIONS = {
@@ -53,6 +54,10 @@ const SPECIFIC_DESCRIPTIONS = {
   party_war_drums: "Increases all party damage by 16% per level.",
   party_execution_doctrine: "Increases all party damage by 20% per level.",
   party_apex_overdrive: "Increases all party damage by 25% per level.",
+  vitality_foundation: "Unlocks the Vitality tree: +50 max Health. From here you can invest in Hitpoints, Power, or Channel time.",
+  vitality_hitpoints: "Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.",
+  vitality_power: "Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.",
+  vitality_channel: "Increases active ability channel (duration) by 5% per level, but also increases the power cost to activate per character by 5% per level. Lets actives run longer at a higher activation cost. Cost scales 3x per track depth.",
 };
 
 const THEME_COLORS = {
@@ -73,6 +78,8 @@ function roman(value) {
 
 function themeActForKey(key) {
   const lower = key.toLowerCase();
+  if (lower === "vitality_foundation" || lower === "vitality_hitpoints") return 4;
+  if (lower === "vitality_power" || lower === "vitality_channel") return 5;
   if (lower.startsWith("extra_skill_")) {
     const n = parseInt(lower.replace("extra_skill_", ""), 10) || 0;
     if (n > 0) {
@@ -93,6 +100,9 @@ function getDisplayName(entry) {
   const key = String(entry.key || "").trim();
   const level = parseInt(entry.level, 10) || 1;
   const baseKey = key.replace(/__L\d+$/, "").replace(/_60$/, "");
+  if (baseKey === "vitality_hitpoints") return `Vitality Hitpoints ${roman(Math.floor((level - 1) / 5) + 1)}`;
+  if (baseKey === "vitality_power") return `Vitality Power ${roman(Math.floor((level - 1) / 5) + 1)}`;
+  if (baseKey === "vitality_channel") return `Vitality Channel ${roman(Math.floor((level - 1) / 5) + 1)}`;
   if (SPECIFIC_NAMES[baseKey]) return SPECIFIC_NAMES[baseKey];
   if (key.startsWith("extra_skill_")) {
     const n = parseInt(key.replace("extra_skill_", ""), 10) || 0;

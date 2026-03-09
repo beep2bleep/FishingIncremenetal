@@ -332,7 +332,11 @@ func load_local_settings():
         controller_sensitivity = float(json_data["controller_sensitivity"]) if json_data.has("controller_sensitivity") else 1.0
         audio_muted = bool(json_data["audio_muted"]) if json_data.has("audio_muted") else false
         touch_input_mode = _load_bool_local_setting(json_data, "touch_input_mode", true)
-        confirm_upgrade_purchase = _load_bool_local_setting(json_data, "confirm_upgrade_purchase", touch_input_mode)
+        confirm_upgrade_purchase = _load_bool_local_setting(json_data, "confirm_upgrade_purchase", false)
+        # Migrate: if save had mouse mode, switch to touch and persist
+        if not touch_input_mode:
+            touch_input_mode = true
+            save_local_settings()
     else:
         # First run / missing settings file: floating text should default on.
         damage_text = true

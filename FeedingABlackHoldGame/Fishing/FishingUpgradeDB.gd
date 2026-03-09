@@ -35,6 +35,7 @@ const SPECIFIC_DESCRIPTIONS := {
     "party_war_drums": "Increases all party damage by 16% per level.",
     "party_execution_doctrine": "Increases all party damage by 20% per level.",
     "party_apex_overdrive": "Increases all party damage by 25% per level.",
+    "vitality_foundation": "Unlocks the Vitality tree: +50 max Health. From here you can invest in Hitpoints, Power, or Channel time.",
 }
 const SPECIFIC_NAMES := {
     "cursor_pickup_unlock": "Cursor Pickup Unlock",
@@ -53,6 +54,7 @@ const SPECIFIC_NAMES := {
     "party_war_drums": "War Drums",
     "party_execution_doctrine": "Execution Doctrine",
     "party_apex_overdrive": "Apex Overdrive",
+    "vitality_foundation": "Vitality Foundation",
 }
 
 var nodes: Array[Dictionary] = []
@@ -245,6 +247,12 @@ func get_display_name(node: Dictionary) -> String:
         return "Hero Coin Gain " + _roman((level - 1) / 5 + 1)
     if key == "cursor_capture_gain":
         return "Cursor Capture " + _roman((level - 1) / 5 + 1)
+    if key == "vitality_hitpoints":
+        return "Vitality Hitpoints " + _roman((level - 1) / 5 + 1)
+    if key == "vitality_power":
+        return "Vitality Power " + _roman((level - 1) / 5 + 1)
+    if key == "vitality_channel":
+        return "Vitality Channel " + _roman((level - 1) / 5 + 1)
     if SPECIFIC_NAMES.has(key):
         return SPECIFIC_NAMES[key]
     if key.begins_with("extra_skill_"):
@@ -277,6 +285,12 @@ func get_description(node: Dictionary) -> String:
         return _with_editor_note(node, "Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier in this node).")
     if key == "cursor_capture_gain":
         return _with_editor_note(node, "Increase cursor-captured coin value by +25% per tier (5 tiers per node).")
+    if key == "vitality_hitpoints":
+        return _with_editor_note(node, "Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.")
+    if key == "vitality_power":
+        return _with_editor_note(node, "Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.")
+    if key == "vitality_channel":
+        return _with_editor_note(node, "Increases active ability channel (duration) by 5% per level, but also increases the power cost to activate per character by 5% per level. Lets actives run longer at a higher activation cost. Cost scales 3x per track depth.")
     if SPECIFIC_DESCRIPTIONS.has(key):
         return _with_editor_note(node, SPECIFIC_DESCRIPTIONS[key])
 

@@ -63,6 +63,7 @@ static func apply_simulation_upgrades() -> void:
     _enforce_required_prerequisites(grouped_upgrades)
     _sanitize_dependency_graph(grouped_upgrades)
     _enforce_branch_anchors(grouped_upgrades)
+    _enforce_tier_chain_order(grouped_upgrades)
     _sanitize_dependency_graph(grouped_upgrades)
     if OS.has_feature("editor"):
         _validate_dependencies_reach_center(grouped_upgrades)
@@ -322,7 +323,13 @@ static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionar
     or lower == "battle_speed_unlock" \
     or lower == "core_armor" \
     or lower == "party_damage_boost" \
+    or lower == "vitality_foundation" \
     or lower.begins_with("recruit_"):
+        return ""
+
+    if lower == "vitality_hitpoints" or lower == "vitality_power" or lower == "vitality_channel":
+        if key_to_primary_id.has("vitality_foundation"):
+            return "vitality_foundation"
         return ""
 
     if lower.begins_with("extra_skill_"):
@@ -711,11 +718,46 @@ static func _enforce_branch_anchors(grouped_upgrades: Array) -> void:
                 forced_dep = str(key_to_primary_id.get("auto_attack_unlock", ""))
             "core_armor":
                 forced_dep = "__CENTER__"
+            "vitality_foundation":
+                forced_dep = "__CENTER__"
+            "vitality_hitpoints", "vitality_power", "vitality_channel":
+                forced_dep = str(key_to_primary_id.get("vitality_foundation", ""))
 
         if forced_dep == "":
             continue
         entry["dependency"] = forced_dep
         grouped_upgrades[i] = entry
+
+## Ensures tier N+1 is always a direct child of tier N (e.g. Vitality Channel II depends on Vitality Channel I).
+static func _enforce_tier_chain_order(grouped_upgrades: Array) -> void:
+    var key_to_entries: Dictionary = {}
+    for entry_variant: Variant in grouped_upgrades:
+        if not (entry_variant is Dictionary):
+            continue
+        var entry: Dictionary = entry_variant
+        var key: String = str(entry.get("key", ""))
+        var entry_id: String = str(entry.get("id", ""))
+        if key == "" or entry_id == "":
+            continue
+        if not key_to_entries.has(key):
+            key_to_entries[key] = []
+        var arr: Array = key_to_entries[key]
+        arr.append(entry)
+        key_to_entries[key] = arr
+
+    for key in key_to_entries:
+        var entries: Array = key_to_entries[key]
+        if entries.size() <= 1:
+            continue
+        entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+            return _group_number_from_id(str(a.get("id", ""))) < _group_number_from_id(str(b.get("id", "")))
+        )
+        for i in range(1, entries.size()):
+            var prev_id: String = str(entries[i - 1].get("id", ""))
+            var cur_entry: Dictionary = entries[i]
+            if prev_id == "":
+                continue
+            cur_entry["dependency"] = prev_id
 
 static func _enforce_max_children_per_node(grouped_upgrades: Array, max_children: int) -> void:
     if max_children <= 0:
@@ -1076,6 +1118,7 @@ static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cell
         "recruit_guardian": Vector2(-3, 0),
         "recruit_mage": Vector2(-2, -3),
         "battle_speed_unlock": Vector2(2, -3),
+        "vitality_foundation": Vector2(-3, 2),
     }
     if fixed_root_targets.has(key):
         target = fixed_root_targets[key]
@@ -1318,6 +1361,11 @@ static func _branch_for_key(key: String) -> int:
 
 static func _theme_act_for_key(key: String) -> int:
     var lower: String = key.to_lower()
+
+    if lower == "vitality_foundation" or lower == "vitality_hitpoints":
+        return THEME_DEFENSE_SURVIVAL_ACT
+    if lower == "vitality_power" or lower == "vitality_channel":
+        return THEME_POWER_ACTIVE_ACT
 
     var extra_skill_theme: int = _extra_skill_theme_act(lower)
     if extra_skill_theme > 0:
