@@ -10,154 +10,154 @@ Total upgrade nodes: 306
   Unlocks cursor pickup bonuses so cursor-collected coins are worth more.
 
 * [Gold #D8BE42] **Hero Coin Gain I**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain I**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain I**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain I**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain I**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Ii**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Ii**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Ii**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Ii**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Ii**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Iii**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Iii**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Iii**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Iii**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Iii**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Iv**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Iv**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Iv**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Iv**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain Iv**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain V**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain V**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain V**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain V**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Gold #D8BE42] **Hero Coin Gain V**
-  Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).
+  Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.
 
 * [Cyan #40B2CD] **Cursor Capture I**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture I**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture I**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture I**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture I**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Ii**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Ii**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Ii**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Ii**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Ii**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Iii**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Iii**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Iii**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Iii**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Iii**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Iv**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Iv**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Iv**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Iv**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture Iv**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture V**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture V**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture V**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture V**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Cyan #40B2CD] **Cursor Capture V**
-  Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).
+  Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).
 
 * [Green #4D9E60] **Recruit Archer**
   Adds the Archer hero to your combat lineup.

@@ -3421,20 +3421,17 @@ func _cursor_bonus_mult() -> float:
         mult += 0.2
     if SaveHandler.has_fishing_upgrade("supply_lenses"):
         mult += 0.2
-    mult += 0.25 * float(_cursor_capture_bonus_level())
     mult += float(battle_mods.get("cursor_bonus", 0.0))
+    # Cursor Capture: +2.5% per level, exponential over 25 levels
+    mult *= pow(1.025, float(_cursor_capture_bonus_level()))
     return mult
 
-func _base_coin_bonus() -> int:
+func _hero_coin_mult() -> float:
     var level: int = SaveHandler.get_fishing_upgrade_level("hero_coin_gain")
     if level <= 0:
-        return 0
-    var total: int = 0
-    for node_index in range(5):
-        var tiers: int = clampi(level - node_index * 5, 0, 5)
-        if tiers > 0:
-            total += (int(pow(3, tiers)) - 1) / 2
-    return total
+        return 1.0
+    # Hero Coin Gain: +20% per level, exponential over 25 levels
+    return pow(1.20, float(level))
 
 func _cursor_capture_bonus_level() -> int:
     return SaveHandler.get_fishing_upgrade_level("cursor_capture_gain")
@@ -3446,7 +3443,7 @@ func _on_coin_collected(coin: CoinPickup, by_cursor: bool) -> void:
     var collected_by_cursor: bool = by_cursor
     if in_infinite_simulation:
         collected_by_cursor = randf() < INFINITE_SIM_CURSOR_COLLECT_SHARE
-    var amount: int = int(coin.value) + _base_coin_bonus()
+    var amount: int = int(round(float(coin.value) * _hero_coin_mult()))
     if collected_by_cursor:
         amount = int(round(float(amount) * _cursor_bonus_mult()))
 

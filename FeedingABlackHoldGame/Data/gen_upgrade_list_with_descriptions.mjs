@@ -37,8 +37,8 @@ const SPECIFIC_NAMES = {
 
 const SPECIFIC_DESCRIPTIONS = {
   cursor_pickup_unlock: "Unlocks cursor pickup bonuses so cursor-collected coins are worth more.",
-  hero_coin_gain: "Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier). 5 tiers per node (I–V).",
-  cursor_capture_gain: "Increase cursor-captured coin value by +25% per tier. 5 tiers per node (I–V).",
+  hero_coin_gain: "Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.",
+  cursor_capture_gain: "Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).",
   recruit_archer: "Adds the Archer hero to your combat lineup.",
   auto_attack_unlock: "Unlocks Tactical Telemetry: reveals enemies remaining during battle using the blue progress HUD.",
   battle_speed_unlock: "Unlocks battle speed control in non-editor builds. Buy levels to unlock 2x, then 4x, then 8x speed.",

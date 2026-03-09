@@ -282,9 +282,9 @@ func get_description(node: Dictionary) -> String:
             return _with_editor_note(node, "Upgrades the Speed button to include 4x battle speed.")
         return _with_editor_note(node, "Upgrades the Speed button to include 8x battle speed.")
     if key == "hero_coin_gain":
-        return _with_editor_note(node, "Base coin value bonus when heroes or cursor collect coins. Each tier triples the bonus (+1, +3, +9, +27, +81 per tier in this node).")
+        return _with_editor_note(node, "Multiplies coin value by +20% per level (exponential over 25 levels). Applies to coins collected by heroes or cursor.")
     if key == "cursor_capture_gain":
-        return _with_editor_note(node, "Increase cursor-captured coin value by +25% per tier (5 tiers per node).")
+        return _with_editor_note(node, "Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).")
     if key == "vitality_hitpoints":
         return _with_editor_note(node, "Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.")
     if key == "vitality_power":
@@ -528,14 +528,11 @@ func _core_name(key: String, level: int = 1) -> String:
     if key == "core_armor":
         return "Core Armor"
     if key.begins_with("core_armor_enemy_"):
-        var track: String = key.trim_prefix("core_armor_enemy_")
-        return "Core Armor Enemy %s %s" % [track, _roman(level)]
+        return "Contact Armor " + _roman(level)
     if key.begins_with("core_armor_dot_"):
-        var track: String = key.trim_prefix("core_armor_dot_")
-        return "Core Armor DOT %s %s" % [track, _roman(level)]
+        return "DoT Armor " + _roman(level)
     if key.begins_with("core_armor_boss_"):
-        var track: String = key.trim_prefix("core_armor_boss_")
-        return "Core Armor Boss %s %s" % [track, _roman(level)]
+        return "Boss Armor " + _roman(level)
     if key == "core_density":
         return "Core Density"
     if key == "core_drop":
