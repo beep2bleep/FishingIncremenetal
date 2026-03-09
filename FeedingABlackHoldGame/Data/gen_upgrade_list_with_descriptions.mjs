@@ -37,7 +37,7 @@ const SPECIFIC_NAMES = {
 
 const SPECIFIC_DESCRIPTIONS = {
   cursor_pickup_unlock: "Unlocks cursor pickup bonuses so cursor-collected coins are worth more.",
-  hero_coin_gain: "Multiplies coin value by +20% per level (exponential over 20 levels). Applies to coins collected by heroes or cursor.",
+  hero_coin_gain: "Multiplies coin value by +6% per level (exponential over 20 levels). Applies to coins collected by heroes or cursor.",
   cursor_capture_gain: "Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).",
   recruit_archer: "Adds the Archer hero to your combat lineup.",
   auto_attack_unlock: "Unlocks Tactical Telemetry: reveals enemies remaining during battle using the blue progress HUD.",

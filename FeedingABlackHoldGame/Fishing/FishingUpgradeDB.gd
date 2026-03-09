@@ -282,7 +282,7 @@ func get_description(node: Dictionary) -> String:
             return _with_editor_note(node, "Upgrades the Speed button to include 4x battle speed.")
         return _with_editor_note(node, "Upgrades the Speed button to include 8x battle speed.")
     if key == "hero_coin_gain":
-        return _with_editor_note(node, "Multiplies coin value by +20% per level (exponential over 20 levels). Applies to coins collected by heroes or cursor.")
+        return _with_editor_note(node, "Multiplies coin value by +6% per level (exponential over 20 levels). Applies to coins collected by heroes or cursor.")
     if key == "cursor_capture_gain":
         return _with_editor_note(node, "Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).")
     if key == "vitality_hitpoints":

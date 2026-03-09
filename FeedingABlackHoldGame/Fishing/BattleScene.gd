@@ -3439,8 +3439,8 @@ func _hero_coin_mult() -> float:
     var level: int = SaveHandler.get_fishing_upgrade_level("hero_coin_gain")
     if level <= 0:
         return 1.0
-    # Hero Coin Gain: +20% per level, exponential over 20 levels
-    return pow(1.20, float(level))
+    # Hero Coin Gain: +6% per level, exponential over 20 levels
+    return pow(1.06, float(level))
 
 func _cursor_capture_bonus_level() -> int:
     return SaveHandler.get_fishing_upgrade_level("cursor_capture_gain")
@@ -4195,10 +4195,13 @@ func _on_boss_defeated() -> void:
     print("DEBUG: _on_boss_defeated() called")
     if battle_completed:
         return
+    var level_key: String = str(current_level)
+    var is_first_clear: bool = not bool(SaveHandler.fishing_first_boss_clear_levels.get(level_key, false))
     _track_level_completion_event(current_level)
     _track_first_boss_clear_event(current_level)
     if current_level >= int(SaveHandler.fishing_max_unlocked_battle_level) and current_level < SaveHandler.MAX_FISHING_BATTLE_LEVEL:
         SaveHandler.fishing_max_unlocked_battle_level = current_level + 1
+    if is_first_clear:
         SaveHandler.fishing_next_battle_level = SaveHandler.fishing_max_unlocked_battle_level
     # Boss defeated sound
     print("[AUDIO] Boss defeated - playing BUTTON_CLICK")
