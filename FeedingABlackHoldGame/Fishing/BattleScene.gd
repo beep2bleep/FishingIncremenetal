@@ -324,6 +324,8 @@ var settings_content: Settings
 var fullscreen_button: Button
 var touch_input_button: Button
 var level_choice_dialog: ConfirmationDialog
+var level_choice_selected_level: int = 1
+var level_choice_line_edit: LineEdit
 var bg_debug_panel: PanelContainer
 var touch_zone_debug_label: Label
 
@@ -394,6 +396,9 @@ const LEVEL_CHOICE_DIALOG_SIZE := Vector2(1200.0, 900.0)
 const LEVEL_CHOICE_DIALOG_FONT_SIZE := 32
 const LEVEL_CHOICE_DIALOG_TITLE_SIZE := 48
 const LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT := 96.0
+const LEVEL_CHOICE_SELECTOR_FONT_SIZE := 52
+const LEVEL_CHOICE_SELECTOR_BUTTON_WIDTH := 140.0
+const LEVEL_CHOICE_SELECTOR_INPUT_WIDTH := 220.0
 var speed_index: int = 0
 var arrow_texture: Texture2D
 var hero_sheets: Dictionary = {}
@@ -612,6 +617,7 @@ func _bind_nodes() -> bool:
         level_choice_dialog.title = "Choose Battle Level"
         level_choice_dialog.dialog_text = "Choose your next battle level."
         level_choice_dialog.get_ok_button().hide()
+        level_choice_dialog.get_cancel_button().hide()
         canvas_layer.add_child(level_choice_dialog)
     _style_level_choice_dialog(level_choice_dialog)
     if level_choice_dialog != null and not level_choice_dialog.custom_action.is_connected(_on_level_choice_action):
@@ -3727,17 +3733,11 @@ func _level_params(level_index: int) -> Dictionary:
     }
 
 func _level_reward_mult(level_index: int) -> float:
-    match clamp(level_index, 1, 3):
-        1:
-            return 1.0
-        2:
-            return 2.25
-        3:
-            return 4.4
-    return 1.0
+    var lv: int = max(1, level_index) - 1
+    return 1.0 + 1.25 * lv + 0.15 * lv * lv
 
 func _max_unlocked_level() -> int:
-    return clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, 3)
+    return clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, SaveHandler.MAX_FISHING_BATTLE_LEVEL)
 
 func _rebuild_battle_mods() -> void:
     battle_mods = {
@@ -4043,7 +4043,7 @@ func _on_boss_defeated() -> void:
     if battle_completed:
         return
     _track_first_boss_clear_event(current_level)
-    if current_level >= int(SaveHandler.fishing_max_unlocked_battle_level) and current_level < 3:
+    if current_level >= int(SaveHandler.fishing_max_unlocked_battle_level) and current_level < SaveHandler.MAX_FISHING_BATTLE_LEVEL:
         SaveHandler.fishing_max_unlocked_battle_level = current_level + 1
         SaveHandler.fishing_next_battle_level = SaveHandler.fishing_max_unlocked_battle_level
     # Boss defeated sound
@@ -4676,13 +4676,105 @@ func _show_level_choice_dialog(max_level: int) -> void:
         return
 
     level_choice_dialog.dialog_text = "You unlocked new battle levels by defeating bosses.\nChoose your next level."
-    for child in level_choice_dialog.get_children():
-        if child is Button and child.name.begins_with("LevelChoiceButton"):
-            child.free()
+    level_choice_selected_level = clamp(SaveHandler.fishing_next_battle_level, 1, max_level)
+    level_choice_line_edit = null
+    var existing: Control = level_choice_dialog.get_node_or_null("LevelChoiceContent")
+    if existing != null:
+        existing.queue_free()
 
-    for level in range(1, max_level + 1):
-        var button: Button = level_choice_dialog.add_button("Level %d" % level, true, "level_%d" % level)
-        button.name = "LevelChoiceButton%d" % level
+    var margin := MarginContainer.new()
+    margin.name = "LevelChoiceContent"
+    margin.anchor_left = 0.0
+    margin.anchor_top = 0.0
+    margin.anchor_right = 1.0
+    margin.anchor_bottom = 1.0
+    margin.offset_left = 24.0
+    margin.offset_top = 24.0
+    margin.offset_right = -24.0
+    margin.offset_bottom = -24.0
+    level_choice_dialog.add_child(margin)
+
+    var vbox := VBoxContainer.new()
+    vbox.anchor_left = 0.0
+    vbox.anchor_top = 0.0
+    vbox.anchor_right = 1.0
+    vbox.anchor_bottom = 1.0
+    vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    vbox.add_theme_constant_override("separation", 16)
+    margin.add_child(vbox)
+
+    if max_level <= 4:
+        for level in range(1, max_level + 1):
+            var button := Button.new()
+            button.name = "LevelChoiceButton%d" % level
+            button.text = "Level %d" % level
+            button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            button.custom_minimum_size = Vector2(0.0, LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+            button.add_theme_font_size_override("font_size", LEVEL_CHOICE_DIALOG_FONT_SIZE)
+            button.pressed.connect(_on_level_choice_button_pressed.bind(level))
+            vbox.add_child(button)
+    else:
+        var prompt := Label.new()
+        prompt.text = "Select a battle level from 1 to %d." % max_level
+        prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        prompt.add_theme_font_size_override("font_size", 28)
+        vbox.add_child(prompt)
+
+        var selector_row := HBoxContainer.new()
+        selector_row.alignment = BoxContainer.ALIGNMENT_CENTER
+        selector_row.add_theme_constant_override("separation", 18)
+        selector_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        selector_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        vbox.add_child(selector_row)
+
+        var minus_button := Button.new()
+        minus_button.text = "-"
+        minus_button.custom_minimum_size = Vector2(LEVEL_CHOICE_SELECTOR_BUTTON_WIDTH, LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+        minus_button.add_theme_font_size_override("font_size", LEVEL_CHOICE_SELECTOR_FONT_SIZE)
+        minus_button.pressed.connect(_on_level_choice_adjust_pressed.bind(-1, max_level))
+        selector_row.add_child(minus_button)
+
+        level_choice_line_edit = LineEdit.new()
+        level_choice_line_edit.name = "LevelChoiceLineEdit"
+        level_choice_line_edit.text = str(level_choice_selected_level)
+        level_choice_line_edit.custom_minimum_size = Vector2(LEVEL_CHOICE_SELECTOR_INPUT_WIDTH, LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+        level_choice_line_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+        level_choice_line_edit.max_length = len(str(max_level))
+        level_choice_line_edit.add_theme_font_size_override("font_size", LEVEL_CHOICE_SELECTOR_FONT_SIZE)
+        level_choice_line_edit.text_submitted.connect(_on_level_choice_text_submitted.bind(max_level))
+        level_choice_line_edit.focus_exited.connect(_on_level_choice_input_focus_exited.bind(max_level))
+        selector_row.add_child(level_choice_line_edit)
+
+        var plus_button := Button.new()
+        plus_button.text = "+"
+        plus_button.custom_minimum_size = Vector2(LEVEL_CHOICE_SELECTOR_BUTTON_WIDTH, LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+        plus_button.add_theme_font_size_override("font_size", LEVEL_CHOICE_SELECTOR_FONT_SIZE)
+        plus_button.pressed.connect(_on_level_choice_adjust_pressed.bind(1, max_level))
+        selector_row.add_child(plus_button)
+
+    var cancel_button := Button.new()
+    cancel_button.name = "LevelChoiceCancelButton"
+    cancel_button.text = "Cancel"
+    cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    cancel_button.custom_minimum_size = Vector2(0.0, LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+    cancel_button.add_theme_font_size_override("font_size", LEVEL_CHOICE_DIALOG_FONT_SIZE)
+    cancel_button.pressed.connect(_on_level_choice_cancel_pressed)
+    vbox.add_child(cancel_button)
+
+    if max_level > 4:
+        var confirm_button := Button.new()
+        confirm_button.name = "LevelChoiceConfirmButton"
+        confirm_button.text = "Confirm"
+        confirm_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        confirm_button.custom_minimum_size = Vector2(0.0, LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+        confirm_button.add_theme_font_size_override("font_size", LEVEL_CHOICE_DIALOG_FONT_SIZE)
+        confirm_button.pressed.connect(_on_level_choice_confirm_pressed.bind(max_level))
+        vbox.add_child(confirm_button)
+
+        if level_choice_line_edit != null:
+            level_choice_line_edit.grab_focus()
+            level_choice_line_edit.select_all()
 
     _style_level_choice_dialog(level_choice_dialog)
     level_choice_dialog.popup_centered(LEVEL_CHOICE_DIALOG_SIZE)
@@ -4693,6 +4785,27 @@ func _on_level_choice_action(action: StringName) -> void:
         return
     var level: int = int(action_text.trim_prefix("level_"))
     _set_next_battle_level_and_exit(level)
+
+func _on_level_choice_button_pressed(level: int) -> void:
+    _set_next_battle_level_and_exit(level)
+
+func _on_level_choice_adjust_pressed(delta: int, max_level: int) -> void:
+    level_choice_selected_level = clamp(level_choice_selected_level + delta, 1, max_level)
+    _update_level_choice_line_edit()
+
+func _on_level_choice_text_submitted(_text: String, max_level: int) -> void:
+    _sync_level_choice_from_input(max_level)
+
+func _on_level_choice_input_focus_exited(max_level: int) -> void:
+    _sync_level_choice_from_input(max_level)
+
+func _on_level_choice_confirm_pressed(max_level: int) -> void:
+    _sync_level_choice_from_input(max_level)
+    _set_next_battle_level_and_exit(level_choice_selected_level)
+
+func _on_level_choice_cancel_pressed() -> void:
+    if level_choice_dialog != null:
+        level_choice_dialog.hide()
 
 func _style_level_choice_dialog(dialog: ConfirmationDialog) -> void:
     if dialog == null:
@@ -4714,6 +4827,22 @@ func _set_next_battle_level_and_exit(level: int) -> void:
     Global.start_in_upgrade_scene = true
     Global.load_saved_run = false
     SceneChanger.change_to_new_scene(Util.PATH_MAIN)
+
+func _sync_level_choice_from_input(max_level: int) -> void:
+    if level_choice_line_edit == null:
+        return
+    var raw_text: String = level_choice_line_edit.text.strip_edges()
+    if raw_text == "":
+        level_choice_selected_level = clamp(level_choice_selected_level, 1, max_level)
+    else:
+        level_choice_selected_level = clamp(int(raw_text), 1, max_level)
+    _update_level_choice_line_edit()
+
+func _update_level_choice_line_edit() -> void:
+    if level_choice_line_edit == null:
+        return
+    level_choice_line_edit.text = str(level_choice_selected_level)
+    level_choice_line_edit.caret_column = level_choice_line_edit.text.length()
 
 func _track_ga_event(event_id: String, fields: Dictionary = {}) -> void:
     var ga_manager: Node = get_node_or_null("/root/GameAnalytics")

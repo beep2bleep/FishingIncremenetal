@@ -480,6 +480,7 @@ func update_touch_input_mode(value: bool) -> void:
 
 var fishing_progress_file_path = "user://fishing_incremental_progress.save"
 const STARTING_FISHING_CURRENCY := 10
+const MAX_FISHING_BATTLE_LEVEL := 20
 var fishing_currency = STARTING_FISHING_CURRENCY
 var fishing_lifetime_coins = 0
 var fishing_unlocked_upgrades: Dictionary = {}
@@ -521,7 +522,7 @@ func load_fishing_progress():
     fishing_active_upgrades = json_data.get("active_upgrades", {})
     fishing_last_battle_summary = json_data.get("last_battle_summary", {})
     fishing_next_battle_level = max(1, int(json_data.get("next_battle_level", 1)))
-    fishing_max_unlocked_battle_level = clamp(int(json_data.get("max_unlocked_battle_level", 1)), 1, 3)
+    fishing_max_unlocked_battle_level = clamp(int(json_data.get("max_unlocked_battle_level", 1)), 1, MAX_FISHING_BATTLE_LEVEL)
     fishing_next_battle_level = clamp(fishing_next_battle_level, 1, fishing_max_unlocked_battle_level)
     fishing_l3_boss_thank_you_shown = bool(json_data.get("l3_boss_thank_you_shown", false))
     fishing_run_clock_seconds = max(0.0, float(json_data.get("run_clock_seconds", 0.0)))

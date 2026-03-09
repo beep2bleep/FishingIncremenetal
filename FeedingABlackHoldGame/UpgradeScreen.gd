@@ -10,6 +10,9 @@ const BATTLE_LEVEL_CHOICE_DIALOG_FONT_SIZE := 24
 const BATTLE_LEVEL_CHOICE_DIALOG_TITLE_SIZE := 36
 const BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE := 72
 const BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT := 180.0
+const BATTLE_LEVEL_SELECTOR_FONT_SIZE := 52
+const BATTLE_LEVEL_SELECTOR_BUTTON_WIDTH := 140.0
+const BATTLE_LEVEL_SELECTOR_INPUT_WIDTH := 220.0
 const UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO := 0.05
 
 var is_active = false
@@ -19,6 +22,8 @@ var editor_add_cash_button: Button
 var editor_reset_add_button: Button
 var editor_unlock_all_button: Button
 var battle_level_choice_dialog: ConfirmationDialog
+var battle_level_choice_selected_level: int = 1
+var battle_level_choice_line_edit: LineEdit
 var reset_progress_confirm_dialog: ConfirmationDialog
 var mute_button: Button
 var settings_button: Button
@@ -372,7 +377,7 @@ func _on_go_again_pressed() -> void :
         _update_go_again_button_state()
         return
     if _is_simulation_upgrade_tree():
-        var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, 3)
+        var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, SaveHandler.MAX_FISHING_BATTLE_LEVEL)
         if max_level <= 1:
             _launch_battle_at_level(1)
         else:
@@ -448,6 +453,7 @@ func _show_battle_level_choice_dialog(max_level: int) -> void:
         _launch_battle_at_level(clamp(SaveHandler.fishing_next_battle_level, 1, max_level))
         return
 
+    battle_level_choice_selected_level = clamp(SaveHandler.fishing_next_battle_level, 1, max_level)
     battle_level_choice_dialog.dialog_text = ""
     _rebuild_battle_level_choice_dialog_content(max_level)
     _style_battle_level_choice_dialog()
@@ -474,6 +480,7 @@ func _style_battle_level_choice_dialog() -> void:
 func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
     if battle_level_choice_dialog == null:
         return
+    battle_level_choice_line_edit = null
     var existing: Control = battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent")
     if existing != null:
         existing.queue_free()
@@ -500,15 +507,54 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
     vbox.add_theme_constant_override("separation", 16)
     margin.add_child(vbox)
 
-    for level in range(1, max_level + 1):
-        var button := Button.new()
-        button.name = "BattleLevelChoiceButton%d" % level
-        button.text = "Level %d" % level
-        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
-        button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
-        button.pressed.connect(_on_battle_level_choice_button_pressed.bind(level))
-        vbox.add_child(button)
+    if max_level <= 4:
+        for level in range(1, max_level + 1):
+            var button := Button.new()
+            button.name = "BattleLevelChoiceButton%d" % level
+            button.text = "Level %d" % level
+            button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+            button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
+            button.pressed.connect(_on_battle_level_choice_button_pressed.bind(level))
+            vbox.add_child(button)
+    else:
+        var prompt := Label.new()
+        prompt.text = "Select a battle level from 1 to %d." % max_level
+        prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        prompt.add_theme_font_size_override("font_size", 28)
+        vbox.add_child(prompt)
+
+        var selector_row := HBoxContainer.new()
+        selector_row.alignment = BoxContainer.ALIGNMENT_CENTER
+        selector_row.add_theme_constant_override("separation", 18)
+        selector_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        selector_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        vbox.add_child(selector_row)
+
+        var minus_button := Button.new()
+        minus_button.text = "-"
+        minus_button.custom_minimum_size = Vector2(BATTLE_LEVEL_SELECTOR_BUTTON_WIDTH, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+        minus_button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
+        minus_button.pressed.connect(_on_battle_level_choice_adjust_pressed.bind(-1, max_level))
+        selector_row.add_child(minus_button)
+
+        battle_level_choice_line_edit = LineEdit.new()
+        battle_level_choice_line_edit.name = "BattleLevelChoiceLineEdit"
+        battle_level_choice_line_edit.text = str(battle_level_choice_selected_level)
+        battle_level_choice_line_edit.custom_minimum_size = Vector2(BATTLE_LEVEL_SELECTOR_INPUT_WIDTH, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+        battle_level_choice_line_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+        battle_level_choice_line_edit.max_length = len(str(max_level))
+        battle_level_choice_line_edit.add_theme_font_size_override("font_size", BATTLE_LEVEL_SELECTOR_FONT_SIZE)
+        battle_level_choice_line_edit.text_submitted.connect(_on_battle_level_choice_text_submitted.bind(max_level))
+        battle_level_choice_line_edit.focus_exited.connect(_on_battle_level_choice_input_focus_exited.bind(max_level))
+        selector_row.add_child(battle_level_choice_line_edit)
+
+        var plus_button := Button.new()
+        plus_button.text = "+"
+        plus_button.custom_minimum_size = Vector2(BATTLE_LEVEL_SELECTOR_BUTTON_WIDTH, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+        plus_button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
+        plus_button.pressed.connect(_on_battle_level_choice_adjust_pressed.bind(1, max_level))
+        selector_row.add_child(plus_button)
 
     var cancel_button := Button.new()
     cancel_button.name = "BattleLevelChoiceCancelButton"
@@ -519,19 +565,63 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
     cancel_button.pressed.connect(_on_battle_level_choice_cancel_pressed)
     vbox.add_child(cancel_button)
 
+    if max_level > 4:
+        var confirm_button := Button.new()
+        confirm_button.name = "BattleLevelChoiceConfirmButton"
+        confirm_button.text = "Confirm"
+        confirm_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        confirm_button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
+        confirm_button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
+        confirm_button.pressed.connect(_on_battle_level_choice_confirm_pressed.bind(max_level))
+        vbox.add_child(confirm_button)
+
+        if battle_level_choice_line_edit != null:
+            battle_level_choice_line_edit.grab_focus()
+            battle_level_choice_line_edit.select_all()
+
 func _on_battle_level_choice_button_pressed(level: int) -> void:
     _launch_battle_at_level(level)
+
+func _on_battle_level_choice_adjust_pressed(delta: int, max_level: int) -> void:
+    battle_level_choice_selected_level = clamp(battle_level_choice_selected_level + delta, 1, max_level)
+    _update_battle_level_choice_line_edit()
+
+func _on_battle_level_choice_text_submitted(_text: String, max_level: int) -> void:
+    _sync_battle_level_choice_from_input(max_level)
+
+func _on_battle_level_choice_input_focus_exited(max_level: int) -> void:
+    _sync_battle_level_choice_from_input(max_level)
+
+func _on_battle_level_choice_confirm_pressed(max_level: int) -> void:
+    _sync_battle_level_choice_from_input(max_level)
+    _launch_battle_at_level(battle_level_choice_selected_level)
 
 func _on_battle_level_choice_cancel_pressed() -> void:
     if battle_level_choice_dialog != null:
         battle_level_choice_dialog.hide()
 
 func _launch_battle_at_level(level: int) -> void:
-    var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, 3)
+    var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, SaveHandler.MAX_FISHING_BATTLE_LEVEL)
     SaveHandler.fishing_next_battle_level = clamp(level, 1, max_level)
     SaveHandler.save_fishing_progress()
     _cache_tech_tree_for_reuse()
     SceneChanger.change_to_new_scene(Util.PATH_FISHING_BATTLE)
+
+func _sync_battle_level_choice_from_input(max_level: int) -> void:
+    if battle_level_choice_line_edit == null:
+        return
+    var raw_text: String = battle_level_choice_line_edit.text.strip_edges()
+    if raw_text == "":
+        battle_level_choice_selected_level = clamp(battle_level_choice_selected_level, 1, max_level)
+    else:
+        battle_level_choice_selected_level = clamp(int(raw_text), 1, max_level)
+    _update_battle_level_choice_line_edit()
+
+func _update_battle_level_choice_line_edit() -> void:
+    if battle_level_choice_line_edit == null:
+        return
+    battle_level_choice_line_edit.text = str(battle_level_choice_selected_level)
+    battle_level_choice_line_edit.caret_column = battle_level_choice_line_edit.text.length()
 
 func _setup_editor_cash_controls() -> void:
     if not OS.has_feature("editor"):
@@ -670,8 +760,8 @@ func _on_editor_unlock_all_pressed() -> void:
         var level: int = int(max_level_by_key[key])
         SaveHandler.fishing_unlocked_upgrades[key] = level
         SaveHandler.fishing_active_upgrades[key] = true
-    SaveHandler.fishing_max_unlocked_battle_level = 3
-    SaveHandler.fishing_next_battle_level = 3
+    SaveHandler.fishing_max_unlocked_battle_level = SaveHandler.MAX_FISHING_BATTLE_LEVEL
+    SaveHandler.fishing_next_battle_level = SaveHandler.MAX_FISHING_BATTLE_LEVEL
     SaveHandler.save_fishing_progress()
 
     _reload_simulation_upgrade_tree_from_save()
