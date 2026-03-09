@@ -336,8 +336,11 @@ func _describe_core_upgrade(key: String, level: int) -> String:
         var total: int = int((pow(3, level + 1) - 3) / 2) if level >= 1 else 0
         return "Reduces regular enemy contact damage taken by %d (3x per level, cumulative over %d purchases)." % [total, level]
     if key.begins_with("core_armor_dot_"):
-        var total: int = int((pow(3, level + 1) - 3) / 2) if level >= 1 else 0
-        return "Reduces damage-over-time taken by %d (3x per level, cumulative over %d purchases)." % [total, level]
+        var track: int = int(key.trim_prefix("core_armor_dot_"))
+        var max_level: int = 5 if track <= 3 else (4 if track == 4 else 3)  # Tracks 1-3: 5 levels; 4: 4 levels; 5: 3 levels
+        var effective_level: int = mini(level, max_level)
+        var total: int = int((pow(3, effective_level + 1) - 3) / 2) if effective_level >= 1 else 0
+        return "Reduces damage-over-time taken by %d (3x per level, cumulative over %d purchases)." % [total, effective_level]
     if key.begins_with("core_armor_boss_"):
         var total: int = int((pow(3, level + 2) - 9) / 2) if level >= 1 else 0
         return "Reduces boss damage taken by %d (3x per level, cumulative over %d purchases)." % [total, level]

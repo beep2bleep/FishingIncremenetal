@@ -3591,6 +3591,7 @@ func _max_health() -> float:
 func _max_power() -> float:
     var cap: float = 100.0
     cap += float(battle_mods.get("power_cap_bonus", 0.0))
+    cap *= float(battle_mods.get("power_cap_mult", 1.0))
     return cap
 
 func _on_hero_clicked(hero: CombatSprite, hero_name: String, skip_anim: bool = false) -> void:
@@ -3781,6 +3782,7 @@ func _rebuild_battle_mods() -> void:
         "cursor_bonus": 0.0,
         "power_gain_mult": 1.0,
         "power_cap_bonus": 0.0,
+        "power_cap_mult": 1.0,
         "active_cost_mult": 1.0,
         "active_cd_mult": 1.0,
         "armor_bonus": 0.0,
@@ -3809,6 +3811,7 @@ func _rebuild_battle_mods() -> void:
     battle_mods["coin_mult"] = 1.0 + (float(battle_mods["coin_mult"]) - 1.0) * float(UPGRADE_EFFECT_TUNE["coin"])
     battle_mods["power_gain_mult"] = 1.0 + (float(battle_mods["power_gain_mult"]) - 1.0) * float(UPGRADE_EFFECT_TUNE["power_gain"])
     battle_mods["power_cap_bonus"] = float(battle_mods["power_cap_bonus"]) * float(UPGRADE_EFFECT_TUNE["power_cap"])
+    battle_mods["power_cap_mult"] = 1.0 + (float(battle_mods.get("power_cap_mult", 1.0)) - 1.0) * float(UPGRADE_EFFECT_TUNE["power_cap"])
     battle_mods["armor_bonus"] = float(battle_mods["armor_bonus"]) * float(UPGRADE_EFFECT_TUNE["armor"])
     battle_mods["enemy_count_mult"] = 1.0 + (float(battle_mods["enemy_count_mult"]) - 1.0) * float(UPGRADE_EFFECT_TUNE["enemy_count"])
 
@@ -3830,12 +3833,12 @@ func _apply_upgrade_key_modifiers(key: String, level: int) -> void:
         battle_mods["health_mult"] = pow(1.2, level)
         return
     if key == "vitality_power":
-        battle_mods["power_gain_mult"] = float(battle_mods["power_gain_mult"]) + 0.05 * level
-        battle_mods["power_cap_bonus"] = float(battle_mods["power_cap_bonus"]) + 5.0 * level
+        battle_mods["power_gain_mult"] = float(battle_mods["power_gain_mult"]) * pow(1.05, level)
+        battle_mods["power_cap_mult"] = float(battle_mods["power_cap_mult"]) * pow(1.05, level)
         return
     if key == "vitality_channel":
-        battle_mods["active_duration_mult"] = 1.0 + 0.05 * level
-        battle_mods["active_cost_extra_mult"] = 1.0 + 0.05 * level
+        battle_mods["active_duration_mult"] = float(battle_mods["active_duration_mult"]) * pow(1.05, level)
+        battle_mods["active_cost_extra_mult"] = float(battle_mods["active_cost_extra_mult"]) * pow(1.05, level)
         return
 
     if key == "core_armor":
@@ -3846,7 +3849,10 @@ func _apply_upgrade_key_modifiers(key: String, level: int) -> void:
         battle_mods["enemy_flat_damage_reduction"] = float(battle_mods["enemy_flat_damage_reduction"]) + total
         return
     if key.begins_with("core_armor_dot_"):
-        var total: float = (pow(3, level + 1) - 3.0) / 2.0 if level >= 1 else 0.0
+        var track: int = int(key.trim_prefix("core_armor_dot_"))
+        var max_level: int = 5 if track <= 3 else (4 if track == 4 else 3)  # Tracks 1-3: 5 levels; 4: 4 levels; 5: 3 levels
+        var effective_level: int = mini(level, max_level)
+        var total: float = (pow(3, effective_level + 1) - 3.0) / 2.0 if effective_level >= 1 else 0.0
         battle_mods["dot_flat_damage_reduction"] = float(battle_mods["dot_flat_damage_reduction"]) + total
         return
     if key.begins_with("core_armor_boss_"):
