@@ -1982,13 +1982,13 @@ func _simulate_step(delta: float, skip_visual_updates: bool = false) -> void:
 func _spawn_loop(delta: float) -> void:
     if battle_completed:
         return
+    spawn_timer -= delta
     if _should_spawn_boss_immediately():
         _spawn_boss_for_level(current_level)
         boss_spawned = true
         boss_alive = true
         spawn_timer = 2.0
         return
-    spawn_timer -= delta
     if spawn_timer > 0.0:
         return
 
@@ -2711,18 +2711,9 @@ func _enemy_offscreen_speed_mult(enemy: CombatSprite) -> float:
         return 1.0
     var enemy_rect: Rect2 = _enemy_world_rect(enemy)
     var inside_count: int = _enemy_count_in_touch_camera_area(touch_area)
-    if inside_count <= 0:
-        return ENEMY_OFFSCREEN_SPEEDUP_MAX_MULT if not enemy_rect.intersects(touch_area) else 1.0
-    var overflow_left: float = max(0.0, touch_area.position.x - enemy_rect.end.x)
-    var overflow_right: float = max(0.0, enemy_rect.position.x - touch_area.end.x)
-    var overflow_top: float = max(0.0, touch_area.position.y - enemy_rect.end.y)
-    var overflow_bottom: float = max(0.0, enemy_rect.position.y - touch_area.end.y)
-    var overflow: float = max(max(overflow_left, overflow_right), max(overflow_top, overflow_bottom))
-    if overflow <= 0.0:
+    if inside_count > 0:
         return 1.0
-    var ramp_distance: float = max(1.0, touch_area.size.x)
-    var t: float = clamp(overflow / ramp_distance, 0.0, 1.0)
-    return lerpf(1.0, ENEMY_OFFSCREEN_SPEEDUP_MAX_MULT, t)
+    return ENEMY_OFFSCREEN_SPEEDUP_MAX_MULT if not enemy_rect.intersects(touch_area) else 1.0
 
 func _touch_camera_world_rect() -> Rect2:
     var viewport_size: Vector2 = get_viewport_rect().size

@@ -101,6 +101,7 @@ func _ready() -> void :
 func _on_tech_tree_build_completed() -> void:
     if not is_active:
         return
+    _sync_simulation_currency_from_save()
     update_input(ControllerIcons.get_last_input_type())
     _update_go_again_button_state()
 
@@ -303,6 +304,7 @@ func update_input(input_type):
 
 func show_screen():
     _ensure_tree_initialized()
+    _sync_simulation_currency_from_save()
     is_active = true
 
     %CanvasLayer.show()
@@ -382,9 +384,9 @@ func _on_go_again_pressed() -> void :
 func _on_tech_tree_selected_node_changed(new_selected_node: TechTreeNode) -> void :
     if ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER:
         if new_selected_node != null:
-            %"Tech Tree".tween_to_pos( - new_selected_node.position)
+            tech_tree.tween_to_pos( - new_selected_node.position)
         else:
-            %"Tech Tree".tween_to_pos(Vector2.ZERO)
+            tech_tree.tween_to_pos(Vector2.ZERO)
 
 func _is_simulation_upgrade_tree() -> bool:
     for upgrade_variant: Variant in Global.game_mode_data_manager.upgrades.values():
@@ -410,14 +412,20 @@ func _ensure_tree_initialized(force_rebuild: bool = false) -> void:
 
     if _is_simulation_upgrade_tree_requested() or _is_simulation_upgrade_tree():
         FishingUpgradeTreeAdapter.apply_simulation_upgrades()
-
-        var current_money: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
-        var target_money: int = int(SaveHandler.fishing_currency)
-        if current_money != target_money:
-            Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, target_money - current_money)
+        _sync_simulation_currency_from_save()
 
     tech_tree.setup()
     tree_initialized = true
+
+func _sync_simulation_currency_from_save() -> void:
+    if not (_is_simulation_upgrade_tree_requested() or _is_simulation_upgrade_tree()):
+        return
+    if Global.global_resoruce_manager == null:
+        return
+    var current_money: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
+    var target_money: int = int(SaveHandler.fishing_currency)
+    if current_money != target_money:
+        Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, target_money - current_money)
 
 func _setup_battle_level_choice_dialog() -> void:
     var parent_layer: CanvasLayer = %CanvasLayer2
