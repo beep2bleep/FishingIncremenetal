@@ -2101,12 +2101,9 @@ func _simulate_step(delta: float, skip_visual_updates: bool = false) -> void:
         shield_time = max(0.0, shield_time - delta)
 
     var lp: Dictionary = _level_params(current_level)
-    var armor_scale: float = _player_armor_scale()
-    if shield_time > 0.0:
-        armor_scale *= 0.4
-    var dot_damage_per_second: float = float(lp["dot_dps"]) * _enemy_dot_mult() * armor_scale
-    dot_damage_per_second = max(0.0, dot_damage_per_second - _player_dot_damage_block())
-    _apply_player_damage(dot_damage_per_second * delta, Vector2(_frontline_x() - 20.0, FLOOR_Y - 140.0))
+    var raw_dot_damage_per_second: float = float(lp["dot_dps"]) * _enemy_dot_mult()
+    var dot_damage: float = _mitigated_player_damage(raw_dot_damage_per_second, delta, _player_dot_damage_block())
+    _apply_player_damage(dot_damage, Vector2(_frontline_x() - 20.0, FLOOR_Y - 140.0))
 
 func _spawn_loop(delta: float) -> void:
     if battle_completed:
@@ -2661,10 +2658,6 @@ func _update_arrows(delta: float) -> void:
             continue
 
 func _update_enemies(delta: float) -> void:
-    var armor_scale: float = _player_armor_scale()
-    if shield_time > 0.0:
-        armor_scale *= 0.4
-
     var frontline_x: float = _frontline_x()
     var alive_sorted: Array[CombatSprite] = []
     for enemy in enemies:
@@ -2720,10 +2713,10 @@ func _update_enemies(delta: float) -> void:
                         enemy_data[attacker] = attacker_data
                         if attacker == enemy:
                             e = attacker_data
-                var contact_damage_per_second: float = total_contact_dps * armor_scale
+                var raw_contact_damage_per_second: float = total_contact_dps
                 var flat_block: float = _player_boss_damage_block() if bool(e.get("is_boss", false)) else _player_enemy_damage_block()
-                contact_damage_per_second = max(0.0, contact_damage_per_second - flat_block)
-                _apply_player_damage(contact_damage_per_second * delta, enemy.position + Vector2(0.0, -90.0))
+                var contact_damage: float = _mitigated_player_damage(raw_contact_damage_per_second, delta, flat_block)
+                _apply_player_damage(contact_damage, enemy.position + Vector2(0.0, -90.0))
 
         _update_enemy_health_bar(enemy, e)
         enemy_data[enemy] = e
@@ -4175,6 +4168,24 @@ func _player_dot_damage_block() -> float:
 
 func _player_boss_damage_block() -> float:
     return float(battle_mods.get("boss_flat_damage_reduction", 0.0))
+
+func _mitigated_player_damage(raw_damage_per_second: float, delta: float, flat_block_per_second: float = 0.0) -> float:
+    if raw_damage_per_second <= 0.0 or delta <= 0.0:
+        return 0.0
+
+    var raw_amount: float = raw_damage_per_second * delta
+    var mitigated_per_second: float = raw_damage_per_second * _player_armor_scale()
+    if shield_time > 0.0:
+        mitigated_per_second *= 0.4
+    mitigated_per_second = max(0.0, mitigated_per_second - max(0.0, flat_block_per_second))
+    var mitigated: float = mitigated_per_second * delta
+
+    if shield_time > 0.0:
+        return mitigated
+
+    var max_block: float = floor(raw_damage_per_second * 0.9) * delta
+    var final_damage: float = max(raw_amount - max_block, mitigated)
+    return max(1.0, ceil(final_damage))
 
 func _update_hero_damage_float(delta: float) -> void:
     if suppress_floating_text:
