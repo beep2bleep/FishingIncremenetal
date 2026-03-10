@@ -20,6 +20,7 @@ var is_attacking := false
 var is_defeated := false
 var base_sprite_scale: Vector2 = Vector2.ONE
 var base_sprite_modulate: Color = Color(1.0, 1.0, 1.0, 1.0)
+var backing_base_offset: Vector2 = BACKING_OFFSET
 var weapon_type: String = ""
 var weapon_base_offset: Vector2 = Vector2.ZERO
 var weapon_idle_offset: Vector2 = Vector2.ZERO
@@ -27,6 +28,8 @@ var weapon_float_phase: float = 0.0
 var weapon_float_speed: float = 2.8
 var weapon_float_amp: float = 2.2
 var weapon_attack_tween: Tween = null
+var attack_shake_tween: Tween = null
+var attack_visual_offset: Vector2 = Vector2.ZERO
 var weapon_attack_base_offset: Vector2 = Vector2.ZERO
 var sway_tween: Tween = null
 var sway_min_degrees: float = ROTATION_SWAY_MIN_DEGREES
@@ -93,7 +96,8 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := 
     backing_sprite.centered = true
     sprite.scale = Vector2.ONE * scale_factor
     backing_sprite.scale = Vector2.ONE * (scale_factor + BACKING_SCALE_BONUS)
-    backing_sprite.position = BACKING_OFFSET * max(1.0, scale_factor * BACKING_OFFSET_SCALE_MULT)
+    backing_base_offset = BACKING_OFFSET * max(1.0, scale_factor * BACKING_OFFSET_SCALE_MULT)
+    _apply_visual_offsets()
     sprite.modulate = base_sprite_modulate
     backing_sprite.modulate = BACKING_TINT
     base_sprite_scale = sprite.scale
@@ -142,10 +146,12 @@ func trigger_attack(strength: float = 1.0, force_restart: bool = false) -> void:
         return
     if is_defeated:
         is_attacking = false
+        _stop_attack_shake()
         _stop_weapon_tween()
         return
     is_attacking = false
     _sync_sprite_stack("walk")
+    _stop_attack_shake()
     sprite.scale = base_sprite_scale
     backing_sprite.scale = base_sprite_scale + Vector2.ONE * BACKING_SCALE_BONUS
     sprite.modulate = base_sprite_modulate
@@ -167,6 +173,7 @@ func set_defeated() -> void:
     is_defeated = true
     is_attacking = false
     _stop_sway_motion()
+    _stop_attack_shake()
     _stop_weapon_tween()
     if sprite.sprite_frames != null and sprite.sprite_frames.has_animation("walk"):
         _sync_sprite_stack("walk")
@@ -180,13 +187,14 @@ func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> voi
         clicked.emit(self)
 
 func _process(delta: float) -> void:
+    _apply_visual_offsets()
     if weapon_layer == null or weapon_layer.get_child_count() == 0:
         return
     if is_defeated:
         return
     weapon_float_phase += delta * weapon_float_speed
     var bob_y: float = sin(weapon_float_phase) * weapon_float_amp
-    weapon_layer.position = weapon_base_offset + weapon_idle_offset + Vector2(0.0, bob_y)
+    _update_weapon_layer_position(bob_y)
 
 func _setup_weapon_visual(role: String, frame_size: Vector2i, scale_factor: float) -> void:
     if weapon_layer == null:
@@ -270,13 +278,31 @@ func get_projectile_spawn_point() -> Vector2:
         return weapon_layer.to_global(ARCHER_BOW_CENTER_LOCAL)
     return global_position + Vector2(26.0, -12.0)
 
+func _apply_visual_offsets() -> void:
+    if sprite != null:
+        sprite.position = attack_visual_offset
+    if backing_sprite != null:
+        backing_sprite.position = backing_base_offset + attack_visual_offset
+
+func _update_weapon_layer_position(bob_y: float = 0.0) -> void:
+    if weapon_layer != null:
+        weapon_layer.position = weapon_base_offset + weapon_idle_offset + attack_visual_offset + Vector2(0.0, bob_y)
+
+func _stop_attack_shake() -> void:
+    if attack_shake_tween != null:
+        attack_shake_tween.kill()
+        attack_shake_tween = null
+    attack_visual_offset = Vector2.ZERO
+    _apply_visual_offsets()
+    _update_weapon_layer_position()
+
 func _stop_weapon_tween() -> void:
     if weapon_attack_tween != null:
         weapon_attack_tween.kill()
         weapon_attack_tween = null
     if weapon_layer != null:
         weapon_layer.rotation = 0.0
-        weapon_layer.position = weapon_base_offset + weapon_idle_offset
+        _update_weapon_layer_position()
 
 func _attack_animation_duration() -> float:
     if sprite == null or sprite.sprite_frames == null or not sprite.sprite_frames.has_animation("attack"):
@@ -336,7 +362,6 @@ func _play_weapon_attack_motion(strength: float = 1.0) -> void:
 func _play_attack_telegraph(strength: float = 1.0) -> void:
     if sprite == null:
         return
-    var base_pos: Vector2 = position
     var attack_strength: float = clamp(strength, 0.0, 1.0)
     var tween: Tween = create_tween().set_parallel(true)
     tween.tween_property(sprite, "scale", base_sprite_scale * lerpf(1.08, 1.16, attack_strength), 0.06).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -345,11 +370,18 @@ func _play_attack_telegraph(strength: float = 1.0) -> void:
     tween.chain().tween_property(sprite, "modulate", Color(1.25, 1.25, 1.1, 1.0), 0.04).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
     tween.chain().tween_property(sprite, "modulate", base_sprite_modulate, 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
-    var shake: Tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-    shake.tween_property(self, "position", base_pos + Vector2(3.0, 0.0) * attack_strength, 0.025)
-    shake.tween_property(self, "position", base_pos + Vector2(-3.0, 0.0) * attack_strength, 0.03)
-    shake.tween_property(self, "position", base_pos + Vector2(2.0, 0.0) * attack_strength, 0.03)
-    shake.tween_property(self, "position", base_pos + Vector2(-2.0, 0.0) * attack_strength, 0.03)
-    shake.tween_property(self, "position", base_pos, 0.03)
+    _stop_attack_shake()
+    attack_shake_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    attack_shake_tween.tween_property(self, "attack_visual_offset", Vector2(3.0, 0.0) * attack_strength, 0.025)
+    attack_shake_tween.tween_property(self, "attack_visual_offset", Vector2(-3.0, 0.0) * attack_strength, 0.03)
+    attack_shake_tween.tween_property(self, "attack_visual_offset", Vector2(2.0, 0.0) * attack_strength, 0.03)
+    attack_shake_tween.tween_property(self, "attack_visual_offset", Vector2(-2.0, 0.0) * attack_strength, 0.03)
+    attack_shake_tween.tween_property(self, "attack_visual_offset", Vector2.ZERO, 0.03)
+    attack_shake_tween.finished.connect(func() -> void:
+        attack_shake_tween = null
+        attack_visual_offset = Vector2.ZERO
+        _apply_visual_offsets()
+        _update_weapon_layer_position()
+    )
 
     tween.chain().tween_property(sprite, "scale", base_sprite_scale, 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)

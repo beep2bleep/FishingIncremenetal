@@ -64,17 +64,17 @@ text_editor/behavior/indent/type=1
 
 enabled=PackedStringArray("res://addons/controller_icons/plugin.cfg")
 
-[global]
-
-Build="v1.3.1"
-Demo=false
-
 [gameanalytics]
 
 build="v1.3.1"
 game_key="de9707a68cd6fe69f19a31bf0c9efc3a"
 secret_key="705c5804eacaa943ebf386f91feec118cf4a01f2"
 info_log=true
+
+[global]
+
+Build="v1.3.1"
+Demo=false
 
 [input]
 

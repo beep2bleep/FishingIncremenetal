@@ -50,6 +50,7 @@ const UFO_SPAWN_MARGIN_X := 220.0
 const UFO_CLOUD_OFFSET_MIN := 28.0
 const UFO_CLOUD_OFFSET_MAX := 92.0
 const DEFEAT_FALL_DURATION := 1.2
+const ARROW_KILL_DESPAWN_DURATION := 0.2
 const DEFEAT_FALL_ROT_SPEED := 1.8
 const ARROW_KILL_GRAVITY_SCALE := 1.0 / 3.0
 const BG_BASE_SKY_Y := 220.0
@@ -174,6 +175,62 @@ const PACK_ENEMY_WEB_VARIANTS := [
         "rest": preload("res://PlatformingPack/Sprites/Enemies/Double/mouse_rest.png"),
         "speed": 55.0,
         "coins": 12,
+    },
+    {
+        "key": "double_fish_blue",
+        "walk_a": preload("res://PlatformingPack/Sprites/Enemies/Double/fish_blue_swim_a.png"),
+        "walk_b": preload("res://PlatformingPack/Sprites/Enemies/Double/fish_blue_swim_b.png"),
+        "rest": preload("res://PlatformingPack/Sprites/Enemies/Double/fish_blue_rest.png"),
+        "speed": 68.0,
+        "coins": 14,
+    },
+    {
+        "key": "double_fish_yellow",
+        "walk_a": preload("res://PlatformingPack/Sprites/Enemies/Double/fish_yellow_swim_a.png"),
+        "walk_b": preload("res://PlatformingPack/Sprites/Enemies/Double/fish_yellow_swim_b.png"),
+        "rest": preload("res://PlatformingPack/Sprites/Enemies/Double/fish_yellow_rest.png"),
+        "speed": 68.0,
+        "coins": 14,
+    },
+    {
+        "key": "double_ladybug",
+        "walk_a": preload("res://PlatformingPack/Sprites/Enemies/Double/ladybug_walk_a.png"),
+        "walk_b": preload("res://PlatformingPack/Sprites/Enemies/Double/ladybug_walk_b.png"),
+        "rest": preload("res://PlatformingPack/Sprites/Enemies/Double/ladybug_rest.png"),
+        "speed": 68.0,
+        "coins": 14,
+    },
+    {
+        "key": "double_saw",
+        "walk_a": preload("res://PlatformingPack/Sprites/Enemies/Double/saw_a.png"),
+        "walk_b": preload("res://PlatformingPack/Sprites/Enemies/Double/saw_b.png"),
+        "rest": preload("res://PlatformingPack/Sprites/Enemies/Double/saw_rest.png"),
+        "speed": 62.0,
+        "coins": 16,
+    },
+    {
+        "key": "double_snail",
+        "walk_a": preload("res://PlatformingPack/Sprites/Enemies/Double/snail_walk_a.png"),
+        "walk_b": preload("res://PlatformingPack/Sprites/Enemies/Double/snail_walk_b.png"),
+        "rest": preload("res://PlatformingPack/Sprites/Enemies/Double/snail_rest.png"),
+        "speed": 36.0,
+        "coins": 15,
+    },
+    {
+        "key": "double_worm_normal",
+        "walk_a": preload("res://PlatformingPack/Sprites/Enemies/Double/worm_normal_move_a.png"),
+        "walk_b": preload("res://PlatformingPack/Sprites/Enemies/Double/worm_normal_move_b.png"),
+        "rest": preload("res://PlatformingPack/Sprites/Enemies/Double/worm_normal_rest.png"),
+        "speed": 36.0,
+        "coins": 15,
+    },
+    {
+        "key": "double_worm_ring",
+        "walk_a": preload("res://PlatformingPack/Sprites/Enemies/Double/worm_ring_move_a.png"),
+        "walk_b": preload("res://PlatformingPack/Sprites/Enemies/Double/worm_ring_move_b.png"),
+        "rest": preload("res://PlatformingPack/Sprites/Enemies/Double/worm_ring_rest.png"),
+        "speed": 36.0,
+        "coins": 15,
     },
 ]
 const ENEMY_POOL_PER_LEVEL := 4
@@ -1760,15 +1817,45 @@ func _is_pack_enemy_allowed(base_name: String) -> bool:
     return true
 
 func _assign_level_enemy_pools(candidate_keys: Array[String]) -> void:
-    var source: Array[String] = candidate_keys.duplicate()
+    var source: Array[String] = []
+    var seen: Dictionary = {}
+    for key_variant in candidate_keys:
+        var key: String = str(key_variant)
+        if seen.has(key):
+            continue
+        seen[key] = true
+        source.append(key)
     if source.is_empty():
         source = ["goblin", "brute", "flyer"]
+    source.sort()
     level_enemy_pools.clear()
-    for level_index_variant in LEVEL_ENEMY_TYPE.keys():
-        var level_index: int = int(level_index_variant)
-        level_enemy_pools[level_index] = [str(LEVEL_ENEMY_TYPE[level_index])]
+    level_enemy_pools[1] = _fixed_enemy_pool(["double_mouse", "double_snail", "double_bee", "double_fly"], source)
+    level_enemy_pools[2] = _fixed_enemy_pool(["double_saw", "double_worm_normal", "double_fish_yellow", "double_bee"], source)
+    level_enemy_pools[3] = _fixed_enemy_pool(["double_fly", "double_worm_ring", "double_ladybug", "double_fish_blue"], source)
     for level_index in range(4, SaveHandler.MAX_FISHING_BATTLE_LEVEL + 1):
-        level_enemy_pools[level_index] = _pick_random_enemy_subset(source, ENEMY_POOL_PER_LEVEL)
+        level_enemy_pools[level_index] = _build_rotating_enemy_pool(source, level_index, ENEMY_POOL_PER_LEVEL)
+
+func _fixed_enemy_pool(preferred_keys: Array[String], source: Array[String]) -> Array[String]:
+    var pool: Array[String] = []
+    var available: Dictionary = {}
+    for key in source:
+        available[key] = true
+    for key in preferred_keys:
+        if enemy_defs.has(key) or available.has(key):
+            pool.append(key)
+    if pool.is_empty():
+        pool = _build_rotating_enemy_pool(source, 1, min(3, max(1, source.size())))
+    return pool
+
+func _build_rotating_enemy_pool(source: Array[String], level_index: int, count: int) -> Array[String]:
+    if source.is_empty():
+        return ["goblin", "brute", "flyer"]
+    var limit: int = min(count, source.size())
+    var start: int = posmod((level_index - 4) * 2, source.size())
+    var result: Array[String] = []
+    for i in range(limit):
+        result.append(str(source[(start + i) % source.size()]))
+    return result
 
 func _pick_random_enemy_subset(source: Array[String], count: int) -> Array[String]:
     var bag: Array[String] = source.duplicate()
@@ -2596,10 +2683,11 @@ func _update_enemies(delta: float) -> void:
         var e: Dictionary = enemy_data[enemy]
         if bool(e.get("defeated_falling", false)):
             var gravity: float = float(ProjectSettings.get_setting("physics/2d/default_gravity", 980.0)) * ARROW_KILL_GRAVITY_SCALE
+            e["defeated_fall_time"] = float(e.get("defeated_fall_time", 0.0)) + delta
             e["fall_velocity_y"] = float(e.get("fall_velocity_y", 0.0)) + gravity * delta
             enemy.position.y += float(e["fall_velocity_y"]) * delta
             enemy.rotation = lerp_angle(enemy.rotation, PI * 0.5, min(1.0, delta * DEFEAT_FALL_ROT_SPEED * 2.0))
-            if enemy.position.y > _character_feet_y():
+            if enemy.position.y > _character_feet_y() or float(e["defeated_fall_time"]) >= ARROW_KILL_DESPAWN_DURATION:
                 _despawn_enemy(enemy)
                 continue
             enemy_data[enemy] = e
@@ -3219,6 +3307,7 @@ func _start_enemy_arrow_fall(enemy: CombatSprite, e: Dictionary) -> void:
     enemy.set_defeated()
     _clear_enemy_health_bar(e)
     e["defeated_falling"] = true
+    e["defeated_fall_time"] = 0.0
     e["fall_velocity_y"] = 0.0
     enemy_data[enemy] = e
 
@@ -4196,13 +4285,11 @@ func _on_boss_defeated() -> void:
     if battle_completed:
         return
     var level_key: String = str(current_level)
-    var is_first_clear: bool = not bool(SaveHandler.fishing_first_boss_clear_levels.get(level_key, false))
     _track_level_completion_event(current_level)
     _track_first_boss_clear_event(current_level)
     if current_level >= int(SaveHandler.fishing_max_unlocked_battle_level) and current_level < SaveHandler.MAX_FISHING_BATTLE_LEVEL:
         SaveHandler.fishing_max_unlocked_battle_level = current_level + 1
-    if is_first_clear:
-        SaveHandler.fishing_next_battle_level = SaveHandler.fishing_max_unlocked_battle_level
+    SaveHandler.fishing_next_battle_level = SaveHandler.fishing_max_unlocked_battle_level
     # Boss defeated sound
     print("[AUDIO] Boss defeated - playing BUTTON_CLICK")
     _play_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
@@ -4843,7 +4930,10 @@ func _on_continue_button_pressed() -> void:
     # Play continue button click audio
     print("[AUDIO] Continue button pressed - playing BUTTON_CLICK")
     _play_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
-    _set_next_battle_level_and_exit(current_level)
+    var next_level: int = current_level
+    if battle_victory:
+        next_level = _max_unlocked_level()
+    _set_next_battle_level_and_exit(next_level)
 
 func _show_level_choice_dialog(max_level: int) -> void:
     if level_choice_dialog == null:
