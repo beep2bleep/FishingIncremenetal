@@ -25,6 +25,7 @@ const SPECIFIC_DESCRIPTIONS := {
     "battle_speed_unlock_2x": "Unlocks 2x battle speed in non-editor builds.",
     "battle_speed_unlock_4x": "Unlocks 4x battle speed in non-editor builds.",
     "battle_speed_unlock_8x": "Unlocks 8x battle speed in non-editor builds.",
+    "old_art_unlock": "Reveals the Art: Old/New toggle in release builds. Cosmetic only; no gameplay effect.",
     "knight_vamp_unlock": "Unlocks the Knight active and improves life steal sustain.",
     "archer_pierce_unlock": "Unlocks the Archer active with piercing attack coverage.",
     "power_harvest_unlock": "Unlocks stronger power generation from combat and pickups.",
@@ -46,6 +47,7 @@ const SPECIFIC_NAMES := {
     "battle_speed_unlock_2x": "Temportal Throttle",
     "battle_speed_unlock_4x": "Temportal Throttle II",
     "battle_speed_unlock_8x": "Temportal Throttle III",
+    "old_art_unlock": "Archive of First Light",
     "knight_vamp_unlock": "Knight Vampirism Unlock",
     "archer_pierce_unlock": "Archer Pierce Unlock",
     "power_harvest_unlock": "Power Harvest Unlock",
@@ -284,6 +286,8 @@ func get_description(node: Dictionary) -> String:
         return _with_editor_note(node, "Unlocks 4x battle speed.")
     if key == "battle_speed_unlock_8x":
         return _with_editor_note(node, "Unlocks 8x battle speed.")
+    if key == "old_art_unlock":
+        return _with_editor_note(node, "Reveals the Art: Old/New toggle in release builds. Cosmetic only; no gameplay effect.")
     if key == "hero_coin_gain":
         return _with_editor_note(node, "Multiplies coin value by +6% per level (exponential over 20 levels). Applies to coins collected by heroes or cursor.")
     if key == "cursor_capture_gain":

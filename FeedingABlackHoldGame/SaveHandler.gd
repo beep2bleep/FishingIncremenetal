@@ -502,6 +502,7 @@ var fishing_last_battle_summary: Dictionary = {}
 var fishing_next_battle_level := 1
 var fishing_max_unlocked_battle_level := 1
 var fishing_l3_boss_thank_you_shown := false
+var fishing_demo_thank_you_levels_shown: Dictionary = {}
 var fishing_run_clock_seconds := 0.0
 var fishing_l3_boss_clear_clock_seconds := -1.0
 var fishing_first_boss_clear_levels: Dictionary = {}
@@ -517,6 +518,7 @@ func reset_fishing_progress() -> void:
     fishing_next_battle_level = 1
     fishing_max_unlocked_battle_level = 1
     fishing_l3_boss_thank_you_shown = false
+    fishing_demo_thank_you_levels_shown = {}
     fishing_run_clock_seconds = 0.0
     fishing_l3_boss_clear_clock_seconds = -1.0
     fishing_first_boss_clear_levels = {}
@@ -540,6 +542,7 @@ func load_fishing_progress():
     fishing_max_unlocked_battle_level = clamp(int(json_data.get("max_unlocked_battle_level", 1)), 1, MAX_FISHING_BATTLE_LEVEL)
     fishing_next_battle_level = clamp(fishing_next_battle_level, 1, fishing_max_unlocked_battle_level)
     fishing_l3_boss_thank_you_shown = bool(json_data.get("l3_boss_thank_you_shown", false))
+    fishing_demo_thank_you_levels_shown = json_data.get("demo_thank_you_levels_shown", {})
     fishing_run_clock_seconds = max(0.0, float(json_data.get("run_clock_seconds", 0.0)))
     fishing_l3_boss_clear_clock_seconds = float(json_data.get("l3_boss_clear_clock_seconds", -1.0))
     fishing_first_boss_clear_levels = json_data.get("first_boss_clear_levels", {})
@@ -565,6 +568,7 @@ func save_fishing_progress():
         "next_battle_level": fishing_next_battle_level,
         "max_unlocked_battle_level": fishing_max_unlocked_battle_level,
         "l3_boss_thank_you_shown": fishing_l3_boss_thank_you_shown,
+        "demo_thank_you_levels_shown": fishing_demo_thank_you_levels_shown,
         "run_clock_seconds": fishing_run_clock_seconds,
         "l3_boss_clear_clock_seconds": fishing_l3_boss_clear_clock_seconds,
         "first_boss_clear_levels": fishing_first_boss_clear_levels,

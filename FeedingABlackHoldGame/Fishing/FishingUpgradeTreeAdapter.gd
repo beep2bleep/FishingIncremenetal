@@ -390,6 +390,10 @@ static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionar
         if key_to_primary_id.has("battle_speed_unlock_4x"):
             return "battle_speed_unlock_4x"
         return ""
+    if lower == "old_art_unlock":
+        if key_to_primary_id.has("battle_speed_unlock_4x"):
+            return "battle_speed_unlock_4x"
+        return ""
 
     if party_parent_key != "":
         if key_to_primary_id.has(party_parent_key):
@@ -778,6 +782,8 @@ static func _enforce_branch_anchors(grouped_upgrades: Array) -> void:
             "battle_speed_unlock_4x":
                 forced_dep = str(key_to_primary_id.get("battle_speed_unlock_2x", ""))
             "battle_speed_unlock_8x":
+                forced_dep = str(key_to_primary_id.get("battle_speed_unlock_4x", ""))
+            "old_art_unlock":
                 forced_dep = str(key_to_primary_id.get("battle_speed_unlock_4x", ""))
             "party_damage_boost":
                 forced_dep = "__CENTER__"
@@ -1221,6 +1227,7 @@ static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cell
         "recruit_guardian": Vector2(-3, 0),
         "recruit_mage": Vector2(-2, -3),
         "battle_speed_unlock_2x": Vector2(2, -3),
+        "old_art_unlock": Vector2(6, -5),
         "vitality_foundation": Vector2(-3, 2),
     }
     if fixed_root_targets.has(key):

@@ -821,6 +821,23 @@
             "grid_y": 1
         },
         {
+            "id": "old_art_unlock",
+            "key": "old_art_unlock",
+            "level": 1,
+            "is_level_node": false,
+            "name": "ARCHIVE OF FIRST LIGHT",
+            "description": "Recover the crew's first combat render and reveal the Art: Old/New toggle in release builds. Cosmetic only; no effect on damage, speed, or rewards.",
+            "icon": "res://generatedicon/cadence_lock.png",
+            "cost": 105000,
+            "repeatable": false,
+            "growth": 1,
+            "dependency": "battle_speed_unlock_4x",
+            "group": 1,
+            "group_pos": 4,
+            "grid_x": 6,
+            "grid_y": 0
+        },
+        {
             "id": "knight_vamp_unlock",
             "key": "knight_vamp_unlock",
             "level": 1,

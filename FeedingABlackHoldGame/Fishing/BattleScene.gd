@@ -3,6 +3,10 @@ extends Node2D
 const HERO_SCENE: PackedScene = preload("res://Fishing/CombatSprite.tscn")
 const COIN_SCENE: PackedScene = preload("res://Fishing/CoinPickup.tscn")
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
+const DEMO_PROJECT_SETTING := "global/Demo"
+const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
+const DEFAULT_DEMO_WISHLIST_URL := "https://Beep2Bleep.com"
+const DEMO_THANK_YOU_LEVELS := [7, 8]
 
 const HERO_FRAME_SIZE := Vector2i(24, 24)
 const ENEMY_FRAME_SIZE := Vector2i(24, 24)
@@ -385,6 +389,7 @@ var clock_label: Label
 var summary_panel: Panel
 var summary_label: Label
 var continue_button: Button
+var demo_wishlist_button: Button
 var speed_button: Button
 var infinite_sim_button: Button
 var exit_battle_button: Button
@@ -418,10 +423,10 @@ var hero_new_y_debug: Dictionary = {
 var weapon_debug_panel: PanelContainer
 var weapon_debug_value_labels: Dictionary = {}
 var weapon_debug_transforms: Dictionary = {
-    "knight": {"rot": 0.0, "x": 0.0, "y": 0.0},
-    "archer": {"rot": 0.0, "x": 0.0, "y": 0.0},
+    "knight": {"rot": -45.0, "x": 56.0, "y": 12.0},
+    "archer": {"rot": 85.0, "x": -39.0, "y": -90.0},
     "guardian": {"rot": 0.0, "x": 0.0, "y": 0.0},
-    "mage": {"rot": 0.0, "x": 0.0, "y": 0.0},
+    "mage": {"rot": -75.0, "x": 108.0, "y": -5.0},
     "arrow": {"rot": 0.0, "x": 0.0, "y": 0.0},
 }
 
@@ -542,6 +547,7 @@ var ufo_spawn_timer: float = 0.0
 var summary_panel_base_layout: Rect2 = Rect2()
 var summary_label_base_layout: Rect2 = Rect2()
 var continue_button_base_layout: Rect2 = Rect2()
+var demo_wishlist_button_base_layout: Rect2 = Rect2(410.0, 464.0, 270.0, 68.0)
 var touch_camera_left_shift: float = 500.0
 var base_fill_texture: Texture2D
 var mage_pending_strikes: Array[Dictionary] = []
@@ -554,7 +560,7 @@ func _should_show_editor_only_touch_toggle() -> bool:
     return OS.has_feature("editor")
 
 func _should_show_editor_only_hero_set_toggle() -> bool:
-    return OS.has_feature("editor")
+    return OS.has_feature("editor") or SaveHandler.has_fishing_upgrade("old_art_unlock")
 
 func _ready() -> void:
     if not _bind_nodes():
@@ -572,6 +578,7 @@ func _ready() -> void:
     _apply_background_layout_for_input_mode("Loaded %s layout" % ("touch" if SaveHandler.touch_input_mode else "mouse"))
     _spawn_heroes()
     _style_clock_ui()
+    _setup_demo_wishlist_button()
     _style_battle_summary_ui()
     _cache_battle_summary_layout()
     _setup_mute_button()
@@ -584,6 +591,8 @@ func _ready() -> void:
     _setup_new_hero_scale_debug_controls()
     _setup_weapon_debug_controls()
     summary_panel.hide()
+    if demo_wishlist_button != null:
+        demo_wishlist_button.hide()
     _setup_speed_controls()
     _restore_or_reset_ufo_spawn_timer()
     _update_speed_button_enabled_state()
@@ -671,6 +680,7 @@ func _bind_nodes() -> bool:
     summary_panel = get_node_or_null("CanvasLayer/SummaryPanel")
     summary_label = get_node_or_null("CanvasLayer/SummaryPanel/SummaryLabel")
     continue_button = get_node_or_null("CanvasLayer/SummaryPanel/ContinueButton")
+    demo_wishlist_button = get_node_or_null("CanvasLayer/SummaryPanel/DemoWishlistButton")
     level_choice_dialog = get_node_or_null("CanvasLayer/LevelChoiceDialog")
     var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
 
@@ -4921,9 +4931,11 @@ func _end_battle(victory: bool) -> void:
     if is_instance_valid(active_ufo):
         active_ufo.queue_free()
     active_ufo = null
-    _apply_battle_summary_layout(Vector2(1.5, 1.8) if _is_first_level_20_clear() else Vector2.ONE)
+    _apply_battle_summary_layout(Vector2(1.5, 1.8) if _uses_expanded_battle_summary_layout() else Vector2.ONE)
     summary_panel.show()
     continue_button.hide()
+    if demo_wishlist_button != null:
+        demo_wishlist_button.hide()
     _refresh_battle_summary_text()
     _update_speed_button_enabled_state()
     if not victory:
@@ -5032,12 +5044,36 @@ func _build_battle_summary_text(is_live: bool) -> String:
     var is_first_level_20_clear: bool = _is_first_level_20_clear()
     if is_first_level_20_clear:
         summary_text += "\n\nCongratulations on beating level 20!\nLevel 20 clear time: %s\nThanks for playing.\nThis game was created by a single developer.\nPlease leave feedback or email to web@beep2bleep.com if you would like more content.\nCreator: Beep2Bleep." % Util.format_time(SaveHandler.fishing_run_clock_seconds)
+    var demo_thank_you_level: int = _get_demo_thank_you_level()
+    if demo_thank_you_level > 0:
+        summary_text += "\n\nThanks for playing the demo!\nTime to reach Level %d: %s\nThis game was created by a single developer.\nPlease leave feedback or email to web@beep2bleep.com if you would like more content.\nCreator: Beep2Bleep." % [
+            demo_thank_you_level,
+            Util.format_time(SaveHandler.fishing_run_clock_seconds),
+        ]
     if battle_victory and current_level == 3 and SaveHandler.fishing_l3_boss_clear_clock_seconds >= 0.0:
         summary_text += "\n\nLevel 3 clear time: %s" % Util.format_time(SaveHandler.fishing_l3_boss_clear_clock_seconds)
     return summary_text
 
 func _is_first_level_20_clear() -> bool:
     return battle_victory and current_level == 20 and not SaveHandler.fishing_l3_boss_thank_you_shown
+
+func _is_demo_mode_enabled() -> bool:
+    return bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
+
+func _get_demo_wishlist_url() -> String:
+    return str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, DEFAULT_DEMO_WISHLIST_URL)).strip_edges()
+
+func _get_demo_thank_you_level() -> int:
+    if not battle_victory or not _is_demo_mode_enabled():
+        return -1
+    if not DEMO_THANK_YOU_LEVELS.has(current_level):
+        return -1
+    if bool(SaveHandler.fishing_demo_thank_you_levels_shown.get(str(current_level), false)):
+        return -1
+    return current_level
+
+func _uses_expanded_battle_summary_layout() -> bool:
+    return _is_first_level_20_clear() or _get_demo_thank_you_level() > 0
 
 func _rect_from_control_offsets(control: Control) -> Rect2:
     var left: float = control.offset_left
@@ -5058,6 +5094,8 @@ func _cache_battle_summary_layout() -> void:
     summary_panel_base_layout = _rect_from_control_offsets(summary_panel)
     summary_label_base_layout = _rect_from_control_offsets(summary_label)
     continue_button_base_layout = _rect_from_control_offsets(continue_button)
+    if demo_wishlist_button != null:
+        demo_wishlist_button_base_layout = _rect_from_control_offsets(demo_wishlist_button)
 
 func _apply_battle_summary_layout(scale: Vector2) -> void:
     if summary_panel == null or summary_label == null or continue_button == null:
@@ -5074,8 +5112,17 @@ func _apply_battle_summary_layout(scale: Vector2) -> void:
     var scaled_label_rect := Rect2(summary_label_base_layout.position * safe_scale, summary_label_base_layout.size * safe_scale)
     _set_control_offsets_from_rect(summary_label, scaled_label_rect)
 
-    var scaled_button_rect := Rect2(continue_button_base_layout.position * safe_scale, continue_button_base_layout.size * safe_scale)
+    var continue_rect: Rect2 = continue_button_base_layout
+    if _get_demo_thank_you_level() > 0:
+        continue_rect = Rect2(80.0, continue_button_base_layout.position.y, 270.0, continue_button_base_layout.size.y)
+    var scaled_button_rect := Rect2(continue_rect.position * safe_scale, continue_rect.size * safe_scale)
     _set_control_offsets_from_rect(continue_button, scaled_button_rect)
+    if demo_wishlist_button != null:
+        var wishlist_rect: Rect2 = demo_wishlist_button_base_layout
+        if _get_demo_thank_you_level() <= 0:
+            wishlist_rect = Rect2(continue_button_base_layout.position.x, continue_button_base_layout.position.y, continue_button_base_layout.size.x, continue_button_base_layout.size.y)
+        var scaled_wishlist_rect := Rect2(wishlist_rect.position * safe_scale, wishlist_rect.size * safe_scale)
+        _set_control_offsets_from_rect(demo_wishlist_button, scaled_wishlist_rect)
 
 func _style_clock_ui() -> void:
     if clock_panel == null or clock_label == null:
@@ -5435,6 +5482,45 @@ func _style_battle_summary_ui() -> void:
     continue_button.add_theme_stylebox_override("normal", normal)
     continue_button.add_theme_stylebox_override("hover", hover)
     continue_button.add_theme_stylebox_override("pressed", hover)
+    if demo_wishlist_button != null:
+        var wishlist_normal := StyleBoxFlat.new()
+        wishlist_normal.bg_color = Color(0.18, 0.6, 0.24, 1.0)
+        wishlist_normal.border_color = Color(0.78, 1.0, 0.82, 1.0)
+        wishlist_normal.border_width_left = 2
+        wishlist_normal.border_width_top = 2
+        wishlist_normal.border_width_right = 2
+        wishlist_normal.border_width_bottom = 2
+        wishlist_normal.corner_radius_top_left = 4
+        wishlist_normal.corner_radius_top_right = 4
+        wishlist_normal.corner_radius_bottom_left = 4
+        wishlist_normal.corner_radius_bottom_right = 4
+        var wishlist_hover := wishlist_normal.duplicate(true)
+        wishlist_hover.bg_color = Color(0.24, 0.72, 0.3, 1.0)
+        var wishlist_disabled := wishlist_normal.duplicate(true)
+        wishlist_disabled.bg_color = Color(0.26, 0.32, 0.26, 1.0)
+        wishlist_disabled.border_color = Color(0.5, 0.56, 0.5, 1.0)
+        demo_wishlist_button.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0, 1.0))
+        demo_wishlist_button.add_theme_font_size_override("font_size", 26)
+        demo_wishlist_button.add_theme_stylebox_override("normal", wishlist_normal)
+        demo_wishlist_button.add_theme_stylebox_override("hover", wishlist_hover)
+        demo_wishlist_button.add_theme_stylebox_override("pressed", wishlist_hover)
+        demo_wishlist_button.add_theme_stylebox_override("focus", wishlist_hover)
+        demo_wishlist_button.add_theme_stylebox_override("disabled", wishlist_disabled)
+
+func _setup_demo_wishlist_button() -> void:
+    if summary_panel == null:
+        return
+    if demo_wishlist_button == null:
+        demo_wishlist_button = Button.new()
+        demo_wishlist_button.name = "DemoWishlistButton"
+        demo_wishlist_button.text = "Wishlist"
+        summary_panel.add_child(demo_wishlist_button)
+    _set_control_offsets_from_rect(demo_wishlist_button, demo_wishlist_button_base_layout)
+    demo_wishlist_button.visible = false
+    demo_wishlist_button.disabled = _get_demo_wishlist_url() == ""
+    demo_wishlist_button.tooltip_text = _get_demo_wishlist_url()
+    if not demo_wishlist_button.pressed.is_connected(_on_demo_wishlist_button_pressed):
+        demo_wishlist_button.pressed.connect(_on_demo_wishlist_button_pressed)
 
 func _finalize_battle_summary() -> void:
     if summary_finalized:
@@ -5442,9 +5528,16 @@ func _finalize_battle_summary() -> void:
     summary_finalized = true
     summary_panel.show()
     continue_button.show()
+    var show_demo_wishlist: bool = _get_demo_thank_you_level() > 0
+    if demo_wishlist_button != null:
+        demo_wishlist_button.visible = show_demo_wishlist
+        demo_wishlist_button.disabled = _get_demo_wishlist_url() == ""
+        demo_wishlist_button.tooltip_text = _get_demo_wishlist_url()
     _refresh_battle_summary_text()
     if battle_victory and current_level == 20 and not SaveHandler.fishing_l3_boss_thank_you_shown:
         SaveHandler.fishing_l3_boss_thank_you_shown = true
+    if show_demo_wishlist:
+        SaveHandler.fishing_demo_thank_you_levels_shown[str(current_level)] = true
     SaveHandler.fishing_last_battle_summary = {
         "victory": battle_victory,
         "level": current_level,
@@ -5503,6 +5596,12 @@ func _on_continue_button_pressed() -> void:
     if battle_victory:
         next_level = _max_unlocked_level()
     _set_next_battle_level_and_exit(next_level)
+
+func _on_demo_wishlist_button_pressed() -> void:
+    var url: String = _get_demo_wishlist_url()
+    if url == "":
+        return
+    OS.shell_open(url)
 
 func _show_level_choice_dialog(max_level: int) -> void:
     if level_choice_dialog == null:
