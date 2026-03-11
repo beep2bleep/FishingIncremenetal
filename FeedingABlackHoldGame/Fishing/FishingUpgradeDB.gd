@@ -340,7 +340,7 @@ func _describe_core_upgrade(node: Dictionary) -> String:
     var key: String = str(node.get("key", ""))
     var level: int = int(node.get("level", 1))
     if key == "core_armor":
-        return "Unlocks the Core Armor branch: three paths that reduce enemy, DOT, and boss damage taken."
+        return "Unlocks the Core Armor branch: three paths that reduce enemy, DOT, and boss damage taken. Armor can prevent at most 90% of damage taken."
     if key.begins_with("core_armor_enemy_"):
         var enemy_track: int = int(key.trim_prefix("core_armor_enemy_"))
         var enemy_per_level_block: int = int(pow(4, enemy_track))

@@ -7,6 +7,16 @@ const DEMO_PROJECT_SETTING := "global/Demo"
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
 const DEFAULT_DEMO_WISHLIST_URL := "https://Beep2Bleep.com"
 const DEMO_THANK_YOU_LEVELS := [7, 8]
+const DEFAULT_BATTLE_HINTS := [
+    "Knight Vampirism restores health from all attacks. Its use is critical.",
+    "Guardian Fortify reduces damage taken and removes the armor cap, allowing you to stop all damage.",
+    "Archer Pierce hits all enemies in its path and can be very powerful when many are on screen.",
+    "Mage Storm hits all enemies on screen and weakens future enemies farther into the fight.",
+    "Timing Fortify and Vampirism can be critical to beat the boss.",
+    "Armor can only reduce damage taken by 90% unless Guardian Fortify is active.",
+    "Wishlist Vanguard - Idle Auto Battler, and thanks for playing.",
+    "You can bank energy on heroes by partially filling their activation.",
+]
 
 const HERO_FRAME_SIZE := Vector2i(24, 24)
 const ENEMY_FRAME_SIZE := Vector2i(24, 24)
@@ -388,6 +398,11 @@ var clock_panel: PanelContainer
 var clock_label: Label
 var summary_panel: Panel
 var summary_label: Label
+var summary_chart: PanelContainer
+var summary_hint_title_label: Label
+var summary_hint_label: Label
+var summary_hint_left_button: Button
+var summary_hint_right_button: Button
 var continue_button: Button
 var demo_wishlist_button: Button
 var speed_button: Button
@@ -546,8 +561,11 @@ var active_ufo: UfoBonus = null
 var ufo_spawn_timer: float = 0.0
 var summary_panel_base_layout: Rect2 = Rect2()
 var summary_label_base_layout: Rect2 = Rect2()
+var summary_chart_base_layout: Rect2 = Rect2(872.0, 36.0, 680.0, 680.0)
 var continue_button_base_layout: Rect2 = Rect2()
-var demo_wishlist_button_base_layout: Rect2 = Rect2(410.0, 464.0, 270.0, 68.0)
+var demo_wishlist_button_base_layout: Rect2 = Rect2(930.0, 760.0, 270.0, 68.0)
+var battle_summary_hints: Array[String] = []
+var battle_summary_hint_index: int = 0
 var touch_camera_left_shift: float = 500.0
 var base_fill_texture: Texture2D
 var mage_pending_strikes: Array[Dictionary] = []
@@ -555,6 +573,42 @@ var enemy_mark_timers: Dictionary = {}
 var guardian_glow_was_active: bool = false
 var battle_scene_unadjusted_seconds: float = 0.0
 var selected_hero_sprite_set: String = HERO_SPRITE_SET_NEW
+var battle_source_stats: Dictionary = {}
+
+const BATTLE_STAT_DAMAGE := "damage"
+const BATTLE_STAT_HEAL := "heal"
+const BATTLE_STAT_PREVENTED := "prevented"
+const BATTLE_STAT_SOURCE_ORDER: Array[String] = [
+    "total",
+    "knight",
+    "archer",
+    "guardian",
+    "mage",
+    "knight_vamp",
+    "guardian_fortify",
+    "armor",
+    "enemy_guard",
+    "dot_guard",
+    "boss_guard",
+]
+const BATTLE_STAT_SOURCE_LABELS := {
+    "total": "Total",
+    "knight": "Knight",
+    "archer": "Archer",
+    "guardian": "Guardian",
+    "mage": "Mage",
+    "knight_vamp": "Knight Vamp",
+    "guardian_fortify": "Guardian Fortify",
+    "armor": "Armor",
+    "enemy_guard": "Enemy Guard",
+    "dot_guard": "DOT Guard",
+    "boss_guard": "Boss Guard",
+}
+const BATTLE_STAT_COLORS := {
+    BATTLE_STAT_DAMAGE: "#f4bd52",
+    BATTLE_STAT_HEAL: "#5ddd92",
+    BATTLE_STAT_PREVENTED: "#62cbff",
+}
 
 func _should_show_editor_only_touch_toggle() -> bool:
     return OS.has_feature("editor")
@@ -581,6 +635,7 @@ func _ready() -> void:
     _setup_demo_wishlist_button()
     _style_battle_summary_ui()
     _cache_battle_summary_layout()
+    _reset_battle_source_stats()
     _setup_mute_button()
     _setup_settings_controls()
     _setup_fullscreen_button()
@@ -633,10 +688,7 @@ func _layout_battle_utility_buttons() -> void:
         hero_scale_debug_panel.offset_right = 1260.0
         hero_scale_debug_panel.offset_bottom = 800.0
     if weapon_debug_panel != null:
-        weapon_debug_panel.offset_left = 1268.0
-        weapon_debug_panel.offset_top = 244.0
-        weapon_debug_panel.offset_right = 1556.0
-        weapon_debug_panel.offset_bottom = 780.0
+        weapon_debug_panel.hide()
 
 func _exit_tree() -> void:
     SaveHandler.save_fishing_progress()
@@ -679,6 +731,11 @@ func _bind_nodes() -> bool:
     mute_button = get_node_or_null("CanvasLayer/MuteButton")
     summary_panel = get_node_or_null("CanvasLayer/SummaryPanel")
     summary_label = get_node_or_null("CanvasLayer/SummaryPanel/SummaryLabel")
+    summary_chart = get_node_or_null("CanvasLayer/SummaryPanel/SummaryChart")
+    summary_hint_title_label = get_node_or_null("CanvasLayer/SummaryPanel/HintTitleLabel")
+    summary_hint_label = get_node_or_null("CanvasLayer/SummaryPanel/HintLabel")
+    summary_hint_left_button = get_node_or_null("CanvasLayer/SummaryPanel/HintLeftButton")
+    summary_hint_right_button = get_node_or_null("CanvasLayer/SummaryPanel/HintRightButton")
     continue_button = get_node_or_null("CanvasLayer/SummaryPanel/ContinueButton")
     demo_wishlist_button = get_node_or_null("CanvasLayer/SummaryPanel/DemoWishlistButton")
     level_choice_dialog = get_node_or_null("CanvasLayer/LevelChoiceDialog")
@@ -773,7 +830,7 @@ func _bind_nodes() -> bool:
     if level_choice_dialog != null and not level_choice_dialog.custom_action.is_connected(_on_level_choice_action):
         level_choice_dialog.custom_action.connect(_on_level_choice_action)
 
-    return world != null and bg_base_sky != null and bg_base_ground != null and bg_deep != null and cloud_far != null and cloud_mid != null and cloud_near != null and bg_far != null and bg_mid != null and bg_near != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and health_bar != null and experience_bar != null and power_bar != null and health_value_label != null and experience_value_label != null and power_value_label != null and currency_label != null and clock_panel != null and clock_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and mute_button != null and summary_panel != null and summary_label != null and continue_button != null and level_choice_dialog != null
+    return world != null and bg_base_sky != null and bg_base_ground != null and bg_deep != null and cloud_far != null and cloud_mid != null and cloud_near != null and bg_far != null and bg_mid != null and bg_near != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and health_bar != null and experience_bar != null and power_bar != null and health_value_label != null and experience_value_label != null and power_value_label != null and currency_label != null and clock_panel != null and clock_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and mute_button != null and summary_panel != null and summary_label != null and summary_hint_title_label != null and summary_hint_label != null and summary_hint_left_button != null and summary_hint_right_button != null and continue_button != null and level_choice_dialog != null
 
 func _clear_battle_entities() -> void:
     for arrow_data_variant in arrows:
@@ -812,6 +869,7 @@ func _clear_battle_entities() -> void:
     mage_pending_strikes.clear()
     enemy_mark_timers.clear()
     guardian_glow_was_active = false
+    _reset_battle_source_stats()
     if health_bar != null:
         health_bar.modulate = Color(1.0, 1.0, 1.0, 1.0)
 
@@ -1018,110 +1076,9 @@ func _print_new_hero_scale_debug_values() -> void:
     print("\n".join(lines))
 
 func _setup_weapon_debug_controls() -> void:
-    if not OS.has_feature("editor"):
-        if weapon_debug_panel != null:
-            weapon_debug_panel.hide()
-        return
-
-    var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
-    if canvas_layer == null:
-        return
-
-    if weapon_debug_panel == null:
-        weapon_debug_panel = PanelContainer.new()
-        weapon_debug_panel.name = "WeaponDebugPanel"
-        canvas_layer.add_child(weapon_debug_panel)
-        _style_utility_panel(weapon_debug_panel)
-
-        var root_margin := MarginContainer.new()
-        root_margin.add_theme_constant_override("margin_left", 10)
-        root_margin.add_theme_constant_override("margin_top", 10)
-        root_margin.add_theme_constant_override("margin_right", 10)
-        root_margin.add_theme_constant_override("margin_bottom", 10)
-        weapon_debug_panel.add_child(root_margin)
-
-        var root_vbox := VBoxContainer.new()
-        root_vbox.add_theme_constant_override("separation", 6)
-        root_margin.add_child(root_vbox)
-
-        var title := Label.new()
-        title.text = "Weapon Rot Debug"
-        title.add_theme_font_size_override("font_size", 20)
-        root_vbox.add_child(title)
-
-        var step_label := Label.new()
-        step_label.text = "Step %.0f deg" % WEAPON_ROTATION_DEBUG_STEP
-        step_label.add_theme_font_size_override("font_size", 14)
-        root_vbox.add_child(step_label)
-
-        for target in _weapon_debug_targets():
-            var row := HBoxContainer.new()
-            row.add_theme_constant_override("separation", 6)
-            root_vbox.add_child(row)
-
-            var name_label := Label.new()
-            name_label.text = str(target.get("label", "Weapon"))
-            name_label.custom_minimum_size = Vector2(70.0, 0.0)
-            row.add_child(name_label)
-
-            var rot_minus := Button.new()
-            rot_minus.text = "R-"
-            rot_minus.custom_minimum_size = Vector2(38.0, 36.0)
-            rot_minus.pressed.connect(_on_weapon_debug_adjust_pressed.bind(str(target.get("key", "")), "rot", -WEAPON_ROTATION_DEBUG_STEP))
-            row.add_child(rot_minus)
-
-            var x_minus := Button.new()
-            x_minus.text = "X-"
-            x_minus.custom_minimum_size = Vector2(38.0, 36.0)
-            x_minus.pressed.connect(_on_weapon_debug_adjust_pressed.bind(str(target.get("key", "")), "x", -1.0))
-            row.add_child(x_minus)
-
-            var y_minus := Button.new()
-            y_minus.text = "Y-"
-            y_minus.custom_minimum_size = Vector2(38.0, 36.0)
-            y_minus.pressed.connect(_on_weapon_debug_adjust_pressed.bind(str(target.get("key", "")), "y", -1.0))
-            row.add_child(y_minus)
-
-            var value_label := Label.new()
-            value_label.custom_minimum_size = Vector2(120.0, 0.0)
-            row.add_child(value_label)
-            weapon_debug_value_labels[str(target.get("key", ""))] = value_label
-
-            var rot_plus := Button.new()
-            rot_plus.text = "R+"
-            rot_plus.custom_minimum_size = Vector2(38.0, 36.0)
-            rot_plus.pressed.connect(_on_weapon_debug_adjust_pressed.bind(str(target.get("key", "")), "rot", WEAPON_ROTATION_DEBUG_STEP))
-            row.add_child(rot_plus)
-
-            var x_plus := Button.new()
-            x_plus.text = "X+"
-            x_plus.custom_minimum_size = Vector2(38.0, 36.0)
-            x_plus.pressed.connect(_on_weapon_debug_adjust_pressed.bind(str(target.get("key", "")), "x", 1.0))
-            row.add_child(x_plus)
-
-            var y_plus := Button.new()
-            y_plus.text = "Y+"
-            y_plus.custom_minimum_size = Vector2(38.0, 36.0)
-            y_plus.pressed.connect(_on_weapon_debug_adjust_pressed.bind(str(target.get("key", "")), "y", 1.0))
-            row.add_child(y_plus)
-
-        var print_button := Button.new()
-        print_button.text = "Print Rotations"
-        print_button.custom_minimum_size = Vector2(0.0, 40.0)
-        print_button.pressed.connect(_print_weapon_rotation_debug_values)
-        root_vbox.add_child(print_button)
-        _style_mute_like_button(print_button)
-
-        for value_label_variant in weapon_debug_value_labels.values():
-            var value_label: Label = value_label_variant
-            if value_label != null:
-                value_label.add_theme_font_size_override("font_size", 14)
-
-    weapon_debug_panel.show()
-    _layout_battle_utility_buttons()
-    _refresh_weapon_debug_value_labels()
-    _apply_weapon_debug_rotations()
-    _print_weapon_rotation_debug_values()
+    if weapon_debug_panel != null:
+        weapon_debug_panel.hide()
+    return
 
 func _weapon_debug_targets() -> Array[Dictionary]:
     return [
@@ -2685,12 +2642,6 @@ func _load_editor_hero_sprite_set() -> void:
     selected_hero_sprite_set = HERO_SPRITE_SET_NEW
     if not _should_show_editor_only_hero_set_toggle():
         return
-    var config := ConfigFile.new()
-    if config.load(HERO_EDITOR_SETTINGS_PATH) != OK:
-        return
-    var saved_set: String = str(config.get_value(HERO_EDITOR_SETTINGS_SECTION, HERO_EDITOR_SETTINGS_KEY, HERO_SPRITE_SET_NEW)).to_lower()
-    if saved_set == HERO_SPRITE_SET_OLD:
-        selected_hero_sprite_set = HERO_SPRITE_SET_OLD
 
 func _save_editor_hero_sprite_set() -> void:
     if not _should_show_editor_only_hero_set_toggle():
@@ -3019,7 +2970,7 @@ func _update_heroes(delta: float) -> void:
                 var mage_tick_interval: float = _mage_attack_interval(h)
                 var mage_tick: float = float(h.get("mage_active_tick", mage_tick_interval)) - delta
                 while mage_tick <= 0.0:
-                    _damage_enemies_in_touch_camera_area(float(h.get("damage", 0.0)) * MAGE_ACTIVE_TICK_DAMAGE_MULT, true)
+                    _damage_enemies_in_touch_camera_area(float(h.get("damage", 0.0)) * MAGE_ACTIVE_TICK_DAMAGE_MULT, true, "mage")
                     mage_tick += mage_tick_interval
                 h["mage_active_tick"] = mage_tick
                 if dist > float(h["range"]):
@@ -3065,7 +3016,7 @@ func _update_heroes(delta: float) -> void:
                 var pierce_arrow: bool = active_remaining2 > 0.0
                 _spawn_arrow(arrow_spawn, target, attack_damage, pierce_arrow)
             else:
-                _damage_enemy(target, attack_damage)
+                _damage_enemy(target, attack_damage, false, "", hero_name)
             hero.trigger_attack()
 
         hero_data[hero] = h
@@ -3122,6 +3073,7 @@ func _spawn_arrow(from_pos: Vector2, target_enemy: CombatSprite, damage: float, 
         "target_pos": target_pos,
         "damage": damage,
         "speed": 420.0,
+        "stat_source": "archer",
         # piercing arrows linger longer so they can cross the whole battlefield
         "ttl": (8.0 if pierce else 4.0),
         "pierce": pierce,
@@ -3146,6 +3098,7 @@ func _update_arrows(delta: float) -> void:
         var is_piercing: bool = bool(arrow.get("pierce", false))
         var dir: Vector2 = arrow.get("dir", Vector2.RIGHT)
         var speed: float = float(arrow.get("speed", 420.0))
+        var stat_source: String = str(arrow.get("stat_source", "archer"))
 
         if not is_piercing:
             # non-piercing arrows home in on a target as before
@@ -3183,7 +3136,7 @@ func _update_arrows(delta: float) -> void:
                     var tid: int = target_enemy.get_instance_id()
                     var hit_ids: Array = arrow.get("hit_ids", [])
                     if not hit_ids.has(tid):
-                        _damage_enemy(target_enemy, float(arrow.get("damage", 0.0)), false, "archer_arrow")
+                        _damage_enemy(target_enemy, float(arrow.get("damage", 0.0)), false, "archer_arrow", stat_source)
                         hit_ids.append(tid)
                         arrow["hit_ids"] = hit_ids
                 # non-piercing always expire on hit
@@ -3206,7 +3159,7 @@ func _update_arrows(delta: float) -> void:
                     if not hit_ids2.has(tid2):
                         var enemy_pos: Vector2 = enemy.position + Vector2(0.0, -18.0)
                         if sprite.position.distance_to(enemy_pos) <= 22.0:
-                            _damage_enemy(enemy, float(arrow.get("damage", 0.0)), false, "archer_pierce")
+                            _damage_enemy(enemy, float(arrow.get("damage", 0.0)), false, "archer_pierce", stat_source)
                             hit_ids2.append(tid2)
                             arrow["hit_ids"] = hit_ids2
             # continue flying until ttl expires
@@ -3534,7 +3487,7 @@ func _random_enemy_in_touch_camera_area_excluding(excluded_ids: Array[int]) -> C
         return null
     return visible[randi() % visible.size()]
 
-func _damage_all_enemies(amount: float) -> void:
+func _damage_all_enemies(amount: float, damage_source: String = "") -> void:
     if amount <= 0.0:
         return
     var targets: Array[CombatSprite] = []
@@ -3542,21 +3495,21 @@ func _damage_all_enemies(amount: float) -> void:
         if _is_enemy_targetable(enemy):
             targets.append(enemy)
     for enemy in targets:
-        _damage_enemy(enemy, amount)
+        _damage_enemy(enemy, amount, false, "", damage_source)
 
-func _damage_enemies_on_screen(amount: float) -> void:
+func _damage_enemies_on_screen(amount: float, damage_source: String = "") -> void:
     if amount <= 0.0:
         return
     var targets: Array[CombatSprite] = _enemies_on_screen()
     for enemy in targets:
-        _damage_enemy(enemy, amount)
+        _damage_enemy(enemy, amount, false, "", damage_source)
 
-func _damage_enemies_in_touch_camera_area(amount: float, is_mage_attack: bool = false) -> void:
+func _damage_enemies_in_touch_camera_area(amount: float, is_mage_attack: bool = false, damage_source: String = "") -> void:
     if amount <= 0.0:
         return
     var targets: Array[CombatSprite] = _enemies_in_touch_camera_area()
     for enemy in targets:
-        _damage_enemy(enemy, amount, is_mage_attack)
+        _damage_enemy(enemy, amount, is_mage_attack, "", damage_source)
 
 func _queue_mage_marked_strike(enemy: CombatSprite, damage: float) -> void:
     if not is_instance_valid(enemy) or damage <= 0.0:
@@ -3629,7 +3582,7 @@ func _update_mage_pending_strikes(delta: float) -> void:
 
         if is_instance_valid(target_enemy):
             _trigger_mage_attack_animation(1.0)
-            _damage_enemy(target_enemy, float(pending.get("damage", 0.0)), true)
+            _damage_enemy(target_enemy, float(pending.get("damage", 0.0)), true, "", "mage")
         mage_pending_strikes.remove_at(i)
 
 func _mage_attack_interval(hero_state: Dictionary) -> float:
@@ -3761,7 +3714,7 @@ func _next_enemy_spawn_x() -> float:
         spawn_x = max(spawn_x, max_existing_x + ENEMY_FORMATION_SPACING)
     return spawn_x
 
-func _damage_enemy(enemy: CombatSprite, amount: float, is_mage_attack: bool = false, kill_source: String = "") -> bool:
+func _damage_enemy(enemy: CombatSprite, amount: float, is_mage_attack: bool = false, kill_source: String = "", damage_source: String = "") -> bool:
     if not is_instance_valid(enemy) or not enemy_data.has(enemy):
         return false
     var e: Dictionary = enemy_data[enemy]
@@ -3770,6 +3723,7 @@ func _damage_enemy(enemy: CombatSprite, amount: float, is_mage_attack: bool = fa
     var prev_hp: float = float(e["hp"])
     e["hp"] = prev_hp - amount
     var dealt_damage: float = max(0.0, min(amount, prev_hp))
+    _record_battle_source_value(_normalize_battle_damage_source(damage_source), BATTLE_STAT_DAMAGE, dealt_damage)
     if is_mage_attack and dealt_damage > 0.0:
         _flash_enemy_red(enemy)
         _spawn_mage_lightning_bolt(enemy.position)
@@ -3800,6 +3754,7 @@ func _apply_knight_vamp_heal(damage_dealt: float, heal_text_world_pos: Vector2) 
     player_health = min(_max_health(), player_health + damage_dealt * 0.18)
     var healed: float = max(0.0, player_health - before_hp)
     if healed > 0.0:
+        _record_battle_source_value("knight_vamp", BATTLE_STAT_HEAL, healed)
         _spawn_floating_heal_text(heal_text_world_pos, healed)
 
 func _award_boss_segments(enemy: CombatSprite, e: Dictionary, prev_hp: float) -> void:
@@ -4732,17 +4687,39 @@ func _mitigated_player_damage(raw_damage_per_second: float, delta: float, flat_b
         return 0.0
 
     var raw_amount: float = raw_damage_per_second * delta
-    var mitigated_per_second: float = raw_damage_per_second * _player_armor_scale()
+    var armor_scaled_amount: float = raw_amount * _player_armor_scale()
+    var armor_prevented: float = max(0.0, raw_amount - armor_scaled_amount)
+    var shield_scaled_amount: float = armor_scaled_amount
+    var shield_prevented: float = 0.0
     if shield_time > 0.0:
-        mitigated_per_second *= 0.4
-    mitigated_per_second = max(0.0, mitigated_per_second - max(0.0, flat_block_per_second))
-    var mitigated: float = mitigated_per_second * delta
+        shield_scaled_amount *= 0.4
+        shield_prevented = max(0.0, armor_scaled_amount - shield_scaled_amount)
 
-    if shield_time > 0.0:
-        return mitigated
+    var flat_block_amount: float = min(max(0.0, flat_block_per_second) * delta, shield_scaled_amount)
+    var mitigated: float = max(0.0, shield_scaled_amount - flat_block_amount)
+    var final_damage: float = mitigated
+    if shield_time <= 0.0:
+        var max_block: float = floor(raw_damage_per_second * 0.9) * delta
+        final_damage = max(raw_amount - max_block, mitigated)
 
-    var max_block: float = floor(raw_damage_per_second * 0.9) * delta
-    var final_damage: float = max(raw_amount - max_block, mitigated)
+    var prevented_total: float = max(0.0, raw_amount - final_damage)
+    var prevented_breakout := {
+        "armor": armor_prevented,
+        "guardian_fortify": shield_prevented,
+        _prevention_source_for_remainder_key(remainder_key): flat_block_amount,
+    }
+    var recorded_prevented: float = 0.0
+    for value_variant in prevented_breakout.values():
+        recorded_prevented += float(value_variant)
+    if recorded_prevented > 0.0 and absf(recorded_prevented - prevented_total) > 0.001:
+        var scale_ratio: float = prevented_total / recorded_prevented
+        for source_key_variant in prevented_breakout.keys():
+            var source_key: String = str(source_key_variant)
+            prevented_breakout[source_key] = max(0.0, float(prevented_breakout[source_key]) * scale_ratio)
+    for source_key_variant in prevented_breakout.keys():
+        var source_key: String = str(source_key_variant)
+        _record_battle_source_value(source_key, BATTLE_STAT_PREVENTED, float(prevented_breakout[source_key]))
+
     if final_damage <= 0.0:
         player_damage_remainders[remainder_key] = 0.0
         return 0.0
@@ -4931,7 +4908,8 @@ func _end_battle(victory: bool) -> void:
     if is_instance_valid(active_ufo):
         active_ufo.queue_free()
     active_ufo = null
-    _apply_battle_summary_layout(Vector2(1.5, 1.8) if _uses_expanded_battle_summary_layout() else Vector2.ONE)
+    _apply_battle_summary_layout(Vector2.ONE)
+    _setup_battle_summary_hints()
     summary_panel.show()
     continue_button.hide()
     if demo_wishlist_button != null:
@@ -5093,6 +5071,8 @@ func _cache_battle_summary_layout() -> void:
         return
     summary_panel_base_layout = _rect_from_control_offsets(summary_panel)
     summary_label_base_layout = _rect_from_control_offsets(summary_label)
+    if summary_chart != null:
+        summary_chart_base_layout = _rect_from_control_offsets(summary_chart)
     continue_button_base_layout = _rect_from_control_offsets(continue_button)
     if demo_wishlist_button != null:
         demo_wishlist_button_base_layout = _rect_from_control_offsets(demo_wishlist_button)
@@ -5111,6 +5091,9 @@ func _apply_battle_summary_layout(scale: Vector2) -> void:
 
     var scaled_label_rect := Rect2(summary_label_base_layout.position * safe_scale, summary_label_base_layout.size * safe_scale)
     _set_control_offsets_from_rect(summary_label, scaled_label_rect)
+    if summary_chart != null:
+        var scaled_chart_rect := Rect2(summary_chart_base_layout.position * safe_scale, summary_chart_base_layout.size * safe_scale)
+        _set_control_offsets_from_rect(summary_chart, scaled_chart_rect)
 
     var continue_rect: Rect2 = continue_button_base_layout
     if _get_demo_thank_you_level() > 0:
@@ -5439,9 +5422,56 @@ func _refresh_battle_summary_text() -> void:
     if summary_label == null:
         return
     summary_label.text = _build_battle_summary_text(not summary_finalized)
+    _refresh_battle_summary_chart()
+    _refresh_battle_summary_hint()
+
+func _setup_battle_summary_hints() -> void:
+    battle_summary_hints = _build_battle_summary_hints()
+    battle_summary_hint_index = 0
+    _refresh_battle_summary_hint()
+
+func _build_battle_summary_hints() -> Array[String]:
+    var hints: Array[String] = DEFAULT_BATTLE_HINTS.duplicate()
+    if not SaveHandler.has_fishing_upgrade("recruit_archer"):
+        hints.append("Recruit the Archer for steady ranged damage. It helps smooth out early and mid-run fights.")
+    if not SaveHandler.has_fishing_upgrade("recruit_guardian"):
+        hints.append("Recruit the Guardian if your frontline is collapsing. Extra durability buys the rest of the team more time.")
+    if not SaveHandler.has_fishing_upgrade("recruit_mage"):
+        hints.append("Recruit the Mage when you need burst damage to break harder waves and boss segments faster.")
+    if not SaveHandler.has_fishing_upgrade("cursor_pickup_unlock"):
+        hints.append("Cursor pickup lets you grab coins faster during combat and gives more coins, which speeds up your post-battle upgrade buys.")
+    if not battle_victory:
+        hints.append("If this fight ended in defeat, spend your next coins before retrying. Small upgrade bumps compound quickly.")
+        if boss_segments_broken <= 0:
+            hints.append("If the boss defeated you quickly consider adding Boss Armor.")
+    return hints
+
+func _refresh_battle_summary_hint() -> void:
+    if summary_hint_title_label == null or summary_hint_label == null or summary_hint_left_button == null or summary_hint_right_button == null:
+        return
+    if battle_summary_hints.is_empty():
+        summary_hint_title_label.text = "Hint"
+        summary_hint_label.text = ""
+        summary_hint_left_button.hide()
+        summary_hint_right_button.hide()
+        return
+    battle_summary_hint_index = wrapi(battle_summary_hint_index, 0, battle_summary_hints.size())
+    summary_hint_title_label.text = "Hint %d/%d" % [battle_summary_hint_index + 1, battle_summary_hints.size()]
+    summary_hint_label.text = battle_summary_hints[battle_summary_hint_index]
+    var show_navigation: bool = battle_summary_hints.size() > 1
+    summary_hint_title_label.show()
+    summary_hint_label.show()
+    summary_hint_left_button.visible = show_navigation
+    summary_hint_right_button.visible = show_navigation
+
+func _cycle_battle_summary_hint(direction: int) -> void:
+    if battle_summary_hints.is_empty():
+        return
+    battle_summary_hint_index += direction
+    _refresh_battle_summary_hint()
 
 func _style_battle_summary_ui() -> void:
-    if summary_panel == null or summary_label == null or continue_button == null:
+    if summary_panel == null or summary_label == null or summary_hint_title_label == null or summary_hint_label == null or summary_hint_left_button == null or summary_hint_right_button == null or continue_button == null:
         return
 
     var panel_style := StyleBoxFlat.new()
@@ -5462,6 +5492,26 @@ func _style_battle_summary_ui() -> void:
     summary_label.autowrap_mode = 2
     summary_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
     summary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+    if summary_chart != null:
+        var chart_style := StyleBoxFlat.new()
+        chart_style.bg_color = Color(0.04, 0.08, 0.14, 0.9)
+        chart_style.border_color = Color(0.18, 0.58, 0.84, 0.9)
+        chart_style.border_width_left = 2
+        chart_style.border_width_top = 2
+        chart_style.border_width_right = 2
+        chart_style.border_width_bottom = 2
+        chart_style.corner_radius_top_left = 4
+        chart_style.corner_radius_top_right = 4
+        chart_style.corner_radius_bottom_left = 4
+        chart_style.corner_radius_bottom_right = 4
+        summary_chart.add_theme_stylebox_override("panel", chart_style)
+    summary_hint_title_label.add_theme_color_override("font_color", Color(0.76, 0.9, 1.0, 1.0))
+    summary_hint_title_label.add_theme_font_size_override("font_size", 20)
+    summary_hint_label.add_theme_color_override("font_color", Color(0.92, 0.97, 1.0, 0.94))
+    summary_hint_label.add_theme_font_size_override("font_size", 22)
+    summary_hint_label.autowrap_mode = 2
+    summary_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    summary_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
     var normal := StyleBoxFlat.new()
     normal.bg_color = Color(0.05, 0.14, 0.4, 0.96)
@@ -5482,6 +5532,16 @@ func _style_battle_summary_ui() -> void:
     continue_button.add_theme_stylebox_override("normal", normal)
     continue_button.add_theme_stylebox_override("hover", hover)
     continue_button.add_theme_stylebox_override("pressed", hover)
+    summary_hint_left_button.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0, 1.0))
+    summary_hint_right_button.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0, 1.0))
+    summary_hint_left_button.add_theme_font_size_override("font_size", 28)
+    summary_hint_right_button.add_theme_font_size_override("font_size", 28)
+    summary_hint_left_button.add_theme_stylebox_override("normal", normal)
+    summary_hint_left_button.add_theme_stylebox_override("hover", hover)
+    summary_hint_left_button.add_theme_stylebox_override("pressed", hover)
+    summary_hint_right_button.add_theme_stylebox_override("normal", normal)
+    summary_hint_right_button.add_theme_stylebox_override("hover", hover)
+    summary_hint_right_button.add_theme_stylebox_override("pressed", hover)
     if demo_wishlist_button != null:
         var wishlist_normal := StyleBoxFlat.new()
         wishlist_normal.bg_color = Color(0.18, 0.6, 0.24, 1.0)
@@ -5506,6 +5566,171 @@ func _style_battle_summary_ui() -> void:
         demo_wishlist_button.add_theme_stylebox_override("pressed", wishlist_hover)
         demo_wishlist_button.add_theme_stylebox_override("focus", wishlist_hover)
         demo_wishlist_button.add_theme_stylebox_override("disabled", wishlist_disabled)
+
+func _reset_battle_source_stats() -> void:
+    battle_source_stats.clear()
+    for source_key in BATTLE_STAT_SOURCE_ORDER:
+        battle_source_stats[source_key] = {
+            BATTLE_STAT_DAMAGE: 0.0,
+            BATTLE_STAT_HEAL: 0.0,
+            BATTLE_STAT_PREVENTED: 0.0,
+        }
+
+func _normalize_battle_damage_source(source_key: String) -> String:
+    var normalized: String = source_key.strip_edges().to_lower()
+    if normalized == "":
+        return ""
+    if normalized.begins_with("archer"):
+        return "archer"
+    if normalized.begins_with("mage"):
+        return "mage"
+    if normalized.begins_with("guardian"):
+        return "guardian"
+    if normalized.begins_with("knight"):
+        return "knight"
+    return normalized
+
+func _prevention_source_for_remainder_key(remainder_key: String) -> String:
+    match remainder_key:
+        "enemy_contact":
+            return "enemy_guard"
+        "dot":
+            return "dot_guard"
+        "boss_contact":
+            return "boss_guard"
+    return "armor"
+
+func _record_battle_source_value(source_key: String, metric: String, amount: float) -> void:
+    if source_key == "" or amount <= 0.0:
+        return
+    if not battle_source_stats.has(source_key):
+        battle_source_stats[source_key] = {
+            BATTLE_STAT_DAMAGE: 0.0,
+            BATTLE_STAT_HEAL: 0.0,
+            BATTLE_STAT_PREVENTED: 0.0,
+        }
+    var stats: Dictionary = battle_source_stats[source_key]
+    stats[metric] = float(stats.get(metric, 0.0)) + amount
+    battle_source_stats[source_key] = stats
+
+    if source_key != "total":
+        var total_stats: Dictionary = battle_source_stats.get("total", {
+            BATTLE_STAT_DAMAGE: 0.0,
+            BATTLE_STAT_HEAL: 0.0,
+            BATTLE_STAT_PREVENTED: 0.0,
+        })
+        total_stats[metric] = float(total_stats.get(metric, 0.0)) + amount
+        battle_source_stats["total"] = total_stats
+
+func _battle_stat_rows() -> Array[String]:
+    var rows: Array[String] = []
+    for source_key in BATTLE_STAT_SOURCE_ORDER:
+        var stats: Dictionary = battle_source_stats.get(source_key, {})
+        var total_value: float = float(stats.get(BATTLE_STAT_DAMAGE, 0.0)) + float(stats.get(BATTLE_STAT_HEAL, 0.0)) + float(stats.get(BATTLE_STAT_PREVENTED, 0.0))
+        if source_key == "total" or total_value > 0.0:
+            rows.append(source_key)
+    if rows.is_empty():
+        rows.append("total")
+    return rows
+
+func _battle_metric_max(metric: String, source_rows: Array[String]) -> float:
+    var max_value: float = 0.0
+    for source_key in source_rows:
+        var stats: Dictionary = battle_source_stats.get(source_key, {})
+        max_value = max(max_value, float(stats.get(metric, 0.0)))
+    return max_value
+
+func _format_battle_stat_value(value: float) -> String:
+    if value >= 1000.0:
+        return "%0.1fk" % (value / 1000.0)
+    return str(int(round(value)))
+
+func _make_summary_chart_label(text: String, width: float, font_size: int, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, color: Color = Color(0.92, 0.97, 1.0, 1.0)) -> Label:
+    var label := Label.new()
+    label.text = text
+    label.custom_minimum_size = Vector2(width, 0.0)
+    label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    label.horizontal_alignment = align
+    label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    label.add_theme_font_size_override("font_size", font_size)
+    label.add_theme_color_override("font_color", color)
+    return label
+
+func _make_summary_chart_bar(value: float, max_value: float, color: String) -> Control:
+    var root := VBoxContainer.new()
+    root.custom_minimum_size = Vector2(156.0, 0.0)
+    root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    root.add_theme_constant_override("separation", 4)
+
+    var meter := ProgressBar.new()
+    meter.custom_minimum_size = Vector2(156.0, 20.0)
+    meter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    meter.show_percentage = false
+    meter.max_value = max(1.0, max_value)
+    meter.value = value
+
+    var bg_style := StyleBoxFlat.new()
+    bg_style.bg_color = Color(0.16, 0.24, 0.34, 0.95)
+    bg_style.corner_radius_top_left = 3
+    bg_style.corner_radius_top_right = 3
+    bg_style.corner_radius_bottom_left = 3
+    bg_style.corner_radius_bottom_right = 3
+    meter.add_theme_stylebox_override("background", bg_style)
+
+    var fill_style := StyleBoxFlat.new()
+    fill_style.bg_color = Color.from_string(color, Color.WHITE)
+    fill_style.corner_radius_top_left = 3
+    fill_style.corner_radius_top_right = 3
+    fill_style.corner_radius_bottom_left = 3
+    fill_style.corner_radius_bottom_right = 3
+    meter.add_theme_stylebox_override("fill", fill_style)
+    root.add_child(meter)
+
+    var value_label := _make_summary_chart_label(_format_battle_stat_value(value), 156.0, 16, HORIZONTAL_ALIGNMENT_RIGHT, Color(0.78, 0.88, 0.98, 1.0))
+    root.add_child(value_label)
+    return root
+
+func _refresh_battle_summary_chart() -> void:
+    if summary_chart == null:
+        return
+    for child in summary_chart.get_children():
+        child.queue_free()
+
+    var source_rows: Array[String] = _battle_stat_rows()
+    var damage_max: float = _battle_metric_max(BATTLE_STAT_DAMAGE, source_rows)
+    var heal_max: float = _battle_metric_max(BATTLE_STAT_HEAL, source_rows)
+    var prevented_max: float = _battle_metric_max(BATTLE_STAT_PREVENTED, source_rows)
+
+    var margin := MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 14)
+    margin.add_theme_constant_override("margin_top", 12)
+    margin.add_theme_constant_override("margin_right", 14)
+    margin.add_theme_constant_override("margin_bottom", 12)
+    summary_chart.add_child(margin)
+
+    var root := VBoxContainer.new()
+    root.add_theme_constant_override("separation", 10)
+    margin.add_child(root)
+
+    root.add_child(_make_summary_chart_label("Combat Breakdown", 0.0, 24, HORIZONTAL_ALIGNMENT_CENTER, Color(0.92, 0.97, 1.0, 1.0)))
+
+    var header := HBoxContainer.new()
+    header.add_theme_constant_override("separation", 12)
+    root.add_child(header)
+    header.add_child(_make_summary_chart_label("Source", 160.0, 16, HORIZONTAL_ALIGNMENT_LEFT, Color(0.76, 0.9, 1.0, 1.0)))
+    header.add_child(_make_summary_chart_label("Damage", 156.0, 16, HORIZONTAL_ALIGNMENT_CENTER, Color(0.76, 0.9, 1.0, 1.0)))
+    header.add_child(_make_summary_chart_label("Healed", 156.0, 16, HORIZONTAL_ALIGNMENT_CENTER, Color(0.76, 0.9, 1.0, 1.0)))
+    header.add_child(_make_summary_chart_label("Prevented", 156.0, 16, HORIZONTAL_ALIGNMENT_CENTER, Color(0.76, 0.9, 1.0, 1.0)))
+
+    for source_key in source_rows:
+        var stats: Dictionary = battle_source_stats.get(source_key, {})
+        var row := HBoxContainer.new()
+        row.add_theme_constant_override("separation", 12)
+        root.add_child(row)
+        row.add_child(_make_summary_chart_label(str(BATTLE_STAT_SOURCE_LABELS.get(source_key, source_key.capitalize())), 160.0, 17))
+        row.add_child(_make_summary_chart_bar(float(stats.get(BATTLE_STAT_DAMAGE, 0.0)), damage_max, str(BATTLE_STAT_COLORS.get(BATTLE_STAT_DAMAGE, "#ffffff"))))
+        row.add_child(_make_summary_chart_bar(float(stats.get(BATTLE_STAT_HEAL, 0.0)), heal_max, str(BATTLE_STAT_COLORS.get(BATTLE_STAT_HEAL, "#ffffff"))))
+        row.add_child(_make_summary_chart_bar(float(stats.get(BATTLE_STAT_PREVENTED, 0.0)), prevented_max, str(BATTLE_STAT_COLORS.get(BATTLE_STAT_PREVENTED, "#ffffff"))))
 
 func _setup_demo_wishlist_button() -> void:
     if summary_panel == null:
@@ -5596,6 +5821,12 @@ func _on_continue_button_pressed() -> void:
     if battle_victory:
         next_level = _max_unlocked_level()
     _set_next_battle_level_and_exit(next_level)
+
+func _on_summary_hint_left_button_pressed() -> void:
+    _cycle_battle_summary_hint(-1)
+
+func _on_summary_hint_right_button_pressed() -> void:
+    _cycle_battle_summary_hint(1)
 
 func _on_demo_wishlist_button_pressed() -> void:
     var url: String = _get_demo_wishlist_url()

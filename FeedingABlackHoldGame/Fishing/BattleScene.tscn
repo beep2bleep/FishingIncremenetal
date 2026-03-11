@@ -178,26 +178,65 @@ offset_bottom = 64.0
 text = ""
 
 [node name="SummaryPanel" type="Panel" parent="CanvasLayer"]
-offset_left = 560.0
-offset_top = 220.0
-offset_right = 1320.0
-offset_bottom = 780.0
+offset_left = 8.0
+offset_top = 50.0
+offset_right = 1592.0
+offset_bottom = 900.0
 
 [node name="SummaryLabel" type="Label" parent="CanvasLayer/SummaryPanel"]
 offset_left = 34.0
 offset_top = 34.0
-offset_right = 728.0
-offset_bottom = 430.0
+offset_right = 899.0
+offset_bottom = 714.0
 autowrap_mode = 2
 text = "Summary"
 
+[node name="SummaryChart" type="PanelContainer" parent="CanvasLayer/SummaryPanel"]
+offset_left = 872.0
+offset_top = 36.0
+offset_right = 1552.0
+offset_bottom = 716.0
+
+[node name="HintTitleLabel" type="Label" parent="CanvasLayer/SummaryPanel"]
+offset_left = 34.0
+offset_top = 736.0
+offset_right = 1552.0
+offset_bottom = 766.0
+text = "Hint 1/1"
+
+[node name="HintLeftButton" type="Button" parent="CanvasLayer/SummaryPanel"]
+offset_left = 34.0
+offset_top = 782.0
+offset_right = 94.0
+offset_bottom = 830.0
+text = "<"
+
+[node name="HintLabel" type="Label" parent="CanvasLayer/SummaryPanel"]
+offset_left = 116.0
+offset_top = 782.0
+offset_right = 1470.0
+offset_bottom = 830.0
+autowrap_mode = 2
+text = "Hint text"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HintRightButton" type="Button" parent="CanvasLayer/SummaryPanel"]
+offset_left = 1492.0
+offset_top = 782.0
+offset_right = 1552.0
+offset_bottom = 830.0
+text = ">"
+
 [node name="ContinueButton" type="Button" parent="CanvasLayer/SummaryPanel"]
-offset_left = 238.0
-offset_top = 464.0
-offset_right = 522.0
-offset_bottom = 532.0
+offset_left = 650.0
+offset_top = 804.0
+offset_right = 936.0
+offset_bottom = 872.0
 text = "Continue"
 
+[connection signal="pressed" from="CanvasLayer/SummaryPanel/HintLeftButton" to="." method="_on_summary_hint_left_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/SummaryPanel/HintRightButton" to="." method="_on_summary_hint_right_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/SummaryPanel/ContinueButton" to="." method="_on_continue_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/SpeedButton" to="." method="_on_speed_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/InfiniteSimButton" to="." method="_on_infinite_sim_button_pressed"]

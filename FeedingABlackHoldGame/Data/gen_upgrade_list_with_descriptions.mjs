@@ -150,7 +150,7 @@ function getDescription(entry) {
   if (entry.description) return entry.description;
   const lower = key.toLowerCase();
   if (key.startsWith("core_")) {
-    if (key === "core_armor") return "Unlocks the Core Armor branch: three paths that reduce enemy, DOT, and boss damage taken.";
+    if (key === "core_armor") return "Unlocks the Core Armor branch: three paths that reduce enemy, DOT, and boss damage taken. Armor can prevent at most 90% of damage taken.";
     if (key.startsWith("core_armor_enemy_")) {
       const addAmount = level >= 1 ? Math.floor(Math.pow(3, level)) : 0;
       return `Reduces regular enemy contact damage by ${addAmount} damage per second.`;
