@@ -10,6 +10,7 @@ const BACKING_OFFSET: Vector2 = Vector2(8.0, 6.0)
 const BACKING_OFFSET_SCALE_MULT: float = 0.35
 const BACKING_SCALE_BONUS: float = 0.14
 const BACKING_TINT: Color = Color(1.0, 1.0, 1.0, 0.95)
+const ATTACK_HOLD_MULT: int = 2
 
 @onready var backing_sprite: AnimatedSprite2D = get_node_or_null("BackingSprite")
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
@@ -31,6 +32,8 @@ var weapon_attack_tween: Tween = null
 var attack_shake_tween: Tween = null
 var attack_visual_offset: Vector2 = Vector2.ZERO
 var weapon_attack_base_offset: Vector2 = Vector2.ZERO
+var weapon_rotation_offset: float = 0.0
+var weapon_debug_offset: Vector2 = Vector2.ZERO
 var sway_tween: Tween = null
 var sway_min_degrees: float = ROTATION_SWAY_MIN_DEGREES
 var sway_max_degrees: float = ROTATION_SWAY_MAX_DEGREES
@@ -41,6 +44,11 @@ const WEAPON_TARGET_Y_RATIO: float = 0.0
 const WEAPON_LOCAL_ANCHOR: Vector2 = Vector2(18.0, -20.0)
 const WEAPON_LEFT_NUDGE_LOCAL: float = 2.0
 const ARCHER_BOW_CENTER_LOCAL: Vector2 = Vector2(17.0, -24.0)
+const WEAPON_CHROMA_SHADER: Shader = preload("res://Fishing/WeaponChromaKey.gdshader")
+const KNIGHT_WEAPON_TEXTURE_PATH := "res://Art/CombatWeapons/sword.png"
+const ARCHER_WEAPON_TEXTURE_PATH := "res://Art/CombatWeapons/bow.png"
+const GUARDIAN_WEAPON_TEXTURE_PATH := "res://Art/CombatWeapons/shield.png"
+const MAGE_WEAPON_TEXTURE_PATH := "res://Art/CombatWeapons/wand.png"
 
 func _ensure_nodes() -> bool:
     if backing_sprite == null:
@@ -64,7 +72,7 @@ func _ensure_nodes() -> bool:
         weapon_layer.position = Vector2.ZERO
     return backing_sprite != null and sprite != null and collider != null and weapon_layer != null
 
-func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := "") -> void:
+func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := "", show_weapon_visuals: bool = true) -> void:
     if not _ensure_nodes():
         push_error("CombatSprite is missing AnimatedSprite2D, BackingSprite, or CollisionShape2D.")
         return
@@ -83,7 +91,10 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := 
     frames.add_animation("attack")
     frames.set_animation_loop("attack", false)
     frames.set_animation_speed("attack", 14.0)
-    for i in [2, 1, 2]:
+    var attack_frames: Array[int] = [2, 1]
+    for _hold in range(ATTACK_HOLD_MULT):
+        attack_frames.append(2)
+    for i in attack_frames:
         var atk := AtlasTexture.new()
         atk.atlas = sheet
         atk.region = Rect2i(Vector2i(frame_size.x * i, 0), frame_size)
@@ -116,12 +127,29 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := 
     weapon_base_offset = target_point - (WEAPON_LOCAL_ANCHOR * weapon_world_scale)
     weapon_layer.scale = Vector2.ONE * weapon_world_scale
     weapon_float_amp = 2.2 * scale_factor
-    _setup_weapon_visual(weapon_type, frame_size, scale_factor)
+    if show_weapon_visuals:
+        _setup_weapon_visual(weapon_type, frame_size, scale_factor)
+    else:
+        for child in weapon_layer.get_children():
+            child.queue_free()
+        weapon_idle_offset = Vector2.ZERO
     weapon_layer.visible = weapon_layer.get_child_count() > 0
-    weapon_layer.rotation = 0.0
+    weapon_layer.rotation = weapon_rotation_offset
     weapon_float_phase = randf() * TAU
     _start_sway_motion()
     set_process(true)
+
+func set_weapon_rotation_offset_degrees(degrees: float) -> void:
+    weapon_rotation_offset = deg_to_rad(degrees)
+    if weapon_layer != null and weapon_attack_tween == null:
+        weapon_layer.rotation = weapon_rotation_offset
+
+func set_weapon_debug_transform(rotation_degrees: float, offset: Vector2) -> void:
+    weapon_rotation_offset = deg_to_rad(rotation_degrees)
+    weapon_debug_offset = offset
+    if weapon_layer != null and weapon_attack_tween == null:
+        weapon_layer.rotation = weapon_rotation_offset
+        _update_weapon_layer_position()
 
 func set_walking() -> void:
     if is_attacking or is_defeated:
@@ -204,28 +232,16 @@ func _setup_weapon_visual(role: String, frame_size: Vector2i, scale_factor: floa
 
     var lower: String = role.to_lower()
     if lower == "knight":
-        _add_line(weapon_layer, [Vector2(12, -20), Vector2(28, -28)], 2.1, Color(0.88, 0.9, 0.95, 1.0))
-        _add_line(weapon_layer, [Vector2(10, -18), Vector2(16, -14)], 2.1, Color(0.5, 0.35, 0.18, 1.0))
+        _add_weapon_sprite(weapon_layer, load(KNIGHT_WEAPON_TEXTURE_PATH) as Texture2D, Vector2(2.0, -29.0), Vector2(26.0, 10.0))
         weapon_idle_offset = Vector2(4, 2)
     elif lower == "archer":
-        _add_line(weapon_layer, [Vector2(10, -24), Vector2(18, -30), Vector2(24, -24), Vector2(18, -18), Vector2(10, -24)], 1.8, Color(0.58, 0.4, 0.2, 1.0))
-        _add_line(weapon_layer, [Vector2(10, -24), Vector2(24, -24)], 1.3, Color(0.92, 0.92, 0.92, 1.0))
+        _add_weapon_sprite(weapon_layer, load(ARCHER_WEAPON_TEXTURE_PATH) as Texture2D, Vector2(4.0, -29.0), Vector2(22.0, 10.0))
         weapon_idle_offset = Vector2(3, 3)
     elif lower == "guardian":
-        var shield: Polygon2D = Polygon2D.new()
-        shield.polygon = PackedVector2Array([Vector2(12, -30), Vector2(24, -24), Vector2(24, -10), Vector2(12, -4), Vector2(0, -10), Vector2(0, -24)])
-        shield.color = Color(0.34, 0.6, 0.85, 1.0)
-        shield.scale = Vector2.ONE * 0.65
-        weapon_layer.add_child(shield)
-        _add_line(weapon_layer, [Vector2(8, -17), Vector2(16, -17)], 1.8, Color(0.85, 0.92, 0.98, 1.0))
+        _add_weapon_sprite(weapon_layer, load(GUARDIAN_WEAPON_TEXTURE_PATH) as Texture2D, Vector2(0.0, -29.0), Vector2(18.0, 20.0))
         weapon_idle_offset = Vector2(4, 4)
     elif lower == "mage":
-        _add_line(weapon_layer, [Vector2(10, -28), Vector2(22, -12)], 1.9, Color(0.58, 0.42, 0.22, 1.0))
-        var orb: Polygon2D = Polygon2D.new()
-        orb.polygon = PackedVector2Array([Vector2(20, -32), Vector2(24, -28), Vector2(20, -24), Vector2(16, -28)])
-        orb.color = Color(0.7, 0.32, 0.95, 1.0)
-        orb.scale = Vector2.ONE * 0.75
-        weapon_layer.add_child(orb)
+        _add_weapon_sprite(weapon_layer, load(MAGE_WEAPON_TEXTURE_PATH) as Texture2D, Vector2(4.0, -30.0), Vector2(22.0, 7.0))
         weapon_idle_offset = Vector2(6, -2)
         weapon_float_speed = 1.15
         weapon_float_amp = 5.2
@@ -242,6 +258,24 @@ func _add_line(parent: Node, points: Array[Vector2], width: float, color: Color)
     line.end_cap_mode = Line2D.LINE_CAP_ROUND
     line.points = PackedVector2Array(points)
     parent.add_child(line)
+
+func _add_weapon_sprite(parent: Node, texture: Texture2D, top_left: Vector2, target_size: Vector2) -> void:
+    if texture == null:
+        return
+    var sprite2d := Sprite2D.new()
+    sprite2d.texture = texture
+    sprite2d.centered = false
+    sprite2d.position = top_left
+    sprite2d.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    sprite2d.material = _make_weapon_material()
+    var texture_size := Vector2(maxi(1, texture.get_width()), maxi(1, texture.get_height()))
+    sprite2d.scale = Vector2(target_size.x / texture_size.x, target_size.y / texture_size.y)
+    parent.add_child(sprite2d)
+
+func _make_weapon_material() -> ShaderMaterial:
+    var material := ShaderMaterial.new()
+    material.shader = WEAPON_CHROMA_SHADER
+    return material
 
 func _sync_sprite_stack(animation_name: String) -> void:
     if sprite == null or backing_sprite == null:
@@ -286,7 +320,7 @@ func _apply_visual_offsets() -> void:
 
 func _update_weapon_layer_position(bob_y: float = 0.0) -> void:
     if weapon_layer != null:
-        weapon_layer.position = weapon_base_offset + weapon_idle_offset + attack_visual_offset + Vector2(0.0, bob_y)
+        weapon_layer.position = weapon_base_offset + weapon_idle_offset + weapon_debug_offset + attack_visual_offset + Vector2(0.0, bob_y)
 
 func _stop_attack_shake() -> void:
     if attack_shake_tween != null:
@@ -301,7 +335,7 @@ func _stop_weapon_tween() -> void:
         weapon_attack_tween.kill()
         weapon_attack_tween = null
     if weapon_layer != null:
-        weapon_layer.rotation = 0.0
+        weapon_layer.rotation = weapon_rotation_offset
         _update_weapon_layer_position()
 
 func _attack_animation_duration() -> float:
@@ -319,42 +353,43 @@ func _play_weapon_attack_motion(strength: float = 1.0) -> void:
     _stop_weapon_tween()
     var lower: String = weapon_type.to_lower()
     var motion_strength: float = clamp(strength, 0.0, 1.0)
+    var base_rotation: float = weapon_rotation_offset
     weapon_attack_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
     weapon_attack_base_offset = weapon_base_offset + weapon_idle_offset
     match lower:
         "archer":
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", -0.35, 0.06)
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.28, 0.08)
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.0, 0.08)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation - 0.35, 0.06)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation + 0.28, 0.08)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation, 0.08)
         "knight":
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", -0.95, 0.08)
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.45, 0.1)
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.0, 0.12)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation - 0.95, 0.08)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation + 0.45, 0.1)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation, 0.12)
         "guardian":
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.42, 0.08)
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", -0.22, 0.08)
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.0, 0.1)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation + 0.42, 0.08)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation - 0.22, 0.08)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation, 0.1)
         "mage":
             weapon_attack_tween.set_parallel(true)
             weapon_attack_tween.tween_property(weapon_layer, "position", weapon_attack_base_offset + Vector2(0.0, -18.0) * motion_strength, 0.10)
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", -0.38 * motion_strength, 0.10)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation - 0.38 * motion_strength, 0.10)
             weapon_attack_tween.chain().set_parallel(true)
             weapon_attack_tween.tween_property(weapon_layer, "position", weapon_attack_base_offset + Vector2(0.0, 12.0) * motion_strength, 0.035)
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", 1.0 * motion_strength, 0.035)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation + 1.0 * motion_strength, 0.035)
             weapon_attack_tween.chain().set_parallel(true)
             weapon_attack_tween.tween_property(weapon_layer, "position", weapon_attack_base_offset + Vector2(0.0, -14.0) * motion_strength, 0.035)
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", -0.92 * motion_strength, 0.035)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation - 0.92 * motion_strength, 0.035)
             weapon_attack_tween.chain().set_parallel(true)
             weapon_attack_tween.tween_property(weapon_layer, "position", weapon_attack_base_offset + Vector2(0.0, 9.0) * motion_strength, 0.035)
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.84 * motion_strength, 0.035)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation + 0.84 * motion_strength, 0.035)
             weapon_attack_tween.chain().set_parallel(true)
             weapon_attack_tween.tween_property(weapon_layer, "position", weapon_attack_base_offset + Vector2(0.0, -10.0) * motion_strength, 0.035)
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", -0.68 * motion_strength, 0.035)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation - 0.68 * motion_strength, 0.035)
             weapon_attack_tween.chain().set_parallel(true)
             weapon_attack_tween.tween_property(weapon_layer, "position", weapon_attack_base_offset, 0.08)
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.0, 0.08)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation, 0.08)
         _:
-            weapon_attack_tween.tween_property(weapon_layer, "rotation", 0.0, 0.06)
+            weapon_attack_tween.tween_property(weapon_layer, "rotation", base_rotation, 0.06)
     weapon_attack_tween.finished.connect(func() -> void:
         weapon_attack_tween = null
     )

@@ -244,6 +244,18 @@ const ENEMY_DOUBLE_EXCLUDED_PREFIXES: Array[String] = [
     "slime_",
 ]
 const HERO_RENDER_SCALE := 4.0
+const OLD_HERO_RENDER_SCALE := 3.75
+const NEW_HERO_TARGET_WORLD_WIDTH := float(HERO_FRAME_SIZE.x) * OLD_HERO_RENDER_SCALE
+const NEW_HERO_TARGET_WORLD_HEIGHT := float(HERO_FRAME_SIZE.y) * OLD_HERO_RENDER_SCALE
+const NEW_HERO_SCALE_DEBUG_STEP := 0.05
+const HERO_SPRITE_SET_OLD := "old"
+const HERO_SPRITE_SET_NEW := "new"
+const HERO_EDITOR_SETTINGS_PATH := "user://battle_editor_settings.cfg"
+const HERO_EDITOR_SETTINGS_SECTION := "battle_scene"
+const HERO_EDITOR_SETTINGS_KEY := "hero_sprite_set"
+const HERO_EDITOR_SCALE_SECTION := "battle_scene_new_hero_scale"
+const HERO_ASSET_BASE_DIR := "res://Art/CombatSprites"
+const HERO_ASSET_NEW_BASE_DIR := "res://Art/CombatSprites/HeroSetNew"
 const ELITE_ENEMY_CHANCE := 0.05
 const ELITE_ENEMY_MULT := 2.0
 const MULTI_SPAWN_DOUBLE_CHANCE := 0.05
@@ -261,6 +273,9 @@ const FLOATING_CURRENCY_NUMBER_SETTINGS := {
     "speed_min": 24.0,
     "speed_max": 42.0,
 }
+const COMBAT_ARROW_TEXTURE_PATH := "res://Art/CombatWeapons/arrow.png"
+const WEAPON_CHROMA_SHADER: Shader = preload("res://Fishing/WeaponChromaKey.gdshader")
+const WEAPON_ROTATION_DEBUG_STEP := 5.0
 
 # helper to play sound effects safely; autoload AudioManager isn't considered an
 # engine singleton so Engine.has_singleton() returns false.  Simply check the
@@ -380,11 +395,35 @@ var settings_panel: PanelContainer
 var settings_content: Settings
 var fullscreen_button: Button
 var touch_input_button: Button
+var hero_set_toggle_button: Button
 var level_choice_dialog: ConfirmationDialog
 var level_choice_selected_level: int = 1
 var level_choice_line_edit: LineEdit
 var bg_debug_panel: PanelContainer
 var touch_zone_debug_label: Label
+var hero_scale_debug_panel: PanelContainer
+var hero_scale_debug_value_labels: Dictionary = {}
+var hero_new_scale_debug: Dictionary = {
+    "knight": 1.0,
+    "archer": 0.85,
+    "guardian": 1.0,
+    "mage": 1.45,
+}
+var hero_new_y_debug: Dictionary = {
+    "knight": 2.0,
+    "archer": 10.0,
+    "guardian": 0.0,
+    "mage": 2.0,
+}
+var weapon_debug_panel: PanelContainer
+var weapon_debug_value_labels: Dictionary = {}
+var weapon_debug_transforms: Dictionary = {
+    "knight": {"rot": 0.0, "x": 0.0, "y": 0.0},
+    "archer": {"rot": 0.0, "x": 0.0, "y": 0.0},
+    "guardian": {"rot": 0.0, "x": 0.0, "y": 0.0},
+    "mage": {"rot": 0.0, "x": 0.0, "y": 0.0},
+    "arrow": {"rot": 0.0, "x": 0.0, "y": 0.0},
+}
 
 var heroes: Array[CombatSprite] = []
 var hero_data: Dictionary = {}
@@ -504,8 +543,12 @@ var mage_pending_strikes: Array[Dictionary] = []
 var enemy_mark_timers: Dictionary = {}
 var guardian_glow_was_active: bool = false
 var battle_scene_unadjusted_seconds: float = 0.0
+var selected_hero_sprite_set: String = HERO_SPRITE_SET_NEW
 
 func _should_show_editor_only_touch_toggle() -> bool:
+    return OS.has_feature("editor")
+
+func _should_show_editor_only_hero_set_toggle() -> bool:
     return OS.has_feature("editor")
 
 func _ready() -> void:
@@ -514,6 +557,8 @@ func _ready() -> void:
         return
 
     SignalBus.settings_updated.connect(_on_settings_updated)
+    _load_editor_hero_sprite_set()
+    _load_editor_new_hero_scale_debug()
     _setup_actor_sheets()
     current_level = clamp(SaveHandler.fishing_next_battle_level, 1, _max_unlocked_level())
     _rebuild_battle_mods()
@@ -528,14 +573,19 @@ func _ready() -> void:
     _setup_settings_controls()
     _setup_fullscreen_button()
     _setup_touch_input_button()
+    _setup_hero_set_toggle_button()
     _layout_battle_utility_buttons()
     _setup_background_debug_controls()
+    _setup_new_hero_scale_debug_controls()
+    _setup_weapon_debug_controls()
     summary_panel.hide()
     _setup_speed_controls()
     _restore_or_reset_ufo_spawn_timer()
     _update_speed_button_enabled_state()
     _refresh_fullscreen_button_icon()
     _refresh_touch_input_button()
+    _refresh_hero_set_toggle_button()
+    _refresh_new_hero_scale_debug_panel()
     _update_ui()
 
 func _layout_battle_utility_buttons() -> void:
@@ -552,10 +602,27 @@ func _layout_battle_utility_buttons() -> void:
         exit_battle_button.offset_right = 1256.0
         exit_battle_button.offset_bottom = 228.0
     if bg_debug_panel != null:
-        bg_debug_panel.offset_left = 960.0
-        bg_debug_panel.offset_top = 244.0
-        bg_debug_panel.offset_right = 1256.0
-        bg_debug_panel.offset_bottom = 920.0
+        bg_debug_panel.hide()
+    if touch_input_button != null:
+        touch_input_button.offset_left = -136.0
+        touch_input_button.offset_top = 244.0
+        touch_input_button.offset_right = -16.0
+        touch_input_button.offset_bottom = 288.0
+    if hero_set_toggle_button != null:
+        hero_set_toggle_button.offset_left = -136.0
+        hero_set_toggle_button.offset_top = 296.0
+        hero_set_toggle_button.offset_right = -16.0
+        hero_set_toggle_button.offset_bottom = 340.0
+    if hero_scale_debug_panel != null:
+        hero_scale_debug_panel.offset_left = 920.0
+        hero_scale_debug_panel.offset_top = 436.0
+        hero_scale_debug_panel.offset_right = 1260.0
+        hero_scale_debug_panel.offset_bottom = 800.0
+    if weapon_debug_panel != null:
+        weapon_debug_panel.offset_left = 1268.0
+        weapon_debug_panel.offset_top = 244.0
+        weapon_debug_panel.offset_right = 1556.0
+        weapon_debug_panel.offset_bottom = 780.0
 
 func _exit_tree() -> void:
     SaveHandler.save_fishing_progress()
@@ -737,7 +804,10 @@ func _reset_heroes_to_start() -> void:
         var hero: CombatSprite = heroes[i]
         if not is_instance_valid(hero):
             continue
-        hero.position = Vector2(HERO_START_X + HERO_FRAME_SIZE.x * HERO_RENDER_SCALE - float(i) * HERO_FORMATION_SPACING, FLOOR_Y)
+        var hero_name: String = ""
+        if hero_data.has(hero):
+            hero_name = str(hero_data[hero].get("name", ""))
+        hero.position = Vector2(HERO_START_X + HERO_FRAME_SIZE.x * HERO_RENDER_SCALE - float(i) * HERO_FORMATION_SPACING, _hero_base_y(hero_name))
         hero.modulate = Color(1.0, 1.0, 1.0, 1.0)
         hero.set_walking()
         if hero_data.has(hero):
@@ -777,71 +847,316 @@ func _setup_speed_controls() -> void:
             speed_button.hide()
 
 func _setup_background_debug_controls() -> void:
-    if not OS.has_feature("editor"):
-        if bg_debug_panel != null:
-            bg_debug_panel.hide()
-        return
+    if bg_debug_panel != null:
+        bg_debug_panel.hide()
 
+func _setup_new_hero_scale_debug_controls() -> void:
+    if true:
+        if hero_scale_debug_panel != null:
+            hero_scale_debug_panel.hide()
+        return
     var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
     if canvas_layer == null:
         return
-
-    if bg_debug_panel == null:
-        bg_debug_panel = PanelContainer.new()
-        bg_debug_panel.name = "BackgroundDebugPanel"
-        canvas_layer.add_child(bg_debug_panel)
+    if hero_scale_debug_panel == null:
+        hero_scale_debug_panel = PanelContainer.new()
+        hero_scale_debug_panel.name = "NewHeroScaleDebugPanel"
+        canvas_layer.add_child(hero_scale_debug_panel)
+        _style_utility_panel(hero_scale_debug_panel)
 
         var root_margin := MarginContainer.new()
         root_margin.add_theme_constant_override("margin_left", 10)
         root_margin.add_theme_constant_override("margin_top", 10)
         root_margin.add_theme_constant_override("margin_right", 10)
         root_margin.add_theme_constant_override("margin_bottom", 10)
-        bg_debug_panel.add_child(root_margin)
+        hero_scale_debug_panel.add_child(root_margin)
 
         var root_vbox := VBoxContainer.new()
         root_vbox.add_theme_constant_override("separation", 6)
         root_margin.add_child(root_vbox)
 
         var title := Label.new()
-        title.text = "BG Y Debug"
+        title.text = "New Hero Scale Debug"
         title.add_theme_font_size_override("font_size", 20)
         root_vbox.add_child(title)
 
+        var note_label := Label.new()
+        note_label.text = "Editor only. Affects NEW hero art only."
+        note_label.add_theme_font_size_override("font_size", 13)
+        root_vbox.add_child(note_label)
+
         var step_label := Label.new()
-        step_label.text = "Step %.0f px" % BG_DEBUG_STEP
+        step_label.text = "Step %.2f" % NEW_HERO_SCALE_DEBUG_STEP
         step_label.add_theme_font_size_override("font_size", 14)
         root_vbox.add_child(step_label)
 
-        touch_zone_debug_label = Label.new()
-        touch_zone_debug_label.text = "Touch Zone Enemies: 0"
-        touch_zone_debug_label.add_theme_font_size_override("font_size", 14)
-        root_vbox.add_child(touch_zone_debug_label)
-
-        for target in _background_debug_targets():
+        for hero_name in ["knight", "archer", "guardian", "mage"]:
             var row := HBoxContainer.new()
             row.add_theme_constant_override("separation", 6)
             root_vbox.add_child(row)
 
             var name_label := Label.new()
-            name_label.text = str(target.get("label", "Layer"))
-            name_label.custom_minimum_size = Vector2(136.0, 0.0)
+            name_label.text = hero_name.capitalize()
+            name_label.custom_minimum_size = Vector2(80.0, 0.0)
             row.add_child(name_label)
 
-            var up_button := Button.new()
-            up_button.text = "Up"
-            up_button.custom_minimum_size = Vector2(60.0, 36.0)
-            up_button.pressed.connect(_on_background_debug_adjust_pressed.bind(str(target.get("key", "")), -BG_DEBUG_STEP))
-            row.add_child(up_button)
+            var minus_button := Button.new()
+            minus_button.text = "-"
+            minus_button.custom_minimum_size = Vector2(38.0, 36.0)
+            minus_button.pressed.connect(_on_new_hero_scale_debug_adjust_pressed.bind(hero_name, -NEW_HERO_SCALE_DEBUG_STEP))
+            row.add_child(minus_button)
 
-            var down_button := Button.new()
-            down_button.text = "Down"
-            down_button.custom_minimum_size = Vector2(60.0, 36.0)
-            down_button.pressed.connect(_on_background_debug_adjust_pressed.bind(str(target.get("key", "")), BG_DEBUG_STEP))
-            row.add_child(down_button)
+            var value_label := Label.new()
+            value_label.custom_minimum_size = Vector2(90.0, 0.0)
+            row.add_child(value_label)
+            hero_scale_debug_value_labels[hero_name] = value_label
 
-    bg_debug_panel.show()
+            var plus_button := Button.new()
+            plus_button.text = "+"
+            plus_button.custom_minimum_size = Vector2(38.0, 36.0)
+            plus_button.pressed.connect(_on_new_hero_scale_debug_adjust_pressed.bind(hero_name, NEW_HERO_SCALE_DEBUG_STEP))
+            row.add_child(plus_button)
+
+            var y_minus_button := Button.new()
+            y_minus_button.text = "Y-"
+            y_minus_button.custom_minimum_size = Vector2(38.0, 36.0)
+            y_minus_button.pressed.connect(_on_new_hero_y_debug_adjust_pressed.bind(hero_name, -1.0))
+            row.add_child(y_minus_button)
+
+            var y_plus_button := Button.new()
+            y_plus_button.text = "Y+"
+            y_plus_button.custom_minimum_size = Vector2(38.0, 36.0)
+            y_plus_button.pressed.connect(_on_new_hero_y_debug_adjust_pressed.bind(hero_name, 1.0))
+            row.add_child(y_plus_button)
+
+        var print_button := Button.new()
+        print_button.text = "Print Scales"
+        print_button.custom_minimum_size = Vector2(0.0, 40.0)
+        print_button.pressed.connect(_print_new_hero_scale_debug_values)
+        root_vbox.add_child(print_button)
+        _style_mute_like_button(print_button)
+
     _layout_battle_utility_buttons()
-    _log_background_layer_positions("Initial")
+    _refresh_new_hero_scale_debug_panel()
+
+func _load_editor_new_hero_scale_debug() -> void:
+    if not OS.has_feature("editor"):
+        return
+    var config := ConfigFile.new()
+    if config.load(HERO_EDITOR_SETTINGS_PATH) != OK:
+        return
+    for hero_name in hero_new_scale_debug.keys():
+        hero_new_scale_debug[hero_name] = float(config.get_value(HERO_EDITOR_SCALE_SECTION, str(hero_name), 1.0))
+    for hero_name in hero_new_y_debug.keys():
+        hero_new_y_debug[hero_name] = float(config.get_value(HERO_EDITOR_SCALE_SECTION, "%s_y" % str(hero_name), 0.0))
+
+func _save_editor_new_hero_scale_debug() -> void:
+    if not OS.has_feature("editor"):
+        return
+    var config := ConfigFile.new()
+    config.load(HERO_EDITOR_SETTINGS_PATH)
+    for hero_name in hero_new_scale_debug.keys():
+        config.set_value(HERO_EDITOR_SCALE_SECTION, str(hero_name), float(hero_new_scale_debug[hero_name]))
+    for hero_name in hero_new_y_debug.keys():
+        config.set_value(HERO_EDITOR_SCALE_SECTION, "%s_y" % str(hero_name), float(hero_new_y_debug[hero_name]))
+    config.save(HERO_EDITOR_SETTINGS_PATH)
+
+func _refresh_new_hero_scale_debug_panel() -> void:
+    if hero_scale_debug_panel == null:
+        return
+    var show_panel: bool = false
+    hero_scale_debug_panel.visible = show_panel
+    if not show_panel:
+        return
+    for hero_name_variant in hero_scale_debug_value_labels.keys():
+        var hero_name: String = str(hero_name_variant)
+        var label: Label = hero_scale_debug_value_labels.get(hero_name, null)
+        if label == null:
+            continue
+        label.text = "%.2fx Y%.0f" % [float(hero_new_scale_debug.get(hero_name, 1.0)), float(hero_new_y_debug.get(hero_name, 0.0))]
+
+func _on_new_hero_scale_debug_adjust_pressed(hero_name: String, delta_value: float) -> void:
+    if not hero_new_scale_debug.has(hero_name):
+        return
+    hero_new_scale_debug[hero_name] = clampf(float(hero_new_scale_debug.get(hero_name, 1.0)) + delta_value, 0.2, 3.0)
+    _save_editor_new_hero_scale_debug()
+    _refresh_new_hero_scale_debug_panel()
+    if selected_hero_sprite_set == HERO_SPRITE_SET_NEW:
+        _apply_selected_hero_sprite_set()
+    _print_new_hero_scale_debug_values()
+
+func _on_new_hero_y_debug_adjust_pressed(hero_name: String, delta_value: float) -> void:
+    if not hero_new_y_debug.has(hero_name):
+        return
+    hero_new_y_debug[hero_name] = clampf(float(hero_new_y_debug.get(hero_name, 0.0)) + delta_value, -80.0, 80.0)
+    _save_editor_new_hero_scale_debug()
+    _refresh_new_hero_scale_debug_panel()
+    if selected_hero_sprite_set == HERO_SPRITE_SET_NEW:
+        _apply_selected_hero_sprite_set()
+    _print_new_hero_scale_debug_values()
+
+func _print_new_hero_scale_debug_values() -> void:
+    var lines: PackedStringArray = ["[New Hero Scale Debug]"]
+    for hero_name in ["knight", "archer", "guardian", "mage"]:
+        lines.append("%s scale=%.2f y=%.0f" % [hero_name, float(hero_new_scale_debug.get(hero_name, 1.0)), float(hero_new_y_debug.get(hero_name, 0.0))])
+    print("\n".join(lines))
+
+func _setup_weapon_debug_controls() -> void:
+    if not OS.has_feature("editor"):
+        if weapon_debug_panel != null:
+            weapon_debug_panel.hide()
+        return
+
+    var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
+    if canvas_layer == null:
+        return
+
+    if weapon_debug_panel == null:
+        weapon_debug_panel = PanelContainer.new()
+        weapon_debug_panel.name = "WeaponDebugPanel"
+        canvas_layer.add_child(weapon_debug_panel)
+        _style_utility_panel(weapon_debug_panel)
+
+        var root_margin := MarginContainer.new()
+        root_margin.add_theme_constant_override("margin_left", 10)
+        root_margin.add_theme_constant_override("margin_top", 10)
+        root_margin.add_theme_constant_override("margin_right", 10)
+        root_margin.add_theme_constant_override("margin_bottom", 10)
+        weapon_debug_panel.add_child(root_margin)
+
+        var root_vbox := VBoxContainer.new()
+        root_vbox.add_theme_constant_override("separation", 6)
+        root_margin.add_child(root_vbox)
+
+        var title := Label.new()
+        title.text = "Weapon Rot Debug"
+        title.add_theme_font_size_override("font_size", 20)
+        root_vbox.add_child(title)
+
+        var step_label := Label.new()
+        step_label.text = "Step %.0f deg" % WEAPON_ROTATION_DEBUG_STEP
+        step_label.add_theme_font_size_override("font_size", 14)
+        root_vbox.add_child(step_label)
+
+        for target in _weapon_debug_targets():
+            var row := HBoxContainer.new()
+            row.add_theme_constant_override("separation", 6)
+            root_vbox.add_child(row)
+
+            var name_label := Label.new()
+            name_label.text = str(target.get("label", "Weapon"))
+            name_label.custom_minimum_size = Vector2(70.0, 0.0)
+            row.add_child(name_label)
+
+            var rot_minus := Button.new()
+            rot_minus.text = "R-"
+            rot_minus.custom_minimum_size = Vector2(38.0, 36.0)
+            rot_minus.pressed.connect(_on_weapon_debug_adjust_pressed.bind(str(target.get("key", "")), "rot", -WEAPON_ROTATION_DEBUG_STEP))
+            row.add_child(rot_minus)
+
+            var x_minus := Button.new()
+            x_minus.text = "X-"
+            x_minus.custom_minimum_size = Vector2(38.0, 36.0)
+            x_minus.pressed.connect(_on_weapon_debug_adjust_pressed.bind(str(target.get("key", "")), "x", -1.0))
+            row.add_child(x_minus)
+
+            var y_minus := Button.new()
+            y_minus.text = "Y-"
+            y_minus.custom_minimum_size = Vector2(38.0, 36.0)
+            y_minus.pressed.connect(_on_weapon_debug_adjust_pressed.bind(str(target.get("key", "")), "y", -1.0))
+            row.add_child(y_minus)
+
+            var value_label := Label.new()
+            value_label.custom_minimum_size = Vector2(120.0, 0.0)
+            row.add_child(value_label)
+            weapon_debug_value_labels[str(target.get("key", ""))] = value_label
+
+            var rot_plus := Button.new()
+            rot_plus.text = "R+"
+            rot_plus.custom_minimum_size = Vector2(38.0, 36.0)
+            rot_plus.pressed.connect(_on_weapon_debug_adjust_pressed.bind(str(target.get("key", "")), "rot", WEAPON_ROTATION_DEBUG_STEP))
+            row.add_child(rot_plus)
+
+            var x_plus := Button.new()
+            x_plus.text = "X+"
+            x_plus.custom_minimum_size = Vector2(38.0, 36.0)
+            x_plus.pressed.connect(_on_weapon_debug_adjust_pressed.bind(str(target.get("key", "")), "x", 1.0))
+            row.add_child(x_plus)
+
+            var y_plus := Button.new()
+            y_plus.text = "Y+"
+            y_plus.custom_minimum_size = Vector2(38.0, 36.0)
+            y_plus.pressed.connect(_on_weapon_debug_adjust_pressed.bind(str(target.get("key", "")), "y", 1.0))
+            row.add_child(y_plus)
+
+        var print_button := Button.new()
+        print_button.text = "Print Rotations"
+        print_button.custom_minimum_size = Vector2(0.0, 40.0)
+        print_button.pressed.connect(_print_weapon_rotation_debug_values)
+        root_vbox.add_child(print_button)
+        _style_mute_like_button(print_button)
+
+        for value_label_variant in weapon_debug_value_labels.values():
+            var value_label: Label = value_label_variant
+            if value_label != null:
+                value_label.add_theme_font_size_override("font_size", 14)
+
+    weapon_debug_panel.show()
+    _layout_battle_utility_buttons()
+    _refresh_weapon_debug_value_labels()
+    _apply_weapon_debug_rotations()
+    _print_weapon_rotation_debug_values()
+
+func _weapon_debug_targets() -> Array[Dictionary]:
+    return [
+        {"key": "knight", "label": "Sword"},
+        {"key": "archer", "label": "Bow"},
+        {"key": "guardian", "label": "Shield"},
+        {"key": "mage", "label": "Wand"},
+        {"key": "arrow", "label": "Arrow"},
+    ]
+
+func _on_weapon_debug_adjust_pressed(key: String, field: String, delta_value: float) -> void:
+    if not weapon_debug_transforms.has(key):
+        return
+    var data: Dictionary = weapon_debug_transforms.get(key, {}).duplicate()
+    data[field] = float(data.get(field, 0.0)) + delta_value
+    weapon_debug_transforms[key] = data
+    _refresh_weapon_debug_value_labels()
+    _apply_weapon_debug_rotations()
+    _print_weapon_rotation_debug_values()
+
+func _refresh_weapon_debug_value_labels() -> void:
+    for key_variant in weapon_debug_value_labels.keys():
+        var key: String = str(key_variant)
+        var label: Label = weapon_debug_value_labels.get(key, null)
+        if label == null:
+            continue
+        var data: Dictionary = weapon_debug_transforms.get(key, {})
+        label.text = "R%.0f X%.0f Y%.0f" % [float(data.get("rot", 0.0)), float(data.get("x", 0.0)), float(data.get("y", 0.0))]
+
+func _apply_weapon_debug_rotations() -> void:
+    for hero in heroes:
+        if not is_instance_valid(hero):
+            continue
+        var h: Dictionary = hero_data.get(hero, {})
+        var hero_name: String = str(h.get("name", ""))
+        if hero_name == "":
+            continue
+        var data: Dictionary = weapon_debug_transforms.get(hero_name, {})
+        if hero.has_method("set_weapon_debug_transform"):
+            hero.call("set_weapon_debug_transform", float(data.get("rot", 0.0)), Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))))
+        elif hero.has_method("set_weapon_rotation_offset_degrees"):
+            hero.call("set_weapon_rotation_offset_degrees", float(data.get("rot", 0.0)))
+
+func _print_weapon_rotation_debug_values() -> void:
+    var lines: PackedStringArray = ["[Weapon Rotation Debug]"]
+    for target in _weapon_debug_targets():
+        var key: String = str(target.get("key", ""))
+        var label: String = str(target.get("label", key))
+        var data: Dictionary = weapon_debug_transforms.get(key, {})
+        lines.append("%s: rot=%.1f x=%.1f y=%.1f" % [label, float(data.get("rot", 0.0)), float(data.get("x", 0.0)), float(data.get("y", 0.0))])
+    print("\n".join(lines))
 
 func _background_debug_targets() -> Array[Dictionary]:
     return [
@@ -1564,30 +1879,31 @@ func _make_atari_ground_texture(w: int, h: int, c1: Color, c2: Color, accent: Co
     return ImageTexture.create_from_image(img)
 
 func _setup_actor_sheets() -> void:
-    var combat_base: String = "res://Art/CombatSprites"
-    var knight_visual: Dictionary = _make_asset_actor(
-        combat_base + "/hero_knight.png",
+    var hero_base: String = _current_hero_asset_base_dir()
+    var combat_base: String = HERO_ASSET_BASE_DIR
+    var knight_visual: Dictionary = _make_hero_visual(
+        _hero_sheet_path(hero_base, "hero_knight.png"),
         HERO_FRAME_SIZE,
         Color(0.25, 0.74, 0.98, 1.0),
         "knight",
         HERO_RENDER_SCALE
     )
-    var archer_visual: Dictionary = _make_asset_actor(
-        combat_base + "/hero_archer.png",
+    var archer_visual: Dictionary = _make_hero_visual(
+        _hero_sheet_path(hero_base, "hero_archer.png"),
         HERO_FRAME_SIZE,
         Color(0.99, 0.58, 0.17, 1.0),
         "archer",
         HERO_RENDER_SCALE
     )
-    var guardian_visual: Dictionary = _make_asset_actor(
-        combat_base + "/hero_guardian.png",
+    var guardian_visual: Dictionary = _make_hero_visual(
+        _hero_sheet_path(hero_base, "hero_guardian.png"),
         HERO_FRAME_SIZE,
         Color(0.28, 0.86, 0.41, 1.0),
         "guardian",
         HERO_RENDER_SCALE
     )
-    var mage_visual: Dictionary = _make_asset_actor(
-        combat_base + "/hero_mage.png",
+    var mage_visual: Dictionary = _make_hero_visual(
+        _hero_sheet_path(hero_base, "hero_mage.png"),
         HERO_FRAME_SIZE,
         Color(0.86, 0.33, 0.35, 1.0),
         "mage",
@@ -1965,24 +2281,13 @@ func _fill_rect(img: Image, x: int, y: int, w: int, h: int, color: Color) -> voi
                 continue
             img.set_pixel(xx, yy, color)
 
-func _make_arrow_texture() -> ImageTexture:
-    var img: Image = Image.create(12, 4, false, Image.FORMAT_RGBA8)
-    for y in range(4):
-        for x in range(12):
-            img.set_pixel(x, y, Color(0, 0, 0, 0))
-    for x in range(2, 10):
-        img.set_pixel(x, 1, Color(0.8, 0.62, 0.24, 1.0))
-        img.set_pixel(x, 2, Color(0.65, 0.45, 0.16, 1.0))
-    img.set_pixel(0, 1, Color(0.9, 0.78, 0.3, 1.0))
-    img.set_pixel(1, 0, Color(0.95, 0.88, 0.45, 1.0))
-    img.set_pixel(1, 1, Color(0.95, 0.88, 0.45, 1.0))
-    img.set_pixel(1, 2, Color(0.95, 0.88, 0.45, 1.0))
-    img.set_pixel(1, 3, Color(0.95, 0.88, 0.45, 1.0))
-    img.set_pixel(10, 0, Color(0.45, 0.3, 0.12, 1.0))
-    img.set_pixel(10, 3, Color(0.45, 0.3, 0.12, 1.0))
-    img.set_pixel(11, 1, Color(0.2, 0.2, 0.2, 1.0))
-    img.set_pixel(11, 2, Color(0.2, 0.2, 0.2, 1.0))
-    return ImageTexture.create_from_image(img)
+func _make_arrow_texture() -> Texture2D:
+    return load(COMBAT_ARROW_TEXTURE_PATH) as Texture2D
+
+func _make_weapon_chroma_material() -> ShaderMaterial:
+    var material := ShaderMaterial.new()
+    material.shader = WEAPON_CHROMA_SHADER
+    return material
 
 func _process(delta: float) -> void:
     if OS.has_feature("editor"):
@@ -2195,9 +2500,14 @@ func _spawn_heroes() -> void:
     for i in range(roster.size()):
         var hero_name: String = roster[i]
         var hero: CombatSprite = HERO_SCENE.instantiate()
-        hero.position = Vector2(HERO_START_X + HERO_FRAME_SIZE.x * HERO_RENDER_SCALE - float(i) * HERO_FORMATION_SPACING, FLOOR_Y)
+        hero.position = Vector2(HERO_START_X + HERO_FRAME_SIZE.x * HERO_RENDER_SCALE - float(i) * HERO_FORMATION_SPACING, _hero_base_y(hero_name))
         var hero_visual: Dictionary = hero_sheets[hero_name]
-        hero.setup(hero_visual["sheet"], hero_visual["frame"], float(hero_visual.get("scale", HERO_RENDER_SCALE)), hero_name)
+        hero.setup(hero_visual["sheet"], hero_visual["frame"], float(hero_visual.get("scale", HERO_RENDER_SCALE)), hero_name, _should_show_hero_weapon_visuals())
+        var weapon_debug: Dictionary = weapon_debug_transforms.get(hero_name, {})
+        if hero.has_method("set_weapon_debug_transform"):
+            hero.call("set_weapon_debug_transform", float(weapon_debug.get("rot", 0.0)), Vector2(float(weapon_debug.get("x", 0.0)), float(weapon_debug.get("y", 0.0))))
+        elif hero.has_method("set_weapon_rotation_offset_degrees"):
+            hero.call("set_weapon_rotation_offset_degrees", float(weapon_debug.get("rot", 0.0)))
         hero.set_sway_range(-5.0, 5.0)
         hero.clicked.connect(_on_hero_clicked.bind(hero_name))
         hero_layer.add_child(hero)
@@ -2317,6 +2627,127 @@ func _make_asset_actor(sheet_path: String, fallback_frame: Vector2i, fallback_co
         "scale": scale_factor,
     }
 
+func _make_hero_asset_actor(sheet_path: String, fallback_frame: Vector2i, fallback_color: Color, fallback_archetype: String, scale_factor: float) -> Dictionary:
+    var loaded: Texture2D = load(sheet_path) as Texture2D
+    if loaded != null:
+        var composed := _compose_trimmed_hero_sheet_from_texture(loaded)
+        if composed.size() > 0:
+            composed["scale"] = scale_factor
+            return composed
+    return _make_asset_actor(sheet_path, fallback_frame, fallback_color, fallback_archetype, scale_factor)
+
+func _make_hero_visual(sheet_path: String, fallback_frame: Vector2i, fallback_color: Color, fallback_archetype: String, scale_factor: float) -> Dictionary:
+    if selected_hero_sprite_set == HERO_SPRITE_SET_NEW:
+        var normalized := _normalize_new_hero_visual_scale(_make_hero_asset_actor(sheet_path, fallback_frame, fallback_color, fallback_archetype, scale_factor))
+        normalized["scale"] = float(normalized.get("scale", OLD_HERO_RENDER_SCALE)) * float(hero_new_scale_debug.get(fallback_archetype, 1.0))
+        return normalized
+    return _make_asset_actor(sheet_path, fallback_frame, fallback_color, fallback_archetype, OLD_HERO_RENDER_SCALE)
+
+func _current_hero_asset_base_dir() -> String:
+    if selected_hero_sprite_set == HERO_SPRITE_SET_NEW:
+        return HERO_ASSET_NEW_BASE_DIR
+    return HERO_ASSET_BASE_DIR
+
+func _hero_sheet_path(base_dir: String, file_name: String) -> String:
+    var preferred := "%s/%s" % [base_dir, file_name]
+    if ResourceLoader.exists(preferred):
+        return preferred
+    return "%s/%s" % [HERO_ASSET_BASE_DIR, file_name]
+
+func _normalize_new_hero_visual_scale(visual: Dictionary) -> Dictionary:
+    var normalized := visual.duplicate()
+    var frame: Vector2i = visual.get("frame", HERO_FRAME_SIZE)
+    if frame.x <= 0 or frame.y <= 0:
+        normalized["scale"] = OLD_HERO_RENDER_SCALE
+        return normalized
+    var width_scale: float = NEW_HERO_TARGET_WORLD_WIDTH / float(frame.x)
+    var height_scale: float = NEW_HERO_TARGET_WORLD_HEIGHT / float(frame.y)
+    normalized["scale"] = max(0.05, min(width_scale, height_scale))
+    return normalized
+
+func _load_editor_hero_sprite_set() -> void:
+    selected_hero_sprite_set = HERO_SPRITE_SET_NEW
+    if not _should_show_editor_only_hero_set_toggle():
+        return
+    var config := ConfigFile.new()
+    if config.load(HERO_EDITOR_SETTINGS_PATH) != OK:
+        return
+    var saved_set: String = str(config.get_value(HERO_EDITOR_SETTINGS_SECTION, HERO_EDITOR_SETTINGS_KEY, HERO_SPRITE_SET_NEW)).to_lower()
+    if saved_set == HERO_SPRITE_SET_OLD:
+        selected_hero_sprite_set = HERO_SPRITE_SET_OLD
+
+func _save_editor_hero_sprite_set() -> void:
+    if not _should_show_editor_only_hero_set_toggle():
+        return
+    var config := ConfigFile.new()
+    config.load(HERO_EDITOR_SETTINGS_PATH)
+    config.set_value(HERO_EDITOR_SETTINGS_SECTION, HERO_EDITOR_SETTINGS_KEY, selected_hero_sprite_set)
+    config.save(HERO_EDITOR_SETTINGS_PATH)
+
+func _setup_hero_set_toggle_button() -> void:
+    if not _should_show_editor_only_hero_set_toggle():
+        return
+    if hero_set_toggle_button != null and is_instance_valid(hero_set_toggle_button):
+        return
+    var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
+    if canvas_layer == null:
+        return
+    hero_set_toggle_button = Button.new()
+    hero_set_toggle_button.name = "HeroSetToggleButton"
+    hero_set_toggle_button.anchor_left = 1.0
+    hero_set_toggle_button.anchor_top = 0.0
+    hero_set_toggle_button.anchor_right = 1.0
+    hero_set_toggle_button.anchor_bottom = 0.0
+    hero_set_toggle_button.z_index = 30
+    hero_set_toggle_button.focus_mode = Control.FOCUS_NONE
+    hero_set_toggle_button.custom_minimum_size = Vector2(120, 44)
+    hero_set_toggle_button.add_theme_font_size_override("font_size", 14)
+    hero_set_toggle_button.pressed.connect(_on_hero_set_toggle_button_pressed)
+    _style_mute_like_button(hero_set_toggle_button)
+    canvas_layer.add_child(hero_set_toggle_button)
+
+func _refresh_hero_set_toggle_button() -> void:
+    if hero_set_toggle_button == null:
+        return
+    var is_new_set: bool = selected_hero_sprite_set == HERO_SPRITE_SET_NEW
+    hero_set_toggle_button.text = "Art: NEW" if is_new_set else "Art: OLD"
+    hero_set_toggle_button.tooltip_text = "Switch between the original and new hero sprite sets."
+
+func _on_hero_set_toggle_button_pressed() -> void:
+    selected_hero_sprite_set = HERO_SPRITE_SET_OLD if selected_hero_sprite_set == HERO_SPRITE_SET_NEW else HERO_SPRITE_SET_NEW
+    _save_editor_hero_sprite_set()
+    _refresh_hero_set_toggle_button()
+    _refresh_new_hero_scale_debug_panel()
+    _apply_selected_hero_sprite_set()
+
+func _apply_selected_hero_sprite_set() -> void:
+    _setup_actor_sheets()
+    for hero in heroes:
+        if not is_instance_valid(hero) or not hero_data.has(hero):
+            continue
+        var h: Dictionary = hero_data[hero]
+        var hero_name: String = str(h.get("name", ""))
+        if hero_name == "" or not hero_sheets.has(hero_name):
+            continue
+        var hero_visual: Dictionary = hero_sheets[hero_name]
+        hero.setup(hero_visual["sheet"], hero_visual["frame"], float(hero_visual.get("scale", HERO_RENDER_SCALE)), hero_name, _should_show_hero_weapon_visuals())
+        hero.position.y = _hero_base_y(hero_name)
+        var weapon_debug: Dictionary = weapon_debug_transforms.get(hero_name, {})
+        if hero.has_method("set_weapon_debug_transform"):
+            hero.call("set_weapon_debug_transform", float(weapon_debug.get("rot", 0.0)), Vector2(float(weapon_debug.get("x", 0.0)), float(weapon_debug.get("y", 0.0))))
+        elif hero.has_method("set_weapon_rotation_offset_degrees"):
+            hero.call("set_weapon_rotation_offset_degrees", float(weapon_debug.get("rot", 0.0)))
+        hero.set_sway_range(-5.0, 5.0)
+        _update_hero_active_bar(hero, h)
+
+func _should_show_hero_weapon_visuals() -> bool:
+    return selected_hero_sprite_set != HERO_SPRITE_SET_NEW
+
+func _hero_base_y(hero_name: String) -> float:
+    if selected_hero_sprite_set == HERO_SPRITE_SET_NEW:
+        return FLOOR_Y + float(hero_new_y_debug.get(hero_name, 0.0))
+    return FLOOR_Y
+
 func _make_pack_actor(walk_a_path: String, walk_b_path: String, attack_path: String, fallback_frame: Vector2i, fallback_color: Color, fallback_archetype: String, scale_factor: float, facing_left: bool = false) -> Dictionary:
     var composed: Dictionary = _compose_three_frame_sheet_from_files([walk_a_path, walk_b_path, attack_path])
     if composed.size() > 0:
@@ -2365,6 +2796,109 @@ func _compose_three_frame_sheet_from_files(frame_paths: Array[String]) -> Dictio
         var dy: int = int((max_h - src.get_height()) / 2)
         sheet.blit_rect(src, Rect2i(0, 0, src.get_width(), src.get_height()), Vector2i(dx, dy))
 
+    return {
+        "sheet": ImageTexture.create_from_image(sheet),
+        "frame": Vector2i(max_w, max_h),
+    }
+
+func _compose_trimmed_hero_sheet_from_texture(sheet_texture: Texture2D) -> Dictionary:
+    if sheet_texture == null:
+        return {}
+    var sheet_image: Image = sheet_texture.get_image()
+    if sheet_image == null or sheet_image.is_empty():
+        return {}
+    if sheet_image.get_format() != Image.FORMAT_RGBA8:
+        sheet_image.convert(Image.FORMAT_RGBA8)
+    var frame_width: int = sheet_image.get_width() / 3
+    var frame_height: int = sheet_image.get_height()
+    if frame_width <= 0 or frame_width * 3 != sheet_image.get_width() or frame_height <= 0:
+        return {}
+
+    var frames: Array[Image] = []
+    for i in range(3):
+        var frame := Image.create(frame_width, frame_height, false, Image.FORMAT_RGBA8)
+        frame.blit_rect(sheet_image, Rect2i(i * frame_width, 0, frame_width, frame_height), Vector2i.ZERO)
+        frames.append(_prepare_hero_frame_image(frame))
+
+    return _compose_bottom_aligned_sheet_from_images(frames)
+
+func _prepare_hero_frame_image(source: Image) -> Image:
+    if source == null or source.is_empty():
+        return source
+    var image: Image = source.duplicate()
+    if image.get_format() != Image.FORMAT_RGBA8:
+        image.convert(Image.FORMAT_RGBA8)
+    _strip_floor_line_rows(image)
+    return _crop_image_to_alpha_bounds(image)
+
+func _strip_floor_line_rows(image: Image) -> void:
+    if image == null or image.is_empty():
+        return
+    var rows_to_check: int = min(6, image.get_height())
+    for offset in range(rows_to_check):
+        var y: int = image.get_height() - 1 - offset
+        if y < 0:
+            break
+        var opaque_count: int = 0
+        var dark_count: int = 0
+        for x in range(image.get_width()):
+            var pixel: Color = image.get_pixel(x, y)
+            if pixel.a <= 0.0:
+                continue
+            opaque_count += 1
+            var luminance: float = (pixel.r + pixel.g + pixel.b) / 3.0
+            if luminance <= 0.24:
+                dark_count += 1
+        if opaque_count == 0:
+            continue
+        var coverage: float = float(opaque_count) / float(max(1, image.get_width()))
+        var dark_ratio: float = float(dark_count) / float(max(1, opaque_count))
+        if coverage < 0.30 or dark_ratio < 0.85:
+            break
+        for x in range(image.get_width()):
+            image.set_pixel(x, y, Color(0, 0, 0, 0))
+
+func _crop_image_to_alpha_bounds(image: Image) -> Image:
+    if image == null or image.is_empty():
+        return image
+    var min_x: int = image.get_width()
+    var min_y: int = image.get_height()
+    var max_x: int = -1
+    var max_y: int = -1
+    for y in range(image.get_height()):
+        for x in range(image.get_width()):
+            if image.get_pixel(x, y).a <= 0.0:
+                continue
+            min_x = min(min_x, x)
+            min_y = min(min_y, y)
+            max_x = max(max_x, x)
+            max_y = max(max_y, y)
+    if max_x < min_x or max_y < min_y:
+        return image
+    var cropped := Image.create(max_x - min_x + 1, max_y - min_y + 1, false, Image.FORMAT_RGBA8)
+    cropped.blit_rect(image, Rect2i(min_x, min_y, cropped.get_width(), cropped.get_height()), Vector2i.ZERO)
+    return cropped
+
+func _compose_bottom_aligned_sheet_from_images(images: Array[Image]) -> Dictionary:
+    if images.size() != 3:
+        return {}
+    var max_w: int = 0
+    var max_h: int = 0
+    for image in images:
+        if image == null or image.is_empty():
+            return {}
+        max_w = max(max_w, image.get_width())
+        max_h = max(max_h, image.get_height())
+    if max_w <= 0 or max_h <= 0:
+        return {}
+
+    var sheet := Image.create(max_w * 3, max_h, false, Image.FORMAT_RGBA8)
+    sheet.fill(Color(0, 0, 0, 0))
+    for i in range(3):
+        var src: Image = images[i]
+        var dx: int = i * max_w + int((max_w - src.get_width()) / 2)
+        var dy: int = max_h - src.get_height()
+        sheet.blit_rect(src, Rect2i(0, 0, src.get_width(), src.get_height()), Vector2i(dx, dy))
     return {
         "sheet": ImageTexture.create_from_image(sheet),
         "frame": Vector2i(max_w, max_h),
@@ -2552,7 +3086,10 @@ func _spawn_arrow(from_pos: Vector2, target_enemy: CombatSprite, damage: float, 
     sprite.texture = arrow_texture
     sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     sprite.centered = true
-    sprite.scale = Vector2.ONE * 3.0
+    sprite.scale = Vector2(12.0 / maxf(1.0, float(arrow_texture.get_width())), 4.0 / maxf(1.0, float(arrow_texture.get_height()))) * 3.0
+    sprite.material = _make_weapon_chroma_material()
+    var arrow_debug: Dictionary = weapon_debug_transforms.get("arrow", {})
+    sprite.offset = Vector2(float(arrow_debug.get("x", 0.0)), float(arrow_debug.get("y", 0.0)))
     sprite.position = from_pos
     projectile_layer.add_child(sprite)
 
@@ -2560,7 +3097,7 @@ func _spawn_arrow(from_pos: Vector2, target_enemy: CombatSprite, damage: float, 
     var dir: Vector2 = (target_pos - from_pos).normalized()
     if dir == Vector2.ZERO:
         dir = Vector2.RIGHT
-    sprite.rotation = dir.angle()
+    sprite.rotation = dir.angle() + deg_to_rad(float(arrow_debug.get("rot", 0.0)))
 
     arrows.append({
         "sprite": sprite,
@@ -2617,7 +3154,8 @@ func _update_arrows(delta: float) -> void:
             var to_target: Vector2 = target_pos - sprite.position
             if to_target.length() > 4.0:
                 dir = to_target.normalized()
-            sprite.rotation = dir.angle()
+            sprite.rotation = dir.angle() + deg_to_rad(float(weapon_debug_transforms.get("arrow", {}).get("rot", 0.0)))
+            sprite.offset = Vector2(float(weapon_debug_transforms.get("arrow", {}).get("x", 0.0)), float(weapon_debug_transforms.get("arrow", {}).get("y", 0.0)))
             sprite.position += dir * speed * delta
 
             arrow["dir"] = dir
@@ -2638,7 +3176,8 @@ func _update_arrows(delta: float) -> void:
             continue
         else:
             # piercing arrow: maintain its direction and check every enemy along its path
-            sprite.rotation = dir.angle()
+            sprite.rotation = dir.angle() + deg_to_rad(float(weapon_debug_transforms.get("arrow", {}).get("rot", 0.0)))
+            sprite.offset = Vector2(float(weapon_debug_transforms.get("arrow", {}).get("x", 0.0)), float(weapon_debug_transforms.get("arrow", {}).get("y", 0.0)))
             sprite.position += dir * speed * delta
             arrow["ttl"] = ttl
             arrows[i] = arrow
@@ -4739,8 +5278,8 @@ func _setup_touch_input_button() -> void:
     touch_input_button.offset_bottom = 332.0
     touch_input_button.z_index = 30
     touch_input_button.focus_mode = Control.FOCUS_NONE
-    touch_input_button.custom_minimum_size = Vector2(240, 88)
-    touch_input_button.add_theme_font_size_override("font_size", 26)
+    touch_input_button.custom_minimum_size = Vector2(120, 44)
+    touch_input_button.add_theme_font_size_override("font_size", 14)
     touch_input_button.pressed.connect(_on_touch_input_button_pressed)
     _style_mute_like_button(touch_input_button)
     canvas_layer.add_child(touch_input_button)
