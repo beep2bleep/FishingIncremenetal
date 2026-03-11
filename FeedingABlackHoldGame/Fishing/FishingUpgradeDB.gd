@@ -22,7 +22,9 @@ const SPECIFIC_DESCRIPTIONS := {
     "cursor_pickup_unlock": "Unlocks cursor pickup bonuses so cursor-collected coins are worth more.",
     "recruit_archer": "Adds the Archer hero to your combat lineup.",
     "auto_attack_unlock": "Unlocks Tactical Telemetry: reveals enemies remaining during battle using the blue progress HUD.",
-    "battle_speed_unlock": "Unlocks battle speed control in non-editor builds. Buy levels to unlock 2x, then 4x, then 8x speed.",
+    "battle_speed_unlock_2x": "Unlocks 2x battle speed in non-editor builds.",
+    "battle_speed_unlock_4x": "Unlocks 4x battle speed in non-editor builds.",
+    "battle_speed_unlock_8x": "Unlocks 8x battle speed in non-editor builds.",
     "knight_vamp_unlock": "Unlocks the Knight active and improves life steal sustain.",
     "archer_pierce_unlock": "Unlocks the Archer active with piercing attack coverage.",
     "power_harvest_unlock": "Unlocks stronger power generation from combat and pickups.",
@@ -41,7 +43,9 @@ const SPECIFIC_NAMES := {
     "cursor_pickup_unlock": "Cursor Pickup Unlock",
     "recruit_archer": "Recruit Archer",
     "auto_attack_unlock": "Tactical Telemetry",
-    "battle_speed_unlock": "Temporal Throttle",
+    "battle_speed_unlock_2x": "Temportal Throttle",
+    "battle_speed_unlock_4x": "Temportal Throttle II",
+    "battle_speed_unlock_8x": "Temportal Throttle III",
     "knight_vamp_unlock": "Knight Vampirism Unlock",
     "archer_pierce_unlock": "Archer Pierce Unlock",
     "power_harvest_unlock": "Power Harvest Unlock",
@@ -274,13 +278,12 @@ func get_description(node: Dictionary) -> String:
         return _with_editor_note(node, explicit_description)
 
     var key: String = str(node.get("key", ""))
-    if key == "battle_speed_unlock":
-        var level: int = int(node.get("level", 1))
-        if level <= 1:
-            return _with_editor_note(node, "Unlocks the Speed button and enables battle speed selection, upgrade for more options.")
-        if level == 2:
-            return _with_editor_note(node, "Upgrades the Speed button to include 4x battle speed.")
-        return _with_editor_note(node, "Upgrades the Speed button to include 8x battle speed.")
+    if key == "battle_speed_unlock_2x":
+        return _with_editor_note(node, "Unlocks the Speed button and enables 2x battle speed.")
+    if key == "battle_speed_unlock_4x":
+        return _with_editor_note(node, "Unlocks 4x battle speed.")
+    if key == "battle_speed_unlock_8x":
+        return _with_editor_note(node, "Unlocks 8x battle speed.")
     if key == "hero_coin_gain":
         return _with_editor_note(node, "Multiplies coin value by +6% per level (exponential over 20 levels). Applies to coins collected by heroes or cursor.")
     if key == "cursor_capture_gain":

@@ -30,6 +30,7 @@ signal unlocked(node: TechTreeNode)
 
 var completed_index = 0
 var touch_buy_button: Button
+var demo_lock_label: Label
 
 enum STATES{LOCKED, AVAILABLE, COMPLETE, SHADOW}
 
@@ -201,6 +202,7 @@ func _ready():
 
 
     %"Tool Tip".pivot_offset = %"Tool Tip".size / 2.0
+    demo_lock_label = get_node_or_null("%Demo Lock Label")
     _setup_touch_buy_button()
 
     SignalBus.settings_updated.connect(_on_settings_updated)
@@ -481,6 +483,8 @@ func update():
     %"Mod Icon".hide()
     %TitlePanel.show()
     %"Upgrade Amount".show()
+    if demo_lock_label != null:
+        demo_lock_label.hide()
 
     var using_sim_display: bool = upgrade != null and upgrade.sim_name != ""
     var sim_effect_text: String = ""
@@ -504,8 +508,14 @@ func update():
 
     elif upgrade.demo_locked == 1:
         %"Upgrade Amount".hide()
-        %Description.text = "LOCKED FOR DEMO"
+        if using_sim_display:
+            %Description.text = "%s\n%s" % [upgrade.sim_name, sim_effect_text]
+        else:
+            %Description.text = Global.mods.get_from_to(upgrade.mod, upgrade.get_current_teir_value())
         %"Mod Icon".texture = locked_texture
+        if demo_lock_label != null:
+            demo_lock_label.text = "Locked in Demo Mode"
+            demo_lock_label.show()
 
     elif upgrade.is_at_max() == true:
         if upgrade.has_tiers():
@@ -548,7 +558,7 @@ func update():
 
     update_can_pay_cost()
 
-    if state == STATES.AVAILABLE and can_pay_cost == true:
+    if state == STATES.AVAILABLE and (can_pay_cost == true or (upgrade != null and upgrade.demo_locked == 1)):
         %"Click Mask".disabled = false
     elif state == STATES.SHADOW or state == STATES.COMPLETE:
         %"Click Mask".disabled = false

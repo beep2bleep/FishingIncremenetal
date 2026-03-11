@@ -73,6 +73,7 @@ static func apply_simulation_upgrades() -> void:
     Global.game_mode_data_manager.upgrades = {}
     Global.game_mode_data_manager.unlocked_upgrades = {}
 
+    var demo_mode_enabled: bool = _is_demo_mode_enabled()
     var i: int = 0
     for entry_variant: Variant in grouped_upgrades:
         if not (entry_variant is Dictionary):
@@ -109,6 +110,8 @@ static func apply_simulation_upgrades() -> void:
         upgrade.sim_group = int(entry.get("group", 1))
         upgrade.sim_level = int(entry.get("level", 1))
         upgrade.sim_group_pos = int(entry.get("group_pos", 1))
+        if demo_mode_enabled and _is_demo_locked_for_display_name(upgrade.sim_name):
+            upgrade.demo_locked = 1
 
         var dep_variant: Variant = entry.get("dependency", null)
         if dep_variant != null:
@@ -121,10 +124,46 @@ static func apply_simulation_upgrades() -> void:
         Global.game_mode_data_manager.upgrades[upgrade.cell] = upgrade
 
         var owned_level: int = SaveHandler.get_fishing_upgrade_level(upgrade.sim_key)
+        if upgrade.demo_locked == 1:
+            owned_level = min(owned_level, upgrade.sim_level - 1)
         if owned_level >= upgrade.sim_level:
             var unlocked_tiers: int = clamp(owned_level - upgrade.sim_level + 1, 0, upgrade.max_tier)
             upgrade.current_tier = unlocked_tiers
             Global.game_mode_data_manager.unlocked_upgrades[upgrade.cell] = upgrade.to_dict()
+
+static func _is_demo_mode_enabled() -> bool:
+    return bool(ProjectSettings.get_setting("global/Demo", false))
+
+static func _is_demo_locked_for_display_name(display_name: String) -> bool:
+    var words: PackedStringArray = display_name.strip_edges().split(" ", false)
+    if words.is_empty():
+        return false
+    return _roman_to_int(words[words.size() - 1]) >= 3
+
+static func _roman_to_int(value: String) -> int:
+    match value.strip_edges().to_upper():
+        "I":
+            return 1
+        "II":
+            return 2
+        "III":
+            return 3
+        "IV":
+            return 4
+        "V":
+            return 5
+        "VI":
+            return 6
+        "VII":
+            return 7
+        "VIII":
+            return 8
+        "IX":
+            return 9
+        "X":
+            return 10
+        _:
+            return 0
 
 static func clear_cached_json_data() -> void:
     _cached_json_data = {}
@@ -218,7 +257,7 @@ static func _group_repeated_upgrades(raw_upgrades: Array) -> Array:
 
 static func _should_keep_key_as_single_root_node(key: String) -> bool:
     match key:
-        "battle_speed_unlock", "core_armor":
+        "battle_speed_unlock_2x", "core_armor":
             return true
         _:
             return false
@@ -343,6 +382,15 @@ static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionar
     var recruit_key_for_hero: String = "recruit_%s" % hero if hero != "" else ""
     var party_parent_key: String = _party_parent_key(lower)
 
+    if lower == "battle_speed_unlock_4x":
+        if key_to_primary_id.has("battle_speed_unlock_2x"):
+            return "battle_speed_unlock_2x"
+        return ""
+    if lower == "battle_speed_unlock_8x":
+        if key_to_primary_id.has("battle_speed_unlock_4x"):
+            return "battle_speed_unlock_4x"
+        return ""
+
     if party_parent_key != "":
         if key_to_primary_id.has(party_parent_key):
             return party_parent_key
@@ -351,7 +399,7 @@ static func _select_hub_dependency_key(key: String, key_to_primary_id: Dictionar
     if lower == "cursor_pickup_unlock" \
     or lower == "knight_vamp_unlock" \
     or lower == "auto_attack_unlock" \
-    or lower == "battle_speed_unlock" \
+    or lower == "battle_speed_unlock_2x" \
     or lower == "core_armor" \
     or lower == "party_damage_boost" \
     or lower == "vitality_foundation" \
@@ -725,6 +773,12 @@ static func _enforce_branch_anchors(grouped_upgrades: Array) -> void:
 
         var forced_dep: String = ""
         match key:
+            "battle_speed_unlock_2x":
+                forced_dep = str(key_to_primary_id.get("auto_attack_unlock", ""))
+            "battle_speed_unlock_4x":
+                forced_dep = str(key_to_primary_id.get("battle_speed_unlock_2x", ""))
+            "battle_speed_unlock_8x":
+                forced_dep = str(key_to_primary_id.get("battle_speed_unlock_4x", ""))
             "party_damage_boost":
                 forced_dep = "__CENTER__"
             "party_battle_standard":
@@ -1166,7 +1220,7 @@ static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cell
         "party_damage_boost": Vector2(-4, 0),
         "recruit_guardian": Vector2(-3, 0),
         "recruit_mage": Vector2(-2, -3),
-        "battle_speed_unlock": Vector2(2, -3),
+        "battle_speed_unlock_2x": Vector2(2, -3),
         "vitality_foundation": Vector2(-3, 2),
     }
     if fixed_root_targets.has(key):

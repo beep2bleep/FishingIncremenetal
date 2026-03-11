@@ -1,5 +1,7 @@
 /**
- * Replace 15 armor nodes with 75 (5 tracks × 5 levels × 3 types). Cost 6x/level.
+ * Replace 15 armor nodes with 75 (5 tracks x 5 levels x 3 types).
+ * Contact/boss armor use the standard 1.55 scaling curve.
+ * DOT armor keeps its current track entry prices but follows the same 1.55 scaling.
  */
 import { readFileSync, writeFileSync } from "fs";
 import { fileURLToPath } from "url";
@@ -9,16 +11,22 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const JSON_PATH = join(__dirname, "FishingUpgradeData.json");
 
 const ROMAN = ["I", "II", "III", "IV", "V"];
-const COSTS = [370, 2220, 13320, 79920, 479520];
+const CONTACT_COSTS = [360, 558, 864.9, 1340.6, 2077.9];
+const DOT_TRACK_STARTS = [370, 2220, 13320, 79920, 479520];
 const TYPES = [
-  { key: "enemy", baseX: 15 },
-  { key: "dot", baseX: 14 },
-  { key: "boss", baseX: 13 },
+  { key: "enemy", baseX: 15, growth: 1.55, costForLevel: (_track, level) => CONTACT_COSTS[level - 1] },
+  {
+    key: "dot",
+    baseX: 14,
+    growth: 1.55,
+    costForLevel: (track, level) => Math.round(DOT_TRACK_STARTS[track - 1] * Math.pow(1.55, level - 1) * 10) / 10,
+  },
+  { key: "boss", baseX: 13, growth: 1.55, costForLevel: (_track, level) => CONTACT_COSTS[level - 1] },
 ];
 
 function buildArmorNodes() {
   const nodes = [];
-  for (const { key: type, baseX } of TYPES) {
+  for (const { key: type, baseX, growth, costForLevel } of TYPES) {
     for (let track = 1; track <= 5; track++) {
       const key = `core_armor_${type}_${track}`;
       const gridX = baseX + (track - 1);
@@ -32,9 +40,9 @@ function buildArmorNodes() {
           is_level_node: true,
           name: `CORE ARMOR ${type.toUpperCase()} ${track} ${ROMAN[level - 1]}`,
           icon: "res://generatedicon/core_armor.png",
-          cost: COSTS[level - 1],
+          cost: costForLevel(track, level),
           repeatable: true,
-          growth: 6,
+          growth,
           dependency: dep,
           group: 1,
           group_pos: level,

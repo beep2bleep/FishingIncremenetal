@@ -4,6 +4,9 @@ class_name UpgradeScreen
 
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const GO_AGAIN_DISABLED_HINT := "You must unlock an upgrade before starting."
+const DEMO_PROJECT_SETTING := "global/Demo"
+const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
+const DEFAULT_DEMO_WISHLIST_URL := "https://Beep2Bleep.com"
 const BATTLE_LEVEL_CHOICE_DIALOG_SIZE := Vector2(600.0, 450.0)
 const BATTLE_LEVEL_CHOICE_DIALOG_FONT_SIZE := 24
 const BATTLE_LEVEL_CHOICE_DIALOG_TITLE_SIZE := 36
@@ -32,6 +35,8 @@ var settings_panel: PanelContainer
 var settings_content: Settings
 var reset_progress_button: Button
 var go_again_button: Button
+var demo_mode_label: Label
+var wishlist_button: Button
 var continue_locked_panel: PanelContainer
 var continue_locked_label: Label
 var speaker_icon_on: Texture2D
@@ -98,6 +103,9 @@ func _ready() -> void :
     _setup_fullscreen_button()
     _setup_touch_input_button()
     go_again_button = get_node_or_null("%Go Again")
+    demo_mode_label = get_node_or_null("%Demo Mode Label")
+    wishlist_button = get_node_or_null("%Wishlist")
+    _setup_wishlist_button()
     _setup_continue_locked_dialog()
     _update_go_again_button_state()
     hide()
@@ -430,6 +438,55 @@ func _sync_simulation_currency_from_save() -> void:
     var target_money: int = int(SaveHandler.fishing_currency)
     if current_money != target_money:
         Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, target_money - current_money)
+
+func _is_demo_mode_enabled() -> bool:
+    return bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
+
+func _get_demo_wishlist_url() -> String:
+    return str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, DEFAULT_DEMO_WISHLIST_URL)).strip_edges()
+
+func _setup_wishlist_button() -> void:
+    if demo_mode_label != null:
+        demo_mode_label.visible = _is_demo_mode_enabled()
+    if wishlist_button == null:
+        return
+    wishlist_button.visible = _is_demo_mode_enabled()
+    wishlist_button.disabled = _get_demo_wishlist_url() == ""
+    wishlist_button.tooltip_text = _get_demo_wishlist_url()
+    if not wishlist_button.pressed.is_connected(_on_wishlist_button_pressed):
+        wishlist_button.pressed.connect(_on_wishlist_button_pressed)
+    _style_wishlist_button(wishlist_button)
+
+func _style_wishlist_button(button: Button) -> void:
+    if button == null:
+        return
+    var normal := StyleBoxFlat.new()
+    normal.bg_color = Color(0.18, 0.6, 0.24, 1.0)
+    normal.border_color = Color(0.78, 1.0, 0.82, 1.0)
+    normal.border_width_left = 2
+    normal.border_width_top = 2
+    normal.border_width_right = 2
+    normal.border_width_bottom = 2
+    normal.corner_radius_top_left = 4
+    normal.corner_radius_top_right = 4
+    normal.corner_radius_bottom_left = 4
+    normal.corner_radius_bottom_right = 4
+    var hover := normal.duplicate(true)
+    hover.bg_color = Color(0.24, 0.72, 0.3, 1.0)
+    var disabled := normal.duplicate(true)
+    disabled.bg_color = Color(0.26, 0.32, 0.26, 1.0)
+    disabled.border_color = Color(0.5, 0.56, 0.5, 1.0)
+    button.add_theme_stylebox_override("normal", normal)
+    button.add_theme_stylebox_override("hover", hover)
+    button.add_theme_stylebox_override("pressed", hover)
+    button.add_theme_stylebox_override("focus", hover)
+    button.add_theme_stylebox_override("disabled", disabled)
+
+func _on_wishlist_button_pressed() -> void:
+    var url: String = _get_demo_wishlist_url()
+    if url == "":
+        return
+    OS.shell_open(url)
 
 func _setup_battle_level_choice_dialog() -> void:
     var parent_layer: CanvasLayer = %CanvasLayer2

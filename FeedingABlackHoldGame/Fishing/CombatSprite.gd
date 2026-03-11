@@ -11,6 +11,7 @@ const BACKING_OFFSET_SCALE_MULT: float = 0.35
 const BACKING_SCALE_BONUS: float = 0.14
 const BACKING_TINT: Color = Color(1.0, 1.0, 1.0, 0.95)
 const ATTACK_HOLD_MULT: int = 2
+const NEW_ART_ATTACK_Y_BONUS: float = -5.0
 
 @onready var backing_sprite: AnimatedSprite2D = get_node_or_null("BackingSprite")
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
@@ -31,6 +32,7 @@ var weapon_float_amp: float = 2.2
 var weapon_attack_tween: Tween = null
 var attack_shake_tween: Tween = null
 var attack_visual_offset: Vector2 = Vector2.ZERO
+var attack_base_visual_offset: Vector2 = Vector2.ZERO
 var weapon_attack_base_offset: Vector2 = Vector2.ZERO
 var weapon_rotation_offset: float = 0.0
 var weapon_debug_offset: Vector2 = Vector2.ZERO
@@ -38,6 +40,7 @@ var sway_tween: Tween = null
 var sway_min_degrees: float = ROTATION_SWAY_MIN_DEGREES
 var sway_max_degrees: float = ROTATION_SWAY_MAX_DEGREES
 var attack_reset_token: int = 0
+var attack_y_bonus: float = 0.0
 const WEAPON_SCALE_RATIO: float = 0.75
 const WEAPON_TARGET_X_RATIO: float = 0.55
 const WEAPON_TARGET_Y_RATIO: float = 0.0
@@ -120,6 +123,8 @@ func setup(sheet: Texture2D, frame_size: Vector2i, scale_factor := 2.0, role := 
     collider.shape = circle
 
     weapon_type = str(role)
+    attack_y_bonus = NEW_ART_ATTACK_Y_BONUS if weapon_type != "" and not show_weapon_visuals else 0.0
+    attack_base_visual_offset = Vector2.ZERO
     var hero_size: Vector2 = Vector2(float(frame_size.x), float(frame_size.y)) * scale_factor
     var weapon_world_scale: float = scale_factor * WEAPON_SCALE_RATIO
     var target_point: Vector2 = Vector2(hero_size.x * WEAPON_TARGET_X_RATIO, -hero_size.y * WEAPON_TARGET_Y_RATIO)
@@ -165,6 +170,9 @@ func trigger_attack(strength: float = 1.0, force_restart: bool = false) -> void:
     attack_reset_token += 1
     var reset_token: int = attack_reset_token
     is_attacking = true
+    attack_base_visual_offset = Vector2(0.0, attack_y_bonus)
+    _apply_visual_offsets()
+    _update_weapon_layer_position()
     var attack_strength: float = clamp(strength, 0.0, 1.0)
     _play_weapon_attack_motion(attack_strength)
     _play_attack_telegraph(attack_strength)
@@ -174,10 +182,12 @@ func trigger_attack(strength: float = 1.0, force_restart: bool = false) -> void:
         return
     if is_defeated:
         is_attacking = false
+        attack_base_visual_offset = Vector2.ZERO
         _stop_attack_shake()
         _stop_weapon_tween()
         return
     is_attacking = false
+    attack_base_visual_offset = Vector2.ZERO
     _sync_sprite_stack("walk")
     _stop_attack_shake()
     sprite.scale = base_sprite_scale
@@ -200,6 +210,7 @@ func set_defeated() -> void:
         return
     is_defeated = true
     is_attacking = false
+    attack_base_visual_offset = Vector2.ZERO
     _stop_sway_motion()
     _stop_attack_shake()
     _stop_weapon_tween()
@@ -313,19 +324,20 @@ func get_projectile_spawn_point() -> Vector2:
     return global_position + Vector2(26.0, -12.0)
 
 func _apply_visual_offsets() -> void:
+    var visual_offset: Vector2 = attack_base_visual_offset + attack_visual_offset
     if sprite != null:
-        sprite.position = attack_visual_offset
+        sprite.position = visual_offset
     if backing_sprite != null:
-        backing_sprite.position = backing_base_offset + attack_visual_offset
+        backing_sprite.position = backing_base_offset + visual_offset
 
 func _update_weapon_layer_position(bob_y: float = 0.0) -> void:
     if weapon_layer != null:
-        weapon_layer.position = weapon_base_offset + weapon_idle_offset + weapon_debug_offset + attack_visual_offset + Vector2(0.0, bob_y)
+        weapon_layer.position = weapon_base_offset + weapon_idle_offset + weapon_debug_offset + attack_base_visual_offset + attack_visual_offset + Vector2(0.0, bob_y)
 
 func _stop_attack_shake() -> void:
     if attack_shake_tween != null:
         attack_shake_tween.kill()
-        attack_shake_tween = null
+    attack_shake_tween = null
     attack_visual_offset = Vector2.ZERO
     _apply_visual_offsets()
     _update_weapon_layer_position()

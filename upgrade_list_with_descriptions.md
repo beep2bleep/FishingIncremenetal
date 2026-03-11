@@ -165,14 +165,14 @@ Total upgrade nodes: 375
 * [Red #D75252] **Tactical Telemetry**
   Unlocks Tactical Telemetry: reveals enemies remaining during battle using the blue progress HUD.
 
-* [Red #D75252] **Temporal Throttle**
-  Unlocks battle speed control in non-editor builds. Buy levels to unlock 2x, then 4x, then 8x speed.
+* [Red #D75252] **Temportal Throttle**
+  Unlocks 2x battle speed in non-editor builds.
 
-* [Red #D75252] **Temporal Throttle**
-  Unlocks battle speed control in non-editor builds. Buy levels to unlock 2x, then 4x, then 8x speed.
+* [Red #D75252] **Temportal Throttle II**
+  Unlocks 4x battle speed in non-editor builds.
 
-* [Red #D75252] **Temporal Throttle**
-  Unlocks battle speed control in non-editor builds. Buy levels to unlock 2x, then 4x, then 8x speed.
+* [Red #D75252] **Temportal Throttle III**
+  Unlocks 8x battle speed in non-editor builds.
 
 * [Red #D75252] **Knight Vampirism Unlock**
   Unlocks the Knight active and improves life steal sustain.

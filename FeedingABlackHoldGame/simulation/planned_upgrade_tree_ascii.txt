@@ -3,7 +3,7 @@ Source: Data/FishingUpgradeData.json
 Status: Planning only. No dependency data changed.
 
 Assumptions used in this draft:
-- "Temporal Tempo" maps to `battle_speed_unlock` (displayed in DB as Temporal Throttle).
+- "Temporal Tempo" maps to `battle_speed_unlock_2x` (displayed in DB as Temporal Throttle).
 - "Unlock Tactical Telemetry" maps to `auto_attack_unlock`.
 - Root can have >4 children. All non-root branches are kept <=4 children by using branch hubs.
 - Branch hubs are planning placeholders; implementation can use existing nodes as hub anchors.
@@ -49,8 +49,8 @@ ROOT
 |   |-- `core_mage_damage__L1` -> ... -> `core_mage_damage__L7`
 |   `-- `core_mage_active_cap__L1` -> ... -> `core_mage_active_cap__L6`
 |
-|-- Temporal Tempo (`battle_speed_unlock__L1`)
-|   |-- `battle_speed_unlock__L2` -> `battle_speed_unlock__L3`
+|-- Temporal Tempo (`battle_speed_unlock_2x`)
+|   |-- `battle_speed_unlock_4x` -> `battle_speed_unlock_8x`
 |   |-- `core_armor__L1` -> ... -> `core_armor__L8`
 |   |-- Mitigation Chain
 |   |   `-- `reinforced_plates` -> `layered_carapace` -> `shock_padding` -> `dot_deflector` -> `front_compression` -> `hemostasis_mesh` -> `shock_sink`

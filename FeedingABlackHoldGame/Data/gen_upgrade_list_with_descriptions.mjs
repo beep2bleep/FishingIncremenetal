@@ -19,7 +19,9 @@ const SPECIFIC_NAMES = {
   cursor_pickup_unlock: "Cursor Pickup Unlock",
   recruit_archer: "Recruit Archer",
   auto_attack_unlock: "Tactical Telemetry",
-  battle_speed_unlock: "Temporal Throttle",
+  battle_speed_unlock_2x: "Temportal Throttle",
+  battle_speed_unlock_4x: "Temportal Throttle II",
+  battle_speed_unlock_8x: "Temportal Throttle III",
   knight_vamp_unlock: "Knight Vampirism Unlock",
   archer_pierce_unlock: "Archer Pierce Unlock",
   power_harvest_unlock: "Power Harvest Unlock",
@@ -41,7 +43,9 @@ const SPECIFIC_DESCRIPTIONS = {
   cursor_capture_gain: "Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).",
   recruit_archer: "Adds the Archer hero to your combat lineup.",
   auto_attack_unlock: "Unlocks Tactical Telemetry: reveals enemies remaining during battle using the blue progress HUD.",
-  battle_speed_unlock: "Unlocks battle speed control in non-editor builds. Buy levels to unlock 2x, then 4x, then 8x speed.",
+  battle_speed_unlock_2x: "Unlocks 2x battle speed in non-editor builds.",
+  battle_speed_unlock_4x: "Unlocks 4x battle speed in non-editor builds.",
+  battle_speed_unlock_8x: "Unlocks 8x battle speed in non-editor builds.",
   knight_vamp_unlock: "Unlocks the Knight active and improves life steal sustain.",
   archer_pierce_unlock: "Unlocks the Archer active with piercing attack coverage.",
   power_harvest_unlock: "Unlocks stronger power generation from combat and pickups.",
@@ -187,7 +191,9 @@ function getDescription(entry) {
   if (/boss|segment/.test(lower)) return "Improves boss progression (reduces effective boss HP or increases boss rewards by a few percent per level).";
   if (/drop|pickup|coin|salvage/.test(lower)) return "Increases coin conversion from combat by roughly +3% income per level (before cursor and extra-skill bonuses).";
   if (/archer|knight|guardian|mage/.test(lower)) return "Improves hero-specific combat contribution (roughly +1%–2% total squad DPS or safety per level depending on the hero).";
-  if (lower.includes("battle_speed")) return "Unlocks the Speed button and enables battle speed selection; upgrade for more options (4x, 8x).";
+  if (lower.includes("battle_speed_unlock_2x")) return "Unlocks the Speed button and enables 2x battle speed.";
+  if (lower.includes("battle_speed_unlock_4x")) return "Unlocks 4x battle speed.";
+  if (lower.includes("battle_speed_unlock_8x")) return "Unlocks 8x battle speed.";
   return "Improves run combat effectiveness by boosting hero output, uptime, durability, or reward conversion on this branch.";
 }
 

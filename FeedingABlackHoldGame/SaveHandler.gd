@@ -534,6 +534,7 @@ func load_fishing_progress():
     fishing_unlocked_upgrades = json_data.get("unlocked_upgrades", {})
     fishing_active_upgrades = json_data.get("active_upgrades", {})
     _migrate_armor_upgrade_keys()
+    _migrate_battle_speed_unlock_keys()
     fishing_last_battle_summary = json_data.get("last_battle_summary", {})
     fishing_next_battle_level = max(1, int(json_data.get("next_battle_level", 1)))
     fishing_max_unlocked_battle_level = clamp(int(json_data.get("max_unlocked_battle_level", 1)), 1, MAX_FISHING_BATTLE_LEVEL)
@@ -589,6 +590,34 @@ func _migrate_armor_upgrade_keys() -> void:
             fishing_unlocked_upgrades.erase(old_key)
             fishing_active_upgrades.erase(old_key)
             changed = true
+    if changed:
+        save_fishing_progress()
+
+func _migrate_battle_speed_unlock_keys() -> void:
+    var old_level: int = int(fishing_unlocked_upgrades.get("battle_speed_unlock", 0))
+    if old_level <= 0:
+        return
+
+    var changed: bool = false
+    var new_keys: Array[String] = [
+        "battle_speed_unlock_2x",
+        "battle_speed_unlock_4x",
+        "battle_speed_unlock_8x",
+    ]
+    for i in range(min(old_level, new_keys.size())):
+        var key: String = new_keys[i]
+        if int(fishing_unlocked_upgrades.get(key, 0)) <= 0:
+            fishing_unlocked_upgrades[key] = 1
+            changed = true
+        if not bool(fishing_active_upgrades.get(key, false)):
+            fishing_active_upgrades[key] = true
+            changed = true
+
+    if fishing_unlocked_upgrades.erase("battle_speed_unlock"):
+        changed = true
+    if fishing_active_upgrades.erase("battle_speed_unlock"):
+        changed = true
+
     if changed:
         save_fishing_progress()
 

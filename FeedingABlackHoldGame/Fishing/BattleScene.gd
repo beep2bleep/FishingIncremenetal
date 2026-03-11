@@ -461,8 +461,12 @@ var battle_victory: bool = false
 var enemy_opening_rush_active: bool = true
 
 const SPEED_STEPS: Array[float] = [1.0, 2.0, 4.0, 8.0, 16.0]
-const SPEED_UNLOCK_KEY := "battle_speed_unlock"
 const MAX_RELEASE_SPEED_LEVEL := 3
+const SPEED_UNLOCK_KEYS: Array[String] = [
+    "battle_speed_unlock_2x",
+    "battle_speed_unlock_4x",
+    "battle_speed_unlock_8x",
+]
 const ACTIVE_COOLDOWNS := {
     "knight": 13.0,
     "archer": 15.0,
@@ -520,6 +524,7 @@ var floating_damage_texts: Array[Dictionary] = []
 var hero_damage_accum: float = 0.0
 var hero_damage_timer: float = 0.0
 var hero_damage_pos: Vector2 = Vector2.ZERO
+var player_damage_remainders: Dictionary = {}
 var suppress_floating_text: bool = false
 var hero_glow_timers: Dictionary = {}
 var post_battle_sweep_time: float = 0.0
@@ -791,6 +796,7 @@ func _clear_battle_entities() -> void:
     floating_damage_texts.clear()
     hero_damage_accum = 0.0
     hero_damage_timer = 0.0
+    player_damage_remainders.clear()
     enemy_opening_rush_active = true
     next_enemy_stack_id = 1
     mage_pending_strikes.clear()
@@ -2407,7 +2413,7 @@ func _simulate_step(delta: float, skip_visual_updates: bool = false) -> void:
 
     var lp: Dictionary = _level_params(current_level)
     var raw_dot_damage_per_second: float = float(lp["dot_dps"]) * _enemy_dot_mult()
-    var dot_damage: float = _mitigated_player_damage(raw_dot_damage_per_second, delta, _player_dot_damage_block())
+    var dot_damage: float = _mitigated_player_damage(raw_dot_damage_per_second, delta, _player_dot_damage_block(), "dot")
     _apply_player_damage(dot_damage, Vector2(_frontline_x() - 20.0, FLOOR_Y - 140.0))
 
 func _spawn_loop(delta: float) -> void:
@@ -3254,7 +3260,7 @@ func _update_enemies(delta: float) -> void:
                             e = attacker_data
                 var raw_contact_damage_per_second: float = total_contact_dps
                 var flat_block: float = _player_boss_damage_block() if bool(e.get("is_boss", false)) else _player_enemy_damage_block()
-                var contact_damage: float = _mitigated_player_damage(raw_contact_damage_per_second, delta, flat_block)
+                var contact_damage: float = _mitigated_player_damage(raw_contact_damage_per_second, delta, flat_block, "boss_contact" if bool(e.get("is_boss", false)) else "enemy_contact")
                 _apply_player_damage(contact_damage, enemy.position + Vector2(0.0, -90.0))
 
         _update_enemy_health_bar(enemy, e)
@@ -4179,7 +4185,10 @@ func _apply_speed_index(new_index: int, persist: bool) -> void:
 func _max_available_speed_index() -> int:
     if OS.has_feature("editor"):
         return SPEED_STEPS.size() - 1
-    var speed_unlock_level: int = SaveHandler.get_fishing_upgrade_level(SPEED_UNLOCK_KEY)
+    var speed_unlock_level: int = 0
+    for unlock_key in SPEED_UNLOCK_KEYS:
+        if SaveHandler.has_fishing_upgrade(str(unlock_key)):
+            speed_unlock_level += 1
     return clamp(speed_unlock_level, 0, MAX_RELEASE_SPEED_LEVEL)
 
 func _on_ufo_collected(ufo: UfoBonus) -> void:
@@ -4708,7 +4717,7 @@ func _player_dot_damage_block() -> float:
 func _player_boss_damage_block() -> float:
     return float(battle_mods.get("boss_flat_damage_reduction", 0.0))
 
-func _mitigated_player_damage(raw_damage_per_second: float, delta: float, flat_block_per_second: float = 0.0) -> float:
+func _mitigated_player_damage(raw_damage_per_second: float, delta: float, flat_block_per_second: float = 0.0, remainder_key: String = "default") -> float:
     if raw_damage_per_second <= 0.0 or delta <= 0.0:
         return 0.0
 
@@ -4724,7 +4733,17 @@ func _mitigated_player_damage(raw_damage_per_second: float, delta: float, flat_b
 
     var max_block: float = floor(raw_damage_per_second * 0.9) * delta
     var final_damage: float = max(raw_amount - max_block, mitigated)
-    return max(1.0, ceil(final_damage))
+    if final_damage <= 0.0:
+        player_damage_remainders[remainder_key] = 0.0
+        return 0.0
+
+    # Preserve fractional incoming damage across frames so low DPS effects do not
+    # get rounded up to 1 every tick.
+    var carry: float = float(player_damage_remainders.get(remainder_key, 0.0))
+    var total_damage: float = final_damage + carry
+    var applied_damage: float = floor(total_damage)
+    player_damage_remainders[remainder_key] = total_damage - applied_damage
+    return applied_damage
 
 func _update_hero_damage_float(delta: float) -> void:
     if suppress_floating_text:

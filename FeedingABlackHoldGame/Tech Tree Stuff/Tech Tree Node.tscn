@@ -579,6 +579,15 @@ theme_override_colors/font_color = Color(0.3234, 0.3234, 0.33, 1)
 text = "FROM -> TO"
 horizontal_alignment = 1
 
+[node name="Demo Lock Label" type="Label" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme = ExtResource("11")
+theme_override_colors/font_color = Color(0.9, 0.2, 0.2, 1)
+text = "Locked in Demo Mode"
+horizontal_alignment = 1
+
 [node name="HBoxContainer2" type="HBoxContainer" parent="Tooltip Pivot/Control/Tool Tip/MarginContainer/VBoxContainer"]
 layout_mode = 2
 alignment = 1
