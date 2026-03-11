@@ -5095,15 +5095,11 @@ func _apply_battle_summary_layout(scale: Vector2) -> void:
         var scaled_chart_rect := Rect2(summary_chart_base_layout.position * safe_scale, summary_chart_base_layout.size * safe_scale)
         _set_control_offsets_from_rect(summary_chart, scaled_chart_rect)
 
-    var continue_rect: Rect2 = continue_button_base_layout
-    if _get_demo_thank_you_level() > 0:
-        continue_rect = Rect2(80.0, continue_button_base_layout.position.y, 270.0, continue_button_base_layout.size.y)
+    var continue_rect := Rect2(640.0, 792.0, 270.0, 68.0)
     var scaled_button_rect := Rect2(continue_rect.position * safe_scale, continue_rect.size * safe_scale)
     _set_control_offsets_from_rect(continue_button, scaled_button_rect)
     if demo_wishlist_button != null:
-        var wishlist_rect: Rect2 = demo_wishlist_button_base_layout
-        if _get_demo_thank_you_level() <= 0:
-            wishlist_rect = Rect2(continue_button_base_layout.position.x, continue_button_base_layout.position.y, continue_button_base_layout.size.x, continue_button_base_layout.size.y)
+        var wishlist_rect := Rect2(930.0, 792.0, 270.0, 68.0)
         var scaled_wishlist_rect := Rect2(wishlist_rect.position * safe_scale, wishlist_rect.size * safe_scale)
         _set_control_offsets_from_rect(demo_wishlist_button, scaled_wishlist_rect)
 
@@ -5294,7 +5290,7 @@ func _setup_fullscreen_button() -> void:
     fullscreen_button.offset_top = 20.0
     fullscreen_button.offset_right = 68.0
     fullscreen_button.offset_bottom = 64.0
-    fullscreen_button.z_index = 30
+    fullscreen_button.z_index = -1
     fullscreen_button.focus_mode = Control.FOCUS_NONE
     fullscreen_button.text = ""
     fullscreen_button.custom_minimum_size = Vector2(44, 44)
@@ -5427,11 +5423,13 @@ func _refresh_battle_summary_text() -> void:
 
 func _setup_battle_summary_hints() -> void:
     battle_summary_hints = _build_battle_summary_hints()
-    battle_summary_hint_index = 0
+    battle_summary_hint_index = 0 if battle_summary_hints.is_empty() else randi() % battle_summary_hints.size()
     _refresh_battle_summary_hint()
 
 func _build_battle_summary_hints() -> Array[String]:
-    var hints: Array[String] = DEFAULT_BATTLE_HINTS.duplicate()
+    var hints: Array[String] = []
+    for hint in DEFAULT_BATTLE_HINTS:
+        hints.append(hint)
     if not SaveHandler.has_fishing_upgrade("recruit_archer"):
         hints.append("Recruit the Archer for steady ranged damage. It helps smooth out early and mid-run fights.")
     if not SaveHandler.has_fishing_upgrade("recruit_guardian"):
@@ -5507,6 +5505,7 @@ func _style_battle_summary_ui() -> void:
         summary_chart.add_theme_stylebox_override("panel", chart_style)
     summary_hint_title_label.add_theme_color_override("font_color", Color(0.76, 0.9, 1.0, 1.0))
     summary_hint_title_label.add_theme_font_size_override("font_size", 20)
+    summary_hint_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     summary_hint_label.add_theme_color_override("font_color", Color(0.92, 0.97, 1.0, 0.94))
     summary_hint_label.add_theme_font_size_override("font_size", 22)
     summary_hint_label.autowrap_mode = 2

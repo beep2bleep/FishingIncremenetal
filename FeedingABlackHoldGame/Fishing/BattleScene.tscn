@@ -181,13 +181,13 @@ text = ""
 offset_left = 8.0
 offset_top = 50.0
 offset_right = 1592.0
-offset_bottom = 900.0
+offset_bottom = 920.0
 
 [node name="SummaryLabel" type="Label" parent="CanvasLayer/SummaryPanel"]
 offset_left = 34.0
 offset_top = 34.0
 offset_right = 899.0
-offset_bottom = 714.0
+offset_bottom = 652.0
 autowrap_mode = 2
 text = "Summary"
 
@@ -195,27 +195,30 @@ text = "Summary"
 offset_left = 872.0
 offset_top = 36.0
 offset_right = 1552.0
-offset_bottom = 716.0
+offset_bottom = 652.0
 
 [node name="HintTitleLabel" type="Label" parent="CanvasLayer/SummaryPanel"]
 offset_left = 34.0
-offset_top = 736.0
+offset_top = 676.0
 offset_right = 1552.0
-offset_bottom = 766.0
+offset_bottom = 706.0
+z_index = 2
 text = "Hint 1/1"
 
 [node name="HintLeftButton" type="Button" parent="CanvasLayer/SummaryPanel"]
 offset_left = 34.0
-offset_top = 782.0
+offset_top = 720.0
 offset_right = 94.0
-offset_bottom = 830.0
+offset_bottom = 780.0
+z_index = 2
 text = "<"
 
 [node name="HintLabel" type="Label" parent="CanvasLayer/SummaryPanel"]
 offset_left = 116.0
-offset_top = 782.0
+offset_top = 720.0
 offset_right = 1470.0
-offset_bottom = 830.0
+offset_bottom = 780.0
+z_index = 2
 autowrap_mode = 2
 text = "Hint text"
 horizontal_alignment = 1
@@ -223,16 +226,18 @@ vertical_alignment = 1
 
 [node name="HintRightButton" type="Button" parent="CanvasLayer/SummaryPanel"]
 offset_left = 1492.0
-offset_top = 782.0
+offset_top = 720.0
 offset_right = 1552.0
-offset_bottom = 830.0
+offset_bottom = 780.0
+z_index = 2
 text = ">"
 
 [node name="ContinueButton" type="Button" parent="CanvasLayer/SummaryPanel"]
-offset_left = 650.0
-offset_top = 804.0
-offset_right = 936.0
-offset_bottom = 872.0
+offset_left = 640.0
+offset_top = 792.0
+offset_right = 910.0
+offset_bottom = 860.0
+z_index = 2
 text = "Continue"
 
 [connection signal="pressed" from="CanvasLayer/SummaryPanel/HintLeftButton" to="." method="_on_summary_hint_left_button_pressed"]
