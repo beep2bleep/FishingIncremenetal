@@ -27,6 +27,7 @@ var battle_level_choice_dialog: ConfirmationDialog
 var battle_level_choice_selected_level: int = 1
 var battle_level_choice_line_edit: LineEdit
 var reset_progress_confirm_dialog: ConfirmationDialog
+var legacy_reset_dialog: ConfirmationDialog
 var mute_button: Button
 var settings_button: Button
 var fullscreen_button: Button
@@ -39,10 +40,12 @@ var demo_mode_label: Label
 var wishlist_button: Button
 var continue_locked_panel: PanelContainer
 var continue_locked_label: Label
+var version_label: Label
 var speaker_icon_on: Texture2D
 var speaker_icon_off: Texture2D
 var fullscreen_icon_on: Texture2D
 var fullscreen_icon_off: Texture2D
+var _legacy_reset_dialog_shown := false
 
 func _should_show_editor_only_touch_toggle() -> bool:
     return OS.has_feature("editor")
@@ -98,6 +101,7 @@ func _ready() -> void :
     _setup_editor_cash_controls()
     _setup_battle_level_choice_dialog()
     _setup_reset_progress_controls()
+    _setup_version_label()
     _setup_mute_button()
     _setup_settings_controls()
     _setup_fullscreen_button()
@@ -337,6 +341,7 @@ func show_screen():
     set_process_input(true)
     set_process(true)
     show()
+    _show_legacy_reset_dialog_if_needed()
 
 
 func check_upgrade_tree_achivements():
@@ -770,6 +775,48 @@ func _setup_reset_progress_controls() -> void:
         cancel_button.text = "No"
     %CanvasLayer2.add_child(reset_progress_confirm_dialog)
 
+    legacy_reset_dialog = ConfirmationDialog.new()
+    legacy_reset_dialog.name = "LegacyResetDialog"
+    legacy_reset_dialog.title = "Progress Reset Required"
+    legacy_reset_dialog.dialog_text = "Thank you for playing the previous version. We apologize, but we have to reset your progress because the upgrades have changed so drastically. We will make every effort to avoid doing this again."
+    legacy_reset_dialog.confirmed.connect(_on_legacy_reset_confirmed)
+    legacy_reset_dialog.canceled.connect(_on_legacy_reset_canceled)
+    var continue_button: Button = legacy_reset_dialog.get_ok_button()
+    if continue_button != null:
+        continue_button.text = "Continue"
+    var legacy_cancel_button: Button = legacy_reset_dialog.get_cancel_button()
+    if legacy_cancel_button != null:
+        legacy_cancel_button.hide()
+    %CanvasLayer2.add_child(legacy_reset_dialog)
+
+func _setup_version_label() -> void:
+    if version_label != null and is_instance_valid(version_label):
+        return
+    version_label = Label.new()
+    version_label.name = "VersionLabel"
+    version_label.anchor_left = 1.0
+    version_label.anchor_top = 0.0
+    version_label.anchor_right = 1.0
+    version_label.anchor_bottom = 0.0
+    version_label.offset_left = -220.0
+    version_label.offset_top = 72.0
+    version_label.offset_right = -16.0
+    version_label.offset_bottom = 110.0
+    version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+    version_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    version_label.text = "Version %s" % SaveHandler.FISHING_SAVE_VERSION
+    %CanvasLayer2.add_child(version_label)
+
+func _show_legacy_reset_dialog_if_needed() -> void:
+    if _legacy_reset_dialog_shown:
+        return
+    if legacy_reset_dialog == null:
+        return
+    if not SaveHandler.needs_fishing_legacy_reset():
+        return
+    _legacy_reset_dialog_shown = true
+    legacy_reset_dialog.popup_centered()
+
 func _on_reset_progress_button_pressed() -> void:
     if reset_progress_confirm_dialog == null:
         return
@@ -777,6 +824,13 @@ func _on_reset_progress_button_pressed() -> void:
 
 func _on_reset_progress_confirmed() -> void:
     _perform_progress_reset()
+
+func _on_legacy_reset_confirmed() -> void:
+    _perform_progress_reset()
+
+func _on_legacy_reset_canceled() -> void:
+    if SaveHandler.needs_fishing_legacy_reset():
+        legacy_reset_dialog.call_deferred("popup_centered")
 
 func _perform_progress_reset() -> void:
     SaveHandler.reset_fishing_progress()

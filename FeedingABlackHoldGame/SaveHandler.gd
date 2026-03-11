@@ -492,8 +492,11 @@ func update_confirm_upgrade_purchase(value: bool) -> void:
 
 
 var fishing_progress_file_path = "user://fishing_incremental_progress.save"
+const FISHING_SAVE_VERSION := "1.0"
 const STARTING_FISHING_CURRENCY := 10
 const MAX_FISHING_BATTLE_LEVEL := 20
+var fishing_save_version := FISHING_SAVE_VERSION
+var fishing_requires_legacy_reset := false
 var fishing_currency = STARTING_FISHING_CURRENCY
 var fishing_lifetime_coins = 0
 var fishing_unlocked_upgrades: Dictionary = {}
@@ -510,6 +513,8 @@ var fishing_ufo_spawn_timer_remaining := -1.0
 var fishing_battle_speed_index := 0
 
 func reset_fishing_progress() -> void:
+    fishing_save_version = FISHING_SAVE_VERSION
+    fishing_requires_legacy_reset = false
     fishing_currency = STARTING_FISHING_CURRENCY
     fishing_lifetime_coins = 0
     fishing_unlocked_upgrades = {}
@@ -530,6 +535,15 @@ func load_fishing_progress():
     if json_data == null:
         reset_fishing_progress()
         return
+
+    var loaded_version: String = str(json_data.get("version", "")).strip_edges()
+    if loaded_version == "":
+        reset_fishing_progress()
+        fishing_requires_legacy_reset = true
+        return
+
+    fishing_save_version = loaded_version
+    fishing_requires_legacy_reset = false
 
     fishing_currency = int(json_data.get("currency", STARTING_FISHING_CURRENCY))
     fishing_lifetime_coins = int(json_data.get("lifetime_coins", 0))
@@ -560,6 +574,7 @@ func load_fishing_progress():
 
 func save_fishing_progress():
     var save_data = {
+        "version": fishing_save_version,
         "currency": fishing_currency,
         "lifetime_coins": fishing_lifetime_coins,
         "unlocked_upgrades": fishing_unlocked_upgrades,
@@ -580,6 +595,9 @@ func save_fishing_progress():
         return
     file.store_string(JSON.stringify(save_data))
     file.close()
+
+func needs_fishing_legacy_reset() -> bool:
+    return fishing_requires_legacy_reset
 
 func _migrate_armor_upgrade_keys() -> void:
     # Migrate old single key (core_armor_enemy etc.) to track 1 (core_armor_enemy_1) so progress is preserved.
