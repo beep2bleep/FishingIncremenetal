@@ -8,13 +8,13 @@ const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
 const DEFAULT_DEMO_WISHLIST_URL := "https://Beep2Bleep.com"
 const DEMO_THANK_YOU_LEVELS := [7, 8]
 const DEFAULT_BATTLE_HINTS := [
-    "Knight Vampirism restores health from all attacks. Its use is critical.",
+    "Knight Vampirism restores health from all attacks. Using it is critical.",
     "Guardian Fortify reduces damage taken and removes the armor cap, allowing you to stop all damage.",
     "Archer Pierce hits all enemies in its path and can be very powerful when many are on screen.",
     "Mage Storm hits all enemies on screen and weakens future enemies farther into the fight.",
-    "Timing Fortify and Vampirism can be critical to beat the boss.",
+    "Timing Fortify and Vampirism correctly can be critical for beating the boss.",
     "Armor can only reduce damage taken by 90% unless Guardian Fortify is active.",
-    "Wishlist Vanguard - Idle Auto Battler, and thanks for playing.",
+    "Wishlist Vanguard - Idle Auto Battler, and thank you for playing.",
     "You can bank energy on heroes by partially filling their activation.",
 ]
 
@@ -5437,11 +5437,11 @@ func _build_battle_summary_hints() -> Array[String]:
     if not SaveHandler.has_fishing_upgrade("recruit_mage"):
         hints.append("Recruit the Mage when you need burst damage to break harder waves and boss segments faster.")
     if not SaveHandler.has_fishing_upgrade("cursor_pickup_unlock"):
-        hints.append("Cursor pickup lets you grab coins faster during combat and gives more coins, which speeds up your post-battle upgrade buys.")
+        hints.append("Cursor Pickup lets you grab coins faster during combat and earn more coins, which speeds up your post-battle upgrade purchases.")
     if not battle_victory:
         hints.append("If this fight ended in defeat, spend your next coins before retrying. Small upgrade bumps compound quickly.")
         if boss_segments_broken <= 0:
-            hints.append("If the boss defeated you quickly consider adding Boss Armor.")
+            hints.append("If the boss defeated you quickly, consider adding Boss Armor.")
     return hints
 
 func _refresh_battle_summary_hint() -> void:
