@@ -147,6 +147,13 @@ func _on_joy_connection_changed(device, connected):
             _set_last_input_type(InputType.CONTROLLER, Input.get_connected_joypads().front())
 
 func _input(event: InputEvent):
+    var virtual_cursor: Node = get_node_or_null("/root/VirtualCursor")
+    if virtual_cursor != null \
+    and virtual_cursor.has_method("is_injecting_mouse_event") \
+    and virtual_cursor.call("is_injecting_mouse_event") \
+    and (event is InputEventMouseMotion or event is InputEventMouseButton):
+        return
+
     var input_type = _last_input_type
     var controller = _last_controller
     match event.get_class():

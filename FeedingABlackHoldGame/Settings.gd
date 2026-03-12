@@ -16,6 +16,7 @@ var fps_limits: Dictionary = {
         144: "144", 
         240: "240"
     }
+var locale_codes: Array[String] = []
 var _is_refreshing: bool = false
 
 func show_screen():
@@ -29,6 +30,7 @@ func show_screen():
 func _ready():
     hide()
 
+    populate_language_list()
     populate_window_mode_list()
     populate_fps_list()
     _refresh_hidden_control_visibility()
@@ -78,9 +80,24 @@ func refresh_from_save() -> void:
     %"Floating Damage CheckButton".button_pressed = SaveHandler.damage_text
     %"Confirm Upgrade Purchase CheckButton".button_pressed = SaveHandler.confirm_upgrade_purchase
     text_scale = SaveHandler.text_scale
+    _refresh_language_selection()
     _refresh_window_mode_selection()
     _refresh_fps_selection()
     _is_refreshing = false
+
+func populate_language_list() -> void:
+    locale_codes.clear()
+    %"Language Dropdown".clear()
+    for locale_code: String in SaveHandler.supported_locales.keys():
+        locale_codes.append(locale_code)
+        %"Language Dropdown".add_item(str(SaveHandler.supported_locales[locale_code]))
+    _refresh_language_selection()
+
+func _refresh_language_selection() -> void:
+    for i in range(locale_codes.size()):
+        if locale_codes[i] == SaveHandler.locale:
+            %"Language Dropdown".select(i)
+            return
 
 
 func populate_window_mode_list():
@@ -124,6 +141,14 @@ func _on_screen_mode_dropdown_item_selected(index: int) -> void :
 
 func _on_fps_dropdown_item_selected(index: int) -> void :
     SaveHandler.update_fps_limit(fps_limits.keys()[index])
+    if visible and not _is_refreshing:
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+
+func _on_language_dropdown_item_selected(index: int) -> void:
+    if index < 0 or index >= locale_codes.size():
+        return
+    SaveHandler.update_locale(locale_codes[index])
+    SaveHandler.update_has_shown_pick_locale_first_time(true)
     if visible and not _is_refreshing:
         AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 

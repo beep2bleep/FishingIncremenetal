@@ -69,6 +69,9 @@ func move_to_control(control: Control) -> void:
 func get_screen_position() -> Vector2:
     return _cursor_position
 
+func is_injecting_mouse_event() -> bool:
+    return _injecting_mouse_event
+
 func _input(event: InputEvent) -> void:
     if not _scene_enabled:
         return

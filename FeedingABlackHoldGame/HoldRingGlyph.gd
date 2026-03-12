@@ -28,7 +28,7 @@ func _ready() -> void:
 
 func _draw() -> void:
     var center := size * 0.5
-    var radius := max(0.0, min(size.x, size.y) * 0.5 - thickness)
+    var radius: float = max(0.0, min(size.x, size.y) * 0.5 - thickness)
     if radius <= 0.0:
         return
     draw_arc(center, radius, 0.0, TAU, 48, track_color, thickness, true)

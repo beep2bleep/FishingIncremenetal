@@ -68,7 +68,7 @@ offset_top = 20.0
 offset_right = 540.0
 offset_bottom = 66.0
 theme_override_font_sizes/font_size = 34
-text = "LEVEL 1"
+text = "BATTLE_LEVEL_PLACEHOLDER"
 
 [node name="HealthValueLabel" type="Label" parent="CanvasLayer"]
 offset_left = 24.0
@@ -76,7 +76,7 @@ offset_top = 66.0
 offset_right = 540.0
 offset_bottom = 100.0
 theme_override_font_sizes/font_size = 28
-text = "300 / 300"
+text = "UI_VALUE_PAIR_PLACEHOLDER"
 
 [node name="HealthBar" type="ProgressBar" parent="CanvasLayer"]
 offset_left = 24.0
@@ -93,7 +93,7 @@ offset_top = 144.0
 offset_right = 540.0
 offset_bottom = 172.0
 theme_override_font_sizes/font_size = 24
-text = "EXP 0 / 32"
+text = "BATTLE_EXP_PLACEHOLDER"
 
 [node name="ExperienceBar" type="ProgressBar" parent="CanvasLayer"]
 offset_left = 24.0
@@ -110,7 +110,7 @@ offset_top = 210.0
 offset_right = 540.0
 offset_bottom = 244.0
 theme_override_font_sizes/font_size = 28
-text = "0 / 0"
+text = "UI_VALUE_PAIR_PLACEHOLDER"
 
 [node name="PowerBar" type="ProgressBar" parent="CanvasLayer"]
 offset_left = 24.0
@@ -127,7 +127,7 @@ offset_top = 290.0
 offset_right = 600.0
 offset_bottom = 318.0
 theme_override_font_sizes/font_size = 24
-text = "Currency: 0"
+text = "BATTLE_CURRENCY_PLACEHOLDER"
 
 [node name="ClockPanel" type="PanelContainer" parent="CanvasLayer"]
 offset_left = 24.0
@@ -137,7 +137,7 @@ offset_bottom = 404.0
 
 [node name="ClockLabel" type="Label" parent="CanvasLayer/ClockPanel"]
 theme_override_font_sizes/font_size = 42
-text = "Clock: 00:00:00"
+text = "BATTLE_CLOCK_PLACEHOLDER"
 
 [node name="SpeedButton" type="Button" parent="CanvasLayer"]
 offset_left = 24.0
@@ -145,7 +145,7 @@ offset_top = 396.0
 offset_right = 416.0
 offset_bottom = 484.0
 theme_override_font_sizes/font_size = 32
-text = "Speed x1"
+text = "BATTLE_SPEED_PLACEHOLDER"
 
 [node name="InfiniteSimButton" type="Button" parent="CanvasLayer"]
 offset_left = 428.0
@@ -153,7 +153,7 @@ offset_top = 396.0
 offset_right = 884.0
 offset_bottom = 484.0
 theme_override_font_sizes/font_size = 32
-text = "Sim Infinity"
+text = "BATTLE_SIM_INFINITY"
 
 [node name="SpawnUfoButton" type="Button" parent="CanvasLayer"]
 visible = false
@@ -161,14 +161,14 @@ offset_left = 24.0
 offset_top = 446.0
 offset_right = 220.0
 offset_bottom = 490.0
-text = "Spawn UFO"
+text = "BATTLE_SPAWN_UFO"
 
 [node name="ExitBattleButton" parent="CanvasLayer" instance=ExtResource("2")]
 offset_left = 1020.0
 offset_top = 20.0
 offset_right = 1256.0
 offset_bottom = 64.0
-text = "EXIT BATTLE"
+text = "BATTLE_EXIT"
 
 [node name="MuteButton" type="Button" parent="CanvasLayer"]
 offset_left = 956.0
@@ -189,7 +189,7 @@ offset_top = 34.0
 offset_right = 899.0
 offset_bottom = 652.0
 autowrap_mode = 2
-text = "Summary"
+text = "BATTLE_SUMMARY_TITLE"
 
 [node name="SummaryChart" type="PanelContainer" parent="CanvasLayer/SummaryPanel"]
 offset_left = 872.0
@@ -203,7 +203,7 @@ offset_top = 676.0
 offset_right = 1552.0
 offset_bottom = 706.0
 z_index = 2
-text = "Hint 1/1"
+text = "BATTLE_HINT_NUMBERED_PLACEHOLDER"
 
 [node name="HintLeftButton" type="Button" parent="CanvasLayer/SummaryPanel"]
 offset_left = 34.0
@@ -220,7 +220,7 @@ offset_right = 1470.0
 offset_bottom = 780.0
 z_index = 2
 autowrap_mode = 2
-text = "Hint text"
+text = "BATTLE_HINT_TEXT_PLACEHOLDER"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -238,7 +238,7 @@ offset_top = 792.0
 offset_right = 910.0
 offset_bottom = 860.0
 z_index = 2
-text = "Continue"
+text = "UI_CONTINUE"
 
 [connection signal="pressed" from="CanvasLayer/SummaryPanel/HintLeftButton" to="." method="_on_summary_hint_left_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/SummaryPanel/HintRightButton" to="." method="_on_summary_hint_right_button_pressed"]

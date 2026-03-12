@@ -205,7 +205,7 @@ offset_bottom = 113.0
 grow_horizontal = 2
 theme = ExtResource("15")
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-text = "DEMO MODE"
+text = "UPGRADE_DEMO_MODE"
 horizontal_alignment = 1
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer2"]
@@ -245,7 +245,7 @@ size_flags_horizontal = 0
 size_flags_vertical = 8
 theme = ExtResource("7")
 theme_override_colors/font_color = Color(0.443137, 0.443137, 0.45098, 1)
-text = "*Icons are coming soon™"
+text = "UPGRADE_ICONS_COMING_SOON"
 horizontal_alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer"]
@@ -321,7 +321,7 @@ stretch_mode = 5
 layout_mode = 2
 size_flags_vertical = 7
 theme = ExtResource("9")
-text = "PAN TREE"
+text = "UPGRADE_PAN_TREE"
 horizontal_alignment = 1
 vertical_alignment = 2
 autowrap_mode = 3
@@ -364,7 +364,7 @@ stretch_mode = 5
 layout_mode = 2
 size_flags_vertical = 7
 theme = ExtResource("9")
-text = "DRAG TREE"
+text = "UPGRADE_DRAG_TREE"
 horizontal_alignment = 1
 vertical_alignment = 2
 autowrap_mode = 3
@@ -410,7 +410,7 @@ stretch_mode = 5
 layout_mode = 2
 size_flags_vertical = 6
 theme = ExtResource("9")
-text = "NAVIGATE"
+text = "UPGRADE_NAVIGATE"
 horizontal_alignment = 1
 vertical_alignment = 2
 
@@ -440,7 +440,7 @@ stretch_mode = 5
 layout_mode = 2
 size_flags_vertical = 7
 theme = ExtResource("9")
-text = "BUY UPGRADE"
+text = "UPGRADE_BUY_UPGRADE"
 horizontal_alignment = 1
 vertical_alignment = 2
 autowrap_mode = 3
@@ -486,7 +486,7 @@ layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 1
 theme = ExtResource("15")
-text = "WISHLIST"
+text = "UPGRADE_WISHLIST"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/MarginContainer2/VBoxContainer"]
 layout_mode = 2
@@ -505,7 +505,7 @@ layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 1
 theme = ExtResource("15")
-text = "CONTINUE"
+text = "UI_CONTINUE"
 
 [node name="Popup Layer" type="CanvasLayer" parent="."]
 unique_name_in_owner = true

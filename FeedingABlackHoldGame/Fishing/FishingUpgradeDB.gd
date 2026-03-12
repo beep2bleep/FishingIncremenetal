@@ -9,64 +9,68 @@ const HERO_CORE_TIERS_PER_NODE := 5
 const HERO_SPEED_NODE_BONUS: Array[float] = [0.04, 0.08, 0.12, 0.24]
 const HERO_DAMAGE_NODE_PCT: Array[int] = [36, 52, 68, 84]
 const FAMILY_DESCRIPTIONS := {
-    "ECON": "Improves income conversion and pickup efficiency.",
-    "DENS": "Increases enemy pressure to raise total reward ceiling.",
-    "SURV": "Improves survivability and run depth.",
-    "MOVE": "Improves traversal tempo.",
-    "POWR": "Improves power economy for actives.",
-    "ACTV": "Improves active ability uptime.",
-    "BOSS": "Improves boss phase output, safety, or rewards.",
-    "TEAM": "Improves hero-specific combat synergy.",
+    "ECON": "UPGRADE_DB_FAMILY_ECON",
+    "DENS": "UPGRADE_DB_FAMILY_DENS",
+    "SURV": "UPGRADE_DB_FAMILY_SURV",
+    "MOVE": "UPGRADE_DB_FAMILY_MOVE",
+    "POWR": "UPGRADE_DB_FAMILY_PWR",
+    "ACTV": "UPGRADE_DB_FAMILY_ACTV",
+    "BOSS": "UPGRADE_DB_FAMILY_BOSS",
+    "TEAM": "UPGRADE_DB_FAMILY_TEAM",
 }
 const SPECIFIC_DESCRIPTIONS := {
-    "cursor_pickup_unlock": "Unlocks cursor pickup bonuses so cursor-collected coins are worth more.",
-    "recruit_archer": "Adds the Archer hero to your combat lineup.",
-    "auto_attack_unlock": "Unlocks Tactical Telemetry: reveals enemies remaining during battle using the blue progress HUD.",
-    "battle_speed_unlock_2x": "Unlocks 2x battle speed in non-editor builds.",
-    "battle_speed_unlock_4x": "Unlocks 4x battle speed in non-editor builds.",
-    "battle_speed_unlock_8x": "Unlocks 8x battle speed in non-editor builds.",
-    "old_art_unlock": "Reveals the Art: Old/New toggle in release builds. Cosmetic only; no gameplay effect.",
-    "knight_vamp_unlock": "Unlocks the Knight active and improves life steal sustain.",
-    "archer_pierce_unlock": "Unlocks the Archer active with piercing attack coverage.",
-    "power_harvest_unlock": "Unlocks stronger power generation from combat and pickups.",
-    "recruit_guardian": "Adds the Guardian hero to your combat lineup.",
-    "guardian_fortify_unlock": "Unlocks the Guardian active: grants a Limited-Time Fortify that reduces incoming damage.",
-    "recruit_mage": "Adds the Mage hero to your combat lineup.",
-    "mage_storm_unlock": "Unlocks the Mage active: while active, the storm repeatedly damages all enemies on screen.",
-    "party_damage_boost": "Increases all party damage by 8% per level.",
-    "party_battle_standard": "Increases all party damage by 12% per level.",
-    "party_war_drums": "Increases all party damage by 16% per level.",
-    "party_execution_doctrine": "Increases all party damage by 20% per level.",
-    "party_apex_overdrive": "Increases all party damage by 25% per level.",
-    "vitality_foundation": "Unlocks the Vitality tree: +50 max Health. From here you can invest in Hitpoints, Power, or Channel time.",
+    "cursor_pickup_unlock": "UPGRADE_DB_DESCRIPTION_CURSOR_PICKUP_UNLOCK",
+    "recruit_archer": "UPGRADE_DB_DESCRIPTION_RECRUIT_ARCHER",
+    "auto_attack_unlock": "UPGRADE_DB_DESCRIPTION_AUTO_ATTACK_UNLOCK",
+    "battle_speed_unlock_2x": "UPGRADE_DB_DESCRIPTION_BATTLE_SPEED_2X",
+    "battle_speed_unlock_4x": "UPGRADE_DB_DESCRIPTION_BATTLE_SPEED_4X",
+    "battle_speed_unlock_8x": "UPGRADE_DB_DESCRIPTION_BATTLE_SPEED_8X",
+    "old_art_unlock": "UPGRADE_DB_DESCRIPTION_OLD_ART_UNLOCK",
+    "knight_vamp_unlock": "UPGRADE_DB_DESCRIPTION_KNIGHT_VAMP_UNLOCK",
+    "archer_pierce_unlock": "UPGRADE_DB_DESCRIPTION_ARCHER_PIERCE_UNLOCK",
+    "power_harvest_unlock": "UPGRADE_DB_DESCRIPTION_POWER_HARVEST_UNLOCK",
+    "recruit_guardian": "UPGRADE_DB_DESCRIPTION_RECRUIT_GUARDIAN",
+    "guardian_fortify_unlock": "UPGRADE_DB_DESCRIPTION_GUARDIAN_FORTIFY_UNLOCK",
+    "recruit_mage": "UPGRADE_DB_DESCRIPTION_RECRUIT_MAGE",
+    "mage_storm_unlock": "UPGRADE_DB_DESCRIPTION_MAGE_STORM_UNLOCK",
+    "party_damage_boost": "UPGRADE_DB_DESCRIPTION_PARTY_DAMAGE_08",
+    "party_battle_standard": "UPGRADE_DB_DESCRIPTION_PARTY_DAMAGE_12",
+    "party_war_drums": "UPGRADE_DB_DESCRIPTION_PARTY_DAMAGE_16",
+    "party_execution_doctrine": "UPGRADE_DB_DESCRIPTION_PARTY_DAMAGE_20",
+    "party_apex_overdrive": "UPGRADE_DB_DESCRIPTION_PARTY_DAMAGE_25",
+    "vitality_foundation": "UPGRADE_DB_DESCRIPTION_VITALITY_FOUNDATION",
 }
 const SPECIFIC_NAMES := {
-    "cursor_pickup_unlock": "Cursor Pickup Unlock",
-    "recruit_archer": "Recruit Archer",
-    "auto_attack_unlock": "Tactical Telemetry",
-    "battle_speed_unlock_2x": "Temportal Throttle",
-    "battle_speed_unlock_4x": "Temportal Throttle II",
-    "battle_speed_unlock_8x": "Temportal Throttle III",
-    "old_art_unlock": "Archive of First Light",
-    "knight_vamp_unlock": "Knight Vampirism Unlock",
-    "archer_pierce_unlock": "Archer Pierce Unlock",
-    "power_harvest_unlock": "Power Harvest Unlock",
-    "recruit_guardian": "Recruit Guardian",
-    "guardian_fortify_unlock": "Guardian Fortify Unlock",
-    "recruit_mage": "Recruit Mage",
-    "mage_storm_unlock": "Mage Storm Unlock",
-    "party_damage_boost": "Party Power",
-    "party_battle_standard": "Battle Standard",
-    "party_war_drums": "War Drums",
-    "party_execution_doctrine": "Execution Doctrine",
-    "party_apex_overdrive": "Apex Overdrive",
-    "vitality_foundation": "Vitality Foundation",
+    "cursor_pickup_unlock": "UPGRADE_DB_NAME_CURSOR_PICKUP_UNLOCK",
+    "recruit_archer": "UPGRADE_DB_NAME_RECRUIT_ARCHER",
+    "auto_attack_unlock": "UPGRADE_DB_NAME_AUTO_ATTACK_UNLOCK",
+    "battle_speed_unlock_2x": "UPGRADE_DB_NAME_BATTLE_SPEED_UNLOCK_2X",
+    "battle_speed_unlock_4x": "UPGRADE_DB_NAME_BATTLE_SPEED_UNLOCK_4X",
+    "battle_speed_unlock_8x": "UPGRADE_DB_NAME_BATTLE_SPEED_UNLOCK_8X",
+    "old_art_unlock": "UPGRADE_DB_NAME_OLD_ART_UNLOCK",
+    "knight_vamp_unlock": "UPGRADE_DB_NAME_KNIGHT_VAMP_UNLOCK",
+    "archer_pierce_unlock": "UPGRADE_DB_NAME_ARCHER_PIERCE_UNLOCK",
+    "power_harvest_unlock": "UPGRADE_DB_NAME_POWER_HARVEST_UNLOCK",
+    "recruit_guardian": "UPGRADE_DB_NAME_RECRUIT_GUARDIAN",
+    "guardian_fortify_unlock": "UPGRADE_DB_NAME_GUARDIAN_FORTIFY_UNLOCK",
+    "recruit_mage": "UPGRADE_DB_NAME_RECRUIT_MAGE",
+    "mage_storm_unlock": "UPGRADE_DB_NAME_MAGE_STORM_UNLOCK",
+    "party_damage_boost": "UPGRADE_DB_NAME_PARTY_DAMAGE_BOOST",
+    "party_battle_standard": "UPGRADE_DB_NAME_PARTY_BATTLE_STANDARD",
+    "party_war_drums": "UPGRADE_DB_NAME_PARTY_WAR_DRUMS",
+    "party_execution_doctrine": "UPGRADE_DB_NAME_PARTY_EXECUTION_DOCTRINE",
+    "party_apex_overdrive": "UPGRADE_DB_NAME_PARTY_APEX_OVERDRIVE",
+    "vitality_foundation": "UPGRADE_DB_NAME_VITALITY_FOUNDATION",
 }
 
 var nodes: Array[Dictionary] = []
 var node_by_id: Dictionary = {}
 var sim_notes_by_id: Dictionary = {}
 static var _cached_data: Dictionary = {}
+
+func _trf(key: String, args: Array = []) -> String:
+    var translated: String = tr(key)
+    return translated % args if not args.is_empty() else translated
 
 func _init(data_override: Variant = null) -> void:
     var data: Variant = data_override
@@ -250,17 +254,17 @@ func get_display_name(node: Dictionary) -> String:
     var level: int = int(node.get("level", 1))
 
     if key == "hero_coin_gain":
-        return "Hero Coin Gain " + _roman((level - 1) / 5 + 1)
+        return _trf("UPGRADE_DB_NAME_HERO_COIN_GAIN", [_roman((level - 1) / 5 + 1)])
     if key == "cursor_capture_gain":
-        return "Cursor Capture " + _roman((level - 1) / 5 + 1)
+        return _trf("UPGRADE_DB_NAME_CURSOR_CAPTURE", [_roman((level - 1) / 5 + 1)])
     if key == "vitality_hitpoints":
-        return "Vitality Hitpoints " + _roman((level - 1) / 5 + 1)
+        return _trf("UPGRADE_DB_NAME_VITALITY_HITPOINTS", [_roman((level - 1) / 5 + 1)])
     if key == "vitality_power":
-        return "Vitality Power " + _roman((level - 1) / 5 + 1)
+        return _trf("UPGRADE_DB_NAME_VITALITY_POWER", [_roman((level - 1) / 5 + 1)])
     if key == "vitality_channel":
-        return "Vitality Channel " + _roman((level - 1) / 5 + 1)
+        return _trf("UPGRADE_DB_NAME_VITALITY_CHANNEL", [_roman((level - 1) / 5 + 1)])
     if SPECIFIC_NAMES.has(key):
-        return SPECIFIC_NAMES[key]
+        return tr(SPECIFIC_NAMES[key])
     if key.begins_with("extra_skill_"):
         return _extra_skill_name(key)
     if key.begins_with("core_"):
@@ -281,25 +285,25 @@ func get_description(node: Dictionary) -> String:
 
     var key: String = str(node.get("key", ""))
     if key == "battle_speed_unlock_2x":
-        return _with_editor_note(node, "Unlocks the Speed button and enables 2x battle speed.")
+        return _with_editor_note(node, tr("UPGRADE_DB_DESCRIPTION_BATTLE_SPEED_2X"))
     if key == "battle_speed_unlock_4x":
-        return _with_editor_note(node, "Unlocks 4x battle speed.")
+        return _with_editor_note(node, tr("UPGRADE_DB_DESCRIPTION_BATTLE_SPEED_4X"))
     if key == "battle_speed_unlock_8x":
-        return _with_editor_note(node, "Unlocks 8x battle speed.")
+        return _with_editor_note(node, tr("UPGRADE_DB_DESCRIPTION_BATTLE_SPEED_8X"))
     if key == "old_art_unlock":
-        return _with_editor_note(node, "Reveals the Art: Old/New toggle in release builds. Cosmetic only; no gameplay effect.")
+        return _with_editor_note(node, tr("UPGRADE_DB_DESCRIPTION_OLD_ART_UNLOCK"))
     if key == "hero_coin_gain":
-        return _with_editor_note(node, "Multiplies coin value by +6% per level (exponential over 20 levels). Applies to coins collected by heroes or cursor.")
+        return _with_editor_note(node, tr("UPGRADE_DB_DESCRIPTION_HERO_COIN_GAIN"))
     if key == "cursor_capture_gain":
-        return _with_editor_note(node, "Multiplies cursor-captured coin value by +2.5% per level (exponential over 25 levels).")
+        return _with_editor_note(node, tr("UPGRADE_DB_DESCRIPTION_CURSOR_CAPTURE_GAIN"))
     if key == "vitality_hitpoints":
-        return _with_editor_note(node, "Increases max Health by 20% per level. Each of the five tracks (I–V) adds 20% per level; cost scales 3x per track depth. Stacks multiplicatively across all levels.")
+        return _with_editor_note(node, tr("UPGRADE_DB_DESCRIPTION_VITALITY_HITPOINTS"))
     if key == "vitality_power":
-        return _with_editor_note(node, "Increases power generation and power capacity by 5% per level. Each of the five tracks (I–V) adds 5% per level; cost scales 3x per track depth.")
+        return _with_editor_note(node, tr("UPGRADE_DB_DESCRIPTION_VITALITY_POWER"))
     if key == "vitality_channel":
-        return _with_editor_note(node, "Increases active ability channel (duration) by 5% per level, active power cost by 5% per level, and power charged per hero click by 5% per level. Lets actives run longer at a higher activation cost without increasing clicks to cast. Cost scales 3x per track depth.")
+        return _with_editor_note(node, tr("UPGRADE_DB_DESCRIPTION_VITALITY_CHANNEL"))
     if SPECIFIC_DESCRIPTIONS.has(key):
-        return _with_editor_note(node, SPECIFIC_DESCRIPTIONS[key])
+        return _with_editor_note(node, tr(SPECIFIC_DESCRIPTIONS[key]))
 
     if key.begins_with("core_"):
         return _with_editor_note(node, _describe_core_upgrade(node))
@@ -312,11 +316,11 @@ func get_description(node: Dictionary) -> String:
 
     var family_desc: String = _infer_family_description(key)
     if family_desc != "":
-        return _with_editor_note(node, family_desc)
+        return _with_editor_note(node, tr(family_desc))
 
     return _with_editor_note(
         node,
-        "Improves run combat effectiveness by boosting hero output, uptime, durability, or reward conversion on this branch."
+        tr("UPGRADE_DB_DESCRIPTION_FALLBACK")
     )
 
 func _with_editor_note(node: Dictionary, base: String) -> String:
@@ -340,11 +344,11 @@ func _describe_core_upgrade(node: Dictionary) -> String:
     var key: String = str(node.get("key", ""))
     var level: int = int(node.get("level", 1))
     if key == "core_armor":
-        return "Unlocks the Core Armor branch: three paths that reduce enemy, DOT, and boss damage taken. Armor can prevent at most 90% of damage taken."
+        return tr("UPGRADE_DB_DESCRIPTION_CORE_ARMOR")
     if key.begins_with("core_armor_enemy_"):
         var enemy_track: int = int(key.trim_prefix("core_armor_enemy_"))
         var enemy_per_level_block: int = int(pow(4, enemy_track))
-        return "Reduces regular enemy contact damage by %d." % enemy_per_level_block
+        return _trf("UPGRADE_DB_DESCRIPTION_CORE_ARMOR_ENEMY", [enemy_per_level_block])
     if key.begins_with("core_armor_dot_"):
         var track: int = int(key.trim_prefix("core_armor_dot_"))
         var per_level_block: int = 0
@@ -357,7 +361,7 @@ func _describe_core_upgrade(node: Dictionary) -> String:
                 per_level_block = 27
             4:
                 per_level_block = 81
-        return "Reduces damage-over-time by %d damage per second." % per_level_block
+        return _trf("UPGRADE_DB_DESCRIPTION_CORE_ARMOR_DOT", [per_level_block])
     if key.begins_with("core_armor_boss_"):
         var boss_track: int = int(key.trim_prefix("core_armor_boss_"))
         var boss_per_level_block: int = 0
@@ -372,15 +376,15 @@ func _describe_core_upgrade(node: Dictionary) -> String:
                 boss_per_level_block = 1600
             5:
                 boss_per_level_block = 10750
-        return "Blocks %d boss contact damage per purchase in this node, %d total when fully upgraded." % [boss_per_level_block, boss_per_level_block * 5]
+        return _trf("UPGRADE_DB_DESCRIPTION_CORE_ARMOR_BOSS", [boss_per_level_block, boss_per_level_block * 5])
     if key == "core_density":
-        return "Increase enemy density by ~5% per level (and coin rewards by ~2% per level) for higher potential rewards."
+        return tr("UPGRADE_DB_DESCRIPTION_CORE_DENSITY")
     if key == "core_drop":
-        return "Increase coin drop value scaling by +8% per level."
+        return tr("UPGRADE_DB_DESCRIPTION_CORE_DROP")
     if key == "core_power":
-        return "Increase power gain by +12% per level, power cap by +8, and reduce active power cost by about 2% per level."
+        return tr("UPGRADE_DB_DESCRIPTION_CORE_POWER")
     if key == "party_damage_boost":
-        return "Increase all party damage by 8% per level."
+        return tr("UPGRADE_DB_DESCRIPTION_PARTY_DAMAGE_08")
 
     var hero_name: String = _hero_core_name(key)
     if hero_name != "":
@@ -389,81 +393,81 @@ func _describe_core_upgrade(node: Dictionary) -> String:
             var pct: int = HERO_DAMAGE_NODE_PCT[node_index]
             var tier_start: int = node_index * HERO_CORE_TIERS_PER_NODE + 1
             var tier_end: int = tier_start + HERO_CORE_TIERS_PER_NODE - 1
-            return "Tiers %d-%d: +%d%% %s damage per purchase (x%.2f each buy). Full branch exceeds 10000x base damage." % [
+            return _trf("UPGRADE_DB_DESCRIPTION_HERO_DAMAGE_TIERS", [
                 tier_start,
                 tier_end,
                 pct,
                 hero_name,
                 1.0 + float(pct) / 100.0,
-            ]
+            ])
         if key.find("speed") != -1:
             var speed_bonus: float = HERO_SPEED_NODE_BONUS[node_index]
             var tier_start_speed: int = node_index * HERO_CORE_TIERS_PER_NODE + 1
             var tier_end_speed: int = tier_start_speed + HERO_CORE_TIERS_PER_NODE - 1
-            return "Tiers %d-%d: +%.2f attacks/sec for %s per purchase (+%.2f attacks/sec across this node). Full branch reaches 3.00x base attack rate." % [
+            return _trf("UPGRADE_DB_DESCRIPTION_HERO_SPEED_TIERS", [
                 tier_start_speed,
                 tier_end_speed,
                 speed_bonus,
                 hero_name,
                 speed_bonus * HERO_CORE_TIERS_PER_NODE,
-            ]
+            ])
 
-    return "Increase this core stat scaling (Level %d)." % level
+    return _trf("UPGRADE_DB_DESCRIPTION_CORE_STAT_LEVEL", [level])
 
 func _describe_extra_skill(key: String) -> String:
     var family: String = _extra_skill_family(key)
     match family:
         "ECON":
-            return "Increases combat reward efficiency so each kill converts into more useful coin and stronger next-run upgrades."
+            return tr("UPGRADE_DB_DESCRIPTION_EXTRA_SKILL_ECON")
         "DENS":
-            return "Raises enemy density/pressure so your DPS kills more targets per second and increases coin-per-minute ceiling."
+            return tr("UPGRADE_DB_DESCRIPTION_EXTRA_SKILL_DENS")
         "SURV":
-            return "Improves survivability (armor/contact/DoT mitigation) so the team survives deeper waves and reaches bosses more often."
+            return tr("UPGRADE_DB_DESCRIPTION_EXTRA_SKILL_SURV")
         "MOVE":
-            return "Improves formation movement and retarget tempo so heroes spend less time repositioning and more time dealing damage."
+            return tr("UPGRADE_DB_DESCRIPTION_EXTRA_SKILL_MOVE")
         "POWR":
-            return "Improves power generation/cap/refund so actives trigger earlier and more frequently in each run."
+            return tr("UPGRADE_DB_DESCRIPTION_EXTRA_SKILL_PWR")
         "ACTV":
-            return "Improves active uptime (duration and cooldown cadence), increasing burst windows and sustained team DPS."
+            return tr("UPGRADE_DB_DESCRIPTION_EXTRA_SKILL_ACTV")
         "BOSS":
-            return "Improves boss-phase effectiveness (damage throughput, mitigation, or reward scaling) to clear more boss segments."
+            return tr("UPGRADE_DB_DESCRIPTION_EXTRA_SKILL_BOSS")
         "TEAM":
-            return "Improves hero-specific combat stats and active ceilings, increasing total squad damage and consistency."
+            return tr("UPGRADE_DB_DESCRIPTION_EXTRA_SKILL_TEAM")
         _:
-            return "Boosts combat scaling for this branch and improves clear speed against enemies and boss phases."
+            return tr("UPGRADE_DB_DESCRIPTION_FALLBACK")
 
 func _describe_key_effect(key: String) -> String:
     var lower: String = key.to_lower()
     if lower.find("party_damage_boost") >= 0:
-        return "Increases all party damage by 8% per level."
+        return tr("UPGRADE_DB_DESCRIPTION_PARTY_DAMAGE_08")
     if lower.find("party_battle_standard") >= 0:
-        return "Increases all party damage by 12% per level."
+        return tr("UPGRADE_DB_DESCRIPTION_PARTY_DAMAGE_12")
     if lower.find("party_war_drums") >= 0:
-        return "Increases all party damage by 16% per level."
+        return tr("UPGRADE_DB_DESCRIPTION_PARTY_DAMAGE_16")
     if lower.find("party_execution_doctrine") >= 0:
-        return "Increases all party damage by 20% per level."
+        return tr("UPGRADE_DB_DESCRIPTION_PARTY_DAMAGE_20")
     if lower.find("party_apex_overdrive") >= 0:
-        return "Increases all party damage by 25% per level."
+        return tr("UPGRADE_DB_DESCRIPTION_PARTY_DAMAGE_25")
     if lower.find("damage") >= 0:
-        return "Increases direct damage output (typically about +1.2%–1.5% total team DPS per level before global tuning)."
+        return tr("UPGRADE_DB_DESCRIPTION_KEY_DAMAGE")
     if lower.find("speed") >= 0 or lower.find("cadence") >= 0:
-        return "Increases attack cadence (typically about +0.9%–1.2% faster attacks per level before global tuning)."
+        return tr("UPGRADE_DB_DESCRIPTION_KEY_SPEED")
     if lower.find("armor") >= 0 or lower.find("plate") >= 0 or lower.find("fortify") >= 0 or lower.find("hemostasis") >= 0:
-        return "Reduces incoming damage (roughly -0.8% to -1.2% taken per level before global tuning)."
+        return tr("UPGRADE_DB_DESCRIPTION_KEY_ARMOR")
     if lower.find("power") >= 0 or lower.find("reservoir") >= 0 or lower.find("invocation") >= 0 or lower.find("active") >= 0:
-        return "Improves active ability economy (about +2.5% power gain per level and modest cooldown/cost reductions before global tuning)."
+        return tr("UPGRADE_DB_DESCRIPTION_KEY_POWER")
     if lower.find("boss") >= 0 or lower.find("segment") >= 0:
-        return "Improves boss progression (reduces effective boss HP or increases boss rewards by a few percent per level)."
+        return tr("UPGRADE_DB_DESCRIPTION_KEY_BOSS")
     if lower.find("drop") >= 0 or lower.find("pickup") >= 0 or lower.find("coin") >= 0 or lower.find("salvage") >= 0:
-        return "Increases coin conversion from combat by roughly +3% income per level (before cursor and extra-skill bonuses)."
+        return tr("UPGRADE_DB_DESCRIPTION_KEY_COIN")
     if lower.find("density") >= 0 or lower.find("horde") >= 0 or lower.find("wave") >= 0 or lower.find("crowd") >= 0:
-        return "Increases enemy density by a few percent per level so high DPS builds can secure more kills (and coins) per minute."
+        return tr("UPGRADE_DB_DESCRIPTION_KEY_DENSITY")
     if lower.find("move") >= 0 or lower.find("march") >= 0 or lower.find("sprint") >= 0 or lower.find("route") >= 0:
-        return "Improves combat pacing (roughly +1%–1.5% frontline walk speed per level) to reduce downtime between engagements."
+        return tr("UPGRADE_DB_DESCRIPTION_FAMILY_MOVE")
     if lower.find("lens") >= 0 or lower.find("magnet") >= 0 or lower.find("cursor") >= 0:
-        return "Increases cursor-collected coin value by about +5% per level, stacking with other coin multipliers."
+        return tr("UPGRADE_DB_DESCRIPTION_FAMILY_CURSOR")
     if lower.find("archer") >= 0 or lower.find("knight") >= 0 or lower.find("guardian") >= 0 or lower.find("mage") >= 0:
-        return "Improves hero-specific combat contribution (roughly +1%–2% total squad DPS or safety per level depending on the hero)."
+        return tr("UPGRADE_DB_DESCRIPTION_FAMILY_HERO")
     return ""
 
 func _extra_skill_family(key: String) -> String:
@@ -583,70 +587,70 @@ func _fallback_icon_for_key(key: String) -> String:
 func _extra_skill_name(key: String) -> String:
     var n: int = int(key.trim_prefix("extra_skill_"))
     if n <= 0:
-        return "Extra Skill"
+        return tr("UPGRADE_DB_NAME_EXTRA_SKILL_FALLBACK")
     var idx: int = (n - 1) % EXTRA_NAME_A.size()
-    return "%s %s %d" % [EXTRA_NAME_A[idx], EXTRA_NAME_B[idx], n]
+    return _trf("UPGRADE_DB_NAME_EXTRA_SKILL", [EXTRA_NAME_A[idx], EXTRA_NAME_B[idx], n])
 
 func _core_name(key: String, level: int = 1) -> String:
     if key == "core_armor":
-        return "Core Armor"
+        return tr("UPGRADE_DB_NAME_CORE_ARMOR")
     if key.begins_with("core_armor_enemy_"):
         var track: int = int(key.trim_prefix("core_armor_enemy_"))
-        return "Contact Armor " + _roman(track)
+        return _trf("UPGRADE_DB_NAME_CONTACT_ARMOR", [_roman(track)])
     if key.begins_with("core_armor_dot_"):
         var track: int = int(key.trim_prefix("core_armor_dot_"))
-        return "DoT Armor " + _roman(track)
+        return _trf("UPGRADE_DB_NAME_DOT_ARMOR", [_roman(track)])
     if key.begins_with("core_armor_boss_"):
         var track: int = int(key.trim_prefix("core_armor_boss_"))
-        return "Boss Armor " + _roman(track)
+        return _trf("UPGRADE_DB_NAME_BOSS_ARMOR", [_roman(track)])
     if key == "core_density":
-        return "Core Density"
+        return tr("UPGRADE_DB_NAME_CORE_DENSITY")
     if key == "core_drop":
-        return "Core Drop"
+        return tr("UPGRADE_DB_NAME_CORE_DROP")
     if key == "core_power":
-        return "Core Power"
+        return tr("UPGRADE_DB_NAME_CORE_POWER")
     var hero_name: String = _hero_core_name(key)
     if hero_name != "":
         var node_tier: String = _roman(_hero_core_node_index(level) + 1)
         if key.find("damage") != -1:
-            return "%s Damage %s" % [hero_name, node_tier]
+            return _trf("UPGRADE_DB_NAME_HERO_DAMAGE", [hero_name, node_tier])
         if key.find("speed") != -1:
-            return "%s Speed %s" % [hero_name, node_tier]
+            return _trf("UPGRADE_DB_NAME_HERO_SPEED", [hero_name, node_tier])
     if key.find("knight") != -1 and key.find("damage") != -1:
-        return "Core Knight Damage"
+        return tr("UPGRADE_DB_NAME_CORE_KNIGHT_DAMAGE")
     if key.find("knight") != -1 and key.find("speed") != -1:
-        return "Core Knight Speed"
+        return tr("UPGRADE_DB_NAME_CORE_KNIGHT_SPEED")
     if key.find("knight") != -1 and key.find("active_cap") != -1:
-        return "Core Knight Active Cap"
+        return tr("UPGRADE_DB_NAME_CORE_KNIGHT_ACTIVE_CAP")
     if key.find("archer") != -1 and key.find("damage") != -1:
-        return "Core Archer Damage"
+        return tr("UPGRADE_DB_NAME_CORE_ARCHER_DAMAGE")
     if key.find("archer") != -1 and key.find("speed") != -1:
-        return "Core Archer Speed"
+        return tr("UPGRADE_DB_NAME_CORE_ARCHER_SPEED")
     if key.find("archer") != -1 and key.find("active_cap") != -1:
-        return "Core Archer Active Cap"
+        return tr("UPGRADE_DB_NAME_CORE_ARCHER_ACTIVE_CAP")
     if key.find("guardian") != -1 and key.find("damage") != -1:
-        return "Core Guardian Damage"
+        return tr("UPGRADE_DB_NAME_CORE_GUARDIAN_DAMAGE")
     if key.find("guardian") != -1 and key.find("speed") != -1:
-        return "Core Guardian Speed"
+        return tr("UPGRADE_DB_NAME_CORE_GUARDIAN_SPEED")
     if key.find("guardian") != -1 and key.find("active_cap") != -1:
-        return "Core Guardian Active Cap"
+        return tr("UPGRADE_DB_NAME_CORE_GUARDIAN_ACTIVE_CAP")
     if key.find("mage") != -1 and key.find("damage") != -1:
-        return "Core Mage Damage"
+        return tr("UPGRADE_DB_NAME_CORE_MAGE_DAMAGE")
     if key.find("mage") != -1 and key.find("speed") != -1:
-        return "Core Mage Speed"
+        return tr("UPGRADE_DB_NAME_CORE_MAGE_SPEED")
     if key.find("mage") != -1 and key.find("active_cap") != -1:
-        return "Core Mage Active Cap"
+        return tr("UPGRADE_DB_NAME_CORE_MAGE_ACTIVE_CAP")
     return _humanize_name(key)
 
 func _hero_core_name(key: String) -> String:
     if key.find("knight") != -1:
-        return "Knight"
+        return tr("BATTLE_SOURCE_KNIGHT")
     if key.find("archer") != -1:
-        return "Archer"
+        return tr("BATTLE_SOURCE_ARCHER")
     if key.find("guardian") != -1:
-        return "Guardian"
+        return tr("BATTLE_SOURCE_GUARDIAN")
     if key.find("mage") != -1:
-        return "Mage"
+        return tr("BATTLE_SOURCE_MAGE")
     return ""
 
 func _hero_core_node_index(level: int) -> int:

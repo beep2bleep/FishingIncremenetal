@@ -8,14 +8,14 @@ const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
 const DEFAULT_DEMO_WISHLIST_URL := "https://Beep2Bleep.com"
 const DEMO_THANK_YOU_LEVELS := [7, 8]
 const DEFAULT_BATTLE_HINTS := [
-    "Knight Vampirism restores health from all attacks. Using it is critical.",
-    "Guardian Fortify reduces damage taken and removes the armor cap, allowing you to stop all damage.",
-    "Archer Pierce hits all enemies in its path and can be very powerful when many are on screen.",
-    "Mage Storm hits all enemies on screen and weakens future enemies farther into the fight.",
-    "Timing Fortify and Vampirism correctly can be critical for beating the boss.",
-    "Armor can only reduce damage taken by 90% unless Guardian Fortify is active.",
-    "Wishlist Vanguard - Idle Auto Battler, and thank you for playing.",
-    "You can bank energy on heroes by partially filling their activation.",
+    "BATTLE_HINT_DEFAULT_01",
+    "BATTLE_HINT_DEFAULT_02",
+    "BATTLE_HINT_DEFAULT_03",
+    "BATTLE_HINT_DEFAULT_04",
+    "BATTLE_HINT_DEFAULT_05",
+    "BATTLE_HINT_DEFAULT_06",
+    "BATTLE_HINT_DEFAULT_07",
+    "BATTLE_HINT_DEFAULT_08",
 ]
 
 const HERO_FRAME_SIZE := Vector2i(24, 24)
@@ -598,17 +598,17 @@ const BATTLE_STAT_SOURCE_ORDER: Array[String] = [
     "boss_guard",
 ]
 const BATTLE_STAT_SOURCE_LABELS := {
-    "total": "Total",
-    "knight": "Knight",
-    "archer": "Archer",
-    "guardian": "Guardian",
-    "mage": "Mage",
-    "knight_vamp": "Knight Vamp",
-    "guardian_fortify": "Guardian Fortify",
-    "armor": "Armor",
-    "enemy_guard": "Enemy Guard",
-    "dot_guard": "DOT Guard",
-    "boss_guard": "Boss Guard",
+    "total": "BATTLE_SOURCE_TOTAL",
+    "knight": "BATTLE_SOURCE_KNIGHT",
+    "archer": "BATTLE_SOURCE_ARCHER",
+    "guardian": "BATTLE_SOURCE_GUARDIAN",
+    "mage": "BATTLE_SOURCE_MAGE",
+    "knight_vamp": "BATTLE_SOURCE_KNIGHT_VAMP",
+    "guardian_fortify": "BATTLE_SOURCE_GUARDIAN_FORTIFY",
+    "armor": "BATTLE_SOURCE_ARMOR",
+    "enemy_guard": "BATTLE_SOURCE_ENEMY_GUARD",
+    "dot_guard": "BATTLE_SOURCE_DOT_GUARD",
+    "boss_guard": "BATTLE_SOURCE_BOSS_GUARD",
 }
 const BATTLE_STAT_COLORS := {
     BATTLE_STAT_DAMAGE: "#f4bd52",
@@ -621,6 +621,23 @@ func _should_show_editor_only_touch_toggle() -> bool:
 
 func _should_show_editor_only_hero_set_toggle() -> bool:
     return OS.has_feature("editor") or SaveHandler.has_fishing_upgrade("old_art_unlock")
+
+func _trf(key: String, args: Array = []) -> String:
+    var translated: String = tr(key)
+    return translated % args if not args.is_empty() else translated
+
+func _hero_name_translation_key(hero_name: String) -> String:
+    match hero_name:
+        "knight":
+            return "BATTLE_SOURCE_KNIGHT"
+        "archer":
+            return "BATTLE_SOURCE_ARCHER"
+        "guardian":
+            return "BATTLE_SOURCE_GUARDIAN"
+        "mage":
+            return "BATTLE_SOURCE_MAGE"
+        _:
+            return ""
 
 func _ready() -> void:
     if not _bind_nodes():
@@ -829,8 +846,8 @@ func _bind_nodes() -> bool:
     if level_choice_dialog == null and canvas_layer != null:
         level_choice_dialog = ConfirmationDialog.new()
         level_choice_dialog.name = "LevelChoiceDialog"
-        level_choice_dialog.title = "Choose Battle Level"
-        level_choice_dialog.dialog_text = "Choose your next battle level."
+        level_choice_dialog.title = tr("UI_CHOOSE_BATTLE_LEVEL")
+        level_choice_dialog.dialog_text = tr("BATTLE_CHOOSE_NEXT_LEVEL")
         level_choice_dialog.get_ok_button().hide()
         level_choice_dialog.get_cancel_button().hide()
         canvas_layer.add_child(level_choice_dialog)
@@ -958,17 +975,17 @@ func _setup_new_hero_scale_debug_controls() -> void:
         root_margin.add_child(root_vbox)
 
         var title := Label.new()
-        title.text = "New Hero Scale Debug"
+        title.text = tr("BATTLE_DEBUG_NEW_HERO_SCALE")
         title.add_theme_font_size_override("font_size", 20)
         root_vbox.add_child(title)
 
         var note_label := Label.new()
-        note_label.text = "Editor only. Affects NEW hero art only."
+        note_label.text = tr("BATTLE_DEBUG_NEW_HERO_SCALE_NOTE")
         note_label.add_theme_font_size_override("font_size", 13)
         root_vbox.add_child(note_label)
 
         var step_label := Label.new()
-        step_label.text = "Step %.2f" % NEW_HERO_SCALE_DEBUG_STEP
+        step_label.text = _trf("BATTLE_DEBUG_STEP", [NEW_HERO_SCALE_DEBUG_STEP])
         step_label.add_theme_font_size_override("font_size", 14)
         root_vbox.add_child(step_label)
 
@@ -978,7 +995,8 @@ func _setup_new_hero_scale_debug_controls() -> void:
             root_vbox.add_child(row)
 
             var name_label := Label.new()
-            name_label.text = hero_name.capitalize()
+            var hero_name_key: String = _hero_name_translation_key(hero_name)
+            name_label.text = tr(hero_name_key) if hero_name_key != "" else hero_name.capitalize()
             name_label.custom_minimum_size = Vector2(80.0, 0.0)
             row.add_child(name_label)
 
@@ -1000,19 +1018,19 @@ func _setup_new_hero_scale_debug_controls() -> void:
             row.add_child(plus_button)
 
             var y_minus_button := Button.new()
-            y_minus_button.text = "Y-"
+            y_minus_button.text = tr("BATTLE_DEBUG_Y_MINUS")
             y_minus_button.custom_minimum_size = Vector2(38.0, 36.0)
             y_minus_button.pressed.connect(_on_new_hero_y_debug_adjust_pressed.bind(hero_name, -1.0))
             row.add_child(y_minus_button)
 
             var y_plus_button := Button.new()
-            y_plus_button.text = "Y+"
+            y_plus_button.text = tr("BATTLE_DEBUG_Y_PLUS")
             y_plus_button.custom_minimum_size = Vector2(38.0, 36.0)
             y_plus_button.pressed.connect(_on_new_hero_y_debug_adjust_pressed.bind(hero_name, 1.0))
             row.add_child(y_plus_button)
 
         var print_button := Button.new()
-        print_button.text = "Print Scales"
+        print_button.text = tr("BATTLE_DEBUG_PRINT_SCALES")
         print_button.custom_minimum_size = Vector2(0.0, 40.0)
         print_button.pressed.connect(_print_new_hero_scale_debug_values)
         root_vbox.add_child(print_button)
@@ -1224,7 +1242,7 @@ func _update_speed_button_enabled_state() -> void:
 func _update_speed_button_text() -> void:
     if speed_button == null:
         return
-    speed_button.text = "Speed x%d" % int(SPEED_STEPS[speed_index])
+    speed_button.text = _trf("BATTLE_SPEED_LABEL", [int(SPEED_STEPS[speed_index])])
 
 func _update_touch_camera_debug() -> void:
     queue_redraw()
@@ -1232,7 +1250,7 @@ func _update_touch_camera_debug() -> void:
         return
     var touch_area: Rect2 = _touch_camera_world_rect()
     var count: int = _enemy_count_in_touch_camera_area(touch_area)
-    touch_zone_debug_label.text = "Touch Zone Enemies: %d" % count
+    touch_zone_debug_label.text = _trf("BATTLE_DEBUG_TOUCH_ZONE_ENEMIES", [count])
 
 func _on_speed_button_pressed() -> void:
     var max_index: int = _max_available_speed_index()
@@ -2693,8 +2711,8 @@ func _refresh_hero_set_toggle_button() -> void:
     if hero_set_toggle_button == null:
         return
     var is_new_set: bool = selected_hero_sprite_set == HERO_SPRITE_SET_NEW
-    hero_set_toggle_button.text = "Art: NEW" if is_new_set else "Art: OLD"
-    hero_set_toggle_button.tooltip_text = "Switch between the original and new hero sprite sets."
+    hero_set_toggle_button.text = tr("BATTLE_ART_NEW") if is_new_set else tr("BATTLE_ART_OLD")
+    hero_set_toggle_button.tooltip_text = tr("BATTLE_ART_TOGGLE_TOOLTIP")
 
 func _on_hero_set_toggle_button_pressed() -> void:
     selected_hero_sprite_set = HERO_SPRITE_SET_OLD if selected_hero_sprite_set == HERO_SPRITE_SET_NEW else HERO_SPRITE_SET_NEW
@@ -4818,7 +4836,7 @@ func _player_armor_scale() -> float:
 func _update_ui() -> void:
     var max_health: float = _max_health()
     var health_now: float = clamp(player_health, 0.0, max_health)
-    health_label.text = "LEVEL %d" % current_level
+    health_label.text = _trf("BATTLE_LEVEL_LABEL", [current_level])
     health_bar.max_value = max_health
     health_bar.value = health_now
     health_value_label.text = "%d / %d" % [int(round(health_now)), int(round(max_health))]
@@ -4841,10 +4859,10 @@ func _update_ui() -> void:
     experience_value_label.visible = show_enemy_counter_hud
     experience_bar.max_value = max(1, exp_total)
     experience_bar.value = exp_remaining
-    experience_value_label.text = "Enemies Remaining: %d" % exp_remaining
+    experience_value_label.text = _trf("BATTLE_ENEMIES_REMAINING", [exp_remaining])
 
-    currency_label.text = "Currency: %d" % SaveHandler.fishing_currency
-    clock_label.text = "Clock: %s" % Util.format_time(SaveHandler.fishing_run_clock_seconds)
+    currency_label.text = _trf("BATTLE_CURRENCY_LABEL", [SaveHandler.fishing_currency])
+    clock_label.text = _trf("BATTLE_CLOCK_LABEL", [Util.format_time(SaveHandler.fishing_run_clock_seconds)])
 
 func _on_boss_defeated() -> void:
     print("DEBUG: _on_boss_defeated() called")
@@ -5018,28 +5036,28 @@ func _run_defeat_pose_instant() -> void:
     _finalize_battle_summary()
 
 func _build_battle_summary_text(is_live: bool) -> String:
-    var title: String = "VICTORY" if battle_victory else "DEFEAT"
-    var summary_text: String = "BATTLE OVER  |  %s\n\nLevel: %d\nEnemies defeated: %d\nBoss segments broken: %d\nCoins gained this run: %d\nGold total: %d" % [
+    var title: String = tr("BATTLE_VICTORY") if battle_victory else tr("BATTLE_DEFEAT")
+    var summary_text: String = _trf("BATTLE_SUMMARY_BODY", [
         title,
         current_level,
         enemies_killed,
         boss_segments_broken,
         coins_gained,
         SaveHandler.fishing_currency,
-    ]
+    ])
     if is_live and battle_victory and not coins.is_empty():
-        summary_text += "\nCollecting remaining loot..."
+        summary_text += "\n" + tr("BATTLE_COLLECTING_LOOT")
     var is_first_level_20_clear: bool = _is_first_level_20_clear()
     if is_first_level_20_clear:
-        summary_text += "\n\nCongratulations on beating level 20!\nLevel 20 clear time: %s\nThanks for playing.\nThis game was created by a single developer.\nPlease leave feedback or email to web@beep2bleep.com if you would like more content.\nCreator: Beep2Bleep." % Util.format_time(SaveHandler.fishing_run_clock_seconds)
+        summary_text += "\n\n" + _trf("BATTLE_LEVEL20_CLEAR_BODY", [Util.format_time(SaveHandler.fishing_run_clock_seconds)])
     var demo_thank_you_level: int = _get_demo_thank_you_level()
     if demo_thank_you_level > 0:
-        summary_text += "\n\nThanks for playing the demo!\nTime to reach Level %d: %s\nThis game was created by a single developer.\nPlease leave feedback or email to web@beep2bleep.com if you would like more content.\nCreator: Beep2Bleep." % [
+        summary_text += "\n\n" + _trf("BATTLE_DEMO_THANK_YOU_BODY", [
             demo_thank_you_level,
             Util.format_time(SaveHandler.fishing_run_clock_seconds),
-        ]
+        ])
     if battle_victory and current_level == 3 and SaveHandler.fishing_l3_boss_clear_clock_seconds >= 0.0:
-        summary_text += "\n\nLevel 3 clear time: %s" % Util.format_time(SaveHandler.fishing_l3_boss_clear_clock_seconds)
+        summary_text += "\n\n" + _trf("BATTLE_LEVEL3_CLEAR_TIME", [Util.format_time(SaveHandler.fishing_l3_boss_clear_clock_seconds)])
     return summary_text
 
 func _is_first_level_20_clear() -> bool:
@@ -5229,7 +5247,7 @@ func _refresh_mute_button_icon() -> void:
     if mute_button == null:
         return
     mute_button.icon = speaker_icon_off if SaveHandler.audio_muted else speaker_icon_on
-    mute_button.tooltip_text = "Unmute all audio" if SaveHandler.audio_muted else "Mute all audio"
+    mute_button.tooltip_text = tr("UI_UNMUTE_AUDIO") if SaveHandler.audio_muted else tr("UI_MUTE_AUDIO")
 
 func _on_mute_button_pressed() -> void:
     SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
@@ -5254,7 +5272,7 @@ func _setup_settings_controls() -> void:
     settings_button.offset_bottom = 108.0
     settings_button.z_index = 30
     settings_button.focus_mode = Control.FOCUS_NONE
-    settings_button.text = "Settings"
+    settings_button.text = tr("UI_SETTINGS")
     settings_button.custom_minimum_size = Vector2(168, 88)
     settings_button.add_theme_font_size_override("font_size", 26)
     settings_button.pressed.connect(_on_settings_button_pressed)
@@ -5291,7 +5309,7 @@ func _setup_settings_controls() -> void:
     margin.add_child(vbox)
 
     var title := Label.new()
-    title.text = "SETTINGS"
+    title.text = tr("UI_SETTINGS_TITLE")
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     title.add_theme_font_size_override("font_size", 46)
     vbox.add_child(title)
@@ -5306,7 +5324,7 @@ func _setup_settings_controls() -> void:
 
     var close_button := Button.new()
     close_button.name = "SettingsCloseButton"
-    close_button.text = "BACK"
+    close_button.text = tr("UI_BACK")
     close_button.focus_mode = Control.FOCUS_NONE
     close_button.custom_minimum_size = Vector2(0, 150)
     close_button.add_theme_font_size_override("font_size", 34)
@@ -5370,7 +5388,7 @@ func _refresh_fullscreen_button_icon() -> void:
         return
     var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
     fullscreen_button.icon = fullscreen_icon_on if is_fullscreen else fullscreen_icon_off
-    fullscreen_button.tooltip_text = "Exit fullscreen" if is_fullscreen else "Enter fullscreen"
+    fullscreen_button.tooltip_text = tr("UI_EXIT_FULLSCREEN") if is_fullscreen else tr("UI_ENTER_FULLSCREEN")
 
 func _on_fullscreen_button_pressed() -> void:
     var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
@@ -5384,7 +5402,7 @@ func _on_fullscreen_button_pressed() -> void:
 func _refresh_touch_input_button() -> void:
     if touch_input_button == null:
         return
-    touch_input_button.text = "Confirm Upgrade Purchase: ON" if SaveHandler.confirm_upgrade_purchase else "Confirm Upgrade Purchase: OFF"
+    touch_input_button.text = tr("UI_CONFIRM_UPGRADE_PURCHASE_ON") if SaveHandler.confirm_upgrade_purchase else tr("UI_CONFIRM_UPGRADE_PURCHASE_OFF")
 
 func _on_touch_input_button_pressed() -> void:
     SaveHandler.update_confirm_upgrade_purchase(not SaveHandler.confirm_upgrade_purchase)
@@ -5465,32 +5483,32 @@ func _setup_battle_summary_hints() -> void:
 func _build_battle_summary_hints() -> Array[String]:
     var hints: Array[String] = []
     for hint in DEFAULT_BATTLE_HINTS:
-        hints.append(hint)
+        hints.append(tr(hint))
     if not SaveHandler.has_fishing_upgrade("recruit_archer"):
-        hints.append("Recruit the Archer for steady ranged damage. It helps smooth out early and mid-run fights.")
+        hints.append(tr("BATTLE_HINT_RECRUIT_ARCHER"))
     if not SaveHandler.has_fishing_upgrade("recruit_guardian"):
-        hints.append("Recruit the Guardian if your frontline is collapsing. Extra durability buys the rest of the team more time.")
+        hints.append(tr("BATTLE_HINT_RECRUIT_GUARDIAN"))
     if not SaveHandler.has_fishing_upgrade("recruit_mage"):
-        hints.append("Recruit the Mage when you need burst damage to break harder waves and boss segments faster.")
+        hints.append(tr("BATTLE_HINT_RECRUIT_MAGE"))
     if not SaveHandler.has_fishing_upgrade("cursor_pickup_unlock"):
-        hints.append("Cursor Pickup lets you grab coins faster during combat and earn more coins, which speeds up your post-battle upgrade purchases.")
+        hints.append(tr("BATTLE_HINT_CURSOR_PICKUP"))
     if not battle_victory:
-        hints.append("If this fight ended in defeat, spend your next coins before retrying. Small upgrade bumps compound quickly.")
+        hints.append(tr("BATTLE_HINT_DEFEAT"))
         if boss_segments_broken <= 0:
-            hints.append("If the boss defeated you quickly, consider adding Boss Armor.")
+            hints.append(tr("BATTLE_HINT_BOSS_ARMOR"))
     return hints
 
 func _refresh_battle_summary_hint() -> void:
     if summary_hint_title_label == null or summary_hint_label == null or summary_hint_left_button == null or summary_hint_right_button == null:
         return
     if battle_summary_hints.is_empty():
-        summary_hint_title_label.text = "Hint"
+        summary_hint_title_label.text = tr("BATTLE_HINT")
         summary_hint_label.text = ""
         summary_hint_left_button.hide()
         summary_hint_right_button.hide()
         return
     battle_summary_hint_index = wrapi(battle_summary_hint_index, 0, battle_summary_hints.size())
-    summary_hint_title_label.text = "Hint %d/%d" % [battle_summary_hint_index + 1, battle_summary_hints.size()]
+    summary_hint_title_label.text = _trf("BATTLE_HINT_NUMBERED", [battle_summary_hint_index + 1, battle_summary_hints.size()])
     summary_hint_label.text = battle_summary_hints[battle_summary_hint_index]
     var show_navigation: bool = battle_summary_hints.size() > 1
     summary_hint_title_label.show()
@@ -5747,22 +5765,23 @@ func _refresh_battle_summary_chart() -> void:
     root.add_theme_constant_override("separation", 10)
     margin.add_child(root)
 
-    root.add_child(_make_summary_chart_label("Combat Breakdown", 0.0, 24, HORIZONTAL_ALIGNMENT_CENTER, Color(0.92, 0.97, 1.0, 1.0)))
+    root.add_child(_make_summary_chart_label(tr("BATTLE_COMBAT_BREAKDOWN"), 0.0, 24, HORIZONTAL_ALIGNMENT_CENTER, Color(0.92, 0.97, 1.0, 1.0)))
 
     var header := HBoxContainer.new()
     header.add_theme_constant_override("separation", 12)
     root.add_child(header)
-    header.add_child(_make_summary_chart_label("Source", 160.0, 16, HORIZONTAL_ALIGNMENT_LEFT, Color(0.76, 0.9, 1.0, 1.0)))
-    header.add_child(_make_summary_chart_label("Damage", 156.0, 16, HORIZONTAL_ALIGNMENT_CENTER, Color(0.76, 0.9, 1.0, 1.0)))
-    header.add_child(_make_summary_chart_label("Healed", 156.0, 16, HORIZONTAL_ALIGNMENT_CENTER, Color(0.76, 0.9, 1.0, 1.0)))
-    header.add_child(_make_summary_chart_label("Prevented", 156.0, 16, HORIZONTAL_ALIGNMENT_CENTER, Color(0.76, 0.9, 1.0, 1.0)))
+    header.add_child(_make_summary_chart_label(tr("BATTLE_SOURCE"), 160.0, 16, HORIZONTAL_ALIGNMENT_LEFT, Color(0.76, 0.9, 1.0, 1.0)))
+    header.add_child(_make_summary_chart_label(tr("BATTLE_DAMAGE"), 156.0, 16, HORIZONTAL_ALIGNMENT_CENTER, Color(0.76, 0.9, 1.0, 1.0)))
+    header.add_child(_make_summary_chart_label(tr("BATTLE_HEALED"), 156.0, 16, HORIZONTAL_ALIGNMENT_CENTER, Color(0.76, 0.9, 1.0, 1.0)))
+    header.add_child(_make_summary_chart_label(tr("BATTLE_PREVENTED"), 156.0, 16, HORIZONTAL_ALIGNMENT_CENTER, Color(0.76, 0.9, 1.0, 1.0)))
 
     for source_key in source_rows:
         var stats: Dictionary = battle_source_stats.get(source_key, {})
         var row := HBoxContainer.new()
         row.add_theme_constant_override("separation", 12)
         root.add_child(row)
-        row.add_child(_make_summary_chart_label(str(BATTLE_STAT_SOURCE_LABELS.get(source_key, source_key.capitalize())), 160.0, 17))
+        var source_label_key: String = str(BATTLE_STAT_SOURCE_LABELS.get(source_key, ""))
+        row.add_child(_make_summary_chart_label(tr(source_label_key) if source_label_key != "" else source_key.capitalize(), 160.0, 17))
         row.add_child(_make_summary_chart_bar(float(stats.get(BATTLE_STAT_DAMAGE, 0.0)), damage_max, str(BATTLE_STAT_COLORS.get(BATTLE_STAT_DAMAGE, "#ffffff"))))
         row.add_child(_make_summary_chart_bar(float(stats.get(BATTLE_STAT_HEAL, 0.0)), heal_max, str(BATTLE_STAT_COLORS.get(BATTLE_STAT_HEAL, "#ffffff"))))
         row.add_child(_make_summary_chart_bar(float(stats.get(BATTLE_STAT_PREVENTED, 0.0)), prevented_max, str(BATTLE_STAT_COLORS.get(BATTLE_STAT_PREVENTED, "#ffffff"))))
@@ -5773,7 +5792,7 @@ func _setup_demo_wishlist_button() -> void:
     if demo_wishlist_button == null:
         demo_wishlist_button = Button.new()
         demo_wishlist_button.name = "DemoWishlistButton"
-        demo_wishlist_button.text = "Wishlist"
+        demo_wishlist_button.text = tr("UPGRADE_WISHLIST")
         summary_panel.add_child(demo_wishlist_button)
     _set_control_offsets_from_rect(demo_wishlist_button, demo_wishlist_button_base_layout)
     demo_wishlist_button.visible = false
@@ -5877,7 +5896,7 @@ func _show_level_choice_dialog(max_level: int) -> void:
         _set_next_battle_level_and_exit(1)
         return
 
-    level_choice_dialog.dialog_text = "You unlocked new battle levels by defeating bosses.\nChoose your next level."
+    level_choice_dialog.dialog_text = tr("BATTLE_LEVEL_UNLOCKED_DIALOG_BODY")
     level_choice_selected_level = clamp(SaveHandler.fishing_next_battle_level, 1, max_level)
     level_choice_line_edit = null
     var existing: Control = level_choice_dialog.get_node_or_null("LevelChoiceContent")
@@ -5910,7 +5929,7 @@ func _show_level_choice_dialog(max_level: int) -> void:
         for level in range(1, max_level + 1):
             var button := Button.new()
             button.name = "LevelChoiceButton%d" % level
-            button.text = "Level %d" % level
+            button.text = _trf("UI_LEVEL_FORMAT", [level])
             button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
             button.custom_minimum_size = Vector2(0.0, LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
             button.add_theme_font_size_override("font_size", LEVEL_CHOICE_DIALOG_FONT_SIZE)
@@ -5918,7 +5937,7 @@ func _show_level_choice_dialog(max_level: int) -> void:
             vbox.add_child(button)
     else:
         var prompt := Label.new()
-        prompt.text = "Select a battle level from 1 to %d." % max_level
+        prompt.text = _trf("UI_SELECT_BATTLE_LEVEL_RANGE", [max_level])
         prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         prompt.add_theme_font_size_override("font_size", 28)
         vbox.add_child(prompt)
@@ -5957,7 +5976,7 @@ func _show_level_choice_dialog(max_level: int) -> void:
 
     var cancel_button := Button.new()
     cancel_button.name = "LevelChoiceCancelButton"
-    cancel_button.text = "Cancel"
+    cancel_button.text = tr("UI_CANCEL")
     cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     cancel_button.custom_minimum_size = Vector2(0.0, LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
     cancel_button.add_theme_font_size_override("font_size", LEVEL_CHOICE_DIALOG_FONT_SIZE)
@@ -5967,7 +5986,7 @@ func _show_level_choice_dialog(max_level: int) -> void:
     if max_level > 4:
         var confirm_button := Button.new()
         confirm_button.name = "LevelChoiceConfirmButton"
-        confirm_button.text = "Confirm"
+        confirm_button.text = tr("UI_CONFIRM")
         confirm_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         confirm_button.custom_minimum_size = Vector2(0.0, LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
         confirm_button.add_theme_font_size_override("font_size", LEVEL_CHOICE_DIALOG_FONT_SIZE)

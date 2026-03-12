@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cerctqmju00gl"
+
+[deps]
+
+files=["res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation"]
+
+source_file="res://Data/tobetranslatedfile.csv"
+dest_files=["res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation", "res://Data/tobetranslatedfile.en.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

@@ -4,8 +4,7 @@ class_name UpgradeScreen
 
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const CONTROLLER_GLYPH_SCENE: PackedScene = preload("res://Controller Glyph.tscn")
-const HOLD_RING_GLYPH_SCRIPT := preload("res://HoldRingGlyph.gd")
-const GO_AGAIN_DISABLED_HINT := "You must unlock an upgrade before starting."
+const GO_AGAIN_DISABLED_HINT := "UPGRADE_GO_AGAIN_DISABLED_HINT"
 const DEMO_PROJECT_SETTING := "global/Demo"
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
 const DEFAULT_DEMO_WISHLIST_URL := "https://Beep2Bleep.com"
@@ -17,7 +16,6 @@ const BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT := 180.0
 const BATTLE_LEVEL_SELECTOR_FONT_SIZE := 52
 const BATTLE_LEVEL_SELECTOR_BUTTON_WIDTH := 140.0
 const BATTLE_LEVEL_SELECTOR_INPUT_WIDTH := 220.0
-const BATTLE_LEVEL_X_CONFIRM_HOLD_SECONDS := 0.2
 const UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO := 0.05
 
 var is_active = false
@@ -30,7 +28,10 @@ var battle_level_choice_dialog: ConfirmationDialog
 var battle_level_choice_selected_level: int = 1
 var battle_level_choice_line_edit: LineEdit
 var battle_level_choice_max_level: int = 1
-var battle_level_choice_x_hold_ring: HoldRingGlyph
+
+func _trf(key: String, args: Array = []) -> String:
+    var translated: String = tr(key)
+    return translated % args if not args.is_empty() else translated
 var reset_progress_confirm_dialog: ConfirmationDialog
 var legacy_reset_dialog: ConfirmationDialog
 var mute_button: Button
@@ -39,6 +40,8 @@ var fullscreen_button: Button
 var touch_input_button: Button
 var settings_panel: PanelContainer
 var settings_content: Settings
+var settings_title_label: Label
+var settings_close_button: Button
 var reset_progress_button: Button
 var go_again_button: Button
 var demo_mode_label: Label
@@ -56,7 +59,36 @@ var _popup_prev_b_pressed := false
 var _popup_prev_x_pressed := false
 var _popup_prev_up_pressed := false
 var _popup_prev_down_pressed := false
-var _popup_x_hold_time := 0.0
+var _popup_x_confirm_armed := true
+
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_TRANSLATION_CHANGED:
+        _refresh_localized_text()
+
+func _refresh_localized_text() -> void:
+    if settings_button != null and is_instance_valid(settings_button):
+        settings_button.text = tr("UI_SETTINGS")
+    if settings_title_label != null and is_instance_valid(settings_title_label):
+        settings_title_label.text = tr("UI_SETTINGS_TITLE")
+    if settings_close_button != null and is_instance_valid(settings_close_button):
+        settings_close_button.text = tr("UI_BACK")
+    if reset_progress_button != null and is_instance_valid(reset_progress_button):
+        reset_progress_button.text = tr("UPGRADE_RESET_PROGRESS")
+    if reset_progress_confirm_dialog != null and is_instance_valid(reset_progress_confirm_dialog):
+        reset_progress_confirm_dialog.title = tr("UPGRADE_CONFIRM_RESET_TITLE")
+        reset_progress_confirm_dialog.dialog_text = tr("UPGRADE_CONFIRM_RESET_BODY")
+        var reset_ok_button: Button = reset_progress_confirm_dialog.get_ok_button()
+        if reset_ok_button != null:
+            reset_ok_button.text = tr("UI_YES")
+        var reset_cancel_button: Button = reset_progress_confirm_dialog.get_cancel_button()
+        if reset_cancel_button != null:
+            reset_cancel_button.text = tr("UI_NO")
+    if legacy_reset_dialog != null and is_instance_valid(legacy_reset_dialog):
+        legacy_reset_dialog.title = tr("UPGRADE_PROGRESS_RESET_REQUIRED")
+        legacy_reset_dialog.dialog_text = tr("UPGRADE_LEGACY_RESET_BODY")
+        var legacy_ok_button: Button = legacy_reset_dialog.get_ok_button()
+        if legacy_ok_button != null:
+            legacy_ok_button.text = tr("UI_CONTINUE")
 
 func _should_show_editor_only_touch_toggle() -> bool:
     return OS.has_feature("editor")
@@ -300,8 +332,7 @@ func _poll_battle_level_choice_controller(delta: float) -> void:
         _popup_prev_x_pressed = false
         _popup_prev_up_pressed = false
         _popup_prev_down_pressed = false
-        _popup_x_hold_time = 0.0
-        _refresh_battle_level_choice_x_hold_indicator()
+        _popup_x_confirm_armed = true
         return
     if ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER:
         return
@@ -318,25 +349,18 @@ func _poll_battle_level_choice_controller(delta: float) -> void:
 
     if a_pressed and not _popup_prev_a_pressed:
         _confirm_battle_level_choice_from_controller()
-    elif x_pressed:
-        if not _popup_prev_x_pressed:
-            _popup_x_hold_time = 0.0
-        else:
-            _popup_x_hold_time += max(0.0, delta)
-        if _popup_x_hold_time >= BATTLE_LEVEL_X_CONFIRM_HOLD_SECONDS:
+    elif x_pressed and not _popup_prev_x_pressed:
+        if _popup_x_confirm_armed:
             _confirm_battle_level_choice_from_controller()
-            _popup_x_hold_time = -9999.0
     elif b_pressed and not _popup_prev_b_pressed:
         _on_battle_level_choice_cancel_pressed()
     elif up_pressed and not _popup_prev_up_pressed:
         _on_battle_level_choice_adjust_pressed(1, battle_level_choice_max_level)
     elif down_pressed and not _popup_prev_down_pressed:
         _on_battle_level_choice_adjust_pressed(-1, battle_level_choice_max_level)
-    else:
-        if not x_pressed:
-            _popup_x_hold_time = 0.0
 
-    _refresh_battle_level_choice_x_hold_indicator()
+    if not x_pressed:
+        _popup_x_confirm_armed = true
 
     _popup_prev_a_pressed = a_pressed
     _popup_prev_b_pressed = b_pressed
@@ -351,15 +375,6 @@ func _get_popup_controller_device() -> int:
     if ControllerIcons != null and ControllerIcons._last_controller in connected:
         return int(ControllerIcons._last_controller)
     return int(connected[0])
-
-func _refresh_battle_level_choice_x_hold_indicator() -> void:
-    if battle_level_choice_x_hold_ring == null:
-        return
-    var progress: float = 0.0
-    if _popup_x_hold_time > 0.0:
-        progress = clamp(_popup_x_hold_time / BATTLE_LEVEL_X_CONFIRM_HOLD_SECONDS, 0.0, 1.0)
-    battle_level_choice_x_hold_ring.visible = ControllerIcons != null and ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER
-    battle_level_choice_x_hold_ring.progress = progress
 
 
 
@@ -399,6 +414,7 @@ func on_node_unlocked(node: TechTreeNode):
 
 func update_input(input_type):
     if is_active == true:
+        _refresh_virtual_cursor_state()
         match input_type:
             ControllerIcons.InputType.KEYBOARD_MOUSE:
                 %"Pan Tree".show()
@@ -423,7 +439,7 @@ func show_screen():
     %CanvasLayer.show()
     %CanvasLayer2.show()
     _hide_settings_panel()
-    VirtualCursor.set_scene_enabled(true)
+    _refresh_virtual_cursor_state()
 
 
 
@@ -600,7 +616,7 @@ func _setup_battle_level_choice_dialog() -> void:
     if battle_level_choice_dialog == null:
         battle_level_choice_dialog = ConfirmationDialog.new()
         battle_level_choice_dialog.name = "BattleLevelChoiceDialog"
-        battle_level_choice_dialog.title = "Choose Battle Level"
+        battle_level_choice_dialog.title = tr("UI_CHOOSE_BATTLE_LEVEL")
         battle_level_choice_dialog.get_ok_button().hide()
         battle_level_choice_dialog.get_cancel_button().hide()
         parent_layer.add_child(battle_level_choice_dialog)
@@ -615,10 +631,13 @@ func _show_battle_level_choice_dialog(max_level: int) -> void:
 
     battle_level_choice_max_level = max_level
     battle_level_choice_selected_level = clamp(SaveHandler.fishing_next_battle_level, 1, max_level)
+    var popup_device := _get_popup_controller_device()
+    _popup_x_confirm_armed = popup_device == -1 or not Input.is_joy_button_pressed(popup_device, JOY_BUTTON_X)
     battle_level_choice_dialog.dialog_text = ""
     _rebuild_battle_level_choice_dialog_content(max_level)
     _style_battle_level_choice_dialog()
     battle_level_choice_dialog.popup_centered(BATTLE_LEVEL_CHOICE_DIALOG_SIZE)
+    _refresh_virtual_cursor_state()
     _position_virtual_cursor_for_battle_level_choice(max_level)
 
 func _on_battle_level_choice_action(action: StringName) -> void:
@@ -643,7 +662,6 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
     if battle_level_choice_dialog == null:
         return
     battle_level_choice_line_edit = null
-    battle_level_choice_x_hold_ring = null
     var existing: Control = battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent")
     if existing != null:
         existing.queue_free()
@@ -674,7 +692,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
         for level in range(1, max_level + 1):
             var button := Button.new()
             button.name = "BattleLevelChoiceButton%d" % level
-            button.text = "Level %d" % level
+            button.text = _trf("UI_LEVEL_FORMAT", [level])
             button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
             button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
             button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
@@ -682,7 +700,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
             vbox.add_child(button)
     else:
         var prompt := Label.new()
-        prompt.text = "Select a battle level from 1 to %d." % max_level
+        prompt.text = _trf("UI_SELECT_BATTLE_LEVEL_RANGE", [max_level])
         prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         prompt.add_theme_font_size_override("font_size", 28)
         vbox.add_child(prompt)
@@ -721,7 +739,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
 
     var cancel_button := Button.new()
     cancel_button.name = "BattleLevelChoiceCancelButton"
-    cancel_button.text = "Cancel"
+    cancel_button.text = tr("UI_CANCEL")
     cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     cancel_button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
     cancel_button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
@@ -731,21 +749,12 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
     if max_level > 4:
         var confirm_button := Button.new()
         confirm_button.name = "BattleLevelChoiceConfirmButton"
-        confirm_button.text = "Confirm"
+        confirm_button.text = tr("UI_CONFIRM")
         confirm_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         confirm_button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
         confirm_button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
         confirm_button.pressed.connect(_on_battle_level_choice_confirm_pressed.bind(max_level))
-        var confirm_row := HBoxContainer.new()
-        confirm_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        confirm_row.alignment = BoxContainer.ALIGNMENT_CENTER
-        confirm_row.add_theme_constant_override("separation", 12)
-        confirm_row.add_child(_make_controller_glyph("joypad/a"))
-        battle_level_choice_x_hold_ring = _make_hold_ring_glyph("joypad/x")
-        confirm_row.add_child(battle_level_choice_x_hold_ring)
-        confirm_row.add_child(confirm_button)
-        vbox.add_child(confirm_row)
-        _refresh_battle_level_choice_x_hold_indicator()
+        vbox.add_child(_wrap_control_with_glyphs(confirm_button, ["joypad/a", "joypad/x"], false))
 
         if battle_level_choice_line_edit != null:
             battle_level_choice_line_edit.select_all()
@@ -771,13 +780,22 @@ func _on_battle_level_choice_confirm_pressed(max_level: int) -> void:
 func _on_battle_level_choice_cancel_pressed() -> void:
     if battle_level_choice_dialog != null:
         battle_level_choice_dialog.hide()
+    _refresh_virtual_cursor_state()
 
 func _launch_battle_at_level(level: int) -> void:
     var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, SaveHandler.MAX_FISHING_BATTLE_LEVEL)
     SaveHandler.fishing_next_battle_level = clamp(level, 1, max_level)
     SaveHandler.save_fishing_progress()
+    _refresh_virtual_cursor_state()
     _cache_tech_tree_for_reuse()
     SceneChanger.change_to_new_scene(Util.PATH_FISHING_BATTLE)
+
+func _refresh_virtual_cursor_state() -> void:
+    var should_enable := is_active and (
+        ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER
+        or _is_battle_level_choice_open()
+    )
+    VirtualCursor.set_scene_enabled(should_enable)
 
 func _sync_battle_level_choice_from_input(max_level: int) -> void:
     if battle_level_choice_line_edit == null:
@@ -864,16 +882,6 @@ func _make_controller_glyph(action_path: String) -> ControllerGlyph:
     glyph.enabled = true
     return glyph
 
-func _make_hold_ring_glyph(action_path: String) -> HoldRingGlyph:
-    var ring := HOLD_RING_GLYPH_SCRIPT.new() as HoldRingGlyph
-    ring.custom_minimum_size = Vector2(42.0, 42.0)
-    ring.size = Vector2(42.0, 42.0)
-    var glyph := _make_controller_glyph(action_path)
-    glyph.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    glyph.custom_minimum_size = Vector2.ZERO
-    ring.add_child(glyph)
-    return ring
-
 func _find_battle_level_choice_control_at_cursor(root: Control, screen_position: Vector2) -> Control:
     if root == null or not is_instance_valid(root) or not root.visible:
         return null
@@ -914,13 +922,13 @@ func _setup_editor_cash_controls() -> void:
 
     editor_reset_add_button = Button.new()
     editor_reset_add_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-    editor_reset_add_button.text = "Reset Add"
+    editor_reset_add_button.text = tr("UPGRADE_EDITOR_RESET_ADD")
     editor_reset_add_button.pressed.connect(_on_editor_reset_add_pressed)
     editor_cash_controls.add_child(editor_reset_add_button)
 
     editor_unlock_all_button = Button.new()
     editor_unlock_all_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-    editor_unlock_all_button.text = "Unlock All (Editor)"
+    editor_unlock_all_button.text = tr("UPGRADE_EDITOR_UNLOCK_ALL")
     editor_unlock_all_button.pressed.connect(_on_editor_unlock_all_pressed)
     editor_cash_controls.add_child(editor_unlock_all_button)
 
@@ -930,7 +938,7 @@ func _setup_editor_cash_controls() -> void:
 func _refresh_editor_cash_button_text() -> void:
     if editor_add_cash_button == null:
         return
-    editor_add_cash_button.text = "Add $%d (Editor)" % editor_add_cash_amount
+    editor_add_cash_button.text = _trf("UPGRADE_EDITOR_ADD_CASH", [editor_add_cash_amount])
 
 func _on_editor_add_cash_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -961,36 +969,37 @@ func _setup_reset_progress_controls() -> void:
     reset_progress_button.offset_bottom = 60.0
     reset_progress_button.z_index = 210
     reset_progress_button.focus_mode = Control.FOCUS_NONE
-    reset_progress_button.text = "Reset Progress"
+    reset_progress_button.text = tr("UPGRADE_RESET_PROGRESS")
     reset_progress_button.pressed.connect(_on_reset_progress_button_pressed)
     %CanvasLayer2.add_child(reset_progress_button)
 
     reset_progress_confirm_dialog = ConfirmationDialog.new()
     reset_progress_confirm_dialog.name = "ResetProgressConfirmDialog"
-    reset_progress_confirm_dialog.title = "Confirm Reset"
-    reset_progress_confirm_dialog.dialog_text = "You will reset your time, currency, and upgrades. Would you like to continue?"
+    reset_progress_confirm_dialog.title = tr("UPGRADE_CONFIRM_RESET_TITLE")
+    reset_progress_confirm_dialog.dialog_text = tr("UPGRADE_CONFIRM_RESET_BODY")
     reset_progress_confirm_dialog.confirmed.connect(_on_reset_progress_confirmed)
     var ok_button: Button = reset_progress_confirm_dialog.get_ok_button()
     if ok_button != null:
-        ok_button.text = "Yes"
+        ok_button.text = tr("UI_YES")
     var cancel_button: Button = reset_progress_confirm_dialog.get_cancel_button()
     if cancel_button != null:
-        cancel_button.text = "No"
+        cancel_button.text = tr("UI_NO")
     %CanvasLayer2.add_child(reset_progress_confirm_dialog)
 
     legacy_reset_dialog = ConfirmationDialog.new()
     legacy_reset_dialog.name = "LegacyResetDialog"
-    legacy_reset_dialog.title = "Progress Reset Required"
-    legacy_reset_dialog.dialog_text = "Thank you for playing the previous version. We apologize, but we have to reset your progress because the upgrades have changed so drastically. We will make every effort to avoid doing this again."
+    legacy_reset_dialog.title = tr("UPGRADE_PROGRESS_RESET_REQUIRED")
+    legacy_reset_dialog.dialog_text = tr("UPGRADE_LEGACY_RESET_BODY")
     legacy_reset_dialog.confirmed.connect(_on_legacy_reset_confirmed)
     legacy_reset_dialog.canceled.connect(_on_legacy_reset_canceled)
     var continue_button: Button = legacy_reset_dialog.get_ok_button()
     if continue_button != null:
-        continue_button.text = "Continue"
+        continue_button.text = tr("UI_CONTINUE")
     var legacy_cancel_button: Button = legacy_reset_dialog.get_cancel_button()
     if legacy_cancel_button != null:
         legacy_cancel_button.hide()
     %CanvasLayer2.add_child(legacy_reset_dialog)
+    _refresh_localized_text()
 
 func _setup_version_label() -> void:
     if version_label != null and is_instance_valid(version_label):
@@ -1007,7 +1016,7 @@ func _setup_version_label() -> void:
     version_label.offset_bottom = 110.0
     version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
     version_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    version_label.text = "Version %s" % SaveHandler.FISHING_SAVE_VERSION
+    version_label.text = _trf("UPGRADE_VERSION_LABEL", [SaveHandler.FISHING_SAVE_VERSION])
     %CanvasLayer2.add_child(version_label)
 
 func _show_legacy_reset_dialog_if_needed() -> void:
@@ -1160,7 +1169,7 @@ func _setup_settings_controls() -> void:
     settings_button.offset_bottom = 104.0
     settings_button.z_index = 210
     settings_button.focus_mode = Control.FOCUS_NONE
-    settings_button.text = "Settings"
+    settings_button.text = tr("UI_SETTINGS")
     settings_button.custom_minimum_size = Vector2(168, 88)
     settings_button.add_theme_font_size_override("font_size", 26)
     settings_button.pressed.connect(_on_settings_button_pressed)
@@ -1197,11 +1206,11 @@ func _setup_settings_controls() -> void:
     vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
     margin.add_child(vbox)
 
-    var title: Label = Label.new()
-    title.text = "SETTINGS"
-    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    title.add_theme_font_size_override("font_size", 46)
-    vbox.add_child(title)
+    settings_title_label = Label.new()
+    settings_title_label.text = tr("UI_SETTINGS_TITLE")
+    settings_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    settings_title_label.add_theme_font_size_override("font_size", 46)
+    vbox.add_child(settings_title_label)
 
     settings_content = SETTINGS_SCENE.instantiate() as Settings
     if settings_content != null:
@@ -1211,15 +1220,17 @@ func _setup_settings_controls() -> void:
         settings_content.scale = Vector2(1.7, 1.7)
         vbox.add_child(settings_content)
 
-    var close_button: Button = Button.new()
-    close_button.name = "SettingsCloseButton"
-    close_button.text = "BACK"
-    close_button.focus_mode = Control.FOCUS_NONE
-    close_button.custom_minimum_size = Vector2(0, 150)
-    close_button.add_theme_font_size_override("font_size", 34)
-    close_button.pressed.connect(_on_settings_close_pressed)
-    _style_utility_button(close_button)
-    vbox.add_child(close_button)
+    settings_close_button = Button.new()
+    settings_close_button.name = "SettingsCloseButton"
+    settings_close_button.text = tr("UI_BACK")
+    settings_close_button.focus_mode = Control.FOCUS_NONE
+    settings_close_button.custom_minimum_size = Vector2(0, 150)
+    settings_close_button.add_theme_font_size_override("font_size", 34)
+    settings_close_button.pressed.connect(_on_settings_close_pressed)
+    _style_utility_button(settings_close_button)
+    vbox.add_child(settings_close_button)
+
+    _refresh_localized_text()
 
 func _setup_fullscreen_button() -> void:
     if fullscreen_button != null and is_instance_valid(fullscreen_button):
@@ -1315,7 +1326,7 @@ func _update_go_again_button_state() -> void:
         return
     var can_continue: bool = _can_continue_to_battle()
     go_again_button.disabled = false
-    go_again_button.tooltip_text = "" if can_continue else GO_AGAIN_DISABLED_HINT
+    go_again_button.tooltip_text = "" if can_continue else tr(GO_AGAIN_DISABLED_HINT)
     go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0) if can_continue else Color(0.7, 0.7, 0.7, 1.0)
 
 func _setup_continue_locked_dialog() -> void:
@@ -1350,12 +1361,12 @@ func _setup_continue_locked_dialog() -> void:
     margin.add_child(vbox)
 
     var title: Label = Label.new()
-    title.text = "CONTINUE LOCKED"
+    title.text = tr("UPGRADE_CONTINUE_LOCKED")
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     vbox.add_child(title)
 
     continue_locked_label = Label.new()
-    continue_locked_label.text = GO_AGAIN_DISABLED_HINT
+    continue_locked_label.text = tr(GO_AGAIN_DISABLED_HINT)
     continue_locked_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     continue_locked_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     continue_locked_label.custom_minimum_size = Vector2(500, 0)
@@ -1363,7 +1374,7 @@ func _setup_continue_locked_dialog() -> void:
 
     var ok_button: Button = Button.new()
     ok_button.name = "ContinueLockedOkButton"
-    ok_button.text = "OK"
+    ok_button.text = tr("UI_OK")
     ok_button.focus_mode = Control.FOCUS_ALL
     ok_button.pressed.connect(_hide_continue_locked_panel)
     _style_utility_button(ok_button)
@@ -1428,7 +1439,7 @@ func _refresh_mute_button_icon() -> void:
     if mute_button == null:
         return
     mute_button.icon = speaker_icon_off if SaveHandler.audio_muted else speaker_icon_on
-    mute_button.tooltip_text = "Unmute all audio" if SaveHandler.audio_muted else "Mute all audio"
+    mute_button.tooltip_text = tr("UI_UNMUTE_AUDIO") if SaveHandler.audio_muted else tr("UI_MUTE_AUDIO")
 
 func _on_mute_button_pressed() -> void:
     SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
@@ -1439,7 +1450,7 @@ func _refresh_fullscreen_button_icon() -> void:
         return
     var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
     fullscreen_button.icon = fullscreen_icon_on if is_fullscreen else fullscreen_icon_off
-    fullscreen_button.tooltip_text = "Exit fullscreen" if is_fullscreen else "Enter fullscreen"
+    fullscreen_button.tooltip_text = tr("UI_EXIT_FULLSCREEN") if is_fullscreen else tr("UI_ENTER_FULLSCREEN")
 
 func _on_fullscreen_button_pressed() -> void:
     var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
@@ -1453,7 +1464,7 @@ func _on_fullscreen_button_pressed() -> void:
 func _refresh_touch_input_button() -> void:
     if touch_input_button == null:
         return
-    touch_input_button.text = "Confirm Upgrade Purchase: ON" if SaveHandler.confirm_upgrade_purchase else "Confirm Upgrade Purchase: OFF"
+    touch_input_button.text = tr("UI_CONFIRM_UPGRADE_PURCHASE_ON") if SaveHandler.confirm_upgrade_purchase else tr("UI_CONFIRM_UPGRADE_PURCHASE_OFF")
 
 func _on_touch_input_button_pressed() -> void:
     SaveHandler.update_confirm_upgrade_purchase(not SaveHandler.confirm_upgrade_purchase)
