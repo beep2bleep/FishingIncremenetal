@@ -44,9 +44,9 @@ func _ready():
 
 
 func set_audio():
-    AudioServer.set_bus_volume_db(0, main_volume)
-    AudioServer.set_bus_volume_db(1, music_volume)
-    AudioServer.set_bus_volume_db(2, effect_volume)
+    AudioServer.set_bus_volume_db(0, linear_to_db(main_volume * 3.0))
+    AudioServer.set_bus_volume_db(1, linear_to_db(music_volume * 3.0))
+    AudioServer.set_bus_volume_db(2, linear_to_db(effect_volume * 3.0))
     apply_audio_mute()
 
 
@@ -244,8 +244,8 @@ func load_player_last_run():
 
 var local_settings_file_path = "user://local_settings.save"
 var main_volume: float = 0.5
-var effect_volume: float = 0.5
-var music_volume: float = 0.25
+var effect_volume: float = 0.25
+var music_volume: float = 0.5
 
 var text_scale: float = 1.0
 var first_time_load = false
@@ -312,8 +312,8 @@ func load_local_settings():
     var json_data = Util.load_json_data_from_path(local_settings_file_path)
     if json_data != null:
         main_volume = float(json_data["main_volume"]) if json_data.has("main_volume") else 0.5
-        music_volume = float(json_data["music_volume"]) if json_data.has("music_volume") else 0.25
-        effect_volume = float(json_data["effect_volume"]) if json_data.has("effect_volume") else 0.5
+        music_volume = float(json_data["music_volume"]) if json_data.has("music_volume") else 0.5
+        effect_volume = float(json_data["effect_volume"]) if json_data.has("effect_volume") else 0.25
         text_scale = float(json_data["text_scale"]) if json_data.has("text_scale") else 1.0
         screen_mode = int(json_data["screen_mode"]) if json_data.has("screen_mode") else SCREEN_MODES.FULL_SCREEN
         vsync_enabled = bool(json_data["vsync_enabled"]) if json_data.has("vsync_enabled") else true
@@ -339,6 +339,10 @@ func load_local_settings():
             save_local_settings()
     else:
         # First run / missing settings file: floating text should default on.
+        main_volume = 0.5
+        music_volume = 0.5
+        effect_volume = 0.25
+        audio_muted = false
         damage_text = true
         money_text = true
         touch_input_mode = true

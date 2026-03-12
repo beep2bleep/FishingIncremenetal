@@ -3173,16 +3173,7 @@ func _update_arrows(delta: float) -> void:
 
 func _update_enemies(delta: float) -> void:
     var frontline_x: float = _frontline_x()
-    var alive_sorted: Array[CombatSprite] = []
-    for enemy in enemies:
-        if _is_enemy_targetable(enemy):
-            alive_sorted.append(enemy)
-    alive_sorted.sort_custom(func(a: CombatSprite, b: CombatSprite): return a.position.x < b.position.x)
-    var front_map: Dictionary = {}
-    var behind_map: Dictionary = {}
-    for i in range(alive_sorted.size() - 1):
-        front_map[alive_sorted[i + 1]] = alive_sorted[i]
-        behind_map[alive_sorted[i]] = alive_sorted[i + 1]
+    var contact_enemies: Array[CombatSprite] = []
 
     for enemy in enemies:
         if not is_instance_valid(enemy):
@@ -3215,25 +3206,29 @@ func _update_enemies(delta: float) -> void:
         else:
             if enemy_opening_rush_active:
                 enemy_opening_rush_active = false
-            if _is_leading_contact_attacker(enemy, frontline_x, front_map):
-                var attackers: Array[CombatSprite] = _get_contact_attackers(enemy, behind_map)
-                var total_contact_dps: float = 0.0
-                for attacker in attackers:
-                    var attacker_data: Dictionary = enemy_data.get(attacker, {})
-                    total_contact_dps += float(attacker_data.get("contact_dps", e["contact_dps"]))
-                    if float(attacker_data.get("attack_cd", 0.0)) <= 0.0:
-                        attacker_data["attack_cd"] = 0.75
-                        attacker.trigger_attack()
-                        enemy_data[attacker] = attacker_data
-                        if attacker == enemy:
-                            e = attacker_data
-                var raw_contact_damage_per_second: float = total_contact_dps
-                var flat_block: float = _player_boss_damage_block() if bool(e.get("is_boss", false)) else _player_enemy_damage_block()
-                var contact_damage: float = _mitigated_player_damage(raw_contact_damage_per_second, delta, flat_block, "boss_contact" if bool(e.get("is_boss", false)) else "enemy_contact")
-                _apply_player_damage(contact_damage, enemy.position + Vector2(0.0, -90.0))
+            contact_enemies.append(enemy)
 
         _update_enemy_health_bar(enemy, e)
         enemy_data[enemy] = e
+
+    var attackers: Array[CombatSprite] = _contact_attackers_for_frontline(contact_enemies)
+    if not attackers.is_empty():
+        var front_attacker: CombatSprite = attackers[0]
+        var front_data: Dictionary = enemy_data.get(front_attacker, {})
+        var total_contact_dps: float = 0.0
+        for attacker in attackers:
+            var attacker_data: Dictionary = enemy_data.get(attacker, {})
+            total_contact_dps += float(attacker_data.get("contact_dps", front_data.get("contact_dps", 0.0)))
+            if float(attacker_data.get("attack_cd", 0.0)) <= 0.0:
+                attacker_data["attack_cd"] = 0.75
+                attacker.trigger_attack()
+                enemy_data[attacker] = attacker_data
+
+        var is_boss_contact: bool = bool(front_data.get("is_boss", false))
+        var flat_block: float = _player_boss_damage_block() if is_boss_contact else _player_enemy_damage_block()
+        var remainder_key: String = "boss_contact" if is_boss_contact else "enemy_contact"
+        var contact_damage: float = _mitigated_player_damage(total_contact_dps, delta, flat_block, remainder_key)
+        _apply_player_damage(contact_damage, front_attacker.position + Vector2(0.0, -90.0))
 
     _enforce_enemy_formation()
 
@@ -3258,27 +3253,27 @@ func _enforce_enemy_formation() -> void:
 func _enemy_contact_reach(enemy: CombatSprite) -> float:
     return max(6.0, _enemy_body_width(enemy) * 0.5)
 
-func _is_leading_contact_attacker(enemy: CombatSprite, frontline_x: float, front_map: Dictionary) -> bool:
-    var front_enemy: CombatSprite = front_map.get(enemy, null)
-    if not is_instance_valid(front_enemy):
-        return true
-    var front_contact_x: float = frontline_x + _enemy_contact_reach(front_enemy)
-    if front_enemy.position.x > front_contact_x:
-        return true
-    return not _enemies_are_stacked_for_contact(front_enemy, enemy)
-
-func _get_contact_attackers(front_enemy: CombatSprite, behind_map: Dictionary) -> Array[CombatSprite]:
+func _contact_attackers_for_frontline(contact_enemies: Array[CombatSprite]) -> Array[CombatSprite]:
+    if contact_enemies.is_empty():
+        return []
+    var alive_sorted: Array[CombatSprite] = []
+    for enemy in contact_enemies:
+        if _is_enemy_targetable(enemy):
+            alive_sorted.append(enemy)
+    if alive_sorted.is_empty():
+        return []
+    alive_sorted.sort_custom(func(a: CombatSprite, b: CombatSprite): return a.position.x < b.position.x)
     var attackers: Array[CombatSprite] = []
-    attackers.append(front_enemy)
-    var current: CombatSprite = front_enemy
-    while attackers.size() < MAX_STACKED_CONTACT_ATTACKERS:
-        var behind_enemy: CombatSprite = behind_map.get(current, null)
-        if not is_instance_valid(behind_enemy):
+    attackers.append(alive_sorted[0])
+    var current: CombatSprite = alive_sorted[0]
+    for i in range(1, alive_sorted.size()):
+        if attackers.size() >= MAX_STACKED_CONTACT_ATTACKERS:
             break
-        if not _enemies_are_stacked_for_contact(current, behind_enemy):
+        var next_enemy: CombatSprite = alive_sorted[i]
+        if not _enemies_are_stacked_for_contact(current, next_enemy):
             break
-        attackers.append(behind_enemy)
-        current = behind_enemy
+        attackers.append(next_enemy)
+        current = next_enemy
     return attackers
 
 func _enemies_are_stacked_for_contact(front_enemy: CombatSprite, back_enemy: CombatSprite) -> bool:
