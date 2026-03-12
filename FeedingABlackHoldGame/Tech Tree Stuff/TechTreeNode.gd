@@ -921,15 +921,21 @@ func _is_any_tooltip_open() -> bool:
     return false
 
 func _on_tooltip_mouse_entered() -> void:
+    if _should_ignore_hover_selection():
+        return
     is_hovering_tooltip = true
     _cancel_tooltip_close()
     is_highlighted = true
 
 func _on_tooltip_mouse_exited() -> void:
+    if _should_ignore_hover_selection():
+        return
     is_hovering_tooltip = _is_cursor_over_tooltip()
 
 
 func _on_click_mask_mouse_entered() -> void :
+    if _should_ignore_hover_selection():
+        return
     if is_hovering_node and _is_highlighted:
         return
     var tooltip_owner_under_cursor: TechTreeNode = _get_tooltip_owner_at_screen_position(get_viewport().get_mouse_position())
@@ -948,12 +954,16 @@ func _on_click_mask_mouse_entered() -> void :
 
 
 func _on_click_mask_mouse_exited() -> void :
+    if _should_ignore_hover_selection():
+        return
     if _is_cursor_over_click_mask():
         return
     is_hovering_node = false
 
 
 func _on_click_mask_focus_entered() -> void :
+    if _should_ignore_hover_selection():
+        return
     var tooltip_owner_under_cursor: TechTreeNode = _get_tooltip_owner_at_screen_position(get_viewport().get_mouse_position())
     if tooltip_owner_under_cursor != null and tooltip_owner_under_cursor != self:
         return
@@ -970,3 +980,8 @@ func _on_click_mask_focus_entered() -> void :
 
 func _on_click_mask_focus_exited() -> void :
     pass
+
+func _should_ignore_hover_selection() -> bool:
+    return Global.game_state == Util.GAME_STATES.UPGRADES \
+        and ControllerIcons != null \
+        and ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER

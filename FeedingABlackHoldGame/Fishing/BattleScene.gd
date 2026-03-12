@@ -3216,6 +3216,9 @@ func _update_enemies(delta: float) -> void:
         else:
             if enemy_opening_rush_active:
                 enemy_opening_rush_active = false
+            if float(e.get("attack_cd", 0.0)) <= 0.0:
+                e["attack_cd"] = 0.75
+                enemy.trigger_attack()
             contact_enemies.append(enemy)
 
         _update_enemy_health_bar(enemy, e)
@@ -3229,10 +3232,6 @@ func _update_enemies(delta: float) -> void:
         for attacker in attackers:
             var attacker_data: Dictionary = enemy_data.get(attacker, {})
             total_contact_dps += float(attacker_data.get("contact_dps", front_data.get("contact_dps", 0.0)))
-            if float(attacker_data.get("attack_cd", 0.0)) <= 0.0:
-                attacker_data["attack_cd"] = 0.75
-                attacker.trigger_attack()
-                enemy_data[attacker] = attacker_data
 
         var is_boss_contact: bool = bool(front_data.get("is_boss", false))
         var flat_block: float = _player_boss_damage_block() if is_boss_contact else _player_enemy_damage_block()

@@ -4,6 +4,7 @@ class_name UpgradeScreen
 
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const CONTROLLER_GLYPH_SCENE: PackedScene = preload("res://Controller Glyph.tscn")
+const HOLD_RING_GLYPH_SCRIPT := preload("res://HoldRingGlyph.gd")
 const GO_AGAIN_DISABLED_HINT := "You must unlock an upgrade before starting."
 const DEMO_PROJECT_SETTING := "global/Demo"
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
@@ -29,7 +30,7 @@ var battle_level_choice_dialog: ConfirmationDialog
 var battle_level_choice_selected_level: int = 1
 var battle_level_choice_line_edit: LineEdit
 var battle_level_choice_max_level: int = 1
-var battle_level_choice_x_hold_label: Label
+var battle_level_choice_x_hold_ring: HoldRingGlyph
 var reset_progress_confirm_dialog: ConfirmationDialog
 var legacy_reset_dialog: ConfirmationDialog
 var mute_button: Button
@@ -300,7 +301,7 @@ func _poll_battle_level_choice_controller(delta: float) -> void:
         _popup_prev_up_pressed = false
         _popup_prev_down_pressed = false
         _popup_x_hold_time = 0.0
-        _refresh_battle_level_choice_x_hold_label()
+        _refresh_battle_level_choice_x_hold_indicator()
         return
     if ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER:
         return
@@ -335,7 +336,7 @@ func _poll_battle_level_choice_controller(delta: float) -> void:
         if not x_pressed:
             _popup_x_hold_time = 0.0
 
-    _refresh_battle_level_choice_x_hold_label()
+    _refresh_battle_level_choice_x_hold_indicator()
 
     _popup_prev_a_pressed = a_pressed
     _popup_prev_b_pressed = b_pressed
@@ -351,17 +352,14 @@ func _get_popup_controller_device() -> int:
         return int(ControllerIcons._last_controller)
     return int(connected[0])
 
-func _refresh_battle_level_choice_x_hold_label() -> void:
-    if battle_level_choice_x_hold_label == null:
+func _refresh_battle_level_choice_x_hold_indicator() -> void:
+    if battle_level_choice_x_hold_ring == null:
         return
     var progress: float = 0.0
     if _popup_x_hold_time > 0.0:
         progress = clamp(_popup_x_hold_time / BATTLE_LEVEL_X_CONFIRM_HOLD_SECONDS, 0.0, 1.0)
-    var filled: int = int(round(progress * 8.0))
-    var meter := ""
-    for i in range(8):
-        meter += "=" if i < filled else "-"
-    battle_level_choice_x_hold_label.text = "Hold X to Confirm  [%s]" % meter
+    battle_level_choice_x_hold_ring.visible = ControllerIcons != null and ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER
+    battle_level_choice_x_hold_ring.progress = progress
 
 
 
@@ -645,7 +643,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
     if battle_level_choice_dialog == null:
         return
     battle_level_choice_line_edit = null
-    battle_level_choice_x_hold_label = null
+    battle_level_choice_x_hold_ring = null
     var existing: Control = battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent")
     if existing != null:
         existing.queue_free()
@@ -738,14 +736,16 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
         confirm_button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
         confirm_button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
         confirm_button.pressed.connect(_on_battle_level_choice_confirm_pressed.bind(max_level))
-        vbox.add_child(_wrap_control_with_glyphs(confirm_button, ["joypad/a", "joypad/x"], false))
-
-        battle_level_choice_x_hold_label = Label.new()
-        battle_level_choice_x_hold_label.name = "BattleLevelChoiceXHoldLabel"
-        battle_level_choice_x_hold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        battle_level_choice_x_hold_label.add_theme_font_size_override("font_size", 22)
-        vbox.add_child(battle_level_choice_x_hold_label)
-        _refresh_battle_level_choice_x_hold_label()
+        var confirm_row := HBoxContainer.new()
+        confirm_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        confirm_row.alignment = BoxContainer.ALIGNMENT_CENTER
+        confirm_row.add_theme_constant_override("separation", 12)
+        confirm_row.add_child(_make_controller_glyph("joypad/a"))
+        battle_level_choice_x_hold_ring = _make_hold_ring_glyph("joypad/x")
+        confirm_row.add_child(battle_level_choice_x_hold_ring)
+        confirm_row.add_child(confirm_button)
+        vbox.add_child(confirm_row)
+        _refresh_battle_level_choice_x_hold_indicator()
 
         if battle_level_choice_line_edit != null:
             battle_level_choice_line_edit.select_all()
@@ -863,6 +863,16 @@ func _make_controller_glyph(action_path: String) -> ControllerGlyph:
     glyph.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
     glyph.enabled = true
     return glyph
+
+func _make_hold_ring_glyph(action_path: String) -> HoldRingGlyph:
+    var ring := HOLD_RING_GLYPH_SCRIPT.new() as HoldRingGlyph
+    ring.custom_minimum_size = Vector2(42.0, 42.0)
+    ring.size = Vector2(42.0, 42.0)
+    var glyph := _make_controller_glyph(action_path)
+    glyph.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    glyph.custom_minimum_size = Vector2.ZERO
+    ring.add_child(glyph)
+    return ring
 
 func _find_battle_level_choice_control_at_cursor(root: Control, screen_position: Vector2) -> Control:
     if root == null or not is_instance_valid(root) or not root.visible:
