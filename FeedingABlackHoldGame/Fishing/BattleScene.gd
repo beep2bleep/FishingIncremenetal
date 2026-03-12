@@ -627,6 +627,7 @@ func _ready() -> void:
         push_error("BattleScene is missing required nodes.")
         return
 
+    VirtualCursor.set_scene_enabled(true)
     SignalBus.settings_updated.connect(_on_settings_updated)
     _load_editor_hero_sprite_set()
     _load_editor_new_hero_scale_debug()
@@ -697,6 +698,7 @@ func _layout_battle_utility_buttons() -> void:
         weapon_debug_panel.hide()
 
 func _exit_tree() -> void:
+    VirtualCursor.set_scene_enabled(false)
     SaveHandler.save_fishing_progress()
     Engine.time_scale = 1.0
 
@@ -2322,6 +2324,14 @@ func _unhandled_input(event: InputEvent) -> void:
     if battle_completed:
         return
     if summary_panel != null and summary_panel.visible:
+        if event.is_action_pressed("ui_accept"):
+            if _activate_summary_or_level_choice_from_controller():
+                get_viewport().set_input_as_handled()
+            return
+        if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+            if level_choice_dialog != null and level_choice_dialog.visible:
+                _on_level_choice_cancel_pressed()
+            return
         return
     if _is_settings_open():
         if event.is_action_pressed("escape") or event.is_action_pressed("back"):
@@ -5800,6 +5810,9 @@ func _finalize_battle_summary() -> void:
     }
     SaveHandler.save_fishing_progress()
     _update_speed_button_enabled_state()
+    if ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER and continue_button != null:
+        continue_button.grab_focus()
+        VirtualCursor.move_to_control(continue_button)
 
 func _advance_run_clock(delta: float) -> void:
     if delta <= 0.0:
@@ -5968,6 +5981,7 @@ func _show_level_choice_dialog(max_level: int) -> void:
 
     _style_level_choice_dialog(level_choice_dialog)
     level_choice_dialog.popup_centered(LEVEL_CHOICE_DIALOG_SIZE)
+    _position_virtual_cursor_for_level_choice(max_level)
 
 func _on_level_choice_action(action: StringName) -> void:
     var action_text: String = str(action)
@@ -5985,6 +5999,50 @@ func _on_level_choice_adjust_pressed(delta: int, max_level: int) -> void:
 
 func _on_level_choice_text_submitted(_text: String, max_level: int) -> void:
     _sync_level_choice_from_input(max_level)
+
+func _position_virtual_cursor_for_level_choice(max_level: int) -> void:
+    if ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER:
+        return
+    await get_tree().process_frame
+    if level_choice_dialog == null or not level_choice_dialog.visible:
+        return
+    var target: Control = null
+    if max_level <= 4:
+        target = level_choice_dialog.get_node_or_null("LevelChoiceContent/VBoxContainer/LevelChoiceButton%d" % level_choice_selected_level)
+    else:
+        target = level_choice_dialog.get_node_or_null("LevelChoiceContent/VBoxContainer/LevelChoiceConfirmButton")
+        if target == null:
+            target = level_choice_dialog.get_node_or_null("LevelChoiceContent/VBoxContainer/LevelChoiceCancelButton")
+    if target != null:
+        target.grab_focus()
+        VirtualCursor.move_to_control(target)
+
+func _activate_summary_or_level_choice_from_controller() -> bool:
+    if level_choice_dialog != null and level_choice_dialog.visible:
+        var level_target: Control = get_viewport().gui_get_focus_owner()
+        var content_root: Control = level_choice_dialog.get_node_or_null("LevelChoiceContent")
+        if not (level_target is BaseButton):
+            level_target = _find_level_choice_control_at_cursor(content_root, VirtualCursor.get_screen_position())
+        if level_target is BaseButton:
+            (level_target as BaseButton).emit_signal("pressed")
+            return true
+    if continue_button != null and continue_button.visible and not continue_button.disabled:
+        continue_button.emit_signal("pressed")
+        return true
+    return false
+
+func _find_level_choice_control_at_cursor(root: Control, screen_position: Vector2) -> Control:
+    if root == null or not is_instance_valid(root) or not root.visible:
+        return null
+    for child_index in range(root.get_child_count() - 1, -1, -1):
+        var child := root.get_child(child_index)
+        if child is Control:
+            var match: Control = _find_level_choice_control_at_cursor(child as Control, screen_position)
+            if match != null:
+                return match
+    if root is BaseButton and not (root as BaseButton).disabled and root.get_global_rect().has_point(screen_position):
+        return root
+    return null
 
 func _on_level_choice_input_focus_exited(max_level: int) -> void:
     _sync_level_choice_from_input(max_level)

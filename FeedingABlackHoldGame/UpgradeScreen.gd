@@ -168,6 +168,14 @@ func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: i
 
 func _input(event: InputEvent) -> void :
     if Global.game_state == Util.GAME_STATES.UPGRADES:
+        if _is_battle_level_choice_open():
+            if event.is_action_pressed("ui_accept"):
+                if _activate_battle_level_choice_from_controller():
+                    get_viewport().set_input_as_handled()
+                return
+            if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+                _on_battle_level_choice_cancel_pressed()
+                return
         if _is_continue_locked_open():
             if event.is_action_pressed("escape") or event.is_action_pressed("back") or event.is_action_pressed("ui_accept"):
                 _hide_continue_locked_panel()
@@ -326,6 +334,7 @@ func show_screen():
     %CanvasLayer.show()
     %CanvasLayer2.show()
     _hide_settings_panel()
+    VirtualCursor.set_scene_enabled(true)
 
 
 
@@ -381,6 +390,7 @@ func hide_screen():
     %CanvasLayer.hide()
     %CanvasLayer2.hide()
     _hide_continue_locked_panel()
+    VirtualCursor.set_scene_enabled(false)
 
 
 func _on_go_again_pressed() -> void :
@@ -519,6 +529,7 @@ func _show_battle_level_choice_dialog(max_level: int) -> void:
     _rebuild_battle_level_choice_dialog_content(max_level)
     _style_battle_level_choice_dialog()
     battle_level_choice_dialog.popup_centered(BATTLE_LEVEL_CHOICE_DIALOG_SIZE)
+    _position_virtual_cursor_for_battle_level_choice(max_level)
 
 func _on_battle_level_choice_action(action: StringName) -> void:
     var action_text: String = str(action)
@@ -683,6 +694,59 @@ func _update_battle_level_choice_line_edit() -> void:
         return
     battle_level_choice_line_edit.text = str(battle_level_choice_selected_level)
     battle_level_choice_line_edit.caret_column = battle_level_choice_line_edit.text.length()
+
+func _position_virtual_cursor_for_battle_level_choice(max_level: int) -> void:
+    if ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER:
+        return
+    VirtualCursor.activate_for_controller()
+    await get_tree().process_frame
+    await get_tree().process_frame
+    if battle_level_choice_dialog == null or not battle_level_choice_dialog.visible:
+        return
+    var target: Control = _get_primary_battle_level_choice_button(max_level)
+    if target != null:
+        target.grab_focus()
+        VirtualCursor.move_to_control(target)
+
+func _is_battle_level_choice_open() -> bool:
+    return battle_level_choice_dialog != null and battle_level_choice_dialog.visible
+
+func _activate_battle_level_choice_from_controller() -> bool:
+    var target: Control = get_viewport().gui_get_focus_owner()
+    var content_root: Control = null
+    if battle_level_choice_dialog != null:
+        content_root = battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent")
+    if not (target is BaseButton):
+        target = _find_battle_level_choice_control_at_cursor(content_root, VirtualCursor.get_screen_position())
+    if not (target is BaseButton):
+        target = _get_primary_battle_level_choice_button(clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, SaveHandler.MAX_FISHING_BATTLE_LEVEL))
+    if target is BaseButton:
+        (target as BaseButton).emit_signal("pressed")
+        return true
+    return false
+
+func _get_primary_battle_level_choice_button(max_level: int) -> Control:
+    if battle_level_choice_dialog == null:
+        return null
+    if max_level <= 4:
+        return battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent/VBoxContainer/BattleLevelChoiceButton%d" % battle_level_choice_selected_level)
+    var confirm_button: Control = battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent/VBoxContainer/BattleLevelChoiceConfirmButton")
+    if confirm_button != null:
+        return confirm_button
+    return battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent/VBoxContainer/BattleLevelChoiceCancelButton")
+
+func _find_battle_level_choice_control_at_cursor(root: Control, screen_position: Vector2) -> Control:
+    if root == null or not is_instance_valid(root) or not root.visible:
+        return null
+    for child_index in range(root.get_child_count() - 1, -1, -1):
+        var child := root.get_child(child_index)
+        if child is Control:
+            var match: Control = _find_battle_level_choice_control_at_cursor(child as Control, screen_position)
+            if match != null:
+                return match
+    if root is BaseButton and not (root as BaseButton).disabled and root.get_global_rect().has_point(screen_position):
+        return root
+    return null
 
 func _setup_editor_cash_controls() -> void:
     if not OS.has_feature("editor"):
