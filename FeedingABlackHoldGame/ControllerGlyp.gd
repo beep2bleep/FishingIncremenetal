@@ -16,7 +16,8 @@ class_name ControllerGlyph
 
 
 func _ready():
-    ControllerIcons.input_type_changed.connect(_on_input_type_changed)
+    if ControllerIcons != null:
+        ControllerIcons.input_type_changed.connect(_on_input_type_changed)
     update()
 
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):
@@ -29,6 +30,10 @@ func update():
         return
 
     if enabled == false:
+        hide()
+        return
+
+    if ControllerIcons == null:
         hide()
         return
 

@@ -31,6 +31,17 @@ const _MOUSE_VELOCITY_DELTA: = 0.15
 var _t: float
 var _mouse_velocity: int
 
+func _ensure_settings_ready() -> void:
+    if _settings != null:
+        return
+    _settings = load("res://addons/controller_icons/settings.tres")
+    if not _settings:
+        _settings = ControllerSettings.new()
+    if _settings.custom_mapper:
+        Mapper = _settings.custom_mapper.new()
+    if _settings.custom_file_extension and not _settings.custom_file_extension.is_empty():
+        _base_extension = _settings.custom_file_extension
+
 var Mapper = preload("res://addons/controller_icons/Mapper.gd").new()
 
 
@@ -296,6 +307,7 @@ func get_matching_event(path: String, input_type: InputType = _last_input_type, 
     return fallbacks[0] if not fallbacks.is_empty() else null
 
 func _expand_path(path: String, input_type: int, controller: int, forced_controller_icon_style = ControllerSettings.Devices.NONE) -> Array:
+    _ensure_settings_ready()
     var paths: = []
     var base_paths: = [
         _settings.custom_asset_dir + "/", 
@@ -310,6 +322,7 @@ func _expand_path(path: String, input_type: int, controller: int, forced_control
     return paths
 
 func _convert_path_to_asset_file(path: String, input_type: int, controller: int, forced_controller_icon_style = ControllerSettings.Devices.NONE) -> String:
+    _ensure_settings_ready()
     match get_path_type(path):
         PathType.INPUT_ACTION:
             var event: = get_matching_event(path, input_type, controller)

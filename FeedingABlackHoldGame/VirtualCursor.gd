@@ -113,11 +113,9 @@ func _input(event: InputEvent) -> void:
         if joy_button.button_index == JOY_BUTTON_A:
             _set_virtual_cursor_active(true)
             _emit_mouse_button(MOUSE_BUTTON_LEFT, joy_button.pressed)
-            get_viewport().set_input_as_handled()
         elif joy_button.button_index == JOY_BUTTON_B:
             _set_virtual_cursor_active(true)
             _emit_mouse_button(MOUSE_BUTTON_RIGHT, joy_button.pressed)
-            get_viewport().set_input_as_handled()
 
 func _process(delta: float) -> void:
     if not _scene_enabled:

@@ -3,6 +3,7 @@ extends CanvasLayer
 class_name UpgradeScreen
 
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
+const CONTROLLER_GLYPH_SCENE: PackedScene = preload("res://Controller Glyph.tscn")
 const GO_AGAIN_DISABLED_HINT := "You must unlock an upgrade before starting."
 const DEMO_PROJECT_SETTING := "global/Demo"
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
@@ -15,6 +16,7 @@ const BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT := 180.0
 const BATTLE_LEVEL_SELECTOR_FONT_SIZE := 52
 const BATTLE_LEVEL_SELECTOR_BUTTON_WIDTH := 140.0
 const BATTLE_LEVEL_SELECTOR_INPUT_WIDTH := 220.0
+const BATTLE_LEVEL_X_CONFIRM_HOLD_SECONDS := 0.2
 const UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO := 0.05
 
 var is_active = false
@@ -26,6 +28,8 @@ var editor_unlock_all_button: Button
 var battle_level_choice_dialog: ConfirmationDialog
 var battle_level_choice_selected_level: int = 1
 var battle_level_choice_line_edit: LineEdit
+var battle_level_choice_max_level: int = 1
+var battle_level_choice_x_hold_label: Label
 var reset_progress_confirm_dialog: ConfirmationDialog
 var legacy_reset_dialog: ConfirmationDialog
 var mute_button: Button
@@ -46,6 +50,12 @@ var speaker_icon_off: Texture2D
 var fullscreen_icon_on: Texture2D
 var fullscreen_icon_off: Texture2D
 var _legacy_reset_dialog_shown := false
+var _popup_prev_a_pressed := false
+var _popup_prev_b_pressed := false
+var _popup_prev_x_pressed := false
+var _popup_prev_up_pressed := false
+var _popup_prev_down_pressed := false
+var _popup_x_hold_time := 0.0
 
 func _should_show_editor_only_touch_toggle() -> bool:
     return OS.has_feature("editor")
@@ -169,12 +179,21 @@ func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: i
 func _input(event: InputEvent) -> void :
     if Global.game_state == Util.GAME_STATES.UPGRADES:
         if _is_battle_level_choice_open():
-            if event.is_action_pressed("ui_accept"):
-                if _activate_battle_level_choice_from_controller():
+            if event.is_action_pressed("ui_accept") or event.is_action_pressed("go again"):
+                if _confirm_battle_level_choice_from_controller():
                     get_viewport().set_input_as_handled()
                 return
             if event.is_action_pressed("escape") or event.is_action_pressed("back"):
                 _on_battle_level_choice_cancel_pressed()
+                get_viewport().set_input_as_handled()
+                return
+            if event.is_action_pressed("up"):
+                _on_battle_level_choice_adjust_pressed(1, battle_level_choice_max_level)
+                get_viewport().set_input_as_handled()
+                return
+            if event.is_action_pressed("down"):
+                _on_battle_level_choice_adjust_pressed(-1, battle_level_choice_max_level)
+                get_viewport().set_input_as_handled()
                 return
         if _is_continue_locked_open():
             if event.is_action_pressed("escape") or event.is_action_pressed("back") or event.is_action_pressed("ui_accept"):
@@ -238,6 +257,7 @@ func update_colors():
 
 
 func _process(delta: float) -> void :
+    _poll_battle_level_choice_controller(delta)
     if is_active == true and state == STATES.SHOWING_TREE:
 
         match ControllerIcons.get_last_input_type():
@@ -271,6 +291,77 @@ func _on_color_rect_gui_input(event: InputEvent) -> void :
 
     if dragging and event is InputEventMouseMotion:
         tech_tree.move_tech_tree(event.relative)
+
+func _poll_battle_level_choice_controller(delta: float) -> void:
+    if not _is_battle_level_choice_open():
+        _popup_prev_a_pressed = false
+        _popup_prev_b_pressed = false
+        _popup_prev_x_pressed = false
+        _popup_prev_up_pressed = false
+        _popup_prev_down_pressed = false
+        _popup_x_hold_time = 0.0
+        _refresh_battle_level_choice_x_hold_label()
+        return
+    if ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER:
+        return
+
+    var device := _get_popup_controller_device()
+    if device == -1:
+        return
+
+    var a_pressed := Input.is_joy_button_pressed(device, JOY_BUTTON_A)
+    var b_pressed := Input.is_joy_button_pressed(device, JOY_BUTTON_B)
+    var x_pressed := Input.is_joy_button_pressed(device, JOY_BUTTON_X)
+    var up_pressed := Input.is_joy_button_pressed(device, JOY_BUTTON_DPAD_UP) or Input.get_joy_axis(device, JOY_AXIS_LEFT_Y) < -0.5
+    var down_pressed := Input.is_joy_button_pressed(device, JOY_BUTTON_DPAD_DOWN) or Input.get_joy_axis(device, JOY_AXIS_LEFT_Y) > 0.5
+
+    if a_pressed and not _popup_prev_a_pressed:
+        _confirm_battle_level_choice_from_controller()
+    elif x_pressed:
+        if not _popup_prev_x_pressed:
+            _popup_x_hold_time = 0.0
+        else:
+            _popup_x_hold_time += max(0.0, delta)
+        if _popup_x_hold_time >= BATTLE_LEVEL_X_CONFIRM_HOLD_SECONDS:
+            _confirm_battle_level_choice_from_controller()
+            _popup_x_hold_time = -9999.0
+    elif b_pressed and not _popup_prev_b_pressed:
+        _on_battle_level_choice_cancel_pressed()
+    elif up_pressed and not _popup_prev_up_pressed:
+        _on_battle_level_choice_adjust_pressed(1, battle_level_choice_max_level)
+    elif down_pressed and not _popup_prev_down_pressed:
+        _on_battle_level_choice_adjust_pressed(-1, battle_level_choice_max_level)
+    else:
+        if not x_pressed:
+            _popup_x_hold_time = 0.0
+
+    _refresh_battle_level_choice_x_hold_label()
+
+    _popup_prev_a_pressed = a_pressed
+    _popup_prev_b_pressed = b_pressed
+    _popup_prev_x_pressed = x_pressed
+    _popup_prev_up_pressed = up_pressed
+    _popup_prev_down_pressed = down_pressed
+
+func _get_popup_controller_device() -> int:
+    var connected := Input.get_connected_joypads()
+    if connected.is_empty():
+        return -1
+    if ControllerIcons != null and ControllerIcons._last_controller in connected:
+        return int(ControllerIcons._last_controller)
+    return int(connected[0])
+
+func _refresh_battle_level_choice_x_hold_label() -> void:
+    if battle_level_choice_x_hold_label == null:
+        return
+    var progress: float = 0.0
+    if _popup_x_hold_time > 0.0:
+        progress = clamp(_popup_x_hold_time / BATTLE_LEVEL_X_CONFIRM_HOLD_SECONDS, 0.0, 1.0)
+    var filled: int = int(round(progress * 8.0))
+    var meter := ""
+    for i in range(8):
+        meter += "=" if i < filled else "-"
+    battle_level_choice_x_hold_label.text = "Hold X to Confirm  [%s]" % meter
 
 
 
@@ -524,6 +615,7 @@ func _show_battle_level_choice_dialog(max_level: int) -> void:
         _launch_battle_at_level(clamp(SaveHandler.fishing_next_battle_level, 1, max_level))
         return
 
+    battle_level_choice_max_level = max_level
     battle_level_choice_selected_level = clamp(SaveHandler.fishing_next_battle_level, 1, max_level)
     battle_level_choice_dialog.dialog_text = ""
     _rebuild_battle_level_choice_dialog_content(max_level)
@@ -553,6 +645,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
     if battle_level_choice_dialog == null:
         return
     battle_level_choice_line_edit = null
+    battle_level_choice_x_hold_label = null
     var existing: Control = battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent")
     if existing != null:
         existing.queue_free()
@@ -608,7 +701,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
         minus_button.custom_minimum_size = Vector2(BATTLE_LEVEL_SELECTOR_BUTTON_WIDTH, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
         minus_button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
         minus_button.pressed.connect(_on_battle_level_choice_adjust_pressed.bind(-1, max_level))
-        selector_row.add_child(minus_button)
+        selector_row.add_child(_wrap_control_with_glyph(minus_button, "joypad/dpad_down", false))
 
         battle_level_choice_line_edit = LineEdit.new()
         battle_level_choice_line_edit.name = "BattleLevelChoiceLineEdit"
@@ -626,7 +719,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
         plus_button.custom_minimum_size = Vector2(BATTLE_LEVEL_SELECTOR_BUTTON_WIDTH, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
         plus_button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
         plus_button.pressed.connect(_on_battle_level_choice_adjust_pressed.bind(1, max_level))
-        selector_row.add_child(plus_button)
+        selector_row.add_child(_wrap_control_with_glyph(plus_button, "joypad/dpad_up", true))
 
     var cancel_button := Button.new()
     cancel_button.name = "BattleLevelChoiceCancelButton"
@@ -635,7 +728,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
     cancel_button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
     cancel_button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
     cancel_button.pressed.connect(_on_battle_level_choice_cancel_pressed)
-    vbox.add_child(cancel_button)
+    vbox.add_child(_wrap_control_with_glyph(cancel_button, "joypad/b", false))
 
     if max_level > 4:
         var confirm_button := Button.new()
@@ -645,10 +738,16 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
         confirm_button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
         confirm_button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
         confirm_button.pressed.connect(_on_battle_level_choice_confirm_pressed.bind(max_level))
-        vbox.add_child(confirm_button)
+        vbox.add_child(_wrap_control_with_glyphs(confirm_button, ["joypad/a", "joypad/x"], false))
+
+        battle_level_choice_x_hold_label = Label.new()
+        battle_level_choice_x_hold_label.name = "BattleLevelChoiceXHoldLabel"
+        battle_level_choice_x_hold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        battle_level_choice_x_hold_label.add_theme_font_size_override("font_size", 22)
+        vbox.add_child(battle_level_choice_x_hold_label)
+        _refresh_battle_level_choice_x_hold_label()
 
         if battle_level_choice_line_edit != null:
-            battle_level_choice_line_edit.grab_focus()
             battle_level_choice_line_edit.select_all()
 
 func _on_battle_level_choice_button_pressed(level: int) -> void:
@@ -657,6 +756,7 @@ func _on_battle_level_choice_button_pressed(level: int) -> void:
 func _on_battle_level_choice_adjust_pressed(delta: int, max_level: int) -> void:
     battle_level_choice_selected_level = clamp(battle_level_choice_selected_level + delta, 1, max_level)
     _update_battle_level_choice_line_edit()
+    _update_battle_level_choice_controller_target(max_level)
 
 func _on_battle_level_choice_text_submitted(_text: String, max_level: int) -> void:
     _sync_battle_level_choice_from_input(max_level)
@@ -703,6 +803,13 @@ func _position_virtual_cursor_for_battle_level_choice(max_level: int) -> void:
     await get_tree().process_frame
     if battle_level_choice_dialog == null or not battle_level_choice_dialog.visible:
         return
+    _update_battle_level_choice_controller_target(max_level)
+
+func _update_battle_level_choice_controller_target(max_level: int) -> void:
+    if ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER:
+        return
+    if battle_level_choice_dialog == null or not battle_level_choice_dialog.visible:
+        return
     var target: Control = _get_primary_battle_level_choice_button(max_level)
     if target != null:
         target.grab_focus()
@@ -711,19 +818,12 @@ func _position_virtual_cursor_for_battle_level_choice(max_level: int) -> void:
 func _is_battle_level_choice_open() -> bool:
     return battle_level_choice_dialog != null and battle_level_choice_dialog.visible
 
-func _activate_battle_level_choice_from_controller() -> bool:
-    var target: Control = get_viewport().gui_get_focus_owner()
-    var content_root: Control = null
-    if battle_level_choice_dialog != null:
-        content_root = battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent")
-    if not (target is BaseButton):
-        target = _find_battle_level_choice_control_at_cursor(content_root, VirtualCursor.get_screen_position())
-    if not (target is BaseButton):
-        target = _get_primary_battle_level_choice_button(clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, SaveHandler.MAX_FISHING_BATTLE_LEVEL))
-    if target is BaseButton:
-        (target as BaseButton).emit_signal("pressed")
+func _confirm_battle_level_choice_from_controller() -> bool:
+    if battle_level_choice_max_level <= 4:
+        _launch_battle_at_level(battle_level_choice_selected_level)
         return true
-    return false
+    _on_battle_level_choice_confirm_pressed(battle_level_choice_max_level)
+    return true
 
 func _get_primary_battle_level_choice_button(max_level: int) -> Control:
     if battle_level_choice_dialog == null:
@@ -734,6 +834,35 @@ func _get_primary_battle_level_choice_button(max_level: int) -> Control:
     if confirm_button != null:
         return confirm_button
     return battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent/VBoxContainer/BattleLevelChoiceCancelButton")
+
+func _wrap_control_with_glyph(control: Control, action_path: String, glyph_after_control: bool) -> HBoxContainer:
+    return _wrap_control_with_glyphs(control, [action_path], glyph_after_control)
+
+func _wrap_control_with_glyphs(control: Control, action_paths: Array[String], glyph_after_control: bool) -> HBoxContainer:
+    var row := HBoxContainer.new()
+    row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    row.alignment = BoxContainer.ALIGNMENT_CENTER
+    row.add_theme_constant_override("separation", 12)
+
+    if not glyph_after_control:
+        for action_path in action_paths:
+            row.add_child(_make_controller_glyph(action_path))
+    row.add_child(control)
+    if glyph_after_control:
+        for action_path in action_paths:
+            row.add_child(_make_controller_glyph(action_path))
+    return row
+
+func _make_controller_glyph(action_path: String) -> ControllerGlyph:
+    var glyph := CONTROLLER_GLYPH_SCENE.instantiate() as ControllerGlyph
+    var icon_texture := ControllerIconTexture.new()
+    icon_texture.path = action_path
+    glyph.texture = icon_texture
+    glyph.custom_minimum_size = Vector2(42.0, 42.0)
+    glyph.size = Vector2(42.0, 42.0)
+    glyph.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+    glyph.enabled = true
+    return glyph
 
 func _find_battle_level_choice_control_at_cursor(root: Control, screen_position: Vector2) -> Control:
     if root == null or not is_instance_valid(root) or not root.visible:

@@ -204,30 +204,33 @@ func _reload_resource():
 
 func _load_texture_path_impl():
     var textures: Array[Texture2D] = []
-    if ControllerIcons.is_node_ready() and _can_be_shown():
-        var input_type = ControllerIcons._last_input_type if force_type == ForceType.NONE else force_type - 1
-        if ControllerIcons.get_path_type(path) == ControllerIcons.PathType.INPUT_ACTION:
-            var event: = ControllerIcons.get_matching_event(path, input_type)
-            textures.append_array(ControllerIcons.parse_event_modifiers(event))
-        var target_device = force_device if force_device != ForceDevice.ANY else ControllerIcons._last_controller
-        var tex: = ControllerIcons.parse_path(path, input_type, target_device, force_controller_icon_style)
-        if tex:
-            textures.append(tex)
+    if ControllerIcons == null:
+        _textures = textures
+        _reload_resource()
+        return
+    var input_type = ControllerIcons._last_input_type if force_type == ForceType.NONE else force_type - 1
+    if ControllerIcons.get_path_type(path) == ControllerIcons.PathType.INPUT_ACTION:
+        var event: = ControllerIcons.get_matching_event(path, input_type)
+        textures.append_array(ControllerIcons.parse_event_modifiers(event))
+    var target_device = force_device if force_device != ForceDevice.ANY else ControllerIcons._last_controller
+    var tex: = ControllerIcons.parse_path(path, input_type, target_device, force_controller_icon_style)
+    if tex:
+        textures.append(tex)
     _textures = textures
     _reload_resource()
 
 func _load_texture_path():
-
+    if ControllerIcons == null:
+        _load_texture_path_impl()
+        return
     if OS.get_thread_caller_id() != OS.get_main_thread_id():
-
-
-
         ControllerIcons._defer_texture_load(_load_texture_path_impl)
     else:
         _load_texture_path_impl()
 
 func _init():
-    ControllerIcons.input_type_changed.connect(_on_input_type_changed)
+    if ControllerIcons != null:
+        ControllerIcons.input_type_changed.connect(_on_input_type_changed)
 
 func _on_input_type_changed(input_type: int, controller: int):
     _load_texture_path()

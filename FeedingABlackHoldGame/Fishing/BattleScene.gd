@@ -6008,11 +6008,11 @@ func _position_virtual_cursor_for_level_choice(max_level: int) -> void:
         return
     var target: Control = null
     if max_level <= 4:
-        target = level_choice_dialog.get_node_or_null("LevelChoiceContent/VBoxContainer/LevelChoiceButton%d" % level_choice_selected_level)
+        target = level_choice_dialog.get_node_or_null("LevelChoiceContent/VBoxContainer/LevelChoiceButton%d" % level_choice_selected_level) as Control
     else:
-        target = level_choice_dialog.get_node_or_null("LevelChoiceContent/VBoxContainer/LevelChoiceConfirmButton")
+        target = level_choice_dialog.get_node_or_null("LevelChoiceContent/VBoxContainer/LevelChoiceConfirmButton") as Control
         if target == null:
-            target = level_choice_dialog.get_node_or_null("LevelChoiceContent/VBoxContainer/LevelChoiceCancelButton")
+            target = level_choice_dialog.get_node_or_null("LevelChoiceContent/VBoxContainer/LevelChoiceCancelButton") as Control
     if target != null:
         target.grab_focus()
         VirtualCursor.move_to_control(target)
@@ -6020,7 +6020,7 @@ func _position_virtual_cursor_for_level_choice(max_level: int) -> void:
 func _activate_summary_or_level_choice_from_controller() -> bool:
     if level_choice_dialog != null and level_choice_dialog.visible:
         var level_target: Control = get_viewport().gui_get_focus_owner()
-        var content_root: Control = level_choice_dialog.get_node_or_null("LevelChoiceContent")
+        var content_root: Control = level_choice_dialog.get_node_or_null("LevelChoiceContent") as Control
         if not (level_target is BaseButton):
             level_target = _find_level_choice_control_at_cursor(content_root, VirtualCursor.get_screen_position())
         if level_target is BaseButton:
