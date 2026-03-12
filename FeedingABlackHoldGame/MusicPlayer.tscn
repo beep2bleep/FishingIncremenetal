@@ -2,7 +2,7 @@
 
 [ext_resource type="AudioStream" uid="uid://dc6516tukbrr5" path="res://Audio/Main Music Playlist.tres" id="1"]
 [ext_resource type="Script" uid="uid://b3p4ac83wcttp" path="res://MusicPlayer.gd" id="2"]
-[ext_resource type="AudioStream" uid="uid://np7vjt4nvdo7" path="res://Audio/Music/Game Over Song.mp3" id="3"]
+[ext_resource type="AudioStream" path="res://Audio/Music/3 - Phat Phrog Studio - Wayward Realm - Moonsong Kingdom.wav" id="3"]
 
 [node name="MusicPlayer" type="AudioStreamPlayer"]
 process_mode = 3

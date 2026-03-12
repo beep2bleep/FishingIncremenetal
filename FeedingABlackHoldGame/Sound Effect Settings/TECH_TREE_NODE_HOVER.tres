@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="SoundEffectSettings" load_steps=3 format=3 uid="uid://ym60vk45o62o"]
 
 [ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
-[ext_resource type="AudioStream" uid="uid://dh6dtu8aapieu" path="res://Audio/bong_001.mp3" id="2"]
+[ext_resource type="AudioStream" uid="uid://dptr621al8d8c" path="res://Audio/zapsplat_office_pen_biro_nib_tap_on_wood_001_33612.mp3" id="2"]
 
 [resource]
 script = ExtResource("1")

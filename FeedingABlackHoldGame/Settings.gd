@@ -19,6 +19,7 @@ var fps_limits: Dictionary = {
 var _is_refreshing: bool = false
 
 func show_screen():
+    _set_credits_visible(false)
     refresh_from_save()
     %"Main Volume".grab_focus()
 
@@ -34,6 +35,23 @@ func _ready():
     refresh_from_save()
 
     show()
+
+func _set_credits_visible(is_visible: bool) -> void:
+    %"Credits Panel".visible = is_visible
+    %"Credits Button".visible = not is_visible
+    var grid_container: GridContainer = get_node_or_null("GridContainer")
+    if grid_container != null:
+        grid_container.visible = not is_visible
+
+func _on_credits_button_pressed() -> void:
+    _set_credits_visible(true)
+    if visible and not _is_refreshing:
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+
+func _on_hide_credits_pressed() -> void:
+    _set_credits_visible(false)
+    if visible and not _is_refreshing:
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 
 func _refresh_hidden_control_visibility() -> void:
     var touch_input_label: Label = get_node_or_null("GridContainer/Touch Input")

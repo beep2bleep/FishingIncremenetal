@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://iny10ls8b1wm"
+path="res://.godot/imported/8 - Phat Phrog Studio - Verdant Glade - Fernsong.wav-acce282fd1ed978a19297ccd118da235.sample"
+
+[deps]
+
+source_file="res://Audio/Music/8 - Phat Phrog Studio - Verdant Glade - Fernsong.wav"
+dest_files=["res://.godot/imported/8 - Phat Phrog Studio - Verdant Glade - Fernsong.wav-acce282fd1ed978a19297ccd118da235.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

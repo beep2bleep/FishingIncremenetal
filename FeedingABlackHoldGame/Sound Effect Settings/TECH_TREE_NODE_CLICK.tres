@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="SoundEffectSettings" load_steps=3 format=3 uid="uid://cvhnupy4e3wxq"]
 
 [ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
-[ext_resource type="AudioStream" uid="uid://gkxwjr0odplu" path="res://Art/Level_Up_Sound_4.mp3" id="2"]
+[ext_resource type="AudioStream" uid="uid://dwwge3qf4kyxg" path="res://Audio/zapsplat_multimedia_game_sound_classic_arcade_coin_collect_simple_fast_113878.mp3" id="2"]
 
 [resource]
 script = ExtResource("1")
@@ -9,9 +9,8 @@ limit = 10
 type = 1
 sound_effect = ExtResource("2")
 volume = -17
+taper_off_enabled = false
+pitch_scale = 1.2
 taper_fall_off_curve = null
-pitch_up_on_count_enabled = true
-pitch_up_amount_per_count = 0.01
-pitch_up_max_count = 20
-pitch_up_decay_rate = 5.0
+pitch_up_on_count_enabled = false
 metadata/_custom_type_script = "uid://blskskrd6wv02"

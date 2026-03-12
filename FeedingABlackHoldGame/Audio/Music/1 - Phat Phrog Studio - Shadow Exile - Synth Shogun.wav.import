@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://t1dwlav366aw"
+path="res://.godot/imported/1 - Phat Phrog Studio - Shadow Exile - Synth Shogun.wav-be5a5a4ab1c210aea57553e72b87d7f2.sample"
+
+[deps]
+
+source_file="res://Audio/Music/1 - Phat Phrog Studio - Shadow Exile - Synth Shogun.wav"
+dest_files=["res://.godot/imported/1 - Phat Phrog Studio - Shadow Exile - Synth Shogun.wav-be5a5a4ab1c210aea57553e72b87d7f2.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

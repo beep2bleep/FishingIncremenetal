@@ -562,8 +562,14 @@ var ufo_spawn_timer: float = 0.0
 var summary_panel_base_layout: Rect2 = Rect2()
 var summary_label_base_layout: Rect2 = Rect2()
 var summary_chart_base_layout: Rect2 = Rect2(872.0, 36.0, 680.0, 680.0)
+var summary_hint_title_base_layout: Rect2 = Rect2()
+var summary_hint_label_base_layout: Rect2 = Rect2()
+var summary_hint_left_button_base_layout: Rect2 = Rect2()
+var summary_hint_right_button_base_layout: Rect2 = Rect2()
 var continue_button_base_layout: Rect2 = Rect2()
 var demo_wishlist_button_base_layout: Rect2 = Rect2(930.0, 760.0, 270.0, 68.0)
+var summary_content_vertical_shift: float = -16.0
+var summary_hint_vertical_shift: float = 12.0
 var battle_summary_hints: Array[String] = []
 var battle_summary_hint_index: int = 0
 var touch_camera_left_shift: float = 500.0
@@ -5073,6 +5079,14 @@ func _cache_battle_summary_layout() -> void:
     summary_label_base_layout = _rect_from_control_offsets(summary_label)
     if summary_chart != null:
         summary_chart_base_layout = _rect_from_control_offsets(summary_chart)
+    if summary_hint_title_label != null:
+        summary_hint_title_base_layout = _rect_from_control_offsets(summary_hint_title_label)
+    if summary_hint_label != null:
+        summary_hint_label_base_layout = _rect_from_control_offsets(summary_hint_label)
+    if summary_hint_left_button != null:
+        summary_hint_left_button_base_layout = _rect_from_control_offsets(summary_hint_left_button)
+    if summary_hint_right_button != null:
+        summary_hint_right_button_base_layout = _rect_from_control_offsets(summary_hint_right_button)
     continue_button_base_layout = _rect_from_control_offsets(continue_button)
     if demo_wishlist_button != null:
         demo_wishlist_button_base_layout = _rect_from_control_offsets(demo_wishlist_button)
@@ -5090,10 +5104,28 @@ func _apply_battle_summary_layout(scale: Vector2) -> void:
     _set_control_offsets_from_rect(summary_panel, scaled_panel_rect)
 
     var scaled_label_rect := Rect2(summary_label_base_layout.position * safe_scale, summary_label_base_layout.size * safe_scale)
+    scaled_label_rect.position.y += summary_content_vertical_shift * safe_scale.y
     _set_control_offsets_from_rect(summary_label, scaled_label_rect)
     if summary_chart != null:
         var scaled_chart_rect := Rect2(summary_chart_base_layout.position * safe_scale, summary_chart_base_layout.size * safe_scale)
+        scaled_chart_rect.position.y += summary_content_vertical_shift * safe_scale.y
         _set_control_offsets_from_rect(summary_chart, scaled_chart_rect)
+    if summary_hint_title_label != null:
+        var scaled_hint_title_rect := Rect2(summary_hint_title_base_layout.position * safe_scale, summary_hint_title_base_layout.size * safe_scale)
+        scaled_hint_title_rect.position.y += summary_hint_vertical_shift * safe_scale.y
+        _set_control_offsets_from_rect(summary_hint_title_label, scaled_hint_title_rect)
+    if summary_hint_label != null:
+        var scaled_hint_label_rect := Rect2(summary_hint_label_base_layout.position * safe_scale, summary_hint_label_base_layout.size * safe_scale)
+        scaled_hint_label_rect.position.y += summary_hint_vertical_shift * safe_scale.y
+        _set_control_offsets_from_rect(summary_hint_label, scaled_hint_label_rect)
+    if summary_hint_left_button != null:
+        var scaled_hint_left_rect := Rect2(summary_hint_left_button_base_layout.position * safe_scale, summary_hint_left_button_base_layout.size * safe_scale)
+        scaled_hint_left_rect.position.y += summary_hint_vertical_shift * safe_scale.y
+        _set_control_offsets_from_rect(summary_hint_left_button, scaled_hint_left_rect)
+    if summary_hint_right_button != null:
+        var scaled_hint_right_rect := Rect2(summary_hint_right_button_base_layout.position * safe_scale, summary_hint_right_button_base_layout.size * safe_scale)
+        scaled_hint_right_rect.position.y += summary_hint_vertical_shift * safe_scale.y
+        _set_control_offsets_from_rect(summary_hint_right_button, scaled_hint_right_rect)
 
     var continue_rect := Rect2(640.0, 792.0, 270.0, 68.0)
     var scaled_button_rect := Rect2(continue_rect.position * safe_scale, continue_rect.size * safe_scale)

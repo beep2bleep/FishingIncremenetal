@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://15qf6b18xk2f"
+path="res://.godot/imported/3 - Phat Phrog Studio - Wayward Realm - Moonsong Kingdom.wav-236aaaddd344d4a5614f122280b72d39.sample"
+
+[deps]
+
+source_file="res://Audio/Music/3 - Phat Phrog Studio - Wayward Realm - Moonsong Kingdom.wav"
+dest_files=["res://.godot/imported/3 - Phat Phrog Studio - Wayward Realm - Moonsong Kingdom.wav-236aaaddd344d4a5614f122280b72d39.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

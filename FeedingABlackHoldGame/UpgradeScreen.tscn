@@ -15,9 +15,9 @@
 [ext_resource type="PackedScene" uid="uid://ds36c3qoqmf3y" path="res://Controller Glyph.tscn" id="13"]
 [ext_resource type="PackedScene" uid="uid://b5w1afldacdb1" path="res://CustomButton.tscn" id="14"]
 [ext_resource type="Theme" uid="uid://f0mobaom23an" path="res://Theme/Theme_Large_Font.tres" id="15"]
-[ext_resource type="AudioStream" uid="uid://qbo4604fr8uj" path="res://Art/Level_Up_Sound_1.mp3" id="16"]
-[ext_resource type="AudioStream" uid="uid://bnuy2l0f83nih" path="res://Art/Level_Up_Sound_2.mp3" id="17"]
-[ext_resource type="AudioStream" uid="uid://x6ebtbv6nen6" path="res://Art/Level_Up_Sound_3.mp3" id="18"]
+[ext_resource type="AudioStream" uid="uid://dwwge3qf4kyxg" path="res://Audio/zapsplat_multimedia_game_sound_classic_arcade_coin_collect_simple_fast_113878.mp3" id="17"]
+[ext_resource type="AudioStream" uid="uid://dwwge3qf4kyxg" path="res://Audio/zapsplat_multimedia_game_sound_classic_arcade_coin_collect_simple_fast_113878.mp3" id="16"]
+[ext_resource type="AudioStream" uid="uid://dwwge3qf4kyxg" path="res://Audio/zapsplat_multimedia_game_sound_classic_arcade_coin_collect_simple_fast_113878.mp3" id="18"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_oxvjb"]
 
@@ -532,12 +532,14 @@ bus = &"Effects"
 unique_name_in_owner = true
 stream = ExtResource("17")
 volume_db = -19.0
+pitch_scale = 1.1
 bus = &"Effects"
 
 [node name="AudioStreamPlayer3" type="AudioStreamPlayer" parent="."]
 unique_name_in_owner = true
 stream = ExtResource("18")
 volume_db = -18.0
+pitch_scale = 1.2
 bus = &"Effects"
 
 [connection signal="gui_input" from="Click Mask" to="." method="_on_color_rect_gui_input"]
