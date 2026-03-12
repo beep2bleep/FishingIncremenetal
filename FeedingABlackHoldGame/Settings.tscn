@@ -286,7 +286,7 @@ size_flags_vertical = 3
 bbcode_enabled = false
 scroll_active = true
 fit_content = false
-text = "Game made by a single developer.\n\nCreator: Beep2Bleep\n\nRequired attributions:\n- Sound effects from ZapSplat: https://www.zapsplat.com/\n- Music by Phat Phrog Studio:\n  Hellfire Tempest - Carnage Cabaret - LOOP\n  Verdant Glade - The Quiet Wild\n  Wayward Realm - Celestial Veil\n  Shadow Exile - Synth Shogun\n  Shadow Exile - Night Splice\n  Verdant Glade - Fernsong\n  Shadow Exile - Tokyo Uprising\n  Shadow Exile - Sakura Slipstream\n  Skyward Spire - Nova Rift\n  Wayward Realm - Astral Winds\n  Wayward Realm - Moonsong Kingdom\n\nAdditional note:\n- Assets also used from Kenney.nl"
+text = "Game made by a single developer.\n\nCreator: Beep2Bleep\n\nRequired attributions:\n- Sound effects from ZapSplat: https://www.zapsplat.com/\n- Music by Phat Phrog Studio:\n  Hellfire Tempest - Carnage Cabaret - LOOP\n  Verdant Glade - The Quiet Wild\n  Wayward Realm - Celestial Veil\n  Shadow Exile - Synth Shogun\n  Shadow Exile - Night Splice\n  Verdant Glade - Fernsong\n  Shadow Exile - Tokyo Uprising\n  Verdant Glade - Roots of Serenity\n  Skyward Spire - Nova Rift\n  Wayward Realm - Astral Winds\n  Wayward Realm - Moonsong Kingdom\n\nAdditional note:\n- Assets also used from Kenney.nl"
 
 [node name="Hide Credits" parent="Credits Panel/Credits Margin/Credits VBox" instance=ExtResource("4")]
 unique_name_in_owner = true

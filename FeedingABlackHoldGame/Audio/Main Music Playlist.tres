@@ -7,7 +7,7 @@
 [ext_resource type="AudioStream" path="res://Audio/Music/2 - Phat Phrog Studio - Shadow Exile - Night Splice.wav" id="5"]
 [ext_resource type="AudioStream" path="res://Audio/Music/8 - Phat Phrog Studio - Verdant Glade - Fernsong.wav" id="6"]
 [ext_resource type="AudioStream" path="res://Audio/Music/7 - Phat Phrog Studio - Shadow Exile - Tokyo Uprising.wav" id="7"]
-[ext_resource type="AudioStream" path="res://Audio/Music/8 - Phat Phrog Studio - Shadow Exile - Sakura Slipstream.wav" id="8"]
+[ext_resource type="AudioStream" path="res://Audio/Music/3 - Phat Phrog Studio - Verdant Glade - Roots of Serenity.wav" id="8"]
 [ext_resource type="AudioStream" path="res://Audio/Music/7 - Phat Phrog Studio - Skyward Spire - Nova Rift.wav" id="9"]
 [ext_resource type="AudioStream" path="res://Audio/Music/2 - Phat Phrog Studio - Wayward Realm - Astral Winds.wav" id="10"]
 

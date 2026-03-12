@@ -526,20 +526,21 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_1ss27")
 unique_name_in_owner = true
 stream = ExtResource("16")
 volume_db = -20.0
+pitch_scale = 0.8
 bus = &"Effects"
 
 [node name="AudioStreamPlayer2" type="AudioStreamPlayer" parent="."]
 unique_name_in_owner = true
 stream = ExtResource("17")
 volume_db = -19.0
-pitch_scale = 1.1
+pitch_scale = 0.9
 bus = &"Effects"
 
 [node name="AudioStreamPlayer3" type="AudioStreamPlayer" parent="."]
 unique_name_in_owner = true
 stream = ExtResource("18")
 volume_db = -18.0
-pitch_scale = 1.2
+pitch_scale = 1.0
 bus = &"Effects"
 
 [connection signal="gui_input" from="Click Mask" to="." method="_on_color_rect_gui_input"]
