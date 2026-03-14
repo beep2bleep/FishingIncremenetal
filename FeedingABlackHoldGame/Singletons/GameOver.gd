@@ -2,10 +2,12 @@ extends ColorRect
 class_name GameOverScreen
 
 var is_shown = false
+@onready var content_root: Control = $MarginContainer/VBoxContainer2
 
 
 func _ready():
     ControllerIcons.input_type_changed.connect(_on_input_type_changed)
+    _reset_visual_state()
 
 
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):
@@ -15,7 +17,16 @@ func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: i
 
 
 func show_screen():
+    _reset_visual_state()
+
     is_shown = true
+    visible = true
+
+    var tween = create_tween()
+    tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    tween.parallel().tween_property(self, "modulate:a", 1.0, 0.18).from(0.0)
+    tween.parallel().tween_property(content_root, "scale", Vector2.ONE * 1.06, 0.22).from(Vector2.ONE * 0.55)
+    tween.tween_property(content_root, "scale", Vector2.ONE, 0.14).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
     if ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER:
         %"Main Menu".grab_focus()
@@ -55,6 +66,17 @@ func setup():
 
     if Global.current_game_mode_data.on_more_time_disabled == true:
         %"One More Time Hbox".hide()
+
+
+func _reset_visual_state() -> void:
+    visible = false
+    modulate.a = 0.0
+
+    if content_root == null:
+        return
+
+    content_root.scale = Vector2.ONE * 0.55
+    content_root.pivot_offset = content_root.size * 0.5
 
 
 func _on_main_menu_pressed() -> void :

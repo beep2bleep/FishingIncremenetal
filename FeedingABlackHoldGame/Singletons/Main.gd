@@ -239,16 +239,14 @@ func on_game_over(tier_index = 0):
             %"Game Over Screen".show_screen()
     )
 
+    game_over_tween.tween_interval(1.0)
+
     game_over_tween.tween_callback(
 
         func():
             check_game_over_achivements()
 
     )
-
-
-    game_over_tween.tween_property( %"Game Over Screen", "visible", true, 0.0)
-    game_over_tween.tween_property( %"Game Over Screen", "modulate:a", 1.0, 1.0).from(0.0)
 
 
 func on_tier_finished(tier_index = 0):

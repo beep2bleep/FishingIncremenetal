@@ -64,6 +64,7 @@ const UFO_SPAWN_MARGIN_X := 220.0
 const UFO_CLOUD_OFFSET_MIN := 28.0
 const UFO_CLOUD_OFFSET_MAX := 92.0
 const DEFEAT_FALL_DURATION := 1.2
+const DEFEAT_SUMMARY_POPUP_DELAY := 1.0
 const ARROW_KILL_DESPAWN_DURATION := 0.2
 const DEFEAT_FALL_ROT_SPEED := 1.8
 const ARROW_KILL_GRAVITY_SCALE := 1.0 / 3.0
@@ -478,6 +479,8 @@ var next_enemy_stack_id: int = 1
 var sim_accumulator: float = 0.0
 var battle_completed: bool = false
 var battle_victory: bool = false
+var defeat_summary_reveal_pending: bool = false
+var defeat_summary_reveal_time: float = 0.0
 var enemy_opening_rush_active: bool = true
 
 const SPEED_STEPS: Array[float] = [1.0, 2.0, 4.0, 8.0, 16.0]
@@ -2415,7 +2418,7 @@ func _simulate_step(delta: float, skip_visual_updates: bool = false) -> void:
     var lp: Dictionary = _level_params(current_level)
     var raw_dot_damage_per_second: float = float(lp["dot_dps"]) * _enemy_dot_mult()
     var dot_damage: float = _mitigated_player_damage(raw_dot_damage_per_second, delta, _player_dot_damage_block(), "dot")
-    _apply_player_damage(dot_damage, Vector2(_frontline_x() - 20.0, FLOOR_Y - 140.0))
+    _apply_player_damage(dot_damage, _frontline_hero_damage_anchor())
 
 func _spawn_loop(delta: float) -> void:
     if battle_completed:
@@ -3200,8 +3203,8 @@ func _update_arrows(delta: float) -> void:
             continue
 
 func _update_enemies(delta: float) -> void:
-    var frontline_x: float = _frontline_x()
-    var contact_enemies: Array[CombatSprite] = []
+    var frontline_contact_x: float = _frontline_contact_x()
+    var contact_front_enemy: CombatSprite = null
 
     for enemy in enemies:
         if not is_instance_valid(enemy):
@@ -3220,7 +3223,7 @@ func _update_enemies(delta: float) -> void:
             continue
         e["attack_cd"] = max(0.0, float(e["attack_cd"]) - delta)
 
-        var contact_front_x: float = frontline_x + _enemy_contact_reach(enemy)
+        var contact_front_x: float = frontline_contact_x + _enemy_contact_reach(enemy)
         var colliding: bool = enemy.position.x <= contact_front_x
         if not colliding:
             var move_mult: float = _enemy_offscreen_speed_mult(enemy)
@@ -3234,15 +3237,13 @@ func _update_enemies(delta: float) -> void:
         else:
             if enemy_opening_rush_active:
                 enemy_opening_rush_active = false
-            if float(e.get("attack_cd", 0.0)) <= 0.0:
-                e["attack_cd"] = 0.75
-                enemy.trigger_attack()
-            contact_enemies.append(enemy)
+            if contact_front_enemy == null or enemy.position.x < contact_front_enemy.position.x:
+                contact_front_enemy = enemy
 
         _update_enemy_health_bar(enemy, e)
         enemy_data[enemy] = e
 
-    var attackers: Array[CombatSprite] = _contact_attackers_for_frontline(contact_enemies)
+    var attackers: Array[CombatSprite] = _contact_attackers_for_frontline(contact_front_enemy)
     if not attackers.is_empty():
         var front_attacker: CombatSprite = attackers[0]
         var front_data: Dictionary = enemy_data.get(front_attacker, {})
@@ -3250,12 +3251,16 @@ func _update_enemies(delta: float) -> void:
         for attacker in attackers:
             var attacker_data: Dictionary = enemy_data.get(attacker, {})
             total_contact_dps += float(attacker_data.get("contact_dps", front_data.get("contact_dps", 0.0)))
+            if float(attacker_data.get("attack_cd", 0.0)) <= 0.0:
+                attacker_data["attack_cd"] = 0.75
+                enemy_data[attacker] = attacker_data
+                attacker.trigger_attack()
 
         var is_boss_contact: bool = bool(front_data.get("is_boss", false))
         var flat_block: float = _player_boss_damage_block() if is_boss_contact else _player_enemy_damage_block()
         var remainder_key: String = "boss_contact" if is_boss_contact else "enemy_contact"
         var contact_damage: float = _mitigated_player_damage(total_contact_dps, delta, flat_block, remainder_key)
-        _apply_player_damage(contact_damage, front_attacker.position + Vector2(0.0, -90.0))
+        _apply_player_damage(contact_damage, _frontline_hero_damage_anchor())
 
     _enforce_enemy_formation()
 
@@ -3280,19 +3285,40 @@ func _enforce_enemy_formation() -> void:
 func _enemy_contact_reach(enemy: CombatSprite) -> float:
     return max(6.0, _enemy_body_width(enemy) * 0.5)
 
-func _contact_attackers_for_frontline(contact_enemies: Array[CombatSprite]) -> Array[CombatSprite]:
-    if contact_enemies.is_empty():
+func _frontline_contact_x() -> float:
+    var front_contact_x: float = HERO_START_X
+    for hero in heroes:
+        if not is_instance_valid(hero):
+            continue
+        front_contact_x = max(front_contact_x, hero.position.x + _combat_sprite_body_width(hero) * 0.5)
+    return front_contact_x
+
+func _frontline_hero_damage_anchor() -> Vector2:
+    var front_hero: CombatSprite = null
+    for hero in heroes:
+        if not is_instance_valid(hero):
+            continue
+        if front_hero == null or hero.position.x > front_hero.position.x:
+            front_hero = hero
+    if is_instance_valid(front_hero):
+        return front_hero.position + Vector2(0.0, -90.0)
+    return Vector2(_frontline_x(), FLOOR_Y - 90.0)
+
+func _contact_attackers_for_frontline(front_contact_enemy: CombatSprite) -> Array[CombatSprite]:
+    if not _is_enemy_targetable(front_contact_enemy):
         return []
     var alive_sorted: Array[CombatSprite] = []
-    for enemy in contact_enemies:
+    for enemy in enemies:
         if _is_enemy_targetable(enemy):
             alive_sorted.append(enemy)
     if alive_sorted.is_empty():
         return []
     alive_sorted.sort_custom(func(a: CombatSprite, b: CombatSprite): return a.position.x < b.position.x)
+    if alive_sorted[0] != front_contact_enemy:
+        return []
     var attackers: Array[CombatSprite] = []
-    attackers.append(alive_sorted[0])
-    var current: CombatSprite = alive_sorted[0]
+    attackers.append(front_contact_enemy)
+    var current: CombatSprite = front_contact_enemy
     for i in range(1, alive_sorted.size()):
         if attackers.size() >= MAX_STACKED_CONTACT_ATTACKERS:
             break
@@ -3322,18 +3348,21 @@ func _enemy_pair_spacing(front_enemy: CombatSprite, back_enemy: CombatSprite) ->
     return base_spacing
 
 func _enemy_body_width(enemy: CombatSprite) -> float:
-    if not is_instance_valid(enemy):
-        return ENEMY_FORMATION_SPACING
-    if enemy.collider != null and enemy.collider.shape is CircleShape2D:
-        var circle: CircleShape2D = enemy.collider.shape as CircleShape2D
+    return _combat_sprite_body_width(enemy, ENEMY_FORMATION_SPACING)
+
+func _combat_sprite_body_width(sprite: CombatSprite, fallback_width: float = ENEMY_FORMATION_SPACING) -> float:
+    if not is_instance_valid(sprite):
+        return fallback_width
+    if sprite.collider != null and sprite.collider.shape is CircleShape2D:
+        var circle: CircleShape2D = sprite.collider.shape as CircleShape2D
         if circle != null:
             return max(12.0, circle.radius * 2.0)
-    if enemy.sprite != null and enemy.sprite.sprite_frames != null:
-        var frame_tex: Texture2D = enemy.sprite.sprite_frames.get_frame_texture("walk", 0)
+    if sprite.sprite != null and sprite.sprite.sprite_frames != null:
+        var frame_tex: Texture2D = sprite.sprite.sprite_frames.get_frame_texture("walk", 0)
         if frame_tex != null:
             var frame_w: float = float(frame_tex.get_width())
-            return max(12.0, frame_w * enemy.base_sprite_scale.x * 0.9)
-    return ENEMY_FORMATION_SPACING
+            return max(12.0, frame_w * sprite.base_sprite_scale.x * 0.9)
+    return fallback_width
 
 func _update_enemy_health_bar(enemy: CombatSprite, e: Dictionary) -> void:
     var bar_back: ColorRect = e.get("bar_back", null)
@@ -4936,9 +4965,16 @@ func _end_battle(victory: bool) -> void:
     if is_instance_valid(active_ufo):
         active_ufo.queue_free()
     active_ufo = null
+    defeat_summary_reveal_pending = false
+    defeat_summary_reveal_time = 0.0
     _apply_battle_summary_layout(Vector2.ONE)
     _setup_battle_summary_hints()
-    summary_panel.show()
+    summary_panel.modulate.a = 1.0
+    summary_panel.scale = Vector2.ONE
+    if victory:
+        summary_panel.show()
+    else:
+        summary_panel.hide()
     continue_button.hide()
     if demo_wishlist_button != null:
         demo_wishlist_button.hide()
@@ -5021,7 +5057,16 @@ func _run_defeat_pose(delta: float) -> void:
             continue
         enemy.rotation = lerp_angle(enemy.rotation, -PI * 0.5, min(1.0, delta * DEFEAT_FALL_ROT_SPEED))
 
-    if defeat_anim_time >= DEFEAT_FALL_DURATION:
+    if defeat_anim_time < DEFEAT_FALL_DURATION:
+        return
+
+    if not defeat_summary_reveal_pending:
+        defeat_summary_reveal_pending = true
+        defeat_summary_reveal_time = DEFEAT_SUMMARY_POPUP_DELAY
+        return
+
+    defeat_summary_reveal_time -= delta
+    if defeat_summary_reveal_time <= 0.0:
         _finalize_battle_summary()
 
 func _run_defeat_pose_instant() -> void:
@@ -5033,7 +5078,10 @@ func _run_defeat_pose_instant() -> void:
     for enemy in enemies:
         if is_instance_valid(enemy):
             enemy.rotation = -PI * 0.5
-    _finalize_battle_summary()
+    defeat_anim_time = DEFEAT_FALL_DURATION
+    if not defeat_summary_reveal_pending:
+        defeat_summary_reveal_pending = true
+        defeat_summary_reveal_time = DEFEAT_SUMMARY_POPUP_DELAY
 
 func _build_battle_summary_text(is_live: bool) -> String:
     var title: String = tr("BATTLE_VICTORY") if battle_victory else tr("BATTLE_DEFEAT")
@@ -5806,6 +5854,18 @@ func _finalize_battle_summary() -> void:
         return
     summary_finalized = true
     summary_panel.show()
+    if battle_victory:
+        summary_panel.modulate.a = 1.0
+        summary_panel.scale = Vector2.ONE
+    else:
+        summary_panel.modulate.a = 0.0
+        summary_panel.scale = Vector2.ONE * 0.6
+        summary_panel.pivot_offset = summary_panel.size * 0.5
+        var summary_intro_tween := create_tween()
+        summary_intro_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+        summary_intro_tween.parallel().tween_property(summary_panel, "modulate:a", 1.0, 0.18).from(0.0)
+        summary_intro_tween.parallel().tween_property(summary_panel, "scale", Vector2.ONE * 1.08, 0.22).from(Vector2.ONE * 0.6)
+        summary_intro_tween.tween_property(summary_panel, "scale", Vector2.ONE, 0.14).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
     continue_button.show()
     var show_demo_wishlist: bool = _get_demo_thank_you_level() > 0
     if demo_wishlist_button != null:
