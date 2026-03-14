@@ -75,7 +75,7 @@ info_log=true
 [global]
 
 Build="v1.3.1"
-Demo=false
+Demo=true
 DemoWishlistUrl="https://Beep2Bleep.com"
 
 [input]
