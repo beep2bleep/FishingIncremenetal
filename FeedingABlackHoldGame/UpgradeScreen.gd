@@ -46,6 +46,7 @@ var reset_progress_button: Button
 var go_again_button: Button
 var demo_mode_label: Label
 var wishlist_button: Button
+var popup_layer: CanvasLayer
 var continue_locked_panel: PanelContainer
 var continue_locked_label: Label
 var version_label: Label
@@ -152,6 +153,8 @@ func _ready() -> void :
     go_again_button = get_node_or_null("%Go Again")
     demo_mode_label = get_node_or_null("%Demo Mode Label")
     wishlist_button = get_node_or_null("%Wishlist")
+    popup_layer = get_node_or_null("%Popup Layer")
+    _bind_popup_layer_visibility_updates()
     _setup_wishlist_button()
     _setup_continue_locked_dialog()
     _update_go_again_button_state()
@@ -562,12 +565,57 @@ func _sync_simulation_currency_from_save() -> void:
 func _is_demo_mode_enabled() -> bool:
     return bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
 
+func _bind_demo_label_visibility_to_popup(control: Node) -> void:
+    if control == null or not is_instance_valid(control):
+        return
+    if not control.visibility_changed.is_connected(_refresh_demo_mode_label_visibility):
+        control.visibility_changed.connect(_refresh_demo_mode_label_visibility)
+
+func _bind_popup_layer_visibility_updates() -> void:
+    if popup_layer == null or not is_instance_valid(popup_layer):
+        return
+    if not popup_layer.child_entered_tree.is_connected(_on_popup_layer_child_entered_tree):
+        popup_layer.child_entered_tree.connect(_on_popup_layer_child_entered_tree)
+    if not popup_layer.child_exiting_tree.is_connected(_on_popup_layer_child_exiting_tree):
+        popup_layer.child_exiting_tree.connect(_on_popup_layer_child_exiting_tree)
+    for child in popup_layer.get_children():
+        if child is CanvasItem:
+            _bind_demo_label_visibility_to_popup(child as CanvasItem)
+
+func _on_popup_layer_child_entered_tree(node: Node) -> void:
+    if node is CanvasItem:
+        _bind_demo_label_visibility_to_popup(node as CanvasItem)
+    _refresh_demo_mode_label_visibility()
+
+func _on_popup_layer_child_exiting_tree(_node: Node) -> void:
+    _refresh_demo_mode_label_visibility()
+
+func _is_any_popup_visible() -> bool:
+    if battle_level_choice_dialog != null and is_instance_valid(battle_level_choice_dialog) and battle_level_choice_dialog.visible:
+        return true
+    if reset_progress_confirm_dialog != null and is_instance_valid(reset_progress_confirm_dialog) and reset_progress_confirm_dialog.visible:
+        return true
+    if legacy_reset_dialog != null and is_instance_valid(legacy_reset_dialog) and legacy_reset_dialog.visible:
+        return true
+    if settings_panel != null and is_instance_valid(settings_panel) and settings_panel.visible:
+        return true
+    if continue_locked_panel != null and is_instance_valid(continue_locked_panel) and continue_locked_panel.visible:
+        return true
+    if popup_layer != null and is_instance_valid(popup_layer):
+        for child in popup_layer.get_children():
+            if child is CanvasItem and (child as CanvasItem).visible:
+                return true
+    return false
+
+func _refresh_demo_mode_label_visibility() -> void:
+    if demo_mode_label != null and is_instance_valid(demo_mode_label):
+        demo_mode_label.visible = _is_demo_mode_enabled() and not _is_any_popup_visible()
+
 func _get_demo_wishlist_url() -> String:
     return str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, DEFAULT_DEMO_WISHLIST_URL)).strip_edges()
 
 func _setup_wishlist_button() -> void:
-    if demo_mode_label != null:
-        demo_mode_label.visible = _is_demo_mode_enabled()
+    _refresh_demo_mode_label_visibility()
     if wishlist_button == null:
         return
     wishlist_button.visible = _is_demo_mode_enabled()
@@ -620,6 +668,7 @@ func _setup_battle_level_choice_dialog() -> void:
         battle_level_choice_dialog.get_ok_button().hide()
         battle_level_choice_dialog.get_cancel_button().hide()
         parent_layer.add_child(battle_level_choice_dialog)
+    _bind_demo_label_visibility_to_popup(battle_level_choice_dialog)
     _style_battle_level_choice_dialog()
     if not battle_level_choice_dialog.custom_action.is_connected(_on_battle_level_choice_action):
         battle_level_choice_dialog.custom_action.connect(_on_battle_level_choice_action)
@@ -978,6 +1027,7 @@ func _setup_reset_progress_controls() -> void:
     reset_progress_confirm_dialog.title = tr("UPGRADE_CONFIRM_RESET_TITLE")
     reset_progress_confirm_dialog.dialog_text = tr("UPGRADE_CONFIRM_RESET_BODY")
     reset_progress_confirm_dialog.confirmed.connect(_on_reset_progress_confirmed)
+    _bind_demo_label_visibility_to_popup(reset_progress_confirm_dialog)
     var ok_button: Button = reset_progress_confirm_dialog.get_ok_button()
     if ok_button != null:
         ok_button.text = tr("UI_YES")
@@ -992,6 +1042,7 @@ func _setup_reset_progress_controls() -> void:
     legacy_reset_dialog.dialog_text = tr("UPGRADE_LEGACY_RESET_BODY")
     legacy_reset_dialog.confirmed.connect(_on_legacy_reset_confirmed)
     legacy_reset_dialog.canceled.connect(_on_legacy_reset_canceled)
+    _bind_demo_label_visibility_to_popup(legacy_reset_dialog)
     var continue_button: Button = legacy_reset_dialog.get_ok_button()
     if continue_button != null:
         continue_button.text = tr("UI_CONTINUE")
@@ -1191,6 +1242,7 @@ func _setup_settings_controls() -> void:
     settings_panel.visible = false
     settings_panel.mouse_filter = Control.MOUSE_FILTER_STOP
     _style_utility_button_panel(settings_panel)
+    _bind_demo_label_visibility_to_popup(settings_panel)
     %CanvasLayer2.add_child(settings_panel)
 
     var margin: MarginContainer = MarginContainer.new()
@@ -1347,6 +1399,7 @@ func _setup_continue_locked_dialog() -> void:
     continue_locked_panel.visible = false
     continue_locked_panel.mouse_filter = Control.MOUSE_FILTER_STOP
     _style_utility_button_panel(continue_locked_panel)
+    _bind_demo_label_visibility_to_popup(continue_locked_panel)
     parent_layer.add_child(continue_locked_panel)
 
     var margin: MarginContainer = MarginContainer.new()
