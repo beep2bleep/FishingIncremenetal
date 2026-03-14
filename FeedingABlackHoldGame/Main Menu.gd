@@ -210,7 +210,7 @@ func _on_quit_pressed() -> void :
 
 
 func _on_wishlist_pressed() -> void :
-    OS.shell_open("https://store.steampowered.com/app/3694480/A_Game_About_A_Black_Hole/")
+    OS.shell_open(SteamHandler.get_store_url())
 
 
 func _on_discord_pressed() -> void :

@@ -1,5 +1,9 @@
 extends Node
 
+const STEAM_APP_ID := 4519820
+const STEAM_STORE_PATH := "Vanguard__Idle_Auto_Battler"
+const STEAM_STORE_URL := "https://store.steampowered.com/app/%s/%s/" % [STEAM_APP_ID, STEAM_STORE_PATH]
+
 
 enum ACHIVEMENTS{
     GROW_BLACK_HOLE, 
@@ -36,7 +40,7 @@ enum ACHIVEMENTS{
 
 }
 
-var app_id = 3694480
+var app_id = STEAM_APP_ID
 signal steamworks_error
 var steam_enabled: bool = false
 
@@ -46,6 +50,10 @@ var statistics: Dictionary = {
 
 }
 var achievements: Dictionary = {}
+
+
+func get_store_url() -> String:
+    return STEAM_STORE_URL
 
 func is_steam_deck():
     if not steam_enabled:

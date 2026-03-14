@@ -104,7 +104,7 @@ func _on_start_epilogue_pressed() -> void :
 
 
 func _on_buy_the_game_pressed() -> void :
-    OS.shell_open("https://store.steampowered.com/app/3694480/A_Game_About_Feeding_A_Black_Hole/")
+    OS.shell_open(SteamHandler.get_store_url())
 
 
 func _on_play_new_modes_pressed() -> void :

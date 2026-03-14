@@ -5531,6 +5531,9 @@ func _setup_battle_summary_hints() -> void:
 func _build_battle_summary_hints() -> Array[String]:
     var hints: Array[String] = []
     for hint in DEFAULT_BATTLE_HINTS:
+        if hint == "BATTLE_HINT_DEFAULT_07" and not _is_demo_mode_enabled():
+            hints.append(tr("GAME_OVER_THANK_YOU"))
+            continue
         hints.append(tr(hint))
     if not SaveHandler.has_fishing_upgrade("recruit_archer"):
         hints.append(tr("BATTLE_HINT_RECRUIT_ARCHER"))
