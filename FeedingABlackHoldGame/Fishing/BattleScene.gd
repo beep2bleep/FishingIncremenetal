@@ -6155,7 +6155,7 @@ func _set_next_battle_level_and_exit(level: int) -> void:
     Global.ensure_default_game_mode_data()
     Global.start_in_upgrade_scene = true
     Global.load_saved_run = false
-    SceneChanger.change_to_new_scene(Util.PATH_MAIN)
+    SceneChanger.change_to_new_scene(Util.get_main_scene_path())
 
 func _sync_level_choice_from_input(max_level: int) -> void:
     if level_choice_line_edit == null:

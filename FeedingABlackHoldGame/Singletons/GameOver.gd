@@ -86,7 +86,7 @@ func _on_main_menu_pressed() -> void :
     Global.game_state = Util.GAME_STATES.MAIN_MENU
     SaveHandler.save_player_last_run()
     get_tree().paused = false
-    SceneChanger.change_to_new_scene(Util.PATH_MAIN_MENU)
+    SceneChanger.change_to_new_scene(Util.get_main_menu_scene_path())
 
 func _on_start_epilogue_pressed() -> void :
     is_shown = false
@@ -108,4 +108,4 @@ func _on_buy_the_game_pressed() -> void :
 
 
 func _on_play_new_modes_pressed() -> void :
-    SceneChanger.change_to_new_scene(Util.PATH_MAIN_MENU, MainMenu.STATES.GAME_MODE)
+    SceneChanger.change_to_new_scene(Util.get_main_menu_scene_path(), MainMenu.STATES.GAME_MODE)

@@ -2,7 +2,6 @@ extends Node
 
 const STEAM_APP_ID := 4519820
 const STEAM_STORE_PATH := "Vanguard__Idle_Auto_Battler"
-const STEAM_STORE_URL := "https://store.steampowered.com/app/%s/%s/" % [STEAM_APP_ID, STEAM_STORE_PATH]
 
 
 enum ACHIVEMENTS{
@@ -53,7 +52,7 @@ var achievements: Dictionary = {}
 
 
 func get_store_url() -> String:
-    return STEAM_STORE_URL
+    return "https://store.steampowered.com/app/%s/%s/" % [STEAM_APP_ID, STEAM_STORE_PATH]
 
 func is_steam_deck():
     if not steam_enabled:

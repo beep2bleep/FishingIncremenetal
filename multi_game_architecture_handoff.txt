@@ -1,0 +1,370 @@
+Multi-game architecture handoff
+
+Purpose
+- This project now supports two game modes in one Godot project:
+  - Vanguard
+  - Mining
+- The intent is to keep shared systems shared, while making top-level scene flow and future game-specific work much safer for Codex and for manual development.
+
+What was changed
+
+1. Startup is now config-driven
+- `FeedingABlackHoldGame/project.godot` no longer starts directly in the old main gameplay scene.
+- It now starts in:
+  - `res://Core/Boot/AppBootstrap.tscn`
+- Bootstrap reads Godot project settings and opens the configured starting scene.
+
+Relevant settings
+- `global/ActiveGame`
+  - `"vanguard"` or `"mining"`
+- `global/StartScreen`
+  - `"menu"` or `"upgrade"`
+- Existing demo mode remains:
+  - `global/Demo`
+
+2. Game selection is handled through shared path helpers
+- `FeedingABlackHoldGame/Util.gd` now contains helper methods for:
+  - active game detection
+  - start screen detection
+  - selecting the correct menu scene
+  - selecting the correct battle scene
+  - selecting the shared upgrade scene
+
+Important idea
+- Old generic constants still exist for compatibility, but new flow should prefer helper functions like:
+  - `Util.get_main_menu_scene_path()`
+  - `Util.get_upgrade_scene_path()`
+  - `Util.get_battle_scene_path()`
+  - `Util.get_configured_start_scene_path()`
+
+3. The project now has game-specific wrapper folders
+- New structure added:
+
+  `res://Core/Boot/`
+  - `AppBootstrap.tscn`
+  - `AppBootstrap.gd`
+
+  `res://Games/Vanguard/Menus/`
+  - `VanguardMainMenu.tscn`
+  - `VanguardMainMenu.gd`
+
+  `res://Games/Vanguard/Scenes/`
+  - `VanguardMain.tscn`
+  - `VanguardMain.gd`
+  - `VanguardBattleScene.tscn`
+  - `VanguardBattleScene.gd`
+
+  `res://Games/Mining/Menus/`
+  - `MiningMainMenu.tscn`
+  - `MiningMainMenu.gd`
+
+  `res://Games/Mining/Scenes/`
+  - `MiningBattleScene.tscn`
+  - `MiningBattleScene.gd`
+
+Why wrappers were used
+- The current project still has many old assets and references in the original `FeedingABlackHoldGame` root.
+- Instead of moving everything at once, wrapper scenes/scripts give each game a stable home now.
+- This keeps behavior mostly intact while making future migration much easier.
+
+4. The upgrade scene is still shared
+- The existing upgrade scene remains the shared screen:
+  - `res://UpgradeScreen.tscn`
+  - `res://UpgradeScreen.gd`
+- It now changes behavior based on the active game.
+
+Current Mining-specific behavior in the shared upgrade screen
+- When `global/ActiveGame = "mining"`:
+  - the upgrade screen shows a `MINING MODE` label
+  - launching battle from upgrades loads the Mining battle scene
+- Demo mode still works on the shared upgrade screen.
+
+5. Mining battle currently reuses Vanguard battle content
+- Mining currently launches:
+  - `res://Games/Mining/Scenes/MiningBattleScene.tscn`
+- This is intentionally a wrapper around the current battle scene for now.
+- It includes a `MINING MODE` label so it is visually obvious which mode is active.
+
+This is only a temporary content state
+- The architecture is split enough to launch a separate game path.
+- Mining gameplay itself is not yet mechanically separated from Vanguard.
+- Right now it is "same battle scene, different entry path and mode label."
+
+6. Per-game progression save separation was added
+- Shared local settings remain shared.
+- The fishing/battle-style progression save now uses a different file depending on the active game.
+
+Current behavior
+- Vanguard progression:
+  - `user://fishing_incremental_progress.save`
+- Mining progression:
+  - `user://mining_incremental_progress.save`
+
+Why this matters
+- You can switch between Vanguard and Mining without the two modes overwriting each other's upgrade progress.
+
+Architecture intent going forward
+
+Core principle
+- One Godot project
+- One shared platform layer
+- Two game modules
+- Shared scenes only when the behavior is truly generic
+
+How to think about the codebase now
+
+Shared layer
+- Input behavior
+- Gamepad support
+- Settings menus
+- Audio systems
+- Scene transitions
+- Common UI helpers
+- Shared upgrade scene shell if it remains generic enough
+
+Vanguard layer
+- Vanguard menu branding
+- Vanguard battle gameplay
+- Vanguard data and balance
+- Vanguard-specific upgrade effects and content
+
+Mining layer
+- Mining menu branding
+- Mining gameplay
+- Mining data and balance
+- Mining-specific upgrade effects and content
+
+What should stay shared
+- Anything that improves both games without knowing what the game is
+- Examples:
+  - controller navigation improvements
+  - settings improvements
+  - fullscreen/audio/input changes
+  - dialog helpers
+  - shared upgrade navigation behavior
+  - virtual cursor behavior
+  - scene transition polish
+
+What should become game-specific
+- Upgrade content
+- Gameplay rules
+- Balance values
+- Win/loss logic
+- Battle/mining scene-specific UI
+- Save fields that describe one game's progression
+
+How the two games should be developed in the future
+
+Recommended rule of thumb
+- If a change is about "how the app behaves," put it in shared code.
+- If a change is about "what this game is," put it in the game folder.
+
+Shared development examples
+- "Improve controller focus movement in the upgrade UI"
+- "Make settings open faster"
+- "Improve audio mute behavior"
+- "Make scene transitions cleaner"
+
+Vanguard-only development examples
+- "Adjust archer scaling"
+- "Add a new Vanguard upgrade"
+- "Change Vanguard main menu layout"
+- "Modify Vanguard battle flow"
+
+Mining-only development examples
+- "Add ore generation"
+- "Create drill heat mechanic"
+- "Add mine depth progression"
+- "Change Mining main menu art"
+- "Add Mining-only upgrade effects"
+
+Important Codex guidance
+- Always mention the target game in prompts.
+- Always mention the target path in prompts.
+
+Good prompt examples
+- "Work only in `res://Games/Mining/` unless shared code under `res://Core/` must change."
+- "Update Mining battle scene only. Do not touch Vanguard."
+- "Improve shared gamepad navigation in the upgrade scene. Keep the change game-agnostic."
+- "Add Mining upgrade data loading without changing Vanguard upgrade data."
+
+Bad prompt examples
+- "Update the main menu"
+- "Change the upgrade scene"
+- "Modify the battle scene"
+
+Those are too generic and make it easier for Codex to touch the wrong files.
+
+How shared upgrade development should work
+
+Current state
+- The upgrade scene is shared.
+- The data and effect application are still not fully separated by game.
+
+Target state
+- Keep one shared upgrade presentation layer only if it still makes sense.
+- Split game-specific content behind that shared layer.
+
+Ideal future split
+- Shared:
+  - common upgrade UI shell
+  - navigation, purchase flow, button prompts, controller support
+- Vanguard:
+  - Vanguard upgrade definitions
+  - Vanguard upgrade effect application
+- Mining:
+  - Mining upgrade definitions
+  - Mining upgrade effect application
+
+Practical rule
+- Shared upgrade code should not know what specific upgrades mean.
+- Shared code should know only:
+  - upgrade key
+  - cost
+  - level
+  - requirements
+  - display text
+- Game-specific code should interpret those upgrades into gameplay effects.
+
+Recommended next steps
+
+Short term
+1. Confirm this split works in Godot.
+2. Make Mining menu art/text distinct enough to avoid confusion.
+3. Separate Mining upgrade data from Vanguard upgrade data.
+4. Separate Mining gameplay logic from the copied Vanguard battle scene.
+
+Medium term
+1. Move more Vanguard-specific entry files under `Games/Vanguard/`.
+2. Add Mining runtime state and Mining save fields cleanly.
+3. Reduce reliance on generic root-level scene names.
+4. Split save handling into:
+   - shared settings
+   - Vanguard progression
+   - Mining progression
+
+Long term
+1. Decide whether the shared upgrade scene stays shared forever or becomes:
+   - one shared base scene plus game-specific wrappers
+2. Move more old root-level scenes into explicit game folders.
+3. Shrink the amount of game-specific logic living in `Global.gd` and `SaveHandler.gd`.
+
+What not to do from here
+- Do not add Mining-specific logic directly into random Vanguard files if it can live under `Games/Mining/`.
+- Do not add more generic top-level names for new game-specific scenes.
+- Do not let Mining and Vanguard reuse one progression file.
+- Do not ask Codex to work on "the menu" or "the upgrade scene" without naming the game.
+
+Current important files
+
+Boot and config
+- `FeedingABlackHoldGame/project.godot`
+- `FeedingABlackHoldGame/Core/Boot/AppBootstrap.tscn`
+- `FeedingABlackHoldGame/Core/Boot/AppBootstrap.gd`
+- `FeedingABlackHoldGame/Util.gd`
+
+Shared upgrade flow
+- `FeedingABlackHoldGame/UpgradeScreen.tscn`
+- `FeedingABlackHoldGame/UpgradeScreen.gd`
+
+Save split
+- `FeedingABlackHoldGame/SaveHandler.gd`
+
+Game-specific wrappers
+- `FeedingABlackHoldGame/Games/Vanguard/...`
+- `FeedingABlackHoldGame/Games/Mining/...`
+
+Verification checklist
+
+Project config checks
+- Open `project.godot` in Godot and confirm the project loads without config errors.
+- Confirm `run/main_scene` is `res://Core/Boot/AppBootstrap.tscn`.
+- Confirm these project settings exist under `global`:
+  - `Build`
+  - `Demo`
+  - `DemoWishlistUrl`
+  - `ActiveGame`
+  - `StartScreen`
+
+Vanguard startup checks
+- Set `global/ActiveGame = "vanguard"`.
+- Set `global/StartScreen = "menu"`.
+- Run the project.
+- Confirm the Vanguard main menu opens.
+- Press Play/New Game.
+- Confirm the shared upgrade scene opens.
+- Confirm the upgrade scene does not show `MINING MODE`.
+- Start a run from the upgrade scene.
+- Confirm the Vanguard battle scene opens.
+- Exit back through the usual flow and confirm it returns to the Vanguard menu.
+
+Mining startup checks
+- Set `global/ActiveGame = "mining"`.
+- Set `global/StartScreen = "menu"`.
+- Run the project.
+- Confirm the Mining menu opens.
+- Confirm the title text says `MINING MODE`.
+- Press Play/New Game.
+- Confirm the shared upgrade scene opens.
+- Confirm the shared upgrade scene shows `MINING MODE`.
+- Start a run from the upgrade scene.
+- Confirm the Mining battle scene opens.
+- Confirm the Mining battle scene shows `MINING MODE`.
+
+Direct-start checks
+- Set `global/StartScreen = "upgrade"` with `ActiveGame = "vanguard"`.
+- Run the project.
+- Confirm the shared upgrade scene opens directly.
+- Start a run and confirm Vanguard battle opens.
+- Set `global/StartScreen = "upgrade"` with `ActiveGame = "mining"`.
+- Run the project.
+- Confirm the shared upgrade scene opens directly with the Mining label.
+- Start a run and confirm Mining battle opens.
+
+Demo mode checks
+- With `global/Demo = true`, run Vanguard.
+- Confirm demo messaging still appears where it used to.
+- With `global/Demo = true`, run Mining.
+- Confirm demo messaging still appears on the shared upgrade screen together with Mining mode labeling.
+- With `global/Demo = false`, run Mining.
+- Confirm the demo label disappears while the Mining label remains.
+
+Save separation checks
+- Run Vanguard and buy at least one upgrade or change progression.
+- Close the game.
+- Run Mining and confirm it does not inherit Vanguard progression.
+- Make Mining progression changes.
+- Return to Vanguard and confirm Vanguard progression still exists.
+- Confirm both modes can keep distinct progress.
+
+Shared system checks
+- Test controller/gamepad in Vanguard menu, upgrade scene, and battle.
+- Test controller/gamepad in Mining menu, upgrade scene, and battle.
+- Confirm settings changes affect both games:
+  - audio volume
+  - mute
+  - fullscreen
+  - touch/confirm setting if applicable
+- Confirm scene transitions still work across both games.
+
+Regression checks
+- Confirm Vanguard game over flow still works.
+- Confirm returning to menu still works.
+- Confirm no scene path errors appear in the Godot output.
+- Confirm there are no missing script/resource warnings for the new wrapper scenes.
+
+If something fails, likely places to inspect first
+- `Util.gd`
+  - wrong path helper
+- `project.godot`
+  - wrong project setting value
+- wrapper scenes under `Games/Vanguard/` or `Games/Mining/`
+  - bad inherited scene/script wiring
+- `UpgradeScreen.gd`
+  - wrong active-game branch
+- `SaveHandler.gd`
+  - wrong save file routing
+
+Suggested next dev milestone
+- Split Mining upgrade data from Vanguard upgrade data while keeping the upgrade scene shared.
+- That is the next clean architectural step after this launch-path split.

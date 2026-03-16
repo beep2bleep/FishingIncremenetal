@@ -1,0 +1,392 @@
+Project note: adding a second incremental game to this codebase
+
+Context observed in the current repo
+- The active Godot project appears to live under `FeedingABlackHoldGame/`.
+- Startup currently goes through `res://Singletons/Main.tscn` from `FeedingABlackHoldGame/project.godot`.
+- There is already a strong split between shared/autoload-style systems and game-specific content, but some boundaries are blurry.
+- `SaveHandler.gd` currently mixes shared settings with fishing-specific progression.
+- `Global.gd` also mixes shared bootstrap state with game-specific assumptions.
+- Current scene constants in `Util.gd` already distinguish menu, upgrades, and battle scenes for the Vanguard/fishing game.
+
+High-level recommendation
+- Keep this as one Godot project.
+- Treat it as a "multi-game project" with:
+  - one shared core layer
+  - one Vanguard game module
+  - one Mining game module
+- Use a small boot scene to decide which game starts.
+- Make game identity explicit in folder names, class names, save keys, scene names, and config resources.
+- Avoid generic names for game-specific files. That is the biggest thing that will keep Codex from touching the wrong scene.
+
+Best mental model
+- Shared core = systems that should work for both games.
+- Game module = everything that is about one game's rules, content, balance, upgrade data, and main play scenes.
+- Boot layer = chooses which menu or game scene to open first.
+
+Recommended folder layout
+- Keep `FeedingABlackHoldGame/` as the Godot root for now if you do not want to migrate the project.
+- Inside it, gradually move toward this structure:
+
+  `res://Core/`
+  - Boot/
+  - Audio/
+  - UI/
+  - Save/
+  - Settings/
+  - SceneFlow/
+  - UpgradesShared/
+  - DataTypes/
+  - Debug/
+
+  `res://Games/Vanguard/`
+  - Scenes/
+  - UI/
+  - Data/
+  - Audio/
+  - Gameplay/
+  - Upgrades/
+  - Menus/
+
+  `res://Games/Mining/`
+  - Scenes/
+  - UI/
+  - Data/
+  - Audio/
+  - Gameplay/
+  - Upgrades/
+  - Menus/
+
+  `res://SharedAssets/`
+  - Music/
+  - SFX/
+  - Fonts/
+  - Materials/
+  - CommonArt/
+
+You do not need to do this all at once. A gradual move is safer.
+
+What should be shared
+- Settings UI and settings persistence.
+- Audio buses, music player, sound effect playback helpers.
+- Scene changing / transitions.
+- Generic modal UI, tooltips, controller glyph helpers, flair helpers.
+- Shared upgrade framework if the underlying concepts are the same:
+  - upgrade definitions
+  - upgrade purchase flow
+  - requirement checking
+  - price calculation
+  - save/load of owned levels
+  - shared upgrade widgets if they are visual variants of the same feature
+- Common utility classes and generic resources.
+
+What should not be shared
+- Anything that encodes Vanguard-specific combat, fish/battle balance, black hole assumptions, or specific upgrade keys.
+- Anything that encodes Mining-specific ore generation, drill/miner logic, mine depth, refinery logic, or mining upgrade keys.
+- Main gameplay scenes.
+- Game-specific main menus.
+- Game-specific data JSON.
+- Game-specific progression saves.
+
+Important rule for Codex safety
+- Shared files should be clearly named `Shared`, `Core`, or `Common`.
+- Game-specific files should always carry the game name in the path and usually in the class name.
+
+Good examples
+- `res://Games/Vanguard/Scenes/VanguardMain.tscn`
+- `res://Games/Vanguard/UI/VanguardUpgradeScreen.tscn`
+- `res://Games/Mining/Scenes/MiningMain.tscn`
+- `res://Games/Mining/UI/MiningUpgradeScreen.tscn`
+- `class_name VanguardUpgradeScreen`
+- `class_name MiningUpgradeScreen`
+
+Bad examples
+- `res://UpgradeScreen.tscn`
+- `res://Main Menu.tscn`
+- `class_name Main`
+- `class_name MainMenu`
+
+Those generic names are exactly how Codex ends up editing the wrong thing.
+
+Boot / startup strategy
+- Replace "one main gameplay scene" as the true entrypoint with a small boot scene.
+- Example flow:
+  1. `project.godot` starts `res://Core/Boot/AppBootstrap.tscn`
+  2. Bootstrap loads shared autoload state
+  3. Bootstrap checks a config value or debug override
+  4. Bootstrap opens:
+     - a shared launcher menu, or
+     - Vanguard main menu, or
+     - Mining main menu
+
+Recommended startup options
+- Production default:
+  - start at a shared launcher menu with buttons for Vanguard and Mining
+- Dev convenience:
+  - a debug setting like `BootConfig.default_game = "mining"` or `"vanguard"`
+  - optionally `BootConfig.start_scene = "upgrade"` for direct iteration
+
+This gives you one project but flexible entry points.
+
+Main menu strategy
+- Have 3 menus, not 2:
+  - Shared launcher menu
+  - Vanguard main menu
+  - Mining main menu
+- The shared launcher menu is very small and only chooses the game.
+- The game-specific menus own their own art, text, continue/new game buttons, and game-specific sub-options.
+- Settings can still open the same shared settings panel.
+
+This is better than forcing one menu to understand both games' internal logic.
+
+Upgrade system strategy
+- You said you want to share much of the upgrade logic. That is a good fit, but only if you separate "engine" from "content".
+
+Split the upgrade system into 3 layers
+
+1. Shared upgrade engine
+- Example responsibilities:
+  - load upgrade definitions
+  - track owned level
+  - compute affordability
+  - compute next cost
+  - validate prerequisites
+  - emit signals when upgrades change
+  - generic save/load helpers
+
+2. Game-specific upgrade data
+- Vanguard:
+  - `res://Games/Vanguard/Data/VanguardUpgradeData.json`
+- Mining:
+  - `res://Games/Mining/Data/MiningUpgradeData.json`
+
+3. Game-specific upgrade effect application
+- Vanguard applies upgrade keys to combat/battle systems.
+- Mining applies upgrade keys to mining/drill/smelting/income systems.
+
+Very important:
+- Do not let shared upgrade code know what `recruit_archer` or `drill_speed_1` means.
+- Shared code should only know that a key exists, has levels, cost, tags, dependencies, and so on.
+- Game-specific effect appliers translate owned upgrade levels into gameplay modifiers.
+
+Practical structure for upgrades
+- Shared:
+  - `res://Core/UpgradesShared/UpgradeDefinition.gd`
+  - `res://Core/UpgradesShared/UpgradeManager.gd`
+  - `res://Core/UpgradesShared/UpgradeSaveAdapter.gd`
+  - `res://Core/UpgradesShared/UpgradeTreeView.gd` if both use the same tree UI
+- Vanguard:
+  - `res://Games/Vanguard/Upgrades/VanguardUpgradeCatalog.gd`
+  - `res://Games/Vanguard/Upgrades/VanguardUpgradeEffects.gd`
+  - `res://Games/Vanguard/UI/VanguardUpgradeScreen.tscn`
+- Mining:
+  - `res://Games/Mining/Upgrades/MiningUpgradeCatalog.gd`
+  - `res://Games/Mining/Upgrades/MiningUpgradeEffects.gd`
+  - `res://Games/Mining/UI/MiningUpgradeScreen.tscn`
+
+Scene ownership strategy
+- Each game gets its own root gameplay scene.
+- Each game gets its own upgrade scene.
+- Shared systems are injected into or called by those scenes, but scenes do not share names.
+
+Recommended scene naming
+- Vanguard:
+  - `VanguardMain.tscn`
+  - `VanguardMainMenu.tscn`
+  - `VanguardUpgradeScreen.tscn`
+- Mining:
+  - `MiningMain.tscn`
+  - `MiningMainMenu.tscn`
+  - `MiningUpgradeScreen.tscn`
+
+Recommended script naming
+- `VanguardMain.gd`
+- `MiningMain.gd`
+- `VanguardUpgradeScreen.gd`
+- `MiningUpgradeScreen.gd`
+
+If you do only one thing for Codex safety, do this naming cleanup.
+
+Save system strategy
+- Split shared local settings from per-game progression.
+
+One shared save area
+- settings
+- controller settings
+- audio settings
+- graphics settings
+- maybe shared achievements metadata if needed
+
+Separate progression per game
+- `user://vanguard_progress.save`
+- `user://mining_progress.save`
+- optionally separate run-state files too
+
+Recommended code split
+- `Core/Save/SharedSettingsStore.gd`
+- `Games/Vanguard/Save/VanguardSaveStore.gd`
+- `Games/Mining/Save/MiningSaveStore.gd`
+
+Based on the current repo, this is better than growing `SaveHandler.gd` into a three-game giant.
+
+Global state strategy
+- Current `Global.gd` is doing too much for a multi-game future.
+- Keep one small global app state, then give each game its own runtime/session state object.
+
+Recommended split
+- `AppState.gd`
+  - current selected game
+  - references to shared services
+  - boot/debug flags
+- `VanguardRuntime.gd`
+  - current Vanguard run/session references
+- `MiningRuntime.gd`
+  - current Mining run/session references
+
+This prevents fields like `Global.black_hole` from existing in contexts where mining is active.
+
+Game identification
+- Introduce a simple enum or string IDs:
+  - `vanguard`
+  - `mining`
+
+Use this in:
+- bootstrap
+- save paths
+- debug launch settings
+- scene resolver
+- analytics if needed
+
+Scene resolver pattern
+- Instead of hardcoding generic paths in `Util.gd`, create a per-game scene registry.
+
+Example idea
+- `Core/Boot/GameRegistry.gd`
+  - maps `vanguard` to its menus/main scenes
+  - maps `mining` to its menus/main scenes
+
+That lets you ask Codex to "change Mining main menu flow" without touching Vanguard constants.
+
+Data strategy
+- Keep balance/content data separate by game.
+- Do not put mining upgrades into the current fishing JSON.
+- Do not put mining scene references into Vanguard data.
+
+Recommended examples
+- `Games/Vanguard/Data/VanguardUpgradeData.json`
+- `Games/Vanguard/Data/VanguardBalance.json`
+- `Games/Mining/Data/MiningUpgradeData.json`
+- `Games/Mining/Data/MiningBalance.json`
+
+Shared content data is okay if truly neutral
+- sound bank definitions
+- music playlist metadata
+- settings defaults
+
+Audio sharing strategy
+- Share:
+  - buses
+  - music player node
+  - sound effect playback helpers
+  - common sound library
+- Keep optional per-game playlists and named event mappings separate.
+
+Example
+- Shared:
+  - `Core/Audio/MusicPlayer.tscn`
+  - `Core/Audio/SfxPlayer.gd`
+- Vanguard:
+  - `Games/Vanguard/Audio/VanguardAudioMap.tres`
+- Mining:
+  - `Games/Mining/Audio/MiningAudioMap.tres`
+
+This lets both games reuse the same audio machinery while having different event names and cue choices.
+
+How to keep Codex work separated
+- Use paths and names that make the target obvious.
+- Put a short `AGENTS.md` or `README_codex.md` inside each game folder if useful.
+- When prompting Codex, always include the game/module name and path.
+
+Prompting pattern that will work well
+- "Work only in `res://Games/Mining/` unless you must touch shared code under `res://Core/`."
+- "Do not modify anything under `res://Games/Vanguard/`."
+- "Implement this in `MiningUpgradeScreen.tscn` and `MiningUpgradeScreen.gd`, not the Vanguard upgrade screen."
+- "If you think shared code should change, keep the change generic and game-agnostic."
+
+Good Codex request examples
+- "Add a mining drill heat mechanic in `Games/Mining/Gameplay/` and wire its UI in `Games/Mining/UI/MiningMainHud.tscn`. Do not touch Vanguard."
+- "Refactor shared upgrade price calculation into `Core/UpgradesShared/UpgradeManager.gd`, then update both game-specific callers."
+- "Add a new button to `Games/Vanguard/Menus/VanguardMainMenu.tscn` only."
+
+Refactoring order I would use
+1. Create explicit game folders and future-safe names.
+2. Add bootstrap/launcher scene.
+3. Split saves into shared settings vs per-game progression.
+4. Split `Global` into app-wide state vs per-game runtime state.
+5. Extract shared upgrade engine.
+6. Create Mining scenes and data using the shared engine.
+7. Only after that, start heavy Mining gameplay development.
+
+Why this order is best
+- It reduces confusion before a lot of new content exists.
+- It gives Codex clean boundaries early.
+- It avoids building Mining on top of mixed Vanguard assumptions.
+
+Minimal viable version if you want the fastest route
+- If you do not want a large refactor yet, do this smaller version:
+  - keep the same Godot project
+  - add `Games/Mining/`
+  - add `MiningMain.tscn`, `MiningMainMenu.tscn`, `MiningUpgradeScreen.tscn`
+  - add a tiny launcher scene as the new `run/main_scene`
+  - leave shared settings/audio alone for now
+  - create separate mining save files in the existing save system
+  - do not reuse generic file names for any new mining scenes
+
+That smaller plan still gives you most of the Codex safety benefit.
+
+Specific issues in the current codebase to address before Mining grows
+- `res://UpgradeScreen.tscn` is too generic.
+- `res://Main Menu.tscn` is too generic.
+- `Global.gd` contains game-specific fields like `black_hole`.
+- `SaveHandler.gd` contains both shared settings and fishing-specific progression.
+- `Util.gd` has generic scene constants pointing at one game's scenes.
+
+I would rename or wrap those before a lot of Mining work.
+
+Suggested naming migration
+- Existing Vanguard assets can be renamed gradually:
+  - `UpgradeScreen.tscn` -> `Games/Vanguard/UI/VanguardUpgradeScreen.tscn`
+  - `Main Menu.tscn` -> `Games/Vanguard/Menus/VanguardMainMenu.tscn`
+  - `Singletons/Main.tscn` -> `Games/Vanguard/Scenes/VanguardMain.tscn`
+
+If renaming right now feels risky, create wrapper scenes in the new paths first, then migrate internals later.
+
+How I would ask Codex to help during the transition
+- Phase 1 prompt:
+  - "Create a new bootstrap scene and launcher menu, but do not change Vanguard gameplay behavior."
+- Phase 2 prompt:
+  - "Move current Vanguard main menu and upgrade screen into `Games/Vanguard/...` with renamed scene/script files, preserving behavior."
+- Phase 3 prompt:
+  - "Extract shared settings persistence from `SaveHandler.gd` into a new shared settings store and keep behavior unchanged."
+- Phase 4 prompt:
+  - "Create the initial Mining module folders, stub scenes, and save store with no gameplay yet."
+
+What not to do
+- Do not keep adding more game-specific state to the existing `Global.gd` and `SaveHandler.gd`.
+- Do not use one `UpgradeScreen.tscn` for both games with many if-statements.
+- Do not let Mining and Vanguard share one progression file.
+- Do not keep generic scene names for new work.
+- Do not ask Codex to "update the upgrade scene" without specifying which game's scene.
+
+My recommendation in one sentence
+- Build this as one Godot project with a shared core and two clearly named game modules, then make game identity explicit everywhere so Codex can safely work in one module without drifting into the other.
+
+Suggested next implementation steps
+- Add `Core/Boot/AppBootstrap.tscn`
+- Add `Core/Boot/GameLauncher.tscn`
+- Create `Games/Vanguard/` and move or wrap current Vanguard entry scenes there
+- Create `Games/Mining/` with stub menu, main, and upgrade scenes
+- Split save handling into shared settings + per-game progression
+- Rename generic scenes/scripts that are currently Vanguard-specific
+
+If using this note in later Codex prompts, include a sentence like:
+- "Follow `mining_game_codex_architecture_notes.txt` as the project structure source of truth for multi-game separation."

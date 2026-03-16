@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://Singletons/Main.tscn" id="1"]
+[ext_resource type="Script" path="res://Games/Mining/Scenes/MiningMain.gd" id="2"]
+
+[node name="MiningMain" instance=ExtResource("1")]
+script = ExtResource("2")

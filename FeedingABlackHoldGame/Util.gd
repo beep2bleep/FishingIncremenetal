@@ -8,9 +8,74 @@ var PATH_MAIN_MENU = "res://Main Menu.tscn"
 var PATH_FISHING_UPGRADES = "res://UpgradeScreen.tscn"
 var PATH_FISHING_BATTLE = "res://Fishing/BattleScene.tscn"
 
+const ACTIVE_GAME_PROJECT_SETTING := "global/ActiveGame"
+const START_SCREEN_PROJECT_SETTING := "global/StartScreen"
+
+const ACTIVE_GAME_VANGUARD := "vanguard"
+const ACTIVE_GAME_MINING := "mining"
+
+const START_SCREEN_MENU := "menu"
+const START_SCREEN_UPGRADES := "upgrade"
+
+const PATH_APP_BOOTSTRAP := "res://Core/Boot/AppBootstrap.tscn"
+const PATH_GAME_LAUNCHER := "res://Core/Boot/GameLauncher.tscn"
+const PATH_VANGUARD_MAIN := "res://Games/Vanguard/Scenes/VanguardMain.tscn"
+const PATH_VANGUARD_MAIN_MENU := "res://Games/Vanguard/Menus/VanguardMainMenu.tscn"
+const PATH_VANGUARD_BATTLE := "res://Games/Vanguard/Scenes/VanguardBattleScene.tscn"
+const PATH_MINING_MAIN := "res://Games/Mining/Scenes/MiningMain.tscn"
+const PATH_MINING_MAIN_MENU := "res://Games/Mining/Menus/MiningMainMenu.tscn"
+const PATH_MINING_BATTLE := "res://Games/Mining/Scenes/MiningBattleScene.tscn"
+
 
 var dark_pallet = "res://Pallets/Dark_Pallet.tres"
 var light_pallet = "res://Pallets/Light_Pallet.tres"
+
+func get_active_game_id() -> String:
+    var active_game: String = str(ProjectSettings.get_setting(ACTIVE_GAME_PROJECT_SETTING, ACTIVE_GAME_VANGUARD)).strip_edges().to_lower()
+    if active_game != ACTIVE_GAME_MINING:
+        return ACTIVE_GAME_VANGUARD
+    return active_game
+
+func is_mining_game_active() -> bool:
+    return get_active_game_id() == ACTIVE_GAME_MINING
+
+func is_vanguard_game_active() -> bool:
+    return get_active_game_id() == ACTIVE_GAME_VANGUARD
+
+func set_active_game_id(game_id: String) -> void:
+    var normalized_game_id: String = str(game_id).strip_edges().to_lower()
+    if normalized_game_id != ACTIVE_GAME_MINING:
+        normalized_game_id = ACTIVE_GAME_VANGUARD
+    ProjectSettings.set_setting(ACTIVE_GAME_PROJECT_SETTING, normalized_game_id)
+
+func get_start_screen_id() -> String:
+    var start_screen: String = str(ProjectSettings.get_setting(START_SCREEN_PROJECT_SETTING, START_SCREEN_MENU)).strip_edges().to_lower()
+    if start_screen != START_SCREEN_UPGRADES:
+        return START_SCREEN_MENU
+    return start_screen
+
+func get_configured_start_scene_path() -> String:
+    if get_start_screen_id() == START_SCREEN_UPGRADES:
+        return get_main_scene_path()
+    return PATH_GAME_LAUNCHER
+
+func get_main_scene_path() -> String:
+    if is_mining_game_active():
+        return PATH_MINING_MAIN
+    return PATH_VANGUARD_MAIN
+
+func get_main_menu_scene_path() -> String:
+    if is_mining_game_active():
+        return PATH_MINING_MAIN_MENU
+    return PATH_VANGUARD_MAIN_MENU
+
+func get_upgrade_scene_path() -> String:
+    return PATH_FISHING_UPGRADES
+
+func get_battle_scene_path() -> String:
+    if is_mining_game_active():
+        return PATH_MINING_BATTLE
+    return PATH_VANGUARD_BATTLE
 
 
 enum GAME_MODES{

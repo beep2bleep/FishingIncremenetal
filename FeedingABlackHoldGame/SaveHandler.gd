@@ -534,8 +534,13 @@ func reset_fishing_progress() -> void:
     fishing_ufo_spawn_timer_remaining = -1.0
     fishing_battle_speed_index = 0
 
+func _get_fishing_progress_file_path() -> String:
+    if Util.is_mining_game_active():
+        return "user://mining_incremental_progress.save"
+    return fishing_progress_file_path
+
 func load_fishing_progress():
-    var json_data = Util.load_json_data_from_path(fishing_progress_file_path)
+    var json_data = Util.load_json_data_from_path(_get_fishing_progress_file_path())
     if json_data == null:
         reset_fishing_progress()
         return
@@ -594,7 +599,7 @@ func save_fishing_progress():
         "ufo_spawn_timer_remaining": fishing_ufo_spawn_timer_remaining,
         "battle_speed_index": fishing_battle_speed_index,
     }
-    var file = FileAccess.open(fishing_progress_file_path, FileAccess.WRITE)
+    var file = FileAccess.open(_get_fishing_progress_file_path(), FileAccess.WRITE)
     if file == null:
         return
     file.store_string(JSON.stringify(save_data))

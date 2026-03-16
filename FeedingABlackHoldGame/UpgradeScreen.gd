@@ -45,6 +45,7 @@ var settings_close_button: Button
 var reset_progress_button: Button
 var go_again_button: Button
 var demo_mode_label: Label
+var game_mode_label: Label
 var wishlist_button: Button
 var popup_layer: CanvasLayer
 var continue_locked_panel: PanelContainer
@@ -152,6 +153,7 @@ func _ready() -> void :
     _setup_touch_input_button()
     go_again_button = get_node_or_null("%Go Again")
     demo_mode_label = get_node_or_null("%Demo Mode Label")
+    game_mode_label = get_node_or_null("%Game Mode Label")
     wishlist_button = get_node_or_null("%Wishlist")
     popup_layer = get_node_or_null("%Popup Layer")
     _bind_popup_layer_visibility_updates()
@@ -610,6 +612,9 @@ func _is_any_popup_visible() -> bool:
 func _refresh_demo_mode_label_visibility() -> void:
     if demo_mode_label != null and is_instance_valid(demo_mode_label):
         demo_mode_label.visible = _is_demo_mode_enabled() and not _is_any_popup_visible()
+    if game_mode_label != null and is_instance_valid(game_mode_label):
+        game_mode_label.visible = Util.is_mining_game_active() and not _is_any_popup_visible()
+        game_mode_label.text = "MINING MODE" if Util.is_mining_game_active() else ""
 
 func _get_demo_wishlist_url() -> String:
     return str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, DEFAULT_DEMO_WISHLIST_URL)).strip_edges()
@@ -837,7 +842,7 @@ func _launch_battle_at_level(level: int) -> void:
     SaveHandler.save_fishing_progress()
     _refresh_virtual_cursor_state()
     _cache_tech_tree_for_reuse()
-    SceneChanger.change_to_new_scene(Util.PATH_FISHING_BATTLE)
+    SceneChanger.change_to_new_scene(Util.get_battle_scene_path())
 
 func _refresh_virtual_cursor_state() -> void:
     var should_enable := is_active and (

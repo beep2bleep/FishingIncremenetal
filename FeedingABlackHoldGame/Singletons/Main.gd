@@ -565,7 +565,7 @@ func _on_main_menu_pressed() -> void :
     Global.game_state = Util.GAME_STATES.MAIN_MENU
     SaveHandler.save_player_last_run()
     get_tree().paused = false
-    SceneChanger.change_to_new_scene(Util.PATH_MAIN_MENU)
+    SceneChanger.change_to_new_scene(Util.get_main_menu_scene_path())
 
 func check_session_end_achivements(allow_send_data = true):
     var send_data = false
