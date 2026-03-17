@@ -1,22 +1,7 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=3 format=3]
 
-[ext_resource type="PackedScene" path="res://Fishing/BattleScene.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://Games/Mining/Scenes/MiningMain.tscn" id="1"]
 [ext_resource type="Script" path="res://Games/Mining/Scenes/MiningBattleScene.gd" id="2"]
-[ext_resource type="Theme" uid="uid://f0mobaom23an" path="res://Theme/Theme_Large_Font.tres" id="3"]
 
 [node name="MiningBattleScene" instance=ExtResource("1")]
 script = ExtResource("2")
-
-[node name="MiningModeLabel" type="Label" parent="CanvasLayer"]
-anchors_preset = 10
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -220.0
-offset_top = 24.0
-offset_right = 220.0
-offset_bottom = 70.0
-grow_horizontal = 2
-theme = ExtResource("3")
-theme_override_colors/font_color = Color(0.960784, 0.839216, 0.447059, 1)
-text = "MINING MODE"
-horizontal_alignment = 1

@@ -1,1 +1,1 @@
-extends "res://Fishing/BattleScene.gd"
+extends "res://Games/Mining/Scenes/MiningMain.gd"
