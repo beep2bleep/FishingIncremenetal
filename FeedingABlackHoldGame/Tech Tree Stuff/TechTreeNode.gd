@@ -8,6 +8,7 @@ const TOOLTIP_VERTICAL_GAP: float = 0.0
 const TOOLTIP_SCREEN_HEIGHT_OFFSET_RATIO: float = 0.03
 const MOUSE_TOOLTIP_EXTRA_OFFSET: float = 18.0
 const TOOLTIP_GROUP: StringName = &"tech_tree_tooltips"
+const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 static var _icon_texture_cache: Dictionary = {}
 
 signal state_changed
@@ -372,17 +373,29 @@ func _purchase_upgrade() -> void:
     state_changed.emit(self)
     update()
 
-    if Global.main and Global.main.upgrade_screen:
-        Global.main.upgrade_screen.on_node_unlocked(self)
+    var upgrade_screen := _get_active_upgrade_screen()
+    if upgrade_screen != null:
+        upgrade_screen.on_node_unlocked(self)
 
     if upgrade != null and upgrade.sim_key != "":
         var new_amount: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
-        SaveHandler.fishing_currency = max(0, new_amount)
         var target_level: int = int(upgrade.sim_level) + int(upgrade.current_tier) - 1
-        SaveHandler.set_fishing_upgrade_level(upgrade.sim_key, max(1, target_level))
-        SaveHandler.save_fishing_progress()
+        if Util.is_mining_game_active():
+            MINING_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
+        else:
+            SaveHandler.fishing_currency = max(0, new_amount)
+            SaveHandler.set_fishing_upgrade_level(upgrade.sim_key, max(1, target_level))
+            SaveHandler.save_fishing_progress()
 
     SaveHandler.save_player_last_run()
+
+func _get_active_upgrade_screen() -> UpgradeScreen:
+    if Global.main != null and Global.main.upgrade_screen != null:
+        return Global.main.upgrade_screen
+    var current_scene: Node = get_tree().current_scene
+    if current_scene is UpgradeScreen:
+        return current_scene as UpgradeScreen
+    return null
 
 func _setup_touch_buy_button() -> void:
     var container: VBoxContainer = %"Tool Tip".get_node_or_null("MarginContainer/VBoxContainer")

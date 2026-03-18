@@ -31,9 +31,9 @@ func _start_game(game_id: String) -> void:
     Global.ensure_default_game_mode_data()
     Global.new_game()
     if game_id == Util.ACTIVE_GAME_MINING:
-        Global.start_in_upgrade_scene = false
+        Global.start_in_upgrade_scene = true
         Global.load_saved_run = false
-        SceneChanger.change_to_new_scene(Util.get_main_menu_scene_path(), null, 0.2)
+        SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
         return
     Global.start_in_upgrade_scene = true
     Global.load_saved_run = false

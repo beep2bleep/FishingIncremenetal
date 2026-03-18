@@ -97,7 +97,7 @@ func move_tech_tree(direction: Vector2):
 
 func set_tech_tree_pos(new_pos: Vector2):
     kill_tween()
-    pivot.position = new_pos
+    pivot.position = _get_viewport_center() + new_pos
     clamp_tech_tree_pos()
 
 
@@ -111,15 +111,19 @@ func tween_to_pos(new_pos: Vector2):
     kill_tween()
 
     move_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CIRC)
-    move_tween.tween_property(pivot, "position", new_pos, 0.5)
+    move_tween.tween_property(pivot, "position", _get_viewport_center() + new_pos, 0.5)
     move_tween.tween_callback( func(): clamp_tech_tree_pos())
 
 
 func clamp_tech_tree_pos():
-    var view_port_size = get_viewport_rect().size / 2.0
+    var viewport_size: Vector2 = get_viewport_rect().size
 
-    pivot.position.x = clamp(pivot.position.x, - view_port_size.x - max_x + padding, view_port_size.x - min_x - padding)
-    pivot.position.y = clamp(pivot.position.y, - view_port_size.y - max_y + padding, view_port_size.y - min_y - padding)
+    pivot.position.x = clamp(pivot.position.x, padding - min_x, viewport_size.x - padding - max_x)
+    pivot.position.y = clamp(pivot.position.y, padding - min_y, viewport_size.y - padding - max_y)
+
+
+func _get_viewport_center() -> Vector2:
+    return get_viewport_rect().size * 0.5
 
 
 func get_nodes():
@@ -339,6 +343,7 @@ func _complete_full_build() -> void:
     center_node.state = TechTreeNode.STATES.COMPLETE
     selected_node = center_node
     _refresh_states_after_full_build()
+    set_tech_tree_pos(Vector2.ZERO)
     update_active()
     build_completed.emit()
 
@@ -540,7 +545,7 @@ func _is_simulation_upgrade_tree() -> bool:
 func _on_node_selected(node: TechTreeNode):
     selected_node = node
 
-    set_tech_tree_pos(node.position)
+    set_tech_tree_pos(-node.position)
 
 
 func update_min_max_for_visible_nodes():

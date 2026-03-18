@@ -4,6 +4,8 @@ class_name UpgradeScreen
 
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const CONTROLLER_GLYPH_SCENE: PackedScene = preload("res://Controller Glyph.tscn")
+const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
+const MINING_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/Mining/MiningUpgradeTreeAdapter.gd")
 const GO_AGAIN_DISABLED_HINT := "UPGRADE_GO_AGAIN_DISABLED_HINT"
 const DEMO_PROJECT_SETTING := "global/Demo"
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
@@ -161,6 +163,9 @@ func _ready() -> void :
     _setup_continue_locked_dialog()
     _update_go_again_button_state()
     hide()
+    if Util.is_mining_game_active() and get_tree().current_scene == self:
+        setup()
+        show_screen()
 
 func _on_tech_tree_build_completed() -> void:
     if not is_active:
@@ -292,6 +297,10 @@ func update_colors():
     var color_dark = Refs.pallet.background
     color_dark.v *= 0.95
     %"GPUParticles2D2 Dark".modulate = color_dark
+    if Util.is_mining_game_active():
+        %"Click Mask".color = Color(0.13, 0.1, 0.08, 1.0)
+        %"GPUParticles2D Light".modulate = Color(0.72, 0.55, 0.22, 0.65)
+        %"GPUParticles2D2 Dark".modulate = Color(0.28, 0.18, 0.1, 0.55)
 
 
 func _process(delta: float) -> void :
@@ -440,6 +449,7 @@ func show_screen():
     _ensure_tree_initialized()
     _sync_simulation_currency_from_save()
     is_active = true
+    Global.game_state = Util.GAME_STATES.UPGRADES
 
     %CanvasLayer.show()
     %CanvasLayer2.show()
@@ -456,7 +466,8 @@ func show_screen():
 
     nodes_unlocked_this_session = 0
 
-    Global.main.camera_2d.target_zoom = Global.main.camera_2d.target_zoom
+    if Global.main != null and Global.main.camera_2d != null:
+        Global.main.camera_2d.target_zoom = Global.main.camera_2d.target_zoom
     set_process_input(true)
     set_process(true)
     show()
@@ -504,6 +515,9 @@ func hide_screen():
 
 
 func _on_go_again_pressed() -> void :
+    if Util.is_mining_game_active():
+        SceneChanger.change_to_new_scene(Util.get_main_scene_path(), null, 0.2)
+        return
     if not _can_continue_to_battle():
         _show_continue_locked_dialog()
         _update_go_again_button_state()
@@ -548,7 +562,10 @@ func _ensure_tree_initialized(force_rebuild: bool = false) -> void:
         return
 
     if _is_simulation_upgrade_tree_requested() or _is_simulation_upgrade_tree():
-        FishingUpgradeTreeAdapter.apply_simulation_upgrades()
+        if Util.is_mining_game_active():
+            MINING_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
+        else:
+            FishingUpgradeTreeAdapter.apply_simulation_upgrades()
         _sync_simulation_currency_from_save()
 
     tech_tree.setup()
@@ -560,7 +577,7 @@ func _sync_simulation_currency_from_save() -> void:
     if Global.global_resoruce_manager == null:
         return
     var current_money: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
-    var target_money: int = int(SaveHandler.fishing_currency)
+    var target_money: int = MINING_PROGRESS_SCRIPT.get_wallet() if Util.is_mining_game_active() else int(SaveHandler.fishing_currency)
     if current_money != target_money:
         Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, target_money - current_money)
 
@@ -1101,8 +1118,11 @@ func _on_legacy_reset_canceled() -> void:
         legacy_reset_dialog.call_deferred("popup_centered")
 
 func _perform_progress_reset() -> void:
-    SaveHandler.reset_fishing_progress()
-    SaveHandler.save_fishing_progress()
+    if Util.is_mining_game_active():
+        MINING_PROGRESS_SCRIPT.reset_progress()
+    else:
+        SaveHandler.reset_fishing_progress()
+        SaveHandler.save_fishing_progress()
     editor_add_cash_amount = 1000
     _refresh_editor_cash_button_text()
 
@@ -1131,16 +1151,24 @@ func _on_editor_unlock_all_pressed() -> void:
         if max_level > prev_level:
             max_level_by_key[upgrade.sim_key] = max_level
 
-    SaveHandler.fishing_unlocked_upgrades = {}
-    SaveHandler.fishing_active_upgrades = {}
-    for key_variant: Variant in max_level_by_key.keys():
-        var key: String = str(key_variant)
-        var level: int = int(max_level_by_key[key])
-        SaveHandler.fishing_unlocked_upgrades[key] = level
-        SaveHandler.fishing_active_upgrades[key] = true
-    SaveHandler.fishing_max_unlocked_battle_level = SaveHandler.MAX_FISHING_BATTLE_LEVEL
-    SaveHandler.fishing_next_battle_level = SaveHandler.MAX_FISHING_BATTLE_LEVEL
-    SaveHandler.save_fishing_progress()
+    if Util.is_mining_game_active():
+        var data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
+        data["upgrades"] = {}
+        for key_variant: Variant in max_level_by_key.keys():
+            var key: String = str(key_variant)
+            data["upgrades"][key] = int(max_level_by_key[key])
+        MINING_PROGRESS_SCRIPT.save_data(data)
+    else:
+        SaveHandler.fishing_unlocked_upgrades = {}
+        SaveHandler.fishing_active_upgrades = {}
+        for key_variant: Variant in max_level_by_key.keys():
+            var key: String = str(key_variant)
+            var level: int = int(max_level_by_key[key])
+            SaveHandler.fishing_unlocked_upgrades[key] = level
+            SaveHandler.fishing_active_upgrades[key] = true
+        SaveHandler.fishing_max_unlocked_battle_level = SaveHandler.MAX_FISHING_BATTLE_LEVEL
+        SaveHandler.fishing_next_battle_level = SaveHandler.MAX_FISHING_BATTLE_LEVEL
+        SaveHandler.save_fishing_progress()
 
     _reload_simulation_upgrade_tree_from_save()
     update()
@@ -1380,6 +1408,12 @@ func _can_continue_to_battle() -> bool:
 
 func _update_go_again_button_state() -> void:
     if go_again_button == null:
+        return
+    if Util.is_mining_game_active():
+        go_again_button.disabled = false
+        go_again_button.text = "START MINING"
+        go_again_button.tooltip_text = ""
+        go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return
     var can_continue: bool = _can_continue_to_battle()
     go_again_button.disabled = false

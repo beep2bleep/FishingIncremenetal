@@ -1,7 +1,7 @@
 extends Node2D
 class_name MiningMain
 
-const SAVE_PATH := "user://mining_mode_save_v1.json"
+const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const WORLD_HALF_WIDTH := 500.0
 const SURFACE_DEPTH := 0.0
 const START_X := 0.0
@@ -44,7 +44,8 @@ var persistent_data := {
 	"boss_unlocks": {},
 	"checkpoint_owned": {},
 	"selected_checkpoint": 0,
-	"equipped": ["pistol", ""]
+	"equipped": ["pistol", ""],
+	"last_run_summary": "No mining run completed yet."
 }
 
 var upgrade_catalog: Array[Dictionary] = []
@@ -82,6 +83,11 @@ var refine_intro_timer := 0.0
 var refine_spawn_queue: Array[Dictionary] = []
 var boss_state: Dictionary = {}
 var last_depth_gain := 0.0
+var run_start_wallet := 0
+var run_mined := {}
+var run_refine_direct_cash := 0
+var run_refine_scrap_cash := 0
+var run_bosses_defeated := 0
 
 func _ready() -> void:
 	Global.game_state = Util.GAME_STATES.UPGRADES
@@ -92,7 +98,7 @@ func _ready() -> void:
 	_build_ui()
 	_connect_ui()
 	_refresh_ui()
-	_enter_garage("Mining bay ready. Early dives are about going deeper, hauling more ore, and getting out before oxygen, drill, or hull fail.")
+	_begin_dive()
 
 func _process(delta: float) -> void:
 	_update_weapon_runtime(delta)
@@ -339,7 +345,7 @@ func _process_refining(delta: float) -> void:
 			kept.append(target)
 	refine_targets = kept
 	if refine_intro_timer <= 0.0 and refine_targets.is_empty() and refine_spawn_queue.is_empty():
-		_enter_garage("Refining complete. Spend the haul and push the next dive deeper.")
+		_return_to_upgrade_scene()
 
 func _update_projectiles(delta: float) -> void:
 	var kept: Array[Dictionary] = []
@@ -491,6 +497,11 @@ func _begin_dive() -> void:
 	active_weapon_slot = 0
 	punch_cooldown = 0.0
 	boss_state.clear()
+	run_start_wallet = int(persistent_data.get("wallet", 0))
+	run_mined = {}
+	run_refine_direct_cash = 0
+	run_refine_scrap_cash = 0
+	run_bosses_defeated = 0
 	status_message = "Run live. Go deep, aim for richer ore, and watch oxygen, drill wear, and hull damage."
 	_spawn_world_until(current_depth + VIEW_AHEAD_DEPTH)
 	shop_panel.visible = false
@@ -539,6 +550,28 @@ func _enter_garage(message: String) -> void:
 	_refresh_upgrade_buttons()
 	_save_progress()
 
+func _return_to_upgrade_scene() -> void:
+	persistent_data["best_depth"] = max(float(persistent_data.get("best_depth", 0.0)), current_depth)
+	persistent_data["last_run_summary"] = _build_last_run_summary()
+	_save_progress()
+	Global.game_state = Util.GAME_STATES.UPGRADES
+	SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
+
+func _build_last_run_summary() -> String:
+	var lines := PackedStringArray()
+	lines.append("Last Mining Run")
+	lines.append("Deepest depth: %dm" % int(round(current_depth)))
+	lines.append("Wallet gained: $%d" % max(0, int(persistent_data.get("wallet", 0)) - run_start_wallet))
+	lines.append("Direct refinery hits: $%d" % run_refine_direct_cash)
+	lines.append("Auto-banked scraps: $%d" % run_refine_scrap_cash)
+	lines.append("Bosses defeated: %d" % run_bosses_defeated)
+	if not run_mined.is_empty():
+		var parts := PackedStringArray()
+		for mineral_id in run_mined.keys():
+			parts.append("%s %d" % [String(mineral_id).capitalize(), int(round(float(run_mined[mineral_id])))])
+		lines.append("Mined: %s" % ", ".join(parts))
+	return "\n".join(lines)
+
 func _start_boss(depth_marker: int) -> void:
 	run_phase = "boss"
 	status_message = "Deep-strata boss online. Break the glowing shield locks, then unload on the core."
@@ -572,10 +605,10 @@ func _finish_boss() -> void:
 	var marker := int(boss_state.get("depth", next_boss_depth))
 	run_bosses_cleared[marker] = true
 	persistent_data["boss_unlocks"][str(marker)] = true
-	if not persistent_data["checkpoint_owned"].has(str(marker)):
-		status_message = "Boss down. Surface shop can now sell the %dm skip beacon." % marker
-	else:
-		status_message = "Boss crushed. Shaft lock disengaged."
+	persistent_data["checkpoint_owned"][str(marker)] = true
+	persistent_data["selected_checkpoint"] = max(int(persistent_data.get("selected_checkpoint", 0)), marker)
+	run_bosses_defeated += 1
+	status_message = "Boss crushed. %dm checkpoint locked into the shaft." % marker
 	_add_wallet(40 + int(marker * 0.45))
 	current_depth = float(marker) + 10.0
 	player_pos.y = current_depth
@@ -733,6 +766,9 @@ func _bank_refine_target(target: Dictionary, direct_hit: bool) -> void:
 	var value := int(target["value"])
 	if not direct_hit:
 		value = max(1, int(round(float(value) * REFINE_BANK_MULT)))
+		run_refine_scrap_cash += value
+	else:
+		run_refine_direct_cash += value
 	_add_wallet(value)
 
 func _add_wallet(amount: int) -> void:
@@ -743,6 +779,8 @@ func _add_cargo(mineral_id: String, amount: float) -> void:
 		return
 	cargo[mineral_id] = float(cargo.get(mineral_id, 0.0)) + amount
 	cargo_total += amount
+	if run_phase in ["descending", "boss"]:
+		run_mined[mineral_id] = float(run_mined.get(mineral_id, 0.0)) + amount
 
 func _spawn_world_until(target_depth: float) -> void:
 	while next_node_depth <= target_depth and world_nodes.size() < MAX_WORLD_OBJECTS:
@@ -904,17 +942,7 @@ func _on_dive_button_pressed() -> void:
 	_begin_dive()
 
 func _on_reset_button_pressed() -> void:
-	if FileAccess.file_exists(SAVE_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
-	persistent_data = {
-		"wallet": 0,
-		"best_depth": 0.0,
-		"upgrades": {},
-		"boss_unlocks": {},
-		"checkpoint_owned": {},
-		"selected_checkpoint": 0,
-		"equipped": ["pistol", ""]
-	}
+	persistent_data = MINING_PROGRESS_SCRIPT.reset_progress()
 	_enter_garage("Mining progression reset. Fresh drill, fresh debt, fresh depths.")
 
 func _on_checkpoint_button_pressed(checkpoint: int) -> void:
@@ -1215,47 +1243,10 @@ func _setup_defs() -> void:
 		"rifle": {"label": "Burst Rifle", "damage": 22.0, "scale": 6.5, "reload": 1.15, "reload_scale": 0.08, "mag": 12, "speed": 1040.0, "life": 1.0, "radius": 4.0, "pellets": 1, "spread": 0.03, "damage_upgrade": "rifle_damage", "reload_upgrade": "rifle_reload", "color": Color(0.72, 0.92, 1.0, 1.0)},
 		"railgun": {"label": "Railgun", "damage": 95.0, "scale": 16.0, "reload": 1.85, "reload_scale": 0.12, "mag": 1, "speed": 1320.0, "life": 0.9, "radius": 6.0, "pellets": 1, "spread": 0.0, "damage_upgrade": "railgun_damage", "reload_upgrade": "railgun_reload", "color": Color(0.55, 1.0, 0.9, 1.0)}
 	}
-	upgrade_catalog = [
-		{"id": "drill_power", "label": "Drill Power", "summary": "Shreds harder nodes faster.", "base_cost": 24, "cost_mult": 1.42, "max_level": 10},
-		{"id": "drill_integrity", "label": "Drill Integrity", "summary": "More drill durability per run.", "base_cost": 26, "cost_mult": 1.43, "max_level": 10},
-		{"id": "oxygen_tanks", "label": "Oxygen Tanks", "summary": "Longer dives before recall.", "base_cost": 28, "cost_mult": 1.45, "max_level": 10},
-		{"id": "hull_plating", "label": "Hull Plating", "summary": "More hull to tank hazards and bosses.", "base_cost": 28, "cost_mult": 1.45, "max_level": 10},
-		{"id": "cargo_racks", "label": "Ore Grading", "summary": "Raises the cash value of the haul you bring back.", "base_cost": 32, "cost_mult": 1.47, "max_level": 8},
-		{"id": "dirt_compressor", "label": "Dirt Compressor", "summary": "Makes the basic shaft dirt worth more.", "base_cost": 20, "cost_mult": 1.4, "max_level": 8},
-		{"id": "ore_scanner", "label": "Ore Scanner", "summary": "Boosts deep rare node spawns.", "base_cost": 44, "cost_mult": 1.48, "max_level": 6},
-		{"id": "thruster_power", "label": "Thruster Power", "summary": "Base descent speed goes up.", "base_cost": 34, "cost_mult": 1.45, "max_level": 10},
-		{"id": "shaft_lubricant", "label": "Shaft Lubricant", "summary": "Cleaner steering and a little more speed.", "base_cost": 38, "cost_mult": 1.45, "max_level": 8},
-		{"id": "cord_winch", "label": "Cord Winch", "summary": "Ascent cord hauls you up even faster.", "base_cost": 48, "cost_mult": 1.48, "max_level": 8},
-		{"id": "launch_thrusters", "label": "Launch Thrusters", "summary": "The start of every run gets much faster.", "base_cost": 56, "cost_mult": 1.5, "max_level": 6, "requires": {"thruster_power": 2}},
-		{"id": "start_boost", "label": "Drop Rails", "summary": "Extends the super-fast opening burst.", "base_cost": 78, "cost_mult": 1.56, "max_level": 5, "requires": {"launch_thrusters": 2}},
-		{"id": "teleport_core", "label": "Teleport Core", "summary": "Instant shaft entry burst with auto-scoop.", "base_cost": 620, "cost_mult": 2.0, "max_level": 1, "requires": {"start_boost": 5}},
-		{"id": "punch_damage", "label": "Shock Fist", "summary": "Punches become a real backup weapon.", "base_cost": 16, "cost_mult": 1.38, "max_level": 10},
-		{"id": "pistol_damage", "label": "Pistol Damage", "summary": "Better skeet cleanup and boss chip damage.", "base_cost": 22, "cost_mult": 1.42, "max_level": 10},
-		{"id": "pistol_reload", "label": "Pistol Reload", "summary": "Less downtime on the starter gun.", "base_cost": 22, "cost_mult": 1.42, "max_level": 8},
-		{"id": "shotgun_unlock", "label": "Unlock Scattergun", "summary": "Adds a short-range burst weapon for slot two.", "base_cost": 96, "cost_mult": 2.0, "max_level": 1, "requires": {"pistol_damage": 2}},
-		{"id": "shotgun_damage", "label": "Scattergun Damage", "summary": "More burst for close mining fights.", "base_cost": 54, "cost_mult": 1.46, "max_level": 8, "requires": {"shotgun_unlock": 1}},
-		{"id": "shotgun_reload", "label": "Scattergun Reload", "summary": "Gets the shell swap moving.", "base_cost": 56, "cost_mult": 1.46, "max_level": 8, "requires": {"shotgun_unlock": 1}},
-		{"id": "rifle_unlock", "label": "Unlock Burst Rifle", "summary": "A stable midrange gun with good uptime.", "base_cost": 168, "cost_mult": 2.0, "max_level": 1, "requires": {"shotgun_unlock": 1, "pistol_reload": 3}},
-		{"id": "rifle_damage", "label": "Burst Rifle Damage", "summary": "Scales the rifle into late bosses.", "base_cost": 72, "cost_mult": 1.48, "max_level": 8, "requires": {"rifle_unlock": 1}},
-		{"id": "rifle_reload", "label": "Burst Rifle Reload", "summary": "Keeps the rifle cycling smoothly.", "base_cost": 72, "cost_mult": 1.48, "max_level": 8, "requires": {"rifle_unlock": 1}},
-		{"id": "railgun_unlock", "label": "Unlock Railgun", "summary": "Huge punch, long reload, perfect swap gun.", "base_cost": 320, "cost_mult": 2.0, "max_level": 1, "requires": {"rifle_unlock": 1, "start_boost": 2}},
-		{"id": "railgun_damage", "label": "Railgun Damage", "summary": "Turns the railgun into a checkpoint breaker.", "base_cost": 122, "cost_mult": 1.52, "max_level": 6, "requires": {"railgun_unlock": 1}},
-		{"id": "railgun_reload", "label": "Railgun Reload", "summary": "Shaves the reload enough for swap loops.", "base_cost": 118, "cost_mult": 1.52, "max_level": 6, "requires": {"railgun_unlock": 1}}
-	]
+	upgrade_catalog = MINING_PROGRESS_SCRIPT.get_upgrade_catalog()
 
 func _load_progress() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if file == null:
-		return
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return
-	persistent_data = persistent_data.merged(parsed, true)
+	persistent_data = MINING_PROGRESS_SCRIPT.load_data()
 
 func _save_progress() -> void:
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if file == null:
-		return
-	file.store_string(JSON.stringify(persistent_data, "\t"))
+	MINING_PROGRESS_SCRIPT.save_data(persistent_data)

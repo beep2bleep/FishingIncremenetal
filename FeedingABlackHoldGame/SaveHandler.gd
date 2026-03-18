@@ -140,13 +140,25 @@ func load_progression_data():
 
 func save_player_last_run():
     var actual_file_path = str(player_last_run_file_location, _get_active_save_file_name())
+    var main_node = Global.main
+    var current_money: int = 0
+    if Global.global_resoruce_manager != null:
+        current_money = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
+    var current_tier_index: int = Global.black_hole.level_manager.current_tier_index if Global.black_hole else 0
+    var comet_cooldown: int = 0
+    var epilogue_active: bool = false
+    if main_node != null:
+        epilogue_active = bool(main_node.get("epilogue"))
+        var object_manager = main_node.get("object_manager")
+        if object_manager != null:
+            comet_cooldown = int(object_manager.get("comet_show_session_cooldown"))
 
     var save_data: Dictionary = {
         "last_save_time": Time.get_unix_time_from_system(), 
-        "money": Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY), 
-        "current_tier": Global.black_hole.level_manager.current_tier_index if Global.black_hole else 0, 
-        "comet_show_session_cooldown": Global.main.object_manager.comet_show_session_cooldown, 
-        "epilogue": Global.main.epilogue, 
+        "money": current_money, 
+        "current_tier": current_tier_index, 
+        "comet_show_session_cooldown": comet_cooldown, 
+        "epilogue": epilogue_active, 
         "run_time": Global.run_stats.run_time, 
     }
 
