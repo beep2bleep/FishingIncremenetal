@@ -89,7 +89,7 @@ size_flags_horizontal = 4
 theme_override_constants/separation = 25
 alignment = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox"]
+[node name="HBoxContainer" type="BoxContainer" parent="MarginContainer3/VBoxContainer/Vbox"]
 layout_mode = 2
 theme_override_constants/separation = 25
 

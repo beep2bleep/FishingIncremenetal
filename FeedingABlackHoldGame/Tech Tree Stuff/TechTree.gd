@@ -2,18 +2,21 @@ extends Node2D
 class_name TechTree
 
 const BUILD_BATCH_SIZE: int = 24
+const NODE_EXTENTS := Vector2(48, 48)
+const TREE_EDGE_PADDING := 0.0
 
 var min_x = 0
 var max_x = 0
 var min_y = 0
 var max_y = 0
 
-var padding = 128
+var padding = TREE_EDGE_PADDING
 
 var node_dict = {}
 var cell_spacing = Vector2(96, 96)
 
 var active_nodes = []
+var debug_center_offset: Vector2 = Vector2.ZERO
 
 var _next_completed_index: int = 0
 var next_completed_index: int:
@@ -97,33 +100,63 @@ func move_tech_tree(direction: Vector2):
 
 func set_tech_tree_pos(new_pos: Vector2):
     kill_tween()
-    pivot.position = _get_viewport_center() + new_pos
+    pivot.position = _get_viewport_center() + (new_pos * current_zoom)
     clamp_tech_tree_pos()
 
 
 var move_tween: Tween
+var current_zoom: float = 1.0
 
 func kill_tween():
     if move_tween:
         move_tween.kill()
 
+func zoom_by(zoom_delta: float, _focus_screen_pos: Vector2 = _get_viewport_center()) -> void:
+    set_zoom(current_zoom + zoom_delta)
+
+func set_zoom(new_zoom: float) -> void:
+    var clamped_zoom: float = clamp(new_zoom, _get_min_zoom(), _get_max_zoom())
+    if is_equal_approx(clamped_zoom, current_zoom):
+        return
+
+    current_zoom = clamped_zoom
+    pivot.scale = Vector2.ONE * current_zoom
+    clamp_tech_tree_pos()
+
 func tween_to_pos(new_pos: Vector2):
     kill_tween()
 
     move_tween = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CIRC)
-    move_tween.tween_property(pivot, "position", _get_viewport_center() + new_pos, 0.5)
+    move_tween.tween_property(pivot, "position", _get_viewport_center() + (new_pos * current_zoom), 0.5)
     move_tween.tween_callback( func(): clamp_tech_tree_pos())
 
 
 func clamp_tech_tree_pos():
     var viewport_size: Vector2 = get_viewport_rect().size
+    var scaled_min_x: float = (min_x - NODE_EXTENTS.x) * current_zoom
+    var scaled_max_x: float = (max_x + NODE_EXTENTS.x) * current_zoom
+    var scaled_min_y: float = (min_y - NODE_EXTENTS.y) * current_zoom
+    var scaled_max_y: float = (max_y + NODE_EXTENTS.y) * current_zoom
+    var min_limit_x: float = -scaled_max_x
+    var max_limit_x: float = viewport_size.x - scaled_min_x
+    var min_limit_y: float = -scaled_max_y
+    var max_limit_y: float = viewport_size.y - scaled_min_y
 
-    pivot.position.x = clamp(pivot.position.x, padding - min_x, viewport_size.x - padding - max_x)
-    pivot.position.y = clamp(pivot.position.y, padding - min_y, viewport_size.y - padding - max_y)
+    pivot.position.x = clamp(pivot.position.x, min_limit_x, max_limit_x)
+    pivot.position.y = clamp(pivot.position.y, min_limit_y, max_limit_y)
 
 
 func _get_viewport_center() -> Vector2:
-    return get_viewport_rect().size * 0.5
+    return (get_viewport_rect().size * 0.5) + debug_center_offset
+
+
+func set_debug_center_offset(new_offset: Vector2) -> void:
+    debug_center_offset = new_offset
+    clamp_tech_tree_pos()
+
+
+func get_debug_center_offset() -> Vector2:
+    return debug_center_offset
 
 
 func get_nodes():
@@ -151,6 +184,9 @@ var center_node: TechTreeNode
 func setup():
     use_grid_adjacency = not _is_simulation_upgrade_tree()
     depth_by_cell = {}
+    current_zoom = 1.0
+    pivot.scale = Vector2.ONE
+    pivot.position = _get_viewport_center()
     center_node = Refs.packed_tech_tree_node.instantiate()
     %"Tech Nodes".add_child(center_node)
     center_node.is_center_node = true
@@ -342,8 +378,13 @@ func _complete_full_build() -> void:
     _rebuild_depth_cache()
     center_node.state = TechTreeNode.STATES.COMPLETE
     selected_node = center_node
-    _refresh_states_after_full_build()
+    update_min_max_for_all_nodes()
+    set_zoom(1.0)
     set_tech_tree_pos(Vector2.ZERO)
+    _refresh_states_after_full_build()
+    update_min_max_for_all_nodes()
+    set_tech_tree_pos(Vector2.ZERO)
+    call_deferred("_recenter_on_core_after_build")
     update_active()
     build_completed.emit()
 
@@ -477,7 +518,7 @@ func generate_nodes_procedurally():
 
 func _on_node_state_changed(node: TechTreeNode):
     update_active()
-    update_min_max_for_visible_nodes()
+    update_min_max_for_all_nodes()
 
 func get_unlock_requirement_node(target_cell: Vector2) -> TechTreeNode:
     if not node_dict.has(target_cell):
@@ -547,15 +588,40 @@ func _on_node_selected(node: TechTreeNode):
 
     set_tech_tree_pos(-node.position)
 
+func _recenter_on_core_after_build() -> void:
+    if center_node == null or not is_instance_valid(center_node):
+        return
+    await get_tree().process_frame
+    await get_tree().process_frame
+    update_min_max_for_all_nodes()
+    set_tech_tree_pos(Vector2(20, 20))
 
-func update_min_max_for_visible_nodes():
+func _get_content_size() -> Vector2:
+    return Vector2(
+        max(float(max_x - min_x) + (NODE_EXTENTS.x * 2.0), cell_spacing.x),
+        max(float(max_y - min_y) + (NODE_EXTENTS.y * 2.0), cell_spacing.y)
+    )
+
+func _get_min_zoom() -> float:
+    var available_size: Vector2 = get_viewport_rect().size - Vector2(padding * 2.0, padding * 2.0)
+    var content_size: Vector2 = _get_content_size()
+    var fit_zoom: float = min(available_size.x / content_size.x, available_size.y / content_size.y)
+    return min(1.0, max(fit_zoom * 0.7, 0.05))
+
+func _get_max_zoom() -> float:
+    var viewport_size: Vector2 = get_viewport_rect().size
+    var single_node_zoom: float = min(viewport_size.x, viewport_size.y) / cell_spacing.y
+    return clamp(single_node_zoom * 0.75, 1.0, 12.0)
+
+
+func update_min_max_for_all_nodes():
     min_x = 0
     max_x = 0
     min_y = 0
     max_y = 0
 
     for node: TechTreeNode in node_dict.values():
-        if node.state == TechTreeNode.STATES.LOCKED:
+        if node == null or not is_instance_valid(node):
             continue
 
         if node.position.x < min_x:

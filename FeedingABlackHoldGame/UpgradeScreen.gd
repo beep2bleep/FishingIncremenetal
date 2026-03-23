@@ -9,7 +9,6 @@ const MINING_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/Mining/MiningUpg
 const GO_AGAIN_DISABLED_HINT := "UPGRADE_GO_AGAIN_DISABLED_HINT"
 const DEMO_PROJECT_SETTING := "global/Demo"
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
-const DEFAULT_DEMO_WISHLIST_URL := "https://Beep2Bleep.com"
 const BATTLE_LEVEL_CHOICE_DIALOG_SIZE := Vector2(600.0, 450.0)
 const BATTLE_LEVEL_CHOICE_DIALOG_FONT_SIZE := 24
 const BATTLE_LEVEL_CHOICE_DIALOG_TITLE_SIZE := 36
@@ -26,6 +25,18 @@ var editor_cash_controls: HBoxContainer
 var editor_add_cash_button: Button
 var editor_reset_add_button: Button
 var editor_unlock_all_button: Button
+var editor_center_offset_controls: VBoxContainer
+var editor_center_offset_label: Label
+var editor_center_offset_x_minus_button: Button
+var editor_center_offset_x_plus_button: Button
+var editor_center_offset_y_minus_button: Button
+var editor_center_offset_y_plus_button: Button
+var editor_center_offset_x_minus_small_button: Button
+var editor_center_offset_x_plus_small_button: Button
+var editor_center_offset_y_minus_small_button: Button
+var editor_center_offset_y_plus_small_button: Button
+var editor_center_offset_rebuild_button: Button
+var editor_center_offset: Vector2 = Vector2(-960.0, -600.0)
 var battle_level_choice_dialog: ConfirmationDialog
 var battle_level_choice_selected_level: int = 1
 var battle_level_choice_line_edit: LineEdit
@@ -49,6 +60,14 @@ var go_again_button: Button
 var demo_mode_label: Label
 var game_mode_label: Label
 var wishlist_button: Button
+var web_wishlist_button: Button
+var leaderboard_panel: PanelContainer
+var leaderboard_title_label: Label
+var leaderboard_body_label: Label
+var leaderboard_submit_30m_button: Button
+var leaderboard_submit_1h_button: Button
+var leaderboard_submit_2h_level20_button: Button
+var leaderboard_submit_3h_level20_button: Button
 var popup_layer: CanvasLayer
 var continue_locked_panel: PanelContainer
 var continue_locked_label: Label
@@ -78,6 +97,7 @@ func _refresh_localized_text() -> void:
         settings_close_button.text = tr("UI_BACK")
     if reset_progress_button != null and is_instance_valid(reset_progress_button):
         reset_progress_button.text = tr("UPGRADE_RESET_PROGRESS")
+    _refresh_wishlist_button_text()
     if reset_progress_confirm_dialog != null and is_instance_valid(reset_progress_confirm_dialog):
         reset_progress_confirm_dialog.title = tr("UPGRADE_CONFIRM_RESET_TITLE")
         reset_progress_confirm_dialog.dialog_text = tr("UPGRADE_CONFIRM_RESET_BODY")
@@ -146,6 +166,7 @@ func _ready() -> void :
 
     update_colors()
     _setup_editor_cash_controls()
+    _setup_editor_center_offset_controls()
     _setup_battle_level_choice_dialog()
     _setup_reset_progress_controls()
     _setup_version_label()
@@ -160,6 +181,7 @@ func _ready() -> void :
     popup_layer = get_node_or_null("%Popup Layer")
     _bind_popup_layer_visibility_updates()
     _setup_wishlist_button()
+    _setup_leaderboard_panel()
     _setup_continue_locked_dialog()
     _update_go_again_button_state()
     hide()
@@ -168,6 +190,7 @@ func _ready() -> void :
         show_screen()
 
 func _on_tech_tree_build_completed() -> void:
+    _apply_editor_center_offset()
     if not is_active:
         return
     _sync_simulation_currency_from_save()
@@ -221,6 +244,17 @@ func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: i
 
 func _input(event: InputEvent) -> void :
     if Global.game_state == Util.GAME_STATES.UPGRADES:
+        if event is InputEventMouseButton and event.pressed and not event.is_echo():
+            if not _is_any_popup_visible() and state == STATES.SHOWING_TREE and tech_tree != null and is_instance_valid(tech_tree):
+                var mouse_event := event as InputEventMouseButton
+                if mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP:
+                    tech_tree.zoom_by(0.18, mouse_event.position)
+                    get_viewport().set_input_as_handled()
+                    return
+                if mouse_event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+                    tech_tree.zoom_by(-0.18, mouse_event.position)
+                    get_viewport().set_input_as_handled()
+                    return
         if _is_battle_level_choice_open():
             if event.is_action_pressed("ui_accept") or event.is_action_pressed("go again"):
                 if _confirm_battle_level_choice_from_controller():
@@ -459,6 +493,8 @@ func show_screen():
 
 
     update_input(ControllerIcons.get_last_input_type())
+    _setup_wishlist_button()
+    _refresh_leaderboard_panel()
     _refresh_mute_button_icon()
     _refresh_fullscreen_button_icon()
     _refresh_touch_input_button()
@@ -634,18 +670,249 @@ func _refresh_demo_mode_label_visibility() -> void:
         game_mode_label.text = "MINING MODE" if Util.is_mining_game_active() else ""
 
 func _get_demo_wishlist_url() -> String:
-    return str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, DEFAULT_DEMO_WISHLIST_URL)).strip_edges()
+    var configured_url: String = str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()
+    if configured_url != "":
+        return configured_url
+    return SteamHandler.get_store_url().strip_edges()
+
+func _can_open_demo_wishlist_url() -> bool:
+    var url: String = _get_demo_wishlist_url()
+    return url.begins_with("http://") or url.begins_with("https://")
 
 func _setup_wishlist_button() -> void:
     _refresh_demo_mode_label_visibility()
-    if wishlist_button == null:
+    var button: Button = _get_active_wishlist_button()
+    if button == null:
         return
-    wishlist_button.visible = _is_demo_mode_enabled()
-    wishlist_button.disabled = _get_demo_wishlist_url() == ""
-    wishlist_button.tooltip_text = _get_demo_wishlist_url()
-    if not wishlist_button.pressed.is_connected(_on_wishlist_button_pressed):
-        wishlist_button.pressed.connect(_on_wishlist_button_pressed)
-    _style_wishlist_button(wishlist_button)
+    button.visible = _is_demo_mode_enabled()
+    button.disabled = false if OS.has_feature("web") and _can_open_demo_wishlist_url() else not _can_open_demo_wishlist_url()
+    button.mouse_filter = Control.MOUSE_FILTER_STOP
+    button.focus_mode = Control.FOCUS_ALL
+    button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+    button.z_index = 250
+    button.modulate = Color(1.0, 1.0, 1.0, 1.0)
+    button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+    button.tooltip_text = _get_demo_wishlist_url()
+    if not button.pressed.is_connected(_on_wishlist_button_pressed):
+        button.pressed.connect(_on_wishlist_button_pressed)
+    _refresh_wishlist_button_text()
+    _style_wishlist_button(button)
+
+func _setup_leaderboard_panel() -> void:
+    if leaderboard_panel != null and is_instance_valid(leaderboard_panel):
+        return
+    var panel_host: CanvasLayer = %CanvasLayer2
+    if panel_host == null:
+        return
+    leaderboard_panel = PanelContainer.new()
+    leaderboard_panel.name = "LeaderboardPanel"
+    leaderboard_panel.anchor_left = 0.0
+    leaderboard_panel.anchor_top = 0.0
+    leaderboard_panel.anchor_right = 0.0
+    leaderboard_panel.anchor_bottom = 0.0
+    leaderboard_panel.offset_left = 16.0
+    leaderboard_panel.offset_top = 120.0
+    leaderboard_panel.offset_right = 420.0
+    leaderboard_panel.offset_bottom = 430.0
+    leaderboard_panel.custom_minimum_size = Vector2(404.0, 0.0)
+    leaderboard_panel.z_index = 210
+    leaderboard_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    var panel_style := StyleBoxFlat.new()
+    panel_style.bg_color = Color(0.05, 0.08, 0.14, 0.48)
+    panel_style.border_color = Color(0.2, 0.72, 0.94, 0.7)
+    panel_style.border_width_left = 2
+    panel_style.border_width_top = 2
+    panel_style.border_width_right = 2
+    panel_style.border_width_bottom = 2
+    panel_style.corner_radius_top_left = 6
+    panel_style.corner_radius_top_right = 6
+    panel_style.corner_radius_bottom_left = 6
+    panel_style.corner_radius_bottom_right = 6
+    leaderboard_panel.add_theme_stylebox_override("panel", panel_style)
+
+    var margin := MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 14)
+    margin.add_theme_constant_override("margin_top", 10)
+    margin.add_theme_constant_override("margin_right", 14)
+    margin.add_theme_constant_override("margin_bottom", 10)
+    leaderboard_panel.add_child(margin)
+
+    var vbox := VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 6)
+    margin.add_child(vbox)
+
+    leaderboard_title_label = Label.new()
+    leaderboard_title_label.text = "Leaderboards"
+    leaderboard_title_label.add_theme_font_size_override("font_size", 24)
+    leaderboard_title_label.add_theme_color_override("font_color", Color(0.9, 0.96, 1.0, 1.0))
+    vbox.add_child(leaderboard_title_label)
+
+    leaderboard_body_label = Label.new()
+    leaderboard_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    leaderboard_body_label.add_theme_font_size_override("font_size", 18)
+    leaderboard_body_label.add_theme_color_override("font_color", Color(0.84, 0.9, 0.98, 1.0))
+    leaderboard_body_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+    vbox.add_child(leaderboard_body_label)
+
+    if OS.has_feature("editor"):
+        var editor_button_row := HBoxContainer.new()
+        editor_button_row.add_theme_constant_override("separation", 8)
+        vbox.add_child(editor_button_row)
+
+        leaderboard_submit_30m_button = Button.new()
+        leaderboard_submit_30m_button.text = "L7 Submit 30m"
+        leaderboard_submit_30m_button.mouse_filter = Control.MOUSE_FILTER_STOP
+        leaderboard_submit_30m_button.pressed.connect(_on_submit_editor_level7_30m_pressed)
+        editor_button_row.add_child(leaderboard_submit_30m_button)
+
+        leaderboard_submit_1h_button = Button.new()
+        leaderboard_submit_1h_button.text = "L7 Submit 1h"
+        leaderboard_submit_1h_button.mouse_filter = Control.MOUSE_FILTER_STOP
+        leaderboard_submit_1h_button.pressed.connect(_on_submit_editor_level7_1h_pressed)
+        editor_button_row.add_child(leaderboard_submit_1h_button)
+
+        var editor_button_row_2 := HBoxContainer.new()
+        editor_button_row_2.add_theme_constant_override("separation", 8)
+        vbox.add_child(editor_button_row_2)
+
+        leaderboard_submit_2h_level20_button = Button.new()
+        leaderboard_submit_2h_level20_button.text = "L20 Submit 2h"
+        leaderboard_submit_2h_level20_button.mouse_filter = Control.MOUSE_FILTER_STOP
+        leaderboard_submit_2h_level20_button.pressed.connect(_on_submit_editor_level20_2h_pressed)
+        editor_button_row_2.add_child(leaderboard_submit_2h_level20_button)
+
+        leaderboard_submit_3h_level20_button = Button.new()
+        leaderboard_submit_3h_level20_button.text = "L20 Submit 3h"
+        leaderboard_submit_3h_level20_button.mouse_filter = Control.MOUSE_FILTER_STOP
+        leaderboard_submit_3h_level20_button.pressed.connect(_on_submit_editor_level20_3h_pressed)
+        editor_button_row_2.add_child(leaderboard_submit_3h_level20_button)
+
+    panel_host.add_child(leaderboard_panel)
+    if SteamHandler != null and SteamHandler.has_signal("leaderboard_data_updated") and not SteamHandler.leaderboard_data_updated.is_connected(_refresh_leaderboard_panel):
+        SteamHandler.leaderboard_data_updated.connect(_refresh_leaderboard_panel)
+    if SteamHandler != null and SteamHandler.has_method("request_active_fishing_leaderboards"):
+        SteamHandler.request_active_fishing_leaderboards()
+    _refresh_leaderboard_panel()
+
+func _refresh_leaderboard_panel() -> void:
+    if leaderboard_panel == null or not is_instance_valid(leaderboard_panel):
+        return
+    var show_panel: bool = not Util.is_mining_game_active()
+    leaderboard_panel.visible = show_panel
+    if not show_panel:
+        return
+    var lines: Array[String] = []
+    var configs: Array = SteamHandler.get_active_fishing_leaderboard_configs() if SteamHandler != null and SteamHandler.has_method("get_active_fishing_leaderboard_configs") else []
+    for config_variant: Variant in configs:
+        if not (config_variant is Dictionary):
+            continue
+        var config: Dictionary = config_variant
+        var level: int = int(config.get("level", -1))
+        var board_id: String = str(config.get("id", ""))
+        var title: String = str(config.get("title", "Level %d" % level))
+        lines.append(title)
+        var local_best: float = SaveHandler.get_fishing_best_boss_clear_time(level)
+        lines.append("Your best: %s" % (_format_leaderboard_time(local_best) if local_best >= 0.0 else "--"))
+        var status: String = SteamHandler.get_cached_leaderboard_status(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_status") else "Unavailable"
+        var submitted_score_ms: int = SteamHandler.get_cached_leaderboard_last_submitted_score(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_last_submitted_score") else -1
+        if submitted_score_ms >= 0:
+            lines.append("Steam submitted: %s" % _format_leaderboard_time(float(submitted_score_ms) / 1000.0))
+        var entries: Array = SteamHandler.get_cached_leaderboard_display_entries(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_display_entries") else []
+        if entries.is_empty():
+            lines.append("Steam status: %s" % status)
+        else:
+            var display_rank: int = 1
+            for entry_variant: Variant in entries:
+                if not (entry_variant is Dictionary):
+                    continue
+                var entry: Dictionary = entry_variant
+                var rank: int = SteamHandler.get_leaderboard_entry_rank(entry, display_rank) if SteamHandler != null and SteamHandler.has_method("get_leaderboard_entry_rank") else display_rank
+                var score_ms: int = int(entry.get("score", 0))
+                var persona: String = SteamHandler.get_leaderboard_entry_display_name(entry) if SteamHandler != null and SteamHandler.has_method("get_leaderboard_entry_display_name") else "Player"
+                lines.append("#%d %s  %s" % [rank, persona, _format_leaderboard_time(float(score_ms) / 1000.0)])
+                display_rank += 1
+        lines.append("")
+    if not lines.is_empty() and lines[lines.size() - 1] == "":
+        lines.remove_at(lines.size() - 1)
+    leaderboard_body_label.text = "\n".join(lines)
+
+func _format_leaderboard_time(seconds: float) -> String:
+    if seconds < 0.0:
+        return "--"
+    return Util.format_time(seconds)
+
+func _submit_editor_leaderboard_time(level: int, time_seconds: float) -> void:
+    if not OS.has_feature("editor"):
+        return
+    if Util.is_mining_game_active():
+        return
+    print("EDITOR LEADERBOARD SUBMIT level=", level, " seconds=", time_seconds)
+    SaveHandler.register_fishing_boss_clear_time(level, time_seconds)
+    if SteamHandler == null:
+        return
+    if level == 20 and SteamHandler.has_method("submit_level20_clear_time"):
+        SteamHandler.submit_level20_clear_time(time_seconds)
+        return
+    if level == 7 and SteamHandler.has_method("submit_level7_clear_time"):
+        SteamHandler.submit_level7_clear_time(time_seconds)
+        return
+    if SteamHandler.has_method("submit_fishing_boss_clear_time"):
+        SteamHandler.submit_fishing_boss_clear_time(level, time_seconds)
+
+func _on_submit_editor_level7_30m_pressed() -> void:
+    _submit_editor_leaderboard_time(7, 1800.0)
+
+func _on_submit_editor_level7_1h_pressed() -> void:
+    _submit_editor_leaderboard_time(7, 3600.0)
+
+func _on_submit_editor_level20_2h_pressed() -> void:
+    _submit_editor_leaderboard_time(20, 7200.0)
+
+func _on_submit_editor_level20_3h_pressed() -> void:
+    _submit_editor_leaderboard_time(20, 10800.0)
+
+func _get_active_wishlist_button() -> Button:
+    if OS.has_feature("web"):
+        return _ensure_web_wishlist_button()
+    return wishlist_button
+
+func _ensure_web_wishlist_button() -> Button:
+    if wishlist_button == null:
+        return null
+    if web_wishlist_button != null and is_instance_valid(web_wishlist_button):
+        wishlist_button.visible = false
+        return web_wishlist_button
+
+    var parent_control := wishlist_button.get_parent()
+    if parent_control == null:
+        return wishlist_button
+
+    web_wishlist_button = Button.new()
+    web_wishlist_button.name = "WebWishlistButton"
+    web_wishlist_button.custom_minimum_size = wishlist_button.custom_minimum_size
+    web_wishlist_button.size_flags_horizontal = wishlist_button.size_flags_horizontal
+    web_wishlist_button.size_flags_vertical = wishlist_button.size_flags_vertical
+    web_wishlist_button.size_flags_stretch_ratio = wishlist_button.size_flags_stretch_ratio
+    web_wishlist_button.theme = wishlist_button.theme
+    web_wishlist_button.mouse_filter = Control.MOUSE_FILTER_STOP
+    web_wishlist_button.focus_mode = Control.FOCUS_ALL
+    web_wishlist_button.clip_text = true
+    web_wishlist_button.flat = false
+    web_wishlist_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+    web_wishlist_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+    web_wishlist_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+    var wishlist_index := wishlist_button.get_index()
+    wishlist_button.visible = false
+    parent_control.add_child(web_wishlist_button)
+    parent_control.move_child(web_wishlist_button, wishlist_index)
+    return web_wishlist_button
+
+func _refresh_wishlist_button_text() -> void:
+    var button: Button = web_wishlist_button if web_wishlist_button != null and is_instance_valid(web_wishlist_button) else wishlist_button
+    if button == null:
+        return
+    button.text = tr("UPGRADE_WISHLIST")
 
 func _style_wishlist_button(button: Button) -> void:
     if button == null:
@@ -663,18 +930,37 @@ func _style_wishlist_button(button: Button) -> void:
     normal.corner_radius_bottom_right = 4
     var hover := normal.duplicate(true)
     hover.bg_color = Color(0.24, 0.72, 0.3, 1.0)
-    var disabled := normal.duplicate(true)
-    disabled.bg_color = Color(0.26, 0.32, 0.26, 1.0)
-    disabled.border_color = Color(0.5, 0.56, 0.5, 1.0)
     button.add_theme_stylebox_override("normal", normal)
     button.add_theme_stylebox_override("hover", hover)
     button.add_theme_stylebox_override("pressed", hover)
     button.add_theme_stylebox_override("focus", hover)
-    button.add_theme_stylebox_override("disabled", disabled)
+    button.add_theme_stylebox_override("disabled", normal.duplicate(true))
+    button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+    button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+    button.add_theme_color_override("font_pressed_color", Color(1.0, 1.0, 1.0, 1.0))
+    button.add_theme_color_override("font_focus_color", Color(1.0, 1.0, 1.0, 1.0))
+    button.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 1.0))
 
 func _on_wishlist_button_pressed() -> void:
     var url: String = _get_demo_wishlist_url()
-    if url == "":
+    if not _can_open_demo_wishlist_url():
+        return
+    _open_external_url(url)
+
+func _open_external_url(url: String) -> void:
+    if url.strip_edges() == "":
+        return
+    if OS.has_feature("web"):
+        var window := JavaScriptBridge.get_interface("window")
+        if window != null:
+            var opened = window.call("open", url, "_blank")
+            if opened != null:
+                return
+            var location = window.get("location")
+            if location != null:
+                location.call("assign", url)
+                return
+            return
         return
     OS.shell_open(url)
 
@@ -1005,6 +1291,122 @@ func _setup_editor_cash_controls() -> void:
 
     %CanvasLayer2.add_child(editor_cash_controls)
     _refresh_editor_cash_button_text()
+
+func _setup_editor_center_offset_controls() -> void:
+    if not OS.has_feature("editor"):
+        return
+    if editor_center_offset_controls != null and is_instance_valid(editor_center_offset_controls):
+        editor_center_offset_controls.hide()
+        return
+
+    editor_center_offset_controls = VBoxContainer.new()
+    editor_center_offset_controls.name = "EditorCenterOffsetControls"
+    editor_center_offset_controls.anchor_left = 0.0
+    editor_center_offset_controls.anchor_top = 0.0
+    editor_center_offset_controls.anchor_right = 0.0
+    editor_center_offset_controls.anchor_bottom = 0.0
+    editor_center_offset_controls.offset_left = 16.0
+    editor_center_offset_controls.offset_top = 120.0
+    editor_center_offset_controls.offset_right = 240.0
+    editor_center_offset_controls.offset_bottom = 260.0
+    editor_center_offset_controls.z_index = 210
+    editor_center_offset_controls.mouse_filter = Control.MOUSE_FILTER_STOP
+    editor_center_offset_controls.visible = false
+
+    editor_center_offset_label = Label.new()
+    editor_center_offset_label.text = "Center Offset"
+    editor_center_offset_controls.add_child(editor_center_offset_label)
+
+    var x_row := HBoxContainer.new()
+    editor_center_offset_controls.add_child(x_row)
+
+    editor_center_offset_x_minus_button = Button.new()
+    editor_center_offset_x_minus_button.text = "X -20"
+    editor_center_offset_x_minus_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(-20.0, 0.0)))
+    x_row.add_child(editor_center_offset_x_minus_button)
+
+    editor_center_offset_x_plus_button = Button.new()
+    editor_center_offset_x_plus_button.text = "X +20"
+    editor_center_offset_x_plus_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(20.0, 0.0)))
+    x_row.add_child(editor_center_offset_x_plus_button)
+
+    var x_small_row := HBoxContainer.new()
+    editor_center_offset_controls.add_child(x_small_row)
+
+    editor_center_offset_x_minus_small_button = Button.new()
+    editor_center_offset_x_minus_small_button.text = "X -5"
+    editor_center_offset_x_minus_small_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(-5.0, 0.0)))
+    x_small_row.add_child(editor_center_offset_x_minus_small_button)
+
+    editor_center_offset_x_plus_small_button = Button.new()
+    editor_center_offset_x_plus_small_button.text = "X +5"
+    editor_center_offset_x_plus_small_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(5.0, 0.0)))
+    x_small_row.add_child(editor_center_offset_x_plus_small_button)
+
+    var y_row := HBoxContainer.new()
+    editor_center_offset_controls.add_child(y_row)
+
+    editor_center_offset_y_minus_button = Button.new()
+    editor_center_offset_y_minus_button.text = "Y -20"
+    editor_center_offset_y_minus_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(0.0, -20.0)))
+    y_row.add_child(editor_center_offset_y_minus_button)
+
+    editor_center_offset_y_plus_button = Button.new()
+    editor_center_offset_y_plus_button.text = "Y +20"
+    editor_center_offset_y_plus_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(0.0, 20.0)))
+    y_row.add_child(editor_center_offset_y_plus_button)
+
+    var y_small_row := HBoxContainer.new()
+    editor_center_offset_controls.add_child(y_small_row)
+
+    editor_center_offset_y_minus_small_button = Button.new()
+    editor_center_offset_y_minus_small_button.text = "Y -5"
+    editor_center_offset_y_minus_small_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(0.0, -5.0)))
+    y_small_row.add_child(editor_center_offset_y_minus_small_button)
+
+    editor_center_offset_y_plus_small_button = Button.new()
+    editor_center_offset_y_plus_small_button.text = "Y +5"
+    editor_center_offset_y_plus_small_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(0.0, 5.0)))
+    y_small_row.add_child(editor_center_offset_y_plus_small_button)
+
+    editor_center_offset_rebuild_button = Button.new()
+    editor_center_offset_rebuild_button.text = "Rebuild With Offset"
+    editor_center_offset_rebuild_button.pressed.connect(_on_editor_center_offset_rebuild_pressed)
+    editor_center_offset_controls.add_child(editor_center_offset_rebuild_button)
+
+    %CanvasLayer2.add_child(editor_center_offset_controls)
+    _refresh_editor_center_offset_label()
+
+func _refresh_editor_center_offset_label() -> void:
+    if editor_center_offset_label == null:
+        return
+    editor_center_offset_label.text = "Center Offset  X: %d  Y: %d" % [int(editor_center_offset.x), int(editor_center_offset.y)]
+
+func _on_editor_center_offset_pressed(offset_delta: Vector2) -> void:
+    if not OS.has_feature("editor"):
+        return
+    editor_center_offset += offset_delta
+    _apply_editor_center_offset()
+    _refresh_editor_center_offset_label()
+    print("Upgrade tree center offset: x=%d y=%d" % [int(editor_center_offset.x), int(editor_center_offset.y)])
+
+func _apply_editor_center_offset() -> void:
+    if tech_tree == null or not is_instance_valid(tech_tree):
+        return
+    if not tech_tree.has_method("set_debug_center_offset"):
+        return
+    tech_tree.call("set_debug_center_offset", editor_center_offset)
+    if tech_tree.selected_node != null and is_instance_valid(tech_tree.selected_node):
+        tech_tree.set_tech_tree_pos(-tech_tree.selected_node.position)
+    else:
+        tech_tree.set_tech_tree_pos(Vector2.ZERO)
+
+func _on_editor_center_offset_rebuild_pressed() -> void:
+    if not OS.has_feature("editor"):
+        return
+    _apply_editor_center_offset()
+    print("Rebuilding upgrade tree with offset: x=%d y=%d" % [int(editor_center_offset.x), int(editor_center_offset.y)])
+    _reload_simulation_upgrade_tree_from_save()
 
 func _refresh_editor_cash_button_text() -> void:
     if editor_add_cash_button == null:
@@ -1383,6 +1785,8 @@ func _update_upgrade_top_button_positions() -> void:
 
 func _on_viewport_size_changed() -> void:
     _update_upgrade_top_button_positions()
+    if tech_tree != null and is_instance_valid(tech_tree):
+        tech_tree.clamp_tech_tree_pos()
 
 func _is_settings_open() -> bool:
     return settings_panel != null and is_instance_valid(settings_panel) and settings_panel.visible

@@ -5,8 +5,9 @@ const COIN_SCENE: PackedScene = preload("res://Fishing/CoinPickup.tscn")
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const DEMO_PROJECT_SETTING := "global/Demo"
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
-const DEFAULT_DEMO_WISHLIST_URL := "https://Beep2Bleep.com"
 const DEMO_THANK_YOU_LEVELS := [7, 8]
+const BATTLE_SUMMARY_WIDTH_SCALE := 0.9
+const BATTLE_SUMMARY_HEIGHT_SCALE := 0.84
 const DEFAULT_BATTLE_HINTS := [
     "BATTLE_HINT_DEFAULT_01",
     "BATTLE_HINT_DEFAULT_02",
@@ -575,6 +576,7 @@ var summary_content_vertical_shift: float = -24.0
 var summary_hint_vertical_shift: float = 20.0
 var battle_summary_hints: Array[String] = []
 var battle_summary_hint_index: int = 0
+const BATTLE_SUMMARY_BASE_VIEWPORT := Vector2(1600.0, 900.0)
 var touch_camera_left_shift: float = 500.0
 var base_fill_texture: Texture2D
 var mage_pending_strikes: Array[Dictionary] = []
@@ -591,8 +593,10 @@ const BATTLE_STAT_SOURCE_ORDER: Array[String] = [
     "total",
     "knight",
     "archer",
+    "archer_pierce",
     "guardian",
     "mage",
+    "mage_storm",
     "knight_vamp",
     "guardian_fortify",
     "armor",
@@ -604,8 +608,10 @@ const BATTLE_STAT_SOURCE_LABELS := {
     "total": "BATTLE_SOURCE_TOTAL",
     "knight": "BATTLE_SOURCE_KNIGHT",
     "archer": "BATTLE_SOURCE_ARCHER",
+    "archer_pierce": "Archer Pierce",
     "guardian": "BATTLE_SOURCE_GUARDIAN",
     "mage": "BATTLE_SOURCE_MAGE",
+    "mage_storm": "Mage Storm",
     "knight_vamp": "BATTLE_SOURCE_KNIGHT_VAMP",
     "guardian_fortify": "BATTLE_SOURCE_GUARDIAN_FORTIFY",
     "armor": "BATTLE_SOURCE_ARMOR",
@@ -647,6 +653,7 @@ func _ready() -> void:
         push_error("BattleScene is missing required nodes.")
         return
 
+    get_viewport().size_changed.connect(_on_battle_viewport_size_changed)
     VirtualCursor.set_scene_enabled(true)
     SignalBus.settings_updated.connect(_on_settings_updated)
     _load_editor_hero_sprite_set()
@@ -678,6 +685,16 @@ func _ready() -> void:
     _setup_speed_controls()
     _restore_or_reset_ufo_spawn_timer()
     _update_speed_button_enabled_state()
+    _refresh_fullscreen_button_icon()
+    _refresh_touch_input_button()
+    _refresh_hero_set_toggle_button()
+    _refresh_new_hero_scale_debug_panel()
+    _update_ui()
+
+func _on_battle_viewport_size_changed() -> void:
+    _layout_battle_utility_buttons()
+    if battle_completed and summary_panel != null and summary_panel.visible:
+        _apply_battle_summary_layout(Vector2(9999.0, 9999.0))
     _refresh_fullscreen_button_icon()
     _refresh_touch_input_button()
     _refresh_hero_set_toggle_button()
@@ -3007,7 +3024,7 @@ func _update_heroes(delta: float) -> void:
                 var mage_tick_interval: float = _mage_attack_interval(h)
                 var mage_tick: float = float(h.get("mage_active_tick", mage_tick_interval)) - delta
                 while mage_tick <= 0.0:
-                    _damage_enemies_in_touch_camera_area(float(h.get("damage", 0.0)) * MAGE_ACTIVE_TICK_DAMAGE_MULT, true, "mage")
+                    _damage_enemies_in_touch_camera_area(float(h.get("damage", 0.0)) * MAGE_ACTIVE_TICK_DAMAGE_MULT, true, "mage_storm")
                     mage_tick += mage_tick_interval
                 h["mage_active_tick"] = mage_tick
                 if dist > float(h["range"]):
@@ -3110,7 +3127,7 @@ func _spawn_arrow(from_pos: Vector2, target_enemy: CombatSprite, damage: float, 
         "target_pos": target_pos,
         "damage": damage,
         "speed": 420.0,
-        "stat_source": "archer",
+        "stat_source": ("archer_pierce" if pierce else "archer"),
         # piercing arrows linger longer so they can cross the whole battlefield
         "ttl": (8.0 if pierce else 4.0),
         "pierce": pierce,
@@ -4900,6 +4917,7 @@ func _on_boss_defeated() -> void:
     var level_key: String = str(current_level)
     _track_level_completion_event(current_level)
     _track_first_boss_clear_event(current_level)
+    _submit_clear_time_leaderboard_if_needed(current_level)
     if current_level >= int(SaveHandler.fishing_max_unlocked_battle_level) and current_level < SaveHandler.MAX_FISHING_BATTLE_LEVEL:
         SaveHandler.fishing_max_unlocked_battle_level = current_level + 1
     SaveHandler.fishing_next_battle_level = SaveHandler.fishing_max_unlocked_battle_level
@@ -4910,6 +4928,21 @@ func _on_boss_defeated() -> void:
         SaveHandler.fishing_l3_boss_clear_clock_seconds = SaveHandler.fishing_run_clock_seconds
         SaveHandler.save_fishing_progress()
     _end_battle(true)
+
+func _submit_clear_time_leaderboard_if_needed(level: int) -> void:
+    if level != 7 and level != 20:
+        return
+    var clear_time_seconds: float = SaveHandler.fishing_run_clock_seconds
+    SaveHandler.register_fishing_boss_clear_time(level, clear_time_seconds)
+    if OS.has_feature("web"):
+        return
+    if level == 20 and SteamHandler != null and SteamHandler.has_method("submit_level20_clear_time"):
+        SteamHandler.submit_level20_clear_time(clear_time_seconds)
+        return
+    if level == 7 and SteamHandler != null and SteamHandler.has_method("submit_level7_clear_time"):
+        SteamHandler.submit_level7_clear_time(clear_time_seconds)
+        return
+    SteamHandler.submit_fishing_boss_clear_time(level, clear_time_seconds)
 
 func _track_level_completion_event(level: int) -> void:
     if level <= 0 or level > SaveHandler.MAX_FISHING_BATTLE_LEVEL:
@@ -4967,7 +5000,7 @@ func _end_battle(victory: bool) -> void:
     active_ufo = null
     defeat_summary_reveal_pending = false
     defeat_summary_reveal_time = 0.0
-    _apply_battle_summary_layout(Vector2.ONE)
+    _apply_battle_summary_layout(Vector2(9999.0, 9999.0))
     _setup_battle_summary_hints()
     summary_panel.modulate.a = 1.0
     summary_panel.scale = Vector2.ONE
@@ -5115,7 +5148,14 @@ func _is_demo_mode_enabled() -> bool:
     return bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
 
 func _get_demo_wishlist_url() -> String:
-    return str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, DEFAULT_DEMO_WISHLIST_URL)).strip_edges()
+    var configured_url: String = str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()
+    if configured_url != "":
+        return configured_url
+    return SteamHandler.get_store_url().strip_edges()
+
+func _can_open_demo_wishlist_url() -> bool:
+    var url: String = _get_demo_wishlist_url()
+    return url.begins_with("http://") or url.begins_with("https://")
 
 func _get_demo_thank_you_level() -> int:
     if not battle_victory or not _is_demo_mode_enabled():
@@ -5164,46 +5204,92 @@ func _cache_battle_summary_layout() -> void:
 func _apply_battle_summary_layout(scale: Vector2) -> void:
     if summary_panel == null or summary_label == null or continue_button == null:
         return
-    if summary_panel_base_layout.size == Vector2.ZERO:
-        _cache_battle_summary_layout()
-    var safe_scale := Vector2(max(0.1, scale.x), max(0.1, scale.y))
+    var viewport_size: Vector2 = get_viewport_rect().size
+    var scale_hint: float = minf(maxf(scale.x, 0.1), maxf(scale.y, 0.1))
+    var outer_margin_x: float = clampf(viewport_size.x * 0.012, 8.0, 24.0)
+    var outer_margin_top: float = clampf(viewport_size.y * 0.045, 36.0, 56.0)
+    var outer_margin_bottom: float = clampf(viewport_size.y * 0.02, 16.0, 28.0)
+    var panel_rect := Rect2(
+        Vector2(outer_margin_x, outer_margin_top),
+        Vector2(
+            maxf(480.0, (viewport_size.x - outer_margin_x * 2.0) * BATTLE_SUMMARY_WIDTH_SCALE),
+            maxf(320.0, (viewport_size.y - outer_margin_top - outer_margin_bottom) * BATTLE_SUMMARY_HEIGHT_SCALE)
+        )
+    )
+    _set_control_offsets_from_rect(summary_panel, panel_rect)
 
-    var base_center: Vector2 = summary_panel_base_layout.position + (summary_panel_base_layout.size * 0.5)
-    var scaled_panel_size: Vector2 = summary_panel_base_layout.size * safe_scale
-    var scaled_panel_rect := Rect2(base_center - (scaled_panel_size * 0.5), scaled_panel_size)
-    _set_control_offsets_from_rect(summary_panel, scaled_panel_rect)
+    var inner_margin: float = clampf(28.0 * scale_hint, 20.0, 34.0)
+    var content_gap: float = clampf(24.0 * scale_hint, 16.0, 28.0)
+    var hint_button_size: float = clampf(60.0 * scale_hint, 50.0, 64.0)
+    var continue_size := Vector2(clampf(320.0 * scale_hint, 240.0, 360.0), clampf(76.0 * scale_hint, 60.0, 84.0))
+    var hint_block_height: float = clampf(110.0 * scale_hint, 90.0, 132.0)
+    var bottom_spacing: float = clampf(18.0 * scale_hint, 12.0, 24.0)
+    var chart_bottom_padding: float = clampf(28.0 * scale_hint, 22.0, 40.0)
+    var content_bottom_y: float = panel_rect.size.y - inner_margin - continue_size.y - bottom_spacing - hint_block_height - chart_bottom_padding
+    var chart_width: float = clampf(panel_rect.size.x * 0.43, 520.0, 860.0)
+    chart_width = minf(chart_width, panel_rect.size.x - inner_margin * 2.0 - 280.0)
+    var text_width: float = maxf(260.0, panel_rect.size.x - inner_margin * 2.0 - content_gap - chart_width)
 
-    var scaled_label_rect := Rect2(summary_label_base_layout.position * safe_scale, summary_label_base_layout.size * safe_scale)
-    scaled_label_rect.position.y += summary_content_vertical_shift * safe_scale.y
-    _set_control_offsets_from_rect(summary_label, scaled_label_rect)
+    var label_rect := Rect2(
+        Vector2(inner_margin, inner_margin),
+        Vector2(text_width, maxf(180.0, content_bottom_y - inner_margin))
+    )
+    _set_control_offsets_from_rect(summary_label, label_rect)
+
     if summary_chart != null:
-        var scaled_chart_rect := Rect2(summary_chart_base_layout.position * safe_scale, summary_chart_base_layout.size * safe_scale)
-        scaled_chart_rect.position.y += summary_content_vertical_shift * safe_scale.y
-        _set_control_offsets_from_rect(summary_chart, scaled_chart_rect)
-    if summary_hint_title_label != null:
-        var scaled_hint_title_rect := Rect2(summary_hint_title_base_layout.position * safe_scale, summary_hint_title_base_layout.size * safe_scale)
-        scaled_hint_title_rect.position.y += summary_hint_vertical_shift * safe_scale.y
-        _set_control_offsets_from_rect(summary_hint_title_label, scaled_hint_title_rect)
-    if summary_hint_label != null:
-        var scaled_hint_label_rect := Rect2(summary_hint_label_base_layout.position * safe_scale, summary_hint_label_base_layout.size * safe_scale)
-        scaled_hint_label_rect.position.y += summary_hint_vertical_shift * safe_scale.y
-        _set_control_offsets_from_rect(summary_hint_label, scaled_hint_label_rect)
-    if summary_hint_left_button != null:
-        var scaled_hint_left_rect := Rect2(summary_hint_left_button_base_layout.position * safe_scale, summary_hint_left_button_base_layout.size * safe_scale)
-        scaled_hint_left_rect.position.y += summary_hint_vertical_shift * safe_scale.y
-        _set_control_offsets_from_rect(summary_hint_left_button, scaled_hint_left_rect)
-    if summary_hint_right_button != null:
-        var scaled_hint_right_rect := Rect2(summary_hint_right_button_base_layout.position * safe_scale, summary_hint_right_button_base_layout.size * safe_scale)
-        scaled_hint_right_rect.position.y += summary_hint_vertical_shift * safe_scale.y
-        _set_control_offsets_from_rect(summary_hint_right_button, scaled_hint_right_rect)
+        var chart_height: float = maxf(180.0, (content_bottom_y - inner_margin) * 0.58)
+        var chart_rect := Rect2(
+            Vector2(panel_rect.size.x - inner_margin - chart_width, inner_margin),
+            Vector2(chart_width, chart_height)
+        )
+        _set_control_offsets_from_rect(summary_chart, chart_rect)
 
-    var continue_rect := Rect2(640.0, 792.0, 270.0, 68.0)
-    var scaled_button_rect := Rect2(continue_rect.position * safe_scale, continue_rect.size * safe_scale)
-    _set_control_offsets_from_rect(continue_button, scaled_button_rect)
+    var hint_y: float = panel_rect.size.y - inner_margin - continue_size.y - bottom_spacing - hint_block_height + (viewport_size.y * 0.05)
+    if summary_hint_title_label != null:
+        _set_control_offsets_from_rect(
+            summary_hint_title_label,
+            Rect2(
+                Vector2(inner_margin + hint_button_size + 20.0, hint_y),
+                Vector2(panel_rect.size.x - (inner_margin + hint_button_size + 20.0) * 2.0, 28.0)
+            )
+        )
+    if summary_hint_left_button != null:
+        _set_control_offsets_from_rect(
+            summary_hint_left_button,
+            Rect2(
+                Vector2(inner_margin, hint_y + 34.0),
+                Vector2(hint_button_size, hint_button_size)
+            )
+        )
+    if summary_hint_right_button != null:
+        _set_control_offsets_from_rect(
+            summary_hint_right_button,
+            Rect2(
+                Vector2(panel_rect.size.x - inner_margin - hint_button_size, hint_y + 34.0),
+                Vector2(hint_button_size, hint_button_size)
+            )
+        )
+    if summary_hint_label != null:
+        _set_control_offsets_from_rect(
+            summary_hint_label,
+            Rect2(
+                Vector2(inner_margin + hint_button_size + 20.0, hint_y + 34.0),
+                Vector2(panel_rect.size.x - (inner_margin + hint_button_size + 20.0) * 2.0, hint_button_size)
+            )
+        )
+
+    var continue_rect := Rect2(
+        Vector2((panel_rect.size.x - continue_size.x) * 0.5, panel_rect.size.y - inner_margin - continue_size.y),
+        continue_size
+    )
+    _set_control_offsets_from_rect(continue_button, continue_rect)
     if demo_wishlist_button != null:
-        var wishlist_rect := Rect2(930.0, 792.0, 270.0, 68.0)
-        var scaled_wishlist_rect := Rect2(wishlist_rect.position * safe_scale, wishlist_rect.size * safe_scale)
-        _set_control_offsets_from_rect(demo_wishlist_button, scaled_wishlist_rect)
+        var wishlist_rect := Rect2(
+            Vector2(continue_rect.position.x + continue_rect.size.x + 24.0, continue_rect.position.y),
+            continue_size
+        )
+        if wishlist_rect.end.x + inner_margin <= panel_rect.size.x:
+            _set_control_offsets_from_rect(demo_wishlist_button, wishlist_rect)
 
 func _style_clock_ui() -> void:
     if clock_panel == null or clock_label == null:
@@ -5528,8 +5614,14 @@ func _setup_battle_summary_hints() -> void:
     battle_summary_hint_index = 0 if battle_summary_hints.is_empty() else randi() % battle_summary_hints.size()
     _refresh_battle_summary_hint()
 
+func _should_hide_battle_summary_hints() -> bool:
+    var demo_thank_you_level: int = _get_demo_thank_you_level()
+    return battle_victory and (_is_first_level_20_clear() or demo_thank_you_level == 7 or demo_thank_you_level == 8)
+
 func _build_battle_summary_hints() -> Array[String]:
     var hints: Array[String] = []
+    if _should_hide_battle_summary_hints():
+        return hints
     for hint in DEFAULT_BATTLE_HINTS:
         if hint == "BATTLE_HINT_DEFAULT_07" and not _is_demo_mode_enabled():
             hints.append(tr("GAME_OVER_THANK_YOU"))
@@ -5553,8 +5645,10 @@ func _refresh_battle_summary_hint() -> void:
     if summary_hint_title_label == null or summary_hint_label == null or summary_hint_left_button == null or summary_hint_right_button == null:
         return
     if battle_summary_hints.is_empty():
-        summary_hint_title_label.text = tr("BATTLE_HINT")
+        summary_hint_title_label.text = ""
         summary_hint_label.text = ""
+        summary_hint_title_label.hide()
+        summary_hint_label.hide()
         summary_hint_left_button.hide()
         summary_hint_right_button.hide()
         return
@@ -5684,6 +5778,10 @@ func _normalize_battle_damage_source(source_key: String) -> String:
     var normalized: String = source_key.strip_edges().to_lower()
     if normalized == "":
         return ""
+    if normalized == "archer_pierce":
+        return "archer_pierce"
+    if normalized == "mage_storm":
+        return "mage_storm"
     if normalized.begins_with("archer"):
         return "archer"
     if normalized.begins_with("mage"):
@@ -5761,13 +5859,13 @@ func _make_summary_chart_label(text: String, width: float, font_size: int, align
     return label
 
 func _make_summary_chart_bar(value: float, max_value: float, color: String) -> Control:
-    var root := VBoxContainer.new()
+    var root := HBoxContainer.new()
     root.custom_minimum_size = Vector2(156.0, 0.0)
     root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    root.add_theme_constant_override("separation", 4)
+    root.add_theme_constant_override("separation", 6)
 
     var meter := ProgressBar.new()
-    meter.custom_minimum_size = Vector2(156.0, 20.0)
+    meter.custom_minimum_size = Vector2(108.0, 20.0)
     meter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     meter.show_percentage = false
     meter.max_value = max(1.0, max_value)
@@ -5790,7 +5888,7 @@ func _make_summary_chart_bar(value: float, max_value: float, color: String) -> C
     meter.add_theme_stylebox_override("fill", fill_style)
     root.add_child(meter)
 
-    var value_label := _make_summary_chart_label(_format_battle_stat_value(value), 156.0, 16, HORIZONTAL_ALIGNMENT_RIGHT, Color(0.78, 0.88, 0.98, 1.0))
+    var value_label := _make_summary_chart_label(_format_battle_stat_value(value), 42.0, 16, HORIZONTAL_ALIGNMENT_RIGHT, Color(0.78, 0.88, 0.98, 1.0))
     root.add_child(value_label)
     return root
 
@@ -5847,7 +5945,7 @@ func _setup_demo_wishlist_button() -> void:
         summary_panel.add_child(demo_wishlist_button)
     _set_control_offsets_from_rect(demo_wishlist_button, demo_wishlist_button_base_layout)
     demo_wishlist_button.visible = false
-    demo_wishlist_button.disabled = _get_demo_wishlist_url() == ""
+    demo_wishlist_button.disabled = not _can_open_demo_wishlist_url()
     demo_wishlist_button.tooltip_text = _get_demo_wishlist_url()
     if not demo_wishlist_button.pressed.is_connected(_on_demo_wishlist_button_pressed):
         demo_wishlist_button.pressed.connect(_on_demo_wishlist_button_pressed)
@@ -5873,7 +5971,7 @@ func _finalize_battle_summary() -> void:
     var show_demo_wishlist: bool = _get_demo_thank_you_level() > 0
     if demo_wishlist_button != null:
         demo_wishlist_button.visible = show_demo_wishlist
-        demo_wishlist_button.disabled = _get_demo_wishlist_url() == ""
+        demo_wishlist_button.disabled = not _can_open_demo_wishlist_url()
         demo_wishlist_button.tooltip_text = _get_demo_wishlist_url()
     _refresh_battle_summary_text()
     if battle_victory and current_level == 20 and not SaveHandler.fishing_l3_boss_thank_you_shown:
@@ -5950,7 +6048,18 @@ func _on_summary_hint_right_button_pressed() -> void:
 
 func _on_demo_wishlist_button_pressed() -> void:
     var url: String = _get_demo_wishlist_url()
-    if url == "":
+    if not _can_open_demo_wishlist_url():
+        return
+    if OS.has_feature("web"):
+        var window := JavaScriptBridge.get_interface("window")
+        if window != null:
+            var opened = window.call("open", url, "_blank")
+            if opened != null:
+                return
+            var location = window.get("location")
+            if location != null:
+                location.call("assign", url)
+                return
         return
     OS.shell_open(url)
 

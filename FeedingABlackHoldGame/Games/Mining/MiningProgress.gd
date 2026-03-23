@@ -2,123 +2,129 @@ extends RefCounted
 class_name MiningProgress
 
 const SAVE_PATH := "user://mining_mode_save_v1.json"
+const MAX_DEPTH_LEVEL := 13
 
 const DEFAULT_DATA := {
-	"wallet": 0,
-	"best_depth": 0.0,
-	"upgrades": {},
-	"boss_unlocks": {},
-	"checkpoint_owned": {},
-	"selected_checkpoint": 0,
-	"equipped": ["pistol", ""],
-	"last_run_summary": "No mining run completed yet."
+    "wallet": 0,
+    "xp": 0,
+    "player_level": 1,
+    "deepest_level_unlocked": 1,
+    "selected_depth_level": 1,
+    "upgrades": {},
+    "last_run_summary": "No mining run completed yet.",
+    "last_run_breakdown": {}
 }
 
 const UPGRADE_CATALOG: Array[Dictionary] = [
-	{"id": "drill_power", "label": "Drill Power", "summary": "Shreds harder nodes faster.", "base_cost": 24, "cost_mult": 1.42, "max_level": 10, "requires": {}, "act": 2, "icon": "D"},
-	{"id": "drill_integrity", "label": "Drill Integrity", "summary": "More drill durability per run.", "base_cost": 26, "cost_mult": 1.43, "max_level": 10, "requires": {"drill_power": 1}, "act": 2, "icon": "I"},
-	{"id": "oxygen_tanks", "label": "Oxygen Tanks", "summary": "Longer dives before recall.", "base_cost": 28, "cost_mult": 1.45, "max_level": 10, "requires": {}, "act": 4, "icon": "O"},
-	{"id": "hull_plating", "label": "Hull Plating", "summary": "More hull to tank hazards and bosses.", "base_cost": 28, "cost_mult": 1.45, "max_level": 10, "requires": {"oxygen_tanks": 1}, "act": 4, "icon": "H"},
-	{"id": "cargo_racks", "label": "Ore Grading", "summary": "Raises the cash value of the haul you bring back.", "base_cost": 32, "cost_mult": 1.47, "max_level": 8, "requires": {"dirt_compressor": 1}, "act": 3, "icon": "G"},
-	{"id": "dirt_compressor", "label": "Dirt Compressor", "summary": "Makes the basic shaft dirt worth more.", "base_cost": 20, "cost_mult": 1.4, "max_level": 8, "requires": {}, "act": 3, "icon": "C"},
-	{"id": "ore_scanner", "label": "Ore Scanner", "summary": "Boosts deep rare node spawns.", "base_cost": 44, "cost_mult": 1.48, "max_level": 6, "requires": {"cargo_racks": 1}, "act": 3, "icon": "S"},
-	{"id": "thruster_power", "label": "Thruster Power", "summary": "Base descent speed goes up.", "base_cost": 34, "cost_mult": 1.45, "max_level": 10, "requires": {}, "act": 5, "icon": "T"},
-	{"id": "shaft_lubricant", "label": "Shaft Lubricant", "summary": "Cleaner steering and a little more speed.", "base_cost": 38, "cost_mult": 1.45, "max_level": 8, "requires": {"thruster_power": 1}, "act": 5, "icon": "L"},
-	{"id": "cord_winch", "label": "Cord Winch", "summary": "Ascent cord hauls you up even faster.", "base_cost": 48, "cost_mult": 1.48, "max_level": 8, "requires": {"shaft_lubricant": 1}, "act": 5, "icon": "W"},
-	{"id": "launch_thrusters", "label": "Launch Thrusters", "summary": "The start of every run gets much faster.", "base_cost": 56, "cost_mult": 1.5, "max_level": 6, "requires": {"thruster_power": 2}, "act": 5, "icon": "B"},
-	{"id": "start_boost", "label": "Drop Rails", "summary": "Extends the super-fast opening burst.", "base_cost": 78, "cost_mult": 1.56, "max_level": 5, "requires": {"launch_thrusters": 2}, "act": 5, "icon": "R"},
-	{"id": "teleport_core", "label": "Teleport Core", "summary": "Instant shaft entry burst with auto-scoop.", "base_cost": 620, "cost_mult": 2.0, "max_level": 1, "requires": {"start_boost": 5}, "act": 5, "icon": "P"},
-	{"id": "punch_damage", "label": "Shock Fist", "summary": "Punches become a real backup weapon.", "base_cost": 16, "cost_mult": 1.38, "max_level": 10, "requires": {}, "act": 1, "icon": "F"},
-	{"id": "pistol_damage", "label": "Pistol Damage", "summary": "Better skeet cleanup and chip damage.", "base_cost": 22, "cost_mult": 1.42, "max_level": 10, "requires": {"punch_damage": 1}, "act": 1, "icon": "P"},
-	{"id": "pistol_reload", "label": "Pistol Reload", "summary": "Less downtime on the starter gun.", "base_cost": 22, "cost_mult": 1.42, "max_level": 8, "requires": {"pistol_damage": 1}, "act": 1, "icon": "R"},
-	{"id": "shotgun_unlock", "label": "Unlock Scattergun", "summary": "Adds a short-range burst weapon for slot two.", "base_cost": 96, "cost_mult": 2.0, "max_level": 1, "requires": {"pistol_damage": 2}, "act": 6, "icon": "S"},
-	{"id": "shotgun_damage", "label": "Scattergun Damage", "summary": "More burst for close mining fights.", "base_cost": 54, "cost_mult": 1.46, "max_level": 8, "requires": {"shotgun_unlock": 1}, "act": 6, "icon": "D"},
-	{"id": "shotgun_reload", "label": "Scattergun Reload", "summary": "Gets the shell swap moving.", "base_cost": 56, "cost_mult": 1.46, "max_level": 8, "requires": {"shotgun_unlock": 1}, "act": 6, "icon": "R"},
-	{"id": "rifle_unlock", "label": "Unlock Burst Rifle", "summary": "A stable midrange gun with good uptime.", "base_cost": 168, "cost_mult": 2.0, "max_level": 1, "requires": {"shotgun_unlock": 1, "pistol_reload": 3}, "act": 6, "icon": "U"},
-	{"id": "rifle_damage", "label": "Burst Rifle Damage", "summary": "Scales the rifle for deep hazards.", "base_cost": 72, "cost_mult": 1.48, "max_level": 8, "requires": {"rifle_unlock": 1}, "act": 6, "icon": "D"},
-	{"id": "rifle_reload", "label": "Burst Rifle Reload", "summary": "Keeps the rifle cycling smoothly.", "base_cost": 72, "cost_mult": 1.48, "max_level": 8, "requires": {"rifle_unlock": 1}, "act": 6, "icon": "R"},
-	{"id": "railgun_unlock", "label": "Unlock Railgun", "summary": "Huge punch, long reload, perfect swap gun.", "base_cost": 320, "cost_mult": 2.0, "max_level": 1, "requires": {"rifle_unlock": 1, "start_boost": 2}, "act": 7, "icon": "U"},
-	{"id": "railgun_damage", "label": "Railgun Damage", "summary": "Turns the railgun into a checkpoint breaker.", "base_cost": 122, "cost_mult": 1.52, "max_level": 6, "requires": {"railgun_unlock": 1}, "act": 7, "icon": "D"},
-	{"id": "railgun_reload", "label": "Railgun Reload", "summary": "Shaves the reload enough for swap loops.", "base_cost": 118, "cost_mult": 1.52, "max_level": 6, "requires": {"railgun_unlock": 1}, "act": 7, "icon": "R"},
+    {"id": "timer_reserve", "label": "Timer Reserve", "summary": "Adds a few precious seconds to every drilling run.", "base_cost": 24, "cost_mult": 1.42, "max_level": 10, "requires": {}, "act": 1, "icon": "T"},
+    {"id": "engine_tuning", "label": "Engine Tuning", "summary": "Move faster through dirt and open tunnels.", "base_cost": 26, "cost_mult": 1.44, "max_level": 10, "requires": {}, "act": 1, "icon": "M"},
+    {"id": "drill_torque", "label": "Drill Torque", "summary": "Chews through resource nodes much faster.", "base_cost": 30, "cost_mult": 1.46, "max_level": 10, "requires": {}, "act": 2, "icon": "D"},
+    {"id": "drill_plating", "label": "Drill Plating", "summary": "Raises drill health so tougher nodes do less wear.", "base_cost": 34, "cost_mult": 1.48, "max_level": 8, "requires": {"drill_torque": 1}, "act": 2, "icon": "H"},
+    {"id": "cargo_pods", "label": "Cargo Pods", "summary": "Carry more drops before returning to base.", "base_cost": 32, "cost_mult": 1.45, "max_level": 8, "requires": {}, "act": 3, "icon": "C"},
+    {"id": "ore_refinery", "label": "Ore Refinery", "summary": "Every mined chunk converts into more money.", "base_cost": 38, "cost_mult": 1.48, "max_level": 8, "requires": {"cargo_pods": 1}, "act": 3, "icon": "V"},
+    {"id": "pickup_radius", "label": "Vacuum Scoop", "summary": "Pick up spawned drops from farther away.", "base_cost": 36, "cost_mult": 1.46, "max_level": 7, "requires": {"cargo_pods": 1}, "act": 3, "icon": "P"},
+    {"id": "xp_calibration", "label": "XP Calibration", "summary": "Mining and hauling gives more XP per run.", "base_cost": 42, "cost_mult": 1.5, "max_level": 7, "requires": {"ore_refinery": 1}, "act": 4, "icon": "X"},
+    {"id": "dirt_softener", "label": "Dirt Softener", "summary": "Reduces how much deeper levels slow the rig down.", "base_cost": 48, "cost_mult": 1.52, "max_level": 6, "requires": {"engine_tuning": 2}, "act": 4, "icon": "S"},
+    {"id": "depth_scanner", "label": "Depth Scanner", "summary": "Lets the rig challenge deeper strata earlier.", "base_cost": 58, "cost_mult": 1.56, "max_level": 5, "requires": {"xp_calibration": 1}, "act": 5, "icon": "L"},
+    {"id": "magnet_drone", "label": "Magnet Drone", "summary": "A support drone tugs nearby drops into your hold.", "base_cost": 92, "cost_mult": 1.78, "max_level": 4, "requires": {"pickup_radius": 2}, "act": 6, "icon": "G"},
+    {"id": "delivery_drone", "label": "Delivery Drone", "summary": "Periodically ferries a little cargo back to base.", "base_cost": 136, "cost_mult": 1.85, "max_level": 3, "requires": {"magnet_drone": 1, "depth_scanner": 1}, "act": 6, "icon": "R"}
 ]
 
 static func get_default_data() -> Dictionary:
-	return DEFAULT_DATA.duplicate(true)
+    return DEFAULT_DATA.duplicate(true)
 
 static func get_upgrade_catalog() -> Array[Dictionary]:
-	return UPGRADE_CATALOG.duplicate(true)
+    return UPGRADE_CATALOG.duplicate(true)
 
 static func load_data() -> Dictionary:
-	var data: Dictionary = get_default_data()
-	if not FileAccess.file_exists(SAVE_PATH):
-		return data
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if file == null:
-		return data
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
-	if parsed is Dictionary:
-		data = data.merged(parsed, true)
-	return data
+    var data: Dictionary = get_default_data()
+    if not FileAccess.file_exists(SAVE_PATH):
+        return data
+    var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+    if file == null:
+        return data
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if parsed is Dictionary:
+        data = data.merged(parsed, true)
+    data["player_level"] = max(1, int(data.get("player_level", 1)))
+    data["deepest_level_unlocked"] = clampi(int(data.get("deepest_level_unlocked", 1)), 1, MAX_DEPTH_LEVEL)
+    data["selected_depth_level"] = clampi(int(data.get("selected_depth_level", 1)), 1, int(data["deepest_level_unlocked"]))
+    return data
 
 static func save_data(data: Dictionary) -> void:
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if file == null:
-		return
-	file.store_string(JSON.stringify(data, "\t"))
+    var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+    if file == null:
+        return
+    file.store_string(JSON.stringify(data, "\t"))
 
 static func reset_progress() -> Dictionary:
-	var data: Dictionary = get_default_data()
-	save_data(data)
-	return data
+    var data: Dictionary = get_default_data()
+    save_data(data)
+    return data
 
 static func get_wallet() -> int:
-	return int(load_data().get("wallet", 0))
+    return int(load_data().get("wallet", 0))
 
 static func get_upgrade_level(upgrade_id: String) -> int:
-	var data: Dictionary = load_data()
-	var upgrades: Dictionary = data.get("upgrades", {})
-	return int(upgrades.get(upgrade_id, 0))
+    var data: Dictionary = load_data()
+    var upgrades: Dictionary = data.get("upgrades", {})
+    return int(upgrades.get(upgrade_id, 0))
 
 static func apply_tree_purchase(upgrade_id: String, level: int, wallet_after_purchase: int) -> void:
-	var data: Dictionary = load_data()
-	var upgrades: Dictionary = data.get("upgrades", {})
-	upgrades[upgrade_id] = max(level, int(upgrades.get(upgrade_id, 0)))
-	data["upgrades"] = upgrades
-	data["wallet"] = max(0, wallet_after_purchase)
-	_try_auto_equip_weapon(data, upgrade_id)
-	save_data(data)
+    var data: Dictionary = load_data()
+    var upgrades: Dictionary = data.get("upgrades", {})
+    upgrades[upgrade_id] = max(level, int(upgrades.get(upgrade_id, 0)))
+    data["upgrades"] = upgrades
+    data["wallet"] = max(0, wallet_after_purchase)
+    _refresh_depth_unlocks(data)
+    save_data(data)
 
-static func set_wallet(wallet_value: int) -> void:
-	var data: Dictionary = load_data()
-	data["wallet"] = max(0, wallet_value)
-	save_data(data)
+static func apply_run_results(results: Dictionary) -> Dictionary:
+    var data: Dictionary = load_data()
+    data["wallet"] = max(0, int(data.get("wallet", 0)) + int(results.get("money", 0)))
+    data["xp"] = max(0, int(data.get("xp", 0)) + int(results.get("xp", 0)))
+    data["player_level"] = get_level_for_total_xp(int(data["xp"]))
+    data["last_run_summary"] = str(results.get("summary_text", "Mining run complete."))
+    data["last_run_breakdown"] = results.duplicate(true)
+    data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", 1)), int(results.get("depth_level", 1)))
+    _refresh_depth_unlocks(data)
+    save_data(data)
+    return data
 
-static func unlock_checkpoint(depth_marker: int) -> void:
-	var data: Dictionary = load_data()
-	var key: String = str(depth_marker)
-	var boss_unlocks: Dictionary = data.get("boss_unlocks", {})
-	var checkpoint_owned: Dictionary = data.get("checkpoint_owned", {})
-	boss_unlocks[key] = true
-	checkpoint_owned[key] = true
-	data["boss_unlocks"] = boss_unlocks
-	data["checkpoint_owned"] = checkpoint_owned
-	data["selected_checkpoint"] = max(int(data.get("selected_checkpoint", 0)), depth_marker)
-	save_data(data)
+static func set_selected_depth_level(depth_level: int) -> Dictionary:
+    var data: Dictionary = load_data()
+    data["selected_depth_level"] = clampi(depth_level, 1, int(data.get("deepest_level_unlocked", 1)))
+    save_data(data)
+    return data
 
-static func _try_auto_equip_weapon(data: Dictionary, upgrade_id: String) -> void:
-	var weapon_id := ""
-	match upgrade_id:
-		"shotgun_unlock":
-			weapon_id = "shotgun"
-		"rifle_unlock":
-			weapon_id = "rifle"
-		"railgun_unlock":
-			weapon_id = "railgun"
-	if weapon_id.is_empty():
-		return
-	var equipped: Array = data.get("equipped", ["pistol", ""])
-	if String(equipped[1]).is_empty():
-		equipped[1] = weapon_id
-	elif String(equipped[0]) == "pistol" and String(equipped[1]) == "shotgun" and weapon_id == "rifle":
-		equipped[1] = weapon_id
-	data["equipped"] = equipped
+static func get_level_for_total_xp(total_xp: int) -> int:
+    var level: int = 1
+    var remaining_xp: int = max(0, total_xp)
+    while remaining_xp >= get_xp_to_next_level(level):
+        remaining_xp -= get_xp_to_next_level(level)
+        level += 1
+    return level
+
+static func get_xp_to_next_level(level: int) -> int:
+    return int(round(28.0 + 18.0 * pow(float(max(level, 1)), 1.28)))
+
+static func get_level_progress(data: Dictionary) -> Dictionary:
+    var current_level: int = max(1, int(data.get("player_level", 1)))
+    var total_xp: int = max(0, int(data.get("xp", 0)))
+    var spent_xp: int = 0
+    for level in range(1, current_level):
+        spent_xp += get_xp_to_next_level(level)
+    var current_level_xp: int = max(0, total_xp - spent_xp)
+    var next_level_cost: int = get_xp_to_next_level(current_level)
+    return {
+        "current_level": current_level,
+        "current_xp": current_level_xp,
+        "next_level_xp": next_level_cost
+    }
+
+static func _refresh_depth_unlocks(data: Dictionary) -> void:
+    var player_level: int = max(1, int(data.get("player_level", 1)))
+    var scanner_level: int = int(data.get("upgrades", {}).get("depth_scanner", 0))
+    var unlocked_depth: int = min(MAX_DEPTH_LEVEL, 1 + int(floor(float(player_level - 1) / 1.0)) + scanner_level)
+    data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", 1)), unlocked_depth)
+    data["selected_depth_level"] = int(data["deepest_level_unlocked"])

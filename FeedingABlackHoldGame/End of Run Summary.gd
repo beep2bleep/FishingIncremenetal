@@ -1,8 +1,17 @@
 extends ColorRect
 class_name EndOfRunSummary
 
+const SUMMARY_STACK_WIDTH := 1500.0
+const SUMMARY_TWO_COLUMN_STATS_WIDTH := 1180.0
+
 var fast_screen = false
 var is_shown = false
+
+@onready var content_row: BoxContainer = $MarginContainer3/VBoxContainer/Vbox/HBoxContainer
+@onready var money_panel: PanelContainer = $"MarginContainer3/VBoxContainer/Vbox/HBoxContainer/Money Stuff"
+@onready var stats_panel: PanelContainer = $MarginContainer3/VBoxContainer/Vbox/HBoxContainer/PanelContainer
+@onready var stats_grid_top: GridContainer = $MarginContainer3/VBoxContainer/Vbox/HBoxContainer/PanelContainer/MarginContainer/VBoxContainer/Stats
+@onready var stats_grid_bottom: GridContainer = $MarginContainer3/VBoxContainer/Vbox/HBoxContainer/PanelContainer/MarginContainer/VBoxContainer/Stats2
 
 
 func show_screen():
@@ -16,14 +25,36 @@ func show_screen():
 
 func _ready():
     set_process_input(false)
-
     ControllerIcons.input_type_changed.connect(_on_input_type_changed)
+    get_viewport().size_changed.connect(_update_responsive_layout)
+    _update_responsive_layout()
 
 
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):
     if is_shown == true:
         if ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER:
             %Upgrades.grab_focus()
+
+
+func _update_responsive_layout() -> void:
+    var viewport_width: float = get_viewport_rect().size.x
+    var use_stacked_layout: bool = viewport_width < SUMMARY_STACK_WIDTH
+    content_row.vertical = use_stacked_layout
+    content_row.alignment = BoxContainer.ALIGNMENT_CENTER
+
+    money_panel.custom_minimum_size.x = 0.0 if use_stacked_layout else 330.0
+    stats_panel.custom_minimum_size.x = 0.0 if use_stacked_layout else 330.0
+
+    if use_stacked_layout:
+        money_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        stats_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    else:
+        money_panel.size_flags_horizontal = 0
+        stats_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+    var stats_columns: int = 1 if viewport_width < SUMMARY_TWO_COLUMN_STATS_WIDTH else 2
+    stats_grid_top.columns = stats_columns
+    stats_grid_bottom.columns = stats_columns
 
 
 func do_end_of_run():

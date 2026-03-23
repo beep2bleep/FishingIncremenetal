@@ -150,7 +150,7 @@ text = "#/#"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer3/VBoxContainer/Vbox"]
+[node name="HBoxContainer" type="BoxContainer" parent="MarginContainer3/VBoxContainer/Vbox"]
 layout_mode = 2
 theme_override_constants/separation = 64
 

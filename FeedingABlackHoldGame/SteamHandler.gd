@@ -2,6 +2,10 @@ extends Node
 
 const STEAM_APP_ID := 4519820
 const STEAM_STORE_PATH := "Vanguard__Idle_Auto_Battler"
+const MINING_WISHLIST_URL := "https://beep2bleep.itch.io"
+const LEADERBOARD_LEVEL7_SHARED := "level7_clear_time"
+const LEADERBOARD_LEVEL20_FULL := "full_level20_clear_time"
+const LEADERBOARD_FETCH_COUNT := 5
 
 
 enum ACHIVEMENTS{
@@ -41,6 +45,7 @@ enum ACHIVEMENTS{
 
 var app_id = STEAM_APP_ID
 signal steamworks_error
+signal leaderboard_data_updated
 var steam_enabled: bool = false
 
 var statistics: Dictionary = {
@@ -49,9 +54,26 @@ var statistics: Dictionary = {
 
 }
 var achievements: Dictionary = {}
+var leaderboard_handles: Dictionary = {}
+var leaderboard_entries: Dictionary = {}
+var leaderboard_statuses: Dictionary = {}
+var leaderboard_entry_counts: Dictionary = {}
+var leaderboard_name_to_id: Dictionary = {}
+var leaderboard_id_to_name: Dictionary = {}
+var leaderboard_pending_submissions: Dictionary = {}
+var leaderboard_last_submitted_scores: Dictionary = {}
+var _leaderboard_request_queue: Array[String] = []
+var _leaderboard_download_queue: Array[String] = []
+var _leaderboard_active_request_id := ""
+var _leaderboard_active_download_id := ""
+var _leaderboard_active_request_started_msec: int = 0
+var _leaderboard_active_download_started_msec: int = 0
+var _leaderboard_last_polled_handle: int = 0
 
 
 func get_store_url() -> String:
+    if Util.is_mining_game_active():
+        return MINING_WISHLIST_URL
     return "https://store.steampowered.com/app/%s/%s/" % [STEAM_APP_ID, STEAM_STORE_PATH]
 
 func is_steam_deck():
@@ -71,6 +93,7 @@ func _ready():
         achievements[mode] = false
 
     initialize_steam()
+    _setup_leaderboard_support()
     set_process(steam_enabled)
 
 
@@ -99,6 +122,321 @@ func initialize_steam() -> void :
     load_steam_achievements()
     print_debug("Finished Steam initialization process")
 
+func _setup_leaderboard_support() -> void:
+    _rebuild_leaderboard_name_maps()
+    if not steam_enabled:
+        return
+    _debug_print_leaderboard_api()
+    if Steam.has_signal("leaderboard_find_result") and not Steam.leaderboard_find_result.is_connected(_on_leaderboard_find_result):
+        Steam.leaderboard_find_result.connect(_on_leaderboard_find_result)
+    if Steam.has_signal("leaderboard_scores_downloaded") and not Steam.leaderboard_scores_downloaded.is_connected(_on_leaderboard_scores_downloaded):
+        Steam.leaderboard_scores_downloaded.connect(_on_leaderboard_scores_downloaded)
+    if Steam.has_signal("leaderboard_score_uploaded") and not Steam.leaderboard_score_uploaded.is_connected(_on_leaderboard_score_uploaded):
+        Steam.leaderboard_score_uploaded.connect(_on_leaderboard_score_uploaded)
+    request_active_fishing_leaderboards()
+
+func _debug_print_leaderboard_api() -> void:
+    var signal_names: Array[String] = []
+    for signal_data: Dictionary in Steam.get_signal_list():
+        var signal_name: String = str(signal_data.get("name", ""))
+        if signal_name.to_lower().contains("leaderboard"):
+            signal_names.append(signal_name)
+    signal_names.sort()
+    print("STEAM LEADERBOARD SIGNALS: ", signal_names)
+
+    var method_names: Array[String] = []
+    for method_data: Dictionary in Steam.get_method_list():
+        var method_name: String = str(method_data.get("name", ""))
+        if method_name.to_lower().contains("leaderboard"):
+            method_names.append(method_name)
+    method_names.sort()
+    print("STEAM LEADERBOARD METHODS: ", method_names)
+
+func _rebuild_leaderboard_name_maps() -> void:
+    leaderboard_name_to_id.clear()
+    leaderboard_id_to_name.clear()
+    for config: Dictionary in get_active_fishing_leaderboard_configs():
+        var board_id: String = str(config.get("id", ""))
+        var board_name: String = str(config.get("steam_name", ""))
+        if board_id == "" or board_name == "":
+            continue
+        leaderboard_name_to_id[board_name] = board_id
+        leaderboard_id_to_name[board_id] = board_name
+
+func _is_demo_build() -> bool:
+    return bool(ProjectSettings.get_setting("global/Demo", false))
+
+func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
+    if _is_demo_build():
+        return [
+            {
+                "id": LEADERBOARD_LEVEL7_SHARED,
+                "steam_name": LEADERBOARD_LEVEL7_SHARED,
+                "level": 7,
+                "title": "Level 7",
+            }
+        ]
+    return [
+        {
+            "id": LEADERBOARD_LEVEL7_SHARED,
+            "steam_name": LEADERBOARD_LEVEL7_SHARED,
+            "level": 7,
+            "title": "Level 7",
+        },
+        {
+            "id": LEADERBOARD_LEVEL20_FULL,
+            "steam_name": LEADERBOARD_LEVEL20_FULL,
+            "level": 20,
+            "title": "Level 20",
+        }
+    ]
+
+func get_cached_leaderboard_entries(board_id: String) -> Array:
+    return leaderboard_entries.get(board_id, [])
+
+func get_cached_leaderboard_status(board_id: String) -> String:
+    return str(leaderboard_statuses.get(board_id, "Unavailable"))
+
+func request_active_fishing_leaderboards() -> void:
+    _rebuild_leaderboard_name_maps()
+    for config: Dictionary in get_active_fishing_leaderboard_configs():
+        request_leaderboard(str(config.get("id", "")))
+
+func request_leaderboard(board_id: String) -> void:
+    if board_id == "":
+        return
+    if not steam_enabled:
+        leaderboard_statuses[board_id] = "Steam unavailable"
+        leaderboard_data_updated.emit()
+        return
+    if leaderboard_handles.has(board_id):
+        _queue_leaderboard_download(board_id)
+        return
+    if _leaderboard_request_queue.has(board_id) or _leaderboard_active_request_id == board_id:
+        return
+    leaderboard_statuses[board_id] = "Loading..."
+    _leaderboard_request_queue.append(board_id)
+    _pump_leaderboard_request_queue()
+    leaderboard_data_updated.emit()
+
+func _pump_leaderboard_request_queue() -> void:
+    if not steam_enabled or _leaderboard_active_request_id != "" or _leaderboard_active_download_id != "" or _leaderboard_request_queue.is_empty():
+        return
+    _leaderboard_active_request_id = _leaderboard_request_queue.pop_front()
+    _leaderboard_active_request_started_msec = Time.get_ticks_msec()
+    _leaderboard_last_polled_handle = 0
+    var board_name: String = str(leaderboard_id_to_name.get(_leaderboard_active_request_id, ""))
+    if board_name == "":
+        leaderboard_statuses[_leaderboard_active_request_id] = "Missing name"
+        _leaderboard_active_request_id = ""
+        _leaderboard_active_request_started_msec = 0
+        leaderboard_data_updated.emit()
+        return
+    if Steam.has_method("set_leaderboard_handle"):
+        Steam.call("set_leaderboard_handle", 0)
+    if Steam.has_method("findLeaderboard"):
+        Steam.call("findLeaderboard", board_name)
+    else:
+        leaderboard_statuses[_leaderboard_active_request_id] = "findLeaderboard unavailable"
+        _leaderboard_active_request_id = ""
+        _leaderboard_active_request_started_msec = 0
+        leaderboard_data_updated.emit()
+
+func _on_leaderboard_find_result(new_handle: int, was_found: int) -> void:
+    var board_id := _leaderboard_active_request_id
+    _leaderboard_active_request_id = ""
+    _leaderboard_active_request_started_msec = 0
+    if board_id == "":
+        _pump_leaderboard_request_queue()
+        return
+    var expected_name: String = str(leaderboard_id_to_name.get(board_id, ""))
+    if new_handle != 0 and expected_name != "" and Steam.has_method("getLeaderboardName"):
+        var resolved_name: String = str(Steam.call("getLeaderboardName", new_handle))
+        if resolved_name != "" and resolved_name != expected_name:
+            leaderboard_statuses[board_id] = "Handle mismatch: %s" % resolved_name
+            leaderboard_data_updated.emit()
+            _pump_leaderboard_request_queue()
+            return
+    if was_found != 1 or new_handle == 0:
+        leaderboard_statuses[board_id] = "Not found"
+        leaderboard_data_updated.emit()
+        _pump_leaderboard_request_queue()
+        return
+    leaderboard_handles[board_id] = new_handle
+    leaderboard_statuses[board_id] = "Loaded"
+    _download_leaderboard_entries(board_id)
+    _submit_pending_leaderboard_score(board_id)
+    leaderboard_data_updated.emit()
+
+func _queue_leaderboard_download(board_id: String) -> void:
+    if board_id == "":
+        return
+    if _leaderboard_active_download_id == board_id or _leaderboard_download_queue.has(board_id):
+        return
+    if _leaderboard_active_download_id != "":
+        _leaderboard_download_queue.append(board_id)
+        return
+    _download_leaderboard_entries(board_id)
+
+func _pump_leaderboard_download_queue() -> void:
+    if _leaderboard_active_download_id != "" or _leaderboard_download_queue.is_empty():
+        return
+    var next_board_id: String = str(_leaderboard_download_queue.pop_front())
+    _download_leaderboard_entries(next_board_id)
+
+func _download_leaderboard_entries(board_id: String) -> void:
+    if not steam_enabled:
+        return
+    if not leaderboard_handles.has(board_id):
+        request_leaderboard(board_id)
+        return
+    if not Steam.has_method("downloadLeaderboardEntries"):
+        leaderboard_statuses[board_id] = "downloadLeaderboardEntries unavailable"
+        leaderboard_data_updated.emit()
+        return
+    if Steam.has_method("set_leaderboard_handle"):
+        Steam.call("set_leaderboard_handle", int(leaderboard_handles[board_id]))
+    if Steam.has_method("set_leaderboard_entries"):
+        Steam.call("set_leaderboard_entries", [])
+    if Steam.has_method("getLeaderboardEntryCount"):
+        leaderboard_entry_counts[board_id] = int(Steam.call("getLeaderboardEntryCount", int(leaderboard_handles[board_id])))
+    _leaderboard_active_download_id = board_id
+    _leaderboard_active_download_started_msec = Time.get_ticks_msec()
+    Steam.call("downloadLeaderboardEntries", 1, LEADERBOARD_FETCH_COUNT, 0, int(leaderboard_handles[board_id]))
+    leaderboard_statuses[board_id] = "Refreshing..."
+    leaderboard_data_updated.emit()
+
+func _on_leaderboard_scores_downloaded(this_handle: int, these_results: Array) -> void:
+    print("LEADERBOARD DOWNLOAD CALLBACK handle=", this_handle, " results=", these_results)
+    var board_id := _leaderboard_active_download_id
+    if board_id == "":
+        for key: Variant in leaderboard_handles.keys():
+            if int(leaderboard_handles[key]) == this_handle:
+                board_id = str(key)
+                break
+    _leaderboard_active_download_id = ""
+    _leaderboard_active_download_started_msec = 0
+    if board_id == "":
+        _pump_leaderboard_download_queue()
+        return
+    leaderboard_entries[board_id] = these_results
+    leaderboard_entry_counts[board_id] = these_results.size()
+    leaderboard_statuses[board_id] = "Loaded"
+    leaderboard_data_updated.emit()
+    _pump_leaderboard_download_queue()
+    _pump_leaderboard_request_queue()
+
+func _on_leaderboard_score_uploaded(_success: int, _handle: int, _score: int, _score_changed: bool, _global_rank_new: int, _global_rank_previous: int) -> void:
+    print("LEADERBOARD UPLOAD CALLBACK success=", _success, " handle=", _handle, " score=", _score, " changed=", _score_changed, " new_rank=", _global_rank_new, " prev_rank=", _global_rank_previous)
+    for key: Variant in leaderboard_handles.keys():
+        if int(leaderboard_handles[key]) == _handle:
+            leaderboard_statuses[str(key)] = "Submitted"
+            _queue_leaderboard_download(str(key))
+            break
+    leaderboard_data_updated.emit()
+
+func submit_fishing_boss_clear_time(level: int, clear_time_seconds: float) -> void:
+    var board_id := _get_leaderboard_id_for_level(level)
+    if board_id == "" or clear_time_seconds < 0.0:
+        return
+    _submit_fishing_boss_clear_time_to_board(board_id, clear_time_seconds)
+
+func submit_level7_clear_time(clear_time_seconds: float) -> void:
+    _submit_fishing_boss_clear_time_to_board(LEADERBOARD_LEVEL7_SHARED, clear_time_seconds)
+
+func submit_level20_clear_time(clear_time_seconds: float) -> void:
+    _submit_fishing_boss_clear_time_to_board(LEADERBOARD_LEVEL20_FULL, clear_time_seconds)
+
+func _submit_fishing_boss_clear_time_to_board(board_id: String, clear_time_seconds: float) -> void:
+    if board_id == "" or clear_time_seconds < 0.0:
+        return
+    var score: int = maxi(1, int(round(clear_time_seconds * 1000.0)))
+    leaderboard_pending_submissions[board_id] = score
+    leaderboard_last_submitted_scores[board_id] = score
+    leaderboard_statuses[board_id] = "Submitted"
+    if not steam_enabled:
+        leaderboard_statuses[board_id] = "Steam unavailable"
+        leaderboard_data_updated.emit()
+        return
+    if not leaderboard_handles.has(board_id):
+        request_leaderboard(board_id)
+        return
+    _submit_pending_leaderboard_score(board_id)
+
+func _submit_pending_leaderboard_score(board_id: String) -> void:
+    if not steam_enabled or not leaderboard_pending_submissions.has(board_id):
+        return
+    if not leaderboard_handles.has(board_id):
+        request_leaderboard(board_id)
+        return
+    if not Steam.has_method("uploadLeaderboardScore"):
+        leaderboard_statuses[board_id] = "uploadLeaderboardScore unavailable"
+        leaderboard_data_updated.emit()
+        return
+    var score: int = int(leaderboard_pending_submissions[board_id])
+    Steam.call("uploadLeaderboardScore", score, true, PackedInt32Array(), int(leaderboard_handles[board_id]))
+    leaderboard_pending_submissions.erase(board_id)
+    _queue_leaderboard_download(board_id)
+
+func _get_leaderboard_id_for_level(level: int) -> String:
+    for config: Dictionary in get_active_fishing_leaderboard_configs():
+        if int(config.get("level", -1)) == level:
+            return str(config.get("id", ""))
+    return ""
+
+func get_cached_leaderboard_last_submitted_score(board_id: String) -> int:
+    return int(leaderboard_last_submitted_scores.get(board_id, -1))
+
+func get_cached_leaderboard_display_entries(board_id: String) -> Array:
+    var entries: Array = get_cached_leaderboard_entries(board_id)
+    if not entries.is_empty():
+        return entries
+    var entry_count: int = int(leaderboard_entry_counts.get(board_id, -1))
+    var submitted_score: int = get_cached_leaderboard_last_submitted_score(board_id)
+    if entry_count > 0 and submitted_score >= 0:
+        var persona_name := "Player"
+        if steam_enabled and Steam.has_method("getPersonaName"):
+            var resolved_name: String = str(Steam.call("getPersonaName")).strip_edges()
+            if resolved_name != "":
+                persona_name = resolved_name
+        return [{
+            "rank": 1 if entry_count == 1 else 0,
+            "name": persona_name,
+            "score": submitted_score,
+        }]
+    return []
+
+func get_leaderboard_entry_rank(entry: Dictionary, fallback_rank: int = 0) -> int:
+    for key in ["global_rank", "rank", "globalRank", "globalrank"]:
+        if entry.has(key):
+            return int(entry.get(key, fallback_rank))
+    return fallback_rank
+
+func get_leaderboard_entry_display_name(entry: Dictionary) -> String:
+    for key in ["name", "persona_name", "steam_name", "persona", "player_name"]:
+        var value: String = str(entry.get(key, "")).strip_edges()
+        if value != "":
+            return value
+
+    var steam_id: int = 0
+    for key in ["steam_id", "steamID", "user", "user_id", "steam_id_user"]:
+        if entry.has(key):
+            steam_id = int(entry.get(key, 0))
+            if steam_id != 0:
+                break
+
+    if steam_id != 0:
+        if Steam.has_method("getFriendPersonaName"):
+            var friend_name: String = str(Steam.call("getFriendPersonaName", steam_id)).strip_edges()
+            if friend_name != "":
+                return friend_name
+        if Steam.has_method("getPersonaName"):
+            var own_name: String = str(Steam.call("getPersonaName")).strip_edges()
+            if own_name != "":
+                return own_name
+
+    return "Player"
+
 
 
 
@@ -108,6 +446,50 @@ func _process(_delta):
             Steam.call("run_callbacks")
         elif Steam.has_method("runCallbacks"):
             Steam.call("runCallbacks")
+        _poll_leaderboard_fallbacks()
+
+func _poll_leaderboard_fallbacks() -> void:
+    if _leaderboard_active_request_id != "" and Steam.has_method("get_leaderboard_handle"):
+        var polled_handle: int = int(Steam.call("get_leaderboard_handle"))
+        if polled_handle != 0:
+            var expected_name: String = str(leaderboard_id_to_name.get(_leaderboard_active_request_id, ""))
+            var resolved_name: String = ""
+            if Steam.has_method("getLeaderboardName"):
+                resolved_name = str(Steam.call("getLeaderboardName", polled_handle))
+            if resolved_name != "" and expected_name != "" and resolved_name == expected_name and polled_handle != _leaderboard_last_polled_handle:
+                _leaderboard_last_polled_handle = polled_handle
+                _on_leaderboard_find_result(polled_handle, 1)
+                return
+        if _leaderboard_active_request_started_msec > 0 and Time.get_ticks_msec() - _leaderboard_active_request_started_msec > 4000:
+            leaderboard_statuses[_leaderboard_active_request_id] = "Find timed out"
+            _leaderboard_active_request_id = ""
+            _leaderboard_active_request_started_msec = 0
+            leaderboard_data_updated.emit()
+            _pump_leaderboard_request_queue()
+            return
+
+    if _leaderboard_active_download_id != "" and Steam.has_method("get_leaderboard_entries"):
+        var polled_entries: Variant = Steam.call("get_leaderboard_entries")
+        if polled_entries is Array:
+            var entries: Array = polled_entries
+            if not entries.is_empty():
+                _on_leaderboard_scores_downloaded(int(leaderboard_handles.get(_leaderboard_active_download_id, 0)), entries)
+                return
+            var expected_handle: int = int(leaderboard_handles.get(_leaderboard_active_download_id, 0))
+            var entry_count: int = -1
+            if expected_handle != 0 and Steam.has_method("getLeaderboardEntryCount"):
+                entry_count = int(Steam.call("getLeaderboardEntryCount", expected_handle))
+            if entry_count == 0 and _leaderboard_active_download_started_msec > 0 and Time.get_ticks_msec() - _leaderboard_active_download_started_msec > 1000:
+                _on_leaderboard_scores_downloaded(expected_handle, entries)
+                return
+        if _leaderboard_active_download_started_msec > 0 and Time.get_ticks_msec() - _leaderboard_active_download_started_msec > 5000:
+            leaderboard_entries[_leaderboard_active_download_id] = []
+            leaderboard_statuses[_leaderboard_active_download_id] = "Download timed out"
+            _leaderboard_active_download_id = ""
+            _leaderboard_active_download_started_msec = 0
+            leaderboard_data_updated.emit()
+            _pump_leaderboard_download_queue()
+            _pump_leaderboard_request_queue()
 
 
 func _achievement_to_name(achievement) -> String:
