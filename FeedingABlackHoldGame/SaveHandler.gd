@@ -525,6 +525,7 @@ var fishing_demo_thank_you_levels_shown: Dictionary = {}
 var fishing_run_clock_seconds := 0.0
 var fishing_l3_boss_clear_clock_seconds := -1.0
 var fishing_first_boss_clear_levels: Dictionary = {}
+var fishing_best_boss_clear_times: Dictionary = {}
 var fishing_ufo_spawn_timer_remaining := -1.0
 var fishing_battle_speed_index := 0
 
@@ -543,6 +544,7 @@ func reset_fishing_progress() -> void:
     fishing_run_clock_seconds = 0.0
     fishing_l3_boss_clear_clock_seconds = -1.0
     fishing_first_boss_clear_levels = {}
+    fishing_best_boss_clear_times = {}
     fishing_ufo_spawn_timer_remaining = -1.0
     fishing_battle_speed_index = 0
 
@@ -581,6 +583,7 @@ func load_fishing_progress():
     fishing_run_clock_seconds = max(0.0, float(json_data.get("run_clock_seconds", 0.0)))
     fishing_l3_boss_clear_clock_seconds = float(json_data.get("l3_boss_clear_clock_seconds", -1.0))
     fishing_first_boss_clear_levels = json_data.get("first_boss_clear_levels", {})
+    fishing_best_boss_clear_times = json_data.get("best_boss_clear_times", {})
     fishing_ufo_spawn_timer_remaining = float(json_data.get("ufo_spawn_timer_remaining", -1.0))
     fishing_battle_speed_index = max(0, int(json_data.get("battle_speed_index", 0)))
     if fishing_first_boss_clear_levels.is_empty():
@@ -608,6 +611,7 @@ func save_fishing_progress():
         "run_clock_seconds": fishing_run_clock_seconds,
         "l3_boss_clear_clock_seconds": fishing_l3_boss_clear_clock_seconds,
         "first_boss_clear_levels": fishing_first_boss_clear_levels,
+        "best_boss_clear_times": fishing_best_boss_clear_times,
         "ufo_spawn_timer_remaining": fishing_ufo_spawn_timer_remaining,
         "battle_speed_index": fishing_battle_speed_index,
     }
@@ -619,6 +623,22 @@ func save_fishing_progress():
 
 func needs_fishing_legacy_reset() -> bool:
     return fishing_requires_legacy_reset
+
+func register_fishing_boss_clear_time(level: int, clear_time_seconds: float) -> bool:
+    if level <= 0 or clear_time_seconds < 0.0:
+        return false
+    var level_key := str(level)
+    var existing_time: float = get_fishing_best_boss_clear_time(level)
+    if existing_time >= 0.0 and clear_time_seconds >= existing_time:
+        return false
+    fishing_best_boss_clear_times[level_key] = clear_time_seconds
+    save_fishing_progress()
+    return true
+
+func get_fishing_best_boss_clear_time(level: int) -> float:
+    if level <= 0:
+        return -1.0
+    return float(fishing_best_boss_clear_times.get(str(level), -1.0))
 
 func _migrate_armor_upgrade_keys() -> void:
     # Migrate old single key (core_armor_enemy etc.) to track 1 (core_armor_enemy_1) so progress is preserved.
