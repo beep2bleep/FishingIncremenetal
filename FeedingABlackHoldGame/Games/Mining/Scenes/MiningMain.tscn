@@ -12,15 +12,15 @@ anchors_preset = 10
 anchor_right = 1.0
 offset_left = 18.0
 offset_top = 18.0
-offset_right = -18.0
-offset_bottom = 150.0
+offset_right = -470.0
+offset_bottom = 478.0
 
 [node name="TopPanel" type="PanelContainer" parent="CanvasLayer/TopBar"]
 layout_mode = 2
 
 [node name="TopInfo" type="VBoxContainer" parent="CanvasLayer/TopBar/TopPanel"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 10
 
 [node name="WalletLabel" type="Label" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
 layout_mode = 2
@@ -34,13 +34,50 @@ text = "Phase"
 layout_mode = 2
 text = "Depth"
 
-[node name="StatLabel" type="Label" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
+[node name="TimeValueLabel" type="Label" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
 layout_mode = 2
-text = "Stats"
+text = "Timer"
 
-[node name="CargoLabel" type="Label" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
+[node name="TimeBar" type="ProgressBar" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+show_percentage = false
+
+[node name="DrillValueLabel" type="Label" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
+layout_mode = 2
+text = "Drill"
+
+[node name="DrillBar" type="ProgressBar" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+show_percentage = false
+
+[node name="HullValueLabel" type="Label" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
+layout_mode = 2
+text = "Hull"
+
+[node name="HullBar" type="ProgressBar" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+show_percentage = false
+
+[node name="CargoValueLabel" type="Label" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
 layout_mode = 2
 text = "Cargo"
+
+[node name="CargoBar" type="ProgressBar" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+show_percentage = false
+
+[node name="XpValueLabel" type="Label" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
+layout_mode = 2
+text = "XP"
+
+[node name="XpBar" type="ProgressBar" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+show_percentage = false
 
 [node name="WeaponLabel" type="Label" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
 layout_mode = 2
@@ -49,6 +86,7 @@ text = "Weapons"
 
 [node name="BossLabel" type="Label" parent="CanvasLayer/TopBar/TopPanel/TopInfo" unique_name_in_owner="true"]
 layout_mode = 2
+autowrap_mode = 3
 text = "Boss"
 
 [node name="ShopPanel" type="PanelContainer" parent="CanvasLayer" unique_name_in_owner="true"]

@@ -25,7 +25,6 @@ const PATH_VANGUARD_BATTLE := "res://Games/Vanguard/Scenes/VanguardBattleScene.t
 const PATH_MINING_MAIN := "res://Games/Mining/Scenes/MiningMain.tscn"
 const PATH_MINING_MAIN_MENU := "res://Games/Mining/Menus/MiningMainMenu.tscn"
 const PATH_MINING_BATTLE := "res://Games/Mining/Scenes/MiningBattleScene.tscn"
-const PATH_MINING_UPGRADES := "res://Games/Mining/Scenes/MiningUpgradeScene.tscn"
 
 
 var dark_pallet = "res://Pallets/Dark_Pallet.tres"
@@ -73,8 +72,6 @@ func get_main_menu_scene_path() -> String:
     return PATH_VANGUARD_MAIN_MENU
 
 func get_upgrade_scene_path() -> String:
-    if is_mining_game_active():
-        return PATH_MINING_UPGRADES
     return PATH_FISHING_UPGRADES
 
 func get_battle_scene_path() -> String:

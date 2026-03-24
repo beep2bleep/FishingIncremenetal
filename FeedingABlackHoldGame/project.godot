@@ -78,7 +78,7 @@ Build="v1.3.1"
 Demo=true
 DemoWishlistUrl="https://store.steampowered.com/app/4519820/Vanguard__Idle_Auto_Battler/"
 ActiveGame="vanguard"
-StartScreen="upgrade"
+StartScreen="menu"
 
 [input]
 

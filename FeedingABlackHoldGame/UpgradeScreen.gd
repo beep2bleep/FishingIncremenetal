@@ -282,6 +282,11 @@ func _input(event: InputEvent) -> void :
         if _is_settings_open():
             if event.is_action_pressed("escape") or event.is_action_pressed("back"):
                 _hide_settings_panel()
+                get_viewport().set_input_as_handled()
+            return
+        if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+            _on_settings_button_pressed()
+            get_viewport().set_input_as_handled()
             return
         if event.is_action_pressed("go again"):
             _on_go_again_pressed()

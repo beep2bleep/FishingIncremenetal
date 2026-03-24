@@ -12,8 +12,13 @@ const NODE_RADIUS_MIN := 18.0
 const NODE_RADIUS_MAX := 34.0
 const MAX_WORLD_NODES := 96
 const DRONE_DELIVERY_INTERVAL := 7.0
+const DRONE_DELIVERY_SPEED := 420.0
+const PICKUP_DRONE_SPEED := 330.0
+const PICKUP_DRONE_GRAB_RANGE := 16.0
 const CONTACT_DRILL_PADDING := 10.0
 const DRILL_AUDIO_INTERVAL := 0.3
+const AIM_CURSOR_SENSITIVITY := 1.0
+const AIM_CURSOR_RADIUS := 12.0
 
 enum RUN_STATES {RUNNING, SUMMARY}
 
@@ -67,6 +72,9 @@ var drill_audio_timer := 0.0
 var last_drill_direction := Vector2.DOWN
 var player_velocity := Vector2.ZERO
 var tail_points: Array[Vector2] = []
+var delivery_drone_visuals: Array[Dictionary] = []
+var pickup_drone_visuals: Array[Dictionary] = []
+var next_pickup_uid := 1
 var attached_node_id := -1
 var attached_contact_point := Vector2.ZERO
 var attached_push_direction := Vector2.DOWN
@@ -77,10 +85,10 @@ var fullscreen_button: Button
 var settings_button: Button
 var settings_panel: PanelContainer
 var settings_content: Settings
+var aim_cursor_screen_pos := Vector2.ZERO
 
 func _ready() -> void:
     Global.game_state = Util.GAME_STATES.PLAYING
-    Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
     rng.randomize()
     material_tiers = _build_material_tiers()
     _setup_system_controls()
@@ -89,18 +97,34 @@ func _ready() -> void:
     reset_button.pressed.connect(_on_summary_retry_pressed)
     _begin_run()
 
+func _exit_tree() -> void:
+    Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
 func _process(delta: float) -> void:
-    if run_state == RUN_STATES.RUNNING:
+    if run_state == RUN_STATES.RUNNING and not _is_settings_open():
         _process_running(delta)
     _refresh_hud()
     queue_redraw()
 
+func _input(event: InputEvent) -> void:
+    if event is InputEventMouseMotion:
+        if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and run_state == RUN_STATES.RUNNING and not _is_settings_open():
+            var motion_event := event as InputEventMouseMotion
+            aim_cursor_screen_pos = _clamp_cursor_to_viewport(aim_cursor_screen_pos + motion_event.relative * AIM_CURSOR_SENSITIVITY)
+        else:
+            var visible_motion_event := event as InputEventMouseMotion
+            aim_cursor_screen_pos = _clamp_cursor_to_viewport(visible_motion_event.position)
+    elif event is InputEventMouseButton:
+        var mouse_button_event := event as InputEventMouseButton
+        aim_cursor_screen_pos = _clamp_cursor_to_viewport(mouse_button_event.position)
+
 func _unhandled_input(event: InputEvent) -> void:
+    if event.is_action_pressed("back") or event.is_action_pressed("escape"):
+        _toggle_settings_panel()
+        get_viewport().set_input_as_handled()
+        return
     if run_state != RUN_STATES.RUNNING:
         return
-    if event.is_action_pressed("back") or event.is_action_pressed("escape"):
-        _finish_run("Manual extraction.")
-        get_viewport().set_input_as_handled()
 
 func _draw() -> void:
     var viewport_size := get_viewport_rect().size
@@ -117,6 +141,7 @@ func _draw() -> void:
     _draw_player(origin)
     _draw_target_line(origin)
     _draw_edge_fade(viewport_size)
+    _draw_aim_cursor()
 
 func _begin_run() -> void:
     persistent_data = MINING_PROGRESS_SCRIPT.load_data()
@@ -144,6 +169,9 @@ func _begin_run() -> void:
     last_drill_direction = Vector2.DOWN
     player_velocity = Vector2.ZERO
     tail_points.clear()
+    delivery_drone_visuals.clear()
+    pickup_drone_visuals.clear()
+    next_pickup_uid = 1
     attached_node_id = -1
     attached_contact_point = player_pos
     attached_push_direction = Vector2.DOWN
@@ -156,14 +184,18 @@ func _begin_run() -> void:
     _carve_dirt_circle(_get_base_position(), 92.0)
     shop_panel.hide()
     hint_label.text = "Steer with the mouse. Build speed, stick to nodes to drill, turn away at least 30 degrees to break off, then return to the bright base ring to bank cargo."
+    _reset_aim_cursor()
+    _refresh_mouse_capture_state()
 
 func _process_running(delta: float) -> void:
     time_left = max(0.0, time_left - delta * _get_time_drain_rate())
     _process_player_movement(delta)
     _process_drilling(delta)
+    _process_pickup_drones(delta)
     _collect_pickups()
     _bank_cargo_if_at_base()
     _process_delivery_drone(delta)
+    _process_delivery_drone_visuals(delta)
     _process_contact_sparks(delta)
     _process_damage_numbers(delta)
     drill_audio_timer = max(0.0, drill_audio_timer - delta)
@@ -260,11 +292,6 @@ func _collect_pickups() -> void:
         var pickup_vel: Vector2 = pickup.get("vel", Vector2.ZERO)
         pickup_pos += pickup_vel * get_process_delta_time()
         pickup_vel *= 0.9
-        var drift_dir: Vector2 = (player_pos - pickup_pos).normalized()
-        var magnet_strength: float = 0.0
-        if int(_get_upgrade_level("magnet_drone")) > 0:
-            magnet_strength = 45.0 + 25.0 * float(_get_upgrade_level("magnet_drone"))
-        pickup_pos += drift_dir * magnet_strength * get_process_delta_time()
         pickup["pos"] = pickup_pos
         pickup["vel"] = pickup_vel
         var can_collect: bool = player_pos.distance_to(pickup_pos) <= collect_radius
@@ -299,6 +326,7 @@ func _process_delivery_drone(delta: float) -> void:
         return
     drone_delivery_timer = max(2.8, DRONE_DELIVERY_INTERVAL - 1.2 * float(drone_level))
     var delivered: int = 0
+    var delivered_material_id := ""
     for material_id_variant in carry_counts.keys():
         var material_id: String = String(material_id_variant)
         if int(carry_counts[material_id]) <= 0:
@@ -309,9 +337,172 @@ func _process_delivery_drone(delta: float) -> void:
         banked_counts[material_id] = int(banked_counts.get(material_id, 0)) + 1
         cargo_used = max(0, cargo_used - 1)
         delivered = 1
+        delivered_material_id = material_id
         break
-    if delivered > 0:
+    if delivered > 0 and delivered_material_id != "":
         run_status = "Delivery drone shipped one crate home."
+        _spawn_delivery_drone_visual(delivered_material_id, _get_material_by_id(delivered_material_id))
+
+func _process_pickup_drones(delta: float) -> void:
+    var drone_level: int = _get_upgrade_level("magnet_drone")
+    if drone_level <= 0:
+        _clear_all_pickup_claims()
+        pickup_drone_visuals.clear()
+        return
+    while pickup_drone_visuals.size() < drone_level:
+        var drone_index: int = pickup_drone_visuals.size()
+        pickup_drone_visuals.append({
+            "index": drone_index,
+            "pos": player_pos,
+            "state": "idle",
+            "target_uid": -1,
+            "carry_material_id": "",
+            "carry_material_name": "",
+            "carry_color": Color.WHITE,
+            "orbit_seed": rng.randf_range(0.0, TAU)
+        })
+    while pickup_drone_visuals.size() > drone_level:
+        pickup_drone_visuals.pop_back()
+    _sync_pickup_claims_with_drones()
+    for index in range(pickup_drone_visuals.size()):
+        var drone: Dictionary = pickup_drone_visuals[index]
+        var state: String = String(drone.get("state", "idle"))
+        var drone_pos: Vector2 = drone.get("pos", player_pos)
+        if state == "to_pickup":
+            var target_pickup: Dictionary = _get_pickup_by_uid(int(drone.get("target_uid", -1)))
+            if target_pickup.is_empty() or cargo_used >= _get_cargo_capacity():
+                _clear_pickup_claim(int(drone.get("target_uid", -1)))
+                drone["state"] = "idle"
+                drone["target_uid"] = -1
+            else:
+                var pickup_pos: Vector2 = target_pickup.get("pos", player_pos)
+                drone_pos = drone_pos.move_toward(pickup_pos, PICKUP_DRONE_SPEED * delta)
+                if drone_pos.distance_to(pickup_pos) <= PICKUP_DRONE_GRAB_RANGE:
+                    drone["carry_material_id"] = String(target_pickup.get("material_id", ""))
+                    drone["carry_material_name"] = String(target_pickup.get("material_name", "loot"))
+                    drone["carry_color"] = target_pickup.get("material_color", Color.WHITE)
+                    drone["state"] = "to_player"
+                    _remove_pickup_by_uid(int(drone.get("target_uid", -1)))
+                    drone["target_uid"] = -1
+        elif state == "to_player":
+            drone_pos = drone_pos.move_toward(player_pos, PICKUP_DRONE_SPEED * delta)
+            if drone_pos.distance_to(player_pos) <= _get_pickup_radius() * 0.5 + 10.0:
+                if cargo_used < _get_cargo_capacity():
+                    var carry_material_id: String = String(drone.get("carry_material_id", ""))
+                    carry_counts[carry_material_id] = int(carry_counts.get(carry_material_id, 0)) + 1
+                    cargo_used += 1
+                    run_status = "Pickup drone hauled in %s." % String(drone.get("carry_material_name", "loot"))
+                drone["state"] = "idle"
+                drone["carry_material_id"] = ""
+                drone["carry_material_name"] = ""
+                drone["target_uid"] = -1
+        if String(drone.get("state", "idle")) == "idle":
+            if cargo_used < _get_cargo_capacity():
+                var assigned_uid: int = _find_available_pickup_uid(drone_pos)
+                if assigned_uid != -1:
+                    _set_pickup_claimed_by(assigned_uid, int(drone.get("index", index)))
+                    drone["state"] = "to_pickup"
+                    drone["target_uid"] = assigned_uid
+                else:
+                    drone_pos = drone_pos.lerp(_get_pickup_drone_idle_position(index, drone), 0.22)
+            else:
+                drone_pos = drone_pos.lerp(_get_pickup_drone_idle_position(index, drone), 0.22)
+        drone["pos"] = drone_pos
+        pickup_drone_visuals[index] = drone
+    _sync_pickup_claims_with_drones()
+
+func _process_delivery_drone_visuals(delta: float) -> void:
+    if delivery_drone_visuals.is_empty():
+        return
+    var remaining: Array[Dictionary] = []
+    var base_pos: Vector2 = _get_base_position()
+    for drone in delivery_drone_visuals:
+        var drone_pos: Vector2 = drone.get("pos", player_pos).move_toward(base_pos, DRONE_DELIVERY_SPEED * delta)
+        drone["pos"] = drone_pos
+        if drone_pos.distance_to(base_pos) > 18.0:
+            remaining.append(drone)
+    delivery_drone_visuals = remaining
+
+func _spawn_delivery_drone_visual(material_id: String, material: Dictionary) -> void:
+    delivery_drone_visuals.append({
+        "pos": player_pos,
+        "material_id": material_id,
+        "carry_color": material.get("color", Color.WHITE),
+        "carry_name": String(material.get("name", material_id))
+    })
+
+func _find_available_pickup_uid(origin: Vector2) -> int:
+    var nearest_uid := -1
+    var nearest_distance := INF
+    for pickup in pickups:
+        if int(pickup.get("claimed_by", -1)) != -1:
+            continue
+        var pickup_uid: int = int(pickup.get("uid", -1))
+        if pickup_uid == -1:
+            continue
+        var distance: float = origin.distance_to(pickup.get("pos", origin))
+        if distance < nearest_distance:
+            nearest_distance = distance
+            nearest_uid = pickup_uid
+    return nearest_uid
+
+func _get_pickup_by_uid(pickup_uid: int) -> Dictionary:
+    for pickup in pickups:
+        if int(pickup.get("uid", -1)) == pickup_uid:
+            return pickup
+    return {}
+
+func _set_pickup_claimed_by(pickup_uid: int, drone_index: int) -> void:
+    for index in range(pickups.size()):
+        var pickup: Dictionary = pickups[index]
+        if int(pickup.get("uid", -1)) != pickup_uid:
+            continue
+        pickup["claimed_by"] = drone_index
+        pickups[index] = pickup
+        return
+
+func _remove_pickup_by_uid(pickup_uid: int) -> void:
+    for index in range(pickups.size() - 1, -1, -1):
+        if int(pickups[index].get("uid", -1)) == pickup_uid:
+            pickups.remove_at(index)
+            return
+
+func _clear_pickup_claim(pickup_uid: int) -> void:
+    if pickup_uid == -1:
+        return
+    for index in range(pickups.size()):
+        var pickup: Dictionary = pickups[index]
+        if int(pickup.get("uid", -1)) != pickup_uid:
+            continue
+        pickup["claimed_by"] = -1
+        pickups[index] = pickup
+        return
+
+func _clear_all_pickup_claims() -> void:
+    for index in range(pickups.size()):
+        var pickup: Dictionary = pickups[index]
+        pickup["claimed_by"] = -1
+        pickups[index] = pickup
+
+func _sync_pickup_claims_with_drones() -> void:
+    var claimed_uids: Dictionary = {}
+    for drone in pickup_drone_visuals:
+        if String(drone.get("state", "idle")) != "to_pickup":
+            continue
+        var target_uid: int = int(drone.get("target_uid", -1))
+        if target_uid != -1:
+            claimed_uids[target_uid] = int(drone.get("index", -1))
+    for index in range(pickups.size()):
+        var pickup: Dictionary = pickups[index]
+        var pickup_uid: int = int(pickup.get("uid", -1))
+        pickup["claimed_by"] = int(claimed_uids.get(pickup_uid, -1))
+        pickups[index] = pickup
+
+func _get_pickup_drone_idle_position(drone_index: int, drone: Dictionary) -> Vector2:
+    var orbit_seed: float = float(drone.get("orbit_seed", 0.0))
+    var angle: float = Time.get_ticks_msec() * 0.002 + orbit_seed + TAU * float(drone_index) / float(max(1, pickup_drone_visuals.size()))
+    var orbit_radius: float = 38.0 + 8.0 * float(drone_index % 2)
+    return player_pos + Vector2.RIGHT.rotated(angle) * orbit_radius
 
 func _generate_world() -> void:
     var available_tiers: int = min(active_depth_level, material_tiers.size())
@@ -380,6 +571,7 @@ func _roll_material_for_level(available_tiers: int) -> Dictionary:
 func _break_node(node_index: int) -> void:
     var node: Dictionary = world_nodes[node_index]
     world_nodes.remove_at(node_index)
+    _handle_removed_node_index(node_index)
     nodes_broken += 1
     var xp_reward: int = int(round(int(node.get("xp", 0)) * _get_xp_multiplier()))
     run_xp += xp_reward
@@ -394,17 +586,35 @@ func _break_node(node_index: int) -> void:
         if spread_dir == Vector2.ZERO:
             spread_dir = perpendicular * side_sign
         pickups.append({
+            "uid": next_pickup_uid,
             "pos": node.get("pos", Vector2.ZERO) + spread_dir * rng.randf_range(12.0, 26.0),
             "vel": spread_dir * rng.randf_range(55.0, 130.0),
             "material_id": String(node.get("material_id", "stone")),
             "material_name": String(node.get("material_name", "Stone")),
-            "material_color": node.get("material_color", Color(0.7, 0.7, 0.7, 1.0))
+            "material_color": node.get("material_color", Color(0.7, 0.7, 0.7, 1.0)),
+            "claimed_by": -1
         })
+        next_pickup_uid += 1
     _spawn_damage_number(node.get("pos", Vector2.ZERO), int(round(float(node.get("max_health", 0.0)))), true)
     _spawn_contact_sparks(node.get("pos", Vector2.ZERO), node.get("material_color", Color.WHITE), 10)
     camera_shake_strength = max(camera_shake_strength, 10.0)
     _carve_dirt_circle(node.get("pos", Vector2.ZERO), float(node.get("radius", 24.0)) + 16.0)
     run_status = "%s vein cracked open. Grab the drops." % String(node.get("material_name", "Stone"))
+
+func _handle_removed_node_index(removed_index: int) -> void:
+    contact_node_id = _remap_node_index_after_removal(contact_node_id, removed_index)
+    target_node_id = _remap_node_index_after_removal(target_node_id, removed_index)
+    attached_node_id = _remap_node_index_after_removal(attached_node_id, removed_index)
+    if attached_node_id == -1:
+        attached_contact_point = player_pos
+        attached_push_direction = Vector2.DOWN
+
+func _remap_node_index_after_removal(index: int, removed_index: int) -> int:
+    if index == removed_index:
+        return -1
+    if index > removed_index:
+        return index - 1
+    return index
 
 func _finish_run(reason: String) -> void:
     if run_state == RUN_STATES.SUMMARY:
@@ -466,6 +676,7 @@ func _finish_run(reason: String) -> void:
     run_state = RUN_STATES.SUMMARY
     Global.game_state = Util.GAME_STATES.UPGRADES
     run_status = reason
+    _refresh_mouse_capture_state()
     _show_summary(summary_text)
 
 func _show_summary(summary_text: String) -> void:
@@ -639,11 +850,49 @@ func _play_drill_tick() -> void:
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER)
 
 func _get_pointer_direction() -> Vector2:
-    var mouse_world: Vector2 = _screen_to_world(get_viewport().get_mouse_position())
+    var mouse_world: Vector2 = _screen_to_world(aim_cursor_screen_pos)
     var dir: Vector2 = mouse_world - player_pos
     if dir.length() < 8.0:
         return Vector2.ZERO
     return dir.normalized()
+
+func _draw_aim_cursor() -> void:
+    if run_state != RUN_STATES.RUNNING:
+        return
+    var outer_color := Color(0.99, 0.86, 0.42, 0.95)
+    var inner_color := Color(0.14, 0.08, 0.03, 0.92)
+    draw_arc(aim_cursor_screen_pos, AIM_CURSOR_RADIUS, 0.0, TAU, 32, outer_color, 2.0)
+    draw_line(
+        aim_cursor_screen_pos + Vector2(-AIM_CURSOR_RADIUS - 5.0, 0.0),
+        aim_cursor_screen_pos + Vector2(AIM_CURSOR_RADIUS + 5.0, 0.0),
+        outer_color,
+        2.0
+    )
+    draw_line(
+        aim_cursor_screen_pos + Vector2(0.0, -AIM_CURSOR_RADIUS - 5.0),
+        aim_cursor_screen_pos + Vector2(0.0, AIM_CURSOR_RADIUS + 5.0),
+        outer_color,
+        2.0
+    )
+    draw_circle(aim_cursor_screen_pos, 3.0, inner_color)
+    draw_circle(aim_cursor_screen_pos, 1.5, outer_color)
+
+func _reset_aim_cursor() -> void:
+    aim_cursor_screen_pos = get_viewport_rect().size * 0.5
+
+func _clamp_cursor_to_viewport(position: Vector2) -> Vector2:
+    var viewport_size: Vector2 = get_viewport_rect().size
+    return Vector2(
+        clampf(position.x, 0.0, max(viewport_size.x - 1.0, 0.0)),
+        clampf(position.y, 0.0, max(viewport_size.y - 1.0, 0.0))
+    )
+
+func _refresh_mouse_capture_state() -> void:
+    var should_capture: bool = run_state == RUN_STATES.RUNNING and not _is_settings_open()
+    Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if should_capture else Input.MOUSE_MODE_VISIBLE
+
+func _is_settings_open() -> bool:
+    return settings_panel != null and settings_panel.visible
 
 func _update_tail() -> void:
     tail_points.push_front(player_pos)
@@ -694,8 +943,30 @@ func _draw_pickups(origin: Vector2) -> void:
         var pickup_color: Color = pickup.get("material_color", Color(0.8, 0.8, 0.8, 1.0))
         draw_circle(pickup_screen, 7.0, pickup_color)
         draw_circle(pickup_screen, 3.0, Color(1.0, 1.0, 1.0, 0.75))
+    _draw_delivery_drones()
+    _draw_pickup_drones()
     _draw_contact_sparks()
     _draw_damage_numbers()
+
+func _draw_delivery_drones() -> void:
+    for drone in delivery_drone_visuals:
+        _draw_drone_body(_world_to_screen(drone.get("pos", Vector2.ZERO)), Color(0.72, 0.9, 0.98, 1.0), drone.get("carry_color", Color.WHITE))
+
+func _draw_pickup_drones() -> void:
+    for drone in pickup_drone_visuals:
+        var carry_color: Color = drone.get("carry_color", Color(0.94, 0.82, 0.38, 1.0)) if String(drone.get("state", "idle")) == "to_player" else Color(0.0, 0.0, 0.0, 0.0)
+        _draw_drone_body(_world_to_screen(drone.get("pos", Vector2.ZERO)), Color(0.92, 0.76, 0.38, 1.0), carry_color)
+
+func _draw_drone_body(screen_pos: Vector2, body_color: Color, carry_color: Color) -> void:
+    draw_circle(screen_pos, 9.0, Color(0.12, 0.14, 0.17, 0.95))
+    draw_circle(screen_pos, 6.0, body_color)
+    draw_line(screen_pos + Vector2(-11.0, -7.0), screen_pos + Vector2(11.0, -7.0), Color(0.85, 0.9, 0.95, 0.72), 2.0)
+    draw_line(screen_pos + Vector2(-11.0, 7.0), screen_pos + Vector2(11.0, 7.0), Color(0.85, 0.9, 0.95, 0.72), 2.0)
+    if carry_color.a > 0.0:
+        var cargo_pos: Vector2 = screen_pos + Vector2(0.0, 12.0)
+        draw_line(screen_pos + Vector2(0.0, 4.0), cargo_pos, Color(0.94, 0.92, 0.8, 0.7), 1.5)
+        draw_circle(cargo_pos, 5.0, carry_color)
+        draw_circle(cargo_pos, 2.0, Color(1.0, 1.0, 1.0, 0.75))
 
 func _draw_contact_sparks() -> void:
     for spark in contact_sparks:
@@ -891,11 +1162,15 @@ func _on_fullscreen_button_pressed() -> void:
     _update_system_button_layout()
 
 func _on_settings_button_pressed() -> void:
+    _toggle_settings_panel()
+
+func _toggle_settings_panel() -> void:
     if settings_panel == null:
         return
     settings_panel.visible = not settings_panel.visible
     if settings_panel.visible and settings_content != null:
         settings_content.show_screen()
+    _refresh_mouse_capture_state()
 
 func _get_material_by_id(material_id: String) -> Dictionary:
     for material in material_tiers:
