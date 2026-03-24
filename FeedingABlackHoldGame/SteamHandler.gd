@@ -1,6 +1,7 @@
 extends Node
 
 const STEAM_APP_ID := 4519820
+const STEAM_DEMO_APP_ID := 4524190
 const STEAM_STORE_PATH := "Vanguard__Idle_Auto_Battler"
 const MINING_WISHLIST_URL := "https://beep2bleep.itch.io"
 const LEADERBOARD_LEVEL7_SHARED := "level7_clear_time"
@@ -86,6 +87,7 @@ func is_steam_deck():
     return bool(Steam.call("isSteamRunningOnSteamDeck"))
 
 func _ready():
+    app_id = _resolve_steam_app_id()
     for key in ACHIVEMENTS.keys():
         achievements[key] = false
 
@@ -165,6 +167,11 @@ func _rebuild_leaderboard_name_maps() -> void:
 
 func _is_demo_build() -> bool:
     return bool(ProjectSettings.get_setting("global/Demo", false))
+
+func _resolve_steam_app_id() -> int:
+    if Util.is_vanguard_game_active() and _is_demo_build():
+        return STEAM_DEMO_APP_ID
+    return STEAM_APP_ID
 
 func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
     if _is_demo_build():
