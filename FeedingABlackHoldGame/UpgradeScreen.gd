@@ -117,6 +117,9 @@ func _refresh_localized_text() -> void:
 func _should_show_editor_only_touch_toggle() -> bool:
     return OS.has_feature("editor")
 
+func _should_show_leaderboards() -> bool:
+    return not OS.has_feature("web")
+
 var dragging = false
 var scroll_speed = 500
 
@@ -699,6 +702,8 @@ func _setup_wishlist_button() -> void:
     _style_wishlist_button(button)
 
 func _setup_leaderboard_panel() -> void:
+    if not _should_show_leaderboards():
+        return
     if leaderboard_panel != null and is_instance_valid(leaderboard_panel):
         return
     var panel_host: CanvasLayer = %CanvasLayer2
@@ -796,6 +801,9 @@ func _setup_leaderboard_panel() -> void:
 
 func _refresh_leaderboard_panel() -> void:
     if leaderboard_panel == null or not is_instance_valid(leaderboard_panel):
+        return
+    if not _should_show_leaderboards():
+        leaderboard_panel.visible = false
         return
     var show_panel: bool = not Util.is_mining_game_active()
     leaderboard_panel.visible = show_panel
