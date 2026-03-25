@@ -36,7 +36,9 @@ enum SOUND_EFFECT_TYPE{
     TECH_TREE_NODE_POP_IN, 
     TECH_TREE_LINE_FILL, 
     BUTTON_CLICK, 
-    GAME_MODE_HOVER
+    GAME_MODE_HOVER,
+    MINING_SUMMARY_DING,
+    MINING_LEVEL_UP
 }
 
 @export_range(0, 20) var limit: int = 5

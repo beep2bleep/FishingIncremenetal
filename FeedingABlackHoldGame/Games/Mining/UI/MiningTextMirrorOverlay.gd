@@ -7,6 +7,11 @@ const LABEL_COLOR_KEYS := [
 	"font_outline_color",
 	"font_shadow_color"
 ]
+const RICH_TEXT_COLOR_KEYS := [
+	"default_color",
+	"font_outline_color",
+	"font_shadow_color"
+]
 const BUTTON_COLOR_KEYS := [
 	"font_color",
 	"font_hover_color",
@@ -65,12 +70,14 @@ func _collect_text_controls(node: Node) -> void:
 			continue
 		if child is Label:
 			_register_label(child as Label)
+		elif child is RichTextLabel:
+			_register_rich_text_label(child as RichTextLabel)
 		elif child is Button:
 			_register_button(child as Button)
 		_collect_text_controls(child)
 
 func _register_label(source: Label) -> void:
-	_hide_original_text(source, LABEL_COLOR_KEYS)
+	var cached_colors := _capture_theme_colors(source, LABEL_COLOR_KEYS)
 	var mirror := Label.new()
 	mirror.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mirror.clip_text = source.clip_text
@@ -82,14 +89,34 @@ func _register_label(source: Label) -> void:
 	mirror.theme = source.theme
 	mirror.label_settings = source.label_settings
 	mirror_root.add_child(mirror)
+	_hide_original_text(source, LABEL_COLOR_KEYS)
 	mirrored_entries.append({
 		"source": source,
 		"mirror": mirror,
-		"type": "label"
+		"type": "label",
+		"cached_colors": cached_colors
+	})
+
+func _register_rich_text_label(source: RichTextLabel) -> void:
+	var cached_colors := _capture_theme_colors(source, RICH_TEXT_COLOR_KEYS)
+	var mirror := RichTextLabel.new()
+	mirror.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mirror.bbcode_enabled = source.bbcode_enabled
+	mirror.fit_content = source.fit_content
+	mirror.scroll_active = false
+	mirror.autowrap_mode = source.autowrap_mode
+	mirror.theme = source.theme
+	mirror_root.add_child(mirror)
+	_hide_original_text(source, RICH_TEXT_COLOR_KEYS)
+	mirrored_entries.append({
+		"source": source,
+		"mirror": mirror,
+		"type": "rich_text",
+		"cached_colors": cached_colors
 	})
 
 func _register_button(source: Button) -> void:
-	_hide_original_text(source, BUTTON_COLOR_KEYS)
+	var cached_colors := _capture_theme_colors(source, BUTTON_COLOR_KEYS)
 	var mirror := Label.new()
 	mirror.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mirror.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -98,20 +125,31 @@ func _register_button(source: Button) -> void:
 	mirror.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	mirror.theme = source.theme
 	mirror_root.add_child(mirror)
+	_hide_original_text(source, BUTTON_COLOR_KEYS)
 	mirrored_entries.append({
 		"source": source,
 		"mirror": mirror,
-		"type": "button"
+		"type": "button",
+		"cached_colors": cached_colors
 	})
 
 func _hide_original_text(control: Control, color_keys: Array) -> void:
 	for color_key in color_keys:
 		control.add_theme_color_override(StringName(color_key), TRANSPARENT)
 
+func _capture_theme_colors(control: Control, color_keys: Array) -> Dictionary:
+	var cached_colors := {}
+	for color_key in color_keys:
+		cached_colors[color_key] = control.get_theme_color(StringName(color_key))
+	return cached_colors
+
 func _sync_entries() -> void:
 	for entry in mirrored_entries:
-		var source: Control = entry.get("source")
-		var mirror: Label = entry.get("mirror")
+		# NOTE: Avoid typed assignment here.
+		# In Godot 4, assigning an invalid previously-freed instance into a typed variable
+		# can throw before we get a chance to check `is_instance_valid()`.
+		var source = entry.get("source")
+		var mirror = entry.get("mirror")
 		if source == null or mirror == null or not is_instance_valid(source) or not is_instance_valid(mirror):
 			continue
 		mirror.visible = source.visible and source.is_visible_in_tree()
@@ -119,12 +157,15 @@ func _sync_entries() -> void:
 		mirror.size = source.size
 		mirror.rotation = source.rotation
 		mirror.scale = source.scale
-		if entry.get("type", "") == "label":
-			_sync_label(source as Label, mirror)
+		var entry_type: String = String(entry.get("type", ""))
+		if entry_type == "label":
+			_sync_label(source as Label, mirror, entry.get("cached_colors", {}))
+		elif entry_type == "rich_text":
+			_sync_rich_text_label(source as RichTextLabel, mirror as RichTextLabel, entry.get("cached_colors", {}))
 		else:
-			_sync_button(source as Button, mirror)
+			_sync_button(source as Button, mirror, entry.get("cached_colors", {}))
 
-func _sync_label(source: Label, mirror: Label) -> void:
+func _sync_label(source: Label, mirror: Label, cached_colors: Dictionary) -> void:
 	if source == null:
 		return
 	mirror.text = source.text
@@ -136,11 +177,25 @@ func _sync_label(source: Label, mirror: Label) -> void:
 	mirror.label_settings = source.label_settings
 	mirror.theme = source.theme
 	mirror.add_theme_font_size_override("font_size", source.get_theme_font_size("font_size"))
-	mirror.add_theme_color_override("font_color", source.get_theme_color("font_color"))
-	mirror.add_theme_color_override("font_outline_color", source.get_theme_color("font_outline_color"))
-	mirror.add_theme_color_override("font_shadow_color", source.get_theme_color("font_shadow_color"))
+	mirror.add_theme_color_override("font_color", _get_visible_theme_color(source, "font_color", LABEL_COLOR_KEYS, cached_colors))
+	mirror.add_theme_color_override("font_outline_color", _get_visible_theme_color(source, "font_outline_color", LABEL_COLOR_KEYS, cached_colors))
+	mirror.add_theme_color_override("font_shadow_color", _get_visible_theme_color(source, "font_shadow_color", LABEL_COLOR_KEYS, cached_colors))
 
-func _sync_button(source: Button, mirror: Label) -> void:
+func _sync_rich_text_label(source: RichTextLabel, mirror: RichTextLabel, cached_colors: Dictionary) -> void:
+	if source == null or mirror == null:
+		return
+	mirror.bbcode_enabled = source.bbcode_enabled
+	mirror.fit_content = source.fit_content
+	mirror.scroll_active = false
+	mirror.autowrap_mode = source.autowrap_mode
+	mirror.text = source.text
+	mirror.theme = source.theme
+	mirror.add_theme_font_size_override("normal_font_size", source.get_theme_font_size("normal_font_size"))
+	mirror.add_theme_color_override("default_color", _get_visible_theme_color(source, "default_color", RICH_TEXT_COLOR_KEYS, cached_colors))
+	mirror.add_theme_color_override("font_outline_color", _get_visible_theme_color(source, "font_outline_color", RICH_TEXT_COLOR_KEYS, cached_colors))
+	mirror.add_theme_color_override("font_shadow_color", _get_visible_theme_color(source, "font_shadow_color", RICH_TEXT_COLOR_KEYS, cached_colors))
+
+func _sync_button(source: Button, mirror: Label, cached_colors: Dictionary) -> void:
 	if source == null:
 		return
 	mirror.text = source.text
@@ -150,6 +205,12 @@ func _sync_button(source: Button, mirror: Label) -> void:
 	mirror.theme = source.theme
 	mirror.add_theme_font_size_override("font_size", source.get_theme_font_size("font_size"))
 	var color_name := &"font_disabled_color" if source.disabled else &"font_color"
-	mirror.add_theme_color_override("font_color", source.get_theme_color(color_name))
-	mirror.add_theme_color_override("font_outline_color", source.get_theme_color("font_outline_color"))
-	mirror.add_theme_color_override("font_shadow_color", source.get_theme_color("font_shadow_color"))
+	mirror.add_theme_color_override("font_color", _get_visible_theme_color(source, String(color_name), BUTTON_COLOR_KEYS, cached_colors))
+	mirror.add_theme_color_override("font_outline_color", _get_visible_theme_color(source, "font_outline_color", BUTTON_COLOR_KEYS, cached_colors))
+	mirror.add_theme_color_override("font_shadow_color", _get_visible_theme_color(source, "font_shadow_color", BUTTON_COLOR_KEYS, cached_colors))
+
+func _get_visible_theme_color(control: Control, color_key: String, hidden_keys: Array, cached_colors: Dictionary) -> Color:
+	var actual_color: Color = control.get_theme_color(StringName(color_key))
+	if hidden_keys.has(color_key) and actual_color.a <= 0.001 and cached_colors.has(color_key):
+		return cached_colors[color_key]
+	return actual_color

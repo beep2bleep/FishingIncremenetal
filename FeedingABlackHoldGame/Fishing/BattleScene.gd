@@ -3,6 +3,8 @@ extends Node2D
 const HERO_SCENE: PackedScene = preload("res://Fishing/CombatSprite.tscn")
 const COIN_SCENE: PackedScene = preload("res://Fishing/CoinPickup.tscn")
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
+const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
+const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
 const DEMO_PROJECT_SETTING := "global/Demo"
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
 const DEMO_THANK_YOU_LEVELS := [7, 8]
@@ -417,6 +419,7 @@ var settings_panel: PanelContainer
 var settings_content: Settings
 var fullscreen_button: Button
 var touch_input_button: Button
+var editor_crt_preview_button: Button
 var hero_set_toggle_button: Button
 var level_choice_dialog: ConfirmationDialog
 var level_choice_selected_level: int = 1
@@ -438,6 +441,7 @@ var hero_new_y_debug: Dictionary = {
     "mage": 2.0,
 }
 var weapon_debug_panel: PanelContainer
+var editor_crt_preview_enabled: bool = false
 var weapon_debug_value_labels: Dictionary = {}
 var weapon_debug_transforms: Dictionary = {
     "knight": {"rot": -45.0, "x": 56.0, "y": 12.0},
@@ -674,6 +678,7 @@ func _ready() -> void:
     _setup_settings_controls()
     _setup_fullscreen_button()
     _setup_touch_input_button()
+    _setup_editor_crt_preview_button()
     _setup_hero_set_toggle_button()
     _layout_battle_utility_buttons()
     _setup_background_debug_controls()
@@ -687,7 +692,9 @@ func _ready() -> void:
     _update_speed_button_enabled_state()
     _refresh_fullscreen_button_icon()
     _refresh_touch_input_button()
+    _refresh_editor_crt_preview_button()
     _refresh_hero_set_toggle_button()
+    _refresh_editor_crt_overlay()
     _refresh_new_hero_scale_debug_panel()
     _update_ui()
 
@@ -697,7 +704,9 @@ func _on_battle_viewport_size_changed() -> void:
         _apply_battle_summary_layout(Vector2(9999.0, 9999.0))
     _refresh_fullscreen_button_icon()
     _refresh_touch_input_button()
+    _refresh_editor_crt_preview_button()
     _refresh_hero_set_toggle_button()
+    _refresh_editor_crt_overlay()
     _refresh_new_hero_scale_debug_panel()
     _update_ui()
 
@@ -721,11 +730,16 @@ func _layout_battle_utility_buttons() -> void:
         touch_input_button.offset_top = 244.0
         touch_input_button.offset_right = -16.0
         touch_input_button.offset_bottom = 288.0
+    if editor_crt_preview_button != null:
+        editor_crt_preview_button.offset_left = -136.0
+        editor_crt_preview_button.offset_top = 296.0
+        editor_crt_preview_button.offset_right = -16.0
+        editor_crt_preview_button.offset_bottom = 340.0
     if hero_set_toggle_button != null:
         hero_set_toggle_button.offset_left = -136.0
-        hero_set_toggle_button.offset_top = 296.0
+        hero_set_toggle_button.offset_top = 348.0
         hero_set_toggle_button.offset_right = -16.0
-        hero_set_toggle_button.offset_bottom = 340.0
+        hero_set_toggle_button.offset_bottom = 392.0
     if hero_scale_debug_panel != null:
         hero_scale_debug_panel.offset_left = 920.0
         hero_scale_debug_panel.offset_top = 436.0
@@ -5536,6 +5550,64 @@ func _setup_touch_input_button() -> void:
     touch_input_button.pressed.connect(_on_touch_input_button_pressed)
     _style_mute_like_button(touch_input_button)
     canvas_layer.add_child(touch_input_button)
+
+func _should_show_editor_only_vanguard_crt_toggle() -> bool:
+    return OS.has_feature("editor") and Util.is_vanguard_game_active()
+
+func _setup_editor_crt_preview_button() -> void:
+    if not _should_show_editor_only_vanguard_crt_toggle():
+        return
+    if editor_crt_preview_button != null and is_instance_valid(editor_crt_preview_button):
+        return
+    var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
+    if canvas_layer == null:
+        return
+    editor_crt_preview_button = Button.new()
+    editor_crt_preview_button.name = "EditorCrtPreviewButton"
+    editor_crt_preview_button.anchor_left = 1.0
+    editor_crt_preview_button.anchor_top = 0.0
+    editor_crt_preview_button.anchor_right = 1.0
+    editor_crt_preview_button.anchor_bottom = 0.0
+    editor_crt_preview_button.z_index = 30
+    editor_crt_preview_button.focus_mode = Control.FOCUS_NONE
+    editor_crt_preview_button.custom_minimum_size = Vector2(120, 44)
+    editor_crt_preview_button.add_theme_font_size_override("font_size", 14)
+    editor_crt_preview_button.pressed.connect(_on_editor_crt_preview_button_pressed)
+    _style_mute_like_button(editor_crt_preview_button)
+    canvas_layer.add_child(editor_crt_preview_button)
+
+func _refresh_editor_crt_preview_button() -> void:
+    if editor_crt_preview_button == null:
+        return
+    editor_crt_preview_button.visible = _should_show_editor_only_vanguard_crt_toggle()
+    editor_crt_preview_button.text = "CRT Preview: %s" % ("On" if editor_crt_preview_enabled else "Off")
+
+func _on_editor_crt_preview_button_pressed() -> void:
+    if not _should_show_editor_only_vanguard_crt_toggle():
+        return
+    editor_crt_preview_enabled = not editor_crt_preview_enabled
+    _refresh_editor_crt_preview_button()
+    _refresh_editor_crt_overlay()
+
+func _refresh_editor_crt_overlay() -> void:
+    var overlay: CanvasLayer = get_node_or_null("EditorCrtOverlay") as CanvasLayer
+    var text_mirror_overlay: CanvasLayer = get_node_or_null("EditorCrtTextMirrorOverlay") as CanvasLayer
+    if _should_show_editor_only_vanguard_crt_toggle() and editor_crt_preview_enabled:
+        if overlay == null:
+            overlay = MINING_CRT_OVERLAY_SCRIPT.new().configure(2)
+            overlay.name = "EditorCrtOverlay"
+            add_child(overlay)
+        if text_mirror_overlay == null:
+            text_mirror_overlay = CRT_TEXT_MIRROR_OVERLAY_SCRIPT.new().configure(self, 3)
+            text_mirror_overlay.name = "EditorCrtTextMirrorOverlay"
+            add_child(text_mirror_overlay)
+        overlay.visible = true
+        text_mirror_overlay.visible = true
+    else:
+        if overlay != null:
+            overlay.visible = false
+        if text_mirror_overlay != null:
+            text_mirror_overlay.visible = false
 
 func _refresh_fullscreen_button_icon() -> void:
     if fullscreen_button == null:

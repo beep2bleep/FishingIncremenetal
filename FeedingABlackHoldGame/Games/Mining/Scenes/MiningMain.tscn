@@ -152,8 +152,11 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="SummaryLabel" type="Label" parent="CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryLeftColumn" unique_name_in_owner="true"]
+[node name="SummaryLabel" type="RichTextLabel" parent="CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryLeftColumn" unique_name_in_owner="true"]
 layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
 autowrap_mode = 3
 text = "Summary"
 
@@ -180,13 +183,13 @@ size_flags_vertical = 3
 theme_override_constants/separation = 14
 
 [node name="MoneyChart" type="PanelContainer" parent="CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryRightColumn" unique_name_in_owner="true"]
-custom_minimum_size = Vector2(0, 310)
+custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="PerformanceChart" type="PanelContainer" parent="CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryRightColumn" unique_name_in_owner="true"]
-custom_minimum_size = Vector2(0, 310)
+custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -213,19 +216,26 @@ layout_mode = 2
 text = ">"
 
 [node name="SummaryHintPanel" type="PanelContainer" parent="CanvasLayer/ShopPanel/ShopMargin/ShopVBox"]
+custom_minimum_size = Vector2(0, 110)
 layout_mode = 2
+size_flags_vertical = 1
 
 [node name="SummaryHintMargin" type="MarginContainer" parent="CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryHintPanel"]
 layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/margin_left = 14
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 14
 theme_override_constants/margin_bottom = 12
 
 [node name="SummaryHintLabel" type="Label" parent="CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryHintPanel/SummaryHintMargin" unique_name_in_owner="true"]
+custom_minimum_size = Vector2(0, 86)
 layout_mode = 2
+size_flags_vertical = 3
+clip_text = true
 autowrap_mode = 3
 horizontal_alignment = 1
+vertical_alignment = 1
 text = "Hint"
 
 [node name="DiveButton" type="Button" parent="CanvasLayer/ShopPanel/ShopMargin/ShopVBox" unique_name_in_owner="true"]

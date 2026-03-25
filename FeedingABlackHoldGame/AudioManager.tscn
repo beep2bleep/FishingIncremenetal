@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=3 uid="uid://1nbk2j8xlxv"]
+[gd_scene load_steps=39 format=3 uid="uid://1nbk2j8xlxv"]
 
 [ext_resource type="Script" uid="uid://ccn4yn1d40xhh" path="res://AudioManager.gd" id="1"]
 [ext_resource type="Resource" uid="uid://dosb4necd57xd" path="res://Sound Effect Settings/ON_ASTEROID_CLICKED.tres" id="2"]
@@ -30,6 +30,8 @@
 [ext_resource type="Resource" uid="uid://ctiwlftq42vj0" path="res://Sound Effect Settings/BLACK_HOLE_COLLAPSE.tres" id="28"]
 [ext_resource type="Resource" uid="uid://sldv4bvsooaa" path="res://Sound Effect Settings/BLACK_HOLE_GROW_MILESTONE.tres" id="29"]
 [ext_resource type="Resource" uid="uid://x4t6mgva646k" path="res://TECH_TREE_NODE_POP_IN.tres" id="30"]
+[ext_resource type="Resource" uid="uid://miningding0001" path="res://Sound Effect Settings/MINING_SUMMARY_DING.tres" id="35"]
+[ext_resource type="Resource" uid="uid://mininglevelup001" path="res://Sound Effect Settings/MINING_LEVEL_UP.tres" id="36"]
 [ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="31"]
 [ext_resource type="AudioStream" uid="uid://c3jqq33opwpve" path="res://Audio/Swipe.mp3" id="32"]
 [ext_resource type="Resource" uid="uid://ccktdpcucgwh" path="res://Sound Effect Settings/BUTTON_CLICK.tres" id="33"]
@@ -62,4 +64,4 @@ metadata/_custom_type_script = "uid://blskskrd6wv02"
 [node name="AudioManager" type="Node2D"]
 process_mode = 3
 script = ExtResource("1")
-sound_effect_settings = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("18"), ExtResource("19"), ExtResource("20"), ExtResource("21"), ExtResource("22"), ExtResource("23"), ExtResource("24"), ExtResource("25"), ExtResource("26"), ExtResource("27"), ExtResource("28"), ExtResource("29"), ExtResource("30"), SubResource("Resource_611gl"), ExtResource("33"), SubResource("Resource_kd3se")]
+sound_effect_settings = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("16"), ExtResource("17"), ExtResource("18"), ExtResource("19"), ExtResource("20"), ExtResource("21"), ExtResource("22"), ExtResource("23"), ExtResource("24"), ExtResource("25"), ExtResource("26"), ExtResource("27"), ExtResource("28"), ExtResource("29"), ExtResource("30"), ExtResource("35"), ExtResource("36"), SubResource("Resource_611gl"), ExtResource("33"), SubResource("Resource_kd3se")]

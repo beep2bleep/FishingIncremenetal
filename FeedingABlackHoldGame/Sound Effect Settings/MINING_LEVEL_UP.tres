@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SoundEffectSettings" format=3 uid="uid://c6yn70k3px4ns"]
+
+[ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
+[ext_resource type="AudioStream" uid="uid://74xpnewijn01" path="res://Audio/little_robot_sound_factory_Jingle_Win_Synth_01.mp3" id="2"]
+
+[resource]
+script = ExtResource("1")
+limit = 6
+type = 36
+sound_effect = ExtResource("2")
+volume = -8
+pitch_scale = 1.08
+pitch_randomness = 0.04
+taper_fall_off_curve = null
+pitch_up_on_count_enabled = false
+metadata/_custom_type_script = "uid://blskskrd6wv02"

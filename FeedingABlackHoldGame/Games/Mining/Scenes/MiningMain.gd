@@ -7,6 +7,13 @@ const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverla
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 
 const WORLD_SIZE := Vector2(1650.0, 1950.0)
+const DEPTH_DOODAD_COUNT := 18
+const DEPTH_DARK_SPOT_COUNT := 8
+const EDGE_TICK_SPACING := 68.0
+const EDGE_TICK_LENGTH := 28.0
+const EDGE_TICK_WIDTH := 4.0
+const EDGE_CORNER_LENGTH := 44.0
+const EDGE_CORNER_WIDTH := 6.0
 const BASE_RADIUS := 84.0
 const PLAYER_RADIUS := 18.0
 const DRILL_RANGE := 118.0
@@ -17,8 +24,20 @@ const DRONE_DELIVERY_INTERVAL := 7.0
 const DRONE_DELIVERY_SPEED := 420.0
 const PICKUP_DRONE_SPEED := 330.0
 const PICKUP_DRONE_GRAB_RANGE := 16.0
+const PICKUP_REJECT_BOUNCE_SPEED_MIN := 120.0
+const PICKUP_REJECT_BOUNCE_SPEED_MAX := 185.0
+const PICKUP_REJECT_BLINK_DURATION := 0.34
+const PICKUP_REJECT_RETRY_DELAY := 0.18
+const PICKUP_REJECT_SOUND_INTERVAL := 0.14
+const CARGO_BAR_REJECT_BLINK_DURATION := 0.38
+const WARNING_BAR_BLINK_THRESHOLD := 0.2
+const WARNING_BAR_BLINK_HZ := 4.0
+const XP_BAR_LEVEL_UP_POP_SCALE := 1.05
+const XP_BAR_LEVEL_UP_FLASH_DURATION := 0.6
 const CONTACT_DRILL_PADDING := 10.0
 const DRILL_AUDIO_INTERVAL := 0.3
+const DONK_PITCH_VARIATION := 0.1
+const INITIAL_DONK_VOLUME_DB_BOOST := 1.2
 const AIM_CURSOR_SENSITIVITY := 1.0
 const AIM_CURSOR_RADIUS := 12.0
 const STATUS_PANEL_SCALE := 0.7
@@ -42,6 +61,16 @@ const TUNNEL_SPEED_BONUS_MIN := 0.14
 const TUNNEL_SPEED_BONUS_MAX := 0.46
 const TUNNEL_BOOST_COVERAGE_THRESHOLD := 0.5
 const TUNNEL_CLEAR_ALPHA_THRESHOLD := 0.12
+const SUMMARY_CHART_ANIM_MIN_DURATION := 0.8
+const SUMMARY_CHART_ANIM_MAX_DURATION := 3.2
+const SUMMARY_CHART_TICK_INTERVAL := 0.085
+const SUMMARY_CHART_POP_SCALE := 1.08
+const SUMMARY_TEXT_MONEY_BASE_FONT_SIZE := 20
+const SUMMARY_TEXT_MONEY_POP_FONT_SIZE := 28
+const SUMMARY_TEXT_BASE_COLOR := Color(0.95, 0.98, 1.0, 1.0)
+const SUMMARY_TEXT_MONEY_GREY := Color(0.62, 0.68, 0.74, 1.0)
+const SUMMARY_TEXT_MONEY_GREEN := Color(0.37, 0.86, 0.61, 1.0)
+const MINING_SUMMARY_HINT_HISTORY_LIMIT := 3
 const TUNNEL_COVERAGE_SAMPLE_OFFSETS := [
     Vector2.ZERO,
     Vector2(1.0, 0.0),
@@ -81,7 +110,7 @@ enum RUN_STATES {RUNNING, SUMMARY}
 @onready var boss_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/BossLabel
 @onready var top_panel: PanelContainer = $CanvasLayer/TopBar/TopPanel
 @onready var shop_panel: PanelContainer = $CanvasLayer/ShopPanel
-@onready var summary_label: Label = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryLeftColumn/SummaryLabel
+@onready var summary_label: RichTextLabel = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryLeftColumn/SummaryLabel
 @onready var summary_stats_panel: PanelContainer = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryLeftColumn/SummaryStatsPanel
 @onready var summary_stats_label: Label = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryLeftColumn/SummaryStatsPanel/SummaryStatsMargin/SummaryStatsLabel
 @onready var money_chart: PanelContainer = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryRightColumn/MoneyChart
@@ -139,11 +168,15 @@ var drill_copies: Array[Dictionary] = []
 var delivery_drone_visuals: Array[Dictionary] = []
 var pickup_drone_visuals: Array[Dictionary] = []
 var next_pickup_uid := 1
+var pickup_reject_sound_timer := 0.0
+var cargo_bar_reject_blink_timer := 0.0
 var attached_node_id := -1
 var attached_contact_point := Vector2.ZERO
 var attached_push_direction := Vector2.DOWN
 var dirt_image: Image
 var dirt_texture: ImageTexture
+var background_noise_texture: ImageTexture
+var last_background_noise_depth_level := -1
 var mute_button: Button
 var fullscreen_button: Button
 var settings_button: Button
@@ -163,6 +196,17 @@ var player_pickups_collected := 0
 var drone_pickups_collected := 0
 var mining_summary_hints: Array[String] = []
 var mining_summary_hint_index := 0
+var summary_chart_animation_entries: Array[Dictionary] = []
+var summary_chart_animation_active := false
+var summary_chart_tick_timer := 0.0
+var summary_chart_pop_tween_count := 0
+var summary_chart_ding_played := false
+var summary_chart_animation_session_id := 0
+var summary_text_tween: Tween
+var summary_text_pop_tween: Tween
+var summary_text_view_model: Dictionary = {}
+var summary_text_progress := 0.0
+var summary_text_money_pop_progress := 0.0
 var simulation_mode_active := false
 var simulation_commit_progress := true
 var simulation_fixed_delta := 1.0 / 30.0
@@ -175,6 +219,9 @@ var autoplay_current_goal := "node"
 var straight_drive_charge := 0.0
 var last_steer_direction := Vector2.ZERO
 var tunnel_speed_boost_strength := 0.0
+var hud_last_reported_level := 1
+var xp_bar_pop_tween: Tween
+var xp_bar_level_up_flash_timer := 0.0
 
 func _ready() -> void:
     Global.game_state = Util.GAME_STATES.PLAYING
@@ -203,6 +250,7 @@ func _process(delta: float) -> void:
     if run_state == RUN_STATES.RUNNING and not _is_settings_open():
         _update_autoplay_pointer()
         _process_running(delta)
+    _process_summary_chart_animation(delta)
     _refresh_hud()
     if not simulation_mode_active:
         queue_redraw()
@@ -237,8 +285,13 @@ func _draw() -> void:
     var origin := viewport_size * 0.5 - camera_pos
     var world_rect := Rect2(origin - WORLD_SIZE * 0.5, WORLD_SIZE)
     draw_rect(world_rect, _get_level_bg_color(), true)
+    _draw_background_doodads(world_rect)
     if dirt_texture != null:
         draw_texture_rect(dirt_texture, world_rect, false)
+    if background_noise_texture != null:
+        var bg := _get_level_bg_color()
+        # White noise texture (rgb=1) tinted by the current depth palette.
+        draw_texture_rect(background_noise_texture, world_rect, true, Color(bg.r, bg.g, bg.b, 1.0))
     _draw_base(origin)
     _draw_nodes(origin)
     _draw_pickups(origin)
@@ -255,6 +308,8 @@ func _begin_run() -> void:
         selected_depth = simulation_depth_override
     active_depth_level = clampi(selected_depth, 1, int(persistent_data.get("deepest_level_unlocked", 1)))
     active_material = material_tiers[active_depth_level - 1]
+    hud_last_reported_level = int(persistent_data.get("player_level", 1))
+    _ensure_background_noise_texture()
     player_pos = Vector2(0.0, -WORLD_SIZE.y * 0.5 + 120.0)
     camera_pos = player_pos
     time_left = _get_run_time_limit()
@@ -272,6 +327,10 @@ func _begin_run() -> void:
     total_pickups_spawned = 0
     player_pickups_collected = 0
     drone_pickups_collected = 0
+    mining_summary_hints.clear()
+    mining_summary_hint_index = 0
+    _reset_summary_chart_animation_state()
+    _reset_xp_bar_level_feedback()
     world_nodes = []
     pickups = []
     target_node_id = -1
@@ -293,6 +352,8 @@ func _begin_run() -> void:
     delivery_drone_visuals.clear()
     pickup_drone_visuals.clear()
     next_pickup_uid = 1
+    pickup_reject_sound_timer = 0.0
+    cargo_bar_reject_blink_timer = 0.0
     attached_node_id = -1
     attached_contact_point = player_pos
     attached_push_direction = Vector2.DOWN
@@ -359,6 +420,9 @@ func _process_running(delta: float) -> void:
     _process_contact_sparks(delta)
     _process_damage_numbers(delta)
     drill_audio_timer = max(0.0, drill_audio_timer - delta)
+    pickup_reject_sound_timer = max(0.0, pickup_reject_sound_timer - delta)
+    cargo_bar_reject_blink_timer = max(0.0, cargo_bar_reject_blink_timer - delta)
+    xp_bar_level_up_flash_timer = max(0.0, xp_bar_level_up_flash_timer - delta)
     camera_shake_strength = max(0.0, camera_shake_strength - delta * 18.0)
     camera_pos = camera_pos.lerp(player_pos + _get_camera_shake_offset(), min(1.0, delta * 7.0))
     _update_system_button_layout()
@@ -464,8 +528,12 @@ func _collect_pickups(delta: float) -> void:
         var pickup_vel: Vector2 = pickup.get("vel", Vector2.ZERO)
         pickup_pos += pickup_vel * delta
         pickup_vel *= 0.9
+        var reject_retry_timer: float = max(0.0, float(pickup.get("reject_retry_timer", 0.0)) - delta)
+        var reject_blink_timer: float = max(0.0, float(pickup.get("reject_blink_timer", 0.0)) - delta)
         pickup["pos"] = pickup_pos
         pickup["vel"] = pickup_vel
+        pickup["reject_retry_timer"] = reject_retry_timer
+        pickup["reject_blink_timer"] = reject_blink_timer
         var can_collect: bool = player_pos.distance_to(pickup_pos) <= collect_radius
         if can_collect and cargo_used < _get_cargo_capacity():
             var material_id: String = String(pickup.get("material_id", ""))
@@ -474,6 +542,9 @@ func _collect_pickups(delta: float) -> void:
             player_pickups_collected += 1
             run_status = "Scooped %s." % String(pickup.get("material_name", "loot"))
             continue
+        if can_collect and reject_retry_timer <= 0.0:
+            pickup = _apply_pickup_rejection_feedback(pickup, player_pos)
+            run_status = "Cargo full. Bank at the surface rig."
         remaining.append(pickup)
     pickups = remaining
 
@@ -573,9 +644,13 @@ func _process_pickup_drones(delta: float) -> void:
                     cargo_used += 1
                     drone_pickups_collected += 1
                     run_status = "Pickup drone hauled in %s." % String(drone.get("carry_material_name", "loot"))
+                else:
+                    _spawn_rejected_pickup_from_drone(drone, drone_pos)
+                    run_status = "Cargo full. Bank at the surface rig."
                 drone["state"] = "idle"
                 drone["carry_material_id"] = ""
                 drone["carry_material_name"] = ""
+                drone["carry_color"] = Color.WHITE
                 drone["target_uid"] = -1
         if String(drone.get("state", "idle")) == "idle":
             if cargo_used < _get_cargo_capacity():
@@ -630,6 +705,45 @@ func _spawn_delivery_drone_visual(material_id: String, material: Dictionary, car
         "cargo_count": max(1, cargo_count),
         "return_offset": Vector2(rng.randf_range(-26.0, 26.0), rng.randf_range(-22.0, 22.0))
     })
+
+func _apply_pickup_rejection_feedback(pickup: Dictionary, source_pos: Vector2) -> Dictionary:
+    var bounce_dir: Vector2 = pickup.get("pos", source_pos) - source_pos
+    if bounce_dir == Vector2.ZERO:
+        bounce_dir = pickup.get("vel", Vector2.ZERO)
+    if bounce_dir == Vector2.ZERO:
+        bounce_dir = Vector2.RIGHT.rotated(rng.randf_range(0.0, TAU))
+    bounce_dir = bounce_dir.normalized()
+    pickup["pos"] = source_pos + bounce_dir * (_get_pickup_radius() + 12.0)
+    pickup["vel"] = bounce_dir * rng.randf_range(PICKUP_REJECT_BOUNCE_SPEED_MIN, PICKUP_REJECT_BOUNCE_SPEED_MAX)
+    pickup["reject_retry_timer"] = PICKUP_REJECT_RETRY_DELAY
+    pickup["reject_blink_timer"] = PICKUP_REJECT_BLINK_DURATION
+    _play_pickup_reject_sound()
+    return pickup
+
+func _spawn_rejected_pickup_from_drone(drone: Dictionary, drone_pos: Vector2) -> void:
+    var material_id: String = String(drone.get("carry_material_id", ""))
+    if material_id == "":
+        return
+    var pickup := {
+        "uid": next_pickup_uid,
+        "pos": drone_pos,
+        "vel": (drone_pos - player_pos).normalized() * PICKUP_REJECT_BOUNCE_SPEED_MIN,
+        "material_id": material_id,
+        "material_name": String(drone.get("carry_material_name", "loot")),
+        "material_color": drone.get("carry_color", Color(0.8, 0.8, 0.8, 1.0)),
+        "claimed_by": -1,
+        "reject_retry_timer": 0.0,
+        "reject_blink_timer": 0.0
+    }
+    next_pickup_uid += 1
+    pickups.append(_apply_pickup_rejection_feedback(pickup, player_pos))
+
+func _play_pickup_reject_sound() -> void:
+    if simulation_mode_active or pickup_reject_sound_timer > 0.0:
+        return
+    pickup_reject_sound_timer = PICKUP_REJECT_SOUND_INTERVAL
+    cargo_bar_reject_blink_timer = CARGO_BAR_REJECT_BLINK_DURATION
+    _play_mining_donk(-16.0)
 
 func _take_one_cargo_for_delivery() -> String:
     for material_id_variant in carry_counts.keys():
@@ -811,7 +925,9 @@ func _break_node(node_index: int) -> void:
             "material_id": String(node.get("material_id", "stone")),
             "material_name": String(node.get("material_name", "Stone")),
             "material_color": node.get("material_color", Color(0.7, 0.7, 0.7, 1.0)),
-            "claimed_by": -1
+            "claimed_by": -1,
+            "reject_retry_timer": 0.0,
+            "reject_blink_timer": 0.0
         })
         next_pickup_uid += 1
         total_pickups_spawned += 1
@@ -906,6 +1022,20 @@ func _build_run_results(reason: String) -> Dictionary:
         "money": total_money,
         "xp": run_xp,
         "depth_level": active_depth_level,
+        "summary_view_model": {
+            "reason": reason,
+            "depth_level": active_depth_level,
+            "depth_material_name": String(active_material.get("name", "Stone")),
+            "nodes_broken": nodes_broken,
+            "xp_earned": run_xp,
+            "leveled_up": level_gain > 0,
+            "money_earned": total_money,
+            "money_breakdown_chart": money_breakdown_chart.duplicate(true),
+            "projected_level": projected_level,
+            "level_progress_current": int(level_progress.get("current_xp", 0)),
+            "level_progress_next": int(level_progress.get("next_level_xp", 1)),
+            "projected_depth_unlock": projected_depth_unlock
+        },
         "summary_text": summary_text,
         "summary_stats_text": _build_summary_stats_text({
             "ore_spawned": total_pickups_spawned,
@@ -976,13 +1106,14 @@ func _finish_run(reason: String) -> void:
         _show_summary(results)
 
 func _show_summary(results: Dictionary) -> void:
-    summary_label.text = str(results.get("summary_text", "Run complete."))
     summary_stats_label.text = str(results.get("summary_stats_text", ""))
     dive_button.text = "Return To Upgrades"
     reset_button.text = "Run Again"
     _setup_summary_hints(results)
     _refresh_summary_hint()
     _refresh_summary_charts(results)
+    _show_summary_text(results)
+    _start_summary_chart_animation()
     shop_panel.show()
     hint_panel.hide()
     hint_label.text = ""
@@ -1001,19 +1132,21 @@ func _on_summary_retry_pressed() -> void:
 func _configure_summary_panel() -> void:
     shop_panel.hide()
     shop_panel.set_anchors_preset(Control.PRESET_CENTER)
-    shop_panel.custom_minimum_size = Vector2(1380.0, 860.0)
+    shop_panel.custom_minimum_size = Vector2(1380.0, 810.0)
     shop_panel.offset_left = -690.0
-    shop_panel.offset_top = -470.0
+    shop_panel.offset_top = -445.0
     shop_panel.offset_right = 690.0
-    shop_panel.offset_bottom = 390.0
+    shop_panel.offset_bottom = 365.0
     checkpoint_header.hide()
     checkpoint_list.hide()
     loadout_header.hide()
     loadout_list.hide()
     upgrade_header.hide()
     upgrade_scroll.hide()
-    summary_label.add_theme_font_size_override("font_size", 26)
-    summary_stats_label.add_theme_font_size_override("font_size", 22)
+    summary_label.add_theme_font_size_override("normal_font_size", 20)
+    summary_label.fit_content = true
+    summary_label.scroll_active = false
+    summary_stats_label.add_theme_font_size_override("font_size", 19)
     dive_button.add_theme_font_size_override("font_size", 30)
     reset_button.add_theme_font_size_override("font_size", 30)
     _style_utility_button(dive_button)
@@ -1046,9 +1179,11 @@ func _refresh_hud() -> void:
     cargo_value_label.text = "Cargo %d / %d   Banked %d" % [cargo_used, cargo_capacity, _get_total_banked_count()]
     cargo_bar.max_value = cargo_capacity
     cargo_bar.value = cargo_used
+    _update_warning_meter_blinks(run_time_limit, drill_health_max)
     xp_value_label.text = "XP %d / %d   Run XP +%d" % [xp_current, xp_next, run_xp]
     xp_bar.max_value = xp_next
     xp_bar.value = xp_current
+    _process_level_up_feedback(projected_level)
     weapon_label.text = "Rig Stats   Move %.0f   Drill %.0f/s   Pickup %.0f   Charge +%d%%   XP Boost +%d%%" % [_get_move_speed(), _get_drill_dps(), _get_pickup_radius(), int(round((_get_straight_drive_speed_multiplier() - 1.0) * 100.0)), int(round((_get_xp_multiplier() - 1.0) * 100.0))]
     boss_label.text = "Status   %s" % run_status
 
@@ -1076,8 +1211,8 @@ func _apply_hud_theme() -> void:
     _style_hud_label(weapon_label, 20, Color(0.88, 0.94, 1.0, 0.96))
     _style_hud_label(boss_label, 22, Color(0.98, 0.95, 0.77, 1.0))
     _style_hud_label(hint_label, 20, Color(0.92, 0.96, 1.0, 1.0))
-    _style_hud_label(summary_label, 26, Color(0.95, 0.98, 1.0, 1.0))
-    _style_hud_label(summary_stats_label, 22, Color(0.9, 0.95, 1.0, 1.0))
+    _style_hud_rich_text_label(summary_label, 20, SUMMARY_TEXT_BASE_COLOR)
+    _style_hud_label(summary_stats_label, 19, Color(0.9, 0.95, 1.0, 1.0))
     _style_hud_label(hint_title_label, 20, Color(0.76, 0.9, 1.0, 1.0))
     _style_hud_label(summary_hint_label, 22, Color(0.92, 0.96, 1.0, 1.0))
     _style_utility_button(hint_left_button)
@@ -1088,6 +1223,15 @@ func _style_hud_label(label: Label, font_size: int, color: Color) -> void:
         return
     label.add_theme_font_size_override("font_size", font_size)
     label.add_theme_color_override("font_color", color)
+    label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.55))
+    label.add_theme_constant_override("shadow_offset_x", 1)
+    label.add_theme_constant_override("shadow_offset_y", 1)
+
+func _style_hud_rich_text_label(label: RichTextLabel, font_size: int, color: Color) -> void:
+    if label == null:
+        return
+    label.add_theme_font_size_override("normal_font_size", font_size)
+    label.add_theme_color_override("default_color", color)
     label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.55))
     label.add_theme_constant_override("shadow_offset_x", 1)
     label.add_theme_constant_override("shadow_offset_y", 1)
@@ -1111,6 +1255,125 @@ func _style_meter(bar: ProgressBar, fill_color: Color) -> void:
     fill.border_color = fill_color.lightened(0.12)
     bar.add_theme_stylebox_override("background", background)
     bar.add_theme_stylebox_override("fill", fill)
+
+func _get_shared_warning_blink_phase() -> float:
+    return 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.001 * TAU * WARNING_BAR_BLINK_HZ)
+
+func _apply_warning_meter_blink(bar: ProgressBar, base_fill: Color, blink_strength: float, accent_color: Color) -> void:
+    if bar == null:
+        return
+    var fill := bar.get_theme_stylebox("fill") as StyleBoxFlat
+    var background := bar.get_theme_stylebox("background") as StyleBoxFlat
+    if fill == null or background == null:
+        return
+    var base_fill_border := base_fill.lightened(0.12)
+    var base_background_border := Color(0.84, 0.9, 1.0, 0.6)
+    var pulse: float = _get_shared_warning_blink_phase()
+    var blink_boost: float = clampf(blink_strength, 0.0, 1.0) * pulse
+    fill.bg_color = base_fill.lerp(accent_color, 0.95 * blink_boost)
+    fill.border_color = base_fill_border.lerp(Color.WHITE, 0.95 * blink_boost)
+    background.border_color = base_background_border.lerp(accent_color.lightened(0.12), 0.95 * blink_boost)
+    bar.scale = Vector2.ONE.lerp(Vector2.ONE * 1.05, blink_boost)
+
+func _get_low_meter_warning_strength(current_value: float, max_value: float) -> float:
+    if max_value <= 0.0:
+        return 0.0
+    var ratio: float = clampf(current_value / max_value, 0.0, 1.0)
+    if ratio > WARNING_BAR_BLINK_THRESHOLD:
+        return 0.0
+    return 1.0 - ratio / WARNING_BAR_BLINK_THRESHOLD
+
+func _update_warning_meter_blinks(run_time_limit: float, drill_health_max: float) -> void:
+    var cargo_ratio: float = clampf(cargo_bar_reject_blink_timer / CARGO_BAR_REJECT_BLINK_DURATION, 0.0, 1.0)
+    _apply_warning_meter_blink(
+        time_bar,
+        Color(0.9, 0.69, 0.2, 0.96),
+        _get_low_meter_warning_strength(time_left, run_time_limit),
+        Color(1.0, 0.8, 0.34, 1.0)
+    )
+    _apply_warning_meter_blink(
+        drill_bar,
+        Color(0.41, 0.79, 1.0, 0.96),
+        _get_low_meter_warning_strength(drill_health, drill_health_max),
+        Color(1.0, 0.64, 0.54, 1.0)
+    )
+    _apply_warning_meter_blink(
+        hull_bar,
+        Color(0.86, 0.31, 0.33, 0.96),
+        _get_low_meter_warning_strength(hull_health, 100.0),
+        Color(1.0, 0.58, 0.48, 1.0)
+    )
+    _apply_warning_meter_blink(
+        cargo_bar,
+        Color(0.8, 0.57, 0.22, 0.96),
+        cargo_ratio,
+        Color(1.0, 0.93, 0.56, 1.0)
+    )
+    _update_xp_bar_level_up_flash()
+
+func _update_xp_bar_level_up_flash() -> void:
+    if xp_bar == null:
+        return
+    var fill := xp_bar.get_theme_stylebox("fill") as StyleBoxFlat
+    var background := xp_bar.get_theme_stylebox("background") as StyleBoxFlat
+    if fill == null or background == null:
+        return
+    var base_fill := Color(0.37, 0.82, 0.67, 0.96)
+    var base_fill_border := base_fill.lightened(0.12)
+    var base_background_border := Color(0.84, 0.9, 1.0, 0.6)
+    var flash_ratio: float = clampf(xp_bar_level_up_flash_timer / XP_BAR_LEVEL_UP_FLASH_DURATION, 0.0, 1.0)
+    var pulse: float = _get_shared_warning_blink_phase()
+    var flash_boost: float = flash_ratio * (0.72 + 0.28 * pulse)
+    fill.bg_color = base_fill.lerp(Color(1.0, 0.96, 0.54, 1.0), 0.95 * flash_boost)
+    fill.border_color = base_fill_border.lerp(Color(1.0, 0.99, 0.9, 1.0), flash_boost)
+    background.border_color = base_background_border.lerp(Color(1.0, 0.88, 0.46, 0.98), 0.9 * flash_boost)
+
+func _reset_xp_bar_level_feedback() -> void:
+    if xp_bar_pop_tween != null and xp_bar_pop_tween.is_running():
+        xp_bar_pop_tween.kill()
+    xp_bar_pop_tween = null
+    xp_bar_level_up_flash_timer = 0.0
+    if xp_bar != null:
+        xp_bar.scale = Vector2.ONE
+    if xp_value_label != null:
+        xp_value_label.scale = Vector2.ONE
+
+func _process_level_up_feedback(projected_level: int) -> void:
+    if run_state != RUN_STATES.RUNNING:
+        hud_last_reported_level = projected_level
+        return
+    if projected_level < hud_last_reported_level:
+        hud_last_reported_level = projected_level
+        _reset_xp_bar_level_feedback()
+        return
+    if projected_level == hud_last_reported_level:
+        return
+    var level_gain: int = projected_level - hud_last_reported_level
+    hud_last_reported_level = projected_level
+    _play_level_up_feedback(level_gain)
+
+func _play_level_up_feedback(level_gain: int) -> void:
+    if xp_bar == null:
+        return
+    if xp_bar_pop_tween != null and xp_bar_pop_tween.is_running():
+        xp_bar_pop_tween.kill()
+    xp_bar.scale = Vector2.ONE
+    if xp_value_label != null:
+        xp_value_label.scale = Vector2.ONE
+    xp_bar_level_up_flash_timer = XP_BAR_LEVEL_UP_FLASH_DURATION
+    xp_bar_pop_tween = create_tween()
+    xp_bar_pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    xp_bar_pop_tween.parallel().tween_property(xp_bar, "scale", Vector2.ONE * XP_BAR_LEVEL_UP_POP_SCALE, 0.11)
+    if xp_value_label != null:
+        xp_bar_pop_tween.parallel().tween_property(xp_value_label, "scale", Vector2.ONE * 1.05, 0.11)
+    xp_bar_pop_tween.tween_interval(0.03)
+    xp_bar_pop_tween.parallel().tween_property(xp_bar, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    if xp_value_label != null:
+        xp_bar_pop_tween.parallel().tween_property(xp_value_label, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    if simulation_mode_active:
+        return
+    for _i in range(level_gain):
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.MINING_LEVEL_UP)
 
 func _style_panel(panel: PanelContainer, background_color: Color, border_color: Color, corner_radius: int) -> void:
     if panel == null:
@@ -1147,24 +1410,25 @@ func _build_summary_stats_text(stats: Dictionary) -> String:
     ]
 
 func _setup_summary_hints(results: Dictionary = {}) -> void:
-    mining_summary_hints = DEFAULT_MINING_SUMMARY_HINTS.duplicate()
-    var contextual_hint: String = _get_contextual_summary_hint(results)
-    if not contextual_hint.is_empty():
-        mining_summary_hints.erase(contextual_hint)
-        mining_summary_hints.push_front(contextual_hint)
-    if _get_upgrade_level("pickup_radius") <= 0:
-        mining_summary_hints.append("Vacuum Scoop is the fastest way to stop drops from slipping away once a vein bursts open.")
-    if _get_upgrade_level("magnet_drone") <= 0:
-        mining_summary_hints.append("Salvage Drone is a strong next buy if rich seams are leaving too many chunks behind.")
-    if _get_upgrade_level("delivery_drone") <= 0:
-        mining_summary_hints.append("Delivery Drone pays off once your cargo is filling before you can safely return to the surface.")
+    var hint_data: Dictionary = _build_summary_hint_data(results)
+    mining_summary_hints = hint_data.get("all_hints", [])
     if mining_summary_hints.is_empty():
         mining_summary_hints.append("Review the run, tune the rig, and go again.")
-    mining_summary_hint_index = 0
+    var ranked_hints: Array[String] = hint_data.get("ranked_hints", [])
+    mining_summary_hint_index = _select_summary_hint_index(ranked_hints)
+    _remember_displayed_summary_hint()
 
-func _get_contextual_summary_hint(results: Dictionary) -> String:
+func _build_summary_hint_data(results: Dictionary) -> Dictionary:
+    var all_hints: Array[String] = []
+    var ranked_hints: Array[String] = []
     if results.is_empty():
-        return ""
+        _append_unique_summary_hint(all_hints, "Review the run, tune the rig, and go again.")
+        _append_unique_summary_hint(ranked_hints, "Review the run, tune the rig, and go again.")
+        return {
+            "all_hints": all_hints,
+            "ranked_hints": ranked_hints,
+        }
+
     var reason: String = String(results.get("reason", ""))
     var ore_left_behind: int = int(results.get("ore_left_behind", 0))
     var ore_spawned: int = int(results.get("ore_spawned", 0))
@@ -1174,27 +1438,134 @@ func _get_contextual_summary_hint(results: Dictionary) -> String:
     var untouched_ratio: float = 0.0 if total_nodes_seen <= 0 else float(remaining_nodes) / float(total_nodes_seen)
     var left_many_pickups: bool = ore_left_behind >= 10 or (ore_spawned >= 12 and collection_rate <= 0.55)
     var left_many_nodes: bool = remaining_nodes >= 28 and untouched_ratio >= 0.72
+    var pickup_radius_missing: bool = _get_upgrade_level("pickup_radius") <= 0
+    var magnet_drone_missing: bool = _get_upgrade_level("magnet_drone") <= 0
+    var delivery_drone_missing: bool = _get_upgrade_level("delivery_drone") <= 0
+
+    var pickup_radius_context_hint := "You left a lot of ore drifting in the dirt that run. Vacuum Scoop will help you clean up popped veins before the loot scatters."
+    var magnet_drone_context_hint := "A lot of ore got left behind that run. Salvage Drone is a strong pickup if you want those loose chunks collected while you keep drilling."
+    var loopback_hint := "A lot of ore got left behind that run. Try looping back through cracked veins sooner so the loose drops turn into cargo instead of dead weight."
+    var routing_hint := "There were still a lot of untouched veins on the field when the run ended. A cleaner route through nearby seams can turn that map into much better payout."
+    var drill_hint := "The run ended because your drill wore out. Drill Plating gives the rig more health, and Cooling Loop helps that health last longer on tough veins."
+    var timer_hint := "The timer ran out before the route paid off. Timer Reserve gives you more room to finish a lane and bank the haul."
+    var hull_hint := "The run ended when the hull gave out. Hull Plating will let you absorb more punishment before you have to call the run."
+    var pickup_radius_upgrade_hint := "Vacuum Scoop is the fastest way to stop drops from slipping away once a vein bursts open."
+    var magnet_drone_upgrade_hint := "Salvage Drone is a strong next buy if rich seams are leaving too many chunks behind."
+    var delivery_drone_upgrade_hint := "Delivery Drone pays off once your cargo is filling before you can safely return to the surface."
+    var fallback_hint := "Review the run, tune the rig, and go again."
 
     if left_many_pickups:
-        if _get_upgrade_level("pickup_radius") <= 0:
-            return "You left a lot of ore drifting in the dirt that run. Vacuum Scoop will help you clean up popped veins before the loot scatters."
-        if _get_upgrade_level("magnet_drone") <= 0:
-            return "A lot of ore got left behind that run. Salvage Drone is a strong pickup if you want those loose chunks collected while you keep drilling."
-        return "A lot of ore got left behind that run. Try looping back through cracked veins sooner so the loose drops turn into cargo instead of dead weight."
-
+        if pickup_radius_missing:
+            _append_unique_summary_hint(ranked_hints, pickup_radius_context_hint)
+        elif magnet_drone_missing:
+            _append_unique_summary_hint(ranked_hints, magnet_drone_context_hint)
+        else:
+            _append_unique_summary_hint(ranked_hints, loopback_hint)
     if left_many_nodes:
-        return "There were still a lot of untouched veins on the field when the run ended. A cleaner route through nearby seams can turn that map into much better payout."
-
+        _append_unique_summary_hint(ranked_hints, routing_hint)
     if reason == "Drill health depleted.":
-        return "The run ended because your drill wore out. Upgrading drill health will buy you more time on tough veins before the rig gives out."
-
+        _append_unique_summary_hint(ranked_hints, drill_hint)
     if reason == "Timer expired.":
-        return "The timer ran out before the route paid off. Upgrading run time will give you more room to finish a lane and bank the haul."
-
+        _append_unique_summary_hint(ranked_hints, timer_hint)
     if reason == "Hull depleted." or reason == "Hull integrity depleted.":
-        return "The run ended when the hull gave out. Hull Plating will let you absorb more punishment before you have to call the run."
+        _append_unique_summary_hint(ranked_hints, hull_hint)
+    if pickup_radius_missing:
+        _append_unique_summary_hint(ranked_hints, pickup_radius_upgrade_hint)
+    if magnet_drone_missing:
+        _append_unique_summary_hint(ranked_hints, magnet_drone_upgrade_hint)
+    if delivery_drone_missing:
+        _append_unique_summary_hint(ranked_hints, delivery_drone_upgrade_hint)
+    for hint in DEFAULT_MINING_SUMMARY_HINTS:
+        _append_unique_summary_hint(ranked_hints, hint)
+    _append_unique_summary_hint(ranked_hints, fallback_hint)
 
-    return ""
+    if left_many_pickups:
+        _append_unique_summary_hint(all_hints, pickup_radius_context_hint)
+        _append_unique_summary_hint(all_hints, magnet_drone_context_hint)
+        _append_unique_summary_hint(all_hints, loopback_hint)
+    if left_many_nodes:
+        _append_unique_summary_hint(all_hints, routing_hint)
+    if reason == "Drill health depleted.":
+        _append_unique_summary_hint(all_hints, drill_hint)
+    if reason == "Timer expired.":
+        _append_unique_summary_hint(all_hints, timer_hint)
+    if reason == "Hull depleted." or reason == "Hull integrity depleted.":
+        _append_unique_summary_hint(all_hints, hull_hint)
+    if pickup_radius_missing:
+        _append_unique_summary_hint(all_hints, pickup_radius_upgrade_hint)
+    if magnet_drone_missing:
+        _append_unique_summary_hint(all_hints, magnet_drone_upgrade_hint)
+    if delivery_drone_missing:
+        _append_unique_summary_hint(all_hints, delivery_drone_upgrade_hint)
+    for hint in DEFAULT_MINING_SUMMARY_HINTS:
+        _append_unique_summary_hint(all_hints, hint)
+    _append_unique_summary_hint(all_hints, fallback_hint)
+    return {
+        "all_hints": all_hints,
+        "ranked_hints": ranked_hints,
+    }
+
+func _append_unique_summary_hint(target: Array[String], hint: String) -> void:
+    if hint.is_empty() or target.has(hint):
+        return
+    target.append(hint)
+
+func _select_summary_hint_index(ranked_hints: Array[String]) -> int:
+    if mining_summary_hints.is_empty():
+        return 0
+    var recent_history: Array[String] = _get_recent_summary_hint_history()
+    var top_choices: Array[String] = []
+    for hint in ranked_hints:
+        if top_choices.size() >= MINING_SUMMARY_HINT_HISTORY_LIMIT:
+            break
+        if mining_summary_hints.has(hint):
+            top_choices.append(hint)
+
+    if top_choices.is_empty():
+        return 0
+
+    var last_hint: String = recent_history[0] if not recent_history.is_empty() else ""
+    if top_choices.size() >= 3 and recent_history.size() >= 3:
+        var recent_top_match := true
+        for index in range(3):
+            if not top_choices.has(recent_history[index]):
+                recent_top_match = false
+                break
+        if recent_top_match:
+            return randi() % mining_summary_hints.size()
+    if top_choices.size() >= 2 and last_hint == top_choices[0]:
+        return mining_summary_hints.find(top_choices[1])
+    if top_choices.size() >= 3 and recent_history.has(top_choices[0]) and recent_history.has(top_choices[1]):
+        return mining_summary_hints.find(top_choices[2])
+    if top_choices.size() >= 2 and recent_history.has(top_choices[0]) and recent_history.has(top_choices[1]):
+        return randi() % mining_summary_hints.size()
+    return mining_summary_hints.find(top_choices[0])
+
+func _get_recent_summary_hint_history() -> Array[String]:
+    var history: Array[String] = []
+    var saved_history: Variant = persistent_data.get("summary_hint_history", [])
+    if saved_history is Array:
+        for entry in saved_history:
+            var hint_text: String = String(entry)
+            if hint_text.is_empty():
+                continue
+            history.append(hint_text)
+            if history.size() >= MINING_SUMMARY_HINT_HISTORY_LIMIT:
+                break
+    return history
+
+func _remember_displayed_summary_hint() -> void:
+    if mining_summary_hints.is_empty():
+        return
+    mining_summary_hint_index = wrapi(mining_summary_hint_index, 0, mining_summary_hints.size())
+    var selected_hint: String = mining_summary_hints[mining_summary_hint_index]
+    var history: Array[String] = _get_recent_summary_hint_history()
+    history.erase(selected_hint)
+    history.push_front(selected_hint)
+    while history.size() > MINING_SUMMARY_HINT_HISTORY_LIMIT:
+        history.pop_back()
+    persistent_data["summary_hint_history"] = history
+    MINING_PROGRESS_SCRIPT.save_data(persistent_data)
 
 func _refresh_summary_hint() -> void:
     if mining_summary_hints.is_empty():
@@ -1231,6 +1602,17 @@ func _make_summary_chart_label(text: String, width: float, font_size: int, align
     return label
 
 func _make_summary_chart_bar(value: float, max_value: float, color: Color) -> Control:
+    var bar_bundle: Dictionary = _make_summary_chart_bar_bundle(max_value, color)
+    var root: HBoxContainer = bar_bundle.get("root", HBoxContainer.new())
+    var meter: ProgressBar = bar_bundle.get("meter", null)
+    var value_label: Label = bar_bundle.get("value_label", null)
+    if meter != null:
+        meter.value = value
+    if value_label != null:
+        value_label.text = _format_summary_chart_value(value)
+    return root
+
+func _make_summary_chart_bar_bundle(max_value: float, color: Color) -> Dictionary:
     var root := HBoxContainer.new()
     root.custom_minimum_size = Vector2(220.0, 0.0)
     root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1241,7 +1623,7 @@ func _make_summary_chart_bar(value: float, max_value: float, color: Color) -> Co
     meter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     meter.show_percentage = false
     meter.max_value = max(1.0, max_value)
-    meter.value = value
+    meter.value = 0.0
 
     var background := StyleBoxFlat.new()
     background.bg_color = Color(0.12, 0.18, 0.28, 0.96)
@@ -1255,8 +1637,13 @@ func _make_summary_chart_bar(value: float, max_value: float, color: Color) -> Co
     fill.bg_color = color
     meter.add_theme_stylebox_override("fill", fill)
     root.add_child(meter)
-    root.add_child(_make_summary_chart_label(_format_summary_chart_value(value), 58.0, 16, HORIZONTAL_ALIGNMENT_RIGHT, Color(0.82, 0.9, 1.0, 1.0)))
-    return root
+    var value_label := _make_summary_chart_label("0", 58.0, 16, HORIZONTAL_ALIGNMENT_RIGHT, Color(0.82, 0.9, 1.0, 1.0))
+    root.add_child(value_label)
+    return {
+        "root": root,
+        "meter": meter,
+        "value_label": value_label
+    }
 
 func _format_summary_chart_value(value: float) -> String:
     if value >= 1000.0:
@@ -1266,6 +1653,7 @@ func _format_summary_chart_value(value: float) -> String:
     return "%0.1f" % value if value != floor(value) else str(int(value))
 
 func _refresh_summary_charts(results: Dictionary) -> void:
+    _reset_summary_chart_animation_state()
     _refresh_money_chart(results)
     _refresh_performance_chart(results)
 
@@ -1291,7 +1679,16 @@ func _refresh_money_chart(results: Dictionary) -> void:
         row.add_theme_constant_override("separation", 10)
         root.add_child(row)
         row.add_child(_make_summary_chart_label("%s x%d" % [str(row_data.get("label", "Ore")), int(row_data.get("count", 0))], 170.0, 17))
-        row.add_child(_make_summary_chart_bar(float(row_data.get("money", 0.0)), max_money, row_data.get("color", Color(0.8, 0.8, 0.8, 1.0))))
+        var target_value: float = float(row_data.get("money", 0.0))
+        var bar_bundle: Dictionary = _make_summary_chart_bar_bundle(max_money, row_data.get("color", Color(0.8, 0.8, 0.8, 1.0)))
+        row.add_child(bar_bundle.get("root", HBoxContainer.new()))
+        _register_summary_chart_animation(
+            row,
+            bar_bundle.get("meter", null),
+            bar_bundle.get("value_label", null),
+            target_value,
+            _summary_chart_animation_duration(target_value, max_money)
+        )
 
 func _refresh_performance_chart(results: Dictionary) -> void:
     _clear_control_children(performance_chart)
@@ -1316,7 +1713,16 @@ func _refresh_performance_chart(results: Dictionary) -> void:
         row.add_theme_constant_override("separation", 10)
         root.add_child(row)
         row.add_child(_make_summary_chart_label(str(row_data.get("label", "")), 190.0, 17))
-        row.add_child(_make_summary_chart_bar(float(row_data.get("value", 0.0)), max_value, row_data.get("color", Color.WHITE)))
+        var target_value: float = float(row_data.get("value", 0.0))
+        var bar_bundle: Dictionary = _make_summary_chart_bar_bundle(max_value, row_data.get("color", Color.WHITE))
+        row.add_child(bar_bundle.get("root", HBoxContainer.new()))
+        _register_summary_chart_animation(
+            row,
+            bar_bundle.get("meter", null),
+            bar_bundle.get("value_label", null),
+            target_value,
+            _summary_chart_animation_duration(target_value, max_value)
+        )
 
 func _make_chart_margin(parent: Control) -> MarginContainer:
     var margin := MarginContainer.new()
@@ -1332,6 +1738,165 @@ func _clear_control_children(parent: Node) -> void:
         parent.remove_child(child)
         child.queue_free()
 
+func _register_summary_chart_animation(row: Control, meter: ProgressBar, value_label: Label, target_value: float, duration: float) -> void:
+    if row == null or meter == null or value_label == null:
+        return
+    row.scale = Vector2.ONE
+    row.pivot_offset = row.size * 0.5
+    summary_chart_animation_entries.append({
+        "row": row,
+        "meter": meter,
+        "value_label": value_label,
+        "target_value": max(0.0, target_value),
+        "duration": max(0.01, duration),
+        "elapsed": 0.0,
+        "popped": false
+    })
+
+func _summary_chart_animation_duration(target_value: float, max_value: float) -> float:
+    if max_value <= 0.0:
+        return SUMMARY_CHART_ANIM_MIN_DURATION
+    var normalized: float = clampf(target_value / max_value, 0.0, 1.0)
+    return lerpf(SUMMARY_CHART_ANIM_MIN_DURATION, SUMMARY_CHART_ANIM_MAX_DURATION, pow(normalized, 0.58))
+
+func _start_summary_chart_animation() -> void:
+    summary_chart_animation_session_id += 1
+    summary_chart_pop_tween_count = 0
+    summary_chart_ding_played = false
+    summary_chart_tick_timer = 0.0
+    summary_chart_animation_active = not summary_chart_animation_entries.is_empty()
+    for entry_index in range(summary_chart_animation_entries.size()):
+        var entry: Dictionary = summary_chart_animation_entries[entry_index]
+        var meter: ProgressBar = entry.get("meter", null)
+        var value_label: Label = entry.get("value_label", null)
+        if meter != null:
+            meter.value = 0.0
+        if value_label != null:
+            value_label.text = "0"
+        entry["elapsed"] = 0.0
+        entry["popped"] = false
+        summary_chart_animation_entries[entry_index] = entry
+    if not summary_chart_animation_active:
+        _play_summary_chart_completion_ding()
+
+func _reset_summary_chart_animation_state() -> void:
+    summary_chart_animation_active = false
+    summary_chart_tick_timer = 0.0
+    summary_chart_animation_entries.clear()
+    summary_chart_pop_tween_count = 0
+    summary_chart_ding_played = false
+    summary_chart_animation_session_id += 1
+    if summary_text_tween != null and summary_text_tween.is_running():
+        summary_text_tween.kill()
+    if summary_text_pop_tween != null and summary_text_pop_tween.is_running():
+        summary_text_pop_tween.kill()
+    summary_text_view_model.clear()
+    summary_text_progress = 0.0
+    summary_text_money_pop_progress = 0.0
+
+func _process_summary_chart_animation(delta: float) -> void:
+    if not summary_chart_animation_active:
+        return
+    var any_active: bool = false
+    for entry_index in range(summary_chart_animation_entries.size()):
+        var entry: Dictionary = summary_chart_animation_entries[entry_index]
+        var meter: ProgressBar = entry.get("meter", null)
+        var value_label: Label = entry.get("value_label", null)
+        var row: Control = entry.get("row", null)
+        var target_value: float = float(entry.get("target_value", 0.0))
+        var duration: float = float(entry.get("duration", SUMMARY_CHART_ANIM_MIN_DURATION))
+        var elapsed: float = min(duration, float(entry.get("elapsed", 0.0)) + delta)
+        var progress: float = 1.0 if duration <= 0.0 else clampf(elapsed / duration, 0.0, 1.0)
+        var eased_progress: float = 1.0 - pow(1.0 - progress, 3.0)
+        var current_value: float = target_value * eased_progress
+        if meter != null:
+            meter.value = current_value
+        if value_label != null:
+            value_label.text = _format_summary_chart_value(current_value)
+        if progress < 1.0:
+            any_active = true
+        elif not bool(entry.get("popped", false)):
+            if meter != null:
+                meter.value = target_value
+            if value_label != null:
+                value_label.text = _format_summary_chart_value(target_value)
+            _play_summary_chart_pop(row)
+            entry["popped"] = true
+        entry["elapsed"] = elapsed
+        summary_chart_animation_entries[entry_index] = entry
+    if any_active:
+        summary_chart_tick_timer += delta
+        while summary_chart_tick_timer >= SUMMARY_CHART_TICK_INTERVAL:
+            summary_chart_tick_timer -= SUMMARY_CHART_TICK_INTERVAL
+            if AudioManager != null:
+                AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER)
+    else:
+        summary_chart_animation_active = false
+        summary_chart_tick_timer = 0.0
+
+func _play_summary_chart_completion_ding() -> void:
+    if summary_chart_ding_played:
+        return
+    summary_chart_ding_played = true
+    if AudioManager != null:
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.MINING_SUMMARY_DING)
+
+func _on_summary_chart_pop_tween_finished(session_id: int) -> void:
+    if session_id != summary_chart_animation_session_id:
+        return
+    if run_state != RUN_STATES.SUMMARY:
+        return
+    summary_chart_pop_tween_count = max(0, summary_chart_pop_tween_count - 1)
+    if not summary_chart_animation_active and summary_chart_pop_tween_count <= 0:
+        _play_summary_chart_completion_ding()
+
+func _play_summary_chart_pop(row: Control) -> void:
+    if row == null:
+        return
+    row.scale = Vector2.ONE
+    row.pivot_offset = row.size * 0.5
+    summary_chart_pop_tween_count += 1
+    var pop_tween: Tween = create_tween()
+    pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    pop_tween.tween_property(row, "scale", Vector2.ONE * SUMMARY_CHART_POP_SCALE, 0.12)
+    pop_tween.tween_property(row, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    var session_id := summary_chart_animation_session_id
+    pop_tween.finished.connect(func() -> void:
+        _on_summary_chart_pop_tween_finished(session_id)
+    )
+
+func _play_summary_text_pop() -> void:
+    if summary_label == null or summary_text_view_model.is_empty():
+        return
+    if summary_text_pop_tween != null and summary_text_pop_tween.is_running():
+        summary_text_pop_tween.kill()
+    summary_text_money_pop_progress = 0.0
+    summary_chart_pop_tween_count += 1
+    summary_text_pop_tween = create_tween()
+    summary_text_pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    summary_text_pop_tween.tween_method(
+        func(pop_progress: float) -> void:
+            summary_text_money_pop_progress = pop_progress
+            _render_summary_text(summary_text_view_model, summary_text_progress),
+        0.0,
+        1.0,
+        0.14
+    )
+    summary_text_pop_tween.tween_method(
+        func(pop_progress: float) -> void:
+            summary_text_money_pop_progress = pop_progress
+            _render_summary_text(summary_text_view_model, summary_text_progress),
+        1.0,
+        0.0,
+        0.12
+    ).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    var session_id := summary_chart_animation_session_id
+    summary_text_pop_tween.finished.connect(func() -> void:
+        summary_text_money_pop_progress = 0.0
+        _render_summary_text(summary_text_view_model, summary_text_progress)
+        _on_summary_chart_pop_tween_finished(session_id)
+    )
+
 func _get_total_count_from_dict(counts: Dictionary) -> int:
     var total := 0
     for value in counts.values():
@@ -1343,6 +1908,148 @@ func _get_total_banked_count() -> int:
     for count in banked_counts.values():
         total += int(count)
     return total
+
+func _show_summary_text(results: Dictionary) -> void:
+    var summary_view_model: Dictionary = results.get("summary_view_model", {})
+    if summary_view_model.is_empty():
+        summary_text_view_model.clear()
+        summary_text_progress = 0.0
+        summary_text_money_pop_progress = 0.0
+        summary_label.clear()
+        summary_label.append_text(str(results.get("summary_text", "Run complete.")))
+        return
+    if summary_text_tween != null and summary_text_tween.is_running():
+        summary_text_tween.kill()
+    if summary_text_pop_tween != null and summary_text_pop_tween.is_running():
+        summary_text_pop_tween.kill()
+    summary_text_view_model = summary_view_model.duplicate(true)
+    summary_text_progress = 0.0
+    summary_text_money_pop_progress = 0.0
+    _render_summary_text(summary_text_view_model, 0.0)
+    var total_money: float = float(summary_view_model.get("money_earned", 0))
+    var duration: float = _get_summary_text_animation_duration(total_money)
+    if duration <= 0.0:
+        summary_text_progress = 1.0
+        _render_summary_text(summary_text_view_model, 1.0)
+        _play_summary_text_pop()
+        return
+    summary_text_tween = create_tween()
+    summary_text_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    summary_text_tween.tween_method(
+        func(progress: float) -> void:
+            summary_text_progress = progress
+            _render_summary_text(summary_text_view_model, progress),
+        0.0,
+        1.0,
+        duration
+    )
+    summary_text_tween.finished.connect(func() -> void:
+        summary_text_progress = 1.0
+        _render_summary_text(summary_text_view_model, 1.0)
+        _play_summary_text_pop()
+    )
+
+func _render_summary_text(summary_view_model: Dictionary, progress: float) -> void:
+    var breakdown: Array = summary_view_model.get("money_breakdown_chart", [])
+    var total_money: int = int(summary_view_model.get("money_earned", 0))
+    var lines := PackedStringArray()
+    lines.append("Run complete: %s" % String(summary_view_model.get("reason", "")))
+    lines.append("")
+    lines.append(
+        "Depth tier %d: %s" % [
+            int(summary_view_model.get("depth_level", 1)),
+            String(summary_view_model.get("depth_material_name", "Stone"))
+        ]
+    )
+    lines.append("Nodes broken: %d" % int(summary_view_model.get("nodes_broken", 0)))
+    lines.append(
+        "XP earned: %d%s" % [
+            int(summary_view_model.get("xp_earned", 0)),
+            "  (LEVEL UP!)" if bool(summary_view_model.get("leveled_up", false)) else ""
+        ]
+    )
+    lines.append(
+        "Money earned: %s" % _format_summary_money_span(
+            _get_animated_money_value(total_money, progress),
+            total_money,
+            1.0,
+            progress
+        )
+    )
+    lines.append("")
+    lines.append("Cargo payout:")
+    if breakdown.is_empty():
+        lines.append("No cargo banked.")
+    else:
+        for entry_variant in breakdown:
+            var entry: Dictionary = entry_variant
+            var subtotal: int = int(entry.get("money", 0))
+            var contribution: float = 0.0 if total_money <= 0 else float(subtotal) / float(total_money)
+            lines.append(
+                "%s x%d -> %s" % [
+                    String(entry.get("label", "Cargo")),
+                    int(entry.get("count", 0)),
+                    _format_summary_money_span(
+                        _get_animated_money_value(subtotal, progress),
+                        subtotal,
+                        contribution,
+                        progress
+                    )
+                ]
+            )
+    lines.append("")
+    lines.append(
+        "Level %d  XP %d/%d" % [
+            int(summary_view_model.get("projected_level", 1)),
+            int(summary_view_model.get("level_progress_current", 0)),
+            int(summary_view_model.get("level_progress_next", 1))
+        ]
+    )
+    lines.append("Unlocked depth tier: %d" % int(summary_view_model.get("projected_depth_unlock", 1)))
+    summary_label.clear()
+    summary_label.append_text("[color=%s]%s[/color]" % [
+        _color_to_bbcode(SUMMARY_TEXT_BASE_COLOR),
+        "\n".join(lines)
+    ])
+
+func _get_animated_money_value(target_value: int, progress: float) -> int:
+    var eased_progress: float = 0.5 - 0.5 * cos(PI * clampf(progress, 0.0, 1.0))
+    return int(round(float(target_value) * eased_progress))
+
+func _get_summary_text_animation_duration(total_money: float) -> float:
+    var chart_duration: float = _get_summary_chart_max_duration()
+    if chart_duration > 0.0:
+        return chart_duration
+    if total_money <= 0.0:
+        return 0.0
+    return _summary_chart_animation_duration(total_money, total_money)
+
+func _get_summary_chart_max_duration() -> float:
+    var longest_duration := 0.0
+    for entry in summary_chart_animation_entries:
+        longest_duration = max(longest_duration, float(entry.get("duration", 0.0)))
+    return longest_duration
+
+func _format_summary_money_span(current_value: int, target_value: int, contribution_ratio: float, progress: float) -> String:
+    var contribution_color: Color = SUMMARY_TEXT_MONEY_GREY.lerp(
+        SUMMARY_TEXT_MONEY_GREEN,
+        clampf(contribution_ratio, 0.0, 1.0)
+    )
+    var animated_color: Color = SUMMARY_TEXT_MONEY_GREY.lerp(contribution_color, clampf(progress, 0.0, 1.0))
+    var shown_value: int = clampi(current_value, 0, max(0, target_value))
+    var money_font_size: int = int(round(lerpf(
+        float(SUMMARY_TEXT_MONEY_BASE_FONT_SIZE),
+        float(SUMMARY_TEXT_MONEY_POP_FONT_SIZE),
+        clampf(summary_text_money_pop_progress, 0.0, 1.0)
+    )))
+    return "[font_size=%d][color=%s]$%s[/color][/font_size]" % [
+        money_font_size,
+        _color_to_bbcode(animated_color),
+        Util.get_number_short_text(shown_value)
+    ]
+
+func _color_to_bbcode(color: Color) -> String:
+    return color.to_html(false)
 
 func _get_upgrade_levels() -> Dictionary:
     return persistent_data.get("upgrades", {})
@@ -1454,6 +2161,8 @@ func _apply_impact_hit(node_index: int, candidate_pos: Vector2) -> bool:
     _spawn_contact_sparks(hit_pos, node.get("material_color", Color.WHITE), 4 + int(round(charge_ratio * 6.0)))
     camera_shake_strength = min(11.0, camera_shake_strength + 4.0 + charge_ratio * 5.0)
     straight_drive_charge = max(0.0, straight_drive_charge - 0.8)
+    _play_mining_donk(INITIAL_DONK_VOLUME_DB_BOOST)
+    drill_audio_timer = DRILL_AUDIO_INTERVAL
     if float(node["health"]) <= 0.0:
         _break_node(node_index)
         run_status = "Charge break. Keep the line and sweep the seam."
@@ -1544,8 +2253,16 @@ func _play_drill_tick(origin: Vector2) -> void:
         _spawn_damage_number(pending_drill_damage_origin if pending_drill_damage_origin != Vector2.ZERO else origin, int(max(1.0, round(pending_drill_damage_number))))
         pending_drill_damage_number = 0.0
         pending_drill_damage_origin = Vector2.ZERO
-    if not simulation_mode_active:
-        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER)
+    _play_mining_donk()
+
+func _play_mining_donk(volume_db_offset: float = 0.0) -> void:
+    if simulation_mode_active:
+        return
+    AudioManager.create_audio(
+        SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER,
+        volume_db_offset,
+        rng.randf_range(-DONK_PITCH_VARIATION, DONK_PITCH_VARIATION)
+    )
 
 func _get_pointer_direction() -> Vector2:
     if autoplay_enabled:
@@ -1844,11 +2561,26 @@ func _draw_nodes(origin: Vector2) -> void:
         var node_screen: Vector2 = _world_to_screen(node.get("pos", Vector2.ZERO))
         var node_color: Color = node.get("material_color", Color(0.5, 0.5, 0.5, 1.0))
         var radius: float = float(node.get("radius", 20.0))
-        var rock_points: PackedVector2Array = _get_translated_shape_points(node, node_screen)
-        draw_colored_polygon(rock_points, node_color)
-        draw_arc(node_screen, radius + 3.0, 0.0, TAU, 28, Color(1.0, 1.0, 1.0, 0.18), 2.0)
         var hp_ratio: float = float(node.get("health", 1.0)) / max(1.0, float(node.get("max_health", 1.0)))
-        draw_arc(node_screen, radius + 8.0, -PI * 0.5, -PI * 0.5 + TAU * hp_ratio, 30, Color(0.95, 0.77, 0.4, 0.95), 3.0)
+        var mined_progress: float = clampf(1.0 - hp_ratio, 0.0, 1.0)
+
+        # Base rock tint; mined nodes get slightly greyer as depletion increases.
+        var luma: float = node_color.r * 0.299 + node_color.g * 0.587 + node_color.b * 0.114
+        var grey_color: Color = Color(luma, luma, luma, node_color.a)
+        var outer_color: Color = node_color.lerp(grey_color, mined_progress * 0.18)
+        var rock_points: PackedVector2Array = _get_translated_shape_points(node, node_screen)
+        draw_colored_polygon(rock_points, outer_color)
+
+        # "Fill in" mined amount using a scaled inner polygon (radial wipe).
+        if mined_progress > 0.001:
+            var inner_scale: float = mined_progress
+            var local_points: PackedVector2Array = node.get("shape_points", PackedVector2Array())
+            var inner_points: PackedVector2Array = PackedVector2Array()
+            for local_point in local_points:
+                inner_points.append(node_screen + local_point * inner_scale)
+            var inner_color: Color = node_color.lerp(grey_color, 0.55)
+            draw_colored_polygon(inner_points, inner_color)
+
         _draw_node_sparkles(node_screen, radius, float(node.get("sparkle", 0.0)))
 
 func _draw_node_sparkles(node_screen: Vector2, radius: float, sparkle: float) -> void:
@@ -1864,8 +2596,12 @@ func _draw_pickups(origin: Vector2) -> void:
     for pickup in pickups:
         var pickup_screen: Vector2 = _world_to_screen(pickup.get("pos", Vector2.ZERO))
         var pickup_color: Color = pickup.get("material_color", Color(0.8, 0.8, 0.8, 1.0))
-        draw_circle(pickup_screen, 7.0, pickup_color)
-        draw_circle(pickup_screen, 3.0, Color(1.0, 1.0, 1.0, 0.75))
+        var blink_ratio: float = clampf(float(pickup.get("reject_blink_timer", 0.0)) / PICKUP_REJECT_BLINK_DURATION, 0.0, 1.0)
+        var blink_pulse: float = 0.5 + 0.5 * sin((1.0 - blink_ratio) * TAU * 4.0)
+        var blink_boost: float = blink_ratio * blink_pulse
+        pickup_color = pickup_color.lerp(Color.WHITE, 0.55 * blink_boost)
+        draw_circle(pickup_screen, 7.0 + 1.8 * blink_boost, pickup_color)
+        draw_circle(pickup_screen, 3.0 + 0.8 * blink_boost, Color(1.0, 1.0, 1.0, 0.75 + 0.2 * blink_boost))
     _draw_delivery_drones()
     _draw_pickup_drones()
     _draw_contact_sparks()
@@ -1938,23 +2674,59 @@ func _draw_player(origin: Vector2) -> void:
     _draw_drill_ship(_world_to_screen(player_pos), aim_dir, 1.0, Color(0.16, 0.17, 0.2, 1.0), Color(0.83, 0.74, 0.28, 1.0), tunnel_speed_boost_strength)
 
 func _draw_drill_ship(screen_pos: Vector2, aim_dir: Vector2, scale: float, shell_color: Color, body_color: Color, boost_strength: float = 0.0) -> void:
-    var spin_angle: float = Time.get_ticks_msec() * 0.02
+    var spin_angle: float = Time.get_ticks_msec() * 0.0045
+    var facing_angle: float = aim_dir.angle() + PI * 0.5
+    # Treat `spin_angle` as a roll around the travel axis (aim_dir), not as a 2D orbit rotation.
+    # This keeps the drill's forward direction stable while the side facets "twist" for a 3D-ish feel.
+    var roll_cos: float = cos(spin_angle)
+    var roll_sin: float = sin(spin_angle)
+    var roll_depth_to_screen: float = 0.35
     var boost_shell: Color = shell_color.lerp(Color(0.24, 0.45, 0.56, shell_color.a), boost_strength * 0.55)
     var boost_body: Color = body_color.lerp(Color(0.92, 0.96, 1.0, body_color.a), boost_strength * 0.45)
     if boost_strength > 0.0:
         draw_circle(screen_pos, (PLAYER_RADIUS + 8.0 + boost_strength * 4.0) * scale, Color(0.6, 0.92, 1.0, 0.1 + boost_strength * 0.16))
         draw_arc(screen_pos, (PLAYER_RADIUS + 9.0) * scale, 0.0, TAU, 32, Color(0.82, 0.97, 1.0, 0.18 + boost_strength * 0.28), 2.0 * scale)
-    draw_circle(screen_pos, (PLAYER_RADIUS + 4.0) * scale, boost_shell)
-    var body_points: PackedVector2Array = PackedVector2Array([
-        screen_pos + Vector2(-14.0, 10.0).rotated(aim_dir.angle() + PI * 0.5) * scale,
-        screen_pos + Vector2(0.0, -22.0).rotated(aim_dir.angle() + PI * 0.5) * scale,
-        screen_pos + Vector2(14.0, 10.0).rotated(aim_dir.angle() + PI * 0.5) * scale
-    ])
-    draw_colored_polygon(body_points, boost_body)
-    for tooth_index in range(3):
-        var tooth_angle: float = spin_angle + TAU * float(tooth_index) / 3.0
-        var tooth_dir: Vector2 = aim_dir.rotated(tooth_angle * 0.25)
-        draw_line(screen_pos + tooth_dir * (4.0 * scale), screen_pos + tooth_dir * ((24.0 + boost_strength * 3.0) * scale), Color(0.95, 0.99, 1.0, boost_body.a), maxf(1.5, (3.0 + boost_strength) * scale))
+    draw_circle(screen_pos, (PLAYER_RADIUS + 5.0) * scale, boost_shell)
+
+    var pyramid_rotation: float = facing_angle
+
+    # Local model points (before projection rotation by `pyramid_rotation`).
+    var top_point: Vector2 = screen_pos + Vector2(0.0, -24.0).rotated(pyramid_rotation) * scale
+    var rear_point: Vector2 = screen_pos + Vector2(0.0, 18.0).rotated(pyramid_rotation) * scale
+
+    # Roll the side points around the travel axis: change their perpendicular offset (x),
+    # and add a small depth-driven y shift so the twist reads like a 3D roll.
+    var left_local: Vector2 = Vector2(-16.0, 10.0)
+    var right_local: Vector2 = Vector2(16.0, 10.0)
+    var left_rolled: Vector2 = Vector2(left_local.x * roll_cos, left_local.y + left_local.x * roll_sin * roll_depth_to_screen)
+    var right_rolled: Vector2 = Vector2(right_local.x * roll_cos, right_local.y + right_local.x * roll_sin * roll_depth_to_screen)
+    var left_point: Vector2 = screen_pos + left_rolled.rotated(pyramid_rotation) * scale
+    var right_point: Vector2 = screen_pos + right_rolled.rotated(pyramid_rotation) * scale
+
+    var front_facet: PackedVector2Array = PackedVector2Array([top_point, left_point, right_point])
+    var left_facet: PackedVector2Array = PackedVector2Array([top_point, rear_point, left_point])
+    var right_facet: PackedVector2Array = PackedVector2Array([top_point, right_point, rear_point])
+    var base_facet: PackedVector2Array = PackedVector2Array([left_point, rear_point, right_point])
+
+    var highlight_color: Color = boost_body.lerp(Color(1.0, 0.98, 0.86, boost_body.a), 0.4 + boost_strength * 0.25)
+    var shadow_color: Color = boost_body.lerp(boost_shell, 0.42)
+    var deep_shadow_color: Color = shadow_color.lerp(Color(0.08, 0.1, 0.13, shadow_color.a), 0.35)
+
+    draw_colored_polygon(base_facet, deep_shadow_color)
+    draw_colored_polygon(left_facet, shadow_color)
+    draw_colored_polygon(right_facet, boost_body)
+    draw_colored_polygon(front_facet, highlight_color)
+
+    draw_polyline(PackedVector2Array([top_point, left_point, rear_point, right_point, top_point]), Color(0.98, 0.95, 0.82, 0.55 * boost_body.a), maxf(1.3, 2.0 * scale))
+    draw_line(top_point, rear_point, Color(1.0, 0.97, 0.9, 0.45 * boost_body.a), maxf(1.0, 1.4 * scale))
+
+    var engine_glow_pos: Vector2 = screen_pos + Vector2(0.0, 18.0).rotated(facing_angle) * scale
+    draw_circle(engine_glow_pos, (4.5 + boost_strength * 2.5) * scale, Color(1.0, 0.86, 0.42, 0.55))
+    if boost_strength > 0.0:
+        var exhaust_tip: Vector2 = screen_pos + Vector2(0.0, 30.0 + boost_strength * 8.0).rotated(facing_angle) * scale
+        var exhaust_left: Vector2 = engine_glow_pos + Vector2(-4.5, 4.0).rotated(facing_angle) * scale
+        var exhaust_right: Vector2 = engine_glow_pos + Vector2(4.5, 4.0).rotated(facing_angle) * scale
+        draw_colored_polygon(PackedVector2Array([exhaust_left, exhaust_tip, exhaust_right]), Color(0.82, 0.96, 1.0, 0.22 + boost_strength * 0.2))
 
 func _draw_target_line(origin: Vector2) -> void:
     if target_node_id < 0 or target_node_id >= world_nodes.size():
@@ -1963,8 +2735,61 @@ func _draw_target_line(origin: Vector2) -> void:
     draw_line(_world_to_screen(player_pos), _world_to_screen(target_pos), Color(1.0, 0.9, 0.5, 0.42), 2.0)
 
 func _draw_edge_fade(viewport_size: Vector2) -> void:
-    draw_rect(Rect2(0.0, 0.0, viewport_size.x, 18.0), Color(0.0, 0.0, 0.0, 0.25), true)
-    draw_rect(Rect2(0.0, viewport_size.y - 18.0, viewport_size.x, 18.0), Color(0.0, 0.0, 0.0, 0.25), true)
+    var origin := viewport_size * 0.5 - camera_pos
+    var world_rect := Rect2(origin - WORLD_SIZE * 0.5, WORLD_SIZE)
+
+    var inside := _get_level_bg_color()
+    var accent := _get_level_edge_accent_color()
+    var outside := Color(0.02, 0.03, 0.05, 1.0).lerp(accent, 0.1)
+    outside.a = 0.54
+
+    var world_top := world_rect.position.y
+    var world_bottom := world_rect.position.y + world_rect.size.y
+    var world_left := world_rect.position.x
+    var world_right := world_rect.position.x + world_rect.size.x
+
+    # Darken anything outside the mining "world" bounds.
+    if world_top > 0.0:
+        draw_rect(Rect2(0.0, 0.0, viewport_size.x, world_top), outside, true)
+    if world_bottom < viewport_size.y:
+        draw_rect(Rect2(0.0, world_bottom, viewport_size.x, viewport_size.y - world_bottom), outside, true)
+    if world_left > 0.0:
+        draw_rect(Rect2(0.0, 0.0, world_left, viewport_size.y), outside, true)
+    if world_right < viewport_size.x:
+        draw_rect(Rect2(world_right, 0.0, viewport_size.x - world_right, viewport_size.y), outside, true)
+
+    # Use a framed lip plus outward ticks instead of a flat black box.
+    var outer_frame := accent.darkened(0.35)
+    outer_frame.a = 0.95
+    var inner_frame := accent.lightened(0.2)
+    inner_frame.a = 0.95
+    var glow := accent.lightened(0.42)
+    glow.a = 0.18
+    draw_rect(world_rect.grow(6.0), glow, false, 14.0)
+    draw_rect(world_rect.grow(2.5), outer_frame, false, 5.0)
+    draw_rect(world_rect, inner_frame, false, 2.5)
+
+    var lip_color := inside.lerp(accent, 0.34)
+    lip_color.a = 0.38
+    draw_rect(world_rect.grow(-8.0), lip_color, false, 10.0)
+
+    _draw_edge_ticks(world_rect, accent)
+    _draw_edge_corner_markers(world_rect, accent)
+
+func _draw_dashed_line(from: Vector2, to: Vector2, color: Color, dash_length: float, gap_length: float, width: float) -> void:
+    var dir := to - from
+    var len := dir.length()
+    if len <= 0.001:
+        return
+    dir /= len
+
+    var step := dash_length + gap_length
+    var dist := 0.0
+    while dist < len:
+        var start: Vector2 = from + dir * dist
+        var end: Vector2 = from + dir * min(len, dist + dash_length)
+        draw_line(start, end, color, width)
+        dist += step
 
 func _get_base_position() -> Vector2:
     return Vector2(0.0, -WORLD_SIZE.y * 0.5 + 120.0)
@@ -1978,7 +2803,169 @@ func _screen_to_world(screen_pos: Vector2) -> Vector2:
 func _get_level_bg_color() -> Color:
     var tint: Color = Color(0.18, 0.14, 0.11, 1.0)
     var depth_factor: float = float(active_depth_level - 1) / float(max(1, material_tiers.size() - 1))
-    return tint.lerp(active_material.get("bg", Color(0.16, 0.12, 0.1, 1.0)), clampf(depth_factor * 0.75, 0.0, 0.8))
+    var base := tint.lerp(active_material.get("bg", Color(0.16, 0.12, 0.1, 1.0)), clampf(depth_factor * 0.75, 0.0, 0.8))
+
+    # Deterministic per-depth palette shift (no RNG / no dependence on run seed),
+    # so `depth_level=3` always looks the same.
+    var seed := float(active_depth_level - 1)
+    var r_mul := 1.0 + 0.06 * sin(seed * 1.17 + 0.11)
+    var g_mul := 1.0 + 0.05 * sin(seed * 0.83 + 1.72)
+    var b_mul := 1.0 + 0.07 * sin(seed * 1.43 + 3.21)
+
+    var out := Color(
+        clampf(base.r * r_mul, 0.0, 1.0),
+        clampf(base.g * g_mul, 0.0, 1.0),
+        clampf(base.b * b_mul, 0.0, 1.0),
+        1.0
+    )
+
+    # Give each depth a more distinct, still deterministic accent tint.
+    var accent := _get_level_edge_accent_color()
+    out = out.lerp(accent, 0.08 + 0.07 * depth_factor)
+
+    # Subtle extra blend toward the active material background so changes feel coherent.
+    var material_bg: Color = active_material.get("bg", Color(0.16, 0.12, 0.1, 1.0))
+    out = out.lerp(material_bg, 0.06)
+    return out
+
+func _get_level_edge_accent_color() -> Color:
+    var seed := float(active_depth_level)
+    var accent := Color(
+        0.4 + 0.26 * (0.5 + 0.5 * sin(seed * 0.91 + 0.4)),
+        0.46 + 0.24 * (0.5 + 0.5 * sin(seed * 1.27 + 2.1)),
+        0.5 + 0.28 * (0.5 + 0.5 * sin(seed * 1.53 + 4.0)),
+        1.0
+    )
+    return accent.lerp(active_material.get("color", Color(0.8, 0.82, 0.86, 1.0)), 0.28)
+
+func _ensure_background_noise_texture() -> void:
+    if background_noise_texture != null and last_background_noise_depth_level == active_depth_level:
+        return
+    last_background_noise_depth_level = active_depth_level
+    background_noise_texture = _make_background_noise_texture(active_depth_level)
+
+func _make_background_noise_texture(depth_level: int) -> ImageTexture:
+    # Small seeded speckle texture, tiled across the world rect.
+    const NOISE_SIZE := 256
+    var img: Image = Image.create(NOISE_SIZE, NOISE_SIZE, false, Image.FORMAT_RGBA8)
+    var nrng := RandomNumberGenerator.new()
+    # Deterministic seed per depth level.
+    nrng.seed = 1337 + depth_level * 10007
+
+    for y in range(NOISE_SIZE):
+        for x in range(NOISE_SIZE):
+            # Mix of "grain" and rarer "dots" for a subtle CRT-ish texture.
+            var n1 := nrng.randf()
+            var n2 := nrng.randf()
+            var n3 := nrng.randf()
+            var dot: float = maxf(0.0, n1 - 0.68) / 0.32
+            dot = pow(dot, 2.2)
+            var grain: float = pow(n2, 3.8)
+            var cluster: float = pow(maxf(0.0, n3 - 0.8) / 0.2, 1.6)
+            var alpha := clampf(0.012 + dot * 0.18 + grain * 0.045 + cluster * 0.11, 0.0, 0.28)
+            img.set_pixel(x, y, Color(1.0, 1.0, 1.0, alpha))
+    return ImageTexture.create_from_image(img)
+
+func _draw_background_doodads(world_rect: Rect2) -> void:
+    var bg := _get_level_bg_color()
+    var accent := _get_level_edge_accent_color()
+    _draw_background_dark_spots(world_rect, bg, accent)
+    var stratum_color := bg.lerp(accent, 0.18)
+    stratum_color.a = 0.15
+    var dot_color := accent.lightened(0.12)
+    dot_color.a = 0.12
+    var ring_color := accent.lightened(0.26)
+    ring_color.a = 0.1
+    var seed_base := float(active_depth_level) * 97.0
+
+    for index in range(DEPTH_DOODAD_COUNT):
+        var fi := float(index)
+        var px := world_rect.position.x + world_rect.size.x * (0.08 + 0.84 * _depth_noise(seed_base, fi * 1.37 + 0.2))
+        var py := world_rect.position.y + world_rect.size.y * (0.06 + 0.88 * _depth_noise(seed_base, fi * 1.91 + 3.4))
+        var pos := Vector2(px, py)
+        var radius := 18.0 + 34.0 * _depth_noise(seed_base, fi * 2.23 + 1.1)
+        var angle := TAU * _depth_noise(seed_base, fi * 2.57 + 5.9)
+        var stratum_len := radius * (1.5 + 0.9 * _depth_noise(seed_base, fi * 0.77 + 8.0))
+        var dir := Vector2.RIGHT.rotated(angle)
+        draw_line(pos - dir * stratum_len, pos + dir * stratum_len, stratum_color, 2.0)
+        draw_circle(pos, 2.0 + radius * 0.08, dot_color)
+        if index % 3 == 0:
+            draw_arc(pos, radius, angle - 0.7, angle + 0.7, 14, ring_color, 2.0)
+
+func _draw_background_dark_spots(world_rect: Rect2, bg: Color, accent: Color) -> void:
+    var seed_base := float(active_depth_level) * 211.0
+    var outer_color := bg.darkened(0.26).lerp(accent.darkened(0.55), 0.15)
+    outer_color.a = 0.17
+    var inner_color := bg.darkened(0.38)
+    inner_color.a = 0.11
+
+    for index in range(DEPTH_DARK_SPOT_COUNT):
+        var fi := float(index)
+        var center := Vector2(
+            world_rect.position.x + world_rect.size.x * (0.14 + 0.72 * _depth_noise(seed_base, fi * 1.11 + 0.8)),
+            world_rect.position.y + world_rect.size.y * (0.14 + 0.72 * _depth_noise(seed_base, fi * 1.63 + 2.6))
+        )
+        var radius_x := 60.0 + 95.0 * _depth_noise(seed_base, fi * 2.07 + 4.9)
+        var radius_y := 46.0 + 82.0 * _depth_noise(seed_base, fi * 2.43 + 1.7)
+        var angle := TAU * _depth_noise(seed_base, fi * 2.81 + 5.4)
+        _draw_soft_dark_spot(center, radius_x, radius_y, angle, outer_color, inner_color)
+
+func _draw_soft_dark_spot(center: Vector2, radius_x: float, radius_y: float, angle: float, outer_color: Color, inner_color: Color) -> void:
+    var ring_count := 4
+    for ring_index in range(ring_count, 0, -1):
+        var t := float(ring_index) / float(ring_count)
+        var ring_color := outer_color.lerp(inner_color, 1.0 - t)
+        ring_color.a *= 0.55 + 0.45 * (1.0 - t)
+        var points := PackedVector2Array()
+        var point_count := 22
+        for point_index in range(point_count):
+            var phase := TAU * float(point_index) / float(point_count)
+            var wobble := 0.88 + 0.18 * sin(phase * 3.0 + angle * 1.7)
+            var local := Vector2(cos(phase) * radius_x * t * wobble, sin(phase) * radius_y * t * wobble)
+            points.append(center + local.rotated(angle))
+        draw_colored_polygon(points, ring_color)
+
+func _draw_edge_ticks(world_rect: Rect2, accent: Color) -> void:
+    var tick_color := accent.lightened(0.3)
+    tick_color.a = 0.86
+    var shadow_color := accent.darkened(0.45)
+    shadow_color.a = 0.5
+
+    var x := world_rect.position.x + EDGE_TICK_SPACING * 0.5
+    while x < world_rect.end.x:
+        draw_line(Vector2(x, world_rect.position.y - EDGE_TICK_LENGTH), Vector2(x, world_rect.position.y - 3.0), shadow_color, EDGE_TICK_WIDTH + 1.5)
+        draw_line(Vector2(x, world_rect.position.y - EDGE_TICK_LENGTH), Vector2(x, world_rect.position.y - 3.0), tick_color, EDGE_TICK_WIDTH)
+        draw_line(Vector2(x, world_rect.end.y + 3.0), Vector2(x, world_rect.end.y + EDGE_TICK_LENGTH), shadow_color, EDGE_TICK_WIDTH + 1.5)
+        draw_line(Vector2(x, world_rect.end.y + 3.0), Vector2(x, world_rect.end.y + EDGE_TICK_LENGTH), tick_color, EDGE_TICK_WIDTH)
+        x += EDGE_TICK_SPACING
+
+    var y := world_rect.position.y + EDGE_TICK_SPACING * 0.5
+    while y < world_rect.end.y:
+        draw_line(Vector2(world_rect.position.x - EDGE_TICK_LENGTH, y), Vector2(world_rect.position.x - 3.0, y), shadow_color, EDGE_TICK_WIDTH + 1.5)
+        draw_line(Vector2(world_rect.position.x - EDGE_TICK_LENGTH, y), Vector2(world_rect.position.x - 3.0, y), tick_color, EDGE_TICK_WIDTH)
+        draw_line(Vector2(world_rect.end.x + 3.0, y), Vector2(world_rect.end.x + EDGE_TICK_LENGTH, y), shadow_color, EDGE_TICK_WIDTH + 1.5)
+        draw_line(Vector2(world_rect.end.x + 3.0, y), Vector2(world_rect.end.x + EDGE_TICK_LENGTH, y), tick_color, EDGE_TICK_WIDTH)
+        y += EDGE_TICK_SPACING
+
+func _draw_edge_corner_markers(world_rect: Rect2, accent: Color) -> void:
+    var corner_color := accent.lightened(0.42)
+    corner_color.a = 1.0
+    var shadow_color := accent.darkened(0.55)
+    shadow_color.a = 0.55
+
+    _draw_corner_marker(world_rect.position, Vector2.RIGHT, Vector2.DOWN, corner_color, shadow_color)
+    _draw_corner_marker(Vector2(world_rect.end.x, world_rect.position.y), Vector2.LEFT, Vector2.DOWN, corner_color, shadow_color)
+    _draw_corner_marker(Vector2(world_rect.position.x, world_rect.end.y), Vector2.RIGHT, Vector2.UP, corner_color, shadow_color)
+    _draw_corner_marker(world_rect.end, Vector2.LEFT, Vector2.UP, corner_color, shadow_color)
+
+func _draw_corner_marker(corner: Vector2, x_dir: Vector2, y_dir: Vector2, color: Color, shadow_color: Color) -> void:
+    draw_line(corner, corner + x_dir * EDGE_CORNER_LENGTH, shadow_color, EDGE_CORNER_WIDTH + 2.0)
+    draw_line(corner, corner + y_dir * EDGE_CORNER_LENGTH, shadow_color, EDGE_CORNER_WIDTH + 2.0)
+    draw_line(corner, corner + x_dir * EDGE_CORNER_LENGTH, color, EDGE_CORNER_WIDTH)
+    draw_line(corner, corner + y_dir * EDGE_CORNER_LENGTH, color, EDGE_CORNER_WIDTH)
+
+func _depth_noise(seed_base: float, offset: float) -> float:
+    return 0.5 + 0.5 * sin(seed_base * 0.61803398875 + offset * 1.913 + sin(offset * 0.73 + seed_base * 0.17))
 
 func _build_rock_shape(radius: float) -> PackedVector2Array:
     var points: PackedVector2Array = PackedVector2Array()
@@ -1999,7 +2986,24 @@ func _get_translated_shape_points(node: Dictionary, center: Vector2) -> PackedVe
 
 func _initialize_dirt_mask() -> void:
     dirt_image = Image.create(512, 640, false, Image.FORMAT_RGBA8)
-    dirt_image.fill(Color(0.38, 0.27, 0.16, 0.96))
+    var bg := _get_level_bg_color()
+    # Dirt overlays the rock, so make it inherit the depth palette a bit.
+    var depth_factor: float = float(active_depth_level - 1) / float(max(1, material_tiers.size() - 1))
+    var base_dirt := Color(0.38, 0.27, 0.16, 0.96)
+
+    # Deterministic per-depth tint wobble so levels are distinct but consistent.
+    var seed := float(active_depth_level - 1)
+    var r_mul := 1.0 + 0.05 * sin(seed * 1.05 + 0.3)
+    var g_mul := 1.0 + 0.05 * sin(seed * 0.77 + 1.7)
+    var b_mul := 1.0 + 0.05 * sin(seed * 1.27 + 2.8)
+    base_dirt.r = clampf(base_dirt.r * r_mul, 0.0, 1.0)
+    base_dirt.g = clampf(base_dirt.g * g_mul, 0.0, 1.0)
+    base_dirt.b = clampf(base_dirt.b * b_mul, 0.0, 1.0)
+
+    var dirt_tint_strength := 0.18 + 0.22 * clampf(depth_factor, 0.0, 1.0)
+    base_dirt = base_dirt.lerp(bg, dirt_tint_strength)
+    base_dirt.a = 0.96
+    dirt_image.fill(base_dirt)
     dirt_texture = ImageTexture.create_from_image(dirt_image)
 
 func _world_to_dirt_pixel(world_pos: Vector2) -> Vector2i:

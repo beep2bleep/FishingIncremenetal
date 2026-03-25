@@ -26,7 +26,7 @@ func on_new_game():
         sound_effect_setting.reset()
 
 
-func create_2d_audio_at_location(location, type: SoundEffectSettings.SOUND_EFFECT_TYPE):
+func create_2d_audio_at_location(location, type: SoundEffectSettings.SOUND_EFFECT_TYPE, volume_db_offset: float = 0.0, pitch_scale_offset: float = 0.0):
     if sound_effect_dict.has(type):
         var sound_effect_setting: SoundEffectSettings = sound_effect_dict[type]
         if sound_effect_setting.has_open_limit():
@@ -39,9 +39,9 @@ func create_2d_audio_at_location(location, type: SoundEffectSettings.SOUND_EFFEC
 
             new_2D_audio.position = location
             new_2D_audio.stream = sound_effect_setting.sound_effect
-            new_2D_audio.volume_db = sound_effect_setting.get_volume()
+            new_2D_audio.volume_db = sound_effect_setting.get_volume() + volume_db_offset
 
-            new_2D_audio.pitch_scale = sound_effect_setting.pitch_scale
+            new_2D_audio.pitch_scale = sound_effect_setting.pitch_scale + pitch_scale_offset
             if sound_effect_setting.pitch_up_on_count_enabled == true:
                 new_2D_audio.pitch_scale += sound_effect_setting.get_pitch_up_amount()
                 sound_effect_setting.pitch_up_count += 1
@@ -56,7 +56,7 @@ func create_2d_audio_at_location(location, type: SoundEffectSettings.SOUND_EFFEC
         push_error("Audio Manager failed to find setting for type ", type)
 
 
-func create_audio(type: SoundEffectSettings.SOUND_EFFECT_TYPE):
+func create_audio(type: SoundEffectSettings.SOUND_EFFECT_TYPE, volume_db_offset: float = 0.0, pitch_scale_offset: float = 0.0):
     if sound_effect_dict.has(type):
         var sound_effect_setting: SoundEffectSettings = sound_effect_dict[type]
         if sound_effect_setting.has_open_limit():
@@ -68,9 +68,9 @@ func create_audio(type: SoundEffectSettings.SOUND_EFFECT_TYPE):
             new_audio.bus = "Effects"
 
             new_audio.stream = sound_effect_setting.sound_effect
-            new_audio.volume_db = sound_effect_setting.get_volume()
+            new_audio.volume_db = sound_effect_setting.get_volume() + volume_db_offset
 
-            new_audio.pitch_scale = sound_effect_setting.pitch_scale
+            new_audio.pitch_scale = sound_effect_setting.pitch_scale + pitch_scale_offset
             if sound_effect_setting.pitch_up_on_count_enabled == true:
                 new_audio.pitch_scale += sound_effect_setting.get_pitch_up_amount()
                 sound_effect_setting.pitch_up_count += 1

@@ -13,7 +13,8 @@ const DEFAULT_DATA := {
     "selected_depth_level": 1,
     "upgrades": {},
     "last_run_summary": "No mining run completed yet.",
-    "last_run_breakdown": {}
+    "last_run_breakdown": {},
+    "summary_hint_history": []
 }
 
 static func get_default_data() -> Dictionary:
@@ -35,6 +36,8 @@ static func load_data() -> Dictionary:
     data["player_level"] = max(1, int(data.get("player_level", 1)))
     data["deepest_level_unlocked"] = clampi(int(data.get("deepest_level_unlocked", 1)), 1, MAX_DEPTH_LEVEL)
     data["selected_depth_level"] = clampi(int(data.get("selected_depth_level", 1)), 1, int(data["deepest_level_unlocked"]))
+    if not (data.get("summary_hint_history", []) is Array):
+        data["summary_hint_history"] = []
     return data
 
 static func save_data(data: Dictionary) -> void:
@@ -68,6 +71,7 @@ static func apply_tree_purchase(upgrade_id: String, level: int, wallet_after_pur
 static func apply_run_results(results: Dictionary) -> Dictionary:
     var data: Dictionary = load_data()
     var previous_level: int = max(1, int(data.get("player_level", 1)))
+    var previous_deepest_level: int = max(1, int(data.get("deepest_level_unlocked", 1)))
     data["wallet"] = max(0, int(data.get("wallet", 0)) + int(results.get("money", 0)))
     data["xp"] = max(0, int(data.get("xp", 0)) + int(results.get("xp", 0)))
     data["player_level"] = get_level_for_total_xp(int(data["xp"]))
@@ -76,6 +80,9 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
     data["last_run_breakdown"] = results.duplicate(true)
     data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", 1)), int(results.get("depth_level", 1)))
     _refresh_depth_unlocks(data)
+    var new_deepest_level: int = max(previous_deepest_level, int(data.get("deepest_level_unlocked", previous_deepest_level)))
+    if new_deepest_level > previous_deepest_level:
+        data["selected_depth_level"] = new_deepest_level
     save_data(data)
     _track_level_progression_events(previous_level, new_level, int(data.get("xp", 0)), results)
     return data

@@ -3,25 +3,37 @@ class_name MiningUpgradeTreeAdapter
 
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 
+const GROUPED_TIER_MAX := 5
+
+const THEME_TIME := 1
+const THEME_DRILL := 2
+const THEME_CARGO := 3
+const THEME_DRONES := 4
+
 const LAYOUT_BY_KEY := {
-	"timer_reserve": Vector2(-1, 0),
-	"route_planner": Vector2(-2, -1),
-	"engine_tuning": Vector2(0, -1),
-	"dirt_softener": Vector2(1, -1),
-	"drill_torque": Vector2(0, 1),
-	"drill_plating": Vector2(1, 1),
-	"cooling_loop": Vector2(2, 1),
-	"cargo_pods": Vector2(-1, 1),
-	"cargo_compressor": Vector2(-1, 2),
-	"ore_refinery": Vector2(-2, 1),
-	"pickup_radius": Vector2(-2, 0),
-	"xp_calibration": Vector2(-3, 1),
-	"depth_scanner": Vector2(2, -1),
-	"seismic_sonar": Vector2(3, -1),
-	"magnet_drone": Vector2(-3, 0),
-	"foreman_bot": Vector2(0, 2),
-	"delivery_drone": Vector2(-4, 0),
-	"auto_sorters": Vector2(-5, 0),
+	"timer_reserve": {"root": Vector2(-1, -3), "step": Vector2(0, -1)},
+	"route_planner": {"root": Vector2(-2, -4), "step": Vector2(-1, -1)},
+	"engine_tuning": {"root": Vector2(1, -3), "step": Vector2(0, -1)},
+	"dirt_softener": {"root": Vector2(2, -4), "step": Vector2(1, -1)},
+	"drill_torque": {"root": Vector2(-3, 0), "step": Vector2(-1, 0)},
+	"drill_plating": {"root": Vector2(-4, 1), "step": Vector2(-1, 0)},
+	"cooling_loop": {"root": Vector2(-5, 2), "step": Vector2(-1, 0)},
+	"foreman_bot": {"root": Vector2(-6, 1), "step": Vector2(-1, 0)},
+	"cargo_pods": {"root": Vector2(0, 3), "step": Vector2(0, 1)},
+	"cargo_compressor": {"root": Vector2(1, 5), "step": Vector2(1, 1)},
+	"ore_refinery": {"root": Vector2(-1, 4), "step": Vector2(-1, 1)},
+	"xp_calibration": {"root": Vector2(-2, 5), "step": Vector2(-1, 1)},
+	"depth_scanner": {"root": Vector2(-3, 6), "step": Vector2(-1, 1)},
+	"seismic_sonar": {"root": Vector2(-4, 7), "step": Vector2(-1, 1)},
+	"pickup_radius": {"root": Vector2(1, 4), "step": Vector2(1, 0)},
+	"magnet_drone": {"root": Vector2(2, 4), "step": Vector2(1, 0)},
+	"delivery_drone": {"root": Vector2(3, 4), "step": Vector2(1, 0)},
+	"auto_sorters": {"root": Vector2(4, 4), "step": Vector2(1, 0)},
+}
+
+const PRIMARY_DEPENDENCY_OVERRIDE := {
+	"foreman_bot": "drill_plating",
+	"delivery_drone": "magnet_drone",
 }
 
 static func apply_simulation_upgrades() -> void:
@@ -31,45 +43,199 @@ static func apply_simulation_upgrades() -> void:
 	var saved_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
 	var saved_upgrades: Dictionary = saved_data.get("upgrades", {})
 	var upgrade_catalog: Array[Dictionary] = MINING_PROGRESS_SCRIPT.get_upgrade_catalog()
+	var grouped_upgrades: Array[Dictionary] = _group_upgrades(upgrade_catalog)
+	var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
 
 	var next_id := 0
-	for upgrade_def in upgrade_catalog:
+	for entry in grouped_upgrades:
 		var upgrade := Upgrade.new()
-		var upgrade_id: String = str(upgrade_def.get("id", ""))
-		if upgrade_id.is_empty():
+		var upgrade_id: String = str(entry.get("id", ""))
+		var upgrade_key: String = str(entry.get("key", ""))
+		if upgrade_id.is_empty() or upgrade_key.is_empty():
 			continue
+
 		upgrade.id = next_id
 		next_id += 1
-		upgrade.cell = Vector2(LAYOUT_BY_KEY.get(upgrade_id, Vector2.ZERO))
-		upgrade.mod = Util.MODS.PASSIVE_MONEY_PER_SECOND
+		upgrade.cell = Vector2(id_to_cell.get(upgrade_id, Vector2.ZERO))
+		# Mining sim upgrades should have distinct icons in the tech tree.
+		# We reuse Vanguard's existing mod-icon textures instead of relying on the
+		# single-letter `icon` fields from the mining balance data.
+		upgrade.mod = _mod_for_mining_upgrade_key(upgrade_key)
 		upgrade.value = 0.0
-		upgrade.max_tier = int(upgrade_def.get("max_level", 1))
-		upgrade.base_cost = int(upgrade_def.get("base_cost", 0))
+		upgrade.max_tier = int(entry.get("max_tier", 1))
+		upgrade.base_cost = int(entry.get("base_cost", 0))
 		upgrade.cost_scale = 0.0
-		upgrade.tier_costs = _build_tier_costs(upgrade_def)
+		upgrade.tier_costs = entry.get("tier_costs", [])
 		upgrade.demo_locked = 0
 		upgrade.section = 0
-		upgrade.act = int(upgrade_def.get("act", 1))
+		upgrade.act = _theme_act_for_key(upgrade_key)
 		upgrade.epilogue = 0
 		upgrade.type = Util.NODE_TYPES.NORMAL
-		upgrade.sim_key = upgrade_id
-		upgrade.sim_name = str(upgrade_def.get("label", upgrade_id))
-		upgrade.sim_description = str(upgrade_def.get("summary", ""))
-		upgrade.sim_icon = str(upgrade_def.get("icon", "M"))
+		upgrade.sim_key = upgrade_key
+		upgrade.sim_name = str(entry.get("label", upgrade_key))
+		upgrade.sim_description = str(entry.get("summary", ""))
+		upgrade.sim_icon = str(entry.get("icon", "M"))
+		upgrade.sim_group = int(entry.get("group", 1))
+		upgrade.sim_level = int(entry.get("level", 1))
+		upgrade.sim_group_pos = 1
 
-		var requires: Dictionary = upgrade_def.get("requires", {})
-		if requires.is_empty():
+		var dep_id: String = str(entry.get("dependency", ""))
+		if dep_id.is_empty() or dep_id == "__CENTER__":
 			upgrade.forced_cell = Vector2.ZERO
 		else:
-			var req_id: String = str(requires.keys()[0])
-			upgrade.forced_cell = Vector2(LAYOUT_BY_KEY.get(req_id, Vector2.ZERO))
+			upgrade.forced_cell = Vector2(id_to_cell.get(dep_id, Vector2.ZERO))
 
 		Global.game_mode_data_manager.upgrades[upgrade.cell] = upgrade
 
-		var owned_level: int = int(saved_upgrades.get(upgrade_id, 0))
-		if owned_level > 0:
-			upgrade.current_tier = clampi(owned_level, 0, upgrade.max_tier)
+		var owned_level: int = int(saved_upgrades.get(upgrade_key, 0))
+		if owned_level >= upgrade.sim_level:
+			var unlocked_tiers: int = clampi(owned_level - upgrade.sim_level + 1, 0, upgrade.max_tier)
+			upgrade.current_tier = unlocked_tiers
 			Global.game_mode_data_manager.unlocked_upgrades[upgrade.cell] = upgrade.to_dict()
+
+static func _group_upgrades(upgrade_catalog: Array[Dictionary]) -> Array[Dictionary]:
+	var grouped: Array[Dictionary] = []
+	for upgrade_def in upgrade_catalog:
+		var upgrade_key: String = str(upgrade_def.get("id", ""))
+		if upgrade_key.is_empty():
+			continue
+
+		var tier_costs: Array = _build_tier_costs(upgrade_def)
+		var max_level: int = int(upgrade_def.get("max_level", 1))
+		var previous_group_id: String = ""
+		var cursor: int = 0
+		var group_index: int = 0
+
+		while cursor < max_level:
+			var start_level: int = cursor + 1
+			var chunk_size: int = min(GROUPED_TIER_MAX, max_level - cursor)
+			var end_level: int = start_level + chunk_size - 1
+			var group_id: String = "%s__G%d" % [upgrade_key, group_index + 1]
+			var chunk_costs: Array = []
+			for offset in range(chunk_size):
+				chunk_costs.append(tier_costs[cursor + offset])
+
+			var grouped_entry: Dictionary = upgrade_def.duplicate(true)
+			grouped_entry["id"] = group_id
+			grouped_entry["key"] = upgrade_key
+			grouped_entry["label"] = _format_group_label(str(upgrade_def.get("label", upgrade_key)), start_level, end_level, max_level)
+			grouped_entry["max_tier"] = chunk_size
+			grouped_entry["base_cost"] = int(chunk_costs[0]) if chunk_costs.size() > 0 else int(upgrade_def.get("base_cost", 0))
+			grouped_entry["tier_costs"] = chunk_costs
+			grouped_entry["level"] = start_level
+			grouped_entry["group"] = group_index + 1
+			grouped_entry["dependency"] = previous_group_id if previous_group_id != "" else _resolve_root_dependency(upgrade_def)
+			grouped.append(grouped_entry)
+
+			previous_group_id = group_id
+			group_index += 1
+			cursor += chunk_size
+
+	return grouped
+
+static func _resolve_root_dependency(upgrade_def: Dictionary) -> String:
+	var requires: Dictionary = upgrade_def.get("requires", {})
+	if requires.is_empty():
+		return "__CENTER__"
+
+	var upgrade_key: String = str(upgrade_def.get("id", ""))
+	var dependency_key: String = _select_dependency_key(upgrade_key, requires)
+	var required_level: int = int(requires.get(dependency_key, 1))
+	return _group_id_for_level(dependency_key, required_level)
+
+static func _select_dependency_key(upgrade_key: String, requires: Dictionary) -> String:
+	if PRIMARY_DEPENDENCY_OVERRIDE.has(upgrade_key):
+		return str(PRIMARY_DEPENDENCY_OVERRIDE[upgrade_key])
+	for key_variant in requires.keys():
+		return str(key_variant)
+	return ""
+
+static func _group_id_for_level(upgrade_key: String, required_level: int) -> String:
+	var group_index: int = max(1, int(ceil(float(max(required_level, 1)) / float(GROUPED_TIER_MAX))))
+	return "%s__G%d" % [upgrade_key, group_index]
+
+static func _build_tree_layout(grouped_upgrades: Array[Dictionary]) -> Dictionary:
+	var id_to_cell: Dictionary = {}
+	var used_cells: Dictionary = {Vector2.ZERO: true}
+
+	for entry in grouped_upgrades:
+		var upgrade_id: String = str(entry.get("id", ""))
+		var upgrade_key: String = str(entry.get("key", ""))
+		var group_index: int = int(entry.get("group", 1))
+		if upgrade_id.is_empty() or upgrade_key.is_empty():
+			continue
+
+		var layout: Dictionary = LAYOUT_BY_KEY.get(upgrade_key, {})
+		var root: Vector2 = Vector2(layout.get("root", Vector2(group_index + 2, 0)))
+		var step: Vector2 = Vector2(layout.get("step", Vector2.RIGHT))
+		var cell: Vector2 = root + (step * max(0, group_index - 1))
+		while used_cells.has(cell):
+			cell += step
+		id_to_cell[upgrade_id] = cell
+		used_cells[cell] = true
+
+	return id_to_cell
+
+static func _theme_act_for_key(upgrade_key: String) -> int:
+	match upgrade_key:
+		"timer_reserve", "route_planner", "engine_tuning", "dirt_softener":
+			return THEME_TIME
+		"drill_torque", "drill_plating", "cooling_loop", "foreman_bot":
+			return THEME_DRILL
+		"cargo_pods", "cargo_compressor", "ore_refinery", "xp_calibration", "depth_scanner", "seismic_sonar":
+			return THEME_CARGO
+		"pickup_radius", "magnet_drone", "delivery_drone", "auto_sorters":
+			return THEME_DRONES
+		_:
+			return THEME_CARGO
+
+static func _mod_for_mining_upgrade_key(upgrade_key: String) -> Util.MODS:
+	# Map mining upgrades to Vanguard's existing mod-icon textures (Pallets/Refs.tscn).
+	# This guarantees the tech-tree nodes show real icons for every mining upgrade.
+	match upgrade_key:
+		"timer_reserve":
+			return Util.MODS.RUN_TIMER_BASE
+		"route_planner":
+			return Util.MODS.CHANCE_TO_ADD_TIME_ON_ASTEROID_DESTROYED
+		"engine_tuning":
+			return Util.MODS.CLICK_RATE
+		"dirt_softener":
+			return Util.MODS.MAX_ASTEROID_SIZE
+		"drill_torque":
+			return Util.MODS.BASE_DAMAGE_PER_CLICK
+		"drill_plating":
+			return Util.MODS.ASTEROID_DENSITY
+		"cooling_loop":
+			return Util.MODS.CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK
+		"cargo_pods":
+			return Util.MODS.MONEY_PER_MATTER
+		"cargo_compressor":
+			return Util.MODS.BONUS_MONEY_SCALE
+		"ore_refinery":
+			return Util.MODS.ASTEROIDS_TO_SPAWN
+		"pickup_radius":
+			return Util.MODS.CLICK_AOE
+		"xp_calibration":
+			return Util.MODS.COMET_SPAWN_CHANCE
+		"depth_scanner":
+			return Util.MODS.ASTEROID_DENSITY
+		"seismic_sonar":
+			return Util.MODS.ASTEROIDS_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW
+		"magnet_drone":
+			return Util.MODS.ELECTRIC_CRIT_CHANCE
+		"foreman_bot":
+			return Util.MODS.CLICKER_CRIT_CHANCE
+		"delivery_drone":
+			return Util.MODS.ELECTRIC_CRIT_BONUS
+		"auto_sorters":
+			return Util.MODS.CLICKER_CRIT_BONUS
+		_:
+			return Util.MODS.MONEY_PER_MATTER
+
+static func _format_group_label(base_label: String, start_level: int, end_level: int, max_level: int) -> String:
+	if max_level <= GROUPED_TIER_MAX:
+		return base_label
+	return "%s %d-%d" % [base_label, start_level, end_level]
 
 static func _build_tier_costs(upgrade_def: Dictionary) -> Array:
 	var costs: Array = []

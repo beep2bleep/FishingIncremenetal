@@ -7,6 +7,7 @@ const CONTROLLER_GLYPH_SCENE: PackedScene = preload("res://Controller Glyph.tscn
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const MINING_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/Mining/MiningUpgradeTreeAdapter.gd")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
+const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
 const GO_AGAIN_DISABLED_HINT := "UPGRADE_GO_AGAIN_DISABLED_HINT"
 const DEMO_PROJECT_SETTING := "global/Demo"
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
@@ -26,6 +27,7 @@ var editor_cash_controls: HBoxContainer
 var editor_add_cash_button: Button
 var editor_reset_add_button: Button
 var editor_unlock_all_button: Button
+var editor_crt_toggle_button: Button
 var editor_center_offset_controls: VBoxContainer
 var editor_center_offset_label: Label
 var editor_center_offset_x_minus_button: Button
@@ -38,6 +40,7 @@ var editor_center_offset_y_minus_small_button: Button
 var editor_center_offset_y_plus_small_button: Button
 var editor_center_offset_rebuild_button: Button
 var editor_center_offset: Vector2 = Vector2(-960.0, -600.0)
+var editor_crt_preview_enabled: bool = false
 var battle_level_choice_dialog: ConfirmationDialog
 var battle_level_choice_selected_level: int = 1
 var battle_level_choice_line_edit: LineEdit
@@ -572,9 +575,28 @@ func hide_screen():
     VirtualCursor.set_scene_enabled(false)
 
 func _refresh_mining_crt_overlay() -> void:
-    var overlay: CanvasLayer = get_node_or_null("MiningCrtOverlay") as CanvasLayer
-    if overlay != null:
-        overlay.visible = false
+    var overlay: CanvasLayer = get_node_or_null("EditorCrtOverlay") as CanvasLayer
+    var text_mirror_overlay: CanvasLayer = get_node_or_null("EditorCrtTextMirrorOverlay") as CanvasLayer
+    var should_show_overlay: bool = _should_show_editor_crt_preview()
+    if should_show_overlay:
+        if overlay == null:
+            overlay = MINING_CRT_OVERLAY_SCRIPT.new().configure(5)
+            overlay.name = "EditorCrtOverlay"
+            add_child(overlay)
+        if text_mirror_overlay == null:
+            text_mirror_overlay = CRT_TEXT_MIRROR_OVERLAY_SCRIPT.new().configure(self, 6)
+            text_mirror_overlay.name = "EditorCrtTextMirrorOverlay"
+            add_child(text_mirror_overlay)
+        overlay.visible = true
+        text_mirror_overlay.visible = true
+    else:
+        if overlay != null:
+            overlay.visible = false
+        if text_mirror_overlay != null:
+            text_mirror_overlay.visible = false
+
+func _should_show_editor_crt_preview() -> bool:
+    return OS.has_feature("editor") and Util.is_vanguard_game_active() and editor_crt_preview_enabled
 
 
 func _on_go_again_pressed() -> void :
@@ -1345,8 +1367,27 @@ func _setup_editor_cash_controls() -> void:
     editor_unlock_all_button.pressed.connect(_on_editor_unlock_all_pressed)
     editor_cash_controls.add_child(editor_unlock_all_button)
 
+    editor_crt_toggle_button = Button.new()
+    editor_crt_toggle_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    editor_crt_toggle_button.pressed.connect(_on_editor_crt_toggle_pressed)
+    editor_cash_controls.add_child(editor_crt_toggle_button)
+
     %CanvasLayer2.add_child(editor_cash_controls)
     _refresh_editor_cash_button_text()
+    _refresh_editor_crt_button_text()
+
+func _refresh_editor_crt_button_text() -> void:
+    if editor_crt_toggle_button == null:
+        return
+    editor_crt_toggle_button.visible = Util.is_vanguard_game_active()
+    editor_crt_toggle_button.text = "CRT Preview: %s" % ("On" if editor_crt_preview_enabled else "Off")
+
+func _on_editor_crt_toggle_pressed() -> void:
+    if not OS.has_feature("editor"):
+        return
+    editor_crt_preview_enabled = not editor_crt_preview_enabled
+    _refresh_editor_crt_button_text()
+    _refresh_mining_crt_overlay()
 
 func _setup_editor_center_offset_controls() -> void:
     if not OS.has_feature("editor"):
