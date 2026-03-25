@@ -32,6 +32,19 @@ const DRILL_COPY_BUMP_RADIUS := 34.0
 const DRILL_COPY_BUMP_LIMIT := 30.0
 const DRILL_TRAIL_SAMPLE_STEP := 8.0
 const DRILL_TRAIL_MAX_SAMPLES := 56
+const STRAIGHT_DRIVE_CHARGE_MAX := 4.4
+const STRAIGHT_DRIVE_TURN_RESET_ANGLE := 18.0
+const STRAIGHT_DRIVE_HARD_TURN_ANGLE := 55.0
+const STRAIGHT_DRIVE_SPEED_BONUS_MAX := 0.62
+const TUNNEL_SPEED_BONUS_MAX := 0.38
+const TUNNEL_CLEAR_ALPHA_THRESHOLD := 0.12
+const DEFAULT_MINING_SUMMARY_HINTS: Array[String] = [
+    "Build speed through cleared tunnels before committing to a seam. Straight runs give the drill its best burst damage.",
+    "Banking at the surface is safest when your cargo is full or your drill is close to breaking. Unbanked ore is a bad gamble.",
+    "Salvage drones are best when you want to stay glued to rich nodes instead of weaving around for loose drops.",
+    "Delivery drones shine once cargo upgrades are online. They keep rich runs flowing while you stay in the field.",
+    "Depth Scanner unlocks harder layers, while Seismic Sonar helps those layers actually pay out with richer veins."
+]
 
 enum RUN_STATES {RUNNING, SUMMARY}
 
@@ -39,21 +52,30 @@ enum RUN_STATES {RUNNING, SUMMARY}
 @onready var wallet_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/WalletLabel
 @onready var phase_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/PhaseLabel
 @onready var depth_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/DepthLabel
-@onready var time_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/TimeValueLabel
-@onready var time_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/TimeBar
-@onready var drill_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/DrillValueLabel
-@onready var drill_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/DrillBar
-@onready var hull_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/HullValueLabel
-@onready var hull_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/HullBar
-@onready var cargo_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/CargoValueLabel
-@onready var cargo_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/CargoBar
-@onready var xp_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/XpValueLabel
-@onready var xp_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/XpBar
+@onready var time_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/TimeRow/TimeValueLabel
+@onready var time_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/TimeRow/TimeBar
+@onready var drill_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/DrillRow/DrillValueLabel
+@onready var drill_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/DrillRow/DrillBar
+@onready var hull_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/HullRow/HullValueLabel
+@onready var hull_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/HullRow/HullBar
+@onready var cargo_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/CargoRow/CargoValueLabel
+@onready var cargo_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/CargoRow/CargoBar
+@onready var xp_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/XpRow/XpValueLabel
+@onready var xp_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/XpRow/XpBar
 @onready var weapon_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/WeaponLabel
 @onready var boss_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/BossLabel
 @onready var top_panel: PanelContainer = $CanvasLayer/TopBar/TopPanel
 @onready var shop_panel: PanelContainer = $CanvasLayer/ShopPanel
 @onready var summary_label: Label = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryLabel
+@onready var summary_stats_panel: PanelContainer = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryStatsPanel
+@onready var summary_stats_label: Label = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryStatsPanel/SummaryStatsMargin/SummaryStatsLabel
+@onready var money_chart: PanelContainer = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryCharts/MoneyChart
+@onready var performance_chart: PanelContainer = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryCharts/PerformanceChart
+@onready var hint_left_button: Button = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/HintHeaderRow/HintLeftButton
+@onready var hint_title_label: Label = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/HintHeaderRow/HintTitleLabel
+@onready var hint_right_button: Button = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/HintHeaderRow/HintRightButton
+@onready var summary_hint_panel: PanelContainer = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryHintPanel
+@onready var summary_hint_label: Label = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryHintPanel/SummaryHintMargin/SummaryHintLabel
 @onready var hint_panel: PanelContainer = $CanvasLayer/HintPanel
 @onready var hint_label: Label = $CanvasLayer/HintPanel/HintMargin/HintLabel
 @onready var dive_button: Button = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/DiveButton
@@ -93,6 +115,8 @@ var camera_shake_strength := 0.0
 var contact_sparks: Array[Dictionary] = []
 var damage_numbers: Array[Dictionary] = []
 var drill_audio_timer := 0.0
+var pending_drill_damage_number := 0.0
+var pending_drill_damage_origin := Vector2.ZERO
 var last_drill_direction := Vector2.DOWN
 var player_velocity := Vector2.ZERO
 var trail_history: Array[Dictionary] = []
@@ -119,6 +143,11 @@ var bank_trips := 0
 var delivery_dump_count := 0
 var simulation_elapsed := 0.0
 var last_run_results: Dictionary = {}
+var total_pickups_spawned := 0
+var player_pickups_collected := 0
+var drone_pickups_collected := 0
+var mining_summary_hints: Array[String] = []
+var mining_summary_hint_index := 0
 var simulation_mode_active := false
 var simulation_commit_progress := true
 var simulation_fixed_delta := 1.0 / 30.0
@@ -128,6 +157,8 @@ var simulation_depth_override := -1
 var autoplay_enabled := false
 var autoplay_pointer_direction := Vector2.ZERO
 var autoplay_current_goal := "node"
+var straight_drive_charge := 0.0
+var last_steer_direction := Vector2.ZERO
 
 func _ready() -> void:
     Global.game_state = Util.GAME_STATES.PLAYING
@@ -144,6 +175,8 @@ func _ready() -> void:
     _configure_summary_panel()
     dive_button.pressed.connect(_on_summary_return_pressed)
     reset_button.pressed.connect(_on_summary_retry_pressed)
+    hint_left_button.pressed.connect(_on_summary_hint_left_button_pressed)
+    hint_right_button.pressed.connect(_on_summary_hint_right_button_pressed)
     _ensure_crt_overlay()
     _begin_run()
 
@@ -220,6 +253,9 @@ func _begin_run() -> void:
     delivery_dump_count = 0
     simulation_elapsed = 0.0
     last_run_results.clear()
+    total_pickups_spawned = 0
+    player_pickups_collected = 0
+    drone_pickups_collected = 0
     world_nodes = []
     pickups = []
     target_node_id = -1
@@ -229,7 +265,11 @@ func _begin_run() -> void:
     contact_sparks.clear()
     damage_numbers.clear()
     drill_audio_timer = 0.0
+    pending_drill_damage_number = 0.0
+    pending_drill_damage_origin = Vector2.ZERO
     last_drill_direction = Vector2.DOWN
+    straight_drive_charge = 0.0
+    last_steer_direction = Vector2.ZERO
     player_velocity = Vector2.ZERO
     trail_history.clear()
     drill_copies.clear()
@@ -247,7 +287,8 @@ func _begin_run() -> void:
     _initialize_dirt_mask()
     _carve_dirt_circle(_get_base_position(), 92.0)
     shop_panel.hide()
-    hint_label.text = "Steer with the mouse. Build speed, stick to nodes to drill, turn away at least 30 degrees to break off, then return to the bright base ring to bank cargo."
+    hint_panel.hide()
+    hint_label.text = ""
     _reset_aim_cursor()
     _reset_drill_train()
     _refresh_mouse_capture_state()
@@ -314,7 +355,10 @@ func _process_player_movement(delta: float) -> void:
     var pointer_dir: Vector2 = _get_pointer_direction()
     move_input_strength = pointer_dir.length()
     contact_node_id = -1
-    var desired_velocity: Vector2 = pointer_dir * _get_move_speed() * _get_dirt_drag_multiplier()
+    _update_straight_drive_charge(pointer_dir, delta)
+    var tunnel_speed_bonus: float = _get_tunnel_speed_multiplier(player_pos.lerp(player_pos + pointer_dir * 18.0, 0.5))
+    var desired_speed: float = _get_move_speed() * _get_dirt_drag_multiplier() * _get_straight_drive_speed_multiplier() * tunnel_speed_bonus
+    var desired_velocity: Vector2 = pointer_dir * desired_speed
     if pointer_dir == Vector2.ZERO:
         player_velocity = player_velocity.lerp(Vector2.ZERO, min(1.0, delta * 4.5))
     else:
@@ -340,6 +384,13 @@ func _process_player_movement(delta: float) -> void:
         return
     contact_node_id = collision_index
     var node: Dictionary = world_nodes[collision_index]
+    if _apply_impact_hit(collision_index, candidate):
+        player_pos = candidate
+        player_pos.x = clampf(player_pos.x, -WORLD_SIZE.x * 0.5 + PLAYER_RADIUS, WORLD_SIZE.x * 0.5 - PLAYER_RADIUS)
+        player_pos.y = clampf(player_pos.y, -WORLD_SIZE.y * 0.5 + PLAYER_RADIUS, WORLD_SIZE.y * 0.5 - PLAYER_RADIUS)
+        _carve_dirt_segment(previous_pos, player_pos, 28.0)
+        _update_drill_train(previous_pos, delta)
+        return
     var node_pos: Vector2 = node.get("pos", Vector2.ZERO)
     var collision_normal: Vector2 = (candidate - node_pos).normalized()
     if collision_normal == Vector2.ZERO:
@@ -371,15 +422,16 @@ func _process_drilling(delta: float) -> void:
     if target_node_id == -1 or move_input_strength <= 0.0:
         return
     var node: Dictionary = world_nodes[target_node_id]
-    var drill_damage: float = _get_drill_dps() * (1.95 + move_input_strength * 2.55) * delta
+    var drill_damage: float = _get_drill_dps() * (1.95 + move_input_strength * 2.55 + straight_drive_charge * 0.42) * delta
     node["health"] = max(0.0, float(node.get("health", 0.0)) - drill_damage)
     world_nodes[target_node_id] = node
-    drill_health = max(0.0, drill_health - _get_drill_wear(node) * (0.55 + move_input_strength * 0.45) * delta)
+    drill_health = max(0.0, drill_health - _get_drill_wear(node) * (0.55 + move_input_strength * 0.45 + straight_drive_charge * 0.08) * delta)
     var hit_pos: Vector2 = player_pos.lerp(node.get("pos", player_pos), 0.45)
-    _spawn_damage_number(hit_pos, int(round(drill_damage)))
+    pending_drill_damage_number += drill_damage
+    pending_drill_damage_origin = hit_pos
     _spawn_contact_sparks(player_pos.lerp(node.get("pos", player_pos), 0.45), node.get("material_color", Color.WHITE), 2)
     camera_shake_strength = min(8.0, camera_shake_strength + 1.8 * delta * 60.0)
-    _play_drill_tick()
+    _play_drill_tick(hit_pos)
     run_status = "Drilling %s..." % String(node.get("material_name", "node"))
     if float(node["health"]) <= 0.0:
         _break_node(target_node_id)
@@ -401,6 +453,7 @@ func _collect_pickups(delta: float) -> void:
             var material_id: String = String(pickup.get("material_id", ""))
             carry_counts[material_id] = int(carry_counts.get(material_id, 0)) + 1
             cargo_used += 1
+            player_pickups_collected += 1
             run_status = "Scooped %s." % String(pickup.get("material_name", "loot"))
             continue
         remaining.append(pickup)
@@ -500,6 +553,7 @@ func _process_pickup_drones(delta: float) -> void:
                     var carry_material_id: String = String(drone.get("carry_material_id", ""))
                     carry_counts[carry_material_id] = int(carry_counts.get(carry_material_id, 0)) + 1
                     cargo_used += 1
+                    drone_pickups_collected += 1
                     run_status = "Pickup drone hauled in %s." % String(drone.get("carry_material_name", "loot"))
                 drone["state"] = "idle"
                 drone["carry_material_id"] = ""
@@ -527,21 +581,36 @@ func _process_delivery_drone_visuals(delta: float) -> void:
     var base_pos: Vector2 = _get_base_position()
     var delivery_speed: float = _get_delivery_drone_speed()
     for drone in delivery_drone_visuals:
-        var drone_pos: Vector2 = drone.get("pos", player_pos).move_toward(base_pos, delivery_speed * delta)
-        drone["pos"] = drone_pos
-        if drone_pos.distance_to(base_pos) > 18.0:
+        var drone_state: String = String(drone.get("state", "to_base"))
+        var drone_pos: Vector2 = drone.get("pos", player_pos)
+        if drone_state == "to_base":
+            drone_pos = drone_pos.move_toward(base_pos, delivery_speed * delta)
+            drone["pos"] = drone_pos
+            if drone_pos.distance_to(base_pos) > 18.0:
+                remaining.append(drone)
+                continue
+            _bank_delivery_drone_cargo(drone)
+            drone["state"] = "returning"
+            drone["cargo_count"] = 0
+            drone["carry_color"] = Color(0.0, 0.0, 0.0, 0.0)
             remaining.append(drone)
             continue
-        _bank_delivery_drone_cargo(drone)
+        var return_anchor: Vector2 = player_pos + drone.get("return_offset", Vector2.ZERO)
+        drone_pos = drone_pos.move_toward(return_anchor, delivery_speed * delta)
+        drone["pos"] = drone_pos
+        if drone_pos.distance_to(return_anchor) > 18.0:
+            remaining.append(drone)
     delivery_drone_visuals = remaining
 
 func _spawn_delivery_drone_visual(material_id: String, material: Dictionary, cargo_count: int = 1) -> void:
     delivery_drone_visuals.append({
         "pos": player_pos,
+        "state": "to_base",
         "material_id": material_id,
         "carry_color": material.get("color", Color.WHITE),
         "carry_name": String(material.get("name", material_id)),
-        "cargo_count": max(1, cargo_count)
+        "cargo_count": max(1, cargo_count),
+        "return_offset": Vector2(rng.randf_range(-26.0, 26.0), rng.randf_range(-22.0, 22.0))
     })
 
 func _take_one_cargo_for_delivery() -> String:
@@ -566,7 +635,8 @@ func _bank_delivery_drone_cargo(drone: Dictionary) -> void:
 
 func _bank_pending_delivery_drone_visuals() -> void:
     for drone in delivery_drone_visuals:
-        _bank_delivery_drone_cargo(drone)
+        if String(drone.get("state", "to_base")) == "to_base":
+            _bank_delivery_drone_cargo(drone)
     delivery_drone_visuals.clear()
 
 func _find_available_pickup_uid(origin: Vector2) -> int:
@@ -726,6 +796,7 @@ func _break_node(node_index: int) -> void:
             "claimed_by": -1
         })
         next_pickup_uid += 1
+        total_pickups_spawned += 1
     _spawn_damage_number(node.get("pos", Vector2.ZERO), int(round(float(node.get("max_health", 0.0)))), true)
     _spawn_contact_sparks(node.get("pos", Vector2.ZERO), node.get("material_color", Color.WHITE), 10)
     camera_shake_strength = max(camera_shake_strength, 10.0)
@@ -749,6 +820,7 @@ func _remap_node_index_after_removal(index: int, removed_index: int) -> int:
 
 func _build_run_results(reason: String) -> Dictionary:
     var money_breakdown: Array[String] = []
+    var money_breakdown_chart: Array[Dictionary] = []
     var total_money: int = 0
     for material_id_variant in banked_counts.keys():
         var material_id: String = String(material_id_variant)
@@ -758,6 +830,13 @@ func _build_run_results(reason: String) -> Dictionary:
         var subtotal: int = count * value_each
         total_money += subtotal
         money_breakdown.append("%s x%d -> $%d" % [String(material.get("name", material_id)), count, subtotal])
+        money_breakdown_chart.append({
+            "material_id": material_id,
+            "label": String(material.get("name", material_id)),
+            "count": count,
+            "money": subtotal,
+            "color": material.get("color", Color.WHITE)
+        })
 
     var before_level: int = int(persistent_data.get("player_level", 1))
     var projected_xp: int = int(persistent_data.get("xp", 0)) + run_xp
@@ -781,6 +860,16 @@ func _build_run_results(reason: String) -> Dictionary:
     projected_data["deepest_level_unlocked"] = max(int(projected_data.get("deepest_level_unlocked", 1)), active_depth_level)
     MINING_BALANCE.refresh_depth_unlocks(projected_data)
     projected_depth_unlock = int(projected_data.get("deepest_level_unlocked", projected_depth_unlock))
+    var ore_collected: int = player_pickups_collected + drone_pickups_collected
+    var ore_banked: int = _get_total_count_from_dict(banked_counts)
+    var ore_left_behind: int = max(0, total_pickups_spawned - ore_collected)
+    var run_seconds: float = max(0.01, simulation_elapsed)
+    var time_spent: float = max(0.0, _get_run_time_limit() - time_left)
+    var money_per_second: float = float(total_money) / run_seconds
+    var xp_per_second: float = float(run_xp) / run_seconds
+    var ore_per_second: float = float(ore_collected) / run_seconds
+    var collection_rate: float = 0.0 if total_pickups_spawned <= 0 else float(ore_collected) / float(total_pickups_spawned)
+    var bank_rate: float = 0.0 if ore_collected <= 0 else float(ore_banked) / float(ore_collected)
     var summary_text: String = "Run complete: %s\n\nDepth tier %d: %s\nNodes broken: %d\nXP earned: %d%s\nMoney earned: $%d\n\nCargo payout:\n%s\n\nLevel %d  XP %d/%d\nUnlocked depth tier: %d" % [
         reason,
         active_depth_level,
@@ -800,11 +889,38 @@ func _build_run_results(reason: String) -> Dictionary:
         "xp": run_xp,
         "depth_level": active_depth_level,
         "summary_text": summary_text,
+        "summary_stats_text": _build_summary_stats_text({
+            "ore_spawned": total_pickups_spawned,
+            "ore_collected": ore_collected,
+            "ore_left_behind": ore_left_behind,
+            "player_pickups_collected": player_pickups_collected,
+            "drone_pickups_collected": drone_pickups_collected,
+            "ore_banked": ore_banked,
+            "delivery_dumps": delivery_dump_count,
+            "money_per_second": money_per_second,
+            "xp_per_second": xp_per_second,
+            "ore_per_second": ore_per_second,
+            "collection_rate": collection_rate,
+            "bank_rate": bank_rate,
+            "time_spent": time_spent
+        }),
+        "money_breakdown_chart": money_breakdown_chart,
         "reason": reason,
         "banked_counts": banked_counts.duplicate(true),
         "bank_trips": bank_trips,
         "delivery_dumps": delivery_dump_count,
         "nodes_broken": nodes_broken,
+        "ore_spawned": total_pickups_spawned,
+        "ore_collected": ore_collected,
+        "ore_left_behind": ore_left_behind,
+        "ore_banked": ore_banked,
+        "player_pickups_collected": player_pickups_collected,
+        "drone_pickups_collected": drone_pickups_collected,
+        "money_per_second": money_per_second,
+        "xp_per_second": xp_per_second,
+        "ore_per_second": ore_per_second,
+        "collection_rate": collection_rate,
+        "bank_rate": bank_rate,
         "time_left": snappedf(time_left, 0.01),
         "time_limit": snappedf(_get_run_time_limit(), 0.01),
         "drill_left": snappedf(drill_health, 0.01),
@@ -837,14 +953,19 @@ func _finish_run(reason: String) -> void:
     run_status = reason
     _refresh_mouse_capture_state()
     if simulation_commit_progress and not simulation_mode_active:
-        _show_summary(str(results.get("summary_text", "Run complete.")))
+        _show_summary(results)
 
-func _show_summary(summary_text: String) -> void:
-    summary_label.text = summary_text
+func _show_summary(results: Dictionary) -> void:
+    summary_label.text = str(results.get("summary_text", "Run complete."))
+    summary_stats_label.text = str(results.get("summary_stats_text", ""))
     dive_button.text = "Return To Upgrades"
     reset_button.text = "Run Again"
+    _setup_summary_hints()
+    _refresh_summary_hint()
+    _refresh_summary_charts(results)
     shop_panel.show()
-    hint_label.text = "Review the payout, then retry or head back to the upgrade tree."
+    hint_panel.hide()
+    hint_label.text = ""
 
 func _on_summary_return_pressed() -> void:
     if run_state != RUN_STATES.SUMMARY:
@@ -860,11 +981,11 @@ func _on_summary_retry_pressed() -> void:
 func _configure_summary_panel() -> void:
     shop_panel.hide()
     shop_panel.set_anchors_preset(Control.PRESET_CENTER)
-    shop_panel.custom_minimum_size = Vector2(560.0, 470.0)
-    shop_panel.offset_left = -280.0
-    shop_panel.offset_top = -235.0
-    shop_panel.offset_right = 280.0
-    shop_panel.offset_bottom = 235.0
+    shop_panel.custom_minimum_size = Vector2(1220.0, 760.0)
+    shop_panel.offset_left = -610.0
+    shop_panel.offset_top = -430.0
+    shop_panel.offset_right = 610.0
+    shop_panel.offset_bottom = 330.0
     checkpoint_header.hide()
     checkpoint_list.hide()
     loadout_header.hide()
@@ -872,6 +993,7 @@ func _configure_summary_panel() -> void:
     upgrade_header.hide()
     upgrade_scroll.hide()
     summary_label.add_theme_font_size_override("font_size", 26)
+    summary_stats_label.add_theme_font_size_override("font_size", 22)
     dive_button.add_theme_font_size_override("font_size", 30)
     reset_button.add_theme_font_size_override("font_size", 30)
     _style_utility_button(dive_button)
@@ -907,12 +1029,16 @@ func _refresh_hud() -> void:
     xp_value_label.text = "XP %d / %d   Run XP +%d" % [xp_current, xp_next, run_xp]
     xp_bar.max_value = xp_next
     xp_bar.value = xp_current
-    weapon_label.text = "Rig Stats   Move %.0f   Drill %.0f/s   Pickup %.0f   XP Boost +%d%%" % [_get_move_speed(), _get_drill_dps(), _get_pickup_radius(), int(round((_get_xp_multiplier() - 1.0) * 100.0))]
+    weapon_label.text = "Rig Stats   Move %.0f   Drill %.0f/s   Pickup %.0f   Charge +%d%%   XP Boost +%d%%" % [_get_move_speed(), _get_drill_dps(), _get_pickup_radius(), int(round((_get_straight_drive_speed_multiplier() - 1.0) * 100.0)), int(round((_get_xp_multiplier() - 1.0) * 100.0))]
     boss_label.text = "Status   %s" % run_status
 
 func _apply_hud_theme() -> void:
     _style_panel(top_panel, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0), 6)
     _style_panel(shop_panel, Color(0.04, 0.06, 0.1, 0.97), Color(0.88, 0.92, 1.0, 0.95), 6)
+    _style_panel(summary_stats_panel, Color(0.05, 0.09, 0.16, 0.94), Color(0.31, 0.63, 0.89, 0.9), 6)
+    _style_panel(money_chart, Color(0.05, 0.09, 0.16, 0.94), Color(0.31, 0.63, 0.89, 0.9), 6)
+    _style_panel(performance_chart, Color(0.05, 0.09, 0.16, 0.94), Color(0.31, 0.63, 0.89, 0.9), 6)
+    _style_panel(summary_hint_panel, Color(0.05, 0.09, 0.16, 0.94), Color(0.31, 0.63, 0.89, 0.9), 6)
     _style_panel(hint_panel, Color(0.04, 0.06, 0.1, 0.9), Color(0.88, 0.92, 1.0, 0.82), 6)
     _style_meter(time_bar, Color(0.9, 0.69, 0.2, 0.96))
     _style_meter(drill_bar, Color(0.41, 0.79, 1.0, 0.96))
@@ -930,6 +1056,12 @@ func _apply_hud_theme() -> void:
     _style_hud_label(weapon_label, 20, Color(0.88, 0.94, 1.0, 0.96))
     _style_hud_label(boss_label, 22, Color(0.98, 0.95, 0.77, 1.0))
     _style_hud_label(hint_label, 20, Color(0.92, 0.96, 1.0, 1.0))
+    _style_hud_label(summary_label, 26, Color(0.95, 0.98, 1.0, 1.0))
+    _style_hud_label(summary_stats_label, 22, Color(0.9, 0.95, 1.0, 1.0))
+    _style_hud_label(hint_title_label, 20, Color(0.76, 0.9, 1.0, 1.0))
+    _style_hud_label(summary_hint_label, 22, Color(0.92, 0.96, 1.0, 1.0))
+    _style_utility_button(hint_left_button)
+    _style_utility_button(hint_right_button)
 
 func _style_hud_label(label: Label, font_size: int, color: Color) -> void:
     if label == null:
@@ -975,6 +1107,178 @@ func _style_panel(panel: PanelContainer, background_color: Color, border_color: 
     box.corner_radius_bottom_left = corner_radius
     box.corner_radius_bottom_right = corner_radius
     panel.add_theme_stylebox_override("panel", box)
+
+func _build_summary_stats_text(stats: Dictionary) -> String:
+    return "Run time %.1fs   Money/sec $%.1f   XP/sec %.1f   Ore/sec %.2f\nOre spawned %d   Collected %d   Left behind %d   Banked %d\nManual scoops %d   Salvage drone scoops %d   Delivery drone drops %d   Surface banks %d\nCollection rate %d%%   Banking rate %d%%" % [
+        float(stats.get("time_spent", 0.0)),
+        float(stats.get("money_per_second", 0.0)),
+        float(stats.get("xp_per_second", 0.0)),
+        float(stats.get("ore_per_second", 0.0)),
+        int(stats.get("ore_spawned", 0)),
+        int(stats.get("ore_collected", 0)),
+        int(stats.get("ore_left_behind", 0)),
+        int(stats.get("ore_banked", 0)),
+        int(stats.get("player_pickups_collected", 0)),
+        int(stats.get("drone_pickups_collected", 0)),
+        int(stats.get("delivery_dumps", 0)),
+        bank_trips,
+        int(round(float(stats.get("collection_rate", 0.0)) * 100.0)),
+        int(round(float(stats.get("bank_rate", 0.0)) * 100.0))
+    ]
+
+func _setup_summary_hints() -> void:
+    mining_summary_hints = DEFAULT_MINING_SUMMARY_HINTS.duplicate()
+    if _get_upgrade_level("pickup_radius") <= 0:
+        mining_summary_hints.append("Vacuum Scoop is the fastest way to stop drops from slipping away once a vein bursts open.")
+    if _get_upgrade_level("magnet_drone") <= 0:
+        mining_summary_hints.append("Salvage Drone is a strong next buy if rich seams are leaving too many chunks behind.")
+    if _get_upgrade_level("delivery_drone") <= 0:
+        mining_summary_hints.append("Delivery Drone pays off once your cargo is filling before you can safely return to the surface.")
+    if mining_summary_hints.is_empty():
+        mining_summary_hints.append("Review the run, tune the rig, and go again.")
+    mining_summary_hint_index = 0
+
+func _refresh_summary_hint() -> void:
+    if mining_summary_hints.is_empty():
+        hint_title_label.text = ""
+        summary_hint_label.text = ""
+        hint_left_button.hide()
+        hint_right_button.hide()
+        return
+    mining_summary_hint_index = wrapi(mining_summary_hint_index, 0, mining_summary_hints.size())
+    hint_title_label.text = "Hint %d/%d" % [mining_summary_hint_index + 1, mining_summary_hints.size()]
+    summary_hint_label.text = mining_summary_hints[mining_summary_hint_index]
+    var show_nav: bool = mining_summary_hints.size() > 1
+    hint_left_button.visible = show_nav
+    hint_right_button.visible = show_nav
+
+func _on_summary_hint_left_button_pressed() -> void:
+    mining_summary_hint_index -= 1
+    _refresh_summary_hint()
+
+func _on_summary_hint_right_button_pressed() -> void:
+    mining_summary_hint_index += 1
+    _refresh_summary_hint()
+
+func _make_summary_chart_label(text: String, width: float, font_size: int, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, color: Color = Color(0.92, 0.97, 1.0, 1.0)) -> Label:
+    var label := Label.new()
+    label.text = text
+    label.custom_minimum_size = Vector2(width, 0.0)
+    label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN if width > 0.0 else Control.SIZE_EXPAND_FILL
+    label.horizontal_alignment = align
+    label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    label.autowrap_mode = 3
+    label.add_theme_font_size_override("font_size", font_size)
+    label.add_theme_color_override("font_color", color)
+    return label
+
+func _make_summary_chart_bar(value: float, max_value: float, color: Color) -> Control:
+    var root := HBoxContainer.new()
+    root.custom_minimum_size = Vector2(220.0, 0.0)
+    root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    root.add_theme_constant_override("separation", 8)
+
+    var meter := ProgressBar.new()
+    meter.custom_minimum_size = Vector2(140.0, 18.0)
+    meter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    meter.show_percentage = false
+    meter.max_value = max(1.0, max_value)
+    meter.value = value
+
+    var background := StyleBoxFlat.new()
+    background.bg_color = Color(0.12, 0.18, 0.28, 0.96)
+    background.corner_radius_top_left = 3
+    background.corner_radius_top_right = 3
+    background.corner_radius_bottom_left = 3
+    background.corner_radius_bottom_right = 3
+    meter.add_theme_stylebox_override("background", background)
+
+    var fill := background.duplicate(true)
+    fill.bg_color = color
+    meter.add_theme_stylebox_override("fill", fill)
+    root.add_child(meter)
+    root.add_child(_make_summary_chart_label(_format_summary_chart_value(value), 58.0, 16, HORIZONTAL_ALIGNMENT_RIGHT, Color(0.82, 0.9, 1.0, 1.0)))
+    return root
+
+func _format_summary_chart_value(value: float) -> String:
+    if value >= 1000.0:
+        return "%0.1fk" % (value / 1000.0)
+    if value >= 100.0:
+        return str(int(round(value)))
+    return "%0.1f" % value if value != floor(value) else str(int(value))
+
+func _refresh_summary_charts(results: Dictionary) -> void:
+    _refresh_money_chart(results)
+    _refresh_performance_chart(results)
+
+func _refresh_money_chart(results: Dictionary) -> void:
+    _clear_control_children(money_chart)
+    var margin := _make_chart_margin(money_chart)
+    var root := VBoxContainer.new()
+    root.add_theme_constant_override("separation", 10)
+    margin.add_child(root)
+    root.add_child(_make_summary_chart_label("Money by mineral", 0.0, 24, HORIZONTAL_ALIGNMENT_CENTER))
+
+    var rows: Array = results.get("money_breakdown_chart", [])
+    if rows.is_empty():
+        root.add_child(_make_summary_chart_label("No banked cargo this run.", 0.0, 18, HORIZONTAL_ALIGNMENT_CENTER, Color(0.82, 0.88, 0.96, 0.92)))
+        return
+    var max_money: float = 0.0
+    for row_variant in rows:
+        var row_data: Dictionary = row_variant
+        max_money = max(max_money, float(row_data.get("money", 0.0)))
+    for row_variant in rows:
+        var row_data: Dictionary = row_variant
+        var row := HBoxContainer.new()
+        row.add_theme_constant_override("separation", 10)
+        root.add_child(row)
+        row.add_child(_make_summary_chart_label("%s x%d" % [str(row_data.get("label", "Ore")), int(row_data.get("count", 0))], 170.0, 17))
+        row.add_child(_make_summary_chart_bar(float(row_data.get("money", 0.0)), max_money, row_data.get("color", Color(0.8, 0.8, 0.8, 1.0))))
+
+func _refresh_performance_chart(results: Dictionary) -> void:
+    _clear_control_children(performance_chart)
+    var margin := _make_chart_margin(performance_chart)
+    var root := VBoxContainer.new()
+    root.add_theme_constant_override("separation", 10)
+    margin.add_child(root)
+    root.add_child(_make_summary_chart_label("Ore flow and performance", 0.0, 24, HORIZONTAL_ALIGNMENT_CENTER))
+
+    var rows: Array[Dictionary] = [
+        {"label": "Ore collected", "value": float(results.get("ore_collected", 0)), "color": Color(0.45, 0.87, 0.99, 1.0)},
+        {"label": "Left behind", "value": float(results.get("ore_left_behind", 0)), "color": Color(0.93, 0.38, 0.35, 1.0)},
+        {"label": "Collected by drones", "value": float(results.get("drone_pickups_collected", 0)), "color": Color(0.56, 0.92, 0.65, 1.0)},
+        {"label": "Delivered by drones", "value": float(results.get("delivery_dumps", 0)), "color": Color(1.0, 0.77, 0.31, 1.0)},
+        {"label": "Nodes broken", "value": float(results.get("nodes_broken", 0)), "color": Color(0.83, 0.74, 1.0, 1.0)}
+    ]
+    var max_value: float = 0.0
+    for row_data in rows:
+        max_value = max(max_value, float(row_data.get("value", 0.0)))
+    for row_data in rows:
+        var row := HBoxContainer.new()
+        row.add_theme_constant_override("separation", 10)
+        root.add_child(row)
+        row.add_child(_make_summary_chart_label(str(row_data.get("label", "")), 190.0, 17))
+        row.add_child(_make_summary_chart_bar(float(row_data.get("value", 0.0)), max_value, row_data.get("color", Color.WHITE)))
+
+func _make_chart_margin(parent: Control) -> MarginContainer:
+    var margin := MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 14)
+    margin.add_theme_constant_override("margin_top", 12)
+    margin.add_theme_constant_override("margin_right", 14)
+    margin.add_theme_constant_override("margin_bottom", 12)
+    parent.add_child(margin)
+    return margin
+
+func _clear_control_children(parent: Node) -> void:
+    for child in parent.get_children():
+        parent.remove_child(child)
+        child.queue_free()
+
+func _get_total_count_from_dict(counts: Dictionary) -> int:
+    var total := 0
+    for value in counts.values():
+        total += int(value)
+    return total
 
 func _get_total_banked_count() -> int:
     var total: int = 0
@@ -1029,6 +1333,61 @@ func _get_delivery_dispatch_window() -> float:
 
 func _get_upgrade_level(upgrade_id: String) -> int:
     return int(_get_upgrade_levels().get(upgrade_id, 0))
+
+func _update_straight_drive_charge(pointer_dir: Vector2, delta: float) -> void:
+    if pointer_dir == Vector2.ZERO:
+        straight_drive_charge = max(0.0, straight_drive_charge - delta * 1.8)
+        return
+    if last_steer_direction == Vector2.ZERO:
+        last_steer_direction = pointer_dir
+    var turn_angle: float = abs(rad_to_deg(last_steer_direction.angle_to(pointer_dir)))
+    if turn_angle >= STRAIGHT_DRIVE_HARD_TURN_ANGLE:
+        straight_drive_charge = max(0.0, straight_drive_charge - delta * 4.8)
+    elif turn_angle >= STRAIGHT_DRIVE_TURN_RESET_ANGLE:
+        straight_drive_charge = max(0.0, straight_drive_charge - delta * 2.4)
+    else:
+        var tunnel_bonus: float = _get_tunnel_speed_multiplier(player_pos) - 1.0
+        straight_drive_charge = min(STRAIGHT_DRIVE_CHARGE_MAX, straight_drive_charge + delta * (0.72 + tunnel_bonus * 1.15))
+    last_steer_direction = pointer_dir
+
+func _get_straight_drive_speed_multiplier() -> float:
+    return 1.0 + min(straight_drive_charge / STRAIGHT_DRIVE_CHARGE_MAX, 1.0) * STRAIGHT_DRIVE_SPEED_BONUS_MAX
+
+func _get_tunnel_speed_multiplier(world_pos: Vector2) -> float:
+    var tunnel_ratio: float = 1.0 - _get_dirt_alpha(world_pos)
+    if tunnel_ratio <= 1.0 - TUNNEL_CLEAR_ALPHA_THRESHOLD:
+        return 1.0
+    var normalized_ratio: float = clampf((tunnel_ratio - (1.0 - TUNNEL_CLEAR_ALPHA_THRESHOLD)) / TUNNEL_CLEAR_ALPHA_THRESHOLD, 0.0, 1.0)
+    return 1.0 + normalized_ratio * TUNNEL_SPEED_BONUS_MAX
+
+func _get_dirt_alpha(world_pos: Vector2) -> float:
+    if dirt_image == null:
+        return 1.0
+    var pixel: Vector2i = _world_to_dirt_pixel(world_pos)
+    return dirt_image.get_pixelv(pixel).a
+
+func _apply_impact_hit(node_index: int, candidate_pos: Vector2) -> bool:
+    if node_index < 0 or node_index >= world_nodes.size():
+        return false
+    var node: Dictionary = world_nodes[node_index]
+    var speed_ratio: float = clampf(player_velocity.length() / max(_get_move_speed(), 1.0), 0.0, 2.0)
+    var charge_ratio: float = clampf(straight_drive_charge / STRAIGHT_DRIVE_CHARGE_MAX, 0.0, 1.0)
+    var impact_damage: float = _get_drill_dps() * (0.68 + speed_ratio * 0.9 + charge_ratio * 4.35)
+    if impact_damage <= 0.0:
+        return false
+    node["health"] = max(0.0, float(node.get("health", 0.0)) - impact_damage)
+    world_nodes[node_index] = node
+    drill_health = max(0.0, drill_health - _get_drill_wear(node) * (0.1 + charge_ratio * 0.17))
+    var hit_pos: Vector2 = candidate_pos.lerp(node.get("pos", candidate_pos), 0.5)
+    _spawn_damage_number(hit_pos, int(round(impact_damage)))
+    _spawn_contact_sparks(hit_pos, node.get("material_color", Color.WHITE), 4 + int(round(charge_ratio * 6.0)))
+    camera_shake_strength = min(11.0, camera_shake_strength + 4.0 + charge_ratio * 5.0)
+    straight_drive_charge = max(0.0, straight_drive_charge - 0.8)
+    if float(node["health"]) <= 0.0:
+        _break_node(node_index)
+        run_status = "Charge break. Keep the line and sweep the seam."
+        return true
+    return false
 
 func _get_collision_node_index(candidate: Vector2) -> int:
     var nearest_index: int = -1
@@ -1106,10 +1465,14 @@ func _spawn_damage_number(origin: Vector2, amount: int, emphasize: bool = false)
         "scale": 1.0 if not emphasize else 1.35
     })
 
-func _play_drill_tick() -> void:
+func _play_drill_tick(origin: Vector2) -> void:
     if drill_audio_timer > 0.0:
         return
     drill_audio_timer = DRILL_AUDIO_INTERVAL
+    if pending_drill_damage_number > 0.0:
+        _spawn_damage_number(pending_drill_damage_origin if pending_drill_damage_origin != Vector2.ZERO else origin, int(max(1.0, round(pending_drill_damage_number))))
+        pending_drill_damage_number = 0.0
+        pending_drill_damage_origin = Vector2.ZERO
     if not simulation_mode_active:
         AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER)
 
@@ -1285,49 +1648,56 @@ func _record_player_trail(previous_pos: Vector2) -> void:
         heading = _get_drill_heading()
     if trail_history.is_empty():
         trail_history.append({
-            "pos": player_pos,
+            "pos": previous_pos,
             "dir": heading
         })
-        return
-    var latest_pos: Vector2 = trail_history[0].get("pos", player_pos)
-    if latest_pos.distance_to(player_pos) >= DRILL_TRAIL_SAMPLE_STEP:
+    var latest_pos: Vector2 = trail_history[0].get("pos", previous_pos)
+    var distance_to_player: float = latest_pos.distance_to(player_pos)
+    while distance_to_player >= DRILL_TRAIL_SAMPLE_STEP:
+        var sample_dir: Vector2 = (player_pos - latest_pos).normalized()
+        if sample_dir == Vector2.ZERO:
+            sample_dir = heading
+        latest_pos += sample_dir * DRILL_TRAIL_SAMPLE_STEP
         trail_history.push_front({
-            "pos": player_pos,
-            "dir": heading
+            "pos": latest_pos,
+            "dir": sample_dir
         })
-    else:
-        trail_history[0] = {
-            "pos": player_pos,
-            "dir": heading
-        }
+        distance_to_player = latest_pos.distance_to(player_pos)
     while trail_history.size() > DRILL_TRAIL_MAX_SAMPLES:
         trail_history.pop_back()
 
 func _sample_trail(path_distance: float) -> Dictionary:
+    var current_heading: Vector2 = _get_drill_heading()
     if trail_history.is_empty():
         return {
             "pos": player_pos,
-            "dir": _get_drill_heading()
+            "dir": current_heading
         }
     var remaining_distance: float = maxf(path_distance, 0.0)
-    for point_index in range(trail_history.size() - 1):
-        var newer_pos: Vector2 = trail_history[point_index].get("pos", player_pos)
-        var older_pos: Vector2 = trail_history[point_index + 1].get("pos", newer_pos)
+    var newer_pos: Vector2 = player_pos
+    var newer_dir: Vector2 = current_heading
+    for point_index in range(trail_history.size()):
+        var point_sample: Dictionary = trail_history[point_index]
+        var older_pos: Vector2 = point_sample.get("pos", newer_pos)
         var segment_length: float = newer_pos.distance_to(older_pos)
         if segment_length <= 0.001:
+            newer_pos = older_pos
+            newer_dir = point_sample.get("dir", newer_dir)
             continue
         if remaining_distance <= segment_length:
             var segment_t: float = remaining_distance / segment_length
             var travel_dir: Vector2 = (newer_pos - older_pos).normalized()
             return {
                 "pos": newer_pos.lerp(older_pos, segment_t),
-                "dir": travel_dir if travel_dir != Vector2.ZERO else _get_drill_heading()
+                "dir": travel_dir if travel_dir != Vector2.ZERO else newer_dir
             }
         remaining_distance -= segment_length
+        newer_pos = older_pos
+        newer_dir = point_sample.get("dir", newer_dir)
     var last_sample: Dictionary = trail_history[trail_history.size() - 1]
     return {
         "pos": last_sample.get("pos", player_pos),
-        "dir": last_sample.get("dir", _get_drill_heading())
+        "dir": last_sample.get("dir", current_heading)
     }
 
 func _update_drill_copies(delta: float) -> void:
@@ -1429,7 +1799,10 @@ func _draw_pickups(origin: Vector2) -> void:
 
 func _draw_delivery_drones() -> void:
     for drone in delivery_drone_visuals:
-        _draw_drone_body(_world_to_screen(drone.get("pos", Vector2.ZERO)), Color(0.72, 0.9, 0.98, 1.0), drone.get("carry_color", Color.WHITE))
+        var is_returning: bool = String(drone.get("state", "to_base")) == "returning"
+        var body_color := Color(0.56, 0.82, 0.88, 1.0) if is_returning else Color(0.72, 0.9, 0.98, 1.0)
+        var carry_color: Color = drone.get("carry_color", Color.WHITE)
+        _draw_drone_body(_world_to_screen(drone.get("pos", Vector2.ZERO)), body_color, carry_color)
 
 func _draw_pickup_drones() -> void:
     for drone in pickup_drone_visuals:
@@ -1606,9 +1979,9 @@ func _setup_system_controls() -> void:
     fullscreen_button.anchor_right = 0.0
     fullscreen_button.anchor_bottom = 0.0
     fullscreen_button.offset_left = 16.0
-    fullscreen_button.offset_top = 88.0
+    fullscreen_button.offset_top = 16.0
     fullscreen_button.offset_right = 60.0
-    fullscreen_button.offset_bottom = 132.0
+    fullscreen_button.offset_bottom = 60.0
     fullscreen_button.focus_mode = Control.FOCUS_NONE
     fullscreen_button.custom_minimum_size = Vector2(44.0, 44.0)
     fullscreen_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER

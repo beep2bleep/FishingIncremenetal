@@ -89,10 +89,10 @@ static func get_move_speed(upgrades: Dictionary) -> float:
 	return 205.0 + 6.5 * float(upgrades.get("engine_tuning", 0)) + 1.8 * float(upgrades.get("route_planner", 0))
 
 static func get_dirt_drag_multiplier(depth_level: int, upgrades: Dictionary) -> float:
-	var base_drag: float = 0.86 - 0.028 * float(max(0, depth_level - 1))
-	base_drag += 0.03 * float(upgrades.get("dirt_softener", 0))
-	base_drag += 0.008 * float(upgrades.get("route_planner", 0))
-	return clampf(base_drag, 0.44, 1.05)
+	var base_drag: float = 0.9 - 0.042 * float(max(0, depth_level - 1))
+	base_drag += 0.034 * float(upgrades.get("dirt_softener", 0))
+	base_drag += 0.01 * float(upgrades.get("route_planner", 0))
+	return clampf(base_drag, 0.3, 1.08)
 
 static func get_run_time_limit(upgrades: Dictionary) -> float:
 	return 16.0 + 0.85 * float(upgrades.get("timer_reserve", 0))

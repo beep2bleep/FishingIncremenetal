@@ -588,13 +588,18 @@ func _on_node_selected(node: TechTreeNode):
 
     set_tech_tree_pos(-node.position)
 
+func recenter_on_core() -> void:
+    if center_node == null or not is_instance_valid(center_node):
+        return
+    update_min_max_for_all_nodes()
+    set_tech_tree_pos(-center_node.position)
+
 func _recenter_on_core_after_build() -> void:
     if center_node == null or not is_instance_valid(center_node):
         return
     await get_tree().process_frame
     await get_tree().process_frame
-    update_min_max_for_all_nodes()
-    set_tech_tree_pos(Vector2(20, 20))
+    recenter_on_core()
 
 func _get_content_size() -> Vector2:
     return Vector2(

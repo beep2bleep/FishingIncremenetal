@@ -3,7 +3,7 @@ extends Node
 const STEAM_APP_ID := 4519820
 const STEAM_DEMO_APP_ID := 4524190
 const STEAM_STORE_PATH := "Vanguard__Idle_Auto_Battler"
-const MINING_WISHLIST_URL := "https://beep2bleep.itch.io"
+const MINING_WISHLIST_URL := "https://beep2bleep.com"
 const LEADERBOARD_LEVEL7_SHARED := "level7_clear_time"
 const LEADERBOARD_LEVEL20_FULL := "full_level20_clear_time"
 const LEADERBOARD_FETCH_COUNT := 5

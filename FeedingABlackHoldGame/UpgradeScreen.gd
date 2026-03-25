@@ -195,7 +195,10 @@ func _ready() -> void :
         show_screen()
 
 func _on_tech_tree_build_completed() -> void:
-    _apply_editor_center_offset()
+    if _should_recenter_upgrade_tree_on_core():
+        _recenter_tech_tree_on_core()
+    elif OS.has_feature("editor"):
+        _apply_editor_center_offset()
     if not is_active:
         return
     _sync_simulation_currency_from_save()
@@ -495,6 +498,10 @@ func update_input(input_type):
 
 func show_screen():
     _ensure_tree_initialized()
+    if _should_recenter_upgrade_tree_on_core():
+        _recenter_tech_tree_on_core()
+    elif OS.has_feature("editor"):
+        _apply_editor_center_offset()
     _sync_simulation_currency_from_save()
     is_active = true
     Global.game_state = Util.GAME_STATES.UPGRADES
@@ -572,7 +579,12 @@ func _refresh_mining_crt_overlay() -> void:
 
 func _on_go_again_pressed() -> void :
     if Util.is_mining_game_active():
-        SceneChanger.change_to_new_scene(Util.get_main_scene_path(), null, 0.2)
+        var mining_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
+        var max_depth: int = clampi(int(mining_data.get("deepest_level_unlocked", 1)), 1, MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL)
+        if max_depth <= 1:
+            _launch_battle_at_level(1)
+        else:
+            _show_battle_level_choice_dialog(max_depth)
         return
     if not _can_continue_to_battle():
         _show_continue_locked_dialog()
@@ -690,6 +702,8 @@ func _refresh_demo_mode_label_visibility() -> void:
         game_mode_label.text = "MINING MODE" if Util.is_mining_game_active() else ""
 
 func _get_demo_wishlist_url() -> String:
+    if Util.is_mining_game_active():
+        return SteamHandler.get_store_url().strip_edges()
     var configured_url: String = str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()
     if configured_url != "":
         return configured_url
@@ -1009,11 +1023,21 @@ func _setup_battle_level_choice_dialog() -> void:
 
 func _show_battle_level_choice_dialog(max_level: int) -> void:
     if battle_level_choice_dialog == null:
-        _launch_battle_at_level(clamp(SaveHandler.fishing_next_battle_level, 1, max_level))
+        if Util.is_mining_game_active():
+            var mining_fallback_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
+            _launch_battle_at_level(clampi(int(mining_fallback_data.get("selected_depth_level", max_level)), 1, max_level))
+        else:
+            _launch_battle_at_level(clamp(SaveHandler.fishing_next_battle_level, 1, max_level))
         return
 
     battle_level_choice_max_level = max_level
-    battle_level_choice_selected_level = clamp(SaveHandler.fishing_next_battle_level, 1, max_level)
+    if Util.is_mining_game_active():
+        var mining_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
+        battle_level_choice_selected_level = clampi(int(mining_data.get("selected_depth_level", max_level)), 1, max_level)
+        battle_level_choice_dialog.title = "Choose Depth Tier"
+    else:
+        battle_level_choice_selected_level = clamp(SaveHandler.fishing_next_battle_level, 1, max_level)
+        battle_level_choice_dialog.title = tr("UI_CHOOSE_BATTLE_LEVEL")
     var popup_device := _get_popup_controller_device()
     _popup_x_confirm_armed = popup_device == -1 or not Input.is_joy_button_pressed(popup_device, JOY_BUTTON_X)
     battle_level_choice_dialog.dialog_text = ""
@@ -1075,7 +1099,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
         for level in range(1, max_level + 1):
             var button := Button.new()
             button.name = "BattleLevelChoiceButton%d" % level
-            button.text = _trf("UI_LEVEL_FORMAT", [level])
+            button.text = "Tier %d" % level if Util.is_mining_game_active() else _trf("UI_LEVEL_FORMAT", [level])
             button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
             button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
             button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
@@ -1083,7 +1107,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
             vbox.add_child(button)
     else:
         var prompt := Label.new()
-        prompt.text = _trf("UI_SELECT_BATTLE_LEVEL_RANGE", [max_level])
+        prompt.text = "Select a depth tier from 1-%d." % max_level if Util.is_mining_game_active() else _trf("UI_SELECT_BATTLE_LEVEL_RANGE", [max_level])
         prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         prompt.add_theme_font_size_override("font_size", 28)
         vbox.add_child(prompt)
@@ -1166,6 +1190,12 @@ func _on_battle_level_choice_cancel_pressed() -> void:
     _refresh_virtual_cursor_state()
 
 func _launch_battle_at_level(level: int) -> void:
+    if Util.is_mining_game_active():
+        MINING_PROGRESS_SCRIPT.set_selected_depth_level(level)
+        _refresh_virtual_cursor_state()
+        _cache_tech_tree_for_reuse()
+        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        return
     var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, SaveHandler.MAX_FISHING_BATTLE_LEVEL)
     SaveHandler.fishing_next_battle_level = clamp(level, 1, max_level)
     SaveHandler.save_fishing_progress()
@@ -1426,6 +1456,15 @@ func _apply_editor_center_offset() -> void:
         tech_tree.set_tech_tree_pos(-tech_tree.selected_node.position)
     else:
         tech_tree.set_tech_tree_pos(Vector2.ZERO)
+
+func _recenter_tech_tree_on_core() -> void:
+    if tech_tree == null or not is_instance_valid(tech_tree):
+        return
+    if tech_tree.has_method("recenter_on_core"):
+        tech_tree.call("recenter_on_core")
+
+func _should_recenter_upgrade_tree_on_core() -> bool:
+    return Util.is_mining_game_active()
 
 func _on_editor_center_offset_rebuild_pressed() -> void:
     if not OS.has_feature("editor"):
