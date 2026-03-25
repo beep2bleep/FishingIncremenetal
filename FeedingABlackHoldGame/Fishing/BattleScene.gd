@@ -2361,6 +2361,10 @@ func _draw() -> void:
 func _unhandled_input(event: InputEvent) -> void:
     if battle_completed:
         return
+    if event.is_action_pressed("toggle_mute"):
+        _on_mute_button_pressed()
+        get_viewport().set_input_as_handled()
+        return
     if summary_panel != null and summary_panel.visible:
         if event.is_action_pressed("ui_accept"):
             if _activate_summary_or_level_choice_from_controller():
@@ -4950,18 +4954,32 @@ func _track_level_completion_event(level: int) -> void:
     var level_key: String = str(level)
     var is_first_clear: bool = not bool(SaveHandler.fishing_first_boss_clear_levels.get(level_key, false))
     var app_clock_seconds: float = float(Time.get_ticks_msec()) / 1000.0
+    var progression_fields := {
+        "level": level,
+        "first_clear": is_first_clear,
+        "game_time_seconds": SaveHandler.fishing_run_clock_seconds,
+        "game_time_formatted": Util.format_time(SaveHandler.fishing_run_clock_seconds),
+        "clock_time_seconds": app_clock_seconds,
+        "clock_time_formatted": Util.format_time(app_clock_seconds),
+        "battle_scene_unadjusted_seconds": battle_scene_unadjusted_seconds,
+        "battle_scene_unadjusted_formatted": Util.format_time(battle_scene_unadjusted_seconds),
+    }
+    var ga_manager: Node = get_node_or_null("/root/GameAnalytics")
+    if ga_manager == null:
+        ga_manager = get_node_or_null("/root/GameAnalyticsManager")
+    if ga_manager != null:
+        ga_manager.call(
+            "track_progression_event",
+            "complete",
+            Util.ACTIVE_GAME_VANGUARD,
+            "battle",
+            "level_%d" % level,
+            int(round(SaveHandler.fishing_run_clock_seconds)),
+            progression_fields
+        )
     _track_ga_event(
         "level:complete:level_%d" % level,
-        {
-            "level": level,
-            "first_clear": is_first_clear,
-            "game_time_seconds": SaveHandler.fishing_run_clock_seconds,
-            "game_time_formatted": Util.format_time(SaveHandler.fishing_run_clock_seconds),
-            "clock_time_seconds": app_clock_seconds,
-            "clock_time_formatted": Util.format_time(app_clock_seconds),
-            "battle_scene_unadjusted_seconds": battle_scene_unadjusted_seconds,
-            "battle_scene_unadjusted_formatted": Util.format_time(battle_scene_unadjusted_seconds),
-        }
+        progression_fields
     )
 
 func _track_first_boss_clear_event(level: int) -> void:

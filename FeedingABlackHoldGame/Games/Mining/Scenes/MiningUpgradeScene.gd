@@ -1,6 +1,7 @@
 extends Control
 class_name MiningUpgradeScene
 
+const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const SAVE_PATH := "user://mining_mode_save_v1.json"
 const FIRST_BOSS_DEPTH := 800
 const BOSS_INTERVAL_METERS := 200
@@ -64,11 +65,19 @@ var upgrade_catalog: Array[Dictionary] = [
 
 func _ready() -> void:
 	Global.game_state = Util.GAME_STATES.UPGRADES
+	_ensure_crt_overlay()
 	_load_progress()
 	_build_ui()
 	_refresh_ui()
 	dive_button.pressed.connect(_on_dive_pressed)
 	reset_button.pressed.connect(_on_reset_pressed)
+
+func _ensure_crt_overlay() -> void:
+	if get_node_or_null("MiningCrtOverlay") != null:
+		return
+	var overlay: CanvasLayer = MINING_CRT_OVERLAY_SCRIPT.new()
+	overlay.name = "MiningCrtOverlay"
+	add_child(overlay)
 
 func _build_ui() -> void:
 	for child in checkpoint_list.get_children():

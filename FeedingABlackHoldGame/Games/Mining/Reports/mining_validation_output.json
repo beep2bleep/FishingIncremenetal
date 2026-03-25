@@ -1,0 +1,1297 @@
+{
+	"date_utc": "2026-03-24 23:45:27",
+	"results": [
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"stone": 5
+			},
+			"cargo_capacity": 4,
+			"delivery_dumps": 0,
+			"depth_level": 1,
+			"drill_left": 48.12,
+			"drill_max": 60.0,
+			"level_progress": {
+				"current_level": 2,
+				"current_xp": 13,
+				"next_level_xp": 67
+			},
+			"money": 35,
+			"nodes_broken": 5,
+			"projected_data": {
+				"deepest_level_unlocked": 1,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 2,
+				"selected_depth_level": 1,
+				"upgrades": {
+
+				},
+				"wallet": 70,
+				"xp": 60
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_1_seed_1",
+			"seed": 923,
+			"selected_goal": "bank",
+			"simulated_seconds": 16.03,
+			"step_count": 481,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 1: Stone\nNodes broken: 5\nXP earned: 30  (LEVEL UP!)\nMoney earned: $35\n\nCargo payout:\nStone x5 -> $35\n\nLevel 2  XP 13/67\nUnlocked depth tier: 1",
+			"time_left": 0.0,
+			"time_limit": 16.0,
+			"xp": 30
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"stone": 5
+			},
+			"cargo_capacity": 4,
+			"delivery_dumps": 0,
+			"depth_level": 1,
+			"drill_left": 47.74,
+			"drill_max": 60.0,
+			"level_progress": {
+				"current_level": 2,
+				"current_xp": 13,
+				"next_level_xp": 67
+			},
+			"money": 35,
+			"nodes_broken": 5,
+			"projected_data": {
+				"deepest_level_unlocked": 1,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 2,
+				"selected_depth_level": 1,
+				"upgrades": {
+
+				},
+				"wallet": 70,
+				"xp": 60
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_1_seed_2",
+			"seed": 924,
+			"selected_goal": "bank",
+			"simulated_seconds": 16.03,
+			"step_count": 481,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 1: Stone\nNodes broken: 5\nXP earned: 30  (LEVEL UP!)\nMoney earned: $35\n\nCargo payout:\nStone x5 -> $35\n\nLevel 2  XP 13/67\nUnlocked depth tier: 1",
+			"time_left": 0.0,
+			"time_limit": 16.0,
+			"xp": 30
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"stone": 4
+			},
+			"cargo_capacity": 4,
+			"delivery_dumps": 0,
+			"depth_level": 1,
+			"drill_left": 50.49,
+			"drill_max": 60.0,
+			"level_progress": {
+				"current_level": 2,
+				"current_xp": 7,
+				"next_level_xp": 67
+			},
+			"money": 28,
+			"nodes_broken": 4,
+			"projected_data": {
+				"deepest_level_unlocked": 1,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 2,
+				"selected_depth_level": 1,
+				"upgrades": {
+
+				},
+				"wallet": 63,
+				"xp": 54
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_1_seed_3",
+			"seed": 925,
+			"selected_goal": "node",
+			"simulated_seconds": 16.03,
+			"step_count": 481,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 1: Stone\nNodes broken: 4\nXP earned: 24  (LEVEL UP!)\nMoney earned: $28\n\nCargo payout:\nStone x4 -> $28\n\nLevel 2  XP 7/67\nUnlocked depth tier: 1",
+			"time_left": 0.0,
+			"time_limit": 16.0,
+			"xp": 24
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"silver": 3
+			},
+			"cargo_capacity": 9,
+			"delivery_dumps": 0,
+			"depth_level": 3,
+			"drill_left": 39.98,
+			"drill_max": 60.0,
+			"level_progress": {
+				"current_level": 6,
+				"current_xp": 41,
+				"next_level_xp": 173
+			},
+			"money": 48,
+			"nodes_broken": 3,
+			"projected_data": {
+				"deepest_level_unlocked": 3,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 6,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_pods": 5.0,
+					"drill_torque": 1.0,
+					"engine_tuning": 1.0,
+					"pickup_radius": 1.0,
+					"timer_reserve": 1.0
+				},
+				"wallet": 315,
+				"xp": 507
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_10_seed_1",
+			"seed": 1130,
+			"selected_goal": "node",
+			"simulated_seconds": 15.2,
+			"step_count": 456,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 3: Silver\nNodes broken: 3\nXP earned: 39\nMoney earned: $48\n\nCargo payout:\nSilver x3 -> $48\n\nLevel 6  XP 41/173\nUnlocked depth tier: 3",
+			"time_left": 0.0,
+			"time_limit": 16.85,
+			"xp": 39
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"silver": 2,
+				"stone": 2
+			},
+			"cargo_capacity": 9,
+			"delivery_dumps": 0,
+			"depth_level": 3,
+			"drill_left": 42.28,
+			"drill_max": 60.0,
+			"level_progress": {
+				"current_level": 6,
+				"current_xp": 40,
+				"next_level_xp": 173
+			},
+			"money": 46,
+			"nodes_broken": 4,
+			"projected_data": {
+				"deepest_level_unlocked": 3,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 6,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_pods": 5.0,
+					"drill_torque": 1.0,
+					"engine_tuning": 1.0,
+					"pickup_radius": 1.0,
+					"timer_reserve": 1.0
+				},
+				"wallet": 313,
+				"xp": 506
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_10_seed_2",
+			"seed": 1131,
+			"selected_goal": "node",
+			"simulated_seconds": 15.2,
+			"step_count": 456,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 3: Silver\nNodes broken: 4\nXP earned: 38\nMoney earned: $46\n\nCargo payout:\nStone x2 -> $14\nSilver x2 -> $32\n\nLevel 6  XP 40/173\nUnlocked depth tier: 3",
+			"time_left": 0.0,
+			"time_limit": 16.85,
+			"xp": 38
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"silver": 2,
+				"stone": 1
+			},
+			"cargo_capacity": 9,
+			"delivery_dumps": 0,
+			"depth_level": 3,
+			"drill_left": 44.78,
+			"drill_max": 60.0,
+			"level_progress": {
+				"current_level": 6,
+				"current_xp": 34,
+				"next_level_xp": 173
+			},
+			"money": 39,
+			"nodes_broken": 3,
+			"projected_data": {
+				"deepest_level_unlocked": 3,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 6,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_pods": 5.0,
+					"drill_torque": 1.0,
+					"engine_tuning": 1.0,
+					"pickup_radius": 1.0,
+					"timer_reserve": 1.0
+				},
+				"wallet": 306,
+				"xp": 500
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_10_seed_3",
+			"seed": 1132,
+			"selected_goal": "node",
+			"simulated_seconds": 15.2,
+			"step_count": 456,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 3: Silver\nNodes broken: 3\nXP earned: 32\nMoney earned: $39\n\nCargo payout:\nStone x1 -> $7\nSilver x2 -> $32\n\nLevel 6  XP 34/173\nUnlocked depth tier: 3",
+			"time_left": 0.0,
+			"time_limit": 16.85,
+			"xp": 32
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"gold": 3,
+				"silver": 1,
+				"stone": 1
+			},
+			"cargo_capacity": 9,
+			"delivery_dumps": 0,
+			"depth_level": 4,
+			"drill_left": 37.71,
+			"drill_max": 68.5,
+			"level_progress": {
+				"current_level": 11,
+				"current_xp": 69,
+				"next_level_xp": 336
+			},
+			"money": 104,
+			"nodes_broken": 5,
+			"projected_data": {
+				"deepest_level_unlocked": 6,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 11,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_pods": 5.0,
+					"dirt_softener": 1.0,
+					"drill_plating": 1.0,
+					"drill_torque": 5.0,
+					"engine_tuning": 6.0,
+					"ore_refinery": 3.0,
+					"pickup_radius": 1.0,
+					"timer_reserve": 2.0
+				},
+				"wallet": 1291,
+				"xp": 1714
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_25_seed_1",
+			"seed": 1475,
+			"selected_goal": "node",
+			"simulated_seconds": 15.2,
+			"step_count": 456,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 4: Gold\nNodes broken: 5\nXP earned: 73  (LEVEL UP!)\nMoney earned: $104\n\nCargo payout:\nStone x1 -> $8\nGold x3 -> $78\nSilver x1 -> $18\n\nLevel 11  XP 69/336\nUnlocked depth tier: 6",
+			"time_left": 0.0,
+			"time_limit": 17.7,
+			"xp": 73
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"gold": 3,
+				"stone": 1
+			},
+			"cargo_capacity": 9,
+			"delivery_dumps": 0,
+			"depth_level": 4,
+			"drill_left": 44.61,
+			"drill_max": 68.5,
+			"level_progress": {
+				"current_level": 11,
+				"current_xp": 56,
+				"next_level_xp": 336
+			},
+			"money": 86,
+			"nodes_broken": 4,
+			"projected_data": {
+				"deepest_level_unlocked": 6,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 11,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_pods": 5.0,
+					"dirt_softener": 1.0,
+					"drill_plating": 1.0,
+					"drill_torque": 5.0,
+					"engine_tuning": 6.0,
+					"ore_refinery": 3.0,
+					"pickup_radius": 1.0,
+					"timer_reserve": 2.0
+				},
+				"wallet": 1273,
+				"xp": 1701
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_25_seed_2",
+			"seed": 1476,
+			"selected_goal": "node",
+			"simulated_seconds": 15.2,
+			"step_count": 456,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 4: Gold\nNodes broken: 4\nXP earned: 60  (LEVEL UP!)\nMoney earned: $86\n\nCargo payout:\nGold x3 -> $78\nStone x1 -> $8\n\nLevel 11  XP 56/336\nUnlocked depth tier: 6",
+			"time_left": 0.0,
+			"time_limit": 17.7,
+			"xp": 60
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"gold": 1,
+				"silver": 2,
+				"stone": 1
+			},
+			"cargo_capacity": 9,
+			"delivery_dumps": 0,
+			"depth_level": 4,
+			"drill_left": 49.06,
+			"drill_max": 68.5,
+			"level_progress": {
+				"current_level": 11,
+				"current_xp": 52,
+				"next_level_xp": 336
+			},
+			"money": 70,
+			"nodes_broken": 5,
+			"projected_data": {
+				"deepest_level_unlocked": 6,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 11,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_pods": 5.0,
+					"dirt_softener": 1.0,
+					"drill_plating": 1.0,
+					"drill_torque": 5.0,
+					"engine_tuning": 6.0,
+					"ore_refinery": 3.0,
+					"pickup_radius": 1.0,
+					"timer_reserve": 2.0
+				},
+				"wallet": 1257,
+				"xp": 1697
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_25_seed_3",
+			"seed": 1477,
+			"selected_goal": "node",
+			"simulated_seconds": 15.2,
+			"step_count": 456,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 4: Gold\nNodes broken: 5\nXP earned: 56  (LEVEL UP!)\nMoney earned: $70\n\nCargo payout:\nStone x1 -> $8\nSilver x2 -> $36\nGold x1 -> $26\n\nLevel 11  XP 52/336\nUnlocked depth tier: 6",
+			"time_left": 0.0,
+			"time_limit": 17.7,
+			"xp": 56
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"gold": 1,
+				"platinum_gold": 2,
+				"platinum_silver": 2
+			},
+			"cargo_capacity": 9,
+			"delivery_dumps": 0,
+			"depth_level": 8,
+			"drill_left": 29.5,
+			"drill_max": 85.5,
+			"level_progress": {
+				"current_level": 18,
+				"current_xp": 435,
+				"next_level_xp": 604
+			},
+			"money": 424,
+			"nodes_broken": 3,
+			"projected_data": {
+				"deepest_level_unlocked": 9,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 18,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_pods": 5.0,
+					"dirt_softener": 5.0,
+					"drill_plating": 3.0,
+					"drill_torque": 12.0,
+					"engine_tuning": 8.0,
+					"ore_refinery": 5.0,
+					"pickup_radius": 3.0,
+					"timer_reserve": 5.0,
+					"xp_calibration": 3.0
+				},
+				"wallet": 7381,
+				"xp": 5211
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_50_seed_1",
+			"seed": 2050,
+			"selected_goal": "node",
+			"simulated_seconds": 14.63,
+			"step_count": 439,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 8: Platinum Gold\nNodes broken: 3\nXP earned: 142\nMoney earned: $424\n\nCargo payout:\nPlatinum Silver x2 -> $166\nPlatinum Gold x2 -> $230\nGold x1 -> $28\n\nLevel 18  XP 435/604\nUnlocked depth tier: 9",
+			"time_left": 0.0,
+			"time_limit": 20.25,
+			"xp": 142
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"bronze": 1,
+				"platinum_gold": 2,
+				"stone": 3
+			},
+			"cargo_capacity": 9,
+			"delivery_dumps": 0,
+			"depth_level": 8,
+			"drill_left": 19.07,
+			"drill_max": 85.5,
+			"level_progress": {
+				"current_level": 18,
+				"current_xp": 461,
+				"next_level_xp": 604
+			},
+			"money": 270,
+			"nodes_broken": 6,
+			"projected_data": {
+				"deepest_level_unlocked": 9,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 18,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_pods": 5.0,
+					"dirt_softener": 5.0,
+					"drill_plating": 3.0,
+					"drill_torque": 12.0,
+					"engine_tuning": 8.0,
+					"ore_refinery": 5.0,
+					"pickup_radius": 3.0,
+					"timer_reserve": 5.0,
+					"xp_calibration": 3.0
+				},
+				"wallet": 7227,
+				"xp": 5237
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_50_seed_2",
+			"seed": 2051,
+			"selected_goal": "node",
+			"simulated_seconds": 14.63,
+			"step_count": 439,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 8: Platinum Gold\nNodes broken: 6\nXP earned: 168\nMoney earned: $270\n\nCargo payout:\nStone x3 -> $27\nPlatinum Gold x2 -> $230\nBronze x1 -> $13\n\nLevel 18  XP 461/604\nUnlocked depth tier: 9",
+			"time_left": 0.0,
+			"time_limit": 20.25,
+			"xp": 168
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"platinum_gold": 2
+			},
+			"cargo_capacity": 9,
+			"delivery_dumps": 0,
+			"depth_level": 8,
+			"drill_left": 12.57,
+			"drill_max": 85.5,
+			"level_progress": {
+				"current_level": 18,
+				"current_xp": 469,
+				"next_level_xp": 604
+			},
+			"money": 230,
+			"nodes_broken": 3,
+			"projected_data": {
+				"deepest_level_unlocked": 9,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 18,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_pods": 5.0,
+					"dirt_softener": 5.0,
+					"drill_plating": 3.0,
+					"drill_torque": 12.0,
+					"engine_tuning": 8.0,
+					"ore_refinery": 5.0,
+					"pickup_radius": 3.0,
+					"timer_reserve": 5.0,
+					"xp_calibration": 3.0
+				},
+				"wallet": 7187,
+				"xp": 5245
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_50_seed_3",
+			"seed": 2052,
+			"selected_goal": "pickup",
+			"simulated_seconds": 14.63,
+			"step_count": 439,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 8: Platinum Gold\nNodes broken: 3\nXP earned: 176\nMoney earned: $230\n\nCargo payout:\nPlatinum Gold x2 -> $230\n\nLevel 18  XP 469/604\nUnlocked depth tier: 9",
+			"time_left": 0.0,
+			"time_limit": 20.25,
+			"xp": 176
+		},
+		{
+			"bank_trips": 2,
+			"banked_counts": {
+				"platinum_bronze": 1,
+				"super_silver": 3
+			},
+			"cargo_capacity": 15,
+			"delivery_dumps": 0,
+			"depth_level": 12,
+			"drill_left": 0.0,
+			"drill_max": 128.0,
+			"level_progress": {
+				"current_level": 31,
+				"current_xp": 600,
+				"next_level_xp": 1192
+			},
+			"money": 1190,
+			"nodes_broken": 2,
+			"projected_data": {
+				"deepest_level_unlocked": 13,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 31,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_compressor": 5.0,
+					"cargo_pods": 9.0,
+					"cooling_loop": 3.0,
+					"dirt_softener": 12.0,
+					"drill_plating": 8.0,
+					"drill_torque": 18.0,
+					"engine_tuning": 12.0,
+					"magnet_drone": 1.0,
+					"ore_refinery": 12.0,
+					"pickup_radius": 4.0,
+					"route_planner": 4.0,
+					"timer_reserve": 7.0,
+					"xp_calibration": 4.0
+				},
+				"wallet": 47677,
+				"xp": 16647
+			},
+			"reason": "Drill health depleted.",
+			"scenario_id": "purchase_100_seed_1",
+			"seed": 3200,
+			"selected_goal": "node",
+			"simulated_seconds": 10.3,
+			"step_count": 309,
+			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 12: Super Gold\nNodes broken: 2\nXP earned: 190\nMoney earned: $1190\n\nCargo payout:\nSuper Silver x3 -> $1113\nPlatinum Bronze x1 -> $77\n\nLevel 31  XP 600/1192\nUnlocked depth tier: 13",
+			"time_left": 6.08,
+			"time_limit": 21.95,
+			"xp": 190
+		},
+		{
+			"bank_trips": 3,
+			"banked_counts": {
+				"platinum_bronze": 1,
+				"super_gold": 3
+			},
+			"cargo_capacity": 15,
+			"delivery_dumps": 0,
+			"depth_level": 12,
+			"drill_left": 0.0,
+			"drill_max": 128.0,
+			"level_progress": {
+				"current_level": 31,
+				"current_xp": 638,
+				"next_level_xp": 1192
+			},
+			"money": 1556,
+			"nodes_broken": 2,
+			"projected_data": {
+				"deepest_level_unlocked": 13,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 31,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_compressor": 5.0,
+					"cargo_pods": 9.0,
+					"cooling_loop": 3.0,
+					"dirt_softener": 12.0,
+					"drill_plating": 8.0,
+					"drill_torque": 18.0,
+					"engine_tuning": 12.0,
+					"magnet_drone": 1.0,
+					"ore_refinery": 12.0,
+					"pickup_radius": 4.0,
+					"route_planner": 4.0,
+					"timer_reserve": 7.0,
+					"xp_calibration": 4.0
+				},
+				"wallet": 48043,
+				"xp": 16685
+			},
+			"reason": "Drill health depleted.",
+			"scenario_id": "purchase_100_seed_2",
+			"seed": 3201,
+			"selected_goal": "node",
+			"simulated_seconds": 10.97,
+			"step_count": 329,
+			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 12: Super Gold\nNodes broken: 2\nXP earned: 228\nMoney earned: $1556\n\nCargo payout:\nPlatinum Bronze x1 -> $77\nSuper Gold x3 -> $1479\n\nLevel 31  XP 638/1192\nUnlocked depth tier: 13",
+			"time_left": 5.05,
+			"time_limit": 21.95,
+			"xp": 228
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"bronze": 1,
+				"platinum_bronze": 1,
+				"platinum_silver": 2,
+				"super_silver": 3
+			},
+			"cargo_capacity": 15,
+			"delivery_dumps": 0,
+			"depth_level": 12,
+			"drill_left": 0.0,
+			"drill_max": 128.0,
+			"level_progress": {
+				"current_level": 31,
+				"current_xp": 667,
+				"next_level_xp": 1192
+			},
+			"money": 1426,
+			"nodes_broken": 4,
+			"projected_data": {
+				"deepest_level_unlocked": 13,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 31,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_compressor": 5.0,
+					"cargo_pods": 9.0,
+					"cooling_loop": 3.0,
+					"dirt_softener": 12.0,
+					"drill_plating": 8.0,
+					"drill_torque": 18.0,
+					"engine_tuning": 12.0,
+					"magnet_drone": 1.0,
+					"ore_refinery": 12.0,
+					"pickup_radius": 4.0,
+					"route_planner": 4.0,
+					"timer_reserve": 7.0,
+					"xp_calibration": 4.0
+				},
+				"wallet": 47913,
+				"xp": 16714
+			},
+			"reason": "Drill health depleted.",
+			"scenario_id": "purchase_100_seed_3",
+			"seed": 3202,
+			"selected_goal": "node",
+			"simulated_seconds": 13.7,
+			"step_count": 411,
+			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 12: Super Gold\nNodes broken: 4\nXP earned: 257\nMoney earned: $1426\n\nCargo payout:\nSuper Silver x3 -> $1113\nPlatinum Bronze x1 -> $77\nPlatinum Silver x2 -> $218\nBronze x1 -> $18\n\nLevel 31  XP 667/1192\nUnlocked depth tier: 13",
+			"time_left": 0.84,
+			"time_limit": 21.95,
+			"xp": 257
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"diamond": 1,
+				"gold": 1,
+				"stone": 4,
+				"super_bronze": 4,
+				"super_silver": 3
+			},
+			"cargo_capacity": 17,
+			"delivery_dumps": 2,
+			"depth_level": 11,
+			"drill_left": 11.16,
+			"drill_max": 153.5,
+			"level_progress": {
+				"current_level": 41,
+				"current_xp": 453,
+				"next_level_xp": 1708
+			},
+			"money": 2723,
+			"nodes_broken": 9,
+			"projected_data": {
+				"deepest_level_unlocked": 13,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 41,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_compressor": 7.0,
+					"cargo_pods": 10.0,
+					"cooling_loop": 6.0,
+					"delivery_drone": 3.0,
+					"depth_scanner": 4.0,
+					"dirt_softener": 13.0,
+					"drill_plating": 11.0,
+					"drill_torque": 27.0,
+					"engine_tuning": 13.0,
+					"foreman_bot": 1.0,
+					"magnet_drone": 4.0,
+					"ore_refinery": 17.0,
+					"pickup_radius": 4.0,
+					"route_planner": 10.0,
+					"seismic_sonar": 1.0,
+					"timer_reserve": 11.0,
+					"xp_calibration": 7.0
+				},
+				"wallet": 133503,
+				"xp": 30704
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_150_seed_1",
+			"seed": 4350,
+			"selected_goal": "node",
+			"simulated_seconds": 18.27,
+			"step_count": 548,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 11: Super Silver\nNodes broken: 9\nXP earned: 533  (LEVEL UP!)\nMoney earned: $2723\n\nCargo payout:\nStone x4 -> $52\nGold x1 -> $43\nSuper Bronze x4 -> $1280\nSuper Silver x3 -> $1287\nDiamond x1 -> $61\n\nLevel 41  XP 453/1708\nUnlocked depth tier: 13",
+			"time_left": 0.0,
+			"time_limit": 25.35,
+			"xp": 533
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"stone": 6,
+				"super_silver": 6
+			},
+			"cargo_capacity": 17,
+			"delivery_dumps": 2,
+			"depth_level": 11,
+			"drill_left": 29.51,
+			"drill_max": 153.5,
+			"level_progress": {
+				"current_level": 41,
+				"current_xp": 312,
+				"next_level_xp": 1708
+			},
+			"money": 2652,
+			"nodes_broken": 8,
+			"projected_data": {
+				"deepest_level_unlocked": 13,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 41,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_compressor": 7.0,
+					"cargo_pods": 10.0,
+					"cooling_loop": 6.0,
+					"delivery_drone": 3.0,
+					"depth_scanner": 4.0,
+					"dirt_softener": 13.0,
+					"drill_plating": 11.0,
+					"drill_torque": 27.0,
+					"engine_tuning": 13.0,
+					"foreman_bot": 1.0,
+					"magnet_drone": 4.0,
+					"ore_refinery": 17.0,
+					"pickup_radius": 4.0,
+					"route_planner": 10.0,
+					"seismic_sonar": 1.0,
+					"timer_reserve": 11.0,
+					"xp_calibration": 7.0
+				},
+				"wallet": 133432,
+				"xp": 30563
+			},
+			"reason": "Timer expired.",
+			"scenario_id": "purchase_150_seed_2",
+			"seed": 4351,
+			"selected_goal": "node",
+			"simulated_seconds": 18.27,
+			"step_count": 548,
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 11: Super Silver\nNodes broken: 8\nXP earned: 392  (LEVEL UP!)\nMoney earned: $2652\n\nCargo payout:\nSuper Silver x6 -> $2574\nStone x6 -> $78\n\nLevel 41  XP 312/1708\nUnlocked depth tier: 13",
+			"time_left": 0.0,
+			"time_limit": 25.35,
+			"xp": 392
+		},
+		{
+			"bank_trips": 2,
+			"banked_counts": {
+				"platinum_silver": 2,
+				"stone": 2,
+				"super_silver": 6
+			},
+			"cargo_capacity": 17,
+			"delivery_dumps": 1,
+			"depth_level": 11,
+			"drill_left": 0.0,
+			"drill_max": 153.5,
+			"level_progress": {
+				"current_level": 41,
+				"current_xp": 340,
+				"next_level_xp": 1708
+			},
+			"money": 2852,
+			"nodes_broken": 5,
+			"projected_data": {
+				"deepest_level_unlocked": 13,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 41,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_compressor": 7.0,
+					"cargo_pods": 10.0,
+					"cooling_loop": 6.0,
+					"delivery_drone": 3.0,
+					"depth_scanner": 4.0,
+					"dirt_softener": 13.0,
+					"drill_plating": 11.0,
+					"drill_torque": 27.0,
+					"engine_tuning": 13.0,
+					"foreman_bot": 1.0,
+					"magnet_drone": 4.0,
+					"ore_refinery": 17.0,
+					"pickup_radius": 4.0,
+					"route_planner": 10.0,
+					"seismic_sonar": 1.0,
+					"timer_reserve": 11.0,
+					"xp_calibration": 7.0
+				},
+				"wallet": 133632,
+				"xp": 30591
+			},
+			"reason": "Drill health depleted.",
+			"scenario_id": "purchase_150_seed_3",
+			"seed": 4352,
+			"selected_goal": "node",
+			"simulated_seconds": 16.13,
+			"step_count": 484,
+			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 11: Super Silver\nNodes broken: 5\nXP earned: 420  (LEVEL UP!)\nMoney earned: $2852\n\nCargo payout:\nPlatinum Silver x2 -> $252\nSuper Silver x6 -> $2574\nStone x2 -> $26\n\nLevel 41  XP 340/1708\nUnlocked depth tier: 13",
+			"time_left": 2.92,
+			"time_limit": 25.35,
+			"xp": 420
+		},
+		{
+			"bank_trips": 2,
+			"banked_counts": {
+				"bronze": 1,
+				"diamond": 1,
+				"platinum_diamond": 2,
+				"stone": 1,
+				"super_diamond": 6
+			},
+			"cargo_capacity": 22,
+			"delivery_dumps": 2,
+			"depth_level": 13,
+			"drill_left": 0.0,
+			"drill_max": 204.5,
+			"level_progress": {
+				"current_level": 59,
+				"current_xp": 1850,
+				"next_level_xp": 2746
+			},
+			"money": 5874,
+			"nodes_broken": 6,
+			"projected_data": {
+				"deepest_level_unlocked": 13,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 59,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"auto_sorters": 2.0,
+					"cargo_compressor": 13.0,
+					"cargo_pods": 12.0,
+					"cooling_loop": 10.0,
+					"delivery_drone": 5.0,
+					"depth_scanner": 5.0,
+					"dirt_softener": 17.0,
+					"drill_plating": 17.0,
+					"drill_torque": 36.0,
+					"engine_tuning": 17.0,
+					"foreman_bot": 5.0,
+					"magnet_drone": 8.0,
+					"ore_refinery": 22.0,
+					"pickup_radius": 9.0,
+					"route_planner": 12.0,
+					"seismic_sonar": 5.0,
+					"timer_reserve": 13.0,
+					"xp_calibration": 11.0
+				},
+				"wallet": 402133,
+				"xp": 71472
+			},
+			"reason": "Drill health depleted.",
+			"scenario_id": "purchase_220_seed_1",
+			"seed": 5960,
+			"selected_goal": "node",
+			"simulated_seconds": 17.4,
+			"step_count": 522,
+			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 13: Super Diamond\nNodes broken: 6\nXP earned: 814\nMoney earned: $5874\n\nCargo payout:\nDiamond x1 -> $71\nSuper Diamond x6 -> $5214\nStone x1 -> $15\nPlatinum Diamond x2 -> $550\nBronze x1 -> $24\n\nLevel 59  XP 1850/2746\nUnlocked depth tier: 13",
+			"time_left": 1.51,
+			"time_limit": 27.05,
+			"xp": 814
+		},
+		{
+			"bank_trips": 2,
+			"banked_counts": {
+				"stone": 2,
+				"super_diamond": 3,
+				"super_gold": 3
+			},
+			"cargo_capacity": 22,
+			"delivery_dumps": 2,
+			"depth_level": 13,
+			"drill_left": 0.0,
+			"drill_max": 204.5,
+			"level_progress": {
+				"current_level": 59,
+				"current_xp": 1617,
+				"next_level_xp": 2746
+			},
+			"money": 4620,
+			"nodes_broken": 4,
+			"projected_data": {
+				"deepest_level_unlocked": 13,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 59,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"auto_sorters": 2.0,
+					"cargo_compressor": 13.0,
+					"cargo_pods": 12.0,
+					"cooling_loop": 10.0,
+					"delivery_drone": 5.0,
+					"depth_scanner": 5.0,
+					"dirt_softener": 17.0,
+					"drill_plating": 17.0,
+					"drill_torque": 36.0,
+					"engine_tuning": 17.0,
+					"foreman_bot": 5.0,
+					"magnet_drone": 8.0,
+					"ore_refinery": 22.0,
+					"pickup_radius": 9.0,
+					"route_planner": 12.0,
+					"seismic_sonar": 5.0,
+					"timer_reserve": 13.0,
+					"xp_calibration": 11.0
+				},
+				"wallet": 400879,
+				"xp": 71239
+			},
+			"reason": "Drill health depleted.",
+			"scenario_id": "purchase_220_seed_2",
+			"seed": 5961,
+			"selected_goal": "node",
+			"simulated_seconds": 12.17,
+			"step_count": 365,
+			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 13: Super Diamond\nNodes broken: 4\nXP earned: 581\nMoney earned: $4620\n\nCargo payout:\nStone x2 -> $30\nSuper Diamond x3 -> $2607\nSuper Gold x3 -> $1983\n\nLevel 59  XP 1617/2746\nUnlocked depth tier: 13",
+			"time_left": 9.19,
+			"time_limit": 27.05,
+			"xp": 581
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"stone": 1,
+				"super_diamond": 6
+			},
+			"cargo_capacity": 22,
+			"delivery_dumps": 0,
+			"depth_level": 13,
+			"drill_left": 0.0,
+			"drill_max": 204.5,
+			"level_progress": {
+				"current_level": 59,
+				"current_xp": 1670,
+				"next_level_xp": 2746
+			},
+			"money": 5229,
+			"nodes_broken": 3,
+			"projected_data": {
+				"deepest_level_unlocked": 13,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 59,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"auto_sorters": 2.0,
+					"cargo_compressor": 13.0,
+					"cargo_pods": 12.0,
+					"cooling_loop": 10.0,
+					"delivery_drone": 5.0,
+					"depth_scanner": 5.0,
+					"dirt_softener": 17.0,
+					"drill_plating": 17.0,
+					"drill_torque": 36.0,
+					"engine_tuning": 17.0,
+					"foreman_bot": 5.0,
+					"magnet_drone": 8.0,
+					"ore_refinery": 22.0,
+					"pickup_radius": 9.0,
+					"route_planner": 12.0,
+					"seismic_sonar": 5.0,
+					"timer_reserve": 13.0,
+					"xp_calibration": 11.0
+				},
+				"wallet": 401488,
+				"xp": 71292
+			},
+			"reason": "Drill health depleted.",
+			"scenario_id": "purchase_220_seed_3",
+			"seed": 5962,
+			"selected_goal": "node",
+			"simulated_seconds": 10.77,
+			"step_count": 323,
+			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 13: Super Diamond\nNodes broken: 3\nXP earned: 634\nMoney earned: $5229\n\nCargo payout:\nSuper Diamond x6 -> $5214\nStone x1 -> $15\n\nLevel 59  XP 1670/2746\nUnlocked depth tier: 13",
+			"time_left": 11.24,
+			"time_limit": 27.05,
+			"xp": 634
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"silver": 2,
+				"stone": 4,
+				"super_bronze": 2,
+				"super_diamond": 2,
+				"super_gold": 6,
+				"super_silver": 3
+			},
+			"cargo_capacity": 24,
+			"delivery_dumps": 12,
+			"depth_level": 13,
+			"drill_left": 0.0,
+			"drill_max": 247.0,
+			"level_progress": {
+				"current_level": 82,
+				"current_xp": 290,
+				"next_level_xp": 4243
+			},
+			"money": 9939,
+			"nodes_broken": 10,
+			"projected_data": {
+				"deepest_level_unlocked": 13,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 82,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"auto_sorters": 8.0,
+					"cargo_compressor": 17.0,
+					"cargo_pods": 12.0,
+					"cooling_loop": 15.0,
+					"delivery_drone": 8.0,
+					"depth_scanner": 12.0,
+					"dirt_softener": 19.0,
+					"drill_plating": 22.0,
+					"drill_torque": 40.0,
+					"engine_tuning": 25.0,
+					"foreman_bot": 12.0,
+					"magnet_drone": 11.0,
+					"ore_refinery": 32.0,
+					"pickup_radius": 12.0,
+					"route_planner": 17.0,
+					"seismic_sonar": 8.0,
+					"timer_reserve": 15.0,
+					"xp_calibration": 14.0
+				},
+				"wallet": 1018654,
+				"xp": 149197
+			},
+			"reason": "Drill health depleted.",
+			"scenario_id": "purchase_300_seed_1",
+			"seed": 7800,
+			"selected_goal": "node",
+			"simulated_seconds": 17.83,
+			"step_count": 535,
+			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 13: Super Diamond\nNodes broken: 10\nXP earned: 1358  (LEVEL UP!)\nMoney earned: $9939\n\nCargo payout:\nSuper Bronze x2 -> $914\nStone x4 -> $76\nSilver x2 -> $84\nSuper Gold x6 -> $4884\nSuper Diamond x2 -> $2142\nSuper Silver x3 -> $1839\n\nLevel 82  XP 290/4243\nUnlocked depth tier: 13",
+			"time_left": 4.0,
+			"time_limit": 28.75,
+			"xp": 1358
+		},
+		{
+			"bank_trips": 1,
+			"banked_counts": {
+				"platinum_diamond": 2,
+				"stone": 2,
+				"super_diamond": 9,
+				"super_gold": 3
+			},
+			"cargo_capacity": 24,
+			"delivery_dumps": 6,
+			"depth_level": 13,
+			"drill_left": 0.0,
+			"drill_max": 247.0,
+			"level_progress": {
+				"current_level": 82,
+				"current_xp": 404,
+				"next_level_xp": 4243
+			},
+			"money": 12795,
+			"nodes_broken": 7,
+			"projected_data": {
+				"deepest_level_unlocked": 13,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 82,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"auto_sorters": 8.0,
+					"cargo_compressor": 17.0,
+					"cargo_pods": 12.0,
+					"cooling_loop": 15.0,
+					"delivery_drone": 8.0,
+					"depth_scanner": 12.0,
+					"dirt_softener": 19.0,
+					"drill_plating": 22.0,
+					"drill_torque": 40.0,
+					"engine_tuning": 25.0,
+					"foreman_bot": 12.0,
+					"magnet_drone": 11.0,
+					"ore_refinery": 32.0,
+					"pickup_radius": 12.0,
+					"route_planner": 17.0,
+					"seismic_sonar": 8.0,
+					"timer_reserve": 15.0,
+					"xp_calibration": 14.0
+				},
+				"wallet": 1021510,
+				"xp": 149311
+			},
+			"reason": "Drill health depleted.",
+			"scenario_id": "purchase_300_seed_2",
+			"seed": 7801,
+			"selected_goal": "node",
+			"simulated_seconds": 15.83,
+			"step_count": 475,
+			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 13: Super Diamond\nNodes broken: 7\nXP earned: 1472  (LEVEL UP!)\nMoney earned: $12795\n\nCargo payout:\nSuper Diamond x9 -> $9639\nStone x2 -> $38\nPlatinum Diamond x2 -> $676\nSuper Gold x3 -> $2442\n\nLevel 82  XP 404/4243\nUnlocked depth tier: 13",
+			"time_left": 6.77,
+			"time_limit": 28.75,
+			"xp": 1472
+		},
+		{
+			"bank_trips": 2,
+			"banked_counts": {
+				"stone": 6,
+				"super_bronze": 2,
+				"super_diamond": 6,
+				"super_gold": 6
+			},
+			"cargo_capacity": 24,
+			"delivery_dumps": 11,
+			"depth_level": 13,
+			"drill_left": 0.0,
+			"drill_max": 247.0,
+			"level_progress": {
+				"current_level": 82,
+				"current_xp": 450,
+				"next_level_xp": 4243
+			},
+			"money": 12338,
+			"nodes_broken": 11,
+			"projected_data": {
+				"deepest_level_unlocked": 13,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 82,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"auto_sorters": 8.0,
+					"cargo_compressor": 17.0,
+					"cargo_pods": 12.0,
+					"cooling_loop": 15.0,
+					"delivery_drone": 8.0,
+					"depth_scanner": 12.0,
+					"dirt_softener": 19.0,
+					"drill_plating": 22.0,
+					"drill_torque": 40.0,
+					"engine_tuning": 25.0,
+					"foreman_bot": 12.0,
+					"magnet_drone": 11.0,
+					"ore_refinery": 32.0,
+					"pickup_radius": 12.0,
+					"route_planner": 17.0,
+					"seismic_sonar": 8.0,
+					"timer_reserve": 15.0,
+					"xp_calibration": 14.0
+				},
+				"wallet": 1021053,
+				"xp": 149357
+			},
+			"reason": "Drill health depleted.",
+			"scenario_id": "purchase_300_seed_3",
+			"seed": 7802,
+			"selected_goal": "node",
+			"simulated_seconds": 20.6,
+			"step_count": 618,
+			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 13: Super Diamond\nNodes broken: 11\nXP earned: 1518  (LEVEL UP!)\nMoney earned: $12338\n\nCargo payout:\nStone x6 -> $114\nSuper Diamond x6 -> $6426\nSuper Bronze x2 -> $914\nSuper Gold x6 -> $4884\n\nLevel 82  XP 450/4243\nUnlocked depth tier: 13",
+			"time_left": 0.16,
+			"time_limit": 28.75,
+			"xp": 1518
+		}
+	]
+}

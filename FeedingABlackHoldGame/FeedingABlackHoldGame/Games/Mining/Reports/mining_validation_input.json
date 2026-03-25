@@ -1,0 +1,199 @@
+{
+  "scenarios": [
+    {
+      "id": "purchase_1",
+      "seed": 901,
+      "depth_level": 1,
+      "save_data": {
+        "wallet": 35,
+        "xp": 30,
+        "player_level": 1,
+        "deepest_level_unlocked": 1,
+        "selected_depth_level": 1,
+        "upgrades": {}
+      }
+    },
+    {
+      "id": "purchase_10",
+      "seed": 910,
+      "depth_level": 3,
+      "save_data": {
+        "wallet": 367,
+        "xp": 492,
+        "player_level": 6,
+        "deepest_level_unlocked": 3,
+        "selected_depth_level": 1,
+        "upgrades": {
+          "cargo_pods": 5,
+          "drill_torque": 1,
+          "engine_tuning": 3
+        }
+      }
+    },
+    {
+      "id": "purchase_25",
+      "seed": 925,
+      "depth_level": 6,
+      "save_data": {
+        "wallet": 1814,
+        "xp": 1890,
+        "player_level": 11,
+        "deepest_level_unlocked": 6,
+        "selected_depth_level": 1,
+        "upgrades": {
+          "cargo_pods": 6,
+          "drill_torque": 5,
+          "engine_tuning": 5,
+          "ore_refinery": 3,
+          "cargo_compressor": 1,
+          "timer_reserve": 1,
+          "xp_calibration": 2,
+          "dirt_softener": 1
+        }
+      }
+    },
+    {
+      "id": "purchase_50",
+      "seed": 950,
+      "depth_level": 9,
+      "save_data": {
+        "wallet": 11132,
+        "xp": 8632,
+        "player_level": 23,
+        "deepest_level_unlocked": 13,
+        "selected_depth_level": 1,
+        "upgrades": {
+          "cargo_pods": 8,
+          "drill_torque": 12,
+          "engine_tuning": 5,
+          "ore_refinery": 6,
+          "cargo_compressor": 2,
+          "timer_reserve": 2,
+          "xp_calibration": 6,
+          "dirt_softener": 2,
+          "drill_plating": 2,
+          "cooling_loop": 2,
+          "pickup_radius": 1,
+          "depth_scanner": 1
+        }
+      }
+    },
+    {
+      "id": "purchase_100",
+      "seed": 1000,
+      "depth_level": 12,
+      "save_data": {
+        "wallet": 60176,
+        "xp": 37601,
+        "player_level": 45,
+        "deepest_level_unlocked": 13,
+        "selected_depth_level": 1,
+        "upgrades": {
+          "cargo_pods": 9,
+          "drill_torque": 18,
+          "engine_tuning": 11,
+          "ore_refinery": 15,
+          "cargo_compressor": 6,
+          "timer_reserve": 2,
+          "xp_calibration": 9,
+          "dirt_softener": 11,
+          "drill_plating": 5,
+          "cooling_loop": 5,
+          "pickup_radius": 5,
+          "depth_scanner": 3
+        }
+      }
+    },
+    {
+      "id": "purchase_150",
+      "seed": 1050,
+      "depth_level": 11,
+      "save_data": {
+        "wallet": 154466,
+        "xp": 82030,
+        "player_level": 63,
+        "deepest_level_unlocked": 13,
+        "selected_depth_level": 1,
+        "upgrades": {
+          "cargo_pods": 13,
+          "drill_torque": 24,
+          "engine_tuning": 16,
+          "ore_refinery": 23,
+          "cargo_compressor": 9,
+          "timer_reserve": 6,
+          "xp_calibration": 13,
+          "dirt_softener": 13,
+          "drill_plating": 8,
+          "cooling_loop": 9,
+          "pickup_radius": 7,
+          "depth_scanner": 6,
+          "route_planner": 1,
+          "magnet_drone": 1
+        }
+      }
+    },
+    {
+      "id": "purchase_220",
+      "seed": 1120,
+      "depth_level": 12,
+      "save_data": {
+        "wallet": 436897,
+        "xp": 221730,
+        "player_level": 97,
+        "deepest_level_unlocked": 13,
+        "selected_depth_level": 1,
+        "upgrades": {
+          "cargo_pods": 14,
+          "drill_torque": 31,
+          "engine_tuning": 19,
+          "ore_refinery": 25,
+          "cargo_compressor": 15,
+          "timer_reserve": 12,
+          "xp_calibration": 22,
+          "dirt_softener": 18,
+          "drill_plating": 13,
+          "cooling_loop": 13,
+          "pickup_radius": 10,
+          "depth_scanner": 6,
+          "route_planner": 8,
+          "magnet_drone": 5,
+          "seismic_sonar": 3,
+          "delivery_drone": 3,
+          "foreman_bot": 2
+        }
+      }
+    },
+    {
+      "id": "purchase_300",
+      "seed": 1200,
+      "depth_level": 13,
+      "save_data": {
+        "wallet": 1008616,
+        "xp": 511351,
+        "player_level": 139,
+        "deepest_level_unlocked": 13,
+        "selected_depth_level": 1,
+        "upgrades": {
+          "cargo_pods": 18,
+          "drill_torque": 39,
+          "engine_tuning": 22,
+          "ore_refinery": 32,
+          "cargo_compressor": 19,
+          "timer_reserve": 16,
+          "xp_calibration": 26,
+          "dirt_softener": 22,
+          "drill_plating": 17,
+          "cooling_loop": 16,
+          "pickup_radius": 12,
+          "depth_scanner": 11,
+          "route_planner": 14,
+          "magnet_drone": 11,
+          "seismic_sonar": 10,
+          "delivery_drone": 4,
+          "foreman_bot": 5,
+          "auto_sorters": 5
+        }
+      }
+    }
+  ]
+}

@@ -2,6 +2,8 @@ extends Node2D
 class_name MiningMain
 
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
+const MINING_BALANCE = preload("res://Games/Mining/MiningBalance.gd")
+const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 
 const WORLD_SIZE := Vector2(1650.0, 1950.0)
@@ -19,18 +21,40 @@ const CONTACT_DRILL_PADDING := 10.0
 const DRILL_AUDIO_INTERVAL := 0.3
 const AIM_CURSOR_SENSITIVITY := 1.0
 const AIM_CURSOR_RADIUS := 12.0
+const STATUS_PANEL_SCALE := 0.7
+const STATUS_PANEL_VERTICAL_SHIFT_RATIO := 0.05
+const DRILL_COPY_COUNT := 3
+const DRILL_COPY_SPACING := 54.0
+const DRILL_COPY_FOLLOW_SPEED := 10.0
+const DRILL_COPY_BUMP_RETURN_SPEED := 42.0
+const DRILL_COPY_BUMP_PUSH_SPEED := 130.0
+const DRILL_COPY_BUMP_RADIUS := 34.0
+const DRILL_COPY_BUMP_LIMIT := 30.0
+const DRILL_TRAIL_SAMPLE_STEP := 8.0
+const DRILL_TRAIL_MAX_SAMPLES := 56
 
 enum RUN_STATES {RUNNING, SUMMARY}
 
+@onready var top_bar: MarginContainer = $CanvasLayer/TopBar
 @onready var wallet_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/WalletLabel
 @onready var phase_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/PhaseLabel
 @onready var depth_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/DepthLabel
-@onready var stat_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/StatLabel
-@onready var cargo_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/CargoLabel
+@onready var time_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/TimeValueLabel
+@onready var time_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/TimeBar
+@onready var drill_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/DrillValueLabel
+@onready var drill_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/DrillBar
+@onready var hull_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/HullValueLabel
+@onready var hull_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/HullBar
+@onready var cargo_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/CargoValueLabel
+@onready var cargo_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/CargoBar
+@onready var xp_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/XpValueLabel
+@onready var xp_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/XpBar
 @onready var weapon_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/WeaponLabel
 @onready var boss_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/BossLabel
+@onready var top_panel: PanelContainer = $CanvasLayer/TopBar/TopPanel
 @onready var shop_panel: PanelContainer = $CanvasLayer/ShopPanel
 @onready var summary_label: Label = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryLabel
+@onready var hint_panel: PanelContainer = $CanvasLayer/HintPanel
 @onready var hint_label: Label = $CanvasLayer/HintPanel/HintMargin/HintLabel
 @onready var dive_button: Button = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/DiveButton
 @onready var reset_button: Button = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/ResetButton
@@ -71,7 +95,8 @@ var damage_numbers: Array[Dictionary] = []
 var drill_audio_timer := 0.0
 var last_drill_direction := Vector2.DOWN
 var player_velocity := Vector2.ZERO
-var tail_points: Array[Vector2] = []
+var trail_history: Array[Dictionary] = []
+var drill_copies: Array[Dictionary] = []
 var delivery_drone_visuals: Array[Dictionary] = []
 var pickup_drone_visuals: Array[Dictionary] = []
 var next_pickup_uid := 1
@@ -85,16 +110,41 @@ var fullscreen_button: Button
 var settings_button: Button
 var settings_panel: PanelContainer
 var settings_content: Settings
+var speaker_icon_on: ImageTexture
+var speaker_icon_off: ImageTexture
+var fullscreen_icon_on: ImageTexture
+var fullscreen_icon_off: ImageTexture
 var aim_cursor_screen_pos := Vector2.ZERO
+var bank_trips := 0
+var delivery_dump_count := 0
+var simulation_elapsed := 0.0
+var last_run_results: Dictionary = {}
+var simulation_mode_active := false
+var simulation_commit_progress := true
+var simulation_fixed_delta := 1.0 / 30.0
+var simulation_seed_override := -1
+var simulation_data_override: Dictionary = {}
+var simulation_depth_override := -1
+var autoplay_enabled := false
+var autoplay_pointer_direction := Vector2.ZERO
+var autoplay_current_goal := "node"
 
 func _ready() -> void:
     Global.game_state = Util.GAME_STATES.PLAYING
-    rng.randomize()
-    material_tiers = _build_material_tiers()
+    if simulation_seed_override >= 0:
+        rng.seed = simulation_seed_override
+    else:
+        rng.randomize()
+    material_tiers = MINING_BALANCE.get_material_tiers()
+    SignalBus.settings_updated.connect(Callable(self, "_on_settings_updated"))
+    _apply_hud_theme()
+    _update_status_panel_layout()
+    get_viewport().size_changed.connect(_on_viewport_size_changed)
     _setup_system_controls()
     _configure_summary_panel()
     dive_button.pressed.connect(_on_summary_return_pressed)
     reset_button.pressed.connect(_on_summary_retry_pressed)
+    _ensure_crt_overlay()
     _begin_run()
 
 func _exit_tree() -> void:
@@ -102,9 +152,11 @@ func _exit_tree() -> void:
 
 func _process(delta: float) -> void:
     if run_state == RUN_STATES.RUNNING and not _is_settings_open():
+        _update_autoplay_pointer()
         _process_running(delta)
     _refresh_hud()
-    queue_redraw()
+    if not simulation_mode_active:
+        queue_redraw()
 
 func _input(event: InputEvent) -> void:
     if event is InputEventMouseMotion:
@@ -119,6 +171,10 @@ func _input(event: InputEvent) -> void:
         aim_cursor_screen_pos = _clamp_cursor_to_viewport(mouse_button_event.position)
 
 func _unhandled_input(event: InputEvent) -> void:
+    if event.is_action_pressed("toggle_mute"):
+        _on_mute_button_pressed()
+        get_viewport().set_input_as_handled()
+        return
     if event.is_action_pressed("back") or event.is_action_pressed("escape"):
         _toggle_settings_panel()
         get_viewport().set_input_as_handled()
@@ -144,8 +200,11 @@ func _draw() -> void:
     _draw_aim_cursor()
 
 func _begin_run() -> void:
-    persistent_data = MINING_PROGRESS_SCRIPT.load_data()
-    active_depth_level = clampi(int(persistent_data.get("selected_depth_level", 1)), 1, int(persistent_data.get("deepest_level_unlocked", 1)))
+    persistent_data = simulation_data_override.duplicate(true) if not simulation_data_override.is_empty() else MINING_PROGRESS_SCRIPT.load_data()
+    var selected_depth: int = int(persistent_data.get("selected_depth_level", 1))
+    if simulation_depth_override > 0:
+        selected_depth = simulation_depth_override
+    active_depth_level = clampi(selected_depth, 1, int(persistent_data.get("deepest_level_unlocked", 1)))
     active_material = material_tiers[active_depth_level - 1]
     player_pos = Vector2(0.0, -WORLD_SIZE.y * 0.5 + 120.0)
     camera_pos = player_pos
@@ -157,6 +216,10 @@ func _begin_run() -> void:
     banked_counts.clear()
     run_xp = 0
     nodes_broken = 0
+    bank_trips = 0
+    delivery_dump_count = 0
+    simulation_elapsed = 0.0
+    last_run_results.clear()
     world_nodes = []
     pickups = []
     target_node_id = -1
@@ -168,14 +231,15 @@ func _begin_run() -> void:
     drill_audio_timer = 0.0
     last_drill_direction = Vector2.DOWN
     player_velocity = Vector2.ZERO
-    tail_points.clear()
+    trail_history.clear()
+    drill_copies.clear()
     delivery_drone_visuals.clear()
     pickup_drone_visuals.clear()
     next_pickup_uid = 1
     attached_node_id = -1
     attached_contact_point = player_pos
     attached_push_direction = Vector2.DOWN
-    drone_delivery_timer = DRONE_DELIVERY_INTERVAL
+    drone_delivery_timer = _get_delivery_dispatch_window()
     run_status = "Mine nodes, scoop the drops, and bank cargo at the surface rig."
     run_state = RUN_STATES.RUNNING
     Global.game_state = Util.GAME_STATES.PLAYING
@@ -185,14 +249,52 @@ func _begin_run() -> void:
     shop_panel.hide()
     hint_label.text = "Steer with the mouse. Build speed, stick to nodes to drill, turn away at least 30 degrees to break off, then return to the bright base ring to bank cargo."
     _reset_aim_cursor()
+    _reset_drill_train()
     _refresh_mouse_capture_state()
 
+func simulate_autoplay_run(options: Dictionary = {}) -> Dictionary:
+    simulation_mode_active = true
+    simulation_commit_progress = bool(options.get("commit_results", false))
+    simulation_fixed_delta = float(options.get("fixed_delta", 1.0 / 30.0))
+    simulation_seed_override = int(options.get("seed", -1))
+    simulation_data_override = options.get("save_data", {}).duplicate(true)
+    simulation_depth_override = int(options.get("depth_level", -1))
+    autoplay_enabled = bool(options.get("autoplay", true))
+    if simulation_seed_override >= 0:
+        rng.seed = simulation_seed_override
+    else:
+        rng.randomize()
+    _begin_run()
+    var step_limit: int = int(options.get("step_limit", 2400))
+    var step_count := 0
+    while run_state == RUN_STATES.RUNNING and step_count < step_limit:
+        _update_autoplay_pointer()
+        _process_running(simulation_fixed_delta)
+        step_count += 1
+    if run_state == RUN_STATES.RUNNING:
+        _finish_run("Simulation step cap reached.")
+    var results: Dictionary = last_run_results.duplicate(true)
+    results["depth_level"] = active_depth_level
+    results["selected_goal"] = autoplay_current_goal
+    results["seed"] = simulation_seed_override
+    results["step_count"] = step_count
+    simulation_mode_active = false
+    simulation_commit_progress = true
+    simulation_fixed_delta = 1.0 / 30.0
+    simulation_seed_override = -1
+    simulation_data_override.clear()
+    simulation_depth_override = -1
+    autoplay_enabled = false
+    autoplay_pointer_direction = Vector2.ZERO
+    return results
+
 func _process_running(delta: float) -> void:
+    simulation_elapsed += delta
     time_left = max(0.0, time_left - delta * _get_time_drain_rate())
     _process_player_movement(delta)
     _process_drilling(delta)
     _process_pickup_drones(delta)
-    _collect_pickups()
+    _collect_pickups(delta)
     _bank_cargo_if_at_base()
     _process_delivery_drone(delta)
     _process_delivery_drone_visuals(delta)
@@ -224,7 +326,7 @@ func _process_player_movement(delta: float) -> void:
             player_velocity = Vector2.ZERO
             contact_node_id = attached_node_id
             last_drill_direction = attached_push_direction
-            _update_tail()
+            _update_drill_train(previous_pos, delta)
             return
         attached_node_id = -1
     var candidate: Vector2 = player_pos + player_velocity * delta
@@ -234,7 +336,7 @@ func _process_player_movement(delta: float) -> void:
     if collision_index == -1:
         player_pos = candidate
         _carve_dirt_segment(previous_pos, player_pos, 28.0)
-        _update_tail()
+        _update_drill_train(previous_pos, delta)
         return
     contact_node_id = collision_index
     var node: Dictionary = world_nodes[collision_index]
@@ -262,7 +364,7 @@ func _process_player_movement(delta: float) -> void:
     player_pos.x = clampf(player_pos.x, -WORLD_SIZE.x * 0.5 + PLAYER_RADIUS, WORLD_SIZE.x * 0.5 - PLAYER_RADIUS)
     player_pos.y = clampf(player_pos.y, -WORLD_SIZE.y * 0.5 + PLAYER_RADIUS, WORLD_SIZE.y * 0.5 - PLAYER_RADIUS)
     _carve_dirt_segment(previous_pos, player_pos, 28.0)
-    _update_tail()
+    _update_drill_train(previous_pos, delta)
 
 func _process_drilling(delta: float) -> void:
     target_node_id = _get_contact_drill_node_index()
@@ -282,7 +384,7 @@ func _process_drilling(delta: float) -> void:
     if float(node["health"]) <= 0.0:
         _break_node(target_node_id)
 
-func _collect_pickups() -> void:
+func _collect_pickups(delta: float) -> void:
     if pickups.is_empty():
         return
     var collect_radius: float = _get_pickup_radius()
@@ -290,7 +392,7 @@ func _collect_pickups() -> void:
     for pickup in pickups:
         var pickup_pos: Vector2 = pickup.get("pos", Vector2.ZERO)
         var pickup_vel: Vector2 = pickup.get("vel", Vector2.ZERO)
-        pickup_pos += pickup_vel * get_process_delta_time()
+        pickup_pos += pickup_vel * delta
         pickup_vel *= 0.9
         pickup["pos"] = pickup_pos
         pickup["vel"] = pickup_vel
@@ -314,42 +416,48 @@ func _bank_cargo_if_at_base() -> void:
         banked_counts[material_id] = int(banked_counts.get(material_id, 0)) + int(carry_counts[material_id])
     carry_counts.clear()
     cargo_used = 0
+    bank_trips += 1
     run_status = "Cargo dropped off at the surface rig."
 
 func _process_delivery_drone(delta: float) -> void:
-    var drone_level: int = _get_upgrade_level("delivery_drone")
-    if drone_level <= 0 or cargo_used <= 0:
-        drone_delivery_timer = DRONE_DELIVERY_INTERVAL
+    var drone_count: int = MINING_BALANCE.get_delivery_drone_count(_get_upgrade_levels())
+    if drone_count <= 0 or cargo_used <= 0:
+        drone_delivery_timer = _get_delivery_dispatch_window()
         return
-    drone_delivery_timer -= delta
+    drone_delivery_timer = max(0.0, drone_delivery_timer - delta)
     if drone_delivery_timer > 0.0:
         return
-    drone_delivery_timer = max(2.8, DRONE_DELIVERY_INTERVAL - 1.2 * float(drone_level))
-    var delivered: int = 0
-    var delivered_material_id := ""
-    for material_id_variant in carry_counts.keys():
-        var material_id: String = String(material_id_variant)
-        if int(carry_counts[material_id]) <= 0:
-            continue
-        carry_counts[material_id] = int(carry_counts[material_id]) - 1
-        if int(carry_counts[material_id]) <= 0:
-            carry_counts.erase(material_id)
-        banked_counts[material_id] = int(banked_counts.get(material_id, 0)) + 1
-        cargo_used = max(0, cargo_used - 1)
-        delivered = 1
-        delivered_material_id = material_id
-        break
-    if delivered > 0 and delivered_material_id != "":
-        run_status = "Delivery drone shipped one crate home."
-        _spawn_delivery_drone_visual(delivered_material_id, _get_material_by_id(delivered_material_id))
+    drone_delivery_timer = _get_delivery_dispatch_window()
+    var active_drones: int = delivery_drone_visuals.size()
+    var available_dispatches: int = max(0, drone_count - active_drones)
+    if available_dispatches <= 0:
+        return
+    var dispatched: int = 0
+    var items_per_dispatch: int = MINING_BALANCE.get_delivery_items_per_dispatch(_get_upgrade_levels())
+    while dispatched < available_dispatches and cargo_used > 0:
+        var dispatched_material_id := ""
+        var cargo_count := 0
+        for item_index in range(items_per_dispatch):
+            var delivered_material_id: String = _take_one_cargo_for_delivery()
+            if delivered_material_id == "":
+                break
+            if dispatched_material_id == "":
+                dispatched_material_id = delivered_material_id
+            cargo_count += 1
+        if dispatched_material_id == "":
+            break
+        _spawn_delivery_drone_visual(dispatched_material_id, _get_material_by_id(dispatched_material_id), cargo_count)
+        dispatched += 1
+    if dispatched > 0:
+        run_status = "Dump drone hauling cargo back to the surface rig."
 
 func _process_pickup_drones(delta: float) -> void:
-    var drone_level: int = _get_upgrade_level("magnet_drone")
-    if drone_level <= 0:
+    var drone_count: int = MINING_BALANCE.get_pickup_drone_count(_get_upgrade_levels())
+    if drone_count <= 0:
         _clear_all_pickup_claims()
         pickup_drone_visuals.clear()
         return
-    while pickup_drone_visuals.size() < drone_level:
+    while pickup_drone_visuals.size() < drone_count:
         var drone_index: int = pickup_drone_visuals.size()
         pickup_drone_visuals.append({
             "index": drone_index,
@@ -361,9 +469,10 @@ func _process_pickup_drones(delta: float) -> void:
             "carry_color": Color.WHITE,
             "orbit_seed": rng.randf_range(0.0, TAU)
         })
-    while pickup_drone_visuals.size() > drone_level:
+    while pickup_drone_visuals.size() > drone_count:
         pickup_drone_visuals.pop_back()
     _sync_pickup_claims_with_drones()
+    var pickup_speed: float = _get_pickup_drone_speed()
     for index in range(pickup_drone_visuals.size()):
         var drone: Dictionary = pickup_drone_visuals[index]
         var state: String = String(drone.get("state", "idle"))
@@ -376,7 +485,7 @@ func _process_pickup_drones(delta: float) -> void:
                 drone["target_uid"] = -1
             else:
                 var pickup_pos: Vector2 = target_pickup.get("pos", player_pos)
-                drone_pos = drone_pos.move_toward(pickup_pos, PICKUP_DRONE_SPEED * delta)
+                drone_pos = drone_pos.move_toward(pickup_pos, pickup_speed * delta)
                 if drone_pos.distance_to(pickup_pos) <= PICKUP_DRONE_GRAB_RANGE:
                     drone["carry_material_id"] = String(target_pickup.get("material_id", ""))
                     drone["carry_material_name"] = String(target_pickup.get("material_name", "loot"))
@@ -385,7 +494,7 @@ func _process_pickup_drones(delta: float) -> void:
                     _remove_pickup_by_uid(int(drone.get("target_uid", -1)))
                     drone["target_uid"] = -1
         elif state == "to_player":
-            drone_pos = drone_pos.move_toward(player_pos, PICKUP_DRONE_SPEED * delta)
+            drone_pos = drone_pos.move_toward(player_pos, pickup_speed * delta)
             if drone_pos.distance_to(player_pos) <= _get_pickup_radius() * 0.5 + 10.0:
                 if cargo_used < _get_cargo_capacity():
                     var carry_material_id: String = String(drone.get("carry_material_id", ""))
@@ -416,20 +525,49 @@ func _process_delivery_drone_visuals(delta: float) -> void:
         return
     var remaining: Array[Dictionary] = []
     var base_pos: Vector2 = _get_base_position()
+    var delivery_speed: float = _get_delivery_drone_speed()
     for drone in delivery_drone_visuals:
-        var drone_pos: Vector2 = drone.get("pos", player_pos).move_toward(base_pos, DRONE_DELIVERY_SPEED * delta)
+        var drone_pos: Vector2 = drone.get("pos", player_pos).move_toward(base_pos, delivery_speed * delta)
         drone["pos"] = drone_pos
         if drone_pos.distance_to(base_pos) > 18.0:
             remaining.append(drone)
+            continue
+        _bank_delivery_drone_cargo(drone)
     delivery_drone_visuals = remaining
 
-func _spawn_delivery_drone_visual(material_id: String, material: Dictionary) -> void:
+func _spawn_delivery_drone_visual(material_id: String, material: Dictionary, cargo_count: int = 1) -> void:
     delivery_drone_visuals.append({
         "pos": player_pos,
         "material_id": material_id,
         "carry_color": material.get("color", Color.WHITE),
-        "carry_name": String(material.get("name", material_id))
+        "carry_name": String(material.get("name", material_id)),
+        "cargo_count": max(1, cargo_count)
     })
+
+func _take_one_cargo_for_delivery() -> String:
+    for material_id_variant in carry_counts.keys():
+        var material_id: String = String(material_id_variant)
+        if int(carry_counts[material_id]) <= 0:
+            continue
+        carry_counts[material_id] = int(carry_counts[material_id]) - 1
+        if int(carry_counts[material_id]) <= 0:
+            carry_counts.erase(material_id)
+        cargo_used = max(0, cargo_used - 1)
+        return material_id
+    return ""
+
+func _bank_delivery_drone_cargo(drone: Dictionary) -> void:
+    var material_id: String = String(drone.get("material_id", ""))
+    if material_id == "":
+        return
+    var cargo_count: int = max(1, int(drone.get("cargo_count", 1)))
+    banked_counts[material_id] = int(banked_counts.get(material_id, 0)) + cargo_count
+    delivery_dump_count += cargo_count
+
+func _bank_pending_delivery_drone_visuals() -> void:
+    for drone in delivery_drone_visuals:
+        _bank_delivery_drone_cargo(drone)
+    delivery_drone_visuals.clear()
 
 func _find_available_pickup_uid(origin: Vector2) -> int:
     var nearest_uid := -1
@@ -510,7 +648,7 @@ func _generate_world() -> void:
     var safety_center: Vector2 = _get_base_position()
     for node_index in range(node_count):
         var material: Dictionary = _roll_material_for_level(available_tiers)
-        var health: float = float(material.get("hardness", 12.0)) * (1.0 + 0.15 * float(active_depth_level - 1))
+        var health: float = MINING_BALANCE.get_node_health(material, active_depth_level)
         var radius: float = clampf(14.0 + sqrt(health) * 1.9, NODE_RADIUS_MIN, NODE_RADIUS_MAX)
         var pos: Vector2 = Vector2.ZERO
         var attempts: int = 0
@@ -550,17 +688,10 @@ func _node_overlaps_existing(pos: Vector2, radius: float) -> bool:
 func _roll_material_for_level(available_tiers: int) -> Dictionary:
     if available_tiers <= 1:
         return material_tiers[0]
-    var weights: Array[float] = []
+    var weights: Array[float] = MINING_BALANCE.get_material_weights(available_tiers, _get_upgrade_levels())
     var total_weight: float = 0.0
-    for index in range(available_tiers):
-        var tier: Dictionary = material_tiers[index]
-        var weight: float = 1.0 + float(index == 0) * 4.0
-        if index == available_tiers - 1:
-            weight = 7.0
-        elif index == available_tiers - 2:
-            weight = 3.0
-        weights.append(weight)
-        total_weight += weight
+    for weight in weights:
+        total_weight += float(weight)
     var roll: float = rng.randf() * total_weight
     for index in range(available_tiers):
         roll -= weights[index]
@@ -575,7 +706,7 @@ func _break_node(node_index: int) -> void:
     nodes_broken += 1
     var xp_reward: int = int(round(int(node.get("xp", 0)) * _get_xp_multiplier()))
     run_xp += xp_reward
-    var drop_count: int = max(1, int(round(1.0 + float(node.get("value", 1)) / 14.0)))
+    var drop_count: int = MINING_BALANCE.get_drop_count_for_node(node)
     var scatter_dir: Vector2 = last_drill_direction
     if scatter_dir == Vector2.ZERO:
         scatter_dir = Vector2.DOWN
@@ -616,16 +747,7 @@ func _remap_node_index_after_removal(index: int, removed_index: int) -> int:
         return index - 1
     return index
 
-func _finish_run(reason: String) -> void:
-    if run_state == RUN_STATES.SUMMARY:
-        return
-    _bank_cargo_if_at_base()
-    for material_id_variant in carry_counts.keys():
-        var material_id: String = String(material_id_variant)
-        banked_counts[material_id] = int(banked_counts.get(material_id, 0)) + int(carry_counts[material_id])
-    carry_counts.clear()
-    cargo_used = 0
-
+func _build_run_results(reason: String) -> Dictionary:
     var money_breakdown: Array[String] = []
     var total_money: int = 0
     for material_id_variant in banked_counts.keys():
@@ -650,6 +772,15 @@ func _finish_run(reason: String) -> void:
     }
     var level_progress: Dictionary = MINING_PROGRESS_SCRIPT.get_level_progress(projected_level_data)
     var level_gain: int = projected_level - before_level
+    var projected_data: Dictionary = persistent_data.duplicate(true)
+    projected_data["wallet"] = max(0, int(projected_data.get("wallet", 0)) + total_money)
+    projected_data["xp"] = projected_xp
+    projected_data["player_level"] = projected_level
+    projected_data["last_run_summary"] = ""
+    projected_data["last_run_breakdown"] = {}
+    projected_data["deepest_level_unlocked"] = max(int(projected_data.get("deepest_level_unlocked", 1)), active_depth_level)
+    MINING_BALANCE.refresh_depth_unlocks(projected_data)
+    projected_depth_unlock = int(projected_data.get("deepest_level_unlocked", projected_depth_unlock))
     var summary_text: String = "Run complete: %s\n\nDepth tier %d: %s\nNodes broken: %d\nXP earned: %d%s\nMoney earned: $%d\n\nCargo payout:\n%s\n\nLevel %d  XP %d/%d\nUnlocked depth tier: %d" % [
         reason,
         active_depth_level,
@@ -664,20 +795,49 @@ func _finish_run(reason: String) -> void:
         int(level_progress.get("next_level_xp", 1)),
         projected_depth_unlock
     ]
-    var results: Dictionary = {
+    return {
         "money": total_money,
         "xp": run_xp,
         "depth_level": active_depth_level,
         "summary_text": summary_text,
         "reason": reason,
-        "banked_counts": banked_counts.duplicate(true)
+        "banked_counts": banked_counts.duplicate(true),
+        "bank_trips": bank_trips,
+        "delivery_dumps": delivery_dump_count,
+        "nodes_broken": nodes_broken,
+        "time_left": snappedf(time_left, 0.01),
+        "time_limit": snappedf(_get_run_time_limit(), 0.01),
+        "drill_left": snappedf(drill_health, 0.01),
+        "drill_max": snappedf(_get_drill_health_max(), 0.01),
+        "cargo_capacity": _get_cargo_capacity(),
+        "simulated_seconds": snappedf(simulation_elapsed, 0.01),
+        "projected_data": projected_data,
+        "level_progress": level_progress.duplicate(true)
     }
-    persistent_data = MINING_PROGRESS_SCRIPT.apply_run_results(results)
+
+func _finish_run(reason: String) -> void:
+    if run_state == RUN_STATES.SUMMARY:
+        return
+    _bank_cargo_if_at_base()
+    _bank_pending_delivery_drone_visuals()
+    for material_id_variant in carry_counts.keys():
+        var material_id: String = String(material_id_variant)
+        banked_counts[material_id] = int(banked_counts.get(material_id, 0)) + int(carry_counts[material_id])
+    carry_counts.clear()
+    cargo_used = 0
+
+    var results: Dictionary = _build_run_results(reason)
+    last_run_results = results.duplicate(true)
+    if simulation_commit_progress:
+        persistent_data = MINING_PROGRESS_SCRIPT.apply_run_results(results)
+    else:
+        persistent_data = results.get("projected_data", persistent_data).duplicate(true)
     run_state = RUN_STATES.SUMMARY
-    Global.game_state = Util.GAME_STATES.UPGRADES
+    Global.game_state = Util.GAME_STATES.UPGRADES if simulation_commit_progress else Util.GAME_STATES.PLAYING
     run_status = reason
     _refresh_mouse_capture_state()
-    _show_summary(summary_text)
+    if simulation_commit_progress and not simulation_mode_active:
+        _show_summary(str(results.get("summary_text", "Run complete.")))
 
 func _show_summary(summary_text: String) -> void:
     summary_label.text = summary_text
@@ -711,16 +871,110 @@ func _configure_summary_panel() -> void:
     loadout_list.hide()
     upgrade_header.hide()
     upgrade_scroll.hide()
+    summary_label.add_theme_font_size_override("font_size", 26)
+    dive_button.add_theme_font_size_override("font_size", 30)
+    reset_button.add_theme_font_size_override("font_size", 30)
+    _style_utility_button(dive_button)
+    _style_utility_button(reset_button)
 
 func _refresh_hud() -> void:
-    var level_progress: Dictionary = MINING_PROGRESS_SCRIPT.get_level_progress(MINING_PROGRESS_SCRIPT.load_data())
+    var projected_xp: int = int(persistent_data.get("xp", 0)) + run_xp
+    var projected_level: int = MINING_PROGRESS_SCRIPT.get_level_for_total_xp(projected_xp)
+    var level_progress: Dictionary = MINING_PROGRESS_SCRIPT.get_level_progress({
+        "player_level": projected_level,
+        "xp": projected_xp
+    })
+    var run_time_limit: float = _get_run_time_limit()
+    var drill_health_max: float = _get_drill_health_max()
+    var cargo_capacity: int = _get_cargo_capacity()
+    var xp_current: int = int(level_progress.get("current_xp", 0))
+    var xp_next: int = max(1, int(level_progress.get("next_level_xp", 1)))
     wallet_label.text = "Wallet: $%s" % Util.get_number_short_text(int(persistent_data.get("wallet", 0)))
     phase_label.text = "Depth Tier %d/%d: %s" % [active_depth_level, MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL, String(active_material.get("name", "Stone"))]
     depth_label.text = "Unlocked Depth: %d   Current XP Level: %d" % [int(persistent_data.get("deepest_level_unlocked", 1)), int(level_progress.get("current_level", 1))]
-    stat_label.text = "Timer %.1fs   Drill %.0f/%.0f   Hull %.0f" % [time_left, drill_health, _get_drill_health_max(), hull_health]
-    cargo_label.text = "Cargo %d/%d   Banked %d" % [cargo_used, _get_cargo_capacity(), _get_total_banked_count()]
-    weapon_label.text = "Move %.0f  Drill %.0f/s  Pickup %.0f  XP +%d%%" % [_get_move_speed(), _get_drill_dps(), _get_pickup_radius(), int(round((_get_xp_multiplier() - 1.0) * 100.0))]
-    boss_label.text = run_status
+    time_value_label.text = "Timer %.1fs / %.1fs" % [time_left, run_time_limit]
+    time_bar.max_value = run_time_limit
+    time_bar.value = time_left
+    drill_value_label.text = "Drill Integrity %.0f / %.0f" % [drill_health, drill_health_max]
+    drill_bar.max_value = drill_health_max
+    drill_bar.value = drill_health
+    hull_value_label.text = "Hull %.0f / 100" % [hull_health]
+    hull_bar.max_value = 100.0
+    hull_bar.value = hull_health
+    cargo_value_label.text = "Cargo %d / %d   Banked %d" % [cargo_used, cargo_capacity, _get_total_banked_count()]
+    cargo_bar.max_value = cargo_capacity
+    cargo_bar.value = cargo_used
+    xp_value_label.text = "XP %d / %d   Run XP +%d" % [xp_current, xp_next, run_xp]
+    xp_bar.max_value = xp_next
+    xp_bar.value = xp_current
+    weapon_label.text = "Rig Stats   Move %.0f   Drill %.0f/s   Pickup %.0f   XP Boost +%d%%" % [_get_move_speed(), _get_drill_dps(), _get_pickup_radius(), int(round((_get_xp_multiplier() - 1.0) * 100.0))]
+    boss_label.text = "Status   %s" % run_status
+
+func _apply_hud_theme() -> void:
+    _style_panel(top_panel, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0), 6)
+    _style_panel(shop_panel, Color(0.04, 0.06, 0.1, 0.97), Color(0.88, 0.92, 1.0, 0.95), 6)
+    _style_panel(hint_panel, Color(0.04, 0.06, 0.1, 0.9), Color(0.88, 0.92, 1.0, 0.82), 6)
+    _style_meter(time_bar, Color(0.9, 0.69, 0.2, 0.96))
+    _style_meter(drill_bar, Color(0.41, 0.79, 1.0, 0.96))
+    _style_meter(hull_bar, Color(0.86, 0.31, 0.33, 0.96))
+    _style_meter(cargo_bar, Color(0.8, 0.57, 0.22, 0.96))
+    _style_meter(xp_bar, Color(0.37, 0.82, 0.67, 0.96))
+    _style_hud_label(wallet_label, 26, Color(0.96, 0.98, 1.0, 1.0))
+    _style_hud_label(phase_label, 34, Color(1.0, 0.87, 0.48, 1.0))
+    _style_hud_label(depth_label, 24, Color(0.83, 0.9, 1.0, 1.0))
+    _style_hud_label(time_value_label, 22, Color(1.0, 0.88, 0.56, 1.0))
+    _style_hud_label(drill_value_label, 22, Color(0.74, 0.91, 1.0, 1.0))
+    _style_hud_label(hull_value_label, 22, Color(1.0, 0.76, 0.76, 1.0))
+    _style_hud_label(cargo_value_label, 22, Color(0.97, 0.83, 0.61, 1.0))
+    _style_hud_label(xp_value_label, 22, Color(0.76, 1.0, 0.9, 1.0))
+    _style_hud_label(weapon_label, 20, Color(0.88, 0.94, 1.0, 0.96))
+    _style_hud_label(boss_label, 22, Color(0.98, 0.95, 0.77, 1.0))
+    _style_hud_label(hint_label, 20, Color(0.92, 0.96, 1.0, 1.0))
+
+func _style_hud_label(label: Label, font_size: int, color: Color) -> void:
+    if label == null:
+        return
+    label.add_theme_font_size_override("font_size", font_size)
+    label.add_theme_color_override("font_color", color)
+    label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.55))
+    label.add_theme_constant_override("shadow_offset_x", 1)
+    label.add_theme_constant_override("shadow_offset_y", 1)
+
+func _style_meter(bar: ProgressBar, fill_color: Color) -> void:
+    if bar == null:
+        return
+    var background := StyleBoxFlat.new()
+    background.bg_color = Color(0.01, 0.02, 0.05, 0.82)
+    background.border_color = Color(0.84, 0.9, 1.0, 0.6)
+    background.border_width_left = 2
+    background.border_width_top = 2
+    background.border_width_right = 2
+    background.border_width_bottom = 2
+    background.corner_radius_top_left = 5
+    background.corner_radius_top_right = 5
+    background.corner_radius_bottom_left = 5
+    background.corner_radius_bottom_right = 5
+    var fill := background.duplicate(true)
+    fill.bg_color = fill_color
+    fill.border_color = fill_color.lightened(0.12)
+    bar.add_theme_stylebox_override("background", background)
+    bar.add_theme_stylebox_override("fill", fill)
+
+func _style_panel(panel: PanelContainer, background_color: Color, border_color: Color, corner_radius: int) -> void:
+    if panel == null:
+        return
+    var box := StyleBoxFlat.new()
+    box.bg_color = background_color
+    box.border_color = border_color
+    box.border_width_left = 2
+    box.border_width_top = 2
+    box.border_width_right = 2
+    box.border_width_bottom = 2
+    box.corner_radius_top_left = corner_radius
+    box.corner_radius_top_right = corner_radius
+    box.corner_radius_bottom_left = corner_radius
+    box.corner_radius_bottom_right = corner_radius
+    panel.add_theme_stylebox_override("panel", box)
 
 func _get_total_banked_count() -> int:
     var total: int = 0
@@ -728,44 +982,53 @@ func _get_total_banked_count() -> int:
         total += int(count)
     return total
 
+func _get_upgrade_levels() -> Dictionary:
+    return persistent_data.get("upgrades", {})
+
 func _get_move_speed() -> float:
-    return 240.0 + 20.0 * float(_get_upgrade_level("engine_tuning"))
+    return MINING_BALANCE.get_move_speed(_get_upgrade_levels())
 
 func _get_dirt_drag_multiplier() -> float:
-    var base_drag: float = 0.92 - 0.03 * float(active_depth_level - 1)
-    base_drag += 0.04 * float(_get_upgrade_level("dirt_softener"))
-    return clampf(base_drag, 0.5, 1.08)
+    return MINING_BALANCE.get_dirt_drag_multiplier(active_depth_level, _get_upgrade_levels())
 
 func _get_drill_dps() -> float:
-    return 22.0 + 5.5 * float(_get_upgrade_level("drill_torque"))
+    return MINING_BALANCE.get_drill_dps(_get_upgrade_levels())
 
 func _get_drill_health_max() -> float:
-    return 84.0 + 18.0 * float(_get_upgrade_level("drill_plating"))
+    return MINING_BALANCE.get_drill_health_max(_get_upgrade_levels())
 
 func _get_run_time_limit() -> float:
-    return 10.0 + 1.5 * float(_get_upgrade_level("timer_reserve"))
+    return MINING_BALANCE.get_run_time_limit(_get_upgrade_levels())
 
 func _get_time_drain_rate() -> float:
-    return 1.0 + 0.1 * float(active_depth_level - 1)
+    return MINING_BALANCE.get_time_drain_rate(active_depth_level, _get_upgrade_levels())
 
 func _get_cargo_capacity() -> int:
-    return 10 + 3 * _get_upgrade_level("cargo_pods")
+    return MINING_BALANCE.get_cargo_capacity(_get_upgrade_levels())
 
 func _get_value_multiplier() -> float:
-    return 1.0 + 0.12 * float(_get_upgrade_level("ore_refinery"))
+    return MINING_BALANCE.get_value_multiplier(_get_upgrade_levels())
 
 func _get_xp_multiplier() -> float:
-    return 1.0 + 0.11 * float(_get_upgrade_level("xp_calibration"))
+    return MINING_BALANCE.get_xp_multiplier(_get_upgrade_levels())
 
 func _get_pickup_radius() -> float:
-    return 30.0 + 7.0 * float(_get_upgrade_level("pickup_radius")) + 18.0 * float(_get_upgrade_level("magnet_drone"))
+    return MINING_BALANCE.get_pickup_radius(_get_upgrade_levels())
 
 func _get_drill_wear(node: Dictionary) -> float:
-    var health_ratio: float = float(node.get("max_health", 20.0)) / 28.0
-    return max(1.4, health_ratio * 1.15)
+    return MINING_BALANCE.get_node_wear_per_second(node, _get_upgrade_levels())
+
+func _get_pickup_drone_speed() -> float:
+    return MINING_BALANCE.get_pickup_drone_speed(_get_upgrade_levels())
+
+func _get_delivery_drone_speed() -> float:
+    return MINING_BALANCE.get_delivery_drone_speed(_get_upgrade_levels())
+
+func _get_delivery_dispatch_window() -> float:
+    return MINING_BALANCE.get_delivery_dispatch_window(_get_upgrade_levels())
 
 func _get_upgrade_level(upgrade_id: String) -> int:
-    return int(persistent_data.get("upgrades", {}).get(upgrade_id, 0))
+    return int(_get_upgrade_levels().get(upgrade_id, 0))
 
 func _get_collision_node_index(candidate: Vector2) -> int:
     var nearest_index: int = -1
@@ -847,14 +1110,98 @@ func _play_drill_tick() -> void:
     if drill_audio_timer > 0.0:
         return
     drill_audio_timer = DRILL_AUDIO_INTERVAL
-    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER)
+    if not simulation_mode_active:
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER)
 
 func _get_pointer_direction() -> Vector2:
+    if autoplay_enabled:
+        return autoplay_pointer_direction
     var mouse_world: Vector2 = _screen_to_world(aim_cursor_screen_pos)
     var dir: Vector2 = mouse_world - player_pos
     if dir.length() < 8.0:
         return Vector2.ZERO
     return dir.normalized()
+
+func _update_autoplay_pointer() -> void:
+    if not autoplay_enabled:
+        return
+    var base_pos: Vector2 = _get_base_position()
+    var cargo_capacity: int = max(1, _get_cargo_capacity())
+    var nearest_node_index: int = _find_nearest_node_index(player_pos)
+    var nearest_pickup_uid: int = _find_nearest_pickup_uid(player_pos)
+    var should_bank: bool = false
+    if cargo_used >= cargo_capacity:
+        should_bank = true
+    elif cargo_used > 0 and player_pos.distance_to(base_pos) <= BASE_RADIUS * 0.9:
+        should_bank = true
+    elif cargo_used > 0 and time_left <= _estimate_travel_time_to(base_pos) + 1.2:
+        should_bank = true
+    elif cargo_used > 0 and drill_health <= _estimate_autoplay_wear_buffer():
+        should_bank = true
+
+    var target_world: Vector2 = base_pos
+    autoplay_current_goal = "bank"
+    if not should_bank:
+        var should_collect_pickup: bool = false
+        if cargo_used < cargo_capacity and nearest_pickup_uid != -1:
+            var nearest_pickup: Dictionary = _get_pickup_by_uid(nearest_pickup_uid)
+            var pickup_pos: Vector2 = nearest_pickup.get("pos", player_pos)
+            var pickup_distance: float = player_pos.distance_to(pickup_pos)
+            var node_distance: float = INF
+            if nearest_node_index != -1:
+                node_distance = player_pos.distance_to(world_nodes[nearest_node_index].get("pos", player_pos))
+            var pickup_priority_distance: float = max(72.0, _get_pickup_radius() + 32.0)
+            should_collect_pickup = pickup_distance <= pickup_priority_distance or pickup_distance + 24.0 < node_distance
+            if should_collect_pickup:
+                target_world = pickup_pos
+                autoplay_current_goal = "pickup"
+        if autoplay_current_goal == "bank" and nearest_node_index != -1:
+            target_world = world_nodes[nearest_node_index].get("pos", player_pos)
+            autoplay_current_goal = "node"
+        elif autoplay_current_goal == "bank":
+            target_world = base_pos
+            autoplay_current_goal = "base"
+    var dir: Vector2 = target_world - player_pos
+    autoplay_pointer_direction = dir.normalized() if dir.length() >= 8.0 else Vector2.ZERO
+    if autoplay_enabled and not simulation_mode_active:
+        aim_cursor_screen_pos = _world_to_screen(player_pos + autoplay_pointer_direction * DRILL_RANGE)
+
+func _estimate_travel_time_to(target_pos: Vector2) -> float:
+    var speed: float = max(1.0, _get_move_speed() * _get_dirt_drag_multiplier())
+    return player_pos.distance_to(target_pos) / speed
+
+func _estimate_autoplay_wear_buffer() -> float:
+    if world_nodes.is_empty():
+        return 8.0
+    var nearest_node_index: int = _find_nearest_node_index(player_pos)
+    if nearest_node_index == -1:
+        return 8.0
+    var node: Dictionary = world_nodes[nearest_node_index]
+    var expected_contact_time: float = float(node.get("health", 1.0)) / max(1.0, _get_drill_dps() * 4.2)
+    return 6.0 + _get_drill_wear(node) * max(0.4, expected_contact_time)
+
+func _find_nearest_node_index(origin: Vector2) -> int:
+    var nearest_index := -1
+    var nearest_distance := INF
+    for index in range(world_nodes.size()):
+        var distance: float = origin.distance_to(world_nodes[index].get("pos", origin))
+        if distance < nearest_distance:
+            nearest_distance = distance
+            nearest_index = index
+    return nearest_index
+
+func _find_nearest_pickup_uid(origin: Vector2) -> int:
+    var nearest_uid := -1
+    var nearest_distance := INF
+    for pickup in pickups:
+        var pickup_uid: int = int(pickup.get("uid", -1))
+        if pickup_uid == -1:
+            continue
+        var distance: float = origin.distance_to(pickup.get("pos", origin))
+        if distance < nearest_distance:
+            nearest_distance = distance
+            nearest_uid = pickup_uid
+    return nearest_uid
 
 func _draw_aim_cursor() -> void:
     if run_state != RUN_STATES.RUNNING:
@@ -888,17 +1235,149 @@ func _clamp_cursor_to_viewport(position: Vector2) -> Vector2:
     )
 
 func _refresh_mouse_capture_state() -> void:
-    var should_capture: bool = run_state == RUN_STATES.RUNNING and not _is_settings_open()
+    var should_capture: bool = run_state == RUN_STATES.RUNNING and not _is_settings_open() and not autoplay_enabled and not simulation_mode_active
     Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if should_capture else Input.MOUSE_MODE_VISIBLE
 
 func _is_settings_open() -> bool:
     return settings_panel != null and settings_panel.visible
 
-func _update_tail() -> void:
-    tail_points.push_front(player_pos)
-    var max_points: int = 14
-    while tail_points.size() > max_points:
-        tail_points.pop_back()
+func _ensure_crt_overlay() -> void:
+    var overlay: CanvasLayer = get_node_or_null("MiningCrtOverlay") as CanvasLayer
+    if overlay != null:
+        overlay.visible = false
+
+func _get_drill_heading() -> Vector2:
+    var heading: Vector2 = _get_pointer_direction()
+    if heading == Vector2.ZERO:
+        heading = player_velocity.normalized()
+    if heading == Vector2.ZERO:
+        heading = last_drill_direction
+    if heading == Vector2.ZERO:
+        heading = Vector2.DOWN
+    return heading.normalized()
+
+func _reset_drill_train() -> void:
+    trail_history.clear()
+    drill_copies.clear()
+    var heading: Vector2 = _get_drill_heading()
+    for sample_index in range(DRILL_TRAIL_MAX_SAMPLES):
+        trail_history.append({
+            "pos": player_pos - heading * DRILL_TRAIL_SAMPLE_STEP * float(sample_index),
+            "dir": heading
+        })
+    for copy_index in range(DRILL_COPY_COUNT):
+        var path_distance: float = DRILL_COPY_SPACING * float(copy_index + 1)
+        var sample: Dictionary = _sample_trail(path_distance)
+        drill_copies.append({
+            "path_distance": path_distance,
+            "pos": sample.get("pos", player_pos),
+            "dir": sample.get("dir", heading),
+            "offset": Vector2.ZERO
+        })
+
+func _update_drill_train(previous_pos: Vector2, delta: float) -> void:
+    _record_player_trail(previous_pos)
+    _update_drill_copies(delta)
+
+func _record_player_trail(previous_pos: Vector2) -> void:
+    var heading: Vector2 = (player_pos - previous_pos).normalized()
+    if heading == Vector2.ZERO:
+        heading = _get_drill_heading()
+    if trail_history.is_empty():
+        trail_history.append({
+            "pos": player_pos,
+            "dir": heading
+        })
+        return
+    var latest_pos: Vector2 = trail_history[0].get("pos", player_pos)
+    if latest_pos.distance_to(player_pos) >= DRILL_TRAIL_SAMPLE_STEP:
+        trail_history.push_front({
+            "pos": player_pos,
+            "dir": heading
+        })
+    else:
+        trail_history[0] = {
+            "pos": player_pos,
+            "dir": heading
+        }
+    while trail_history.size() > DRILL_TRAIL_MAX_SAMPLES:
+        trail_history.pop_back()
+
+func _sample_trail(path_distance: float) -> Dictionary:
+    if trail_history.is_empty():
+        return {
+            "pos": player_pos,
+            "dir": _get_drill_heading()
+        }
+    var remaining_distance: float = maxf(path_distance, 0.0)
+    for point_index in range(trail_history.size() - 1):
+        var newer_pos: Vector2 = trail_history[point_index].get("pos", player_pos)
+        var older_pos: Vector2 = trail_history[point_index + 1].get("pos", newer_pos)
+        var segment_length: float = newer_pos.distance_to(older_pos)
+        if segment_length <= 0.001:
+            continue
+        if remaining_distance <= segment_length:
+            var segment_t: float = remaining_distance / segment_length
+            var travel_dir: Vector2 = (newer_pos - older_pos).normalized()
+            return {
+                "pos": newer_pos.lerp(older_pos, segment_t),
+                "dir": travel_dir if travel_dir != Vector2.ZERO else _get_drill_heading()
+            }
+        remaining_distance -= segment_length
+    var last_sample: Dictionary = trail_history[trail_history.size() - 1]
+    return {
+        "pos": last_sample.get("pos", player_pos),
+        "dir": last_sample.get("dir", _get_drill_heading())
+    }
+
+func _update_drill_copies(delta: float) -> void:
+    if drill_copies.is_empty():
+        return
+    var occupied_positions: Array[Vector2] = [player_pos]
+    for copy_index in range(drill_copies.size()):
+        var copy_data: Dictionary = drill_copies[copy_index]
+        var sample: Dictionary = _sample_trail(float(copy_data.get("path_distance", DRILL_COPY_SPACING)))
+        var target_pos: Vector2 = sample.get("pos", player_pos)
+        var target_dir: Vector2 = sample.get("dir", _get_drill_heading())
+        if target_dir == Vector2.ZERO:
+            target_dir = _get_drill_heading()
+
+        var offset: Vector2 = copy_data.get("offset", Vector2.ZERO)
+        offset = offset.move_toward(Vector2.ZERO, delta * DRILL_COPY_BUMP_RETURN_SPEED)
+
+        var copy_target: Vector2 = target_pos + offset
+        for occupied_pos in occupied_positions:
+            var separation: Vector2 = copy_target - occupied_pos
+            var separation_length: float = separation.length()
+            if separation_length < 0.001:
+                var fallback_normal: Vector2 = Vector2.RIGHT.rotated(target_dir.angle() + PI * 0.5)
+                offset += fallback_normal * delta * DRILL_COPY_BUMP_PUSH_SPEED * 0.35
+                continue
+            if separation_length >= DRILL_COPY_BUMP_RADIUS:
+                continue
+            offset += separation.normalized() * (DRILL_COPY_BUMP_RADIUS - separation_length) * delta * DRILL_COPY_BUMP_PUSH_SPEED
+        if offset.length() > DRILL_COPY_BUMP_LIMIT:
+            offset = offset.normalized() * DRILL_COPY_BUMP_LIMIT
+
+        var current_pos: Vector2 = copy_data.get("pos", copy_target)
+        current_pos = current_pos.lerp(target_pos + offset, min(1.0, delta * DRILL_COPY_FOLLOW_SPEED))
+        current_pos.x = clampf(current_pos.x, -WORLD_SIZE.x * 0.5 + PLAYER_RADIUS, WORLD_SIZE.x * 0.5 - PLAYER_RADIUS)
+        current_pos.y = clampf(current_pos.y, -WORLD_SIZE.y * 0.5 + PLAYER_RADIUS, WORLD_SIZE.y * 0.5 - PLAYER_RADIUS)
+
+        var current_dir: Vector2 = copy_data.get("dir", target_dir)
+        if current_dir == Vector2.ZERO:
+            current_dir = target_dir
+        current_dir = current_dir.lerp(target_dir, min(1.0, delta * 8.0))
+        if current_dir != Vector2.ZERO:
+            current_dir = current_dir.normalized()
+        else:
+            current_dir = _get_drill_heading()
+
+        copy_data["pos"] = current_pos
+        copy_data["dir"] = current_dir
+        copy_data["offset"] = offset
+        drill_copies[copy_index] = copy_data
+        occupied_positions.append(current_pos)
 
 func _get_camera_shake_offset() -> Vector2:
     if camera_shake_strength <= 0.0:
@@ -988,33 +1467,40 @@ func _draw_damage_numbers() -> void:
         draw_string(font, number_screen, String(number.get("text", "0")), HORIZONTAL_ALIGNMENT_CENTER, -1.0, font_size, color)
 
 func _draw_tail() -> void:
-    for index in range(tail_points.size()):
-        var tail_pos: Vector2 = _world_to_screen(tail_points[index])
-        var size_mult: float = 1.0 - float(index) / float(max(1, tail_points.size()))
-        var tail_radius: float = lerpf(5.0, 14.0, size_mult)
-        var tail_color: Color = active_material.get("color", Color(0.6, 0.5, 0.4, 1.0)).darkened(0.35 + 0.03 * float(index))
-        draw_circle(tail_pos, tail_radius, tail_color)
-        draw_circle(tail_pos, tail_radius * 0.35, Color(1.0, 1.0, 1.0, 0.1 + 0.15 * size_mult))
+    for copy_index in range(drill_copies.size() - 1, -1, -1):
+        var copy_data: Dictionary = drill_copies[copy_index]
+        var scale: float = 0.88 - 0.08 * float(copy_index)
+        var shell_color: Color = Color(0.16, 0.17, 0.2, 0.82 - 0.08 * float(copy_index))
+        var body_color: Color = Color(0.83, 0.74, 0.28, 0.74 - 0.09 * float(copy_index))
+        _draw_drill_ship(
+            _world_to_screen(copy_data.get("pos", player_pos)),
+            copy_data.get("dir", _get_drill_heading()),
+            scale,
+            shell_color,
+            body_color
+        )
 
 func _draw_player(origin: Vector2) -> void:
-    var player_screen: Vector2 = _world_to_screen(player_pos)
     var aim_dir: Vector2 = _get_pointer_direction()
     if aim_dir == Vector2.ZERO:
         aim_dir = player_velocity.normalized()
     if aim_dir == Vector2.ZERO:
         aim_dir = Vector2.DOWN
+    _draw_drill_ship(_world_to_screen(player_pos), aim_dir, 1.0, Color(0.16, 0.17, 0.2, 1.0), Color(0.83, 0.74, 0.28, 1.0))
+
+func _draw_drill_ship(screen_pos: Vector2, aim_dir: Vector2, scale: float, shell_color: Color, body_color: Color) -> void:
     var spin_angle: float = Time.get_ticks_msec() * 0.02
-    draw_circle(player_screen, PLAYER_RADIUS + 4.0, Color(0.16, 0.17, 0.2, 1.0))
+    draw_circle(screen_pos, (PLAYER_RADIUS + 4.0) * scale, shell_color)
     var body_points: PackedVector2Array = PackedVector2Array([
-        player_screen + Vector2(-14.0, 10.0).rotated(aim_dir.angle() + PI * 0.5),
-        player_screen + Vector2(0.0, -22.0).rotated(aim_dir.angle() + PI * 0.5),
-        player_screen + Vector2(14.0, 10.0).rotated(aim_dir.angle() + PI * 0.5)
+        screen_pos + Vector2(-14.0, 10.0).rotated(aim_dir.angle() + PI * 0.5) * scale,
+        screen_pos + Vector2(0.0, -22.0).rotated(aim_dir.angle() + PI * 0.5) * scale,
+        screen_pos + Vector2(14.0, 10.0).rotated(aim_dir.angle() + PI * 0.5) * scale
     ])
-    draw_colored_polygon(body_points, Color(0.83, 0.74, 0.28, 1.0))
+    draw_colored_polygon(body_points, body_color)
     for tooth_index in range(3):
         var tooth_angle: float = spin_angle + TAU * float(tooth_index) / 3.0
         var tooth_dir: Vector2 = aim_dir.rotated(tooth_angle * 0.25)
-        draw_line(player_screen + tooth_dir * 4.0, player_screen + tooth_dir * 24.0, Color(0.95, 0.95, 0.98, 1.0), 3.0)
+        draw_line(screen_pos + tooth_dir * (4.0 * scale), screen_pos + tooth_dir * (24.0 * scale), Color(0.95, 0.95, 0.98, body_color.a), maxf(1.5, 3.0 * scale))
 
 func _draw_target_line(origin: Vector2) -> void:
     if target_node_id < 0 or target_node_id >= world_nodes.size():
@@ -1096,73 +1582,208 @@ func _carve_dirt_circle(world_pos: Vector2, radius: float) -> void:
     dirt_texture.update(dirt_image)
 
 func _setup_system_controls() -> void:
-    mute_button = _make_utility_button("Mute", Vector2(18.0, 18.0), Vector2(76.0, 44.0))
-    fullscreen_button = _make_utility_button("Full", Vector2(18.0, 68.0), Vector2(76.0, 44.0))
-    settings_button = _make_utility_button("Settings", Vector2(0.0, 18.0), Vector2(136.0, 44.0))
+    mute_button = Button.new()
+    mute_button.name = "MuteButton"
+    mute_button.anchor_left = 0.5
+    mute_button.anchor_top = 0.0
+    mute_button.anchor_right = 0.5
+    mute_button.anchor_bottom = 0.0
+    mute_button.offset_left = -42.0
+    mute_button.offset_top = 16.0
+    mute_button.offset_right = 42.0
+    mute_button.offset_bottom = 82.0
+    mute_button.focus_mode = Control.FOCUS_NONE
+    mute_button.custom_minimum_size = Vector2(84.0, 66.0)
+    mute_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    mute_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+    mute_button.expand_icon = true
+    mute_button.z_index = 60
+
+    fullscreen_button = Button.new()
+    fullscreen_button.name = "FullscreenButton"
+    fullscreen_button.anchor_left = 0.0
+    fullscreen_button.anchor_top = 0.0
+    fullscreen_button.anchor_right = 0.0
+    fullscreen_button.anchor_bottom = 0.0
+    fullscreen_button.offset_left = 16.0
+    fullscreen_button.offset_top = 88.0
+    fullscreen_button.offset_right = 60.0
+    fullscreen_button.offset_bottom = 132.0
+    fullscreen_button.focus_mode = Control.FOCUS_NONE
+    fullscreen_button.custom_minimum_size = Vector2(44.0, 44.0)
+    fullscreen_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    fullscreen_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+    fullscreen_button.expand_icon = true
+    fullscreen_button.z_index = 60
+
+    settings_button = Button.new()
+    settings_button.name = "SettingsButton"
+    settings_button.anchor_left = 1.0
+    settings_button.anchor_top = 0.0
+    settings_button.anchor_right = 1.0
+    settings_button.anchor_bottom = 0.0
+    settings_button.offset_left = -184.0
+    settings_button.offset_top = 16.0
+    settings_button.offset_right = -16.0
+    settings_button.offset_bottom = 104.0
+    settings_button.focus_mode = Control.FOCUS_NONE
+    settings_button.custom_minimum_size = Vector2(168.0, 88.0)
+    settings_button.text = tr("UI_SETTINGS")
+    settings_button.add_theme_font_size_override("font_size", 26)
+    settings_button.z_index = 60
     mute_button.pressed.connect(_on_mute_button_pressed)
     fullscreen_button.pressed.connect(_on_fullscreen_button_pressed)
     settings_button.pressed.connect(_on_settings_button_pressed)
+    _style_utility_button(mute_button)
+    _style_utility_button(fullscreen_button)
+    _style_utility_button(settings_button)
     $CanvasLayer.add_child(mute_button)
     $CanvasLayer.add_child(fullscreen_button)
     $CanvasLayer.add_child(settings_button)
-    _refresh_system_button_labels()
+    speaker_icon_on = _make_speaker_icon_texture(false)
+    speaker_icon_off = _make_speaker_icon_texture(true)
+    fullscreen_icon_on = _make_fullscreen_icon_texture(true)
+    fullscreen_icon_off = _make_fullscreen_icon_texture(false)
+    _refresh_system_button_icons()
     _update_system_button_layout()
+
     settings_panel = PanelContainer.new()
-    settings_panel.anchor_left = 0.5
-    settings_panel.anchor_top = 0.5
-    settings_panel.anchor_right = 0.5
-    settings_panel.anchor_bottom = 0.5
-    settings_panel.offset_left = -310.0
-    settings_panel.offset_top = -230.0
-    settings_panel.offset_right = 310.0
-    settings_panel.offset_bottom = 230.0
+    settings_panel.name = "MiningSettingsPanel"
+    settings_panel.anchor_left = 0.0
+    settings_panel.anchor_top = 0.0
+    settings_panel.anchor_right = 1.0
+    settings_panel.anchor_bottom = 1.0
+    settings_panel.offset_left = 16.0
+    settings_panel.offset_top = 16.0
+    settings_panel.offset_right = -16.0
+    settings_panel.offset_bottom = -16.0
     settings_panel.z_index = 80
     settings_panel.visible = false
-    settings_content = SETTINGS_SCENE.instantiate() as Settings
-    settings_panel.add_child(settings_content)
+    settings_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+    _style_utility_button_panel(settings_panel)
     $CanvasLayer.add_child(settings_panel)
 
-func _make_utility_button(label: String, offset: Vector2, size: Vector2) -> Button:
-    var button: Button = Button.new()
-    button.text = label
-    button.anchor_left = 0.0
-    button.anchor_top = 0.0
-    button.anchor_right = 0.0
-    button.anchor_bottom = 0.0
-    button.offset_left = offset.x
-    button.offset_top = offset.y
-    button.offset_right = offset.x + size.x
-    button.offset_bottom = offset.y + size.y
-    button.focus_mode = Control.FOCUS_NONE
-    button.z_index = 60
-    return button
+    var margin: MarginContainer = MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 12)
+    margin.add_theme_constant_override("margin_top", 12)
+    margin.add_theme_constant_override("margin_right", 12)
+    margin.add_theme_constant_override("margin_bottom", 12)
+    settings_panel.add_child(margin)
+
+    var vbox: VBoxContainer = VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 12)
+    vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    margin.add_child(vbox)
+
+    var settings_title_label: Label = Label.new()
+    settings_title_label.text = tr("UI_SETTINGS_TITLE")
+    settings_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    settings_title_label.add_theme_font_size_override("font_size", 46)
+    vbox.add_child(settings_title_label)
+
+    settings_content = SETTINGS_SCENE.instantiate() as Settings
+    if settings_content != null:
+        settings_content.name = "SettingsContent"
+        settings_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        settings_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        settings_content.scale = Vector2(1.7, 1.7)
+        vbox.add_child(settings_content)
+
+    var close_button: Button = Button.new()
+    close_button.name = "SettingsCloseButton"
+    close_button.text = tr("UI_BACK")
+    close_button.focus_mode = Control.FOCUS_NONE
+    close_button.custom_minimum_size = Vector2(0.0, 150.0)
+    close_button.add_theme_font_size_override("font_size", 34)
+    close_button.pressed.connect(_on_settings_close_pressed)
+    _style_utility_button(close_button)
+    vbox.add_child(close_button)
 
 func _update_system_button_layout() -> void:
-    if settings_button == null:
+    if settings_button == null or not is_instance_valid(settings_button):
         return
-    var viewport_width: float = get_viewport_rect().size.x
-    settings_button.offset_left = viewport_width - 154.0
-    settings_button.offset_right = viewport_width - 18.0
+    settings_button.offset_top = 16.0
+    settings_button.offset_bottom = 104.0
 
-func _refresh_system_button_labels() -> void:
+func _update_status_panel_layout() -> void:
+    if top_bar == null or not is_instance_valid(top_bar):
+        return
+    var viewport_height: float = get_viewport_rect().size.y
+    var vertical_shift: float = viewport_height * STATUS_PANEL_VERTICAL_SHIFT_RATIO
+    top_bar.scale = Vector2(STATUS_PANEL_SCALE, STATUS_PANEL_SCALE)
+    top_bar.offset_top = 18.0 + vertical_shift
+    top_bar.offset_bottom = 478.0 + vertical_shift
+
+func _on_viewport_size_changed() -> void:
+    _update_status_panel_layout()
+
+func _style_utility_button(button: Button) -> void:
+    if button == null:
+        return
+    var normal := StyleBoxFlat.new()
+    normal.bg_color = Color(0.08, 0.1, 0.16, 0.96)
+    normal.border_color = Color(0.88, 0.92, 1.0, 1.0)
+    normal.border_width_left = 2
+    normal.border_width_top = 2
+    normal.border_width_right = 2
+    normal.border_width_bottom = 2
+    normal.corner_radius_top_left = 4
+    normal.corner_radius_top_right = 4
+    normal.corner_radius_bottom_left = 4
+    normal.corner_radius_bottom_right = 4
+    var hover := normal.duplicate(true)
+    hover.bg_color = Color(0.14, 0.18, 0.26, 0.98)
+    button.add_theme_stylebox_override("normal", normal)
+    button.add_theme_stylebox_override("hover", hover)
+    button.add_theme_stylebox_override("pressed", hover)
+
+func _style_utility_button_panel(panel: PanelContainer) -> void:
+    if panel == null:
+        return
+    var box := StyleBoxFlat.new()
+    box.bg_color = Color(0.04, 0.06, 0.1, 0.98)
+    box.border_color = Color(0.88, 0.92, 1.0, 1.0)
+    box.border_width_left = 2
+    box.border_width_top = 2
+    box.border_width_right = 2
+    box.border_width_bottom = 2
+    box.corner_radius_top_left = 6
+    box.corner_radius_top_right = 6
+    box.corner_radius_bottom_left = 6
+    box.corner_radius_bottom_right = 6
+    panel.add_theme_stylebox_override("panel", box)
+
+func _refresh_system_button_icons() -> void:
     if mute_button != null:
-        mute_button.text = "Unmute" if SaveHandler.audio_muted else "Mute"
+        mute_button.text = ""
+        mute_button.icon = speaker_icon_off if SaveHandler.audio_muted else speaker_icon_on
+        mute_button.tooltip_text = tr("UI_UNMUTE_AUDIO") if SaveHandler.audio_muted else tr("UI_MUTE_AUDIO")
     if fullscreen_button != null:
+        fullscreen_button.text = ""
         var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-        fullscreen_button.text = "Window" if is_fullscreen else "Full"
+        fullscreen_button.icon = fullscreen_icon_on if is_fullscreen else fullscreen_icon_off
+        fullscreen_button.tooltip_text = tr("UI_EXIT_FULLSCREEN") if is_fullscreen else tr("UI_ENTER_FULLSCREEN")
 
 func _on_mute_button_pressed() -> void:
     SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
-    _refresh_system_button_labels()
+    _refresh_system_button_icons()
 
 func _on_fullscreen_button_pressed() -> void:
     var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
     SaveHandler.update_screen_mode(SaveHandler.SCREEN_MODES.WINDOWED if is_fullscreen else SaveHandler.SCREEN_MODES.FULL_SCREEN)
-    _refresh_system_button_labels()
+    _refresh_system_button_icons()
     _update_system_button_layout()
+    if settings_content != null:
+        settings_content.refresh_from_save()
 
 func _on_settings_button_pressed() -> void:
     _toggle_settings_panel()
+
+func _on_settings_close_pressed() -> void:
+    if settings_panel != null and is_instance_valid(settings_panel):
+        settings_panel.hide()
+    _refresh_mouse_capture_state()
 
 func _toggle_settings_panel() -> void:
     if settings_panel == null:
@@ -1170,27 +1791,102 @@ func _toggle_settings_panel() -> void:
     settings_panel.visible = not settings_panel.visible
     if settings_panel.visible and settings_content != null:
         settings_content.show_screen()
+        settings_content.refresh_from_save()
     _refresh_mouse_capture_state()
 
+func _on_settings_updated() -> void:
+    _refresh_system_button_icons()
+    if settings_content != null:
+        settings_content.refresh_from_save()
+
+func _make_fullscreen_icon_texture(is_fullscreen: bool) -> ImageTexture:
+    var image := Image.create(80, 80, false, Image.FORMAT_RGBA8)
+    image.fill(Color(0, 0, 0, 0))
+    var line_color := Color(0.93, 0.97, 1.0, 1.0)
+    if is_fullscreen:
+        _draw_rect_pixels(image, Rect2i(12, 12, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(12, 12, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(48, 12, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(62, 12, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(12, 62, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(12, 48, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(48, 62, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(62, 48, 6, 20), line_color)
+    else:
+        _draw_rect_pixels(image, Rect2i(24, 12, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(12, 24, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(50, 12, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(48, 24, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(24, 48, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(12, 50, 20, 6), line_color)
+        _draw_rect_pixels(image, Rect2i(50, 48, 6, 20), line_color)
+        _draw_rect_pixels(image, Rect2i(48, 50, 20, 6), line_color)
+    return ImageTexture.create_from_image(image)
+
+func _make_speaker_icon_texture(is_muted: bool) -> ImageTexture:
+    var image := Image.create(80, 80, false, Image.FORMAT_RGBA8)
+    image.fill(Color(0, 0, 0, 0))
+    var speaker_color := Color(0.93, 0.97, 1.0, 1.0)
+    _draw_rect_pixels(image, Rect2i(14, 28, 14, 24), speaker_color)
+    _draw_triangle_right(image, Vector2i(28, 40), 22, 18, speaker_color)
+    if is_muted:
+        _draw_thick_line(image, Vector2i(42, 20), Vector2i(68, 60), Color(1.0, 0.2, 0.2, 1.0), 4)
+        _draw_thick_line(image, Vector2i(68, 20), Vector2i(42, 60), Color(1.0, 0.2, 0.2, 1.0), 4)
+    else:
+        _draw_arc_ring(image, Vector2i(40, 40), 16, 22, PI * -0.42, PI * 0.42, speaker_color)
+        _draw_arc_ring(image, Vector2i(40, 40), 24, 30, PI * -0.42, PI * 0.42, speaker_color)
+    return ImageTexture.create_from_image(image)
+
+func _draw_rect_pixels(image: Image, rect: Rect2i, color: Color) -> void:
+    for x in range(rect.position.x, rect.position.x + rect.size.x):
+        for y in range(rect.position.y, rect.position.y + rect.size.y):
+            image.set_pixel(x, y, color)
+
+func _draw_triangle_right(image: Image, center: Vector2i, width: int, half_height: int, color: Color) -> void:
+    for i in range(width):
+        var x: int = center.x + i
+        var y_top: int = center.y - int(round(float(half_height) * (1.0 - float(i) / float(width))))
+        var y_bottom: int = center.y + int(round(float(half_height) * (1.0 - float(i) / float(width))))
+        for y in range(y_top, y_bottom + 1):
+            image.set_pixel(x, y, color)
+
+func _draw_thick_line(image: Image, start: Vector2i, finish: Vector2i, color: Color, thickness: int) -> void:
+    var steps: int = maxi(abs(finish.x - start.x), abs(finish.y - start.y))
+    if steps <= 0:
+        image.set_pixel(start.x, start.y, color)
+        return
+    for step in range(steps + 1):
+        var t: float = float(step) / float(steps)
+        var point := Vector2(
+            lerpf(float(start.x), float(finish.x), t),
+            lerpf(float(start.y), float(finish.y), t)
+        )
+        var radius: int = maxi(1, int(round(float(thickness) * 0.5)))
+        for offset_x in range(-radius, radius + 1):
+            for offset_y in range(-radius, radius + 1):
+                if Vector2(offset_x, offset_y).length() > float(radius):
+                    continue
+                var px: int = int(round(point.x)) + offset_x
+                var py: int = int(round(point.y)) + offset_y
+                if px < 0 or py < 0 or px >= image.get_width() or py >= image.get_height():
+                    continue
+                image.set_pixel(px, py, color)
+
+func _draw_arc_ring(image: Image, center: Vector2i, inner_radius: int, outer_radius: int, start_angle: float, end_angle: float, color: Color) -> void:
+    for radius in range(inner_radius, outer_radius + 1):
+        var arc_length: float = abs(end_angle - start_angle) * float(radius)
+        var segments: int = maxi(12, int(ceil(arc_length)))
+        for segment in range(segments + 1):
+            var t: float = float(segment) / float(segments)
+            var angle: float = lerpf(start_angle, end_angle, t)
+            var px: int = int(round(float(center.x) + cos(angle) * float(radius)))
+            var py: int = int(round(float(center.y) + sin(angle) * float(radius)))
+            if px < 0 or py < 0 or px >= image.get_width() or py >= image.get_height():
+                continue
+            image.set_pixel(px, py, color)
+
 func _get_material_by_id(material_id: String) -> Dictionary:
-    for material in material_tiers:
-        if String(material.get("id", "")) == material_id:
-            return material
-    return material_tiers[0]
+    return MINING_BALANCE.get_material_by_id(material_id)
 
 func _build_material_tiers() -> Array[Dictionary]:
-    return [
-        {"id": "stone", "name": "Stone", "value": 6, "xp": 5, "hardness": 16.0, "color": Color(0.49, 0.49, 0.52, 1.0), "bg": Color(0.18, 0.15, 0.13, 1.0), "sparkle": 0.0},
-        {"id": "bronze", "name": "Bronze", "value": 11, "xp": 8, "hardness": 22.0, "color": Color(0.7, 0.46, 0.24, 1.0), "bg": Color(0.24, 0.16, 0.11, 1.0), "sparkle": 0.0},
-        {"id": "silver", "name": "Silver", "value": 19, "xp": 12, "hardness": 30.0, "color": Color(0.76, 0.78, 0.82, 1.0), "bg": Color(0.17, 0.18, 0.22, 1.0), "sparkle": 0.08},
-        {"id": "gold", "name": "Gold", "value": 33, "xp": 18, "hardness": 40.0, "color": Color(0.94, 0.78, 0.23, 1.0), "bg": Color(0.28, 0.22, 0.1, 1.0), "sparkle": 0.12},
-        {"id": "diamond", "name": "Diamond", "value": 52, "xp": 26, "hardness": 52.0, "color": Color(0.55, 0.93, 1.0, 1.0), "bg": Color(0.11, 0.2, 0.24, 1.0), "sparkle": 0.18},
-        {"id": "platinum_bronze", "name": "Platinum Bronze", "value": 78, "xp": 36, "hardness": 64.0, "color": Color(0.83, 0.63, 0.47, 1.0), "bg": Color(0.22, 0.17, 0.19, 1.0), "sparkle": 0.28},
-        {"id": "platinum_silver", "name": "Platinum Silver", "value": 114, "xp": 48, "hardness": 76.0, "color": Color(0.92, 0.94, 1.0, 1.0), "bg": Color(0.16, 0.18, 0.24, 1.0), "sparkle": 0.34},
-        {"id": "platinum_gold", "name": "Platinum Gold", "value": 162, "xp": 62, "hardness": 92.0, "color": Color(1.0, 0.86, 0.43, 1.0), "bg": Color(0.27, 0.2, 0.15, 1.0), "sparkle": 0.42},
-        {"id": "platinum_diamond", "name": "Platinum Diamond", "value": 228, "xp": 80, "hardness": 108.0, "color": Color(0.72, 0.98, 1.0, 1.0), "bg": Color(0.09, 0.18, 0.28, 1.0), "sparkle": 0.5},
-        {"id": "super_bronze", "name": "Super Bronze", "value": 320, "xp": 102, "hardness": 126.0, "color": Color(0.96, 0.56, 0.3, 1.0), "bg": Color(0.24, 0.12, 0.1, 1.0), "sparkle": 0.62},
-        {"id": "super_silver", "name": "Super Silver", "value": 445, "xp": 128, "hardness": 148.0, "color": Color(0.96, 0.98, 1.0, 1.0), "bg": Color(0.18, 0.19, 0.28, 1.0), "sparkle": 0.72},
-        {"id": "super_gold", "name": "Super Gold", "value": 612, "xp": 160, "hardness": 172.0, "color": Color(1.0, 0.91, 0.52, 1.0), "bg": Color(0.3, 0.21, 0.12, 1.0), "sparkle": 0.84},
-        {"id": "super_diamond", "name": "Super Diamond", "value": 840, "xp": 198, "hardness": 198.0, "color": Color(0.81, 1.0, 1.0, 1.0), "bg": Color(0.11, 0.23, 0.31, 1.0), "sparkle": 0.98}
-    ]
+    return MINING_BALANCE.get_material_tiers()

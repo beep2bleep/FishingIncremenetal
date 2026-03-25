@@ -5,17 +5,23 @@ const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 
 const LAYOUT_BY_KEY := {
 	"timer_reserve": Vector2(-1, 0),
+	"route_planner": Vector2(-2, -1),
 	"engine_tuning": Vector2(0, -1),
+	"dirt_softener": Vector2(1, -1),
 	"drill_torque": Vector2(0, 1),
 	"drill_plating": Vector2(1, 1),
+	"cooling_loop": Vector2(2, 1),
 	"cargo_pods": Vector2(-1, 1),
+	"cargo_compressor": Vector2(-1, 2),
 	"ore_refinery": Vector2(-2, 1),
 	"pickup_radius": Vector2(-2, 0),
 	"xp_calibration": Vector2(-3, 1),
-	"dirt_softener": Vector2(1, -1),
 	"depth_scanner": Vector2(2, -1),
+	"seismic_sonar": Vector2(3, -1),
 	"magnet_drone": Vector2(-3, 0),
+	"foreman_bot": Vector2(0, 2),
 	"delivery_drone": Vector2(-4, 0),
+	"auto_sorters": Vector2(-5, 0),
 }
 
 static func apply_simulation_upgrades() -> void:

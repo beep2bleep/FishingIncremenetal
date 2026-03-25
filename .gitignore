@@ -10,3 +10,4 @@ Godot/*.exe
 
 # Ignore Godot export package files
 *.pck
+*.TMP

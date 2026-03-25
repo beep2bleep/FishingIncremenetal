@@ -27,6 +27,8 @@ func _on_mining_button_pressed() -> void:
 
 func _start_game(game_id: String) -> void:
     Util.set_active_game_id(game_id)
+    if GameAnalytics != null and GameAnalytics.has_method("refresh_active_game_session"):
+        GameAnalytics.refresh_active_game_session(true)
     SaveHandler.load_fishing_progress()
     Global.ensure_default_game_mode_data()
     Global.new_game()

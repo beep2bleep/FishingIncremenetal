@@ -6,6 +6,7 @@ const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const CONTROLLER_GLYPH_SCENE: PackedScene = preload("res://Controller Glyph.tscn")
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const MINING_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/Mining/MiningUpgradeTreeAdapter.gd")
+const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const GO_AGAIN_DISABLED_HINT := "UPGRADE_GO_AGAIN_DISABLED_HINT"
 const DEMO_PROJECT_SETTING := "global/Demo"
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
@@ -187,6 +188,7 @@ func _ready() -> void :
     _setup_leaderboard_panel()
     _setup_continue_locked_dialog()
     _update_go_again_button_state()
+    _refresh_mining_crt_overlay()
     hide()
     if Util.is_mining_game_active() and get_tree().current_scene == self:
         setup()
@@ -278,6 +280,10 @@ func _input(event: InputEvent) -> void :
         if _is_continue_locked_open():
             if event.is_action_pressed("escape") or event.is_action_pressed("back") or event.is_action_pressed("ui_accept"):
                 _hide_continue_locked_panel()
+            return
+        if event.is_action_pressed("toggle_mute"):
+            _on_mute_button_pressed()
+            get_viewport().set_input_as_handled()
             return
         if _is_settings_open():
             if event.is_action_pressed("escape") or event.is_action_pressed("back"):
@@ -507,6 +513,7 @@ func show_screen():
     _refresh_fullscreen_button_icon()
     _refresh_touch_input_button()
     _update_go_again_button_state()
+    _refresh_mining_crt_overlay()
 
     nodes_unlocked_this_session = 0
 
@@ -556,6 +563,11 @@ func hide_screen():
     %CanvasLayer2.hide()
     _hide_continue_locked_panel()
     VirtualCursor.set_scene_enabled(false)
+
+func _refresh_mining_crt_overlay() -> void:
+    var overlay: CanvasLayer = get_node_or_null("MiningCrtOverlay") as CanvasLayer
+    if overlay != null:
+        overlay.visible = false
 
 
 func _on_go_again_pressed() -> void :
@@ -697,7 +709,8 @@ func _setup_wishlist_button() -> void:
     button.mouse_filter = Control.MOUSE_FILTER_STOP
     button.focus_mode = Control.FOCUS_ALL
     button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
-    button.z_index = 250
+    # Keep the wishlist above the bottom bar but below top-level overlays like settings.
+    button.z_index = 200
     button.modulate = Color(1.0, 1.0, 1.0, 1.0)
     button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
     button.tooltip_text = _get_demo_wishlist_url()

@@ -3,13 +3,24 @@ extends Node
 const API_BASE := "https://api.gameanalytics.com"
 const API_VERSION := 2
 const SDK_VERSION := "rest api v2"
-const STATE_PATH := "user://gameanalytics_state.cfg"
+const STATE_PATH_TEMPLATE := "user://gameanalytics_state_%s.cfg"
+const MINING_GAME_KEY := "b8a2581219b15c0021b5b3a16949645f"
+const MINING_SECRET_KEY := "fd45f4799dbac827b520bd9963deaa6cc8bad0b0"
+const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
+const PROGRESSION_STATUS_MAP := {
+    "start": "Start",
+    "complete": "Complete",
+    "fail": "Fail",
+}
 
 var _game_key := ""
 var _secret_key := ""
 var _build := "dev"
 var _info_log := false
 var _enabled := false
+var _configured_game_id := ""
+var _default_vanguard_game_key := ""
+var _default_vanguard_secret_key := ""
 
 var _user_id := ""
 var _session_id := ""
@@ -35,8 +46,8 @@ func _ready() -> void:
 
     _build = str(ProjectSettings.get_setting("gameanalytics/build", "dev"))
     _info_log = bool(ProjectSettings.get_setting("gameanalytics/info_log", OS.is_debug_build()))
-    _game_key = str(ProjectSettings.get_setting("gameanalytics/game_key", ""))
-    _secret_key = str(ProjectSettings.get_setting("gameanalytics/secret_key", ""))
+    _default_vanguard_game_key = str(ProjectSettings.get_setting("gameanalytics/game_key", ""))
+    _default_vanguard_secret_key = str(ProjectSettings.get_setting("gameanalytics/secret_key", ""))
     _platform = _detect_platform()
     _os_version = "%s %s" % [_platform, str(OS.get_version())]
     _manufacturer = "unknown"
@@ -44,15 +55,10 @@ func _ready() -> void:
     if _device == "":
         _device = "desktop"
 
-    if _game_key == "" or _secret_key == "":
-        push_warning("GameAnalyticsManager: missing gameanalytics/game_key or gameanalytics/secret_key in ProjectSettings.")
-        return
-
-    _enabled = true
     if _info_log:
         print("GameAnalyticsManager: initialized platform=%s build=%s" % [_platform, _build])
-    _load_or_create_state()
-    _start_session()
+    if not _should_defer_initial_session():
+        refresh_active_game_session()
 
 func configureBuild(build: String) -> void:
     _build = build
@@ -68,6 +74,7 @@ func init(game_key: String, secret_key: String) -> void:
         _start_session()
 
 func addDesignEvent(options: Dictionary) -> void:
+    refresh_active_game_session()
     var event_id: String = str(options.get("eventId", ""))
     if event_id == "":
         return
@@ -79,13 +86,42 @@ func addDesignEvent(options: Dictionary) -> void:
     if value is int or value is float:
         event["value"] = float(value)
 
-    var custom_fields_json: String = str(options.get("customFields", ""))
-    if custom_fields_json != "":
-        var parsed: Variant = JSON.parse_string(custom_fields_json)
-        if parsed is Dictionary:
-            var custom_fields: Dictionary = _sanitize_custom_fields(parsed as Dictionary)
-            if not custom_fields.is_empty():
-                event["custom_fields"] = custom_fields
+    var custom_fields: Dictionary = _read_custom_fields(options)
+    if not custom_fields.is_empty():
+        event["custom_fields"] = custom_fields
+
+    _enqueue_event(event)
+
+func addProgressionEvent(options: Dictionary) -> void:
+    refresh_active_game_session()
+    var progression_status_raw: String = str(options.get("progressionStatus", "")).strip_edges().to_lower()
+    var progression_status: String = str(PROGRESSION_STATUS_MAP.get(progression_status_raw, ""))
+    if progression_status == "":
+        return
+
+    var event_id_parts: Array[String] = [progression_status]
+    for key in ["progression01", "progression02", "progression03"]:
+        var value: String = str(options.get(key, "")).strip_edges()
+        if value != "":
+            event_id_parts.append(value)
+
+    if event_id_parts.size() < 2:
+        return
+
+    var event: Dictionary = _base_event_payload("progression")
+    event["event_id"] = ":".join(event_id_parts)
+
+    var attempt_num: int = int(options.get("attemptNum", 0))
+    if attempt_num > 0 and progression_status != PROGRESSION_STATUS_MAP["start"]:
+        event["attempt_num"] = attempt_num
+
+    var score: Variant = options.get("score", null)
+    if score is int or score is float:
+        event["score"] = int(round(float(score)))
+
+    var custom_fields: Dictionary = _read_custom_fields(options)
+    if not custom_fields.is_empty():
+        event["custom_fields"] = custom_fields
 
     _enqueue_event(event)
 
@@ -98,6 +134,46 @@ func track_design_event(event_id: String, value: Variant = null, custom_fields: 
     if not custom_fields.is_empty():
         options["customFields"] = JSON.stringify(custom_fields)
     addDesignEvent(options)
+
+func track_progression_event(status: String, progression01: String, progression02: String = "", progression03: String = "", score: Variant = null, custom_fields: Dictionary = {}) -> void:
+    var options: Dictionary = {
+        "progressionStatus": status,
+        "progression01": progression01,
+        "progression02": progression02,
+        "progression03": progression03,
+    }
+    if score is int or score is float:
+        options["score"] = int(round(float(score)))
+    if not custom_fields.is_empty():
+        options["customFields"] = JSON.stringify(custom_fields)
+    addProgressionEvent(options)
+
+func refresh_active_game_session(force_restart: bool = false) -> void:
+    var credentials: Dictionary = _get_active_credentials()
+    var game_id: String = str(credentials.get("game_id", Util.ACTIVE_GAME_VANGUARD))
+    var game_key: String = str(credentials.get("game_key", ""))
+    var secret_key: String = str(credentials.get("secret_key", ""))
+    if game_key == "" or secret_key == "":
+        _enabled = false
+        push_warning("GameAnalyticsManager: missing analytics credentials for active game '%s'." % game_id)
+        return
+    if not force_restart and _enabled and _configured_game_id == game_id and _session_id != "":
+        return
+
+    _configured_game_id = game_id
+    _game_key = game_key
+    _secret_key = secret_key
+    _enabled = true
+    _pending.clear()
+    _request_in_flight = false
+    _init_done = false
+    _server_ts_offset = 0
+    _user_id = ""
+    _session_id = ""
+    _session_num = 0
+    _first_game_start_sent = false
+    _load_or_create_state()
+    _start_session()
 
 func _start_session() -> void:
     if not _enabled:
@@ -112,6 +188,7 @@ func _start_session() -> void:
     _send_init()
     _send_user_start_event()
     _send_first_game_start_event()
+    _send_active_game_progression_start_event()
 
 func _send_init() -> void:
     var payload: Dictionary = {
@@ -134,6 +211,37 @@ func _send_first_game_start_event() -> void:
     _first_game_start_sent = true
     _save_state()
     track_design_event("game:first_start")
+
+func _send_active_game_progression_start_event() -> void:
+    if not _enabled:
+        return
+    if Util.is_mining_game_active():
+        var mining_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
+        var player_level: int = max(1, int(mining_data.get("player_level", 1)))
+        track_progression_event(
+            "start",
+            Util.ACTIVE_GAME_MINING,
+            "player_level",
+            "level_%d" % player_level,
+            null,
+            {
+                "player_level": player_level,
+                "total_xp": int(mining_data.get("xp", 0)),
+            }
+        )
+        return
+    var battle_level: int = max(1, int(SaveHandler.fishing_next_battle_level))
+    track_progression_event(
+        "start",
+        Util.ACTIVE_GAME_VANGUARD,
+        "battle",
+        "level_%d" % battle_level,
+        null,
+        {
+            "battle_level": battle_level,
+            "max_unlocked_level": int(SaveHandler.fishing_max_unlocked_battle_level),
+        }
+    )
 
 func _enqueue_event(event: Dictionary) -> void:
     if not _enabled:
@@ -195,7 +303,7 @@ func _on_request_completed(_result: int, response_code: int, _headers: PackedStr
     _pump_queue()
 
 func _base_event_payload(category: String) -> Dictionary:
-    return {
+    var payload := {
         "category": category,
         "v": API_VERSION,
         "user_id": _user_id,
@@ -209,6 +317,8 @@ func _base_event_payload(category: String) -> Dictionary:
         "session_num": _session_num,
         "build": _build
     }
+    payload["custom_fields"] = _default_custom_fields()
+    return payload
 
 func _client_ts() -> int:
     return int(Time.get_unix_time_from_system()) + _server_ts_offset
@@ -221,7 +331,7 @@ func _auth_header(body: String) -> String:
     return Marshalls.raw_to_base64(digest)
 
 func _sanitize_custom_fields(fields: Dictionary) -> Dictionary:
-    var output: Dictionary = {}
+    var output: Dictionary = _default_custom_fields()
     for key_variant in fields.keys():
         var key: String = str(key_variant)
         if key == "":
@@ -231,9 +341,23 @@ func _sanitize_custom_fields(fields: Dictionary) -> Dictionary:
             output[key] = value
     return output
 
+func _read_custom_fields(options: Dictionary) -> Dictionary:
+    var custom_fields_json: String = str(options.get("customFields", ""))
+    if custom_fields_json == "":
+        return _default_custom_fields()
+    var parsed: Variant = JSON.parse_string(custom_fields_json)
+    if parsed is Dictionary:
+        return _sanitize_custom_fields(parsed as Dictionary)
+    return _default_custom_fields()
+
+func _default_custom_fields() -> Dictionary:
+    return {
+        "active_game": Util.get_active_game_id()
+    }
+
 func _load_or_create_state() -> void:
     var cfg := ConfigFile.new()
-    var err: int = cfg.load(STATE_PATH)
+    var err: int = cfg.load(_get_state_path())
     if err == OK:
         _user_id = str(cfg.get_value("ga", "user_id", ""))
         _session_num = int(cfg.get_value("ga", "session_num", 0))
@@ -249,7 +373,29 @@ func _save_state() -> void:
     cfg.set_value("ga", "user_id", _user_id)
     cfg.set_value("ga", "session_num", _session_num)
     cfg.set_value("ga", "first_game_start_sent", _first_game_start_sent)
-    cfg.save(STATE_PATH)
+    cfg.save(_get_state_path())
+
+func _get_state_path() -> String:
+    var game_id: String = _configured_game_id
+    if game_id == "":
+        game_id = Util.get_active_game_id()
+    return STATE_PATH_TEMPLATE % game_id
+
+func _get_active_credentials() -> Dictionary:
+    if Util.is_mining_game_active():
+        return {
+            "game_id": Util.ACTIVE_GAME_MINING,
+            "game_key": MINING_GAME_KEY,
+            "secret_key": MINING_SECRET_KEY,
+        }
+    return {
+        "game_id": Util.ACTIVE_GAME_VANGUARD,
+        "game_key": _default_vanguard_game_key,
+        "secret_key": _default_vanguard_secret_key,
+    }
+
+func _should_defer_initial_session() -> bool:
+    return Util.get_configured_start_scene_path() == Util.PATH_GAME_LAUNCHER
 
 func _new_uuid_v4() -> String:
     var crypto := Crypto.new()
