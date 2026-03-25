@@ -68,6 +68,19 @@ static func apply_tree_purchase(upgrade_id: String, level: int, wallet_after_pur
     _refresh_depth_unlocks(data)
     save_data(data)
 
+static func apply_tree_sale(upgrade_id: String, level: int, wallet_after_sale: int) -> void:
+    var data: Dictionary = load_data()
+    var upgrades: Dictionary = data.get("upgrades", {})
+    var safe_level: int = max(0, level)
+    if safe_level > 0:
+        upgrades[upgrade_id] = safe_level
+    else:
+        upgrades.erase(upgrade_id)
+    data["upgrades"] = upgrades
+    data["wallet"] = max(0, wallet_after_sale)
+    _refresh_depth_unlocks(data)
+    save_data(data)
+
 static func apply_run_results(results: Dictionary) -> Dictionary:
     var data: Dictionary = load_data()
     var previous_level: int = max(1, int(data.get("player_level", 1)))

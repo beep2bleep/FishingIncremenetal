@@ -48,6 +48,19 @@ func get_cost():
     else:
         return base_cost
 
+func get_cost_for_tier(tier_index: int):
+    var safe_tier_index: int = max(0, tier_index)
+    if tier_costs.size() > 0 and safe_tier_index < tier_costs.size():
+        return float(tier_costs[safe_tier_index])
+    if has_tiers():
+        return base_cost + (safe_tier_index * base_cost * cost_scale)
+    return base_cost
+
+func get_last_purchased_cost():
+    if current_tier <= 0:
+        return 0
+    return get_cost_for_tier(current_tier - 1)
+
 func is_at_max():
     return current_tier >= max_tier
 

@@ -205,6 +205,8 @@ func _ready():
     %"Tool Tip".pivot_offset = %"Tool Tip".size / 2.0
     demo_lock_label = get_node_or_null("%Demo Lock Label")
     _setup_touch_buy_button()
+    if click_mask != null and not click_mask.gui_input.is_connected(_on_click_mask_gui_input):
+        click_mask.gui_input.connect(_on_click_mask_gui_input)
 
     SignalBus.settings_updated.connect(_on_settings_updated)
 
@@ -354,6 +356,23 @@ func _on_click_mask_pressed() -> void :
             update()
             return
         _purchase_upgrade()
+
+func _on_click_mask_gui_input(event: InputEvent) -> void:
+    if not OS.has_feature("editor"):
+        return
+    if not (event is InputEventMouseButton):
+        return
+    var mouse_event: InputEventMouseButton = event as InputEventMouseButton
+    if not mouse_event.pressed or mouse_event.is_echo():
+        return
+    if mouse_event.button_index != MOUSE_BUTTON_RIGHT:
+        return
+    if upgrade == null or upgrade.current_tier <= 0 or upgrade.sim_key == "":
+        return
+    var upgrade_screen := _get_active_upgrade_screen()
+    if upgrade_screen != null and upgrade_screen.has_method("request_editor_sell_for_node"):
+        upgrade_screen.call("request_editor_sell_for_node", self, get_viewport().get_mouse_position())
+        get_viewport().set_input_as_handled()
 
 func _purchase_upgrade() -> void:
     if state != STATES.AVAILABLE or not can_pay_cost:

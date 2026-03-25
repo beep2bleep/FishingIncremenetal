@@ -48,7 +48,7 @@ text = "Wallet"
 
 [node name="SummaryPanel" type="PanelContainer" parent="Margin/Root"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 150)
+custom_minimum_size = Vector2(0, 165)
 
 [node name="SummaryMargin" type="MarginContainer" parent="Margin/Root/SummaryPanel"]
 layout_mode = 2

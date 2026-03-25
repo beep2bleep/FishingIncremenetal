@@ -20,6 +20,7 @@ const BATTLE_LEVEL_SELECTOR_FONT_SIZE := 52
 const BATTLE_LEVEL_SELECTOR_BUTTON_WIDTH := 140.0
 const BATTLE_LEVEL_SELECTOR_INPUT_WIDTH := 220.0
 const UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO := 0.05
+const EDITOR_SELL_MENU_ID := 1
 
 var is_active = false
 var editor_add_cash_amount: int = 1000
@@ -28,6 +29,8 @@ var editor_add_cash_button: Button
 var editor_reset_add_button: Button
 var editor_unlock_all_button: Button
 var editor_crt_toggle_button: Button
+var editor_sell_popup_menu: PopupMenu
+var editor_sell_target_node: TechTreeNode
 var editor_center_offset_controls: VBoxContainer
 var editor_center_offset_label: Label
 var editor_center_offset_x_minus_button: Button
@@ -174,6 +177,7 @@ func _ready() -> void :
     update_colors()
     _setup_editor_cash_controls()
     _setup_editor_center_offset_controls()
+    _setup_editor_sell_popup_menu()
     _setup_battle_level_choice_dialog()
     _setup_reset_progress_controls()
     _setup_version_label()
@@ -1376,6 +1380,93 @@ func _setup_editor_cash_controls() -> void:
     _refresh_editor_cash_button_text()
     _refresh_editor_crt_button_text()
 
+func _setup_editor_sell_popup_menu() -> void:
+    if not OS.has_feature("editor"):
+        return
+    if editor_sell_popup_menu != null and is_instance_valid(editor_sell_popup_menu):
+        return
+    editor_sell_popup_menu = PopupMenu.new()
+    editor_sell_popup_menu.name = "EditorSellPopupMenu"
+    editor_sell_popup_menu.id_pressed.connect(_on_editor_sell_popup_id_pressed)
+    editor_sell_popup_menu.popup_hide.connect(_on_editor_sell_popup_hidden)
+    %CanvasLayer2.add_child(editor_sell_popup_menu)
+
+func request_editor_sell_for_node(node: TechTreeNode, screen_position: Vector2) -> void:
+    if not OS.has_feature("editor"):
+        return
+    if node == null or not is_instance_valid(node):
+        return
+    if node.upgrade == null or node.upgrade.current_tier <= 0 or node.upgrade.sim_key == "":
+        return
+    if not _is_simulation_upgrade_tree():
+        return
+    if editor_sell_popup_menu == null or not is_instance_valid(editor_sell_popup_menu):
+        return
+
+    editor_sell_target_node = node
+    var refund_amount: int = int(round(node.upgrade.get_last_purchased_cost()))
+    var blocked_nodes: Array[TechTreeNode] = []
+    if tech_tree != null and is_instance_valid(tech_tree) and tech_tree.has_method("get_owned_nodes_blocked_by_removal"):
+        blocked_nodes = tech_tree.get_owned_nodes_blocked_by_removal(node)
+    var can_sell: bool = blocked_nodes.is_empty()
+    var item_text: String = "Sell for $%s" % Util.get_number_short_text(refund_amount)
+    if not can_sell:
+        var blocked_name: String = "dependent upgrades"
+        if not blocked_nodes.is_empty() and blocked_nodes[0] != null and blocked_nodes[0].upgrade != null:
+            var node_name: String = blocked_nodes[0].upgrade.sim_name.strip_edges()
+            if node_name != "":
+                blocked_name = node_name
+        item_text = "Can't sell: %s depends on it" % blocked_name
+
+    editor_sell_popup_menu.clear()
+    editor_sell_popup_menu.add_item(item_text, EDITOR_SELL_MENU_ID)
+    editor_sell_popup_menu.set_item_disabled(0, not can_sell)
+    editor_sell_popup_menu.reset_size()
+    editor_sell_popup_menu.popup(Rect2i(Vector2i(int(screen_position.x), int(screen_position.y)), Vector2i.ONE))
+
+func _on_editor_sell_popup_id_pressed(id: int) -> void:
+    if id != EDITOR_SELL_MENU_ID:
+        return
+    _perform_editor_sell()
+
+func _on_editor_sell_popup_hidden() -> void:
+    call_deferred("_clear_editor_sell_target_node")
+
+func _clear_editor_sell_target_node() -> void:
+    editor_sell_target_node = null
+
+func _perform_editor_sell() -> void:
+    if not OS.has_feature("editor"):
+        return
+    var node: TechTreeNode = editor_sell_target_node
+    editor_sell_target_node = null
+    if node == null or not is_instance_valid(node):
+        return
+    if node.upgrade == null or node.upgrade.current_tier <= 0 or node.upgrade.sim_key == "":
+        return
+    if tech_tree == null or not is_instance_valid(tech_tree):
+        return
+    if Global.global_resoruce_manager == null:
+        return
+    if tech_tree.has_method("can_remove_owned_tier") and not tech_tree.can_remove_owned_tier(node):
+        return
+
+    var refund_amount: int = int(round(node.upgrade.get_last_purchased_cost()))
+    var current_money: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
+    var wallet_after_sale: int = current_money + refund_amount
+    var new_tier: int = max(0, int(node.upgrade.current_tier) - 1)
+    var new_level: int = max(0, int(node.upgrade.sim_level) + new_tier - 1)
+
+    if Util.is_mining_game_active():
+        MINING_PROGRESS_SCRIPT.apply_tree_sale(node.upgrade.sim_key, new_level, wallet_after_sale)
+    else:
+        SaveHandler.fishing_currency = wallet_after_sale
+        SaveHandler.set_fishing_upgrade_level(node.upgrade.sim_key, new_level)
+        SaveHandler.save_fishing_progress()
+
+    _reload_simulation_upgrade_tree_from_save()
+    update()
+
 func _refresh_editor_crt_button_text() -> void:
     if editor_crt_toggle_button == null:
         return
@@ -1665,6 +1756,8 @@ func _on_editor_unlock_all_pressed() -> void:
         for key_variant: Variant in max_level_by_key.keys():
             var key: String = str(key_variant)
             data["upgrades"][key] = int(max_level_by_key[key])
+        data["deepest_level_unlocked"] = MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL
+        data["selected_depth_level"] = MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL
         MINING_PROGRESS_SCRIPT.save_data(data)
     else:
         SaveHandler.fishing_unlocked_upgrades = {}

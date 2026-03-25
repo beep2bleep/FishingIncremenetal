@@ -32,31 +32,37 @@ TARGET_DEMO_SECONDS = 40.0 * 60.0
 TARGET_FULL_SECONDS = 3.0 * 60.0 * 60.0
 MAX_RUNS = 520
 VALIDATION_SEEDS_PER_CHECKPOINT = 3
+MAX_DEPTH_LEVEL = 100
+MAX_UPGRADE_LEVEL = 100
+MAX_MATERIAL_TYPES_PER_LEVEL = 8
+EARLY_UPGRADE_LEVELS = 5
+LATE_COST_MULTIPLIER_START = 2.0
+LATE_COST_MULTIPLIER_END = 30.0
 
 
 UPGRADES: List[Dict] = [
-    {"id": "timer_reserve", "label": "Timer Reserve", "base_cost": 18, "cost_mult": 1.14, "max_level": 28, "requires": {}},
-    {"id": "route_planner", "label": "Route Planner", "base_cost": 22, "cost_mult": 1.145, "max_level": 20, "requires": {"timer_reserve": 4}},
-    {"id": "engine_tuning", "label": "Engine Tuning", "base_cost": 19, "cost_mult": 1.14, "max_level": 28, "requires": {}},
-    {"id": "dirt_softener", "label": "Dirt Softener", "base_cost": 27, "cost_mult": 1.152, "max_level": 22, "requires": {"engine_tuning": 4}},
-    {"id": "drill_torque", "label": "Drill Torque", "base_cost": 20, "cost_mult": 1.142, "max_level": 40, "requires": {}},
-    {"id": "drill_plating", "label": "Drill Plating", "base_cost": 22, "cost_mult": 1.146, "max_level": 32, "requires": {"drill_torque": 2}},
-    {"id": "cooling_loop", "label": "Cooling Loop", "base_cost": 25, "cost_mult": 1.149, "max_level": 24, "requires": {"drill_plating": 2}},
-    {"id": "cargo_pods", "label": "Cargo Pods", "base_cost": 21, "cost_mult": 1.143, "max_level": 26, "requires": {}},
-    {"id": "cargo_compressor", "label": "Cargo Compressor", "base_cost": 29, "cost_mult": 1.156, "max_level": 22, "requires": {"cargo_pods": 6}},
-    {"id": "ore_refinery", "label": "Ore Refinery", "base_cost": 24, "cost_mult": 1.148, "max_level": 32, "requires": {"cargo_pods": 2}},
-    {"id": "pickup_radius", "label": "Vacuum Scoop", "base_cost": 23, "cost_mult": 1.146, "max_level": 22, "requires": {"cargo_pods": 1}},
-    {"id": "xp_calibration", "label": "XP Calibration", "base_cost": 27, "cost_mult": 1.152, "max_level": 26, "requires": {"ore_refinery": 2}},
-    {"id": "depth_scanner", "label": "Depth Scanner", "base_cost": 34, "cost_mult": 1.162, "max_level": 12, "requires": {"xp_calibration": 2}},
-    {"id": "seismic_sonar", "label": "Seismic Sonar", "base_cost": 37, "cost_mult": 1.168, "max_level": 18, "requires": {"depth_scanner": 2}},
-    {"id": "magnet_drone", "label": "Salvage Drone", "base_cost": 39, "cost_mult": 1.17, "max_level": 20, "requires": {"pickup_radius": 4}},
-    {"id": "foreman_bot", "label": "Foreman Bot", "base_cost": 41, "cost_mult": 1.172, "max_level": 18, "requires": {"drill_plating": 6, "magnet_drone": 4}},
-    {"id": "delivery_drone", "label": "Delivery Drone", "base_cost": 46, "cost_mult": 1.178, "max_level": 18, "requires": {"magnet_drone": 2, "depth_scanner": 1}},
-    {"id": "auto_sorters", "label": "Auto Sorters", "base_cost": 45, "cost_mult": 1.176, "max_level": 16, "requires": {"delivery_drone": 4}},
+    {"id": "timer_reserve", "label": "Timer Reserve", "base_cost": 18, "cost_mult": 1.14, "max_level": 100, "requires": {}},
+    {"id": "route_planner", "label": "Route Planner", "base_cost": 22, "cost_mult": 1.145, "max_level": 100, "requires": {"timer_reserve": 4}},
+    {"id": "engine_tuning", "label": "Engine Tuning", "base_cost": 19, "cost_mult": 1.14, "max_level": 100, "requires": {}},
+    {"id": "dirt_softener", "label": "Dirt Softener", "base_cost": 27, "cost_mult": 1.152, "max_level": 100, "requires": {"engine_tuning": 4}},
+    {"id": "drill_torque", "label": "Drill Torque", "base_cost": 20, "cost_mult": 1.142, "max_level": 100, "requires": {}},
+    {"id": "drill_plating", "label": "Drill Plating", "base_cost": 22, "cost_mult": 1.146, "max_level": 100, "requires": {"drill_torque": 2}},
+    {"id": "cooling_loop", "label": "Cooling Loop", "base_cost": 25, "cost_mult": 1.149, "max_level": 100, "requires": {"drill_plating": 2}},
+    {"id": "cargo_pods", "label": "Cargo Pods", "base_cost": 21, "cost_mult": 1.143, "max_level": 100, "requires": {}},
+    {"id": "cargo_compressor", "label": "Cargo Compressor", "base_cost": 29, "cost_mult": 1.156, "max_level": 100, "requires": {"cargo_pods": 6}},
+    {"id": "ore_refinery", "label": "Ore Refinery", "base_cost": 24, "cost_mult": 1.148, "max_level": 100, "requires": {"cargo_pods": 2}},
+    {"id": "pickup_radius", "label": "Vacuum Scoop", "base_cost": 23, "cost_mult": 1.146, "max_level": 100, "requires": {"cargo_pods": 1}},
+    {"id": "xp_calibration", "label": "XP Calibration", "base_cost": 27, "cost_mult": 1.152, "max_level": 100, "requires": {"ore_refinery": 2}},
+    {"id": "depth_scanner", "label": "Depth Scanner", "base_cost": 34, "cost_mult": 1.162, "max_level": 100, "requires": {"xp_calibration": 2}},
+    {"id": "seismic_sonar", "label": "Seismic Sonar", "base_cost": 37, "cost_mult": 1.168, "max_level": 100, "requires": {"depth_scanner": 2}},
+    {"id": "magnet_drone", "label": "Salvage Drone", "base_cost": 39, "cost_mult": 1.17, "max_level": 100, "requires": {"pickup_radius": 4}},
+    {"id": "foreman_bot", "label": "Foreman Bot", "base_cost": 41, "cost_mult": 1.172, "max_level": 100, "requires": {"drill_plating": 6, "magnet_drone": 4}},
+    {"id": "delivery_drone", "label": "Delivery Drone", "base_cost": 46, "cost_mult": 1.178, "max_level": 100, "requires": {"magnet_drone": 2, "depth_scanner": 1}},
+    {"id": "auto_sorters", "label": "Auto Sorters", "base_cost": 45, "cost_mult": 1.176, "max_level": 100, "requires": {"delivery_drone": 4}},
 ]
 UPGRADE_BY_ID = {u["id"]: u for u in UPGRADES}
 
-MATERIALS: List[Dict] = [
+BASE_MATERIALS: List[Dict] = [
     {"id": "stone", "name": "Stone", "value": 7, "xp": 6, "hardness": 24.0},
     {"id": "bronze", "name": "Bronze", "value": 11, "xp": 9, "hardness": 34.0},
     {"id": "silver", "name": "Silver", "value": 16, "xp": 13, "hardness": 46.0},
@@ -71,6 +77,29 @@ MATERIALS: List[Dict] = [
     {"id": "super_gold", "name": "Super Gold", "value": 308, "xp": 150, "hardness": 304.0},
     {"id": "super_diamond", "name": "Super Diamond", "value": 405, "xp": 188, "hardness": 356.0},
 ]
+
+
+def build_material_for_depth(depth_level: int) -> Dict:
+    base_count = len(BASE_MATERIALS)
+    base_index = max(0, min(depth_level - 1, base_count - 1))
+    if depth_level <= base_count:
+        return dict(BASE_MATERIALS[base_index])
+
+    loop_index = (depth_level - 1) % base_count
+    cycle_number = 1 + (depth_level - 1) // base_count
+    band = max(0, cycle_number - 1)
+    base = dict(BASE_MATERIALS[loop_index])
+    band_scale = pow(1.42, band)
+    intra_band_scale = 1.0 + 0.035 * loop_index
+    base["id"] = f"{base['id']}_{cycle_number}"
+    base["name"] = f"{base['name']} {cycle_number}"
+    base["value"] = int(round(float(base["value"]) * band_scale * intra_band_scale))
+    base["xp"] = int(round(float(base["xp"]) * pow(1.46, band) * intra_band_scale))
+    base["hardness"] = float(base["hardness"]) * pow(1.38, band) * (1.0 + 0.04 * loop_index)
+    return base
+
+
+MATERIALS: List[Dict] = [build_material_for_depth(depth) for depth in range(1, MAX_DEPTH_LEVEL + 1)]
 
 
 def now_utc() -> str:
@@ -103,7 +132,7 @@ def refresh_depth_unlocks(data: Dict) -> None:
     player_level = max(1, int(data.get("player_level", 1)))
     scanner_level = int(data.get("upgrades", {}).get("depth_scanner", 0))
     unlocked = 1 + int(math.floor(float(player_level - 1) / 2.0)) + scanner_level
-    data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", 1)), min(13, unlocked))
+    data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", 1)), min(MAX_DEPTH_LEVEL, unlocked))
     data["selected_depth_level"] = min(int(data["deepest_level_unlocked"]), max(1, int(data.get("selected_depth_level", 1))))
 
 
@@ -122,81 +151,102 @@ def get_default_state() -> Dict:
 
 def get_upgrade_cost(upgrade_id: str, current_level: int) -> int:
     upgrade = UPGRADE_BY_ID[upgrade_id]
-    return int(round(float(upgrade["base_cost"]) * pow(float(upgrade["cost_mult"]), current_level)))
+    level_to_buy = current_level + 1
+    late_mult = get_late_upgrade_multiplier(level_to_buy, int(upgrade["max_level"]))
+    return int(round(float(upgrade["base_cost"]) * pow(float(upgrade["cost_mult"]), current_level) * late_mult))
+
+
+def get_late_upgrade_multiplier(level: int, max_level: int = MAX_UPGRADE_LEVEL) -> float:
+    if level <= EARLY_UPGRADE_LEVELS:
+        return 1.0
+    late_levels = max(1, max_level - EARLY_UPGRADE_LEVELS)
+    denominator = late_levels - 1 if late_levels > 1 else 1
+    progress = float(level - EARLY_UPGRADE_LEVELS - 1) / float(denominator)
+    progress = max(0.0, min(1.0, progress))
+    return LATE_COST_MULTIPLIER_START + (LATE_COST_MULTIPLIER_END - LATE_COST_MULTIPLIER_START) * progress
+
+
+def scaled_upgrade_strength(upgrades: Dict[str, int], upgrade_id: str) -> float:
+    owned_level = int(upgrades.get(upgrade_id, 0))
+    max_level = int(UPGRADE_BY_ID.get(upgrade_id, {}).get("max_level", MAX_UPGRADE_LEVEL))
+    total = 0.0
+    for level in range(1, owned_level + 1):
+        total += get_late_upgrade_multiplier(level, max_level)
+    return total
 
 
 def move_speed(upgrades: Dict[str, int]) -> float:
-    return 205.0 + 6.5 * upgrades.get("engine_tuning", 0) + 1.8 * upgrades.get("route_planner", 0)
+    return 205.0 + 6.5 * scaled_upgrade_strength(upgrades, "engine_tuning") + 1.8 * scaled_upgrade_strength(upgrades, "route_planner")
 
 
 def dirt_drag(depth_level: int, upgrades: Dict[str, int]) -> float:
-    base = 0.86 - 0.028 * max(0, depth_level - 1)
-    base += 0.03 * upgrades.get("dirt_softener", 0)
-    base += 0.008 * upgrades.get("route_planner", 0)
-    return max(0.44, min(1.05, base))
+    base = 0.9 - 0.042 * max(0, depth_level - 1)
+    base += 0.034 * scaled_upgrade_strength(upgrades, "dirt_softener")
+    base += 0.01 * scaled_upgrade_strength(upgrades, "route_planner")
+    return max(0.3, min(1.08, base))
 
 
 def run_time_limit(upgrades: Dict[str, int]) -> float:
-    return 16.0 + 0.85 * upgrades.get("timer_reserve", 0)
+    return 16.0 + 0.85 * scaled_upgrade_strength(upgrades, "timer_reserve")
 
 
 def time_drain(depth_level: int, upgrades: Dict[str, int]) -> float:
-    drain = 1.0 + 0.055 * max(0, depth_level - 1) - 0.016 * upgrades.get("route_planner", 0)
+    drain = 1.0 + 0.055 * max(0, depth_level - 1) - 0.016 * scaled_upgrade_strength(upgrades, "route_planner")
     return max(0.62, min(2.4, drain))
 
 
 def drill_dps(upgrades: Dict[str, int]) -> float:
-    return 8.5 + 1.35 * upgrades.get("drill_torque", 0) + 0.12 * upgrades.get("cooling_loop", 0) + 0.9 * upgrades.get("foreman_bot", 0)
+    return 8.5 + 1.35 * scaled_upgrade_strength(upgrades, "drill_torque") + 0.12 * scaled_upgrade_strength(upgrades, "cooling_loop") + 0.9 * scaled_upgrade_strength(upgrades, "foreman_bot")
 
 
 def drill_health_max(upgrades: Dict[str, int]) -> float:
-    return 60.0 + 8.5 * upgrades.get("drill_plating", 0)
+    return 60.0 + 8.5 * scaled_upgrade_strength(upgrades, "drill_plating")
 
 
 def drill_wear_multiplier(upgrades: Dict[str, int]) -> float:
-    return max(0.45, min(1.0, 1.0 - 0.012 * upgrades.get("cooling_loop", 0)))
+    return max(0.08, min(1.0, 1.0 - 0.012 * scaled_upgrade_strength(upgrades, "cooling_loop")))
 
 
 def cargo_capacity(upgrades: Dict[str, int]) -> int:
-    return 4 + upgrades.get("cargo_pods", 0) + upgrades.get("cargo_compressor", 0) // 2
+    return 4 + int(round(scaled_upgrade_strength(upgrades, "cargo_pods"))) + int(math.floor(scaled_upgrade_strength(upgrades, "cargo_compressor") / 2.0))
 
 
 def value_multiplier(upgrades: Dict[str, int]) -> float:
-    return 1.0 + 0.045 * upgrades.get("ore_refinery", 0) + 0.012 * upgrades.get("cargo_compressor", 0)
+    return 1.0 + 0.045 * scaled_upgrade_strength(upgrades, "ore_refinery") + 0.012 * scaled_upgrade_strength(upgrades, "cargo_compressor")
 
 
 def xp_multiplier(upgrades: Dict[str, int]) -> float:
-    return 1.0 + 0.06 * upgrades.get("xp_calibration", 0)
+    return 1.0 + 0.06 * scaled_upgrade_strength(upgrades, "xp_calibration")
 
 
 def pickup_radius(upgrades: Dict[str, int]) -> float:
-    return 18.0 + 3.0 * upgrades.get("pickup_radius", 0) + 2.5 * upgrades.get("magnet_drone", 0)
+    return 18.0 + 3.0 * scaled_upgrade_strength(upgrades, "pickup_radius") + 2.5 * scaled_upgrade_strength(upgrades, "magnet_drone")
 
 
 def pickup_drone_count(upgrades: Dict[str, int]) -> int:
-    level = upgrades.get("magnet_drone", 0)
-    return 0 if level <= 0 else 1 + max(0, level - 1) // 4
+    strength = scaled_upgrade_strength(upgrades, "magnet_drone")
+    return 0 if strength <= 0.0 else 1 + int(math.floor(max(0.0, strength - 1.0) / 4.0))
 
 
 def pickup_drone_speed(upgrades: Dict[str, int]) -> float:
-    return 300.0 + 9.0 * upgrades.get("magnet_drone", 0)
+    return 300.0 + 9.0 * scaled_upgrade_strength(upgrades, "magnet_drone")
 
 
 def delivery_drone_count(upgrades: Dict[str, int]) -> int:
-    level = upgrades.get("delivery_drone", 0)
-    return 0 if level <= 0 else 1 + max(0, level - 1) // 3
+    strength = scaled_upgrade_strength(upgrades, "delivery_drone")
+    return 0 if strength <= 0.0 else 1 + int(math.floor(max(0.0, strength - 1.0) / 3.0))
 
 
 def delivery_speed(upgrades: Dict[str, int]) -> float:
-    return 380.0 + 12.0 * upgrades.get("delivery_drone", 0) + 6.0 * upgrades.get("auto_sorters", 0)
+    return 380.0 + 12.0 * scaled_upgrade_strength(upgrades, "delivery_drone") + 6.0 * scaled_upgrade_strength(upgrades, "auto_sorters")
 
 
 def dispatch_window(upgrades: Dict[str, int]) -> float:
-    return max(2.0, min(6.5, 6.5 - 0.12 * upgrades.get("delivery_drone", 0) - 0.05 * upgrades.get("auto_sorters", 0)))
+    return max(0.4, min(6.5, 6.5 - 0.12 * scaled_upgrade_strength(upgrades, "delivery_drone") - 0.05 * scaled_upgrade_strength(upgrades, "auto_sorters")))
 
 
 def delivery_items(upgrades: Dict[str, int]) -> int:
-    return 1 + upgrades.get("auto_sorters", 0) // 5
+    return 1 + int(math.floor(scaled_upgrade_strength(upgrades, "auto_sorters") / 5.0))
 
 
 def material_weights(available_tiers: int, upgrades: Dict[str, int]) -> List[float]:
@@ -212,6 +262,46 @@ def material_weights(available_tiers: int, upgrades: Dict[str, int]) -> List[flo
             weight = 3.0 + sonar * 0.28
         elif idx <= available_tiers - 3:
             weight = max(0.45, weight - sonar * 0.08)
+        weights.append(weight)
+    return weights
+
+
+def material_pool_indices(available_tiers: int) -> List[int]:
+    capped_tiers = max(1, available_tiers)
+    if capped_tiers <= MAX_MATERIAL_TYPES_PER_LEVEL:
+        return list(range(capped_tiers))
+
+    recent_count = min(5, MAX_MATERIAL_TYPES_PER_LEVEL - 1)
+    recent_start = max(0, capped_tiers - recent_count)
+    anchor_count = MAX_MATERIAL_TYPES_PER_LEVEL - recent_count
+    anchor_limit = max(1, recent_start)
+    indices: List[int] = []
+    for anchor_index in range(anchor_count):
+        progress = 0.0 if anchor_count <= 1 else float(anchor_index) / float(anchor_count - 1)
+        selected_index = int(round(progress * float(anchor_limit - 1)))
+        if not indices or indices[-1] != selected_index:
+            indices.append(selected_index)
+    for recent_index in range(recent_start, capped_tiers):
+        if recent_index not in indices:
+            indices.append(recent_index)
+    return indices
+
+
+def material_weights_for_indices(indices: List[int], upgrades: Dict[str, int]) -> List[float]:
+    if not indices:
+        return [1.0]
+    weights_by_tier = material_weights(indices[-1] + 1, upgrades)
+    pool_size = len(indices)
+    weights: List[float] = []
+    for pool_index, tier_index in enumerate(indices):
+        weight = float(weights_by_tier[tier_index])
+        recency_progress = float(pool_index + 1) / float(pool_size)
+        if pool_index >= pool_size - min(3, pool_size):
+            weight *= 1.15 + recency_progress * 0.35
+        elif pool_index == 0:
+            weight *= 0.9
+        else:
+            weight *= 0.95 + recency_progress * 0.15
         weights.append(weight)
     return weights
 
@@ -294,11 +384,12 @@ def generate_world(depth_level: int, upgrades: Dict[str, int], seed: int) -> Lis
     rng = random.Random(seed)
     base = get_base_position()
     available_tiers = min(depth_level, len(MATERIALS))
+    selected_indices = material_pool_indices(available_tiers)
     node_count = min(MAX_WORLD_NODES, 28 + depth_level * 6)
     nodes: List[Node] = []
-    weights = material_weights(available_tiers, upgrades)
+    weights = material_weights_for_indices(selected_indices, upgrades)
     for _ in range(node_count):
-        mat = MATERIALS[weight_roll(rng, weights)]
+        mat = MATERIALS[selected_indices[weight_roll(rng, weights)]]
         health = node_health(mat, depth_level)
         radius = max(NODE_RADIUS_MIN, min(NODE_RADIUS_MAX, 14.0 + math.sqrt(health) * 1.9))
         pos = (0.0, 0.0)
@@ -593,7 +684,7 @@ def apply_purchase(state: Dict, purchase: Dict) -> Dict:
 
 
 def choose_best_depth(state: Dict, base_seed: int, run_index: int) -> Dict:
-    deepest = min(13, int(state.get("deepest_level_unlocked", 1)))
+    deepest = min(MAX_DEPTH_LEVEL, int(state.get("deepest_level_unlocked", 1)))
     best = None
     best_score = -1e18
     for depth in range(1, deepest + 1):

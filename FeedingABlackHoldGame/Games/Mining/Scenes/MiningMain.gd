@@ -20,6 +20,7 @@ const DRILL_RANGE := 118.0
 const NODE_RADIUS_MIN := 18.0
 const NODE_RADIUS_MAX := 34.0
 const MAX_WORLD_NODES := 96
+const LEVEL_SIZE_GROWTH_PER_10_TIERS := 0.1
 const DRONE_DELIVERY_INTERVAL := 7.0
 const DRONE_DELIVERY_SPEED := 420.0
 const PICKUP_DRONE_SPEED := 330.0
@@ -283,7 +284,8 @@ func _draw() -> void:
     var viewport_size := get_viewport_rect().size
     draw_rect(Rect2(Vector2.ZERO, viewport_size), Color(0.07, 0.08, 0.1, 1.0), true)
     var origin := viewport_size * 0.5 - camera_pos
-    var world_rect := Rect2(origin - WORLD_SIZE * 0.5, WORLD_SIZE)
+    var world_size: Vector2 = _get_world_size()
+    var world_rect := Rect2(origin - world_size * 0.5, world_size)
     draw_rect(world_rect, _get_level_bg_color(), true)
     _draw_background_doodads(world_rect)
     if dirt_texture != null:
@@ -310,7 +312,7 @@ func _begin_run() -> void:
     active_material = material_tiers[active_depth_level - 1]
     hud_last_reported_level = int(persistent_data.get("player_level", 1))
     _ensure_background_noise_texture()
-    player_pos = Vector2(0.0, -WORLD_SIZE.y * 0.5 + 120.0)
+    player_pos = _get_base_position()
     camera_pos = player_pos
     time_left = _get_run_time_limit()
     drill_health = _get_drill_health_max()
@@ -456,8 +458,9 @@ func _process_player_movement(delta: float) -> void:
             return
         attached_node_id = -1
     var candidate: Vector2 = player_pos + player_velocity * delta
-    candidate.x = clampf(candidate.x, -WORLD_SIZE.x * 0.5 + PLAYER_RADIUS, WORLD_SIZE.x * 0.5 - PLAYER_RADIUS)
-    candidate.y = clampf(candidate.y, -WORLD_SIZE.y * 0.5 + PLAYER_RADIUS, WORLD_SIZE.y * 0.5 - PLAYER_RADIUS)
+    var world_size: Vector2 = _get_world_size()
+    candidate.x = clampf(candidate.x, -world_size.x * 0.5 + PLAYER_RADIUS, world_size.x * 0.5 - PLAYER_RADIUS)
+    candidate.y = clampf(candidate.y, -world_size.y * 0.5 + PLAYER_RADIUS, world_size.y * 0.5 - PLAYER_RADIUS)
     var collision_index: int = _get_collision_node_index(candidate)
     if collision_index == -1:
         player_pos = candidate
@@ -468,8 +471,8 @@ func _process_player_movement(delta: float) -> void:
     var node: Dictionary = world_nodes[collision_index]
     if _apply_impact_hit(collision_index, candidate):
         player_pos = candidate
-        player_pos.x = clampf(player_pos.x, -WORLD_SIZE.x * 0.5 + PLAYER_RADIUS, WORLD_SIZE.x * 0.5 - PLAYER_RADIUS)
-        player_pos.y = clampf(player_pos.y, -WORLD_SIZE.y * 0.5 + PLAYER_RADIUS, WORLD_SIZE.y * 0.5 - PLAYER_RADIUS)
+        player_pos.x = clampf(player_pos.x, -world_size.x * 0.5 + PLAYER_RADIUS, world_size.x * 0.5 - PLAYER_RADIUS)
+        player_pos.y = clampf(player_pos.y, -world_size.y * 0.5 + PLAYER_RADIUS, world_size.y * 0.5 - PLAYER_RADIUS)
         _carve_dirt_segment(previous_pos, player_pos, 28.0)
         _update_drill_train(previous_pos, delta)
         return
@@ -494,8 +497,8 @@ func _process_player_movement(delta: float) -> void:
     attached_push_direction = (node_pos - player_pos).normalized()
     if attached_push_direction == Vector2.ZERO:
         attached_push_direction = pointer_dir if pointer_dir != Vector2.ZERO else Vector2.DOWN
-    player_pos.x = clampf(player_pos.x, -WORLD_SIZE.x * 0.5 + PLAYER_RADIUS, WORLD_SIZE.x * 0.5 - PLAYER_RADIUS)
-    player_pos.y = clampf(player_pos.y, -WORLD_SIZE.y * 0.5 + PLAYER_RADIUS, WORLD_SIZE.y * 0.5 - PLAYER_RADIUS)
+    player_pos.x = clampf(player_pos.x, -world_size.x * 0.5 + PLAYER_RADIUS, world_size.x * 0.5 - PLAYER_RADIUS)
+    player_pos.y = clampf(player_pos.y, -world_size.y * 0.5 + PLAYER_RADIUS, world_size.y * 0.5 - PLAYER_RADIUS)
     _carve_dirt_segment(previous_pos, player_pos, 28.0)
     _update_drill_train(previous_pos, delta)
 
@@ -846,10 +849,11 @@ func _get_pickup_drone_idle_position(drone_index: int, drone: Dictionary) -> Vec
 
 func _generate_world() -> void:
     var available_tiers: int = min(active_depth_level, material_tiers.size())
+    var material_pool_indices: Array[int] = MINING_BALANCE.get_material_pool_indices(available_tiers)
     var node_count: int = min(MAX_WORLD_NODES, 28 + active_depth_level * 6)
     var safety_center: Vector2 = _get_base_position()
     for node_index in range(node_count):
-        var material: Dictionary = _roll_material_for_level(available_tiers)
+        var material: Dictionary = _roll_material_for_level(material_pool_indices)
         var health: float = MINING_BALANCE.get_node_health(material, active_depth_level)
         var radius: float = clampf(14.0 + sqrt(health) * 1.9, NODE_RADIUS_MIN, NODE_RADIUS_MAX)
         var pos: Vector2 = Vector2.ZERO
@@ -887,19 +891,21 @@ func _node_overlaps_existing(pos: Vector2, radius: float) -> bool:
             return true
     return false
 
-func _roll_material_for_level(available_tiers: int) -> Dictionary:
-    if available_tiers <= 1:
+func _roll_material_for_level(material_pool_indices: Array[int]) -> Dictionary:
+    if material_pool_indices.is_empty():
         return material_tiers[0]
-    var weights: Array[float] = MINING_BALANCE.get_material_weights(available_tiers, _get_upgrade_levels())
+    if material_pool_indices.size() == 1:
+        return material_tiers[material_pool_indices[0]]
+    var weights: Array[float] = MINING_BALANCE.get_material_weights_for_indices(material_pool_indices, _get_upgrade_levels())
     var total_weight: float = 0.0
     for weight in weights:
         total_weight += float(weight)
     var roll: float = rng.randf() * total_weight
-    for index in range(available_tiers):
+    for index in range(material_pool_indices.size()):
         roll -= weights[index]
         if roll <= 0.0:
-            return material_tiers[index]
-    return material_tiers[available_tiers - 1]
+            return material_tiers[material_pool_indices[index]]
+    return material_tiers[material_pool_indices[material_pool_indices.size() - 1]]
 
 func _break_node(node_index: int) -> void:
     var node: Dictionary = world_nodes[node_index]

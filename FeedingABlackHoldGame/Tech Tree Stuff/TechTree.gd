@@ -588,6 +588,71 @@ func _on_node_selected(node: TechTreeNode):
 
     set_tech_tree_pos(-node.position)
 
+func get_owned_nodes_blocked_by_removal(target_node: TechTreeNode) -> Array[TechTreeNode]:
+    var blocked_nodes: Array[TechTreeNode] = []
+    if target_node == null or not is_instance_valid(target_node):
+        return blocked_nodes
+    if target_node.upgrade == null or target_node.upgrade.current_tier <= 0:
+        return blocked_nodes
+
+    var owned_cells: Dictionary = {Vector2.ZERO: true}
+    for node_variant: Variant in node_dict.values():
+        if not (node_variant is TechTreeNode):
+            continue
+        var node: TechTreeNode = node_variant
+        if node == null or not is_instance_valid(node):
+            continue
+        if node.is_center_node or node.upgrade == null:
+            continue
+        var owned_tier: int = node.upgrade.current_tier
+        if node == target_node:
+            owned_tier = max(0, owned_tier - 1)
+        if owned_tier > 0:
+            owned_cells[node.cell] = true
+
+    var visited: Dictionary = {Vector2.ZERO: true}
+    var frontier: Array[Vector2] = [Vector2.ZERO]
+    while not frontier.is_empty():
+        var next_frontier: Array[Vector2] = []
+        for source_cell in frontier:
+            for connected_cell in get_all_connected_cells(source_cell):
+                if visited.has(connected_cell) or not owned_cells.has(connected_cell):
+                    continue
+                var connected_node_variant: Variant = node_dict.get(connected_cell, null)
+                if not (connected_node_variant is TechTreeNode):
+                    continue
+                var connected_node: TechTreeNode = connected_node_variant
+                if connected_node == null or connected_node.upgrade == null:
+                    continue
+                var forced_cell: Variant = connected_node.upgrade.forced_cell
+                if forced_cell != null and not owned_cells.has(forced_cell):
+                    continue
+                visited[connected_cell] = true
+                next_frontier.append(connected_cell)
+        frontier = next_frontier
+
+    for node_variant: Variant in node_dict.values():
+        if not (node_variant is TechTreeNode):
+            continue
+        var node: TechTreeNode = node_variant
+        if node == null or not is_instance_valid(node):
+            continue
+        if node.is_center_node or node.upgrade == null:
+            continue
+        var owned_tier: int = node.upgrade.current_tier
+        if node == target_node:
+            owned_tier = max(0, owned_tier - 1)
+        if owned_tier <= 0:
+            continue
+        var forced_cell: Variant = node.upgrade.forced_cell
+        var forced_missing: bool = forced_cell != null and not owned_cells.has(forced_cell)
+        if forced_missing or not visited.has(node.cell):
+            blocked_nodes.append(node)
+    return blocked_nodes
+
+func can_remove_owned_tier(target_node: TechTreeNode) -> bool:
+    return get_owned_nodes_blocked_by_removal(target_node).is_empty()
+
 func recenter_on_core() -> void:
     if center_node == null or not is_instance_valid(center_node):
         return
