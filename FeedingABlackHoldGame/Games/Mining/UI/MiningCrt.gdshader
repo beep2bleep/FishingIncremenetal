@@ -31,29 +31,28 @@ void fragment() {
 		curved_uv.y < 0.0 || curved_uv.y > 1.0
 	) {
 		COLOR = vec4(0.0, 0.0, 0.0, 1.0);
-		return;
+	} else {
+		float pixel_height = 1.0 / target_vertical_resolution;
+		vec2 pixel_size = vec2(pixel_height / aspect, pixel_height);
+		vec2 snapped_uv = (floor(curved_uv / pixel_size) + 0.5) * pixel_size;
+		vec2 chroma_shift = vec2(pixel_size.x * chroma_offset, 0.0);
+
+		float red = texture(SCREEN_TEXTURE, snapped_uv + chroma_shift).r;
+		float green = texture(SCREEN_TEXTURE, snapped_uv).g;
+		float blue = texture(SCREEN_TEXTURE, snapped_uv - chroma_shift).b;
+		vec3 color = vec3(red, green, blue);
+
+		float scanline = 0.5 + 0.5 * sin(snapped_uv.y * viewport_size.y * 3.14159265);
+		float grille = 0.5 + 0.5 * sin(snapped_uv.x * viewport_size.x * 6.2831853);
+		color *= 1.0 - scanline * scanline_strength;
+		color *= 1.0 - grille * grille_strength;
+
+		float edge = distance(curved_uv, vec2(0.5)) * 1.85;
+		float vignette = clamp(1.0 - edge * edge * vignette_strength, 0.0, 1.0);
+		color *= vignette;
+		color *= tint;
+		color += (hash(snapped_uv * viewport_size) - 0.5) * noise_strength;
+
+		COLOR = vec4(clamp(color, 0.0, 1.0), 1.0);
 	}
-
-	float pixel_height = 1.0 / target_vertical_resolution;
-	vec2 pixel_size = vec2(pixel_height / aspect, pixel_height);
-	vec2 snapped_uv = (floor(curved_uv / pixel_size) + 0.5) * pixel_size;
-	vec2 chroma_shift = vec2(pixel_size.x * chroma_offset, 0.0);
-
-	float red = texture(SCREEN_TEXTURE, snapped_uv + chroma_shift).r;
-	float green = texture(SCREEN_TEXTURE, snapped_uv).g;
-	float blue = texture(SCREEN_TEXTURE, snapped_uv - chroma_shift).b;
-	vec3 color = vec3(red, green, blue);
-
-	float scanline = 0.5 + 0.5 * sin(snapped_uv.y * viewport_size.y * 3.14159265);
-	float grille = 0.5 + 0.5 * sin(snapped_uv.x * viewport_size.x * 6.2831853);
-	color *= 1.0 - scanline * scanline_strength;
-	color *= 1.0 - grille * grille_strength;
-
-	float edge = distance(curved_uv, vec2(0.5)) * 1.85;
-	float vignette = clamp(1.0 - edge * edge * vignette_strength, 0.0, 1.0);
-	color *= vignette;
-	color *= tint;
-	color += (hash(snapped_uv * viewport_size) - 0.5) * noise_strength;
-
-	COLOR = vec4(clamp(color, 0.0, 1.0), 1.0);
 }

@@ -2,6 +2,7 @@ extends Control
 class_name MiningUpgradeScene
 
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
+const MINING_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningTextMirrorOverlay.gd")
 const SAVE_PATH := "user://mining_mode_save_v1.json"
 const FIRST_BOSS_DEPTH := 800
 const BOSS_INTERVAL_METERS := 200
@@ -74,10 +75,18 @@ func _ready() -> void:
 
 func _ensure_crt_overlay() -> void:
 	if get_node_or_null("MiningCrtOverlay") != null:
+		var existing_mirror: CanvasLayer = get_node_or_null("MiningTextMirrorOverlay") as CanvasLayer
+		if existing_mirror == null:
+			var text_overlay: CanvasLayer = MINING_TEXT_MIRROR_OVERLAY_SCRIPT.new().configure(self, 2)
+			text_overlay.name = "MiningTextMirrorOverlay"
+			add_child(text_overlay)
 		return
-	var overlay: CanvasLayer = MINING_CRT_OVERLAY_SCRIPT.new()
+	var overlay: CanvasLayer = MINING_CRT_OVERLAY_SCRIPT.new().configure(1)
 	overlay.name = "MiningCrtOverlay"
 	add_child(overlay)
+	var text_mirror_overlay: CanvasLayer = MINING_TEXT_MIRROR_OVERLAY_SCRIPT.new().configure(self, 2)
+	text_mirror_overlay.name = "MiningTextMirrorOverlay"
+	add_child(text_mirror_overlay)
 
 func _build_ui() -> void:
 	for child in checkpoint_list.get_children():

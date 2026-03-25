@@ -36,8 +36,23 @@ const STRAIGHT_DRIVE_CHARGE_MAX := 4.4
 const STRAIGHT_DRIVE_TURN_RESET_ANGLE := 18.0
 const STRAIGHT_DRIVE_HARD_TURN_ANGLE := 55.0
 const STRAIGHT_DRIVE_SPEED_BONUS_MAX := 0.62
-const TUNNEL_SPEED_BONUS_MAX := 0.38
+const PLAYER_ACCELERATION := 2.2
+const PLAYER_DECELERATION := 4.5
+const TUNNEL_SPEED_BONUS_MIN := 0.14
+const TUNNEL_SPEED_BONUS_MAX := 0.46
+const TUNNEL_BOOST_COVERAGE_THRESHOLD := 0.5
 const TUNNEL_CLEAR_ALPHA_THRESHOLD := 0.12
+const TUNNEL_COVERAGE_SAMPLE_OFFSETS := [
+    Vector2.ZERO,
+    Vector2(1.0, 0.0),
+    Vector2(-1.0, 0.0),
+    Vector2(0.0, 1.0),
+    Vector2(0.0, -1.0),
+    Vector2(0.72, 0.72),
+    Vector2(-0.72, 0.72),
+    Vector2(0.72, -0.72),
+    Vector2(-0.72, -0.72)
+]
 const DEFAULT_MINING_SUMMARY_HINTS: Array[String] = [
     "Build speed through cleared tunnels before committing to a seam. Straight runs give the drill its best burst damage.",
     "Banking at the surface is safest when your cargo is full or your drill is close to breaking. Unbanked ore is a bad gamble.",
@@ -66,11 +81,11 @@ enum RUN_STATES {RUNNING, SUMMARY}
 @onready var boss_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/BossLabel
 @onready var top_panel: PanelContainer = $CanvasLayer/TopBar/TopPanel
 @onready var shop_panel: PanelContainer = $CanvasLayer/ShopPanel
-@onready var summary_label: Label = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryLabel
-@onready var summary_stats_panel: PanelContainer = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryStatsPanel
-@onready var summary_stats_label: Label = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryStatsPanel/SummaryStatsMargin/SummaryStatsLabel
-@onready var money_chart: PanelContainer = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryCharts/MoneyChart
-@onready var performance_chart: PanelContainer = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryCharts/PerformanceChart
+@onready var summary_label: Label = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryLeftColumn/SummaryLabel
+@onready var summary_stats_panel: PanelContainer = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryLeftColumn/SummaryStatsPanel
+@onready var summary_stats_label: Label = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryLeftColumn/SummaryStatsPanel/SummaryStatsMargin/SummaryStatsLabel
+@onready var money_chart: PanelContainer = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryRightColumn/MoneyChart
+@onready var performance_chart: PanelContainer = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/SummaryBody/SummaryRightColumn/PerformanceChart
 @onready var hint_left_button: Button = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/HintHeaderRow/HintLeftButton
 @onready var hint_title_label: Label = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/HintHeaderRow/HintTitleLabel
 @onready var hint_right_button: Button = $CanvasLayer/ShopPanel/ShopMargin/ShopVBox/HintHeaderRow/HintRightButton
@@ -159,6 +174,7 @@ var autoplay_pointer_direction := Vector2.ZERO
 var autoplay_current_goal := "node"
 var straight_drive_charge := 0.0
 var last_steer_direction := Vector2.ZERO
+var tunnel_speed_boost_strength := 0.0
 
 func _ready() -> void:
     Global.game_state = Util.GAME_STATES.PLAYING
@@ -270,6 +286,7 @@ func _begin_run() -> void:
     last_drill_direction = Vector2.DOWN
     straight_drive_charge = 0.0
     last_steer_direction = Vector2.ZERO
+    tunnel_speed_boost_strength = 0.0
     player_velocity = Vector2.ZERO
     trail_history.clear()
     drill_copies.clear()
@@ -357,12 +374,13 @@ func _process_player_movement(delta: float) -> void:
     contact_node_id = -1
     _update_straight_drive_charge(pointer_dir, delta)
     var tunnel_speed_bonus: float = _get_tunnel_speed_multiplier(player_pos.lerp(player_pos + pointer_dir * 18.0, 0.5))
+    tunnel_speed_boost_strength = clampf((tunnel_speed_bonus - 1.0) / TUNNEL_SPEED_BONUS_MAX, 0.0, 1.0)
     var desired_speed: float = _get_move_speed() * _get_dirt_drag_multiplier() * _get_straight_drive_speed_multiplier() * tunnel_speed_bonus
     var desired_velocity: Vector2 = pointer_dir * desired_speed
     if pointer_dir == Vector2.ZERO:
-        player_velocity = player_velocity.lerp(Vector2.ZERO, min(1.0, delta * 4.5))
+        player_velocity = player_velocity.lerp(Vector2.ZERO, min(1.0, delta * PLAYER_DECELERATION))
     else:
-        player_velocity = player_velocity.lerp(desired_velocity, min(1.0, delta * 3.2))
+        player_velocity = player_velocity.lerp(desired_velocity, min(1.0, delta * PLAYER_ACCELERATION))
     if attached_node_id != -1 and attached_node_id < world_nodes.size():
         var disengage_angle: float = abs(rad_to_deg(attached_push_direction.angle_to(pointer_dir))) if pointer_dir != Vector2.ZERO else 0.0
         if pointer_dir == Vector2.ZERO or disengage_angle < 30.0:
@@ -910,6 +928,8 @@ func _build_run_results(reason: String) -> Dictionary:
         "bank_trips": bank_trips,
         "delivery_dumps": delivery_dump_count,
         "nodes_broken": nodes_broken,
+        "remaining_nodes": world_nodes.size(),
+        "total_nodes_seen": nodes_broken + world_nodes.size(),
         "ore_spawned": total_pickups_spawned,
         "ore_collected": ore_collected,
         "ore_left_behind": ore_left_behind,
@@ -960,7 +980,7 @@ func _show_summary(results: Dictionary) -> void:
     summary_stats_label.text = str(results.get("summary_stats_text", ""))
     dive_button.text = "Return To Upgrades"
     reset_button.text = "Run Again"
-    _setup_summary_hints()
+    _setup_summary_hints(results)
     _refresh_summary_hint()
     _refresh_summary_charts(results)
     shop_panel.show()
@@ -981,11 +1001,11 @@ func _on_summary_retry_pressed() -> void:
 func _configure_summary_panel() -> void:
     shop_panel.hide()
     shop_panel.set_anchors_preset(Control.PRESET_CENTER)
-    shop_panel.custom_minimum_size = Vector2(1220.0, 760.0)
-    shop_panel.offset_left = -610.0
-    shop_panel.offset_top = -430.0
-    shop_panel.offset_right = 610.0
-    shop_panel.offset_bottom = 330.0
+    shop_panel.custom_minimum_size = Vector2(1380.0, 860.0)
+    shop_panel.offset_left = -690.0
+    shop_panel.offset_top = -470.0
+    shop_panel.offset_right = 690.0
+    shop_panel.offset_bottom = 390.0
     checkpoint_header.hide()
     checkpoint_list.hide()
     loadout_header.hide()
@@ -1126,8 +1146,12 @@ func _build_summary_stats_text(stats: Dictionary) -> String:
         int(round(float(stats.get("bank_rate", 0.0)) * 100.0))
     ]
 
-func _setup_summary_hints() -> void:
+func _setup_summary_hints(results: Dictionary = {}) -> void:
     mining_summary_hints = DEFAULT_MINING_SUMMARY_HINTS.duplicate()
+    var contextual_hint: String = _get_contextual_summary_hint(results)
+    if not contextual_hint.is_empty():
+        mining_summary_hints.erase(contextual_hint)
+        mining_summary_hints.push_front(contextual_hint)
     if _get_upgrade_level("pickup_radius") <= 0:
         mining_summary_hints.append("Vacuum Scoop is the fastest way to stop drops from slipping away once a vein bursts open.")
     if _get_upgrade_level("magnet_drone") <= 0:
@@ -1137,6 +1161,40 @@ func _setup_summary_hints() -> void:
     if mining_summary_hints.is_empty():
         mining_summary_hints.append("Review the run, tune the rig, and go again.")
     mining_summary_hint_index = 0
+
+func _get_contextual_summary_hint(results: Dictionary) -> String:
+    if results.is_empty():
+        return ""
+    var reason: String = String(results.get("reason", ""))
+    var ore_left_behind: int = int(results.get("ore_left_behind", 0))
+    var ore_spawned: int = int(results.get("ore_spawned", 0))
+    var collection_rate: float = float(results.get("collection_rate", 0.0))
+    var remaining_nodes: int = int(results.get("remaining_nodes", 0))
+    var total_nodes_seen: int = int(results.get("total_nodes_seen", 0))
+    var untouched_ratio: float = 0.0 if total_nodes_seen <= 0 else float(remaining_nodes) / float(total_nodes_seen)
+    var left_many_pickups: bool = ore_left_behind >= 10 or (ore_spawned >= 12 and collection_rate <= 0.55)
+    var left_many_nodes: bool = remaining_nodes >= 28 and untouched_ratio >= 0.72
+
+    if left_many_pickups:
+        if _get_upgrade_level("pickup_radius") <= 0:
+            return "You left a lot of ore drifting in the dirt that run. Vacuum Scoop will help you clean up popped veins before the loot scatters."
+        if _get_upgrade_level("magnet_drone") <= 0:
+            return "A lot of ore got left behind that run. Salvage Drone is a strong pickup if you want those loose chunks collected while you keep drilling."
+        return "A lot of ore got left behind that run. Try looping back through cracked veins sooner so the loose drops turn into cargo instead of dead weight."
+
+    if left_many_nodes:
+        return "There were still a lot of untouched veins on the field when the run ended. A cleaner route through nearby seams can turn that map into much better payout."
+
+    if reason == "Drill health depleted.":
+        return "The run ended because your drill wore out. Upgrading drill health will buy you more time on tough veins before the rig gives out."
+
+    if reason == "Timer expired.":
+        return "The timer ran out before the route paid off. Upgrading run time will give you more room to finish a lane and bank the haul."
+
+    if reason == "Hull depleted." or reason == "Hull integrity depleted.":
+        return "The run ended when the hull gave out. Hull Plating will let you absorb more punishment before you have to call the run."
+
+    return ""
 
 func _refresh_summary_hint() -> void:
     if mining_summary_hints.is_empty():
@@ -1354,11 +1412,24 @@ func _get_straight_drive_speed_multiplier() -> float:
     return 1.0 + min(straight_drive_charge / STRAIGHT_DRIVE_CHARGE_MAX, 1.0) * STRAIGHT_DRIVE_SPEED_BONUS_MAX
 
 func _get_tunnel_speed_multiplier(world_pos: Vector2) -> float:
-    var tunnel_ratio: float = 1.0 - _get_dirt_alpha(world_pos)
-    if tunnel_ratio <= 1.0 - TUNNEL_CLEAR_ALPHA_THRESHOLD:
+    var cleared_ratio: float = _get_tunnel_cleared_coverage(world_pos)
+    if cleared_ratio < TUNNEL_BOOST_COVERAGE_THRESHOLD:
         return 1.0
-    var normalized_ratio: float = clampf((tunnel_ratio - (1.0 - TUNNEL_CLEAR_ALPHA_THRESHOLD)) / TUNNEL_CLEAR_ALPHA_THRESHOLD, 0.0, 1.0)
-    return 1.0 + normalized_ratio * TUNNEL_SPEED_BONUS_MAX
+    var normalized_ratio: float = clampf((cleared_ratio - TUNNEL_BOOST_COVERAGE_THRESHOLD) / (1.0 - TUNNEL_BOOST_COVERAGE_THRESHOLD), 0.0, 1.0)
+    var bonus_ratio: float = lerpf(TUNNEL_SPEED_BONUS_MIN, TUNNEL_SPEED_BONUS_MAX, normalized_ratio)
+    return 1.0 + bonus_ratio
+
+func _get_tunnel_cleared_coverage(world_pos: Vector2) -> float:
+    if dirt_image == null:
+        return 0.0
+    var cleared_count := 0
+    var sample_radius: float = PLAYER_RADIUS + 6.0
+    for offset_variant in TUNNEL_COVERAGE_SAMPLE_OFFSETS:
+        var offset: Vector2 = offset_variant
+        var sample_pos: Vector2 = world_pos + offset * sample_radius
+        if _get_dirt_alpha(sample_pos) <= TUNNEL_CLEAR_ALPHA_THRESHOLD:
+            cleared_count += 1
+    return float(cleared_count) / float(max(1, TUNNEL_COVERAGE_SAMPLE_OFFSETS.size()))
 
 func _get_dirt_alpha(world_pos: Vector2) -> float:
     if dirt_image == null:
@@ -1606,8 +1677,11 @@ func _is_settings_open() -> bool:
 
 func _ensure_crt_overlay() -> void:
     var overlay: CanvasLayer = get_node_or_null("MiningCrtOverlay") as CanvasLayer
-    if overlay != null:
-        overlay.visible = false
+    if overlay == null:
+        overlay = MINING_CRT_OVERLAY_SCRIPT.new().configure(0)
+        overlay.name = "MiningCrtOverlay"
+        add_child(overlay)
+    overlay.visible = true
 
 func _get_drill_heading() -> Vector2:
     var heading: Vector2 = _get_pointer_direction()
@@ -1845,12 +1919,14 @@ func _draw_tail() -> void:
         var scale: float = 0.88 - 0.08 * float(copy_index)
         var shell_color: Color = Color(0.16, 0.17, 0.2, 0.82 - 0.08 * float(copy_index))
         var body_color: Color = Color(0.83, 0.74, 0.28, 0.74 - 0.09 * float(copy_index))
+        var copy_boost_strength: float = tunnel_speed_boost_strength * max(0.0, 1.0 - 0.18 * float(copy_index))
         _draw_drill_ship(
             _world_to_screen(copy_data.get("pos", player_pos)),
             copy_data.get("dir", _get_drill_heading()),
             scale,
             shell_color,
-            body_color
+            body_color,
+            copy_boost_strength
         )
 
 func _draw_player(origin: Vector2) -> void:
@@ -1859,21 +1935,26 @@ func _draw_player(origin: Vector2) -> void:
         aim_dir = player_velocity.normalized()
     if aim_dir == Vector2.ZERO:
         aim_dir = Vector2.DOWN
-    _draw_drill_ship(_world_to_screen(player_pos), aim_dir, 1.0, Color(0.16, 0.17, 0.2, 1.0), Color(0.83, 0.74, 0.28, 1.0))
+    _draw_drill_ship(_world_to_screen(player_pos), aim_dir, 1.0, Color(0.16, 0.17, 0.2, 1.0), Color(0.83, 0.74, 0.28, 1.0), tunnel_speed_boost_strength)
 
-func _draw_drill_ship(screen_pos: Vector2, aim_dir: Vector2, scale: float, shell_color: Color, body_color: Color) -> void:
+func _draw_drill_ship(screen_pos: Vector2, aim_dir: Vector2, scale: float, shell_color: Color, body_color: Color, boost_strength: float = 0.0) -> void:
     var spin_angle: float = Time.get_ticks_msec() * 0.02
-    draw_circle(screen_pos, (PLAYER_RADIUS + 4.0) * scale, shell_color)
+    var boost_shell: Color = shell_color.lerp(Color(0.24, 0.45, 0.56, shell_color.a), boost_strength * 0.55)
+    var boost_body: Color = body_color.lerp(Color(0.92, 0.96, 1.0, body_color.a), boost_strength * 0.45)
+    if boost_strength > 0.0:
+        draw_circle(screen_pos, (PLAYER_RADIUS + 8.0 + boost_strength * 4.0) * scale, Color(0.6, 0.92, 1.0, 0.1 + boost_strength * 0.16))
+        draw_arc(screen_pos, (PLAYER_RADIUS + 9.0) * scale, 0.0, TAU, 32, Color(0.82, 0.97, 1.0, 0.18 + boost_strength * 0.28), 2.0 * scale)
+    draw_circle(screen_pos, (PLAYER_RADIUS + 4.0) * scale, boost_shell)
     var body_points: PackedVector2Array = PackedVector2Array([
         screen_pos + Vector2(-14.0, 10.0).rotated(aim_dir.angle() + PI * 0.5) * scale,
         screen_pos + Vector2(0.0, -22.0).rotated(aim_dir.angle() + PI * 0.5) * scale,
         screen_pos + Vector2(14.0, 10.0).rotated(aim_dir.angle() + PI * 0.5) * scale
     ])
-    draw_colored_polygon(body_points, body_color)
+    draw_colored_polygon(body_points, boost_body)
     for tooth_index in range(3):
         var tooth_angle: float = spin_angle + TAU * float(tooth_index) / 3.0
         var tooth_dir: Vector2 = aim_dir.rotated(tooth_angle * 0.25)
-        draw_line(screen_pos + tooth_dir * (4.0 * scale), screen_pos + tooth_dir * (24.0 * scale), Color(0.95, 0.95, 0.98, body_color.a), maxf(1.5, 3.0 * scale))
+        draw_line(screen_pos + tooth_dir * (4.0 * scale), screen_pos + tooth_dir * ((24.0 + boost_strength * 3.0) * scale), Color(0.95, 0.99, 1.0, boost_body.a), maxf(1.5, (3.0 + boost_strength) * scale))
 
 func _draw_target_line(origin: Vector2) -> void:
     if target_node_id < 0 or target_node_id >= world_nodes.size():
