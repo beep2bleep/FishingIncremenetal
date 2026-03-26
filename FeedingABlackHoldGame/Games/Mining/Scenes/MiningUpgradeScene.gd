@@ -40,7 +40,6 @@ var upgrade_catalog: Array[Dictionary] = [
 	{"id": "drill_power", "label": "Drill Power", "summary": "Shreds harder nodes faster.", "base_cost": 24, "cost_mult": 1.42, "max_level": 10},
 	{"id": "drill_integrity", "label": "Drill Integrity", "summary": "More drill durability per run.", "base_cost": 26, "cost_mult": 1.43, "max_level": 10},
 	{"id": "oxygen_tanks", "label": "Oxygen Tanks", "summary": "Longer dives before recall.", "base_cost": 28, "cost_mult": 1.45, "max_level": 10},
-	{"id": "hull_plating", "label": "Hull Plating", "summary": "More hull to tank hazards and bosses.", "base_cost": 28, "cost_mult": 1.45, "max_level": 10},
 	{"id": "cargo_racks", "label": "Ore Grading", "summary": "Raises the cash value of the haul you bring back.", "base_cost": 32, "cost_mult": 1.47, "max_level": 8},
 	{"id": "dirt_compressor", "label": "Dirt Compressor", "summary": "Makes the basic shaft dirt worth more.", "base_cost": 20, "cost_mult": 1.4, "max_level": 8},
 	{"id": "ore_scanner", "label": "Ore Scanner", "summary": "Boosts deep rare node spawns.", "base_cost": 44, "cost_mult": 1.48, "max_level": 6},

@@ -41,7 +41,6 @@ var upgrade_catalog: Array[Dictionary] = [
 	{"id": "drill_power", "label": "Drill Power", "summary": "Shreds harder nodes faster.", "base_cost": 24, "cost_mult": 1.42, "max_level": 10, "icon": "drill"},
 	{"id": "drill_integrity", "label": "Drill Integrity", "summary": "More drill durability per run.", "base_cost": 26, "cost_mult": 1.43, "max_level": 10, "icon": "drill"},
 	{"id": "oxygen_tanks", "label": "Oxygen Tanks", "summary": "Longer dives before recall.", "base_cost": 28, "cost_mult": 1.45, "max_level": 10, "icon": "oxygen"},
-	{"id": "hull_plating", "label": "Hull Plating", "summary": "More hull to tank hazards and bosses.", "base_cost": 28, "cost_mult": 1.45, "max_level": 10, "icon": "shield"},
 	{"id": "cargo_racks", "label": "Ore Grading", "summary": "Raises the cash value of the haul you bring back.", "base_cost": 32, "cost_mult": 1.47, "max_level": 8, "icon": "ore"},
 	{"id": "dirt_compressor", "label": "Dirt Compressor", "summary": "Makes the basic shaft dirt worth more.", "base_cost": 20, "cost_mult": 1.4, "max_level": 8, "icon": "ore"},
 	{"id": "ore_scanner", "label": "Ore Scanner", "summary": "Boosts deep rare node spawns.", "base_cost": 44, "cost_mult": 1.48, "max_level": 6, "icon": "scanner"},
@@ -318,11 +317,6 @@ func _get_icon_texture(icon_id: String) -> Texture2D:
 		"oxygen":
 			_draw_rect(image, Rect2i(8, 4, 12, 18), color)
 			_draw_rect(image, Rect2i(10, 2, 8, 4), color)
-		"shield":
-			for y in range(4, 22):
-				var width: int = int(10 - abs(13 - y) / 2)
-				for x in range(14 - width, 14 + width):
-					image.set_pixel(x, y, color)
 		"scanner":
 			_draw_rect(image, Rect2i(5, 5, 14, 14), color)
 			_draw_rect(image, Rect2i(17, 17, 6, 6), color)

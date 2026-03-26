@@ -182,6 +182,7 @@ static func get_material_weights(available_tiers: int, upgrades: Dictionary) -> 
     if available_tiers <= 1:
         return [1.0]
     var sonar_level: float = float(upgrades.get("seismic_sonar", 0))
+    var frontier_pressure: float = clampf((float(available_tiers) - 20.0) / 24.0, 0.0, 1.0)
     var weights: Array[float] = []
     for index in range(available_tiers):
         var weight: float = 1.0 + float(index == 0) * 4.0
@@ -191,6 +192,17 @@ static func get_material_weights(available_tiers: int, upgrades: Dictionary) -> 
             weight = 3.0 + sonar_level * 0.24
         elif index <= available_tiers - 3:
             weight = max(0.5, weight - sonar_level * 0.05)
+        if frontier_pressure > 0.0:
+            if index == available_tiers - 1:
+                weight *= 1.0 + 1.0 * frontier_pressure
+            elif index == available_tiers - 2:
+                weight *= 1.0 + 0.55 * frontier_pressure
+            elif index == available_tiers - 3:
+                weight *= 1.0 + 0.25 * frontier_pressure
+            elif index == 0:
+                weight *= 1.0 - 0.45 * frontier_pressure
+            else:
+                weight *= 1.0 - 0.12 * frontier_pressure
         weights.append(weight)
     return weights
 
@@ -461,10 +473,11 @@ static func _build_material_tier_for_depth(depth_level: int, previous_material: 
     var base_material: Dictionary = BASE_MATERIAL_TIERS[loop_index].duplicate(true)
     if previous_material.is_empty():
         previous_material = _build_material_tier_for_depth(depth_level - 1)
+    var late_frontier_bonus: float = min(0.02, 0.001 * float(max(0, depth_level - 20)))
     var sparkle_bonus: float = min(0.44, 0.03 * float(max(0, cycle_number - 1)))
     base_material["id"] = "%s_%d" % [String(base_material.get("id", "ore")), cycle_number]
     base_material["name"] = "%s %d" % [String(base_material.get("name", "Ore")), cycle_number]
-    base_material["value"] = int(round(float(previous_material.get("value", base_material.get("value", 1))) * 1.072))
+    base_material["value"] = int(round(float(previous_material.get("value", base_material.get("value", 1))) * (1.072 + late_frontier_bonus)))
     base_material["xp"] = int(round(float(previous_material.get("xp", base_material.get("xp", 1))) * 1.069))
     base_material["hardness"] = float(previous_material.get("hardness", base_material.get("hardness", 24.0))) * 1.075
 

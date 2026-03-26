@@ -42,9 +42,9 @@ LATE_COST_MULTIPLIER_START = 1.8
 LATE_COST_MULTIPLIER_END = 30.0
 LATE_EFFECT_MULTIPLIER_START = 1.0
 LATE_EFFECT_MULTIPLIER_END = 2.25
-AUTOPLAY_MOVE_SPEED_MULTIPLIER = 1.22
+AUTOPLAY_MOVE_SPEED_MULTIPLIER = 1.24
 AUTOPLAY_DRILL_DPS_MULTIPLIER = 5.45
-AUTOPLAY_DRILL_WEAR_MULTIPLIER = 0.94
+AUTOPLAY_DRILL_WEAR_MULTIPLIER = 0.96
 MAX_PURCHASES_PER_RUN = 3
 MIN_PURCHASE_SCORE_DELTA = 0.05
 
@@ -100,9 +100,10 @@ def build_materials() -> List[Dict]:
         cycle_number = 1 + (depth_level - 1) // base_count
         previous = materials[-1]
         base = dict(BASE_MATERIALS[loop_index])
+        late_frontier_bonus = min(0.02, 0.001 * max(0, depth_level - 20))
         base["id"] = f"{base['id']}_{cycle_number}"
         base["name"] = f"{base['name']} {cycle_number}"
-        base["value"] = int(round(float(previous["value"]) * 1.072))
+        base["value"] = int(round(float(previous["value"]) * (1.072 + late_frontier_bonus)))
         base["xp"] = int(round(float(previous["xp"]) * 1.069))
         base["hardness"] = float(previous["hardness"]) * 1.075
         materials.append(base)
@@ -304,6 +305,7 @@ def material_weights(available_tiers: int, upgrades: Dict[str, int]) -> List[flo
     if available_tiers <= 1:
         return [1.0]
     sonar = upgrades.get("seismic_sonar", 0)
+    frontier_pressure = max(0.0, min(1.0, (float(available_tiers) - 20.0) / 24.0))
     weights: List[float] = []
     for idx in range(available_tiers):
         weight = 1.0 + (4.0 if idx == 0 else 0.0)
@@ -313,6 +315,17 @@ def material_weights(available_tiers: int, upgrades: Dict[str, int]) -> List[flo
             weight = 3.0 + sonar * 0.24
         elif idx <= available_tiers - 3:
             weight = max(0.5, weight - sonar * 0.05)
+        if frontier_pressure > 0.0:
+            if idx == available_tiers - 1:
+                weight *= 1.0 + 1.0 * frontier_pressure
+            elif idx == available_tiers - 2:
+                weight *= 1.0 + 0.55 * frontier_pressure
+            elif idx == available_tiers - 3:
+                weight *= 1.0 + 0.25 * frontier_pressure
+            elif idx == 0:
+                weight *= 1.0 - 0.45 * frontier_pressure
+            else:
+                weight *= 1.0 - 0.12 * frontier_pressure
         weights.append(weight)
     return weights
 

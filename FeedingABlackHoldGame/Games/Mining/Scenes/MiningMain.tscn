@@ -64,21 +64,6 @@ custom_minimum_size = Vector2(220, 12)
 layout_mode = 2
 show_percentage = false
 
-[node name="HullRow" type="HBoxContainer" parent="CanvasLayer/TopBar/TopPanel/TopInfo"]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="HullValueLabel" type="Label" parent="CanvasLayer/TopBar/TopPanel/TopInfo/HullRow" unique_name_in_owner="true"]
-custom_minimum_size = Vector2(440, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Hull"
-
-[node name="HullBar" type="ProgressBar" parent="CanvasLayer/TopBar/TopPanel/TopInfo/HullRow" unique_name_in_owner="true"]
-custom_minimum_size = Vector2(220, 12)
-layout_mode = 2
-show_percentage = false
-
 [node name="CargoRow" type="HBoxContainer" parent="CanvasLayer/TopBar/TopPanel/TopInfo"]
 layout_mode = 2
 theme_override_constants/separation = 16

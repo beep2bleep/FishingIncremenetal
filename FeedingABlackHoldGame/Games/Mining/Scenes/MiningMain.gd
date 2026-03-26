@@ -101,8 +101,6 @@ enum RUN_STATES {RUNNING, SUMMARY}
 @onready var time_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/TimeRow/TimeBar
 @onready var drill_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/DrillRow/DrillValueLabel
 @onready var drill_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/DrillRow/DrillBar
-@onready var hull_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/HullRow/HullValueLabel
-@onready var hull_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/HullRow/HullBar
 @onready var cargo_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/CargoRow/CargoValueLabel
 @onready var cargo_bar: ProgressBar = $CanvasLayer/TopBar/TopPanel/TopInfo/CargoRow/CargoBar
 @onready var xp_value_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/XpRow/XpValueLabel
@@ -145,7 +143,6 @@ var active_depth_level := 1
 var active_material: Dictionary = {}
 var time_left := 0.0
 var drill_health := 0.0
-var hull_health := 100.0
 var cargo_used := 0
 var carry_counts: Dictionary = {}
 var banked_counts: Dictionary = {}
@@ -316,7 +313,6 @@ func _begin_run() -> void:
     camera_pos = player_pos
     time_left = _get_run_time_limit()
     drill_health = _get_drill_health_max()
-    hull_health = 100.0
     cargo_used = 0
     carry_counts.clear()
     banked_counts.clear()
@@ -1186,9 +1182,6 @@ func _refresh_hud() -> void:
     drill_value_label.text = "Drill Integrity %.0f / %.0f" % [drill_health, drill_health_max]
     drill_bar.max_value = drill_health_max
     drill_bar.value = drill_health
-    hull_value_label.text = "Hull %.0f / 100" % [hull_health]
-    hull_bar.max_value = 100.0
-    hull_bar.value = hull_health
     cargo_value_label.text = "Cargo %d / %d   Banked %d" % [cargo_used, cargo_capacity, _get_total_banked_count()]
     cargo_bar.max_value = cargo_capacity
     cargo_bar.value = cargo_used
@@ -1210,7 +1203,6 @@ func _apply_hud_theme() -> void:
     _style_panel(hint_panel, Color(0.04, 0.06, 0.1, 0.9), Color(0.88, 0.92, 1.0, 0.82), 6)
     _style_meter(time_bar, Color(0.9, 0.69, 0.2, 0.96))
     _style_meter(drill_bar, Color(0.41, 0.79, 1.0, 0.96))
-    _style_meter(hull_bar, Color(0.86, 0.31, 0.33, 0.96))
     _style_meter(cargo_bar, Color(0.8, 0.57, 0.22, 0.96))
     _style_meter(xp_bar, Color(0.37, 0.82, 0.67, 0.96))
     _style_hud_label(wallet_label, 26, Color(0.96, 0.98, 1.0, 1.0))
@@ -1218,7 +1210,6 @@ func _apply_hud_theme() -> void:
     _style_hud_label(depth_label, 24, Color(0.83, 0.9, 1.0, 1.0))
     _style_hud_label(time_value_label, 22, Color(1.0, 0.88, 0.56, 1.0))
     _style_hud_label(drill_value_label, 22, Color(0.74, 0.91, 1.0, 1.0))
-    _style_hud_label(hull_value_label, 22, Color(1.0, 0.76, 0.76, 1.0))
     _style_hud_label(cargo_value_label, 22, Color(0.97, 0.83, 0.61, 1.0))
     _style_hud_label(xp_value_label, 22, Color(0.76, 1.0, 0.9, 1.0))
     _style_hud_label(weapon_label, 20, Color(0.88, 0.94, 1.0, 0.96))
@@ -1309,12 +1300,6 @@ func _update_warning_meter_blinks(run_time_limit: float, drill_health_max: float
         Color(0.41, 0.79, 1.0, 0.96),
         _get_low_meter_warning_strength(drill_health, drill_health_max),
         Color(1.0, 0.64, 0.54, 1.0)
-    )
-    _apply_warning_meter_blink(
-        hull_bar,
-        Color(0.86, 0.31, 0.33, 0.96),
-        _get_low_meter_warning_strength(hull_health, 100.0),
-        Color(1.0, 0.58, 0.48, 1.0)
     )
     _apply_warning_meter_blink(
         cargo_bar,
@@ -1461,7 +1446,6 @@ func _build_summary_hint_data(results: Dictionary) -> Dictionary:
     var routing_hint := "There were still a lot of untouched veins on the field when the run ended. A cleaner route through nearby seams can turn that map into much better payout."
     var drill_hint := "The run ended because your drill wore out. Drill Plating gives the rig more health, and Cooling Loop helps that health last longer on tough veins."
     var timer_hint := "The timer ran out before the route paid off. Timer Reserve gives you more room to finish a lane and bank the haul."
-    var hull_hint := "The run ended when the hull gave out. Hull Plating will let you absorb more punishment before you have to call the run."
     var pickup_radius_upgrade_hint := "Vacuum Scoop is the fastest way to stop drops from slipping away once a vein bursts open."
     var magnet_drone_upgrade_hint := "Salvage Drone is a strong next buy if rich seams are leaving too many chunks behind."
     var delivery_drone_upgrade_hint := "Delivery Drone pays off once your cargo is filling before you can safely return to the surface."
@@ -1480,8 +1464,6 @@ func _build_summary_hint_data(results: Dictionary) -> Dictionary:
         _append_unique_summary_hint(ranked_hints, drill_hint)
     if reason == "Timer expired.":
         _append_unique_summary_hint(ranked_hints, timer_hint)
-    if reason == "Hull depleted." or reason == "Hull integrity depleted.":
-        _append_unique_summary_hint(ranked_hints, hull_hint)
     if pickup_radius_missing:
         _append_unique_summary_hint(ranked_hints, pickup_radius_upgrade_hint)
     if magnet_drone_missing:
@@ -1502,8 +1484,6 @@ func _build_summary_hint_data(results: Dictionary) -> Dictionary:
         _append_unique_summary_hint(all_hints, drill_hint)
     if reason == "Timer expired.":
         _append_unique_summary_hint(all_hints, timer_hint)
-    if reason == "Hull depleted." or reason == "Hull integrity depleted.":
-        _append_unique_summary_hint(all_hints, hull_hint)
     if pickup_radius_missing:
         _append_unique_summary_hint(all_hints, pickup_radius_upgrade_hint)
     if magnet_drone_missing:
