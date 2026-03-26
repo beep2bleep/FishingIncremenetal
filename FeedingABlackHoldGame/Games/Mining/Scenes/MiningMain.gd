@@ -96,7 +96,7 @@ const TUNNEL_COVERAGE_SAMPLE_OFFSETS := [
 ]
 const DEFAULT_MINING_SUMMARY_HINTS: Array[String] = [
     "Build speed through cleared tunnels before committing to a seam. Straight runs give the drill its best burst damage.",
-    "Banking at the surface is safest when your cargo is full or your drill is close to breaking. Unbanked ore is a bad gamble.",
+    "Banking at the surface is safest when your cargo is full or your drill is close to breaking. Richer ore also eats more hold space now, so unbanked ore is a bad gamble.",
     "Salvage drones are best when you want to stay glued to rich nodes instead of weaving around for loose drops.",
     "Delivery drones shine once cargo upgrades are online. They keep rich runs flowing while you stay in the field.",
     "Depth Scanner unlocks harder layers, while Seismic Sonar helps those layers actually pay out with richer veins."
@@ -555,10 +555,8 @@ func _collect_pickups(delta: float) -> void:
         pickup["reject_retry_timer"] = reject_retry_timer
         pickup["reject_blink_timer"] = reject_blink_timer
         var can_collect: bool = player_pos.distance_to(pickup_pos) <= collect_radius
-        if can_collect and cargo_used < _get_cargo_capacity():
-            var material_id: String = String(pickup.get("material_id", ""))
-            carry_counts[material_id] = int(carry_counts.get(material_id, 0)) + 1
-            cargo_used += 1
+        var material_id: String = String(pickup.get("material_id", ""))
+        if can_collect and _add_cargo_material(material_id):
             player_pickups_collected += 1
             run_status = "Scooped %s." % String(pickup.get("material_name", "loot"))
             continue
@@ -595,18 +593,11 @@ func _process_delivery_drone(delta: float) -> void:
     if available_dispatches <= 0:
         return
     var dispatched: int = 0
-    var items_per_dispatch: int = MINING_BALANCE.get_delivery_items_per_dispatch(_get_upgrade_levels())
     while dispatched < available_dispatches and cargo_used > 0:
-        var dispatched_material_id := ""
-        var cargo_count := 0
-        for item_index in range(items_per_dispatch):
-            var delivered_material_id: String = _take_one_cargo_for_delivery()
-            if delivered_material_id == "":
-                break
-            if dispatched_material_id == "":
-                dispatched_material_id = delivered_material_id
-            cargo_count += 1
-        if dispatched_material_id == "":
+        var dispatch_bundle: Dictionary = _take_delivery_drone_dispatch(MINING_BALANCE.get_delivery_cargo_space_per_dispatch(_get_upgrade_levels()))
+        var dispatched_material_id: String = String(dispatch_bundle.get("material_id", ""))
+        var cargo_count: int = int(dispatch_bundle.get("cargo_count", 0))
+        if dispatched_material_id == "" or cargo_count <= 0:
             break
         _spawn_delivery_drone_visual(dispatched_material_id, _get_material_by_id(dispatched_material_id), cargo_count)
         dispatched += 1
@@ -641,7 +632,7 @@ func _process_pickup_drones(delta: float) -> void:
         var drone_pos: Vector2 = drone.get("pos", player_pos)
         if state == "to_pickup":
             var target_pickup: Dictionary = _get_pickup_by_uid(int(drone.get("target_uid", -1)))
-            if target_pickup.is_empty() or cargo_used >= _get_cargo_capacity():
+            if target_pickup.is_empty() or not _can_fit_material_in_cargo(String(target_pickup.get("material_id", ""))):
                 _clear_pickup_claim(int(drone.get("target_uid", -1)))
                 drone["state"] = "idle"
                 drone["target_uid"] = -1
@@ -658,10 +649,8 @@ func _process_pickup_drones(delta: float) -> void:
         elif state == "to_player":
             drone_pos = drone_pos.move_toward(player_pos, pickup_speed * delta)
             if drone_pos.distance_to(player_pos) <= _get_pickup_radius() * 0.5 + 10.0:
-                if cargo_used < _get_cargo_capacity():
-                    var carry_material_id: String = String(drone.get("carry_material_id", ""))
-                    carry_counts[carry_material_id] = int(carry_counts.get(carry_material_id, 0)) + 1
-                    cargo_used += 1
+                var carry_material_id: String = String(drone.get("carry_material_id", ""))
+                if _add_cargo_material(carry_material_id):
                     drone_pickups_collected += 1
                     run_status = "Pickup drone hauled in %s." % String(drone.get("carry_material_name", "loot"))
                 else:
@@ -773,9 +762,44 @@ func _take_one_cargo_for_delivery() -> String:
         carry_counts[material_id] = int(carry_counts[material_id]) - 1
         if int(carry_counts[material_id]) <= 0:
             carry_counts.erase(material_id)
-        cargo_used = max(0, cargo_used - 1)
+        cargo_used = max(0, cargo_used - _get_material_cargo_space(material_id))
         return material_id
     return ""
+
+func _peek_next_carried_material_id() -> String:
+    for material_id_variant in carry_counts.keys():
+        var material_id: String = String(material_id_variant)
+        if int(carry_counts.get(material_id, 0)) > 0:
+            return material_id
+    return ""
+
+func _take_delivery_drone_dispatch(dispatch_space_budget: int) -> Dictionary:
+    var first_material_id: String = _peek_next_carried_material_id()
+    if first_material_id == "":
+        return {}
+    var remaining_dispatch_space: int = max(1, dispatch_space_budget)
+    var cargo_count := 0
+    while true:
+        var next_material_id: String = _peek_next_carried_material_id()
+        if next_material_id == "":
+            break
+        if cargo_count > 0 and next_material_id != first_material_id:
+            break
+        var next_space: int = _get_material_cargo_space(next_material_id)
+        if cargo_count > 0 and next_space > remaining_dispatch_space:
+            break
+        if _take_one_cargo_for_delivery() == "":
+            break
+        cargo_count += 1
+        remaining_dispatch_space = max(0, remaining_dispatch_space - next_space)
+        if remaining_dispatch_space <= 0:
+            break
+    if cargo_count <= 0:
+        return {}
+    return {
+        "material_id": first_material_id,
+        "cargo_count": cargo_count
+    }
 
 func _bank_delivery_drone_cargo(drone: Dictionary) -> void:
     var material_id: String = String(drone.get("material_id", ""))
@@ -799,6 +823,8 @@ func _find_available_pickup_uid(origin: Vector2) -> int:
             continue
         var pickup_uid: int = int(pickup.get("uid", -1))
         if pickup_uid == -1:
+            continue
+        if not _can_fit_material_in_cargo(String(pickup.get("material_id", ""))):
             continue
         var distance: float = origin.distance_to(pickup.get("pos", origin))
         if distance < nearest_distance:
@@ -1201,7 +1227,7 @@ func _refresh_hud() -> void:
     drill_value_label.text = "Drill Integrity %.0f / %.0f" % [drill_health, drill_health_max]
     drill_bar.max_value = drill_health_max
     drill_bar.value = drill_health
-    cargo_value_label.text = "Cargo %d / %d   Banked %d" % [cargo_used, cargo_capacity, _get_total_banked_count()]
+    cargo_value_label.text = "Cargo Space %d / %d   Banked %d" % [cargo_used, cargo_capacity, _get_total_banked_count()]
     cargo_bar.max_value = cargo_capacity
     cargo_bar.value = cargo_used
     _update_warning_meter_blinks(run_time_limit, drill_health_max)
@@ -2087,6 +2113,23 @@ func _get_time_drain_rate() -> float:
 func _get_cargo_capacity() -> int:
     return MINING_BALANCE.get_cargo_capacity(_get_upgrade_levels())
 
+func _get_material_cargo_space(material_id: String) -> int:
+    if material_id == "":
+        return 0
+    return MINING_BALANCE.get_material_cargo_space(_get_material_by_id(material_id))
+
+func _can_fit_material_in_cargo(material_id: String) -> bool:
+    if material_id == "":
+        return false
+    return cargo_used + _get_material_cargo_space(material_id) <= _get_cargo_capacity()
+
+func _add_cargo_material(material_id: String) -> bool:
+    if not _can_fit_material_in_cargo(material_id):
+        return false
+    carry_counts[material_id] = int(carry_counts.get(material_id, 0)) + 1
+    cargo_used += _get_material_cargo_space(material_id)
+    return true
+
 func _get_value_multiplier() -> float:
     return MINING_BALANCE.get_value_multiplier(_get_upgrade_levels())
 
@@ -2366,6 +2409,8 @@ func _find_nearest_pickup_uid(origin: Vector2) -> int:
     for pickup in pickups:
         var pickup_uid: int = int(pickup.get("uid", -1))
         if pickup_uid == -1:
+            continue
+        if not _can_fit_material_in_cargo(String(pickup.get("material_id", ""))):
             continue
         var distance: float = origin.distance_to(pickup.get("pos", origin))
         if distance < nearest_distance:

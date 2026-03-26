@@ -1,14 +1,14 @@
 {
-	"date_utc": "2026-03-26 20:01:52",
+	"date_utc": "2026-03-26 21:49:36",
 	"results": [
 		{
 			"bank_rate": 1.0,
 			"bank_trips": 3,
 			"banked_counts": {
-				"stone": 11
+				"stone": 12
 			},
 			"cargo_capacity": 5,
-			"collection_rate": 0.916666666666667,
+			"collection_rate": 1.0,
 			"delivery_dumps": 0,
 			"depth_level": 1,
 			"drill_left": 40.51,
@@ -19,24 +19,24 @@
 				"current_xp": 86,
 				"next_level_xp": 133
 			},
-			"money": 77,
+			"money": 84,
 			"money_breakdown_chart": [
 				{
 					"color": "(0.49, 0.49, 0.52, 1.0)",
-					"count": 11,
+					"count": 12,
 					"label": "Stone",
 					"material_id": "stone",
-					"money": 77
+					"money": 84
 				}
 			],
-			"money_per_second": 3.49999999999996,
+			"money_per_second": 3.81818181818177,
 			"nodes_broken": 12,
-			"ore_banked": 11,
-			"ore_collected": 11,
-			"ore_left_behind": 1,
-			"ore_per_second": 0.499999999999994,
+			"ore_banked": 12,
+			"ore_collected": 12,
+			"ore_left_behind": 0,
+			"ore_per_second": 0.545454545454539,
 			"ore_spawned": 12,
-			"player_pickups_collected": 11,
+			"player_pickups_collected": 12,
 			"projected_data": {
 				"deepest_level_unlocked": 1,
 				"last_run_breakdown": {
@@ -48,18 +48,18 @@
 				"upgrades": {
 					"cargo_pods": 1.0
 				},
-				"wallet": 176,
+				"wallet": 183,
 				"xp": 180
 			},
 			"reason": "Timer expired.",
 			"remaining_nodes": 22,
 			"scenario_id": "purchase_1_seed_1",
 			"seed": 923,
-			"selected_goal": "pickup",
+			"selected_goal": "bank",
 			"simulated_seconds": 22.0,
 			"step_count": 660,
-			"summary_stats_text": "Run time 22.0s   Money/sec $3.5   XP/sec 3.3   Ore/sec 0.50\nOre spawned 12   Collected 11   Left behind 1   Banked 11\nManual scoops 11   Salvage drone scoops 0   Delivery drone drops 0   Surface banks 3\nCollection rate 92%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 1: Stone\nNodes broken: 12\nXP earned: 72\nMoney earned: $77\n\nCargo payout:\nStone x11 -> $77\n\nLevel 2  XP 86/133\nUnlocked depth tier: 1",
+			"summary_stats_text": "Run time 22.0s   Money/sec $3.8   XP/sec 3.3   Ore/sec 0.55\nOre spawned 12   Collected 12   Left behind 0   Banked 12\nManual scoops 12   Salvage drone scoops 0   Delivery drone drops 0   Surface banks 3\nCollection rate 100%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 1: Stone\nNodes broken: 12\nXP earned: 72\nMoney earned: $84\n\nCargo payout:\nStone x12 -> $84\n\nLevel 2  XP 86/133\nUnlocked depth tier: 1",
 			"summary_view_model": {
 				"depth_level": 1,
 				"depth_material_name": "Stone",
@@ -69,13 +69,13 @@
 				"money_breakdown_chart": [
 					{
 						"color": "(0.49, 0.49, 0.52, 1.0)",
-						"count": 11,
+						"count": 12,
 						"label": "Stone",
 						"material_id": "stone",
-						"money": 77
+						"money": 84
 					}
 				],
-				"money_earned": 77,
+				"money_earned": 84,
 				"nodes_broken": 12,
 				"projected_depth_unlock": 1,
 				"projected_level": 2,
@@ -98,7 +98,7 @@
 			"collection_rate": 0.916666666666667,
 			"delivery_dumps": 0,
 			"depth_level": 1,
-			"drill_left": 40.11,
+			"drill_left": 40.75,
 			"drill_max": 54.0,
 			"drone_pickups_collected": 0,
 			"level_progress": {
@@ -185,7 +185,7 @@
 			"collection_rate": 0.888888888888889,
 			"delivery_dumps": 0,
 			"depth_level": 1,
-			"drill_left": 44.98,
+			"drill_left": 44.9,
 			"drill_max": 54.0,
 			"drone_pickups_collected": 0,
 			"level_progress": {
@@ -266,13 +266,102 @@
 			"bank_rate": 1.0,
 			"bank_trips": 2,
 			"banked_counts": {
+				"stone": 12
+			},
+			"cargo_capacity": 10,
+			"collection_rate": 1.0,
+			"delivery_dumps": 0,
+			"depth_level": 1,
+			"drill_left": 43.56,
+			"drill_max": 54.0,
+			"drone_pickups_collected": 0,
+			"level_progress": {
+				"current_level": 4,
+				"current_xp": 73,
+				"next_level_xp": 233
+			},
+			"money": 84,
+			"money_breakdown_chart": [
+				{
+					"color": "(0.49, 0.49, 0.52, 1.0)",
+					"count": 12,
+					"label": "Stone",
+					"material_id": "stone",
+					"money": 84
+				}
+			],
+			"money_per_second": 3.81818181818177,
+			"nodes_broken": 12,
+			"ore_banked": 12,
+			"ore_collected": 12,
+			"ore_left_behind": 0,
+			"ore_per_second": 0.545454545454539,
+			"ore_spawned": 12,
+			"player_pickups_collected": 12,
+			"projected_data": {
+				"deepest_level_unlocked": 1,
+				"last_run_breakdown": {
+
+				},
+				"last_run_summary": "",
+				"player_level": 4,
+				"selected_depth_level": 1,
+				"upgrades": {
+					"cargo_pods": 6.0,
+					"drill_torque": 2.0,
+					"engine_tuning": 2.0
+				},
+				"wallet": 159,
+				"xp": 480
+			},
+			"reason": "Timer expired.",
+			"remaining_nodes": 22,
+			"scenario_id": "purchase_10_seed_1",
+			"seed": 1130,
+			"selected_goal": "node",
+			"simulated_seconds": 22.0,
+			"step_count": 660,
+			"summary_stats_text": "Run time 22.0s   Money/sec $3.8   XP/sec 3.3   Ore/sec 0.55\nOre spawned 12   Collected 12   Left behind 0   Banked 12\nManual scoops 12   Salvage drone scoops 0   Delivery drone drops 0   Surface banks 2\nCollection rate 100%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 1: Stone\nNodes broken: 12\nXP earned: 72\nMoney earned: $84\n\nCargo payout:\nStone x12 -> $84\n\nLevel 4  XP 73/233\nUnlocked depth tier: 1",
+			"summary_view_model": {
+				"depth_level": 1,
+				"depth_material_name": "Stone",
+				"level_progress_current": 73,
+				"level_progress_next": 233,
+				"leveled_up": false,
+				"money_breakdown_chart": [
+					{
+						"color": "(0.49, 0.49, 0.52, 1.0)",
+						"count": 12,
+						"label": "Stone",
+						"material_id": "stone",
+						"money": 84
+					}
+				],
+				"money_earned": 84,
+				"nodes_broken": 12,
+				"projected_depth_unlock": 1,
+				"projected_level": 4,
+				"reason": "Timer expired.",
+				"xp_earned": 72
+			},
+			"time_left": 0.0,
+			"time_limit": 22.0,
+			"total_nodes_seen": 34,
+			"xp": 72,
+			"xp_per_second": 3.27272727272724
+		},
+		{
+			"bank_rate": 1.0,
+			"bank_trips": 2,
+			"banked_counts": {
 				"stone": 11
 			},
 			"cargo_capacity": 10,
 			"collection_rate": 1.0,
 			"delivery_dumps": 0,
 			"depth_level": 1,
-			"drill_left": 43.65,
+			"drill_left": 43.37,
 			"drill_max": 54.0,
 			"drone_pickups_collected": 0,
 			"level_progress": {
@@ -316,8 +405,8 @@
 			},
 			"reason": "Timer expired.",
 			"remaining_nodes": 23,
-			"scenario_id": "purchase_10_seed_1",
-			"seed": 1130,
+			"scenario_id": "purchase_10_seed_2",
+			"seed": 1131,
 			"selected_goal": "node",
 			"simulated_seconds": 22.0,
 			"step_count": 660,
@@ -353,109 +442,20 @@
 		},
 		{
 			"bank_rate": 1.0,
-			"bank_trips": 1,
-			"banked_counts": {
-				"stone": 9
-			},
-			"cargo_capacity": 10,
-			"collection_rate": 0.818181818181818,
-			"delivery_dumps": 0,
-			"depth_level": 1,
-			"drill_left": 43.75,
-			"drill_max": 54.0,
-			"drone_pickups_collected": 0,
-			"level_progress": {
-				"current_level": 4,
-				"current_xp": 67,
-				"next_level_xp": 233
-			},
-			"money": 63,
-			"money_breakdown_chart": [
-				{
-					"color": "(0.49, 0.49, 0.52, 1.0)",
-					"count": 9,
-					"label": "Stone",
-					"material_id": "stone",
-					"money": 63
-				}
-			],
-			"money_per_second": 2.86363636363633,
-			"nodes_broken": 11,
-			"ore_banked": 9,
-			"ore_collected": 9,
-			"ore_left_behind": 2,
-			"ore_per_second": 0.409090909090904,
-			"ore_spawned": 11,
-			"player_pickups_collected": 9,
-			"projected_data": {
-				"deepest_level_unlocked": 1,
-				"last_run_breakdown": {
-
-				},
-				"last_run_summary": "",
-				"player_level": 4,
-				"selected_depth_level": 1,
-				"upgrades": {
-					"cargo_pods": 6.0,
-					"drill_torque": 2.0,
-					"engine_tuning": 2.0
-				},
-				"wallet": 138,
-				"xp": 474
-			},
-			"reason": "Timer expired.",
-			"remaining_nodes": 23,
-			"scenario_id": "purchase_10_seed_2",
-			"seed": 1131,
-			"selected_goal": "pickup",
-			"simulated_seconds": 22.0,
-			"step_count": 660,
-			"summary_stats_text": "Run time 22.0s   Money/sec $2.9   XP/sec 3.0   Ore/sec 0.41\nOre spawned 11   Collected 9   Left behind 2   Banked 9\nManual scoops 9   Salvage drone scoops 0   Delivery drone drops 0   Surface banks 1\nCollection rate 82%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 1: Stone\nNodes broken: 11\nXP earned: 66\nMoney earned: $63\n\nCargo payout:\nStone x9 -> $63\n\nLevel 4  XP 67/233\nUnlocked depth tier: 1",
-			"summary_view_model": {
-				"depth_level": 1,
-				"depth_material_name": "Stone",
-				"level_progress_current": 67,
-				"level_progress_next": 233,
-				"leveled_up": false,
-				"money_breakdown_chart": [
-					{
-						"color": "(0.49, 0.49, 0.52, 1.0)",
-						"count": 9,
-						"label": "Stone",
-						"material_id": "stone",
-						"money": 63
-					}
-				],
-				"money_earned": 63,
-				"nodes_broken": 11,
-				"projected_depth_unlock": 1,
-				"projected_level": 4,
-				"reason": "Timer expired.",
-				"xp_earned": 66
-			},
-			"time_left": 0.0,
-			"time_limit": 22.0,
-			"total_nodes_seen": 34,
-			"xp": 66,
-			"xp_per_second": 2.99999999999997
-		},
-		{
-			"bank_rate": 1.0,
 			"bank_trips": 2,
 			"banked_counts": {
 				"stone": 12
 			},
 			"cargo_capacity": 10,
-			"collection_rate": 0.8,
+			"collection_rate": 1.0,
 			"delivery_dumps": 0,
 			"depth_level": 1,
-			"drill_left": 39.1,
+			"drill_left": 42.51,
 			"drill_max": 54.0,
 			"drone_pickups_collected": 0,
 			"level_progress": {
 				"current_level": 4,
-				"current_xp": 91,
+				"current_xp": 73,
 				"next_level_xp": 233
 			},
 			"money": 84,
@@ -469,12 +469,12 @@
 				}
 			],
 			"money_per_second": 3.81818181818177,
-			"nodes_broken": 15,
+			"nodes_broken": 12,
 			"ore_banked": 12,
 			"ore_collected": 12,
-			"ore_left_behind": 3,
+			"ore_left_behind": 0,
 			"ore_per_second": 0.545454545454539,
-			"ore_spawned": 15,
+			"ore_spawned": 12,
 			"player_pickups_collected": 12,
 			"projected_data": {
 				"deepest_level_unlocked": 1,
@@ -490,21 +490,21 @@
 					"engine_tuning": 2.0
 				},
 				"wallet": 159,
-				"xp": 498
+				"xp": 480
 			},
 			"reason": "Timer expired.",
-			"remaining_nodes": 19,
+			"remaining_nodes": 22,
 			"scenario_id": "purchase_10_seed_3",
 			"seed": 1132,
-			"selected_goal": "bank",
+			"selected_goal": "node",
 			"simulated_seconds": 22.0,
 			"step_count": 660,
-			"summary_stats_text": "Run time 22.0s   Money/sec $3.8   XP/sec 4.1   Ore/sec 0.55\nOre spawned 15   Collected 12   Left behind 3   Banked 12\nManual scoops 12   Salvage drone scoops 0   Delivery drone drops 0   Surface banks 2\nCollection rate 80%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 1: Stone\nNodes broken: 15\nXP earned: 90\nMoney earned: $84\n\nCargo payout:\nStone x12 -> $84\n\nLevel 4  XP 91/233\nUnlocked depth tier: 1",
+			"summary_stats_text": "Run time 22.0s   Money/sec $3.8   XP/sec 3.3   Ore/sec 0.55\nOre spawned 12   Collected 12   Left behind 0   Banked 12\nManual scoops 12   Salvage drone scoops 0   Delivery drone drops 0   Surface banks 2\nCollection rate 100%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 1: Stone\nNodes broken: 12\nXP earned: 72\nMoney earned: $84\n\nCargo payout:\nStone x12 -> $84\n\nLevel 4  XP 73/233\nUnlocked depth tier: 1",
 			"summary_view_model": {
 				"depth_level": 1,
 				"depth_material_name": "Stone",
-				"level_progress_current": 91,
+				"level_progress_current": 73,
 				"level_progress_next": 233,
 				"leveled_up": false,
 				"money_breakdown_chart": [
@@ -517,17 +517,17 @@
 					}
 				],
 				"money_earned": 84,
-				"nodes_broken": 15,
+				"nodes_broken": 12,
 				"projected_depth_unlock": 1,
 				"projected_level": 4,
 				"reason": "Timer expired.",
-				"xp_earned": 90
+				"xp_earned": 72
 			},
 			"time_left": 0.0,
 			"time_limit": 22.0,
 			"total_nodes_seen": 34,
-			"xp": 90,
-			"xp_per_second": 4.09090909090904
+			"xp": 72,
+			"xp_per_second": 3.27272727272724
 		},
 		{
 			"bank_rate": 1.0,
@@ -537,15 +537,15 @@
 				"stone": 4
 			},
 			"cargo_capacity": 13,
-			"collection_rate": 1.0,
+			"collection_rate": 0.875,
 			"delivery_dumps": 0,
 			"depth_level": 2,
-			"drill_left": 39.27,
+			"drill_left": 37.27,
 			"drill_max": 54.0,
 			"drone_pickups_collected": 0,
 			"level_progress": {
 				"current_level": 7,
-				"current_xp": 153,
+				"current_xp": 171,
 				"next_level_xp": 422
 			},
 			"money": 152,
@@ -566,12 +566,12 @@
 				}
 			],
 			"money_per_second": 6.96183206106862,
-			"nodes_broken": 14,
+			"nodes_broken": 16,
 			"ore_banked": 14,
 			"ore_collected": 14,
-			"ore_left_behind": 0,
+			"ore_left_behind": 2,
 			"ore_per_second": 0.641221374045794,
-			"ore_spawned": 14,
+			"ore_spawned": 16,
 			"player_pickups_collected": 14,
 			"projected_data": {
 				"deepest_level_unlocked": 2,
@@ -591,21 +591,21 @@
 					"timer_reserve": 1.0
 				},
 				"wallet": 338,
-				"xp": 1440
+				"xp": 1458
 			},
 			"reason": "Timer expired.",
-			"remaining_nodes": 26,
+			"remaining_nodes": 24,
 			"scenario_id": "purchase_25_seed_1",
 			"seed": 1475,
-			"selected_goal": "node",
+			"selected_goal": "pickup",
 			"simulated_seconds": 21.83,
 			"step_count": 655,
-			"summary_stats_text": "Run time 22.6s   Money/sec $7.0   XP/sec 5.2   Ore/sec 0.64\nOre spawned 14   Collected 14   Left behind 0   Banked 14\nManual scoops 14   Salvage drone scoops 0   Delivery drone drops 0   Surface banks 2\nCollection rate 100%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 2: Bronze\nNodes broken: 14\nXP earned: 114\nMoney earned: $152\n\nCargo payout:\nStone x4 -> $32\nBronze x10 -> $120\n\nLevel 7  XP 153/422\nUnlocked depth tier: 2",
+			"summary_stats_text": "Run time 22.6s   Money/sec $7.0   XP/sec 6.0   Ore/sec 0.64\nOre spawned 16   Collected 14   Left behind 2   Banked 14\nManual scoops 14   Salvage drone scoops 0   Delivery drone drops 0   Surface banks 2\nCollection rate 88%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 2: Bronze\nNodes broken: 16\nXP earned: 132\nMoney earned: $152\n\nCargo payout:\nStone x4 -> $32\nBronze x10 -> $120\n\nLevel 7  XP 171/422\nUnlocked depth tier: 2",
 			"summary_view_model": {
 				"depth_level": 2,
 				"depth_material_name": "Bronze",
-				"level_progress_current": 153,
+				"level_progress_current": 171,
 				"level_progress_next": 422,
 				"leveled_up": false,
 				"money_breakdown_chart": [
@@ -625,17 +625,17 @@
 					}
 				],
 				"money_earned": 152,
-				"nodes_broken": 14,
+				"nodes_broken": 16,
 				"projected_depth_unlock": 2,
 				"projected_level": 7,
 				"reason": "Timer expired.",
-				"xp_earned": 114
+				"xp_earned": 132
 			},
 			"time_left": 0.0,
 			"time_limit": 22.65,
 			"total_nodes_seen": 40,
-			"xp": 114,
-			"xp_per_second": 5.22137404580147
+			"xp": 132,
+			"xp_per_second": 6.04580152671749
 		},
 		{
 			"bank_rate": 1.0,
@@ -648,7 +648,7 @@
 			"collection_rate": 1.0,
 			"delivery_dumps": 0,
 			"depth_level": 2,
-			"drill_left": 38.29,
+			"drill_left": 38.96,
 			"drill_max": 54.0,
 			"drone_pickups_collected": 0,
 			"level_progress": {
@@ -747,48 +747,48 @@
 		},
 		{
 			"bank_rate": 1.0,
-			"bank_trips": 1,
+			"bank_trips": 2,
 			"banked_counts": {
-				"bronze": 9,
-				"stone": 3
+				"bronze": 11,
+				"stone": 4
 			},
 			"cargo_capacity": 13,
-			"collection_rate": 0.8,
+			"collection_rate": 0.882352941176471,
 			"delivery_dumps": 0,
 			"depth_level": 2,
-			"drill_left": 36.69,
+			"drill_left": 37.0,
 			"drill_max": 54.0,
 			"drone_pickups_collected": 0,
 			"level_progress": {
 				"current_level": 7,
-				"current_xp": 162,
+				"current_xp": 177,
 				"next_level_xp": 422
 			},
-			"money": 132,
+			"money": 164,
 			"money_breakdown_chart": [
 				{
 					"color": "(0.7, 0.46, 0.24, 1.0)",
-					"count": 9,
+					"count": 11,
 					"label": "Bronze",
 					"material_id": "bronze",
-					"money": 108
+					"money": 132
 				},
 				{
 					"color": "(0.49, 0.49, 0.52, 1.0)",
-					"count": 3,
+					"count": 4,
 					"label": "Stone",
 					"material_id": "stone",
-					"money": 24
+					"money": 32
 				}
 			],
-			"money_per_second": 6.04580152671749,
-			"nodes_broken": 15,
-			"ore_banked": 12,
-			"ore_collected": 12,
-			"ore_left_behind": 3,
-			"ore_per_second": 0.549618320610681,
-			"ore_spawned": 15,
-			"player_pickups_collected": 12,
+			"money_per_second": 7.51145038167931,
+			"nodes_broken": 17,
+			"ore_banked": 15,
+			"ore_collected": 15,
+			"ore_left_behind": 2,
+			"ore_per_second": 0.687022900763351,
+			"ore_spawned": 17,
+			"player_pickups_collected": 15,
 			"projected_data": {
 				"deepest_level_unlocked": 2,
 				"last_run_breakdown": {
@@ -806,82 +806,82 @@
 					"pickup_radius": 2.0,
 					"timer_reserve": 1.0
 				},
-				"wallet": 318,
-				"xp": 1449
+				"wallet": 350,
+				"xp": 1464
 			},
 			"reason": "Timer expired.",
-			"remaining_nodes": 25,
+			"remaining_nodes": 23,
 			"scenario_id": "purchase_25_seed_3",
 			"seed": 1477,
-			"selected_goal": "bank",
+			"selected_goal": "node",
 			"simulated_seconds": 21.83,
 			"step_count": 655,
-			"summary_stats_text": "Run time 22.6s   Money/sec $6.0   XP/sec 5.6   Ore/sec 0.55\nOre spawned 15   Collected 12   Left behind 3   Banked 12\nManual scoops 12   Salvage drone scoops 0   Delivery drone drops 0   Surface banks 1\nCollection rate 80%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 2: Bronze\nNodes broken: 15\nXP earned: 123\nMoney earned: $132\n\nCargo payout:\nBronze x9 -> $108\nStone x3 -> $24\n\nLevel 7  XP 162/422\nUnlocked depth tier: 2",
+			"summary_stats_text": "Run time 22.6s   Money/sec $7.5   XP/sec 6.3   Ore/sec 0.69\nOre spawned 17   Collected 15   Left behind 2   Banked 15\nManual scoops 15   Salvage drone scoops 0   Delivery drone drops 0   Surface banks 2\nCollection rate 88%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 2: Bronze\nNodes broken: 17\nXP earned: 138\nMoney earned: $164\n\nCargo payout:\nBronze x11 -> $132\nStone x4 -> $32\n\nLevel 7  XP 177/422\nUnlocked depth tier: 2",
 			"summary_view_model": {
 				"depth_level": 2,
 				"depth_material_name": "Bronze",
-				"level_progress_current": 162,
+				"level_progress_current": 177,
 				"level_progress_next": 422,
 				"leveled_up": false,
 				"money_breakdown_chart": [
 					{
 						"color": "(0.7, 0.46, 0.24, 1.0)",
-						"count": 9,
+						"count": 11,
 						"label": "Bronze",
 						"material_id": "bronze",
-						"money": 108
+						"money": 132
 					},
 					{
 						"color": "(0.49, 0.49, 0.52, 1.0)",
-						"count": 3,
+						"count": 4,
 						"label": "Stone",
 						"material_id": "stone",
-						"money": 24
+						"money": 32
 					}
 				],
-				"money_earned": 132,
-				"nodes_broken": 15,
+				"money_earned": 164,
+				"nodes_broken": 17,
 				"projected_depth_unlock": 2,
 				"projected_level": 7,
 				"reason": "Timer expired.",
-				"xp_earned": 123
+				"xp_earned": 138
 			},
 			"time_left": 0.0,
 			"time_limit": 22.65,
 			"total_nodes_seen": 40,
-			"xp": 123,
-			"xp_per_second": 5.63358778625948
+			"xp": 138,
+			"xp_per_second": 6.32061068702283
 		},
 		{
 			"bank_rate": 1.0,
-			"bank_trips": 2,
+			"bank_trips": 1,
 			"banked_counts": {
 				"bronze": 1,
-				"gold": 3,
+				"gold": 5,
 				"silver": 3,
 				"stone": 9
 			},
 			"cargo_capacity": 17,
-			"collection_rate": 0.888888888888889,
+			"collection_rate": 1.0,
 			"delivery_dumps": 0,
 			"depth_level": 4,
-			"drill_left": 30.05,
+			"drill_left": 30.7,
 			"drill_max": 54.0,
-			"drone_pickups_collected": 7,
+			"drone_pickups_collected": 5,
 			"level_progress": {
 				"current_level": 11,
-				"current_xp": 467,
+				"current_xp": 480,
 				"next_level_xp": 731
 			},
-			"money": 223,
+			"money": 277,
 			"money_breakdown_chart": [
 				{
 					"color": "(0.94, 0.78, 0.23, 1.0)",
-					"count": 3,
+					"count": 5,
 					"label": "Gold",
 					"material_id": "gold",
-					"money": 81
+					"money": 135
 				},
 				{
 					"color": "(0.76, 0.78, 0.82, 1.0)",
@@ -905,14 +905,14 @@
 					"money": 13
 				}
 			],
-			"money_per_second": 9.7238372093022,
+			"money_per_second": 12.0784883720929,
 			"nodes_broken": 18,
-			"ore_banked": 16,
-			"ore_collected": 16,
-			"ore_left_behind": 2,
-			"ore_per_second": 0.697674418604642,
+			"ore_banked": 18,
+			"ore_collected": 18,
+			"ore_left_behind": 0,
+			"ore_per_second": 0.784883720930222,
 			"ore_spawned": 18,
-			"player_pickups_collected": 9,
+			"player_pickups_collected": 13,
 			"projected_data": {
 				"deepest_level_unlocked": 4,
 				"last_run_breakdown": {
@@ -934,31 +934,31 @@
 					"timer_reserve": 5.0,
 					"xp_calibration": 1.0
 				},
-				"wallet": 992,
-				"xp": 3888
+				"wallet": 1046,
+				"xp": 3901
 			},
 			"reason": "Timer expired.",
 			"remaining_nodes": 34,
 			"scenario_id": "purchase_50_seed_1",
 			"seed": 2050,
-			"selected_goal": "pickup",
+			"selected_goal": "bank",
 			"simulated_seconds": 22.93,
 			"step_count": 688,
-			"summary_stats_text": "Run time 25.3s   Money/sec $9.7   XP/sec 8.0   Ore/sec 0.70\nOre spawned 18   Collected 16   Left behind 2   Banked 16\nManual scoops 9   Salvage drone scoops 7   Delivery drone drops 0   Surface banks 2\nCollection rate 89%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 4: Gold\nNodes broken: 18\nXP earned: 184\nMoney earned: $223\n\nCargo payout:\nGold x3 -> $81\nSilver x3 -> $57\nStone x9 -> $72\nBronze x1 -> $13\n\nLevel 11  XP 467/731\nUnlocked depth tier: 4",
+			"summary_stats_text": "Run time 25.3s   Money/sec $12.1   XP/sec 8.6   Ore/sec 0.78\nOre spawned 18   Collected 18   Left behind 0   Banked 18\nManual scoops 13   Salvage drone scoops 5   Delivery drone drops 0   Surface banks 1\nCollection rate 100%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 4: Gold\nNodes broken: 18\nXP earned: 197\nMoney earned: $277\n\nCargo payout:\nGold x5 -> $135\nSilver x3 -> $57\nStone x9 -> $72\nBronze x1 -> $13\n\nLevel 11  XP 480/731\nUnlocked depth tier: 4",
 			"summary_view_model": {
 				"depth_level": 4,
 				"depth_material_name": "Gold",
-				"level_progress_current": 467,
+				"level_progress_current": 480,
 				"level_progress_next": 731,
 				"leveled_up": false,
 				"money_breakdown_chart": [
 					{
 						"color": "(0.94, 0.78, 0.23, 1.0)",
-						"count": 3,
+						"count": 5,
 						"label": "Gold",
 						"material_id": "gold",
-						"money": 81
+						"money": 135
 					},
 					{
 						"color": "(0.76, 0.78, 0.82, 1.0)",
@@ -982,62 +982,62 @@
 						"money": 13
 					}
 				],
-				"money_earned": 223,
+				"money_earned": 277,
 				"nodes_broken": 18,
 				"projected_depth_unlock": 4,
 				"projected_level": 11,
 				"reason": "Timer expired.",
-				"xp_earned": 184
+				"xp_earned": 197
 			},
 			"time_left": 0.0,
 			"time_limit": 25.25,
 			"total_nodes_seen": 52,
-			"xp": 184,
-			"xp_per_second": 8.02325581395338
+			"xp": 197,
+			"xp_per_second": 8.59011627906966
 		},
 		{
 			"bank_rate": 1.0,
 			"bank_trips": 1,
 			"banked_counts": {
-				"bronze": 4,
-				"gold": 9,
+				"bronze": 2,
+				"gold": 8,
 				"silver": 2,
-				"stone": 3
+				"stone": 5
 			},
 			"cargo_capacity": 17,
-			"collection_rate": 1.0,
+			"collection_rate": 0.944444444444444,
 			"delivery_dumps": 0,
 			"depth_level": 4,
-			"drill_left": 28.58,
+			"drill_left": 27.58,
 			"drill_max": 54.0,
 			"drone_pickups_collected": 6,
 			"level_progress": {
 				"current_level": 11,
-				"current_xp": 534,
+				"current_xp": 528,
 				"next_level_xp": 731
 			},
-			"money": 357,
+			"money": 320,
 			"money_breakdown_chart": [
 				{
 					"color": "(0.7, 0.46, 0.24, 1.0)",
-					"count": 4,
+					"count": 2,
 					"label": "Bronze",
 					"material_id": "bronze",
-					"money": 52
+					"money": 26
 				},
 				{
 					"color": "(0.94, 0.78, 0.23, 1.0)",
-					"count": 9,
+					"count": 8,
 					"label": "Gold",
 					"material_id": "gold",
-					"money": 243
+					"money": 216
 				},
 				{
 					"color": "(0.49, 0.49, 0.52, 1.0)",
-					"count": 3,
+					"count": 5,
 					"label": "Stone",
 					"material_id": "stone",
-					"money": 24
+					"money": 40
 				},
 				{
 					"color": "(0.76, 0.78, 0.82, 1.0)",
@@ -1047,14 +1047,14 @@
 					"money": 38
 				}
 			],
-			"money_per_second": 15.5668604651161,
+			"money_per_second": 13.9534883720928,
 			"nodes_broken": 18,
-			"ore_banked": 18,
-			"ore_collected": 18,
-			"ore_left_behind": 0,
-			"ore_per_second": 0.784883720930222,
+			"ore_banked": 17,
+			"ore_collected": 17,
+			"ore_left_behind": 1,
+			"ore_per_second": 0.741279069767432,
 			"ore_spawned": 18,
-			"player_pickups_collected": 12,
+			"player_pickups_collected": 11,
 			"projected_data": {
 				"deepest_level_unlocked": 4,
 				"last_run_breakdown": {
@@ -1076,45 +1076,45 @@
 					"timer_reserve": 5.0,
 					"xp_calibration": 1.0
 				},
-				"wallet": 1126,
-				"xp": 3955
+				"wallet": 1089,
+				"xp": 3949
 			},
 			"reason": "Timer expired.",
 			"remaining_nodes": 34,
 			"scenario_id": "purchase_50_seed_2",
 			"seed": 2051,
-			"selected_goal": "bank",
+			"selected_goal": "node",
 			"simulated_seconds": 22.93,
 			"step_count": 688,
-			"summary_stats_text": "Run time 25.3s   Money/sec $15.6   XP/sec 10.9   Ore/sec 0.78\nOre spawned 18   Collected 18   Left behind 0   Banked 18\nManual scoops 12   Salvage drone scoops 6   Delivery drone drops 0   Surface banks 1\nCollection rate 100%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 4: Gold\nNodes broken: 18\nXP earned: 251\nMoney earned: $357\n\nCargo payout:\nBronze x4 -> $52\nGold x9 -> $243\nStone x3 -> $24\nSilver x2 -> $38\n\nLevel 11  XP 534/731\nUnlocked depth tier: 4",
+			"summary_stats_text": "Run time 25.3s   Money/sec $14.0   XP/sec 10.7   Ore/sec 0.74\nOre spawned 18   Collected 17   Left behind 1   Banked 17\nManual scoops 11   Salvage drone scoops 6   Delivery drone drops 0   Surface banks 1\nCollection rate 94%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 4: Gold\nNodes broken: 18\nXP earned: 245\nMoney earned: $320\n\nCargo payout:\nBronze x2 -> $26\nGold x8 -> $216\nStone x5 -> $40\nSilver x2 -> $38\n\nLevel 11  XP 528/731\nUnlocked depth tier: 4",
 			"summary_view_model": {
 				"depth_level": 4,
 				"depth_material_name": "Gold",
-				"level_progress_current": 534,
+				"level_progress_current": 528,
 				"level_progress_next": 731,
 				"leveled_up": false,
 				"money_breakdown_chart": [
 					{
 						"color": "(0.7, 0.46, 0.24, 1.0)",
-						"count": 4,
+						"count": 2,
 						"label": "Bronze",
 						"material_id": "bronze",
-						"money": 52
+						"money": 26
 					},
 					{
 						"color": "(0.94, 0.78, 0.23, 1.0)",
-						"count": 9,
+						"count": 8,
 						"label": "Gold",
 						"material_id": "gold",
-						"money": 243
+						"money": 216
 					},
 					{
 						"color": "(0.49, 0.49, 0.52, 1.0)",
-						"count": 3,
+						"count": 5,
 						"label": "Stone",
 						"material_id": "stone",
-						"money": 24
+						"money": 40
 					},
 					{
 						"color": "(0.76, 0.78, 0.82, 1.0)",
@@ -1124,62 +1124,55 @@
 						"money": 38
 					}
 				],
-				"money_earned": 357,
+				"money_earned": 320,
 				"nodes_broken": 18,
 				"projected_depth_unlock": 4,
 				"projected_level": 11,
 				"reason": "Timer expired.",
-				"xp_earned": 251
+				"xp_earned": 245
 			},
 			"time_left": 0.0,
 			"time_limit": 25.25,
 			"total_nodes_seen": 52,
-			"xp": 251,
-			"xp_per_second": 10.9447674418603
+			"xp": 245,
+			"xp_per_second": 10.6831395348836
 		},
 		{
 			"bank_rate": 1.0,
-			"bank_trips": 1,
+			"bank_trips": 2,
 			"banked_counts": {
 				"bronze": 3,
-				"gold": 10,
+				"gold": 7,
 				"silver": 3,
-				"stone": 2
+				"stone": 5
 			},
 			"cargo_capacity": 17,
-			"collection_rate": 0.947368421052632,
+			"collection_rate": 0.857142857142857,
 			"delivery_dumps": 0,
 			"depth_level": 4,
-			"drill_left": 19.04,
+			"drill_left": 25.37,
 			"drill_max": 54.0,
-			"drone_pickups_collected": 11,
+			"drone_pickups_collected": 4,
 			"level_progress": {
 				"current_level": 11,
-				"current_xp": 570,
+				"current_xp": 559,
 				"next_level_xp": 731
 			},
-			"money": 382,
+			"money": 325,
 			"money_breakdown_chart": [
 				{
 					"color": "(0.49, 0.49, 0.52, 1.0)",
-					"count": 2,
+					"count": 5,
 					"label": "Stone",
 					"material_id": "stone",
-					"money": 16
+					"money": 40
 				},
 				{
 					"color": "(0.94, 0.78, 0.23, 1.0)",
-					"count": 10,
+					"count": 7,
 					"label": "Gold",
 					"material_id": "gold",
-					"money": 270
-				},
-				{
-					"color": "(0.7, 0.46, 0.24, 1.0)",
-					"count": 3,
-					"label": "Bronze",
-					"material_id": "bronze",
-					"money": 39
+					"money": 189
 				},
 				{
 					"color": "(0.76, 0.78, 0.82, 1.0)",
@@ -1187,16 +1180,23 @@
 					"label": "Silver",
 					"material_id": "silver",
 					"money": 57
+				},
+				{
+					"color": "(0.7, 0.46, 0.24, 1.0)",
+					"count": 3,
+					"label": "Bronze",
+					"material_id": "bronze",
+					"money": 39
 				}
 			],
-			"money_per_second": 16.6569767441858,
-			"nodes_broken": 19,
+			"money_per_second": 14.1715116279068,
+			"nodes_broken": 21,
 			"ore_banked": 18,
 			"ore_collected": 18,
-			"ore_left_behind": 1,
+			"ore_left_behind": 3,
 			"ore_per_second": 0.784883720930222,
-			"ore_spawned": 19,
-			"player_pickups_collected": 7,
+			"ore_spawned": 21,
+			"player_pickups_collected": 14,
 			"projected_data": {
 				"deepest_level_unlocked": 4,
 				"last_run_breakdown": {
@@ -1218,45 +1218,38 @@
 					"timer_reserve": 5.0,
 					"xp_calibration": 1.0
 				},
-				"wallet": 1151,
-				"xp": 3991
+				"wallet": 1094,
+				"xp": 3980
 			},
 			"reason": "Timer expired.",
-			"remaining_nodes": 33,
+			"remaining_nodes": 31,
 			"scenario_id": "purchase_50_seed_3",
 			"seed": 2052,
-			"selected_goal": "bank",
+			"selected_goal": "node",
 			"simulated_seconds": 22.93,
 			"step_count": 688,
-			"summary_stats_text": "Run time 25.3s   Money/sec $16.7   XP/sec 12.5   Ore/sec 0.78\nOre spawned 19   Collected 18   Left behind 1   Banked 18\nManual scoops 7   Salvage drone scoops 11   Delivery drone drops 0   Surface banks 1\nCollection rate 95%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 4: Gold\nNodes broken: 19\nXP earned: 287\nMoney earned: $382\n\nCargo payout:\nStone x2 -> $16\nGold x10 -> $270\nBronze x3 -> $39\nSilver x3 -> $57\n\nLevel 11  XP 570/731\nUnlocked depth tier: 4",
+			"summary_stats_text": "Run time 25.3s   Money/sec $14.2   XP/sec 12.0   Ore/sec 0.78\nOre spawned 21   Collected 18   Left behind 3   Banked 18\nManual scoops 14   Salvage drone scoops 4   Delivery drone drops 0   Surface banks 2\nCollection rate 86%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 4: Gold\nNodes broken: 21\nXP earned: 276\nMoney earned: $325\n\nCargo payout:\nStone x5 -> $40\nGold x7 -> $189\nSilver x3 -> $57\nBronze x3 -> $39\n\nLevel 11  XP 559/731\nUnlocked depth tier: 4",
 			"summary_view_model": {
 				"depth_level": 4,
 				"depth_material_name": "Gold",
-				"level_progress_current": 570,
+				"level_progress_current": 559,
 				"level_progress_next": 731,
 				"leveled_up": false,
 				"money_breakdown_chart": [
 					{
 						"color": "(0.49, 0.49, 0.52, 1.0)",
-						"count": 2,
+						"count": 5,
 						"label": "Stone",
 						"material_id": "stone",
-						"money": 16
+						"money": 40
 					},
 					{
 						"color": "(0.94, 0.78, 0.23, 1.0)",
-						"count": 10,
+						"count": 7,
 						"label": "Gold",
 						"material_id": "gold",
-						"money": 270
-					},
-					{
-						"color": "(0.7, 0.46, 0.24, 1.0)",
-						"count": 3,
-						"label": "Bronze",
-						"material_id": "bronze",
-						"money": 39
+						"money": 189
 					},
 					{
 						"color": "(0.76, 0.78, 0.82, 1.0)",
@@ -1264,20 +1257,27 @@
 						"label": "Silver",
 						"material_id": "silver",
 						"money": 57
+					},
+					{
+						"color": "(0.7, 0.46, 0.24, 1.0)",
+						"count": 3,
+						"label": "Bronze",
+						"material_id": "bronze",
+						"money": 39
 					}
 				],
-				"money_earned": 382,
-				"nodes_broken": 19,
+				"money_earned": 325,
+				"nodes_broken": 21,
 				"projected_depth_unlock": 4,
 				"projected_level": 11,
 				"reason": "Timer expired.",
-				"xp_earned": 287
+				"xp_earned": 276
 			},
 			"time_left": 0.0,
 			"time_limit": 25.25,
 			"total_nodes_seen": 52,
-			"xp": 287,
-			"xp_per_second": 12.5145348837208
+			"xp": 276,
+			"xp_per_second": 12.0348837209301
 		},
 		{
 			"bank_rate": 1.0,
@@ -1287,21 +1287,21 @@
 				"platinum_bronze": 1,
 				"platinum_gold": 15,
 				"platinum_silver": 1,
-				"stone": 2
+				"stone": 3
 			},
 			"cargo_capacity": 24,
-			"collection_rate": 0.909090909090909,
+			"collection_rate": 0.954545454545455,
 			"delivery_dumps": 0,
 			"depth_level": 8,
-			"drill_left": 11.76,
+			"drill_left": 23.51,
 			"drill_max": 135.0,
-			"drone_pickups_collected": 11,
+			"drone_pickups_collected": 9,
 			"level_progress": {
 				"current_level": 19,
-				"current_xp": 679,
+				"current_xp": 635,
 				"next_level_xp": 1500
 			},
-			"money": 2124,
+			"money": 2133,
 			"money_breakdown_chart": [
 				{
 					"color": "(1.0, 0.86, 0.43, 1.0)",
@@ -1325,28 +1325,28 @@
 					"money": 92
 				},
 				{
-					"color": "(0.49, 0.49, 0.52, 1.0)",
-					"count": 2,
-					"label": "Stone",
-					"material_id": "stone",
-					"money": 18
-				},
-				{
 					"color": "(0.55, 0.93, 1.0, 1.0)",
 					"count": 1,
 					"label": "Diamond",
 					"material_id": "diamond",
 					"money": 44
+				},
+				{
+					"color": "(0.49, 0.49, 0.52, 1.0)",
+					"count": 3,
+					"label": "Stone",
+					"material_id": "stone",
+					"money": 27
 				}
 			],
-			"money_per_second": 99.2523364485971,
+			"money_per_second": 99.6728971962606,
 			"nodes_broken": 14,
-			"ore_banked": 20,
-			"ore_collected": 20,
-			"ore_left_behind": 2,
-			"ore_per_second": 0.934579439252327,
+			"ore_banked": 21,
+			"ore_collected": 21,
+			"ore_left_behind": 1,
+			"ore_per_second": 0.981308411214943,
 			"ore_spawned": 22,
-			"player_pickups_collected": 9,
+			"player_pickups_collected": 12,
 			"projected_data": {
 				"deepest_level_unlocked": 8,
 				"last_run_breakdown": {
@@ -1372,8 +1372,8 @@
 					"timer_reserve": 7.0,
 					"xp_calibration": 4.0
 				},
-				"wallet": 6707,
-				"xp": 12520
+				"wallet": 6716,
+				"xp": 12476
 			},
 			"reason": "Timer expired.",
 			"remaining_nodes": 62,
@@ -1382,12 +1382,12 @@
 			"selected_goal": "node",
 			"simulated_seconds": 21.4,
 			"step_count": 642,
-			"summary_stats_text": "Run time 26.6s   Money/sec $99.3   XP/sec 33.3   Ore/sec 0.93\nOre spawned 22   Collected 20   Left behind 2   Banked 20\nManual scoops 9   Salvage drone scoops 11   Delivery drone drops 0   Surface banks 1\nCollection rate 91%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 8: Platinum Gold\nNodes broken: 14\nXP earned: 712  (LEVEL UP!)\nMoney earned: $2124\n\nCargo payout:\nPlatinum Gold x15 -> $1905\nPlatinum Bronze x1 -> $65\nPlatinum Silver x1 -> $92\nStone x2 -> $18\nDiamond x1 -> $44\n\nLevel 19  XP 679/1500\nUnlocked depth tier: 8",
+			"summary_stats_text": "Run time 26.6s   Money/sec $99.7   XP/sec 31.2   Ore/sec 0.98\nOre spawned 22   Collected 21   Left behind 1   Banked 21\nManual scoops 12   Salvage drone scoops 9   Delivery drone drops 0   Surface banks 1\nCollection rate 95%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 8: Platinum Gold\nNodes broken: 14\nXP earned: 668  (LEVEL UP!)\nMoney earned: $2133\n\nCargo payout:\nPlatinum Gold x15 -> $1905\nPlatinum Bronze x1 -> $65\nPlatinum Silver x1 -> $92\nDiamond x1 -> $44\nStone x3 -> $27\n\nLevel 19  XP 635/1500\nUnlocked depth tier: 8",
 			"summary_view_model": {
 				"depth_level": 8,
 				"depth_material_name": "Platinum Gold",
-				"level_progress_current": 679,
+				"level_progress_current": 635,
 				"level_progress_next": 1500,
 				"leveled_up": true,
 				"money_breakdown_chart": [
@@ -1413,32 +1413,32 @@
 						"money": 92
 					},
 					{
-						"color": "(0.49, 0.49, 0.52, 1.0)",
-						"count": 2,
-						"label": "Stone",
-						"material_id": "stone",
-						"money": 18
-					},
-					{
 						"color": "(0.55, 0.93, 1.0, 1.0)",
 						"count": 1,
 						"label": "Diamond",
 						"material_id": "diamond",
 						"money": 44
+					},
+					{
+						"color": "(0.49, 0.49, 0.52, 1.0)",
+						"count": 3,
+						"label": "Stone",
+						"material_id": "stone",
+						"money": 27
 					}
 				],
-				"money_earned": 2124,
+				"money_earned": 2133,
 				"nodes_broken": 14,
 				"projected_depth_unlock": 8,
 				"projected_level": 19,
 				"reason": "Timer expired.",
-				"xp_earned": 712
+				"xp_earned": 668
 			},
 			"time_left": 0.0,
 			"time_limit": 26.55,
 			"total_nodes_seen": 76,
-			"xp": 712,
-			"xp_per_second": 33.2710280373828
+			"xp": 668,
+			"xp_per_second": 31.2149532710277
 		},
 		{
 			"bank_rate": 1.0,
@@ -1447,7 +1447,7 @@
 				"bronze": 1,
 				"gold": 1,
 				"platinum_gold": 8,
-				"platinum_silver": 4,
+				"platinum_silver": 5,
 				"silver": 2,
 				"stone": 4
 			},
@@ -1455,15 +1455,15 @@
 			"collection_rate": 1.0,
 			"delivery_dumps": 0,
 			"depth_level": 8,
-			"drill_left": 39.98,
+			"drill_left": 28.83,
 			"drill_max": 135.0,
-			"drone_pickups_collected": 7,
+			"drone_pickups_collected": 10,
 			"level_progress": {
 				"current_level": 19,
-				"current_xp": 524,
+				"current_xp": 575,
 				"next_level_xp": 1500
 			},
-			"money": 1510,
+			"money": 1602,
 			"money_breakdown_chart": [
 				{
 					"color": "(1.0, 0.86, 0.43, 1.0)",
@@ -1481,10 +1481,10 @@
 				},
 				{
 					"color": "(0.92, 0.94, 1.0, 1.0)",
-					"count": 4,
+					"count": 5,
 					"label": "Platinum Silver",
 					"material_id": "platinum_silver",
-					"money": 368
+					"money": 460
 				},
 				{
 					"color": "(0.94, 0.78, 0.23, 1.0)",
@@ -1508,14 +1508,14 @@
 					"money": 44
 				}
 			],
-			"money_per_second": 70.5607476635507,
-			"nodes_broken": 16,
-			"ore_banked": 20,
-			"ore_collected": 20,
+			"money_per_second": 74.8598130841114,
+			"nodes_broken": 17,
+			"ore_banked": 21,
+			"ore_collected": 21,
 			"ore_left_behind": 0,
-			"ore_per_second": 0.934579439252327,
-			"ore_spawned": 20,
-			"player_pickups_collected": 13,
+			"ore_per_second": 0.981308411214943,
+			"ore_spawned": 21,
+			"player_pickups_collected": 11,
 			"projected_data": {
 				"deepest_level_unlocked": 8,
 				"last_run_breakdown": {
@@ -1541,22 +1541,22 @@
 					"timer_reserve": 7.0,
 					"xp_calibration": 4.0
 				},
-				"wallet": 6093,
-				"xp": 12365
+				"wallet": 6185,
+				"xp": 12416
 			},
 			"reason": "Timer expired.",
-			"remaining_nodes": 60,
+			"remaining_nodes": 59,
 			"scenario_id": "purchase_100_seed_2",
 			"seed": 3201,
 			"selected_goal": "node",
 			"simulated_seconds": 21.4,
 			"step_count": 642,
-			"summary_stats_text": "Run time 26.6s   Money/sec $70.6   XP/sec 26.0   Ore/sec 0.93\nOre spawned 20   Collected 20   Left behind 0   Banked 20\nManual scoops 13   Salvage drone scoops 7   Delivery drone drops 0   Surface banks 1\nCollection rate 100%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 8: Platinum Gold\nNodes broken: 16\nXP earned: 557  (LEVEL UP!)\nMoney earned: $1510\n\nCargo payout:\nPlatinum Gold x8 -> $1016\nStone x4 -> $36\nPlatinum Silver x4 -> $368\nGold x1 -> $31\nBronze x1 -> $15\nSilver x2 -> $44\n\nLevel 19  XP 524/1500\nUnlocked depth tier: 8",
+			"summary_stats_text": "Run time 26.6s   Money/sec $74.9   XP/sec 28.4   Ore/sec 0.98\nOre spawned 21   Collected 21   Left behind 0   Banked 21\nManual scoops 11   Salvage drone scoops 10   Delivery drone drops 0   Surface banks 1\nCollection rate 100%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 8: Platinum Gold\nNodes broken: 17\nXP earned: 608  (LEVEL UP!)\nMoney earned: $1602\n\nCargo payout:\nPlatinum Gold x8 -> $1016\nStone x4 -> $36\nPlatinum Silver x5 -> $460\nGold x1 -> $31\nBronze x1 -> $15\nSilver x2 -> $44\n\nLevel 19  XP 575/1500\nUnlocked depth tier: 8",
 			"summary_view_model": {
 				"depth_level": 8,
 				"depth_material_name": "Platinum Gold",
-				"level_progress_current": 524,
+				"level_progress_current": 575,
 				"level_progress_next": 1500,
 				"leveled_up": true,
 				"money_breakdown_chart": [
@@ -1576,10 +1576,10 @@
 					},
 					{
 						"color": "(0.92, 0.94, 1.0, 1.0)",
-						"count": 4,
+						"count": 5,
 						"label": "Platinum Silver",
 						"material_id": "platinum_silver",
-						"money": 368
+						"money": 460
 					},
 					{
 						"color": "(0.94, 0.78, 0.23, 1.0)",
@@ -1603,43 +1603,42 @@
 						"money": 44
 					}
 				],
-				"money_earned": 1510,
-				"nodes_broken": 16,
+				"money_earned": 1602,
+				"nodes_broken": 17,
 				"projected_depth_unlock": 8,
 				"projected_level": 19,
 				"reason": "Timer expired.",
-				"xp_earned": 557
+				"xp_earned": 608
 			},
 			"time_left": 0.0,
 			"time_limit": 26.55,
 			"total_nodes_seen": 76,
-			"xp": 557,
-			"xp_per_second": 26.0280373831773
+			"xp": 608,
+			"xp_per_second": 28.4112149532707
 		},
 		{
 			"bank_rate": 1.0,
 			"bank_trips": 1,
 			"banked_counts": {
-				"gold": 1,
 				"platinum_bronze": 2,
 				"platinum_gold": 14,
 				"platinum_silver": 2,
 				"silver": 2,
-				"stone": 3
+				"stone": 2
 			},
 			"cargo_capacity": 24,
-			"collection_rate": 0.923076923076923,
+			"collection_rate": 0.956521739130435,
 			"delivery_dumps": 0,
 			"depth_level": 8,
-			"drill_left": 9.68,
+			"drill_left": 26.64,
 			"drill_max": 135.0,
-			"drone_pickups_collected": 12,
+			"drone_pickups_collected": 9,
 			"level_progress": {
 				"current_level": 19,
-				"current_xp": 747,
+				"current_xp": 674,
 				"next_level_xp": 1500
 			},
-			"money": 2194,
+			"money": 2154,
 			"money_breakdown_chart": [
 				{
 					"color": "(1.0, 0.86, 0.43, 1.0)",
@@ -1671,27 +1670,20 @@
 				},
 				{
 					"color": "(0.49, 0.49, 0.52, 1.0)",
-					"count": 3,
+					"count": 2,
 					"label": "Stone",
 					"material_id": "stone",
-					"money": 27
-				},
-				{
-					"color": "(0.94, 0.78, 0.23, 1.0)",
-					"count": 1,
-					"label": "Gold",
-					"material_id": "gold",
-					"money": 31
+					"money": 18
 				}
 			],
-			"money_per_second": 102.52336448598,
-			"nodes_broken": 18,
-			"ore_banked": 24,
-			"ore_collected": 24,
-			"ore_left_behind": 2,
-			"ore_per_second": 1.12149532710279,
-			"ore_spawned": 26,
-			"player_pickups_collected": 12,
+			"money_per_second": 100.654205607476,
+			"nodes_broken": 16,
+			"ore_banked": 22,
+			"ore_collected": 22,
+			"ore_left_behind": 1,
+			"ore_per_second": 1.02803738317756,
+			"ore_spawned": 23,
+			"player_pickups_collected": 13,
 			"projected_data": {
 				"deepest_level_unlocked": 8,
 				"last_run_breakdown": {
@@ -1717,22 +1709,22 @@
 					"timer_reserve": 7.0,
 					"xp_calibration": 4.0
 				},
-				"wallet": 6777,
-				"xp": 12588
+				"wallet": 6737,
+				"xp": 12515
 			},
 			"reason": "Timer expired.",
-			"remaining_nodes": 58,
+			"remaining_nodes": 60,
 			"scenario_id": "purchase_100_seed_3",
 			"seed": 3202,
-			"selected_goal": "pickup",
+			"selected_goal": "bank",
 			"simulated_seconds": 21.4,
 			"step_count": 642,
-			"summary_stats_text": "Run time 26.6s   Money/sec $102.5   XP/sec 36.4   Ore/sec 1.12\nOre spawned 26   Collected 24   Left behind 2   Banked 24\nManual scoops 12   Salvage drone scoops 12   Delivery drone drops 0   Surface banks 1\nCollection rate 92%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 8: Platinum Gold\nNodes broken: 18\nXP earned: 780  (LEVEL UP!)\nMoney earned: $2194\n\nCargo payout:\nPlatinum Gold x14 -> $1778\nPlatinum Bronze x2 -> $130\nPlatinum Silver x2 -> $184\nSilver x2 -> $44\nStone x3 -> $27\nGold x1 -> $31\n\nLevel 19  XP 747/1500\nUnlocked depth tier: 8",
+			"summary_stats_text": "Run time 26.6s   Money/sec $100.7   XP/sec 33.0   Ore/sec 1.03\nOre spawned 23   Collected 22   Left behind 1   Banked 22\nManual scoops 13   Salvage drone scoops 9   Delivery drone drops 0   Surface banks 1\nCollection rate 96%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 8: Platinum Gold\nNodes broken: 16\nXP earned: 707  (LEVEL UP!)\nMoney earned: $2154\n\nCargo payout:\nPlatinum Gold x14 -> $1778\nPlatinum Bronze x2 -> $130\nPlatinum Silver x2 -> $184\nSilver x2 -> $44\nStone x2 -> $18\n\nLevel 19  XP 674/1500\nUnlocked depth tier: 8",
 			"summary_view_model": {
 				"depth_level": 8,
 				"depth_material_name": "Platinum Gold",
-				"level_progress_current": 747,
+				"level_progress_current": 674,
 				"level_progress_next": 1500,
 				"leveled_up": true,
 				"money_breakdown_chart": [
@@ -1766,54 +1758,62 @@
 					},
 					{
 						"color": "(0.49, 0.49, 0.52, 1.0)",
-						"count": 3,
+						"count": 2,
 						"label": "Stone",
 						"material_id": "stone",
-						"money": 27
-					},
-					{
-						"color": "(0.94, 0.78, 0.23, 1.0)",
-						"count": 1,
-						"label": "Gold",
-						"material_id": "gold",
-						"money": 31
+						"money": 18
 					}
 				],
-				"money_earned": 2194,
-				"nodes_broken": 18,
+				"money_earned": 2154,
+				"nodes_broken": 16,
 				"projected_depth_unlock": 8,
 				"projected_level": 19,
 				"reason": "Timer expired.",
-				"xp_earned": 780
+				"xp_earned": 707
 			},
 			"time_left": 0.0,
 			"time_limit": 26.55,
 			"total_nodes_seen": 76,
-			"xp": 780,
-			"xp_per_second": 36.4485981308407
+			"xp": 707,
+			"xp_per_second": 33.0373831775698
 		},
 		{
 			"bank_rate": 1.0,
-			"bank_trips": 2,
+			"bank_trips": 1,
 			"banked_counts": {
 				"stone": 3,
-				"super_gold": 17,
-				"super_silver": 4
+				"super_bronze": 2,
+				"super_gold": 15,
+				"super_silver": 2
 			},
 			"cargo_capacity": 27,
-			"collection_rate": 0.96,
-			"delivery_dumps": 1,
+			"collection_rate": 1.0,
+			"delivery_dumps": 2,
 			"depth_level": 12,
-			"drill_left": 10.84,
+			"drill_left": 39.34,
 			"drill_max": 202.19,
-			"drone_pickups_collected": 15,
+			"drone_pickups_collected": 16,
 			"level_progress": {
 				"current_level": 32,
-				"current_xp": 969,
+				"current_xp": 763,
 				"next_level_xp": 3088
 			},
-			"money": 8935,
+			"money": 7875,
 			"money_breakdown_chart": [
+				{
+					"color": "(1.0, 0.91, 0.52, 1.0)",
+					"count": 15,
+					"label": "Super Gold",
+					"material_id": "super_gold",
+					"money": 6675
+				},
+				{
+					"color": "(0.96, 0.98, 1.0, 1.0)",
+					"count": 2,
+					"label": "Super Silver",
+					"material_id": "super_silver",
+					"money": 670
+				},
 				{
 					"color": "(0.49, 0.49, 0.52, 1.0)",
 					"count": 3,
@@ -1822,28 +1822,21 @@
 					"money": 30
 				},
 				{
-					"color": "(1.0, 0.91, 0.52, 1.0)",
-					"count": 17,
-					"label": "Super Gold",
-					"material_id": "super_gold",
-					"money": 7565
-				},
-				{
-					"color": "(0.96, 0.98, 1.0, 1.0)",
-					"count": 4,
-					"label": "Super Silver",
-					"material_id": "super_silver",
-					"money": 1340
+					"color": "(0.96, 0.56, 0.3, 1.0)",
+					"count": 2,
+					"label": "Super Bronze",
+					"material_id": "super_bronze",
+					"money": 500
 				}
 			],
-			"money_per_second": 468.618881118879,
-			"nodes_broken": 11,
-			"ore_banked": 24,
-			"ore_collected": 24,
-			"ore_left_behind": 1,
-			"ore_per_second": 1.25874125874125,
-			"ore_spawned": 25,
-			"player_pickups_collected": 9,
+			"money_per_second": 413.024475524473,
+			"nodes_broken": 10,
+			"ore_banked": 22,
+			"ore_collected": 22,
+			"ore_left_behind": 0,
+			"ore_per_second": 1.15384615384615,
+			"ore_spawned": 22,
+			"player_pickups_collected": 6,
 			"projected_data": {
 				"deepest_level_unlocked": 12,
 				"last_run_breakdown": {
@@ -1871,25 +1864,39 @@
 					"timer_reserve": 7.0,
 					"xp_calibration": 5.0
 				},
-				"wallet": 70214,
-				"xp": 41432
+				"wallet": 69154,
+				"xp": 41226
 			},
 			"reason": "Timer expired.",
-			"remaining_nodes": 105,
+			"remaining_nodes": 106,
 			"scenario_id": "purchase_150_seed_1",
 			"seed": 4350,
-			"selected_goal": "bank",
+			"selected_goal": "node",
 			"simulated_seconds": 19.07,
 			"step_count": 572,
-			"summary_stats_text": "Run time 26.6s   Money/sec $468.6   XP/sec 71.2   Ore/sec 1.26\nOre spawned 25   Collected 24   Left behind 1   Banked 24\nManual scoops 9   Salvage drone scoops 15   Delivery drone drops 1   Surface banks 2\nCollection rate 96%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 12: Super Gold\nNodes broken: 11\nXP earned: 1357  (LEVEL UP!)\nMoney earned: $8935\n\nCargo payout:\nStone x3 -> $30\nSuper Gold x17 -> $7565\nSuper Silver x4 -> $1340\n\nLevel 32  XP 969/3088\nUnlocked depth tier: 12",
+			"summary_stats_text": "Run time 26.6s   Money/sec $413.0   XP/sec 60.4   Ore/sec 1.15\nOre spawned 22   Collected 22   Left behind 0   Banked 22\nManual scoops 6   Salvage drone scoops 16   Delivery drone drops 2   Surface banks 1\nCollection rate 100%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 12: Super Gold\nNodes broken: 10\nXP earned: 1151  (LEVEL UP!)\nMoney earned: $7875\n\nCargo payout:\nSuper Gold x15 -> $6675\nSuper Silver x2 -> $670\nStone x3 -> $30\nSuper Bronze x2 -> $500\n\nLevel 32  XP 763/3088\nUnlocked depth tier: 12",
 			"summary_view_model": {
 				"depth_level": 12,
 				"depth_material_name": "Super Gold",
-				"level_progress_current": 969,
+				"level_progress_current": 763,
 				"level_progress_next": 3088,
 				"leveled_up": true,
 				"money_breakdown_chart": [
+					{
+						"color": "(1.0, 0.91, 0.52, 1.0)",
+						"count": 15,
+						"label": "Super Gold",
+						"material_id": "super_gold",
+						"money": 6675
+					},
+					{
+						"color": "(0.96, 0.98, 1.0, 1.0)",
+						"count": 2,
+						"label": "Super Silver",
+						"material_id": "super_silver",
+						"money": 670
+					},
 					{
 						"color": "(0.49, 0.49, 0.52, 1.0)",
 						"count": 3,
@@ -1898,62 +1905,55 @@
 						"money": 30
 					},
 					{
-						"color": "(1.0, 0.91, 0.52, 1.0)",
-						"count": 17,
-						"label": "Super Gold",
-						"material_id": "super_gold",
-						"money": 7565
-					},
-					{
-						"color": "(0.96, 0.98, 1.0, 1.0)",
-						"count": 4,
-						"label": "Super Silver",
-						"material_id": "super_silver",
-						"money": 1340
+						"color": "(0.96, 0.56, 0.3, 1.0)",
+						"count": 2,
+						"label": "Super Bronze",
+						"material_id": "super_bronze",
+						"money": 500
 					}
 				],
-				"money_earned": 8935,
-				"nodes_broken": 11,
+				"money_earned": 7875,
+				"nodes_broken": 10,
 				"projected_depth_unlock": 12,
 				"projected_level": 32,
 				"reason": "Timer expired.",
-				"xp_earned": 1357
+				"xp_earned": 1151
 			},
 			"time_left": 0.0,
 			"time_limit": 26.55,
 			"total_nodes_seen": 116,
-			"xp": 1357,
-			"xp_per_second": 71.1713286713283
+			"xp": 1151,
+			"xp_per_second": 60.3671328671325
 		},
 		{
 			"bank_rate": 1.0,
-			"bank_trips": 3,
+			"bank_trips": 1,
 			"banked_counts": {
 				"stone": 4,
 				"super_bronze": 2,
-				"super_gold": 12,
-				"super_silver": 2
+				"super_gold": 14,
+				"super_silver": 4
 			},
 			"cargo_capacity": 27,
-			"collection_rate": 1.0,
-			"delivery_dumps": 1,
+			"collection_rate": 0.96,
+			"delivery_dumps": 2,
 			"depth_level": 12,
-			"drill_left": 64.18,
+			"drill_left": 18.23,
 			"drill_max": 202.19,
-			"drone_pickups_collected": 12,
+			"drone_pickups_collected": 11,
 			"level_progress": {
 				"current_level": 32,
-				"current_xp": 594,
+				"current_xp": 910,
 				"next_level_xp": 3088
 			},
-			"money": 6550,
+			"money": 8110,
 			"money_breakdown_chart": [
 				{
 					"color": "(1.0, 0.91, 0.52, 1.0)",
-					"count": 12,
+					"count": 14,
 					"label": "Super Gold",
 					"material_id": "super_gold",
-					"money": 5340
+					"money": 6230
 				},
 				{
 					"color": "(0.49, 0.49, 0.52, 1.0)",
@@ -1971,20 +1971,20 @@
 				},
 				{
 					"color": "(0.96, 0.98, 1.0, 1.0)",
-					"count": 2,
+					"count": 4,
 					"label": "Super Silver",
 					"material_id": "super_silver",
-					"money": 670
+					"money": 1340
 				}
 			],
-			"money_per_second": 343.531468531467,
-			"nodes_broken": 10,
-			"ore_banked": 20,
-			"ore_collected": 20,
-			"ore_left_behind": 0,
-			"ore_per_second": 1.04895104895104,
-			"ore_spawned": 20,
-			"player_pickups_collected": 8,
+			"money_per_second": 425.349650349648,
+			"nodes_broken": 12,
+			"ore_banked": 24,
+			"ore_collected": 24,
+			"ore_left_behind": 1,
+			"ore_per_second": 1.25874125874125,
+			"ore_spawned": 25,
+			"player_pickups_collected": 13,
 			"projected_data": {
 				"deepest_level_unlocked": 12,
 				"last_run_breakdown": {
@@ -2012,31 +2012,31 @@
 					"timer_reserve": 7.0,
 					"xp_calibration": 5.0
 				},
-				"wallet": 67829,
-				"xp": 41057
+				"wallet": 69389,
+				"xp": 41373
 			},
 			"reason": "Timer expired.",
-			"remaining_nodes": 106,
+			"remaining_nodes": 104,
 			"scenario_id": "purchase_150_seed_2",
 			"seed": 4351,
 			"selected_goal": "node",
 			"simulated_seconds": 19.07,
 			"step_count": 572,
-			"summary_stats_text": "Run time 26.6s   Money/sec $343.5   XP/sec 51.5   Ore/sec 1.05\nOre spawned 20   Collected 20   Left behind 0   Banked 20\nManual scoops 8   Salvage drone scoops 12   Delivery drone drops 1   Surface banks 3\nCollection rate 100%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 12: Super Gold\nNodes broken: 10\nXP earned: 982  (LEVEL UP!)\nMoney earned: $6550\n\nCargo payout:\nSuper Gold x12 -> $5340\nStone x4 -> $40\nSuper Bronze x2 -> $500\nSuper Silver x2 -> $670\n\nLevel 32  XP 594/3088\nUnlocked depth tier: 12",
+			"summary_stats_text": "Run time 26.6s   Money/sec $425.3   XP/sec 68.1   Ore/sec 1.26\nOre spawned 25   Collected 24   Left behind 1   Banked 24\nManual scoops 13   Salvage drone scoops 11   Delivery drone drops 2   Surface banks 1\nCollection rate 96%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 12: Super Gold\nNodes broken: 12\nXP earned: 1298  (LEVEL UP!)\nMoney earned: $8110\n\nCargo payout:\nSuper Gold x14 -> $6230\nStone x4 -> $40\nSuper Bronze x2 -> $500\nSuper Silver x4 -> $1340\n\nLevel 32  XP 910/3088\nUnlocked depth tier: 12",
 			"summary_view_model": {
 				"depth_level": 12,
 				"depth_material_name": "Super Gold",
-				"level_progress_current": 594,
+				"level_progress_current": 910,
 				"level_progress_next": 3088,
 				"leveled_up": true,
 				"money_breakdown_chart": [
 					{
 						"color": "(1.0, 0.91, 0.52, 1.0)",
-						"count": 12,
+						"count": 14,
 						"label": "Super Gold",
 						"material_id": "super_gold",
-						"money": 5340
+						"money": 6230
 					},
 					{
 						"color": "(0.49, 0.49, 0.52, 1.0)",
@@ -2054,68 +2054,61 @@
 					},
 					{
 						"color": "(0.96, 0.98, 1.0, 1.0)",
-						"count": 2,
+						"count": 4,
 						"label": "Super Silver",
 						"material_id": "super_silver",
-						"money": 670
+						"money": 1340
 					}
 				],
-				"money_earned": 6550,
-				"nodes_broken": 10,
+				"money_earned": 8110,
+				"nodes_broken": 12,
 				"projected_depth_unlock": 12,
 				"projected_level": 32,
 				"reason": "Timer expired.",
-				"xp_earned": 982
+				"xp_earned": 1298
 			},
 			"time_left": 0.0,
 			"time_limit": 26.55,
 			"total_nodes_seen": 116,
-			"xp": 982,
-			"xp_per_second": 51.5034965034962
+			"xp": 1298,
+			"xp_per_second": 68.0769230769227
 		},
 		{
 			"bank_rate": 1.0,
-			"bank_trips": 1,
+			"bank_trips": 3,
 			"banked_counts": {
-				"stone": 4,
-				"super_bronze": 2,
-				"super_gold": 12,
+				"stone": 2,
+				"super_bronze": 4,
+				"super_gold": 11,
 				"super_silver": 4
 			},
 			"cargo_capacity": 27,
-			"collection_rate": 1.0,
-			"delivery_dumps": 1,
+			"collection_rate": 0.954545454545455,
+			"delivery_dumps": 2,
 			"depth_level": 12,
-			"drill_left": 16.09,
+			"drill_left": 40.5,
 			"drill_max": 202.19,
-			"drone_pickups_collected": 11,
+			"drone_pickups_collected": 10,
 			"level_progress": {
 				"current_level": 32,
-				"current_xp": 734,
+				"current_xp": 830,
 				"next_level_xp": 3088
 			},
-			"money": 7220,
+			"money": 7255,
 			"money_breakdown_chart": [
 				{
-					"color": "(0.49, 0.49, 0.52, 1.0)",
-					"count": 4,
-					"label": "Stone",
-					"material_id": "stone",
-					"money": 40
-				},
-				{
 					"color": "(0.96, 0.56, 0.3, 1.0)",
-					"count": 2,
+					"count": 4,
 					"label": "Super Bronze",
 					"material_id": "super_bronze",
-					"money": 500
+					"money": 1000
 				},
 				{
 					"color": "(1.0, 0.91, 0.52, 1.0)",
-					"count": 12,
+					"count": 11,
 					"label": "Super Gold",
 					"material_id": "super_gold",
-					"money": 5340
+					"money": 4895
 				},
 				{
 					"color": "(0.96, 0.98, 1.0, 1.0)",
@@ -2123,14 +2116,21 @@
 					"label": "Super Silver",
 					"material_id": "super_silver",
 					"money": 1340
+				},
+				{
+					"color": "(0.49, 0.49, 0.52, 1.0)",
+					"count": 2,
+					"label": "Stone",
+					"material_id": "stone",
+					"money": 20
 				}
 			],
-			"money_per_second": 378.671328671327,
-			"nodes_broken": 11,
-			"ore_banked": 22,
-			"ore_collected": 22,
-			"ore_left_behind": 0,
-			"ore_per_second": 1.15384615384615,
+			"money_per_second": 380.506993006991,
+			"nodes_broken": 10,
+			"ore_banked": 21,
+			"ore_collected": 21,
+			"ore_left_behind": 1,
+			"ore_per_second": 1.1013986013986,
 			"ore_spawned": 22,
 			"player_pickups_collected": 11,
 			"projected_data": {
@@ -2160,45 +2160,38 @@
 					"timer_reserve": 7.0,
 					"xp_calibration": 5.0
 				},
-				"wallet": 68499,
-				"xp": 41197
+				"wallet": 68534,
+				"xp": 41293
 			},
 			"reason": "Timer expired.",
-			"remaining_nodes": 105,
+			"remaining_nodes": 106,
 			"scenario_id": "purchase_150_seed_3",
 			"seed": 4352,
 			"selected_goal": "node",
 			"simulated_seconds": 19.07,
 			"step_count": 572,
-			"summary_stats_text": "Run time 26.6s   Money/sec $378.7   XP/sec 58.8   Ore/sec 1.15\nOre spawned 22   Collected 22   Left behind 0   Banked 22\nManual scoops 11   Salvage drone scoops 11   Delivery drone drops 1   Surface banks 1\nCollection rate 100%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 12: Super Gold\nNodes broken: 11\nXP earned: 1122  (LEVEL UP!)\nMoney earned: $7220\n\nCargo payout:\nStone x4 -> $40\nSuper Bronze x2 -> $500\nSuper Gold x12 -> $5340\nSuper Silver x4 -> $1340\n\nLevel 32  XP 734/3088\nUnlocked depth tier: 12",
+			"summary_stats_text": "Run time 26.6s   Money/sec $380.5   XP/sec 63.9   Ore/sec 1.10\nOre spawned 22   Collected 21   Left behind 1   Banked 21\nManual scoops 11   Salvage drone scoops 10   Delivery drone drops 2   Surface banks 3\nCollection rate 95%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 12: Super Gold\nNodes broken: 10\nXP earned: 1218  (LEVEL UP!)\nMoney earned: $7255\n\nCargo payout:\nSuper Bronze x4 -> $1000\nSuper Gold x11 -> $4895\nSuper Silver x4 -> $1340\nStone x2 -> $20\n\nLevel 32  XP 830/3088\nUnlocked depth tier: 12",
 			"summary_view_model": {
 				"depth_level": 12,
 				"depth_material_name": "Super Gold",
-				"level_progress_current": 734,
+				"level_progress_current": 830,
 				"level_progress_next": 3088,
 				"leveled_up": true,
 				"money_breakdown_chart": [
 					{
-						"color": "(0.49, 0.49, 0.52, 1.0)",
-						"count": 4,
-						"label": "Stone",
-						"material_id": "stone",
-						"money": 40
-					},
-					{
 						"color": "(0.96, 0.56, 0.3, 1.0)",
-						"count": 2,
+						"count": 4,
 						"label": "Super Bronze",
 						"material_id": "super_bronze",
-						"money": 500
+						"money": 1000
 					},
 					{
 						"color": "(1.0, 0.91, 0.52, 1.0)",
-						"count": 12,
+						"count": 11,
 						"label": "Super Gold",
 						"material_id": "super_gold",
-						"money": 5340
+						"money": 4895
 					},
 					{
 						"color": "(0.96, 0.98, 1.0, 1.0)",
@@ -2206,20 +2199,27 @@
 						"label": "Super Silver",
 						"material_id": "super_silver",
 						"money": 1340
+					},
+					{
+						"color": "(0.49, 0.49, 0.52, 1.0)",
+						"count": 2,
+						"label": "Stone",
+						"material_id": "stone",
+						"money": 20
 					}
 				],
-				"money_earned": 7220,
-				"nodes_broken": 11,
+				"money_earned": 7255,
+				"nodes_broken": 10,
 				"projected_depth_unlock": 12,
 				"projected_level": 32,
 				"reason": "Timer expired.",
-				"xp_earned": 1122
+				"xp_earned": 1218
 			},
 			"time_left": 0.0,
 			"time_limit": 26.55,
 			"total_nodes_seen": 116,
-			"xp": 1122,
-			"xp_per_second": 58.8461538461535
+			"xp": 1218,
+			"xp_per_second": 63.8811188811185
 		},
 		{
 			"bank_rate": 1.0,
@@ -2229,29 +2229,24 @@
 				"platinum_gold": 2,
 				"stone": 2,
 				"super_bronze": 2,
-				"super_diamond": 18
+				"super_diamond": 9,
+				"super_gold": 6,
+				"super_silver": 2
 			},
 			"cargo_capacity": 38,
 			"collection_rate": 1.0,
-			"delivery_dumps": 2,
+			"delivery_dumps": 4,
 			"depth_level": 13,
-			"drill_left": 85.19,
+			"drill_left": 111.05,
 			"drill_max": 275.36,
-			"drone_pickups_collected": 14,
+			"drone_pickups_collected": 7,
 			"level_progress": {
 				"current_level": 46,
-				"current_xp": 2231,
+				"current_xp": 2044,
 				"next_level_xp": 5176
 			},
-			"money": 15374,
+			"money": 12773,
 			"money_breakdown_chart": [
-				{
-					"color": "(0.96, 0.56, 0.3, 1.0)",
-					"count": 2,
-					"label": "Super Bronze",
-					"material_id": "super_bronze",
-					"money": 676
-				},
 				{
 					"color": "(1.0, 0.86, 0.43, 1.0)",
 					"count": 2,
@@ -2261,10 +2256,10 @@
 				},
 				{
 					"color": "(0.81, 1.0, 1.0, 1.0)",
-					"count": 18,
+					"count": 9,
 					"label": "Super Diamond",
 					"material_id": "super_diamond",
-					"money": 14238
+					"money": 7119
 				},
 				{
 					"color": "(0.55, 0.93, 1.0, 1.0)",
@@ -2274,21 +2269,42 @@
 					"money": 64
 				},
 				{
+					"color": "(1.0, 0.91, 0.52, 1.0)",
+					"count": 6,
+					"label": "Super Gold",
+					"material_id": "super_gold",
+					"money": 3612
+				},
+				{
+					"color": "(0.96, 0.98, 1.0, 1.0)",
+					"count": 2,
+					"label": "Super Silver",
+					"material_id": "super_silver",
+					"money": 906
+				},
+				{
 					"color": "(0.49, 0.49, 0.52, 1.0)",
 					"count": 2,
 					"label": "Stone",
 					"material_id": "stone",
 					"money": 28
+				},
+				{
+					"color": "(0.96, 0.56, 0.3, 1.0)",
+					"count": 2,
+					"label": "Super Bronze",
+					"material_id": "super_bronze",
+					"money": 676
 				}
 			],
-			"money_per_second": 788.410256410251,
+			"money_per_second": 655.025641025637,
 			"nodes_broken": 11,
-			"ore_banked": 25,
-			"ore_collected": 25,
+			"ore_banked": 24,
+			"ore_collected": 24,
 			"ore_left_behind": 0,
-			"ore_per_second": 1.28205128205127,
-			"ore_spawned": 25,
-			"player_pickups_collected": 11,
+			"ore_per_second": 1.23076923076922,
+			"ore_spawned": 24,
+			"player_pickups_collected": 17,
 			"projected_data": {
 				"deepest_level_unlocked": 18,
 				"last_run_breakdown": {
@@ -2317,8 +2333,8 @@
 					"timer_reserve": 8.0,
 					"xp_calibration": 8.0
 				},
-				"wallet": 327862,
-				"xp": 99080
+				"wallet": 325261,
+				"xp": 98893
 			},
 			"reason": "Timer expired.",
 			"remaining_nodes": 105,
@@ -2327,22 +2343,15 @@
 			"selected_goal": "node",
 			"simulated_seconds": 19.5,
 			"step_count": 585,
-			"summary_stats_text": "Run time 27.2s   Money/sec $788.4   XP/sec 86.6   Ore/sec 1.28\nOre spawned 25   Collected 25   Left behind 0   Banked 25\nManual scoops 11   Salvage drone scoops 14   Delivery drone drops 2   Surface banks 1\nCollection rate 100%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 13: Super Diamond\nNodes broken: 11\nXP earned: 1688\nMoney earned: $15374\n\nCargo payout:\nSuper Bronze x2 -> $676\nPlatinum Gold x2 -> $368\nSuper Diamond x18 -> $14238\nDiamond x1 -> $64\nStone x2 -> $28\n\nLevel 46  XP 2231/5176\nUnlocked depth tier: 18",
+			"summary_stats_text": "Run time 27.2s   Money/sec $655.0   XP/sec 77.0   Ore/sec 1.23\nOre spawned 24   Collected 24   Left behind 0   Banked 24\nManual scoops 17   Salvage drone scoops 7   Delivery drone drops 4   Surface banks 1\nCollection rate 100%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 13: Super Diamond\nNodes broken: 11\nXP earned: 1501\nMoney earned: $12773\n\nCargo payout:\nPlatinum Gold x2 -> $368\nSuper Diamond x9 -> $7119\nDiamond x1 -> $64\nSuper Gold x6 -> $3612\nSuper Silver x2 -> $906\nStone x2 -> $28\nSuper Bronze x2 -> $676\n\nLevel 46  XP 2044/5176\nUnlocked depth tier: 18",
 			"summary_view_model": {
 				"depth_level": 13,
 				"depth_material_name": "Super Diamond",
-				"level_progress_current": 2231,
+				"level_progress_current": 2044,
 				"level_progress_next": 5176,
 				"leveled_up": false,
 				"money_breakdown_chart": [
-					{
-						"color": "(0.96, 0.56, 0.3, 1.0)",
-						"count": 2,
-						"label": "Super Bronze",
-						"material_id": "super_bronze",
-						"money": 676
-					},
 					{
 						"color": "(1.0, 0.86, 0.43, 1.0)",
 						"count": 2,
@@ -2352,10 +2361,10 @@
 					},
 					{
 						"color": "(0.81, 1.0, 1.0, 1.0)",
-						"count": 18,
+						"count": 9,
 						"label": "Super Diamond",
 						"material_id": "super_diamond",
-						"money": 14238
+						"money": 7119
 					},
 					{
 						"color": "(0.55, 0.93, 1.0, 1.0)",
@@ -2365,55 +2374,76 @@
 						"money": 64
 					},
 					{
+						"color": "(1.0, 0.91, 0.52, 1.0)",
+						"count": 6,
+						"label": "Super Gold",
+						"material_id": "super_gold",
+						"money": 3612
+					},
+					{
+						"color": "(0.96, 0.98, 1.0, 1.0)",
+						"count": 2,
+						"label": "Super Silver",
+						"material_id": "super_silver",
+						"money": 906
+					},
+					{
 						"color": "(0.49, 0.49, 0.52, 1.0)",
 						"count": 2,
 						"label": "Stone",
 						"material_id": "stone",
 						"money": 28
+					},
+					{
+						"color": "(0.96, 0.56, 0.3, 1.0)",
+						"count": 2,
+						"label": "Super Bronze",
+						"material_id": "super_bronze",
+						"money": 676
 					}
 				],
-				"money_earned": 15374,
+				"money_earned": 12773,
 				"nodes_broken": 11,
 				"projected_depth_unlock": 18,
 				"projected_level": 46,
 				"reason": "Timer expired.",
-				"xp_earned": 1688
+				"xp_earned": 1501
 			},
 			"time_left": 0.0,
 			"time_limit": 27.2,
 			"total_nodes_seen": 116,
-			"xp": 1688,
-			"xp_per_second": 86.564102564102
+			"xp": 1501,
+			"xp_per_second": 76.9743589743585
 		},
 		{
 			"bank_rate": 1.0,
-			"bank_trips": 2,
+			"bank_trips": 1,
 			"banked_counts": {
 				"platinum_diamond": 2,
 				"platinum_gold": 2,
 				"stone": 1,
-				"super_diamond": 24
+				"super_diamond": 21
 			},
 			"cargo_capacity": 38,
 			"collection_rate": 1.0,
-			"delivery_dumps": 2,
+			"delivery_dumps": 4,
 			"depth_level": 13,
-			"drill_left": 45.31,
+			"drill_left": 55.88,
 			"drill_max": 275.36,
-			"drone_pickups_collected": 13,
+			"drone_pickups_collected": 10,
 			"level_progress": {
 				"current_level": 46,
-				"current_xp": 2648,
+				"current_xp": 2407,
 				"next_level_xp": 5176
 			},
-			"money": 19866,
+			"money": 17493,
 			"money_breakdown_chart": [
 				{
 					"color": "(0.81, 1.0, 1.0, 1.0)",
-					"count": 24,
+					"count": 21,
 					"label": "Super Diamond",
 					"material_id": "super_diamond",
-					"money": 18984
+					"money": 16611
 				},
 				{
 					"color": "(0.49, 0.49, 0.52, 1.0)",
@@ -2437,13 +2467,13 @@
 					"money": 500
 				}
 			],
-			"money_per_second": 1018.76923076922,
-			"nodes_broken": 11,
-			"ore_banked": 29,
-			"ore_collected": 29,
+			"money_per_second": 897.076923076917,
+			"nodes_broken": 10,
+			"ore_banked": 26,
+			"ore_collected": 26,
 			"ore_left_behind": 0,
-			"ore_per_second": 1.48717948717948,
-			"ore_spawned": 29,
+			"ore_per_second": 1.33333333333332,
+			"ore_spawned": 26,
 			"player_pickups_collected": 16,
 			"projected_data": {
 				"deepest_level_unlocked": 18,
@@ -2473,31 +2503,31 @@
 					"timer_reserve": 8.0,
 					"xp_calibration": 8.0
 				},
-				"wallet": 332354,
-				"xp": 99497
+				"wallet": 329981,
+				"xp": 99256
 			},
 			"reason": "Timer expired.",
-			"remaining_nodes": 105,
+			"remaining_nodes": 106,
 			"scenario_id": "purchase_220_seed_2",
 			"seed": 5961,
 			"selected_goal": "node",
 			"simulated_seconds": 19.5,
 			"step_count": 585,
-			"summary_stats_text": "Run time 27.2s   Money/sec $1018.8   XP/sec 107.9   Ore/sec 1.49\nOre spawned 29   Collected 29   Left behind 0   Banked 29\nManual scoops 16   Salvage drone scoops 13   Delivery drone drops 2   Surface banks 2\nCollection rate 100%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 13: Super Diamond\nNodes broken: 11\nXP earned: 2105\nMoney earned: $19866\n\nCargo payout:\nSuper Diamond x24 -> $18984\nStone x1 -> $14\nPlatinum Gold x2 -> $368\nPlatinum Diamond x2 -> $500\n\nLevel 46  XP 2648/5176\nUnlocked depth tier: 18",
+			"summary_stats_text": "Run time 27.2s   Money/sec $897.1   XP/sec 95.6   Ore/sec 1.33\nOre spawned 26   Collected 26   Left behind 0   Banked 26\nManual scoops 16   Salvage drone scoops 10   Delivery drone drops 4   Surface banks 1\nCollection rate 100%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 13: Super Diamond\nNodes broken: 10\nXP earned: 1864\nMoney earned: $17493\n\nCargo payout:\nSuper Diamond x21 -> $16611\nStone x1 -> $14\nPlatinum Gold x2 -> $368\nPlatinum Diamond x2 -> $500\n\nLevel 46  XP 2407/5176\nUnlocked depth tier: 18",
 			"summary_view_model": {
 				"depth_level": 13,
 				"depth_material_name": "Super Diamond",
-				"level_progress_current": 2648,
+				"level_progress_current": 2407,
 				"level_progress_next": 5176,
 				"leveled_up": false,
 				"money_breakdown_chart": [
 					{
 						"color": "(0.81, 1.0, 1.0, 1.0)",
-						"count": 24,
+						"count": 21,
 						"label": "Super Diamond",
 						"material_id": "super_diamond",
-						"money": 18984
+						"money": 16611
 					},
 					{
 						"color": "(0.49, 0.49, 0.52, 1.0)",
@@ -2521,22 +2551,22 @@
 						"money": 500
 					}
 				],
-				"money_earned": 19866,
-				"nodes_broken": 11,
+				"money_earned": 17493,
+				"nodes_broken": 10,
 				"projected_depth_unlock": 18,
 				"projected_level": 46,
 				"reason": "Timer expired.",
-				"xp_earned": 2105
+				"xp_earned": 1864
 			},
 			"time_left": 0.0,
 			"time_limit": 27.2,
 			"total_nodes_seen": 116,
-			"xp": 2105,
-			"xp_per_second": 107.948717948717
+			"xp": 1864,
+			"xp_per_second": 95.589743589743
 		},
 		{
 			"bank_rate": 1.0,
-			"bank_trips": 1,
+			"bank_trips": 2,
 			"banked_counts": {
 				"diamond": 2,
 				"stone": 2,
@@ -2545,11 +2575,11 @@
 			},
 			"cargo_capacity": 38,
 			"collection_rate": 1.0,
-			"delivery_dumps": 2,
+			"delivery_dumps": 3,
 			"depth_level": 13,
-			"drill_left": 79.12,
+			"drill_left": 84.26,
 			"drill_max": 275.36,
-			"drone_pickups_collected": 9,
+			"drone_pickups_collected": 14,
 			"level_progress": {
 				"current_level": 46,
 				"current_xp": 2257,
@@ -2593,7 +2623,7 @@
 			"ore_left_behind": 0,
 			"ore_per_second": 1.43589743589743,
 			"ore_spawned": 28,
-			"player_pickups_collected": 19,
+			"player_pickups_collected": 14,
 			"projected_data": {
 				"deepest_level_unlocked": 18,
 				"last_run_breakdown": {
@@ -2632,7 +2662,7 @@
 			"selected_goal": "node",
 			"simulated_seconds": 19.5,
 			"step_count": 585,
-			"summary_stats_text": "Run time 27.2s   Money/sec $807.1   XP/sec 87.9   Ore/sec 1.44\nOre spawned 28   Collected 28   Left behind 0   Banked 28\nManual scoops 19   Salvage drone scoops 9   Delivery drone drops 2   Surface banks 1\nCollection rate 100%   Banking rate 100%",
+			"summary_stats_text": "Run time 27.2s   Money/sec $807.1   XP/sec 87.9   Ore/sec 1.44\nOre spawned 28   Collected 28   Left behind 0   Banked 28\nManual scoops 14   Salvage drone scoops 14   Delivery drone drops 3   Surface banks 2\nCollection rate 100%   Banking rate 100%",
 			"summary_text": "Run complete: Timer expired.\n\nDepth tier 13: Super Diamond\nNodes broken: 12\nXP earned: 1714\nMoney earned: $15738\n\nCargo payout:\nSuper Gold x18 -> $10836\nDiamond x2 -> $128\nSuper Diamond x6 -> $4746\nStone x2 -> $28\n\nLevel 46  XP 2257/5176\nUnlocked depth tier: 18",
 			"summary_view_model": {
 				"depth_level": 13,
@@ -2688,28 +2718,28 @@
 			"bank_trips": 3,
 			"banked_counts": {
 				"platinum_bronze_2": 6,
-				"platinum_silver_2": 10
+				"platinum_silver_2": 11
 			},
 			"cargo_capacity": 45,
-			"collection_rate": 0.888888888888889,
-			"delivery_dumps": 6,
+			"collection_rate": 0.944444444444444,
+			"delivery_dumps": 8,
 			"depth_level": 20,
-			"drill_left": 6.22,
+			"drill_left": 6.29,
 			"drill_max": 353.92,
-			"drone_pickups_collected": 4,
+			"drone_pickups_collected": 5,
 			"level_progress": {
 				"current_level": 59,
 				"current_xp": 1224,
 				"next_level_xp": 7411
 			},
-			"money": 24346,
+			"money": 25907,
 			"money_breakdown_chart": [
 				{
 					"color": "(0.92, 0.9328, 1.0, 1.0)",
-					"count": 10,
+					"count": 11,
 					"label": "Platinum Silver 2",
 					"material_id": "platinum_silver_2",
-					"money": 15610
+					"money": 17171
 				},
 				{
 					"color": "(0.8466, 0.6756, 0.4794, 1.0)",
@@ -2719,12 +2749,12 @@
 					"money": 8736
 				}
 			],
-			"money_per_second": 1410.0,
+			"money_per_second": 1500.4054054054,
 			"nodes_broken": 5,
-			"ore_banked": 16,
-			"ore_collected": 16,
-			"ore_left_behind": 2,
-			"ore_per_second": 0.926640926640926,
+			"ore_banked": 17,
+			"ore_collected": 17,
+			"ore_left_behind": 1,
+			"ore_per_second": 0.984555984555984,
 			"ore_spawned": 18,
 			"player_pickups_collected": 12,
 			"projected_data": {
@@ -2755,7 +2785,7 @@
 					"timer_reserve": 9.0,
 					"xp_calibration": 12.0
 				},
-				"wallet": 293469,
+				"wallet": 295030,
 				"xp": 178482
 			},
 			"reason": "Timer expired.",
@@ -2765,8 +2795,8 @@
 			"selected_goal": "node",
 			"simulated_seconds": 17.27,
 			"step_count": 518,
-			"summary_stats_text": "Run time 27.9s   Money/sec $1410.0   XP/sec 120.5   Ore/sec 0.93\nOre spawned 18   Collected 16   Left behind 2   Banked 16\nManual scoops 12   Salvage drone scoops 4   Delivery drone drops 6   Surface banks 3\nCollection rate 89%   Banking rate 100%",
-			"summary_text": "Run complete: Timer expired.\n\nDepth tier 20: Platinum Silver 2\nNodes broken: 5\nXP earned: 2081  (LEVEL UP!)\nMoney earned: $24346\n\nCargo payout:\nPlatinum Silver 2 x10 -> $15610\nPlatinum Bronze 2 x6 -> $8736\n\nLevel 59  XP 1224/7411\nUnlocked depth tier: 25",
+			"summary_stats_text": "Run time 27.9s   Money/sec $1500.4   XP/sec 120.5   Ore/sec 0.98\nOre spawned 18   Collected 17   Left behind 1   Banked 17\nManual scoops 12   Salvage drone scoops 5   Delivery drone drops 8   Surface banks 3\nCollection rate 94%   Banking rate 100%",
+			"summary_text": "Run complete: Timer expired.\n\nDepth tier 20: Platinum Silver 2\nNodes broken: 5\nXP earned: 2081  (LEVEL UP!)\nMoney earned: $25907\n\nCargo payout:\nPlatinum Silver 2 x11 -> $17171\nPlatinum Bronze 2 x6 -> $8736\n\nLevel 59  XP 1224/7411\nUnlocked depth tier: 25",
 			"summary_view_model": {
 				"depth_level": 20,
 				"depth_material_name": "Platinum Silver 2",
@@ -2776,10 +2806,10 @@
 				"money_breakdown_chart": [
 					{
 						"color": "(0.92, 0.9328, 1.0, 1.0)",
-						"count": 10,
+						"count": 11,
 						"label": "Platinum Silver 2",
 						"material_id": "platinum_silver_2",
-						"money": 15610
+						"money": 17171
 					},
 					{
 						"color": "(0.8466, 0.6756, 0.4794, 1.0)",
@@ -2789,7 +2819,7 @@
 						"money": 8736
 					}
 				],
-				"money_earned": 24346,
+				"money_earned": 25907,
 				"nodes_broken": 5,
 				"projected_depth_unlock": 25,
 				"projected_level": 59,
@@ -2804,18 +2834,18 @@
 		},
 		{
 			"bank_rate": 1.0,
-			"bank_trips": 3,
+			"bank_trips": 2,
 			"banked_counts": {
 				"platinum_bronze_2": 6,
 				"platinum_silver_2": 8
 			},
 			"cargo_capacity": 45,
 			"collection_rate": 1.0,
-			"delivery_dumps": 6,
+			"delivery_dumps": 8,
 			"depth_level": 20,
 			"drill_left": 0.0,
 			"drill_max": 353.92,
-			"drone_pickups_collected": 6,
+			"drone_pickups_collected": 4,
 			"level_progress": {
 				"current_level": 59,
 				"current_xp": 797,
@@ -2824,28 +2854,28 @@
 			"money": 21224,
 			"money_breakdown_chart": [
 				{
-					"color": "(0.92, 0.9328, 1.0, 1.0)",
-					"count": 8,
-					"label": "Platinum Silver 2",
-					"material_id": "platinum_silver_2",
-					"money": 12488
-				},
-				{
 					"color": "(0.8466, 0.6756, 0.4794, 1.0)",
 					"count": 6,
 					"label": "Platinum Bronze 2",
 					"material_id": "platinum_bronze_2",
 					"money": 8736
+				},
+				{
+					"color": "(0.92, 0.9328, 1.0, 1.0)",
+					"count": 8,
+					"label": "Platinum Silver 2",
+					"material_id": "platinum_silver_2",
+					"money": 12488
 				}
 			],
-			"money_per_second": 1537.97101449276,
+			"money_per_second": 1498.16470588236,
 			"nodes_broken": 4,
 			"ore_banked": 14,
 			"ore_collected": 14,
 			"ore_left_behind": 0,
-			"ore_per_second": 1.01449275362319,
+			"ore_per_second": 0.98823529411765,
 			"ore_spawned": 14,
-			"player_pickups_collected": 8,
+			"player_pickups_collected": 10,
 			"projected_data": {
 				"deepest_level_unlocked": 25,
 				"last_run_breakdown": {
@@ -2882,10 +2912,10 @@
 			"scenario_id": "purchase_300_seed_2",
 			"seed": 7801,
 			"selected_goal": "node",
-			"simulated_seconds": 13.8,
-			"step_count": 414,
-			"summary_stats_text": "Run time 22.3s   Money/sec $1538.0   XP/sec 119.9   Ore/sec 1.01\nOre spawned 14   Collected 14   Left behind 0   Banked 14\nManual scoops 8   Salvage drone scoops 6   Delivery drone drops 6   Surface banks 3\nCollection rate 100%   Banking rate 100%",
-			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 20: Platinum Silver 2\nNodes broken: 4\nXP earned: 1654  (LEVEL UP!)\nMoney earned: $21224\n\nCargo payout:\nPlatinum Silver 2 x8 -> $12488\nPlatinum Bronze 2 x6 -> $8736\n\nLevel 59  XP 797/7411\nUnlocked depth tier: 25",
+			"simulated_seconds": 14.17,
+			"step_count": 425,
+			"summary_stats_text": "Run time 22.9s   Money/sec $1498.2   XP/sec 116.8   Ore/sec 0.99\nOre spawned 14   Collected 14   Left behind 0   Banked 14\nManual scoops 10   Salvage drone scoops 4   Delivery drone drops 8   Surface banks 2\nCollection rate 100%   Banking rate 100%",
+			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 20: Platinum Silver 2\nNodes broken: 4\nXP earned: 1654  (LEVEL UP!)\nMoney earned: $21224\n\nCargo payout:\nPlatinum Bronze 2 x6 -> $8736\nPlatinum Silver 2 x8 -> $12488\n\nLevel 59  XP 797/7411\nUnlocked depth tier: 25",
 			"summary_view_model": {
 				"depth_level": 20,
 				"depth_material_name": "Platinum Silver 2",
@@ -2894,18 +2924,18 @@
 				"leveled_up": true,
 				"money_breakdown_chart": [
 					{
-						"color": "(0.92, 0.9328, 1.0, 1.0)",
-						"count": 8,
-						"label": "Platinum Silver 2",
-						"material_id": "platinum_silver_2",
-						"money": 12488
-					},
-					{
 						"color": "(0.8466, 0.6756, 0.4794, 1.0)",
 						"count": 6,
 						"label": "Platinum Bronze 2",
 						"material_id": "platinum_bronze_2",
 						"money": 8736
+					},
+					{
+						"color": "(0.92, 0.9328, 1.0, 1.0)",
+						"count": 8,
+						"label": "Platinum Silver 2",
+						"material_id": "platinum_silver_2",
+						"money": 12488
 					}
 				],
 				"money_earned": 21224,
@@ -2915,15 +2945,15 @@
 				"reason": "Drill health depleted.",
 				"xp_earned": 1654
 			},
-			"time_left": 5.58,
+			"time_left": 4.99,
 			"time_limit": 27.85,
 			"total_nodes_seen": 138,
 			"xp": 1654,
-			"xp_per_second": 119.855072463768
+			"xp_per_second": 116.752941176471
 		},
 		{
 			"bank_rate": 1.0,
-			"bank_trips": 3,
+			"bank_trips": 4,
 			"banked_counts": {
 				"bronze_2": 3,
 				"diamond_2": 3,
@@ -2931,11 +2961,11 @@
 			},
 			"cargo_capacity": 45,
 			"collection_rate": 1.0,
-			"delivery_dumps": 6,
+			"delivery_dumps": 8,
 			"depth_level": 20,
 			"drill_left": 0.0,
 			"drill_max": 353.92,
-			"drone_pickups_collected": 9,
+			"drone_pickups_collected": 11,
 			"level_progress": {
 				"current_level": 59,
 				"current_xp": 1105,
@@ -2944,18 +2974,18 @@
 			"money": 26124,
 			"money_breakdown_chart": [
 				{
-					"color": "(0.92, 0.9328, 1.0, 1.0)",
-					"count": 12,
-					"label": "Platinum Silver 2",
-					"material_id": "platinum_silver_2",
-					"money": 18732
-				},
-				{
 					"color": "(0.714, 0.5114, 0.2448, 1.0)",
 					"count": 3,
 					"label": "Bronze 2",
 					"material_id": "bronze_2",
 					"money": 3315
+				},
+				{
+					"color": "(0.92, 0.9328, 1.0, 1.0)",
+					"count": 12,
+					"label": "Platinum Silver 2",
+					"material_id": "platinum_silver_2",
+					"money": 18732
 				},
 				{
 					"color": "(0.55, 0.8895, 1.0, 1.0)",
@@ -2965,14 +2995,14 @@
 					"money": 4077
 				}
 			],
-			"money_per_second": 1533.69863013699,
+			"money_per_second": 1548.85375494071,
 			"nodes_broken": 5,
 			"ore_banked": 18,
 			"ore_collected": 18,
 			"ore_left_behind": 0,
-			"ore_per_second": 1.05675146771037,
+			"ore_per_second": 1.06719367588933,
 			"ore_spawned": 18,
-			"player_pickups_collected": 9,
+			"player_pickups_collected": 7,
 			"projected_data": {
 				"deepest_level_unlocked": 25,
 				"last_run_breakdown": {
@@ -3009,10 +3039,10 @@
 			"scenario_id": "purchase_300_seed_3",
 			"seed": 7802,
 			"selected_goal": "node",
-			"simulated_seconds": 17.03,
-			"step_count": 511,
-			"summary_stats_text": "Run time 27.5s   Money/sec $1533.7   XP/sec 115.2   Ore/sec 1.06\nOre spawned 18   Collected 18   Left behind 0   Banked 18\nManual scoops 9   Salvage drone scoops 9   Delivery drone drops 6   Surface banks 3\nCollection rate 100%   Banking rate 100%",
-			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 20: Platinum Silver 2\nNodes broken: 5\nXP earned: 1962  (LEVEL UP!)\nMoney earned: $26124\n\nCargo payout:\nPlatinum Silver 2 x12 -> $18732\nBronze 2 x3 -> $3315\nDiamond 2 x3 -> $4077\n\nLevel 59  XP 1105/7411\nUnlocked depth tier: 25",
+			"simulated_seconds": 16.87,
+			"step_count": 506,
+			"summary_stats_text": "Run time 27.2s   Money/sec $1548.9   XP/sec 116.3   Ore/sec 1.07\nOre spawned 18   Collected 18   Left behind 0   Banked 18\nManual scoops 7   Salvage drone scoops 11   Delivery drone drops 8   Surface banks 4\nCollection rate 100%   Banking rate 100%",
+			"summary_text": "Run complete: Drill health depleted.\n\nDepth tier 20: Platinum Silver 2\nNodes broken: 5\nXP earned: 1962  (LEVEL UP!)\nMoney earned: $26124\n\nCargo payout:\nBronze 2 x3 -> $3315\nPlatinum Silver 2 x12 -> $18732\nDiamond 2 x3 -> $4077\n\nLevel 59  XP 1105/7411\nUnlocked depth tier: 25",
 			"summary_view_model": {
 				"depth_level": 20,
 				"depth_material_name": "Platinum Silver 2",
@@ -3021,18 +3051,18 @@
 				"leveled_up": true,
 				"money_breakdown_chart": [
 					{
-						"color": "(0.92, 0.9328, 1.0, 1.0)",
-						"count": 12,
-						"label": "Platinum Silver 2",
-						"material_id": "platinum_silver_2",
-						"money": 18732
-					},
-					{
 						"color": "(0.714, 0.5114, 0.2448, 1.0)",
 						"count": 3,
 						"label": "Bronze 2",
 						"material_id": "bronze_2",
 						"money": 3315
+					},
+					{
+						"color": "(0.92, 0.9328, 1.0, 1.0)",
+						"count": 12,
+						"label": "Platinum Silver 2",
+						"material_id": "platinum_silver_2",
+						"money": 18732
 					},
 					{
 						"color": "(0.55, 0.8895, 1.0, 1.0)",
@@ -3049,11 +3079,11 @@
 				"reason": "Drill health depleted.",
 				"xp_earned": 1962
 			},
-			"time_left": 0.36,
+			"time_left": 0.63,
 			"time_limit": 27.85,
 			"total_nodes_seen": 138,
 			"xp": 1962,
-			"xp_per_second": 115.18590998043
+			"xp_per_second": 116.324110671937
 		}
 	]
 }

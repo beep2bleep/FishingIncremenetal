@@ -137,6 +137,11 @@ static func get_drill_wear_multiplier(upgrades: Dictionary) -> float:
 static func get_cargo_capacity(upgrades: Dictionary) -> int:
     return 4 + int(round(get_scaled_upgrade_strength(upgrades, "cargo_pods"))) + int(floor(get_scaled_upgrade_strength(upgrades, "cargo_compressor") / 3.0))
 
+static func get_material_cargo_space(material: Dictionary) -> int:
+    var value: float = float(material.get("value", 1))
+    var normalized_value: float = max(1.0, value / 260.0)
+    return clampi(1 + int(floor(log(normalized_value) / log(2.6))), 1, 5)
+
 static func get_value_multiplier(upgrades: Dictionary) -> float:
     return 1.0 + 0.03 * get_scaled_upgrade_strength(upgrades, "ore_refinery") + 0.008 * get_scaled_upgrade_strength(upgrades, "cargo_compressor")
 
@@ -175,8 +180,8 @@ static func get_pickup_drone_depth_drag(depth_level: int) -> float:
 static func get_delivery_dispatch_window(upgrades: Dictionary) -> float:
     return clampf(5.65 - 0.09 * get_scaled_upgrade_strength(upgrades, "delivery_drone") - 0.04 * get_scaled_upgrade_strength(upgrades, "auto_sorters"), 0.9, 5.65)
 
-static func get_delivery_items_per_dispatch(upgrades: Dictionary) -> int:
-    return 1 + int(floor(get_scaled_upgrade_strength(upgrades, "auto_sorters") / 5.0))
+static func get_delivery_cargo_space_per_dispatch(upgrades: Dictionary) -> int:
+    return 2 + int(floor(get_scaled_upgrade_strength(upgrades, "auto_sorters") / 5.0))
 
 static func get_material_weights(available_tiers: int, upgrades: Dictionary) -> Array[float]:
     if available_tiers <= 1:
@@ -439,9 +444,9 @@ static func _describe_auto_sorters_level(level: int) -> String:
         "+%s delivery lane speed" % _format_number((38.0 + 0.5 * get_scaled_upgrade_strength(after, "auto_sorters")) - (38.0 + 0.5 * get_scaled_upgrade_strength(before, "auto_sorters"))),
         "-%ss dispatch window" % _format_number(get_delivery_dispatch_window(before) - get_delivery_dispatch_window(after))
     ]
-    var item_delta: int = get_delivery_items_per_dispatch(after) - get_delivery_items_per_dispatch(before)
-    if item_delta > 0:
-        effect_parts.append("+%d %s per dispatch" % [item_delta, _pluralize(item_delta, "item", "items")])
+    var cargo_delta: int = get_delivery_cargo_space_per_dispatch(after) - get_delivery_cargo_space_per_dispatch(before)
+    if cargo_delta > 0:
+        effect_parts.append("+%d %s per dispatch" % [cargo_delta, _pluralize(cargo_delta, "cargo space", "cargo space")])
     return _format_effect_list(effect_parts)
 
 static func _format_effect_list(effect_parts: Array) -> String:

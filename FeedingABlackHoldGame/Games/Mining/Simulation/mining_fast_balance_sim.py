@@ -253,6 +253,12 @@ def cargo_capacity(upgrades: Dict[str, int]) -> int:
     return 4 + int(round(scaled_upgrade_strength(upgrades, "cargo_pods"))) + int(math.floor(scaled_upgrade_strength(upgrades, "cargo_compressor") / 3.0))
 
 
+def material_cargo_space(material: Dict) -> int:
+    value = float(material.get("value", 1))
+    normalized_value = max(1.0, value / 260.0)
+    return max(1, min(5, 1 + int(math.floor(math.log(normalized_value) / math.log(2.6)))))
+
+
 def value_multiplier(upgrades: Dict[str, int]) -> float:
     return 1.0 + 0.03 * scaled_upgrade_strength(upgrades, "ore_refinery") + 0.008 * scaled_upgrade_strength(upgrades, "cargo_compressor")
 
@@ -297,8 +303,8 @@ def dispatch_window(upgrades: Dict[str, int]) -> float:
     return max(0.9, min(5.65, 5.65 - 0.09 * scaled_upgrade_strength(upgrades, "delivery_drone") - 0.04 * scaled_upgrade_strength(upgrades, "auto_sorters")))
 
 
-def delivery_items(upgrades: Dict[str, int]) -> int:
-    return 1 + int(math.floor(scaled_upgrade_strength(upgrades, "auto_sorters") / 5.0))
+def delivery_cargo_space(upgrades: Dict[str, int]) -> int:
+    return 2 + int(math.floor(scaled_upgrade_strength(upgrades, "auto_sorters") / 5.0))
 
 
 def material_weights(available_tiers: int, upgrades: Dict[str, int]) -> List[float]:
@@ -514,26 +520,48 @@ def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
     pickup_bot_count = pickup_drone_count(upgrades)
     delivery_rate_floor = delivery_drone_count(upgrades)
     carry_order: List[str] = []
+    material_lookup = {m["id"]: m for m in MATERIALS}
 
-    def add_carried(material_id: str, count: int) -> None:
+    def cargo_space_for_material(material_id: str) -> int:
+        return material_cargo_space(material_lookup[material_id])
+
+    def can_fit_material(material_id: str) -> bool:
+        return cargo + cargo_space_for_material(material_id) <= cargo_capacity(upgrades)
+
+    def add_carried(material_id: str, count: int) -> int:
         nonlocal cargo
         if count <= 0:
-            return
-        if material_id not in carried:
-            carry_order.append(material_id)
-        carried[material_id] = carried.get(material_id, 0) + count
-        cargo += count
+            return 0
+        added = 0
+        for _ in range(count):
+            if not can_fit_material(material_id):
+                break
+            if material_id not in carried:
+                carry_order.append(material_id)
+            carried[material_id] = carried.get(material_id, 0) + 1
+            cargo += cargo_space_for_material(material_id)
+            added += 1
+        return added
 
     def remove_one_carried(material_id: str) -> None:
         nonlocal cargo
         if material_id not in carried:
             return
         carried[material_id] -= 1
-        cargo = max(0, cargo - 1)
+        cargo = max(0, cargo - cargo_space_for_material(material_id))
         if carried[material_id] <= 0:
             carried.pop(material_id, None)
             if material_id in carry_order:
                 carry_order.remove(material_id)
+
+    def peek_next_carried_material_id() -> str:
+        while carry_order:
+            material_id = carry_order[0]
+            if carried.get(material_id, 0) > 0:
+                return material_id
+            carry_order.pop(0)
+            carried.pop(material_id, None)
+        return ""
 
     def offload_background(seconds: float, current_distance: float) -> None:
         nonlocal delivery_progress, delivery_dumps
@@ -542,23 +570,35 @@ def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
         cycle_time = dispatch_window(upgrades) + current_distance / max(1.0, delivery_speed(depth_level, upgrades))
         if cycle_time <= 0:
             return
-        items_per_second = (delivery_rate_floor * delivery_items(upgrades)) / cycle_time
-        delivery_progress += seconds * items_per_second
-        to_dump = min(cargo, int(delivery_progress))
-        if to_dump <= 0:
+        dispatches_per_second = delivery_rate_floor / cycle_time
+        delivery_progress += seconds * dispatches_per_second
+        completed_dispatches = int(delivery_progress)
+        if completed_dispatches <= 0:
             return
-        delivery_progress -= to_dump
-        delivery_dumps += to_dump
-        while to_dump > 0 and carry_order:
-            material_id = carry_order[0]
-            available = carried.get(material_id, 0)
-            if available <= 0:
-                carry_order.pop(0)
-                carried.pop(material_id, None)
-                continue
-            banked[material_id] = banked.get(material_id, 0) + 1
-            remove_one_carried(material_id)
-            to_dump -= 1
+        delivery_progress -= completed_dispatches
+        for _ in range(completed_dispatches):
+            var_material_id = peek_next_carried_material_id()
+            if var_material_id == "":
+                break
+            dispatched_material_id = var_material_id
+            dispatch_space = max(1, delivery_cargo_space(upgrades))
+            dispatched_items = 0
+            while True:
+                next_material_id = peek_next_carried_material_id()
+                if next_material_id == "":
+                    break
+                if dispatched_items > 0 and next_material_id != dispatched_material_id:
+                    break
+                next_space = cargo_space_for_material(next_material_id)
+                if dispatched_items > 0 and next_space > dispatch_space:
+                    break
+                banked[next_material_id] = banked.get(next_material_id, 0) + 1
+                remove_one_carried(next_material_id)
+                delivery_dumps += 1
+                dispatched_items += 1
+                dispatch_space = max(0, dispatch_space - next_space)
+                if dispatch_space <= 0:
+                    break
 
     def collect_with_pickup_drones(seconds: float) -> None:
         nonlocal pickup_progress
@@ -568,14 +608,18 @@ def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
         cycle_time = max(0.45, 0.2 + nearest_distance * 2.0 / max(1.0, pickup_drone_speed(depth_level, upgrades)))
         items_per_second = pickup_bot_count / cycle_time
         pickup_progress += seconds * items_per_second
-        collected = min(len(pickups), cargo_capacity(upgrades) - cargo, int(pickup_progress))
-        if collected <= 0:
+        attempts = min(len(pickups), int(pickup_progress))
+        if attempts <= 0:
             return
-        pickup_progress -= collected
-        for _ in range(collected):
-            nearest_index = min(range(len(pickups)), key=lambda idx: dist(position, pickups[idx].pos))
+        collected = 0
+        for _ in range(attempts):
+            fitting_indices = [idx for idx in range(len(pickups)) if can_fit_material(pickups[idx].material_id)]
+            if not fitting_indices:
+                break
+            nearest_index = min(fitting_indices, key=lambda idx: dist(position, pickups[idx].pos))
             pickup = pickups.pop(nearest_index)
-            add_carried(pickup.material_id, 1)
+            collected += add_carried(pickup.material_id, 1)
+        pickup_progress = max(0.0, pickup_progress - collected)
 
     def spend_seconds(seconds: float, current_distance: float) -> None:
         nonlocal elapsed, time_left
@@ -630,7 +674,7 @@ def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
             pickup_distance = dist(position, pickup.pos)
             node_distance = dist(position, nearest_node.pos) if nodes else math.inf
             pickup_priority_distance = max(72.0, collect_radius + 32.0)
-            target_pickup = pickup_distance <= pickup_priority_distance or pickup_distance + 24.0 < node_distance
+            target_pickup = can_fit_material(pickup.material_id) and (pickup_distance <= pickup_priority_distance or pickup_distance + 24.0 < node_distance)
 
         if target_pickup:
             pickup = pickups[nearest_pickup_index]
@@ -639,7 +683,7 @@ def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
             position = pickup.pos
             if time_left <= 0.0:
                 break
-            if pickup in pickups and cargo < cargo_capacity(upgrades):
+            if pickup in pickups and can_fit_material(pickup.material_id):
                 pickups.remove(pickup)
                 add_carried(pickup.material_id, 1)
             continue
@@ -674,7 +718,7 @@ def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
             angle = rng.random() * math.tau
             radius = rng.uniform(14.0, 28.0)
             pickup_pos = (node.pos[0] + math.cos(angle) * radius, node.pos[1] + math.sin(angle) * radius)
-            if dist(position, pickup_pos) <= collect_radius and cargo < cargo_capacity(upgrades):
+            if dist(position, pickup_pos) <= collect_radius and can_fit_material(node.material_id):
                 add_carried(node.material_id, 1)
             else:
                 pickups.append(Pickup(pos=pickup_pos, material_id=node.material_id))
@@ -683,7 +727,6 @@ def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
         banked[material_id] = banked.get(material_id, 0) + count
 
     total_money = 0
-    material_lookup = {m["id"]: m for m in MATERIALS}
     for material_id, count in banked.items():
         material = material_lookup[material_id]
         total_money += count * int(round(material["value"] * value_multiplier(upgrades)))
