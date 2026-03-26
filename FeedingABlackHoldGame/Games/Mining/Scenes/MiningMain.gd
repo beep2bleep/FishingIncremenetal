@@ -9,6 +9,17 @@ const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const WORLD_SIZE := Vector2(1650.0, 1950.0)
 const DEPTH_DOODAD_COUNT := 18
 const DEPTH_DARK_SPOT_COUNT := 8
+const DIRT_VARIATION_SPOT_COUNT := 18
+const VISUAL_VARIATION_STRENGTH_MIN := 0.4
+const VISUAL_VARIATION_STRENGTH_MAX := 10.0
+const VISUAL_VARIATION_STRENGTH_STEP := 0.2
+const VISUAL_VARIATION_STRENGTH_DEFAULT := 3.2
+const DOT_VARIATION_RANDOM_MIN := 3.0
+const DOT_VARIATION_RANDOM_MAX := 5.0
+const MINERAL_CRACK_VARIATION_RANDOM_MIN := 2.0
+const MINERAL_CRACK_VARIATION_RANDOM_MAX := 5.0
+const CRACK_VARIATION_RANDOM_MIN := 3.0
+const CRACK_VARIATION_RANDOM_MAX := 14.0
 const EDGE_TICK_SPACING := 68.0
 const EDGE_TICK_LENGTH := 28.0
 const EDGE_TICK_WIDTH := 4.0
@@ -178,6 +189,9 @@ var last_background_noise_depth_level := -1
 var mute_button: Button
 var fullscreen_button: Button
 var settings_button: Button
+var variation_down_button: Button
+var variation_up_button: Button
+var variation_reroll_button: Button
 var settings_panel: PanelContainer
 var settings_content: Settings
 var speaker_icon_on: ImageTexture
@@ -220,6 +234,8 @@ var tunnel_speed_boost_strength := 0.0
 var hud_last_reported_level := 1
 var xp_bar_pop_tween: Tween
 var xp_bar_level_up_flash_timer := 0.0
+var visual_variation_strength := VISUAL_VARIATION_STRENGTH_DEFAULT
+var visual_style_reroll_index := 0
 
 func _ready() -> void:
     Global.game_state = Util.GAME_STATES.PLAYING
@@ -266,6 +282,9 @@ func _input(event: InputEvent) -> void:
         aim_cursor_screen_pos = _clamp_cursor_to_viewport(mouse_button_event.position)
 
 func _unhandled_input(event: InputEvent) -> void:
+    if _show_editor_variation_controls() and _handle_editor_variation_shortcut(event):
+        get_viewport().set_input_as_handled()
+        return
     if event.is_action_pressed("toggle_mute"):
         _on_mute_button_pressed()
         get_viewport().set_input_as_handled()
@@ -468,7 +487,7 @@ func _process_player_movement(delta: float) -> void:
     contact_node_id = collision_index
     var node: Dictionary = world_nodes[collision_index]
     if _apply_impact_hit(collision_index, candidate):
-        player_pos = candidate
+        player_pos = previous_pos + player_velocity * delta
         player_pos.x = clampf(player_pos.x, -world_size.x * 0.5 + PLAYER_RADIUS, world_size.x * 0.5 - PLAYER_RADIUS)
         player_pos.y = clampf(player_pos.y, -world_size.y * 0.5 + PLAYER_RADIUS, world_size.y * 0.5 - PLAYER_RADIUS)
         _carve_dirt_segment(previous_pos, player_pos, 28.0)
@@ -2141,12 +2160,13 @@ func _apply_impact_hit(node_index: int, candidate_pos: Vector2) -> bool:
     if node_index < 0 or node_index >= world_nodes.size():
         return false
     var node: Dictionary = world_nodes[node_index]
+    var node_health_before: float = float(node.get("health", 0.0))
     var speed_ratio: float = clampf(player_velocity.length() / max(_get_move_speed(), 1.0), 0.0, 2.0)
     var charge_ratio: float = clampf(straight_drive_charge / STRAIGHT_DRIVE_CHARGE_MAX, 0.0, 1.0)
     var impact_damage: float = _get_drill_dps() * (0.55 + speed_ratio * 0.7 + charge_ratio * 3.15)
     if impact_damage <= 0.0:
         return false
-    node["health"] = max(0.0, float(node.get("health", 0.0)) - impact_damage)
+    node["health"] = max(0.0, node_health_before - impact_damage)
     world_nodes[node_index] = node
     drill_health = max(0.0, drill_health - _get_drill_wear(node) * (0.12 + charge_ratio * 0.2))
     var hit_pos: Vector2 = candidate_pos.lerp(node.get("pos", candidate_pos), 0.5)
@@ -2157,10 +2177,16 @@ func _apply_impact_hit(node_index: int, candidate_pos: Vector2) -> bool:
     _play_mining_donk(INITIAL_DONK_VOLUME_DB_BOOST)
     drill_audio_timer = DRILL_AUDIO_INTERVAL
     if float(node["health"]) <= 0.0:
+        player_velocity *= _get_pass_through_speed_multiplier(impact_damage, node_health_before)
         _break_node(node_index)
         run_status = "Charge break. Keep the line and sweep the seam."
         return true
     return false
+
+func _get_pass_through_speed_multiplier(damage_amount: float, node_health_before: float) -> float:
+    if node_health_before <= 0.0:
+        return 1.0
+    return clampf(damage_amount / (node_health_before * 3.0), 1.0 / 3.0, 1.0)
 
 func _get_collision_node_index(candidate: Vector2) -> int:
     var nearest_index: int = -1
@@ -2544,16 +2570,38 @@ func _get_camera_shake_offset() -> Vector2:
 
 func _draw_base(origin: Vector2) -> void:
     var base_screen: Vector2 = _world_to_screen(_get_base_position())
-    draw_circle(base_screen, BASE_RADIUS, Color(0.27, 0.3, 0.35, 0.92))
-    draw_circle(base_screen, BASE_RADIUS - 12.0, Color(0.81, 0.7, 0.36, 0.28))
-    draw_arc(base_screen, BASE_RADIUS - 8.0, 0.0, TAU, 40, Color(0.95, 0.81, 0.45, 0.95), 3.0)
+    var base_seed := float(active_depth_level) * 43.0
+    var base_outer := _apply_visual_palette_variant(Color(0.27, 0.3, 0.35, 0.92), base_seed + 0.7, 0.65)
+    var base_inner := _apply_visual_palette_variant(Color(0.81, 0.7, 0.36, 0.28), base_seed + 1.4, 0.9)
+    var base_arc := _apply_visual_palette_variant(Color(0.95, 0.81, 0.45, 0.95), base_seed + 2.1, 0.7)
+    draw_circle(base_screen, BASE_RADIUS, base_outer)
+    draw_circle(base_screen, BASE_RADIUS - 12.0, base_inner)
+    _draw_seeded_variation_spots(
+        base_screen,
+        BASE_RADIUS - 18.0,
+        base_seed,
+        Color(0.08, 0.09, 0.11, 0.085),
+        3,
+        0.46,
+        0.18,
+        0.3
+    )
+    _draw_seeded_variation_highlight(
+        base_screen,
+        BASE_RADIUS - 22.0,
+        base_seed + 4.2,
+        Color(1.0, 0.94, 0.72, 0.055),
+        0.22
+    )
+    draw_arc(base_screen, BASE_RADIUS - 8.0, 0.0, TAU, 40, base_arc, 3.0)
     draw_rect(Rect2(base_screen + Vector2(-22.0, -58.0), Vector2(44.0, 72.0)), Color(0.22, 0.24, 0.28, 1.0), true)
     draw_rect(Rect2(base_screen + Vector2(-36.0, -16.0), Vector2(72.0, 28.0)), Color(0.42, 0.43, 0.48, 1.0), true)
 
 func _draw_nodes(origin: Vector2) -> void:
     for node in world_nodes:
         var node_screen: Vector2 = _world_to_screen(node.get("pos", Vector2.ZERO))
-        var node_color: Color = node.get("material_color", Color(0.5, 0.5, 0.5, 1.0))
+        var node_seed := float(int(node.get("id", 0))) * 17.0 + float(active_depth_level) * 7.0
+        var node_color: Color = _apply_visual_palette_variant(node.get("material_color", Color(0.5, 0.5, 0.5, 1.0)), node_seed + 0.9, 0.78)
         var radius: float = float(node.get("radius", 20.0))
         var hp_ratio: float = float(node.get("health", 1.0)) / max(1.0, float(node.get("max_health", 1.0)))
         var mined_progress: float = clampf(1.0 - hp_ratio, 0.0, 1.0)
@@ -2575,6 +2623,24 @@ func _draw_nodes(origin: Vector2) -> void:
             var inner_color: Color = node_color.lerp(grey_color, 0.55)
             draw_colored_polygon(inner_points, inner_color)
 
+        var node_spot_color := outer_color.darkened(0.46)
+        node_spot_color.a = 0.08 + 0.05 * (1.0 - mined_progress)
+        _draw_seeded_variation_spots(node_screen, radius, node_seed, node_spot_color, 2, 0.42, 0.16, 0.27)
+        _draw_seeded_variation_highlight(
+            node_screen,
+            radius,
+            node_seed + 2.6,
+            Color(1.0, 1.0, 1.0, 0.028 + float(node.get("sparkle", 0.0)) * 0.014),
+            0.24
+        )
+        _draw_seeded_mineral_crack_lines(
+            node_screen,
+            radius,
+            node_seed + 7.8,
+            Color(0.04, 0.05, 0.06, 0.14 + mined_progress * 0.04),
+            1,
+            1.15
+        )
         _draw_node_sparkles(node_screen, radius, float(node.get("sparkle", 0.0)))
 
 func _draw_node_sparkles(node_screen: Vector2, radius: float, sparkle: float) -> void:
@@ -2589,12 +2655,31 @@ func _draw_node_sparkles(node_screen: Vector2, radius: float, sparkle: float) ->
 func _draw_pickups(origin: Vector2) -> void:
     for pickup in pickups:
         var pickup_screen: Vector2 = _world_to_screen(pickup.get("pos", Vector2.ZERO))
-        var pickup_color: Color = pickup.get("material_color", Color(0.8, 0.8, 0.8, 1.0))
+        var pickup_seed := float(int(pickup.get("uid", 0))) * 13.0 + float(active_depth_level) * 5.0
+        var pickup_color: Color = _apply_visual_palette_variant(pickup.get("material_color", Color(0.8, 0.8, 0.8, 1.0)), pickup_seed + 1.1, 0.72)
         var blink_ratio: float = clampf(float(pickup.get("reject_blink_timer", 0.0)) / PICKUP_REJECT_BLINK_DURATION, 0.0, 1.0)
         var blink_pulse: float = 0.5 + 0.5 * sin((1.0 - blink_ratio) * TAU * 4.0)
         var blink_boost: float = blink_ratio * blink_pulse
         pickup_color = pickup_color.lerp(Color.WHITE, 0.55 * blink_boost)
         draw_circle(pickup_screen, 7.0 + 1.8 * blink_boost, pickup_color)
+        var pickup_spot_color := pickup_color.darkened(0.5)
+        pickup_spot_color.a = 0.12 + 0.04 * blink_boost
+        _draw_seeded_variation_spots(pickup_screen, 6.6 + blink_boost, pickup_seed, pickup_spot_color, 1, 0.2, 0.24, 0.28)
+        _draw_seeded_variation_highlight(
+            pickup_screen,
+            6.6 + blink_boost,
+            pickup_seed + 1.8,
+            Color(1.0, 1.0, 1.0, 0.06 + 0.03 * blink_boost),
+            0.18
+        )
+        _draw_seeded_mineral_crack_lines(
+            pickup_screen,
+            6.4 + blink_boost,
+            pickup_seed + 5.4,
+            Color(0.03, 0.04, 0.05, 0.12),
+            1,
+            0.95
+        )
         draw_circle(pickup_screen, 3.0 + 0.8 * blink_boost, Color(1.0, 1.0, 1.0, 0.75 + 0.2 * blink_boost))
     _draw_delivery_drones()
     _draw_pickup_drones()
@@ -2602,26 +2687,34 @@ func _draw_pickups(origin: Vector2) -> void:
     _draw_damage_numbers()
 
 func _draw_delivery_drones() -> void:
-    for drone in delivery_drone_visuals:
+    for index in range(delivery_drone_visuals.size()):
+        var drone: Dictionary = delivery_drone_visuals[index]
         var is_returning: bool = String(drone.get("state", "to_base")) == "returning"
         var body_color := Color(0.56, 0.82, 0.88, 1.0) if is_returning else Color(0.72, 0.9, 0.98, 1.0)
-        var carry_color: Color = drone.get("carry_color", Color.WHITE)
-        _draw_drone_body(_world_to_screen(drone.get("pos", Vector2.ZERO)), body_color, carry_color)
+        var carry_color: Color = _apply_visual_palette_variant(drone.get("carry_color", Color.WHITE), float(index) * 9.0 + 5.1, 0.7)
+        var return_offset: Vector2 = drone.get("return_offset", Vector2.ZERO)
+        var variation_seed := float(active_depth_level) * 14.0 + float(index) * 9.0 + return_offset.x * 0.17 + return_offset.y * 0.11
+        _draw_drone_body(_world_to_screen(drone.get("pos", Vector2.ZERO)), _apply_visual_palette_variant(body_color, variation_seed + 1.7, 0.55), carry_color, variation_seed)
 
 func _draw_pickup_drones() -> void:
-    for drone in pickup_drone_visuals:
-        var carry_color: Color = drone.get("carry_color", Color(0.94, 0.82, 0.38, 1.0)) if String(drone.get("state", "idle")) == "to_player" else Color(0.0, 0.0, 0.0, 0.0)
-        _draw_drone_body(_world_to_screen(drone.get("pos", Vector2.ZERO)), Color(0.92, 0.76, 0.38, 1.0), carry_color)
+    for index in range(pickup_drone_visuals.size()):
+        var drone: Dictionary = pickup_drone_visuals[index]
+        var carry_color: Color = _apply_visual_palette_variant(drone.get("carry_color", Color(0.94, 0.82, 0.38, 1.0)), float(index) * 8.0 + 7.3, 0.74) if String(drone.get("state", "idle")) == "to_player" else Color(0.0, 0.0, 0.0, 0.0)
+        var variation_seed := float(active_depth_level) * 19.0 + float(index) * 7.0 + float(drone.get("orbit_seed", 0.0)) * 11.0
+        _draw_drone_body(_world_to_screen(drone.get("pos", Vector2.ZERO)), _apply_visual_palette_variant(Color(0.92, 0.76, 0.38, 1.0), variation_seed + 2.2, 0.6), carry_color, variation_seed)
 
-func _draw_drone_body(screen_pos: Vector2, body_color: Color, carry_color: Color) -> void:
+func _draw_drone_body(screen_pos: Vector2, body_color: Color, carry_color: Color, variation_seed: float) -> void:
     draw_circle(screen_pos, 9.0, Color(0.12, 0.14, 0.17, 0.95))
     draw_circle(screen_pos, 6.0, body_color)
+    _draw_seeded_variation_spots(screen_pos, 5.8, variation_seed, Color(0.05, 0.06, 0.08, 0.13), 1, 0.18, 0.28, 0.3)
+    _draw_seeded_variation_highlight(screen_pos, 5.8, variation_seed + 1.2, Color(1.0, 1.0, 1.0, 0.075), 0.2)
     draw_line(screen_pos + Vector2(-11.0, -7.0), screen_pos + Vector2(11.0, -7.0), Color(0.85, 0.9, 0.95, 0.72), 2.0)
     draw_line(screen_pos + Vector2(-11.0, 7.0), screen_pos + Vector2(11.0, 7.0), Color(0.85, 0.9, 0.95, 0.72), 2.0)
     if carry_color.a > 0.0:
         var cargo_pos: Vector2 = screen_pos + Vector2(0.0, 12.0)
         draw_line(screen_pos + Vector2(0.0, 4.0), cargo_pos, Color(0.94, 0.92, 0.8, 0.7), 1.5)
         draw_circle(cargo_pos, 5.0, carry_color)
+        _draw_seeded_variation_spots(cargo_pos, 4.8, variation_seed + 4.6, Color(0.04, 0.05, 0.07, 0.14), 1, 0.16, 0.28, 0.31)
         draw_circle(cargo_pos, 2.0, Color(1.0, 1.0, 1.0, 0.75))
 
 func _draw_contact_sparks() -> void:
@@ -2670,17 +2763,30 @@ func _draw_player(origin: Vector2) -> void:
 func _draw_drill_ship(screen_pos: Vector2, aim_dir: Vector2, scale: float, shell_color: Color, body_color: Color, boost_strength: float = 0.0) -> void:
     var spin_angle: float = Time.get_ticks_msec() * 0.0045
     var facing_angle: float = aim_dir.angle() + PI * 0.5
+    var variation_seed := float(active_depth_level) * 37.0 + scale * 13.0
     # Treat `spin_angle` as a roll around the travel axis (aim_dir), not as a 2D orbit rotation.
     # This keeps the drill's forward direction stable while the side facets "twist" for a 3D-ish feel.
     var roll_cos: float = cos(spin_angle)
     var roll_sin: float = sin(spin_angle)
     var roll_depth_to_screen: float = 0.35
+    shell_color = _apply_visual_palette_variant(shell_color, variation_seed + 0.8, 0.55)
+    body_color = _apply_visual_palette_variant(body_color, variation_seed + 1.6, 0.62)
     var boost_shell: Color = shell_color.lerp(Color(0.24, 0.45, 0.56, shell_color.a), boost_strength * 0.55)
     var boost_body: Color = body_color.lerp(Color(0.92, 0.96, 1.0, body_color.a), boost_strength * 0.45)
     if boost_strength > 0.0:
         draw_circle(screen_pos, (PLAYER_RADIUS + 8.0 + boost_strength * 4.0) * scale, Color(0.6, 0.92, 1.0, 0.1 + boost_strength * 0.16))
         draw_arc(screen_pos, (PLAYER_RADIUS + 9.0) * scale, 0.0, TAU, 32, Color(0.82, 0.97, 1.0, 0.18 + boost_strength * 0.28), 2.0 * scale)
     draw_circle(screen_pos, (PLAYER_RADIUS + 5.0) * scale, boost_shell)
+    _draw_seeded_variation_spots(
+        screen_pos,
+        (PLAYER_RADIUS + 3.0) * scale,
+        variation_seed,
+        Color(0.03, 0.04, 0.05, 0.095 * shell_color.a),
+        2,
+        0.3,
+        0.16,
+        0.24
+    )
 
     var pyramid_rotation: float = facing_angle
 
@@ -2710,6 +2816,23 @@ func _draw_drill_ship(screen_pos: Vector2, aim_dir: Vector2, scale: float, shell
     draw_colored_polygon(left_facet, shadow_color)
     draw_colored_polygon(right_facet, boost_body)
     draw_colored_polygon(front_facet, highlight_color)
+    _draw_seeded_variation_spots(
+        screen_pos + Vector2(0.0, 4.0).rotated(facing_angle) * scale,
+        PLAYER_RADIUS * 0.72 * scale,
+        variation_seed + 5.4,
+        Color(0.03, 0.04, 0.05, 0.075 * body_color.a),
+        2,
+        0.24,
+        0.14,
+        0.22
+    )
+    _draw_seeded_variation_highlight(
+        screen_pos + Vector2(-2.0, -4.0).rotated(facing_angle) * scale,
+        PLAYER_RADIUS * 0.78 * scale,
+        variation_seed + 8.3,
+        Color(1.0, 0.99, 0.9, 0.05 + boost_strength * 0.035),
+        0.18
+    )
 
     draw_polyline(PackedVector2Array([top_point, left_point, rear_point, right_point, top_point]), Color(0.98, 0.95, 0.82, 0.55 * boost_body.a), maxf(1.3, 2.0 * scale))
     draw_line(top_point, rear_point, Color(1.0, 0.97, 0.9, 0.45 * boost_body.a), maxf(1.0, 1.4 * scale))
@@ -2814,7 +2937,7 @@ func _get_level_bg_color() -> Color:
 
     # Deterministic per-depth palette shift (no RNG / no dependence on run seed),
     # so `depth_level=3` always looks the same.
-    var seed := float(active_depth_level - 1)
+    var seed := float(active_depth_level - 1) + _get_visual_style_seed_offset() * 0.013
     var r_mul := 1.0 + 0.06 * sin(seed * 1.17 + 0.11)
     var g_mul := 1.0 + 0.05 * sin(seed * 0.83 + 1.72)
     var b_mul := 1.0 + 0.07 * sin(seed * 1.43 + 3.21)
@@ -2833,17 +2956,17 @@ func _get_level_bg_color() -> Color:
     # Subtle extra blend toward the active material background so changes feel coherent.
     var material_bg: Color = active_material.get("bg", Color(0.16, 0.12, 0.1, 1.0))
     out = out.lerp(material_bg, 0.06)
-    return out
+    return _apply_visual_palette_variant(out, float(active_depth_level) * 4.3 + 1.2, 0.85)
 
 func _get_level_edge_accent_color() -> Color:
-    var seed := float(active_depth_level)
+    var seed := float(active_depth_level) + _get_visual_style_seed_offset() * 0.017
     var accent := Color(
         0.4 + 0.26 * (0.5 + 0.5 * sin(seed * 0.91 + 0.4)),
         0.46 + 0.24 * (0.5 + 0.5 * sin(seed * 1.27 + 2.1)),
         0.5 + 0.28 * (0.5 + 0.5 * sin(seed * 1.53 + 4.0)),
         1.0
     )
-    return accent.lerp(active_material.get("color", Color(0.8, 0.82, 0.86, 1.0)), 0.28)
+    return _apply_visual_palette_variant(accent.lerp(active_material.get("color", Color(0.8, 0.82, 0.86, 1.0)), 0.28), float(active_depth_level) * 5.9 + 2.8, 0.92)
 
 func _ensure_background_noise_texture() -> void:
     if background_noise_texture != null and last_background_noise_depth_level == active_depth_level:
@@ -2857,7 +2980,7 @@ func _make_background_noise_texture(depth_level: int) -> ImageTexture:
     var img: Image = Image.create(NOISE_SIZE, NOISE_SIZE, false, Image.FORMAT_RGBA8)
     var nrng := RandomNumberGenerator.new()
     # Deterministic seed per depth level.
-    nrng.seed = 1337 + depth_level * 10007
+    nrng.seed = 1337 + depth_level * 10007 + visual_style_reroll_index * 7919
 
     for y in range(NOISE_SIZE):
         for x in range(NOISE_SIZE):
@@ -2883,7 +3006,9 @@ func _draw_background_doodads(world_rect: Rect2) -> void:
     dot_color.a = 0.12
     var ring_color := accent.lightened(0.26)
     ring_color.a = 0.1
-    var seed_base := float(active_depth_level) * 97.0
+    var smudge_color := bg.darkened(0.22)
+    smudge_color.a = 0.05
+    var seed_base := float(active_depth_level) * 97.0 + _get_visual_style_seed_offset()
 
     for index in range(DEPTH_DOODAD_COUNT):
         var fi := float(index)
@@ -2895,12 +3020,14 @@ func _draw_background_doodads(world_rect: Rect2) -> void:
         var stratum_len := radius * (1.5 + 0.9 * _depth_noise(seed_base, fi * 0.77 + 8.0))
         var dir := Vector2.RIGHT.rotated(angle)
         draw_line(pos - dir * stratum_len, pos + dir * stratum_len, stratum_color, 2.0)
+        if index % 2 == 0:
+            _draw_seeded_variation_spots(pos, radius, seed_base + fi * 13.0, smudge_color, 2, 0.34, 0.16, 0.22)
         draw_circle(pos, 2.0 + radius * 0.08, dot_color)
         if index % 3 == 0:
             draw_arc(pos, radius, angle - 0.7, angle + 0.7, 14, ring_color, 2.0)
 
 func _draw_background_dark_spots(world_rect: Rect2, bg: Color, accent: Color) -> void:
-    var seed_base := float(active_depth_level) * 211.0
+    var seed_base := float(active_depth_level) * 211.0 + _get_visual_style_seed_offset()
     var outer_color := bg.darkened(0.26).lerp(accent.darkened(0.55), 0.15)
     outer_color.a = 0.17
     var inner_color := bg.darkened(0.38)
@@ -2931,6 +3058,71 @@ func _draw_soft_dark_spot(center: Vector2, radius_x: float, radius_y: float, ang
             var local := Vector2(cos(phase) * radius_x * t * wobble, sin(phase) * radius_y * t * wobble)
             points.append(center + local.rotated(angle))
         draw_colored_polygon(points, ring_color)
+
+func _draw_seeded_variation_spots(center: Vector2, base_radius: float, seed_base: float, color: Color, spot_count: int = 2, spread: float = 0.38, scale_min: float = 0.18, scale_max: float = 0.28) -> void:
+    if base_radius <= 0.0 or color.a <= 0.0 or spot_count <= 0:
+        return
+    var strength := _get_effective_dot_variation_strength()
+    var effective_count: int = max(1, int(round(float(spot_count) * (0.72 + strength * 0.38))))
+    var alpha_scale: float = 0.52 + strength * 0.48
+    var radius_scale: float = 0.86 + strength * 0.14
+    var spread_scale: float = 0.92 + strength * 0.08
+    for spot_index in range(effective_count):
+        var fi := float(spot_index)
+        var orbit_angle := TAU * _depth_noise(seed_base, fi * 1.93 + 0.37)
+        var orbit_distance := base_radius * spread * spread_scale * _depth_noise(seed_base, fi * 2.17 + 1.91)
+        var spot_radius := base_radius * radius_scale * lerpf(scale_min, scale_max, _depth_noise(seed_base, fi * 2.71 + 3.11))
+        var spot_center := center + Vector2.RIGHT.rotated(orbit_angle) * orbit_distance
+        var outer_color := color
+        outer_color.a *= alpha_scale * (0.55 + 0.35 * _depth_noise(seed_base, fi * 3.19 + 4.73))
+        var inner_color := color.darkened(0.18)
+        inner_color.a = outer_color.a * 0.92
+        draw_circle(spot_center, spot_radius * 1.12, outer_color)
+        var inner_offset := Vector2.RIGHT.rotated(orbit_angle + PI * (0.18 + 0.22 * _depth_noise(seed_base, fi * 3.73 + 2.41))) * spot_radius * 0.16
+        draw_circle(spot_center + inner_offset, spot_radius * 0.72, inner_color)
+
+func _draw_seeded_variation_highlight(center: Vector2, base_radius: float, seed_base: float, color: Color, offset_strength: float = 0.24) -> void:
+    if base_radius <= 0.0 or color.a <= 0.0:
+        return
+    var strength := _get_effective_dot_variation_strength()
+    var angle := -PI * 0.62 + (_depth_noise(seed_base, 0.61) - 0.5) * 0.75
+    var offset := Vector2.RIGHT.rotated(angle) * base_radius * offset_strength
+    var highlight_radius := base_radius * (0.3 + 0.08 * strength + 0.12 * _depth_noise(seed_base, 1.67))
+    var highlight_color := color
+    highlight_color.a *= 0.5 + strength * 0.42
+    draw_circle(center + offset, highlight_radius, highlight_color)
+
+func _draw_seeded_crack_lines_with_strength(center: Vector2, base_radius: float, seed_base: float, color: Color, strength: float, line_count: int = 2, width: float = 1.4) -> void:
+    if base_radius <= 0.0 or color.a <= 0.0 or line_count <= 0:
+        return
+    var effective_count: int = max(1, int(round(float(line_count) * (0.65 + strength * 0.45))))
+    var alpha_scale: float = 0.46 + strength * 0.34
+    var width_scale: float = 0.8 + strength * 0.14
+    for crack_index in range(effective_count):
+        var fi := float(crack_index)
+        var start_angle := TAU * _depth_noise(seed_base, fi * 1.31 + 0.17)
+        var span_sign := -1.0 if int(fi) % 2 == 0 else 1.0
+        var branch_angle := start_angle + span_sign * (0.28 + 0.45 * _depth_noise(seed_base, fi * 1.93 + 0.81))
+        var start_radius := base_radius * (0.08 + 0.18 * _depth_noise(seed_base, fi * 2.27 + 1.43))
+        var mid_radius := base_radius * (0.28 + 0.2 * _depth_noise(seed_base, fi * 2.71 + 2.19))
+        var end_radius := base_radius * (0.54 + 0.24 * _depth_noise(seed_base, fi * 3.19 + 2.77))
+        var start_pos := center + Vector2.RIGHT.rotated(start_angle) * start_radius
+        var mid_pos := center + Vector2.RIGHT.rotated(start_angle + span_sign * 0.1) * mid_radius
+        var end_pos := center + Vector2.RIGHT.rotated(branch_angle) * end_radius
+        var crack_color := color
+        crack_color.a *= alpha_scale * (0.64 + 0.24 * _depth_noise(seed_base, fi * 3.61 + 3.41))
+        var crack_width := maxf(0.85, width * width_scale * (0.85 + 0.2 * _depth_noise(seed_base, fi * 4.07 + 4.33)))
+        draw_line(start_pos, mid_pos, crack_color, crack_width)
+        draw_line(mid_pos, end_pos, crack_color, crack_width * 0.9)
+        var branch_len := base_radius * (0.14 + 0.12 * _depth_noise(seed_base, fi * 4.63 + 1.61))
+        var branch_dir := Vector2.RIGHT.rotated(branch_angle + span_sign * (0.55 + 0.2 * _depth_noise(seed_base, fi * 5.21 + 0.94)))
+        draw_line(mid_pos, mid_pos + branch_dir * branch_len, crack_color, crack_width * 0.72)
+
+func _draw_seeded_crack_lines(center: Vector2, base_radius: float, seed_base: float, color: Color, line_count: int = 2, width: float = 1.4) -> void:
+    _draw_seeded_crack_lines_with_strength(center, base_radius, seed_base, color, _get_effective_crack_variation_strength(), line_count, width)
+
+func _draw_seeded_mineral_crack_lines(center: Vector2, base_radius: float, seed_base: float, color: Color, line_count: int = 1, width: float = 1.0) -> void:
+    _draw_seeded_crack_lines_with_strength(center, base_radius, seed_base, color, _get_effective_mineral_crack_variation_strength(), line_count, width)
 
 func _draw_edge_ticks(world_rect: Rect2, accent: Color) -> void:
     var tick_color := accent.lightened(0.3)
@@ -2999,7 +3191,7 @@ func _initialize_dirt_mask() -> void:
     var base_dirt := Color(0.38, 0.27, 0.16, 0.96)
 
     # Deterministic per-depth tint wobble so levels are distinct but consistent.
-    var seed := float(active_depth_level - 1)
+    var seed := float(active_depth_level - 1) + _get_visual_style_seed_offset() * 0.015
     var r_mul := 1.0 + 0.05 * sin(seed * 1.05 + 0.3)
     var g_mul := 1.0 + 0.05 * sin(seed * 0.77 + 1.7)
     var b_mul := 1.0 + 0.05 * sin(seed * 1.27 + 2.8)
@@ -3011,7 +3203,157 @@ func _initialize_dirt_mask() -> void:
     base_dirt = base_dirt.lerp(bg, dirt_tint_strength)
     base_dirt.a = 0.96
     dirt_image.fill(base_dirt)
+    _apply_dirt_variation(dirt_image)
     dirt_texture = ImageTexture.create_from_image(dirt_image)
+
+func _apply_dirt_variation(image: Image) -> void:
+    if image == null:
+        return
+    var seed_base := float(active_depth_level) * 173.0 + _get_visual_style_seed_offset()
+    var strength := _get_effective_dot_variation_strength()
+    var crack_strength := _get_effective_crack_variation_strength()
+    var width: float = float(image.get_width())
+    var height: float = float(image.get_height())
+    var effective_spot_count: int = max(6, int(round(float(DIRT_VARIATION_SPOT_COUNT) * (0.68 + strength * 0.34))))
+    for spot_index in range(effective_spot_count):
+        var fi := float(spot_index)
+        var center := Vector2(
+            width * (0.08 + 0.84 * _depth_noise(seed_base, fi * 1.11 + 0.4)),
+            height * (0.08 + 0.84 * _depth_noise(seed_base, fi * 1.63 + 1.8))
+        )
+        var radius_x := (18.0 + 44.0 * _depth_noise(seed_base, fi * 2.07 + 3.1)) * (0.82 + strength * 0.18)
+        var radius_y := radius_x * lerpf(0.72, 1.24, _depth_noise(seed_base, fi * 2.41 + 4.6))
+        var tint := image.get_pixel(
+            clampi(int(round(center.x)), 0, image.get_width() - 1),
+            clampi(int(round(center.y)), 0, image.get_height() - 1)
+        ).darkened(0.22)
+        tint.a = (0.05 + 0.06 * _depth_noise(seed_base, fi * 3.03 + 2.7)) * (0.55 + strength * 0.42)
+        _paint_image_variation_spot(
+            image,
+            center,
+            radius_x,
+            radius_y,
+            TAU * _depth_noise(seed_base, fi * 2.77 + 5.2),
+            tint
+        )
+    var crack_count: int = max(6, int(round(4.0 + crack_strength * 4.0)))
+    for crack_index in range(crack_count):
+        var fi := float(crack_index)
+        var start := Vector2(
+            width * (0.1 + 0.8 * _depth_noise(seed_base, fi * 1.37 + 1.1)),
+            height * (0.12 + 0.76 * _depth_noise(seed_base, fi * 1.91 + 0.6))
+        )
+        var angle := TAU * _depth_noise(seed_base, fi * 2.29 + 2.4)
+        var bend := angle + (-1.0 if crack_index % 2 == 0 else 1.0) * (0.24 + 0.28 * _depth_noise(seed_base, fi * 2.73 + 4.8))
+        var seg_a := start + Vector2.RIGHT.rotated(angle) * (18.0 + 24.0 * crack_strength)
+        var seg_b := seg_a + Vector2.RIGHT.rotated(bend) * (16.0 + 22.0 * crack_strength)
+        var crack_tint := image.get_pixel(
+            clampi(int(round(start.x)), 0, image.get_width() - 1),
+            clampi(int(round(start.y)), 0, image.get_height() - 1)
+        ).darkened(0.35)
+        crack_tint.a = 0.05 + 0.035 * crack_strength
+        _paint_image_variation_crack(image, start, seg_a, crack_tint, 1.0 + crack_strength * 0.22)
+        _paint_image_variation_crack(image, seg_a, seg_b, crack_tint, 0.9 + crack_strength * 0.2)
+
+func _get_visual_style_seed_offset() -> float:
+    return float(visual_style_reroll_index) * 1009.0
+
+func _get_visual_variation_bias() -> float:
+    return visual_variation_strength - VISUAL_VARIATION_STRENGTH_DEFAULT
+
+func _get_tier_random_visual_strength(seed_offset: float, min_strength: float, max_strength: float) -> float:
+    return lerpf(min_strength, max_strength, _depth_noise(float(active_depth_level) * 317.0 + _get_visual_style_seed_offset(), seed_offset))
+
+func _get_effective_dot_variation_strength() -> float:
+    return clampf(
+        _get_tier_random_visual_strength(1.17, DOT_VARIATION_RANDOM_MIN, DOT_VARIATION_RANDOM_MAX) + _get_visual_variation_bias(),
+        VISUAL_VARIATION_STRENGTH_MIN,
+        VISUAL_VARIATION_STRENGTH_MAX
+    )
+
+func _get_effective_mineral_crack_variation_strength() -> float:
+    return clampf(
+        _get_tier_random_visual_strength(4.21, MINERAL_CRACK_VARIATION_RANDOM_MIN, MINERAL_CRACK_VARIATION_RANDOM_MAX) + _get_visual_variation_bias(),
+        MINERAL_CRACK_VARIATION_RANDOM_MIN,
+        MINERAL_CRACK_VARIATION_RANDOM_MAX
+    )
+
+func _get_effective_crack_variation_strength() -> float:
+    return clampf(
+        _get_tier_random_visual_strength(6.43, CRACK_VARIATION_RANDOM_MIN, CRACK_VARIATION_RANDOM_MAX) + _get_visual_variation_bias(),
+        VISUAL_VARIATION_STRENGTH_MIN,
+        VISUAL_VARIATION_STRENGTH_MAX
+    )
+
+func _apply_visual_palette_variant(base_color: Color, seed_base: float, amount: float = 0.7) -> Color:
+    if base_color.a <= 0.0:
+        return base_color
+    var visual_seed := seed_base + _get_visual_style_seed_offset()
+    var hue_shift := (_depth_noise(visual_seed, 0.13) - 0.5) * 0.09 * amount
+    var sat_scale := 1.0 + (_depth_noise(visual_seed, 1.91) - 0.5) * 0.18 * amount
+    var val_scale := 1.0 + (_depth_noise(visual_seed, 3.77) - 0.5) * 0.22 * amount
+    var hsv := Color.from_hsv(
+        fposmod(base_color.h + hue_shift, 1.0),
+        clampf(base_color.s * sat_scale, 0.0, 1.0),
+        clampf(base_color.v * val_scale, 0.0, 1.0),
+        base_color.a
+    )
+    hsv.a = base_color.a
+    return hsv
+
+func _paint_image_variation_spot(image: Image, center: Vector2, radius_x: float, radius_y: float, angle: float, tint: Color) -> void:
+    if image == null or radius_x <= 0.0 or radius_y <= 0.0 or tint.a <= 0.0:
+        return
+    var reach: int = int(ceil(maxf(radius_x, radius_y))) + 2
+    var min_x: int = max(0, int(floor(center.x)) - reach)
+    var max_x: int = min(image.get_width() - 1, int(ceil(center.x)) + reach)
+    var min_y: int = max(0, int(floor(center.y)) - reach)
+    var max_y: int = min(image.get_height() - 1, int(ceil(center.y)) + reach)
+    var cos_angle: float = cos(angle)
+    var sin_angle: float = sin(angle)
+
+    for y in range(min_y, max_y + 1):
+        for x in range(min_x, max_x + 1):
+            var delta := Vector2(float(x) + 0.5 - center.x, float(y) + 0.5 - center.y)
+            var local_x := delta.x * cos_angle + delta.y * sin_angle
+            var local_y := -delta.x * sin_angle + delta.y * cos_angle
+            var normalized_distance := pow(local_x / radius_x, 2.0) + pow(local_y / radius_y, 2.0)
+            if normalized_distance > 1.0:
+                continue
+            var blend := tint.a * pow(1.0 - normalized_distance, 1.6)
+            if blend <= 0.001:
+                continue
+            var current: Color = image.get_pixel(x, y)
+            var shaded := current.lerp(Color(tint.r, tint.g, tint.b, current.a), blend)
+            shaded.a = current.a
+            image.set_pixel(x, y, shaded)
+
+func _paint_image_variation_crack(image: Image, from_pos: Vector2, to_pos: Vector2, tint: Color, thickness: float) -> void:
+    if image == null or tint.a <= 0.0:
+        return
+    var distance: float = from_pos.distance_to(to_pos)
+    if distance <= 0.001:
+        return
+    var steps: int = max(1, int(ceil(distance / 1.2)))
+    for step in range(steps + 1):
+        var t: float = float(step) / float(steps)
+        var pos: Vector2 = from_pos.lerp(to_pos, t)
+        var radius: float = thickness * (0.82 + 0.18 * sin(t * PI))
+        var min_x: int = max(0, int(floor(pos.x - radius - 1.0)))
+        var max_x: int = min(image.get_width() - 1, int(ceil(pos.x + radius + 1.0)))
+        var min_y: int = max(0, int(floor(pos.y - radius - 1.0)))
+        var max_y: int = min(image.get_height() - 1, int(ceil(pos.y + radius + 1.0)))
+        for y in range(min_y, max_y + 1):
+            for x in range(min_x, max_x + 1):
+                var pixel_delta := Vector2(float(x) + 0.5 - pos.x, float(y) + 0.5 - pos.y)
+                var normalized_distance := pixel_delta.length() / maxf(radius, 0.001)
+                if normalized_distance > 1.0:
+                    continue
+                var blend := tint.a * pow(1.0 - normalized_distance, 1.9)
+                var current: Color = image.get_pixel(x, y)
+                var shaded := current.lerp(Color(tint.r, tint.g, tint.b, current.a), blend)
+                shaded.a = current.a
+                image.set_pixel(x, y, shaded)
 
 func _world_to_dirt_pixel(world_pos: Vector2) -> Vector2i:
     var world_size: Vector2 = _get_world_size()
@@ -3045,6 +3387,20 @@ func _carve_dirt_circle(world_pos: Vector2, radius: float) -> void:
             if Vector2(float(x - pixel_center.x), float(y - pixel_center.y)).length() > float(pixel_radius):
                 continue
             dirt_image.set_pixel(x, y, Color(0.0, 0.0, 0.0, 0.0))
+    dirt_texture.update(dirt_image)
+
+func _refresh_dirt_visual_texture() -> void:
+    if dirt_image == null:
+        return
+    var previous_mask: Image = dirt_image.duplicate()
+    _initialize_dirt_mask()
+    if previous_mask == null:
+        return
+    for y in range(min(dirt_image.get_height(), previous_mask.get_height())):
+        for x in range(min(dirt_image.get_width(), previous_mask.get_width())):
+            var rebuilt_pixel: Color = dirt_image.get_pixel(x, y)
+            rebuilt_pixel.a = previous_mask.get_pixel(x, y).a
+            dirt_image.set_pixel(x, y, rebuilt_pixel)
     dirt_texture.update(dirt_image)
 
 func _setup_system_controls() -> void:
@@ -3106,6 +3462,53 @@ func _setup_system_controls() -> void:
     $CanvasLayer.add_child(mute_button)
     $CanvasLayer.add_child(fullscreen_button)
     $CanvasLayer.add_child(settings_button)
+    if _show_editor_variation_controls():
+        variation_down_button = Button.new()
+        variation_down_button.name = "VariationDownButton"
+        variation_down_button.anchor_left = 1.0
+        variation_down_button.anchor_top = 0.0
+        variation_down_button.anchor_right = 1.0
+        variation_down_button.anchor_bottom = 0.0
+        variation_down_button.focus_mode = Control.FOCUS_NONE
+        variation_down_button.custom_minimum_size = Vector2(80.0, 44.0)
+        variation_down_button.text = "Var -"
+        variation_down_button.add_theme_font_size_override("font_size", 18)
+        variation_down_button.z_index = 60
+
+        variation_up_button = Button.new()
+        variation_up_button.name = "VariationUpButton"
+        variation_up_button.anchor_left = 1.0
+        variation_up_button.anchor_top = 0.0
+        variation_up_button.anchor_right = 1.0
+        variation_up_button.anchor_bottom = 0.0
+        variation_up_button.focus_mode = Control.FOCUS_NONE
+        variation_up_button.custom_minimum_size = Vector2(80.0, 44.0)
+        variation_up_button.text = "Var +"
+        variation_up_button.add_theme_font_size_override("font_size", 18)
+        variation_up_button.z_index = 60
+
+        variation_reroll_button = Button.new()
+        variation_reroll_button.name = "VariationRerollButton"
+        variation_reroll_button.anchor_left = 1.0
+        variation_reroll_button.anchor_top = 0.0
+        variation_reroll_button.anchor_right = 1.0
+        variation_reroll_button.anchor_bottom = 0.0
+        variation_reroll_button.focus_mode = Control.FOCUS_NONE
+        variation_reroll_button.custom_minimum_size = Vector2(168.0, 44.0)
+        variation_reroll_button.text = "Reroll"
+        variation_reroll_button.add_theme_font_size_override("font_size", 18)
+        variation_reroll_button.z_index = 60
+
+        variation_down_button.pressed.connect(_on_variation_down_button_pressed)
+        variation_up_button.pressed.connect(_on_variation_up_button_pressed)
+        variation_reroll_button.pressed.connect(_on_variation_reroll_button_pressed)
+        _style_utility_button(variation_down_button)
+        _style_utility_button(variation_up_button)
+        _style_utility_button(variation_reroll_button)
+        $CanvasLayer.add_child(variation_down_button)
+        $CanvasLayer.add_child(variation_up_button)
+        $CanvasLayer.add_child(variation_reroll_button)
+        _refresh_editor_variation_controls()
     speaker_icon_on = _make_speaker_icon_texture(false)
     speaker_icon_off = _make_speaker_icon_texture(true)
     fullscreen_icon_on = _make_fullscreen_icon_texture(true)
@@ -3181,6 +3584,21 @@ func _update_system_button_layout() -> void:
         return
     settings_button.offset_top = 16.0
     settings_button.offset_bottom = 104.0
+    if variation_down_button != null and is_instance_valid(variation_down_button):
+        variation_down_button.offset_left = -184.0
+        variation_down_button.offset_top = 112.0
+        variation_down_button.offset_right = -104.0
+        variation_down_button.offset_bottom = 160.0
+    if variation_up_button != null and is_instance_valid(variation_up_button):
+        variation_up_button.offset_left = -96.0
+        variation_up_button.offset_top = 112.0
+        variation_up_button.offset_right = -16.0
+        variation_up_button.offset_bottom = 160.0
+    if variation_reroll_button != null and is_instance_valid(variation_reroll_button):
+        variation_reroll_button.offset_left = -184.0
+        variation_reroll_button.offset_top = 164.0
+        variation_reroll_button.offset_right = -16.0
+        variation_reroll_button.offset_bottom = 212.0
 
 func _update_status_panel_layout() -> void:
     if top_bar == null or not is_instance_valid(top_bar):
@@ -3240,6 +3658,79 @@ func _refresh_system_button_icons() -> void:
         var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
         fullscreen_button.icon = fullscreen_icon_on if is_fullscreen else fullscreen_icon_off
         fullscreen_button.tooltip_text = tr("UI_EXIT_FULLSCREEN") if is_fullscreen else tr("UI_ENTER_FULLSCREEN")
+
+func _show_editor_variation_controls() -> bool:
+    return OS.has_feature("editor") or Engine.is_editor_hint()
+
+func _handle_editor_variation_shortcut(event: InputEvent) -> bool:
+    var key_event := event as InputEventKey
+    if key_event == null or not key_event.pressed or key_event.echo:
+        return false
+    if key_event.keycode == KEY_R:
+        _reroll_visual_style_variant()
+        return true
+    if key_event.keycode == KEY_MINUS or key_event.keycode == KEY_KP_SUBTRACT:
+        _apply_visual_variation_strength_delta(-VISUAL_VARIATION_STRENGTH_STEP)
+        return true
+    if key_event.keycode == KEY_KP_ADD:
+        _apply_visual_variation_strength_delta(VISUAL_VARIATION_STRENGTH_STEP)
+        return true
+    if key_event.keycode == KEY_EQUAL and key_event.shift_pressed:
+        _apply_visual_variation_strength_delta(VISUAL_VARIATION_STRENGTH_STEP)
+        return true
+    return false
+
+func _refresh_editor_variation_controls() -> void:
+    if variation_down_button != null and is_instance_valid(variation_down_button):
+        variation_down_button.tooltip_text = "Lower variation bias. Dot %.2f  Mineral %.2f  Bg crack %.2f" % [_get_effective_dot_variation_strength(), _get_effective_mineral_crack_variation_strength(), _get_effective_crack_variation_strength()]
+    if variation_up_button != null and is_instance_valid(variation_up_button):
+        variation_up_button.tooltip_text = "Raise variation bias. Dot %.2f  Mineral %.2f  Bg crack %.2f" % [_get_effective_dot_variation_strength(), _get_effective_mineral_crack_variation_strength(), _get_effective_crack_variation_strength()]
+    if variation_reroll_button != null and is_instance_valid(variation_reroll_button):
+        variation_reroll_button.tooltip_text = "Reroll cosmetic variant. Dot %.2f  Mineral %.2f  Bg crack %.2f  Seed %d" % [_get_effective_dot_variation_strength(), _get_effective_mineral_crack_variation_strength(), _get_effective_crack_variation_strength(), visual_style_reroll_index]
+
+func _log_visual_variation_state() -> void:
+    print(
+        "Mining visual variation bias: %.2f | dot: %.2f | mineral crack: %.2f | bg crack: %.2f | reroll: %d" % [
+            visual_variation_strength,
+            _get_effective_dot_variation_strength(),
+            _get_effective_mineral_crack_variation_strength(),
+            _get_effective_crack_variation_strength(),
+            visual_style_reroll_index
+        ]
+    )
+
+func _apply_visual_variation_strength_delta(delta: float) -> void:
+    var next_value := clampf(
+        snappedf(visual_variation_strength + delta, 0.05),
+        VISUAL_VARIATION_STRENGTH_MIN,
+        VISUAL_VARIATION_STRENGTH_MAX
+    )
+    if is_equal_approx(next_value, visual_variation_strength):
+        _log_visual_variation_state()
+        return
+    visual_variation_strength = next_value
+    _refresh_editor_variation_controls()
+    _refresh_dirt_visual_texture()
+    queue_redraw()
+    _log_visual_variation_state()
+
+func _reroll_visual_style_variant() -> void:
+    visual_style_reroll_index += 1
+    last_background_noise_depth_level = -1
+    _ensure_background_noise_texture()
+    _refresh_dirt_visual_texture()
+    _refresh_editor_variation_controls()
+    queue_redraw()
+    _log_visual_variation_state()
+
+func _on_variation_down_button_pressed() -> void:
+    _apply_visual_variation_strength_delta(-VISUAL_VARIATION_STRENGTH_STEP)
+
+func _on_variation_up_button_pressed() -> void:
+    _apply_visual_variation_strength_delta(VISUAL_VARIATION_STRENGTH_STEP)
+
+func _on_variation_reroll_button_pressed() -> void:
+    _reroll_visual_style_variant()
 
 func _on_mute_button_pressed() -> void:
     SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
