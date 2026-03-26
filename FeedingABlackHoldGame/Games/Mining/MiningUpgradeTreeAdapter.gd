@@ -5,6 +5,11 @@ const MINING_BALANCE_SCRIPT = preload("res://Games/Mining/MiningBalance.gd")
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 
 const GROUPED_TIER_MAX := 5
+const DEMO_PROJECT_SETTING := "global/Demo"
+const MINING_DEMO_MAX_GROUP_PROJECT_SETTING := "global/mining_demo_max_group"
+const MINING_DEMO_DEFAULT_MAX_GROUP := 6
+const MINING_DEMO_RECOMMENDED_20_MIN_GROUP_CAP := 4
+const MINING_DEMO_RECOMMENDED_40_MIN_GROUP_CAP := 6
 
 const THEME_TIME := 1
 const THEME_DRILL := 2
@@ -43,6 +48,8 @@ static func apply_simulation_upgrades() -> void:
 
     var saved_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
     var saved_upgrades: Dictionary = saved_data.get("upgrades", {})
+    var demo_mode_enabled: bool = _is_demo_mode_enabled()
+    var demo_max_group: int = _get_demo_max_group()
     var upgrade_catalog: Array[Dictionary] = MINING_PROGRESS_SCRIPT.get_upgrade_catalog()
     var grouped_upgrades: Array[Dictionary] = _group_upgrades(upgrade_catalog)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
@@ -79,6 +86,8 @@ static func apply_simulation_upgrades() -> void:
         upgrade.sim_group = int(entry.get("group", 1))
         upgrade.sim_level = int(entry.get("level", 1))
         upgrade.sim_group_pos = 1
+        if demo_mode_enabled and upgrade.sim_group > demo_max_group:
+            upgrade.demo_locked = 1
 
         var dep_id: String = str(entry.get("dependency", ""))
         if dep_id.is_empty() or dep_id == "__CENTER__":
@@ -89,10 +98,18 @@ static func apply_simulation_upgrades() -> void:
         Global.game_mode_data_manager.upgrades[upgrade.cell] = upgrade
 
         var owned_level: int = int(saved_upgrades.get(upgrade_key, 0))
+        if upgrade.demo_locked == 1:
+            owned_level = min(owned_level, upgrade.sim_level - 1)
         if owned_level >= upgrade.sim_level:
             var unlocked_tiers: int = clampi(owned_level - upgrade.sim_level + 1, 0, upgrade.max_tier)
             upgrade.current_tier = unlocked_tiers
             Global.game_mode_data_manager.unlocked_upgrades[upgrade.cell] = upgrade.to_dict()
+
+static func _is_demo_mode_enabled() -> bool:
+    return bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
+
+static func _get_demo_max_group() -> int:
+    return max(1, int(ProjectSettings.get_setting(MINING_DEMO_MAX_GROUP_PROJECT_SETTING, MINING_DEMO_DEFAULT_MAX_GROUP)))
 
 static func _group_upgrades(upgrade_catalog: Array[Dictionary]) -> Array[Dictionary]:
     var grouped: Array[Dictionary] = []
@@ -240,9 +257,8 @@ static func _format_group_label(base_label: String, start_level: int, end_level:
 
 static func _build_tier_costs(upgrade_def: Dictionary) -> Array:
     var costs: Array = []
-    var base_cost: float = float(upgrade_def.get("base_cost", 0))
-    var scale: float = float(upgrade_def.get("cost_mult", 1.0))
+    var upgrade_key: String = str(upgrade_def.get("id", ""))
     var max_level: int = int(upgrade_def.get("max_level", 1))
     for level in range(max_level):
-        costs.append(int(round(base_cost * pow(scale, level))))
+        costs.append(MINING_BALANCE_SCRIPT.get_upgrade_cost(upgrade_key, level))
     return costs

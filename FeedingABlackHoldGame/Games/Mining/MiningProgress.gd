@@ -97,8 +97,32 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
     if new_deepest_level > previous_deepest_level:
         data["selected_depth_level"] = new_deepest_level
     save_data(data)
+    _track_depth_tier_progression_events(previous_deepest_level, new_deepest_level, results, data)
     _track_level_progression_events(previous_level, new_level, int(data.get("xp", 0)), results)
     return data
+
+static func track_run_start(depth_level: int, data: Dictionary = {}) -> void:
+    var ga_manager: Node = _get_game_analytics_manager()
+    if ga_manager == null:
+        return
+    var snapshot: Dictionary = data if not data.is_empty() else load_data()
+    var safe_depth_level: int = max(1, depth_level)
+    ga_manager.call(
+        "track_progression_event",
+        "start",
+        "mining",
+        "depth_tier",
+        "tier_%d" % safe_depth_level,
+        null,
+        {
+            "depth_level": safe_depth_level,
+            "selected_depth_level": int(snapshot.get("selected_depth_level", safe_depth_level)),
+            "deepest_depth_unlocked": int(snapshot.get("deepest_level_unlocked", safe_depth_level)),
+            "player_level": int(snapshot.get("player_level", 1)),
+            "total_xp": int(snapshot.get("xp", 0)),
+            "wallet": int(snapshot.get("wallet", 0)),
+        }
+    )
 
 static func set_selected_depth_level(depth_level: int) -> Dictionary:
     var data: Dictionary = load_data()
@@ -156,8 +180,57 @@ static func _track_level_progression_events(previous_level: int, new_level: int,
         }
     )
 
+static func _track_depth_tier_progression_events(previous_deepest_level: int, new_deepest_level: int, results: Dictionary, data: Dictionary) -> void:
+    var ga_manager: Node = _get_game_analytics_manager()
+    if ga_manager == null:
+        return
+    var run_depth_level: int = max(1, int(results.get("depth_level", 1)))
+    var completion_fields: Dictionary = {
+        "completed_depth_tier": run_depth_level,
+        "run_depth_tier": run_depth_level,
+        "reason": str(results.get("reason", "")),
+        "money_earned": int(results.get("money", 0)),
+        "xp_earned": int(results.get("xp", 0)),
+        "nodes_broken": int(results.get("nodes_broken", 0)),
+        "ore_banked": int(results.get("ore_banked", 0)),
+        "deepest_before": previous_deepest_level,
+        "deepest_after": new_deepest_level,
+        "player_level": int(data.get("player_level", 1)),
+        "total_xp": int(data.get("xp", 0)),
+        "wallet": int(data.get("wallet", 0)),
+        "completion_source": "run_end",
+    }
+    ga_manager.call(
+        "track_progression_event",
+        "complete",
+        "mining",
+        "depth_tier",
+        "tier_%d" % run_depth_level,
+        int(results.get("money", 0)),
+        completion_fields
+    )
+
+    for unlocked_depth in range(max(previous_deepest_level + 1, run_depth_level + 1), new_deepest_level + 1):
+        var unlock_fields: Dictionary = completion_fields.duplicate(true)
+        unlock_fields["completed_depth_tier"] = unlocked_depth
+        unlock_fields["completion_source"] = "skip_unlock"
+        unlock_fields["skipped_from_run_depth"] = run_depth_level
+        ga_manager.call(
+            "track_progression_event",
+            "complete",
+            "mining",
+            "depth_tier",
+            "tier_%d" % unlocked_depth,
+            int(results.get("money", 0)),
+            unlock_fields
+        )
+
 static func _get_game_analytics_manager() -> Node:
     var main_loop: MainLoop = Engine.get_main_loop()
     if main_loop is SceneTree:
-        return (main_loop as SceneTree).root.get_node_or_null("GameAnalytics")
+        var root: Node = (main_loop as SceneTree).root
+        var ga_manager: Node = root.get_node_or_null("GameAnalytics")
+        if ga_manager == null:
+            ga_manager = root.get_node_or_null("GameAnalyticsManager")
+        return ga_manager
     return null

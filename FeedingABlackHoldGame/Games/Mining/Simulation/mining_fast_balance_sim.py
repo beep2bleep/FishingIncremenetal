@@ -27,38 +27,47 @@ CONTACT_DRILL_PADDING = 10.0
 NODE_RADIUS_MIN = 18.0
 NODE_RADIUS_MAX = 34.0
 MAX_WORLD_NODES = 96
-TARGET_DEMO_PURCHASES = 100
-TARGET_DEMO_SECONDS = 40.0 * 60.0
+LEVEL_SIZE_GROWTH_PER_10_TIERS = 0.1
+TARGET_DEMO_SHORT_SECONDS = 20.0 * 60.0
+TARGET_DEMO_LONG_SECONDS = 40.0 * 60.0
 TARGET_FULL_SECONDS = 3.0 * 60.0 * 60.0
 MAX_RUNS = 520
 VALIDATION_SEEDS_PER_CHECKPOINT = 3
 MAX_DEPTH_LEVEL = 100
 MAX_UPGRADE_LEVEL = 100
 MAX_MATERIAL_TYPES_PER_LEVEL = 8
+UPGRADE_EFFECT_GROUP_SIZE = 5
 EARLY_UPGRADE_LEVELS = 5
-LATE_COST_MULTIPLIER_START = 2.0
+LATE_COST_MULTIPLIER_START = 1.8
 LATE_COST_MULTIPLIER_END = 30.0
+LATE_EFFECT_MULTIPLIER_START = 1.0
+LATE_EFFECT_MULTIPLIER_END = 2.25
+AUTOPLAY_MOVE_SPEED_MULTIPLIER = 1.22
+AUTOPLAY_DRILL_DPS_MULTIPLIER = 5.45
+AUTOPLAY_DRILL_WEAR_MULTIPLIER = 0.94
+MAX_PURCHASES_PER_RUN = 3
+MIN_PURCHASE_SCORE_DELTA = 0.05
 
 
 UPGRADES: List[Dict] = [
-    {"id": "timer_reserve", "label": "Timer Reserve", "base_cost": 18, "cost_mult": 1.14, "max_level": 100, "requires": {}},
-    {"id": "route_planner", "label": "Route Planner", "base_cost": 22, "cost_mult": 1.145, "max_level": 100, "requires": {"timer_reserve": 4}},
-    {"id": "engine_tuning", "label": "Engine Tuning", "base_cost": 19, "cost_mult": 1.14, "max_level": 100, "requires": {}},
-    {"id": "dirt_softener", "label": "Dirt Softener", "base_cost": 27, "cost_mult": 1.152, "max_level": 100, "requires": {"engine_tuning": 4}},
-    {"id": "drill_torque", "label": "Drill Torque", "base_cost": 20, "cost_mult": 1.142, "max_level": 100, "requires": {}},
-    {"id": "drill_plating", "label": "Drill Plating", "base_cost": 22, "cost_mult": 1.146, "max_level": 100, "requires": {"drill_torque": 2}},
-    {"id": "cooling_loop", "label": "Cooling Loop", "base_cost": 25, "cost_mult": 1.149, "max_level": 100, "requires": {"drill_plating": 2}},
-    {"id": "cargo_pods", "label": "Cargo Pods", "base_cost": 21, "cost_mult": 1.143, "max_level": 100, "requires": {}},
-    {"id": "cargo_compressor", "label": "Cargo Compressor", "base_cost": 29, "cost_mult": 1.156, "max_level": 100, "requires": {"cargo_pods": 6}},
-    {"id": "ore_refinery", "label": "Ore Refinery", "base_cost": 24, "cost_mult": 1.148, "max_level": 100, "requires": {"cargo_pods": 2}},
-    {"id": "pickup_radius", "label": "Vacuum Scoop", "base_cost": 23, "cost_mult": 1.146, "max_level": 100, "requires": {"cargo_pods": 1}},
-    {"id": "xp_calibration", "label": "XP Calibration", "base_cost": 27, "cost_mult": 1.152, "max_level": 100, "requires": {"ore_refinery": 2}},
-    {"id": "depth_scanner", "label": "Depth Scanner", "base_cost": 34, "cost_mult": 1.162, "max_level": 100, "requires": {"xp_calibration": 2}},
-    {"id": "seismic_sonar", "label": "Seismic Sonar", "base_cost": 37, "cost_mult": 1.168, "max_level": 100, "requires": {"depth_scanner": 2}},
-    {"id": "magnet_drone", "label": "Salvage Drone", "base_cost": 39, "cost_mult": 1.17, "max_level": 100, "requires": {"pickup_radius": 4}},
-    {"id": "foreman_bot", "label": "Foreman Bot", "base_cost": 41, "cost_mult": 1.172, "max_level": 100, "requires": {"drill_plating": 6, "magnet_drone": 4}},
-    {"id": "delivery_drone", "label": "Delivery Drone", "base_cost": 46, "cost_mult": 1.178, "max_level": 100, "requires": {"magnet_drone": 2, "depth_scanner": 1}},
-    {"id": "auto_sorters", "label": "Auto Sorters", "base_cost": 45, "cost_mult": 1.176, "max_level": 100, "requires": {"delivery_drone": 4}},
+    {"id": "timer_reserve", "label": "Timer Reserve", "base_cost": 24, "cost_mult": 1.148, "max_level": 100, "requires": {}},
+    {"id": "route_planner", "label": "Route Planner", "base_cost": 42, "cost_mult": 1.17, "max_level": 100, "requires": {"timer_reserve": 3}},
+    {"id": "engine_tuning", "label": "Engine Tuning", "base_cost": 26, "cost_mult": 1.152, "max_level": 100, "requires": {}},
+    {"id": "dirt_softener", "label": "Dirt Softener", "base_cost": 54, "cost_mult": 1.174, "max_level": 100, "requires": {"engine_tuning": 3}},
+    {"id": "drill_torque", "label": "Drill Torque", "base_cost": 26, "cost_mult": 1.156, "max_level": 100, "requires": {}},
+    {"id": "drill_plating", "label": "Drill Plating", "base_cost": 24, "cost_mult": 1.148, "max_level": 100, "requires": {"drill_torque": 2}},
+    {"id": "cooling_loop", "label": "Cooling Loop", "base_cost": 28, "cost_mult": 1.152, "max_level": 100, "requires": {"drill_plating": 2}},
+    {"id": "cargo_pods", "label": "Cargo Pods", "base_cost": 27, "cost_mult": 1.154, "max_level": 100, "requires": {}},
+    {"id": "cargo_compressor", "label": "Cargo Compressor", "base_cost": 40, "cost_mult": 1.168, "max_level": 100, "requires": {"cargo_pods": 4}},
+    {"id": "ore_refinery", "label": "Ore Refinery", "base_cost": 36, "cost_mult": 1.166, "max_level": 100, "requires": {"cargo_pods": 2}},
+    {"id": "pickup_radius", "label": "Vacuum Scoop", "base_cost": 30, "cost_mult": 1.158, "max_level": 100, "requires": {"cargo_pods": 1}},
+    {"id": "xp_calibration", "label": "XP Calibration", "base_cost": 46, "cost_mult": 1.176, "max_level": 100, "requires": {"ore_refinery": 2}},
+    {"id": "depth_scanner", "label": "Depth Scanner", "base_cost": 62, "cost_mult": 1.182, "max_level": 100, "requires": {"xp_calibration": 2}},
+    {"id": "seismic_sonar", "label": "Seismic Sonar", "base_cost": 60, "cost_mult": 1.182, "max_level": 100, "requires": {"depth_scanner": 2}},
+    {"id": "magnet_drone", "label": "Salvage Drone", "base_cost": 46, "cost_mult": 1.172, "max_level": 100, "requires": {"pickup_radius": 3}},
+    {"id": "foreman_bot", "label": "Foreman Bot", "base_cost": 56, "cost_mult": 1.18, "max_level": 100, "requires": {"drill_plating": 5, "magnet_drone": 3}},
+    {"id": "delivery_drone", "label": "Delivery Drone", "base_cost": 54, "cost_mult": 1.176, "max_level": 100, "requires": {"magnet_drone": 2, "depth_scanner": 1}},
+    {"id": "auto_sorters", "label": "Auto Sorters", "base_cost": 52, "cost_mult": 1.176, "max_level": 100, "requires": {"delivery_drone": 3}},
 ]
 UPGRADE_BY_ID = {u["id"]: u for u in UPGRADES}
 
@@ -79,35 +88,37 @@ BASE_MATERIALS: List[Dict] = [
 ]
 
 
-def build_material_for_depth(depth_level: int) -> Dict:
+def build_materials() -> List[Dict]:
+    materials: List[Dict] = []
     base_count = len(BASE_MATERIALS)
-    base_index = max(0, min(depth_level - 1, base_count - 1))
-    if depth_level <= base_count:
-        return dict(BASE_MATERIALS[base_index])
+    for depth_level in range(1, MAX_DEPTH_LEVEL + 1):
+        base_index = max(0, min(depth_level - 1, base_count - 1))
+        if depth_level <= base_count:
+            materials.append(dict(BASE_MATERIALS[base_index]))
+            continue
+        loop_index = (depth_level - 1) % base_count
+        cycle_number = 1 + (depth_level - 1) // base_count
+        previous = materials[-1]
+        base = dict(BASE_MATERIALS[loop_index])
+        base["id"] = f"{base['id']}_{cycle_number}"
+        base["name"] = f"{base['name']} {cycle_number}"
+        base["value"] = int(round(float(previous["value"]) * 1.072))
+        base["xp"] = int(round(float(previous["xp"]) * 1.069))
+        base["hardness"] = float(previous["hardness"]) * 1.075
+        materials.append(base)
+    return materials
 
-    loop_index = (depth_level - 1) % base_count
-    cycle_number = 1 + (depth_level - 1) // base_count
-    band = max(0, cycle_number - 1)
-    base = dict(BASE_MATERIALS[loop_index])
-    band_scale = pow(1.42, band)
-    intra_band_scale = 1.0 + 0.035 * loop_index
-    base["id"] = f"{base['id']}_{cycle_number}"
-    base["name"] = f"{base['name']} {cycle_number}"
-    base["value"] = int(round(float(base["value"]) * band_scale * intra_band_scale))
-    base["xp"] = int(round(float(base["xp"]) * pow(1.46, band) * intra_band_scale))
-    base["hardness"] = float(base["hardness"]) * pow(1.38, band) * (1.0 + 0.04 * loop_index)
-    return base
 
-
-MATERIALS: List[Dict] = [build_material_for_depth(depth) for depth in range(1, MAX_DEPTH_LEVEL + 1)]
+MATERIALS: List[Dict] = build_materials()
 
 
 def now_utc() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
-def get_base_position() -> Tuple[float, float]:
-    return (0.0, -WORLD_SIZE[1] * 0.5 + 120.0)
+def get_base_position(depth_level: int) -> Tuple[float, float]:
+    world_size = world_size_for_depth(depth_level)
+    return (0.0, -world_size[1] * 0.5 + 120.0)
 
 
 def dist(a: Tuple[float, float], b: Tuple[float, float]) -> float:
@@ -116,7 +127,7 @@ def dist(a: Tuple[float, float], b: Tuple[float, float]) -> float:
 
 def xp_to_next(level: int) -> int:
     level_value = float(max(level, 1))
-    return int(round(30.0 + 10.0 * level_value + 6.5 * pow(level_value, 1.42)))
+    return int(round(65.0 + 16.0 * level_value + 12.5 * pow(level_value, 1.53)))
 
 
 def level_for_total_xp(total_xp: int) -> int:
@@ -131,7 +142,7 @@ def level_for_total_xp(total_xp: int) -> int:
 def refresh_depth_unlocks(data: Dict) -> None:
     player_level = max(1, int(data.get("player_level", 1)))
     scanner_level = int(data.get("upgrades", {}).get("depth_scanner", 0))
-    unlocked = 1 + int(math.floor(float(player_level - 1) / 2.0)) + scanner_level
+    unlocked = 1 + int(math.floor(float(player_level - 1) / 3.2)) + int(math.floor(float(scanner_level) * 0.7))
     data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", 1)), min(MAX_DEPTH_LEVEL, unlocked))
     data["selected_depth_level"] = min(int(data["deepest_level_unlocked"]), max(1, int(data.get("selected_depth_level", 1))))
 
@@ -166,83 +177,123 @@ def get_late_upgrade_multiplier(level: int, max_level: int = MAX_UPGRADE_LEVEL) 
     return LATE_COST_MULTIPLIER_START + (LATE_COST_MULTIPLIER_END - LATE_COST_MULTIPLIER_START) * progress
 
 
+def get_upgrade_effect_multiplier(level: int, max_level: int = MAX_UPGRADE_LEVEL) -> float:
+    grouped_level = get_group_start_level(level)
+    if grouped_level <= EARLY_UPGRADE_LEVELS:
+        return 1.0
+    late_levels = max(1, max_level - EARLY_UPGRADE_LEVELS)
+    denominator = late_levels - 1 if late_levels > 1 else 1
+    progress = float(grouped_level - EARLY_UPGRADE_LEVELS - 1) / float(denominator)
+    progress = max(0.0, min(1.0, progress))
+    return LATE_EFFECT_MULTIPLIER_START + (LATE_EFFECT_MULTIPLIER_END - LATE_EFFECT_MULTIPLIER_START) * progress
+
+
+def get_group_start_level(level: int) -> int:
+    return ((max(level, 1) - 1) // UPGRADE_EFFECT_GROUP_SIZE) * UPGRADE_EFFECT_GROUP_SIZE + 1
+
+
 def scaled_upgrade_strength(upgrades: Dict[str, int], upgrade_id: str) -> float:
     owned_level = int(upgrades.get(upgrade_id, 0))
     max_level = int(UPGRADE_BY_ID.get(upgrade_id, {}).get("max_level", MAX_UPGRADE_LEVEL))
     total = 0.0
     for level in range(1, owned_level + 1):
-        total += get_late_upgrade_multiplier(level, max_level)
+        total += get_upgrade_effect_multiplier(level, max_level)
     return total
 
 
 def move_speed(upgrades: Dict[str, int]) -> float:
-    return 205.0 + 6.5 * scaled_upgrade_strength(upgrades, "engine_tuning") + 1.8 * scaled_upgrade_strength(upgrades, "route_planner")
+    return 210.0 + 0.84 * scaled_upgrade_strength(upgrades, "engine_tuning") + 0.14 * scaled_upgrade_strength(upgrades, "route_planner")
 
 
 def dirt_drag(depth_level: int, upgrades: Dict[str, int]) -> float:
-    base = 0.9 - 0.042 * max(0, depth_level - 1)
-    base += 0.034 * scaled_upgrade_strength(upgrades, "dirt_softener")
-    base += 0.01 * scaled_upgrade_strength(upgrades, "route_planner")
-    return max(0.3, min(1.08, base))
+    base = 0.98 - 0.028 * max(0, depth_level - 1)
+    base += 0.0035 * scaled_upgrade_strength(upgrades, "dirt_softener")
+    base += 0.001 * scaled_upgrade_strength(upgrades, "route_planner")
+    return max(0.42, min(1.0, base))
+
+
+def world_scale_multiplier(depth_level: int) -> float:
+    completed_tier_bands = math.floor(depth_level / 10.0)
+    return 1.0 + completed_tier_bands * LEVEL_SIZE_GROWTH_PER_10_TIERS
+
+
+def world_size_for_depth(depth_level: int) -> Tuple[float, float]:
+    scale = world_scale_multiplier(depth_level)
+    return (WORLD_SIZE[0] * scale, WORLD_SIZE[1] * scale)
+
+
+def world_area_multiplier(depth_level: int) -> float:
+    scale = world_scale_multiplier(depth_level)
+    return scale * scale
 
 
 def run_time_limit(upgrades: Dict[str, int]) -> float:
-    return 16.0 + 0.85 * scaled_upgrade_strength(upgrades, "timer_reserve")
+    return 22.0 + 0.65 * scaled_upgrade_strength(upgrades, "timer_reserve")
 
 
 def time_drain(depth_level: int, upgrades: Dict[str, int]) -> float:
-    drain = 1.0 + 0.055 * max(0, depth_level - 1) - 0.016 * scaled_upgrade_strength(upgrades, "route_planner")
-    return max(0.62, min(2.4, drain))
+    drain = 1.0 + 0.038 * max(0, depth_level - 1) - 0.012 * scaled_upgrade_strength(upgrades, "route_planner")
+    return max(0.68, min(2.2, drain))
 
 
 def drill_dps(upgrades: Dict[str, int]) -> float:
-    return 8.5 + 1.35 * scaled_upgrade_strength(upgrades, "drill_torque") + 0.12 * scaled_upgrade_strength(upgrades, "cooling_loop") + 0.9 * scaled_upgrade_strength(upgrades, "foreman_bot")
+    return 7.4 + 1.12 * scaled_upgrade_strength(upgrades, "drill_torque") + 0.12 * scaled_upgrade_strength(upgrades, "cooling_loop") + 0.72 * scaled_upgrade_strength(upgrades, "foreman_bot")
 
 
 def drill_health_max(upgrades: Dict[str, int]) -> float:
-    return 60.0 + 8.5 * scaled_upgrade_strength(upgrades, "drill_plating")
+    return 54.0 + 9.0 * scaled_upgrade_strength(upgrades, "drill_plating")
 
 
 def drill_wear_multiplier(upgrades: Dict[str, int]) -> float:
-    return max(0.08, min(1.0, 1.0 - 0.012 * scaled_upgrade_strength(upgrades, "cooling_loop")))
+    return max(0.2, min(1.0, 1.0 - 0.0115 * scaled_upgrade_strength(upgrades, "cooling_loop")))
 
 
 def cargo_capacity(upgrades: Dict[str, int]) -> int:
-    return 4 + int(round(scaled_upgrade_strength(upgrades, "cargo_pods"))) + int(math.floor(scaled_upgrade_strength(upgrades, "cargo_compressor") / 2.0))
+    return 4 + int(round(scaled_upgrade_strength(upgrades, "cargo_pods"))) + int(math.floor(scaled_upgrade_strength(upgrades, "cargo_compressor") / 3.0))
 
 
 def value_multiplier(upgrades: Dict[str, int]) -> float:
-    return 1.0 + 0.045 * scaled_upgrade_strength(upgrades, "ore_refinery") + 0.012 * scaled_upgrade_strength(upgrades, "cargo_compressor")
+    return 1.0 + 0.03 * scaled_upgrade_strength(upgrades, "ore_refinery") + 0.008 * scaled_upgrade_strength(upgrades, "cargo_compressor")
 
 
 def xp_multiplier(upgrades: Dict[str, int]) -> float:
-    return 1.0 + 0.06 * scaled_upgrade_strength(upgrades, "xp_calibration")
+    return 1.0 + 0.035 * scaled_upgrade_strength(upgrades, "xp_calibration")
 
 
 def pickup_radius(upgrades: Dict[str, int]) -> float:
-    return 18.0 + 3.0 * scaled_upgrade_strength(upgrades, "pickup_radius") + 2.5 * scaled_upgrade_strength(upgrades, "magnet_drone")
+    return 18.0 + 2.7 * scaled_upgrade_strength(upgrades, "pickup_radius") + 1.6 * scaled_upgrade_strength(upgrades, "magnet_drone")
 
 
 def pickup_drone_count(upgrades: Dict[str, int]) -> int:
     strength = scaled_upgrade_strength(upgrades, "magnet_drone")
-    return 0 if strength <= 0.0 else 1 + int(math.floor(max(0.0, strength - 1.0) / 4.0))
+    return 0 if strength <= 0.0 else 1 + int(math.floor(max(0.0, strength - 1.0) / 5.0))
 
 
-def pickup_drone_speed(upgrades: Dict[str, int]) -> float:
-    return 300.0 + 9.0 * scaled_upgrade_strength(upgrades, "magnet_drone")
+def pickup_drone_depth_drag(depth_level: int) -> float:
+    return max(0.46, min(1.0, 1.0 - 0.022 * max(0, depth_level - 1)))
+
+
+def pickup_drone_speed(depth_level: int, upgrades: Dict[str, int]) -> float:
+    base = 248.0 + 5.0 * scaled_upgrade_strength(upgrades, "magnet_drone")
+    return max(86.0, base * pickup_drone_depth_drag(depth_level))
 
 
 def delivery_drone_count(upgrades: Dict[str, int]) -> int:
     strength = scaled_upgrade_strength(upgrades, "delivery_drone")
-    return 0 if strength <= 0.0 else 1 + int(math.floor(max(0.0, strength - 1.0) / 3.0))
+    return 0 if strength <= 0.0 else 1 + int(math.floor(max(0.0, strength - 1.0) / 4.0))
 
 
-def delivery_speed(upgrades: Dict[str, int]) -> float:
-    return 380.0 + 12.0 * scaled_upgrade_strength(upgrades, "delivery_drone") + 6.0 * scaled_upgrade_strength(upgrades, "auto_sorters")
+def delivery_drone_depth_drag(depth_level: int) -> float:
+    return max(0.22, min(1.0, 1.0 - 0.032 * max(0, depth_level - 1)))
+
+
+def delivery_speed(depth_level: int, upgrades: Dict[str, int]) -> float:
+    base = 38.0 + 1.05 * scaled_upgrade_strength(upgrades, "delivery_drone") + 0.5 * scaled_upgrade_strength(upgrades, "auto_sorters")
+    return max(5.0, base * delivery_drone_depth_drag(depth_level))
 
 
 def dispatch_window(upgrades: Dict[str, int]) -> float:
-    return max(0.4, min(6.5, 6.5 - 0.12 * scaled_upgrade_strength(upgrades, "delivery_drone") - 0.05 * scaled_upgrade_strength(upgrades, "auto_sorters")))
+    return max(0.9, min(5.65, 5.65 - 0.09 * scaled_upgrade_strength(upgrades, "delivery_drone") - 0.04 * scaled_upgrade_strength(upgrades, "auto_sorters")))
 
 
 def delivery_items(upgrades: Dict[str, int]) -> int:
@@ -257,11 +308,11 @@ def material_weights(available_tiers: int, upgrades: Dict[str, int]) -> List[flo
     for idx in range(available_tiers):
         weight = 1.0 + (4.0 if idx == 0 else 0.0)
         if idx == available_tiers - 1:
-            weight = 7.0 + sonar * 0.65
+            weight = 7.3 + sonar * 0.55
         elif idx == available_tiers - 2:
-            weight = 3.0 + sonar * 0.28
+            weight = 3.0 + sonar * 0.24
         elif idx <= available_tiers - 3:
-            weight = max(0.45, weight - sonar * 0.08)
+            weight = max(0.5, weight - sonar * 0.05)
         weights.append(weight)
     return weights
 
@@ -307,15 +358,15 @@ def material_weights_for_indices(indices: List[int], upgrades: Dict[str, int]) -
 
 
 def node_health(material: Dict, depth_level: int) -> float:
-    return float(material["hardness"]) * (1.0 + 0.08 * max(0, depth_level - 1))
+    return float(material["hardness"]) * (1.0 + 0.018 * max(0, depth_level - 1))
 
 
 def node_wear_per_second(max_health: float, upgrades: Dict[str, int]) -> float:
-    return (2.6 + max_health * 0.048) * drill_wear_multiplier(upgrades)
+    return (2.3 + max_health * 0.049) * drill_wear_multiplier(upgrades)
 
 
 def drop_count(node_value: int) -> int:
-    return max(1, min(6, 1 + int(math.floor(math.sqrt(node_value) / 7.0))))
+    return max(1, min(5, 1 + int(math.floor(math.sqrt(node_value) / 8.5))))
 
 
 def weight_roll(rng: random.Random, weights: List[float]) -> int:
@@ -382,10 +433,12 @@ class RunResult:
 
 def generate_world(depth_level: int, upgrades: Dict[str, int], seed: int) -> List[Node]:
     rng = random.Random(seed)
-    base = get_base_position()
+    base = get_base_position(depth_level)
     available_tiers = min(depth_level, len(MATERIALS))
     selected_indices = material_pool_indices(available_tiers)
-    node_count = min(MAX_WORLD_NODES, 28 + depth_level * 6)
+    world_size = world_size_for_depth(depth_level)
+    area_multiplier = world_area_multiplier(depth_level)
+    node_count = min(round(MAX_WORLD_NODES * area_multiplier), round((28 + depth_level * 6) * area_multiplier))
     nodes: List[Node] = []
     weights = material_weights_for_indices(selected_indices, upgrades)
     for _ in range(node_count):
@@ -396,8 +449,8 @@ def generate_world(depth_level: int, upgrades: Dict[str, int], seed: int) -> Lis
         attempts = 0
         while attempts < 32:
             pos = (
-                rng.uniform(-WORLD_SIZE[0] * 0.47, WORLD_SIZE[0] * 0.47),
-                rng.uniform(-WORLD_SIZE[1] * 0.36, WORLD_SIZE[1] * 0.47),
+                rng.uniform(-world_size[0] * 0.47, world_size[0] * 0.47),
+                rng.uniform(-world_size[1] * 0.36, world_size[1] * 0.47),
             )
             if dist(pos, base) < BASE_RADIUS + 150.0:
                 attempts += 1
@@ -423,7 +476,7 @@ def generate_world(depth_level: int, upgrades: Dict[str, int], seed: int) -> Lis
 
 def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
     upgrades = dict(state.get("upgrades", {}))
-    base = get_base_position()
+    base = get_base_position(depth_level)
     position = base
     rng = random.Random(seed * 3571 + depth_level * 211)
     time_limit = run_time_limit(upgrades)
@@ -442,8 +495,8 @@ def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
     delivery_progress = 0.0
     pickup_progress = 0.0
     run_xp = 0
-    player_speed = max(1.0, move_speed(upgrades) * dirt_drag(depth_level, upgrades))
-    dps = max(1.0, drill_dps(upgrades) * 3.9)
+    player_speed = max(1.0, move_speed(upgrades) * dirt_drag(depth_level, upgrades) * AUTOPLAY_MOVE_SPEED_MULTIPLIER)
+    dps = max(1.0, drill_dps(upgrades) * AUTOPLAY_DRILL_DPS_MULTIPLIER)
     collect_radius = pickup_radius(upgrades)
     pickup_bot_count = pickup_drone_count(upgrades)
     delivery_rate_floor = delivery_drone_count(upgrades)
@@ -473,7 +526,7 @@ def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
         nonlocal delivery_progress, delivery_dumps
         if delivery_rate_floor <= 0 or cargo <= 0:
             return
-        cycle_time = dispatch_window(upgrades) + current_distance / max(1.0, delivery_speed(upgrades))
+        cycle_time = dispatch_window(upgrades) + current_distance / max(1.0, delivery_speed(depth_level, upgrades))
         if cycle_time <= 0:
             return
         items_per_second = (delivery_rate_floor * delivery_items(upgrades)) / cycle_time
@@ -499,7 +552,7 @@ def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
         if pickup_bot_count <= 0 or cargo >= cargo_capacity(upgrades) or not pickups:
             return
         nearest_distance = min(dist(position, pickup.pos) for pickup in pickups)
-        cycle_time = max(0.45, 0.2 + nearest_distance * 2.0 / max(1.0, pickup_drone_speed(upgrades)))
+        cycle_time = max(0.45, 0.2 + nearest_distance * 2.0 / max(1.0, pickup_drone_speed(depth_level, upgrades)))
         items_per_second = pickup_bot_count / cycle_time
         pickup_progress += seconds * items_per_second
         collected = min(len(pickups), cargo_capacity(upgrades) - cargo, int(pickup_progress))
@@ -596,7 +649,7 @@ def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
 
         drill_time = node.health / dps
         spend_seconds(drill_time, dist(position, base))
-        drill_left -= node_wear_per_second(node.max_health, upgrades) * drill_time
+        drill_left -= node_wear_per_second(node.max_health, upgrades) * AUTOPLAY_DRILL_WEAR_MULTIPLIER * drill_time
         if time_left <= 0.0 or drill_left <= 0.0:
             break
 
@@ -651,10 +704,17 @@ def score_run(run: Dict) -> float:
     run_time = max(1.0, float(run["simulated_seconds"]))
     money_per_second = float(run["money"]) / run_time
     xp_per_second = float(run["xp"]) / run_time
-    depth_bonus = float(run["depth_level"]) * 0.42
+    depth_bonus = float(run["depth_level"]) * 0.34
     time_pressure = 1.0 - (float(run["time_left"]) / max(0.1, float(run["time_limit"])))
     drill_pressure = 1.0 - (float(run["drill_left"]) / max(0.1, float(run["drill_max"])))
-    return money_per_second + xp_per_second * 0.72 + depth_bonus + time_pressure * 0.7 + drill_pressure * 0.45
+    time_band_bonus = 0.0
+    if run_time < 15.0:
+        time_band_bonus -= (15.0 - run_time) * 2.6
+    elif run_time > 45.0:
+        time_band_bonus -= (run_time - 45.0) * 1.4
+    else:
+        time_band_bonus += min(1.8, (run_time - 15.0) / 30.0 * 1.8)
+    return money_per_second + xp_per_second * 0.68 + depth_bonus + time_pressure * 0.8 + drill_pressure * 0.5 + time_band_bonus
 
 
 def affordable_upgrades(state: Dict) -> List[Dict]:
@@ -683,11 +743,34 @@ def apply_purchase(state: Dict, purchase: Dict) -> Dict:
     return upgraded
 
 
-def choose_best_depth(state: Dict, base_seed: int, run_index: int) -> Dict:
+def preview_depth_candidates(state: Dict, preferred_depth: int) -> List[int]:
     deepest = min(MAX_DEPTH_LEVEL, int(state.get("deepest_level_unlocked", 1)))
+    candidates = {
+        max(1, min(deepest, preferred_depth)),
+        max(1, min(deepest, preferred_depth - 1)),
+        max(1, min(deepest, preferred_depth + 1)),
+        deepest,
+    }
+    return sorted(candidates)
+
+
+def search_depth_candidates(state: Dict) -> List[int]:
+    deepest = min(MAX_DEPTH_LEVEL, int(state.get("deepest_level_unlocked", 1)))
+    if deepest <= 8:
+        return list(range(1, deepest + 1))
+    candidates = {1, deepest}
+    for offset in range(1, 7):
+        candidates.add(max(1, deepest - offset))
+    candidates.add(max(1, int(round(deepest * 0.8))))
+    candidates.add(max(1, int(round(deepest * 0.6))))
+    candidates.add(max(1, int(round(deepest * 0.4))))
+    return sorted(candidates)
+
+
+def choose_best_depth(state: Dict, base_seed: int, run_index: int) -> Dict:
     best = None
     best_score = -1e18
-    for depth in range(1, deepest + 1):
+    for depth in search_depth_candidates(state):
         run = simulate_fast_run(state, depth, base_seed * 100000 + run_index * 113 + depth * 17)
         run_score = score_run(run)
         if run_score > best_score:
@@ -696,22 +779,84 @@ def choose_best_depth(state: Dict, base_seed: int, run_index: int) -> Dict:
     return best
 
 
-def choose_best_purchase(state: Dict, best_run: Dict, base_seed: int, run_index: int) -> Dict | None:
+def preview_best_run(state: Dict, preferred_depth: int, base_seed: int, run_index: int, salt: int) -> Dict:
+    best = None
+    best_score = -1e18
+    for depth in preview_depth_candidates(state, preferred_depth):
+        preview = simulate_fast_run(state, depth, base_seed * 100000 + run_index * 199 + depth * 29 + salt)
+        preview_score = score_run(preview)
+        if preview_score > best_score:
+            best = preview
+            best_score = preview_score
+    return best
+
+
+def choose_best_purchase(state: Dict, baseline_run: Dict, base_seed: int, run_index: int, purchase_index: int) -> Dict | None:
     candidates = affordable_upgrades(state)
     if not candidates:
         return None
-    depth = int(best_run["depth_level"])
+    baseline_score = score_run(baseline_run)
+    baseline_depth = int(baseline_run["depth_level"])
+    affordable_ids_before = {candidate["id"] for candidate in candidates}
     best = None
     best_score = -1e18
     for candidate in candidates:
         purchased_state = apply_purchase(state, candidate)
-        preview = simulate_fast_run(purchased_state, depth, base_seed * 100000 + run_index * 199 + candidate["level"] * 29)
-        weighted_score = score_run(preview) + min(4.0, 240.0 / max(1.0, candidate["cost"]))
+        preview = preview_best_run(
+            purchased_state,
+            baseline_depth,
+            base_seed,
+            run_index,
+            purchase_index * 97 + candidate["level"] * 29,
+        )
+        preview_score = score_run(preview)
+        score_delta = preview_score - baseline_score
+        new_affordable_ids = {option["id"] for option in affordable_upgrades(purchased_state)}
+        unlock_bonus = min(1.0, 0.25 * len(new_affordable_ids - affordable_ids_before))
+        depth_bonus = max(0, int(preview["depth_level"]) - baseline_depth) * 0.6
+        affordability_bonus = min(0.8, 40.0 / max(1.0, candidate["cost"]))
+        weighted_score = score_delta * 3.0 + unlock_bonus + depth_bonus + affordability_bonus
         if weighted_score > best_score:
             best = dict(candidate)
             best["projected_data"] = purchased_state
+            best["preview_run"] = preview
+            best["preview_score"] = preview_score
+            best["score_delta"] = score_delta
+            best["unlock_bonus"] = unlock_bonus
+            best["depth_bonus"] = depth_bonus
+            best["weighted_score"] = weighted_score
             best_score = weighted_score
     return best
+
+
+def choose_purchase_sequence(state: Dict, baseline_run: Dict, base_seed: int, run_index: int) -> Tuple[List[Dict], Dict]:
+    purchases: List[Dict] = []
+    current_state = json.loads(json.dumps(state))
+    current_baseline = dict(baseline_run)
+    for purchase_index in range(1, MAX_PURCHASES_PER_RUN + 1):
+        candidate = choose_best_purchase(current_state, current_baseline, base_seed, run_index, purchase_index)
+        if not candidate:
+            break
+        score_delta = float(candidate.get("score_delta", 0.0))
+        unlock_bonus = float(candidate.get("unlock_bonus", 0.0))
+        depth_bonus = float(candidate.get("depth_bonus", 0.0))
+        required_delta = MIN_PURCHASE_SCORE_DELTA * float(purchase_index)
+        if score_delta < required_delta and unlock_bonus < 0.5 and depth_bonus <= 0.0:
+            break
+        current_state = candidate["projected_data"]
+        current_baseline = candidate["preview_run"]
+        purchase_record = {
+            "id": candidate["id"],
+            "label": candidate["label"],
+            "level": candidate["level"],
+            "cost": candidate["cost"],
+            "score_delta": score_delta,
+            "preview_depth_level": int(current_baseline["depth_level"]),
+            "wallet_after_spend": int(current_state["wallet"]),
+            "save_data": json.loads(json.dumps(current_state)),
+        }
+        purchases.append(purchase_record)
+    return purchases, current_state
 
 
 def run_campaign(seed: int) -> Dict:
@@ -724,30 +869,42 @@ def run_campaign(seed: int) -> Dict:
         best_run["run_index"] = run_index
         total_time += float(best_run["simulated_seconds"])
         state = best_run["projected_data"]
-        purchase = choose_best_purchase(state, best_run, seed, run_index)
-        if purchase:
-            state = purchase["projected_data"]
-            best_run["upgrade_bought"] = purchase["id"]
-            best_run["upgrade_level"] = purchase["level"]
-            best_run["upgrade_cost"] = purchase["cost"]
+        wallet_before_spend = int(state["wallet"])
+        purchases_this_run, state = choose_purchase_sequence(state, best_run, seed, run_index)
+        if purchases_this_run:
+            best_run["upgrade_bought"] = " + ".join(purchase["id"] for purchase in purchases_this_run)
+            best_run["upgrade_level"] = int(purchases_this_run[-1]["level"])
+            best_run["upgrade_cost"] = int(sum(int(purchase["cost"]) for purchase in purchases_this_run))
+            best_run["purchase_count_after_run"] = len(purchases_this_run)
+            best_run["purchases_after_run"] = json.loads(json.dumps(purchases_this_run))
+            best_run["wallet_before_spend"] = wallet_before_spend
             best_run["wallet_after_spend"] = int(state["wallet"])
-            purchases.append(
-                {
-                    "run_index": run_index,
-                    "label": purchase["label"],
-                    "id": purchase["id"],
-                    "level": purchase["level"],
-                    "cost": purchase["cost"],
-                    "cumulative_time_seconds": total_time,
-                }
-            )
+            for purchase in purchases_this_run:
+                purchases.append(
+                    {
+                        "run_index": run_index,
+                        "label": purchase["label"],
+                        "id": purchase["id"],
+                        "level": purchase["level"],
+                        "cost": purchase["cost"],
+                        "cumulative_time_seconds": total_time,
+                        "wallet_after_spend": int(purchase["wallet_after_spend"]),
+                        "preview_depth_level": int(purchase["preview_depth_level"]),
+                        "save_data": json.loads(json.dumps(purchase["save_data"])),
+                    }
+                )
         else:
             best_run["upgrade_bought"] = ""
             best_run["upgrade_level"] = 0
             best_run["upgrade_cost"] = 0
+            best_run["purchase_count_after_run"] = 0
+            best_run["purchases_after_run"] = []
+            best_run["wallet_before_spend"] = wallet_before_spend
             best_run["wallet_after_spend"] = int(state["wallet"])
         runs.append(best_run)
         if all(int(state.get("upgrades", {}).get(u["id"], 0)) >= int(u["max_level"]) for u in UPGRADES):
+            break
+        if total_time >= TARGET_FULL_SECONDS + 600.0:
             break
     return {
         "seed": seed,
@@ -764,19 +921,16 @@ def run_campaign(seed: int) -> Dict:
 def build_validation_scenarios(campaign: Dict) -> List[Dict]:
     purchase_targets = [1, 10, 25, 50, 100, 150, 220, 300]
     checkpoint_specs = []
-    purchase_index = 0
-    for run in campaign["runs"]:
-        if run["upgrade_bought"]:
-            purchase_index += 1
-            if purchase_index in purchase_targets:
-                checkpoint_specs.append(
-                    {
-                        "checkpoint_id": f"purchase_{purchase_index}",
-                        "purchase_index": purchase_index,
-                        "depth_level": int(run["depth_level"]),
-                        "save_data": run["projected_data"],
-                    }
-                )
+    for purchase_index, purchase in enumerate(campaign["purchases"], start=1):
+        if purchase_index in purchase_targets:
+            checkpoint_specs.append(
+                {
+                    "checkpoint_id": f"purchase_{purchase_index}",
+                    "purchase_index": purchase_index,
+                    "depth_level": int(purchase.get("preview_depth_level", 1)),
+                    "save_data": purchase.get("save_data", get_default_state()),
+                }
+            )
         if len(checkpoint_specs) >= len(purchase_targets):
             break
     scenarios = []
@@ -876,12 +1030,55 @@ def compare_validation(scenarios: List[Dict], live_results: Dict) -> Dict:
     }
 
 
+def build_time_slice(campaign: Dict, seconds: float, label: str) -> Dict:
+    elapsed = 0.0
+    included_runs: List[Dict] = []
+    for run in campaign["runs"]:
+        run_time = float(run.get("simulated_seconds", 0.0))
+        if elapsed + run_time > seconds + 1e-6:
+            break
+        elapsed += run_time
+        included_runs.append(run)
+
+    included_purchases = [
+        purchase
+        for purchase in campaign["purchases"]
+        if float(purchase.get("cumulative_time_seconds", 0.0)) <= seconds + 1e-6
+    ]
+    final_state = (
+        included_purchases[-1]["save_data"]
+        if included_purchases
+        else included_runs[-1]["projected_data"] if included_runs else get_default_state()
+    )
+    run_times = [float(run.get("simulated_seconds", 0.0)) for run in included_runs]
+    return {
+        "label": label,
+        "seconds": seconds,
+        "elapsed_seconds": elapsed,
+        "run_count": len(included_runs),
+        "purchase_count": len(included_purchases),
+        "upgrades_per_run": len(included_purchases) / max(1, len(included_runs)),
+        "avg_run_seconds": mean(run_times) if run_times else 0.0,
+        "min_run_seconds": min(run_times) if run_times else 0.0,
+        "max_run_seconds": max(run_times) if run_times else 0.0,
+        "final_wallet": int(final_state.get("wallet", 0)),
+        "final_player_level": int(final_state.get("player_level", 1)),
+        "final_depth_unlocked": int(final_state.get("deepest_level_unlocked", 1)),
+    }
+
+
 def write_reports(campaign: Dict, validation: Dict) -> None:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    time_slices = [
+        build_time_slice(campaign, TARGET_DEMO_SHORT_SECONDS, "20 minute demo"),
+        build_time_slice(campaign, TARGET_DEMO_LONG_SECONDS, "40 minute demo"),
+        build_time_slice(campaign, TARGET_FULL_SECONDS, "3 hour game"),
+    ]
     summary = {
         "date_utc": now_utc(),
         "campaign": campaign,
         "validation": validation,
+        "time_slices": time_slices,
     }
     (REPORT_DIR / "mining_fast_sim_results.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
@@ -897,7 +1094,20 @@ def write_reports(campaign: Dict, validation: Dict) -> None:
         f"- Total purchases: {campaign['purchase_count']}",
         f"- Upgrades per run: {campaign['upgrades_per_run']:.3f}",
         f"- Full campaign time: {campaign['total_time_seconds']:.1f} sec",
-        f"- Demo slice time ({TARGET_DEMO_PURCHASES} purchases): {campaign['purchases'][TARGET_DEMO_PURCHASES - 1]['cumulative_time_seconds'] if len(campaign['purchases']) >= TARGET_DEMO_PURCHASES else campaign['total_time_seconds']:.1f} sec",
+        "",
+        "## Time Slices",
+        "",
+        "| Slice | Target Time (s) | Completed Time (s) | Runs | Purchases | Upgrades/Run | Avg Run (s) | Min Run (s) | Max Run (s) | Wallet | Level | Depth |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for slice_row in time_slices:
+        md.append(
+            f"| {slice_row['label']} | {slice_row['seconds']:.0f} | {slice_row['elapsed_seconds']:.1f} | {slice_row['run_count']} | "
+            f"{slice_row['purchase_count']} | {slice_row['upgrades_per_run']:.3f} | {slice_row['avg_run_seconds']:.2f} | "
+            f"{slice_row['min_run_seconds']:.2f} | {slice_row['max_run_seconds']:.2f} | {slice_row['final_wallet']} | "
+            f"{slice_row['final_player_level']} | {slice_row['final_depth_unlocked']} |"
+        )
+    md.extend([
         "",
         "## Validation Averages",
         "",
@@ -910,7 +1120,7 @@ def write_reports(campaign: Dict, validation: Dict) -> None:
         "",
         "| Checkpoint | Depth | Samples | Fast Money Avg | Live Money Avg | Money Error % | Fast XP Avg | Live XP Avg | XP Error % | Fast Time Avg | Live Time Avg | Time Error % |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
-    ]
+    ])
     for row in validation.get("checkpoint_rows", []):
         md.append(
             f"| {row['checkpoint_id']} | {row['depth_level']} | {row['sample_count']} | {row['fast_avg_money']:.1f} | {row['live_avg_money']:.1f} | {row['money_avg_error_pct']:.1f} | "
@@ -931,11 +1141,27 @@ def write_reports(campaign: Dict, validation: Dict) -> None:
     md.append("")
     md.append("## Purchase Order")
     md.append("")
-    md.append("| # | Run | Upgrade | Level | Cost | Cumulative Time (s) |")
-    md.append("|---:|---:|---|---:|---:|---:|")
+    md.append("| # | Run | Upgrade | Level | Cost | Depth Preview | Wallet After Spend | Cumulative Time (s) |")
+    md.append("|---:|---:|---|---:|---:|---:|---:|---:|")
     for idx, purchase in enumerate(campaign["purchases"], start=1):
         md.append(
-            f"| {idx} | {purchase['run_index']} | {purchase['label']} | {purchase['level']} | {purchase['cost']} | {purchase['cumulative_time_seconds']:.1f} |"
+            f"| {idx} | {purchase['run_index']} | {purchase['label']} | {purchase['level']} | {purchase['cost']} | "
+            f"{purchase['preview_depth_level']} | {purchase['wallet_after_spend']} | {purchase['cumulative_time_seconds']:.1f} |"
+        )
+    md.append("")
+    md.append("## Run Breakdown")
+    md.append("")
+    md.append("| Run | Depth | Time (s) | Money | XP | Reason | Wallet Before Spend | Purchases After Run | Wallet After Spend |")
+    md.append("|---:|---:|---:|---:|---:|---|---:|---|---:|")
+    for run in campaign["runs"]:
+        purchase_text = ", ".join(
+            f"{purchase['id']} {purchase['level']}"
+            for purchase in run.get("purchases_after_run", [])
+        )
+        md.append(
+            f"| {run['run_index']} | {run['depth_level']} | {float(run['simulated_seconds']):.2f} | {run['money']} | {run['xp']} | "
+            f"{run['reason']} | {run.get('wallet_before_spend', 0)} | {purchase_text if purchase_text else '-'} | "
+            f"{run['wallet_after_spend']} |"
         )
     (REPORT_DIR / "mining_fast_sim_report.md").write_text("\n".join(md), encoding="utf-8")
 
@@ -947,13 +1173,43 @@ def write_reports(campaign: Dict, validation: Dict) -> None:
         f"Simulated full campaign time: {campaign['total_time_seconds']:.1f} sec",
         f"Average upgrades/run: {campaign['upgrades_per_run']:.3f}",
         "",
+        "## Time Slices",
+        "",
+        "| Slice | Runs | Purchases | Avg Run (s) | Wallet | Level | Depth |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for slice_row in time_slices:
+        dated_report.append(
+            f"| {slice_row['label']} | {slice_row['run_count']} | {slice_row['purchase_count']} | {slice_row['avg_run_seconds']:.2f} | "
+            f"{slice_row['final_wallet']} | {slice_row['final_player_level']} | {slice_row['final_depth_unlocked']} |"
+        )
+    dated_report.extend([
+        "",
         "## Upgrades Bought",
         "",
-        "| Run | Upgrade | Level | Cost |",
-        "|---:|---|---:|---:|",
-    ]
-    for purchase in campaign["purchases"]:
-        dated_report.append(f"| {purchase['run_index']} | {purchase['label']} | {purchase['level']} | {purchase['cost']} |")
+        "| # | Run | Upgrade | Level | Cost | Wallet After Spend |",
+        "|---:|---:|---|---:|---:|---:|",
+    ])
+    for index, purchase in enumerate(campaign["purchases"], start=1):
+        dated_report.append(
+            f"| {index} | {purchase['run_index']} | {purchase['label']} | {purchase['level']} | {purchase['cost']} | {purchase['wallet_after_spend']} |"
+        )
+    dated_report.extend([
+        "",
+        "## Run Breakdown",
+        "",
+        "| Run | Depth | Time (s) | Money | XP | Wallet Before Spend | Purchases After Run | Wallet After Spend |",
+        "|---:|---:|---:|---:|---:|---:|---|---:|",
+    ])
+    for run in campaign["runs"]:
+        purchase_text = ", ".join(
+            f"{purchase['label']} {purchase['level']}"
+            for purchase in run.get("purchases_after_run", [])
+        )
+        dated_report.append(
+            f"| {run['run_index']} | {run['depth_level']} | {float(run['simulated_seconds']):.2f} | {run['money']} | {run['xp']} | "
+            f"{run.get('wallet_before_spend', 0)} | {purchase_text if purchase_text else '-'} | {run['wallet_after_spend']} |"
+        )
     (REPORT_DIR / f"miningRunWithTimeAndDate_{timestamp}.md").write_text("\n".join(dated_report), encoding="utf-8")
 
 

@@ -1,490 +1,1278 @@
 # Mining Fast Simulation Report
 
 Source: Python fast run simulator with live Godot validation spot-checks.
-Date (UTC): 2026-03-24 23:45:27
+Date (UTC): 2026-03-26 18:28:50
 
 ## Campaign
 
-- Total runs: 424
-- Total purchases: 424
-- Upgrades per run: 1.000
-- Full campaign time: 6324.9 sec
-- Demo slice time (100 purchases): 1509.3 sec
+- Total runs: 456
+- Total purchases: 744
+- Upgrades per run: 1.632
+- Full campaign time: 11431.8 sec
+
+## Time Slices
+
+| Slice | Target Time (s) | Completed Time (s) | Runs | Purchases | Upgrades/Run | Avg Run (s) | Min Run (s) | Max Run (s) | Wallet | Level | Depth |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 20 minute demo | 1200 | 1189.0 | 52 | 82 | 1.577 | 22.87 | 21.60 | 25.32 | 786 | 16 | 7 |
+| 40 minute demo | 2400 | 2383.8 | 114 | 216 | 1.895 | 20.91 | 15.99 | 25.32 | 243041 | 39 | 16 |
+| 3 hour game | 10800 | 10791.6 | 439 | 736 | 1.677 | 24.58 | 15.90 | 44.69 | 48205 | 155 | 72 |
 
 ## Validation Averages
 
 - Seeds per checkpoint: 3
-- Mean money error: 19.7%
-- Mean XP error: 20.5%
-- Mean time error: 9.2%
-- Mean nodes error: 28.4%
-- 10% gate passed: no
+- Mean money error: 8.6%
+- Mean XP error: 9.6%
+- Mean time error: 8.9%
+- Mean nodes error: 14.1%
+- 10% gate passed: yes
 
 | Checkpoint | Depth | Samples | Fast Money Avg | Live Money Avg | Money Error % | Fast XP Avg | Live XP Avg | XP Error % | Fast Time Avg | Live Time Avg | Time Error % |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| purchase_1 | 1 | 3 | 32.7 | 32.7 | 0.0 | 32.0 | 28.0 | 14.3 | 17.4 | 16.0 | 8.6 |
-| purchase_10 | 3 | 3 | 53.3 | 44.3 | 20.3 | 46.3 | 36.3 | 27.5 | 16.6 | 15.2 | 9.0 |
-| purchase_100 | 12 | 3 | 1033.7 | 1390.7 | 25.7 | 160.7 | 225.0 | 28.6 | 12.2 | 11.7 | 4.4 |
-| purchase_150 | 11 | 3 | 2188.0 | 2742.3 | 20.2 | 415.7 | 448.3 | 7.3 | 16.3 | 17.6 | 7.1 |
-| purchase_220 | 13 | 3 | 4658.3 | 5241.0 | 11.1 | 626.3 | 676.3 | 7.4 | 11.7 | 13.4 | 13.1 |
-| purchase_25 | 4 | 3 | 128.0 | 86.7 | 47.7 | 99.0 | 63.0 | 57.1 | 16.9 | 15.2 | 11.1 |
-| purchase_300 | 13 | 3 | 10117.7 | 11690.7 | 13.5 | 1192.7 | 1449.3 | 17.7 | 14.9 | 18.1 | 17.5 |
-| purchase_50 | 8 | 3 | 366.3 | 308.0 | 18.9 | 169.0 | 162.0 | 4.3 | 15.1 | 14.6 | 3.0 |
+| purchase_1 | 1 | 3 | 72.3 | 70.0 | 3.3 | 62.0 | 66.0 | 6.1 | 23.5 | 22.0 | 6.9 |
+| purchase_10 | 1 | 3 | 86.3 | 84.0 | 2.8 | 76.0 | 74.0 | 2.7 | 23.1 | 22.0 | 5.1 |
+| purchase_100 | 8 | 3 | 1842.0 | 2012.3 | 8.5 | 531.7 | 649.7 | 18.2 | 21.3 | 20.3 | 4.7 |
+| purchase_150 | 13 | 3 | 6858.7 | 5141.7 | 33.4 | 749.3 | 571.0 | 31.2 | 18.4 | 15.1 | 21.7 |
+| purchase_220 | 15 | 3 | 16691.0 | 15496.3 | 7.7 | 1700.7 | 1610.3 | 5.6 | 18.9 | 17.0 | 11.1 |
+| purchase_25 | 3 | 3 | 186.3 | 208.7 | 10.7 | 150.3 | 164.7 | 8.7 | 23.0 | 21.7 | 6.2 |
+| purchase_300 | 20 | 3 | 28837.0 | 28861.7 | 0.1 | 2039.3 | 2023.0 | 0.8 | 18.1 | 16.4 | 10.7 |
+| purchase_50 | 4 | 3 | 328.7 | 321.0 | 2.4 | 207.0 | 215.3 | 3.9 | 22.5 | 21.5 | 4.8 |
 
 ## Validation Samples
 
 | Scenario | Checkpoint | Depth | Fast Money | Live Money | Money Error % | Fast XP | Live XP | XP Error % | Fast Time | Live Time | Time Error % |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| purchase_1_seed_1 | purchase_1 | 1 | 35.0 | 35.0 | 0.0 | 36.0 | 30.0 | 20.0 | 17.5 | 16.0 | 8.9 |
-| purchase_1_seed_2 | purchase_1 | 1 | 35.0 | 35.0 | 0.0 | 36.0 | 30.0 | 20.0 | 17.6 | 16.0 | 10.0 |
-| purchase_1_seed_3 | purchase_1 | 1 | 28.0 | 28.0 | 0.0 | 24.0 | 24.0 | 0.0 | 17.2 | 16.0 | 7.0 |
-| purchase_10_seed_1 | purchase_10 | 3 | 54.0 | 48.0 | 12.5 | 45.0 | 39.0 | 15.4 | 17.4 | 15.2 | 14.2 |
-| purchase_10_seed_2 | purchase_10 | 3 | 53.0 | 46.0 | 15.2 | 50.0 | 38.0 | 31.6 | 15.3 | 15.2 | 0.6 |
-| purchase_10_seed_3 | purchase_10 | 3 | 53.0 | 39.0 | 35.9 | 44.0 | 32.0 | 37.5 | 17.0 | 15.2 | 12.0 |
-| purchase_25_seed_1 | purchase_25 | 4 | 122.0 | 104.0 | 17.3 | 95.0 | 73.0 | 30.1 | 16.7 | 15.2 | 9.6 |
-| purchase_25_seed_2 | purchase_25 | 4 | 132.0 | 86.0 | 53.5 | 93.0 | 60.0 | 55.0 | 17.4 | 15.2 | 14.4 |
-| purchase_25_seed_3 | purchase_25 | 4 | 130.0 | 70.0 | 85.7 | 109.0 | 56.0 | 94.6 | 16.6 | 15.2 | 9.4 |
-| purchase_50_seed_1 | purchase_50 | 8 | 469.0 | 424.0 | 10.6 | 158.0 | 142.0 | 11.3 | 15.7 | 14.6 | 7.1 |
-| purchase_50_seed_2 | purchase_50 | 8 | 234.0 | 270.0 | 13.3 | 175.0 | 168.0 | 4.2 | 16.2 | 14.6 | 10.5 |
-| purchase_50_seed_3 | purchase_50 | 8 | 396.0 | 230.0 | 72.2 | 174.0 | 176.0 | 1.1 | 13.4 | 14.6 | 8.6 |
-| purchase_100_seed_1 | purchase_100 | 12 | 1479.0 | 1190.0 | 24.3 | 186.0 | 190.0 | 2.1 | 12.0 | 10.3 | 16.2 |
-| purchase_100_seed_2 | purchase_100 | 12 | 509.0 | 1556.0 | 67.3 | 148.0 | 228.0 | 35.1 | 14.6 | 11.0 | 33.4 |
-| purchase_100_seed_3 | purchase_100 | 12 | 1113.0 | 1426.0 | 21.9 | 148.0 | 257.0 | 42.4 | 9.9 | 13.7 | 27.6 |
-| purchase_150_seed_1 | purchase_150 | 11 | 1866.0 | 2723.0 | 31.5 | 345.0 | 533.0 | 35.3 | 15.6 | 18.3 | 14.6 |
-| purchase_150_seed_2 | purchase_150 | 11 | 1682.0 | 2652.0 | 36.6 | 424.0 | 392.0 | 8.2 | 18.5 | 18.3 | 1.5 |
-| purchase_150_seed_3 | purchase_150 | 11 | 3016.0 | 2852.0 | 5.8 | 478.0 | 420.0 | 13.8 | 14.8 | 16.1 | 8.4 |
-| purchase_220_seed_1 | purchase_220 | 13 | 4590.0 | 5874.0 | 21.9 | 561.0 | 814.0 | 31.1 | 10.3 | 17.4 | 40.6 |
-| purchase_220_seed_2 | purchase_220 | 13 | 5297.0 | 4620.0 | 14.7 | 676.0 | 581.0 | 16.4 | 11.2 | 12.2 | 8.1 |
-| purchase_220_seed_3 | purchase_220 | 13 | 4088.0 | 5229.0 | 21.8 | 642.0 | 634.0 | 1.3 | 13.5 | 10.8 | 25.7 |
-| purchase_300_seed_1 | purchase_300 | 13 | 10572.0 | 9939.0 | 6.4 | 1222.0 | 1358.0 | 10.0 | 15.1 | 17.8 | 15.3 |
-| purchase_300_seed_2 | purchase_300 | 13 | 10100.0 | 12795.0 | 21.1 | 1294.0 | 1472.0 | 12.1 | 17.1 | 15.8 | 8.2 |
-| purchase_300_seed_3 | purchase_300 | 13 | 9681.0 | 12338.0 | 21.5 | 1062.0 | 1518.0 | 30.0 | 12.6 | 20.6 | 39.0 |
+| purchase_1_seed_1 | purchase_1 | 1 | 77.0 | 77.0 | 0.0 | 66.0 | 72.0 | 8.3 | 23.9 | 22.0 | 8.7 |
+| purchase_1_seed_2 | purchase_1 | 1 | 77.0 | 77.0 | 0.0 | 66.0 | 72.0 | 8.3 | 23.3 | 22.0 | 5.7 |
+| purchase_1_seed_3 | purchase_1 | 1 | 63.0 | 56.0 | 12.5 | 54.0 | 54.0 | 0.0 | 23.4 | 22.0 | 6.3 |
+| purchase_10_seed_1 | purchase_10 | 1 | 84.0 | 84.0 | 0.0 | 72.0 | 72.0 | 0.0 | 22.4 | 22.0 | 1.9 |
+| purchase_10_seed_2 | purchase_10 | 1 | 91.0 | 84.0 | 8.3 | 84.0 | 72.0 | 16.7 | 24.1 | 22.0 | 9.4 |
+| purchase_10_seed_3 | purchase_10 | 1 | 84.0 | 84.0 | 0.0 | 72.0 | 78.0 | 7.7 | 22.9 | 22.0 | 4.0 |
+| purchase_25_seed_1 | purchase_25 | 3 | 188.0 | 200.0 | 6.0 | 156.0 | 152.0 | 2.6 | 23.2 | 21.7 | 7.0 |
+| purchase_25_seed_2 | purchase_25 | 3 | 162.0 | 209.0 | 22.5 | 136.0 | 171.0 | 20.5 | 22.1 | 21.7 | 2.1 |
+| purchase_25_seed_3 | purchase_25 | 3 | 209.0 | 217.0 | 3.7 | 159.0 | 171.0 | 7.0 | 23.7 | 21.7 | 9.5 |
+| purchase_50_seed_1 | purchase_50 | 4 | 359.0 | 291.0 | 23.4 | 227.0 | 186.0 | 22.0 | 22.2 | 21.5 | 3.5 |
+| purchase_50_seed_2 | purchase_50 | 4 | 297.0 | 311.0 | 4.5 | 187.0 | 196.0 | 4.6 | 22.5 | 21.5 | 4.4 |
+| purchase_50_seed_3 | purchase_50 | 4 | 330.0 | 361.0 | 8.6 | 207.0 | 264.0 | 21.6 | 22.9 | 21.5 | 6.4 |
+| purchase_100_seed_1 | purchase_100 | 8 | 1894.0 | 2143.0 | 11.6 | 532.0 | 655.0 | 18.8 | 21.3 | 20.3 | 4.6 |
+| purchase_100_seed_2 | purchase_100 | 8 | 1734.0 | 1822.0 | 4.8 | 528.0 | 660.0 | 20.0 | 21.2 | 20.3 | 4.2 |
+| purchase_100_seed_3 | purchase_100 | 8 | 1898.0 | 2072.0 | 8.4 | 535.0 | 634.0 | 15.6 | 21.4 | 20.3 | 5.3 |
+| purchase_150_seed_1 | purchase_150 | 13 | 6546.0 | 4406.0 | 48.6 | 726.0 | 456.0 | 59.2 | 19.2 | 12.1 | 58.5 |
+| purchase_150_seed_2 | purchase_150 | 13 | 7710.0 | 5516.0 | 39.8 | 794.0 | 632.0 | 25.6 | 18.6 | 17.8 | 4.4 |
+| purchase_150_seed_3 | purchase_150 | 13 | 6320.0 | 5503.0 | 14.8 | 728.0 | 625.0 | 16.5 | 17.3 | 15.3 | 12.7 |
+| purchase_220_seed_1 | purchase_220 | 15 | 17132.0 | 14561.0 | 17.7 | 1770.0 | 1579.0 | 12.1 | 17.7 | 17.5 | 1.1 |
+| purchase_220_seed_2 | purchase_220 | 15 | 14833.0 | 16283.0 | 8.9 | 1513.0 | 1640.0 | 7.7 | 19.4 | 16.2 | 20.0 |
+| purchase_220_seed_3 | purchase_220 | 15 | 18108.0 | 15645.0 | 15.7 | 1819.0 | 1612.0 | 12.8 | 19.7 | 17.5 | 12.9 |
+| purchase_300_seed_1 | purchase_300 | 20 | 28034.0 | 26466.0 | 5.9 | 2045.0 | 2002.0 | 2.1 | 17.9 | 15.7 | 13.9 |
+| purchase_300_seed_2 | purchase_300 | 20 | 28118.0 | 30359.0 | 7.4 | 2011.0 | 2062.0 | 2.5 | 18.4 | 17.3 | 6.5 |
+| purchase_300_seed_3 | purchase_300 | 20 | 30359.0 | 29760.0 | 2.0 | 2062.0 | 2005.0 | 2.8 | 18.2 | 16.2 | 12.0 |
 
 ## Purchase Order
 
-| # | Run | Upgrade | Level | Cost | Cumulative Time (s) |
-|---:|---:|---|---:|---:|---:|
-| 1 | 1 | Cargo Pods | 1 | 21 | 16.6 |
-| 2 | 2 | Cargo Pods | 2 | 24 | 34.6 |
-| 3 | 3 | Drill Torque | 1 | 20 | 52.5 |
-| 4 | 4 | Cargo Pods | 3 | 27 | 71.1 |
-| 5 | 5 | Engine Tuning | 1 | 19 | 87.9 |
-| 6 | 6 | Cargo Pods | 4 | 31 | 105.3 |
-| 7 | 7 | Vacuum Scoop | 1 | 23 | 122.8 |
-| 8 | 8 | Timer Reserve | 1 | 18 | 138.4 |
-| 9 | 9 | Cargo Pods | 5 | 36 | 156.0 |
-| 10 | 10 | Drill Torque | 2 | 23 | 171.8 |
-| 11 | 11 | Drill Torque | 3 | 26 | 187.3 |
-| 12 | 12 | Engine Tuning | 2 | 22 | 203.3 |
-| 13 | 13 | Engine Tuning | 3 | 25 | 218.7 |
-| 14 | 14 | Drill Torque | 4 | 30 | 234.6 |
-| 15 | 15 | Engine Tuning | 4 | 28 | 249.1 |
-| 16 | 16 | Ore Refinery | 1 | 24 | 264.0 |
-| 17 | 17 | Engine Tuning | 5 | 32 | 280.0 |
-| 18 | 18 | Ore Refinery | 2 | 28 | 296.2 |
-| 19 | 19 | Dirt Softener | 1 | 27 | 312.4 |
-| 20 | 20 | Drill Torque | 5 | 34 | 326.4 |
-| 21 | 21 | Ore Refinery | 3 | 32 | 340.5 |
-| 22 | 22 | Timer Reserve | 2 | 21 | 355.3 |
-| 23 | 23 | Drill Plating | 1 | 22 | 371.2 |
-| 24 | 24 | Engine Tuning | 6 | 37 | 386.3 |
-| 25 | 25 | Drill Torque | 6 | 39 | 402.4 |
-| 26 | 26 | Drill Torque | 7 | 44 | 419.6 |
-| 27 | 27 | Drill Torque | 8 | 51 | 435.7 |
-| 28 | 28 | Ore Refinery | 4 | 36 | 450.6 |
-| 29 | 29 | Drill Torque | 9 | 58 | 466.1 |
-| 30 | 30 | Dirt Softener | 2 | 31 | 481.9 |
-| 31 | 31 | Dirt Softener | 3 | 36 | 497.2 |
-| 32 | 32 | Engine Tuning | 7 | 42 | 512.3 |
-| 33 | 33 | Timer Reserve | 3 | 23 | 527.1 |
-| 34 | 34 | Vacuum Scoop | 2 | 26 | 542.2 |
-| 35 | 35 | Dirt Softener | 4 | 41 | 557.0 |
-| 36 | 36 | XP Calibration | 1 | 27 | 572.7 |
-| 37 | 37 | Drill Plating | 2 | 25 | 587.4 |
-| 38 | 38 | Drill Torque | 10 | 66 | 601.4 |
-| 39 | 39 | Timer Reserve | 4 | 27 | 616.1 |
-| 40 | 40 | Drill Torque | 11 | 75 | 631.3 |
-| 41 | 41 | Engine Tuning | 8 | 48 | 644.0 |
-| 42 | 42 | Drill Plating | 3 | 29 | 659.2 |
-| 43 | 43 | Ore Refinery | 5 | 42 | 673.9 |
-| 44 | 44 | Dirt Softener | 5 | 48 | 690.2 |
-| 45 | 45 | Vacuum Scoop | 3 | 30 | 704.4 |
-| 46 | 46 | XP Calibration | 2 | 31 | 719.1 |
-| 47 | 47 | Timer Reserve | 5 | 30 | 731.7 |
-| 48 | 48 | Drill Torque | 12 | 86 | 746.7 |
-| 49 | 49 | XP Calibration | 3 | 36 | 762.1 |
-| 50 | 50 | Engine Tuning | 9 | 54 | 777.3 |
-| 51 | 51 | Drill Torque | 13 | 98 | 793.8 |
-| 52 | 52 | Ore Refinery | 6 | 48 | 810.8 |
-| 53 | 53 | Ore Refinery | 7 | 55 | 826.3 |
-| 54 | 54 | Dirt Softener | 6 | 55 | 841.2 |
-| 55 | 55 | Ore Refinery | 8 | 63 | 857.6 |
-| 56 | 56 | Drill Torque | 14 | 112 | 874.3 |
-| 57 | 57 | Engine Tuning | 10 | 62 | 890.0 |
-| 58 | 58 | Engine Tuning | 11 | 70 | 904.2 |
-| 59 | 59 | Drill Torque | 15 | 128 | 919.8 |
-| 60 | 60 | Drill Plating | 4 | 33 | 932.8 |
-| 61 | 61 | Route Planner | 1 | 22 | 949.3 |
-| 62 | 62 | XP Calibration | 4 | 41 | 961.7 |
-| 63 | 63 | Cargo Pods | 6 | 41 | 974.9 |
-| 64 | 64 | Timer Reserve | 6 | 35 | 988.9 |
-| 65 | 65 | Route Planner | 2 | 25 | 999.2 |
-| 66 | 66 | Drill Plating | 5 | 38 | 1012.9 |
-| 67 | 67 | Ore Refinery | 9 | 72 | 1029.9 |
-| 68 | 68 | Dirt Softener | 7 | 63 | 1046.0 |
-| 69 | 69 | Cooling Loop | 1 | 25 | 1063.4 |
-| 70 | 70 | Cargo Compressor | 1 | 29 | 1079.9 |
-| 71 | 71 | Drill Plating | 6 | 43 | 1094.6 |
-| 72 | 72 | Route Planner | 3 | 29 | 1109.9 |
-| 73 | 73 | Route Planner | 4 | 33 | 1126.6 |
-| 74 | 74 | Drill Torque | 16 | 147 | 1143.6 |
-| 75 | 75 | Engine Tuning | 12 | 80 | 1159.0 |
-| 76 | 76 | Dirt Softener | 8 | 73 | 1175.7 |
-| 77 | 77 | Dirt Softener | 9 | 84 | 1193.3 |
-| 78 | 78 | Cargo Compressor | 2 | 34 | 1207.5 |
-| 79 | 79 | Ore Refinery | 10 | 83 | 1222.6 |
-| 80 | 80 | Cooling Loop | 2 | 29 | 1238.6 |
-| 81 | 81 | Timer Reserve | 7 | 40 | 1250.7 |
-| 82 | 82 | Cargo Pods | 7 | 47 | 1269.2 |
-| 83 | 83 | Vacuum Scoop | 4 | 35 | 1282.9 |
-| 84 | 84 | Ore Refinery | 11 | 95 | 1301.3 |
-| 85 | 85 | Salvage Drone | 1 | 39 | 1314.0 |
-| 86 | 86 | Drill Torque | 17 | 167 | 1331.5 |
-| 87 | 87 | Drill Torque | 18 | 191 | 1348.2 |
-| 88 | 88 | Drill Plating | 7 | 50 | 1366.4 |
-| 89 | 89 | Cargo Compressor | 3 | 39 | 1383.4 |
-| 90 | 90 | Cargo Compressor | 4 | 45 | 1393.1 |
-| 91 | 91 | Cargo Compressor | 5 | 52 | 1402.3 |
-| 92 | 92 | Drill Plating | 8 | 57 | 1414.7 |
-| 93 | 93 | Dirt Softener | 10 | 96 | 1430.9 |
-| 94 | 94 | Dirt Softener | 11 | 111 | 1446.4 |
-| 95 | 95 | Cooling Loop | 3 | 33 | 1456.4 |
-| 96 | 96 | Cargo Pods | 8 | 54 | 1470.1 |
-| 97 | 97 | Cargo Pods | 9 | 61 | 1478.2 |
-| 98 | 98 | Ore Refinery | 12 | 110 | 1487.0 |
-| 99 | 99 | Dirt Softener | 12 | 128 | 1498.8 |
-| 100 | 100 | Timer Reserve | 8 | 45 | 1509.3 |
-| 101 | 101 | Drill Torque | 19 | 218 | 1521.5 |
-| 102 | 102 | Ore Refinery | 13 | 126 | 1532.5 |
-| 103 | 103 | Cargo Pods | 10 | 70 | 1546.3 |
-| 104 | 104 | Ore Refinery | 14 | 144 | 1555.0 |
-| 105 | 105 | Route Planner | 5 | 38 | 1566.8 |
-| 106 | 106 | Route Planner | 6 | 43 | 1578.7 |
-| 107 | 107 | Drill Plating | 9 | 65 | 1591.1 |
-| 108 | 108 | Salvage Drone | 2 | 46 | 1602.5 |
-| 109 | 109 | Drill Torque | 20 | 249 | 1613.7 |
-| 110 | 110 | Depth Scanner | 1 | 34 | 1625.5 |
-| 111 | 111 | Timer Reserve | 9 | 51 | 1636.7 |
-| 112 | 112 | Drill Plating | 10 | 75 | 1651.2 |
-| 113 | 113 | Timer Reserve | 10 | 59 | 1660.2 |
-| 114 | 114 | Cargo Compressor | 6 | 60 | 1671.4 |
-| 115 | 115 | Drill Torque | 21 | 285 | 1684.5 |
-| 116 | 116 | Cooling Loop | 4 | 38 | 1698.5 |
-| 117 | 117 | Salvage Drone | 3 | 53 | 1710.3 |
-| 118 | 118 | XP Calibration | 5 | 48 | 1723.7 |
-| 119 | 119 | Delivery Drone | 1 | 46 | 1739.8 |
-| 120 | 120 | Depth Scanner | 2 | 40 | 1749.8 |
-| 121 | 121 | Depth Scanner | 3 | 46 | 1762.8 |
-| 122 | 122 | Delivery Drone | 2 | 54 | 1780.4 |
-| 123 | 123 | Drill Torque | 22 | 325 | 1790.3 |
-| 124 | 124 | Drill Plating | 11 | 86 | 1802.0 |
-| 125 | 125 | Depth Scanner | 4 | 53 | 1814.6 |
-| 126 | 126 | Ore Refinery | 15 | 166 | 1825.8 |
-| 127 | 127 | Route Planner | 7 | 50 | 1836.6 |
-| 128 | 128 | Cargo Compressor | 7 | 69 | 1849.2 |
-| 129 | 129 | Drill Torque | 23 | 371 | 1862.5 |
-| 130 | 130 | Delivery Drone | 3 | 64 | 1877.9 |
-| 131 | 131 | Drill Torque | 24 | 424 | 1894.5 |
-| 132 | 132 | Timer Reserve | 11 | 67 | 1907.3 |
-| 133 | 133 | XP Calibration | 6 | 55 | 1919.2 |
-| 134 | 134 | Dirt Softener | 13 | 148 | 1934.0 |
-| 135 | 135 | Engine Tuning | 13 | 92 | 1943.6 |
-| 136 | 136 | Route Planner | 8 | 57 | 1957.0 |
-| 137 | 137 | Salvage Drone | 4 | 62 | 1969.1 |
-| 138 | 138 | Drill Torque | 25 | 484 | 1978.4 |
-| 139 | 139 | Cooling Loop | 5 | 44 | 1988.0 |
-| 140 | 140 | Foreman Bot | 1 | 41 | 1999.4 |
-| 141 | 141 | Ore Refinery | 16 | 190 | 2007.8 |
-| 142 | 142 | Drill Torque | 26 | 553 | 2019.0 |
-| 143 | 143 | Route Planner | 9 | 65 | 2029.2 |
-| 144 | 144 | Cooling Loop | 6 | 50 | 2042.0 |
-| 145 | 145 | Ore Refinery | 17 | 218 | 2054.7 |
-| 146 | 146 | XP Calibration | 7 | 63 | 2066.6 |
-| 147 | 147 | Seismic Sonar | 1 | 37 | 2079.0 |
-| 148 | 148 | Drill Torque | 27 | 631 | 2089.5 |
-| 149 | 149 | Route Planner | 10 | 74 | 2104.3 |
-| 150 | 150 | Route Planner | 11 | 85 | 2120.8 |
-| 151 | 151 | Engine Tuning | 14 | 104 | 2134.2 |
-| 152 | 152 | Dirt Softener | 14 | 170 | 2145.3 |
-| 153 | 153 | Cargo Pods | 11 | 80 | 2158.8 |
-| 154 | 154 | Cargo Compressor | 8 | 80 | 2167.9 |
-| 155 | 155 | Cargo Compressor | 9 | 92 | 2180.9 |
-| 156 | 156 | Delivery Drone | 4 | 75 | 2192.3 |
-| 157 | 157 | Foreman Bot | 2 | 48 | 2201.2 |
-| 158 | 158 | Auto Sorters | 1 | 45 | 2212.5 |
-| 159 | 159 | XP Calibration | 8 | 73 | 2227.8 |
-| 160 | 160 | Drill Plating | 12 | 99 | 2237.8 |
-| 161 | 161 | Foreman Bot | 3 | 56 | 2256.3 |
-| 162 | 162 | Ore Refinery | 18 | 251 | 2274.4 |
-| 163 | 163 | XP Calibration | 9 | 84 | 2288.1 |
-| 164 | 164 | Drill Plating | 13 | 113 | 2299.2 |
-| 165 | 165 | Cargo Compressor | 10 | 107 | 2317.4 |
-| 166 | 166 | Drill Torque | 28 | 721 | 2330.2 |
-| 167 | 167 | Drill Torque | 29 | 824 | 2339.2 |
-| 168 | 168 | Cooling Loop | 7 | 58 | 2350.8 |
-| 169 | 169 | Drill Plating | 14 | 129 | 2364.4 |
-| 170 | 170 | Route Planner | 12 | 98 | 2375.4 |
-| 171 | 171 | XP Calibration | 10 | 96 | 2385.6 |
-| 172 | 172 | Engine Tuning | 15 | 119 | 2398.2 |
-| 173 | 173 | Seismic Sonar | 2 | 43 | 2413.6 |
-| 174 | 174 | Vacuum Scoop | 5 | 40 | 2426.5 |
-| 175 | 175 | Vacuum Scoop | 6 | 45 | 2438.6 |
-| 176 | 176 | Cooling Loop | 8 | 66 | 2454.0 |
-| 177 | 177 | Drill Torque | 30 | 940 | 2465.9 |
-| 178 | 178 | Cooling Loop | 9 | 76 | 2478.6 |
-| 179 | 179 | Cooling Loop | 10 | 87 | 2491.1 |
-| 180 | 180 | Drill Plating | 15 | 148 | 2503.2 |
-| 181 | 181 | Ore Refinery | 19 | 288 | 2517.4 |
-| 182 | 182 | Dirt Softener | 15 | 196 | 2530.7 |
-| 183 | 183 | Drill Torque | 31 | 1074 | 2545.9 |
-| 184 | 184 | Salvage Drone | 5 | 73 | 2560.5 |
-| 185 | 185 | Depth Scanner | 5 | 62 | 2572.8 |
-| 186 | 186 | Engine Tuning | 16 | 136 | 2584.1 |
-| 187 | 187 | Delivery Drone | 5 | 89 | 2598.1 |
-| 188 | 188 | Seismic Sonar | 3 | 50 | 2613.3 |
-| 189 | 189 | Timer Reserve | 12 | 76 | 2622.0 |
-| 190 | 190 | Engine Tuning | 17 | 155 | 2633.6 |
-| 191 | 191 | Drill Torque | 32 | 1227 | 2646.5 |
-| 192 | 192 | Vacuum Scoop | 7 | 52 | 2656.6 |
-| 193 | 193 | Seismic Sonar | 4 | 59 | 2671.4 |
-| 194 | 194 | Foreman Bot | 4 | 66 | 2684.1 |
-| 195 | 195 | Cargo Pods | 12 | 91 | 2697.3 |
-| 196 | 196 | Drill Torque | 33 | 1401 | 2712.6 |
-| 197 | 197 | Salvage Drone | 6 | 86 | 2725.9 |
-| 198 | 198 | Drill Plating | 16 | 170 | 2736.1 |
-| 199 | 199 | Auto Sorters | 2 | 53 | 2750.0 |
-| 200 | 200 | Foreman Bot | 5 | 77 | 2764.4 |
-| 201 | 201 | Drill Torque | 34 | 1600 | 2777.7 |
-| 202 | 202 | Cargo Compressor | 11 | 124 | 2792.0 |
-| 203 | 203 | Ore Refinery | 20 | 330 | 2804.3 |
-| 204 | 204 | Cargo Compressor | 12 | 143 | 2816.5 |
-| 205 | 205 | Cargo Compressor | 13 | 165 | 2832.0 |
-| 206 | 206 | Vacuum Scoop | 8 | 60 | 2843.4 |
-| 207 | 207 | Salvage Drone | 7 | 100 | 2855.0 |
-| 208 | 208 | Drill Plating | 17 | 195 | 2865.8 |
-| 209 | 209 | Drill Torque | 35 | 1827 | 2879.1 |
-| 210 | 210 | Drill Torque | 36 | 2086 | 2894.8 |
-| 211 | 211 | Salvage Drone | 8 | 117 | 2909.0 |
-| 212 | 212 | Dirt Softener | 16 | 226 | 2922.6 |
-| 213 | 213 | XP Calibration | 11 | 111 | 2935.8 |
-| 214 | 214 | Vacuum Scoop | 9 | 68 | 2948.8 |
-| 215 | 215 | Dirt Softener | 17 | 260 | 2964.2 |
-| 216 | 216 | Ore Refinery | 21 | 379 | 2976.6 |
-| 217 | 217 | Ore Refinery | 22 | 436 | 2987.0 |
-| 218 | 218 | Timer Reserve | 13 | 87 | 3002.7 |
-| 219 | 219 | Seismic Sonar | 5 | 69 | 3018.0 |
-| 220 | 220 | Ore Refinery | 23 | 500 | 3028.5 |
-| 221 | 221 | Auto Sorters | 3 | 62 | 3040.4 |
-| 222 | 222 | Drill Torque | 37 | 2382 | 3051.9 |
-| 223 | 223 | Foreman Bot | 6 | 91 | 3065.6 |
-| 224 | 224 | Salvage Drone | 9 | 137 | 3075.9 |
-| 225 | 225 | Cargo Compressor | 14 | 191 | 3091.1 |
-| 226 | 226 | Drill Torque | 38 | 2721 | 3107.4 |
-| 227 | 227 | Timer Reserve | 14 | 99 | 3122.7 |
-| 228 | 228 | Depth Scanner | 6 | 72 | 3132.6 |
-| 229 | 229 | Seismic Sonar | 6 | 80 | 3142.7 |
-| 230 | 230 | Cooling Loop | 11 | 100 | 3157.7 |
-| 231 | 231 | Drill Torque | 39 | 3107 | 3170.0 |
-| 232 | 232 | Vacuum Scoop | 10 | 78 | 3185.6 |
-| 233 | 233 | Vacuum Scoop | 11 | 90 | 3195.9 |
-| 234 | 234 | Route Planner | 13 | 112 | 3211.3 |
-| 235 | 235 | Ore Refinery | 24 | 574 | 3223.7 |
-| 236 | 236 | Ore Refinery | 25 | 659 | 3234.0 |
-| 237 | 237 | Auto Sorters | 4 | 73 | 3244.8 |
-| 238 | 238 | Auto Sorters | 5 | 86 | 3255.9 |
-| 239 | 239 | Engine Tuning | 18 | 176 | 3265.4 |
-| 240 | 240 | Cooling Loop | 12 | 115 | 3276.3 |
-| 241 | 241 | Salvage Drone | 10 | 160 | 3290.2 |
-| 242 | 242 | Ore Refinery | 26 | 756 | 3300.4 |
-| 243 | 243 | Foreman Bot | 7 | 106 | 3310.8 |
-| 244 | 244 | Depth Scanner | 7 | 84 | 3323.4 |
-| 245 | 245 | Salvage Drone | 11 | 187 | 3336.5 |
-| 246 | 246 | Engine Tuning | 19 | 201 | 3351.8 |
-| 247 | 247 | Auto Sorters | 6 | 101 | 3363.7 |
-| 248 | 248 | Cooling Loop | 13 | 132 | 3379.1 |
-| 249 | 249 | Dirt Softener | 18 | 299 | 3394.2 |
-| 250 | 250 | XP Calibration | 12 | 128 | 3410.5 |
-| 251 | 251 | Engine Tuning | 20 | 229 | 3425.4 |
-| 252 | 252 | Foreman Bot | 8 | 125 | 3444.3 |
-| 253 | 253 | Seismic Sonar | 7 | 94 | 3457.2 |
-| 254 | 254 | Drill Plating | 18 | 223 | 3469.2 |
-| 255 | 255 | Drill Plating | 19 | 256 | 3483.3 |
-| 256 | 256 | Engine Tuning | 21 | 261 | 3495.4 |
-| 257 | 257 | Engine Tuning | 22 | 298 | 3507.6 |
-| 258 | 258 | Ore Refinery | 27 | 868 | 3520.1 |
-| 259 | 259 | Cargo Compressor | 15 | 221 | 3533.9 |
-| 260 | 260 | Timer Reserve | 15 | 113 | 3549.7 |
-| 261 | 261 | Foreman Bot | 9 | 146 | 3563.5 |
-| 262 | 262 | Route Planner | 14 | 128 | 3576.7 |
-| 263 | 263 | Cooling Loop | 14 | 152 | 3591.8 |
-| 264 | 264 | Foreman Bot | 10 | 171 | 3605.3 |
-| 265 | 265 | Route Planner | 15 | 146 | 3621.0 |
-| 266 | 266 | Depth Scanner | 8 | 97 | 3635.5 |
-| 267 | 267 | Vacuum Scoop | 12 | 103 | 3651.0 |
-| 268 | 268 | Cooling Loop | 15 | 175 | 3665.0 |
-| 269 | 269 | Ore Refinery | 28 | 997 | 3676.7 |
-| 270 | 270 | Drill Torque | 40 | 3548 | 3690.2 |
-| 271 | 271 | Foreman Bot | 11 | 200 | 3702.6 |
-| 272 | 272 | Auto Sorters | 7 | 119 | 3715.5 |
-| 273 | 273 | Seismic Sonar | 8 | 110 | 3731.9 |
-| 274 | 274 | Drill Plating | 20 | 293 | 3743.6 |
-| 275 | 275 | Ore Refinery | 29 | 1144 | 3755.5 |
-| 276 | 276 | Ore Refinery | 30 | 1314 | 3767.6 |
-| 277 | 277 | Delivery Drone | 6 | 104 | 3787.0 |
-| 278 | 278 | Engine Tuning | 23 | 339 | 3803.4 |
-| 279 | 279 | Drill Plating | 21 | 336 | 3818.0 |
-| 280 | 280 | Auto Sorters | 8 | 140 | 3831.8 |
-| 281 | 281 | Depth Scanner | 9 | 113 | 3849.3 |
-| 282 | 282 | Delivery Drone | 7 | 123 | 3865.4 |
-| 283 | 283 | Depth Scanner | 10 | 131 | 3877.2 |
-| 284 | 284 | Delivery Drone | 8 | 145 | 3889.2 |
-| 285 | 285 | Depth Scanner | 11 | 153 | 3905.6 |
-| 286 | 286 | Engine Tuning | 24 | 387 | 3920.7 |
-| 287 | 287 | Engine Tuning | 25 | 441 | 3932.6 |
-| 288 | 288 | Cargo Compressor | 16 | 255 | 3950.5 |
-| 289 | 289 | Ore Refinery | 31 | 1508 | 3963.4 |
-| 290 | 290 | XP Calibration | 13 | 148 | 3977.7 |
-| 291 | 291 | Dirt Softener | 19 | 345 | 3989.9 |
-| 292 | 292 | Route Planner | 16 | 168 | 4005.5 |
-| 293 | 293 | Foreman Bot | 12 | 235 | 4018.4 |
-| 294 | 294 | XP Calibration | 14 | 170 | 4035.8 |
-| 295 | 295 | Cargo Compressor | 17 | 295 | 4051.3 |
-| 296 | 296 | Route Planner | 17 | 192 | 4067.6 |
-| 297 | 297 | Drill Plating | 22 | 385 | 4078.7 |
-| 298 | 298 | Ore Refinery | 32 | 1731 | 4094.0 |
-| 299 | 299 | Depth Scanner | 12 | 177 | 4114.2 |
-| 300 | 300 | XP Calibration | 15 | 196 | 4128.6 |
-| 301 | 301 | Foreman Bot | 13 | 275 | 4140.1 |
-| 302 | 302 | Foreman Bot | 14 | 323 | 4154.2 |
-| 303 | 303 | XP Calibration | 16 | 226 | 4168.8 |
-| 304 | 304 | Cargo Compressor | 18 | 341 | 4182.9 |
-| 305 | 305 | XP Calibration | 17 | 260 | 4194.6 |
-| 306 | 306 | Seismic Sonar | 9 | 128 | 4208.3 |
-| 307 | 307 | Engine Tuning | 26 | 503 | 4222.5 |
-| 308 | 308 | Auto Sorters | 9 | 165 | 4238.8 |
-| 309 | 309 | Cooling Loop | 16 | 201 | 4250.3 |
-| 310 | 310 | Engine Tuning | 27 | 573 | 4268.1 |
-| 311 | 311 | Timer Reserve | 16 | 128 | 4284.3 |
-| 312 | 312 | Engine Tuning | 28 | 653 | 4295.6 |
-| 313 | 313 | Cargo Compressor | 19 | 394 | 4308.4 |
-| 314 | 314 | Cargo Pods | 13 | 104 | 4319.3 |
-| 315 | 315 | Drill Plating | 23 | 441 | 4334.5 |
-| 316 | 316 | Foreman Bot | 15 | 378 | 4352.9 |
-| 317 | 317 | Delivery Drone | 9 | 171 | 4368.1 |
-| 318 | 318 | Salvage Drone | 12 | 219 | 4384.1 |
-| 319 | 319 | Cargo Compressor | 20 | 456 | 4396.9 |
-| 320 | 320 | Vacuum Scoop | 13 | 118 | 4413.9 |
-| 321 | 321 | Dirt Softener | 20 | 397 | 4430.8 |
-| 322 | 322 | Cargo Compressor | 21 | 527 | 4445.8 |
-| 323 | 323 | Auto Sorters | 10 | 194 | 4461.7 |
-| 324 | 324 | Auto Sorters | 11 | 228 | 4478.3 |
-| 325 | 325 | Auto Sorters | 12 | 268 | 4493.0 |
-| 326 | 326 | Seismic Sonar | 10 | 150 | 4510.7 |
-| 327 | 327 | Drill Plating | 24 | 505 | 4526.0 |
-| 328 | 328 | Delivery Drone | 10 | 201 | 4543.0 |
-| 329 | 329 | Cooling Loop | 17 | 231 | 4560.1 |
-| 330 | 330 | Seismic Sonar | 11 | 175 | 4578.9 |
-| 331 | 331 | Salvage Drone | 13 | 257 | 4593.5 |
-| 332 | 332 | Cargo Compressor | 22 | 609 | 4608.6 |
-| 333 | 333 | Seismic Sonar | 12 | 204 | 4625.2 |
-| 334 | 334 | XP Calibration | 18 | 299 | 4639.4 |
-| 335 | 335 | Drill Plating | 25 | 579 | 4656.5 |
-| 336 | 336 | Drill Plating | 26 | 664 | 4672.0 |
-| 337 | 337 | Delivery Drone | 11 | 237 | 4693.0 |
-| 338 | 338 | Seismic Sonar | 13 | 239 | 4706.6 |
-| 339 | 339 | XP Calibration | 19 | 345 | 4721.1 |
-| 340 | 340 | XP Calibration | 20 | 397 | 4739.1 |
-| 341 | 341 | Delivery Drone | 12 | 279 | 4756.8 |
-| 342 | 342 | Foreman Bot | 16 | 443 | 4773.4 |
-| 343 | 343 | XP Calibration | 21 | 458 | 4787.1 |
-| 344 | 344 | Drill Plating | 27 | 761 | 4802.7 |
-| 345 | 345 | Cooling Loop | 18 | 265 | 4822.4 |
-| 346 | 346 | Foreman Bot | 17 | 520 | 4836.7 |
-| 347 | 347 | XP Calibration | 22 | 527 | 4850.0 |
-| 348 | 348 | Drill Plating | 28 | 872 | 4870.8 |
-| 349 | 349 | Cargo Pods | 14 | 119 | 4888.4 |
-| 350 | 350 | Foreman Bot | 18 | 609 | 4903.6 |
-| 351 | 351 | Timer Reserve | 17 | 146 | 4918.2 |
-| 352 | 352 | Drill Plating | 29 | 999 | 4934.4 |
-| 353 | 353 | Dirt Softener | 21 | 458 | 4956.9 |
-| 354 | 354 | XP Calibration | 23 | 607 | 4975.0 |
-| 355 | 355 | Cargo Pods | 15 | 136 | 4991.4 |
-| 356 | 356 | Vacuum Scoop | 14 | 135 | 5009.0 |
-| 357 | 357 | Route Planner | 18 | 220 | 5025.6 |
-| 358 | 358 | Auto Sorters | 13 | 315 | 5043.9 |
-| 359 | 359 | Delivery Drone | 13 | 328 | 5060.8 |
-| 360 | 360 | Drill Plating | 30 | 1145 | 5079.3 |
-| 361 | 361 | Route Planner | 19 | 252 | 5099.6 |
-| 362 | 362 | Salvage Drone | 14 | 300 | 5119.8 |
-| 363 | 363 | XP Calibration | 24 | 699 | 5136.6 |
-| 364 | 364 | Dirt Softener | 22 | 527 | 5153.1 |
-| 365 | 365 | XP Calibration | 25 | 806 | 5172.1 |
-| 366 | 366 | Seismic Sonar | 14 | 279 | 5188.0 |
-| 367 | 367 | Cooling Loop | 19 | 305 | 5209.0 |
-| 368 | 368 | Cargo Pods | 16 | 156 | 5228.6 |
-| 369 | 369 | XP Calibration | 26 | 928 | 5245.2 |
-| 370 | 370 | Auto Sorters | 14 | 370 | 5263.5 |
-| 371 | 371 | Cargo Pods | 17 | 178 | 5283.8 |
-| 372 | 372 | Vacuum Scoop | 15 | 155 | 5301.9 |
-| 373 | 373 | Delivery Drone | 14 | 387 | 5317.9 |
-| 374 | 374 | Seismic Sonar | 15 | 325 | 5337.9 |
-| 375 | 375 | Seismic Sonar | 16 | 380 | 5357.0 |
-| 376 | 376 | Drill Plating | 31 | 1312 | 5376.6 |
-| 377 | 377 | Drill Plating | 32 | 1504 | 5398.1 |
-| 378 | 378 | Timer Reserve | 18 | 167 | 5414.6 |
-| 379 | 379 | Seismic Sonar | 17 | 444 | 5430.0 |
-| 380 | 380 | Salvage Drone | 15 | 351 | 5448.2 |
-| 381 | 381 | Auto Sorters | 15 | 435 | 5465.7 |
-| 382 | 382 | Vacuum Scoop | 16 | 178 | 5487.4 |
-| 383 | 383 | Salvage Drone | 16 | 411 | 5507.3 |
-| 384 | 384 | Timer Reserve | 19 | 190 | 5522.5 |
-| 385 | 385 | Vacuum Scoop | 17 | 204 | 5543.9 |
-| 386 | 386 | Cooling Loop | 20 | 350 | 5563.7 |
-| 387 | 387 | Cooling Loop | 21 | 402 | 5583.3 |
-| 388 | 388 | Auto Sorters | 16 | 512 | 5605.6 |
-| 389 | 389 | Route Planner | 20 | 288 | 5624.5 |
-| 390 | 390 | Seismic Sonar | 18 | 518 | 5641.5 |
-| 391 | 391 | Cooling Loop | 22 | 462 | 5659.6 |
-| 392 | 392 | Cooling Loop | 23 | 531 | 5680.2 |
-| 393 | 393 | Timer Reserve | 20 | 217 | 5698.2 |
-| 394 | 394 | Cooling Loop | 24 | 610 | 5716.5 |
-| 395 | 395 | Cargo Pods | 18 | 204 | 5734.2 |
-| 396 | 396 | Vacuum Scoop | 18 | 233 | 5754.8 |
-| 397 | 397 | Delivery Drone | 15 | 456 | 5774.9 |
-| 398 | 398 | Delivery Drone | 16 | 537 | 5793.7 |
-| 399 | 399 | Salvage Drone | 17 | 481 | 5816.7 |
-| 400 | 400 | Salvage Drone | 18 | 563 | 5833.9 |
-| 401 | 401 | Timer Reserve | 21 | 247 | 5856.4 |
-| 402 | 402 | Timer Reserve | 22 | 282 | 5876.3 |
-| 403 | 403 | Timer Reserve | 23 | 321 | 5896.0 |
-| 404 | 404 | Timer Reserve | 24 | 367 | 5918.1 |
-| 405 | 405 | Delivery Drone | 17 | 633 | 5937.1 |
-| 406 | 406 | Timer Reserve | 25 | 418 | 5955.6 |
-| 407 | 407 | Cargo Pods | 19 | 233 | 5975.4 |
-| 408 | 408 | Delivery Drone | 18 | 745 | 5996.2 |
-| 409 | 409 | Timer Reserve | 26 | 476 | 6016.3 |
-| 410 | 410 | Vacuum Scoop | 19 | 267 | 6034.5 |
-| 411 | 411 | Timer Reserve | 27 | 543 | 6054.7 |
-| 412 | 412 | Salvage Drone | 19 | 658 | 6077.0 |
-| 413 | 413 | Timer Reserve | 28 | 619 | 6098.3 |
-| 414 | 414 | Cargo Pods | 20 | 266 | 6118.3 |
-| 415 | 415 | Cargo Pods | 21 | 304 | 6138.4 |
-| 416 | 416 | Cargo Pods | 22 | 348 | 6155.9 |
-| 417 | 417 | Vacuum Scoop | 20 | 306 | 6173.1 |
-| 418 | 418 | Salvage Drone | 20 | 770 | 6196.0 |
-| 419 | 419 | Cargo Pods | 23 | 397 | 6219.1 |
-| 420 | 420 | Vacuum Scoop | 21 | 351 | 6242.0 |
-| 421 | 421 | Cargo Pods | 24 | 454 | 6260.7 |
-| 422 | 422 | Cargo Pods | 25 | 519 | 6283.2 |
-| 423 | 423 | Vacuum Scoop | 22 | 402 | 6306.9 |
-| 424 | 424 | Cargo Pods | 26 | 593 | 6324.9 |
+| # | Run | Upgrade | Level | Cost | Depth Preview | Wallet After Spend | Cumulative Time (s) |
+|---:|---:|---|---:|---:|---:|---:|---:|
+| 1 | 2 | Cargo Pods | 1 | 27 | 1 | 99 | 47.2 |
+| 2 | 3 | Drill Torque | 1 | 26 | 1 | 136 | 71.2 |
+| 3 | 4 | Cargo Pods | 2 | 31 | 1 | 175 | 93.3 |
+| 4 | 4 | Cargo Pods | 3 | 36 | 1 | 139 | 93.3 |
+| 5 | 5 | Cargo Pods | 4 | 41 | 1 | 175 | 116.5 |
+| 6 | 6 | Drill Torque | 2 | 30 | 1 | 208 | 139.8 |
+| 7 | 6 | Cargo Pods | 5 | 48 | 1 | 160 | 139.8 |
+| 8 | 7 | Cargo Pods | 6 | 99 | 1 | 131 | 163.5 |
+| 9 | 8 | Cargo Pods | 7 | 134 | 1 | 74 | 185.7 |
+| 10 | 8 | Vacuum Scoop | 1 | 30 | 1 | 44 | 185.7 |
+| 11 | 8 | Engine Tuning | 1 | 26 | 1 | 18 | 185.7 |
+| 12 | 10 | Timer Reserve | 1 | 24 | 1 | 155 | 232.0 |
+| 13 | 10 | Drill Torque | 3 | 35 | 1 | 120 | 232.0 |
+| 14 | 11 | Cargo Pods | 8 | 177 | 2 | 27 | 256.6 |
+| 15 | 11 | Drill Plating | 1 | 24 | 2 | 3 | 256.6 |
+| 16 | 12 | Drill Torque | 4 | 40 | 2 | 102 | 279.7 |
+| 17 | 13 | Cargo Pods | 9 | 229 | 2 | 4 | 303.0 |
+| 18 | 15 | Ore Refinery | 1 | 36 | 2 | 223 | 349.0 |
+| 19 | 16 | Drill Torque | 5 | 46 | 2 | 304 | 371.2 |
+| 20 | 16 | Cargo Pods | 10 | 294 | 2 | 10 | 371.2 |
+| 21 | 17 | Ore Refinery | 2 | 42 | 2 | 92 | 394.8 |
+| 22 | 17 | Ore Refinery | 3 | 49 | 2 | 43 | 394.8 |
+| 23 | 19 | Drill Torque | 6 | 97 | 2 | 242 | 440.6 |
+| 24 | 20 | Drill Plating | 2 | 28 | 2 | 366 | 462.8 |
+| 25 | 21 | Timer Reserve | 2 | 28 | 3 | 506 | 486.2 |
+| 26 | 21 | Engine Tuning | 2 | 30 | 3 | 476 | 486.2 |
+| 27 | 21 | Cargo Compressor | 1 | 40 | 3 | 436 | 486.2 |
+| 28 | 22 | Ore Refinery | 4 | 57 | 3 | 575 | 508.8 |
+| 29 | 23 | Vacuum Scoop | 2 | 35 | 3 | 702 | 532.3 |
+| 30 | 23 | Cargo Compressor | 2 | 47 | 3 | 655 | 532.3 |
+| 31 | 23 | Drill Torque | 7 | 130 | 3 | 525 | 532.3 |
+| 32 | 24 | Cargo Pods | 11 | 373 | 3 | 306 | 554.1 |
+| 33 | 25 | Drill Torque | 8 | 172 | 3 | 324 | 576.4 |
+| 34 | 26 | Ore Refinery | 5 | 67 | 3 | 453 | 599.7 |
+| 35 | 27 | Drill Torque | 9 | 224 | 3 | 417 | 621.9 |
+| 36 | 27 | Ore Refinery | 6 | 140 | 3 | 277 | 621.9 |
+| 37 | 28 | Cargo Compressor | 3 | 55 | 3 | 470 | 645.0 |
+| 38 | 28 | Ore Refinery | 7 | 190 | 3 | 280 | 645.0 |
+| 39 | 29 | Cooling Loop | 1 | 28 | 3 | 479 | 667.3 |
+| 40 | 30 | Cargo Pods | 12 | 470 | 3 | 204 | 690.4 |
+| 41 | 31 | Vacuum Scoop | 3 | 40 | 3 | 371 | 712.9 |
+| 42 | 32 | Cargo Pods | 13 | 587 | 4 | 45 | 734.7 |
+| 43 | 33 | Engine Tuning | 3 | 35 | 4 | 246 | 757.0 |
+| 44 | 33 | Timer Reserve | 3 | 32 | 4 | 214 | 757.0 |
+| 45 | 35 | Vacuum Scoop | 4 | 47 | 4 | 798 | 802.1 |
+| 46 | 36 | Salvage Drone | 1 | 46 | 4 | 1059 | 826.4 |
+| 47 | 37 | Cargo Compressor | 4 | 64 | 4 | 1358 | 849.2 |
+| 48 | 37 | Cargo Pods | 14 | 730 | 4 | 628 | 849.2 |
+| 49 | 38 | Drill Torque | 10 | 288 | 4 | 635 | 870.8 |
+| 50 | 38 | Salvage Drone | 2 | 54 | 4 | 581 | 870.8 |
+| 51 | 38 | Drill Torque | 11 | 366 | 4 | 215 | 870.8 |
+| 52 | 39 | XP Calibration | 1 | 46 | 4 | 519 | 893.0 |
+| 53 | 39 | Drill Torque | 12 | 461 | 4 | 58 | 893.0 |
+| 54 | 40 | Dirt Softener | 1 | 54 | 4 | 333 | 916.1 |
+| 55 | 40 | Timer Reserve | 4 | 36 | 4 | 297 | 916.1 |
+| 56 | 40 | Engine Tuning | 4 | 40 | 4 | 257 | 916.1 |
+| 57 | 41 | Salvage Drone | 3 | 63 | 4 | 505 | 938.7 |
+| 58 | 41 | XP Calibration | 2 | 54 | 4 | 451 | 938.7 |
+| 59 | 41 | Ore Refinery | 8 | 253 | 4 | 198 | 938.7 |
+| 60 | 42 | Vacuum Scoop | 5 | 54 | 4 | 472 | 961.1 |
+| 61 | 42 | Engine Tuning | 5 | 46 | 4 | 426 | 961.1 |
+| 62 | 43 | Cooling Loop | 2 | 32 | 4 | 740 | 986.4 |
+| 63 | 43 | XP Calibration | 3 | 64 | 4 | 676 | 986.4 |
+| 64 | 43 | Dirt Softener | 2 | 63 | 4 | 613 | 986.4 |
+| 65 | 44 | Ore Refinery | 9 | 332 | 5 | 690 | 1008.7 |
+| 66 | 44 | Route Planner | 1 | 42 | 5 | 648 | 1008.7 |
+| 67 | 45 | Cooling Loop | 3 | 37 | 5 | 1086 | 1030.7 |
+| 68 | 46 | Timer Reserve | 5 | 42 | 5 | 1509 | 1053.4 |
+| 69 | 47 | Dirt Softener | 3 | 74 | 5 | 1982 | 1076.9 |
+| 70 | 48 | Cargo Pods | 15 | 903 | 5 | 1597 | 1099.2 |
+| 71 | 48 | Cargo Pods | 16 | 1111 | 5 | 486 | 1099.2 |
+| 72 | 49 | Drill Plating | 3 | 32 | 5 | 949 | 1121.8 |
+| 73 | 49 | Depth Scanner | 1 | 62 | 5 | 887 | 1121.8 |
+| 74 | 49 | Depth Scanner | 2 | 73 | 6 | 814 | 1121.8 |
+| 75 | 50 | Depth Scanner | 3 | 87 | 6 | 1307 | 1143.9 |
+| 76 | 50 | Ore Refinery | 10 | 430 | 7 | 877 | 1143.9 |
+| 77 | 50 | Ore Refinery | 11 | 552 | 7 | 325 | 1143.9 |
+| 78 | 51 | Drill Plating | 4 | 36 | 7 | 1004 | 1165.6 |
+| 79 | 51 | Ore Refinery | 12 | 702 | 7 | 302 | 1165.6 |
+| 80 | 52 | Vacuum Scoop | 6 | 112 | 7 | 980 | 1189.0 |
+| 81 | 52 | Vacuum Scoop | 7 | 152 | 7 | 828 | 1189.0 |
+| 82 | 52 | Drill Plating | 5 | 42 | 7 | 786 | 1189.0 |
+| 83 | 53 | Salvage Drone | 4 | 74 | 8 | 1419 | 1209.9 |
+| 84 | 54 | XP Calibration | 4 | 75 | 8 | 2601 | 1230.6 |
+| 85 | 54 | Cargo Compressor | 5 | 74 | 8 | 2527 | 1230.6 |
+| 86 | 55 | Cargo Compressor | 6 | 157 | 8 | 3798 | 1252.2 |
+| 87 | 56 | Cargo Pods | 17 | 1362 | 8 | 3816 | 1272.9 |
+| 88 | 56 | Foreman Bot | 1 | 56 | 8 | 3760 | 1272.9 |
+| 89 | 56 | Ore Refinery | 13 | 887 | 8 | 2873 | 1272.9 |
+| 90 | 57 | Foreman Bot | 2 | 66 | 8 | 4357 | 1293.8 |
+| 91 | 58 | Dirt Softener | 4 | 87 | 8 | 5890 | 1314.6 |
+| 92 | 59 | Foreman Bot | 3 | 78 | 8 | 7101 | 1335.1 |
+| 93 | 59 | Vacuum Scoop | 8 | 201 | 8 | 6900 | 1335.1 |
+| 94 | 60 | Drill Plating | 6 | 86 | 8 | 8574 | 1356.4 |
+| 95 | 60 | XP Calibration | 5 | 88 | 8 | 8486 | 1356.4 |
+| 96 | 61 | Seismic Sonar | 1 | 60 | 8 | 10247 | 1377.0 |
+| 97 | 61 | Ore Refinery | 14 | 1113 | 8 | 9134 | 1377.0 |
+| 98 | 61 | Route Planner | 2 | 49 | 8 | 9085 | 1377.0 |
+| 99 | 62 | Foreman Bot | 4 | 92 | 8 | 10828 | 1398.7 |
+| 100 | 62 | Seismic Sonar | 2 | 71 | 8 | 10757 | 1398.7 |
+| 101 | 62 | Drill Plating | 7 | 115 | 8 | 10642 | 1398.7 |
+| 102 | 63 | Ore Refinery | 15 | 1391 | 8 | 11402 | 1419.5 |
+| 103 | 63 | Cargo Compressor | 7 | 213 | 8 | 11189 | 1419.5 |
+| 104 | 65 | Vacuum Scoop | 9 | 262 | 9 | 15444 | 1462.8 |
+| 105 | 65 | Ore Refinery | 16 | 1730 | 9 | 13714 | 1462.8 |
+| 106 | 65 | Foreman Bot | 5 | 109 | 9 | 13605 | 1462.8 |
+| 107 | 66 | Drill Torque | 13 | 577 | 9 | 15305 | 1483.0 |
+| 108 | 66 | Ore Refinery | 17 | 2143 | 9 | 13162 | 1483.0 |
+| 109 | 66 | Cooling Loop | 4 | 43 | 9 | 13119 | 1483.0 |
+| 110 | 67 | Drill Plating | 8 | 151 | 9 | 15298 | 1503.6 |
+| 111 | 67 | Ore Refinery | 18 | 2646 | 9 | 12652 | 1503.6 |
+| 112 | 67 | Depth Scanner | 4 | 102 | 9 | 12550 | 1503.6 |
+| 113 | 68 | Cooling Loop | 5 | 49 | 9 | 15227 | 1524.1 |
+| 114 | 69 | Depth Scanner | 5 | 121 | 10 | 17623 | 1545.0 |
+| 115 | 69 | Drill Torque | 14 | 719 | 10 | 16904 | 1545.0 |
+| 116 | 69 | Drill Plating | 9 | 195 | 10 | 16709 | 1545.0 |
+| 117 | 70 | Foreman Bot | 6 | 231 | 9 | 19306 | 1564.7 |
+| 118 | 71 | Depth Scanner | 6 | 257 | 11 | 22192 | 1584.0 |
+| 119 | 72 | Drill Torque | 15 | 890 | 10 | 23966 | 1600.5 |
+| 120 | 72 | Ore Refinery | 19 | 3257 | 11 | 20709 | 1600.5 |
+| 121 | 72 | Vacuum Scoop | 10 | 337 | 11 | 20372 | 1600.5 |
+| 122 | 73 | Drill Plating | 10 | 249 | 10 | 23565 | 1620.5 |
+| 123 | 73 | Dirt Softener | 5 | 103 | 11 | 23462 | 1620.5 |
+| 124 | 73 | Drill Plating | 11 | 315 | 11 | 23147 | 1620.5 |
+| 125 | 74 | Route Planner | 3 | 57 | 12 | 26794 | 1640.1 |
+| 126 | 75 | Delivery Drone | 1 | 54 | 12 | 30164 | 1659.1 |
+| 127 | 75 | Vacuum Scoop | 11 | 429 | 12 | 29735 | 1659.1 |
+| 128 | 75 | Seismic Sonar | 3 | 84 | 12 | 29651 | 1659.1 |
+| 129 | 76 | Cargo Pods | 18 | 1664 | 12 | 33028 | 1678.8 |
+| 130 | 76 | Salvage Drone | 5 | 87 | 12 | 32941 | 1678.8 |
+| 131 | 77 | Foreman Bot | 7 | 317 | 12 | 36487 | 1696.9 |
+| 132 | 77 | Drill Torque | 16 | 1098 | 12 | 35389 | 1696.9 |
+| 133 | 77 | Vacuum Scoop | 12 | 542 | 12 | 34847 | 1696.9 |
+| 134 | 78 | Delivery Drone | 2 | 64 | 12 | 39347 | 1714.7 |
+| 135 | 78 | Foreman Bot | 8 | 428 | 12 | 38919 | 1714.7 |
+| 136 | 79 | Drill Torque | 17 | 1349 | 12 | 41341 | 1734.1 |
+| 137 | 80 | Cargo Compressor | 8 | 285 | 12 | 46725 | 1753.1 |
+| 138 | 80 | Vacuum Scoop | 13 | 680 | 12 | 46045 | 1753.1 |
+| 139 | 80 | Vacuum Scoop | 14 | 848 | 12 | 45197 | 1753.1 |
+| 140 | 81 | Drill Plating | 12 | 394 | 12 | 49239 | 1772.2 |
+| 141 | 82 | Ore Refinery | 20 | 3997 | 12 | 50446 | 1792.1 |
+| 142 | 82 | Ore Refinery | 21 | 4893 | 12 | 45553 | 1792.1 |
+| 143 | 82 | Vacuum Scoop | 15 | 1053 | 12 | 44500 | 1792.1 |
+| 144 | 83 | Cargo Pods | 19 | 2027 | 12 | 46953 | 1810.4 |
+| 145 | 84 | Drill Plating | 13 | 490 | 13 | 51707 | 1826.8 |
+| 146 | 84 | Ore Refinery | 22 | 5977 | 13 | 45730 | 1826.8 |
+| 147 | 84 | Cargo Pods | 20 | 2463 | 13 | 43267 | 1826.8 |
+| 148 | 85 | Cooling Loop | 6 | 102 | 13 | 49111 | 1842.7 |
+| 149 | 85 | Drill Plating | 14 | 606 | 13 | 48505 | 1842.7 |
+| 150 | 86 | Ore Refinery | 23 | 7287 | 13 | 47886 | 1862.9 |
+| 151 | 86 | Route Planner | 4 | 67 | 13 | 47819 | 1862.9 |
+| 152 | 86 | XP Calibration | 6 | 186 | 13 | 47633 | 1862.9 |
+| 153 | 87 | Drill Torque | 18 | 1651 | 12 | 52378 | 1881.1 |
+| 154 | 87 | Ore Refinery | 24 | 8865 | 12 | 43513 | 1881.1 |
+| 155 | 87 | Seismic Sonar | 4 | 99 | 13 | 43414 | 1881.1 |
+| 156 | 88 | Dirt Softener | 6 | 217 | 13 | 49677 | 1898.1 |
+| 157 | 88 | Cooling Loop | 7 | 137 | 13 | 49540 | 1898.1 |
+| 158 | 88 | Cooling Loop | 8 | 181 | 13 | 49359 | 1898.1 |
+| 159 | 89 | Drill Torque | 19 | 2014 | 12 | 55752 | 1917.3 |
+| 160 | 90 | Dirt Softener | 7 | 297 | 13 | 63984 | 1935.7 |
+| 161 | 90 | Drill Torque | 20 | 2451 | 13 | 61533 | 1935.7 |
+| 162 | 90 | Drill Plating | 15 | 746 | 13 | 60787 | 1935.7 |
+| 163 | 91 | Drill Torque | 21 | 2975 | 13 | 65861 | 1955.8 |
+| 164 | 91 | Foreman Bot | 9 | 568 | 13 | 65293 | 1955.8 |
+| 165 | 91 | Cargo Compressor | 9 | 374 | 13 | 64919 | 1955.8 |
+| 166 | 92 | Drill Torque | 22 | 3603 | 13 | 70240 | 1975.6 |
+| 167 | 92 | Foreman Bot | 10 | 745 | 13 | 69495 | 1975.6 |
+| 168 | 92 | Drill Torque | 23 | 4354 | 13 | 65141 | 1975.6 |
+| 169 | 93 | Foreman Bot | 11 | 967 | 13 | 74320 | 1994.2 |
+| 170 | 93 | Foreman Bot | 12 | 1245 | 13 | 73075 | 1994.2 |
+| 171 | 94 | Salvage Drone | 6 | 183 | 14 | 83575 | 2012.5 |
+| 172 | 94 | Drill Plating | 16 | 913 | 14 | 82662 | 2012.5 |
+| 173 | 94 | XP Calibration | 7 | 256 | 13 | 82406 | 2012.5 |
+| 174 | 95 | Drill Plating | 17 | 1114 | 13 | 92860 | 2030.6 |
+| 175 | 95 | Vacuum Scoop | 16 | 1300 | 13 | 91560 | 2030.6 |
+| 176 | 96 | Drill Plating | 18 | 1354 | 12 | 102244 | 2050.6 |
+| 177 | 96 | Drill Torque | 24 | 5252 | 13 | 96992 | 2050.6 |
+| 178 | 96 | Delivery Drone | 3 | 75 | 12 | 96917 | 2050.6 |
+| 179 | 97 | Foreman Bot | 13 | 1592 | 13 | 107819 | 2068.3 |
+| 180 | 98 | Delivery Drone | 4 | 88 | 13 | 120606 | 2088.0 |
+| 181 | 98 | Engine Tuning | 6 | 95 | 14 | 120511 | 2088.0 |
+| 182 | 99 | Cooling Loop | 9 | 234 | 14 | 131974 | 2105.9 |
+| 183 | 99 | Drill Torque | 25 | 6324 | 14 | 125650 | 2105.9 |
+| 184 | 99 | Auto Sorters | 1 | 52 | 13 | 125598 | 2105.9 |
+| 185 | 100 | Auto Sorters | 2 | 61 | 13 | 137719 | 2124.8 |
+| 186 | 100 | Vacuum Scoop | 17 | 1600 | 12 | 136119 | 2124.8 |
+| 187 | 100 | Route Planner | 5 | 79 | 13 | 136040 | 2124.8 |
+| 188 | 101 | Cargo Compressor | 10 | 485 | 13 | 147909 | 2142.5 |
+| 189 | 102 | Salvage Drone | 7 | 250 | 13 | 160637 | 2160.8 |
+| 190 | 103 | Drill Torque | 26 | 7604 | 13 | 165808 | 2179.4 |
+| 191 | 104 | Dirt Softener | 8 | 398 | 13 | 179274 | 2198.2 |
+| 192 | 104 | Cooling Loop | 10 | 300 | 13 | 178974 | 2198.2 |
+| 193 | 105 | Drill Plating | 19 | 1641 | 14 | 189944 | 2216.3 |
+| 194 | 106 | Cargo Pods | 21 | 2984 | 13 | 200424 | 2233.9 |
+| 195 | 106 | Drill Torque | 27 | 9128 | 13 | 191296 | 2233.9 |
+| 196 | 106 | Foreman Bot | 14 | 2023 | 13 | 189273 | 2233.9 |
+| 197 | 107 | Ore Refinery | 25 | 10768 | 13 | 192678 | 2252.5 |
+| 198 | 107 | Engine Tuning | 7 | 128 | 14 | 192550 | 2252.5 |
+| 199 | 107 | Dirt Softener | 9 | 526 | 13 | 192024 | 2252.5 |
+| 200 | 108 | Vacuum Scoop | 18 | 1961 | 14 | 205043 | 2270.8 |
+| 201 | 108 | Vacuum Scoop | 19 | 2397 | 13 | 202646 | 2270.8 |
+| 202 | 108 | Route Planner | 6 | 166 | 14 | 202480 | 2270.8 |
+| 203 | 109 | XP Calibration | 8 | 343 | 14 | 215283 | 2289.4 |
+| 204 | 109 | Vacuum Scoop | 20 | 2922 | 14 | 212361 | 2289.4 |
+| 205 | 109 | Dirt Softener | 10 | 686 | 13 | 211675 | 2289.4 |
+| 206 | 110 | Drill Plating | 20 | 1983 | 13 | 223256 | 2307.9 |
+| 207 | 111 | Ore Refinery | 26 | 13058 | 14 | 226198 | 2327.6 |
+| 208 | 112 | Cargo Pods | 22 | 3608 | 13 | 238818 | 2347.5 |
+| 209 | 112 | Foreman Bot | 15 | 2557 | 14 | 236261 | 2347.5 |
+| 210 | 112 | Cooling Loop | 11 | 380 | 13 | 235881 | 2347.5 |
+| 211 | 113 | Foreman Bot | 16 | 3219 | 14 | 248118 | 2365.7 |
+| 212 | 113 | Drill Plating | 21 | 2390 | 15 | 245728 | 2365.7 |
+| 213 | 113 | Drill Torque | 28 | 10942 | 14 | 234786 | 2365.7 |
+| 214 | 114 | Route Planner | 7 | 226 | 13 | 249468 | 2383.8 |
+| 215 | 114 | Drill Plating | 22 | 2874 | 14 | 246594 | 2383.8 |
+| 216 | 114 | Vacuum Scoop | 21 | 3553 | 14 | 243041 | 2383.8 |
+| 217 | 115 | Drill Torque | 29 | 13101 | 13 | 245771 | 2403.5 |
+| 218 | 115 | Ore Refinery | 27 | 15811 | 14 | 229960 | 2403.5 |
+| 219 | 115 | Vacuum Scoop | 22 | 4311 | 13 | 225649 | 2403.5 |
+| 220 | 116 | Foreman Bot | 17 | 4035 | 15 | 235937 | 2420.6 |
+| 221 | 116 | Drill Torque | 30 | 15667 | 15 | 220270 | 2420.6 |
+| 222 | 116 | Ore Refinery | 28 | 19118 | 15 | 201152 | 2420.6 |
+| 223 | 118 | Ore Refinery | 29 | 23088 | 14 | 215454 | 2456.9 |
+| 224 | 118 | Cooling Loop | 12 | 478 | 15 | 214976 | 2456.9 |
+| 225 | 118 | Depth Scanner | 7 | 355 | 16 | 214621 | 2456.9 |
+| 226 | 119 | Cargo Pods | 23 | 4353 | 14 | 229142 | 2476.3 |
+| 227 | 119 | Seismic Sonar | 5 | 117 | 13 | 229025 | 2476.3 |
+| 228 | 120 | Drill Plating | 23 | 3450 | 16 | 242380 | 2494.3 |
+| 229 | 120 | XP Calibration | 9 | 454 | 15 | 241926 | 2494.3 |
+| 230 | 120 | Vacuum Scoop | 23 | 5219 | 15 | 236707 | 2494.3 |
+| 231 | 121 | Timer Reserve | 6 | 86 | 15 | 252977 | 2511.7 |
+| 232 | 121 | Engine Tuning | 8 | 168 | 16 | 252809 | 2511.7 |
+| 233 | 121 | Ore Refinery | 30 | 27849 | 16 | 224960 | 2511.7 |
+| 234 | 122 | Seismic Sonar | 6 | 249 | 15 | 244055 | 2531.0 |
+| 235 | 122 | Cooling Loop | 13 | 597 | 15 | 243458 | 2531.0 |
+| 236 | 123 | Auto Sorters | 3 | 72 | 15 | 261221 | 2548.7 |
+| 237 | 123 | XP Calibration | 10 | 594 | 14 | 260627 | 2548.7 |
+| 238 | 124 | Auto Sorters | 4 | 85 | 15 | 278806 | 2567.1 |
+| 239 | 124 | Cooling Loop | 14 | 740 | 15 | 278066 | 2567.1 |
+| 240 | 124 | Engine Tuning | 9 | 218 | 15 | 277848 | 2567.1 |
+| 241 | 125 | Auto Sorters | 5 | 99 | 13 | 297886 | 2586.7 |
+| 242 | 125 | Ore Refinery | 31 | 33554 | 14 | 264332 | 2586.7 |
+| 243 | 125 | Ore Refinery | 32 | 40386 | 15 | 223946 | 2586.7 |
+| 244 | 126 | Seismic Sonar | 7 | 344 | 14 | 244284 | 2605.6 |
+| 245 | 126 | Cargo Compressor | 11 | 624 | 15 | 243660 | 2605.6 |
+| 246 | 126 | Foreman Bot | 18 | 5042 | 14 | 238618 | 2605.6 |
+| 247 | 128 | Drill Torque | 31 | 18715 | 13 | 263209 | 2644.4 |
+| 248 | 128 | Seismic Sonar | 8 | 464 | 13 | 262745 | 2644.4 |
+| 249 | 128 | Foreman Bot | 19 | 6280 | 14 | 256465 | 2644.4 |
+| 250 | 129 | Dirt Softener | 11 | 886 | 15 | 277410 | 2664.7 |
+| 251 | 130 | Timer Reserve | 7 | 115 | 16 | 297218 | 2682.6 |
+| 252 | 130 | Route Planner | 8 | 303 | 15 | 296915 | 2682.6 |
+| 253 | 131 | Timer Reserve | 8 | 151 | 15 | 318340 | 2702.7 |
+| 254 | 131 | Route Planner | 9 | 398 | 14 | 317942 | 2702.7 |
+| 255 | 134 | Cargo Pods | 24 | 5241 | 14 | 384890 | 2766.0 |
+| 256 | 134 | Ore Refinery | 33 | 48561 | 14 | 336329 | 2766.0 |
+| 257 | 134 | Salvage Drone | 8 | 335 | 13 | 335994 | 2766.0 |
+| 258 | 136 | Ore Refinery | 34 | 58338 | 15 | 322866 | 2805.4 |
+| 259 | 136 | Ore Refinery | 35 | 70023 | 14 | 252843 | 2805.4 |
+| 260 | 136 | Auto Sorters | 6 | 211 | 15 | 252632 | 2805.4 |
+| 261 | 137 | Delivery Drone | 5 | 103 | 15 | 276377 | 2826.7 |
+| 262 | 138 | Cooling Loop | 15 | 913 | 14 | 299962 | 2847.7 |
+| 263 | 138 | Engine Tuning | 10 | 279 | 15 | 299683 | 2847.7 |
+| 264 | 139 | Foreman Bot | 20 | 7800 | 14 | 318116 | 2869.1 |
+| 265 | 140 | Seismic Sonar | 9 | 617 | 14 | 340935 | 2890.4 |
+| 266 | 140 | Drill Torque | 32 | 22333 | 13 | 318602 | 2890.4 |
+| 267 | 140 | Foreman Bot | 21 | 9664 | 14 | 308938 | 2890.4 |
+| 268 | 141 | XP Calibration | 11 | 768 | 15 | 331655 | 2909.5 |
+| 269 | 141 | Drill Plating | 24 | 4132 | 16 | 327523 | 2909.5 |
+| 270 | 142 | Drill Plating | 25 | 4942 | 16 | 349396 | 2930.9 |
+| 271 | 143 | Foreman Bot | 22 | 11947 | 14 | 362559 | 2950.8 |
+| 272 | 143 | Drill Torque | 33 | 26623 | 15 | 335936 | 2950.8 |
+| 273 | 143 | Cooling Loop | 16 | 1123 | 16 | 334813 | 2950.8 |
+| 274 | 145 | Timer Reserve | 9 | 195 | 16 | 386863 | 2989.9 |
+| 275 | 145 | Depth Scanner | 8 | 480 | 21 | 386383 | 2989.9 |
+| 276 | 146 | Salvage Drone | 9 | 442 | 15 | 409426 | 3010.4 |
+| 277 | 146 | Drill Torque | 34 | 31709 | 14 | 377717 | 3010.4 |
+| 278 | 146 | Ore Refinery | 36 | 83980 | 14 | 293737 | 3010.4 |
+| 279 | 147 | Drill Plating | 26 | 5900 | 14 | 314817 | 3031.2 |
+| 280 | 147 | Ore Refinery | 37 | 100641 | 15 | 214176 | 3031.2 |
+| 281 | 147 | Auto Sorters | 7 | 289 | 21 | 213887 | 3031.2 |
+| 282 | 148 | Drill Torque | 35 | 37734 | 14 | 202198 | 3051.1 |
+| 283 | 150 | Drill Torque | 36 | 44866 | 16 | 207111 | 3088.9 |
+| 284 | 151 | Drill Torque | 37 | 53306 | 20 | 180525 | 3107.4 |
+| 285 | 151 | Cooling Loop | 17 | 1374 | 20 | 179151 | 3107.4 |
+| 286 | 151 | Drill Plating | 27 | 7034 | 21 | 172117 | 3107.4 |
+| 287 | 152 | Drill Plating | 28 | 8374 | 21 | 189136 | 3124.3 |
+| 288 | 152 | Auto Sorters | 8 | 388 | 20 | 188748 | 3124.3 |
+| 289 | 152 | Foreman Bot | 23 | 14738 | 20 | 174010 | 3124.3 |
+| 290 | 153 | Drill Plating | 29 | 9956 | 22 | 193005 | 3142.6 |
+| 291 | 153 | Dirt Softener | 12 | 1135 | 21 | 191870 | 3142.6 |
+| 292 | 153 | Auto Sorters | 9 | 514 | 20 | 191356 | 3142.6 |
+| 293 | 154 | Dirt Softener | 13 | 1444 | 15 | 216438 | 3162.4 |
+| 294 | 155 | Ore Refinery | 38 | 120519 | 20 | 122191 | 3179.7 |
+| 295 | 156 | Ore Refinery | 39 | 144223 | 20 | 4248 | 3197.1 |
+| 296 | 156 | Salvage Drone | 10 | 576 | 20 | 3672 | 3197.1 |
+| 297 | 156 | Engine Tuning | 11 | 353 | 21 | 3319 | 3197.1 |
+| 298 | 157 | Vacuum Scoop | 24 | 6306 | 20 | 27886 | 3215.9 |
+| 299 | 157 | Depth Scanner | 9 | 638 | 21 | 27248 | 3215.9 |
+| 300 | 159 | Drill Plating | 30 | 11824 | 20 | 76741 | 3255.9 |
+| 301 | 159 | Cargo Compressor | 12 | 795 | 21 | 75946 | 3255.9 |
+| 302 | 159 | Delivery Drone | 6 | 219 | 20 | 75727 | 3255.9 |
+| 303 | 160 | Drill Plating | 31 | 14027 | 22 | 88565 | 3272.5 |
+| 304 | 160 | Route Planner | 10 | 518 | 21 | 88047 | 3272.5 |
+| 305 | 160 | Timer Reserve | 10 | 249 | 21 | 87798 | 3272.5 |
+| 306 | 161 | Cargo Compressor | 13 | 1006 | 19 | 120068 | 3293.0 |
+| 307 | 161 | Delivery Drone | 7 | 300 | 20 | 119768 | 3293.0 |
+| 308 | 161 | Engine Tuning | 12 | 444 | 20 | 119324 | 3293.0 |
+| 309 | 162 | Delivery Drone | 8 | 403 | 21 | 152813 | 3312.9 |
+| 310 | 162 | Drill Torque | 38 | 63288 | 20 | 89525 | 3312.9 |
+| 311 | 163 | Auto Sorters | 10 | 671 | 21 | 116710 | 3330.2 |
+| 312 | 164 | Salvage Drone | 11 | 742 | 21 | 145970 | 3347.3 |
+| 313 | 165 | Foreman Bot | 24 | 18147 | 21 | 157695 | 3365.0 |
+| 314 | 165 | Seismic Sonar | 10 | 811 | 21 | 156884 | 3365.0 |
+| 315 | 165 | XP Calibration | 12 | 985 | 20 | 155899 | 3365.0 |
+| 316 | 166 | Delivery Drone | 9 | 533 | 21 | 189610 | 3385.4 |
+| 317 | 167 | Cooling Loop | 18 | 1676 | 21 | 220468 | 3403.7 |
+| 318 | 167 | Dirt Softener | 14 | 1825 | 20 | 218643 | 3403.7 |
+| 319 | 167 | Foreman Bot | 25 | 22306 | 21 | 196337 | 3403.7 |
+| 320 | 168 | Delivery Drone | 10 | 697 | 20 | 229102 | 3423.5 |
+| 321 | 168 | Dirt Softener | 15 | 2296 | 21 | 226806 | 3423.5 |
+| 322 | 168 | Route Planner | 11 | 666 | 20 | 226140 | 3423.5 |
+| 323 | 169 | Route Planner | 12 | 850 | 20 | 258735 | 3441.1 |
+| 324 | 169 | Ore Refinery | 40 | 172475 | 21 | 86260 | 3441.1 |
+| 325 | 169 | Cooling Loop | 19 | 2038 | 21 | 84222 | 3441.1 |
+| 326 | 170 | Cargo Compressor | 14 | 1265 | 21 | 117425 | 3462.2 |
+| 327 | 171 | Cooling Loop | 20 | 2471 | 20 | 150764 | 3481.7 |
+| 328 | 172 | Drill Plating | 32 | 16622 | 21 | 167776 | 3501.0 |
+| 329 | 172 | Salvage Drone | 12 | 949 | 20 | 166827 | 3501.0 |
+| 330 | 172 | Cargo Pods | 25 | 6300 | 21 | 160527 | 3501.0 |
+| 331 | 173 | Cooling Loop | 21 | 2989 | 20 | 193409 | 3522.3 |
+| 332 | 173 | Cooling Loop | 22 | 3607 | 21 | 189802 | 3522.3 |
+| 333 | 174 | Ore Refinery | 41 | 206134 | 22 | 15792 | 3539.9 |
+| 334 | 175 | Foreman Bot | 26 | 27374 | 16 | 24728 | 3561.1 |
+| 335 | 175 | Engine Tuning | 13 | 554 | 15 | 24174 | 3561.1 |
+| 336 | 175 | XP Calibration | 13 | 1255 | 16 | 22919 | 3561.1 |
+| 337 | 176 | Cooling Loop | 23 | 4345 | 21 | 51844 | 3579.9 |
+| 338 | 176 | Dirt Softener | 16 | 2875 | 20 | 48969 | 3579.9 |
+| 339 | 176 | Foreman Bot | 27 | 33543 | 21 | 15426 | 3579.9 |
+| 340 | 177 | Cooling Loop | 24 | 5223 | 22 | 48443 | 3598.3 |
+| 341 | 178 | Cargo Compressor | 15 | 1583 | 21 | 85340 | 3619.2 |
+| 342 | 178 | Foreman Bot | 28 | 41047 | 21 | 44293 | 3619.2 |
+| 343 | 179 | Drill Torque | 39 | 75086 | 21 | 5487 | 3638.0 |
+| 344 | 180 | Foreman Bot | 29 | 50165 | 20 | 667 | 3658.6 |
+| 345 | 180 | Timer Reserve | 11 | 315 | 21 | 352 | 3658.6 |
+| 346 | 181 | Cargo Pods | 26 | 7561 | 21 | 34771 | 3679.8 |
+| 347 | 182 | Dirt Softener | 17 | 3586 | 22 | 73745 | 3699.1 |
+| 348 | 182 | Engine Tuning | 14 | 687 | 21 | 73058 | 3699.1 |
+| 349 | 183 | Auto Sorters | 11 | 868 | 21 | 111273 | 3718.6 |
+| 350 | 184 | Drill Torque | 40 | 89025 | 22 | 59630 | 3738.3 |
+| 351 | 184 | XP Calibration | 14 | 1590 | 21 | 58040 | 3738.3 |
+| 352 | 185 | Foreman Bot | 30 | 61236 | 21 | 34656 | 3756.0 |
+| 353 | 185 | Delivery Drone | 11 | 902 | 21 | 33754 | 3756.0 |
+| 354 | 186 | Dirt Softener | 18 | 4458 | 21 | 72344 | 3776.8 |
+| 355 | 187 | Drill Torque | 41 | 105485 | 21 | 5777 | 3796.1 |
+| 356 | 187 | Timer Reserve | 12 | 394 | 21 | 5383 | 3796.1 |
+| 357 | 187 | Seismic Sonar | 11 | 1054 | 21 | 4329 | 3796.1 |
+| 358 | 188 | Depth Scanner | 10 | 838 | 20 | 52331 | 3818.8 |
+| 359 | 189 | Depth Scanner | 11 | 1089 | 21 | 93746 | 3840.3 |
+| 360 | 189 | Route Planner | 13 | 1078 | 22 | 92668 | 3840.3 |
+| 361 | 190 | Drill Plating | 33 | 19678 | 23 | 113052 | 3861.6 |
+| 362 | 190 | Auto Sorters | 12 | 1114 | 22 | 111938 | 3861.6 |
+| 363 | 191 | Engine Tuning | 15 | 848 | 25 | 140550 | 3878.6 |
+| 364 | 191 | Delivery Drone | 12 | 1157 | 25 | 139393 | 3878.6 |
+| 365 | 191 | Drill Plating | 34 | 23275 | 24 | 116118 | 3878.6 |
+| 366 | 192 | Drill Plating | 35 | 27506 | 22 | 129180 | 3899.2 |
+| 367 | 192 | Drill Torque | 42 | 124915 | 22 | 4265 | 3899.2 |
+| 368 | 193 | Drill Plating | 36 | 32479 | 22 | 15423 | 3919.3 |
+| 369 | 193 | Seismic Sonar | 12 | 1359 | 21 | 14064 | 3919.3 |
+| 370 | 194 | Dirt Softener | 19 | 5525 | 22 | 54695 | 3941.0 |
+| 371 | 194 | Drill Plating | 37 | 38321 | 23 | 16374 | 3941.0 |
+| 372 | 194 | Dirt Softener | 20 | 6827 | 22 | 9547 | 3941.0 |
+| 373 | 195 | Drill Plating | 38 | 45182 | 23 | 6045 | 3960.5 |
+| 374 | 195 | Timer Reserve | 13 | 490 | 22 | 5555 | 3960.5 |
+| 375 | 197 | Cargo Compressor | 16 | 1972 | 23 | 95449 | 4001.5 |
+| 376 | 197 | Cargo Compressor | 17 | 2447 | 23 | 93002 | 4001.5 |
+| 377 | 197 | Salvage Drone | 13 | 1205 | 22 | 91797 | 4001.5 |
+| 378 | 198 | Cargo Pods | 27 | 9061 | 23 | 129220 | 4023.1 |
+| 379 | 200 | Cargo Pods | 28 | 10844 | 23 | 214896 | 4064.0 |
+| 380 | 201 | Cargo Pods | 29 | 12961 | 24 | 239851 | 4083.5 |
+| 381 | 201 | Drill Plating | 39 | 53234 | 24 | 186617 | 4083.5 |
+| 382 | 202 | Route Planner | 14 | 1358 | 22 | 226697 | 4102.3 |
+| 383 | 202 | Cooling Loop | 25 | 6267 | 22 | 220430 | 4102.3 |
+| 384 | 203 | Timer Reserve | 14 | 606 | 23 | 268638 | 4124.5 |
+| 385 | 203 | Cooling Loop | 26 | 7509 | 23 | 261129 | 4124.5 |
+| 386 | 203 | Vacuum Scoop | 25 | 7607 | 22 | 253522 | 4124.5 |
+| 387 | 204 | Cooling Loop | 27 | 8983 | 22 | 292703 | 4144.3 |
+| 388 | 204 | Drill Torque | 43 | 147840 | 23 | 144863 | 4144.3 |
+| 389 | 205 | Depth Scanner | 12 | 1404 | 22 | 193275 | 4165.9 |
+| 390 | 206 | Salvage Drone | 14 | 1521 | 25 | 231706 | 4183.8 |
+| 391 | 206 | Drill Plating | 40 | 62680 | 26 | 169026 | 4183.8 |
+| 392 | 206 | Vacuum Scoop | 26 | 9161 | 26 | 159865 | 4183.8 |
+| 393 | 207 | Cargo Compressor | 18 | 3027 | 25 | 197486 | 4202.8 |
+| 394 | 208 | Drill Torque | 44 | 174878 | 24 | 67748 | 4223.5 |
+| 395 | 208 | Dirt Softener | 21 | 8416 | 24 | 59332 | 4223.5 |
+| 396 | 208 | Cargo Pods | 30 | 15473 | 24 | 43859 | 4223.5 |
+| 397 | 209 | Foreman Bot | 31 | 74667 | 24 | 16264 | 4244.3 |
+| 398 | 209 | Engine Tuning | 16 | 1042 | 25 | 15222 | 4244.3 |
+| 399 | 210 | Route Planner | 15 | 1702 | 24 | 51564 | 4264.2 |
+| 400 | 210 | Cargo Compressor | 19 | 3732 | 23 | 47832 | 4264.2 |
+| 401 | 211 | Cargo Pods | 31 | 18451 | 25 | 68249 | 4283.8 |
+| 402 | 212 | Auto Sorters | 13 | 1419 | 25 | 114092 | 4306.6 |
+| 403 | 212 | Cargo Compressor | 20 | 4588 | 25 | 109504 | 4306.6 |
+| 404 | 212 | Foreman Bot | 32 | 90950 | 24 | 18554 | 4306.6 |
+| 405 | 215 | Cooling Loop | 28 | 10731 | 25 | 139605 | 4361.5 |
+| 406 | 215 | Cargo Compressor | 21 | 5627 | 25 | 133978 | 4361.5 |
+| 407 | 215 | Engine Tuning | 17 | 1276 | 24 | 132702 | 4361.5 |
+| 408 | 217 | Engine Tuning | 18 | 1556 | 24 | 221708 | 4400.1 |
+| 409 | 217 | XP Calibration | 15 | 2003 | 25 | 219705 | 4400.1 |
+| 410 | 218 | Cargo Pods | 32 | 21979 | 24 | 243470 | 4420.9 |
+| 411 | 220 | Dirt Softener | 22 | 10351 | 24 | 319099 | 4458.9 |
+| 412 | 220 | Dirt Softener | 23 | 12704 | 24 | 306395 | 4458.9 |
+| 413 | 220 | Drill Plating | 41 | 73755 | 25 | 232640 | 4458.9 |
+| 414 | 221 | Drill Torque | 45 | 206753 | 26 | 67103 | 4477.3 |
+| 415 | 222 | Cargo Pods | 33 | 26157 | 27 | 82418 | 4494.7 |
+| 416 | 224 | Delivery Drone | 13 | 1473 | 31 | 155145 | 4527.5 |
+| 417 | 225 | Cargo Compressor | 22 | 6885 | 29 | 191476 | 4546.2 |
+| 418 | 225 | Foreman Bot | 33 | 110674 | 30 | 80802 | 4546.2 |
+| 419 | 226 | XP Calibration | 16 | 2513 | 25 | 119661 | 4565.7 |
+| 420 | 226 | XP Calibration | 17 | 3139 | 24 | 116522 | 4565.7 |
+| 421 | 226 | Engine Tuning | 19 | 1892 | 24 | 114630 | 4565.7 |
+| 422 | 227 | Drill Plating | 42 | 86736 | 29 | 62616 | 4582.7 |
+| 423 | 228 | Route Planner | 16 | 2125 | 25 | 101863 | 4601.6 |
+| 424 | 228 | Vacuum Scoop | 27 | 11016 | 24 | 90847 | 4601.6 |
+| 425 | 228 | Cargo Compressor | 23 | 8407 | 25 | 82440 | 4601.6 |
+| 426 | 229 | Seismic Sonar | 13 | 1740 | 32 | 121610 | 4619.6 |
+| 427 | 229 | Cooling Loop | 29 | 12804 | 32 | 108806 | 4619.6 |
+| 428 | 230 | Foreman Bot | 34 | 134553 | 27 | 18773 | 4639.0 |
+| 429 | 230 | Timer Reserve | 15 | 746 | 26 | 18027 | 4639.0 |
+| 430 | 230 | XP Calibration | 18 | 3909 | 25 | 14118 | 4639.0 |
+| 431 | 231 | Route Planner | 17 | 2641 | 25 | 62853 | 4661.1 |
+| 432 | 231 | Cooling Loop | 30 | 15259 | 26 | 47594 | 4661.1 |
+| 433 | 231 | Cooling Loop | 31 | 18164 | 26 | 29430 | 4661.1 |
+| 434 | 232 | Engine Tuning | 20 | 2295 | 29 | 71791 | 4679.6 |
+| 435 | 232 | Route Planner | 18 | 3272 | 30 | 68519 | 4679.6 |
+| 436 | 233 | Cargo Compressor | 24 | 10247 | 29 | 107052 | 4699.2 |
+| 437 | 234 | Cooling Loop | 32 | 21600 | 29 | 130291 | 4718.1 |
+| 438 | 234 | Salvage Drone | 15 | 1910 | 29 | 128381 | 4718.1 |
+| 439 | 234 | Dirt Softener | 24 | 15563 | 30 | 112818 | 4718.1 |
+| 440 | 235 | Vacuum Scoop | 28 | 13229 | 25 | 152569 | 4740.0 |
+| 441 | 235 | Cargo Compressor | 25 | 12467 | 25 | 140102 | 4740.0 |
+| 442 | 236 | XP Calibration | 19 | 4852 | 29 | 184375 | 4758.9 |
+| 443 | 237 | Cargo Compressor | 26 | 15143 | 29 | 213298 | 4776.5 |
+| 444 | 237 | Foreman Bot | 35 | 163443 | 29 | 49855 | 4776.5 |
+| 445 | 238 | Seismic Sonar | 14 | 2215 | 21 | 108272 | 4799.4 |
+| 446 | 238 | Seismic Sonar | 15 | 2805 | 21 | 105467 | 4799.4 |
+| 447 | 239 | Cooling Loop | 33 | 25661 | 20 | 136852 | 4823.7 |
+| 448 | 239 | XP Calibration | 20 | 6007 | 21 | 130845 | 4823.7 |
+| 449 | 239 | Vacuum Scoop | 29 | 15866 | 21 | 114979 | 4823.7 |
+| 450 | 240 | Vacuum Scoop | 30 | 19007 | 25 | 148632 | 4844.3 |
+| 451 | 240 | Cooling Loop | 34 | 30457 | 26 | 118175 | 4844.3 |
+| 452 | 241 | Timer Reserve | 16 | 913 | 30 | 166601 | 4863.2 |
+| 453 | 241 | Dirt Softener | 25 | 19032 | 29 | 147569 | 4863.2 |
+| 454 | 241 | Depth Scanner | 13 | 1798 | 30 | 145771 | 4863.2 |
+| 455 | 243 | Drill Torque | 46 | 244318 | 21 | 18412 | 4904.9 |
+| 456 | 245 | Engine Tuning | 21 | 2776 | 28 | 115475 | 4943.6 |
+| 457 | 245 | Cooling Loop | 35 | 36119 | 29 | 79356 | 4943.6 |
+| 458 | 245 | Cargo Pods | 34 | 31100 | 30 | 48256 | 4943.6 |
+| 459 | 247 | Drill Plating | 43 | 101944 | 29 | 45503 | 4979.6 |
+| 460 | 248 | Route Planner | 19 | 4041 | 21 | 100806 | 5002.6 |
+| 461 | 250 | Route Planner | 20 | 4977 | 30 | 212056 | 5044.5 |
+| 462 | 250 | Seismic Sonar | 16 | 3537 | 29 | 208519 | 5044.5 |
+| 463 | 250 | Cargo Compressor | 27 | 18368 | 30 | 190151 | 5044.5 |
+| 464 | 251 | Cooling Loop | 36 | 42798 | 30 | 203389 | 5063.3 |
+| 465 | 251 | XP Calibration | 21 | 7417 | 30 | 195972 | 5063.3 |
+| 466 | 251 | Auto Sorters | 14 | 1797 | 29 | 194175 | 5063.3 |
+| 467 | 252 | Seismic Sonar | 17 | 4442 | 30 | 239233 | 5081.5 |
+| 468 | 252 | Drill Plating | 44 | 119753 | 31 | 119480 | 5081.5 |
+| 469 | 252 | Route Planner | 21 | 6114 | 31 | 113366 | 5081.5 |
+| 470 | 253 | Drill Plating | 45 | 140601 | 22 | 38897 | 5105.1 |
+| 471 | 253 | Cargo Compressor | 28 | 22248 | 21 | 16649 | 5105.1 |
+| 472 | 254 | Cooling Loop | 37 | 50672 | 29 | 18061 | 5123.0 |
+| 473 | 255 | Cargo Compressor | 29 | 26914 | 30 | 53206 | 5142.3 |
+| 474 | 255 | Cargo Compressor | 30 | 32520 | 29 | 20686 | 5142.3 |
+| 475 | 256 | Dirt Softener | 26 | 23238 | 29 | 63265 | 5165.0 |
+| 476 | 257 | Cooling Loop | 38 | 59952 | 29 | 65843 | 5186.6 |
+| 477 | 258 | Cooling Loop | 39 | 70882 | 29 | 53262 | 5205.7 |
+| 478 | 258 | Dirt Softener | 27 | 28330 | 29 | 24932 | 5205.7 |
+| 479 | 259 | Dirt Softener | 28 | 34491 | 29 | 57181 | 5226.0 |
+| 480 | 260 | Delivery Drone | 14 | 1866 | 29 | 109008 | 5245.4 |
+| 481 | 261 | Cooling Loop | 40 | 83750 | 30 | 78913 | 5264.0 |
+| 482 | 262 | Dirt Softener | 29 | 41939 | 30 | 99485 | 5282.6 |
+| 483 | 263 | Cooling Loop | 41 | 98892 | 30 | 69752 | 5305.1 |
+| 484 | 263 | Salvage Drone | 16 | 2387 | 30 | 67365 | 5305.1 |
+| 485 | 264 | Auto Sorters | 15 | 2264 | 30 | 134241 | 5326.5 |
+| 486 | 264 | Seismic Sonar | 18 | 5560 | 29 | 128681 | 5326.5 |
+| 487 | 264 | Auto Sorters | 16 | 2840 | 29 | 125841 | 5326.5 |
+| 488 | 265 | Seismic Sonar | 19 | 6937 | 30 | 175139 | 5344.6 |
+| 489 | 265 | Cargo Compressor | 31 | 39249 | 30 | 135890 | 5344.6 |
+| 490 | 266 | Dirt Softener | 30 | 50934 | 30 | 141449 | 5363.6 |
+| 491 | 266 | Cargo Compressor | 32 | 47322 | 30 | 94127 | 5363.6 |
+| 492 | 266 | Cargo Compressor | 33 | 56999 | 29 | 37128 | 5363.6 |
+| 493 | 267 | Engine Tuning | 22 | 3350 | 30 | 90673 | 5381.5 |
+| 494 | 267 | Cargo Pods | 35 | 36945 | 30 | 53728 | 5381.5 |
+| 495 | 268 | Cargo Pods | 36 | 43852 | 30 | 81046 | 5401.7 |
+| 496 | 269 | Cargo Compressor | 34 | 68592 | 30 | 83624 | 5422.9 |
+| 497 | 269 | Delivery Drone | 15 | 2351 | 30 | 81273 | 5422.9 |
+| 498 | 270 | Depth Scanner | 14 | 2289 | 30 | 137409 | 5440.7 |
+| 499 | 270 | Cargo Compressor | 35 | 82472 | 29 | 54937 | 5440.7 |
+| 500 | 270 | XP Calibration | 22 | 9138 | 30 | 45799 | 5440.7 |
+| 501 | 271 | Cooling Loop | 42 | 116703 | 30 | 816 | 5462.6 |
+| 502 | 272 | Depth Scanner | 15 | 2899 | 30 | 68417 | 5484.0 |
+| 503 | 273 | Seismic Sonar | 20 | 8630 | 30 | 125972 | 5504.8 |
+| 504 | 274 | Foreman Bot | 36 | 198373 | 30 | 539 | 5525.7 |
+| 505 | 275 | Vacuum Scoop | 31 | 22744 | 32 | 37979 | 5544.8 |
+| 506 | 275 | Delivery Drone | 16 | 2949 | 32 | 35030 | 5544.8 |
+| 507 | 276 | Timer Reserve | 17 | 1114 | 29 | 104416 | 5564.3 |
+| 508 | 276 | Vacuum Scoop | 32 | 27187 | 30 | 77229 | 5564.3 |
+| 509 | 276 | Engine Tuning | 23 | 4034 | 30 | 73195 | 5564.3 |
+| 510 | 277 | Route Planner | 22 | 7494 | 30 | 121721 | 5582.5 |
+| 511 | 278 | Depth Scanner | 16 | 3655 | 30 | 176735 | 5602.3 |
+| 512 | 278 | Drill Plating | 46 | 164997 | 30 | 11738 | 5602.3 |
+| 513 | 279 | Vacuum Scoop | 33 | 32466 | 23 | 36366 | 5625.2 |
+| 514 | 280 | Vacuum Scoop | 34 | 38735 | 32 | 57696 | 5643.7 |
+| 515 | 280 | Salvage Drone | 17 | 2973 | 32 | 54723 | 5643.7 |
+| 516 | 280 | Auto Sorters | 17 | 3549 | 33 | 51174 | 5643.7 |
+| 517 | 281 | Engine Tuning | 24 | 4850 | 25 | 118364 | 5667.8 |
+| 518 | 282 | Cargo Compressor | 36 | 99079 | 32 | 80765 | 5687.3 |
+| 519 | 282 | XP Calibration | 23 | 11235 | 32 | 69530 | 5687.3 |
+| 520 | 283 | Dirt Softener | 31 | 61790 | 32 | 69489 | 5705.3 |
+| 521 | 283 | Delivery Drone | 17 | 3685 | 31 | 65804 | 5705.3 |
+| 522 | 284 | Vacuum Scoop | 35 | 46174 | 32 | 81360 | 5723.4 |
+| 523 | 285 | Timer Reserve | 18 | 1354 | 24 | 145685 | 5745.9 |
+| 524 | 285 | Cooling Loop | 43 | 137642 | 23 | 8043 | 5745.9 |
+| 525 | 285 | Engine Tuning | 25 | 5820 | 24 | 2223 | 5745.9 |
+| 526 | 286 | Route Planner | 23 | 9166 | 31 | 54787 | 5766.9 |
+| 527 | 287 | Dirt Softener | 32 | 74882 | 32 | 40215 | 5787.0 |
+| 528 | 287 | Seismic Sonar | 21 | 10711 | 31 | 29504 | 5787.0 |
+| 529 | 287 | Salvage Drone | 18 | 3689 | 31 | 25815 | 5787.0 |
+| 530 | 288 | Vacuum Scoop | 36 | 54998 | 24 | 30896 | 5812.0 |
+| 531 | 288 | Engine Tuning | 26 | 6972 | 23 | 23924 | 5812.0 |
+| 532 | 289 | XP Calibration | 24 | 13787 | 36 | 62017 | 5830.2 |
+| 533 | 290 | Dirt Softener | 33 | 90658 | 25 | 33447 | 5854.2 |
+| 534 | 291 | XP Calibration | 25 | 16889 | 33 | 79808 | 5872.8 |
+| 535 | 292 | Seismic Sonar | 22 | 13264 | 26 | 127267 | 5895.4 |
+| 536 | 293 | Seismic Sonar | 23 | 16390 | 35 | 162757 | 5913.2 |
+| 537 | 293 | Depth Scanner | 17 | 4590 | 35 | 158167 | 5913.2 |
+| 538 | 293 | Seismic Sonar | 24 | 20216 | 36 | 137951 | 5913.2 |
+| 539 | 294 | XP Calibration | 26 | 20655 | 36 | 167431 | 5932.7 |
+| 540 | 294 | Cooling Loop | 44 | 162251 | 36 | 5180 | 5932.7 |
+| 541 | 296 | Seismic Sonar | 25 | 24890 | 25 | 105106 | 5975.0 |
+| 542 | 296 | Auto Sorters | 18 | 4419 | 24 | 100687 | 5975.0 |
+| 543 | 296 | Route Planner | 24 | 11191 | 23 | 89496 | 5975.0 |
+| 544 | 297 | Cargo Compressor | 37 | 118939 | 36 | 22437 | 5993.6 |
+| 545 | 298 | Timer Reserve | 19 | 1641 | 25 | 82472 | 6015.7 |
+| 546 | 298 | Seismic Sonar | 26 | 30597 | 24 | 51875 | 6015.7 |
+| 547 | 298 | Timer Reserve | 20 | 1983 | 23 | 49892 | 6015.7 |
+| 548 | 299 | Salvage Drone | 19 | 4564 | 36 | 96393 | 6034.1 |
+| 549 | 300 | Cargo Compressor | 38 | 142676 | 25 | 20757 | 6058.2 |
+| 550 | 301 | Route Planner | 25 | 13639 | 24 | 79446 | 6081.8 |
+| 551 | 302 | Engine Tuning | 27 | 8341 | 36 | 125275 | 6100.6 |
+| 552 | 303 | Cooling Loop | 45 | 191162 | 24 | 5765 | 6125.6 |
+| 553 | 303 | Timer Reserve | 21 | 2390 | 25 | 3375 | 6125.6 |
+| 554 | 304 | Cargo Pods | 37 | 52011 | 25 | 21624 | 6150.6 |
+| 555 | 305 | Engine Tuning | 28 | 9965 | 36 | 62929 | 6170.3 |
+| 556 | 305 | Salvage Drone | 20 | 5630 | 36 | 57299 | 6170.3 |
+| 557 | 307 | Auto Sorters | 19 | 5485 | 24 | 212462 | 6220.7 |
+| 558 | 308 | Salvage Drone | 21 | 6929 | 24 | 274805 | 6247.2 |
+| 559 | 309 | Salvage Drone | 22 | 8507 | 24 | 335974 | 6271.7 |
+| 560 | 309 | Drill Torque | 47 | 288571 | 25 | 47403 | 6271.7 |
+| 561 | 310 | Cargo Pods | 38 | 61643 | 24 | 56696 | 6295.9 |
+| 562 | 310 | Salvage Drone | 23 | 10424 | 23 | 46272 | 6295.9 |
+| 563 | 311 | Timer Reserve | 22 | 2874 | 25 | 119430 | 6323.3 |
+| 564 | 312 | Delivery Drone | 18 | 4589 | 25 | 181743 | 6346.9 |
+| 565 | 312 | Dirt Softener | 34 | 109658 | 24 | 72085 | 6346.9 |
+| 566 | 312 | Route Planner | 26 | 16596 | 25 | 55489 | 6346.9 |
+| 567 | 313 | Cargo Pods | 39 | 73008 | 26 | 57761 | 6372.0 |
+| 568 | 313 | Salvage Drone | 24 | 12748 | 26 | 45013 | 6372.0 |
+| 569 | 313 | Engine Tuning | 29 | 11889 | 27 | 33124 | 6372.0 |
+| 570 | 314 | Salvage Drone | 25 | 15563 | 25 | 94365 | 6397.5 |
+| 571 | 315 | Vacuum Scoop | 37 | 65456 | 26 | 103737 | 6422.5 |
+| 572 | 315 | Depth Scanner | 18 | 5745 | 27 | 97992 | 6422.5 |
+| 573 | 316 | Dirt Softener | 35 | 132525 | 25 | 41539 | 6449.9 |
+| 574 | 317 | Route Planner | 27 | 20164 | 34 | 73665 | 6469.1 |
+| 575 | 317 | Route Planner | 28 | 24465 | 33 | 49200 | 6469.1 |
+| 576 | 317 | Salvage Drone | 26 | 18969 | 32 | 30231 | 6469.1 |
+| 577 | 318 | Delivery Drone | 19 | 5696 | 25 | 99815 | 6494.0 |
+| 578 | 318 | Vacuum Scoop | 38 | 77847 | 25 | 21968 | 6494.0 |
+| 579 | 319 | Engine Tuning | 30 | 14169 | 27 | 86107 | 6520.2 |
+| 580 | 320 | Engine Tuning | 31 | 16867 | 28 | 140384 | 6546.2 |
+| 581 | 320 | Auto Sorters | 20 | 6790 | 29 | 133594 | 6546.2 |
+| 582 | 321 | Cargo Pods | 40 | 86412 | 28 | 118366 | 6570.1 |
+| 583 | 321 | XP Calibration | 27 | 25225 | 29 | 93141 | 6570.1 |
+| 584 | 321 | Vacuum Scoop | 39 | 92519 | 30 | 622 | 6570.1 |
+| 585 | 322 | Timer Reserve | 23 | 3450 | 27 | 68316 | 6594.8 |
+| 586 | 323 | Cargo Pods | 41 | 102212 | 26 | 39378 | 6622.5 |
+| 587 | 323 | Timer Reserve | 24 | 4132 | 25 | 35246 | 6622.5 |
+| 588 | 324 | Engine Tuning | 32 | 20057 | 28 | 97517 | 6651.3 |
+| 589 | 324 | Auto Sorters | 21 | 8385 | 29 | 89132 | 6651.3 |
+| 590 | 324 | Auto Sorters | 22 | 10330 | 29 | 78802 | 6651.3 |
+| 591 | 325 | Cargo Pods | 42 | 120829 | 28 | 41109 | 6678.2 |
+| 592 | 325 | Depth Scanner | 19 | 7168 | 29 | 33941 | 6678.2 |
+| 593 | 325 | Engine Tuning | 33 | 23828 | 30 | 10113 | 6678.2 |
+| 594 | 326 | Engine Tuning | 34 | 28282 | 29 | 56375 | 6702.6 |
+| 595 | 326 | Auto Sorters | 23 | 12700 | 30 | 43675 | 6702.6 |
+| 596 | 326 | Engine Tuning | 35 | 33539 | 30 | 10136 | 6702.6 |
+| 597 | 327 | Auto Sorters | 24 | 15585 | 29 | 69959 | 6726.1 |
+| 598 | 327 | XP Calibration | 28 | 30763 | 30 | 39196 | 6726.1 |
+| 599 | 328 | Engine Tuning | 36 | 39741 | 29 | 72842 | 6754.7 |
+| 600 | 328 | Salvage Drone | 27 | 23087 | 30 | 49755 | 6754.7 |
+| 601 | 328 | Engine Tuning | 37 | 47053 | 29 | 2702 | 6754.7 |
+| 602 | 329 | XP Calibration | 29 | 37470 | 29 | 40640 | 6781.2 |
+| 603 | 329 | Salvage Drone | 28 | 28060 | 30 | 12580 | 6781.2 |
+| 604 | 330 | Engine Tuning | 38 | 55670 | 29 | 34969 | 6808.0 |
+| 605 | 330 | Timer Reserve | 25 | 4942 | 30 | 30027 | 6808.0 |
+| 606 | 330 | Auto Sorters | 25 | 19092 | 30 | 10935 | 6808.0 |
+| 607 | 331 | Engine Tuning | 39 | 65819 | 29 | 18872 | 6832.0 |
+| 608 | 332 | Timer Reserve | 26 | 5900 | 29 | 89244 | 6859.1 |
+| 609 | 332 | Route Planner | 29 | 29646 | 29 | 59598 | 6859.1 |
+| 610 | 332 | Delivery Drone | 20 | 7052 | 29 | 52546 | 6859.1 |
+| 611 | 333 | Delivery Drone | 21 | 8707 | 29 | 130431 | 6887.8 |
+| 612 | 334 | Depth Scanner | 20 | 8918 | 29 | 196941 | 6914.2 |
+| 613 | 334 | Cargo Pods | 43 | 142757 | 29 | 54184 | 6914.2 |
+| 614 | 335 | Delivery Drone | 22 | 10727 | 30 | 139989 | 6940.3 |
+| 615 | 336 | Salvage Drone | 29 | 34060 | 30 | 200541 | 6968.6 |
+| 616 | 336 | Cargo Compressor | 39 | 171031 | 29 | 29510 | 6968.6 |
+| 617 | 336 | Depth Scanner | 21 | 11068 | 30 | 18442 | 6968.6 |
+| 618 | 337 | Depth Scanner | 22 | 13706 | 21 | 98440 | 6999.3 |
+| 619 | 338 | Delivery Drone | 23 | 13189 | 30 | 174201 | 7023.8 |
+| 620 | 338 | Delivery Drone | 24 | 16184 | 30 | 158017 | 7023.8 |
+| 621 | 338 | Delivery Drone | 25 | 19826 | 29 | 138191 | 7023.8 |
+| 622 | 339 | Drill Plating | 47 | 193534 | 30 | 37010 | 7050.5 |
+| 623 | 339 | Depth Scanner | 23 | 16937 | 30 | 20073 | 7050.5 |
+| 624 | 340 | Seismic Sonar | 27 | 37557 | 30 | 60641 | 7076.8 |
+| 625 | 340 | Depth Scanner | 24 | 20889 | 30 | 39752 | 7076.8 |
+| 626 | 340 | Auto Sorters | 26 | 23350 | 29 | 16402 | 7076.8 |
+| 627 | 341 | Delivery Drone | 26 | 24248 | 30 | 73702 | 7099.9 |
+| 628 | 341 | Seismic Sonar | 28 | 46037 | 30 | 27665 | 7099.9 |
+| 629 | 342 | Auto Sorters | 27 | 28515 | 30 | 76035 | 7123.4 |
+| 630 | 342 | Auto Sorters | 28 | 34776 | 29 | 41259 | 7123.4 |
+| 631 | 343 | Depth Scanner | 25 | 25720 | 30 | 93684 | 7148.7 |
+| 632 | 343 | Depth Scanner | 26 | 31617 | 29 | 62067 | 7148.7 |
+| 633 | 344 | Auto Sorters | 29 | 42357 | 22 | 119651 | 7180.0 |
+| 634 | 345 | XP Calibration | 30 | 45584 | 22 | 163769 | 7211.1 |
+| 635 | 345 | Dirt Softener | 36 | 160030 | 23 | 3739 | 7211.1 |
+| 636 | 346 | Engine Tuning | 40 | 77768 | 21 | 27043 | 7242.0 |
+| 637 | 347 | Seismic Sonar | 29 | 56359 | 21 | 57459 | 7271.6 |
+| 638 | 348 | Vacuum Scoop | 40 | 109884 | 23 | 43994 | 7302.1 |
+| 639 | 348 | Timer Reserve | 27 | 7034 | 24 | 36960 | 7302.1 |
+| 640 | 348 | Delivery Drone | 27 | 29612 | 24 | 7348 | 7302.1 |
+| 641 | 349 | XP Calibration | 31 | 55394 | 22 | 49039 | 7333.0 |
+| 642 | 349 | Route Planner | 30 | 35882 | 22 | 13157 | 7333.0 |
+| 643 | 349 | Timer Reserve | 28 | 8374 | 23 | 4783 | 7333.0 |
+| 644 | 350 | Salvage Drone | 30 | 41295 | 32 | 47268 | 7358.3 |
+| 645 | 350 | Depth Scanner | 27 | 38809 | 32 | 8459 | 7358.3 |
+| 646 | 351 | Seismic Sonar | 30 | 68913 | 22 | 49050 | 7390.5 |
+| 647 | 352 | Auto Sorters | 30 | 51530 | 21 | 97360 | 7421.0 |
+| 648 | 353 | Dirt Softener | 37 | 193094 | 22 | 1371 | 7453.3 |
+| 649 | 354 | XP Calibration | 32 | 67244 | 21 | 31212 | 7484.6 |
+| 650 | 354 | Timer Reserve | 29 | 9956 | 22 | 21256 | 7484.6 |
+| 651 | 355 | XP Calibration | 33 | 81551 | 22 | 39609 | 7517.1 |
+| 652 | 355 | Timer Reserve | 30 | 11824 | 21 | 27785 | 7517.1 |
+| 653 | 355 | Timer Reserve | 31 | 14027 | 21 | 13758 | 7517.1 |
+| 654 | 356 | Engine Tuning | 41 | 91829 | 22 | 33644 | 7550.0 |
+| 655 | 357 | XP Calibration | 34 | 98810 | 21 | 43186 | 7584.6 |
+| 656 | 357 | Timer Reserve | 32 | 16622 | 21 | 26564 | 7584.6 |
+| 657 | 357 | Timer Reserve | 33 | 19678 | 22 | 6886 | 7584.6 |
+| 658 | 358 | Route Planner | 31 | 43382 | 21 | 68545 | 7620.4 |
+| 659 | 359 | Engine Tuning | 42 | 108367 | 22 | 72623 | 7656.0 |
+| 660 | 360 | Timer Reserve | 34 | 23275 | 23 | 167364 | 7690.2 |
+| 661 | 361 | Foreman Bot | 37 | 240582 | 21 | 44242 | 7725.9 |
+| 662 | 361 | Timer Reserve | 35 | 27506 | 22 | 16736 | 7725.9 |
+| 663 | 362 | Vacuum Scoop | 41 | 130427 | 22 | 3915 | 7762.1 |
+| 664 | 363 | Delivery Drone | 28 | 36114 | 22 | 84133 | 7798.1 |
+| 665 | 363 | Delivery Drone | 29 | 43986 | 22 | 40147 | 7798.1 |
+| 666 | 364 | Depth Scanner | 28 | 47571 | 22 | 117376 | 7834.2 |
+| 667 | 365 | Engine Tuning | 43 | 127811 | 22 | 94889 | 7870.9 |
+| 668 | 366 | Route Planner | 32 | 52394 | 23 | 158087 | 7907.7 |
+| 669 | 366 | Timer Reserve | 36 | 32479 | 22 | 125608 | 7907.7 |
+| 670 | 367 | Timer Reserve | 37 | 38321 | 23 | 194903 | 7944.4 |
+| 671 | 367 | Route Planner | 33 | 63217 | 24 | 131686 | 7944.4 |
+| 672 | 367 | Salvage Drone | 31 | 50011 | 24 | 81675 | 7944.4 |
+| 673 | 368 | Route Planner | 34 | 76205 | 22 | 122226 | 7981.3 |
+| 674 | 369 | XP Calibration | 35 | 119618 | 23 | 124964 | 8019.7 |
+| 675 | 369 | Timer Reserve | 38 | 45182 | 24 | 79782 | 8019.7 |
+| 676 | 370 | Timer Reserve | 39 | 53234 | 24 | 151816 | 8057.4 |
+| 677 | 371 | Cooling Loop | 46 | 225112 | 22 | 59856 | 8097.1 |
+| 678 | 371 | Delivery Drone | 30 | 53512 | 21 | 6344 | 8097.1 |
+| 679 | 372 | Timer Reserve | 40 | 62680 | 24 | 76336 | 8137.3 |
+| 680 | 372 | Depth Scanner | 29 | 58237 | 23 | 18099 | 8137.3 |
+| 681 | 373 | Timer Reserve | 41 | 73755 | 24 | 77892 | 8178.2 |
+| 682 | 374 | Auto Sorters | 31 | 62619 | 24 | 149473 | 8218.1 |
+| 683 | 374 | Route Planner | 35 | 91782 | 24 | 57691 | 8218.1 |
+| 684 | 375 | Depth Scanner | 30 | 71210 | 23 | 118357 | 8258.4 |
+| 685 | 376 | Dirt Softener | 38 | 232819 | 23 | 9398 | 8298.8 |
+| 686 | 377 | Timer Reserve | 42 | 86736 | 24 | 65330 | 8340.3 |
+| 687 | 378 | Vacuum Scoop | 42 | 154719 | 24 | 38867 | 8379.0 |
+| 688 | 379 | Route Planner | 36 | 110453 | 24 | 61050 | 8419.7 |
+| 689 | 380 | Timer Reserve | 43 | 101944 | 24 | 91042 | 8461.1 |
+| 690 | 381 | Salvage Drone | 32 | 60504 | 24 | 163874 | 8501.5 |
+| 691 | 382 | Auto Sorters | 32 | 76015 | 24 | 219795 | 8541.7 |
+| 692 | 383 | Ore Refinery | 42 | 246214 | 24 | 113621 | 8583.8 |
+| 693 | 384 | Drill Plating | 48 | 226904 | 24 | 20733 | 8624.2 |
+| 694 | 385 | Route Planner | 37 | 132820 | 25 | 21977 | 8666.1 |
+| 695 | 386 | Route Planner | 38 | 159599 | 24 | 5338 | 8710.7 |
+| 696 | 387 | XP Calibration | 36 | 144690 | 24 | 4148 | 8752.9 |
+| 697 | 388 | Salvage Drone | 33 | 73127 | 24 | 66441 | 8793.1 |
+| 698 | 389 | Delivery Drone | 31 | 65027 | 24 | 135702 | 8833.2 |
+| 699 | 389 | Delivery Drone | 32 | 78939 | 24 | 56763 | 8833.2 |
+| 700 | 390 | Seismic Sonar | 31 | 84170 | 24 | 108785 | 8874.2 |
+| 701 | 390 | Auto Sorters | 33 | 92188 | 23 | 16597 | 8874.2 |
+| 702 | 391 | Delivery Drone | 33 | 95733 | 25 | 53872 | 8914.6 |
+| 703 | 392 | Salvage Drone | 34 | 88302 | 25 | 94486 | 8953.9 |
+| 704 | 392 | Depth Scanner | 31 | 86976 | 25 | 7510 | 8953.9 |
+| 705 | 393 | Salvage Drone | 35 | 106533 | 25 | 31633 | 8994.3 |
+| 706 | 394 | Auto Sorters | 34 | 111698 | 25 | 53711 | 9034.2 |
+| 707 | 395 | Seismic Sonar | 32 | 102699 | 25 | 74192 | 9073.3 |
+| 708 | 396 | Route Planner | 39 | 191645 | 25 | 4227 | 9112.5 |
+| 709 | 397 | Salvage Drone | 36 | 128425 | 25 | 1286 | 9153.9 |
+| 710 | 398 | Timer Reserve | 44 | 119753 | 25 | 3177 | 9195.5 |
+| 711 | 399 | Depth Scanner | 32 | 106122 | 25 | 19483 | 9236.6 |
+| 712 | 400 | Seismic Sonar | 33 | 125183 | 25 | 16772 | 9278.3 |
+| 713 | 401 | Timer Reserve | 45 | 140601 | 25 | 5067 | 9319.7 |
+| 714 | 402 | Delivery Drone | 34 | 115994 | 25 | 12793 | 9361.5 |
+| 715 | 403 | Auto Sorters | 35 | 135220 | 25 | 8725 | 9402.9 |
+| 716 | 404 | Depth Scanner | 33 | 129356 | 26 | 21 | 9444.7 |
+| 717 | 406 | Engine Tuning | 44 | 150662 | 26 | 81635 | 9524.5 |
+| 718 | 407 | Auto Sorters | 36 | 163562 | 26 | 27321 | 9562.9 |
+| 719 | 408 | Delivery Drone | 35 | 140421 | 26 | 7532 | 9603.1 |
+| 720 | 410 | Cargo Pods | 44 | 168573 | 26 | 75635 | 9681.7 |
+| 721 | 411 | Timer Reserve | 46 | 164997 | 29 | 12862 | 9719.6 |
+| 722 | 413 | Vacuum Scoop | 43 | 183430 | 29 | 43656 | 9798.2 |
+| 723 | 415 | Seismic Sonar | 34 | 152450 | 29 | 96596 | 9874.0 |
+| 724 | 416 | Timer Reserve | 47 | 193534 | 29 | 5286 | 9910.5 |
+| 725 | 418 | Cargo Compressor | 40 | 204886 | 29 | 5768 | 9988.2 |
+| 726 | 420 | Delivery Drone | 36 | 169853 | 29 | 42095 | 10061.3 |
+| 727 | 422 | Seismic Sonar | 35 | 185496 | 29 | 64527 | 10140.9 |
+| 728 | 423 | XP Calibration | 37 | 174882 | 28 | 1412 | 10181.7 |
+| 729 | 425 | Depth Scanner | 34 | 157532 | 29 | 50904 | 10254.2 |
+| 730 | 427 | Engine Tuning | 45 | 177507 | 29 | 80464 | 10334.1 |
+| 731 | 428 | Salvage Drone | 37 | 154694 | 29 | 29282 | 10370.4 |
+| 732 | 430 | Cargo Pods | 45 | 198954 | 29 | 33856 | 10449.7 |
+| 733 | 432 | XP Calibration | 38 | 211219 | 29 | 28877 | 10529.3 |
+| 734 | 434 | Auto Sorters | 37 | 197692 | 29 | 35033 | 10604.6 |
+| 735 | 436 | Vacuum Scoop | 44 | 217352 | 29 | 22937 | 10680.2 |
+| 736 | 438 | Salvage Drone | 38 | 186202 | 29 | 48205 | 10755.7 |
+| 737 | 440 | Route Planner | 40 | 229974 | 30 | 30342 | 10827.6 |
+| 738 | 442 | Delivery Drone | 37 | 205296 | 30 | 44308 | 10899.4 |
+| 739 | 444 | Timer Reserve | 48 | 226904 | 30 | 38633 | 10973.0 |
+| 740 | 446 | Cargo Compressor | 41 | 245289 | 29 | 11828 | 11045.2 |
+| 741 | 448 | Seismic Sonar | 36 | 225521 | 30 | 25151 | 11124.6 |
+| 742 | 450 | Vacuum Scoop | 45 | 257414 | 30 | 2113 | 11206.0 |
+| 743 | 452 | Engine Tuning | 46 | 209033 | 29 | 15232 | 11282.9 |
+| 744 | 454 | Auto Sorters | 38 | 238770 | 30 | 8638 | 11361.2 |
+
+## Run Breakdown
+
+| Run | Depth | Time (s) | Money | XP | Reason | Wallet Before Spend | Purchases After Run | Wallet After Spend |
+|---:|---:|---:|---:|---:|---|---:|---|---:|
+| 1 | 1 | 22.55 | 63 | 54 | Timer expired. | 63 | - | 63 |
+| 2 | 1 | 24.70 | 63 | 54 | Timer expired. | 126 | cargo_pods 1 | 99 |
+| 3 | 1 | 23.94 | 63 | 60 | Timer expired. | 162 | drill_torque 1 | 136 |
+| 4 | 1 | 22.08 | 70 | 60 | Timer expired. | 206 | cargo_pods 2, cargo_pods 3 | 139 |
+| 5 | 1 | 23.29 | 77 | 72 | Timer expired. | 216 | cargo_pods 4 | 175 |
+| 6 | 1 | 23.27 | 63 | 54 | Timer expired. | 238 | drill_torque 2, cargo_pods 5 | 160 |
+| 7 | 1 | 23.69 | 70 | 60 | Timer expired. | 230 | cargo_pods 6 | 131 |
+| 8 | 1 | 22.23 | 77 | 66 | Timer expired. | 208 | cargo_pods 7, pickup_radius 1, engine_tuning 1 | 18 |
+| 9 | 1 | 23.18 | 84 | 78 | Timer expired. | 102 | - | 102 |
+| 10 | 1 | 23.08 | 77 | 66 | Timer expired. | 179 | timer_reserve 1, drill_torque 3 | 120 |
+| 11 | 1 | 24.59 | 84 | 78 | Timer expired. | 204 | cargo_pods 8, drill_plating 1 | 3 |
+| 12 | 2 | 23.07 | 139 | 114 | Timer expired. | 142 | drill_torque 4 | 102 |
+| 13 | 2 | 23.31 | 131 | 108 | Timer expired. | 233 | cargo_pods 9 | 4 |
+| 14 | 2 | 23.11 | 128 | 114 | Timer expired. | 132 | - | 132 |
+| 15 | 2 | 22.91 | 127 | 105 | Timer expired. | 259 | ore_refinery 1 | 223 |
+| 16 | 2 | 22.22 | 127 | 105 | Timer expired. | 350 | drill_torque 5, cargo_pods 10 | 10 |
+| 17 | 2 | 23.62 | 124 | 111 | Timer expired. | 134 | ore_refinery 2, ore_refinery 3 | 43 |
+| 18 | 2 | 22.33 | 168 | 126 | Timer expired. | 211 | - | 211 |
+| 19 | 2 | 23.41 | 128 | 105 | Timer expired. | 339 | drill_torque 6 | 242 |
+| 20 | 2 | 22.27 | 152 | 114 | Timer expired. | 394 | drill_plating 2 | 366 |
+| 21 | 2 | 23.33 | 168 | 126 | Timer expired. | 534 | timer_reserve 2, engine_tuning 2, cargo_compressor 1 | 436 |
+| 22 | 3 | 22.59 | 196 | 149 | Timer expired. | 632 | ore_refinery 4 | 575 |
+| 23 | 3 | 23.57 | 162 | 131 | Timer expired. | 737 | pickup_radius 2, cargo_compressor 2, drill_torque 7 | 525 |
+| 24 | 3 | 21.77 | 154 | 119 | Timer expired. | 679 | cargo_pods 11 | 306 |
+| 25 | 3 | 22.29 | 190 | 140 | Timer expired. | 496 | drill_torque 8 | 324 |
+| 26 | 2 | 23.26 | 196 | 147 | Timer expired. | 520 | ore_refinery 5 | 453 |
+| 27 | 3 | 22.28 | 188 | 136 | Timer expired. | 641 | drill_torque 9, ore_refinery 6 | 277 |
+| 28 | 3 | 23.08 | 248 | 172 | Timer expired. | 525 | cargo_compressor 3, ore_refinery 7 | 280 |
+| 29 | 3 | 22.28 | 227 | 161 | Timer expired. | 507 | cooling_loop 1 | 479 |
+| 30 | 2 | 23.10 | 195 | 132 | Timer expired. | 674 | cargo_pods 12 | 204 |
+| 31 | 3 | 22.55 | 207 | 148 | Timer expired. | 411 | pickup_radius 3 | 371 |
+| 32 | 3 | 21.73 | 261 | 183 | Timer expired. | 632 | cargo_pods 13 | 45 |
+| 33 | 4 | 22.35 | 236 | 159 | Timer expired. | 281 | engine_tuning 3, timer_reserve 3 | 214 |
+| 34 | 4 | 22.87 | 333 | 233 | Timer expired. | 547 | - | 547 |
+| 35 | 4 | 22.24 | 298 | 199 | Timer expired. | 845 | pickup_radius 4 | 798 |
+| 36 | 4 | 24.25 | 307 | 212 | Timer expired. | 1105 | magnet_drone 1 | 1059 |
+| 37 | 4 | 22.81 | 363 | 234 | Timer expired. | 1422 | cargo_compressor 4, cargo_pods 14 | 628 |
+| 38 | 4 | 21.60 | 295 | 188 | Timer expired. | 923 | drill_torque 10, magnet_drone 2, drill_torque 11 | 215 |
+| 39 | 4 | 22.22 | 350 | 220 | Timer expired. | 565 | xp_calibration 1, drill_torque 12 | 58 |
+| 40 | 3 | 23.07 | 329 | 214 | Timer expired. | 387 | dirt_softener 1, timer_reserve 4, engine_tuning 4 | 257 |
+| 41 | 4 | 22.59 | 311 | 204 | Timer expired. | 568 | magnet_drone 3, xp_calibration 2, ore_refinery 8 | 198 |
+| 42 | 4 | 22.38 | 328 | 223 | Timer expired. | 526 | pickup_radius 5, engine_tuning 5 | 426 |
+| 43 | 4 | 25.32 | 346 | 229 | Timer expired. | 772 | cooling_loop 2, xp_calibration 3, dirt_softener 2 | 613 |
+| 44 | 4 | 22.30 | 409 | 287 | Timer expired. | 1022 | ore_refinery 9, route_planner 1 | 648 |
+| 45 | 5 | 22.01 | 475 | 315 | Timer expired. | 1123 | cooling_loop 3 | 1086 |
+| 46 | 5 | 22.67 | 465 | 307 | Timer expired. | 1551 | timer_reserve 5 | 1509 |
+| 47 | 5 | 23.57 | 547 | 363 | Timer expired. | 2056 | dirt_softener 3 | 1982 |
+| 48 | 5 | 22.22 | 518 | 347 | Timer expired. | 2500 | cargo_pods 15, cargo_pods 16 | 486 |
+| 49 | 5 | 22.65 | 495 | 329 | Timer expired. | 981 | drill_plating 3, depth_scanner 1, depth_scanner 2 | 814 |
+| 50 | 6 | 22.09 | 580 | 366 | Timer expired. | 1394 | depth_scanner 3, ore_refinery 10, ore_refinery 11 | 325 |
+| 51 | 7 | 21.73 | 715 | 410 | Timer expired. | 1040 | drill_plating 4, ore_refinery 12 | 302 |
+| 52 | 6 | 23.42 | 790 | 462 | Timer expired. | 1092 | pickup_radius 6, pickup_radius 7, drill_plating 5 | 786 |
+| 53 | 7 | 20.83 | 707 | 389 | Timer expired. | 1493 | magnet_drone 4 | 1419 |
+| 54 | 8 | 20.70 | 1257 | 375 | Timer expired. | 2676 | xp_calibration 4, cargo_compressor 5 | 2527 |
+| 55 | 8 | 21.66 | 1428 | 480 | Timer expired. | 3955 | cargo_compressor 6 | 3798 |
+| 56 | 8 | 20.67 | 1380 | 443 | Timer expired. | 5178 | cargo_pods 17, foreman_bot 1, ore_refinery 13 | 2873 |
+| 57 | 8 | 20.93 | 1550 | 442 | Timer expired. | 4423 | foreman_bot 2 | 4357 |
+| 58 | 8 | 20.79 | 1620 | 483 | Timer expired. | 5977 | dirt_softener 4 | 5890 |
+| 59 | 8 | 20.45 | 1289 | 452 | Timer expired. | 7179 | foreman_bot 3, pickup_radius 8 | 6900 |
+| 60 | 8 | 21.29 | 1760 | 468 | Timer expired. | 8660 | drill_plating 6, xp_calibration 5 | 8486 |
+| 61 | 8 | 20.64 | 1821 | 518 | Timer expired. | 10307 | seismic_sonar 1, ore_refinery 14, route_planner 2 | 9085 |
+| 62 | 8 | 21.73 | 1835 | 513 | Timer expired. | 10920 | foreman_bot 4, seismic_sonar 2, drill_plating 7 | 10642 |
+| 63 | 8 | 20.78 | 2151 | 590 | Timer expired. | 12793 | ore_refinery 15, cargo_compressor 7 | 11189 |
+| 64 | 8 | 22.51 | 2402 | 604 | Timer expired. | 13591 | - | 13591 |
+| 65 | 8 | 20.79 | 2115 | 625 | Timer expired. | 15706 | pickup_radius 9, ore_refinery 16, foreman_bot 5 | 13605 |
+| 66 | 9 | 20.19 | 2277 | 581 | Timer expired. | 15882 | drill_torque 13, ore_refinery 17, cooling_loop 4 | 13119 |
+| 67 | 9 | 20.59 | 2330 | 582 | Timer expired. | 15449 | drill_plating 8, ore_refinery 18, depth_scanner 4 | 12550 |
+| 68 | 9 | 20.55 | 2726 | 599 | Timer expired. | 15276 | cooling_loop 5 | 15227 |
+| 69 | 9 | 20.87 | 2517 | 577 | Timer expired. | 17744 | depth_scanner 5, drill_torque 14, drill_plating 9 | 16709 |
+| 70 | 10 | 19.72 | 2828 | 650 | Timer expired. | 19537 | foreman_bot 6 | 19306 |
+| 71 | 10 | 19.32 | 3143 | 657 | Timer expired. | 22449 | depth_scanner 6 | 22192 |
+| 72 | 11 | 16.45 | 2664 | 507 | Drill health depleted. | 24856 | drill_torque 15, ore_refinery 19, pickup_radius 10 | 20372 |
+| 73 | 11 | 20.05 | 3442 | 640 | Timer expired. | 23814 | drill_plating 10, dirt_softener 5, drill_plating 11 | 23147 |
+| 74 | 10 | 19.55 | 3704 | 724 | Timer expired. | 26851 | route_planner 3 | 26794 |
+| 75 | 12 | 19.04 | 3424 | 455 | Timer expired. | 30218 | delivery_drone 1, pickup_radius 11, seismic_sonar 3 | 29651 |
+| 76 | 12 | 19.64 | 5041 | 636 | Timer expired. | 34692 | cargo_pods 18, magnet_drone 5 | 32941 |
+| 77 | 12 | 18.11 | 3863 | 617 | Drill health depleted. | 36804 | foreman_bot 7, drill_torque 16, pickup_radius 12 | 34847 |
+| 78 | 12 | 17.81 | 4564 | 654 | Drill health depleted. | 39411 | delivery_drone 2, foreman_bot 8 | 38919 |
+| 79 | 10 | 19.37 | 3771 | 809 | Timer expired. | 42690 | drill_torque 17 | 41341 |
+| 80 | 12 | 19.01 | 5669 | 743 | Timer expired. | 47010 | cargo_compressor 8, pickup_radius 13, pickup_radius 14 | 45197 |
+| 81 | 11 | 19.10 | 4436 | 817 | Timer expired. | 49633 | drill_plating 12 | 49239 |
+| 82 | 12 | 19.94 | 5204 | 756 | Timer expired. | 54443 | ore_refinery 20, ore_refinery 21, pickup_radius 15 | 44500 |
+| 83 | 12 | 18.31 | 4480 | 634 | Timer expired. | 48980 | cargo_pods 19 | 46953 |
+| 84 | 12 | 16.34 | 5244 | 719 | Drill health depleted. | 52197 | drill_plating 13, ore_refinery 22, cargo_pods 20 | 43267 |
+| 85 | 13 | 15.99 | 5946 | 632 | Drill health depleted. | 49213 | cooling_loop 6, drill_plating 14 | 48505 |
+| 86 | 12 | 20.12 | 6668 | 868 | Timer expired. | 55173 | ore_refinery 23, route_planner 4, xp_calibration 6 | 47633 |
+| 87 | 13 | 18.22 | 6396 | 713 | Timer expired. | 54029 | drill_torque 18, ore_refinery 24, seismic_sonar 4 | 43414 |
+| 88 | 13 | 17.02 | 6480 | 735 | Drill health depleted. | 49894 | dirt_softener 6, cooling_loop 7, cooling_loop 8 | 49359 |
+| 89 | 13 | 19.15 | 8407 | 870 | Timer expired. | 57766 | drill_torque 19 | 55752 |
+| 90 | 12 | 18.43 | 8529 | 931 | Timer expired. | 64281 | dirt_softener 7, drill_torque 20, drill_plating 15 | 60787 |
+| 91 | 12 | 20.08 | 8049 | 1000 | Timer expired. | 68836 | drill_torque 21, foreman_bot 9, cargo_compressor 9 | 64919 |
+| 92 | 13 | 19.85 | 8924 | 960 | Timer expired. | 73843 | drill_torque 22, foreman_bot 10, drill_torque 23 | 65141 |
+| 93 | 13 | 18.62 | 10146 | 1045 | Timer expired. | 75287 | foreman_bot 11, foreman_bot 12 | 73075 |
+| 94 | 13 | 18.27 | 10683 | 1090 | Timer expired. | 83758 | magnet_drone 6, drill_plating 16, xp_calibration 7 | 82406 |
+| 95 | 13 | 18.09 | 11568 | 1242 | Timer expired. | 93974 | drill_plating 17, pickup_radius 16 | 91560 |
+| 96 | 12 | 19.96 | 12038 | 1462 | Timer expired. | 103598 | drill_plating 18, drill_torque 24, delivery_drone 3 | 96917 |
+| 97 | 14 | 17.74 | 12494 | 1351 | Timer expired. | 109411 | foreman_bot 13 | 107819 |
+| 98 | 13 | 19.67 | 12875 | 1409 | Timer expired. | 120694 | delivery_drone 4, engine_tuning 6 | 120511 |
+| 99 | 14 | 17.90 | 11697 | 1218 | Timer expired. | 132208 | cooling_loop 9, drill_torque 25, auto_sorters 1 | 125598 |
+| 100 | 14 | 18.93 | 12182 | 1317 | Timer expired. | 137780 | auto_sorters 2, pickup_radius 17, route_planner 5 | 136040 |
+| 101 | 14 | 17.66 | 12354 | 1340 | Timer expired. | 148394 | cargo_compressor 10 | 147909 |
+| 102 | 13 | 18.33 | 12978 | 1357 | Timer expired. | 160887 | magnet_drone 7 | 160637 |
+| 103 | 14 | 18.62 | 12775 | 1349 | Timer expired. | 173412 | drill_torque 26 | 165808 |
+| 104 | 13 | 18.76 | 13864 | 1519 | Timer expired. | 179672 | dirt_softener 8, cooling_loop 10 | 178974 |
+| 105 | 14 | 18.12 | 12611 | 1366 | Timer expired. | 191585 | drill_plating 19 | 189944 |
+| 106 | 14 | 17.65 | 13464 | 1405 | Timer expired. | 203408 | cargo_pods 21, drill_torque 27, foreman_bot 14 | 189273 |
+| 107 | 13 | 18.60 | 14173 | 1528 | Timer expired. | 203446 | ore_refinery 25, engine_tuning 7, dirt_softener 9 | 192024 |
+| 108 | 13 | 18.23 | 14980 | 1551 | Timer expired. | 207004 | pickup_radius 18, pickup_radius 19, route_planner 6 | 202480 |
+| 109 | 13 | 18.63 | 13146 | 1459 | Timer expired. | 215626 | xp_calibration 8, pickup_radius 20, dirt_softener 10 | 211675 |
+| 110 | 14 | 18.49 | 13564 | 1437 | Timer expired. | 225239 | drill_plating 20 | 223256 |
+| 111 | 13 | 19.68 | 16000 | 1733 | Timer expired. | 239256 | ore_refinery 26 | 226198 |
+| 112 | 13 | 19.92 | 16228 | 1728 | Timer expired. | 242426 | cargo_pods 22, foreman_bot 15, cooling_loop 11 | 235881 |
+| 113 | 14 | 18.21 | 15456 | 1646 | Timer expired. | 251337 | foreman_bot 16, drill_plating 21, drill_torque 28 | 234786 |
+| 114 | 14 | 18.05 | 14908 | 1605 | Timer expired. | 249694 | route_planner 7, drill_plating 22, pickup_radius 21 | 243041 |
+| 115 | 12 | 19.75 | 15831 | 1816 | Timer expired. | 258872 | drill_torque 29, ore_refinery 27, pickup_radius 22 | 225649 |
+| 116 | 16 | 17.05 | 14323 | 1448 | Timer expired. | 239972 | foreman_bot 17, drill_torque 30, ore_refinery 28 | 201152 |
+| 117 | 15 | 17.97 | 19200 | 1889 | Timer expired. | 220352 | - | 220352 |
+| 118 | 14 | 18.34 | 18190 | 1831 | Timer expired. | 238542 | ore_refinery 29, cooling_loop 12, depth_scanner 7 | 214621 |
+| 119 | 14 | 19.40 | 18874 | 1903 | Timer expired. | 233495 | cargo_pods 23, seismic_sonar 5 | 229025 |
+| 120 | 17 | 18.06 | 16805 | 1638 | Timer expired. | 245830 | drill_plating 23, xp_calibration 9, pickup_radius 23 | 236707 |
+| 121 | 16 | 17.34 | 16356 | 1631 | Timer expired. | 253063 | timer_reserve 6, engine_tuning 8, ore_refinery 30 | 224960 |
+| 122 | 15 | 19.34 | 19344 | 1903 | Timer expired. | 244304 | seismic_sonar 6, cooling_loop 13 | 243458 |
+| 123 | 16 | 17.69 | 17835 | 1736 | Timer expired. | 261293 | auto_sorters 3, xp_calibration 10 | 260627 |
+| 124 | 16 | 18.45 | 18264 | 1829 | Timer expired. | 278891 | auto_sorters 4, cooling_loop 14, engine_tuning 9 | 277848 |
+| 125 | 13 | 19.60 | 20137 | 2080 | Timer expired. | 297985 | auto_sorters 5, ore_refinery 31, ore_refinery 32 | 223946 |
+| 126 | 15 | 18.86 | 20682 | 1992 | Timer expired. | 244628 | seismic_sonar 7, cargo_compressor 11, foreman_bot 18 | 238618 |
+| 127 | 14 | 19.73 | 23847 | 2310 | Timer expired. | 262465 | - | 262465 |
+| 128 | 13 | 19.05 | 19459 | 1947 | Timer expired. | 281924 | drill_torque 31, seismic_sonar 8, foreman_bot 19 | 256465 |
+| 129 | 16 | 20.33 | 21831 | 2091 | Timer expired. | 278296 | dirt_softener 11 | 277410 |
+| 130 | 17 | 17.88 | 19923 | 1912 | Timer expired. | 297333 | timer_reserve 7, route_planner 8 | 296915 |
+| 131 | 14 | 20.14 | 21576 | 2082 | Timer expired. | 318491 | timer_reserve 8, route_planner 9 | 317942 |
+| 132 | 14 | 20.57 | 24681 | 2387 | Timer expired. | 342623 | - | 342623 |
+| 133 | 15 | 20.99 | 23604 | 2271 | Timer expired. | 366227 | - | 366227 |
+| 134 | 14 | 21.73 | 23904 | 2336 | Timer expired. | 390131 | cargo_pods 24, ore_refinery 33, magnet_drone 8 | 335994 |
+| 135 | 15 | 19.58 | 24027 | 2263 | Timer expired. | 360021 | - | 360021 |
+| 136 | 15 | 19.78 | 21183 | 2008 | Timer expired. | 381204 | ore_refinery 34, ore_refinery 35, auto_sorters 6 | 252632 |
+| 137 | 14 | 21.28 | 23848 | 2176 | Timer expired. | 276480 | delivery_drone 5 | 276377 |
+| 138 | 14 | 21.09 | 24498 | 2295 | Timer expired. | 300875 | cooling_loop 15, engine_tuning 10 | 299683 |
+| 139 | 14 | 21.33 | 26233 | 2396 | Timer expired. | 325916 | foreman_bot 20 | 318116 |
+| 140 | 14 | 21.32 | 23436 | 2134 | Timer expired. | 341552 | seismic_sonar 9, drill_torque 32, foreman_bot 21 | 308938 |
+| 141 | 16 | 19.05 | 23485 | 2138 | Timer expired. | 332423 | xp_calibration 11, drill_plating 24 | 327523 |
+| 142 | 15 | 21.49 | 26815 | 2524 | Timer expired. | 354338 | drill_plating 25 | 349396 |
+| 143 | 15 | 19.81 | 25110 | 2346 | Timer expired. | 374506 | foreman_bot 22, drill_torque 33, cooling_loop 16 | 334813 |
+| 144 | 16 | 19.59 | 26436 | 2468 | Timer expired. | 361249 | - | 361249 |
+| 145 | 16 | 19.59 | 25809 | 2420 | Timer expired. | 387058 | timer_reserve 9, depth_scanner 8 | 386383 |
+| 146 | 16 | 20.45 | 23485 | 2199 | Timer expired. | 409868 | magnet_drone 9, drill_torque 34, ore_refinery 36 | 293737 |
+| 147 | 13 | 20.79 | 26980 | 2512 | Timer expired. | 320717 | drill_plating 26, ore_refinery 37, auto_sorters 7 | 213887 |
+| 148 | 15 | 19.91 | 26045 | 2354 | Timer expired. | 239932 | drill_torque 35 | 202198 |
+| 149 | 21 | 17.55 | 25376 | 1693 | Timer expired. | 227574 | - | 227574 |
+| 150 | 17 | 20.31 | 24403 | 2210 | Timer expired. | 251977 | drill_torque 36 | 207111 |
+| 151 | 21 | 18.45 | 26720 | 1780 | Timer expired. | 233831 | drill_torque 37, cooling_loop 17, drill_plating 27 | 172117 |
+| 152 | 21 | 16.94 | 25393 | 1701 | Timer expired. | 197510 | drill_plating 28, auto_sorters 8, foreman_bot 23 | 174010 |
+| 153 | 20 | 18.25 | 28951 | 2079 | Timer expired. | 202961 | drill_plating 29, dirt_softener 12, auto_sorters 9 | 191356 |
+| 154 | 16 | 19.83 | 26526 | 2399 | Timer expired. | 217882 | dirt_softener 13 | 216438 |
+| 155 | 21 | 17.29 | 26272 | 1751 | Timer expired. | 242710 | ore_refinery 38 | 122191 |
+| 156 | 21 | 17.40 | 26280 | 1722 | Timer expired. | 148471 | ore_refinery 39, magnet_drone 10, engine_tuning 11 | 3319 |
+| 157 | 21 | 18.82 | 30873 | 2070 | Timer expired. | 34192 | pickup_radius 24, depth_scanner 9 | 27248 |
+| 158 | 17 | 19.97 | 30444 | 2641 | Timer expired. | 57692 | - | 57692 |
+| 159 | 21 | 19.97 | 30873 | 2070 | Timer expired. | 88565 | drill_plating 30, cargo_compressor 12, delivery_drone 6 | 75727 |
+| 160 | 22 | 16.69 | 26865 | 1818 | Timer expired. | 102592 | drill_plating 31, route_planner 10, timer_reserve 10 | 87798 |
+| 161 | 18 | 20.47 | 33276 | 2872 | Timer expired. | 121074 | cargo_compressor 13, delivery_drone 7, engine_tuning 12 | 119324 |
+| 162 | 21 | 19.83 | 33892 | 2167 | Timer expired. | 153216 | delivery_drone 8, drill_torque 38 | 89525 |
+| 163 | 22 | 17.36 | 27856 | 1780 | Timer expired. | 117381 | auto_sorters 10 | 116710 |
+| 164 | 22 | 17.08 | 30002 | 1976 | Timer expired. | 146712 | magnet_drone 11 | 145970 |
+| 165 | 22 | 17.73 | 29872 | 1904 | Timer expired. | 175842 | foreman_bot 24, seismic_sonar 10, xp_calibration 12 | 155899 |
+| 166 | 20 | 20.40 | 34244 | 2436 | Timer expired. | 190143 | delivery_drone 9 | 189610 |
+| 167 | 20 | 18.31 | 32534 | 2153 | Timer expired. | 222144 | cooling_loop 18, dirt_softener 14, foreman_bot 25 | 196337 |
+| 168 | 21 | 19.81 | 33462 | 2213 | Timer expired. | 229799 | delivery_drone 10, dirt_softener 15, route_planner 11 | 226140 |
+| 169 | 21 | 17.55 | 33445 | 2204 | Timer expired. | 259585 | route_planner 12, ore_refinery 40, cooling_loop 19 | 84222 |
+| 170 | 21 | 21.12 | 34468 | 2225 | Timer expired. | 118690 | cargo_compressor 14 | 117425 |
+| 171 | 20 | 19.50 | 35810 | 2508 | Timer expired. | 153235 | cooling_loop 20 | 150764 |
+| 172 | 20 | 19.27 | 33634 | 2218 | Timer expired. | 184398 | drill_plating 32, magnet_drone 12, cargo_pods 25 | 160527 |
+| 173 | 21 | 21.33 | 35871 | 2502 | Timer expired. | 196398 | cooling_loop 21, cooling_loop 22 | 189802 |
+| 174 | 23 | 17.56 | 32124 | 2058 | Timer expired. | 221926 | ore_refinery 41 | 15792 |
+| 175 | 15 | 21.21 | 36310 | 3172 | Timer expired. | 52102 | foreman_bot 26, engine_tuning 13, xp_calibration 13 | 22919 |
+| 176 | 20 | 18.85 | 33270 | 2453 | Timer expired. | 56189 | cooling_loop 23, dirt_softener 16, foreman_bot 27 | 15426 |
+| 177 | 22 | 18.39 | 38240 | 2473 | Timer expired. | 53666 | cooling_loop 24 | 48443 |
+| 178 | 20 | 20.92 | 38480 | 2615 | Timer expired. | 86923 | cargo_compressor 15, foreman_bot 28 | 44293 |
+| 179 | 21 | 18.71 | 36280 | 2345 | Timer expired. | 80573 | drill_torque 39 | 5487 |
+| 180 | 20 | 20.62 | 45345 | 3045 | Timer expired. | 50832 | foreman_bot 29, timer_reserve 11 | 352 |
+| 181 | 22 | 21.25 | 41980 | 2801 | Timer expired. | 42332 | cargo_pods 26 | 34771 |
+| 182 | 21 | 19.23 | 42560 | 2754 | Timer expired. | 77331 | dirt_softener 17, engine_tuning 14 | 73058 |
+| 183 | 21 | 19.53 | 39083 | 2645 | Timer expired. | 112141 | auto_sorters 11 | 111273 |
+| 184 | 22 | 19.74 | 37382 | 2436 | Timer expired. | 148655 | drill_torque 40, xp_calibration 14 | 58040 |
+| 185 | 22 | 17.67 | 37852 | 2504 | Timer expired. | 95892 | foreman_bot 30, delivery_drone 11 | 33754 |
+| 186 | 21 | 20.80 | 43048 | 2855 | Timer expired. | 76802 | dirt_softener 18 | 72344 |
+| 187 | 22 | 19.34 | 38918 | 2579 | Timer expired. | 111262 | drill_torque 41, timer_reserve 12, seismic_sonar 11 | 4329 |
+| 188 | 21 | 22.63 | 48840 | 3243 | Timer expired. | 53169 | depth_scanner 10 | 52331 |
+| 189 | 22 | 21.48 | 42504 | 2906 | Timer expired. | 94835 | depth_scanner 11, route_planner 13 | 92668 |
+| 190 | 23 | 21.36 | 40062 | 2654 | Timer expired. | 132730 | drill_plating 33, auto_sorters 12 | 111938 |
+| 191 | 26 | 16.98 | 29460 | 1932 | Timer expired. | 141398 | engine_tuning 15, delivery_drone 12, drill_plating 34 | 116118 |
+| 192 | 23 | 20.61 | 40568 | 2678 | Timer expired. | 156686 | drill_plating 35, drill_torque 42 | 4265 |
+| 193 | 22 | 20.07 | 43637 | 2991 | Timer expired. | 47902 | drill_plating 36, seismic_sonar 12 | 14064 |
+| 194 | 22 | 21.77 | 46156 | 3051 | Timer expired. | 60220 | dirt_softener 19, drill_plating 37, dirt_softener 20 | 9547 |
+| 195 | 23 | 19.48 | 41680 | 2750 | Timer expired. | 51227 | drill_plating 38, timer_reserve 13 | 5555 |
+| 196 | 23 | 20.84 | 48380 | 3195 | Timer expired. | 53935 | - | 53935 |
+| 197 | 24 | 20.17 | 43486 | 2873 | Timer expired. | 97421 | cargo_compressor 16, cargo_compressor 17, magnet_drone 13 | 91797 |
+| 198 | 22 | 21.60 | 46484 | 3051 | Timer expired. | 138281 | cargo_pods 27 | 129220 |
+| 199 | 22 | 21.61 | 54320 | 3565 | Timer expired. | 183540 | - | 183540 |
+| 200 | 24 | 19.30 | 42200 | 2764 | Timer expired. | 225740 | cargo_pods 28 | 214896 |
+| 201 | 25 | 19.49 | 37916 | 2472 | Timer expired. | 252812 | cargo_pods 29, drill_plating 39 | 186617 |
+| 202 | 23 | 18.78 | 41438 | 2723 | Timer expired. | 228055 | route_planner 14, cooling_loop 25 | 220430 |
+| 203 | 23 | 22.16 | 48814 | 3209 | Timer expired. | 269244 | timer_reserve 14, cooling_loop 26, pickup_radius 25 | 253522 |
+| 204 | 23 | 19.78 | 48164 | 3159 | Timer expired. | 301686 | cooling_loop 27, drill_torque 43 | 144863 |
+| 205 | 23 | 21.61 | 49816 | 3264 | Timer expired. | 194679 | depth_scanner 12 | 193275 |
+| 206 | 26 | 17.97 | 39952 | 2600 | Timer expired. | 233227 | magnet_drone 14, drill_plating 40, pickup_radius 26 | 159865 |
+| 207 | 26 | 18.95 | 40648 | 2644 | Timer expired. | 200513 | cargo_compressor 18 | 197486 |
+| 208 | 24 | 20.73 | 45140 | 2940 | Timer expired. | 242626 | drill_torque 44, dirt_softener 21, cargo_pods 30 | 43859 |
+| 209 | 25 | 20.75 | 47072 | 3060 | Timer expired. | 90931 | foreman_bot 31, engine_tuning 16 | 15222 |
+| 210 | 25 | 19.92 | 38044 | 2472 | Timer expired. | 53266 | route_planner 15, cargo_compressor 19 | 47832 |
+| 211 | 25 | 19.62 | 38868 | 2530 | Timer expired. | 86700 | cargo_pods 31 | 68249 |
+| 212 | 25 | 22.84 | 47262 | 3069 | Timer expired. | 115511 | auto_sorters 13, cargo_compressor 20, foreman_bot 32 | 18554 |
+| 213 | 27 | 17.57 | 41936 | 2696 | Timer expired. | 60490 | - | 60490 |
+| 214 | 25 | 18.29 | 48052 | 3100 | Timer expired. | 108542 | - | 108542 |
+| 215 | 26 | 18.95 | 41794 | 2697 | Timer expired. | 150336 | cooling_loop 28, cargo_compressor 21, engine_tuning 17 | 132702 |
+| 216 | 27 | 17.45 | 41664 | 2668 | Timer expired. | 174366 | - | 174366 |
+| 217 | 25 | 21.21 | 48898 | 3149 | Timer expired. | 223264 | engine_tuning 18, xp_calibration 15 | 219705 |
+| 218 | 25 | 20.73 | 45744 | 3019 | Timer expired. | 265449 | cargo_pods 32 | 243470 |
+| 219 | 31 | 16.13 | 37100 | 1920 | Timer expired. | 280570 | - | 280570 |
+| 220 | 25 | 21.95 | 48880 | 3220 | Timer expired. | 329450 | dirt_softener 22, dirt_softener 23, drill_plating 41 | 232640 |
+| 221 | 26 | 18.34 | 41216 | 2708 | Timer expired. | 273856 | drill_torque 45 | 67103 |
+| 222 | 27 | 17.46 | 41472 | 2724 | Timer expired. | 108575 | cargo_pods 33 | 82418 |
+| 223 | 32 | 15.90 | 37100 | 1920 | Timer expired. | 119518 | - | 119518 |
+| 224 | 31 | 16.89 | 37100 | 1920 | Timer expired. | 156618 | delivery_drone 13 | 155145 |
+| 225 | 30 | 18.72 | 43216 | 2384 | Timer expired. | 198361 | cargo_compressor 22, foreman_bot 33 | 80802 |
+| 226 | 26 | 19.42 | 41372 | 2708 | Timer expired. | 122174 | xp_calibration 16, xp_calibration 17, engine_tuning 19 | 114630 |
+| 227 | 28 | 17.09 | 34722 | 2388 | Timer expired. | 149352 | drill_plating 42 | 62616 |
+| 228 | 26 | 18.83 | 41372 | 2849 | Timer expired. | 103988 | route_planner 16, pickup_radius 27, cargo_compressor 23 | 82440 |
+| 229 | 32 | 18.04 | 40910 | 2349 | Timer expired. | 123350 | seismic_sonar 13, cooling_loop 29 | 108806 |
+| 230 | 27 | 19.35 | 44520 | 3046 | Timer expired. | 153326 | foreman_bot 34, timer_reserve 15, xp_calibration 18 | 14118 |
+| 231 | 26 | 22.14 | 51376 | 3614 | Timer expired. | 65494 | route_planner 17, cooling_loop 30, cooling_loop 31 | 29430 |
+| 232 | 29 | 18.50 | 44656 | 2660 | Timer expired. | 74086 | engine_tuning 20, route_planner 18 | 68519 |
+| 233 | 29 | 19.55 | 48780 | 2718 | Timer expired. | 117299 | cargo_compressor 24 | 107052 |
+| 234 | 29 | 18.99 | 44839 | 2670 | Timer expired. | 151891 | cooling_loop 32, magnet_drone 15, dirt_softener 24 | 112818 |
+| 235 | 26 | 21.86 | 52980 | 3710 | Timer expired. | 165798 | pickup_radius 28, cargo_compressor 25 | 140102 |
+| 236 | 29 | 18.89 | 49125 | 2718 | Timer expired. | 189227 | xp_calibration 19 | 184375 |
+| 237 | 29 | 17.63 | 44066 | 2982 | Timer expired. | 228441 | cargo_compressor 26, foreman_bot 35 | 49855 |
+| 238 | 20 | 22.92 | 60632 | 4499 | Timer expired. | 110487 | seismic_sonar 14, seismic_sonar 15 | 105467 |
+| 239 | 20 | 24.25 | 57046 | 4492 | Timer expired. | 162513 | cooling_loop 33, xp_calibration 20, pickup_radius 29 | 114979 |
+| 240 | 26 | 20.61 | 52660 | 3835 | Timer expired. | 167639 | pickup_radius 30, cooling_loop 34 | 118175 |
+| 241 | 29 | 18.88 | 49339 | 2857 | Timer expired. | 167514 | timer_reserve 16, dirt_softener 25, depth_scanner 13 | 145771 |
+| 242 | 30 | 17.78 | 49320 | 2847 | Timer expired. | 195091 | - | 195091 |
+| 243 | 21 | 23.93 | 67639 | 5208 | Timer expired. | 262730 | drill_torque 46 | 18412 |
+| 244 | 30 | 18.92 | 50500 | 2913 | Timer expired. | 68912 | - | 68912 |
+| 245 | 29 | 19.74 | 49339 | 2857 | Timer expired. | 118251 | engine_tuning 21, cooling_loop 35, cargo_pods 34 | 48256 |
+| 246 | 30 | 17.65 | 51699 | 2989 | Timer expired. | 99955 | - | 99955 |
+| 247 | 28 | 18.36 | 47492 | 3441 | Timer expired. | 147447 | drill_plating 43 | 45503 |
+| 248 | 21 | 23.08 | 59344 | 4382 | Timer expired. | 104847 | route_planner 19 | 100806 |
+| 249 | 21 | 23.56 | 66888 | 4939 | Timer expired. | 167694 | - | 167694 |
+| 250 | 29 | 18.34 | 49339 | 2857 | Timer expired. | 217033 | route_planner 20, seismic_sonar 16, cargo_compressor 27 | 190151 |
+| 251 | 29 | 18.71 | 56036 | 3563 | Timer expired. | 246187 | cooling_loop 36, xp_calibration 21, auto_sorters 14 | 194175 |
+| 252 | 29 | 18.21 | 49500 | 2916 | Timer expired. | 243675 | seismic_sonar 17, drill_plating 44, route_planner 21 | 113366 |
+| 253 | 21 | 23.63 | 66132 | 4982 | Timer expired. | 179498 | drill_plating 45, cargo_compressor 28 | 16649 |
+| 254 | 30 | 17.93 | 52084 | 3061 | Timer expired. | 68733 | cooling_loop 37 | 18061 |
+| 255 | 29 | 19.22 | 62059 | 3826 | Timer expired. | 80120 | cargo_compressor 29, cargo_compressor 30 | 20686 |
+| 256 | 29 | 22.72 | 65817 | 4160 | Timer expired. | 86503 | dirt_softener 26 | 63265 |
+| 257 | 29 | 21.65 | 62530 | 3837 | Timer expired. | 125795 | cooling_loop 38 | 65843 |
+| 258 | 29 | 19.09 | 58301 | 3775 | Timer expired. | 124144 | cooling_loop 39, dirt_softener 27 | 24932 |
+| 259 | 29 | 20.29 | 66740 | 3888 | Timer expired. | 91672 | dirt_softener 28 | 57181 |
+| 260 | 30 | 19.37 | 53693 | 3139 | Timer expired. | 110874 | delivery_drone 14 | 109008 |
+| 261 | 30 | 18.64 | 53655 | 3117 | Timer expired. | 162663 | cooling_loop 40 | 78913 |
+| 262 | 29 | 18.61 | 62511 | 3826 | Timer expired. | 141424 | dirt_softener 29 | 99485 |
+| 263 | 30 | 22.52 | 69159 | 4033 | Timer expired. | 168644 | cooling_loop 41, magnet_drone 16 | 67365 |
+| 264 | 30 | 21.39 | 69140 | 4022 | Timer expired. | 136505 | auto_sorters 15, seismic_sonar 18, auto_sorters 16 | 125841 |
+| 265 | 31 | 18.10 | 56235 | 3261 | Timer expired. | 182076 | seismic_sonar 19, cargo_compressor 31 | 135890 |
+| 266 | 31 | 18.93 | 56493 | 3283 | Timer expired. | 192383 | dirt_softener 30, cargo_compressor 32, cargo_compressor 33 | 37128 |
+| 267 | 31 | 17.94 | 56895 | 3261 | Timer expired. | 94023 | engine_tuning 22, cargo_pods 35 | 53728 |
+| 268 | 30 | 20.26 | 71170 | 4089 | Timer expired. | 124898 | cargo_pods 36 | 81046 |
+| 269 | 30 | 21.17 | 71170 | 4089 | Timer expired. | 152216 | cargo_compressor 34, delivery_drone 15 | 81273 |
+| 270 | 31 | 17.76 | 58425 | 3333 | Timer expired. | 139698 | depth_scanner 14, cargo_compressor 35, xp_calibration 22 | 45799 |
+| 271 | 30 | 21.88 | 71720 | 4187 | Timer expired. | 117519 | cooling_loop 42 | 816 |
+| 272 | 30 | 21.43 | 70500 | 4118 | Timer expired. | 71316 | depth_scanner 15 | 68417 |
+| 273 | 30 | 20.78 | 66185 | 4054 | Timer expired. | 134602 | seismic_sonar 20 | 125972 |
+| 274 | 30 | 20.91 | 72940 | 4256 | Timer expired. | 198912 | foreman_bot 36 | 539 |
+| 275 | 32 | 19.08 | 60184 | 3505 | Timer expired. | 60723 | pickup_radius 31, delivery_drone 16 | 35030 |
+| 276 | 30 | 19.50 | 70500 | 4118 | Timer expired. | 105530 | timer_reserve 17, pickup_radius 32, engine_tuning 23 | 73195 |
+| 277 | 31 | 18.23 | 56020 | 3265 | Timer expired. | 129215 | route_planner 22 | 121721 |
+| 278 | 31 | 19.76 | 58669 | 3422 | Timer expired. | 180390 | depth_scanner 16, drill_plating 46 | 11738 |
+| 279 | 24 | 22.90 | 57094 | 4255 | Timer expired. | 68832 | pickup_radius 33 | 36366 |
+| 280 | 32 | 18.57 | 60065 | 3489 | Timer expired. | 96431 | pickup_radius 34, magnet_drone 17, auto_sorters 17 | 51174 |
+| 281 | 24 | 24.04 | 72040 | 5357 | Timer expired. | 123214 | engine_tuning 24 | 118364 |
+| 282 | 32 | 19.53 | 61480 | 3567 | Timer expired. | 179844 | cargo_compressor 36, xp_calibration 23 | 69530 |
+| 283 | 32 | 17.99 | 61749 | 3660 | Timer expired. | 131279 | dirt_softener 31, delivery_drone 17 | 65804 |
+| 284 | 32 | 18.05 | 61730 | 3649 | Timer expired. | 127534 | pickup_radius 35 | 81360 |
+| 285 | 24 | 22.56 | 65679 | 4976 | Timer expired. | 147039 | timer_reserve 18, cooling_loop 43, engine_tuning 25 | 2223 |
+| 286 | 32 | 20.95 | 61730 | 3649 | Timer expired. | 63953 | route_planner 23 | 54787 |
+| 287 | 32 | 20.16 | 60310 | 3569 | Timer expired. | 115097 | dirt_softener 32, seismic_sonar 21, magnet_drone 18 | 25815 |
+| 288 | 25 | 24.97 | 60079 | 4543 | Timer expired. | 85894 | pickup_radius 36, engine_tuning 26 | 23924 |
+| 289 | 35 | 18.19 | 51880 | 3036 | Timer expired. | 75804 | xp_calibration 24 | 62017 |
+| 290 | 25 | 24.00 | 62088 | 4782 | Timer expired. | 124105 | dirt_softener 33 | 33447 |
+| 291 | 33 | 18.61 | 63250 | 3819 | Timer expired. | 96697 | xp_calibration 25 | 79808 |
+| 292 | 25 | 22.60 | 60723 | 4796 | Timer expired. | 140531 | seismic_sonar 22 | 127267 |
+| 293 | 35 | 17.75 | 51880 | 3174 | Timer expired. | 179147 | seismic_sonar 23, depth_scanner 17, seismic_sonar 24 | 137951 |
+| 294 | 35 | 19.52 | 50135 | 3071 | Timer expired. | 188086 | xp_calibration 26, cooling_loop 44 | 5180 |
+| 295 | 36 | 17.76 | 53745 | 3358 | Timer expired. | 58925 | - | 58925 |
+| 296 | 25 | 24.53 | 71071 | 5737 | Timer expired. | 129996 | seismic_sonar 25, auto_sorters 18, route_planner 24 | 89496 |
+| 297 | 36 | 18.60 | 51880 | 3246 | Timer expired. | 141376 | cargo_compressor 37 | 22437 |
+| 298 | 25 | 22.15 | 61676 | 4969 | Timer expired. | 84113 | timer_reserve 19, seismic_sonar 26, timer_reserve 20 | 49892 |
+| 299 | 37 | 18.37 | 51065 | 3183 | Timer expired. | 100957 | magnet_drone 19 | 96393 |
+| 300 | 25 | 24.15 | 67040 | 5391 | Timer expired. | 163433 | cargo_compressor 38 | 20757 |
+| 301 | 25 | 23.54 | 72328 | 5778 | Timer expired. | 93085 | route_planner 25 | 79446 |
+| 302 | 36 | 18.85 | 54170 | 3358 | Timer expired. | 133616 | engine_tuning 27 | 125275 |
+| 303 | 25 | 24.95 | 71652 | 5737 | Timer expired. | 196927 | cooling_loop 45, timer_reserve 21 | 3375 |
+| 304 | 25 | 25.06 | 70260 | 5631 | Timer expired. | 73635 | cargo_pods 37 | 21624 |
+| 305 | 37 | 19.65 | 51270 | 3183 | Timer expired. | 72894 | engine_tuning 28, magnet_drone 20 | 57299 |
+| 306 | 25 | 24.71 | 80672 | 6452 | Timer expired. | 137971 | - | 137971 |
+| 307 | 25 | 25.73 | 79976 | 6399 | Timer expired. | 217947 | auto_sorters 19 | 212462 |
+| 308 | 25 | 26.47 | 69272 | 5542 | Timer expired. | 281734 | magnet_drone 21 | 274805 |
+| 309 | 25 | 24.55 | 69676 | 5574 | Timer expired. | 344481 | magnet_drone 22, drill_torque 47 | 47403 |
+| 310 | 25 | 24.20 | 70936 | 5672 | Timer expired. | 118339 | cargo_pods 38, magnet_drone 23 | 46272 |
+| 311 | 26 | 27.37 | 76032 | 6063 | Timer expired. | 122304 | timer_reserve 22 | 119430 |
+| 312 | 26 | 23.61 | 66902 | 5467 | Timer expired. | 186332 | delivery_drone 18, dirt_softener 34, route_planner 26 | 55489 |
+| 313 | 26 | 25.06 | 75280 | 6005 | Timer expired. | 130769 | cargo_pods 39, magnet_drone 24, engine_tuning 29 | 33124 |
+| 314 | 26 | 25.55 | 76804 | 6133 | Timer expired. | 109928 | magnet_drone 25 | 94365 |
+| 315 | 26 | 24.91 | 74828 | 5970 | Timer expired. | 169193 | pickup_radius 37, depth_scanner 18 | 97992 |
+| 316 | 26 | 27.49 | 76072 | 6087 | Timer expired. | 174064 | dirt_softener 35 | 41539 |
+| 317 | 35 | 19.16 | 52290 | 3246 | Timer expired. | 93829 | route_planner 27, route_planner 28, magnet_drone 26 | 30231 |
+| 318 | 26 | 24.87 | 75280 | 6005 | Timer expired. | 105511 | delivery_drone 19, pickup_radius 38 | 21968 |
+| 319 | 26 | 26.22 | 78308 | 6249 | Timer expired. | 100276 | engine_tuning 30 | 86107 |
+| 320 | 27 | 26.06 | 71144 | 5656 | Timer expired. | 157251 | engine_tuning 31, auto_sorters 20 | 133594 |
+| 321 | 27 | 23.89 | 71184 | 5680 | Timer expired. | 204778 | cargo_pods 40, xp_calibration 27, pickup_radius 39 | 622 |
+| 322 | 27 | 24.68 | 71144 | 5781 | Timer expired. | 71766 | timer_reserve 23 | 68316 |
+| 323 | 27 | 27.67 | 73274 | 6098 | Timer expired. | 141590 | cargo_pods 41, timer_reserve 24 | 35246 |
+| 324 | 27 | 28.81 | 82328 | 6692 | Timer expired. | 117574 | engine_tuning 32, auto_sorters 21, auto_sorters 22 | 78802 |
+| 325 | 27 | 26.93 | 83136 | 6755 | Timer expired. | 161938 | cargo_pods 42, depth_scanner 19, engine_tuning 33 | 10113 |
+| 326 | 28 | 24.37 | 74544 | 6045 | Timer expired. | 84657 | engine_tuning 34, auto_sorters 23, engine_tuning 35 | 10136 |
+| 327 | 28 | 23.54 | 75408 | 6112 | Timer expired. | 85544 | auto_sorters 24, xp_calibration 28 | 39196 |
+| 328 | 28 | 28.55 | 73387 | 6200 | Timer expired. | 112583 | engine_tuning 36, magnet_drone 27, engine_tuning 37 | 2702 |
+| 329 | 28 | 26.50 | 75408 | 6246 | Timer expired. | 78110 | xp_calibration 29, magnet_drone 28 | 12580 |
+| 330 | 28 | 26.79 | 78059 | 6699 | Timer expired. | 90639 | engine_tuning 38, timer_reserve 25, auto_sorters 25 | 10935 |
+| 331 | 28 | 24.03 | 73756 | 6254 | Timer expired. | 84691 | engine_tuning 39 | 18872 |
+| 332 | 28 | 27.06 | 76272 | 6446 | Timer expired. | 95144 | timer_reserve 26, route_planner 29, delivery_drone 20 | 52546 |
+| 333 | 28 | 28.73 | 86592 | 7327 | Timer expired. | 139138 | delivery_drone 21 | 130431 |
+| 334 | 28 | 26.46 | 75428 | 6389 | Timer expired. | 205859 | depth_scanner 20, cargo_pods 43 | 54184 |
+| 335 | 29 | 26.02 | 96532 | 6694 | Timer expired. | 150716 | delivery_drone 22 | 139989 |
+| 336 | 29 | 28.31 | 94612 | 6829 | Timer expired. | 234601 | magnet_drone 29, cargo_compressor 39, depth_scanner 21 | 18442 |
+| 337 | 20 | 30.72 | 93704 | 8215 | Timer expired. | 112146 | depth_scanner 22 | 98440 |
+| 338 | 30 | 24.53 | 88950 | 5978 | Timer expired. | 187390 | delivery_drone 23, delivery_drone 24, delivery_drone 25 | 138191 |
+| 339 | 30 | 26.69 | 92353 | 6364 | Timer expired. | 230544 | drill_plating 47, depth_scanner 23 | 20073 |
+| 340 | 31 | 26.25 | 78125 | 5219 | Timer expired. | 98198 | seismic_sonar 27, depth_scanner 24, auto_sorters 26 | 16402 |
+| 341 | 31 | 23.09 | 81548 | 5618 | Timer expired. | 97950 | delivery_drone 26, seismic_sonar 28 | 27665 |
+| 342 | 31 | 23.51 | 76885 | 5139 | Timer expired. | 104550 | auto_sorters 27, auto_sorters 28 | 41259 |
+| 343 | 31 | 25.28 | 78145 | 5232 | Timer expired. | 119404 | depth_scanner 25, depth_scanner 26 | 62067 |
+| 344 | 21 | 31.38 | 99941 | 8763 | Timer expired. | 162008 | auto_sorters 29 | 119651 |
+| 345 | 21 | 31.09 | 89702 | 7968 | Timer expired. | 209353 | xp_calibration 30, dirt_softener 36 | 3739 |
+| 346 | 22 | 30.87 | 101072 | 8872 | Timer expired. | 104811 | engine_tuning 40 | 27043 |
+| 347 | 22 | 29.57 | 86775 | 7736 | Timer expired. | 113818 | seismic_sonar 29 | 57459 |
+| 348 | 22 | 30.50 | 96419 | 8562 | Timer expired. | 153878 | pickup_radius 40, timer_reserve 27, delivery_drone 27 | 7348 |
+| 349 | 22 | 30.93 | 97085 | 8638 | Timer expired. | 104433 | xp_calibration 31, route_planner 30, timer_reserve 28 | 4783 |
+| 350 | 32 | 25.34 | 83780 | 5817 | Timer expired. | 88563 | magnet_drone 30, depth_scanner 27 | 8459 |
+| 351 | 22 | 32.18 | 109504 | 9769 | Timer expired. | 117963 | seismic_sonar 30 | 49050 |
+| 352 | 22 | 30.53 | 99840 | 8912 | Timer expired. | 148890 | auto_sorters 30 | 97360 |
+| 353 | 22 | 32.24 | 97105 | 8837 | Timer expired. | 194465 | dirt_softener 37 | 1371 |
+| 354 | 22 | 31.29 | 97085 | 8824 | Timer expired. | 98456 | xp_calibration 32, timer_reserve 29 | 21256 |
+| 355 | 22 | 32.54 | 99904 | 9117 | Timer expired. | 121160 | xp_calibration 33, timer_reserve 30, timer_reserve 31 | 13758 |
+| 356 | 22 | 32.93 | 111715 | 10544 | Timer expired. | 125473 | engine_tuning 41 | 33644 |
+| 357 | 22 | 34.56 | 108352 | 10079 | Timer expired. | 141996 | xp_calibration 34, timer_reserve 32, timer_reserve 33 | 6886 |
+| 358 | 22 | 35.79 | 105041 | 10151 | Timer expired. | 111927 | route_planner 31 | 68545 |
+| 359 | 22 | 35.63 | 112445 | 10857 | Timer expired. | 180990 | engine_tuning 42 | 72623 |
+| 360 | 22 | 34.18 | 118016 | 11194 | Timer expired. | 190639 | timer_reserve 34 | 167364 |
+| 361 | 22 | 35.76 | 117460 | 11156 | Timer expired. | 284824 | foreman_bot 37, timer_reserve 35 | 16736 |
+| 362 | 22 | 36.17 | 117606 | 11278 | Timer expired. | 134342 | pickup_radius 41 | 3915 |
+| 363 | 22 | 35.98 | 116332 | 11041 | Timer expired. | 120247 | delivery_drone 28, delivery_drone 29 | 40147 |
+| 364 | 22 | 36.12 | 124800 | 11845 | Timer expired. | 164947 | depth_scanner 28 | 117376 |
+| 365 | 23 | 36.63 | 105324 | 9987 | Timer expired. | 222700 | engine_tuning 43 | 94889 |
+| 366 | 23 | 36.84 | 115592 | 10980 | Timer expired. | 210481 | route_planner 32, timer_reserve 36 | 125608 |
+| 367 | 23 | 36.67 | 107616 | 10197 | Timer expired. | 233224 | timer_reserve 37, route_planner 33, magnet_drone 31 | 81675 |
+| 368 | 23 | 36.99 | 116756 | 11075 | Timer expired. | 198431 | route_planner 34 | 122226 |
+| 369 | 23 | 38.35 | 122356 | 11624 | Timer expired. | 244582 | xp_calibration 35, timer_reserve 38 | 79782 |
+| 370 | 23 | 37.74 | 125268 | 12116 | Timer expired. | 205050 | timer_reserve 39 | 151816 |
+| 371 | 23 | 39.64 | 133152 | 12867 | Timer expired. | 284968 | cooling_loop 46, delivery_drone 30 | 6344 |
+| 372 | 23 | 40.21 | 132672 | 12836 | Timer expired. | 139016 | timer_reserve 40, depth_scanner 29 | 18099 |
+| 373 | 24 | 40.92 | 133548 | 12874 | Timer expired. | 151647 | timer_reserve 41 | 77892 |
+| 374 | 24 | 39.92 | 134200 | 12934 | Timer expired. | 212092 | auto_sorters 31, route_planner 35 | 57691 |
+| 375 | 24 | 40.27 | 131876 | 12715 | Timer expired. | 189567 | depth_scanner 30 | 118357 |
+| 376 | 24 | 40.45 | 123860 | 11963 | Timer expired. | 242217 | dirt_softener 38 | 9398 |
+| 377 | 24 | 41.48 | 142668 | 13755 | Timer expired. | 152066 | timer_reserve 42 | 65330 |
+| 378 | 25 | 38.63 | 128256 | 12364 | Timer expired. | 193586 | pickup_radius 42 | 38867 |
+| 379 | 25 | 40.78 | 132636 | 12745 | Timer expired. | 171503 | route_planner 36 | 61050 |
+| 380 | 25 | 41.36 | 131936 | 12681 | Timer expired. | 192986 | timer_reserve 43 | 91042 |
+| 381 | 25 | 40.44 | 133336 | 12809 | Timer expired. | 224378 | magnet_drone 32 | 163874 |
+| 382 | 25 | 40.20 | 131936 | 12681 | Timer expired. | 295810 | auto_sorters 32 | 219795 |
+| 383 | 25 | 42.08 | 140040 | 13465 | Timer expired. | 359835 | ore_refinery 42 | 113621 |
+| 384 | 25 | 40.42 | 134016 | 12695 | Timer expired. | 247637 | drill_plating 48 | 20733 |
+| 385 | 25 | 41.83 | 134064 | 12699 | Timer expired. | 154797 | route_planner 37 | 21977 |
+| 386 | 25 | 44.69 | 142960 | 13543 | Timer expired. | 164937 | route_planner 38 | 5338 |
+| 387 | 25 | 42.17 | 143500 | 13593 | Timer expired. | 148838 | xp_calibration 36 | 4148 |
+| 388 | 25 | 40.16 | 135420 | 13074 | Timer expired. | 139568 | magnet_drone 33 | 66441 |
+| 389 | 25 | 40.17 | 134288 | 12981 | Timer expired. | 200729 | delivery_drone 31, delivery_drone 32 | 56763 |
+| 390 | 25 | 40.98 | 136192 | 13185 | Timer expired. | 192955 | seismic_sonar 31, auto_sorters 33 | 16597 |
+| 391 | 26 | 40.43 | 133008 | 12809 | Timer expired. | 149605 | delivery_drone 33 | 53872 |
+| 392 | 26 | 39.28 | 128916 | 12442 | Timer expired. | 182788 | magnet_drone 34, depth_scanner 31 | 7510 |
+| 393 | 26 | 40.33 | 130656 | 12760 | Timer expired. | 138166 | magnet_drone 35 | 31633 |
+| 394 | 26 | 39.90 | 133776 | 12880 | Timer expired. | 165409 | auto_sorters 34 | 53711 |
+| 395 | 26 | 39.15 | 123180 | 11884 | Timer expired. | 176891 | seismic_sonar 32 | 74192 |
+| 396 | 26 | 39.17 | 121680 | 11732 | Timer expired. | 195872 | route_planner 39 | 4227 |
+| 397 | 26 | 41.42 | 125484 | 12097 | Timer expired. | 129711 | magnet_drone 36 | 1286 |
+| 398 | 26 | 41.59 | 121644 | 11742 | Timer expired. | 122930 | timer_reserve 44 | 3177 |
+| 399 | 26 | 41.08 | 122428 | 11788 | Timer expired. | 125605 | depth_scanner 32 | 19483 |
+| 400 | 26 | 41.71 | 122472 | 12140 | Timer expired. | 141955 | seismic_sonar 33 | 16772 |
+| 401 | 26 | 41.46 | 128896 | 12427 | Timer expired. | 145668 | timer_reserve 45 | 5067 |
+| 402 | 26 | 41.72 | 123720 | 12089 | Timer expired. | 128787 | delivery_drone 34 | 12793 |
+| 403 | 26 | 41.47 | 131152 | 12688 | Timer expired. | 143945 | auto_sorters 35 | 8725 |
+| 404 | 27 | 41.72 | 120652 | 11593 | Timer expired. | 129377 | depth_scanner 33 | 21 |
+| 405 | 27 | 41.64 | 115764 | 11142 | Timer expired. | 115785 | - | 115785 |
+| 406 | 27 | 38.26 | 116512 | 11198 | Drill health depleted. | 232297 | engine_tuning 44 | 81635 |
+| 407 | 27 | 38.38 | 109248 | 10496 | Drill health depleted. | 190883 | auto_sorters 36 | 27321 |
+| 408 | 27 | 40.20 | 120632 | 11578 | Timer expired. | 147953 | delivery_drone 35 | 7532 |
+| 409 | 27 | 37.77 | 117684 | 11319 | Drill health depleted. | 125216 | - | 125216 |
+| 410 | 27 | 40.83 | 118992 | 11595 | Timer expired. | 244208 | cargo_pods 44 | 75635 |
+| 411 | 28 | 37.85 | 102224 | 9789 | Drill health depleted. | 177859 | timer_reserve 46 | 12862 |
+| 412 | 28 | 40.96 | 112000 | 10749 | Timer expired. | 124862 | - | 124862 |
+| 413 | 28 | 37.62 | 102224 | 9789 | Drill health depleted. | 227086 | pickup_radius 43 | 43656 |
+| 414 | 28 | 37.15 | 101344 | 9708 | Drill health depleted. | 145000 | - | 145000 |
+| 415 | 28 | 38.71 | 104046 | 10080 | Drill health depleted. | 249046 | seismic_sonar 34 | 96596 |
+| 416 | 28 | 36.50 | 102224 | 9789 | Drill health depleted. | 198820 | timer_reserve 47 | 5286 |
+| 417 | 28 | 38.14 | 102224 | 9789 | Drill health depleted. | 107510 | - | 107510 |
+| 418 | 28 | 39.58 | 103144 | 9900 | Drill health depleted. | 210654 | cargo_compressor 40 | 5768 |
+| 419 | 28 | 37.80 | 103552 | 9900 | Drill health depleted. | 109320 | - | 109320 |
+| 420 | 28 | 35.29 | 102628 | 9789 | Drill health depleted. | 211948 | delivery_drone 36 | 42095 |
+| 421 | 28 | 38.14 | 104396 | 9951 | Drill health depleted. | 146491 | - | 146491 |
+| 422 | 28 | 41.39 | 103532 | 9885 | Timer expired. | 250023 | seismic_sonar 35 | 64527 |
+| 423 | 28 | 40.89 | 111767 | 10797 | Timer expired. | 176294 | xp_calibration 37 | 1412 |
+| 424 | 28 | 36.49 | 102628 | 9983 | Drill health depleted. | 104040 | - | 104040 |
+| 425 | 28 | 35.94 | 104396 | 10149 | Drill health depleted. | 208436 | depth_scanner 34 | 50904 |
+| 426 | 28 | 37.62 | 103532 | 10081 | Drill health depleted. | 154436 | - | 154436 |
+| 427 | 28 | 42.28 | 103535 | 10207 | Timer expired. | 257971 | engine_tuning 45 | 80464 |
+| 428 | 28 | 36.35 | 103512 | 10066 | Drill health depleted. | 183976 | magnet_drone 37 | 29282 |
+| 429 | 28 | 40.70 | 100900 | 9847 | Timer expired. | 130182 | - | 130182 |
+| 430 | 28 | 38.58 | 102628 | 9983 | Drill health depleted. | 232810 | cargo_pods 45 | 33856 |
+| 431 | 28 | 40.55 | 103552 | 10096 | Timer expired. | 137408 | - | 137408 |
+| 432 | 28 | 39.01 | 102688 | 10028 | Drill health depleted. | 240096 | xp_calibration 38 | 28877 |
+| 433 | 28 | 38.90 | 101220 | 10057 | Drill health depleted. | 130097 | - | 130097 |
+| 434 | 28 | 36.40 | 102628 | 10180 | Drill health depleted. | 232725 | auto_sorters 37 | 35033 |
+| 435 | 28 | 36.76 | 101744 | 10096 | Drill health depleted. | 136777 | - | 136777 |
+| 436 | 28 | 38.91 | 103512 | 10264 | Drill health depleted. | 240289 | pickup_radius 44 | 22937 |
+| 437 | 28 | 36.08 | 103512 | 10264 | Drill health depleted. | 126449 | - | 126449 |
+| 438 | 28 | 39.38 | 107958 | 10959 | Drill health depleted. | 234407 | magnet_drone 38 | 48205 |
+| 439 | 29 | 35.88 | 103823 | 9247 | Drill health depleted. | 152028 | - | 152028 |
+| 440 | 29 | 36.05 | 108288 | 9336 | Drill health depleted. | 260316 | route_planner 40 | 30342 |
+| 441 | 29 | 35.66 | 110020 | 9514 | Drill health depleted. | 140362 | - | 140362 |
+| 442 | 29 | 36.08 | 109242 | 8837 | Drill health depleted. | 249604 | delivery_drone 37 | 44308 |
+| 443 | 29 | 37.55 | 106784 | 9178 | Drill health depleted. | 151092 | - | 151092 |
+| 444 | 29 | 36.06 | 114445 | 9573 | Drill health depleted. | 265537 | timer_reserve 48 | 38633 |
+| 445 | 29 | 35.80 | 107496 | 9247 | Drill health depleted. | 146129 | - | 146129 |
+| 446 | 29 | 36.41 | 110988 | 9726 | Drill health depleted. | 257117 | cargo_compressor 41 | 11828 |
+| 447 | 29 | 39.09 | 114944 | 9588 | Drill health depleted. | 126772 | - | 126772 |
+| 448 | 29 | 40.37 | 123900 | 9751 | Timer expired. | 250672 | seismic_sonar 36 | 25151 |
+| 449 | 29 | 40.68 | 114964 | 9603 | Timer expired. | 140115 | - | 140115 |
+| 450 | 29 | 40.74 | 119412 | 9662 | Timer expired. | 259527 | pickup_radius 45 | 2113 |
+| 451 | 29 | 39.76 | 107228 | 9178 | Drill health depleted. | 109341 | - | 109341 |
+| 452 | 29 | 37.05 | 114924 | 9573 | Drill health depleted. | 224265 | engine_tuning 46 | 15232 |
+| 453 | 29 | 38.72 | 119412 | 9662 | Drill health depleted. | 134644 | - | 134644 |
+| 454 | 29 | 39.57 | 112764 | 10102 | Drill health depleted. | 247408 | auto_sorters 38 | 8638 |
+| 455 | 29 | 33.46 | 107228 | 9178 | Drill health depleted. | 115866 | - | 115866 |
+| 456 | 29 | 37.14 | 123900 | 9751 | Drill health depleted. | 239766 | - | 239766 |

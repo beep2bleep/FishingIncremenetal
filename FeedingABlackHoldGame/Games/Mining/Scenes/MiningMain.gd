@@ -363,6 +363,8 @@ func _begin_run() -> void:
     run_status = "Mine nodes, scoop the drops, and bank cargo at the surface rig."
     run_state = RUN_STATES.RUNNING
     Global.game_state = Util.GAME_STATES.PLAYING
+    if not simulation_mode_active or simulation_commit_progress:
+        MINING_PROGRESS_SCRIPT.track_run_start(active_depth_level, persistent_data)
     _generate_world()
     _initialize_dirt_mask()
     _carve_dirt_circle(_get_base_position(), 92.0)
@@ -507,10 +509,10 @@ func _process_drilling(delta: float) -> void:
     if target_node_id == -1 or move_input_strength <= 0.0:
         return
     var node: Dictionary = world_nodes[target_node_id]
-    var drill_damage: float = _get_drill_dps() * (1.95 + move_input_strength * 2.55 + straight_drive_charge * 0.42) * delta
+    var drill_damage: float = _get_drill_dps() * (1.55 + move_input_strength * 2.15 + straight_drive_charge * 0.35) * delta
     node["health"] = max(0.0, float(node.get("health", 0.0)) - drill_damage)
     world_nodes[target_node_id] = node
-    drill_health = max(0.0, drill_health - _get_drill_wear(node) * (0.55 + move_input_strength * 0.45 + straight_drive_charge * 0.08) * delta)
+    drill_health = max(0.0, drill_health - _get_drill_wear(node) * (0.58 + move_input_strength * 0.52 + straight_drive_charge * 0.09) * delta)
     var hit_pos: Vector2 = player_pos.lerp(node.get("pos", player_pos), 0.45)
     pending_drill_damage_number += drill_damage
     pending_drill_damage_origin = hit_pos
@@ -850,7 +852,12 @@ func _get_pickup_drone_idle_position(drone_index: int, drone: Dictionary) -> Vec
 func _generate_world() -> void:
     var available_tiers: int = min(active_depth_level, material_tiers.size())
     var material_pool_indices: Array[int] = MINING_BALANCE.get_material_pool_indices(available_tiers)
-    var node_count: int = min(MAX_WORLD_NODES, 28 + active_depth_level * 6)
+    var world_size: Vector2 = _get_world_size()
+    var area_multiplier: float = _get_world_area_multiplier()
+    var node_count: int = min(
+        int(round(MAX_WORLD_NODES * area_multiplier)),
+        int(round((28 + active_depth_level * 6) * area_multiplier))
+    )
     var safety_center: Vector2 = _get_base_position()
     for node_index in range(node_count):
         var material: Dictionary = _roll_material_for_level(material_pool_indices)
@@ -860,8 +867,8 @@ func _generate_world() -> void:
         var attempts: int = 0
         while attempts < 32:
             pos = Vector2(
-                rng.randf_range(-WORLD_SIZE.x * 0.47, WORLD_SIZE.x * 0.47),
-                rng.randf_range(-WORLD_SIZE.y * 0.36, WORLD_SIZE.y * 0.47)
+                rng.randf_range(-world_size.x * 0.47, world_size.x * 0.47),
+                rng.randf_range(-world_size.y * 0.36, world_size.y * 0.47)
             )
             if pos.distance_to(safety_center) < BASE_RADIUS + 150.0:
                 attempts += 1
@@ -2094,10 +2101,10 @@ func _get_drill_wear(node: Dictionary) -> float:
     return MINING_BALANCE.get_node_wear_per_second(node, _get_upgrade_levels())
 
 func _get_pickup_drone_speed() -> float:
-    return MINING_BALANCE.get_pickup_drone_speed(_get_upgrade_levels())
+    return MINING_BALANCE.get_pickup_drone_speed(active_depth_level, _get_upgrade_levels())
 
 func _get_delivery_drone_speed() -> float:
-    return MINING_BALANCE.get_delivery_drone_speed(_get_upgrade_levels())
+    return MINING_BALANCE.get_delivery_drone_speed(active_depth_level, _get_upgrade_levels())
 
 func _get_delivery_dispatch_window() -> float:
     return MINING_BALANCE.get_delivery_dispatch_window(_get_upgrade_levels())
@@ -2156,12 +2163,12 @@ func _apply_impact_hit(node_index: int, candidate_pos: Vector2) -> bool:
     var node: Dictionary = world_nodes[node_index]
     var speed_ratio: float = clampf(player_velocity.length() / max(_get_move_speed(), 1.0), 0.0, 2.0)
     var charge_ratio: float = clampf(straight_drive_charge / STRAIGHT_DRIVE_CHARGE_MAX, 0.0, 1.0)
-    var impact_damage: float = _get_drill_dps() * (0.68 + speed_ratio * 0.9 + charge_ratio * 4.35)
+    var impact_damage: float = _get_drill_dps() * (0.55 + speed_ratio * 0.7 + charge_ratio * 3.15)
     if impact_damage <= 0.0:
         return false
     node["health"] = max(0.0, float(node.get("health", 0.0)) - impact_damage)
     world_nodes[node_index] = node
-    drill_health = max(0.0, drill_health - _get_drill_wear(node) * (0.1 + charge_ratio * 0.17))
+    drill_health = max(0.0, drill_health - _get_drill_wear(node) * (0.12 + charge_ratio * 0.2))
     var hit_pos: Vector2 = candidate_pos.lerp(node.get("pos", candidate_pos), 0.5)
     _spawn_damage_number(hit_pos, int(round(impact_damage)))
     _spawn_contact_sparks(hit_pos, node.get("material_color", Color.WHITE), 4 + int(round(charge_ratio * 6.0)))
@@ -2528,8 +2535,9 @@ func _update_drill_copies(delta: float) -> void:
 
         var current_pos: Vector2 = copy_data.get("pos", copy_target)
         current_pos = current_pos.lerp(target_pos + offset, min(1.0, delta * DRILL_COPY_FOLLOW_SPEED))
-        current_pos.x = clampf(current_pos.x, -WORLD_SIZE.x * 0.5 + PLAYER_RADIUS, WORLD_SIZE.x * 0.5 - PLAYER_RADIUS)
-        current_pos.y = clampf(current_pos.y, -WORLD_SIZE.y * 0.5 + PLAYER_RADIUS, WORLD_SIZE.y * 0.5 - PLAYER_RADIUS)
+        var world_size: Vector2 = _get_world_size()
+        current_pos.x = clampf(current_pos.x, -world_size.x * 0.5 + PLAYER_RADIUS, world_size.x * 0.5 - PLAYER_RADIUS)
+        current_pos.y = clampf(current_pos.y, -world_size.y * 0.5 + PLAYER_RADIUS, world_size.y * 0.5 - PLAYER_RADIUS)
 
         var current_dir: Vector2 = copy_data.get("dir", target_dir)
         if current_dir == Vector2.ZERO:
@@ -2742,7 +2750,8 @@ func _draw_target_line(origin: Vector2) -> void:
 
 func _draw_edge_fade(viewport_size: Vector2) -> void:
     var origin := viewport_size * 0.5 - camera_pos
-    var world_rect := Rect2(origin - WORLD_SIZE * 0.5, WORLD_SIZE)
+    var world_size: Vector2 = _get_world_size()
+    var world_rect := Rect2(origin - world_size * 0.5, world_size)
 
     var inside := _get_level_bg_color()
     var accent := _get_level_edge_accent_color()
@@ -2798,7 +2807,19 @@ func _draw_dashed_line(from: Vector2, to: Vector2, color: Color, dash_length: fl
         dist += step
 
 func _get_base_position() -> Vector2:
-    return Vector2(0.0, -WORLD_SIZE.y * 0.5 + 120.0)
+    var world_size: Vector2 = _get_world_size()
+    return Vector2(0.0, -world_size.y * 0.5 + 120.0)
+
+func _get_world_scale_multiplier() -> float:
+    var completed_tier_bands: int = int(floor(float(active_depth_level) / 10.0))
+    return 1.0 + float(completed_tier_bands) * LEVEL_SIZE_GROWTH_PER_10_TIERS
+
+func _get_world_size() -> Vector2:
+    return WORLD_SIZE * _get_world_scale_multiplier()
+
+func _get_world_area_multiplier() -> float:
+    var scale_multiplier: float = _get_world_scale_multiplier()
+    return scale_multiplier * scale_multiplier
 
 func _world_to_screen(world_pos: Vector2) -> Vector2:
     return world_pos - camera_pos + get_viewport_rect().size * 0.5
@@ -3013,8 +3034,9 @@ func _initialize_dirt_mask() -> void:
     dirt_texture = ImageTexture.create_from_image(dirt_image)
 
 func _world_to_dirt_pixel(world_pos: Vector2) -> Vector2i:
-    var x_ratio: float = clampf((world_pos.x + WORLD_SIZE.x * 0.5) / WORLD_SIZE.x, 0.0, 1.0)
-    var y_ratio: float = clampf((world_pos.y + WORLD_SIZE.y * 0.5) / WORLD_SIZE.y, 0.0, 1.0)
+    var world_size: Vector2 = _get_world_size()
+    var x_ratio: float = clampf((world_pos.x + world_size.x * 0.5) / world_size.x, 0.0, 1.0)
+    var y_ratio: float = clampf((world_pos.y + world_size.y * 0.5) / world_size.y, 0.0, 1.0)
     return Vector2i(
         int(round(x_ratio * float(dirt_image.get_width() - 1))),
         int(round(y_ratio * float(dirt_image.get_height() - 1)))
@@ -3033,7 +3055,7 @@ func _carve_dirt_circle(world_pos: Vector2, radius: float) -> void:
     if dirt_image == null or dirt_texture == null:
         return
     var pixel_center: Vector2i = _world_to_dirt_pixel(world_pos)
-    var pixel_radius: int = int(round(radius * float(dirt_image.get_width()) / WORLD_SIZE.x))
+    var pixel_radius: int = int(round(radius * float(dirt_image.get_width()) / _get_world_size().x))
     for x in range(pixel_center.x - pixel_radius, pixel_center.x + pixel_radius + 1):
         if x < 0 or x >= dirt_image.get_width():
             continue
@@ -3154,6 +3176,16 @@ func _setup_system_controls() -> void:
         settings_content.scale = Vector2(1.7, 1.7)
         vbox.add_child(settings_content)
 
+    var end_run_button: Button = Button.new()
+    end_run_button.name = "EndRunButton"
+    end_run_button.text = "End Run"
+    end_run_button.focus_mode = Control.FOCUS_NONE
+    end_run_button.custom_minimum_size = Vector2(0.0, 120.0)
+    end_run_button.add_theme_font_size_override("font_size", 30)
+    end_run_button.pressed.connect(_on_settings_end_run_pressed)
+    _style_utility_button(end_run_button)
+    vbox.add_child(end_run_button)
+
     var close_button: Button = Button.new()
     close_button.name = "SettingsCloseButton"
     close_button.text = tr("UI_BACK")
@@ -3248,6 +3280,14 @@ func _on_settings_close_pressed() -> void:
     if settings_panel != null and is_instance_valid(settings_panel):
         settings_panel.hide()
     _refresh_mouse_capture_state()
+
+func _on_settings_end_run_pressed() -> void:
+    if run_state != RUN_STATES.RUNNING:
+        return
+    if settings_panel != null and is_instance_valid(settings_panel):
+        settings_panel.hide()
+    _refresh_mouse_capture_state()
+    _finish_run("Run ended from settings.")
 
 func _toggle_settings_panel() -> void:
     if settings_panel == null:

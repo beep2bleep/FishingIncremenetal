@@ -724,8 +724,8 @@ func _refresh_demo_mode_label_visibility() -> void:
     if demo_mode_label != null and is_instance_valid(demo_mode_label):
         demo_mode_label.visible = _is_demo_mode_enabled() and not _is_any_popup_visible()
     if game_mode_label != null and is_instance_valid(game_mode_label):
-        game_mode_label.visible = Util.is_mining_game_active() and not _is_any_popup_visible()
-        game_mode_label.text = "MINING MODE" if Util.is_mining_game_active() else ""
+        game_mode_label.visible = false
+        game_mode_label.text = ""
 
 func _get_demo_wishlist_url() -> String:
     if Util.is_mining_game_active():

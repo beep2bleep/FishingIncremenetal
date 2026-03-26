@@ -546,7 +546,7 @@ func update():
             %Description.text = Global.mods.get_from_to(upgrade.mod, upgrade.get_current_teir_value())
         %"Mod Icon".texture = locked_texture
         if demo_lock_label != null:
-            demo_lock_label.text = "Locked in Demo Mode"
+            demo_lock_label.text = "Locked in Demo"
             demo_lock_label.show()
 
     elif upgrade.is_at_max() == true:

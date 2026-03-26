@@ -4,29 +4,32 @@ class_name MiningBalance
 const MAX_DEPTH_LEVEL := 100
 const MAX_UPGRADE_LEVEL := 100
 const MAX_MATERIAL_TYPES_PER_LEVEL := 8
+const UPGRADE_EFFECT_GROUP_SIZE := 5
 const EARLY_UPGRADE_LEVELS := 5
-const LATE_COST_MULTIPLIER_START := 2.0
+const LATE_COST_MULTIPLIER_START := 1.8
 const LATE_COST_MULTIPLIER_END := 30.0
+const LATE_EFFECT_MULTIPLIER_START := 1.0
+const LATE_EFFECT_MULTIPLIER_END := 2.25
 
 const UPGRADE_CATALOG: Array[Dictionary] = [
-    {"id": "timer_reserve", "label": "Timer Reserve", "summary": "Extends each run so upgraded rigs can squeeze in one more haul before the horn sounds.", "base_cost": 18, "cost_mult": 1.14, "max_level": 100, "requires": {}, "act": 1, "icon": "T"},
-    {"id": "route_planner", "label": "Route Planner", "summary": "Trims wasted travel and stretches the timer by making each route more efficient.", "base_cost": 58, "cost_mult": 1.19, "max_level": 100, "requires": {"timer_reserve": 4}, "act": 1, "icon": "R"},
-    {"id": "engine_tuning", "label": "Engine Tuning", "summary": "Boosts rig acceleration so short runs still feel punchy instead of sluggish.", "base_cost": 54, "cost_mult": 1.185, "max_level": 100, "requires": {}, "act": 1, "icon": "M"},
-    {"id": "dirt_softener", "label": "Dirt Softener", "summary": "Keeps deeper layers from stealing too much speed away from the drill rig.", "base_cost": 140, "cost_mult": 1.225, "max_level": 100, "requires": {"engine_tuning": 4}, "act": 2, "icon": "S"},
-    {"id": "drill_torque", "label": "Drill Torque", "summary": "Raises drilling throughput so each pass breaks more rock before the timer runs dry.", "base_cost": 20, "cost_mult": 1.142, "max_level": 100, "requires": {}, "act": 1, "icon": "D"},
-    {"id": "drill_plating", "label": "Drill Plating", "summary": "Adds integrity to the bit so risky dives can survive tougher veins.", "base_cost": 22, "cost_mult": 1.146, "max_level": 100, "requires": {"drill_torque": 2}, "act": 2, "icon": "H"},
-    {"id": "cooling_loop", "label": "Cooling Loop", "summary": "Shaves off drill wear so health stays right on the edge instead of collapsing instantly.", "base_cost": 25, "cost_mult": 1.149, "max_level": 100, "requires": {"drill_plating": 2}, "act": 2, "icon": "K"},
-    {"id": "cargo_pods", "label": "Cargo Pods", "summary": "Lets each trip carry a few more chunks before you have to dump at the surface.", "base_cost": 21, "cost_mult": 1.143, "max_level": 100, "requires": {}, "act": 1, "icon": "C"},
-    {"id": "cargo_compressor", "label": "Cargo Compressor", "summary": "Packs ore tighter so every haul holds together longer before a forced dump.", "base_cost": 29, "cost_mult": 1.156, "max_level": 100, "requires": {"cargo_pods": 6}, "act": 3, "icon": "Q"},
-    {"id": "ore_refinery", "label": "Ore Refinery", "summary": "Improves payout conversion so every dumped load is worth a little more.", "base_cost": 24, "cost_mult": 1.148, "max_level": 100, "requires": {"cargo_pods": 2}, "act": 2, "icon": "V"},
-    {"id": "pickup_radius", "label": "Vacuum Scoop", "summary": "Widens the collection field so more of each broken node actually makes it into cargo.", "base_cost": 23, "cost_mult": 1.146, "max_level": 100, "requires": {"cargo_pods": 1}, "act": 2, "icon": "P"},
-    {"id": "xp_calibration", "label": "XP Calibration", "summary": "Keeps progression climbing fast enough that new depths keep unlocking through the full run.", "base_cost": 27, "cost_mult": 1.152, "max_level": 100, "requires": {"ore_refinery": 2}, "act": 3, "icon": "X"},
-    {"id": "depth_scanner", "label": "Depth Scanner", "summary": "Unlocks harder strata a little earlier when your rig can actually survive them.", "base_cost": 34, "cost_mult": 1.162, "max_level": 100, "requires": {"xp_calibration": 2}, "act": 4, "icon": "L"},
-    {"id": "seismic_sonar", "label": "Seismic Sonar", "summary": "Leans each depth roll toward richer veins so later runs keep feeling like upgrades matter.", "base_cost": 37, "cost_mult": 1.168, "max_level": 100, "requires": {"depth_scanner": 2}, "act": 4, "icon": "N"},
-    {"id": "magnet_drone", "label": "Salvage Drone", "summary": "Launches bots that fly out to loose ore chunks so the player can stay on drilling lines.", "base_cost": 39, "cost_mult": 1.17, "max_level": 100, "requires": {"pickup_radius": 4}, "act": 4, "icon": "G"},
-    {"id": "foreman_bot", "label": "Foreman Bot", "summary": "A helper bot locks onto your current node and adds steady drill pressure during the contact.", "base_cost": 41, "cost_mult": 1.172, "max_level": 100, "requires": {"drill_plating": 6, "magnet_drone": 4}, "act": 5, "icon": "F"},
-    {"id": "delivery_drone", "label": "Delivery Drone", "summary": "Dispatches separate bots that ferry cargo back to the base ring while you keep drilling.", "base_cost": 46, "cost_mult": 1.178, "max_level": 100, "requires": {"magnet_drone": 2, "depth_scanner": 1}, "act": 5, "icon": "R"},
-    {"id": "auto_sorters", "label": "Auto Sorters", "summary": "Upgrades the delivery lane so each dump drone hauls more before it has to turn around.", "base_cost": 45, "cost_mult": 1.176, "max_level": 100, "requires": {"delivery_drone": 4}, "act": 5, "icon": "B"}
+    {"id": "timer_reserve", "label": "Timer Reserve", "summary": "Extends each run so upgraded rigs can squeeze in one more haul before the horn sounds.", "base_cost": 24, "cost_mult": 1.148, "max_level": 100, "requires": {}, "act": 1, "icon": "T"},
+    {"id": "route_planner", "label": "Route Planner", "summary": "Trims wasted travel and stretches the timer by making each route more efficient.", "base_cost": 42, "cost_mult": 1.17, "max_level": 100, "requires": {"timer_reserve": 3}, "act": 1, "icon": "R"},
+    {"id": "engine_tuning", "label": "Engine Tuning", "summary": "Boosts rig acceleration so short runs still feel punchy instead of sluggish.", "base_cost": 26, "cost_mult": 1.152, "max_level": 100, "requires": {}, "act": 1, "icon": "M"},
+    {"id": "dirt_softener", "label": "Dirt Softener", "summary": "Keeps deeper layers from stealing too much speed away from the drill rig.", "base_cost": 54, "cost_mult": 1.174, "max_level": 100, "requires": {"engine_tuning": 3}, "act": 2, "icon": "S"},
+    {"id": "drill_torque", "label": "Drill Torque", "summary": "Raises drilling throughput so each pass stays close to one-hit territory on the current frontier.", "base_cost": 26, "cost_mult": 1.156, "max_level": 100, "requires": {}, "act": 1, "icon": "D"},
+    {"id": "drill_plating", "label": "Drill Plating", "summary": "Adds integrity to the bit so risky dives can survive tougher veins instead of folding a tier early.", "base_cost": 24, "cost_mult": 1.148, "max_level": 100, "requires": {"drill_torque": 2}, "act": 2, "icon": "H"},
+    {"id": "cooling_loop", "label": "Cooling Loop", "summary": "Shaves off drill wear so health stays right on the knife edge instead of collapsing when depth pressure spikes.", "base_cost": 28, "cost_mult": 1.152, "max_level": 100, "requires": {"drill_plating": 2}, "act": 2, "icon": "K"},
+    {"id": "cargo_pods", "label": "Cargo Pods", "summary": "Lets each trip carry a few more chunks before you have to dump at the surface.", "base_cost": 27, "cost_mult": 1.154, "max_level": 100, "requires": {}, "act": 1, "icon": "C"},
+    {"id": "cargo_compressor", "label": "Cargo Compressor", "summary": "Packs ore tighter so every haul holds together longer before a forced dump.", "base_cost": 40, "cost_mult": 1.168, "max_level": 100, "requires": {"cargo_pods": 4}, "act": 3, "icon": "Q"},
+    {"id": "ore_refinery", "label": "Ore Refinery", "summary": "Improves payout conversion so every dumped load is worth a little more.", "base_cost": 36, "cost_mult": 1.166, "max_level": 100, "requires": {"cargo_pods": 2}, "act": 2, "icon": "V"},
+    {"id": "pickup_radius", "label": "Vacuum Scoop", "summary": "Widens the collection field so more of each broken node actually makes it into cargo.", "base_cost": 30, "cost_mult": 1.158, "max_level": 100, "requires": {"cargo_pods": 1}, "act": 2, "icon": "P"},
+    {"id": "xp_calibration", "label": "XP Calibration", "summary": "Keeps progression climbing fast enough that new depths keep unlocking through the full run.", "base_cost": 46, "cost_mult": 1.176, "max_level": 100, "requires": {"ore_refinery": 2}, "act": 3, "icon": "X"},
+    {"id": "depth_scanner", "label": "Depth Scanner", "summary": "Unlocks harder strata a little earlier when your rig can actually survive them.", "base_cost": 62, "cost_mult": 1.182, "max_level": 100, "requires": {"xp_calibration": 2}, "act": 4, "icon": "L"},
+    {"id": "seismic_sonar", "label": "Seismic Sonar", "summary": "Leans each depth roll toward richer veins so later runs keep feeling like upgrades matter.", "base_cost": 60, "cost_mult": 1.182, "max_level": 100, "requires": {"depth_scanner": 2}, "act": 4, "icon": "N"},
+    {"id": "magnet_drone", "label": "Salvage Drone", "summary": "Launches bots that fly out to loose ore chunks and helps counter the deeper-layer slowdown on the salvage lane.", "base_cost": 46, "cost_mult": 1.172, "max_level": 100, "requires": {"pickup_radius": 3}, "act": 4, "icon": "G"},
+    {"id": "foreman_bot", "label": "Foreman Bot", "summary": "A helper bot locks onto your current node and adds steady drill pressure during the contact.", "base_cost": 56, "cost_mult": 1.18, "max_level": 100, "requires": {"drill_plating": 5, "magnet_drone": 3}, "act": 5, "icon": "F"},
+    {"id": "delivery_drone", "label": "Delivery Drone", "summary": "Dispatches separate bots that ferry cargo back to the base ring while you keep drilling, offsetting the heavier drag in deeper tiers.", "base_cost": 54, "cost_mult": 1.176, "max_level": 100, "requires": {"magnet_drone": 2, "depth_scanner": 1}, "act": 5, "icon": "R"},
+    {"id": "auto_sorters", "label": "Auto Sorters", "summary": "Upgrades the delivery lane so each dump drone keeps pace deeper in the mine instead of taking over too early.", "base_cost": 52, "cost_mult": 1.176, "max_level": 100, "requires": {"delivery_drone": 3}, "act": 5, "icon": "B"}
 ]
 
 const BASE_MATERIAL_TIERS: Array[Dictionary] = [
@@ -50,18 +53,20 @@ static func get_upgrade_catalog() -> Array[Dictionary]:
 
 static func get_upgrade_description(upgrade_def: Dictionary) -> String:
     var summary: String = str(upgrade_def.get("summary", "")).strip_edges()
-    var effect_lines: Array = _build_upgrade_effect_lines(upgrade_def)
-    if effect_lines.is_empty():
+    var effect_text: String = _build_upgrade_effect_summary(upgrade_def)
+    if effect_text == "":
         return summary
-    var effect_text: String = PackedStringArray(effect_lines).join("\n")
     if summary == "":
         return effect_text
     return "%s\n%s" % [summary, effect_text]
 
 static func get_material_tiers() -> Array[Dictionary]:
     var tiers: Array[Dictionary] = []
+    var previous_material: Dictionary = {}
     for depth_level in range(1, MAX_DEPTH_LEVEL + 1):
-        tiers.append(_build_material_tier_for_depth(depth_level))
+        var material: Dictionary = _build_material_tier_for_depth(depth_level, previous_material)
+        tiers.append(material)
+        previous_material = material
     return tiers
 
 static func get_material_by_id(material_id: String) -> Dictionary:
@@ -80,7 +85,7 @@ static func get_level_for_total_xp(total_xp: int) -> int:
 
 static func get_xp_to_next_level(level: int) -> int:
     var level_value: float = float(max(level, 1))
-    return int(round(30.0 + 10.0 * level_value + 6.5 * pow(level_value, 1.42)))
+    return int(round(65.0 + 16.0 * level_value + 12.5 * pow(level_value, 1.53)))
 
 static func get_level_progress(data: Dictionary) -> Dictionary:
     var current_level: int = max(1, int(data.get("player_level", 1)))
@@ -99,68 +104,76 @@ static func get_level_progress(data: Dictionary) -> Dictionary:
 static func refresh_depth_unlocks(data: Dictionary) -> void:
     var player_level: int = max(1, int(data.get("player_level", 1)))
     var scanner_level: int = int(data.get("upgrades", {}).get("depth_scanner", 0))
-    var unlocked_depth: int = 1 + int(floor(float(player_level - 1) / 2.0)) + scanner_level
+    var unlocked_depth: int = 1 + int(floor(float(player_level - 1) / 3.2)) + int(floor(float(scanner_level) * 0.7))
     data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", 1)), clampi(unlocked_depth, 1, MAX_DEPTH_LEVEL))
     data["selected_depth_level"] = clampi(int(data.get("selected_depth_level", data["deepest_level_unlocked"])), 1, int(data["deepest_level_unlocked"]))
 
 static func get_move_speed(upgrades: Dictionary) -> float:
-    return 205.0 + 4.2 * get_scaled_upgrade_strength(upgrades, "engine_tuning") + 0.7 * get_scaled_upgrade_strength(upgrades, "route_planner")
+    return 210.0 + 0.84 * get_scaled_upgrade_strength(upgrades, "engine_tuning") + 0.14 * get_scaled_upgrade_strength(upgrades, "route_planner")
 
 static func get_dirt_drag_multiplier(depth_level: int, upgrades: Dictionary) -> float:
-    var base_drag: float = 0.9 - 0.042 * float(max(0, depth_level - 1))
-    base_drag += 0.014 * get_scaled_upgrade_strength(upgrades, "dirt_softener")
-    base_drag += 0.004 * get_scaled_upgrade_strength(upgrades, "route_planner")
-    return clampf(base_drag, 0.3, 1.08)
+    var base_drag: float = 0.98 - 0.028 * float(max(0, depth_level - 1))
+    base_drag += 0.0035 * get_scaled_upgrade_strength(upgrades, "dirt_softener")
+    base_drag += 0.001 * get_scaled_upgrade_strength(upgrades, "route_planner")
+    return clampf(base_drag, 0.42, 1.0)
 
 static func get_run_time_limit(upgrades: Dictionary) -> float:
-    return 16.0 + 0.85 * get_scaled_upgrade_strength(upgrades, "timer_reserve")
+    return 22.0 + 0.65 * get_scaled_upgrade_strength(upgrades, "timer_reserve")
 
 static func get_time_drain_rate(depth_level: int, upgrades: Dictionary) -> float:
-    var drain: float = 1.0 + 0.055 * float(max(0, depth_level - 1))
-    drain -= 0.016 * get_scaled_upgrade_strength(upgrades, "route_planner")
-    return clampf(drain, 0.62, 2.4)
+    var drain: float = 1.0 + 0.038 * float(max(0, depth_level - 1))
+    drain -= 0.012 * get_scaled_upgrade_strength(upgrades, "route_planner")
+    return clampf(drain, 0.68, 2.2)
 
 static func get_drill_dps(upgrades: Dictionary) -> float:
-    return 8.5 + 1.35 * get_scaled_upgrade_strength(upgrades, "drill_torque") + 0.12 * get_scaled_upgrade_strength(upgrades, "cooling_loop") + 0.9 * get_scaled_upgrade_strength(upgrades, "foreman_bot")
+    return 7.4 + 1.12 * get_scaled_upgrade_strength(upgrades, "drill_torque") + 0.12 * get_scaled_upgrade_strength(upgrades, "cooling_loop") + 0.72 * get_scaled_upgrade_strength(upgrades, "foreman_bot")
 
 static func get_drill_health_max(upgrades: Dictionary) -> float:
-    return 60.0 + 8.5 * get_scaled_upgrade_strength(upgrades, "drill_plating")
+    return 54.0 + 9.0 * get_scaled_upgrade_strength(upgrades, "drill_plating")
 
 static func get_drill_wear_multiplier(upgrades: Dictionary) -> float:
-    return clampf(1.0 - 0.012 * get_scaled_upgrade_strength(upgrades, "cooling_loop"), 0.08, 1.0)
+    return clampf(1.0 - 0.0115 * get_scaled_upgrade_strength(upgrades, "cooling_loop"), 0.2, 1.0)
 
 static func get_cargo_capacity(upgrades: Dictionary) -> int:
-    return 4 + int(round(get_scaled_upgrade_strength(upgrades, "cargo_pods"))) + int(floor(get_scaled_upgrade_strength(upgrades, "cargo_compressor") / 2.0))
+    return 4 + int(round(get_scaled_upgrade_strength(upgrades, "cargo_pods"))) + int(floor(get_scaled_upgrade_strength(upgrades, "cargo_compressor") / 3.0))
 
 static func get_value_multiplier(upgrades: Dictionary) -> float:
-    return 1.0 + 0.045 * get_scaled_upgrade_strength(upgrades, "ore_refinery") + 0.012 * get_scaled_upgrade_strength(upgrades, "cargo_compressor")
+    return 1.0 + 0.03 * get_scaled_upgrade_strength(upgrades, "ore_refinery") + 0.008 * get_scaled_upgrade_strength(upgrades, "cargo_compressor")
 
 static func get_xp_multiplier(upgrades: Dictionary) -> float:
-    return 1.0 + 0.06 * get_scaled_upgrade_strength(upgrades, "xp_calibration")
+    return 1.0 + 0.035 * get_scaled_upgrade_strength(upgrades, "xp_calibration")
 
 static func get_pickup_radius(upgrades: Dictionary) -> float:
-    return 18.0 + 3.0 * get_scaled_upgrade_strength(upgrades, "pickup_radius") + 2.5 * get_scaled_upgrade_strength(upgrades, "magnet_drone")
+    return 18.0 + 2.7 * get_scaled_upgrade_strength(upgrades, "pickup_radius") + 1.6 * get_scaled_upgrade_strength(upgrades, "magnet_drone")
 
 static func get_pickup_drone_count(upgrades: Dictionary) -> int:
     var strength: float = get_scaled_upgrade_strength(upgrades, "magnet_drone")
     if strength <= 0.0:
         return 0
-    return 1 + int(floor(max(0.0, strength - 1.0) / 4.0))
+    return 1 + int(floor(max(0.0, strength - 1.0) / 5.0))
 
 static func get_delivery_drone_count(upgrades: Dictionary) -> int:
     var strength: float = get_scaled_upgrade_strength(upgrades, "delivery_drone")
     if strength <= 0.0:
         return 0
-    return 1 + int(floor(max(0.0, strength - 1.0) / 3.0))
+    return 1 + int(floor(max(0.0, strength - 1.0) / 4.0))
 
-static func get_delivery_drone_speed(upgrades: Dictionary) -> float:
-    return 380.0 + 12.0 * get_scaled_upgrade_strength(upgrades, "delivery_drone") + 6.0 * get_scaled_upgrade_strength(upgrades, "auto_sorters")
+static func get_delivery_drone_speed(depth_level: int, upgrades: Dictionary) -> float:
+    var base_speed: float = 38.0 + 1.05 * get_scaled_upgrade_strength(upgrades, "delivery_drone") + 0.5 * get_scaled_upgrade_strength(upgrades, "auto_sorters")
+    return max(5.0, base_speed * get_delivery_drone_depth_drag(depth_level))
 
-static func get_pickup_drone_speed(upgrades: Dictionary) -> float:
-    return 300.0 + 9.0 * get_scaled_upgrade_strength(upgrades, "magnet_drone")
+static func get_pickup_drone_speed(depth_level: int, upgrades: Dictionary) -> float:
+    var base_speed: float = 248.0 + 5.0 * get_scaled_upgrade_strength(upgrades, "magnet_drone")
+    return max(86.0, base_speed * get_pickup_drone_depth_drag(depth_level))
+
+static func get_delivery_drone_depth_drag(depth_level: int) -> float:
+    return clampf(1.0 - 0.032 * float(max(0, depth_level - 1)), 0.22, 1.0)
+
+static func get_pickup_drone_depth_drag(depth_level: int) -> float:
+    return clampf(1.0 - 0.022 * float(max(0, depth_level - 1)), 0.46, 1.0)
 
 static func get_delivery_dispatch_window(upgrades: Dictionary) -> float:
-    return clampf(6.5 - 0.12 * get_scaled_upgrade_strength(upgrades, "delivery_drone") - 0.05 * get_scaled_upgrade_strength(upgrades, "auto_sorters"), 0.4, 6.5)
+    return clampf(5.65 - 0.09 * get_scaled_upgrade_strength(upgrades, "delivery_drone") - 0.04 * get_scaled_upgrade_strength(upgrades, "auto_sorters"), 0.9, 5.65)
 
 static func get_delivery_items_per_dispatch(upgrades: Dictionary) -> int:
     return 1 + int(floor(get_scaled_upgrade_strength(upgrades, "auto_sorters") / 5.0))
@@ -173,11 +186,11 @@ static func get_material_weights(available_tiers: int, upgrades: Dictionary) -> 
     for index in range(available_tiers):
         var weight: float = 1.0 + float(index == 0) * 4.0
         if index == available_tiers - 1:
-            weight = 7.0 + sonar_level * 0.65
+            weight = 7.3 + sonar_level * 0.55
         elif index == available_tiers - 2:
-            weight = 3.0 + sonar_level * 0.28
+            weight = 3.0 + sonar_level * 0.24
         elif index <= available_tiers - 3:
-            weight = max(0.45, weight - sonar_level * 0.08)
+            weight = max(0.5, weight - sonar_level * 0.05)
         weights.append(weight)
     return weights
 
@@ -227,14 +240,14 @@ static func get_material_weights_for_indices(indices: Array[int], upgrades: Dict
 
 static func get_drop_count_for_node(node: Dictionary) -> int:
     var value: float = float(node.get("value", 1))
-    return clampi(1 + int(floor(sqrt(value) / 7.0)), 1, 6)
+    return clampi(1 + int(floor(sqrt(value) / 8.5)), 1, 5)
 
 static func get_node_health(material: Dictionary, depth_level: int) -> float:
     var hardness: float = float(material.get("hardness", 24.0))
-    return hardness * (1.0 + 0.08 * float(max(0, depth_level - 1)))
+    return hardness * (1.0 + 0.018 * float(max(0, depth_level - 1)))
 
 static func get_node_wear_per_second(node: Dictionary, upgrades: Dictionary) -> float:
-    var wear: float = 2.6 + float(node.get("max_health", 20.0)) * 0.048
+    var wear: float = 2.3 + float(node.get("max_health", 20.0)) * 0.049
     return wear * get_drill_wear_multiplier(upgrades)
 
 static func get_upgrade_cost(upgrade_id: String, current_level: int) -> int:
@@ -251,6 +264,14 @@ static func get_scaled_upgrade_strength(upgrades: Dictionary, upgrade_id: String
     var owned_level: int = int(upgrades.get(upgrade_id, 0))
     return _get_scaled_level_total(owned_level, _get_upgrade_max_level(upgrade_id))
 
+static func get_upgrade_effect_multiplier(level: int, max_level: int = MAX_UPGRADE_LEVEL) -> float:
+    var grouped_level: int = _group_start_level(level)
+    if grouped_level <= EARLY_UPGRADE_LEVELS:
+        return 1.0
+    var late_levels: int = max(1, max_level - EARLY_UPGRADE_LEVELS)
+    var progress: float = float(grouped_level - EARLY_UPGRADE_LEVELS - 1) / float(late_levels - 1 if late_levels > 1 else 1)
+    return lerpf(LATE_EFFECT_MULTIPLIER_START, LATE_EFFECT_MULTIPLIER_END, clampf(progress, 0.0, 1.0))
+
 static func get_late_upgrade_multiplier(level: int, max_level: int = MAX_UPGRADE_LEVEL) -> float:
     if level <= EARLY_UPGRADE_LEVELS:
         return 1.0
@@ -261,7 +282,7 @@ static func get_late_upgrade_multiplier(level: int, max_level: int = MAX_UPGRADE
 static func _get_scaled_level_total(level: int, max_level: int) -> float:
     var total: float = 0.0
     for tier_level in range(1, level + 1):
-        total += get_late_upgrade_multiplier(tier_level, max_level)
+        total += get_upgrade_effect_multiplier(tier_level, max_level)
     return total
 
 static func _get_upgrade_max_level(upgrade_id: String) -> int:
@@ -270,7 +291,166 @@ static func _get_upgrade_max_level(upgrade_id: String) -> int:
             return int(upgrade_def.get("max_level", MAX_UPGRADE_LEVEL))
     return MAX_UPGRADE_LEVEL
 
-static func _build_material_tier_for_depth(depth_level: int) -> Dictionary:
+static func _build_upgrade_effect_summary(upgrade_def: Dictionary) -> String:
+    var upgrade_key: String = str(upgrade_def.get("key", upgrade_def.get("id", "")))
+    if upgrade_key == "":
+        return ""
+    var start_level: int = max(1, int(upgrade_def.get("level", 1)))
+    var tier_count: int = max(1, int(upgrade_def.get("max_tier", 1)))
+    var end_level: int = start_level + tier_count - 1
+    var prefix: String = "This level: " if tier_count == 1 else "Each level in this group: "
+    var effect_text: String = _describe_upgrade_level_effect(upgrade_key, start_level)
+    if tier_count <= 1:
+        return "%s%s" % [prefix, effect_text]
+    return "%s%s (Lv %d-%d)." % [prefix, effect_text, start_level, end_level]
+
+static func _describe_upgrade_level_effect(upgrade_key: String, level: int) -> String:
+    var strength_delta: float = get_upgrade_effect_multiplier(level, _get_upgrade_max_level(upgrade_key))
+    match upgrade_key:
+        "timer_reserve":
+            return _format_effect_list([
+                "+%ss run time" % _format_number(0.65 * strength_delta)
+            ])
+        "route_planner":
+            return _format_effect_list([
+                "+%s move speed" % _format_number(0.14 * strength_delta),
+                "+%s%% dirt speed multiplier" % _format_number(0.1 * strength_delta),
+                "-%s%% timer drain" % _format_number(1.2 * strength_delta)
+            ])
+        "engine_tuning":
+            return _format_effect_list([
+                "+%s move speed" % _format_number(0.84 * strength_delta)
+            ])
+        "dirt_softener":
+            return _format_effect_list([
+                "+%s%% dirt speed multiplier" % _format_number(0.35 * strength_delta)
+            ])
+        "drill_torque":
+            return _format_effect_list([
+                "+%s drill DPS" % _format_number(1.12 * strength_delta)
+            ])
+        "drill_plating":
+            return _format_effect_list([
+                "+%s drill health" % _format_number(9.0 * strength_delta)
+            ])
+        "cooling_loop":
+            return _format_effect_list([
+                "+%s drill DPS" % _format_number(0.12 * strength_delta),
+                "-%s%% drill wear" % _format_number(1.15 * strength_delta)
+            ])
+        "cargo_pods":
+            return _describe_cargo_pods_level(level)
+        "cargo_compressor":
+            return _describe_cargo_compressor_level(level)
+        "ore_refinery":
+            return _format_effect_list([
+                "+%s%% ore value" % _format_number(3.0 * strength_delta)
+            ])
+        "pickup_radius":
+            return _format_effect_list([
+                "+%s pickup radius" % _format_number(2.7 * strength_delta)
+            ])
+        "xp_calibration":
+            return _format_effect_list([
+                "+%s%% XP gain" % _format_number(3.5 * strength_delta)
+            ])
+        "depth_scanner":
+            return _format_effect_list([
+                "+1 max unlocked depth"
+            ])
+        "seismic_sonar":
+            return _format_effect_list([
+                "+0.55 top-tier ore weight",
+                "+0.24 near-top ore weight",
+                "-0.05 older-tier weight"
+            ])
+        "magnet_drone":
+            return _describe_magnet_drone_level(level)
+        "foreman_bot":
+            return _format_effect_list([
+                "+%s drill DPS" % _format_number(0.72 * strength_delta)
+            ])
+        "delivery_drone":
+            return _describe_delivery_drone_level(level)
+        "auto_sorters":
+            return _describe_auto_sorters_level(level)
+        _:
+            return "Effect applied on unlock."
+
+static func _describe_cargo_pods_level(level: int) -> String:
+    var before: Dictionary = {"cargo_pods": max(0, level - 1)}
+    var after: Dictionary = {"cargo_pods": level}
+    var cargo_delta: int = get_cargo_capacity(after) - get_cargo_capacity(before)
+    return _format_effect_list([
+        "+%d %s" % [cargo_delta, _pluralize(cargo_delta, "cargo slot", "cargo slots")]
+    ])
+
+static func _describe_cargo_compressor_level(level: int) -> String:
+    var before: Dictionary = {"cargo_compressor": max(0, level - 1)}
+    var after: Dictionary = {"cargo_compressor": level}
+    var cargo_delta: int = get_cargo_capacity(after) - get_cargo_capacity(before)
+    var value_delta: float = (get_value_multiplier(after) - get_value_multiplier(before)) * 100.0
+    var effect_parts: Array = []
+    if cargo_delta > 0:
+        effect_parts.append("+%d %s" % [cargo_delta, _pluralize(cargo_delta, "cargo slot", "cargo slots")])
+    effect_parts.append("+%s%% ore value" % _format_number(value_delta))
+    return _format_effect_list(effect_parts)
+
+static func _describe_magnet_drone_level(level: int) -> String:
+    var before: Dictionary = {"magnet_drone": max(0, level - 1)}
+    var after: Dictionary = {"magnet_drone": level}
+    var effect_parts: Array = [
+        "+%s pickup radius" % _format_number(get_pickup_radius(after) - get_pickup_radius(before)),
+        "+%s salvage lane speed" % _format_number((248.0 + 5.0 * get_scaled_upgrade_strength(after, "magnet_drone")) - (248.0 + 5.0 * get_scaled_upgrade_strength(before, "magnet_drone")))
+    ]
+    var drone_delta: int = get_pickup_drone_count(after) - get_pickup_drone_count(before)
+    if drone_delta > 0:
+        effect_parts.append("+%d %s" % [drone_delta, _pluralize(drone_delta, "salvage drone", "salvage drones")])
+    return _format_effect_list(effect_parts)
+
+static func _describe_delivery_drone_level(level: int) -> String:
+    var before: Dictionary = {"delivery_drone": max(0, level - 1)}
+    var after: Dictionary = {"delivery_drone": level}
+    var effect_parts: Array = [
+        "+%s delivery lane speed" % _format_number((38.0 + 1.05 * get_scaled_upgrade_strength(after, "delivery_drone")) - (38.0 + 1.05 * get_scaled_upgrade_strength(before, "delivery_drone"))),
+        "-%ss dispatch window" % _format_number(get_delivery_dispatch_window(before) - get_delivery_dispatch_window(after))
+    ]
+    var drone_delta: int = get_delivery_drone_count(after) - get_delivery_drone_count(before)
+    if drone_delta > 0:
+        effect_parts.append("+%d %s" % [drone_delta, _pluralize(drone_delta, "delivery drone", "delivery drones")])
+    return _format_effect_list(effect_parts)
+
+static func _describe_auto_sorters_level(level: int) -> String:
+    var before: Dictionary = {"auto_sorters": max(0, level - 1)}
+    var after: Dictionary = {"auto_sorters": level}
+    var effect_parts: Array = [
+        "+%s delivery lane speed" % _format_number((38.0 + 0.5 * get_scaled_upgrade_strength(after, "auto_sorters")) - (38.0 + 0.5 * get_scaled_upgrade_strength(before, "auto_sorters"))),
+        "-%ss dispatch window" % _format_number(get_delivery_dispatch_window(before) - get_delivery_dispatch_window(after))
+    ]
+    var item_delta: int = get_delivery_items_per_dispatch(after) - get_delivery_items_per_dispatch(before)
+    if item_delta > 0:
+        effect_parts.append("+%d %s per dispatch" % [item_delta, _pluralize(item_delta, "item", "items")])
+    return _format_effect_list(effect_parts)
+
+static func _format_effect_list(effect_parts: Array) -> String:
+    return ", ".join(effect_parts)
+
+static func _pluralize(amount: int, singular: String, plural: String) -> String:
+    return singular if amount == 1 else plural
+
+static func _format_number(value: float) -> String:
+    var rounded: float = snappedf(value, 0.01)
+    if is_equal_approx(rounded, round(rounded)):
+        return str(int(round(rounded)))
+    var text: String = "%.2f" % rounded
+    while text.contains(".") and (text.ends_with("0") or text.ends_with(".")):
+        text = text.left(text.length() - 1)
+    return text
+
+static func _group_start_level(level: int) -> int:
+    return (int(floor(float(max(level, 1) - 1) / float(UPGRADE_EFFECT_GROUP_SIZE))) * UPGRADE_EFFECT_GROUP_SIZE) + 1
+
+static func _build_material_tier_for_depth(depth_level: int, previous_material: Dictionary = {}) -> Dictionary:
     var base_count: int = BASE_MATERIAL_TIERS.size()
     var base_index: int = clampi(depth_level - 1, 0, base_count - 1)
     if depth_level <= base_count:
@@ -278,30 +458,29 @@ static func _build_material_tier_for_depth(depth_level: int) -> Dictionary:
 
     var loop_index: int = (depth_level - 1) % base_count
     var cycle_number: int = 1 + int(floor(float(depth_level - 1) / float(base_count)))
-    var band: int = max(0, cycle_number - 1)
     var base_material: Dictionary = BASE_MATERIAL_TIERS[loop_index].duplicate(true)
-    var band_scale: float = pow(1.42, band)
-    var intra_band_scale: float = 1.0 + 0.035 * float(loop_index)
-    var sparkle_bonus: float = min(0.4, 0.04 * float(band))
+    if previous_material.is_empty():
+        previous_material = _build_material_tier_for_depth(depth_level - 1)
+    var sparkle_bonus: float = min(0.44, 0.03 * float(max(0, cycle_number - 1)))
     base_material["id"] = "%s_%d" % [String(base_material.get("id", "ore")), cycle_number]
     base_material["name"] = "%s %d" % [String(base_material.get("name", "Ore")), cycle_number]
-    base_material["value"] = int(round(float(base_material.get("value", 1)) * band_scale * intra_band_scale))
-    base_material["xp"] = int(round(float(base_material.get("xp", 1)) * pow(1.46, band) * intra_band_scale))
-    base_material["hardness"] = float(base_material.get("hardness", 24.0)) * pow(1.38, band) * (1.0 + 0.04 * float(loop_index))
+    base_material["value"] = int(round(float(previous_material.get("value", base_material.get("value", 1))) * 1.072))
+    base_material["xp"] = int(round(float(previous_material.get("xp", base_material.get("xp", 1))) * 1.069))
+    base_material["hardness"] = float(previous_material.get("hardness", base_material.get("hardness", 24.0))) * 1.075
 
     var ore_color: Color = base_material.get("color", Color.WHITE)
     var bg_color: Color = base_material.get("bg", Color(0.1, 0.1, 0.1, 1.0))
-    var hue_wobble: float = 0.015 * float(band)
+    var hue_wobble: float = 0.015 * float(max(0, cycle_number - 1))
     base_material["color"] = Color.from_hsv(
         fposmod(ore_color.h + hue_wobble, 1.0),
-        clampf(ore_color.s * (0.98 + 0.02 * float(band)), 0.0, 1.0),
-        clampf(ore_color.v * (1.0 + 0.03 * float(band)), 0.0, 1.0),
+        clampf(ore_color.s * (0.98 + 0.02 * float(max(0, cycle_number - 1))), 0.0, 1.0),
+        clampf(ore_color.v * (1.0 + 0.02 * float(max(0, cycle_number - 1))), 0.0, 1.0),
         1.0
     )
     base_material["bg"] = Color.from_hsv(
         fposmod(bg_color.h + hue_wobble * 0.5, 1.0),
-        clampf(bg_color.s * (1.0 + 0.04 * float(band)), 0.0, 1.0),
-        clampf(bg_color.v * (0.96 + 0.015 * float(band)), 0.0, 1.0),
+        clampf(bg_color.s * (1.0 + 0.03 * float(max(0, cycle_number - 1))), 0.0, 1.0),
+        clampf(bg_color.v * (0.97 + 0.012 * float(max(0, cycle_number - 1))), 0.0, 1.0),
         1.0
     )
     base_material["sparkle"] = clampf(float(base_material.get("sparkle", 0.0)) + sparkle_bonus, 0.0, 1.5)
