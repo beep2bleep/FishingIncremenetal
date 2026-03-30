@@ -186,18 +186,12 @@ var dirt_image: Image
 var dirt_texture: ImageTexture
 var background_noise_texture: ImageTexture
 var last_background_noise_depth_level := -1
-var mute_button: Button
-var fullscreen_button: Button
 var settings_button: Button
 var variation_down_button: Button
 var variation_up_button: Button
 var variation_reroll_button: Button
 var settings_panel: PanelContainer
 var settings_content: Settings
-var speaker_icon_on: ImageTexture
-var speaker_icon_off: ImageTexture
-var fullscreen_icon_on: ImageTexture
-var fullscreen_icon_off: ImageTexture
 var aim_cursor_screen_pos := Vector2.ZERO
 var bank_trips := 0
 var delivery_dump_count := 0
@@ -3449,40 +3443,6 @@ func _refresh_dirt_visual_texture() -> void:
     dirt_texture.update(dirt_image)
 
 func _setup_system_controls() -> void:
-    mute_button = Button.new()
-    mute_button.name = "MuteButton"
-    mute_button.anchor_left = 0.5
-    mute_button.anchor_top = 0.0
-    mute_button.anchor_right = 0.5
-    mute_button.anchor_bottom = 0.0
-    mute_button.offset_left = -42.0
-    mute_button.offset_top = 16.0
-    mute_button.offset_right = 42.0
-    mute_button.offset_bottom = 82.0
-    mute_button.focus_mode = Control.FOCUS_NONE
-    mute_button.custom_minimum_size = Vector2(84.0, 66.0)
-    mute_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    mute_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
-    mute_button.expand_icon = true
-    mute_button.z_index = 60
-
-    fullscreen_button = Button.new()
-    fullscreen_button.name = "FullscreenButton"
-    fullscreen_button.anchor_left = 0.0
-    fullscreen_button.anchor_top = 0.0
-    fullscreen_button.anchor_right = 0.0
-    fullscreen_button.anchor_bottom = 0.0
-    fullscreen_button.offset_left = 16.0
-    fullscreen_button.offset_top = 16.0
-    fullscreen_button.offset_right = 60.0
-    fullscreen_button.offset_bottom = 60.0
-    fullscreen_button.focus_mode = Control.FOCUS_NONE
-    fullscreen_button.custom_minimum_size = Vector2(44.0, 44.0)
-    fullscreen_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    fullscreen_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
-    fullscreen_button.expand_icon = true
-    fullscreen_button.z_index = 60
-
     settings_button = Button.new()
     settings_button.name = "SettingsButton"
     settings_button.anchor_left = 1.0
@@ -3498,14 +3458,8 @@ func _setup_system_controls() -> void:
     settings_button.text = tr("UI_SETTINGS")
     settings_button.add_theme_font_size_override("font_size", 26)
     settings_button.z_index = 60
-    mute_button.pressed.connect(_on_mute_button_pressed)
-    fullscreen_button.pressed.connect(_on_fullscreen_button_pressed)
     settings_button.pressed.connect(_on_settings_button_pressed)
-    _style_utility_button(mute_button)
-    _style_utility_button(fullscreen_button)
     _style_utility_button(settings_button)
-    $CanvasLayer.add_child(mute_button)
-    $CanvasLayer.add_child(fullscreen_button)
     $CanvasLayer.add_child(settings_button)
     if _show_editor_variation_controls():
         variation_down_button = Button.new()
@@ -3554,11 +3508,6 @@ func _setup_system_controls() -> void:
         $CanvasLayer.add_child(variation_up_button)
         $CanvasLayer.add_child(variation_reroll_button)
         _refresh_editor_variation_controls()
-    speaker_icon_on = _make_speaker_icon_texture(false)
-    speaker_icon_off = _make_speaker_icon_texture(true)
-    fullscreen_icon_on = _make_fullscreen_icon_texture(true)
-    fullscreen_icon_off = _make_fullscreen_icon_texture(false)
-    _refresh_system_button_icons()
     _update_system_button_layout()
 
     settings_panel = PanelContainer.new()
@@ -3693,17 +3642,6 @@ func _style_utility_button_panel(panel: PanelContainer) -> void:
     box.corner_radius_bottom_right = 6
     panel.add_theme_stylebox_override("panel", box)
 
-func _refresh_system_button_icons() -> void:
-    if mute_button != null:
-        mute_button.text = ""
-        mute_button.icon = speaker_icon_off if SaveHandler.audio_muted else speaker_icon_on
-        mute_button.tooltip_text = tr("UI_UNMUTE_AUDIO") if SaveHandler.audio_muted else tr("UI_MUTE_AUDIO")
-    if fullscreen_button != null:
-        fullscreen_button.text = ""
-        var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-        fullscreen_button.icon = fullscreen_icon_on if is_fullscreen else fullscreen_icon_off
-        fullscreen_button.tooltip_text = tr("UI_EXIT_FULLSCREEN") if is_fullscreen else tr("UI_ENTER_FULLSCREEN")
-
 func _show_editor_variation_controls() -> bool:
     return OS.has_feature("editor") or Engine.is_editor_hint()
 
@@ -3779,15 +3717,6 @@ func _on_variation_reroll_button_pressed() -> void:
 
 func _on_mute_button_pressed() -> void:
     SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
-    _refresh_system_button_icons()
-
-func _on_fullscreen_button_pressed() -> void:
-    var is_fullscreen: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-    SaveHandler.update_screen_mode(SaveHandler.SCREEN_MODES.WINDOWED if is_fullscreen else SaveHandler.SCREEN_MODES.FULL_SCREEN)
-    _refresh_system_button_icons()
-    _update_system_button_layout()
-    if settings_content != null:
-        settings_content.refresh_from_save()
 
 func _on_settings_button_pressed() -> void:
     _toggle_settings_panel()
@@ -3815,95 +3744,8 @@ func _toggle_settings_panel() -> void:
     _refresh_mouse_capture_state()
 
 func _on_settings_updated() -> void:
-    _refresh_system_button_icons()
     if settings_content != null:
         settings_content.refresh_from_save()
-
-func _make_fullscreen_icon_texture(is_fullscreen: bool) -> ImageTexture:
-    var image := Image.create(80, 80, false, Image.FORMAT_RGBA8)
-    image.fill(Color(0, 0, 0, 0))
-    var line_color := Color(0.93, 0.97, 1.0, 1.0)
-    if is_fullscreen:
-        _draw_rect_pixels(image, Rect2i(12, 12, 20, 6), line_color)
-        _draw_rect_pixels(image, Rect2i(12, 12, 6, 20), line_color)
-        _draw_rect_pixels(image, Rect2i(48, 12, 20, 6), line_color)
-        _draw_rect_pixels(image, Rect2i(62, 12, 6, 20), line_color)
-        _draw_rect_pixels(image, Rect2i(12, 62, 20, 6), line_color)
-        _draw_rect_pixels(image, Rect2i(12, 48, 6, 20), line_color)
-        _draw_rect_pixels(image, Rect2i(48, 62, 20, 6), line_color)
-        _draw_rect_pixels(image, Rect2i(62, 48, 6, 20), line_color)
-    else:
-        _draw_rect_pixels(image, Rect2i(24, 12, 6, 20), line_color)
-        _draw_rect_pixels(image, Rect2i(12, 24, 20, 6), line_color)
-        _draw_rect_pixels(image, Rect2i(50, 12, 6, 20), line_color)
-        _draw_rect_pixels(image, Rect2i(48, 24, 20, 6), line_color)
-        _draw_rect_pixels(image, Rect2i(24, 48, 6, 20), line_color)
-        _draw_rect_pixels(image, Rect2i(12, 50, 20, 6), line_color)
-        _draw_rect_pixels(image, Rect2i(50, 48, 6, 20), line_color)
-        _draw_rect_pixels(image, Rect2i(48, 50, 20, 6), line_color)
-    return ImageTexture.create_from_image(image)
-
-func _make_speaker_icon_texture(is_muted: bool) -> ImageTexture:
-    var image := Image.create(80, 80, false, Image.FORMAT_RGBA8)
-    image.fill(Color(0, 0, 0, 0))
-    var speaker_color := Color(0.93, 0.97, 1.0, 1.0)
-    _draw_rect_pixels(image, Rect2i(14, 28, 14, 24), speaker_color)
-    _draw_triangle_right(image, Vector2i(28, 40), 22, 18, speaker_color)
-    if is_muted:
-        _draw_thick_line(image, Vector2i(42, 20), Vector2i(68, 60), Color(1.0, 0.2, 0.2, 1.0), 4)
-        _draw_thick_line(image, Vector2i(68, 20), Vector2i(42, 60), Color(1.0, 0.2, 0.2, 1.0), 4)
-    else:
-        _draw_arc_ring(image, Vector2i(40, 40), 16, 22, PI * -0.42, PI * 0.42, speaker_color)
-        _draw_arc_ring(image, Vector2i(40, 40), 24, 30, PI * -0.42, PI * 0.42, speaker_color)
-    return ImageTexture.create_from_image(image)
-
-func _draw_rect_pixels(image: Image, rect: Rect2i, color: Color) -> void:
-    for x in range(rect.position.x, rect.position.x + rect.size.x):
-        for y in range(rect.position.y, rect.position.y + rect.size.y):
-            image.set_pixel(x, y, color)
-
-func _draw_triangle_right(image: Image, center: Vector2i, width: int, half_height: int, color: Color) -> void:
-    for i in range(width):
-        var x: int = center.x + i
-        var y_top: int = center.y - int(round(float(half_height) * (1.0 - float(i) / float(width))))
-        var y_bottom: int = center.y + int(round(float(half_height) * (1.0 - float(i) / float(width))))
-        for y in range(y_top, y_bottom + 1):
-            image.set_pixel(x, y, color)
-
-func _draw_thick_line(image: Image, start: Vector2i, finish: Vector2i, color: Color, thickness: int) -> void:
-    var steps: int = maxi(abs(finish.x - start.x), abs(finish.y - start.y))
-    if steps <= 0:
-        image.set_pixel(start.x, start.y, color)
-        return
-    for step in range(steps + 1):
-        var t: float = float(step) / float(steps)
-        var point := Vector2(
-            lerpf(float(start.x), float(finish.x), t),
-            lerpf(float(start.y), float(finish.y), t)
-        )
-        var radius: int = maxi(1, int(round(float(thickness) * 0.5)))
-        for offset_x in range(-radius, radius + 1):
-            for offset_y in range(-radius, radius + 1):
-                if Vector2(offset_x, offset_y).length() > float(radius):
-                    continue
-                var px: int = int(round(point.x)) + offset_x
-                var py: int = int(round(point.y)) + offset_y
-                if px < 0 or py < 0 or px >= image.get_width() or py >= image.get_height():
-                    continue
-                image.set_pixel(px, py, color)
-
-func _draw_arc_ring(image: Image, center: Vector2i, inner_radius: int, outer_radius: int, start_angle: float, end_angle: float, color: Color) -> void:
-    for radius in range(inner_radius, outer_radius + 1):
-        var arc_length: float = abs(end_angle - start_angle) * float(radius)
-        var segments: int = maxi(12, int(ceil(arc_length)))
-        for segment in range(segments + 1):
-            var t: float = float(segment) / float(segments)
-            var angle: float = lerpf(start_angle, end_angle, t)
-            var px: int = int(round(float(center.x) + cos(angle) * float(radius)))
-            var py: int = int(round(float(center.y) + sin(angle) * float(radius)))
-            if px < 0 or py < 0 or px >= image.get_width() or py >= image.get_height():
-                continue
-            image.set_pixel(px, py, color)
 
 func _get_material_by_id(material_id: String) -> Dictionary:
     return MINING_BALANCE.get_material_by_id(material_id)

@@ -13,6 +13,7 @@ var session_stats: SessionStats
 var tier_stats: TierStats
 var run_stats: RunStats
 var cached_upgrade_tech_tree: Node = null
+var cached_upgrade_tree_locale: String = ""
 
 
 const G = 100000.0
@@ -92,6 +93,7 @@ func clear_upgrade_tree_cache() -> void:
     if cached_upgrade_tech_tree != null and is_instance_valid(cached_upgrade_tech_tree):
         cached_upgrade_tech_tree.queue_free()
     cached_upgrade_tech_tree = null
+    cached_upgrade_tree_locale = ""
     FishingUpgradeDB.clear_cached_data()
     FishingUpgradeTreeAdapter.clear_cached_json_data()
 

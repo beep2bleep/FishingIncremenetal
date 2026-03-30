@@ -206,7 +206,7 @@ func _on_contiunue_old_game_pressed() -> void :
 
 
 func _on_quit_pressed() -> void :
-    get_tree().quit()
+    SteamHandler.request_app_quit()
 
 
 func _on_wishlist_pressed() -> void :

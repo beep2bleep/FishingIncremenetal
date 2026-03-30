@@ -79,7 +79,7 @@ func _on_sound_effects_h_slider_2_value_changed(value: float) -> void :
 
 
 func _on_quit_pressed() -> void :
-    get_tree().quit()
+    SteamHandler.request_app_quit()
 
 
 func _on_go_to_upgrades_pressed() -> void :

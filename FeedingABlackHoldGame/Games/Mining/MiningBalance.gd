@@ -49,7 +49,10 @@ const BASE_MATERIAL_TIERS: Array[Dictionary] = [
 ]
 
 static func get_upgrade_catalog() -> Array[Dictionary]:
-    return UPGRADE_CATALOG.duplicate(true)
+    var localized_catalog: Array[Dictionary] = []
+    for entry in UPGRADE_CATALOG:
+        localized_catalog.append(_localize_upgrade_entry(entry))
+    return localized_catalog
 
 static func get_upgrade_description(upgrade_def: Dictionary) -> String:
     var summary: String = str(upgrade_def.get("summary", "")).strip_edges()
@@ -65,6 +68,7 @@ static func get_material_tiers() -> Array[Dictionary]:
     var previous_material: Dictionary = {}
     for depth_level in range(1, MAX_DEPTH_LEVEL + 1):
         var material: Dictionary = _build_material_tier_for_depth(depth_level, previous_material)
+        material = _localize_material_entry(material)
         tiers.append(material)
         previous_material = material
     return tiers
@@ -73,7 +77,7 @@ static func get_material_by_id(material_id: String) -> Dictionary:
     for material in get_material_tiers():
         if String(material.get("id", "")) == material_id:
             return material.duplicate(true)
-    return _build_material_tier_for_depth(1)
+    return _localize_material_entry(_build_material_tier_for_depth(1))
 
 static func get_level_for_total_xp(total_xp: int) -> int:
     var level: int = 1
@@ -326,34 +330,34 @@ static func _describe_upgrade_level_effect(upgrade_key: String, level: int) -> S
     match upgrade_key:
         "timer_reserve":
             return _format_effect_list([
-                "+%ss run time" % _format_number(0.65 * strength_delta)
+                _trf("MINING_EFFECT_RUN_TIME", [_format_number(0.65 * strength_delta)])
             ])
         "route_planner":
             return _format_effect_list([
-                "+%s move speed" % _format_number(0.14 * strength_delta),
-                "+%s%% dirt speed multiplier" % _format_number(0.1 * strength_delta),
-                "-%s%% timer drain" % _format_number(1.2 * strength_delta)
+                _trf("MINING_EFFECT_MOVE_SPEED", [_format_number(0.14 * strength_delta)]),
+                _trf("MINING_EFFECT_DIRT_SPEED_MULT", [_format_number(0.1 * strength_delta)]),
+                _trf("MINING_EFFECT_TIMER_DRAIN", [_format_number(1.2 * strength_delta)])
             ])
         "engine_tuning":
             return _format_effect_list([
-                "+%s move speed" % _format_number(0.84 * strength_delta)
+                _trf("MINING_EFFECT_MOVE_SPEED", [_format_number(0.84 * strength_delta)])
             ])
         "dirt_softener":
             return _format_effect_list([
-                "+%s%% dirt speed multiplier" % _format_number(0.35 * strength_delta)
+                _trf("MINING_EFFECT_DIRT_SPEED_MULT", [_format_number(0.35 * strength_delta)])
             ])
         "drill_torque":
             return _format_effect_list([
-                "+%s drill DPS" % _format_number(1.12 * strength_delta)
+                _trf("MINING_EFFECT_DRILL_DPS", [_format_number(1.12 * strength_delta)])
             ])
         "drill_plating":
             return _format_effect_list([
-                "+%s drill health" % _format_number(9.0 * strength_delta)
+                _trf("MINING_EFFECT_DRILL_HEALTH", [_format_number(9.0 * strength_delta)])
             ])
         "cooling_loop":
             return _format_effect_list([
-                "+%s drill DPS" % _format_number(0.12 * strength_delta),
-                "-%s%% drill wear" % _format_number(1.15 * strength_delta)
+                _trf("MINING_EFFECT_DRILL_DPS", [_format_number(0.12 * strength_delta)]),
+                _trf("MINING_EFFECT_DRILL_WEAR", [_format_number(1.15 * strength_delta)])
             ])
         "cargo_pods":
             return _describe_cargo_pods_level(level)
@@ -361,45 +365,49 @@ static func _describe_upgrade_level_effect(upgrade_key: String, level: int) -> S
             return _describe_cargo_compressor_level(level)
         "ore_refinery":
             return _format_effect_list([
-                "+%s%% ore value" % _format_number(3.0 * strength_delta)
+                _trf("MINING_EFFECT_ORE_VALUE", [_format_number(3.0 * strength_delta)])
             ])
         "pickup_radius":
             return _format_effect_list([
-                "+%s pickup radius" % _format_number(2.7 * strength_delta)
+                _trf("MINING_EFFECT_PICKUP_RADIUS", [_format_number(2.7 * strength_delta)])
             ])
         "xp_calibration":
             return _format_effect_list([
-                "+%s%% XP gain" % _format_number(3.5 * strength_delta)
+                _trf("MINING_EFFECT_XP_GAIN", [_format_number(3.5 * strength_delta)])
             ])
         "depth_scanner":
             return _format_effect_list([
-                "+1 max unlocked depth"
+                tr("MINING_EFFECT_MAX_UNLOCKED_DEPTH")
             ])
         "seismic_sonar":
             return _format_effect_list([
-                "+0.55 top-tier ore weight",
-                "+0.24 near-top ore weight",
-                "-0.05 older-tier weight"
+                tr("MINING_EFFECT_TOP_TIER_ORE_WEIGHT"),
+                tr("MINING_EFFECT_NEAR_TOP_ORE_WEIGHT"),
+                tr("MINING_EFFECT_OLDER_TIER_WEIGHT")
             ])
         "magnet_drone":
             return _describe_magnet_drone_level(level)
         "foreman_bot":
             return _format_effect_list([
-                "+%s drill DPS" % _format_number(0.72 * strength_delta)
+                _trf("MINING_EFFECT_DRILL_DPS", [_format_number(0.72 * strength_delta)])
             ])
         "delivery_drone":
             return _describe_delivery_drone_level(level)
         "auto_sorters":
             return _describe_auto_sorters_level(level)
         _:
-            return "Effect applied on unlock."
+            return tr("MINING_EFFECT_UNLOCK_ONLY")
 
 static func _describe_cargo_pods_level(level: int) -> String:
     var before: Dictionary = {"cargo_pods": max(0, level - 1)}
     var after: Dictionary = {"cargo_pods": level}
     var cargo_delta: int = get_cargo_capacity(after) - get_cargo_capacity(before)
     return _format_effect_list([
-        "+%d %s" % [cargo_delta, _pluralize(cargo_delta, "cargo slot", "cargo slots")]
+        _pluralize_effect(
+            cargo_delta,
+            "MINING_EFFECT_CARGO_SLOT_ONE",
+            "MINING_EFFECT_CARGO_SLOT_MANY"
+        )
     ])
 
 static func _describe_cargo_compressor_level(level: int) -> String:
@@ -409,51 +417,63 @@ static func _describe_cargo_compressor_level(level: int) -> String:
     var value_delta: float = (get_value_multiplier(after) - get_value_multiplier(before)) * 100.0
     var effect_parts: Array = []
     if cargo_delta > 0:
-        effect_parts.append("+%d %s" % [cargo_delta, _pluralize(cargo_delta, "cargo slot", "cargo slots")])
-    effect_parts.append("+%s%% ore value" % _format_number(value_delta))
+        effect_parts.append(_pluralize_effect(
+            cargo_delta,
+            "MINING_EFFECT_CARGO_SLOT_ONE",
+            "MINING_EFFECT_CARGO_SLOT_MANY"
+        ))
+    effect_parts.append(_trf("MINING_EFFECT_ORE_VALUE", [_format_number(value_delta)]))
     return _format_effect_list(effect_parts)
 
 static func _describe_magnet_drone_level(level: int) -> String:
     var before: Dictionary = {"magnet_drone": max(0, level - 1)}
     var after: Dictionary = {"magnet_drone": level}
     var effect_parts: Array = [
-        "+%s pickup radius" % _format_number(get_pickup_radius(after) - get_pickup_radius(before)),
-        "+%s salvage lane speed" % _format_number((248.0 + 5.0 * get_scaled_upgrade_strength(after, "magnet_drone")) - (248.0 + 5.0 * get_scaled_upgrade_strength(before, "magnet_drone")))
+        _trf("MINING_EFFECT_PICKUP_RADIUS", [_format_number(get_pickup_radius(after) - get_pickup_radius(before))]),
+        _trf("MINING_EFFECT_SALVAGE_LANE_SPEED", [_format_number((248.0 + 5.0 * get_scaled_upgrade_strength(after, "magnet_drone")) - (248.0 + 5.0 * get_scaled_upgrade_strength(before, "magnet_drone")))])
     ]
     var drone_delta: int = get_pickup_drone_count(after) - get_pickup_drone_count(before)
     if drone_delta > 0:
-        effect_parts.append("+%d %s" % [drone_delta, _pluralize(drone_delta, "salvage drone", "salvage drones")])
+        effect_parts.append(_pluralize_effect(
+            drone_delta,
+            "MINING_EFFECT_SALVAGE_DRONE_ONE",
+            "MINING_EFFECT_SALVAGE_DRONE_MANY"
+        ))
     return _format_effect_list(effect_parts)
 
 static func _describe_delivery_drone_level(level: int) -> String:
     var before: Dictionary = {"delivery_drone": max(0, level - 1)}
     var after: Dictionary = {"delivery_drone": level}
     var effect_parts: Array = [
-        "+%s delivery lane speed" % _format_number((38.0 + 1.05 * get_scaled_upgrade_strength(after, "delivery_drone")) - (38.0 + 1.05 * get_scaled_upgrade_strength(before, "delivery_drone"))),
-        "-%ss dispatch window" % _format_number(get_delivery_dispatch_window(before) - get_delivery_dispatch_window(after))
+        _trf("MINING_EFFECT_DELIVERY_LANE_SPEED", [_format_number((38.0 + 1.05 * get_scaled_upgrade_strength(after, "delivery_drone")) - (38.0 + 1.05 * get_scaled_upgrade_strength(before, "delivery_drone")))]),
+        _trf("MINING_EFFECT_DISPATCH_WINDOW", [_format_number(get_delivery_dispatch_window(before) - get_delivery_dispatch_window(after))])
     ]
     var drone_delta: int = get_delivery_drone_count(after) - get_delivery_drone_count(before)
     if drone_delta > 0:
-        effect_parts.append("+%d %s" % [drone_delta, _pluralize(drone_delta, "delivery drone", "delivery drones")])
+        effect_parts.append(_pluralize_effect(
+            drone_delta,
+            "MINING_EFFECT_DELIVERY_DRONE_ONE",
+            "MINING_EFFECT_DELIVERY_DRONE_MANY"
+        ))
     return _format_effect_list(effect_parts)
 
 static func _describe_auto_sorters_level(level: int) -> String:
     var before: Dictionary = {"auto_sorters": max(0, level - 1)}
     var after: Dictionary = {"auto_sorters": level}
     var effect_parts: Array = [
-        "+%s delivery lane speed" % _format_number((38.0 + 0.5 * get_scaled_upgrade_strength(after, "auto_sorters")) - (38.0 + 0.5 * get_scaled_upgrade_strength(before, "auto_sorters"))),
-        "-%ss dispatch window" % _format_number(get_delivery_dispatch_window(before) - get_delivery_dispatch_window(after))
+        _trf("MINING_EFFECT_DELIVERY_LANE_SPEED", [_format_number((38.0 + 0.5 * get_scaled_upgrade_strength(after, "auto_sorters")) - (38.0 + 0.5 * get_scaled_upgrade_strength(before, "auto_sorters")))]),
+        _trf("MINING_EFFECT_DISPATCH_WINDOW", [_format_number(get_delivery_dispatch_window(before) - get_delivery_dispatch_window(after))])
     ]
     var cargo_delta: int = get_delivery_cargo_space_per_dispatch(after) - get_delivery_cargo_space_per_dispatch(before)
     if cargo_delta > 0:
-        effect_parts.append("+%d %s per dispatch" % [cargo_delta, _pluralize(cargo_delta, "cargo space", "cargo space")])
+        effect_parts.append(_trf("MINING_EFFECT_CARGO_SPACE_PER_DISPATCH", [cargo_delta]))
     return _format_effect_list(effect_parts)
 
 static func _format_effect_list(effect_parts: Array) -> String:
     return ", ".join(effect_parts)
 
-static func _pluralize(amount: int, singular: String, plural: String) -> String:
-    return singular if amount == 1 else plural
+static func _pluralize_effect(amount: int, singular_key: String, plural_key: String) -> String:
+    return _trf(singular_key if amount == 1 else plural_key, [amount])
 
 static func _format_number(value: float) -> String:
     var rounded: float = snappedf(value, 0.01)
@@ -466,6 +486,40 @@ static func _format_number(value: float) -> String:
 
 static func _group_start_level(level: int) -> int:
     return (int(floor(float(max(level, 1) - 1) / float(UPGRADE_EFFECT_GROUP_SIZE))) * UPGRADE_EFFECT_GROUP_SIZE) + 1
+
+static func _trf(key: String, args: Array = []) -> String:
+    var translated: String = tr(key)
+    for index in range(args.size()):
+        translated = translated.replace("{%d}" % index, str(args[index]))
+    return translated
+
+static func _localize_upgrade_entry(entry: Dictionary) -> Dictionary:
+    var localized: Dictionary = entry.duplicate(true)
+    var upgrade_id: String = str(entry.get("id", "")).strip_edges()
+    if upgrade_id.is_empty():
+        return localized
+    localized["label"] = tr("MINING_UPGRADE_%s_NAME" % upgrade_id.to_upper())
+    localized["summary"] = tr("MINING_UPGRADE_%s_SUMMARY" % upgrade_id.to_upper())
+    return localized
+
+static func _localize_material_entry(entry: Dictionary) -> Dictionary:
+    var localized: Dictionary = entry.duplicate(true)
+    var material_id: String = str(entry.get("id", "")).strip_edges()
+    if material_id.is_empty():
+        return localized
+
+    var base_material_id: String = material_id
+    var cycle_number: int = -1
+    var id_parts: PackedStringArray = material_id.split("_")
+    if id_parts.size() > 1 and id_parts[id_parts.size() - 1].is_valid_int():
+        cycle_number = int(id_parts[id_parts.size() - 1])
+        id_parts.remove_at(id_parts.size() - 1)
+        base_material_id = "_".join(id_parts)
+
+    var base_name_key := "MINING_MATERIAL_%s_NAME" % base_material_id.to_upper()
+    var base_name: String = tr(base_name_key)
+    localized["name"] = base_name if cycle_number <= 1 else _trf("MINING_MATERIAL_CYCLE_FORMAT", [base_name, cycle_number])
+    return localized
 
 static func _build_material_tier_for_depth(depth_level: int, previous_material: Dictionary = {}) -> Dictionary:
     var base_count: int = BASE_MATERIAL_TIERS.size()

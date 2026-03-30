@@ -48,6 +48,7 @@ var battle_level_choice_dialog: ConfirmationDialog
 var battle_level_choice_selected_level: int = 1
 var battle_level_choice_line_edit: LineEdit
 var battle_level_choice_max_level: int = 1
+var _locale_tree_refresh_queued: bool = false
 
 func _trf(key: String, args: Array = []) -> String:
     var translated: String = tr(key)
@@ -94,6 +95,7 @@ var _popup_x_confirm_armed := true
 func _notification(what: int) -> void:
     if what == NOTIFICATION_TRANSLATION_CHANGED:
         _refresh_localized_text()
+        _queue_upgrade_tree_locale_refresh()
 
 func _refresh_localized_text() -> void:
     if settings_button != null and is_instance_valid(settings_button):
@@ -120,6 +122,24 @@ func _refresh_localized_text() -> void:
         var legacy_ok_button: Button = legacy_reset_dialog.get_ok_button()
         if legacy_ok_button != null:
             legacy_ok_button.text = tr("UI_CONTINUE")
+
+func _queue_upgrade_tree_locale_refresh() -> void:
+    if _locale_tree_refresh_queued:
+        return
+    _locale_tree_refresh_queued = true
+    call_deferred("_refresh_upgrade_tree_for_locale_change")
+
+func _refresh_upgrade_tree_for_locale_change() -> void:
+    _locale_tree_refresh_queued = false
+    if tech_tree == null or not is_instance_valid(tech_tree):
+        return
+    if not tree_initialized:
+        return
+
+    _ensure_tree_initialized(true)
+    if not tech_tree.build_in_progress:
+        tech_tree.update_active()
+        _update_go_again_button_state()
 
 func _should_show_editor_only_touch_toggle() -> bool:
     return OS.has_feature("editor")
@@ -223,9 +243,13 @@ func _restore_cached_tech_tree_if_available() -> void:
     if not (Global.cached_upgrade_tech_tree is TechTree):
         Global.clear_upgrade_tree_cache()
         return
+    if Global.cached_upgrade_tree_locale != "" and Global.cached_upgrade_tree_locale != SaveHandler.locale:
+        Global.clear_upgrade_tree_cache()
+        return
 
     var cached_tree: TechTree = Global.cached_upgrade_tech_tree
     Global.cached_upgrade_tech_tree = null
+    Global.cached_upgrade_tree_locale = ""
 
     if tech_tree != null and tech_tree != cached_tree and is_instance_valid(tech_tree):
         tech_tree.queue_free()
@@ -252,6 +276,7 @@ func _cache_tech_tree_for_reuse() -> void:
     tech_tree.set_process_unhandled_input(false)
     Global.add_child(tech_tree)
     Global.cached_upgrade_tech_tree = tech_tree
+    Global.cached_upgrade_tree_locale = SaveHandler.locale
 
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):
     if is_active == true:

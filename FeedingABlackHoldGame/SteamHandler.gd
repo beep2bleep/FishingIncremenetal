@@ -70,6 +70,8 @@ var _leaderboard_active_download_id := ""
 var _leaderboard_active_request_started_msec: int = 0
 var _leaderboard_active_download_started_msec: int = 0
 var _leaderboard_last_polled_handle: int = 0
+var _quit_requested := false
+var _steam_shutdown_started := false
 
 
 func get_store_url() -> String:
@@ -97,6 +99,49 @@ func _ready():
     initialize_steam()
     _setup_leaderboard_support()
     set_process(steam_enabled)
+
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_WM_CLOSE_REQUEST:
+        request_app_quit()
+
+func _exit_tree() -> void:
+    shutdown_steam()
+
+func request_app_quit() -> void:
+    if _quit_requested:
+        return
+
+    _quit_requested = true
+    shutdown_steam()
+
+    var tree: SceneTree = get_tree()
+    if tree != null:
+        tree.quit()
+
+func shutdown_steam() -> void:
+    if _steam_shutdown_started:
+        return
+
+    _steam_shutdown_started = true
+    set_process(false)
+
+    if not steam_enabled:
+        return
+
+    if Steam.has_method("storeStats"):
+        Steam.call("storeStats")
+
+    if Steam.has_method("run_callbacks"):
+        Steam.call("run_callbacks")
+    elif Steam.has_method("runCallbacks"):
+        Steam.call("runCallbacks")
+
+    if Steam.has_method("steamShutdown"):
+        Steam.call("steamShutdown")
+    elif Steam.has_method("shutdown"):
+        Steam.call("shutdown")
+
+    steam_enabled = false
 
 
 func initialize_steam() -> void :
