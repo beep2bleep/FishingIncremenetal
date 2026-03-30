@@ -1,0 +1,19 @@
+Tags and Category Strategy
+
+Primary Tags
+- Incremental
+- Mining
+- Simulation
+- Singleplayer
+
+Secondary Tags
+- Strategy
+- Casual
+- Progression
+- PvE
+- Indie
+
+Positioning Notes
+- Lead with "mining incremental" or "run-based mining progression" so the page reads as Mining first, not Vanguard-adjacent.
+- Emphasize drill pressure, cargo banking, depth unlocks, and persistent upgrades.
+- Highlight automation support through drones and logistics upgrades once the core mining loop is established.

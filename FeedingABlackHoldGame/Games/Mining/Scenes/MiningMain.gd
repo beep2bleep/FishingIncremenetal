@@ -5,6 +5,9 @@ const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const MINING_BALANCE = preload("res://Games/Mining/MiningBalance.gd")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
+const RUN_REASON_TIMER_EXPIRED := "MINING_REASON_TIMER_EXPIRED"
+const RUN_REASON_DRILL_DEPLETED := "MINING_REASON_DRILL_DEPLETED"
+const RUN_REASON_SIMULATION_STEP_CAP := "MINING_REASON_SIMULATION_STEP_CAP"
 
 const WORLD_SIZE := Vector2(1650.0, 1950.0)
 const DEPTH_DOODAD_COUNT := 18
@@ -95,11 +98,11 @@ const TUNNEL_COVERAGE_SAMPLE_OFFSETS := [
     Vector2(-0.72, -0.72)
 ]
 const DEFAULT_MINING_SUMMARY_HINTS: Array[String] = [
-    "Build speed through cleared tunnels before committing to a seam. Straight runs give the drill its best burst damage.",
-    "Banking at the surface is safest when your cargo is full or your drill is close to breaking. Richer ore also eats more hold space now, so unbanked ore is a bad gamble.",
-    "Salvage drones are best when you want to stay glued to rich nodes instead of weaving around for loose drops.",
-    "Delivery drones shine once cargo upgrades are online. They keep rich runs flowing while you stay in the field.",
-    "Depth Scanner unlocks harder layers, while Seismic Sonar helps those layers actually pay out with richer veins."
+    "MINING_HINT_DEFAULT_1",
+    "MINING_HINT_DEFAULT_2",
+    "MINING_HINT_DEFAULT_3",
+    "MINING_HINT_DEFAULT_4",
+    "MINING_HINT_DEFAULT_5"
 ]
 
 enum RUN_STATES {RUNNING, SUMMARY}
@@ -230,6 +233,19 @@ var xp_bar_pop_tween: Tween
 var xp_bar_level_up_flash_timer := 0.0
 var visual_variation_strength := VISUAL_VARIATION_STRENGTH_DEFAULT
 var visual_style_reroll_index := 0
+
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_TRANSLATION_CHANGED:
+        material_tiers = MINING_BALANCE.get_material_tiers()
+        if active_depth_level >= 1 and active_depth_level <= material_tiers.size():
+            active_material = material_tiers[active_depth_level - 1]
+        _refresh_localized_text()
+
+func _trf(key: String, args: Array = []) -> String:
+    var translated: String = tr(key)
+    for index in range(args.size()):
+        translated = translated.replace("{%d}" % index, str(args[index]))
+    return translated
 
 func _ready() -> void:
     Global.game_state = Util.GAME_STATES.PLAYING
@@ -369,7 +385,7 @@ func _begin_run() -> void:
     attached_contact_point = player_pos
     attached_push_direction = Vector2.DOWN
     drone_delivery_timer = _get_delivery_dispatch_window()
-    run_status = "Mine nodes, scoop the drops, and bank cargo at the surface rig."
+    run_status = tr("MINING_RUN_STATUS_START")
     run_state = RUN_STATES.RUNNING
     Global.game_state = Util.GAME_STATES.PLAYING
     if not simulation_mode_active or simulation_commit_progress:
@@ -404,7 +420,7 @@ func simulate_autoplay_run(options: Dictionary = {}) -> Dictionary:
         _process_running(simulation_fixed_delta)
         step_count += 1
     if run_state == RUN_STATES.RUNNING:
-        _finish_run("Simulation step cap reached.")
+        _finish_run(RUN_REASON_SIMULATION_STEP_CAP)
     var results: Dictionary = last_run_results.duplicate(true)
     results["depth_level"] = active_depth_level
     results["selected_goal"] = autoplay_current_goal
@@ -440,9 +456,9 @@ func _process_running(delta: float) -> void:
     camera_pos = camera_pos.lerp(player_pos + _get_camera_shake_offset(), min(1.0, delta * 7.0))
     _update_system_button_layout()
     if time_left <= 0.0:
-        _finish_run("Timer expired.")
+        _finish_run(RUN_REASON_TIMER_EXPIRED)
     elif drill_health <= 0.0:
-        _finish_run("Drill health depleted.")
+        _finish_run(RUN_REASON_DRILL_DEPLETED)
 
 func _process_player_movement(delta: float) -> void:
     var previous_pos: Vector2 = player_pos
@@ -528,7 +544,7 @@ func _process_drilling(delta: float) -> void:
     _spawn_contact_sparks(player_pos.lerp(node.get("pos", player_pos), 0.45), node.get("material_color", Color.WHITE), 2)
     camera_shake_strength = min(8.0, camera_shake_strength + 1.8 * delta * 60.0)
     _play_drill_tick(hit_pos)
-    run_status = "Drilling %s..." % String(node.get("material_name", "node"))
+    run_status = _trf("MINING_RUN_STATUS_DRILLING", [String(node.get("material_name", tr("MINING_NODE_GENERIC")))])
     if float(node["health"]) <= 0.0:
         _break_node(target_node_id)
 
@@ -552,11 +568,11 @@ func _collect_pickups(delta: float) -> void:
         var material_id: String = String(pickup.get("material_id", ""))
         if can_collect and _add_cargo_material(material_id):
             player_pickups_collected += 1
-            run_status = "Scooped %s." % String(pickup.get("material_name", "loot"))
+            run_status = _trf("MINING_RUN_STATUS_SCOOPED", [String(pickup.get("material_name", tr("MINING_LOOT_GENERIC")))])
             continue
         if can_collect and reject_retry_timer <= 0.0:
             pickup = _apply_pickup_rejection_feedback(pickup, player_pos)
-            run_status = "Cargo full. Bank at the surface rig."
+            run_status = tr("MINING_RUN_STATUS_CARGO_FULL")
         remaining.append(pickup)
     pickups = remaining
 
@@ -571,7 +587,7 @@ func _bank_cargo_if_at_base() -> void:
     carry_counts.clear()
     cargo_used = 0
     bank_trips += 1
-    run_status = "Cargo dropped off at the surface rig."
+    run_status = tr("MINING_RUN_STATUS_BANKED")
 
 func _process_delivery_drone(delta: float) -> void:
     var drone_count: int = MINING_BALANCE.get_delivery_drone_count(_get_upgrade_levels())
@@ -596,7 +612,7 @@ func _process_delivery_drone(delta: float) -> void:
         _spawn_delivery_drone_visual(dispatched_material_id, _get_material_by_id(dispatched_material_id), cargo_count)
         dispatched += 1
     if dispatched > 0:
-        run_status = "Dump drone hauling cargo back to the surface rig."
+        run_status = tr("MINING_RUN_STATUS_DELIVERY_DRONE")
 
 func _process_pickup_drones(delta: float) -> void:
     var drone_count: int = MINING_BALANCE.get_pickup_drone_count(_get_upgrade_levels())
@@ -646,10 +662,10 @@ func _process_pickup_drones(delta: float) -> void:
                 var carry_material_id: String = String(drone.get("carry_material_id", ""))
                 if _add_cargo_material(carry_material_id):
                     drone_pickups_collected += 1
-                    run_status = "Pickup drone hauled in %s." % String(drone.get("carry_material_name", "loot"))
+                    run_status = _trf("MINING_RUN_STATUS_PICKUP_DRONE", [String(drone.get("carry_material_name", tr("MINING_LOOT_GENERIC")))])
                 else:
                     _spawn_rejected_pickup_from_drone(drone, drone_pos)
-                    run_status = "Cargo full. Bank at the surface rig."
+                    run_status = tr("MINING_RUN_STATUS_CARGO_FULL")
                 drone["state"] = "idle"
                 drone["carry_material_id"] = ""
                 drone["carry_material_name"] = ""
@@ -983,7 +999,7 @@ func _break_node(node_index: int) -> void:
     _spawn_contact_sparks(node.get("pos", Vector2.ZERO), node.get("material_color", Color.WHITE), 10)
     camera_shake_strength = max(camera_shake_strength, 10.0)
     _carve_dirt_circle(node.get("pos", Vector2.ZERO), float(node.get("radius", 24.0)) + 16.0)
-    run_status = "%s vein cracked open. Grab the drops." % String(node.get("material_name", "Stone"))
+    run_status = _trf("MINING_RUN_STATUS_VEIN_CRACKED", [String(node.get("material_name", tr("MINING_MATERIAL_STONE_NAME")))])
 
 func _handle_removed_node_index(removed_index: int) -> void:
     contact_node_id = _remap_node_index_after_removal(contact_node_id, removed_index)
@@ -1000,7 +1016,8 @@ func _remap_node_index_after_removal(index: int, removed_index: int) -> int:
         return index - 1
     return index
 
-func _build_run_results(reason: String) -> Dictionary:
+func _build_run_results(reason_key: String) -> Dictionary:
+    var reason_text: String = tr(reason_key)
     var money_breakdown: Array[String] = []
     var money_breakdown_chart: Array[Dictionary] = []
     var total_money: int = 0
@@ -1011,7 +1028,7 @@ func _build_run_results(reason: String) -> Dictionary:
         var value_each: int = int(round(int(material.get("value", 1)) * _get_value_multiplier()))
         var subtotal: int = count * value_each
         total_money += subtotal
-        money_breakdown.append("%s x%d -> $%d" % [String(material.get("name", material_id)), count, subtotal])
+        money_breakdown.append(_trf("MINING_SUMMARY_TEXT_CARGO_LINE_CASH", [String(material.get("name", material_id)), count, subtotal]))
         money_breakdown_chart.append({
             "material_id": material_id,
             "label": String(material.get("name", material_id)),
@@ -1052,28 +1069,29 @@ func _build_run_results(reason: String) -> Dictionary:
     var ore_per_second: float = float(ore_collected) / run_seconds
     var collection_rate: float = 0.0 if total_pickups_spawned <= 0 else float(ore_collected) / float(total_pickups_spawned)
     var bank_rate: float = 0.0 if ore_collected <= 0 else float(ore_banked) / float(ore_collected)
-    var summary_text: String = "Run complete: %s\n\nDepth tier %d: %s\nNodes broken: %d\nXP earned: %d%s\nMoney earned: $%d\n\nCargo payout:\n%s\n\nLevel %d  XP %d/%d\nUnlocked depth tier: %d" % [
-        reason,
-        active_depth_level,
-        String(active_material.get("name", "Stone")),
-        nodes_broken,
-        run_xp,
-        "  (LEVEL UP!)" if level_gain > 0 else "",
-        total_money,
-        "No cargo banked." if money_breakdown.is_empty() else "\n".join(money_breakdown),
-        projected_level,
-        int(level_progress.get("current_xp", 0)),
-        int(level_progress.get("next_level_xp", 1)),
-        projected_depth_unlock
-    ]
+    var summary_lines := PackedStringArray()
+    summary_lines.append(_trf("MINING_SUMMARY_TEXT_RUN_COMPLETE", [reason_text]))
+    summary_lines.append("")
+    summary_lines.append(_trf("MINING_SUMMARY_TEXT_DEPTH_TIER", [active_depth_level, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME")))]))
+    summary_lines.append(_trf("MINING_SUMMARY_TEXT_NODES_BROKEN", [nodes_broken]))
+    summary_lines.append(_trf("MINING_SUMMARY_TEXT_XP_EARNED", [run_xp, "  %s" % tr("MINING_SUMMARY_LEVEL_UP") if level_gain > 0 else ""]))
+    summary_lines.append(_trf("MINING_SUMMARY_TEXT_MONEY_EARNED", ["$%d" % total_money]))
+    summary_lines.append("")
+    summary_lines.append(tr("MINING_SUMMARY_TEXT_CARGO_PAYOUT"))
+    summary_lines.append(tr("MINING_SUMMARY_TEXT_NO_CARGO") if money_breakdown.is_empty() else "\n".join(money_breakdown))
+    summary_lines.append("")
+    summary_lines.append(_trf("MINING_SUMMARY_TEXT_LEVEL", [projected_level, int(level_progress.get("current_xp", 0)), int(level_progress.get("next_level_xp", 1))]))
+    summary_lines.append(_trf("MINING_SUMMARY_TEXT_UNLOCKED_DEPTH", [projected_depth_unlock]))
+    var summary_text: String = "\n".join(summary_lines)
     return {
         "money": total_money,
         "xp": run_xp,
         "depth_level": active_depth_level,
         "summary_view_model": {
-            "reason": reason,
+            "reason_key": reason_key,
+            "reason": reason_text,
             "depth_level": active_depth_level,
-            "depth_material_name": String(active_material.get("name", "Stone")),
+            "depth_material_name": String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME"))),
             "nodes_broken": nodes_broken,
             "xp_earned": run_xp,
             "leveled_up": level_gain > 0,
@@ -1101,7 +1119,8 @@ func _build_run_results(reason: String) -> Dictionary:
             "time_spent": time_spent
         }),
         "money_breakdown_chart": money_breakdown_chart,
-        "reason": reason,
+        "reason_key": reason_key,
+        "reason": reason_text,
         "banked_counts": banked_counts.duplicate(true),
         "bank_trips": bank_trips,
         "delivery_dumps": delivery_dump_count,
@@ -1129,7 +1148,7 @@ func _build_run_results(reason: String) -> Dictionary:
         "level_progress": level_progress.duplicate(true)
     }
 
-func _finish_run(reason: String) -> void:
+func _finish_run(reason_key: String) -> void:
     if run_state == RUN_STATES.SUMMARY:
         return
     _bank_cargo_if_at_base()
@@ -1140,7 +1159,7 @@ func _finish_run(reason: String) -> void:
     carry_counts.clear()
     cargo_used = 0
 
-    var results: Dictionary = _build_run_results(reason)
+    var results: Dictionary = _build_run_results(reason_key)
     last_run_results = results.duplicate(true)
     if simulation_commit_progress:
         persistent_data = MINING_PROGRESS_SCRIPT.apply_run_results(results)
@@ -1148,15 +1167,15 @@ func _finish_run(reason: String) -> void:
         persistent_data = results.get("projected_data", persistent_data).duplicate(true)
     run_state = RUN_STATES.SUMMARY
     Global.game_state = Util.GAME_STATES.UPGRADES if simulation_commit_progress else Util.GAME_STATES.PLAYING
-    run_status = reason
+    run_status = tr(reason_key)
     _refresh_mouse_capture_state()
     if simulation_commit_progress and not simulation_mode_active:
         _show_summary(results)
 
 func _show_summary(results: Dictionary) -> void:
     summary_stats_label.text = str(results.get("summary_stats_text", ""))
-    dive_button.text = "Return To Upgrades"
-    reset_button.text = "Run Again"
+    dive_button.text = tr("MINING_SUMMARY_RETURN_UPGRADES")
+    reset_button.text = tr("MINING_SUMMARY_RUN_AGAIN")
     _setup_summary_hints(results)
     _refresh_summary_hint()
     _refresh_summary_charts(results)
@@ -1201,6 +1220,8 @@ func _configure_summary_panel() -> void:
     _style_utility_button(reset_button)
 
 func _refresh_hud() -> void:
+    if not _is_ui_ready():
+        return
     var projected_xp: int = int(persistent_data.get("xp", 0)) + run_xp
     var projected_level: int = MINING_PROGRESS_SCRIPT.get_level_for_total_xp(projected_xp)
     var level_progress: Dictionary = MINING_PROGRESS_SCRIPT.get_level_progress({
@@ -1212,25 +1233,25 @@ func _refresh_hud() -> void:
     var cargo_capacity: int = _get_cargo_capacity()
     var xp_current: int = int(level_progress.get("current_xp", 0))
     var xp_next: int = max(1, int(level_progress.get("next_level_xp", 1)))
-    wallet_label.text = "Wallet: $%s" % Util.get_number_short_text(int(persistent_data.get("wallet", 0)))
-    phase_label.text = "Depth Tier %d/%d: %s" % [active_depth_level, MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL, String(active_material.get("name", "Stone"))]
-    depth_label.text = "Unlocked Depth: %d   Current XP Level: %d" % [int(persistent_data.get("deepest_level_unlocked", 1)), int(level_progress.get("current_level", 1))]
-    time_value_label.text = "Timer %.1fs / %.1fs" % [time_left, run_time_limit]
+    wallet_label.text = _trf("MINING_HUD_WALLET", [Util.get_number_short_text(int(persistent_data.get("wallet", 0)))])
+    phase_label.text = _trf("MINING_HUD_PHASE", [active_depth_level, MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME")))])
+    depth_label.text = _trf("MINING_HUD_DEPTH", [int(persistent_data.get("deepest_level_unlocked", 1)), int(level_progress.get("current_level", 1))])
+    time_value_label.text = _trf("MINING_HUD_TIMER", [snappedf(time_left, 0.1), snappedf(run_time_limit, 0.1)])
     time_bar.max_value = run_time_limit
     time_bar.value = time_left
-    drill_value_label.text = "Drill Integrity %.0f / %.0f" % [drill_health, drill_health_max]
+    drill_value_label.text = _trf("MINING_HUD_DRILL", [int(round(drill_health)), int(round(drill_health_max))])
     drill_bar.max_value = drill_health_max
     drill_bar.value = drill_health
-    cargo_value_label.text = "Cargo Space %d / %d   Banked %d" % [cargo_used, cargo_capacity, _get_total_banked_count()]
+    cargo_value_label.text = _trf("MINING_HUD_CARGO", [cargo_used, cargo_capacity, _get_total_banked_count()])
     cargo_bar.max_value = cargo_capacity
     cargo_bar.value = cargo_used
     _update_warning_meter_blinks(run_time_limit, drill_health_max)
-    xp_value_label.text = "XP %d / %d   Run XP +%d" % [xp_current, xp_next, run_xp]
+    xp_value_label.text = _trf("MINING_HUD_XP", [xp_current, xp_next, run_xp])
     xp_bar.max_value = xp_next
     xp_bar.value = xp_current
     _process_level_up_feedback(projected_level)
-    weapon_label.text = "Rig Stats   Move %.0f   Drill %.0f/s   Pickup %.0f   Charge +%d%%   XP Boost +%d%%" % [_get_move_speed(), _get_drill_dps(), _get_pickup_radius(), int(round((_get_straight_drive_speed_multiplier() - 1.0) * 100.0)), int(round((_get_xp_multiplier() - 1.0) * 100.0))]
-    boss_label.text = "Status   %s" % run_status
+    weapon_label.text = _trf("MINING_HUD_RIG_STATS", [int(round(_get_move_speed())), int(round(_get_drill_dps())), int(round(_get_pickup_radius())), int(round((_get_straight_drive_speed_multiplier() - 1.0) * 100.0)), int(round((_get_xp_multiplier() - 1.0) * 100.0))])
+    boss_label.text = _trf("MINING_HUD_STATUS", [run_status])
 
 func _apply_hud_theme() -> void:
     _style_panel(top_panel, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0), 6)
@@ -1429,28 +1450,36 @@ func _style_panel(panel: PanelContainer, background_color: Color, border_color: 
     panel.add_theme_stylebox_override("panel", box)
 
 func _build_summary_stats_text(stats: Dictionary) -> String:
-    return "Run time %.1fs   Money/sec $%.1f   XP/sec %.1f   Ore/sec %.2f\nOre spawned %d   Collected %d   Left behind %d   Banked %d\nManual scoops %d   Salvage drone scoops %d   Delivery drone drops %d   Surface banks %d\nCollection rate %d%%   Banking rate %d%%" % [
+    var lines := PackedStringArray()
+    lines.append(_trf("MINING_SUMMARY_STATS_LINE_1", [
         float(stats.get("time_spent", 0.0)),
         float(stats.get("money_per_second", 0.0)),
         float(stats.get("xp_per_second", 0.0)),
-        float(stats.get("ore_per_second", 0.0)),
+        float(stats.get("ore_per_second", 0.0))
+    ]))
+    lines.append(_trf("MINING_SUMMARY_STATS_LINE_2", [
         int(stats.get("ore_spawned", 0)),
         int(stats.get("ore_collected", 0)),
         int(stats.get("ore_left_behind", 0)),
-        int(stats.get("ore_banked", 0)),
+        int(stats.get("ore_banked", 0))
+    ]))
+    lines.append(_trf("MINING_SUMMARY_STATS_LINE_3", [
         int(stats.get("player_pickups_collected", 0)),
         int(stats.get("drone_pickups_collected", 0)),
         int(stats.get("delivery_dumps", 0)),
-        bank_trips,
+        bank_trips
+    ]))
+    lines.append(_trf("MINING_SUMMARY_STATS_LINE_4", [
         int(round(float(stats.get("collection_rate", 0.0)) * 100.0)),
         int(round(float(stats.get("bank_rate", 0.0)) * 100.0))
-    ]
+    ]))
+    return "\n".join(lines)
 
 func _setup_summary_hints(results: Dictionary = {}) -> void:
     var hint_data: Dictionary = _build_summary_hint_data(results)
     mining_summary_hints = hint_data.get("all_hints", [])
     if mining_summary_hints.is_empty():
-        mining_summary_hints.append("Review the run, tune the rig, and go again.")
+        mining_summary_hints.append(tr("MINING_HINT_FALLBACK"))
     var ranked_hints: Array[String] = hint_data.get("ranked_hints", [])
     mining_summary_hint_index = _select_summary_hint_index(ranked_hints)
     _remember_displayed_summary_hint()
@@ -1459,14 +1488,14 @@ func _build_summary_hint_data(results: Dictionary) -> Dictionary:
     var all_hints: Array[String] = []
     var ranked_hints: Array[String] = []
     if results.is_empty():
-        _append_unique_summary_hint(all_hints, "Review the run, tune the rig, and go again.")
-        _append_unique_summary_hint(ranked_hints, "Review the run, tune the rig, and go again.")
+        _append_unique_summary_hint(all_hints, tr("MINING_HINT_FALLBACK"))
+        _append_unique_summary_hint(ranked_hints, tr("MINING_HINT_FALLBACK"))
         return {
             "all_hints": all_hints,
             "ranked_hints": ranked_hints,
         }
 
-    var reason: String = String(results.get("reason", ""))
+    var reason_key: String = String(results.get("reason_key", ""))
     var ore_left_behind: int = int(results.get("ore_left_behind", 0))
     var ore_spawned: int = int(results.get("ore_spawned", 0))
     var collection_rate: float = float(results.get("collection_rate", 0.0))
@@ -1479,16 +1508,16 @@ func _build_summary_hint_data(results: Dictionary) -> Dictionary:
     var magnet_drone_missing: bool = _get_upgrade_level("magnet_drone") <= 0
     var delivery_drone_missing: bool = _get_upgrade_level("delivery_drone") <= 0
 
-    var pickup_radius_context_hint := "You left a lot of ore drifting in the dirt that run. Vacuum Scoop will help you clean up popped veins before the loot scatters."
-    var magnet_drone_context_hint := "A lot of ore got left behind that run. Salvage Drone is a strong pickup if you want those loose chunks collected while you keep drilling."
-    var loopback_hint := "A lot of ore got left behind that run. Try looping back through cracked veins sooner so the loose drops turn into cargo instead of dead weight."
-    var routing_hint := "There were still a lot of untouched veins on the field when the run ended. A cleaner route through nearby seams can turn that map into much better payout."
-    var drill_hint := "The run ended because your drill wore out. Drill Plating gives the rig more health, and Cooling Loop helps that health last longer on tough veins."
-    var timer_hint := "The timer ran out before the route paid off. Timer Reserve gives you more room to finish a lane and bank the haul."
-    var pickup_radius_upgrade_hint := "Vacuum Scoop is the fastest way to stop drops from slipping away once a vein bursts open."
-    var magnet_drone_upgrade_hint := "Salvage Drone is a strong next buy if rich seams are leaving too many chunks behind."
-    var delivery_drone_upgrade_hint := "Delivery Drone pays off once your cargo is filling before you can safely return to the surface."
-    var fallback_hint := "Review the run, tune the rig, and go again."
+    var pickup_radius_context_hint := tr("MINING_HINT_CONTEXT_PICKUP_RADIUS")
+    var magnet_drone_context_hint := tr("MINING_HINT_CONTEXT_MAGNET_DRONE")
+    var loopback_hint := tr("MINING_HINT_CONTEXT_LOOPBACK")
+    var routing_hint := tr("MINING_HINT_CONTEXT_ROUTING")
+    var drill_hint := tr("MINING_HINT_CONTEXT_DRILL")
+    var timer_hint := tr("MINING_HINT_CONTEXT_TIMER")
+    var pickup_radius_upgrade_hint := tr("MINING_HINT_UPGRADE_PICKUP_RADIUS")
+    var magnet_drone_upgrade_hint := tr("MINING_HINT_UPGRADE_MAGNET_DRONE")
+    var delivery_drone_upgrade_hint := tr("MINING_HINT_UPGRADE_DELIVERY_DRONE")
+    var fallback_hint := tr("MINING_HINT_FALLBACK")
 
     if left_many_pickups:
         if pickup_radius_missing:
@@ -1499,9 +1528,9 @@ func _build_summary_hint_data(results: Dictionary) -> Dictionary:
             _append_unique_summary_hint(ranked_hints, loopback_hint)
     if left_many_nodes:
         _append_unique_summary_hint(ranked_hints, routing_hint)
-    if reason == "Drill health depleted.":
+    if reason_key == RUN_REASON_DRILL_DEPLETED:
         _append_unique_summary_hint(ranked_hints, drill_hint)
-    if reason == "Timer expired.":
+    if reason_key == RUN_REASON_TIMER_EXPIRED:
         _append_unique_summary_hint(ranked_hints, timer_hint)
     if pickup_radius_missing:
         _append_unique_summary_hint(ranked_hints, pickup_radius_upgrade_hint)
@@ -1509,8 +1538,8 @@ func _build_summary_hint_data(results: Dictionary) -> Dictionary:
         _append_unique_summary_hint(ranked_hints, magnet_drone_upgrade_hint)
     if delivery_drone_missing:
         _append_unique_summary_hint(ranked_hints, delivery_drone_upgrade_hint)
-    for hint in DEFAULT_MINING_SUMMARY_HINTS:
-        _append_unique_summary_hint(ranked_hints, hint)
+    for hint_key in DEFAULT_MINING_SUMMARY_HINTS:
+        _append_unique_summary_hint(ranked_hints, tr(hint_key))
     _append_unique_summary_hint(ranked_hints, fallback_hint)
 
     if left_many_pickups:
@@ -1519,9 +1548,9 @@ func _build_summary_hint_data(results: Dictionary) -> Dictionary:
         _append_unique_summary_hint(all_hints, loopback_hint)
     if left_many_nodes:
         _append_unique_summary_hint(all_hints, routing_hint)
-    if reason == "Drill health depleted.":
+    if reason_key == RUN_REASON_DRILL_DEPLETED:
         _append_unique_summary_hint(all_hints, drill_hint)
-    if reason == "Timer expired.":
+    if reason_key == RUN_REASON_TIMER_EXPIRED:
         _append_unique_summary_hint(all_hints, timer_hint)
     if pickup_radius_missing:
         _append_unique_summary_hint(all_hints, pickup_radius_upgrade_hint)
@@ -1529,8 +1558,8 @@ func _build_summary_hint_data(results: Dictionary) -> Dictionary:
         _append_unique_summary_hint(all_hints, magnet_drone_upgrade_hint)
     if delivery_drone_missing:
         _append_unique_summary_hint(all_hints, delivery_drone_upgrade_hint)
-    for hint in DEFAULT_MINING_SUMMARY_HINTS:
-        _append_unique_summary_hint(all_hints, hint)
+    for hint_key in DEFAULT_MINING_SUMMARY_HINTS:
+        _append_unique_summary_hint(all_hints, tr(hint_key))
     _append_unique_summary_hint(all_hints, fallback_hint)
     return {
         "all_hints": all_hints,
@@ -1607,7 +1636,7 @@ func _refresh_summary_hint() -> void:
         hint_right_button.hide()
         return
     mining_summary_hint_index = wrapi(mining_summary_hint_index, 0, mining_summary_hints.size())
-    hint_title_label.text = "Hint %d/%d" % [mining_summary_hint_index + 1, mining_summary_hints.size()]
+    hint_title_label.text = _trf("MINING_HINT_TITLE", [mining_summary_hint_index + 1, mining_summary_hints.size()])
     summary_hint_label.text = mining_summary_hints[mining_summary_hint_index]
     var show_nav: bool = mining_summary_hints.size() > 1
     hint_left_button.visible = show_nav
@@ -1695,11 +1724,11 @@ func _refresh_money_chart(results: Dictionary) -> void:
     var root := VBoxContainer.new()
     root.add_theme_constant_override("separation", 10)
     margin.add_child(root)
-    root.add_child(_make_summary_chart_label("Money by mineral", 0.0, 24, HORIZONTAL_ALIGNMENT_CENTER))
+    root.add_child(_make_summary_chart_label(tr("MINING_MONEY_CHART_TITLE"), 0.0, 24, HORIZONTAL_ALIGNMENT_CENTER))
 
     var rows: Array = results.get("money_breakdown_chart", [])
     if rows.is_empty():
-        root.add_child(_make_summary_chart_label("No banked cargo this run.", 0.0, 18, HORIZONTAL_ALIGNMENT_CENTER, Color(0.82, 0.88, 0.96, 0.92)))
+        root.add_child(_make_summary_chart_label(tr("MINING_MONEY_CHART_EMPTY"), 0.0, 18, HORIZONTAL_ALIGNMENT_CENTER, Color(0.82, 0.88, 0.96, 0.92)))
         return
     var max_money: float = 0.0
     for row_variant in rows:
@@ -1710,7 +1739,7 @@ func _refresh_money_chart(results: Dictionary) -> void:
         var row := HBoxContainer.new()
         row.add_theme_constant_override("separation", 10)
         root.add_child(row)
-        row.add_child(_make_summary_chart_label("%s x%d" % [str(row_data.get("label", "Ore")), int(row_data.get("count", 0))], 170.0, 17))
+        row.add_child(_make_summary_chart_label(_trf("MINING_SUMMARY_TEXT_CARGO_LINE_SIMPLE", [str(row_data.get("label", tr("MINING_ORE_GENERIC"))), int(row_data.get("count", 0))]), 170.0, 17))
         var target_value: float = float(row_data.get("money", 0.0))
         var bar_bundle: Dictionary = _make_summary_chart_bar_bundle(max_money, row_data.get("color", Color(0.8, 0.8, 0.8, 1.0)))
         row.add_child(bar_bundle.get("root", HBoxContainer.new()))
@@ -1728,14 +1757,14 @@ func _refresh_performance_chart(results: Dictionary) -> void:
     var root := VBoxContainer.new()
     root.add_theme_constant_override("separation", 10)
     margin.add_child(root)
-    root.add_child(_make_summary_chart_label("Ore flow and performance", 0.0, 24, HORIZONTAL_ALIGNMENT_CENTER))
+    root.add_child(_make_summary_chart_label(tr("MINING_PERFORMANCE_TITLE"), 0.0, 24, HORIZONTAL_ALIGNMENT_CENTER))
 
     var rows: Array[Dictionary] = [
-        {"label": "Ore collected", "value": float(results.get("ore_collected", 0)), "color": Color(0.45, 0.87, 0.99, 1.0)},
-        {"label": "Left behind", "value": float(results.get("ore_left_behind", 0)), "color": Color(0.93, 0.38, 0.35, 1.0)},
-        {"label": "Collected by drones", "value": float(results.get("drone_pickups_collected", 0)), "color": Color(0.56, 0.92, 0.65, 1.0)},
-        {"label": "Delivered by drones", "value": float(results.get("delivery_dumps", 0)), "color": Color(1.0, 0.77, 0.31, 1.0)},
-        {"label": "Nodes broken", "value": float(results.get("nodes_broken", 0)), "color": Color(0.83, 0.74, 1.0, 1.0)}
+        {"label": tr("MINING_PERFORMANCE_ORE_COLLECTED"), "value": float(results.get("ore_collected", 0)), "color": Color(0.45, 0.87, 0.99, 1.0)},
+        {"label": tr("MINING_PERFORMANCE_LEFT_BEHIND"), "value": float(results.get("ore_left_behind", 0)), "color": Color(0.93, 0.38, 0.35, 1.0)},
+        {"label": tr("MINING_PERFORMANCE_COLLECTED_BY_DRONES"), "value": float(results.get("drone_pickups_collected", 0)), "color": Color(0.56, 0.92, 0.65, 1.0)},
+        {"label": tr("MINING_PERFORMANCE_DELIVERED_BY_DRONES"), "value": float(results.get("delivery_dumps", 0)), "color": Color(1.0, 0.77, 0.31, 1.0)},
+        {"label": tr("MINING_PERFORMANCE_NODES_BROKEN"), "value": float(results.get("nodes_broken", 0)), "color": Color(0.83, 0.74, 1.0, 1.0)}
     ]
     var max_value: float = 0.0
     for row_data in rows:
@@ -1948,7 +1977,7 @@ func _show_summary_text(results: Dictionary) -> void:
         summary_text_progress = 0.0
         summary_text_money_pop_progress = 0.0
         summary_label.clear()
-        summary_label.append_text(str(results.get("summary_text", "Run complete.")))
+        summary_label.append_text(str(results.get("summary_text", tr("MINING_RUN_COMPLETE_FALLBACK"))))
         return
     if summary_text_tween != null and summary_text_tween.is_running():
         summary_text_tween.kill()
@@ -1985,59 +2014,49 @@ func _render_summary_text(summary_view_model: Dictionary, progress: float) -> vo
     var breakdown: Array = summary_view_model.get("money_breakdown_chart", [])
     var total_money: int = int(summary_view_model.get("money_earned", 0))
     var lines := PackedStringArray()
-    lines.append("Run complete: %s" % String(summary_view_model.get("reason", "")))
+    lines.append(_trf("MINING_SUMMARY_TEXT_RUN_COMPLETE", [String(summary_view_model.get("reason", ""))]))
     lines.append("")
-    lines.append(
-        "Depth tier %d: %s" % [
-            int(summary_view_model.get("depth_level", 1)),
-            String(summary_view_model.get("depth_material_name", "Stone"))
-        ]
-    )
-    lines.append("Nodes broken: %d" % int(summary_view_model.get("nodes_broken", 0)))
-    lines.append(
-        "XP earned: %d%s" % [
-            int(summary_view_model.get("xp_earned", 0)),
-            "  (LEVEL UP!)" if bool(summary_view_model.get("leveled_up", false)) else ""
-        ]
-    )
-    lines.append(
-        "Money earned: %s" % _format_summary_money_span(
-            _get_animated_money_value(total_money, progress),
-            total_money,
-            1.0,
-            progress
-        )
-    )
+    lines.append(_trf("MINING_SUMMARY_TEXT_DEPTH_TIER", [
+        int(summary_view_model.get("depth_level", 1)),
+        String(summary_view_model.get("depth_material_name", tr("MINING_MATERIAL_STONE_NAME")))
+    ]))
+    lines.append(_trf("MINING_SUMMARY_TEXT_NODES_BROKEN", [int(summary_view_model.get("nodes_broken", 0))]))
+    lines.append(_trf("MINING_SUMMARY_TEXT_XP_EARNED", [
+        int(summary_view_model.get("xp_earned", 0)),
+        "  %s" % tr("MINING_SUMMARY_LEVEL_UP") if bool(summary_view_model.get("leveled_up", false)) else ""
+    ]))
+    lines.append(_trf("MINING_SUMMARY_TEXT_MONEY_EARNED", [_format_summary_money_span(
+        _get_animated_money_value(total_money, progress),
+        total_money,
+        1.0,
+        progress
+    )]))
     lines.append("")
-    lines.append("Cargo payout:")
+    lines.append(tr("MINING_SUMMARY_TEXT_CARGO_PAYOUT"))
     if breakdown.is_empty():
-        lines.append("No cargo banked.")
+        lines.append(tr("MINING_SUMMARY_TEXT_NO_CARGO"))
     else:
         for entry_variant in breakdown:
             var entry: Dictionary = entry_variant
             var subtotal: int = int(entry.get("money", 0))
             var contribution: float = 0.0 if total_money <= 0 else float(subtotal) / float(total_money)
-            lines.append(
-                "%s x%d -> %s" % [
-                    String(entry.get("label", "Cargo")),
-                    int(entry.get("count", 0)),
-                    _format_summary_money_span(
-                        _get_animated_money_value(subtotal, progress),
-                        subtotal,
-                        contribution,
-                        progress
-                    )
-                ]
-            )
+            lines.append(_trf("MINING_SUMMARY_TEXT_CARGO_LINE", [
+                String(entry.get("label", tr("MINING_ORE_GENERIC"))),
+                int(entry.get("count", 0)),
+                _format_summary_money_span(
+                    _get_animated_money_value(subtotal, progress),
+                    subtotal,
+                    contribution,
+                    progress
+                )
+            ]))
     lines.append("")
-    lines.append(
-        "Level %d  XP %d/%d" % [
-            int(summary_view_model.get("projected_level", 1)),
-            int(summary_view_model.get("level_progress_current", 0)),
-            int(summary_view_model.get("level_progress_next", 1))
-        ]
-    )
-    lines.append("Unlocked depth tier: %d" % int(summary_view_model.get("projected_depth_unlock", 1)))
+    lines.append(_trf("MINING_SUMMARY_TEXT_LEVEL", [
+        int(summary_view_model.get("projected_level", 1)),
+        int(summary_view_model.get("level_progress_current", 0)),
+        int(summary_view_model.get("level_progress_next", 1))
+    ]))
+    lines.append(_trf("MINING_SUMMARY_TEXT_UNLOCKED_DEPTH", [int(summary_view_model.get("projected_depth_unlock", 1))]))
     summary_label.clear()
     summary_label.append_text("[color=%s]%s[/color]" % [
         _color_to_bbcode(SUMMARY_TEXT_BASE_COLOR),
@@ -2216,7 +2235,7 @@ func _apply_impact_hit(node_index: int, candidate_pos: Vector2) -> bool:
     if float(node["health"]) <= 0.0:
         player_velocity *= _get_pass_through_speed_multiplier(impact_damage, node_health_before)
         _break_node(node_index)
-        run_status = "Charge break. Keep the line and sweep the seam."
+        run_status = tr("MINING_RUN_STATUS_CHARGE_BREAK")
         return true
     return false
 
@@ -3470,7 +3489,7 @@ func _setup_system_controls() -> void:
         variation_down_button.anchor_bottom = 0.0
         variation_down_button.focus_mode = Control.FOCUS_NONE
         variation_down_button.custom_minimum_size = Vector2(80.0, 44.0)
-        variation_down_button.text = "Var -"
+        variation_down_button.text = tr("MINING_VAR_DOWN")
         variation_down_button.add_theme_font_size_override("font_size", 18)
         variation_down_button.z_index = 60
 
@@ -3482,7 +3501,7 @@ func _setup_system_controls() -> void:
         variation_up_button.anchor_bottom = 0.0
         variation_up_button.focus_mode = Control.FOCUS_NONE
         variation_up_button.custom_minimum_size = Vector2(80.0, 44.0)
-        variation_up_button.text = "Var +"
+        variation_up_button.text = tr("MINING_VAR_UP")
         variation_up_button.add_theme_font_size_override("font_size", 18)
         variation_up_button.z_index = 60
 
@@ -3494,7 +3513,7 @@ func _setup_system_controls() -> void:
         variation_reroll_button.anchor_bottom = 0.0
         variation_reroll_button.focus_mode = Control.FOCUS_NONE
         variation_reroll_button.custom_minimum_size = Vector2(168.0, 44.0)
-        variation_reroll_button.text = "Reroll"
+        variation_reroll_button.text = tr("MINING_REROLL")
         variation_reroll_button.add_theme_font_size_override("font_size", 18)
         variation_reroll_button.z_index = 60
 
@@ -3555,7 +3574,7 @@ func _setup_system_controls() -> void:
 
     var end_run_button: Button = Button.new()
     end_run_button.name = "EndRunButton"
-    end_run_button.text = "End Run"
+    end_run_button.text = tr("MINING_END_RUN")
     end_run_button.focus_mode = Control.FOCUS_NONE
     end_run_button.custom_minimum_size = Vector2(0.0, 120.0)
     end_run_button.add_theme_font_size_override("font_size", 30)
@@ -3665,11 +3684,11 @@ func _handle_editor_variation_shortcut(event: InputEvent) -> bool:
 
 func _refresh_editor_variation_controls() -> void:
     if variation_down_button != null and is_instance_valid(variation_down_button):
-        variation_down_button.tooltip_text = "Lower variation bias. Dot %.2f  Mineral %.2f  Bg crack %.2f" % [_get_effective_dot_variation_strength(), _get_effective_mineral_crack_variation_strength(), _get_effective_crack_variation_strength()]
+        variation_down_button.tooltip_text = _trf("MINING_VAR_DOWN_TOOLTIP", [_get_effective_dot_variation_strength(), _get_effective_mineral_crack_variation_strength(), _get_effective_crack_variation_strength()])
     if variation_up_button != null and is_instance_valid(variation_up_button):
-        variation_up_button.tooltip_text = "Raise variation bias. Dot %.2f  Mineral %.2f  Bg crack %.2f" % [_get_effective_dot_variation_strength(), _get_effective_mineral_crack_variation_strength(), _get_effective_crack_variation_strength()]
+        variation_up_button.tooltip_text = _trf("MINING_VAR_UP_TOOLTIP", [_get_effective_dot_variation_strength(), _get_effective_mineral_crack_variation_strength(), _get_effective_crack_variation_strength()])
     if variation_reroll_button != null and is_instance_valid(variation_reroll_button):
-        variation_reroll_button.tooltip_text = "Reroll cosmetic variant. Dot %.2f  Mineral %.2f  Bg crack %.2f  Seed %d" % [_get_effective_dot_variation_strength(), _get_effective_mineral_crack_variation_strength(), _get_effective_crack_variation_strength(), visual_style_reroll_index]
+        variation_reroll_button.tooltip_text = _trf("MINING_REROLL_TOOLTIP", [_get_effective_dot_variation_strength(), _get_effective_mineral_crack_variation_strength(), _get_effective_crack_variation_strength(), visual_style_reroll_index])
 
 func _log_visual_variation_state() -> void:
     print(
@@ -3732,7 +3751,7 @@ func _on_settings_end_run_pressed() -> void:
     if settings_panel != null and is_instance_valid(settings_panel):
         settings_panel.hide()
     _refresh_mouse_capture_state()
-    _finish_run("Run ended from settings.")
+    _finish_run("MINING_REASON_SETTINGS_ENDED")
 
 func _toggle_settings_panel() -> void:
     if settings_panel == null:
@@ -3746,6 +3765,90 @@ func _toggle_settings_panel() -> void:
 func _on_settings_updated() -> void:
     if settings_content != null:
         settings_content.refresh_from_save()
+    _refresh_localized_text()
+
+func _refresh_localized_text() -> void:
+    if not _is_ui_ready():
+        return
+    if run_state == RUN_STATES.RUNNING:
+        _refresh_hud()
+    elif not last_run_results.is_empty():
+        summary_stats_label.text = _build_summary_stats_text(last_run_results)
+        dive_button.text = tr("MINING_SUMMARY_RETURN_UPGRADES")
+        reset_button.text = tr("MINING_SUMMARY_RUN_AGAIN")
+        _refresh_summary_hint()
+        _refresh_summary_charts(last_run_results)
+        _show_summary_text(last_run_results)
+    if settings_button != null and is_instance_valid(settings_button):
+        settings_button.text = tr("UI_SETTINGS")
+    if variation_down_button != null and is_instance_valid(variation_down_button):
+        variation_down_button.text = tr("MINING_VAR_DOWN")
+    if variation_up_button != null and is_instance_valid(variation_up_button):
+        variation_up_button.text = tr("MINING_VAR_UP")
+    if variation_reroll_button != null and is_instance_valid(variation_reroll_button):
+        variation_reroll_button.text = tr("MINING_REROLL")
+    if settings_panel != null and is_instance_valid(settings_panel):
+        var end_run_button: Button = settings_panel.get_node_or_null("MarginContainer/VBoxContainer/EndRunButton")
+        if end_run_button != null:
+            end_run_button.text = tr("MINING_END_RUN")
+        var close_button: Button = settings_panel.get_node_or_null("MarginContainer/VBoxContainer/SettingsCloseButton")
+        if close_button != null:
+            close_button.text = tr("UI_BACK")
+    _refresh_editor_variation_controls()
+
+func _ensure_ui_refs() -> void:
+    if wallet_label == null:
+        wallet_label = get_node_or_null("%WalletLabel") as Label
+    if phase_label == null:
+        phase_label = get_node_or_null("%PhaseLabel") as Label
+    if depth_label == null:
+        depth_label = get_node_or_null("%DepthLabel") as Label
+    if time_value_label == null:
+        time_value_label = get_node_or_null("%TimeValueLabel") as Label
+    if time_bar == null:
+        time_bar = get_node_or_null("%TimeBar") as ProgressBar
+    if drill_value_label == null:
+        drill_value_label = get_node_or_null("%DrillValueLabel") as Label
+    if drill_bar == null:
+        drill_bar = get_node_or_null("%DrillBar") as ProgressBar
+    if cargo_value_label == null:
+        cargo_value_label = get_node_or_null("%CargoValueLabel") as Label
+    if cargo_bar == null:
+        cargo_bar = get_node_or_null("%CargoBar") as ProgressBar
+    if xp_value_label == null:
+        xp_value_label = get_node_or_null("%XpValueLabel") as Label
+    if xp_bar == null:
+        xp_bar = get_node_or_null("%XpBar") as ProgressBar
+    if weapon_label == null:
+        weapon_label = get_node_or_null("%WeaponLabel") as Label
+    if boss_label == null:
+        boss_label = get_node_or_null("%BossLabel") as Label
+    if summary_stats_label == null:
+        summary_stats_label = get_node_or_null("%SummaryStatsLabel") as Label
+    if dive_button == null:
+        dive_button = get_node_or_null("%DiveButton") as Button
+    if reset_button == null:
+        reset_button = get_node_or_null("%ResetButton") as Button
+
+func _is_ui_ready() -> bool:
+    _ensure_ui_refs()
+    return is_node_ready() \
+        and wallet_label != null \
+        and phase_label != null \
+        and depth_label != null \
+        and time_value_label != null \
+        and time_bar != null \
+        and drill_value_label != null \
+        and drill_bar != null \
+        and cargo_value_label != null \
+        and cargo_bar != null \
+        and xp_value_label != null \
+        and xp_bar != null \
+        and weapon_label != null \
+        and boss_label != null \
+        and summary_stats_label != null \
+        and dive_button != null \
+        and reset_button != null
 
 func _get_material_by_id(material_id: String) -> Dictionary:
     return MINING_BALANCE.get_material_by_id(material_id)

@@ -319,11 +319,11 @@ static func _build_upgrade_effect_summary(upgrade_def: Dictionary) -> String:
     var start_level: int = max(1, int(upgrade_def.get("level", 1)))
     var tier_count: int = max(1, int(upgrade_def.get("max_tier", 1)))
     var end_level: int = start_level + tier_count - 1
-    var prefix: String = "This level: " if tier_count == 1 else "Each level in this group: "
+    var prefix: String = _translate("MINING_EFFECT_THIS_LEVEL") if tier_count == 1 else _translate("MINING_EFFECT_EACH_LEVEL_GROUP")
     var effect_text: String = _describe_upgrade_level_effect(upgrade_key, start_level)
     if tier_count <= 1:
-        return "%s%s" % [prefix, effect_text]
-    return "%s%s (Lv %d-%d)." % [prefix, effect_text, start_level, end_level]
+        return "%s %s" % [prefix, effect_text]
+    return "%s %s%s" % [prefix, effect_text, _trf("MINING_EFFECT_LEVEL_RANGE", [start_level, end_level])]
 
 static func _describe_upgrade_level_effect(upgrade_key: String, level: int) -> String:
     var strength_delta: float = get_upgrade_effect_multiplier(level, _get_upgrade_max_level(upgrade_key))
@@ -377,13 +377,13 @@ static func _describe_upgrade_level_effect(upgrade_key: String, level: int) -> S
             ])
         "depth_scanner":
             return _format_effect_list([
-                tr("MINING_EFFECT_MAX_UNLOCKED_DEPTH")
+                _translate("MINING_EFFECT_MAX_UNLOCKED_DEPTH")
             ])
         "seismic_sonar":
             return _format_effect_list([
-                tr("MINING_EFFECT_TOP_TIER_ORE_WEIGHT"),
-                tr("MINING_EFFECT_NEAR_TOP_ORE_WEIGHT"),
-                tr("MINING_EFFECT_OLDER_TIER_WEIGHT")
+                _translate("MINING_EFFECT_TOP_TIER_ORE_WEIGHT"),
+                _translate("MINING_EFFECT_NEAR_TOP_ORE_WEIGHT"),
+                _translate("MINING_EFFECT_OLDER_TIER_WEIGHT")
             ])
         "magnet_drone":
             return _describe_magnet_drone_level(level)
@@ -396,7 +396,7 @@ static func _describe_upgrade_level_effect(upgrade_key: String, level: int) -> S
         "auto_sorters":
             return _describe_auto_sorters_level(level)
         _:
-            return tr("MINING_EFFECT_UNLOCK_ONLY")
+            return _translate("MINING_EFFECT_UNLOCK_ONLY")
 
 static func _describe_cargo_pods_level(level: int) -> String:
     var before: Dictionary = {"cargo_pods": max(0, level - 1)}
@@ -487,8 +487,11 @@ static func _format_number(value: float) -> String:
 static func _group_start_level(level: int) -> int:
     return (int(floor(float(max(level, 1) - 1) / float(UPGRADE_EFFECT_GROUP_SIZE))) * UPGRADE_EFFECT_GROUP_SIZE) + 1
 
+static func _translate(key: String) -> String:
+    return TranslationServer.translate(key)
+
 static func _trf(key: String, args: Array = []) -> String:
-    var translated: String = tr(key)
+    var translated: String = _translate(key)
     for index in range(args.size()):
         translated = translated.replace("{%d}" % index, str(args[index]))
     return translated
@@ -498,8 +501,8 @@ static func _localize_upgrade_entry(entry: Dictionary) -> Dictionary:
     var upgrade_id: String = str(entry.get("id", "")).strip_edges()
     if upgrade_id.is_empty():
         return localized
-    localized["label"] = tr("MINING_UPGRADE_%s_NAME" % upgrade_id.to_upper())
-    localized["summary"] = tr("MINING_UPGRADE_%s_SUMMARY" % upgrade_id.to_upper())
+    localized["label"] = _translate("MINING_UPGRADE_%s_NAME" % upgrade_id.to_upper())
+    localized["summary"] = _translate("MINING_UPGRADE_%s_SUMMARY" % upgrade_id.to_upper())
     return localized
 
 static func _localize_material_entry(entry: Dictionary) -> Dictionary:
@@ -517,7 +520,7 @@ static func _localize_material_entry(entry: Dictionary) -> Dictionary:
         base_material_id = "_".join(id_parts)
 
     var base_name_key := "MINING_MATERIAL_%s_NAME" % base_material_id.to_upper()
-    var base_name: String = tr(base_name_key)
+    var base_name: String = _translate(base_name_key)
     localized["name"] = base_name if cycle_number <= 1 else _trf("MINING_MATERIAL_CYCLE_FORMAT", [base_name, cycle_number])
     return localized
 

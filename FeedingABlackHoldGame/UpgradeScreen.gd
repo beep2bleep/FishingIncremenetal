@@ -49,6 +49,7 @@ var battle_level_choice_selected_level: int = 1
 var battle_level_choice_line_edit: LineEdit
 var battle_level_choice_max_level: int = 1
 var _locale_tree_refresh_queued: bool = false
+var _loaded_tree_locale: String = ""
 
 func _trf(key: String, args: Array = []) -> String:
     var translated: String = tr(key)
@@ -122,6 +123,11 @@ func _refresh_localized_text() -> void:
         var legacy_ok_button: Button = legacy_reset_dialog.get_ok_button()
         if legacy_ok_button != null:
             legacy_ok_button.text = tr("UI_CONTINUE")
+    if leaderboard_title_label != null and is_instance_valid(leaderboard_title_label):
+        leaderboard_title_label.text = tr("MINING_LEADERBOARDS_TITLE")
+    _update_go_again_button_state()
+    if battle_level_choice_dialog != null and is_instance_valid(battle_level_choice_dialog) and battle_level_choice_dialog.visible:
+        _show_battle_level_choice_dialog(battle_level_choice_max_level)
 
 func _queue_upgrade_tree_locale_refresh() -> void:
     if _locale_tree_refresh_queued:
@@ -135,11 +141,15 @@ func _refresh_upgrade_tree_for_locale_change() -> void:
         return
     if not tree_initialized:
         return
+    var active_locale: String = TranslationServer.get_locale()
+    if _loaded_tree_locale == active_locale:
+        return
 
     _ensure_tree_initialized(true)
     if not tech_tree.build_in_progress:
         tech_tree.update_active()
         _update_go_again_button_state()
+    _loaded_tree_locale = active_locale
 
 func _should_show_editor_only_touch_toggle() -> bool:
     return OS.has_feature("editor")
@@ -264,6 +274,7 @@ func _restore_cached_tech_tree_if_available() -> void:
     cached_tree.set_process_unhandled_input(true)
     _bind_tech_tree(cached_tree)
     tree_initialized = true
+    _loaded_tree_locale = SaveHandler.locale
 
 func _cache_tech_tree_for_reuse() -> void:
     if not _is_simulation_upgrade_tree() or tech_tree == null or not is_instance_valid(tech_tree):
@@ -689,6 +700,7 @@ func _ensure_tree_initialized(force_rebuild: bool = false) -> void:
 
     tech_tree.setup()
     tree_initialized = true
+    _loaded_tree_locale = TranslationServer.get_locale()
 
 func _sync_simulation_currency_from_save() -> void:
     if not (_is_simulation_upgrade_tree_requested() or _is_simulation_upgrade_tree()):
@@ -830,7 +842,7 @@ func _setup_leaderboard_panel() -> void:
     margin.add_child(vbox)
 
     leaderboard_title_label = Label.new()
-    leaderboard_title_label.text = "Leaderboards"
+    leaderboard_title_label.text = tr("MINING_LEADERBOARDS_TITLE")
     leaderboard_title_label.add_theme_font_size_override("font_size", 24)
     leaderboard_title_label.add_theme_color_override("font_color", Color(0.9, 0.96, 1.0, 1.0))
     vbox.add_child(leaderboard_title_label)
@@ -1085,7 +1097,7 @@ func _show_battle_level_choice_dialog(max_level: int) -> void:
     if Util.is_mining_game_active():
         var mining_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
         battle_level_choice_selected_level = clampi(int(mining_data.get("selected_depth_level", max_level)), 1, max_level)
-        battle_level_choice_dialog.title = "Choose Depth Tier"
+        battle_level_choice_dialog.title = tr("MINING_CHOOSE_DEPTH_TIER_TITLE")
     else:
         battle_level_choice_selected_level = clamp(SaveHandler.fishing_next_battle_level, 1, max_level)
         battle_level_choice_dialog.title = tr("UI_CHOOSE_BATTLE_LEVEL")
@@ -1150,7 +1162,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
         for level in range(1, max_level + 1):
             var button := Button.new()
             button.name = "BattleLevelChoiceButton%d" % level
-            button.text = "Tier %d" % level if Util.is_mining_game_active() else _trf("UI_LEVEL_FORMAT", [level])
+            button.text = _trf("MINING_DEPTH_TIER_FORMAT", [level]) if Util.is_mining_game_active() else _trf("UI_LEVEL_FORMAT", [level])
             button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
             button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
             button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
@@ -1158,7 +1170,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
             vbox.add_child(button)
     else:
         var prompt := Label.new()
-        prompt.text = "Select a depth tier from 1-%d." % max_level if Util.is_mining_game_active() else _trf("UI_SELECT_BATTLE_LEVEL_RANGE", [max_level])
+        prompt.text = _trf("MINING_SELECT_DEPTH_TIER_RANGE", [max_level]) if Util.is_mining_game_active() else _trf("UI_SELECT_BATTLE_LEVEL_RANGE", [max_level])
         prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         prompt.add_theme_font_size_override("font_size", 28)
         vbox.add_child(prompt)
@@ -1434,14 +1446,14 @@ func request_editor_sell_for_node(node: TechTreeNode, screen_position: Vector2) 
     if tech_tree != null and is_instance_valid(tech_tree) and tech_tree.has_method("get_owned_nodes_blocked_by_removal"):
         blocked_nodes = tech_tree.get_owned_nodes_blocked_by_removal(node)
     var can_sell: bool = blocked_nodes.is_empty()
-    var item_text: String = "Sell for $%s" % Util.get_number_short_text(refund_amount)
+    var item_text: String = _trf("MINING_SELL_FOR", [Util.get_number_short_text(refund_amount)])
     if not can_sell:
         var blocked_name: String = "dependent upgrades"
         if not blocked_nodes.is_empty() and blocked_nodes[0] != null and blocked_nodes[0].upgrade != null:
             var node_name: String = blocked_nodes[0].upgrade.sim_name.strip_edges()
             if node_name != "":
                 blocked_name = node_name
-        item_text = "Can't sell: %s depends on it" % blocked_name
+        item_text = _trf("MINING_CANNOT_SELL_DEPENDS", [blocked_name])
 
     editor_sell_popup_menu.clear()
     editor_sell_popup_menu.add_item(item_text, EDITOR_SELL_MENU_ID)
@@ -1844,6 +1856,7 @@ func _clear_tech_tree_runtime() -> void:
         for child in nodes_container.get_children():
             child.queue_free()
     tree_initialized = false
+    _loaded_tree_locale = ""
 
 func _setup_mute_button() -> void:
     mute_button = get_node_or_null("%MuteButton")
@@ -2039,7 +2052,7 @@ func _update_go_again_button_state() -> void:
         return
     if Util.is_mining_game_active():
         go_again_button.disabled = false
-        go_again_button.text = "START MINING"
+        go_again_button.text = tr("MINING_START")
         go_again_button.tooltip_text = ""
         go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return

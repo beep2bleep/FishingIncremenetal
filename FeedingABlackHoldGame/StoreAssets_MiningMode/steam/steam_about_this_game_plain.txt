@@ -1,0 +1,13 @@
+Mining Mode is a progression-first mining incremental.
+
+You pilot a drill rig through underground layers, break ore nodes, collect resources, and bank the haul before your timer, cargo, or drill wear cuts the run short.
+
+Every dive becomes permanent growth. Upgrade drill power, cargo flow, ore value, XP pace, and automation support to reach richer depths and larger payouts on the next run.
+
+Features:
+- Direct-control mining with destructible underground nodes
+- Real run pressure from timer drain, cargo limits, and drill wear
+- Persistent upgrades across speed, torque, plating, cooling, value, and progression
+- Depth progression with richer materials and stronger payout targets
+- Support automation through salvage drones, delivery drones, foreman bots, and sorters
+- Single-player progression loop built for repeat dives and optimization
