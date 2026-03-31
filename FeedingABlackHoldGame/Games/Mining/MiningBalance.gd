@@ -10,6 +10,11 @@ const LATE_COST_MULTIPLIER_START := 1.8
 const LATE_COST_MULTIPLIER_END := 30.0
 const LATE_EFFECT_MULTIPLIER_START := 1.0
 const LATE_EFFECT_MULTIPLIER_END := 2.25
+const LEVEL_BONUS_ROTATION: Array[Dictionary] = [
+    {"id": "speed", "move_speed": 4.0},
+    {"id": "drill_health", "drill_health": 8.0},
+    {"id": "time", "run_time": 0.45}
+]
 
 const UPGRADE_CATALOG: Array[Dictionary] = [
     {"id": "timer_reserve", "label": "Timer Reserve", "summary": "Extends each run so upgraded rigs can squeeze in one more haul before the horn sounds.", "base_cost": 24, "cost_mult": 1.148, "max_level": 100, "requires": {}, "act": 1, "icon": "T"},
@@ -108,12 +113,36 @@ static func get_level_progress(data: Dictionary) -> Dictionary:
 static func refresh_depth_unlocks(data: Dictionary) -> void:
     var player_level: int = max(1, int(data.get("player_level", 1)))
     var scanner_level: int = int(data.get("upgrades", {}).get("depth_scanner", 0))
-    var unlocked_depth: int = 1 + int(floor(float(player_level - 1) / 3.2)) + int(floor(float(scanner_level) * 0.7))
+    var unlocked_depth: int = 1 + int(floor(float(player_level + 1) / 3.2)) + int(floor(float(scanner_level) * 0.7))
     data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", 1)), clampi(unlocked_depth, 1, MAX_DEPTH_LEVEL))
     data["selected_depth_level"] = clampi(int(data.get("selected_depth_level", data["deepest_level_unlocked"])), 1, int(data["deepest_level_unlocked"]))
 
-static func get_move_speed(upgrades: Dictionary) -> float:
-    return 210.0 + 0.84 * get_scaled_upgrade_strength(upgrades, "engine_tuning") + 0.14 * get_scaled_upgrade_strength(upgrades, "route_planner")
+static func get_level_bonus_for_level(level: int) -> Dictionary:
+    if level <= 1 or LEVEL_BONUS_ROTATION.is_empty():
+        return {}
+    var rotation_index: int = posmod(level - 2, LEVEL_BONUS_ROTATION.size())
+    return LEVEL_BONUS_ROTATION[rotation_index].duplicate(true)
+
+static func get_level_bonus_totals_for_level(player_level: int) -> Dictionary:
+    return get_level_bonus_totals_for_range(1, player_level)
+
+static func get_level_bonus_totals_for_range(previous_level: int, new_level: int) -> Dictionary:
+    var totals := {
+        "move_speed": 0.0,
+        "drill_health": 0.0,
+        "run_time": 0.0
+    }
+    if new_level <= previous_level:
+        return totals
+    for level in range(max(2, previous_level + 1), max(2, new_level) + 1):
+        var bonus: Dictionary = get_level_bonus_for_level(level)
+        totals["move_speed"] = float(totals.get("move_speed", 0.0)) + float(bonus.get("move_speed", 0.0))
+        totals["drill_health"] = float(totals.get("drill_health", 0.0)) + float(bonus.get("drill_health", 0.0))
+        totals["run_time"] = float(totals.get("run_time", 0.0)) + float(bonus.get("run_time", 0.0))
+    return totals
+
+static func get_move_speed(upgrades: Dictionary, level_bonuses: Dictionary = {}) -> float:
+    return 210.0 + 0.84 * get_scaled_upgrade_strength(upgrades, "engine_tuning") + 0.14 * get_scaled_upgrade_strength(upgrades, "route_planner") + float(level_bonuses.get("move_speed", 0.0))
 
 static func get_dirt_drag_multiplier(depth_level: int, upgrades: Dictionary) -> float:
     var base_drag: float = 0.98 - 0.028 * float(max(0, depth_level - 1))
@@ -121,8 +150,8 @@ static func get_dirt_drag_multiplier(depth_level: int, upgrades: Dictionary) -> 
     base_drag += 0.001 * get_scaled_upgrade_strength(upgrades, "route_planner")
     return clampf(base_drag, 0.42, 1.0)
 
-static func get_run_time_limit(upgrades: Dictionary) -> float:
-    return 22.0 + 0.65 * get_scaled_upgrade_strength(upgrades, "timer_reserve")
+static func get_run_time_limit(upgrades: Dictionary, level_bonuses: Dictionary = {}) -> float:
+    return 22.0 + 0.65 * get_scaled_upgrade_strength(upgrades, "timer_reserve") + float(level_bonuses.get("run_time", 0.0))
 
 static func get_time_drain_rate(depth_level: int, upgrades: Dictionary) -> float:
     var drain: float = 1.0 + 0.038 * float(max(0, depth_level - 1))
@@ -132,8 +161,8 @@ static func get_time_drain_rate(depth_level: int, upgrades: Dictionary) -> float
 static func get_drill_dps(upgrades: Dictionary) -> float:
     return 7.4 + 1.12 * get_scaled_upgrade_strength(upgrades, "drill_torque") + 0.12 * get_scaled_upgrade_strength(upgrades, "cooling_loop") + 0.72 * get_scaled_upgrade_strength(upgrades, "foreman_bot")
 
-static func get_drill_health_max(upgrades: Dictionary) -> float:
-    return 54.0 + 9.0 * get_scaled_upgrade_strength(upgrades, "drill_plating")
+static func get_drill_health_max(upgrades: Dictionary, level_bonuses: Dictionary = {}) -> float:
+    return 54.0 + 9.0 * get_scaled_upgrade_strength(upgrades, "drill_plating") + float(level_bonuses.get("drill_health", 0.0))
 
 static func get_drill_wear_multiplier(upgrades: Dictionary) -> float:
     return clampf(1.0 - 0.0115 * get_scaled_upgrade_strength(upgrades, "cooling_loop"), 0.2, 1.0)
@@ -265,7 +294,7 @@ static func get_drop_count_for_node(node: Dictionary) -> int:
 
 static func get_node_health(material: Dictionary, depth_level: int) -> float:
     var hardness: float = float(material.get("hardness", 24.0))
-    return hardness * (1.0 + 0.018 * float(max(0, depth_level - 1)))
+    return hardness * (1.0 + 0.0205 * float(max(0, depth_level - 1)))
 
 static func get_node_wear_per_second(node: Dictionary, upgrades: Dictionary) -> float:
     var wear: float = 2.3 + float(node.get("max_health", 20.0)) * 0.049
@@ -541,7 +570,7 @@ static func _build_material_tier_for_depth(depth_level: int, previous_material: 
     base_material["name"] = "%s %d" % [String(base_material.get("name", "Ore")), cycle_number]
     base_material["value"] = int(round(float(previous_material.get("value", base_material.get("value", 1))) * (1.072 + late_frontier_bonus)))
     base_material["xp"] = int(round(float(previous_material.get("xp", base_material.get("xp", 1))) * 1.069))
-    base_material["hardness"] = float(previous_material.get("hardness", base_material.get("hardness", 24.0))) * 1.075
+    base_material["hardness"] = float(previous_material.get("hardness", base_material.get("hardness", 24.0))) * 1.081
 
     var ore_color: Color = base_material.get("color", Color.WHITE)
     var bg_color: Color = base_material.get("bg", Color(0.1, 0.1, 0.1, 1.0))

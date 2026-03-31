@@ -4,7 +4,7 @@ class_name MiningProgress
 const MINING_BALANCE := preload("res://Games/Mining/MiningBalance.gd")
 const SAVE_PATH := "user://mining_mode_save_v1.json"
 const MAX_DEPTH_LEVEL := MINING_BALANCE.MAX_DEPTH_LEVEL
-const MIN_START_DEPTH_LEVEL := 2
+const MIN_START_DEPTH_LEVEL := 1
 
 const DEFAULT_DATA := {
     "wallet": 0,
@@ -44,10 +44,17 @@ static func load_data() -> Dictionary:
     if parsed is Dictionary:
         data = data.merged(parsed, true)
     data["player_level"] = max(1, int(data.get("player_level", 1)))
+    var deepest_before_refresh: int = clampi(int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+    var selected_before_refresh: int = clampi(int(data.get("selected_depth_level", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, deepest_before_refresh)
+    data["deepest_level_unlocked"] = deepest_before_refresh
+    data["selected_depth_level"] = selected_before_refresh
+    _refresh_depth_unlocks(data)
     data["deepest_level_unlocked"] = clampi(int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
-    data["selected_depth_level"] = clampi(int(data.get("selected_depth_level", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, int(data["deepest_level_unlocked"]))
+    data["selected_depth_level"] = clampi(int(data.get("selected_depth_level", selected_before_refresh)), MIN_START_DEPTH_LEVEL, int(data["deepest_level_unlocked"]))
     if not (data.get("summary_hint_history", []) is Array):
         data["summary_hint_history"] = []
+    if int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)) != deepest_before_refresh or int(data.get("selected_depth_level", selected_before_refresh)) != selected_before_refresh:
+        save_data(data)
     return data
 
 static func save_data(data: Dictionary) -> void:

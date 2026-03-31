@@ -41,6 +41,7 @@ const PICKUP_DRONE_SPEED := 330.0
 const PICKUP_DRONE_GRAB_RANGE := 16.0
 const PICKUP_REJECT_BOUNCE_SPEED_MIN := 120.0
 const PICKUP_REJECT_BOUNCE_SPEED_MAX := 185.0
+const PICKUP_REJECT_PUSH_DISTANCE := 30.0
 const PICKUP_REJECT_BLINK_DURATION := 0.34
 const PICKUP_REJECT_RETRY_DELAY := 0.18
 const PICKUP_REJECT_SOUND_INTERVAL := 0.14
@@ -351,10 +352,11 @@ func _draw() -> void:
 
 func _begin_run() -> void:
     persistent_data = simulation_data_override.duplicate(true) if not simulation_data_override.is_empty() else MINING_PROGRESS_SCRIPT.load_data()
-    var selected_depth: int = int(persistent_data.get("selected_depth_level", 1))
+    var min_depth: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+    var selected_depth: int = int(persistent_data.get("selected_depth_level", min_depth))
     if simulation_depth_override > 0:
         selected_depth = simulation_depth_override
-    active_depth_level = clampi(selected_depth, 1, int(persistent_data.get("deepest_level_unlocked", 1)))
+    active_depth_level = clampi(selected_depth, min_depth, int(persistent_data.get("deepest_level_unlocked", min_depth)))
     active_material = material_tiers[active_depth_level - 1]
     hud_last_reported_level = int(persistent_data.get("player_level", 1))
     _ensure_background_noise_texture()
@@ -803,7 +805,7 @@ func _apply_pickup_rejection_feedback(pickup: Dictionary, source_pos: Vector2) -
     if bounce_dir == Vector2.ZERO:
         bounce_dir = Vector2.RIGHT.rotated(rng.randf_range(0.0, TAU))
     bounce_dir = bounce_dir.normalized()
-    pickup["pos"] = source_pos + bounce_dir * (_get_pickup_radius() + 12.0)
+    pickup["pos"] = source_pos + bounce_dir * PICKUP_REJECT_PUSH_DISTANCE
     pickup["vel"] = bounce_dir * rng.randf_range(PICKUP_REJECT_BOUNCE_SPEED_MIN, PICKUP_REJECT_BOUNCE_SPEED_MAX)
     pickup["reject_retry_timer"] = PICKUP_REJECT_RETRY_DELAY
     pickup["reject_blink_timer"] = PICKUP_REJECT_BLINK_DURATION
@@ -972,7 +974,7 @@ func _get_pickup_drone_idle_position(drone_index: int, drone: Dictionary) -> Vec
     return player_pos + Vector2.RIGHT.rotated(angle) * orbit_radius
 
 func _generate_world() -> void:
-    var available_tiers: int = min(active_depth_level, material_tiers.size())
+    var available_tiers: int = min(active_depth_level + 1, material_tiers.size())
     var material_pool_indices: Array[int] = MINING_BALANCE.get_material_pool_indices(available_tiers)
     var world_size: Vector2 = _get_world_size()
     var area_multiplier: float = _get_world_area_multiplier()
@@ -1009,6 +1011,7 @@ func _generate_world() -> void:
             "material_id": String(material.get("id", "stone")),
             "material_name": String(material.get("name", "Stone")),
             "material_color": material.get("color", Color(0.5, 0.5, 0.5, 1.0)),
+            "material_bg_color": material.get("bg", Color(0.18, 0.16, 0.14, 1.0)),
             "value": int(material.get("value", 1)),
             "xp": int(material.get("xp", 3)),
             "sparkle": float(material.get("sparkle", 0.0))
@@ -1121,15 +1124,21 @@ func _build_run_results(reason_key: String) -> Dictionary:
     }
     var level_progress: Dictionary = MINING_PROGRESS_SCRIPT.get_level_progress(projected_level_data)
     var level_gain: int = projected_level - before_level
+    var level_bonus_gains: Dictionary = MINING_BALANCE.get_level_bonus_totals_for_range(before_level, projected_level)
     var projected_data: Dictionary = persistent_data.duplicate(true)
     projected_data["wallet"] = max(0, int(projected_data.get("wallet", 0)) + total_money)
     projected_data["xp"] = projected_xp
     projected_data["player_level"] = projected_level
     projected_data["last_run_summary"] = ""
     projected_data["last_run_breakdown"] = {}
-    projected_data["deepest_level_unlocked"] = max(int(projected_data.get("deepest_level_unlocked", 1)), active_depth_level)
+    projected_data["deepest_level_unlocked"] = max(int(projected_data.get("deepest_level_unlocked", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL)), active_depth_level)
     MINING_BALANCE.refresh_depth_unlocks(projected_data)
     projected_depth_unlock = int(projected_data.get("deepest_level_unlocked", projected_depth_unlock))
+    var unlocked_depth_before_run: int = int(persistent_data.get("deepest_level_unlocked", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL))
+    var display_depth_level: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(active_depth_level)
+    var display_depth_unlock: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(projected_depth_unlock)
+    var level_bonus_note: String = _format_level_bonus_summary(level_bonus_gains)
+    var tier_unlock_note: String = _format_depth_unlock_summary(unlocked_depth_before_run, projected_depth_unlock)
     var ore_collected: int = player_pickups_collected + drone_pickups_collected
     var ore_banked: int = _get_total_count_from_dict(banked_counts)
     var ore_left_behind: int = max(0, total_pickups_spawned - ore_collected)
@@ -1143,7 +1152,7 @@ func _build_run_results(reason_key: String) -> Dictionary:
     var summary_lines := PackedStringArray()
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_RUN_COMPLETE", [reason_text]))
     summary_lines.append("")
-    summary_lines.append(_trf("MINING_SUMMARY_TEXT_DEPTH_TIER", [active_depth_level, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME")))]))
+    summary_lines.append(_trf("MINING_SUMMARY_TEXT_DEPTH_TIER", [display_depth_level, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME")))]))
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_NODES_BROKEN", [nodes_broken]))
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_XP_EARNED", [run_xp, "  %s" % tr("MINING_SUMMARY_LEVEL_UP") if level_gain > 0 else ""]))
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_MONEY_EARNED", ["$%d" % total_money]))
@@ -1152,7 +1161,11 @@ func _build_run_results(reason_key: String) -> Dictionary:
     summary_lines.append(tr("MINING_SUMMARY_TEXT_NO_CARGO") if money_breakdown.is_empty() else "\n".join(money_breakdown))
     summary_lines.append("")
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_LEVEL", [projected_level, int(level_progress.get("current_xp", 0)), int(level_progress.get("next_level_xp", 1))]))
-    summary_lines.append(_trf("MINING_SUMMARY_TEXT_UNLOCKED_DEPTH", [projected_depth_unlock]))
+    summary_lines.append(_trf("MINING_SUMMARY_TEXT_UNLOCKED_DEPTH", [display_depth_unlock]))
+    if level_bonus_note != "":
+        summary_lines.append(level_bonus_note)
+    if tier_unlock_note != "":
+        summary_lines.append(tier_unlock_note)
     var summary_text: String = "\n".join(summary_lines)
     return {
         "money": total_money,
@@ -1171,7 +1184,9 @@ func _build_run_results(reason_key: String) -> Dictionary:
             "projected_level": projected_level,
             "level_progress_current": int(level_progress.get("current_xp", 0)),
             "level_progress_next": int(level_progress.get("next_level_xp", 1)),
-            "projected_depth_unlock": projected_depth_unlock
+            "projected_depth_unlock": projected_depth_unlock,
+            "level_bonus_note": level_bonus_note,
+            "tier_unlock_note": tier_unlock_note
         },
         "summary_text": summary_text,
         "summary_stats_text": _build_summary_stats_text({
@@ -1333,14 +1348,17 @@ func _refresh_hud() -> void:
         "player_level": projected_level,
         "xp": projected_xp
     })
+    var display_depth_level: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(active_depth_level)
+    var display_depth_max: int = MINING_PROGRESS_SCRIPT.get_max_display_depth_tier()
+    var display_depth_unlocked: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(int(persistent_data.get("deepest_level_unlocked", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL)))
     var run_time_limit: float = _get_run_time_limit()
     var drill_health_max: float = _get_drill_health_max()
     var cargo_capacity: int = _get_cargo_capacity()
     var xp_current: int = int(level_progress.get("current_xp", 0))
     var xp_next: int = max(1, int(level_progress.get("next_level_xp", 1)))
     wallet_label.text = _trf("MINING_HUD_WALLET", [Util.get_number_short_text(int(persistent_data.get("wallet", 0)))])
-    phase_label.text = _trf("MINING_HUD_PHASE", [active_depth_level, MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME")))])
-    depth_label.text = _trf("MINING_HUD_DEPTH", [int(persistent_data.get("deepest_level_unlocked", 1)), int(level_progress.get("current_level", 1))])
+    phase_label.text = _trf("MINING_HUD_PHASE", [display_depth_level, display_depth_max, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME")))])
+    depth_label.text = _trf("MINING_HUD_DEPTH", [display_depth_unlocked, int(level_progress.get("current_level", 1))])
     time_value_label.text = _trf("MINING_HUD_TIMER", [snappedf(time_left, 0.1), snappedf(run_time_limit, 0.1)])
     time_bar.max_value = run_time_limit
     time_bar.value = time_left
@@ -2122,7 +2140,7 @@ func _render_summary_text(summary_view_model: Dictionary, progress: float) -> vo
     lines.append(_trf("MINING_SUMMARY_TEXT_RUN_COMPLETE", [String(summary_view_model.get("reason", ""))]))
     lines.append("")
     lines.append(_trf("MINING_SUMMARY_TEXT_DEPTH_TIER", [
-        int(summary_view_model.get("depth_level", 1)),
+        MINING_PROGRESS_SCRIPT.get_display_depth_tier(int(summary_view_model.get("depth_level", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL))),
         String(summary_view_model.get("depth_material_name", tr("MINING_MATERIAL_STONE_NAME")))
     ]))
     lines.append(_trf("MINING_SUMMARY_TEXT_NODES_BROKEN", [int(summary_view_model.get("nodes_broken", 0))]))
@@ -2161,7 +2179,13 @@ func _render_summary_text(summary_view_model: Dictionary, progress: float) -> vo
         int(summary_view_model.get("level_progress_current", 0)),
         int(summary_view_model.get("level_progress_next", 1))
     ]))
-    lines.append(_trf("MINING_SUMMARY_TEXT_UNLOCKED_DEPTH", [int(summary_view_model.get("projected_depth_unlock", 1))]))
+    lines.append(_trf("MINING_SUMMARY_TEXT_UNLOCKED_DEPTH", [MINING_PROGRESS_SCRIPT.get_display_depth_tier(int(summary_view_model.get("projected_depth_unlock", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL)))]))
+    var level_bonus_note: String = String(summary_view_model.get("level_bonus_note", "")).strip_edges()
+    if level_bonus_note != "":
+        lines.append(level_bonus_note)
+    var tier_unlock_note: String = String(summary_view_model.get("tier_unlock_note", "")).strip_edges()
+    if tier_unlock_note != "":
+        lines.append(tier_unlock_note)
     summary_label.clear()
     summary_label.append_text("[color=%s]%s[/color]" % [
         _color_to_bbcode(SUMMARY_TEXT_BASE_COLOR),
@@ -2204,14 +2228,41 @@ func _format_summary_money_span(current_value: int, target_value: int, contribut
         Util.get_number_short_text(shown_value)
     ]
 
+func _format_level_bonus_summary(level_bonus_gains: Dictionary) -> String:
+    var bonus_parts := PackedStringArray()
+    var speed_gain: float = float(level_bonus_gains.get("move_speed", 0.0))
+    var drill_health_gain: float = float(level_bonus_gains.get("drill_health", 0.0))
+    var time_gain: float = float(level_bonus_gains.get("run_time", 0.0))
+    if speed_gain > 0.0:
+        bonus_parts.append("+%d speed" % int(round(speed_gain)))
+    if drill_health_gain > 0.0:
+        bonus_parts.append("+%d drill health" % int(round(drill_health_gain)))
+    if time_gain > 0.0:
+        bonus_parts.append("+%.1fs timing" % snappedf(time_gain, 0.1))
+    if bonus_parts.is_empty():
+        return ""
+    return "Level bonus%s: %s" % ["es" if bonus_parts.size() > 1 else "", ", ".join(bonus_parts)]
+
+func _format_depth_unlock_summary(previous_depth_unlock: int, new_depth_unlock: int) -> String:
+    if new_depth_unlock <= previous_depth_unlock:
+        return ""
+    var first_new_display_tier: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(previous_depth_unlock + 1)
+    var latest_display_tier: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(new_depth_unlock)
+    if first_new_display_tier == latest_display_tier:
+        return "New depth tier unlocked: %d" % latest_display_tier
+    return "New depth tiers unlocked: %d-%d" % [first_new_display_tier, latest_display_tier]
+
 func _color_to_bbcode(color: Color) -> String:
     return color.to_html(false)
 
 func _get_upgrade_levels() -> Dictionary:
     return persistent_data.get("upgrades", {})
 
+func _get_level_bonus_totals() -> Dictionary:
+    return MINING_BALANCE.get_level_bonus_totals_for_level(int(persistent_data.get("player_level", 1)))
+
 func _get_move_speed() -> float:
-    return MINING_BALANCE.get_move_speed(_get_upgrade_levels())
+    return MINING_BALANCE.get_move_speed(_get_upgrade_levels(), _get_level_bonus_totals())
 
 func _get_dirt_drag_multiplier() -> float:
     return MINING_BALANCE.get_dirt_drag_multiplier(active_depth_level, _get_upgrade_levels())
@@ -2220,10 +2271,10 @@ func _get_drill_dps() -> float:
     return MINING_BALANCE.get_drill_dps(_get_upgrade_levels())
 
 func _get_drill_health_max() -> float:
-    return MINING_BALANCE.get_drill_health_max(_get_upgrade_levels())
+    return MINING_BALANCE.get_drill_health_max(_get_upgrade_levels(), _get_level_bonus_totals())
 
 func _get_run_time_limit() -> float:
-    return MINING_BALANCE.get_run_time_limit(_get_upgrade_levels())
+    return MINING_BALANCE.get_run_time_limit(_get_upgrade_levels(), _get_level_bonus_totals())
 
 func _get_time_drain_rate() -> float:
     return MINING_BALANCE.get_time_drain_rate(active_depth_level, _get_upgrade_levels())
@@ -2816,7 +2867,7 @@ func _draw_nodes(origin: Vector2) -> void:
     for node in world_nodes:
         var node_screen: Vector2 = _world_to_screen(node.get("pos", Vector2.ZERO))
         var node_seed := float(int(node.get("id", 0))) * 17.0 + float(active_depth_level) * 7.0
-        var node_color: Color = _apply_visual_palette_variant(node.get("material_color", Color(0.5, 0.5, 0.5, 1.0)), node_seed + 0.9, 0.78)
+        var node_color: Color = _apply_material_color_variation(node.get("material_color", Color(0.5, 0.5, 0.5, 1.0)), node_seed + 0.9, 0.9)
         var radius: float = float(node.get("radius", 20.0))
         var hp_ratio: float = float(node.get("health", 1.0)) / max(1.0, float(node.get("max_health", 1.0)))
         var mined_progress: float = clampf(1.0 - hp_ratio, 0.0, 1.0)
@@ -2838,7 +2889,7 @@ func _draw_nodes(origin: Vector2) -> void:
             var inner_color: Color = node_color.lerp(grey_color, 0.55)
             draw_colored_polygon(inner_points, inner_color)
 
-        var node_spot_color := outer_color.darkened(0.46)
+        var node_spot_color: Color = _apply_material_color_variation(node.get("material_bg_color", outer_color.darkened(0.46)), node_seed + 3.4, 0.55)
         node_spot_color.a = 0.08 + 0.05 * (1.0 - mined_progress)
         _draw_seeded_variation_spots(node_screen, radius, node_seed, node_spot_color, 2, 0.42, 0.16, 0.27)
         _draw_seeded_variation_highlight(
@@ -2871,7 +2922,7 @@ func _draw_pickups(origin: Vector2) -> void:
     for pickup in pickups:
         var pickup_screen: Vector2 = _world_to_screen(pickup.get("pos", Vector2.ZERO))
         var pickup_seed := float(int(pickup.get("uid", 0))) * 13.0 + float(active_depth_level) * 5.0
-        var pickup_color: Color = _apply_visual_palette_variant(pickup.get("material_color", Color(0.8, 0.8, 0.8, 1.0)), pickup_seed + 1.1, 0.72)
+        var pickup_color: Color = _apply_material_color_variation(pickup.get("material_color", Color(0.8, 0.8, 0.8, 1.0)), pickup_seed + 1.1, 0.75)
         var blink_ratio: float = clampf(float(pickup.get("reject_blink_timer", 0.0)) / PICKUP_REJECT_BLINK_DURATION, 0.0, 1.0)
         var blink_pulse: float = 0.5 + 0.5 * sin((1.0 - blink_ratio) * TAU * 4.0)
         var blink_boost: float = blink_ratio * blink_pulse
@@ -2906,7 +2957,7 @@ func _draw_delivery_drones() -> void:
         var drone: Dictionary = delivery_drone_visuals[index]
         var is_returning: bool = String(drone.get("state", "to_base")) == "returning"
         var body_color := Color(0.56, 0.82, 0.88, 1.0) if is_returning else Color(0.72, 0.9, 0.98, 1.0)
-        var carry_color: Color = _apply_visual_palette_variant(drone.get("carry_color", Color.WHITE), float(index) * 9.0 + 5.1, 0.7)
+        var carry_color: Color = _apply_material_color_variation(drone.get("carry_color", Color.WHITE), float(index) * 9.0 + 5.1, 0.55)
         var return_offset: Vector2 = drone.get("return_offset", Vector2.ZERO)
         var variation_seed := float(active_depth_level) * 14.0 + float(index) * 9.0 + return_offset.x * 0.17 + return_offset.y * 0.11
         _draw_drone_body(_world_to_screen(drone.get("pos", Vector2.ZERO)), _apply_visual_palette_variant(body_color, variation_seed + 1.7, 0.55), carry_color, variation_seed)
@@ -2914,7 +2965,7 @@ func _draw_delivery_drones() -> void:
 func _draw_pickup_drones() -> void:
     for index in range(pickup_drone_visuals.size()):
         var drone: Dictionary = pickup_drone_visuals[index]
-        var carry_color: Color = _apply_visual_palette_variant(drone.get("carry_color", Color(0.94, 0.82, 0.38, 1.0)), float(index) * 8.0 + 7.3, 0.74) if String(drone.get("state", "idle")) == "to_player" else Color(0.0, 0.0, 0.0, 0.0)
+        var carry_color: Color = _apply_material_color_variation(drone.get("carry_color", Color(0.94, 0.82, 0.38, 1.0)), float(index) * 8.0 + 7.3, 0.55) if String(drone.get("state", "idle")) == "to_player" else Color(0.0, 0.0, 0.0, 0.0)
         var variation_seed := float(active_depth_level) * 19.0 + float(index) * 7.0 + float(drone.get("orbit_seed", 0.0)) * 11.0
         _draw_drone_body(_world_to_screen(drone.get("pos", Vector2.ZERO)), _apply_visual_palette_variant(Color(0.92, 0.76, 0.38, 1.0), variation_seed + 2.2, 0.6), carry_color, variation_seed)
 
@@ -3560,6 +3611,19 @@ func _apply_visual_palette_variant(base_color: Color, seed_base: float, amount: 
     )
     hsv.a = base_color.a
     return hsv
+
+func _apply_material_color_variation(base_color: Color, seed_base: float, amount: float = 0.7) -> Color:
+    if base_color.a <= 0.0:
+        return base_color
+    var visual_seed := seed_base + _get_visual_style_seed_offset()
+    var sat_scale := 1.0 + (_depth_noise(visual_seed, 1.17) - 0.5) * 0.07 * amount
+    var val_scale := 1.0 + (_depth_noise(visual_seed, 2.93) - 0.5) * 0.09 * amount
+    return Color.from_hsv(
+        base_color.h,
+        clampf(base_color.s * sat_scale, 0.0, 1.0),
+        clampf(base_color.v * val_scale, 0.0, 1.0),
+        base_color.a
+    )
 
 func _paint_image_variation_spot(image: Image, center: Vector2, radius_x: float, radius_y: float, angle: float, tint: Color) -> void:
     if image == null or radius_x <= 0.0 or radius_y <= 0.0 or tint.a <= 0.0:

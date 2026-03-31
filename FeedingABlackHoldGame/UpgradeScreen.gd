@@ -53,7 +53,15 @@ var _loaded_tree_locale: String = ""
 
 func _trf(key: String, args: Array = []) -> String:
     var translated: String = tr(key)
-    return translated % args if not args.is_empty() else translated
+    var used_brace_placeholders: bool = false
+    for index in range(args.size()):
+        var placeholder := "{%d}" % index
+        if translated.contains(placeholder):
+            used_brace_placeholders = true
+            translated = translated.replace(placeholder, str(args[index]))
+    if used_brace_placeholders or args.is_empty():
+        return translated
+    return translated % args
 var reset_progress_confirm_dialog: ConfirmationDialog
 var legacy_reset_dialog: ConfirmationDialog
 var mute_button: Button
@@ -642,9 +650,10 @@ func _should_show_editor_crt_preview() -> bool:
 func _on_go_again_pressed() -> void :
     if Util.is_mining_game_active():
         var mining_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
-        var max_depth: int = clampi(int(mining_data.get("deepest_level_unlocked", 1)), 1, MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL)
-        if max_depth <= 1:
-            _launch_battle_at_level(1)
+        var min_depth: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+        var max_depth: int = clampi(int(mining_data.get("deepest_level_unlocked", min_depth)), min_depth, MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL)
+        if MINING_PROGRESS_SCRIPT.get_display_depth_tier(max_depth) <= 1:
+            _launch_battle_at_level(min_depth)
         else:
             _show_battle_level_choice_dialog(max_depth)
         return
@@ -1088,7 +1097,8 @@ func _show_battle_level_choice_dialog(max_level: int) -> void:
     if battle_level_choice_dialog == null:
         if Util.is_mining_game_active():
             var mining_fallback_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
-            _launch_battle_at_level(clampi(int(mining_fallback_data.get("selected_depth_level", max_level)), 1, max_level))
+            var min_depth: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+            _launch_battle_at_level(clampi(int(mining_fallback_data.get("selected_depth_level", max_level)), min_depth, max_level))
         else:
             _launch_battle_at_level(clamp(SaveHandler.fishing_next_battle_level, 1, max_level))
         return
@@ -1096,7 +1106,8 @@ func _show_battle_level_choice_dialog(max_level: int) -> void:
     battle_level_choice_max_level = max_level
     if Util.is_mining_game_active():
         var mining_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
-        battle_level_choice_selected_level = clampi(int(mining_data.get("selected_depth_level", max_level)), 1, max_level)
+        var min_depth: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+        battle_level_choice_selected_level = clampi(int(mining_data.get("selected_depth_level", max_level)), min_depth, max_level)
         battle_level_choice_dialog.title = tr("MINING_CHOOSE_DEPTH_TIER_TITLE")
     else:
         battle_level_choice_selected_level = clamp(SaveHandler.fishing_next_battle_level, 1, max_level)
@@ -1158,11 +1169,16 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
     vbox.add_theme_constant_override("separation", 16)
     margin.add_child(vbox)
 
-    if max_level <= 4:
-        for level in range(1, max_level + 1):
+    var mining_mode_active: bool = Util.is_mining_game_active()
+    var min_level: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL if mining_mode_active else 1
+    var display_max_level: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(max_level) if mining_mode_active else max_level
+
+    if display_max_level <= 4:
+        for level in range(min_level, max_level + 1):
             var button := Button.new()
             button.name = "BattleLevelChoiceButton%d" % level
-            button.text = _trf("MINING_DEPTH_TIER_FORMAT", [level]) if Util.is_mining_game_active() else _trf("UI_LEVEL_FORMAT", [level])
+            var display_level: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(level) if mining_mode_active else level
+            button.text = _trf("MINING_DEPTH_TIER_FORMAT", [display_level]) if mining_mode_active else _trf("UI_LEVEL_FORMAT", [display_level])
             button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
             button.custom_minimum_size = Vector2(0.0, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
             button.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_FONT_SIZE)
@@ -1170,7 +1186,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
             vbox.add_child(button)
     else:
         var prompt := Label.new()
-        prompt.text = _trf("MINING_SELECT_DEPTH_TIER_RANGE", [max_level]) if Util.is_mining_game_active() else _trf("UI_SELECT_BATTLE_LEVEL_RANGE", [max_level])
+        prompt.text = _trf("MINING_SELECT_DEPTH_TIER_RANGE", [display_max_level]) if mining_mode_active else _trf("UI_SELECT_BATTLE_LEVEL_RANGE", [display_max_level])
         prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         prompt.add_theme_font_size_override("font_size", 28)
         vbox.add_child(prompt)
@@ -1191,10 +1207,10 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
 
         battle_level_choice_line_edit = LineEdit.new()
         battle_level_choice_line_edit.name = "BattleLevelChoiceLineEdit"
-        battle_level_choice_line_edit.text = str(battle_level_choice_selected_level)
+        battle_level_choice_line_edit.text = str(MINING_PROGRESS_SCRIPT.get_display_depth_tier(battle_level_choice_selected_level) if mining_mode_active else battle_level_choice_selected_level)
         battle_level_choice_line_edit.custom_minimum_size = Vector2(BATTLE_LEVEL_SELECTOR_INPUT_WIDTH, BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT)
         battle_level_choice_line_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
-        battle_level_choice_line_edit.max_length = len(str(max_level))
+        battle_level_choice_line_edit.max_length = len(str(display_max_level))
         battle_level_choice_line_edit.add_theme_font_size_override("font_size", BATTLE_LEVEL_SELECTOR_FONT_SIZE)
         battle_level_choice_line_edit.text_submitted.connect(_on_battle_level_choice_text_submitted.bind(max_level))
         battle_level_choice_line_edit.focus_exited.connect(_on_battle_level_choice_input_focus_exited.bind(max_level))
@@ -1216,7 +1232,7 @@ func _rebuild_battle_level_choice_dialog_content(max_level: int) -> void:
     cancel_button.pressed.connect(_on_battle_level_choice_cancel_pressed)
     vbox.add_child(_wrap_control_with_glyph(cancel_button, "joypad/b", false))
 
-    if max_level > 4:
+    if display_max_level > 4:
         var confirm_button := Button.new()
         confirm_button.name = "BattleLevelChoiceConfirmButton"
         confirm_button.text = tr("UI_CONFIRM")
@@ -1233,7 +1249,8 @@ func _on_battle_level_choice_button_pressed(level: int) -> void:
     _launch_battle_at_level(level)
 
 func _on_battle_level_choice_adjust_pressed(delta: int, max_level: int) -> void:
-    battle_level_choice_selected_level = clamp(battle_level_choice_selected_level + delta, 1, max_level)
+    var min_level: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL if Util.is_mining_game_active() else 1
+    battle_level_choice_selected_level = clampi(battle_level_choice_selected_level + delta, min_level, max_level)
     _update_battle_level_choice_line_edit()
     _update_battle_level_choice_controller_target(max_level)
 
@@ -1277,16 +1294,23 @@ func _sync_battle_level_choice_from_input(max_level: int) -> void:
     if battle_level_choice_line_edit == null:
         return
     var raw_text: String = battle_level_choice_line_edit.text.strip_edges()
+    var min_level: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL if Util.is_mining_game_active() else 1
     if raw_text == "":
-        battle_level_choice_selected_level = clamp(battle_level_choice_selected_level, 1, max_level)
+        battle_level_choice_selected_level = clampi(battle_level_choice_selected_level, min_level, max_level)
     else:
-        battle_level_choice_selected_level = clamp(int(raw_text), 1, max_level)
+        if Util.is_mining_game_active():
+            var max_display_level: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(max_level)
+            var display_level: int = clampi(int(raw_text), 1, max_display_level)
+            battle_level_choice_selected_level = MINING_PROGRESS_SCRIPT.get_depth_level_for_display_tier(display_level)
+        else:
+            battle_level_choice_selected_level = clampi(int(raw_text), min_level, max_level)
     _update_battle_level_choice_line_edit()
 
 func _update_battle_level_choice_line_edit() -> void:
     if battle_level_choice_line_edit == null:
         return
-    battle_level_choice_line_edit.text = str(battle_level_choice_selected_level)
+    var display_level: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(battle_level_choice_selected_level) if Util.is_mining_game_active() else battle_level_choice_selected_level
+    battle_level_choice_line_edit.text = str(display_level)
     battle_level_choice_line_edit.caret_column = battle_level_choice_line_edit.text.length()
 
 func _position_virtual_cursor_for_battle_level_choice(max_level: int) -> void:
@@ -1313,7 +1337,8 @@ func _is_battle_level_choice_open() -> bool:
     return battle_level_choice_dialog != null and battle_level_choice_dialog.visible
 
 func _confirm_battle_level_choice_from_controller() -> bool:
-    if battle_level_choice_max_level <= 4:
+    var display_max_level: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(battle_level_choice_max_level) if Util.is_mining_game_active() else battle_level_choice_max_level
+    if display_max_level <= 4:
         _launch_battle_at_level(battle_level_choice_selected_level)
         return true
     _on_battle_level_choice_confirm_pressed(battle_level_choice_max_level)
@@ -1322,7 +1347,8 @@ func _confirm_battle_level_choice_from_controller() -> bool:
 func _get_primary_battle_level_choice_button(max_level: int) -> Control:
     if battle_level_choice_dialog == null:
         return null
-    if max_level <= 4:
+    var display_max_level: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(max_level) if Util.is_mining_game_active() else max_level
+    if display_max_level <= 4:
         return battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent/VBoxContainer/BattleLevelChoiceButton%d" % battle_level_choice_selected_level)
     var confirm_button: Control = battle_level_choice_dialog.get_node_or_null("BattleLevelChoiceContent/VBoxContainer/BattleLevelChoiceConfirmButton")
     if confirm_button != null:

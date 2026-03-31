@@ -42,6 +42,11 @@ LATE_COST_MULTIPLIER_START = 1.8
 LATE_COST_MULTIPLIER_END = 30.0
 LATE_EFFECT_MULTIPLIER_START = 1.0
 LATE_EFFECT_MULTIPLIER_END = 2.25
+LEVEL_BONUS_ROTATION: List[Dict[str, float | str]] = [
+    {"id": "speed", "move_speed": 4.0},
+    {"id": "drill_health", "drill_health": 8.0},
+    {"id": "time", "run_time": 0.45},
+]
 AUTOPLAY_MOVE_SPEED_MULTIPLIER = 1.24
 AUTOPLAY_DRILL_DPS_MULTIPLIER = 5.45
 AUTOPLAY_DRILL_WEAR_MULTIPLIER = 0.96
@@ -105,7 +110,7 @@ def build_materials() -> List[Dict]:
         base["name"] = f"{base['name']} {cycle_number}"
         base["value"] = int(round(float(previous["value"]) * (1.072 + late_frontier_bonus)))
         base["xp"] = int(round(float(previous["xp"]) * 1.069))
-        base["hardness"] = float(previous["hardness"]) * 1.075
+        base["hardness"] = float(previous["hardness"]) * 1.081
         materials.append(base)
     return materials
 
@@ -143,9 +148,35 @@ def level_for_total_xp(total_xp: int) -> int:
 def refresh_depth_unlocks(data: Dict) -> None:
     player_level = max(1, int(data.get("player_level", 1)))
     scanner_level = int(data.get("upgrades", {}).get("depth_scanner", 0))
-    unlocked = 1 + int(math.floor(float(player_level - 1) / 3.2)) + int(math.floor(float(scanner_level) * 0.7))
+    unlocked = 1 + int(math.floor(float(player_level + 1) / 3.2)) + int(math.floor(float(scanner_level) * 0.7))
     data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", 1)), min(MAX_DEPTH_LEVEL, unlocked))
     data["selected_depth_level"] = min(int(data["deepest_level_unlocked"]), max(1, int(data.get("selected_depth_level", 1))))
+
+
+def level_bonus_for_level(level: int) -> Dict:
+    if level <= 1 or not LEVEL_BONUS_ROTATION:
+        return {}
+    return dict(LEVEL_BONUS_ROTATION[(level - 2) % len(LEVEL_BONUS_ROTATION)])
+
+
+def level_bonus_totals_for_range(previous_level: int, new_level: int) -> Dict[str, float]:
+    totals = {
+        "move_speed": 0.0,
+        "drill_health": 0.0,
+        "run_time": 0.0,
+    }
+    if new_level <= previous_level:
+        return totals
+    for level in range(max(2, previous_level + 1), max(2, new_level) + 1):
+        bonus = level_bonus_for_level(level)
+        totals["move_speed"] += float(bonus.get("move_speed", 0.0))
+        totals["drill_health"] += float(bonus.get("drill_health", 0.0))
+        totals["run_time"] += float(bonus.get("run_time", 0.0))
+    return totals
+
+
+def level_bonus_totals_for_level(player_level: int) -> Dict[str, float]:
+    return level_bonus_totals_for_range(1, player_level)
 
 
 def get_default_state() -> Dict:
@@ -202,8 +233,9 @@ def scaled_upgrade_strength(upgrades: Dict[str, int], upgrade_id: str) -> float:
     return total
 
 
-def move_speed(upgrades: Dict[str, int]) -> float:
-    return 210.0 + 0.84 * scaled_upgrade_strength(upgrades, "engine_tuning") + 0.14 * scaled_upgrade_strength(upgrades, "route_planner")
+def move_speed(upgrades: Dict[str, int], level_bonuses: Dict[str, float] | None = None) -> float:
+    level_bonuses = level_bonuses or {}
+    return 210.0 + 0.84 * scaled_upgrade_strength(upgrades, "engine_tuning") + 0.14 * scaled_upgrade_strength(upgrades, "route_planner") + float(level_bonuses.get("move_speed", 0.0))
 
 
 def dirt_drag(depth_level: int, upgrades: Dict[str, int]) -> float:
@@ -228,8 +260,9 @@ def world_area_multiplier(depth_level: int) -> float:
     return scale * scale
 
 
-def run_time_limit(upgrades: Dict[str, int]) -> float:
-    return 22.0 + 0.65 * scaled_upgrade_strength(upgrades, "timer_reserve")
+def run_time_limit(upgrades: Dict[str, int], level_bonuses: Dict[str, float] | None = None) -> float:
+    level_bonuses = level_bonuses or {}
+    return 22.0 + 0.65 * scaled_upgrade_strength(upgrades, "timer_reserve") + float(level_bonuses.get("run_time", 0.0))
 
 
 def time_drain(depth_level: int, upgrades: Dict[str, int]) -> float:
@@ -241,8 +274,9 @@ def drill_dps(upgrades: Dict[str, int]) -> float:
     return 7.4 + 1.12 * scaled_upgrade_strength(upgrades, "drill_torque") + 0.12 * scaled_upgrade_strength(upgrades, "cooling_loop") + 0.72 * scaled_upgrade_strength(upgrades, "foreman_bot")
 
 
-def drill_health_max(upgrades: Dict[str, int]) -> float:
-    return 54.0 + 9.0 * scaled_upgrade_strength(upgrades, "drill_plating")
+def drill_health_max(upgrades: Dict[str, int], level_bonuses: Dict[str, float] | None = None) -> float:
+    level_bonuses = level_bonuses or {}
+    return 54.0 + 9.0 * scaled_upgrade_strength(upgrades, "drill_plating") + float(level_bonuses.get("drill_health", 0.0))
 
 
 def drill_wear_multiplier(upgrades: Dict[str, int]) -> float:
@@ -377,7 +411,7 @@ def material_weights_for_indices(indices: List[int], upgrades: Dict[str, int]) -
 
 
 def node_health(material: Dict, depth_level: int) -> float:
-    return float(material["hardness"]) * (1.0 + 0.018 * max(0, depth_level - 1))
+    return float(material["hardness"]) * (1.0 + 0.0205 * max(0, depth_level - 1))
 
 
 def node_wear_per_second(max_health: float, upgrades: Dict[str, int]) -> float:
@@ -495,12 +529,13 @@ def generate_world(depth_level: int, upgrades: Dict[str, int], seed: int) -> Lis
 
 def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
     upgrades = dict(state.get("upgrades", {}))
+    level_bonuses = level_bonus_totals_for_level(int(state.get("player_level", 1)))
     base = get_base_position(depth_level)
     position = base
     rng = random.Random(seed * 3571 + depth_level * 211)
-    time_limit = run_time_limit(upgrades)
+    time_limit = run_time_limit(upgrades, level_bonuses)
     time_left = time_limit
-    drill_max = drill_health_max(upgrades)
+    drill_max = drill_health_max(upgrades, level_bonuses)
     drill_left = drill_max
     cargo = 0
     banked: Dict[str, int] = {}
@@ -514,7 +549,7 @@ def simulate_fast_run(state: Dict, depth_level: int, seed: int) -> Dict:
     delivery_progress = 0.0
     pickup_progress = 0.0
     run_xp = 0
-    player_speed = max(1.0, move_speed(upgrades) * dirt_drag(depth_level, upgrades) * AUTOPLAY_MOVE_SPEED_MULTIPLIER)
+    player_speed = max(1.0, move_speed(upgrades, level_bonuses) * dirt_drag(depth_level, upgrades) * AUTOPLAY_MOVE_SPEED_MULTIPLIER)
     dps = max(1.0, drill_dps(upgrades) * AUTOPLAY_DRILL_DPS_MULTIPLIER)
     collect_radius = pickup_radius(upgrades)
     pickup_bot_count = pickup_drone_count(upgrades)
