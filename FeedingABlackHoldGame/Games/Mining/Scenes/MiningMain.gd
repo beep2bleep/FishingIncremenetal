@@ -86,6 +86,14 @@ const SUMMARY_TEXT_BASE_COLOR := Color(0.95, 0.98, 1.0, 1.0)
 const SUMMARY_TEXT_MONEY_GREY := Color(0.62, 0.68, 0.74, 1.0)
 const SUMMARY_TEXT_MONEY_GREEN := Color(0.37, 0.86, 0.61, 1.0)
 const MINING_SUMMARY_HINT_HISTORY_LIMIT := 3
+const RUN_ENDING_DURATION := 3.0
+const RUN_ENDING_MIN_SPEED_MULT := 0.24
+const RUN_ENDING_MAX_SPEED_MULT := 0.82
+const RUN_ENDING_TURN_ANGLE := 0.7
+const RUN_ENDING_SPARK_INTERVAL := 0.055
+const RUN_ENDING_FADE_START := 0.42
+const SUMMARY_RECOVER_DURATION := 4.0
+const SUMMARY_GAMEPLAY_DIM_ALPHA := 0.5
 const TUNNEL_COVERAGE_SAMPLE_OFFSETS := [
     Vector2.ZERO,
     Vector2(1.0, 0.0),
@@ -105,7 +113,7 @@ const DEFAULT_MINING_SUMMARY_HINTS: Array[String] = [
     "MINING_HINT_DEFAULT_5"
 ]
 
-enum RUN_STATES {RUNNING, SUMMARY}
+enum RUN_STATES {RUNNING, ENDING, SUMMARY}
 
 @onready var top_bar: MarginContainer = $CanvasLayer/TopBar
 @onready var wallet_label: Label = $CanvasLayer/TopBar/TopPanel/TopInfo/WalletLabel
@@ -233,6 +241,14 @@ var xp_bar_pop_tween: Tween
 var xp_bar_level_up_flash_timer := 0.0
 var visual_variation_strength := VISUAL_VARIATION_STRENGTH_DEFAULT
 var visual_style_reroll_index := 0
+var run_end_reason_key := ""
+var run_end_timer := 0.0
+var run_end_turn_sign := 1.0
+var run_end_initial_heading := Vector2.DOWN
+var run_end_spark_timer := 0.0
+var summary_transition_active := false
+var summary_transition_timer := 0.0
+var summary_transition_start_dim_alpha := 0.0
 
 func _notification(what: int) -> void:
     if what == NOTIFICATION_TRANSLATION_CHANGED:
@@ -274,7 +290,10 @@ func _process(delta: float) -> void:
     if run_state == RUN_STATES.RUNNING and not _is_settings_open():
         _update_autoplay_pointer()
         _process_running(delta)
+    elif run_state == RUN_STATES.ENDING and not _is_settings_open():
+        _process_run_ending(delta)
     _process_summary_chart_animation(delta)
+    _process_summary_transition(delta)
     _refresh_hud()
     if not simulation_mode_active:
         queue_redraw()
@@ -326,6 +345,7 @@ func _draw() -> void:
     _draw_tail()
     _draw_player(origin)
     _draw_target_line(origin)
+    _draw_run_end_fx()
     _draw_edge_fade(viewport_size)
     _draw_aim_cursor()
 
@@ -374,6 +394,14 @@ func _begin_run() -> void:
     last_steer_direction = Vector2.ZERO
     tunnel_speed_boost_strength = 0.0
     player_velocity = Vector2.ZERO
+    run_end_reason_key = ""
+    run_end_timer = 0.0
+    run_end_turn_sign = 1.0
+    run_end_initial_heading = Vector2.DOWN
+    run_end_spark_timer = 0.0
+    summary_transition_active = false
+    summary_transition_timer = 0.0
+    summary_transition_start_dim_alpha = 0.0
     trail_history.clear()
     drill_copies.clear()
     delivery_drone_visuals.clear()
@@ -394,6 +422,7 @@ func _begin_run() -> void:
     _initialize_dirt_mask()
     _carve_dirt_circle(_get_base_position(), 92.0)
     shop_panel.hide()
+    shop_panel.modulate = Color(1.0, 1.0, 1.0, 1.0)
     hint_panel.hide()
     hint_label.text = ""
     _reset_aim_cursor()
@@ -456,9 +485,51 @@ func _process_running(delta: float) -> void:
     camera_pos = camera_pos.lerp(player_pos + _get_camera_shake_offset(), min(1.0, delta * 7.0))
     _update_system_button_layout()
     if time_left <= 0.0:
-        _finish_run(RUN_REASON_TIMER_EXPIRED)
+        _trigger_run_end(RUN_REASON_TIMER_EXPIRED)
     elif drill_health <= 0.0:
-        _finish_run(RUN_REASON_DRILL_DEPLETED)
+        _trigger_run_end(RUN_REASON_DRILL_DEPLETED)
+
+func _process_run_ending(delta: float) -> void:
+    run_end_timer = min(RUN_ENDING_DURATION, run_end_timer + delta)
+    run_end_spark_timer = max(0.0, run_end_spark_timer - delta)
+    var previous_pos: Vector2 = player_pos
+    var progress: float = _get_run_end_progress()
+    var heading: Vector2 = _get_run_end_heading(progress)
+    var travel_speed: float = _get_move_speed() * lerpf(RUN_ENDING_MAX_SPEED_MULT, RUN_ENDING_MIN_SPEED_MULT, ease(progress, 1.7))
+    player_velocity = heading * travel_speed
+    player_pos += player_velocity * delta
+    var world_size: Vector2 = _get_world_size()
+    player_pos.x = clampf(player_pos.x, -world_size.x * 0.5 + PLAYER_RADIUS, world_size.x * 0.5 - PLAYER_RADIUS)
+    player_pos.y = clampf(player_pos.y, -world_size.y * 0.5 + PLAYER_RADIUS, world_size.y * 0.5 - PLAYER_RADIUS)
+    last_drill_direction = heading
+    move_input_strength = max(0.0, 1.0 - progress * 0.35)
+    _carve_dirt_segment(previous_pos, player_pos, 26.0)
+    _update_drill_train(previous_pos, delta)
+    _process_pickup_drones(delta)
+    _collect_pickups(delta)
+    _bank_cargo_if_at_base()
+    _process_delivery_drone(delta)
+    _process_delivery_drone_visuals(delta)
+    _process_contact_sparks(delta)
+    _process_damage_numbers(delta)
+    drill_audio_timer = max(0.0, drill_audio_timer - delta)
+    pickup_reject_sound_timer = max(0.0, pickup_reject_sound_timer - delta)
+    cargo_bar_reject_blink_timer = max(0.0, cargo_bar_reject_blink_timer - delta)
+    xp_bar_level_up_flash_timer = max(0.0, xp_bar_level_up_flash_timer - delta)
+    camera_shake_strength = max(0.0, camera_shake_strength - delta * 14.0)
+    camera_pos = camera_pos.lerp(player_pos + _get_camera_shake_offset(), min(1.0, delta * 5.0))
+    _update_system_button_layout()
+    _spawn_run_end_sparks(progress)
+    if run_end_timer >= RUN_ENDING_DURATION:
+        _finish_run(run_end_reason_key)
+
+func _process_summary_transition(delta: float) -> void:
+    if not summary_transition_active:
+        return
+    summary_transition_timer = min(SUMMARY_RECOVER_DURATION, summary_transition_timer + delta)
+    var progress: float = clampf(summary_transition_timer / SUMMARY_RECOVER_DURATION, 0.0, 1.0)
+    if shop_panel != null:
+        shop_panel.modulate = Color(1.0, 1.0, 1.0, progress)
 
 func _process_player_movement(delta: float) -> void:
     var previous_pos: Vector2 = player_pos
@@ -1148,9 +1219,39 @@ func _build_run_results(reason_key: String) -> Dictionary:
         "level_progress": level_progress.duplicate(true)
     }
 
+func _trigger_run_end(reason_key: String) -> void:
+    if run_state != RUN_STATES.RUNNING:
+        return
+    if reason_key == RUN_REASON_TIMER_EXPIRED and not simulation_mode_active:
+        run_state = RUN_STATES.ENDING
+        run_end_reason_key = reason_key
+        run_end_timer = 0.0
+        run_end_spark_timer = 0.0
+        run_end_initial_heading = _get_drill_heading()
+        if run_end_initial_heading == Vector2.ZERO:
+            run_end_initial_heading = Vector2.DOWN
+        run_end_turn_sign = -1.0 if rng.randf() < 0.5 else 1.0
+        var steer_cross: float = last_steer_direction.cross(run_end_initial_heading)
+        if absf(steer_cross) > 0.001:
+            run_end_turn_sign = signf(steer_cross)
+        move_input_strength = 0.0
+        straight_drive_charge = 0.0
+        attached_node_id = -1
+        contact_node_id = -1
+        target_node_id = -1
+        run_status = tr(reason_key)
+        camera_shake_strength = max(camera_shake_strength, 6.0)
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BLACK_HOLE_COLLAPSE, -14.0, -0.24)
+        _play_mining_donk(-7.0)
+        _refresh_mouse_capture_state()
+        return
+    _finish_run(reason_key)
+
 func _finish_run(reason_key: String) -> void:
     if run_state == RUN_STATES.SUMMARY:
         return
+    var was_ending: bool = run_state == RUN_STATES.ENDING
+    var ending_overlay_alpha: float = _get_run_end_overlay_alpha() if was_ending else 0.0
     _bank_cargo_if_at_base()
     _bank_pending_delivery_drone_visuals()
     for material_id_variant in carry_counts.keys():
@@ -1166,6 +1267,9 @@ func _finish_run(reason_key: String) -> void:
     else:
         persistent_data = results.get("projected_data", persistent_data).duplicate(true)
     run_state = RUN_STATES.SUMMARY
+    summary_transition_active = was_ending
+    summary_transition_timer = 0.0
+    summary_transition_start_dim_alpha = ending_overlay_alpha
     Global.game_state = Util.GAME_STATES.UPGRADES if simulation_commit_progress else Util.GAME_STATES.PLAYING
     run_status = tr(reason_key)
     _refresh_mouse_capture_state()
@@ -1181,6 +1285,7 @@ func _show_summary(results: Dictionary) -> void:
     _refresh_summary_charts(results)
     _show_summary_text(results)
     _start_summary_chart_animation()
+    shop_panel.modulate = Color(1.0, 1.0, 1.0, 0.0) if summary_transition_active else Color(1.0, 1.0, 1.0, 1.0)
     shop_panel.show()
     hint_panel.hide()
     hint_label.text = ""
@@ -2310,6 +2415,26 @@ func _spawn_contact_sparks(origin: Vector2, color: Color, count: int) -> void:
             "radius": rng.randf_range(1.8, 3.8)
         })
 
+func _spawn_run_end_sparks(progress: float) -> void:
+    if run_end_spark_timer > 0.0:
+        return
+    run_end_spark_timer = RUN_ENDING_SPARK_INTERVAL
+    var heading: Vector2 = _get_run_end_heading(progress)
+    var side: Vector2 = Vector2(-heading.y, heading.x)
+    var intensity: float = lerpf(1.0, 0.45, progress)
+    for spark_index in range(3):
+        var side_sign: float = -1.0 if spark_index % 2 == 0 else 1.0
+        var launch_dir: Vector2 = (side * side_sign + heading * rng.randf_range(-0.45, -0.18)).normalized()
+        if launch_dir == Vector2.ZERO:
+            launch_dir = -heading
+        contact_sparks.append({
+            "pos": player_pos + heading * rng.randf_range(-8.0, 6.0) + side * side_sign * rng.randf_range(4.0, 11.0),
+            "vel": launch_dir * rng.randf_range(55.0, 140.0) * intensity,
+            "life": rng.randf_range(0.14, 0.34),
+            "color": Color(1.0, 0.74, 0.34, 0.95).lerp(Color(0.72, 0.9, 1.0, 0.9), progress * 0.6),
+            "radius": rng.randf_range(1.4, 2.8)
+        })
+
 func _spawn_damage_number(origin: Vector2, amount: int, emphasize: bool = false) -> void:
     damage_numbers.append({
         "pos": origin + Vector2(rng.randf_range(-6.0, 6.0), rng.randf_range(-10.0, -2.0)),
@@ -2486,6 +2611,38 @@ func _get_drill_heading() -> Vector2:
     if heading == Vector2.ZERO:
         heading = Vector2.DOWN
     return heading.normalized()
+
+func _get_run_end_progress() -> float:
+    if run_state != RUN_STATES.ENDING:
+        return 0.0
+    return clampf(run_end_timer / RUN_ENDING_DURATION, 0.0, 1.0)
+
+func _get_run_end_heading(progress: float = -1.0) -> Vector2:
+    if progress < 0.0:
+        progress = _get_run_end_progress()
+    var heading: Vector2 = run_end_initial_heading
+    if heading == Vector2.ZERO:
+        heading = _get_drill_heading()
+    if heading == Vector2.ZERO:
+        heading = Vector2.DOWN
+    var turn_progress: float = ease(progress, 1.4)
+    return heading.rotated(RUN_ENDING_TURN_ANGLE * run_end_turn_sign * turn_progress).normalized()
+
+func _get_run_end_draw_alpha() -> float:
+    if run_state != RUN_STATES.ENDING:
+        return 1.0
+    var fade_progress: float = clampf((_get_run_end_progress() - RUN_ENDING_FADE_START) / max(0.001, 1.0 - RUN_ENDING_FADE_START), 0.0, 1.0)
+    return clampf(1.0 - ease(fade_progress, 1.8), 0.0, 1.0)
+
+func _get_run_end_overlay_alpha() -> float:
+    var fade_progress: float = clampf((_get_run_end_progress() - RUN_ENDING_FADE_START) / max(0.001, 1.0 - RUN_ENDING_FADE_START), 0.0, 1.0)
+    return ease(fade_progress, 1.8) * 0.96
+
+func _get_summary_dim_alpha() -> float:
+    if not summary_transition_active:
+        return 0.0
+    var progress: float = clampf(summary_transition_timer / SUMMARY_RECOVER_DURATION, 0.0, 1.0)
+    return lerpf(summary_transition_start_dim_alpha, SUMMARY_GAMEPLAY_DIM_ALPHA, progress)
 
 func _reset_drill_train() -> void:
     trail_history.clear()
@@ -2795,12 +2952,13 @@ func _draw_damage_numbers() -> void:
         draw_string(font, number_screen, String(number.get("text", "0")), HORIZONTAL_ALIGNMENT_CENTER, -1.0, font_size, color)
 
 func _draw_tail() -> void:
+    var fade_alpha: float = _get_run_end_draw_alpha()
     for copy_index in range(drill_copies.size() - 1, -1, -1):
         var copy_data: Dictionary = drill_copies[copy_index]
         var scale: float = 0.88 - 0.08 * float(copy_index)
-        var shell_color: Color = Color(0.16, 0.17, 0.2, 0.82 - 0.08 * float(copy_index))
-        var body_color: Color = Color(0.83, 0.74, 0.28, 0.74 - 0.09 * float(copy_index))
-        var copy_boost_strength: float = tunnel_speed_boost_strength * max(0.0, 1.0 - 0.18 * float(copy_index))
+        var shell_color: Color = Color(0.16, 0.17, 0.2, (0.82 - 0.08 * float(copy_index)) * fade_alpha)
+        var body_color: Color = Color(0.83, 0.74, 0.28, (0.74 - 0.09 * float(copy_index)) * fade_alpha)
+        var copy_boost_strength: float = 0.0 if run_state == RUN_STATES.ENDING else tunnel_speed_boost_strength * max(0.0, 1.0 - 0.18 * float(copy_index))
         _draw_drill_ship(
             _world_to_screen(copy_data.get("pos", player_pos)),
             copy_data.get("dir", _get_drill_heading()),
@@ -2811,12 +2969,14 @@ func _draw_tail() -> void:
         )
 
 func _draw_player(origin: Vector2) -> void:
-    var aim_dir: Vector2 = _get_pointer_direction()
+    var aim_dir: Vector2 = _get_run_end_heading() if run_state == RUN_STATES.ENDING else _get_pointer_direction()
     if aim_dir == Vector2.ZERO:
         aim_dir = player_velocity.normalized()
     if aim_dir == Vector2.ZERO:
         aim_dir = Vector2.DOWN
-    _draw_drill_ship(_world_to_screen(player_pos), aim_dir, 1.0, Color(0.16, 0.17, 0.2, 1.0), Color(0.83, 0.74, 0.28, 1.0), tunnel_speed_boost_strength)
+    var fade_alpha: float = _get_run_end_draw_alpha()
+    var boost_strength: float = 0.0 if run_state == RUN_STATES.ENDING else tunnel_speed_boost_strength
+    _draw_drill_ship(_world_to_screen(player_pos), aim_dir, 1.0, Color(0.16, 0.17, 0.2, fade_alpha), Color(0.83, 0.74, 0.28, fade_alpha), boost_strength)
 
 func _draw_drill_ship(screen_pos: Vector2, aim_dir: Vector2, scale: float, shell_color: Color, body_color: Color, boost_strength: float = 0.0) -> void:
     var spin_angle: float = Time.get_ticks_msec() * 0.0045
@@ -2904,10 +3064,44 @@ func _draw_drill_ship(screen_pos: Vector2, aim_dir: Vector2, scale: float, shell
         draw_colored_polygon(PackedVector2Array([exhaust_left, exhaust_tip, exhaust_right]), Color(0.82, 0.96, 1.0, 0.22 + boost_strength * 0.2))
 
 func _draw_target_line(origin: Vector2) -> void:
+    if run_state != RUN_STATES.RUNNING:
+        return
     if target_node_id < 0 or target_node_id >= world_nodes.size():
         return
     var target_pos: Vector2 = world_nodes[target_node_id].get("pos", Vector2.ZERO)
     draw_line(_world_to_screen(player_pos), _world_to_screen(target_pos), Color(1.0, 0.9, 0.5, 0.42), 2.0)
+
+func _draw_run_end_fx() -> void:
+    if run_state != RUN_STATES.ENDING:
+        return
+    var progress: float = _get_run_end_progress()
+    var alpha: float = _get_run_end_draw_alpha()
+    if alpha <= 0.0:
+        return
+    var screen_pos: Vector2 = _world_to_screen(player_pos)
+    var heading: Vector2 = _get_run_end_heading(progress)
+    var side: Vector2 = Vector2(-heading.y, heading.x)
+    var accent: Color = Color(1.0, 0.78, 0.38, 0.9 * alpha)
+    var cool_accent: Color = Color(0.74, 0.92, 1.0, 0.65 * alpha)
+    var rear: Vector2 = screen_pos - heading * (20.0 + 18.0 * progress)
+    draw_line(rear - side * 10.0, rear + side * 10.0, accent, 2.4)
+    draw_line(rear - side * 17.0, rear + side * 17.0, cool_accent, 1.6)
+    for stripe_index in range(4):
+        var stripe_progress: float = float(stripe_index) / 3.0
+        var stripe_anchor: Vector2 = screen_pos - heading * (18.0 + 34.0 * stripe_progress + 18.0 * progress)
+        var stripe_half: float = 8.0 + 9.0 * stripe_progress
+        var stripe_color: Color = accent.lerp(cool_accent, stripe_progress)
+        stripe_color.a *= 1.0 - stripe_progress * 0.25
+        draw_line(stripe_anchor - side * stripe_half, stripe_anchor + side * stripe_half, stripe_color, 1.5 + (1.0 - stripe_progress))
+    var fin_tip: Vector2 = screen_pos - heading * (28.0 + 10.0 * progress)
+    draw_colored_polygon(
+        PackedVector2Array([
+            fin_tip,
+            fin_tip - side * 13.0 - heading * 15.0,
+            fin_tip + side * 13.0 - heading * 15.0
+        ]),
+        Color(1.0, 0.9, 0.64, 0.18 * alpha)
+    )
 
 func _draw_edge_fade(viewport_size: Vector2) -> void:
     var origin := viewport_size * 0.5 - camera_pos
@@ -2951,6 +3145,14 @@ func _draw_edge_fade(viewport_size: Vector2) -> void:
 
     _draw_edge_ticks(world_rect, accent)
     _draw_edge_corner_markers(world_rect, accent)
+    if run_state == RUN_STATES.ENDING:
+        var fade_alpha: float = _get_run_end_overlay_alpha()
+        if fade_alpha > 0.0:
+            draw_rect(Rect2(Vector2.ZERO, viewport_size), Color(0.01, 0.01, 0.02, fade_alpha), true)
+    elif run_state == RUN_STATES.SUMMARY and summary_transition_active:
+        var summary_dim_alpha: float = _get_summary_dim_alpha()
+        if summary_dim_alpha > 0.0:
+            draw_rect(Rect2(Vector2.ZERO, viewport_size), Color(0.01, 0.01, 0.02, summary_dim_alpha), true)
 
 func _draw_dashed_line(from: Vector2, to: Vector2, color: Color, dash_length: float, gap_length: float, width: float) -> void:
     var dir := to - from

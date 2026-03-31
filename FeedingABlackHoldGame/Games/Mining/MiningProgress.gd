@@ -4,18 +4,28 @@ class_name MiningProgress
 const MINING_BALANCE := preload("res://Games/Mining/MiningBalance.gd")
 const SAVE_PATH := "user://mining_mode_save_v1.json"
 const MAX_DEPTH_LEVEL := MINING_BALANCE.MAX_DEPTH_LEVEL
+const MIN_START_DEPTH_LEVEL := 2
 
 const DEFAULT_DATA := {
     "wallet": 0,
     "xp": 0,
     "player_level": 1,
-    "deepest_level_unlocked": 1,
-    "selected_depth_level": 1,
+    "deepest_level_unlocked": MIN_START_DEPTH_LEVEL,
+    "selected_depth_level": MIN_START_DEPTH_LEVEL,
     "upgrades": {},
     "last_run_summary": "No mining run completed yet.",
     "last_run_breakdown": {},
     "summary_hint_history": []
 }
+
+static func get_display_depth_tier(depth_level: int) -> int:
+    return max(1, depth_level - MIN_START_DEPTH_LEVEL + 1)
+
+static func get_depth_level_for_display_tier(display_tier: int) -> int:
+    return clampi(MIN_START_DEPTH_LEVEL + max(1, display_tier) - 1, MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+
+static func get_max_display_depth_tier() -> int:
+    return get_display_depth_tier(MAX_DEPTH_LEVEL)
 
 static func get_default_data() -> Dictionary:
     return DEFAULT_DATA.duplicate(true)
@@ -34,8 +44,8 @@ static func load_data() -> Dictionary:
     if parsed is Dictionary:
         data = data.merged(parsed, true)
     data["player_level"] = max(1, int(data.get("player_level", 1)))
-    data["deepest_level_unlocked"] = clampi(int(data.get("deepest_level_unlocked", 1)), 1, MAX_DEPTH_LEVEL)
-    data["selected_depth_level"] = clampi(int(data.get("selected_depth_level", 1)), 1, int(data["deepest_level_unlocked"]))
+    data["deepest_level_unlocked"] = clampi(int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+    data["selected_depth_level"] = clampi(int(data.get("selected_depth_level", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, int(data["deepest_level_unlocked"]))
     if not (data.get("summary_hint_history", []) is Array):
         data["summary_hint_history"] = []
     return data
@@ -84,14 +94,14 @@ static func apply_tree_sale(upgrade_id: String, level: int, wallet_after_sale: i
 static func apply_run_results(results: Dictionary) -> Dictionary:
     var data: Dictionary = load_data()
     var previous_level: int = max(1, int(data.get("player_level", 1)))
-    var previous_deepest_level: int = max(1, int(data.get("deepest_level_unlocked", 1)))
+    var previous_deepest_level: int = max(MIN_START_DEPTH_LEVEL, int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)))
     data["wallet"] = max(0, int(data.get("wallet", 0)) + int(results.get("money", 0)))
     data["xp"] = max(0, int(data.get("xp", 0)) + int(results.get("xp", 0)))
     data["player_level"] = get_level_for_total_xp(int(data["xp"]))
     var new_level: int = max(1, int(data.get("player_level", previous_level)))
     data["last_run_summary"] = str(results.get("summary_text", "Mining run complete."))
     data["last_run_breakdown"] = results.duplicate(true)
-    data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", 1)), int(results.get("depth_level", 1)))
+    data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)), int(results.get("depth_level", MIN_START_DEPTH_LEVEL)))
     _refresh_depth_unlocks(data)
     var new_deepest_level: int = max(previous_deepest_level, int(data.get("deepest_level_unlocked", previous_deepest_level)))
     if new_deepest_level > previous_deepest_level:
@@ -126,7 +136,7 @@ static func track_run_start(depth_level: int, data: Dictionary = {}) -> void:
 
 static func set_selected_depth_level(depth_level: int) -> Dictionary:
     var data: Dictionary = load_data()
-    data["selected_depth_level"] = clampi(depth_level, 1, int(data.get("deepest_level_unlocked", 1)))
+    data["selected_depth_level"] = clampi(depth_level, MIN_START_DEPTH_LEVEL, int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)))
     save_data(data)
     return data
 

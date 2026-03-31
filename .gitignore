@@ -4,6 +4,7 @@ Godot/*.exe
 
 # Ignore build output and project-specific Godot configs
 /Build/
+/Build - Mining/
 
 # ignore all Godot project config directories
 **/.godot/
