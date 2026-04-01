@@ -1,13 +1,13 @@
-Mining Mode is a progression-first mining incremental.
+Deepcore is a run-based mining incremental.
 
-You pilot a drill rig through underground layers, break ore nodes, collect resources, and bank the haul before your timer, cargo, or drill wear cuts the run short.
+You steer a drill rig through underground terrain, break open ore nodes, collect the loose haul, and bank it at the base ring before the timer expires, the drill gives out, or cargo pressure cuts the run short.
 
-Every dive becomes permanent growth. Upgrade drill power, cargo flow, ore value, XP pace, and automation support to reach richer depths and larger payouts on the next run.
+Every dive becomes permanent growth. Upgrade engine tuning, drill torque, plating, cooling, cargo, ore value, XP, route efficiency, and drone support to reach deeper tiers and bring back bigger payouts on the next run.
 
 Features:
-- Direct-control mining with destructible underground nodes
-- Real run pressure from timer drain, cargo limits, and drill wear
-- Persistent upgrades across speed, torque, plating, cooling, value, and progression
-- Depth progression with richer materials and stronger payout targets
-- Support automation through salvage drones, delivery drones, foreman bots, and sorters
+- Mouse-steered drilling through destructible underground terrain
+- Real run pressure from timer drain, drill depletion, and cargo limits
+- Permanent upgrades across speed, drilling, durability, cargo, value, XP, and efficiency
+- Depth-tier progression with richer materials and stronger payout targets
+- Support automation through salvage drones and delivery drones
 - Single-player progression loop built for repeat dives and optimization

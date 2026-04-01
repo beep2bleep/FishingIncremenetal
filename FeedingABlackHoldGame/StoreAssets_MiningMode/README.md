@@ -1,24 +1,24 @@
-# Store Assets Pack: Mining Mode
+# Store Assets Pack: Deepcore
 
-This folder mirrors the Vanguard store pack, but the copy, checklist, and placeholder art are all rewritten for Mining Mode.
+This folder contains the current store-copy pack for Deepcore.
 
 ## What this pack includes
-- `common/`: shared positioning, hook lines, and master copy
+- `common/`: shared positioning, hooks, and master copy
 - `steam/`: Steam-ready store text, capsule guidance, and submission checklist
 - `itchio/`: itch.io page copy, layout plan, and upload checklist
-- `templates/`: SVG placeholders for required Steam assets and practical itch.io art targets
+- `templates/`: SVG placeholders for Steam and itch.io art targets
 
 ## Product positioning used
-Mining Mode is positioned as a progression-first mining incremental where you pilot a drill rig, break through rock layers, bank ore, unlock deeper strata, and turn each run into stronger permanent upgrades.
+Deepcore is a run-based mining incremental about piloting a drill rig into dangerous layers, hauling ore back to the base ring, and turning short high-pressure dives into permanent machine growth.
 
-Gameplay hooks used from project code:
-- Direct control of a drill ship through dense rock layers
-- Real run pressure from timer drain, drill wear, and cargo limits
-- Ore banking loop with money and XP payout after each dive
-- Depth progression with richer materials and new strata
-- Persistent upgrades for drill power, cargo, route efficiency, ore value, and progression pace
-- Helper automation through salvage drones, delivery drones, foreman support, and sorters
-- Run-end summary screen with depth, payout, XP, and efficiency feedback
+Gameplay hooks used from the current build:
+- Mouse-steered drill-rig control through destructible underground terrain
+- Constant run pressure from timer drain, drill depletion, and cargo limits
+- Ore collection and banking loop tied to money and XP rewards
+- Depth-tier progression with tougher layers and richer materials
+- Permanent upgrades for speed, torque, plating, cooling, cargo, value, XP, and routing
+- Automation support through salvage drones and delivery drones
+- Run-end summary screens that call out payout, XP, depth reached, and efficiency
 
 ## Platform references used
 - Steamworks Store Graphical Assets:
@@ -39,5 +39,5 @@ Gameplay hooks used from project code:
 ## Notes
 - Steam asset sizes in this pack were checked against the Steamworks docs listed above.
 - itch.io still emphasizes clarity and page quality over one rigid image-size matrix, so this pack uses practical high-resolution templates.
-- Every placeholder graphic in `templates/` is intentionally labeled `Mining Mode` so your art pass is easy to keep separate from Vanguard.
-- Replace all placeholder art with final branded assets before publishing.
+- Placeholder graphics in `templates/` should be updated to the final Deepcore branding before publishing.
+- Replace all placeholder art and re-verify screenshots against the current build before going live.

@@ -1,25 +1,25 @@
-# Mining Mode
+# Deepcore
 
 ## Long Description (Master)
-Mining Mode is a progression-first mining incremental where every dive is a race between depth, cargo, drill wear, and the clock.
+Deepcore is a run-based mining incremental where every dive is a fast decision about risk, route, and payout.
 
-Pilot your drill rig through destructible rock, scoop up the ore you break loose, and haul it back to base before your run collapses. The deeper you push, the better the materials and the bigger the payout, but every layer increases the strain on your machine.
+You pilot a drill rig into dense underground layers, carve paths through destructible terrain, scoop up loose ore, and race it back to the base ring before the timer runs out, the drill burns down, or your cargo clogs the run. The deeper you push, the more valuable the haul becomes, but the pressure climbs with it.
 
-Every run feeds permanent growth. Better upgrades improve speed, drill power, hull integrity, cargo flow, ore value, XP gain, and automation support, creating a strong "one more dive" loop with clear momentum.
+Every return feeds permanent progress. Upgrades improve movement, drilling power, durability, cooling, cargo capacity, ore value, XP gain, route efficiency, and drone support, so each new dive starts stronger and reaches farther.
 
 ### Core Experience
-- Directly steer a drill ship through layered underground runs
-- Manage timer drain, drill wear, and cargo pressure at the same time
-- Break ore nodes, collect resources, and bank them for money and XP
-- Unlock deeper strata with richer materials and harder survival demands
-- Invest in permanent upgrades that reshape future dives
-- Add automation support through salvage drones, delivery drones, and foreman tools
+- Directly steer a drill rig through destructible underground routes
+- Balance timer pressure, drill health, and cargo space on every run
+- Break nodes, collect ore, and bank the haul for money and XP
+- Unlock deeper depth tiers with richer rewards and harsher pressure
+- Buy permanent upgrades that visibly change future dives
+- Add support through salvage drones and delivery drones as the rig scales up
 
 ### Why It Feels Good
-- The run-to-run upgrade curve is immediately visible in movement, drilling, and payouts
-- Banking a full haul under pressure creates strong risk-versus-return moments
-- Depth unlocks make every new push feel like a meaningful frontier
-- Automation upgrades create satisfying transitions from scrappy manual mining to efficient industrial runs
+- Runs stay short and readable, so upgrades pay off quickly
+- Banking a full cargo load under pressure creates strong risk-versus-return moments
+- Depth unlocks give the campaign a steady sense of frontier and escalation
+- Rig upgrades and drone support shift the feel of a run from scrappy survival to efficient extraction
 
 ### Player Fantasy
-You are not just chipping rocks. You are engineering a better mining operation every dive: stronger drill, cleaner routes, smarter logistics, richer ore, and deeper runs.
+Deepcore is about building a drilling operation that can survive one more layer, one more haul, and one more upgrade break point until impossible depths start looking manageable.

@@ -25,22 +25,22 @@ Written store fields to prepare:
 - Capsule and screenshot set aligned with copy promises
 
 Formatting notes:
-- Steam supports a BBCode subset in the About This Game section.
-- Keep promises specific to implemented gameplay systems.
-- Avoid UI text overload in capsule art.
+- Steam supports a BBCode subset in the About This Game section
+- Keep promises specific to implemented gameplay systems
+- Avoid UI text overload in capsule art
 
 Suggested screenshot set (6 to 10):
 1) Live drilling view with full HUD
-2) Depth layer with distinct ore palette
-3) High-pressure moment with low drill health / near-full cargo / timer tension
-4) Delivery or salvage drone support visible
-5) Upgrade screen with Mining-specific upgrade list
+2) High-pressure moment with low drill health, tight cargo, or limited time
+3) Depth tier with a distinct ore and color palette
+4) Salvage drone or delivery drone support visible
+5) Upgrade screen with Deepcore-specific upgrade list
 6) Run summary screen with payout and XP
-7) Deeper late-run layer if visually distinct
+7) Late-campaign depth if visually distinct
 
 Store page QA before publish:
 - Short description immediately communicates mining + progression
 - First 2 screenshots show real in-game drilling, not menus
 - About section has scan-friendly bullets and no vague filler
 - Visual style is consistent across all capsules
-- Capsule art clearly reads as Mining Mode, not Vanguard
+- Capsule art clearly reads as Deepcore

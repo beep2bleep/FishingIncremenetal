@@ -2,10 +2,10 @@ itch.io Page Checklist
 Source: itch.io creator quality guidelines + page design docs
 
 Core page elements to prepare:
-- Cover image and clear title presentation
+- Cover image and clear Deepcore title treatment
 - Short summary at the top of page
 - Long description with readable sections
-- Real gameplay screenshots (multiple)
+- Real gameplay screenshots
 - Optional trailer or gameplay GIF near top
 - Accurate metadata (genre, tags, platforms)
 
@@ -13,7 +13,7 @@ Recommended content order for conversion:
 1) One-sentence hook
 2) 3 to 6 key features
 3) Screenshot strip or embedded trailer
-4) Mining loop explanation
+4) Deepcore gameplay loop explanation
 5) Controls and session style
 6) Build notes / current status
 
@@ -24,7 +24,7 @@ Image guidance:
 
 Metadata guidance:
 - Category: Game
-- Genre: Simulation / Strategy (or the closest fit in your chosen taxonomy)
+- Genre: Simulation / Strategy
 - Tags: Mining, Incremental, Simulation, Strategy, Singleplayer
 - Platforms: list only platforms you actively ship
 

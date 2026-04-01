@@ -1,7 +1,7 @@
 Short Summary Options
 
-1) Mining Mode is a progression-heavy mining incremental where you pilot a drill rig, bank ore, unlock deeper layers, and turn every dive into permanent upgrades.
-2) A run-based mining game built around drill wear, cargo pressure, ore banking, and long-term progression.
-3) Dig deeper, haul smarter, and upgrade your whole operation in a tight loop of depth, payout, and permanent growth.
-4) Break rock, collect ore, survive the timer, and reinvest each run into stronger drilling, logistics, and automation.
-5) A mining progression game with real run tension and satisfying upgrade momentum.
+1) Deepcore is a run-based mining incremental where you steer a drill rig, bank ore, unlock deeper tiers, and turn fast dives into permanent upgrades.
+2) A mining progression game built around timer pressure, drill depletion, cargo limits, and smarter returns to base.
+3) Dig routes, haul ore, cash out, and keep upgrading your rig for deeper and more profitable dives.
+4) Break rock, collect loose ore, survive the run, and reinvest every payout into stronger drilling, cargo, and automation.
+5) A fast-loop mining incremental with real run tension and satisfying machine growth.

@@ -8,12 +8,12 @@ Primary Tags
 
 Secondary Tags
 - Strategy
-- Casual
+- Resource Management
 - Progression
-- PvE
 - Indie
+- Casual
 
 Positioning Notes
-- Lead with "mining incremental" or "run-based mining progression" so the page reads as Mining first, not Vanguard-adjacent.
-- Emphasize drill pressure, cargo banking, depth unlocks, and persistent upgrades.
-- Highlight automation support through drones and logistics upgrades once the core mining loop is established.
+- Lead with `run-based mining incremental` or `mining progression game` so Deepcore reads as its own product immediately.
+- Emphasize timer pressure, drill depletion, cargo management, banking runs, and depth-tier progression.
+- Highlight permanent upgrades and drone support after the core mining loop is established.

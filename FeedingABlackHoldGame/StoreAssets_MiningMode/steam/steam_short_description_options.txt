@@ -1,8 +1,8 @@
 Steam Short Description Options
 (Use one. Keep concise and feature-true.)
 
-1) A progression-heavy mining incremental where you pilot a drill rig, bank ore, unlock deeper layers, and turn every dive into permanent upgrades.
-2) Break rock, haul ore, and survive the timer in a mining progression loop built for repeat dives.
-3) Upgrade drill power, cargo flow, and automation support as you push toward richer depths.
-4) A mining strategy-incremental with direct control, strong payout loops, and long-term machine growth.
-5) Dig deeper, bank smarter, and build a better drilling operation every run.
+1) A run-based mining incremental where you steer a drill rig, bank ore, unlock deeper tiers, and turn fast dives into permanent upgrades.
+2) Break rock, haul ore home, and survive short high-pressure dives in a mining progression loop built for repeat runs.
+3) Upgrade drill power, cargo flow, route efficiency, and drone support as you push toward richer depths.
+4) A mining strategy-incremental about smart routes, tight returns, and long-term rig growth.
+5) Drill deeper, cash out smarter, and build a better machine every run.

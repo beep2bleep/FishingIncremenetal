@@ -1,24 +1,24 @@
 Steam Capsule Copy Direction
 
 Game Name Lockup:
-Mining Mode
+Deepcore
 
 Primary capsule text (short, optional depending on visual clutter):
-- Mining Incremental
+- Run-Based Mining Incremental
 - Drill. Haul. Upgrade.
-- Deeper Runs, Bigger Payouts
+- Fast Dives, Bigger Payouts
 
 Visual priorities by asset:
-- Main Capsule (1232x706): drill rig + ore field + clear title lockup
+- Main Capsule (1232x706): drill rig + underground route + clear Deepcore lockup
 - Header Capsule (920x430): title readability first, one strong mining focal point
 - Small Capsule (462x174): strongest contrast and title legibility only
-- Vertical Capsule (748x896): strongest drill-rig silhouette + clear mining read
-- Library Hero (3840x1240): dramatic deep-strata environment, no text
+- Vertical Capsule (748x896): strongest rig silhouette + immediate underground read
+- Library Hero (3840x1240): dramatic deep-layer environment, no text
 - Library Logo: transparent logo only; export final as PNG for Steam
 
 Do:
 - Keep text minimal and readable at small scale
-- Show real gameplay tone (drill, ore, cargo, depth, machinery)
+- Show the actual gameplay tone: rig, ore, tunnel carving, depth, pressure
 - Use one consistent palette and logo treatment
 
 Do not:
