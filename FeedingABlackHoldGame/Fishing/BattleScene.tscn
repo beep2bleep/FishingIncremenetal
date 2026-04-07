@@ -170,13 +170,6 @@ offset_right = 1256.0
 offset_bottom = 64.0
 text = "BATTLE_EXIT"
 
-[node name="MuteButton" type="Button" parent="CanvasLayer"]
-offset_left = 956.0
-offset_top = 20.0
-offset_right = 1008.0
-offset_bottom = 64.0
-text = ""
-
 [node name="SummaryPanel" type="Panel" parent="CanvasLayer"]
 offset_left = 8.0
 offset_top = 50.0
@@ -247,4 +240,3 @@ text = "UI_CONTINUE"
 [connection signal="pressed" from="CanvasLayer/InfiniteSimButton" to="." method="_on_infinite_sim_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/SpawnUfoButton" to="." method="_on_spawn_ufo_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/ExitBattleButton" to="." method="_on_exit_battle_button_pressed"]
-[connection signal="pressed" from="CanvasLayer/MuteButton" to="." method="_on_mute_button_pressed"]

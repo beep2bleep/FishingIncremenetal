@@ -176,21 +176,6 @@ visible = false
 offset_right = 333.0
 offset_bottom = 582.0
 
-[node name="MuteButton" type="Button" parent="CanvasLayer2"]
-unique_name_in_owner = true
-anchors_preset = 10
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -28.0
-offset_top = 16.0
-offset_right = 28.0
-offset_bottom = 60.0
-grow_horizontal = 2
-z_index = 30
-focus_mode = 0
-text = ""
-flat = true
-
 [node name="Demo Mode Label" type="Label" parent="CanvasLayer2"]
 unique_name_in_owner = true
 visible = false
@@ -563,4 +548,3 @@ bus = &"Effects"
 [connection signal="gui_input" from="Click Mask" to="." method="_on_color_rect_gui_input"]
 [connection signal="selected_node_changed" from="CanvasLayer/Tech Tree" to="." method="_on_tech_tree_selected_node_changed"]
 [connection signal="pressed" from="CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/MarginContainer2/VBoxContainer/HBoxContainer/Go Again" to="." method="_on_go_again_pressed"]
-[connection signal="pressed" from="CanvasLayer2/MuteButton" to="." method="_on_mute_button_pressed"]

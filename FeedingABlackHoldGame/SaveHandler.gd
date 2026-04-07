@@ -383,11 +383,12 @@ func apply_audio_mute() -> void:
     var master_bus_index: int = AudioServer.get_bus_index("Master")
     if master_bus_index < 0:
         master_bus_index = 0
-    AudioServer.set_bus_mute(master_bus_index, audio_muted)
+    # Keep legacy save compatibility for `audio_muted`, but audio is now
+    # controlled only through the settings volume sliders.
+    AudioServer.set_bus_mute(master_bus_index, false)
 
 func update_audio_muted(value: bool) -> void:
     audio_muted = value
-    apply_audio_mute()
     save_local_settings()
 
 func update_first_time_load(value):

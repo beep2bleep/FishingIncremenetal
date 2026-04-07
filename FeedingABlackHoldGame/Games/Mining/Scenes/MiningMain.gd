@@ -95,6 +95,40 @@ const RUN_ENDING_SPARK_INTERVAL := 0.055
 const RUN_ENDING_FADE_START := 0.42
 const SUMMARY_RECOVER_DURATION := 4.0
 const SUMMARY_GAMEPLAY_DIM_ALPHA := 0.5
+const WEB_REDRAW_INTERVAL := 1.0 / 30.0
+const WEB_SHIP_VISUAL_INTERVAL := 1.0 / 30.0
+const WEB_TRAIL_VISUAL_INTERVAL := 1.0 / 15.0
+const WEB_EFFECT_FULL_HUD_REFRESH := 0
+const WEB_EFFECT_HIGH_RES_DIRT_MASK := 1
+const WEB_EFFECT_FAST_DIRT_UPDATES := 2
+const WEB_EFFECT_BACKGROUND_NOISE := 3
+const WEB_EFFECT_TARGET_AND_EDGE_FX := 4
+const WEB_EFFECT_FULL_PICKUP_DETAIL := 5
+const WEB_EFFECT_FULL_DRONE_DETAIL := 6
+const WEB_EFFECT_CONTACT_SPARKS := 7
+const WEB_EFFECT_DAMAGE_NUMBERS := 8
+const WEB_EFFECT_FULL_SHIP_DETAIL := 9
+const WEB_EFFECT_FULL_TRAIL_BUDDIES := 10
+const WEB_EFFECT_FULL_REDRAW_RATE := 11
+const WEB_EFFECT_BACKGROUND_DOODADS := 12
+const WEB_EFFECT_FULL_NODE_DETAIL := 13
+const WEB_DEFAULT_EFFECT_COUNT := WEB_EFFECT_FULL_TRAIL_BUDDIES + 1
+const WEB_EFFECT_LABELS := [
+    "Full HUD refresh",
+    "High-res dirt mask",
+    "Fast dirt updates",
+    "Background noise",
+    "Target line and edge FX",
+    "Full pickup detail",
+    "Full drone detail",
+    "Contact sparks",
+    "Damage numbers",
+    "Full ship detail",
+    "Full trail buddies",
+    "60 FPS redraw",
+    "Background doodads",
+    "Full node detail"
+]
 const TUNNEL_COVERAGE_SAMPLE_OFFSETS := [
     Vector2.ZERO,
     Vector2(1.0, 0.0),
@@ -186,6 +220,8 @@ var last_drill_direction := Vector2.DOWN
 var player_velocity := Vector2.ZERO
 var trail_history: Array[Dictionary] = []
 var drill_copies: Array[Dictionary] = []
+var web_tail_ship_visual_cache: Array[Dictionary] = []
+var web_player_ship_visual_cache: Dictionary = {}
 var delivery_drone_visuals: Array[Dictionary] = []
 var pickup_drone_visuals: Array[Dictionary] = []
 var next_pickup_uid := 1
@@ -198,6 +234,9 @@ var dirt_image: Image
 var dirt_texture: ImageTexture
 var dirt_texture_dirty := false
 var dirt_texture_flush_accumulator := 0.0
+var web_redraw_accumulator := 0.0
+var web_ship_visual_accumulator := 0.0
+var web_trail_visual_accumulator := 0.0
 var background_noise_texture: ImageTexture
 var last_background_noise_depth_level := -1
 var settings_button: Button
@@ -253,6 +292,8 @@ var summary_transition_active := false
 var summary_transition_timer := 0.0
 var summary_transition_start_dim_alpha := 0.0
 var hud_refresh_accumulator := 0.0
+var web_effects_enabled_count := 0
+var web_effect_last_message := "Web baseline active"
 
 func _notification(what: int) -> void:
     if what == NOTIFICATION_TRANSLATION_CHANGED:
@@ -298,10 +339,11 @@ func _process(delta: float) -> void:
         _process_run_ending(delta)
     _process_summary_chart_animation(delta)
     _process_summary_transition(delta)
+    _update_web_drill_visual_cache(delta)
     if _should_refresh_hud_this_frame(delta):
         _refresh_hud()
     _flush_dirt_texture_updates(delta)
-    if not simulation_mode_active:
+    if not simulation_mode_active and _should_queue_scene_redraw(delta):
         queue_redraw()
 
 func _input(event: InputEvent) -> void:
@@ -317,11 +359,10 @@ func _input(event: InputEvent) -> void:
         aim_cursor_screen_pos = _clamp_cursor_to_viewport(mouse_button_event.position)
 
 func _unhandled_input(event: InputEvent) -> void:
-    if _show_editor_variation_controls() and _handle_editor_variation_shortcut(event):
+    if _is_web_effect_debug_available() and _handle_web_effect_shortcut(event):
         get_viewport().set_input_as_handled()
         return
-    if event.is_action_pressed("toggle_mute"):
-        _on_mute_button_pressed()
+    if _show_editor_variation_controls() and _handle_editor_variation_shortcut(event):
         get_viewport().set_input_as_handled()
         return
     if event.is_action_pressed("back") or event.is_action_pressed("escape"):
@@ -332,27 +373,31 @@ func _unhandled_input(event: InputEvent) -> void:
         return
 
 func _draw() -> void:
+    var web_fast_path: bool = OS.has_feature("web")
     var viewport_size := get_viewport_rect().size
     draw_rect(Rect2(Vector2.ZERO, viewport_size), Color(0.07, 0.08, 0.1, 1.0), true)
     var origin := viewport_size * 0.5 - camera_pos
     var world_size: Vector2 = _get_world_size()
     var world_rect := Rect2(origin - world_size * 0.5, world_size)
     draw_rect(world_rect, _get_level_bg_color(), true)
-    _draw_background_doodads(world_rect)
+    if not web_fast_path or _is_web_effect_enabled(WEB_EFFECT_BACKGROUND_DOODADS):
+        _draw_background_doodads(world_rect)
     if dirt_texture != null:
         draw_texture_rect(dirt_texture, world_rect, false)
-    if background_noise_texture != null:
+    if background_noise_texture != null and (not web_fast_path or _is_web_effect_enabled(WEB_EFFECT_BACKGROUND_NOISE)):
         var bg := _get_level_bg_color()
         # White noise texture (rgb=1) tinted by the current depth palette.
         draw_texture_rect(background_noise_texture, world_rect, true, Color(bg.r, bg.g, bg.b, 1.0))
     _draw_base(origin)
     _draw_nodes(origin)
     _draw_pickups(origin)
-    _draw_tail()
+    if not web_fast_path or _is_web_effect_enabled(WEB_EFFECT_FULL_TRAIL_BUDDIES):
+        _draw_tail()
     _draw_player(origin)
-    _draw_target_line(origin)
-    _draw_run_end_fx()
-    _draw_edge_fade(viewport_size)
+    if not web_fast_path or _is_web_effect_enabled(WEB_EFFECT_TARGET_AND_EDGE_FX):
+        _draw_target_line(origin)
+        _draw_run_end_fx()
+        _draw_edge_fade(viewport_size)
     _draw_aim_cursor()
 
 func _begin_run() -> void:
@@ -364,6 +409,13 @@ func _begin_run() -> void:
     active_depth_level = clampi(selected_depth, min_depth, int(persistent_data.get("deepest_level_unlocked", min_depth)))
     active_material = material_tiers[active_depth_level - 1]
     hud_last_reported_level = int(persistent_data.get("player_level", 1))
+    if OS.has_feature("web"):
+        web_effects_enabled_count = WEB_DEFAULT_EFFECT_COUNT
+        web_effect_last_message = "Default web level: Full trail buddies"
+    else:
+        web_effects_enabled_count = 0
+        web_effect_last_message = "Web baseline active"
+    _refresh_web_effect_status_label()
     _ensure_background_noise_texture()
     player_pos = _get_base_position()
     camera_pos = player_pos
@@ -411,8 +463,13 @@ func _begin_run() -> void:
     summary_transition_start_dim_alpha = 0.0
     hud_refresh_accumulator = 0.0
     dirt_texture_flush_accumulator = 0.0
+    web_redraw_accumulator = 0.0
+    web_ship_visual_accumulator = 0.0
+    web_trail_visual_accumulator = 0.0
     trail_history.clear()
     drill_copies.clear()
+    web_tail_ship_visual_cache.clear()
+    web_player_ship_visual_cache.clear()
     delivery_drone_visuals.clear()
     pickup_drone_visuals.clear()
     next_pickup_uid = 1
@@ -2661,7 +2718,7 @@ func _ensure_crt_overlay() -> void:
     overlay.visible = true
 
 func _should_refresh_hud_this_frame(delta: float) -> bool:
-    if not OS.has_feature("web"):
+    if not OS.has_feature("web") or _is_web_effect_enabled(WEB_EFFECT_FULL_HUD_REFRESH):
         return true
     if run_state != RUN_STATES.RUNNING and run_state != RUN_STATES.ENDING:
         return true
@@ -2670,6 +2727,83 @@ func _should_refresh_hud_this_frame(delta: float) -> bool:
         return false
     hud_refresh_accumulator = 0.0
     return true
+
+func _should_queue_scene_redraw(delta: float) -> bool:
+    if not OS.has_feature("web") or _is_web_effect_enabled(WEB_EFFECT_FULL_REDRAW_RATE):
+        return true
+    web_redraw_accumulator += delta
+    if web_redraw_accumulator < WEB_REDRAW_INTERVAL:
+        return false
+    web_redraw_accumulator = 0.0
+    return true
+
+func _is_web_effect_enabled(effect_index: int) -> bool:
+    if not OS.has_feature("web"):
+        return true
+    return effect_index >= 0 and effect_index < web_effects_enabled_count
+
+func _is_web_effect_debug_available() -> bool:
+    return OS.has_feature("web")
+
+func _web_effect_label(effect_index: int) -> String:
+    if effect_index < 0 or effect_index >= WEB_EFFECT_LABELS.size():
+        return "Unknown"
+    return String(WEB_EFFECT_LABELS[effect_index])
+
+func _refresh_web_effect_status_label() -> void:
+    pass
+
+func _apply_web_effect_debug_state() -> void:
+    if _is_web_effect_enabled(WEB_EFFECT_HIGH_RES_DIRT_MASK):
+        if dirt_image != null and (dirt_image.get_width() != 512 or dirt_image.get_height() != 640):
+            _refresh_dirt_visual_texture()
+    else:
+        if dirt_image != null and (dirt_image.get_width() != 192 or dirt_image.get_height() != 224):
+            _refresh_dirt_visual_texture()
+    _ensure_background_noise_texture()
+    web_player_ship_visual_cache.clear()
+    web_tail_ship_visual_cache.clear()
+    web_ship_visual_accumulator = 0.0
+    web_trail_visual_accumulator = 0.0
+    _refresh_web_effect_status_label()
+    queue_redraw()
+
+func _on_web_effect_plus_button_pressed() -> void:
+    if not _is_web_effect_debug_available():
+        return
+    if web_effects_enabled_count >= WEB_EFFECT_LABELS.size():
+        web_effect_last_message = "All web effects already enabled"
+        _refresh_web_effect_status_label()
+        return
+    var effect_index: int = web_effects_enabled_count
+    web_effects_enabled_count += 1
+    web_effect_last_message = "Added: %s" % _web_effect_label(effect_index)
+    print(web_effect_last_message)
+    _apply_web_effect_debug_state()
+
+func _on_web_effect_minus_button_pressed() -> void:
+    if not _is_web_effect_debug_available():
+        return
+    if web_effects_enabled_count <= 0:
+        web_effect_last_message = "Already at web baseline"
+        _refresh_web_effect_status_label()
+        return
+    web_effects_enabled_count -= 1
+    web_effect_last_message = "Removed: %s" % _web_effect_label(web_effects_enabled_count)
+    print(web_effect_last_message)
+    _apply_web_effect_debug_state()
+
+func _handle_web_effect_shortcut(event: InputEvent) -> bool:
+    var key_event := event as InputEventKey
+    if key_event == null or not key_event.pressed or key_event.echo:
+        return false
+    if key_event.keycode == KEY_BRACKETLEFT:
+        _on_web_effect_minus_button_pressed()
+        return true
+    if key_event.keycode == KEY_BRACKETRIGHT:
+        _on_web_effect_plus_button_pressed()
+        return true
+    return false
 
 func _get_drill_heading() -> Vector2:
     var heading: Vector2 = _get_pointer_direction()
@@ -2882,6 +3016,7 @@ func _draw_base(origin: Vector2) -> void:
     draw_rect(Rect2(base_screen + Vector2(-36.0, -16.0), Vector2(72.0, 28.0)), Color(0.42, 0.43, 0.48, 1.0), true)
 
 func _draw_nodes(origin: Vector2) -> void:
+    var web_fast_path: bool = OS.has_feature("web") and not _is_web_effect_enabled(WEB_EFFECT_FULL_NODE_DETAIL)
     for node in world_nodes:
         var node_screen: Vector2 = _world_to_screen(node.get("pos", Vector2.ZERO))
         var node_seed := float(int(node.get("id", 0))) * 17.0 + float(active_depth_level) * 7.0
@@ -2894,6 +3029,23 @@ func _draw_nodes(origin: Vector2) -> void:
         var luma: float = node_color.r * 0.299 + node_color.g * 0.587 + node_color.b * 0.114
         var grey_color: Color = Color(luma, luma, luma, node_color.a)
         var outer_color: Color = node_color.lerp(grey_color, mined_progress * 0.18)
+        if web_fast_path:
+            var rock_points_web: PackedVector2Array = _get_translated_shape_points(node, node_screen)
+            draw_colored_polygon(rock_points_web, outer_color)
+            if mined_progress > 0.001:
+                var local_points_web: PackedVector2Array = node.get("shape_points", PackedVector2Array())
+                var inner_points_web: PackedVector2Array = PackedVector2Array()
+                for local_point_web in local_points_web:
+                    inner_points_web.append(node_screen + local_point_web * mined_progress)
+                var inner_color: Color = node_color.lerp(grey_color, 0.55)
+                draw_colored_polygon(inner_points_web, inner_color)
+            if float(node.get("sparkle", 0.0)) > 0.0:
+                draw_circle(
+                    node_screen + Vector2(-radius * 0.2, -radius * 0.22),
+                    maxf(2.0, radius * 0.16),
+                    Color(1.0, 1.0, 1.0, 0.12)
+                )
+            continue
         var rock_points: PackedVector2Array = _get_translated_shape_points(node, node_screen)
         draw_colored_polygon(rock_points, outer_color)
 
@@ -2937,6 +3089,7 @@ func _draw_node_sparkles(node_screen: Vector2, radius: float, sparkle: float) ->
         draw_circle(pos, 2.0 + sparkle, Color(1.0, 1.0, 1.0, 0.75))
 
 func _draw_pickups(origin: Vector2) -> void:
+    var web_fast_path: bool = OS.has_feature("web") and not _is_web_effect_enabled(WEB_EFFECT_FULL_PICKUP_DETAIL)
     for pickup in pickups:
         var pickup_screen: Vector2 = _world_to_screen(pickup.get("pos", Vector2.ZERO))
         var pickup_seed := float(int(pickup.get("uid", 0))) * 13.0 + float(active_depth_level) * 5.0
@@ -2945,6 +3098,10 @@ func _draw_pickups(origin: Vector2) -> void:
         var blink_pulse: float = 0.5 + 0.5 * sin((1.0 - blink_ratio) * TAU * 4.0)
         var blink_boost: float = blink_ratio * blink_pulse
         pickup_color = pickup_color.lerp(Color.WHITE, 0.55 * blink_boost)
+        if web_fast_path:
+            draw_circle(pickup_screen, 6.0 + 1.2 * blink_boost, pickup_color)
+            draw_circle(pickup_screen, 2.5 + 0.5 * blink_boost, Color(1.0, 1.0, 1.0, 0.78))
+            continue
         draw_circle(pickup_screen, 7.0 + 1.8 * blink_boost, pickup_color)
         var pickup_spot_color := pickup_color.darkened(0.5)
         pickup_spot_color.a = 0.12 + 0.04 * blink_boost
@@ -2988,6 +3145,14 @@ func _draw_pickup_drones() -> void:
         _draw_drone_body(_world_to_screen(drone.get("pos", Vector2.ZERO)), _apply_visual_palette_variant(Color(0.92, 0.76, 0.38, 1.0), variation_seed + 2.2, 0.6), carry_color, variation_seed)
 
 func _draw_drone_body(screen_pos: Vector2, body_color: Color, carry_color: Color, variation_seed: float) -> void:
+    if OS.has_feature("web") and not _is_web_effect_enabled(WEB_EFFECT_FULL_DRONE_DETAIL):
+        draw_circle(screen_pos, 8.0, Color(0.12, 0.14, 0.17, 0.95))
+        draw_circle(screen_pos, 5.0, body_color)
+        if carry_color.a > 0.0:
+            var cargo_pos: Vector2 = screen_pos + Vector2(0.0, 10.0)
+            draw_line(screen_pos + Vector2(0.0, 3.0), cargo_pos, Color(0.94, 0.92, 0.8, 0.65), 1.2)
+            draw_circle(cargo_pos, 4.0, carry_color)
+        return
     draw_circle(screen_pos, 9.0, Color(0.12, 0.14, 0.17, 0.95))
     draw_circle(screen_pos, 6.0, body_color)
     _draw_seeded_variation_spots(screen_pos, 5.8, variation_seed, Color(0.05, 0.06, 0.08, 0.13), 1, 0.18, 0.28, 0.3)
@@ -3002,6 +3167,8 @@ func _draw_drone_body(screen_pos: Vector2, body_color: Color, carry_color: Color
         draw_circle(cargo_pos, 2.0, Color(1.0, 1.0, 1.0, 0.75))
 
 func _draw_contact_sparks() -> void:
+    if OS.has_feature("web") and not _is_web_effect_enabled(WEB_EFFECT_CONTACT_SPARKS):
+        return
     for spark in contact_sparks:
         var spark_screen: Vector2 = _world_to_screen(spark.get("pos", Vector2.ZERO))
         var spark_color: Color = spark.get("color", Color.WHITE)
@@ -3009,6 +3176,8 @@ func _draw_contact_sparks() -> void:
         draw_circle(spark_screen, spark_radius, spark_color)
 
 func _draw_damage_numbers() -> void:
+    if OS.has_feature("web") and not _is_web_effect_enabled(WEB_EFFECT_DAMAGE_NUMBERS):
+        return
     var font: Font = ThemeDB.fallback_font
     if font == null:
         return
@@ -3020,9 +3189,257 @@ func _draw_damage_numbers() -> void:
         color.a = life_ratio
         draw_string(font, number_screen, String(number.get("text", "0")), HORIZONTAL_ALIGNMENT_CENTER, -1.0, font_size, color)
 
+func _update_web_drill_visual_cache(delta: float) -> void:
+    if not OS.has_feature("web"):
+        return
+
+    web_ship_visual_accumulator += delta
+    web_trail_visual_accumulator += delta
+
+    if web_player_ship_visual_cache.is_empty() or web_ship_visual_accumulator >= WEB_SHIP_VISUAL_INTERVAL:
+        web_ship_visual_accumulator = 0.0
+        var aim_dir: Vector2 = _get_run_end_heading() if run_state == RUN_STATES.ENDING else _get_pointer_direction()
+        if aim_dir == Vector2.ZERO:
+            aim_dir = player_velocity.normalized()
+        if aim_dir == Vector2.ZERO:
+            aim_dir = Vector2.DOWN
+        var fade_alpha: float = _get_run_end_draw_alpha()
+        var boost_strength: float = 0.0 if run_state == RUN_STATES.ENDING else tunnel_speed_boost_strength
+        web_player_ship_visual_cache = _build_drill_ship_visual(
+            _world_to_screen(player_pos),
+            aim_dir,
+            1.0,
+            Color(0.16, 0.17, 0.2, fade_alpha),
+            Color(0.83, 0.74, 0.28, fade_alpha),
+            boost_strength,
+            _is_web_effect_enabled(WEB_EFFECT_FULL_SHIP_DETAIL)
+        )
+
+    var desired_tail_indices: Array[int] = []
+    if not drill_copies.is_empty():
+        var start_index: int = drill_copies.size() - 1
+        if not _is_web_effect_enabled(WEB_EFFECT_FULL_TRAIL_BUDDIES):
+            start_index = min(drill_copies.size() - 1, 1)
+        for copy_index in range(start_index, -1, -1):
+            desired_tail_indices.append(copy_index)
+
+    if desired_tail_indices.is_empty():
+        web_tail_ship_visual_cache.clear()
+        web_trail_visual_accumulator = 0.0
+        return
+
+    if web_tail_ship_visual_cache.size() == desired_tail_indices.size() and web_trail_visual_accumulator < WEB_TRAIL_VISUAL_INTERVAL:
+        return
+
+    web_trail_visual_accumulator = 0.0
+    var cached_tail_visuals: Array[Dictionary] = []
+    var tail_fade_alpha: float = _get_run_end_draw_alpha()
+    for copy_index in desired_tail_indices:
+        var copy_data: Dictionary = drill_copies[copy_index]
+        var scale: float = 0.88 - 0.08 * float(copy_index)
+        var shell_color: Color = Color(0.16, 0.17, 0.2, (0.82 - 0.08 * float(copy_index)) * tail_fade_alpha)
+        var body_color: Color = Color(0.83, 0.74, 0.28, (0.74 - 0.09 * float(copy_index)) * tail_fade_alpha)
+        var copy_boost_strength: float = 0.0 if run_state == RUN_STATES.ENDING else tunnel_speed_boost_strength * max(0.0, 1.0 - 0.18 * float(copy_index))
+        cached_tail_visuals.append(
+            _build_drill_ship_visual(
+                _world_to_screen(copy_data.get("pos", player_pos)),
+                copy_data.get("dir", _get_drill_heading()),
+                scale,
+                shell_color,
+                body_color,
+                copy_boost_strength,
+                _is_web_effect_enabled(WEB_EFFECT_FULL_SHIP_DETAIL)
+            )
+        )
+    web_tail_ship_visual_cache = cached_tail_visuals
+
+func _build_drill_ship_visual(screen_pos: Vector2, aim_dir: Vector2, scale: float, shell_color: Color, body_color: Color, boost_strength: float, full_detail: bool) -> Dictionary:
+    var polygons: Array[Dictionary] = []
+    var polylines: Array[Dictionary] = []
+    var lines: Array[Dictionary] = []
+    var circles: Array[Dictionary] = []
+    var arcs: Array[Dictionary] = []
+
+    if not full_detail:
+        var facing_angle_web: float = aim_dir.angle() + PI * 0.5
+        var boost_shell_web: Color = shell_color.lerp(Color(0.24, 0.45, 0.56, shell_color.a), boost_strength * 0.55)
+        var boost_body_web: Color = body_color.lerp(Color(0.92, 0.96, 1.0, body_color.a), boost_strength * 0.45)
+        var top_point_web: Vector2 = screen_pos + Vector2(0.0, -23.0).rotated(facing_angle_web) * scale
+        var rear_point_web: Vector2 = screen_pos + Vector2(0.0, 18.0).rotated(facing_angle_web) * scale
+        var left_point_web: Vector2 = screen_pos + Vector2(-15.0, 10.0).rotated(facing_angle_web) * scale
+        var right_point_web: Vector2 = screen_pos + Vector2(15.0, 10.0).rotated(facing_angle_web) * scale
+        polygons.append({"points": PackedVector2Array([left_point_web, rear_point_web, right_point_web]), "color": boost_shell_web})
+        polygons.append({"points": PackedVector2Array([top_point_web, left_point_web, right_point_web]), "color": boost_body_web})
+        polylines.append({
+            "points": PackedVector2Array([top_point_web, left_point_web, rear_point_web, right_point_web, top_point_web]),
+            "color": Color(1.0, 0.97, 0.9, 0.55 * boost_body_web.a),
+            "width": maxf(1.2, 1.8 * scale)
+        })
+        circles.append({
+            "center": screen_pos + Vector2(0.0, -4.5).rotated(facing_angle_web) * scale,
+            "radius": maxf(2.5, 4.0 * scale),
+            "color": Color(1.0, 0.97, 0.88, 0.35)
+        })
+        if boost_strength > 0.0:
+            circles.append({
+                "center": screen_pos,
+                "radius": (PLAYER_RADIUS + 8.0 + boost_strength * 3.0) * scale,
+                "color": Color(0.6, 0.92, 1.0, 0.08 + boost_strength * 0.12)
+            })
+            var exhaust_tip_web: Vector2 = screen_pos + Vector2(0.0, 26.0 + boost_strength * 6.0).rotated(facing_angle_web) * scale
+            var exhaust_left_web: Vector2 = screen_pos + Vector2(-4.0, 10.0).rotated(facing_angle_web) * scale
+            var exhaust_right_web: Vector2 = screen_pos + Vector2(4.0, 10.0).rotated(facing_angle_web) * scale
+            polygons.append({
+                "points": PackedVector2Array([exhaust_left_web, exhaust_tip_web, exhaust_right_web]),
+                "color": Color(0.82, 0.96, 1.0, 0.16 + boost_strength * 0.16)
+            })
+        return {
+            "polygons": polygons,
+            "polylines": polylines,
+            "lines": lines,
+            "circles": circles,
+            "arcs": arcs
+        }
+
+    var spin_angle: float = Time.get_ticks_msec() * 0.0045
+    var facing_angle: float = aim_dir.angle() + PI * 0.5
+    var variation_seed: float = float(active_depth_level) * 37.0 + scale * 13.0
+    var roll_cos: float = cos(spin_angle)
+    var roll_sin: float = sin(spin_angle)
+    var roll_depth_to_screen: float = 0.35
+    shell_color = _apply_visual_palette_variant(shell_color, variation_seed + 0.8, 0.55)
+    body_color = _apply_visual_palette_variant(body_color, variation_seed + 1.6, 0.62)
+    var boost_shell: Color = shell_color.lerp(Color(0.24, 0.45, 0.56, shell_color.a), boost_strength * 0.55)
+    var boost_body: Color = body_color.lerp(Color(0.92, 0.96, 1.0, body_color.a), boost_strength * 0.45)
+    if boost_strength > 0.0:
+        circles.append({
+            "center": screen_pos,
+            "radius": (PLAYER_RADIUS + 8.0 + boost_strength * 4.0) * scale,
+            "color": Color(0.6, 0.92, 1.0, 0.1 + boost_strength * 0.16)
+        })
+        arcs.append({
+            "center": screen_pos,
+            "radius": (PLAYER_RADIUS + 9.0) * scale,
+            "start_angle": 0.0,
+            "end_angle": TAU,
+            "point_count": 32,
+            "color": Color(0.82, 0.97, 1.0, 0.18 + boost_strength * 0.28),
+            "width": 2.0 * scale
+        })
+    circles.append({
+        "center": screen_pos,
+        "radius": (PLAYER_RADIUS + 5.0) * scale,
+        "color": boost_shell
+    })
+
+    var pyramid_rotation: float = facing_angle
+    var top_point: Vector2 = screen_pos + Vector2(0.0, -24.0).rotated(pyramid_rotation) * scale
+    var rear_point: Vector2 = screen_pos + Vector2(0.0, 18.0).rotated(pyramid_rotation) * scale
+    var left_local: Vector2 = Vector2(-16.0, 10.0)
+    var right_local: Vector2 = Vector2(16.0, 10.0)
+    var left_rolled: Vector2 = Vector2(left_local.x * roll_cos, left_local.y + left_local.x * roll_sin * roll_depth_to_screen)
+    var right_rolled: Vector2 = Vector2(right_local.x * roll_cos, right_local.y + right_local.x * roll_sin * roll_depth_to_screen)
+    var left_point: Vector2 = screen_pos + left_rolled.rotated(pyramid_rotation) * scale
+    var right_point: Vector2 = screen_pos + right_rolled.rotated(pyramid_rotation) * scale
+
+    var highlight_color: Color = boost_body.lerp(Color(1.0, 0.98, 0.86, boost_body.a), 0.4 + boost_strength * 0.25)
+    var shadow_color: Color = boost_body.lerp(boost_shell, 0.42)
+    var deep_shadow_color: Color = shadow_color.lerp(Color(0.08, 0.1, 0.13, shadow_color.a), 0.35)
+
+    polygons.append({"points": PackedVector2Array([left_point, rear_point, right_point]), "color": deep_shadow_color})
+    polygons.append({"points": PackedVector2Array([top_point, rear_point, left_point]), "color": shadow_color})
+    polygons.append({"points": PackedVector2Array([top_point, right_point, rear_point]), "color": boost_body})
+    polygons.append({"points": PackedVector2Array([top_point, left_point, right_point]), "color": highlight_color})
+    polylines.append({
+        "points": PackedVector2Array([top_point, left_point, rear_point, right_point, top_point]),
+        "color": Color(0.98, 0.95, 0.82, 0.55 * boost_body.a),
+        "width": maxf(1.3, 2.0 * scale)
+    })
+    lines.append({
+        "from": top_point,
+        "to": rear_point,
+        "color": Color(1.0, 0.97, 0.9, 0.45 * boost_body.a),
+        "width": maxf(1.0, 1.4 * scale)
+    })
+
+    var engine_glow_pos: Vector2 = screen_pos + Vector2(0.0, 18.0).rotated(facing_angle) * scale
+    circles.append({
+        "center": engine_glow_pos,
+        "radius": (4.5 + boost_strength * 2.5) * scale,
+        "color": Color(1.0, 0.86, 0.42, 0.55)
+    })
+    if boost_strength > 0.0:
+        var exhaust_tip: Vector2 = screen_pos + Vector2(0.0, 30.0 + boost_strength * 8.0).rotated(facing_angle) * scale
+        var exhaust_left: Vector2 = engine_glow_pos + Vector2(-4.5, 4.0).rotated(facing_angle) * scale
+        var exhaust_right: Vector2 = engine_glow_pos + Vector2(4.5, 4.0).rotated(facing_angle) * scale
+        polygons.append({
+            "points": PackedVector2Array([exhaust_left, exhaust_tip, exhaust_right]),
+            "color": Color(0.82, 0.96, 1.0, 0.22 + boost_strength * 0.2)
+        })
+
+    return {
+        "polygons": polygons,
+        "polylines": polylines,
+        "lines": lines,
+        "circles": circles,
+        "arcs": arcs
+    }
+
+func _draw_cached_drill_ship_visual(visual: Dictionary) -> void:
+    for circle_variant in visual.get("circles", []):
+        var circle_data: Dictionary = circle_variant
+        draw_circle(
+            circle_data.get("center", Vector2.ZERO),
+            float(circle_data.get("radius", 0.0)),
+            circle_data.get("color", Color.WHITE)
+        )
+    for arc_variant in visual.get("arcs", []):
+        var arc_data: Dictionary = arc_variant
+        draw_arc(
+            arc_data.get("center", Vector2.ZERO),
+            float(arc_data.get("radius", 0.0)),
+            float(arc_data.get("start_angle", 0.0)),
+            float(arc_data.get("end_angle", TAU)),
+            int(arc_data.get("point_count", 16)),
+            arc_data.get("color", Color.WHITE),
+            float(arc_data.get("width", 1.0))
+        )
+    for polygon_variant in visual.get("polygons", []):
+        var polygon_data: Dictionary = polygon_variant
+        draw_colored_polygon(
+            polygon_data.get("points", PackedVector2Array()),
+            polygon_data.get("color", Color.WHITE)
+        )
+    for polyline_variant in visual.get("polylines", []):
+        var polyline_data: Dictionary = polyline_variant
+        draw_polyline(
+            polyline_data.get("points", PackedVector2Array()),
+            polyline_data.get("color", Color.WHITE),
+            float(polyline_data.get("width", 1.0))
+        )
+    for line_variant in visual.get("lines", []):
+        var line_data: Dictionary = line_variant
+        draw_line(
+            line_data.get("from", Vector2.ZERO),
+            line_data.get("to", Vector2.ZERO),
+            line_data.get("color", Color.WHITE),
+            float(line_data.get("width", 1.0))
+        )
+
 func _draw_tail() -> void:
+    if OS.has_feature("web"):
+        if web_tail_ship_visual_cache.is_empty() and not drill_copies.is_empty():
+            _update_web_drill_visual_cache(WEB_TRAIL_VISUAL_INTERVAL)
+        for tail_visual_variant in web_tail_ship_visual_cache:
+            var tail_visual: Dictionary = tail_visual_variant
+            _draw_cached_drill_ship_visual(tail_visual)
+        return
     var fade_alpha: float = _get_run_end_draw_alpha()
-    for copy_index in range(drill_copies.size() - 1, -1, -1):
+    var start_index: int = drill_copies.size() - 1
+    var end_index: int = -1
+    if OS.has_feature("web") and not _is_web_effect_enabled(WEB_EFFECT_FULL_TRAIL_BUDDIES):
+        start_index = min(drill_copies.size() - 1, 1)
+    for copy_index in range(start_index, end_index, -1):
         var copy_data: Dictionary = drill_copies[copy_index]
         var scale: float = 0.88 - 0.08 * float(copy_index)
         var shell_color: Color = Color(0.16, 0.17, 0.2, (0.82 - 0.08 * float(copy_index)) * fade_alpha)
@@ -3038,6 +3455,11 @@ func _draw_tail() -> void:
         )
 
 func _draw_player(origin: Vector2) -> void:
+    if OS.has_feature("web"):
+        if web_player_ship_visual_cache.is_empty():
+            _update_web_drill_visual_cache(WEB_SHIP_VISUAL_INTERVAL)
+        _draw_cached_drill_ship_visual(web_player_ship_visual_cache)
+        return
     var aim_dir: Vector2 = _get_run_end_heading() if run_state == RUN_STATES.ENDING else _get_pointer_direction()
     if aim_dir == Vector2.ZERO:
         aim_dir = player_velocity.normalized()
@@ -3048,6 +3470,35 @@ func _draw_player(origin: Vector2) -> void:
     _draw_drill_ship(_world_to_screen(player_pos), aim_dir, 1.0, Color(0.16, 0.17, 0.2, fade_alpha), Color(0.83, 0.74, 0.28, fade_alpha), boost_strength)
 
 func _draw_drill_ship(screen_pos: Vector2, aim_dir: Vector2, scale: float, shell_color: Color, body_color: Color, boost_strength: float = 0.0) -> void:
+    if OS.has_feature("web") and not _is_web_effect_enabled(WEB_EFFECT_FULL_SHIP_DETAIL):
+        var facing_angle_web: float = aim_dir.angle() + PI * 0.5
+        var boost_shell_web: Color = shell_color.lerp(Color(0.24, 0.45, 0.56, shell_color.a), boost_strength * 0.55)
+        var boost_body_web: Color = body_color.lerp(Color(0.92, 0.96, 1.0, body_color.a), boost_strength * 0.45)
+        var top_point_web: Vector2 = screen_pos + Vector2(0.0, -23.0).rotated(facing_angle_web) * scale
+        var rear_point_web: Vector2 = screen_pos + Vector2(0.0, 18.0).rotated(facing_angle_web) * scale
+        var left_point_web: Vector2 = screen_pos + Vector2(-15.0, 10.0).rotated(facing_angle_web) * scale
+        var right_point_web: Vector2 = screen_pos + Vector2(15.0, 10.0).rotated(facing_angle_web) * scale
+        var front_facet_web: PackedVector2Array = PackedVector2Array([top_point_web, left_point_web, right_point_web])
+        var body_facet_web: PackedVector2Array = PackedVector2Array([left_point_web, rear_point_web, right_point_web])
+        draw_colored_polygon(body_facet_web, boost_shell_web)
+        draw_colored_polygon(front_facet_web, boost_body_web)
+        draw_polyline(
+            PackedVector2Array([top_point_web, left_point_web, rear_point_web, right_point_web, top_point_web]),
+            Color(1.0, 0.97, 0.9, 0.55 * boost_body_web.a),
+            maxf(1.2, 1.8 * scale)
+        )
+        var cockpit_web: Vector2 = screen_pos + Vector2(0.0, -4.5).rotated(facing_angle_web) * scale
+        draw_circle(cockpit_web, maxf(2.5, 4.0 * scale), Color(1.0, 0.97, 0.88, 0.35))
+        if boost_strength > 0.0:
+            draw_circle(screen_pos, (PLAYER_RADIUS + 8.0 + boost_strength * 3.0) * scale, Color(0.6, 0.92, 1.0, 0.08 + boost_strength * 0.12))
+            var exhaust_tip_web: Vector2 = screen_pos + Vector2(0.0, 26.0 + boost_strength * 6.0).rotated(facing_angle_web) * scale
+            var exhaust_left_web: Vector2 = screen_pos + Vector2(-4.0, 10.0).rotated(facing_angle_web) * scale
+            var exhaust_right_web: Vector2 = screen_pos + Vector2(4.0, 10.0).rotated(facing_angle_web) * scale
+            draw_colored_polygon(
+                PackedVector2Array([exhaust_left_web, exhaust_tip_web, exhaust_right_web]),
+                Color(0.82, 0.96, 1.0, 0.16 + boost_strength * 0.16)
+            )
+        return
     var spin_angle: float = Time.get_ticks_msec() * 0.0045
     var facing_angle: float = aim_dir.angle() + PI * 0.5
     var variation_seed := float(active_depth_level) * 37.0 + scale * 13.0
@@ -3511,8 +3962,9 @@ func _get_translated_shape_points(node: Dictionary, center: Vector2) -> PackedVe
     return translated
 
 func _initialize_dirt_mask() -> void:
-    var dirt_width: int = 256 if OS.has_feature("web") else 512
-    var dirt_height: int = 320 if OS.has_feature("web") else 640
+    var use_web_low_res: bool = OS.has_feature("web") and not _is_web_effect_enabled(WEB_EFFECT_HIGH_RES_DIRT_MASK)
+    var dirt_width: int = 192 if use_web_low_res else 512
+    var dirt_height: int = 224 if use_web_low_res else 640
     dirt_image = Image.create(dirt_width, dirt_height, false, Image.FORMAT_RGBA8)
     var bg := _get_level_bg_color()
     # Dirt overlays the rock, so make it inherit the depth palette a bit.
@@ -3757,9 +4209,9 @@ func _flush_dirt_texture_updates(delta: float) -> void:
     if not dirt_texture_dirty or dirt_texture == null or dirt_image == null:
         dirt_texture_flush_accumulator = 0.0
         return
-    if OS.has_feature("web"):
+    if OS.has_feature("web") and not _is_web_effect_enabled(WEB_EFFECT_FAST_DIRT_UPDATES):
         dirt_texture_flush_accumulator += delta
-        if dirt_texture_flush_accumulator < 0.08:
+        if dirt_texture_flush_accumulator < 0.12:
             return
     dirt_texture_flush_accumulator = 0.0
     dirt_texture.update(dirt_image)
@@ -3903,19 +4355,19 @@ func _update_system_button_layout() -> void:
     settings_button.offset_bottom = 104.0
     if variation_down_button != null and is_instance_valid(variation_down_button):
         variation_down_button.offset_left = -184.0
-        variation_down_button.offset_top = 112.0
+        variation_down_button.offset_top = 268.0
         variation_down_button.offset_right = -104.0
-        variation_down_button.offset_bottom = 160.0
+        variation_down_button.offset_bottom = 316.0
     if variation_up_button != null and is_instance_valid(variation_up_button):
         variation_up_button.offset_left = -96.0
-        variation_up_button.offset_top = 112.0
+        variation_up_button.offset_top = 268.0
         variation_up_button.offset_right = -16.0
-        variation_up_button.offset_bottom = 160.0
+        variation_up_button.offset_bottom = 316.0
     if variation_reroll_button != null and is_instance_valid(variation_reroll_button):
         variation_reroll_button.offset_left = -184.0
-        variation_reroll_button.offset_top = 164.0
+        variation_reroll_button.offset_top = 320.0
         variation_reroll_button.offset_right = -16.0
-        variation_reroll_button.offset_bottom = 212.0
+        variation_reroll_button.offset_bottom = 368.0
 
 func _update_status_panel_layout() -> void:
     if top_bar == null or not is_instance_valid(top_bar):
@@ -4037,9 +4489,6 @@ func _on_variation_up_button_pressed() -> void:
 
 func _on_variation_reroll_button_pressed() -> void:
     _reroll_visual_style_variant()
-
-func _on_mute_button_pressed() -> void:
-    SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
 
 func _on_settings_button_pressed() -> void:
     _toggle_settings_panel()

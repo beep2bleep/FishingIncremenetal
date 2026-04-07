@@ -70,7 +70,6 @@ func _trf(key: String, args: Array = []) -> String:
     return translated % args
 var reset_progress_confirm_dialog: ConfirmationDialog
 var legacy_reset_dialog: ConfirmationDialog
-var mute_button: Button
 var settings_button: Button
 var fullscreen_button: Button
 var touch_input_button: Button
@@ -95,8 +94,6 @@ var popup_layer: CanvasLayer
 var continue_locked_panel: PanelContainer
 var continue_locked_label: Label
 var version_label: Label
-var speaker_icon_on: Texture2D
-var speaker_icon_off: Texture2D
 var fullscreen_icon_on: Texture2D
 var fullscreen_icon_off: Texture2D
 var _legacy_reset_dialog_shown := false
@@ -226,7 +223,6 @@ func _ready() -> void :
     _setup_battle_level_choice_dialog()
     _setup_reset_progress_controls()
     _setup_version_label()
-    _setup_mute_button()
     _setup_settings_controls()
     _setup_fullscreen_button()
     _setup_touch_input_button()
@@ -366,10 +362,6 @@ func _input(event: InputEvent) -> void :
         if _is_continue_locked_open():
             if event.is_action_pressed("escape") or event.is_action_pressed("back") or event.is_action_pressed("ui_accept"):
                 _hide_continue_locked_panel()
-            return
-        if event.is_action_pressed("toggle_mute"):
-            _on_mute_button_pressed()
-            get_viewport().set_input_as_handled()
             return
         if _is_settings_open():
             if event.is_action_pressed("escape") or event.is_action_pressed("back"):
@@ -611,7 +603,6 @@ func show_screen():
     update_input(ControllerIcons.get_last_input_type())
     _setup_wishlist_button()
     _refresh_leaderboard_panel()
-    _refresh_mute_button_icon()
     _refresh_fullscreen_button_icon()
     _refresh_touch_input_button()
     _update_go_again_button_state()
@@ -2025,25 +2016,6 @@ func _clear_tech_tree_runtime() -> void:
     tree_initialized = false
     _loaded_tree_locale = ""
 
-func _setup_mute_button() -> void:
-    mute_button = get_node_or_null("%MuteButton")
-    if mute_button == null:
-        return
-    speaker_icon_on = _make_speaker_icon_texture(false)
-    speaker_icon_off = _make_speaker_icon_texture(true)
-    mute_button.text = ""
-    mute_button.focus_mode = Control.FOCUS_NONE
-    mute_button.offset_left = -42.0
-    mute_button.offset_right = 42.0
-    mute_button.offset_top = 16.0
-    mute_button.offset_bottom = 82.0
-    mute_button.custom_minimum_size = Vector2(84, 66)
-    mute_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    mute_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
-    mute_button.expand_icon = true
-    _style_utility_button(mute_button)
-    _refresh_mute_button_icon()
-
 func _setup_settings_controls() -> void:
     if settings_button != null and is_instance_valid(settings_button):
         return
@@ -2358,16 +2330,6 @@ func _style_utility_button_panel(panel: PanelContainer) -> void:
     box.corner_radius_bottom_right = 6
     panel.add_theme_stylebox_override("panel", box)
 
-func _refresh_mute_button_icon() -> void:
-    if mute_button == null:
-        return
-    mute_button.icon = speaker_icon_off if SaveHandler.audio_muted else speaker_icon_on
-    mute_button.tooltip_text = tr("UI_UNMUTE_AUDIO") if SaveHandler.audio_muted else tr("UI_MUTE_AUDIO")
-
-func _on_mute_button_pressed() -> void:
-    SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
-    _refresh_mute_button_icon()
-
 func _refresh_fullscreen_button_icon() -> void:
     if fullscreen_button == null:
         return
@@ -2417,20 +2379,6 @@ func _make_fullscreen_icon_texture(is_fullscreen: bool) -> ImageTexture:
         _draw_rect_pixels(image, Rect2i(12, 50, 20, 6), line_color)
         _draw_rect_pixels(image, Rect2i(50, 48, 6, 20), line_color)
         _draw_rect_pixels(image, Rect2i(48, 50, 20, 6), line_color)
-    return ImageTexture.create_from_image(image)
-
-func _make_speaker_icon_texture(is_muted: bool) -> ImageTexture:
-    var image := Image.create(80, 80, false, Image.FORMAT_RGBA8)
-    image.fill(Color(0, 0, 0, 0))
-    var speaker_color := Color(0.93, 0.97, 1.0, 1.0)
-    _draw_rect_pixels(image, Rect2i(14, 28, 14, 24), speaker_color)
-    _draw_triangle_right(image, Vector2i(28, 40), 22, 18, speaker_color)
-    if is_muted:
-        _draw_thick_line(image, Vector2i(42, 20), Vector2i(68, 60), Color(1.0, 0.2, 0.2, 1.0), 4)
-        _draw_thick_line(image, Vector2i(68, 20), Vector2i(42, 60), Color(1.0, 0.2, 0.2, 1.0), 4)
-    else:
-        _draw_arc_ring(image, Vector2i(40, 40), 16, 22, PI * -0.42, PI * 0.42, speaker_color)
-        _draw_arc_ring(image, Vector2i(40, 40), 24, 30, PI * -0.42, PI * 0.42, speaker_color)
     return ImageTexture.create_from_image(image)
 
 func _draw_rect_pixels(image: Image, rect: Rect2i, color: Color) -> void:

@@ -413,7 +413,6 @@ var speed_button: Button
 var infinite_sim_button: Button
 var exit_battle_button: Button
 var spawn_ufo_button: Button
-var mute_button: Button
 var settings_button: Button
 var settings_panel: PanelContainer
 var settings_content: Settings
@@ -561,8 +560,6 @@ var defeat_anim_time: float = 0.0
 var pack_texture_cache: Dictionary = {}
 var coin_landing_y: float = 676.0
 var run_clock_save_accum: float = 0.0
-var speaker_icon_on: Texture2D
-var speaker_icon_off: Texture2D
 var fullscreen_icon_on: Texture2D
 var fullscreen_icon_off: Texture2D
 var active_ufo: UfoBonus = null
@@ -674,7 +671,6 @@ func _ready() -> void:
     _style_battle_summary_ui()
     _cache_battle_summary_layout()
     _reset_battle_source_stats()
-    _setup_mute_button()
     _setup_settings_controls()
     _setup_fullscreen_button()
     _setup_touch_input_button()
@@ -787,7 +783,6 @@ func _bind_nodes() -> bool:
     infinite_sim_button = get_node_or_null("CanvasLayer/InfiniteSimButton")
     exit_battle_button = get_node_or_null("CanvasLayer/ExitBattleButton")
     spawn_ufo_button = get_node_or_null("CanvasLayer/SpawnUfoButton")
-    mute_button = get_node_or_null("CanvasLayer/MuteButton")
     summary_panel = get_node_or_null("CanvasLayer/SummaryPanel")
     summary_label = get_node_or_null("CanvasLayer/SummaryPanel/SummaryLabel")
     summary_chart = get_node_or_null("CanvasLayer/SummaryPanel/SummaryChart")
@@ -889,7 +884,7 @@ func _bind_nodes() -> bool:
     if level_choice_dialog != null and not level_choice_dialog.custom_action.is_connected(_on_level_choice_action):
         level_choice_dialog.custom_action.connect(_on_level_choice_action)
 
-    return world != null and bg_base_sky != null and bg_base_ground != null and bg_deep != null and cloud_far != null and cloud_mid != null and cloud_near != null and bg_far != null and bg_mid != null and bg_near != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and health_bar != null and experience_bar != null and power_bar != null and health_value_label != null and experience_value_label != null and power_value_label != null and currency_label != null and clock_panel != null and clock_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and mute_button != null and summary_panel != null and summary_label != null and summary_hint_title_label != null and summary_hint_label != null and summary_hint_left_button != null and summary_hint_right_button != null and continue_button != null and level_choice_dialog != null
+    return world != null and bg_base_sky != null and bg_base_ground != null and bg_deep != null and cloud_far != null and cloud_mid != null and cloud_near != null and bg_far != null and bg_mid != null and bg_near != null and ground != null and ground_overlay != null and hero_layer != null and projectile_layer != null and enemy_layer != null and coin_layer != null and damage_text_layer != null and camera_2d != null and health_label != null and health_bar != null and experience_bar != null and power_bar != null and health_value_label != null and experience_value_label != null and power_value_label != null and currency_label != null and clock_panel != null and clock_label != null and speed_button != null and infinite_sim_button != null and exit_battle_button != null and summary_panel != null and summary_label != null and summary_hint_title_label != null and summary_hint_label != null and summary_hint_left_button != null and summary_hint_right_button != null and continue_button != null and level_choice_dialog != null
 
 func _clear_battle_entities() -> void:
     for arrow_data_variant in arrows:
@@ -2374,10 +2369,6 @@ func _draw() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
     if battle_completed:
-        return
-    if event.is_action_pressed("toggle_mute"):
-        _on_mute_button_pressed()
-        get_viewport().set_input_as_handled()
         return
     if summary_panel != null and summary_panel.visible:
         if event.is_action_pressed("ui_accept"):
@@ -5352,29 +5343,6 @@ func _style_speed_controls() -> void:
     speed_button.add_theme_font_size_override("font_size", 32)
     infinite_sim_button.add_theme_font_size_override("font_size", 32)
 
-func _setup_mute_button() -> void:
-    if mute_button == null:
-        return
-    speaker_icon_on = _make_speaker_icon_texture(false)
-    speaker_icon_off = _make_speaker_icon_texture(true)
-    mute_button.text = ""
-    mute_button.focus_mode = Control.FOCUS_NONE
-    mute_button.offset_left = 896.0
-    mute_button.offset_top = 20.0
-    mute_button.offset_right = 980.0
-    mute_button.offset_bottom = 86.0
-    mute_button.custom_minimum_size = Vector2(84, 66)
-    mute_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    mute_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
-    mute_button.expand_icon = true
-    _style_mute_button()
-    _refresh_mute_button_icon()
-
-func _style_mute_button() -> void:
-    if mute_button == null:
-        return
-    _style_mute_like_button(mute_button)
-
 func _style_mute_like_button(button: Button) -> void:
     if button == null:
         return
@@ -5410,16 +5378,6 @@ func _style_utility_panel(panel: PanelContainer) -> void:
     box.corner_radius_bottom_left = 6
     box.corner_radius_bottom_right = 6
     panel.add_theme_stylebox_override("panel", box)
-
-func _refresh_mute_button_icon() -> void:
-    if mute_button == null:
-        return
-    mute_button.icon = speaker_icon_off if SaveHandler.audio_muted else speaker_icon_on
-    mute_button.tooltip_text = tr("UI_UNMUTE_AUDIO") if SaveHandler.audio_muted else tr("UI_MUTE_AUDIO")
-
-func _on_mute_button_pressed() -> void:
-    SaveHandler.update_audio_muted(not SaveHandler.audio_muted)
-    _refresh_mute_button_icon()
 
 func _setup_settings_controls() -> void:
     if settings_button != null and is_instance_valid(settings_button):
@@ -6380,20 +6338,6 @@ func _track_ga_event(event_id: String, fields: Dictionary = {}) -> void:
         ga_manager = get_node_or_null("/root/GameAnalyticsManager")
     if ga_manager != null:
         ga_manager.call("track_design_event", event_id, null, fields)
-
-func _make_speaker_icon_texture(is_muted: bool) -> ImageTexture:
-    var image := Image.create(80, 80, false, Image.FORMAT_RGBA8)
-    image.fill(Color(0, 0, 0, 0))
-    var speaker_color := Color(0.93, 0.97, 1.0, 1.0)
-    _draw_rect_pixels(image, Rect2i(14, 28, 14, 24), speaker_color)
-    _draw_triangle_right(image, Vector2i(28, 40), 22, 18, speaker_color)
-    if is_muted:
-        _draw_thick_line(image, Vector2i(42, 20), Vector2i(68, 60), Color(1.0, 0.2, 0.2, 1.0), 4)
-        _draw_thick_line(image, Vector2i(68, 20), Vector2i(42, 60), Color(1.0, 0.2, 0.2, 1.0), 4)
-    else:
-        _draw_arc_ring(image, Vector2i(40, 40), 16, 22, PI * -0.42, PI * 0.42, speaker_color)
-        _draw_arc_ring(image, Vector2i(40, 40), 24, 30, PI * -0.42, PI * 0.42, speaker_color)
-    return ImageTexture.create_from_image(image)
 
 func _draw_rect_pixels(image: Image, rect: Rect2i, color: Color) -> void:
     for x in range(rect.position.x, rect.position.x + rect.size.x):
