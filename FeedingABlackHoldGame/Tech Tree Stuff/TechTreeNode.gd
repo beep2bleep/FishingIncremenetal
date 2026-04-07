@@ -9,6 +9,9 @@ const TOOLTIP_SCREEN_HEIGHT_OFFSET_RATIO: float = 0.03
 const MOUSE_TOOLTIP_EXTRA_OFFSET: float = 18.0
 const TOOLTIP_GROUP: StringName = &"tech_tree_tooltips"
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
+const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
+const REEL_INTO_DARKNESS_PROGRESS_SCRIPT = preload("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
+const RED_SKY_ICON_FACTORY = preload("res://Games/RedSkyDefense/RedSkyIconFactory.gd")
 static var _icon_texture_cache: Dictionary = {}
 
 signal state_changed
@@ -401,6 +404,10 @@ func _purchase_upgrade() -> void:
         var target_level: int = int(upgrade.sim_level) + int(upgrade.current_tier) - 1
         if Util.is_mining_game_active():
             MINING_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
+        elif Util.is_red_sky_game_active():
+            RED_SKY_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
+        elif Util.is_reel_into_darkness_game_active():
+            REEL_INTO_DARKNESS_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
         else:
             SaveHandler.fishing_currency = max(0, new_amount)
             SaveHandler.set_fishing_upgrade_level(upgrade.sim_key, max(1, target_level))
@@ -693,6 +700,13 @@ func _is_texture_icon_path(icon_value: String) -> bool:
 
 func _get_upgrade_icon_texture() -> Texture2D:
     if upgrade != null and upgrade.sim_icon != "":
+        if upgrade.sim_icon.begins_with("redsky://"):
+            if _icon_texture_cache.has(upgrade.sim_icon):
+                return _icon_texture_cache[upgrade.sim_icon]
+            var generated_texture: Texture2D = RED_SKY_ICON_FACTORY.get_icon(upgrade.sim_icon)
+            if generated_texture != null:
+                _icon_texture_cache[upgrade.sim_icon] = generated_texture
+                return generated_texture
         if _is_texture_icon_path(upgrade.sim_icon):
             if _icon_texture_cache.has(upgrade.sim_icon):
                 return _icon_texture_cache[upgrade.sim_icon]

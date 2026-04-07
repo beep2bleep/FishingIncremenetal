@@ -6,6 +6,10 @@ const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const CONTROLLER_GLYPH_SCENE: PackedScene = preload("res://Controller Glyph.tscn")
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const MINING_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/Mining/MiningUpgradeTreeAdapter.gd")
+const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
+const RED_SKY_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyUpgradeTreeAdapter.gd")
+const REEL_INTO_DARKNESS_PROGRESS_SCRIPT = preload("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
+const REEL_INTO_DARKNESS_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/ReelIntoDarkness/ReelIntoDarknessUpgradeTreeAdapter.gd")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
 const GO_AGAIN_DISABLED_HINT := "UPGRADE_GO_AGAIN_DISABLED_HINT"
@@ -133,6 +137,7 @@ func _refresh_localized_text() -> void:
             legacy_ok_button.text = tr("UI_CONTINUE")
     if leaderboard_title_label != null and is_instance_valid(leaderboard_title_label):
         leaderboard_title_label.text = tr("MINING_LEADERBOARDS_TITLE")
+    _refresh_demo_mode_label_visibility()
     _update_go_again_button_state()
     if battle_level_choice_dialog != null and is_instance_valid(battle_level_choice_dialog) and battle_level_choice_dialog.visible:
         _show_battle_level_choice_dialog(battle_level_choice_max_level)
@@ -235,7 +240,7 @@ func _ready() -> void :
     _update_go_again_button_state()
     _refresh_mining_crt_overlay()
     hide()
-    if Util.is_mining_game_active() and get_tree().current_scene == self:
+    if _is_standalone_mode_upgrade_scene() and get_tree().current_scene == self:
         setup()
         show_screen()
 
@@ -403,6 +408,14 @@ func update_colors():
         %"Click Mask".color = Color(0.13, 0.1, 0.08, 1.0)
         %"GPUParticles2D Light".modulate = Color(0.72, 0.55, 0.22, 0.65)
         %"GPUParticles2D2 Dark".modulate = Color(0.28, 0.18, 0.1, 0.55)
+    elif Util.is_red_sky_game_active():
+        %"Click Mask".color = Color(0.19, 0.095, 0.085, 1.0)
+        %"GPUParticles2D Light".modulate = Color(0.81, 0.39, 0.24, 0.64)
+        %"GPUParticles2D2 Dark".modulate = Color(0.36, 0.135, 0.095, 0.6)
+    elif Util.is_reel_into_darkness_game_active():
+        %"Click Mask".color = Color(0.05, 0.11, 0.16, 1.0)
+        %"GPUParticles2D Light".modulate = Color(0.37, 0.7, 0.84, 0.62)
+        %"GPUParticles2D2 Dark".modulate = Color(0.02, 0.07, 0.12, 0.58)
 
 
 func _process(delta: float) -> void :
@@ -657,6 +670,16 @@ func _on_go_again_pressed() -> void :
         else:
             _show_battle_level_choice_dialog(max_depth)
         return
+    if Util.is_red_sky_game_active():
+        _refresh_virtual_cursor_state()
+        _cache_tech_tree_for_reuse()
+        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        return
+    if Util.is_reel_into_darkness_game_active():
+        _refresh_virtual_cursor_state()
+        _cache_tech_tree_for_reuse()
+        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        return
     if not _can_continue_to_battle():
         _show_continue_locked_dialog()
         _update_go_again_button_state()
@@ -703,6 +726,10 @@ func _ensure_tree_initialized(force_rebuild: bool = false) -> void:
     if _is_simulation_upgrade_tree_requested() or _is_simulation_upgrade_tree():
         if Util.is_mining_game_active():
             MINING_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
+        elif Util.is_red_sky_game_active():
+            RED_SKY_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
+        elif Util.is_reel_into_darkness_game_active():
+            REEL_INTO_DARKNESS_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
         else:
             FishingUpgradeTreeAdapter.apply_simulation_upgrades()
         _sync_simulation_currency_from_save()
@@ -717,9 +744,18 @@ func _sync_simulation_currency_from_save() -> void:
     if Global.global_resoruce_manager == null:
         return
     var current_money: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
-    var target_money: int = MINING_PROGRESS_SCRIPT.get_wallet() if Util.is_mining_game_active() else int(SaveHandler.fishing_currency)
+    var target_money: int = _get_upgrade_wallet_amount()
     if current_money != target_money:
         Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, target_money - current_money)
+
+func _get_upgrade_wallet_amount() -> int:
+    if Util.is_mining_game_active():
+        return MINING_PROGRESS_SCRIPT.get_wallet()
+    if Util.is_red_sky_game_active():
+        return RED_SKY_PROGRESS_SCRIPT.get_wallet()
+    if Util.is_reel_into_darkness_game_active():
+        return REEL_INTO_DARKNESS_PROGRESS_SCRIPT.get_wallet()
+    return int(SaveHandler.fishing_currency)
 
 func _is_demo_mode_enabled() -> bool:
     return bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
@@ -770,8 +806,18 @@ func _refresh_demo_mode_label_visibility() -> void:
     if demo_mode_label != null and is_instance_valid(demo_mode_label):
         demo_mode_label.visible = _is_demo_mode_enabled() and not _is_any_popup_visible()
     if game_mode_label != null and is_instance_valid(game_mode_label):
-        game_mode_label.visible = false
-        game_mode_label.text = ""
+        game_mode_label.visible = not _is_any_popup_visible() and (Util.is_mining_game_active() or Util.is_red_sky_game_active() or Util.is_reel_into_darkness_game_active())
+        if Util.is_mining_game_active():
+            game_mode_label.text = tr("MINING_MODE_TITLE")
+            game_mode_label.add_theme_color_override("font_color", Color(0.96, 0.84, 0.45, 1.0))
+        elif Util.is_red_sky_game_active():
+            game_mode_label.text = "RED SKY MODE"
+            game_mode_label.add_theme_color_override("font_color", Color(0.98, 0.62, 0.42, 1.0))
+        elif Util.is_reel_into_darkness_game_active():
+            game_mode_label.text = "REEL INTO DARKNESS"
+            game_mode_label.add_theme_color_override("font_color", Color(0.56, 0.84, 0.94, 1.0))
+        else:
+            game_mode_label.text = ""
 
 func _get_demo_wishlist_url() -> String:
     if Util.is_mining_game_active():
@@ -909,7 +955,7 @@ func _refresh_leaderboard_panel() -> void:
     if not _should_show_leaderboards():
         leaderboard_panel.visible = false
         return
-    var show_panel: bool = not Util.is_mining_game_active()
+    var show_panel: bool = Util.is_vanguard_game_active()
     leaderboard_panel.visible = show_panel
     if not show_panel:
         return
@@ -956,7 +1002,7 @@ func _format_leaderboard_time(seconds: float) -> String:
 func _submit_editor_leaderboard_time(level: int, time_seconds: float) -> void:
     if not OS.has_feature("editor"):
         return
-    if Util.is_mining_game_active():
+    if not Util.is_vanguard_game_active():
         return
     print("EDITOR LEADERBOARD SUBMIT level=", level, " seconds=", time_seconds)
     SaveHandler.register_fishing_boss_clear_time(level, time_seconds)
@@ -1276,6 +1322,16 @@ func _launch_battle_at_level(level: int) -> void:
         _cache_tech_tree_for_reuse()
         SceneChanger.change_to_new_scene(Util.get_main_scene_path())
         return
+    if Util.is_red_sky_game_active():
+        _refresh_virtual_cursor_state()
+        _cache_tech_tree_for_reuse()
+        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        return
+    if Util.is_reel_into_darkness_game_active():
+        _refresh_virtual_cursor_state()
+        _cache_tech_tree_for_reuse()
+        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        return
     var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, SaveHandler.MAX_FISHING_BATTLE_LEVEL)
     SaveHandler.fishing_next_battle_level = clamp(level, 1, max_level)
     SaveHandler.save_fishing_progress()
@@ -1522,6 +1578,10 @@ func _perform_editor_sell() -> void:
 
     if Util.is_mining_game_active():
         MINING_PROGRESS_SCRIPT.apply_tree_sale(node.upgrade.sim_key, new_level, wallet_after_sale)
+    elif Util.is_red_sky_game_active():
+        RED_SKY_PROGRESS_SCRIPT.apply_tree_sale(node.upgrade.sim_key, new_level, wallet_after_sale)
+    elif Util.is_reel_into_darkness_game_active():
+        REEL_INTO_DARKNESS_PROGRESS_SCRIPT.apply_tree_sale(node.upgrade.sim_key, new_level, wallet_after_sale)
     else:
         SaveHandler.fishing_currency = wallet_after_sale
         SaveHandler.set_fishing_upgrade_level(node.upgrade.sim_key, new_level)
@@ -1659,7 +1719,7 @@ func _recenter_tech_tree_on_core() -> void:
         tech_tree.call("recenter_on_core")
 
 func _should_recenter_upgrade_tree_on_core() -> bool:
-    return Util.is_mining_game_active()
+    return Util.is_mining_game_active() or Util.is_red_sky_game_active() or Util.is_reel_into_darkness_game_active()
 
 func _on_editor_center_offset_rebuild_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -1759,6 +1819,8 @@ func _show_legacy_reset_dialog_if_needed() -> void:
         return
     if legacy_reset_dialog == null:
         return
+    if not Util.is_vanguard_game_active():
+        return
     if not SaveHandler.needs_fishing_legacy_reset():
         return
     _legacy_reset_dialog_shown = true
@@ -1776,12 +1838,18 @@ func _on_legacy_reset_confirmed() -> void:
     _perform_progress_reset()
 
 func _on_legacy_reset_canceled() -> void:
+    if not Util.is_vanguard_game_active():
+        return
     if SaveHandler.needs_fishing_legacy_reset():
         legacy_reset_dialog.call_deferred("popup_centered")
 
 func _perform_progress_reset() -> void:
     if Util.is_mining_game_active():
         MINING_PROGRESS_SCRIPT.reset_progress()
+    elif Util.is_red_sky_game_active():
+        RED_SKY_PROGRESS_SCRIPT.reset_progress()
+    elif Util.is_reel_into_darkness_game_active():
+        REEL_INTO_DARKNESS_PROGRESS_SCRIPT.reset_progress()
     else:
         SaveHandler.reset_fishing_progress()
         SaveHandler.save_fishing_progress()
@@ -1822,6 +1890,20 @@ func _on_editor_unlock_all_pressed() -> void:
         data["deepest_level_unlocked"] = MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL
         data["selected_depth_level"] = MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL
         MINING_PROGRESS_SCRIPT.save_data(data)
+    elif Util.is_red_sky_game_active():
+        var red_sky_data: Dictionary = RED_SKY_PROGRESS_SCRIPT.load_data()
+        red_sky_data["meta_upgrades"] = {}
+        for key_variant: Variant in max_level_by_key.keys():
+            var key: String = str(key_variant)
+            red_sky_data["meta_upgrades"][key] = int(max_level_by_key[key])
+        RED_SKY_PROGRESS_SCRIPT.save_data(red_sky_data)
+    elif Util.is_reel_into_darkness_game_active():
+        var reel_data: Dictionary = REEL_INTO_DARKNESS_PROGRESS_SCRIPT.load_data()
+        reel_data["meta_upgrades"] = {}
+        for key_variant: Variant in max_level_by_key.keys():
+            var key: String = str(key_variant)
+            reel_data["meta_upgrades"][key] = int(max_level_by_key[key])
+        REEL_INTO_DARKNESS_PROGRESS_SCRIPT.save_data(reel_data)
     else:
         SaveHandler.fishing_unlocked_upgrades = {}
         SaveHandler.fishing_active_upgrades = {}
@@ -2069,6 +2151,8 @@ func _hide_settings_panel() -> void:
         settings_panel.hide()
 
 func _can_continue_to_battle() -> bool:
+    if Util.is_red_sky_game_active() or Util.is_reel_into_darkness_game_active():
+        return true
     if not _is_simulation_upgrade_tree():
         return true
     return SaveHandler.has_any_fishing_upgrade()
@@ -2082,10 +2166,25 @@ func _update_go_again_button_state() -> void:
         go_again_button.tooltip_text = ""
         go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return
+    if Util.is_red_sky_game_active():
+        go_again_button.disabled = false
+        go_again_button.text = "START DEFENSE"
+        go_again_button.tooltip_text = ""
+        go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        return
+    if Util.is_reel_into_darkness_game_active():
+        go_again_button.disabled = false
+        go_again_button.text = "START FISHING"
+        go_again_button.tooltip_text = ""
+        go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        return
     var can_continue: bool = _can_continue_to_battle()
     go_again_button.disabled = false
     go_again_button.tooltip_text = "" if can_continue else tr(GO_AGAIN_DISABLED_HINT)
     go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0) if can_continue else Color(0.7, 0.7, 0.7, 1.0)
+
+func _is_standalone_mode_upgrade_scene() -> bool:
+    return Util.is_mining_game_active() or Util.is_red_sky_game_active() or Util.is_reel_into_darkness_game_active()
 
 func _setup_continue_locked_dialog() -> void:
     var parent_layer: CanvasLayer = %CanvasLayer2

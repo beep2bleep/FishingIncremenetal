@@ -1,0 +1,1611 @@
+extends Node2D
+class_name MissleMain
+
+const RED_SKY_DATA = preload("res://Games/RedSkyDefense/RedSkyData.gd")
+const RED_SKY_PROGRESS = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
+const RED_SKY_ICON_FACTORY = preload("res://Games/RedSkyDefense/RedSkyIconFactory.gd")
+const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
+const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
+
+const SKY_TOP_COLOR := Color(0.22, 0.05, 0.06, 1.0)
+const SKY_BOTTOM_COLOR := Color(0.66, 0.22, 0.13, 1.0)
+const SKY_TOP_NIGHT_COLOR := Color(0.03, 0.03, 0.08, 1.0)
+const SKY_BOTTOM_NIGHT_COLOR := Color(0.16, 0.05, 0.08, 1.0)
+const GROUND_COLOR := Color(0.15, 0.09, 0.08, 1.0)
+const GROUND_NIGHT_COLOR := Color(0.08, 0.07, 0.07, 1.0)
+const BASE_COLOR := Color(0.86, 0.76, 0.62, 1.0)
+const BASE_DARK_COLOR := Color(0.28, 0.2, 0.16, 1.0)
+const PLAYER_BULLET_COLOR := Color(1.0, 0.93, 0.56, 1.0)
+const PLAYER_CRIT_BULLET_COLOR := Color(1.0, 0.62, 0.26, 1.0)
+const NUKE_COLOR := Color(0.99, 0.48, 0.3, 1.0)
+const EXPLOSION_COLOR := Color(1.0, 0.69, 0.34, 0.42)
+const ENEMY_PROJECTILE_COLOR := Color(0.96, 0.3, 0.24, 1.0)
+const DEFLECTED_PROJECTILE_COLOR := Color(0.67, 0.94, 1.0, 1.0)
+const SHIELD_COLOR := Color(0.38, 0.86, 1.0, 0.62)
+const TOWER_COLOR := Color(0.78, 0.9, 1.0, 1.0)
+const DRONE_COLOR := Color(0.64, 0.96, 0.98, 1.0)
+const TENTACLE_COLOR := Color(0.8, 0.34, 0.36, 1.0)
+const SALVAGE_COLOR := Color(0.96, 0.9, 0.54, 1.0)
+
+const GROUND_HEIGHT := 124.0
+const BASE_RADIUS := 58.0
+const BASE_COLLISION_RADIUS := 76.0
+const BULLET_RADIUS := 5.0
+const NUKE_RADIUS := 9.0
+const AIM_CURSOR_RADIUS := 12.0
+const BULLET_LIFETIME := 2.1
+const NUKE_SPEED := 720.0
+const FLOATING_TEXT_DURATION := 0.85
+const TEXT_FILTER_SCALE_STEP := 0.1
+const SUPPORT_EFFECT_DURATION := 0.12
+
+enum RUN_STATES {RUNNING, UPGRADE, SUMMARY}
+
+@onready var mode_label: Label = $CanvasLayer/HudMargin/HudPanel/HudMargin/HudVBox/ModeLabel
+@onready var wave_label: Label = $CanvasLayer/HudMargin/HudPanel/HudMargin/HudVBox/WaveLabel
+@onready var health_label: Label = $CanvasLayer/HudMargin/HudPanel/HudMargin/HudVBox/HealthLabel
+@onready var score_label: Label = $CanvasLayer/HudMargin/HudPanel/HudMargin/HudVBox/ScoreLabel
+@onready var nukes_label: Label = $CanvasLayer/HudMargin/HudPanel/HudMargin/HudVBox/NukesLabel
+@onready var status_label: Label = $CanvasLayer/HudMargin/HudPanel/HudMargin/HudVBox/StatusLabel
+@onready var upgrade_panel: PanelContainer = $OverlayCanvasLayer/UpgradePanel
+@onready var upgrade_title_label: Label = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeTitleLabel
+@onready var upgrade_desc_label: Label = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeDescLabel
+@onready var upgrade_buttons_grid: GridContainer = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons
+@onready var damage_button: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons/DamageButton
+@onready var speed_button: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons/SpeedButton
+@onready var health_button: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons/HealthButton
+@onready var choice_button_4: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons/ChoiceButton4
+@onready var choice_button_5: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons/ChoiceButton5
+@onready var choice_button_6: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons/ChoiceButton6
+@onready var summary_panel: PanelContainer = $OverlayCanvasLayer/SummaryPanel
+@onready var summary_title_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryTitleLabel
+@onready var summary_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryLabel
+@onready var summary_stats_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryStatsLabel
+@onready var continue_button: Button = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryButtons/ContinueButton
+@onready var retry_button: Button = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryButtons/RetryButton
+
+var rng := RandomNumberGenerator.new()
+var persistent_data: Dictionary = {}
+var meta_bonuses: Dictionary = {}
+var last_run_results: Dictionary = {}
+var run_state: int = RUN_STATES.RUNNING
+var aim_cursor_screen_pos := Vector2.ZERO
+var combat_text_scale := 1.9
+var text_node_base_sizes: Dictionary = {}
+var environment_darkness := 0.0
+var sun_progress := 0.0
+var support_time := 0.0
+
+var current_wave := 1
+var waves_cleared := 0
+var wave_spawn_queue: Array[Dictionary] = []
+var wave_spawn_timer := 0.0
+var offered_wave_upgrades: Array[Dictionary] = []
+var wave_upgrade_levels: Dictionary = {}
+
+var base_max_health := 0.0
+var base_health := 0.0
+var shield_max := 0.0
+var shield_health := 0.0
+var shield_regen_rate := 0.0
+var shield_regen_delay := 2.6
+var shield_regen_cooldown := 0.0
+var damage_reduction := 0.0
+var gun_damage := 0.0
+var bullet_speed := 0.0
+var fire_interval := 0.17
+var fire_timer := 0.0
+var crit_chance := 0.04
+var crit_bonus := 1.65
+var bullet_pierce := 0
+var bullet_blast_radius := 0.0
+var bullet_blast_damage_scale := 1.0
+var pickup_radius := 28.0
+var salvage_multiplier := 1.0
+var salvage_lifetime := 7.4
+var meta_reward_multiplier := 1.0
+var wave_scrap_bonus := 0.0
+var wave_auto_bank_ratio := 0.68
+var level_up_choice_count := 3
+var remaining_nukes := 0
+var nuke_damage := 128.0
+var nuke_blast_radius := 292.0
+var repair_between_waves := 0.0
+var projectile_redirect_chance := 0.0
+var upgrade_power_multiplier := 1.0
+
+var tower_count := 0
+var tower_damage := 15.0
+var tower_range := 270.0
+var tower_fire_interval := 1.18
+var drone_count := 0
+var drone_damage := 13.0
+var drone_range := 210.0
+var drone_fire_interval := 0.88
+var drone_speed := 182.0
+var tentacle_count := 0
+var tentacle_damage := 19.0
+var tentacle_range := 168.0
+var tentacle_attack_cooldown := 1.05
+var tentacle_slow := 0.18
+
+var score := 0
+var damage_dealt := 0.0
+var damage_taken := 0.0
+var shield_damage_absorbed := 0.0
+var nukes_launched := 0
+var enemy_projectiles_destroyed := 0
+var enemy_projectiles_deflected := 0
+var escape_scores := 0
+var shots_fired := 0
+var total_kills := 0
+var tower_kills := 0
+var drone_kills := 0
+var tentacle_kills := 0
+var salvage_collected := 0
+var salvage_lost := 0
+var bonus_scrap_earned := 0
+
+var enemy_kill_counts := {
+	"raider": 0,
+	"runner": 0,
+	"gunship": 0,
+	"bomber": 0
+}
+
+var player_bullets: Array[Dictionary] = []
+var nukes: Array[Dictionary] = []
+var explosions: Array[Dictionary] = []
+var enemies: Array[Dictionary] = []
+var enemy_projectiles: Array[Dictionary] = []
+var floating_texts: Array[Dictionary] = []
+var salvage_pickups: Array[Dictionary] = []
+var support_effects: Array[Dictionary] = []
+var tower_fire_timers: Array = []
+var drone_fire_timers: Array = []
+var tentacle_cooldowns: Array = []
+var upgrade_buttons: Array[Button] = []
+
+func _ready() -> void:
+	rng.randomize()
+	persistent_data = RED_SKY_PROGRESS.load_data()
+	_ensure_crt_overlay()
+	_connect_ui()
+	_setup_text_presentation()
+	_begin_run()
+
+func _exit_tree() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _connect_ui() -> void:
+	upgrade_buttons = [
+		damage_button,
+		speed_button,
+		health_button,
+		choice_button_4,
+		choice_button_5,
+		choice_button_6
+	]
+	for button_index in range(upgrade_buttons.size()):
+		var button: Button = upgrade_buttons[button_index]
+		button.pressed.connect(_on_wave_upgrade_button_pressed.bind(button_index))
+		button.custom_minimum_size = Vector2(0.0, 96.0)
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		button.add_theme_font_size_override("font_size", 18)
+	mode_label.hide()
+	status_label.hide()
+	continue_button.pressed.connect(_on_continue_pressed)
+	retry_button.pressed.connect(_on_retry_pressed)
+
+func _ensure_crt_overlay() -> void:
+	var overlay: CanvasLayer = get_node_or_null("MiningCrtOverlay") as CanvasLayer
+	var text_mirror_overlay: CanvasLayer = get_node_or_null("RedSkyTextMirrorOverlay") as CanvasLayer
+	if overlay == null:
+		overlay = MINING_CRT_OVERLAY_SCRIPT.new().configure(1)
+		overlay.name = "MiningCrtOverlay"
+		add_child(overlay)
+	overlay.visible = true
+	if text_mirror_overlay == null:
+		text_mirror_overlay = CRT_TEXT_MIRROR_OVERLAY_SCRIPT.new().configure($CanvasLayer/HudMargin, 2)
+		text_mirror_overlay.name = "RedSkyTextMirrorOverlay"
+		add_child(text_mirror_overlay)
+	text_mirror_overlay.visible = true
+
+func _setup_text_presentation() -> void:
+	var text_controls: Array[Control] = [
+		wave_label, health_label, score_label, nukes_label
+	]
+	for control in text_controls:
+		if control == null:
+			continue
+		var base_size: int = control.get_theme_font_size("font_size")
+		if base_size <= 0:
+			base_size = 18
+		text_node_base_sizes[control.get_instance_id()] = base_size
+	_apply_text_filter_scale()
+
+func _apply_text_filter_scale() -> void:
+	for control_id_variant in text_node_base_sizes.keys():
+		var control_id: int = int(control_id_variant)
+		var control := instance_from_id(control_id) as Control
+		if control == null or not is_instance_valid(control):
+			continue
+		var base_size: int = int(text_node_base_sizes[control_id])
+		control.add_theme_font_size_override("font_size", maxi(14, int(round(float(base_size) * combat_text_scale))))
+
+func tune_text_pixel_filter(delta: float) -> void:
+	combat_text_scale = clampf(combat_text_scale + delta, 1.0, 3.2)
+	_apply_text_filter_scale()
+	print("Red Sky text filter scale: ", snappedf(combat_text_scale, 0.01))
+
+func _begin_run() -> void:
+	persistent_data = RED_SKY_PROGRESS.load_data()
+	meta_bonuses = RED_SKY_DATA.build_meta_bonuses(persistent_data.get("meta_upgrades", {}))
+	last_run_results.clear()
+	run_state = RUN_STATES.RUNNING
+	Global.game_state = Util.GAME_STATES.PLAYING
+	current_wave = 1
+	waves_cleared = 0
+	wave_spawn_queue.clear()
+	wave_spawn_timer = 0.0
+	fire_timer = 0.0
+	support_time = 0.0
+	wave_upgrade_levels.clear()
+	offered_wave_upgrades.clear()
+	player_bullets.clear()
+	nukes.clear()
+	explosions.clear()
+	enemies.clear()
+	enemy_projectiles.clear()
+	floating_texts.clear()
+	salvage_pickups.clear()
+	support_effects.clear()
+	tower_fire_timers.clear()
+	drone_fire_timers.clear()
+	tentacle_cooldowns.clear()
+	score = 0
+	damage_dealt = 0.0
+	damage_taken = 0.0
+	shield_damage_absorbed = 0.0
+	nukes_launched = 0
+	enemy_projectiles_destroyed = 0
+	enemy_projectiles_deflected = 0
+	escape_scores = 0
+	shots_fired = 0
+	total_kills = 0
+	tower_kills = 0
+	drone_kills = 0
+	tentacle_kills = 0
+	salvage_collected = 0
+	salvage_lost = 0
+	bonus_scrap_earned = 0
+	enemy_kill_counts = {"raider": 0, "runner": 0, "gunship": 0, "bomber": 0}
+	_apply_meta_bonuses()
+	summary_panel.hide()
+	upgrade_panel.hide()
+	_reset_aim_cursor()
+	_start_wave(current_wave)
+	_refresh_mouse_capture_state()
+	_refresh_ui()
+
+func _apply_meta_bonuses() -> void:
+	base_max_health = float(meta_bonuses.get("base_health", 154.0))
+	base_health = base_max_health
+	shield_max = float(meta_bonuses.get("base_shield", 0.0))
+	shield_health = shield_max
+	shield_regen_rate = float(meta_bonuses.get("shield_regen", 0.0))
+	shield_regen_delay = float(meta_bonuses.get("shield_regen_delay", 2.6))
+	shield_regen_cooldown = 0.0
+	damage_reduction = float(meta_bonuses.get("damage_reduction", 0.0))
+	gun_damage = float(meta_bonuses.get("gun_damage", 12.0))
+	bullet_speed = float(meta_bonuses.get("bullet_speed", 930.0))
+	fire_interval = float(meta_bonuses.get("fire_interval", 0.17))
+	crit_chance = float(meta_bonuses.get("crit_chance", 0.04))
+	crit_bonus = float(meta_bonuses.get("crit_bonus", 1.65))
+	bullet_pierce = int(meta_bonuses.get("bullet_pierce", 0))
+	bullet_blast_radius = float(meta_bonuses.get("bullet_blast_radius", 0.0))
+	bullet_blast_damage_scale = float(meta_bonuses.get("bullet_blast_damage", 1.0))
+	pickup_radius = float(meta_bonuses.get("pickup_radius", 28.0))
+	salvage_multiplier = float(meta_bonuses.get("salvage_multiplier", 1.0))
+	salvage_lifetime = float(meta_bonuses.get("salvage_lifetime", 7.4))
+	meta_reward_multiplier = float(meta_bonuses.get("meta_reward_multiplier", 1.0))
+	wave_scrap_bonus = float(meta_bonuses.get("wave_scrap_bonus", 0.0))
+	wave_auto_bank_ratio = float(meta_bonuses.get("wave_auto_bank_ratio", 0.68))
+	level_up_choice_count = clampi(int(meta_bonuses.get("level_up_choice_count", 3)), 3, 6)
+	remaining_nukes = int(meta_bonuses.get("starting_nukes", 2))
+	nuke_damage = float(meta_bonuses.get("nuke_damage", 128.0))
+	nuke_blast_radius = float(meta_bonuses.get("nuke_radius", 292.0))
+	repair_between_waves = float(meta_bonuses.get("repair_between_waves", 0.0))
+	projectile_redirect_chance = float(meta_bonuses.get("projectile_redirect_chance", 0.0))
+	upgrade_power_multiplier = float(meta_bonuses.get("upgrade_power_multiplier", 1.0))
+	tower_count = int(meta_bonuses.get("tower_count", 0))
+	tower_damage = float(meta_bonuses.get("tower_damage", 15.0))
+	tower_range = float(meta_bonuses.get("tower_range", 270.0))
+	tower_fire_interval = float(meta_bonuses.get("tower_fire_interval", 1.18))
+	drone_count = int(meta_bonuses.get("drone_count", 0))
+	drone_damage = float(meta_bonuses.get("drone_damage", 13.0))
+	drone_range = float(meta_bonuses.get("drone_range", 210.0))
+	drone_fire_interval = float(meta_bonuses.get("drone_fire_interval", 0.88))
+	drone_speed = float(meta_bonuses.get("drone_speed", 182.0))
+	tentacle_count = int(meta_bonuses.get("tentacle_count", 0))
+	tentacle_damage = float(meta_bonuses.get("tentacle_damage", 19.0))
+	tentacle_range = float(meta_bonuses.get("tentacle_range", 168.0))
+	tentacle_attack_cooldown = float(meta_bonuses.get("tentacle_cooldown", 1.05))
+	tentacle_slow = float(meta_bonuses.get("tentacle_slow", 0.18))
+	_ensure_support_arrays()
+
+func _start_wave(wave: int) -> void:
+	current_wave = wave
+	wave_spawn_queue = _build_wave_spawn_list(wave)
+	wave_spawn_timer = 0.12
+	_spawn_floating_text("WAVE %d" % wave, get_viewport_rect().size * Vector2(0.5, 0.28), Color(1.0, 0.88, 0.58, 1.0), 34)
+
+func _build_wave_spawn_list(wave: int) -> Array[Dictionary]:
+	var queue: Array[Dictionary] = []
+	var total_spawns: int = 5 + wave * 2 + int(wave / 2)
+	var gunship_count: int = 0 if wave < 2 else min(1 + int((wave - 2) / 3), maxi(1, total_spawns / 4))
+	var bomber_count: int = 0 if wave < 5 else min(1 + int((wave - 5) / 4), maxi(1, total_spawns / 5))
+	var runner_count: int = 1 if wave >= 2 else 0
+	runner_count += int(max(wave - 3, 0) / 3)
+	runner_count = min(runner_count, maxi(1, total_spawns / 3))
+	var raider_count: int = maxi(1, total_spawns - gunship_count - bomber_count - runner_count)
+	var enemy_types: Array[String] = []
+	for _i in range(raider_count):
+		enemy_types.append("raider")
+	for _i in range(runner_count):
+		enemy_types.append("runner")
+	for _i in range(gunship_count):
+		enemy_types.append("gunship")
+	for _i in range(bomber_count):
+		enemy_types.append("bomber")
+	enemy_types.shuffle()
+	for spawn_index in range(enemy_types.size()):
+		queue.append(_build_enemy_def(enemy_types[spawn_index], wave, spawn_index))
+	return queue
+
+func _build_enemy_def(enemy_type: String, wave: int, spawn_index: int) -> Dictionary:
+	var viewport := get_viewport_rect().size
+	var spawn_pos := _get_random_spawn_position(viewport)
+	var data := {
+		"type": enemy_type,
+		"pos": spawn_pos,
+		"vel": Vector2.ZERO,
+		"shoot_timer": rng.randf_range(0.6, 1.25),
+		"lifetime": 0.0,
+		"wave": wave,
+		"radius": 18.0,
+		"health": 28.0,
+		"speed": 116.0,
+		"contact_damage": 12.0,
+		"score_value": 12,
+		"escape_score": 0,
+		"mass": 3.0,
+		"standoff_y": viewport.y * 0.34,
+		"lane_offset": rng.randf_range(-300.0, 300.0),
+		"spawn_index": spawn_index,
+		"movement_seed": rng.randf_range(0.0, TAU),
+		"drift_strength": rng.randf_range(40.0, 90.0),
+		"orbit_radius": rng.randf_range(32.0, 76.0),
+		"arc_direction": -1.0 if rng.randf() < 0.5 else 1.0,
+		"slow_timer": 0.0,
+		"slow_amount": 0.0
+	}
+	match enemy_type:
+		"runner":
+			data["radius"] = 14.0
+			data["health"] = 20.0 + float(wave) * 4.5
+			data["speed"] = 176.0 + float(wave) * 7.4
+			data["contact_damage"] = 8.0 + float(wave) * 1.4
+			data["score_value"] = 18 + wave * 3
+			data["mass"] = 2.0
+			data["drift_strength"] = rng.randf_range(90.0, 160.0)
+		"gunship":
+			data["radius"] = 22.0
+			data["health"] = 44.0 + float(wave) * 9.0
+			data["speed"] = 92.0 + float(wave) * 4.0
+			data["contact_damage"] = 16.0 + float(wave) * 1.9
+			data["score_value"] = 24 + wave * 4
+			data["mass"] = 4.0
+			data["standoff_y"] = viewport.y * rng.randf_range(0.24, 0.42)
+			data["orbit_radius"] = rng.randf_range(48.0, 94.0)
+		"bomber":
+			data["radius"] = 27.0
+			data["health"] = 82.0 + float(wave) * 12.5
+			data["speed"] = 86.0 + float(wave) * 4.0
+			data["contact_damage"] = 28.0 + float(wave) * 2.8
+			data["score_value"] = 34 + wave * 5
+			data["mass"] = 7.5
+			data["drift_strength"] = rng.randf_range(70.0, 120.0)
+		_:
+			data["health"] = 30.0 + float(wave) * 6.5
+			data["speed"] = 116.0 + float(wave) * 5.4
+			data["contact_damage"] = 12.0 + float(wave) * 2.2
+			data["score_value"] = 12 + wave * 3
+			data["mass"] = 3.2
+			data["drift_strength"] = rng.randf_range(50.0, 95.0)
+	return data
+
+func _process(delta: float) -> void:
+	_update_environment(delta)
+	if run_state == RUN_STATES.RUNNING:
+		_process_running(delta)
+	_process_explosions(delta)
+	_process_support_effects(delta)
+	_process_floating_texts(delta)
+	_refresh_ui()
+	queue_redraw()
+
+func _process_running(delta: float) -> void:
+	support_time += delta
+	fire_timer -= delta
+	wave_spawn_timer -= delta
+	shield_regen_cooldown = max(0.0, shield_regen_cooldown - delta)
+	if shield_regen_cooldown <= 0.0 and shield_max > 0.0 and shield_health < shield_max:
+		shield_health = min(shield_max, shield_health + shield_regen_rate * delta)
+	if fire_timer <= 0.0:
+		_fire_player_bullet()
+		fire_timer = max(0.045, fire_interval)
+	if wave_spawn_timer <= 0.0 and not wave_spawn_queue.is_empty():
+		enemies.append(wave_spawn_queue.pop_front())
+		wave_spawn_timer = max(0.08, 0.44 - float(current_wave) * 0.012 + rng.randf_range(-0.025, 0.04))
+	_process_support_units(delta)
+	_process_player_bullets(delta)
+	_process_nukes(delta)
+	_process_enemies(delta)
+	_process_enemy_projectiles(delta)
+	_process_salvage_pickups(delta)
+	_check_wave_clear()
+
+func _process_support_units(delta: float) -> void:
+	_process_towers(delta)
+	_process_drones(delta)
+	_process_tentacles(delta)
+
+func _process_towers(delta: float) -> void:
+	if tower_count <= 0:
+		return
+	_ensure_support_arrays()
+	var tower_positions: Array[Vector2] = _get_tower_positions()
+	for tower_index in range(tower_count):
+		tower_fire_timers[tower_index] = float(tower_fire_timers[tower_index]) - delta
+		if float(tower_fire_timers[tower_index]) > 0.0:
+			continue
+		var tower_pos: Vector2 = tower_positions[tower_index]
+		var enemy_index: int = _find_nearest_enemy_index(tower_pos, tower_range)
+		if enemy_index == -1:
+			tower_fire_timers[tower_index] = 0.15
+			continue
+		var enemy_pos: Vector2 = enemies[enemy_index].get("pos", Vector2.ZERO)
+		tower_fire_timers[tower_index] = max(0.12, tower_fire_interval)
+		_spawn_support_effect(tower_pos, enemy_pos, TOWER_COLOR, SUPPORT_EFFECT_DURATION)
+		_damage_enemy(enemy_index, tower_damage, tower_pos, "tower")
+
+func _process_drones(delta: float) -> void:
+	if drone_count <= 0:
+		return
+	_ensure_support_arrays()
+	var drone_positions: Array[Vector2] = _get_drone_positions()
+	for drone_index in range(drone_count):
+		drone_fire_timers[drone_index] = float(drone_fire_timers[drone_index]) - delta
+		if float(drone_fire_timers[drone_index]) > 0.0:
+			continue
+		var drone_pos: Vector2 = drone_positions[drone_index]
+		var enemy_index: int = _find_nearest_enemy_index(drone_pos, drone_range)
+		if enemy_index == -1:
+			drone_fire_timers[drone_index] = 0.12
+			continue
+		var enemy_pos: Vector2 = enemies[enemy_index].get("pos", Vector2.ZERO)
+		drone_fire_timers[drone_index] = max(0.08, drone_fire_interval)
+		_spawn_support_effect(drone_pos, enemy_pos, DRONE_COLOR, SUPPORT_EFFECT_DURATION)
+		_damage_enemy(enemy_index, drone_damage, drone_pos, "drone")
+
+func _process_tentacles(delta: float) -> void:
+	if tentacle_count <= 0:
+		return
+	_ensure_support_arrays()
+	var anchors: Array[Vector2] = _get_tentacle_anchor_positions()
+	for tentacle_index in range(tentacle_count):
+		tentacle_cooldowns[tentacle_index] = float(tentacle_cooldowns[tentacle_index]) - delta
+		if float(tentacle_cooldowns[tentacle_index]) > 0.0:
+			continue
+		var anchor: Vector2 = anchors[tentacle_index]
+		var enemy_index: int = _find_nearest_enemy_index(anchor, tentacle_range)
+		if enemy_index == -1:
+			tentacle_cooldowns[tentacle_index] = 0.15
+			continue
+		var enemy: Dictionary = enemies[enemy_index]
+		var enemy_pos: Vector2 = enemy.get("pos", Vector2.ZERO)
+		enemy["slow_timer"] = max(float(enemy.get("slow_timer", 0.0)), 1.4)
+		enemy["slow_amount"] = max(float(enemy.get("slow_amount", 0.0)), tentacle_slow)
+		enemies[enemy_index] = enemy
+		tentacle_cooldowns[tentacle_index] = max(0.18, tentacle_attack_cooldown)
+		_spawn_support_effect(anchor, enemy_pos, TENTACLE_COLOR, SUPPORT_EFFECT_DURATION * 1.4)
+		_damage_enemy(enemy_index, tentacle_damage, anchor, "tentacle")
+
+func _process_player_bullets(delta: float) -> void:
+	for bullet_index in range(player_bullets.size() - 1, -1, -1):
+		var bullet: Dictionary = player_bullets[bullet_index]
+		bullet["lifetime"] = float(bullet.get("lifetime", 0.0)) - delta
+		bullet["pos"] = bullet.get("pos", Vector2.ZERO) + bullet.get("vel", Vector2.ZERO) * delta
+		if float(bullet.get("lifetime", 0.0)) <= 0.0 or _is_point_far_offscreen(bullet.get("pos", Vector2.ZERO), 50.0):
+			player_bullets.remove_at(bullet_index)
+			continue
+		if _resolve_bullet_enemy_projectile_hits(bullet):
+			player_bullets.remove_at(bullet_index)
+			continue
+		var consumed: bool = _resolve_bullet_enemy_hits(bullet)
+		if consumed:
+			player_bullets.remove_at(bullet_index)
+		else:
+			player_bullets[bullet_index] = bullet
+
+func _process_nukes(delta: float) -> void:
+	for nuke_index in range(nukes.size() - 1, -1, -1):
+		var nuke: Dictionary = nukes[nuke_index]
+		var target: Vector2 = nuke.get("target", Vector2.ZERO)
+		var pos: Vector2 = nuke.get("pos", Vector2.ZERO)
+		var to_target: Vector2 = target - pos
+		if to_target.length() <= NUKE_SPEED * delta + 12.0:
+			_trigger_explosion(target, nuke_blast_radius, nuke_damage, true)
+			nukes.remove_at(nuke_index)
+			continue
+		nuke["vel"] = to_target.normalized() * NUKE_SPEED
+		nuke["pos"] = pos + nuke.get("vel", Vector2.ZERO) * delta
+		if _is_point_far_offscreen(nuke.get("pos", Vector2.ZERO), 80.0):
+			_trigger_explosion(nuke.get("pos", Vector2.ZERO), nuke_blast_radius, nuke_damage, true)
+			nukes.remove_at(nuke_index)
+		else:
+			nukes[nuke_index] = nuke
+
+func _process_enemies(delta: float) -> void:
+	var base_pos := _get_base_position()
+	var viewport := get_viewport_rect().size
+	for enemy_index in range(enemies.size() - 1, -1, -1):
+		var enemy: Dictionary = enemies[enemy_index]
+		enemy["lifetime"] = float(enemy.get("lifetime", 0.0)) + delta
+		enemy["slow_timer"] = max(0.0, float(enemy.get("slow_timer", 0.0)) - delta)
+		if float(enemy.get("slow_timer", 0.0)) <= 0.0:
+			enemy["slow_amount"] = 0.0
+		var pos: Vector2 = enemy.get("pos", Vector2.ZERO)
+		var vel: Vector2 = enemy.get("vel", Vector2.ZERO)
+		var enemy_type: String = String(enemy.get("type", "raider"))
+		var desired_velocity := Vector2.ZERO
+		var lifetime: float = float(enemy.get("lifetime", 0.0))
+		var movement_seed: float = float(enemy.get("movement_seed", 0.0))
+		var lane_offset: float = float(enemy.get("lane_offset", 0.0))
+		var slow_mult: float = 1.0 - clampf(float(enemy.get("slow_amount", 0.0)), 0.0, 0.75)
+		var forward_to_base: Vector2 = (base_pos - pos).normalized()
+		if forward_to_base == Vector2.ZERO:
+			forward_to_base = Vector2.DOWN
+		var lateral: Vector2 = Vector2(-forward_to_base.y, forward_to_base.x)
+
+		match enemy_type:
+			"gunship":
+				var orbit_angle: float = lifetime * 1.4 + movement_seed
+				var orbit_center := Vector2(
+					clampf(base_pos.x + lane_offset + sin(lifetime * 0.5 + movement_seed) * 82.0, 60.0, viewport.x - 60.0),
+					float(enemy.get("standoff_y", viewport.y * 0.32)) + sin(lifetime * 1.0 + movement_seed * 1.2) * 32.0
+				)
+				var target_pos := orbit_center + Vector2(cos(orbit_angle), sin(orbit_angle) * 0.66) * float(enemy.get("orbit_radius", 60.0))
+				var to_target: Vector2 = target_pos - pos
+				if to_target.length() > 20.0:
+					desired_velocity = to_target.normalized() * float(enemy.get("speed", 100.0)) * slow_mult
+				enemy["shoot_timer"] = float(enemy.get("shoot_timer", 1.0)) - delta
+				if float(enemy.get("shoot_timer", 0.0)) <= 0.0:
+					_spawn_enemy_projectile(pos, (base_pos - pos).normalized(), int(enemy.get("wave", current_wave)))
+					enemy["shoot_timer"] = max(0.72, 1.7 - float(enemy.get("wave", current_wave)) * 0.04 + rng.randf_range(-0.04, 0.16))
+			"runner":
+				var escape_target := Vector2(
+					clampf(base_pos.x + lane_offset * 0.3 + sin(lifetime * 5.0 + movement_seed) * float(enemy.get("drift_strength", 120.0)), 32.0, viewport.x - 32.0),
+					viewport.y + 80.0
+				)
+				desired_velocity = (escape_target - pos).normalized() * float(enemy.get("speed", 100.0)) * slow_mult
+			"bomber":
+				var sweep_target := Vector2(
+					clampf(base_pos.x + sin(lifetime * 0.8 + movement_seed) * 220.0 * float(enemy.get("arc_direction", 1.0)), 80.0, viewport.x - 80.0),
+					viewport.y * 0.44 + cos(lifetime * 1.1 + movement_seed) * 42.0
+				)
+				var should_dive: bool = lifetime > 2.2 or float(enemy.get("health", 1.0)) < 0.6 * _get_enemy_max_health(enemy)
+				var bomber_target := (base_pos + lateral * sin(lifetime * 2.0 + movement_seed) * 54.0) if should_dive else sweep_target
+				desired_velocity = (bomber_target - pos).normalized() * float(enemy.get("speed", 100.0)) * slow_mult
+				enemy["shoot_timer"] = float(enemy.get("shoot_timer", 1.0)) - delta
+				if float(enemy.get("shoot_timer", 0.0)) <= 0.0:
+					_spawn_enemy_projectile(pos, (base_pos - pos).normalized(), int(enemy.get("wave", current_wave)) + 2)
+					enemy["shoot_timer"] = max(0.95, 2.0 - float(enemy.get("wave", current_wave)) * 0.025 + rng.randf_range(0.0, 0.18))
+			_:
+				var raider_target := base_pos + lateral * sin(lifetime * 2.3 + movement_seed) * float(enemy.get("drift_strength", 70.0)) + Vector2(0.0, cos(lifetime * 1.5 + movement_seed) * 18.0)
+				desired_velocity = (raider_target - pos).normalized() * float(enemy.get("speed", 100.0)) * slow_mult
+
+		vel = vel.lerp(desired_velocity, clampf(delta * 1.8, 0.0, 1.0))
+		pos += vel * delta
+		enemy["vel"] = vel
+		enemy["pos"] = pos
+
+		if pos.distance_to(base_pos) <= BASE_COLLISION_RADIUS + float(enemy.get("radius", 18.0)):
+			_damage_base(float(enemy.get("contact_damage", 8.0)), pos)
+			_spawn_floating_text("HIT", pos, Color(1.0, 0.45, 0.35, 1.0), 26)
+			enemies.remove_at(enemy_index)
+			continue
+
+		if enemy_type == "runner" and pos.y > viewport.y + float(enemy.get("radius", 18.0)) + 24.0:
+			escape_scores += 1
+			_spawn_floating_text("SLIPPED", Vector2(clampf(pos.x, 80.0, viewport.x - 80.0), viewport.y - GROUND_HEIGHT - 24.0), Color(1.0, 0.52, 0.38, 1.0), 24)
+			enemies.remove_at(enemy_index)
+			continue
+
+		if _is_point_far_offscreen(pos, 120.0):
+			enemies.remove_at(enemy_index)
+			continue
+
+		enemies[enemy_index] = enemy
+
+func _get_enemy_max_health(enemy: Dictionary) -> float:
+	var enemy_type: String = String(enemy.get("type", "raider"))
+	var wave: int = int(enemy.get("wave", current_wave))
+	match enemy_type:
+		"runner":
+			return 20.0 + float(wave) * 4.5
+		"gunship":
+			return 44.0 + float(wave) * 9.0
+		"bomber":
+			return 82.0 + float(wave) * 12.5
+		_:
+			return 30.0 + float(wave) * 6.5
+
+func _process_enemy_projectiles(delta: float) -> void:
+	var base_pos := _get_base_position()
+	for projectile_index in range(enemy_projectiles.size() - 1, -1, -1):
+		var projectile: Dictionary = enemy_projectiles[projectile_index]
+		projectile["lifetime"] = float(projectile.get("lifetime", 0.0)) - delta
+		projectile["pos"] = projectile.get("pos", Vector2.ZERO) + projectile.get("vel", Vector2.ZERO) * delta
+		var projectile_pos: Vector2 = projectile.get("pos", Vector2.ZERO)
+		var projectile_radius: float = float(projectile.get("radius", 10.0))
+		var team: String = String(projectile.get("team", "enemy"))
+		if float(projectile.get("lifetime", 0.0)) <= 0.0 or _is_point_far_offscreen(projectile_pos, 60.0):
+			enemy_projectiles.remove_at(projectile_index)
+			continue
+
+		if team == "enemy" and projectile_pos.distance_to(base_pos) <= BASE_COLLISION_RADIUS + projectile_radius:
+			if rng.randf() < projectile_redirect_chance:
+				projectile["team"] = "player"
+				projectile["vel"] = _get_reflected_projectile_direction(projectile_pos) * max(320.0, projectile.get("vel", Vector2.ZERO).length())
+				projectile["damage"] = float(projectile.get("damage", 8.0)) * 0.9
+				projectile["lifetime"] = 1.75
+				enemy_projectiles_deflected += 1
+				enemy_projectiles[projectile_index] = projectile
+				_spawn_floating_text("REDIRECT", projectile_pos, DRONE_COLOR, 22)
+				continue
+			_damage_base(float(projectile.get("damage", 8.0)), projectile_pos)
+			enemy_projectiles.remove_at(projectile_index)
+			continue
+
+		if team == "player":
+			var hit_enemy_index := _find_enemy_hit_index(projectile_pos, projectile_radius)
+			if hit_enemy_index != -1:
+				_spawn_support_effect(projectile_pos, enemies[hit_enemy_index].get("pos", Vector2.ZERO), DRONE_COLOR, SUPPORT_EFFECT_DURATION)
+				_damage_enemy(hit_enemy_index, float(projectile.get("damage", gun_damage)), projectile_pos, "deflection")
+				enemy_projectiles.remove_at(projectile_index)
+				continue
+
+		enemy_projectiles[projectile_index] = projectile
+
+func _resolve_bullet_enemy_projectile_hits(bullet: Dictionary) -> bool:
+	var bullet_pos: Vector2 = bullet.get("pos", Vector2.ZERO)
+	var bullet_radius: float = float(bullet.get("radius", BULLET_RADIUS))
+	for projectile_index in range(enemy_projectiles.size() - 1, -1, -1):
+		var projectile: Dictionary = enemy_projectiles[projectile_index]
+		if String(projectile.get("team", "enemy")) != "enemy":
+			continue
+		if bullet_pos.distance_to(projectile.get("pos", Vector2.ZERO)) > bullet_radius + float(projectile.get("radius", 10.0)):
+			continue
+		if rng.randf() < projectile_redirect_chance:
+			projectile["team"] = "player"
+			projectile["vel"] = _get_reflected_projectile_direction(projectile.get("pos", Vector2.ZERO)) * max(360.0, projectile.get("vel", Vector2.ZERO).length())
+			projectile["damage"] = max(float(projectile.get("damage", 0.0)), float(bullet.get("damage", gun_damage)) * 0.75)
+			projectile["lifetime"] = max(0.7, float(projectile.get("lifetime", 0.0)))
+			enemy_projectiles_deflected += 1
+			enemy_projectiles[projectile_index] = projectile
+			_spawn_floating_text("DEFLECT", bullet_pos, DRONE_COLOR, 22)
+		else:
+			enemy_projectiles_destroyed += 1
+			enemy_projectiles.remove_at(projectile_index)
+			_spawn_floating_text("POP", bullet_pos, Color(1.0, 0.82, 0.6, 1.0), 22)
+		return true
+	return false
+
+func _resolve_bullet_enemy_hits(bullet: Dictionary) -> bool:
+	var bullet_pos: Vector2 = bullet.get("pos", Vector2.ZERO)
+	var bullet_radius: float = float(bullet.get("radius", BULLET_RADIUS))
+	for enemy_index in range(enemies.size() - 1, -1, -1):
+		var enemy: Dictionary = enemies[enemy_index]
+		if bullet_pos.distance_to(enemy.get("pos", Vector2.ZERO)) > bullet_radius + float(enemy.get("radius", 18.0)):
+			continue
+		var damage_amount: float = float(bullet.get("damage", gun_damage))
+		_damage_enemy(enemy_index, damage_amount, bullet_pos, "gun")
+		if float(bullet.get("blast_radius", 0.0)) > 0.0:
+			_trigger_explosion(
+				bullet_pos,
+				float(bullet.get("blast_radius", 0.0)),
+				damage_amount * 0.42 * float(bullet.get("blast_damage_scale", 1.0)),
+				false
+			)
+		var remaining_pierce: int = int(bullet.get("pierce_remaining", 0))
+		if remaining_pierce > 0:
+			bullet["pierce_remaining"] = remaining_pierce - 1
+			return false
+		return true
+	return false
+
+func _find_enemy_hit_index(position: Vector2, radius: float) -> int:
+	for enemy_index in range(enemies.size() - 1, -1, -1):
+		if position.distance_to(enemies[enemy_index].get("pos", Vector2.ZERO)) <= radius + float(enemies[enemy_index].get("radius", 18.0)):
+			return enemy_index
+	return -1
+
+func _fire_player_bullet() -> void:
+	var direction := _get_pointer_direction()
+	if direction == Vector2.ZERO:
+		direction = Vector2.UP
+	var start_pos := _get_base_position() + direction * (BASE_RADIUS * 0.82)
+	var is_crit: bool = rng.randf() < crit_chance
+	var damage_amount: float = gun_damage * (crit_bonus if is_crit else 1.0)
+	player_bullets.append({
+		"pos": start_pos,
+		"vel": direction * bullet_speed,
+		"radius": BULLET_RADIUS,
+		"lifetime": BULLET_LIFETIME,
+		"damage": damage_amount,
+		"pierce_remaining": bullet_pierce,
+		"blast_radius": bullet_blast_radius,
+		"blast_damage_scale": bullet_blast_damage_scale,
+		"crit": is_crit
+	})
+	shots_fired += 1
+
+func _spawn_enemy_projectile(origin: Vector2, direction: Vector2, wave: int) -> void:
+	var normalized_direction := direction.normalized()
+	if normalized_direction == Vector2.ZERO:
+		normalized_direction = Vector2.DOWN
+	enemy_projectiles.append({
+		"pos": origin,
+		"vel": normalized_direction * (248.0 + float(wave) * 14.0),
+		"radius": 12.0,
+		"lifetime": 5.0,
+		"damage": 8.0 + float(wave) * 1.7,
+		"mass": 2.0 + float(wave) * 0.22,
+		"team": "enemy"
+	})
+
+func _damage_enemy(enemy_index: int, damage_amount: float, hit_position: Vector2, source: String) -> void:
+	if enemy_index < 0 or enemy_index >= enemies.size():
+		return
+	var enemy: Dictionary = enemies[enemy_index]
+	var previous_health: float = float(enemy.get("health", 1.0))
+	enemy["health"] = previous_health - damage_amount
+	damage_dealt += min(previous_health, damage_amount)
+	var impulse_dir: Vector2 = (enemy.get("pos", Vector2.ZERO) - hit_position).normalized()
+	if impulse_dir == Vector2.ZERO:
+		impulse_dir = Vector2.UP
+	enemy["vel"] = enemy.get("vel", Vector2.ZERO) + impulse_dir * 120.0 / max(float(enemy.get("mass", 1.0)), 0.1)
+	if float(enemy.get("health", 0.0)) <= 0.0:
+		_kill_enemy(enemy_index, source)
+	else:
+		enemies[enemy_index] = enemy
+
+func _trigger_explosion(position: Vector2, blast_radius: float, damage_amount: float, is_nuke: bool) -> void:
+	explosions.append({
+		"pos": position,
+		"radius": 16.0,
+		"max_radius": blast_radius,
+		"age": 0.0,
+		"duration": 0.42 if is_nuke else 0.22,
+		"color": EXPLOSION_COLOR
+	})
+	for enemy_index in range(enemies.size() - 1, -1, -1):
+		var enemy: Dictionary = enemies[enemy_index]
+		var enemy_pos: Vector2 = enemy.get("pos", Vector2.ZERO)
+		var distance: float = position.distance_to(enemy_pos)
+		if distance > blast_radius + float(enemy.get("radius", 18.0)):
+			continue
+		var falloff: float = clampf(1.0 - distance / max(blast_radius, 1.0), 0.18, 1.0)
+		_damage_enemy(enemy_index, damage_amount * falloff, position, "nuke" if is_nuke else "blast")
+	for projectile_index in range(enemy_projectiles.size() - 1, -1, -1):
+		var projectile: Dictionary = enemy_projectiles[projectile_index]
+		if position.distance_to(projectile.get("pos", Vector2.ZERO)) <= blast_radius + float(projectile.get("radius", 10.0)):
+			enemy_projectiles_destroyed += 1
+			enemy_projectiles.remove_at(projectile_index)
+	_spawn_floating_text("NUKE" if is_nuke else "BLAST", position, Color(1.0, 0.82, 0.6, 1.0), 30)
+
+func _process_explosions(delta: float) -> void:
+	for explosion_index in range(explosions.size() - 1, -1, -1):
+		var explosion: Dictionary = explosions[explosion_index]
+		explosion["age"] = float(explosion.get("age", 0.0)) + delta
+		var progress: float = clampf(float(explosion.get("age", 0.0)) / max(float(explosion.get("duration", 0.2)), 0.01), 0.0, 1.0)
+		explosion["radius"] = lerpf(16.0, float(explosion.get("max_radius", 120.0)), progress)
+		if progress >= 1.0:
+			explosions.remove_at(explosion_index)
+		else:
+			explosions[explosion_index] = explosion
+
+func _process_support_effects(delta: float) -> void:
+	for effect_index in range(support_effects.size() - 1, -1, -1):
+		var effect: Dictionary = support_effects[effect_index]
+		effect["age"] = float(effect.get("age", 0.0)) + delta
+		if float(effect.get("age", 0.0)) >= float(effect.get("duration", SUPPORT_EFFECT_DURATION)):
+			support_effects.remove_at(effect_index)
+		else:
+			support_effects[effect_index] = effect
+
+func _kill_enemy(enemy_index: int, source: String) -> void:
+	var enemy: Dictionary = enemies[enemy_index]
+	var enemy_type: String = String(enemy.get("type", "raider"))
+	total_kills += 1
+	enemy_kill_counts[enemy_type] = int(enemy_kill_counts.get(enemy_type, 0)) + 1
+	match source:
+		"tower":
+			tower_kills += 1
+		"drone":
+			drone_kills += 1
+		"tentacle":
+			tentacle_kills += 1
+	var value: int = max(1, int(round(float(enemy.get("score_value", 0)) * salvage_multiplier)))
+	_spawn_salvage(enemy.get("pos", Vector2.ZERO), value)
+	if source == "nuke":
+		explosions.append({
+			"pos": enemy.get("pos", Vector2.ZERO),
+			"radius": 18.0,
+			"max_radius": 84.0,
+			"age": 0.0,
+			"duration": 0.18,
+			"color": EXPLOSION_COLOR
+		})
+	enemies.remove_at(enemy_index)
+
+func _damage_base(amount: float, hit_position: Vector2) -> void:
+	var remaining_damage: float = amount
+	if shield_health > 0.0:
+		var absorbed: float = min(shield_health, remaining_damage)
+		shield_health -= absorbed
+		remaining_damage -= absorbed
+		shield_damage_absorbed += absorbed
+		shield_regen_cooldown = shield_regen_delay
+		if absorbed > 0.0:
+			_spawn_floating_text("SHIELD", hit_position, SHIELD_COLOR, 20)
+	if remaining_damage <= 0.0:
+		return
+	var final_damage: float = remaining_damage * (1.0 - damage_reduction)
+	base_health = max(0.0, base_health - final_damage)
+	damage_taken += final_damage
+	_spawn_floating_text("-%d" % int(round(final_damage)), hit_position.lerp(_get_base_position(), 0.4), Color(1.0, 0.48, 0.42, 1.0), 24)
+	if base_health <= 0.0:
+		_finish_run("Base destroyed.")
+
+func _check_wave_clear() -> void:
+	if run_state != RUN_STATES.RUNNING:
+		return
+	if not wave_spawn_queue.is_empty():
+		return
+	if not enemies.is_empty():
+		return
+	if not enemy_projectiles.is_empty():
+		return
+	waves_cleared = current_wave
+	_show_upgrade_panel()
+
+func _show_upgrade_panel() -> void:
+	run_state = RUN_STATES.UPGRADE
+	Global.game_state = Util.GAME_STATES.UPGRADES
+	_bank_remaining_salvage(wave_auto_bank_ratio)
+	_award_wave_clear_bonus()
+	base_health = min(base_max_health, base_health + repair_between_waves)
+	if shield_max > 0.0:
+		shield_health = min(shield_max, shield_health + repair_between_waves * 0.5)
+	offered_wave_upgrades = _roll_wave_upgrade_offers(min(level_up_choice_count, upgrade_buttons.size()))
+	_update_upgrade_offer_layout(offered_wave_upgrades.size())
+	upgrade_title_label.text = "Wave %d Cleared" % current_wave
+	upgrade_desc_label.text = "Pick one."
+	for button_index in range(upgrade_buttons.size()):
+		var button: Button = upgrade_buttons[button_index]
+		if button_index >= offered_wave_upgrades.size():
+			button.hide()
+			button.icon = null
+			_apply_upgrade_button_rarity_style(button, 1)
+			continue
+		var offered_upgrade: Dictionary = offered_wave_upgrades[button_index]
+		var upgrade_id: String = str(offered_upgrade.get("id", ""))
+		var offer_tier: int = int(offered_upgrade.get("tier", 1))
+		button.show()
+		button.text = RED_SKY_DATA.get_wave_upgrade_button_text(upgrade_id, upgrade_power_multiplier, offer_tier)
+		button.icon = _get_upgrade_icon_texture(upgrade_id)
+		_apply_upgrade_button_rarity_style(button, offer_tier)
+	upgrade_panel.show()
+	_refresh_mouse_capture_state()
+
+func _roll_wave_upgrade_offers(count: int) -> Array[Dictionary]:
+	var candidates: Array[Dictionary] = []
+	var runtime_flags := {"shield_max": shield_max}
+	for upgrade_def in RED_SKY_DATA.get_wave_upgrade_catalog():
+		if RED_SKY_DATA.can_offer_wave_upgrade(upgrade_def, current_wave, wave_upgrade_levels, meta_bonuses, runtime_flags):
+			candidates.append(upgrade_def)
+	var chosen_ids: Array[String] = []
+	var offers: Array[Dictionary] = []
+	var max_to_pick: int = min(count, candidates.size())
+	while offers.size() < max_to_pick:
+		var picked_id: String = _pick_weighted_upgrade(candidates, chosen_ids)
+		if picked_id.is_empty():
+			break
+		offers.append({
+			"id": picked_id,
+			"tier": RED_SKY_DATA.roll_wave_offer_tier(RED_SKY_DATA.get_wave_upgrade_definition(picked_id), meta_bonuses, rng)
+		})
+		chosen_ids.append(picked_id)
+	return offers
+
+func _pick_weighted_upgrade(candidates: Array[Dictionary], chosen: Array[String]) -> String:
+	var total_weight := 0.0
+	var weighted_entries: Array[Dictionary] = []
+	for upgrade_def in candidates:
+		var upgrade_id: String = str(upgrade_def.get("id", ""))
+		if chosen.has(upgrade_id):
+			continue
+		var weight: float = RED_SKY_DATA.get_offer_weight(upgrade_def, wave_upgrade_levels, meta_bonuses)
+		total_weight += weight
+		weighted_entries.append({"id": upgrade_id, "weight": weight})
+	if total_weight <= 0.0:
+		return ""
+	var roll: float = rng.randf() * total_weight
+	for entry in weighted_entries:
+		roll -= float(entry.get("weight", 0.0))
+		if roll <= 0.0:
+			return str(entry.get("id", ""))
+	return str(weighted_entries.back().get("id", ""))
+
+func _on_wave_upgrade_button_pressed(button_index: int) -> void:
+	if button_index < 0 or button_index >= offered_wave_upgrades.size():
+		return
+	_apply_wave_upgrade(offered_wave_upgrades[button_index])
+
+func _apply_wave_upgrade(offered_upgrade: Dictionary) -> void:
+	var upgrade_id: String = str(offered_upgrade.get("id", ""))
+	var offer_tier: int = int(offered_upgrade.get("tier", 1))
+	if upgrade_id.is_empty():
+		return
+	var next_level: int = int(wave_upgrade_levels.get(upgrade_id, 0)) + 1
+	wave_upgrade_levels[upgrade_id] = next_level
+	var scaled_effects: Dictionary = RED_SKY_DATA.get_scaled_wave_effects(upgrade_id, upgrade_power_multiplier, offer_tier)
+	_apply_effect_bundle(scaled_effects)
+	_spawn_floating_text(str(RED_SKY_DATA.get_wave_upgrade_definition(upgrade_id).get("label", "UPGRADE")).to_upper(), get_viewport_rect().size * Vector2(0.5, 0.3), Color(1.0, 0.86, 0.56, 1.0), 26)
+	upgrade_panel.hide()
+	run_state = RUN_STATES.RUNNING
+	Global.game_state = Util.GAME_STATES.PLAYING
+	_start_wave(current_wave + 1)
+	_refresh_mouse_capture_state()
+
+func _apply_effect_bundle(bundle: Dictionary) -> void:
+	var add_effects: Dictionary = bundle.get("add", {})
+	for key_variant in add_effects.keys():
+		var key: String = str(key_variant)
+		var amount: float = float(add_effects[key_variant])
+		match key:
+			"gun_damage":
+				gun_damage += amount
+			"bullet_speed":
+				bullet_speed += amount
+			"base_max_health":
+				base_max_health += amount
+				base_health += amount
+			"repair":
+				base_health = min(base_max_health, base_health + amount)
+			"shield_max":
+				shield_max += amount
+				shield_health += amount
+			"shield_fill":
+				shield_health = min(shield_max, shield_health + amount)
+			"shield_regen":
+				shield_regen_rate += amount
+			"nukes":
+				remaining_nukes += _round_upgrade_count(amount)
+			"bullet_pierce":
+				bullet_pierce += _round_upgrade_count(amount)
+			"bullet_blast_radius":
+				bullet_blast_radius += amount
+			"crit_chance":
+				crit_chance += amount
+			"tower_count":
+				tower_count += _round_upgrade_count(amount)
+			"drone_count":
+				drone_count += _round_upgrade_count(amount)
+			"tentacle_count":
+				tentacle_count += _round_upgrade_count(amount)
+			"tentacle_slow":
+				tentacle_slow += amount
+			"projectile_redirect_chance":
+				projectile_redirect_chance = min(0.85, projectile_redirect_chance + amount)
+			"pickup_radius":
+				pickup_radius += amount
+			"salvage_lifetime":
+				salvage_lifetime += amount
+			"wave_scrap_bonus":
+				wave_scrap_bonus += amount
+			"wave_auto_bank_ratio":
+				wave_auto_bank_ratio = min(1.0, wave_auto_bank_ratio + amount)
+	_ensure_support_arrays()
+
+	var mult_effects: Dictionary = bundle.get("mult", {})
+	for key_variant in mult_effects.keys():
+		var key: String = str(key_variant)
+		var multiplier: float = float(mult_effects[key_variant])
+		match key:
+			"fire_rate":
+				fire_interval /= multiplier
+			"nuke_damage":
+				nuke_damage *= multiplier
+			"nuke_radius":
+				nuke_blast_radius *= multiplier
+			"bullet_blast_damage":
+				bullet_blast_damage_scale *= multiplier
+			"crit_bonus":
+				crit_bonus *= multiplier
+			"tower_damage":
+				tower_damage *= multiplier
+			"tower_fire_rate":
+				tower_fire_interval /= multiplier
+			"drone_damage":
+				drone_damage *= multiplier
+			"drone_fire_rate":
+				drone_fire_interval /= multiplier
+			"drone_speed":
+				drone_speed *= multiplier
+			"tentacle_damage":
+				tentacle_damage *= multiplier
+			"tentacle_range":
+				tentacle_range *= multiplier
+			"salvage_multiplier":
+				salvage_multiplier *= multiplier
+			"upgrade_power_multiplier":
+				upgrade_power_multiplier *= multiplier
+
+func _finish_run(reason: String) -> void:
+	if run_state == RUN_STATES.SUMMARY:
+		return
+	run_state = RUN_STATES.SUMMARY
+	Global.game_state = Util.GAME_STATES.UPGRADES
+	upgrade_panel.hide()
+	_bank_remaining_salvage(1.0)
+	last_run_results = _build_run_results(reason)
+	persistent_data = RED_SKY_PROGRESS.apply_run_results(last_run_results)
+	summary_title_label.text = "Red Sky Defense Summary"
+	summary_label.text = str(last_run_results.get("summary_text", "Run complete."))
+	summary_stats_label.text = str(last_run_results.get("summary_stats_text", ""))
+	continue_button.text = "Return to Upgrades"
+	retry_button.text = "Run Again"
+	summary_panel.show()
+	_refresh_mouse_capture_state()
+
+func _build_run_results(reason: String) -> Dictionary:
+	var wallet_gain: int = RED_SKY_DATA.calculate_meta_scrap_reward({
+		"score": score,
+		"waves_cleared": waves_cleared,
+		"meta_reward_multiplier": meta_reward_multiplier
+	}, {"meta_reward_multiplier": meta_reward_multiplier})
+	var wallet_bonus: int = max(0, wallet_gain - score)
+	var kill_lines := PackedStringArray()
+	for enemy_type in ["raider", "runner", "gunship", "bomber"]:
+		kill_lines.append("%s x%d" % [_get_enemy_display_name(enemy_type), int(enemy_kill_counts.get(enemy_type, 0))])
+	var summary_lines := PackedStringArray([
+		"Run complete: %s" % reason,
+		"",
+		"Waves cleared: %d" % waves_cleared,
+		"Final wave reached: %d" % current_wave,
+		"Scrap banked: %d" % score,
+		"Wave bonus scrap: %d" % bonus_scrap_earned,
+		"Damage dealt: %d" % int(round(damage_dealt)),
+		"Hull damage taken: %d" % int(round(damage_taken)),
+		"Shield damage absorbed: %d" % int(round(shield_damage_absorbed)),
+		"Nukes launched: %d" % nukes_launched,
+		"Enemy projectiles destroyed: %d" % enemy_projectiles_destroyed,
+		"Enemy projectiles redirected: %d" % enemy_projectiles_deflected,
+		"Runners escaped: %d" % escape_scores,
+		"Salvage collected: %d    Salvage lost: %d" % [salvage_collected, salvage_lost],
+		"Tower kills: %d    Drone kills: %d    Tentacle kills: %d" % [tower_kills, drone_kills, tentacle_kills],
+		"",
+		"Kills by type:",
+		"\n".join(kill_lines)
+	])
+	if wallet_bonus > 0:
+		summary_lines.insert(5, "Command scrap bonus: %d    Meta scrap payout: %d" % [wallet_bonus, wallet_gain])
+	var summary_text := "\n".join(summary_lines)
+	var summary_stats_text := "Best Score: %d    Best Wave: %d    Total Runs: %d    Shots Fired: %d" % [
+		max(int(persistent_data.get("best_score", 0)), score),
+		max(int(persistent_data.get("best_wave", 0)), waves_cleared),
+		int(persistent_data.get("runs", 0)) + 1,
+		shots_fired
+	]
+	return {
+		"reason": reason,
+		"waves_cleared": waves_cleared,
+		"final_wave": current_wave,
+		"score": score,
+		"wallet_bonus": wallet_bonus,
+		"wallet_gain": wallet_gain,
+		"damage_dealt": int(round(damage_dealt)),
+		"damage_taken": int(round(damage_taken)),
+		"shield_damage_absorbed": int(round(shield_damage_absorbed)),
+		"nukes_launched": nukes_launched,
+		"enemy_projectiles_destroyed": enemy_projectiles_destroyed,
+		"enemy_projectiles_deflected": enemy_projectiles_deflected,
+		"escape_scores": escape_scores,
+		"shots_fired": shots_fired,
+		"total_kills": total_kills,
+		"tower_kills": tower_kills,
+		"drone_kills": drone_kills,
+		"tentacle_kills": tentacle_kills,
+		"salvage_collected": salvage_collected,
+		"salvage_lost": salvage_lost,
+		"bonus_scrap_earned": bonus_scrap_earned,
+		"enemy_kill_counts": enemy_kill_counts.duplicate(true),
+		"summary_text": summary_text,
+		"summary_stats_text": summary_stats_text
+	}
+
+func _refresh_ui() -> void:
+	wave_label.text = "Wave %d  Clear %d" % [current_wave, waves_cleared]
+	if shield_max > 0.0:
+		health_label.text = "Hull %d/%d  Shield %d/%d" % [int(round(base_health)), int(round(base_max_health)), int(round(shield_health)), int(round(shield_max))]
+	else:
+		health_label.text = "Hull %d/%d" % [int(round(base_health)), int(round(base_max_health))]
+	score_label.text = "Scrap %s" % Util.get_number_short_text(score)
+	nukes_label.text = "Nukes %d" % remaining_nukes
+
+func _update_upgrade_offer_layout(visible_count: int) -> void:
+	if upgrade_buttons_grid == null:
+		return
+	var clamped_count: int = maxi(1, visible_count)
+	if clamped_count <= 1:
+		upgrade_buttons_grid.columns = 1
+	elif clamped_count == 2:
+		upgrade_buttons_grid.columns = 2
+	elif clamped_count <= 4:
+		upgrade_buttons_grid.columns = 2
+	else:
+		upgrade_buttons_grid.columns = 3
+	var min_height: float = 128.0
+	match clamped_count:
+		1:
+			min_height = 240.0
+		2:
+			min_height = 196.0
+		3:
+			min_height = 168.0
+		4:
+			min_height = 148.0
+		_:
+			min_height = 128.0
+	for button in upgrade_buttons:
+		if button == null:
+			continue
+		button.custom_minimum_size = Vector2(0.0, min_height)
+
+func _apply_upgrade_button_rarity_style(button: Button, offer_tier: int) -> void:
+	if button == null:
+		return
+	var tier_def: Dictionary = RED_SKY_DATA.get_wave_offer_tier_definition(offer_tier)
+	var border_color: Color = tier_def.get("border", Color(0.94, 0.94, 0.96, 1.0))
+	var intensity: float = clampf((float(offer_tier) + 1.0) / 6.0, 0.24, 1.0)
+	button.add_theme_stylebox_override("normal", _make_upgrade_button_style(border_color, 0.12 + intensity * 0.08, 3.0 + float(offer_tier)))
+	button.add_theme_stylebox_override("hover", _make_upgrade_button_style(border_color.lightened(0.1), 0.16 + intensity * 0.1, 4.0 + float(offer_tier)))
+	button.add_theme_stylebox_override("pressed", _make_upgrade_button_style(border_color.darkened(0.08), 0.2 + intensity * 0.1, 4.0 + float(offer_tier)))
+	button.add_theme_stylebox_override("focus", _make_upgrade_button_style(border_color.lightened(0.16), 0.16 + intensity * 0.12, 4.0 + float(offer_tier)))
+	button.add_theme_stylebox_override("disabled", _make_upgrade_button_style(border_color.darkened(0.22), 0.08, 2.0 + float(offer_tier)))
+	button.add_theme_color_override("font_color", Color(0.97, 0.96, 0.92, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 0.99, 0.96, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(1.0, 0.98, 0.94, 1.0))
+	button.add_theme_color_override("font_focus_color", Color(1.0, 0.99, 0.96, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.68, 0.66, 0.64, 1.0))
+	button.add_theme_constant_override("outline_size", 2)
+	button.add_theme_color_override("font_outline_color", Color(0.04, 0.04, 0.05, 0.92))
+
+func _make_upgrade_button_style(border_color: Color, tint_amount: float, border_size: float) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.11, 0.1, 0.12, 0.96).lerp(border_color, clampf(tint_amount, 0.0, 0.45))
+	style.set_border_width_all(int(round(border_size)))
+	style.border_color = border_color
+	style.corner_radius_top_left = 14
+	style.corner_radius_top_right = 14
+	style.corner_radius_bottom_right = 14
+	style.corner_radius_bottom_left = 14
+	style.expand_margin_left = 2.0
+	style.expand_margin_top = 2.0
+	style.expand_margin_right = 2.0
+	style.expand_margin_bottom = 2.0
+	style.content_margin_left = 16.0
+	style.content_margin_top = 14.0
+	style.content_margin_right = 16.0
+	style.content_margin_bottom = 14.0
+	style.shadow_color = Color(border_color.r, border_color.g, border_color.b, 0.18)
+	style.shadow_size = 6
+	style.shadow_offset = Vector2(0.0, 3.0)
+	return style
+
+func _round_upgrade_count(value: float) -> int:
+	if value <= 0.0:
+		return int(round(value))
+	return maxi(1, int(ceil(value - 0.0001)))
+
+func _draw() -> void:
+	var viewport_size := get_viewport_rect().size
+	var top_color := SKY_TOP_COLOR.lerp(SKY_TOP_NIGHT_COLOR, environment_darkness)
+	var bottom_color := SKY_BOTTOM_COLOR.lerp(SKY_BOTTOM_NIGHT_COLOR, environment_darkness)
+	var ground_color := GROUND_COLOR.lerp(GROUND_NIGHT_COLOR, environment_darkness)
+	var sun_center := Vector2(viewport_size.x * 0.78, lerpf(viewport_size.y * 0.22, viewport_size.y * 0.72, sun_progress))
+	var sun_color := Color(1.0, lerpf(0.55, 0.32, environment_darkness), lerpf(0.33, 0.2, environment_darkness), lerpf(0.18, 0.07, environment_darkness))
+	draw_rect(Rect2(Vector2.ZERO, viewport_size), top_color, true)
+	draw_rect(Rect2(Vector2(0.0, viewport_size.y * 0.58), Vector2(viewport_size.x, viewport_size.y * 0.42)), bottom_color, true)
+	draw_circle(sun_center, 110.0, sun_color)
+	draw_rect(Rect2(0.0, viewport_size.y - GROUND_HEIGHT, viewport_size.x, GROUND_HEIGHT), ground_color, true)
+	_draw_base()
+	_draw_support_units()
+	_draw_enemies()
+	_draw_player_bullets()
+	_draw_nukes()
+	_draw_enemy_projectiles()
+	_draw_salvage_pickups()
+	_draw_support_effects()
+	_draw_explosions()
+	_draw_floating_texts()
+	if run_state == RUN_STATES.RUNNING:
+		_draw_aim_cursor()
+
+func _draw_base() -> void:
+	var base_pos := _get_base_position()
+	draw_circle(base_pos, BASE_RADIUS, BASE_COLOR)
+	draw_circle(base_pos, BASE_RADIUS - 18.0, BASE_DARK_COLOR)
+	draw_rect(Rect2(base_pos.x - 120.0, base_pos.y + 26.0, 240.0, 18.0), Color(0.25, 0.19, 0.14, 1.0), true)
+	draw_line(base_pos + Vector2(-22.0, -16.0), aim_cursor_screen_pos, Color(1.0, 0.79, 0.49, 0.12), 2.0)
+	var health_ratio := clampf(base_health / max(base_max_health, 1.0), 0.0, 1.0)
+	draw_rect(Rect2(base_pos.x - 84.0, base_pos.y - 92.0, 168.0, 12.0), Color(0.18, 0.09, 0.09, 0.9), true)
+	draw_rect(Rect2(base_pos.x - 82.0, base_pos.y - 90.0, 164.0 * health_ratio, 8.0), Color(0.84, 0.35, 0.3, 1.0), true)
+	if shield_max > 0.0:
+		var shield_ratio := clampf(shield_health / max(shield_max, 1.0), 0.0, 1.0)
+		draw_arc(base_pos, BASE_RADIUS + 14.0, PI * 0.12, PI * 0.88, 24, Color(SHIELD_COLOR.r, SHIELD_COLOR.g, SHIELD_COLOR.b, 0.25), 10.0)
+		draw_arc(base_pos, BASE_RADIUS + 14.0, PI * 0.12, PI * (0.12 + 0.76 * shield_ratio), 24, SHIELD_COLOR, 8.0)
+
+func _draw_support_units() -> void:
+	for tower_pos in _get_tower_positions():
+		draw_rect(Rect2(tower_pos.x - 10.0, tower_pos.y - 8.0, 20.0, 16.0), Color(0.16, 0.22, 0.28, 1.0), true)
+		draw_line(tower_pos, tower_pos + Vector2(18.0, -10.0), TOWER_COLOR, 3.0)
+	for drone_pos in _get_drone_positions():
+		draw_circle(drone_pos, 7.0, DRONE_COLOR)
+		draw_circle(drone_pos, 3.0, Color(0.12, 0.18, 0.22, 1.0))
+	for anchor in _get_tentacle_anchor_positions():
+		draw_line(_get_base_position(), anchor, Color(TENTACLE_COLOR.r, TENTACLE_COLOR.g, TENTACLE_COLOR.b, 0.35), 2.0)
+		draw_circle(anchor, 5.0, TENTACLE_COLOR)
+
+func _draw_enemies() -> void:
+	for enemy in enemies:
+		var pos: Vector2 = enemy.get("pos", Vector2.ZERO)
+		var radius: float = float(enemy.get("radius", 18.0))
+		var enemy_type: String = String(enemy.get("type", "raider"))
+		var rotation := _get_enemy_rotation(enemy)
+		match enemy_type:
+			"runner":
+				draw_polygon(_build_rotated_points([Vector2(0.0, -radius - 4.0), Vector2(radius * 0.65, radius * 0.95), Vector2(0.0, radius * 0.4), Vector2(-radius * 0.65, radius * 0.95)], rotation, pos), [Color(0.98, 0.8, 0.4, 1.0)])
+			"gunship":
+				draw_polygon(_build_rotated_points([Vector2(0.0, -radius * 0.95), Vector2(radius * 1.35, -radius * 0.25), Vector2(radius * 0.9, radius * 0.5), Vector2(0.0, radius * 0.2), Vector2(-radius * 0.9, radius * 0.5), Vector2(-radius * 1.35, -radius * 0.25)], rotation, pos), [Color(0.86, 0.57, 0.44, 1.0)])
+			"bomber":
+				draw_polygon(_build_rotated_points([Vector2(0.0, -radius * 1.1), Vector2(radius * 0.95, -radius * 0.45), Vector2(radius * 1.15, radius * 0.45), Vector2(0.0, radius * 0.95), Vector2(-radius * 1.15, radius * 0.45), Vector2(-radius * 0.95, -radius * 0.45)], rotation, pos), [Color(0.76, 0.33, 0.28, 1.0)])
+			_:
+				draw_polygon(_build_rotated_points([Vector2(0.0, -radius * 1.0), Vector2(radius * 0.8, 0.0), Vector2(0.0, radius * 0.92), Vector2(-radius * 0.8, 0.0)], rotation, pos), [Color(0.89, 0.75, 0.61, 1.0)])
+		if float(enemy.get("slow_timer", 0.0)) > 0.0:
+			draw_arc(pos, radius + 6.0, 0.0, TAU, 16, Color(0.6, 0.92, 1.0, 0.7), 2.0)
+
+func _draw_player_bullets() -> void:
+	for bullet in player_bullets:
+		var color: Color = PLAYER_CRIT_BULLET_COLOR if bool(bullet.get("crit", false)) else PLAYER_BULLET_COLOR
+		draw_circle(bullet.get("pos", Vector2.ZERO), float(bullet.get("radius", BULLET_RADIUS)), color)
+
+func _draw_nukes() -> void:
+	for nuke in nukes:
+		var pos: Vector2 = nuke.get("pos", Vector2.ZERO)
+		var vel: Vector2 = nuke.get("vel", Vector2.UP * -1.0)
+		draw_line(pos - vel.normalized() * 24.0, pos, Color(1.0, 0.8, 0.52, 0.7), 3.0)
+		draw_circle(pos, NUKE_RADIUS, NUKE_COLOR)
+		draw_circle(pos, NUKE_RADIUS * 0.45, Color(1.0, 0.93, 0.72, 1.0))
+
+func _draw_enemy_projectiles() -> void:
+	for projectile in enemy_projectiles:
+		var color := ENEMY_PROJECTILE_COLOR if String(projectile.get("team", "enemy")) == "enemy" else DEFLECTED_PROJECTILE_COLOR
+		draw_circle(projectile.get("pos", Vector2.ZERO), float(projectile.get("radius", 12.0)), color)
+
+func _draw_salvage_pickups() -> void:
+	for pickup in salvage_pickups:
+		var pos: Vector2 = pickup.get("pos", Vector2.ZERO)
+		var points := PackedVector2Array([pos + Vector2(0.0, -6.0), pos + Vector2(6.0, 0.0), pos + Vector2(0.0, 6.0), pos + Vector2(-6.0, 0.0)])
+		draw_polygon(points, [SALVAGE_COLOR])
+
+func _draw_support_effects() -> void:
+	for effect in support_effects:
+		var progress: float = clampf(float(effect.get("age", 0.0)) / max(float(effect.get("duration", SUPPORT_EFFECT_DURATION)), 0.01), 0.0, 1.0)
+		var color: Color = effect.get("color", Color.WHITE)
+		var alpha: float = 1.0 - progress
+		draw_line(effect.get("start", Vector2.ZERO), effect.get("finish", Vector2.ZERO), Color(color.r, color.g, color.b, alpha), 3.0)
+
+func _draw_explosions() -> void:
+	for explosion in explosions:
+		var pos: Vector2 = explosion.get("pos", Vector2.ZERO)
+		var radius: float = float(explosion.get("radius", 0.0))
+		var progress: float = clampf(float(explosion.get("age", 0.0)) / max(float(explosion.get("duration", 0.2)), 0.01), 0.0, 1.0)
+		var alpha := 1.0 - progress
+		draw_circle(pos, radius, Color(EXPLOSION_COLOR.r, EXPLOSION_COLOR.g, EXPLOSION_COLOR.b, 0.24 * alpha))
+		draw_circle(pos, radius * 0.55, Color(1.0, 0.86, 0.62, 0.18 * alpha))
+		draw_arc(pos, radius, 0.0, TAU, 48, Color(1.0, 0.84, 0.52, 0.65 * alpha), 4.0)
+
+func _draw_floating_texts() -> void:
+	for entry in floating_texts:
+		draw_string(ThemeDB.fallback_font, entry.get("pos", Vector2.ZERO), String(entry.get("text", "")), HORIZONTAL_ALIGNMENT_CENTER, -1.0, int(entry.get("font_size", 22)), entry.get("color", Color.WHITE))
+
+func _draw_aim_cursor() -> void:
+	draw_arc(aim_cursor_screen_pos, AIM_CURSOR_RADIUS, 0.0, TAU, 32, Color(0.99, 0.86, 0.42, 0.95), 2.0)
+	draw_line(aim_cursor_screen_pos + Vector2(-AIM_CURSOR_RADIUS - 5.0, 0.0), aim_cursor_screen_pos + Vector2(AIM_CURSOR_RADIUS + 5.0, 0.0), Color(0.99, 0.86, 0.42, 0.95), 2.0)
+	draw_line(aim_cursor_screen_pos + Vector2(0.0, -AIM_CURSOR_RADIUS - 5.0), aim_cursor_screen_pos + Vector2(0.0, AIM_CURSOR_RADIUS + 5.0), Color(0.99, 0.86, 0.42, 0.95), 2.0)
+	draw_circle(aim_cursor_screen_pos, 2.0, Color(0.16, 0.08, 0.04, 1.0))
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var key_event := event as InputEventKey
+		if key_event.pressed and not key_event.echo:
+			if key_event.keycode == KEY_MINUS or key_event.keycode == KEY_KP_SUBTRACT:
+				tune_text_pixel_filter(-TEXT_FILTER_SCALE_STEP)
+				get_viewport().set_input_as_handled()
+				return
+			if key_event.keycode == KEY_KP_ADD or (key_event.keycode == KEY_EQUAL and key_event.shift_pressed):
+				tune_text_pixel_filter(TEXT_FILTER_SCALE_STEP)
+				get_viewport().set_input_as_handled()
+				return
+	if event is InputEventMouseMotion:
+		var motion_event := event as InputEventMouseMotion
+		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and run_state == RUN_STATES.RUNNING:
+			aim_cursor_screen_pos = _clamp_cursor_to_viewport(aim_cursor_screen_pos + motion_event.relative)
+		else:
+			aim_cursor_screen_pos = _clamp_cursor_to_viewport(motion_event.position)
+	elif event is InputEventMouseButton:
+		var mouse_button_event := event as InputEventMouseButton
+		if not (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and run_state == RUN_STATES.RUNNING):
+			aim_cursor_screen_pos = _clamp_cursor_to_viewport(mouse_button_event.position)
+		if run_state == RUN_STATES.RUNNING and mouse_button_event.pressed and mouse_button_event.button_index == MOUSE_BUTTON_LEFT:
+			_launch_nuke()
+
+func _launch_nuke() -> void:
+	if remaining_nukes <= 0:
+		return
+	var base_pos := _get_base_position()
+	var target := _clamp_cursor_to_viewport(aim_cursor_screen_pos)
+	if target.distance_to(base_pos) <= 24.0:
+		return
+	remaining_nukes -= 1
+	nukes_launched += 1
+	nukes.append({"pos": base_pos, "target": target, "vel": (target - base_pos).normalized() * NUKE_SPEED})
+
+func _process_salvage_pickups(delta: float) -> void:
+	var collectors: Array[Vector2] = [aim_cursor_screen_pos]
+	collectors.append_array(_get_drone_positions())
+	for pickup_index in range(salvage_pickups.size() - 1, -1, -1):
+		var pickup: Dictionary = salvage_pickups[pickup_index]
+		pickup["age"] = float(pickup.get("age", 0.0)) + delta
+		var pos: Vector2 = pickup.get("pos", Vector2.ZERO)
+		var vel: Vector2 = pickup.get("vel", Vector2.ZERO)
+		var nearest_collector: Vector2 = aim_cursor_screen_pos
+		var nearest_distance := INF
+		for collector in collectors:
+			var dist: float = pos.distance_to(collector)
+			if dist < nearest_distance:
+				nearest_distance = dist
+				nearest_collector = collector
+		if nearest_distance <= pickup_radius * 3.0:
+			vel += (nearest_collector - pos).normalized() * 420.0 * delta
+		vel *= 0.94
+		pos += vel * delta
+		pickup["vel"] = vel
+		pickup["pos"] = pos
+		if nearest_distance <= pickup_radius:
+			_collect_salvage_pickup(pickup_index, 1.0)
+			continue
+		if float(pickup.get("age", 0.0)) >= salvage_lifetime:
+			salvage_lost += int(pickup.get("value", 0))
+			salvage_pickups.remove_at(pickup_index)
+		else:
+			salvage_pickups[pickup_index] = pickup
+
+func _spawn_salvage(position: Vector2, total_value: int) -> void:
+	var shard_count: int = clampi(1 + int(total_value / 24), 1, 4)
+	var remaining_value: int = total_value
+	for shard_index in range(shard_count):
+		var shard_value: int = remaining_value if shard_index == shard_count - 1 else maxi(1, int(round(float(total_value) / float(shard_count))))
+		remaining_value -= shard_value
+		salvage_pickups.append({
+			"pos": position + Vector2(rng.randf_range(-12.0, 12.0), rng.randf_range(-8.0, 8.0)),
+			"vel": Vector2(rng.randf_range(-90.0, 90.0), rng.randf_range(-100.0, 10.0)),
+			"value": shard_value,
+			"age": 0.0
+		})
+
+func _award_wave_clear_bonus() -> void:
+	if wave_scrap_bonus <= 0.0:
+		return
+	var bonus_value: int = max(0, int(round(wave_scrap_bonus * float(current_wave))))
+	if bonus_value <= 0:
+		return
+	score += bonus_value
+	bonus_scrap_earned += bonus_value
+	_spawn_floating_text("+%d SCRAP" % bonus_value, get_viewport_rect().size * Vector2(0.5, 0.22), SALVAGE_COLOR, 26)
+
+func _get_upgrade_icon_texture(upgrade_id: String) -> Texture2D:
+	var upgrade_def: Dictionary = RED_SKY_DATA.get_wave_upgrade_definition(upgrade_id)
+	var icon_id: String = str(upgrade_def.get("icon", ""))
+	if icon_id.begins_with("redsky://"):
+		return RED_SKY_ICON_FACTORY.get_icon(icon_id)
+	if not icon_id.is_empty() and ResourceLoader.exists(icon_id):
+		return load(icon_id) as Texture2D
+	return null
+
+func _collect_salvage_pickup(pickup_index: int, value_ratio: float) -> void:
+	var pickup: Dictionary = salvage_pickups[pickup_index]
+	var value: int = int(round(float(pickup.get("value", 0)) * value_ratio))
+	score += value
+	salvage_collected += value
+	_spawn_floating_text("+%d" % value, pickup.get("pos", Vector2.ZERO), SALVAGE_COLOR, 22)
+	var lost_amount: int = int(pickup.get("value", 0)) - value
+	if lost_amount > 0:
+		salvage_lost += lost_amount
+	salvage_pickups.remove_at(pickup_index)
+
+func _bank_remaining_salvage(ratio: float) -> void:
+	for pickup_index in range(salvage_pickups.size() - 1, -1, -1):
+		_collect_salvage_pickup(pickup_index, ratio)
+
+func _spawn_support_effect(start_pos: Vector2, finish_pos: Vector2, color: Color, duration: float) -> void:
+	support_effects.append({"start": start_pos, "finish": finish_pos, "color": color, "duration": duration, "age": 0.0})
+
+func _get_pointer_direction() -> Vector2:
+	var direction := aim_cursor_screen_pos - _get_base_position()
+	if direction.length() < 8.0:
+		return Vector2.ZERO
+	return direction.normalized()
+
+func _get_base_position() -> Vector2:
+	var viewport := get_viewport_rect().size
+	return Vector2(viewport.x * 0.5, viewport.y - GROUND_HEIGHT - 20.0)
+
+func _get_random_spawn_position(viewport: Vector2) -> Vector2:
+	var edge_roll: int = rng.randi_range(0, 2)
+	if edge_roll == 0:
+		return Vector2(rng.randf_range(80.0, viewport.x - 80.0), -40.0)
+	if edge_roll == 1:
+		return Vector2(-40.0, rng.randf_range(40.0, viewport.y * 0.26))
+	return Vector2(viewport.x + 40.0, rng.randf_range(40.0, viewport.y * 0.26))
+
+func _find_nearest_enemy_index(origin: Vector2, max_distance: float) -> int:
+	var best_index := -1
+	var best_distance := max_distance
+	for enemy_index in range(enemies.size()):
+		var distance: float = origin.distance_to(enemies[enemy_index].get("pos", Vector2.ZERO))
+		if distance <= best_distance:
+			best_distance = distance
+			best_index = enemy_index
+	return best_index
+
+func _get_reflected_projectile_direction(projectile_pos: Vector2) -> Vector2:
+	var enemy_index: int = _find_nearest_enemy_index(projectile_pos, 800.0)
+	if enemy_index != -1:
+		return (enemies[enemy_index].get("pos", Vector2.ZERO) - projectile_pos).normalized()
+	return Vector2.UP
+
+func _ensure_support_arrays() -> void:
+	while tower_fire_timers.size() < tower_count:
+		tower_fire_timers.append(rng.randf_range(0.1, tower_fire_interval))
+	while tower_fire_timers.size() > tower_count:
+		tower_fire_timers.remove_at(tower_fire_timers.size() - 1)
+	while drone_fire_timers.size() < drone_count:
+		drone_fire_timers.append(rng.randf_range(0.05, drone_fire_interval))
+	while drone_fire_timers.size() > drone_count:
+		drone_fire_timers.remove_at(drone_fire_timers.size() - 1)
+	while tentacle_cooldowns.size() < tentacle_count:
+		tentacle_cooldowns.append(rng.randf_range(0.08, tentacle_attack_cooldown))
+	while tentacle_cooldowns.size() > tentacle_count:
+		tentacle_cooldowns.remove_at(tentacle_cooldowns.size() - 1)
+
+func _get_tower_positions() -> Array[Vector2]:
+	var positions: Array[Vector2] = []
+	var base_pos := _get_base_position()
+	for tower_index in range(tower_count):
+		var angle: float = lerpf(-0.75, -PI + 0.75, float(tower_index + 1) / float(tower_count + 1))
+		positions.append(base_pos + Vector2(cos(angle), sin(angle)) * (BASE_RADIUS + 34.0))
+	return positions
+
+func _get_drone_positions() -> Array[Vector2]:
+	var positions: Array[Vector2] = []
+	var base_pos := _get_base_position()
+	for drone_index in range(drone_count):
+		var angle: float = support_time * 1.5 + float(drone_index) * TAU / max(float(drone_count), 1.0)
+		positions.append(base_pos + Vector2(cos(angle), sin(angle) * 0.55) * (BASE_RADIUS + 52.0))
+	return positions
+
+func _get_tentacle_anchor_positions() -> Array[Vector2]:
+	var positions: Array[Vector2] = []
+	var base_pos := _get_base_position()
+	for tentacle_index in range(tentacle_count):
+		var angle: float = lerpf(-PI * 0.82, -PI * 0.18, float(tentacle_index + 1) / float(tentacle_count + 1))
+		positions.append(base_pos + Vector2(cos(angle), sin(angle)) * (BASE_RADIUS + 14.0))
+	return positions
+
+func _is_point_far_offscreen(point: Vector2, margin: float) -> bool:
+	var viewport := get_viewport_rect().size
+	return point.x < -margin or point.x > viewport.x + margin or point.y < -margin or point.y > viewport.y + margin
+
+func _spawn_floating_text(text: String, position: Vector2, color: Color, font_size: int = 22) -> void:
+	floating_texts.append({"text": text, "pos": position, "color": color, "font_size": font_size, "age": 0.0})
+
+func _process_floating_texts(delta: float) -> void:
+	for text_index in range(floating_texts.size() - 1, -1, -1):
+		var entry: Dictionary = floating_texts[text_index]
+		entry["age"] = float(entry.get("age", 0.0)) + delta
+		entry["pos"] = entry.get("pos", Vector2.ZERO) + Vector2(0.0, -38.0) * delta
+		if float(entry.get("age", 0.0)) >= FLOATING_TEXT_DURATION:
+			floating_texts.remove_at(text_index)
+		else:
+			var alpha: float = 1.0 - float(entry.get("age", 0.0)) / FLOATING_TEXT_DURATION
+			var color: Color = entry.get("color", Color.WHITE)
+			entry["color"] = Color(color.r, color.g, color.b, alpha)
+			floating_texts[text_index] = entry
+
+func _get_enemy_display_name(enemy_type: String) -> String:
+	match enemy_type:
+		"runner":
+			return "Runner"
+		"gunship":
+			return "Gunship"
+		"bomber":
+			return "Bomber"
+		_:
+			return "Raider"
+
+func _reset_aim_cursor() -> void:
+	aim_cursor_screen_pos = get_viewport_rect().size * 0.5
+
+func _clamp_cursor_to_viewport(position: Vector2) -> Vector2:
+	var viewport_size := get_viewport_rect().size
+	return Vector2(clampf(position.x, 0.0, max(viewport_size.x - 1.0, 0.0)), clampf(position.y, 0.0, max(viewport_size.y - 1.0, 0.0)))
+
+func _refresh_mouse_capture_state() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if run_state == RUN_STATES.RUNNING else Input.MOUSE_MODE_VISIBLE
+
+func _update_environment(delta: float) -> void:
+	var base_darkness := clampf(float(max(current_wave - 1, 0)) / 11.0, 0.0, 0.82)
+	var target_darkness := base_darkness
+	if run_state == RUN_STATES.UPGRADE:
+		target_darkness = max(0.0, base_darkness - 0.2)
+	elif run_state == RUN_STATES.SUMMARY:
+		target_darkness = min(0.9, base_darkness + 0.08)
+	environment_darkness = lerpf(environment_darkness, target_darkness, clampf(delta * 1.2, 0.0, 1.0))
+	sun_progress = lerpf(sun_progress, target_darkness, clampf(delta * 0.9, 0.0, 1.0))
+
+func _get_enemy_rotation(enemy: Dictionary) -> float:
+	var velocity: Vector2 = enemy.get("vel", Vector2.ZERO)
+	if velocity.length_squared() <= 0.001:
+		velocity = _get_base_position() - enemy.get("pos", Vector2.ZERO)
+	return velocity.angle() + PI * 0.5
+
+func _build_rotated_points(local_points: Array[Vector2], rotation: float, center: Vector2) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for point in local_points:
+		points.append(center + point.rotated(rotation))
+	return points
+
+func _on_continue_pressed() -> void:
+	Global.start_in_upgrade_scene = true
+	SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
+
+func _on_retry_pressed() -> void:
+	_begin_run()

@@ -1,0 +1,206 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Games/Turkey/Scenes/TurkeyMain.gd" id="1"]
+[ext_resource type="Theme" uid="uid://bxx07kmhw0oiv" path="res://Theme/Theme_Small_Medium_Font.tres" id="2"]
+
+[node name="TurkeyMain" type="Node3D"]
+script = ExtResource("1")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.825336, -0.344846, 0.447214, 0, 0.791782, 0.610803, -0.564642, -0.504633, 0.653644, 0, 5, 0)
+light_energy = 1.45
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 0.976296, 0.21644, 0, -0.21644, 0.976296, 0, 1.66, -1.8)
+current = true
+fov = 74.0
+
+[node name="LaneRoot" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="DynamicRoot" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="AimLine" type="MeshInstance3D" parent="."]
+unique_name_in_owner = true
+visible = false
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="RootVBox" type="VBoxContainer" parent="CanvasLayer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TopPanel" type="PanelContainer" parent="CanvasLayer/MarginContainer/RootVBox"]
+layout_mode = 2
+theme = ExtResource("2")
+size_flags_horizontal = 3
+
+[node name="TopMargin" type="MarginContainer" parent="CanvasLayer/MarginContainer/RootVBox/TopPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 14
+
+[node name="TopVBox" type="VBoxContainer" parent="CanvasLayer/MarginContainer/RootVBox/TopPanel/TopMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/MarginContainer/RootVBox/TopPanel/TopMargin/TopVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "TURKEY"
+
+[node name="WalletLabel" type="Label" parent="CanvasLayer/MarginContainer/RootVBox/TopPanel/TopMargin/TopVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Wallet: $0"
+
+[node name="ScorecardLabel" type="Label" parent="CanvasLayer/MarginContainer/RootVBox/TopPanel/TopMargin/TopVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "F1: -- | --\nF2: -- | --\nF3: -- | --"
+
+[node name="FrameStatusLabel" type="Label" parent="CanvasLayer/MarginContainer/RootVBox/TopPanel/TopMargin/TopVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Frame 1, Ball 1"
+
+[node name="ResultLabel" type="Label" parent="CanvasLayer/MarginContainer/RootVBox/TopPanel/TopMargin/TopVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Click once to start your approach, move the mouse left or right to pick the line, then click again to throw."
+autowrap_mode = 3
+
+[node name="Spacer" type="Control" parent="CanvasLayer/MarginContainer/RootVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BottomPanel" type="PanelContainer" parent="CanvasLayer/MarginContainer/RootVBox"]
+layout_mode = 2
+theme = ExtResource("2")
+size_flags_horizontal = 3
+
+[node name="BottomMargin" type="MarginContainer" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="BottomVBox" type="VBoxContainer" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel/BottomMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="StartLocationTitle" type="Label" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel/BottomMargin/BottomVBox"]
+layout_mode = 2
+text = "Starting Position"
+
+[node name="StartLocationRow" type="HBoxContainer" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel/BottomMargin/BottomVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SpinTitle" type="Label" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel/BottomMargin/BottomVBox"]
+layout_mode = 2
+text = "Spin"
+
+[node name="SpinRow" type="HBoxContainer" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel/BottomMargin/BottomVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AimingHelpLabel" type="Label" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel/BottomMargin/BottomVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Default line is center. Starter gear is weak on purpose, so a strike should feel rare."
+autowrap_mode = 3
+
+[node name="PowerBar" type="ProgressBar" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel/BottomMargin/BottomVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 100.0
+value = 0.0
+show_percentage = false
+
+[node name="EndPanel" type="PanelContainer" parent="CanvasLayer/MarginContainer"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -290.0
+offset_top = -180.0
+offset_right = 290.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2")
+
+[node name="EndMargin" type="MarginContainer" parent="CanvasLayer/MarginContainer/EndPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="EndVBox" type="VBoxContainer" parent="CanvasLayer/MarginContainer/EndPanel/EndMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="EndTitleLabel" type="Label" parent="CanvasLayer/MarginContainer/EndPanel/EndMargin/EndVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "SERIES COMPLETE"
+horizontal_alignment = 1
+
+[node name="EndScorecardLabel" type="Label" parent="CanvasLayer/MarginContainer/EndPanel/EndMargin/EndVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "F1: -- | --"
+horizontal_alignment = 1
+
+[node name="EndSummaryLabel" type="Label" parent="CanvasLayer/MarginContainer/EndPanel/EndMargin/EndVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Summary"
+autowrap_mode = 3
+horizontal_alignment = 1
+
+[node name="EndButtons" type="HBoxContainer" parent="CanvasLayer/MarginContainer/EndPanel/EndMargin/EndVBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="PlayAgainButton" type="Button" parent="CanvasLayer/MarginContainer/EndPanel/EndMargin/EndVBox/EndButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "BOWL AGAIN"
+
+[node name="UpgradeButton" type="Button" parent="CanvasLayer/MarginContainer/EndPanel/EndMargin/EndVBox/EndButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "UPGRADES"
+
+[node name="MenuButton" type="Button" parent="CanvasLayer/MarginContainer/EndPanel/EndMargin/EndVBox/EndButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "MAIN MENU"

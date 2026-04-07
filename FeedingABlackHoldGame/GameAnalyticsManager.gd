@@ -230,6 +230,30 @@ func _send_active_game_progression_start_event() -> void:
             }
         )
         return
+    if Util.is_red_sky_game_active():
+        track_progression_event(
+            "start",
+            Util.ACTIVE_GAME_RED_SKY,
+            "wave",
+            "wave_1",
+            null,
+            {
+                "wave": 1,
+            }
+        )
+        return
+    if Util.is_reel_into_darkness_game_active():
+        track_progression_event(
+            "start",
+            Util.ACTIVE_GAME_REEL_INTO_DARKNESS,
+            "run",
+            "dock",
+            null,
+            {
+                "run": 1,
+            }
+        )
+        return
     var battle_level: int = max(1, int(SaveHandler.fishing_next_battle_level))
     track_progression_event(
         "start",
@@ -387,6 +411,18 @@ func _get_active_credentials() -> Dictionary:
             "game_id": Util.ACTIVE_GAME_MINING,
             "game_key": MINING_GAME_KEY,
             "secret_key": MINING_SECRET_KEY,
+        }
+    if Util.is_red_sky_game_active():
+        return {
+            "game_id": Util.ACTIVE_GAME_RED_SKY,
+            "game_key": _default_vanguard_game_key,
+            "secret_key": _default_vanguard_secret_key,
+        }
+    if Util.is_reel_into_darkness_game_active():
+        return {
+            "game_id": Util.ACTIVE_GAME_REEL_INTO_DARKNESS,
+            "game_key": _default_vanguard_game_key,
+            "secret_key": _default_vanguard_secret_key,
         }
     return {
         "game_id": Util.ACTIVE_GAME_VANGUARD,

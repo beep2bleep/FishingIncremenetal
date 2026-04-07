@@ -13,6 +13,8 @@ const START_SCREEN_PROJECT_SETTING := "global/StartScreen"
 
 const ACTIVE_GAME_VANGUARD := "vanguard"
 const ACTIVE_GAME_MINING := "mining"
+const ACTIVE_GAME_RED_SKY := "redsky"
+const ACTIVE_GAME_REEL_INTO_DARKNESS := "reelintodarkness"
 
 const START_SCREEN_MENU := "menu"
 const START_SCREEN_UPGRADES := "upgrade"
@@ -25,6 +27,10 @@ const PATH_VANGUARD_BATTLE := "res://Games/Vanguard/Scenes/VanguardBattleScene.t
 const PATH_MINING_MAIN := "res://Games/Mining/Scenes/MiningMain.tscn"
 const PATH_MINING_MAIN_MENU := "res://Games/Mining/Menus/MiningMainMenu.tscn"
 const PATH_MINING_BATTLE := "res://Games/Mining/Scenes/MiningBattleScene.tscn"
+const PATH_RED_SKY_MAIN := "res://Games/RedSkyDefense/Scenes/MissleMain.tscn"
+const PATH_RED_SKY_MAIN_MENU := "res://Games/RedSkyDefense/Menus/RedSkyMainMenu.tscn"
+const PATH_REEL_INTO_DARKNESS_MAIN := "res://Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.tscn"
+const PATH_REEL_INTO_DARKNESS_MAIN_MENU := "res://Games/ReelIntoDarkness/Menus/ReelIntoDarknessMainMenu.tscn"
 
 
 var dark_pallet = "res://Pallets/Dark_Pallet.tres"
@@ -32,7 +38,7 @@ var light_pallet = "res://Pallets/Light_Pallet.tres"
 
 func get_active_game_id() -> String:
     var active_game: String = str(ProjectSettings.get_setting(ACTIVE_GAME_PROJECT_SETTING, ACTIVE_GAME_VANGUARD)).strip_edges().to_lower()
-    if active_game != ACTIVE_GAME_MINING:
+    if active_game != ACTIVE_GAME_MINING and active_game != ACTIVE_GAME_RED_SKY and active_game != ACTIVE_GAME_REEL_INTO_DARKNESS:
         return ACTIVE_GAME_VANGUARD
     return active_game
 
@@ -42,9 +48,15 @@ func is_mining_game_active() -> bool:
 func is_vanguard_game_active() -> bool:
     return get_active_game_id() == ACTIVE_GAME_VANGUARD
 
+func is_red_sky_game_active() -> bool:
+    return get_active_game_id() == ACTIVE_GAME_RED_SKY
+
+func is_reel_into_darkness_game_active() -> bool:
+    return get_active_game_id() == ACTIVE_GAME_REEL_INTO_DARKNESS
+
 func set_active_game_id(game_id: String) -> void:
     var normalized_game_id: String = str(game_id).strip_edges().to_lower()
-    if normalized_game_id != ACTIVE_GAME_MINING:
+    if normalized_game_id != ACTIVE_GAME_MINING and normalized_game_id != ACTIVE_GAME_RED_SKY and normalized_game_id != ACTIVE_GAME_REEL_INTO_DARKNESS:
         normalized_game_id = ACTIVE_GAME_VANGUARD
     ProjectSettings.set_setting(ACTIVE_GAME_PROJECT_SETTING, normalized_game_id)
 
@@ -56,7 +68,7 @@ func get_start_screen_id() -> String:
 
 func get_configured_start_scene_path() -> String:
     if get_start_screen_id() == START_SCREEN_UPGRADES:
-        if is_mining_game_active():
+        if is_mining_game_active() or is_red_sky_game_active() or is_reel_into_darkness_game_active():
             return get_upgrade_scene_path()
         return get_main_scene_path()
     return PATH_GAME_LAUNCHER
@@ -64,11 +76,19 @@ func get_configured_start_scene_path() -> String:
 func get_main_scene_path() -> String:
     if is_mining_game_active():
         return PATH_MINING_MAIN
+    if is_red_sky_game_active():
+        return PATH_RED_SKY_MAIN
+    if is_reel_into_darkness_game_active():
+        return PATH_REEL_INTO_DARKNESS_MAIN
     return PATH_VANGUARD_MAIN
 
 func get_main_menu_scene_path() -> String:
     if is_mining_game_active():
         return PATH_MINING_MAIN_MENU
+    if is_red_sky_game_active():
+        return PATH_RED_SKY_MAIN_MENU
+    if is_reel_into_darkness_game_active():
+        return PATH_REEL_INTO_DARKNESS_MAIN_MENU
     return PATH_VANGUARD_MAIN_MENU
 
 func get_upgrade_scene_path() -> String:
@@ -77,6 +97,10 @@ func get_upgrade_scene_path() -> String:
 func get_battle_scene_path() -> String:
     if is_mining_game_active():
         return PATH_MINING_BATTLE
+    if is_red_sky_game_active():
+        return PATH_RED_SKY_MAIN
+    if is_reel_into_darkness_game_active():
+        return PATH_REEL_INTO_DARKNESS_MAIN
     return PATH_VANGUARD_BATTLE
 
 
