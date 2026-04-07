@@ -95,6 +95,8 @@ const RUN_ENDING_SPARK_INTERVAL := 0.055
 const RUN_ENDING_FADE_START := 0.42
 const SUMMARY_RECOVER_DURATION := 4.0
 const SUMMARY_GAMEPLAY_DIM_ALPHA := 0.5
+const RUN_START_BANNER_HOLD_DURATION := 1.45
+const RUN_START_BANNER_FADE_DURATION := 0.26
 const WEB_REDRAW_INTERVAL := 1.0 / 30.0
 const WEB_SHIP_VISUAL_INTERVAL := 1.0 / 30.0
 const WEB_TRAIL_VISUAL_INTERVAL := 1.0 / 15.0
@@ -109,10 +111,10 @@ const WEB_EFFECT_CONTACT_SPARKS := 7
 const WEB_EFFECT_DAMAGE_NUMBERS := 8
 const WEB_EFFECT_FULL_SHIP_DETAIL := 9
 const WEB_EFFECT_FULL_TRAIL_BUDDIES := 10
-const WEB_EFFECT_FULL_REDRAW_RATE := 11
-const WEB_EFFECT_BACKGROUND_DOODADS := 12
-const WEB_EFFECT_FULL_NODE_DETAIL := 13
-const WEB_DEFAULT_EFFECT_COUNT := WEB_EFFECT_FULL_TRAIL_BUDDIES + 1
+const WEB_EFFECT_FULL_NODE_DETAIL := 11
+const WEB_EFFECT_FULL_REDRAW_RATE := 12
+const WEB_EFFECT_BACKGROUND_DOODADS := 13
+const WEB_DEFAULT_EFFECT_COUNT := WEB_EFFECT_BACKGROUND_DOODADS
 const WEB_EFFECT_LABELS := [
     "Full HUD refresh",
     "High-res dirt mask",
@@ -125,9 +127,9 @@ const WEB_EFFECT_LABELS := [
     "Damage numbers",
     "Full ship detail",
     "Full trail buddies",
+    "Full node detail",
     "60 FPS redraw",
-    "Background doodads",
-    "Full node detail"
+    "Background doodads"
 ]
 const TUNNEL_COVERAGE_SAMPLE_OFFSETS := [
     Vector2.ZERO,
@@ -294,12 +296,17 @@ var summary_transition_start_dim_alpha := 0.0
 var hud_refresh_accumulator := 0.0
 var web_effects_enabled_count := 0
 var web_effect_last_message := "Web baseline active"
+var web_effect_status_note := ""
+var run_start_banner_panel: PanelContainer
+var run_start_banner_title_label: Label
+var run_start_banner_detail_label: Label
+var run_start_banner_tween: Tween
 
 func _notification(what: int) -> void:
     if what == NOTIFICATION_TRANSLATION_CHANGED:
         material_tiers = MINING_BALANCE.get_material_tiers()
         if active_depth_level >= 1 and active_depth_level <= material_tiers.size():
-            active_material = material_tiers[active_depth_level - 1]
+            active_material = _get_display_material_for_depth_level(active_depth_level)
         _refresh_localized_text()
 
 func _trf(key: String, args: Array = []) -> String:
@@ -320,6 +327,7 @@ func _ready() -> void:
     _update_status_panel_layout()
     get_viewport().size_changed.connect(_on_viewport_size_changed)
     _setup_system_controls()
+    _setup_run_start_banner()
     _configure_summary_panel()
     dive_button.pressed.connect(_on_summary_return_pressed)
     reset_button.pressed.connect(_on_summary_retry_pressed)
@@ -407,11 +415,11 @@ func _begin_run() -> void:
     if simulation_depth_override > 0:
         selected_depth = simulation_depth_override
     active_depth_level = clampi(selected_depth, min_depth, int(persistent_data.get("deepest_level_unlocked", min_depth)))
-    active_material = material_tiers[active_depth_level - 1]
-    hud_last_reported_level = int(persistent_data.get("player_level", 1))
+    active_material = _get_display_material_for_depth_level(active_depth_level)
+    hud_last_reported_level = MINING_PROGRESS_SCRIPT.get_rank(persistent_data)
     if OS.has_feature("web"):
         web_effects_enabled_count = WEB_DEFAULT_EFFECT_COUNT
-        web_effect_last_message = "Default web level: Full trail buddies"
+        web_effect_last_message = "Default web level: %s" % _web_effect_label(WEB_DEFAULT_EFFECT_COUNT - 1)
     else:
         web_effects_enabled_count = 0
         web_effect_last_message = "Web baseline active"
@@ -494,6 +502,7 @@ func _begin_run() -> void:
     _reset_aim_cursor()
     _reset_drill_train()
     _refresh_mouse_capture_state()
+    _show_run_start_banner()
 
 func simulate_autoplay_run(options: Dictionary = {}) -> Dictionary:
     simulation_mode_active = true
@@ -1065,7 +1074,7 @@ func _generate_world() -> void:
                 attempts += 1
                 continue
             break
-        world_nodes.append({
+        var node_data: Dictionary = {
             "id": node_index,
             "pos": pos,
             "radius": radius,
@@ -1079,7 +1088,10 @@ func _generate_world() -> void:
             "value": int(material.get("value", 1)),
             "xp": int(material.get("xp", 3)),
             "sparkle": float(material.get("sparkle", 0.0))
-        })
+        }
+        if OS.has_feature("web"):
+            node_data.merge(_build_node_render_cache(node_data), true)
+        world_nodes.append(node_data)
 
 func _node_overlaps_existing(pos: Vector2, radius: float) -> bool:
     for node in world_nodes:
@@ -1102,6 +1114,19 @@ func _roll_material_for_level(material_pool_indices: Array[int]) -> Dictionary:
         if roll <= 0.0:
             return material_tiers[material_pool_indices[index]]
     return material_tiers[material_pool_indices[material_pool_indices.size() - 1]]
+
+func _get_display_material_depth_level(depth_level: int) -> int:
+    if material_tiers.is_empty():
+        return MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+    return clampi(depth_level + 1, MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL, material_tiers.size())
+
+func _get_display_material_for_depth_level(depth_level: int) -> Dictionary:
+    if material_tiers.is_empty():
+        return {}
+    return material_tiers[_get_display_material_depth_level(depth_level) - 1]
+
+func _get_display_depth_tier_for_run_depth(depth_level: int) -> int:
+    return MINING_PROGRESS_SCRIPT.get_display_depth_tier(_get_display_material_depth_level(depth_level))
 
 func _break_node(node_index: int) -> void:
     var node: Dictionary = world_nodes[node_index]
@@ -1175,22 +1200,21 @@ func _build_run_results(reason_key: String) -> Dictionary:
             "color": material.get("color", Color.WHITE)
         })
 
-    var before_level: int = int(persistent_data.get("player_level", 1))
-    var projected_xp: int = int(persistent_data.get("xp", 0)) + run_xp
-    var projected_level: int = MINING_PROGRESS_SCRIPT.get_level_for_total_xp(projected_xp)
+    var before_level: int = MINING_PROGRESS_SCRIPT.get_rank(persistent_data)
+    var projected_xp: int = MINING_PROGRESS_SCRIPT.get_rank_xp(persistent_data) + run_xp
+    var projected_level: int = MINING_PROGRESS_SCRIPT.get_rank_for_total_xp(projected_xp)
     var projected_depth_unlock: int = min(
         MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL,
         1 + projected_level - 1 + _get_upgrade_level("depth_scanner")
     )
-    var projected_level_data: Dictionary = {
-        "player_level": projected_level,
-        "xp": projected_xp
-    }
-    var level_progress: Dictionary = MINING_PROGRESS_SCRIPT.get_level_progress(projected_level_data)
+    var projected_level_data: Dictionary = _make_rank_progress_data(projected_level, projected_xp)
+    var level_progress: Dictionary = MINING_PROGRESS_SCRIPT.get_rank_progress(projected_level_data)
     var level_gain: int = projected_level - before_level
     var level_bonus_gains: Dictionary = MINING_BALANCE.get_level_bonus_totals_for_range(before_level, projected_level)
     var projected_data: Dictionary = persistent_data.duplicate(true)
     projected_data["wallet"] = max(0, int(projected_data.get("wallet", 0)) + total_money)
+    projected_data[MINING_PROGRESS_SCRIPT.RANK_XP_KEY] = projected_xp
+    projected_data[MINING_PROGRESS_SCRIPT.RANK_LEVEL_KEY] = projected_level
     projected_data["xp"] = projected_xp
     projected_data["player_level"] = projected_level
     projected_data["last_run_summary"] = ""
@@ -1199,8 +1223,8 @@ func _build_run_results(reason_key: String) -> Dictionary:
     MINING_BALANCE.refresh_depth_unlocks(projected_data)
     projected_depth_unlock = int(projected_data.get("deepest_level_unlocked", projected_depth_unlock))
     var unlocked_depth_before_run: int = int(persistent_data.get("deepest_level_unlocked", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL))
-    var display_depth_level: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(active_depth_level)
-    var display_depth_unlock: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(projected_depth_unlock)
+    var display_depth_level: int = _get_display_depth_tier_for_run_depth(active_depth_level)
+    var display_depth_unlock: int = _get_display_depth_tier_for_run_depth(projected_depth_unlock)
     var level_bonus_note: String = _format_level_bonus_summary(level_bonus_gains)
     var tier_unlock_note: String = _format_depth_unlock_summary(unlocked_depth_before_run, projected_depth_unlock)
     var ore_collected: int = player_pickups_collected + drone_pickups_collected
@@ -1218,13 +1242,13 @@ func _build_run_results(reason_key: String) -> Dictionary:
     summary_lines.append("")
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_DEPTH_TIER", [display_depth_level, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME")))]))
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_NODES_BROKEN", [nodes_broken]))
-    summary_lines.append(_trf("MINING_SUMMARY_TEXT_XP_EARNED", [run_xp, "  %s" % tr("MINING_SUMMARY_LEVEL_UP") if level_gain > 0 else ""]))
+    summary_lines.append("%s earned: %d%s" % [MINING_BALANCE.get_rank_xp_label(), run_xp, "  %s" % MINING_BALANCE.get_rank_up_label() if level_gain > 0 else ""])
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_MONEY_EARNED", ["$%d" % total_money]))
     summary_lines.append("")
     summary_lines.append(tr("MINING_SUMMARY_TEXT_CARGO_PAYOUT"))
     summary_lines.append(tr("MINING_SUMMARY_TEXT_NO_CARGO") if money_breakdown.is_empty() else "\n".join(money_breakdown))
     summary_lines.append("")
-    summary_lines.append(_trf("MINING_SUMMARY_TEXT_LEVEL", [projected_level, int(level_progress.get("current_xp", 0)), int(level_progress.get("next_level_xp", 1))]))
+    summary_lines.append(_format_rank_summary_text(projected_level, int(level_progress.get("current_xp", 0)), int(level_progress.get("next_rank_xp", level_progress.get("next_level_xp", 1)))))
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_UNLOCKED_DEPTH", [display_depth_unlock]))
     if level_bonus_note != "":
         summary_lines.append(level_bonus_note)
@@ -1242,12 +1266,12 @@ func _build_run_results(reason_key: String) -> Dictionary:
             "depth_material_name": String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME"))),
             "nodes_broken": nodes_broken,
             "xp_earned": run_xp,
-            "leveled_up": level_gain > 0,
+            "ranked_up": level_gain > 0,
             "money_earned": total_money,
             "money_breakdown_chart": money_breakdown_chart.duplicate(true),
-            "projected_level": projected_level,
-            "level_progress_current": int(level_progress.get("current_xp", 0)),
-            "level_progress_next": int(level_progress.get("next_level_xp", 1)),
+            "projected_rank": projected_level,
+            "rank_progress_current": int(level_progress.get("current_xp", 0)),
+            "rank_progress_next": int(level_progress.get("next_rank_xp", level_progress.get("next_level_xp", 1))),
             "projected_depth_unlock": projected_depth_unlock,
             "level_bonus_note": level_bonus_note,
             "tier_unlock_note": tier_unlock_note
@@ -1406,23 +1430,20 @@ func _configure_summary_panel() -> void:
 func _refresh_hud() -> void:
     if not _is_ui_ready():
         return
-    var projected_xp: int = int(persistent_data.get("xp", 0)) + run_xp
-    var projected_level: int = MINING_PROGRESS_SCRIPT.get_level_for_total_xp(projected_xp)
-    var level_progress: Dictionary = MINING_PROGRESS_SCRIPT.get_level_progress({
-        "player_level": projected_level,
-        "xp": projected_xp
-    })
-    var display_depth_level: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(active_depth_level)
+    var projected_xp: int = MINING_PROGRESS_SCRIPT.get_rank_xp(persistent_data) + run_xp
+    var projected_level: int = MINING_PROGRESS_SCRIPT.get_rank_for_total_xp(projected_xp)
+    var level_progress: Dictionary = MINING_PROGRESS_SCRIPT.get_rank_progress(_make_rank_progress_data(projected_level, projected_xp))
+    var display_depth_level: int = _get_display_depth_tier_for_run_depth(active_depth_level)
     var display_depth_max: int = MINING_PROGRESS_SCRIPT.get_max_display_depth_tier()
-    var display_depth_unlocked: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(int(persistent_data.get("deepest_level_unlocked", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL)))
+    var display_depth_unlocked: int = _get_display_depth_tier_for_run_depth(int(persistent_data.get("deepest_level_unlocked", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL)))
     var run_time_limit: float = _get_run_time_limit()
     var drill_health_max: float = _get_drill_health_max()
     var cargo_capacity: int = _get_cargo_capacity()
     var xp_current: int = int(level_progress.get("current_xp", 0))
-    var xp_next: int = max(1, int(level_progress.get("next_level_xp", 1)))
+    var xp_next: int = max(1, int(level_progress.get("next_rank_xp", level_progress.get("next_level_xp", 1))))
     wallet_label.text = _trf("MINING_HUD_WALLET", [Util.get_number_short_text(int(persistent_data.get("wallet", 0)))])
     phase_label.text = _trf("MINING_HUD_PHASE", [display_depth_level, display_depth_max, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME")))])
-    depth_label.text = _trf("MINING_HUD_DEPTH", [display_depth_unlocked, int(level_progress.get("current_level", 1))])
+    depth_label.text = _format_depth_status_text(display_depth_unlocked, projected_level)
     time_value_label.text = _trf("MINING_HUD_TIMER", [snappedf(time_left, 0.1), snappedf(run_time_limit, 0.1)])
     time_bar.max_value = run_time_limit
     time_bar.value = time_left
@@ -1433,12 +1454,12 @@ func _refresh_hud() -> void:
     cargo_bar.max_value = cargo_capacity
     cargo_bar.value = cargo_used
     _update_warning_meter_blinks(run_time_limit, drill_health_max)
-    xp_value_label.text = _trf("MINING_HUD_XP", [xp_current, xp_next, run_xp])
+    xp_value_label.text = _format_rank_xp_status_text(xp_current, xp_next, run_xp)
     xp_bar.max_value = xp_next
     xp_bar.value = xp_current
     _process_level_up_feedback(projected_level)
     weapon_label.text = _trf("MINING_HUD_RIG_STATS", [int(round(_get_move_speed())), int(round(_get_drill_dps())), int(round(_get_pickup_radius())), int(round((_get_straight_drive_speed_multiplier() - 1.0) * 100.0)), int(round((_get_xp_multiplier() - 1.0) * 100.0))])
-    boss_label.text = _trf("MINING_HUD_STATUS", [run_status])
+    boss_label.text = _trf("MINING_HUD_STATUS", [_get_display_run_status(true)])
 
 func _apply_hud_theme() -> void:
     _style_panel(top_panel, Color(0.0, 0.0, 0.0, 0.0), Color(0.0, 0.0, 0.0, 0.0), 6)
@@ -1468,6 +1489,117 @@ func _apply_hud_theme() -> void:
     _style_hud_label(summary_hint_label, 22, Color(0.92, 0.96, 1.0, 1.0))
     _style_utility_button(hint_left_button)
     _style_utility_button(hint_right_button)
+
+func _make_rank_progress_data(rank: int, rank_xp: int) -> Dictionary:
+    return {
+        MINING_PROGRESS_SCRIPT.RANK_LEVEL_KEY: rank,
+        MINING_PROGRESS_SCRIPT.RANK_XP_KEY: rank_xp,
+        "player_level": rank,
+        "xp": rank_xp,
+    }
+
+func _format_depth_status_text(unlocked_depth: int, current_rank: int) -> String:
+    return "Unlocked Depth: %d   %s: %d" % [unlocked_depth, MINING_BALANCE.get_rank_label(), current_rank]
+
+func _format_rank_xp_status_text(current_xp: int, next_xp: int, run_gain: int) -> String:
+    return "%s %d / %d   Dive +%d" % [MINING_BALANCE.get_rank_xp_label(), current_xp, next_xp, run_gain]
+
+func _format_rank_summary_text(rank: int, current_xp: int, next_xp: int) -> String:
+    return "%s %d   %s %d/%d" % [MINING_BALANCE.get_rank_label(), rank, MINING_BALANCE.get_rank_xp_label(), current_xp, next_xp]
+
+func _setup_run_start_banner() -> void:
+    if top_bar == null or run_start_banner_panel != null:
+        return
+    var canvas_layer: Node = top_bar.get_parent()
+    if canvas_layer == null:
+        return
+
+    run_start_banner_panel = PanelContainer.new()
+    run_start_banner_panel.name = "RunStartBanner"
+    run_start_banner_panel.anchor_left = 0.5
+    run_start_banner_panel.anchor_top = 0.0
+    run_start_banner_panel.anchor_right = 0.5
+    run_start_banner_panel.anchor_bottom = 0.0
+    run_start_banner_panel.offset_left = -290.0
+    run_start_banner_panel.offset_top = 34.0
+    run_start_banner_panel.offset_right = 290.0
+    run_start_banner_panel.offset_bottom = 162.0
+    run_start_banner_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    run_start_banner_panel.visible = false
+    run_start_banner_panel.modulate = Color(1.0, 1.0, 1.0, 0.0)
+    canvas_layer.add_child(run_start_banner_panel)
+
+    var margin := MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 20)
+    margin.add_theme_constant_override("margin_top", 16)
+    margin.add_theme_constant_override("margin_right", 20)
+    margin.add_theme_constant_override("margin_bottom", 16)
+    run_start_banner_panel.add_child(margin)
+
+    var vbox := VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 10)
+    margin.add_child(vbox)
+
+    var accent_line := ColorRect.new()
+    accent_line.custom_minimum_size = Vector2(0.0, 5.0)
+    accent_line.color = Color(0.92, 0.74, 0.28, 0.95)
+    vbox.add_child(accent_line)
+
+    run_start_banner_title_label = Label.new()
+    run_start_banner_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    run_start_banner_title_label.add_theme_font_size_override("font_size", 28)
+    run_start_banner_title_label.add_theme_color_override("font_color", Color(0.98, 0.95, 0.84, 1.0))
+    vbox.add_child(run_start_banner_title_label)
+
+    run_start_banner_detail_label = Label.new()
+    run_start_banner_detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    run_start_banner_detail_label.add_theme_font_size_override("font_size", 18)
+    run_start_banner_detail_label.add_theme_color_override("font_color", Color(0.82, 0.93, 1.0, 0.96))
+    vbox.add_child(run_start_banner_detail_label)
+
+func _show_run_start_banner() -> void:
+    if simulation_mode_active or run_start_banner_panel == null or run_start_banner_title_label == null or run_start_banner_detail_label == null:
+        return
+    if run_start_banner_tween != null and run_start_banner_tween.is_running():
+        run_start_banner_tween.kill()
+
+    var accent: Color = Color(active_material.get("color", Color(0.92, 0.74, 0.28, 1.0)))
+    var bg: Color = Color(active_material.get("bg", Color(0.08, 0.09, 0.12, 1.0)))
+    var style := StyleBoxFlat.new()
+    style.bg_color = bg.darkened(0.38)
+    style.bg_color.a = 0.93
+    style.border_color = accent.lightened(0.22)
+    style.border_width_left = 2
+    style.border_width_top = 2
+    style.border_width_right = 2
+    style.border_width_bottom = 2
+    style.corner_radius_top_left = 7
+    style.corner_radius_top_right = 7
+    style.corner_radius_bottom_left = 7
+    style.corner_radius_bottom_right = 7
+    style.shadow_size = 10
+    style.shadow_color = Color(0.0, 0.0, 0.0, 0.32)
+    run_start_banner_panel.add_theme_stylebox_override("panel", style)
+
+    var rank: int = MINING_PROGRESS_SCRIPT.get_rank(persistent_data)
+    var depth_tier: int = _get_display_depth_tier_for_run_depth(active_depth_level)
+    run_start_banner_title_label.text = "DIVE %02d  |  %s STRATUM" % [depth_tier, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME"))).to_upper()]
+    run_start_banner_detail_label.text = "%s %d   |   Surface rig hot   |   Cargo lane online" % [MINING_BALANCE.get_rank_label(), rank]
+    run_start_banner_title_label.add_theme_color_override("font_color", accent.lightened(0.18))
+
+    run_start_banner_panel.visible = true
+    run_start_banner_panel.scale = Vector2(0.96, 0.96)
+    run_start_banner_panel.modulate = Color(1.0, 1.0, 1.0, 0.0)
+    run_start_banner_tween = create_tween()
+    run_start_banner_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+    run_start_banner_tween.parallel().tween_property(run_start_banner_panel, "modulate:a", 1.0, 0.18)
+    run_start_banner_tween.parallel().tween_property(run_start_banner_panel, "scale", Vector2.ONE, 0.18)
+    run_start_banner_tween.tween_interval(RUN_START_BANNER_HOLD_DURATION)
+    run_start_banner_tween.tween_property(run_start_banner_panel, "modulate:a", 0.0, RUN_START_BANNER_FADE_DURATION)
+    run_start_banner_tween.finished.connect(func() -> void:
+        if run_start_banner_panel != null:
+            run_start_banner_panel.visible = false
+    )
 
 func _style_hud_label(label: Label, font_size: int, color: Color) -> void:
     if label == null:
@@ -2204,14 +2336,15 @@ func _render_summary_text(summary_view_model: Dictionary, progress: float) -> vo
     lines.append(_trf("MINING_SUMMARY_TEXT_RUN_COMPLETE", [String(summary_view_model.get("reason", ""))]))
     lines.append("")
     lines.append(_trf("MINING_SUMMARY_TEXT_DEPTH_TIER", [
-        MINING_PROGRESS_SCRIPT.get_display_depth_tier(int(summary_view_model.get("depth_level", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL))),
+        _get_display_depth_tier_for_run_depth(int(summary_view_model.get("depth_level", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL))),
         String(summary_view_model.get("depth_material_name", tr("MINING_MATERIAL_STONE_NAME")))
     ]))
     lines.append(_trf("MINING_SUMMARY_TEXT_NODES_BROKEN", [int(summary_view_model.get("nodes_broken", 0))]))
-    lines.append(_trf("MINING_SUMMARY_TEXT_XP_EARNED", [
+    lines.append("%s earned: %d%s" % [
+        MINING_BALANCE.get_rank_xp_label(),
         int(summary_view_model.get("xp_earned", 0)),
-        "  %s" % tr("MINING_SUMMARY_LEVEL_UP") if bool(summary_view_model.get("leveled_up", false)) else ""
-    ]))
+        "  %s" % MINING_BALANCE.get_rank_up_label() if bool(summary_view_model.get("ranked_up", false)) else ""
+    ])
     lines.append(_trf("MINING_SUMMARY_TEXT_MONEY_EARNED", [_format_summary_money_span(
         _get_animated_money_value(total_money, progress),
         total_money,
@@ -2238,12 +2371,12 @@ func _render_summary_text(summary_view_model: Dictionary, progress: float) -> vo
                 )
             ]))
     lines.append("")
-    lines.append(_trf("MINING_SUMMARY_TEXT_LEVEL", [
-        int(summary_view_model.get("projected_level", 1)),
-        int(summary_view_model.get("level_progress_current", 0)),
-        int(summary_view_model.get("level_progress_next", 1))
-    ]))
-    lines.append(_trf("MINING_SUMMARY_TEXT_UNLOCKED_DEPTH", [MINING_PROGRESS_SCRIPT.get_display_depth_tier(int(summary_view_model.get("projected_depth_unlock", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL)))]))
+    lines.append(_format_rank_summary_text(
+        int(summary_view_model.get("projected_rank", 1)),
+        int(summary_view_model.get("rank_progress_current", 0)),
+        int(summary_view_model.get("rank_progress_next", 1))
+    ))
+    lines.append(_trf("MINING_SUMMARY_TEXT_UNLOCKED_DEPTH", [_get_display_depth_tier_for_run_depth(int(summary_view_model.get("projected_depth_unlock", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL)))]))
     var level_bonus_note: String = String(summary_view_model.get("level_bonus_note", "")).strip_edges()
     if level_bonus_note != "":
         lines.append(level_bonus_note)
@@ -2310,8 +2443,8 @@ func _format_level_bonus_summary(level_bonus_gains: Dictionary) -> String:
 func _format_depth_unlock_summary(previous_depth_unlock: int, new_depth_unlock: int) -> String:
     if new_depth_unlock <= previous_depth_unlock:
         return ""
-    var first_new_display_tier: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(previous_depth_unlock + 1)
-    var latest_display_tier: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(new_depth_unlock)
+    var first_new_display_tier: int = _get_display_depth_tier_for_run_depth(previous_depth_unlock + 1)
+    var latest_display_tier: int = _get_display_depth_tier_for_run_depth(new_depth_unlock)
     if first_new_display_tier == latest_display_tier:
         return "New depth tier unlocked: %d" % latest_display_tier
     return "New depth tiers unlocked: %d-%d" % [first_new_display_tier, latest_display_tier]
@@ -2323,7 +2456,7 @@ func _get_upgrade_levels() -> Dictionary:
     return persistent_data.get("upgrades", {})
 
 func _get_level_bonus_totals() -> Dictionary:
-    return MINING_BALANCE.get_level_bonus_totals_for_level(int(persistent_data.get("player_level", 1)))
+    return MINING_BALANCE.get_level_bonus_totals_for_level(MINING_PROGRESS_SCRIPT.get_rank(persistent_data))
 
 func _get_move_speed() -> float:
     return MINING_BALANCE.get_move_speed(_get_upgrade_levels(), _get_level_bonus_totals())
@@ -2750,8 +2883,19 @@ func _web_effect_label(effect_index: int) -> String:
         return "Unknown"
     return String(WEB_EFFECT_LABELS[effect_index])
 
+func _get_display_run_status(consume_web_effect_note: bool) -> String:
+    var status_text: String = run_status
+    if web_effect_status_note.is_empty():
+        return status_text
+    status_text += " | %s" % web_effect_status_note
+    if consume_web_effect_note:
+        web_effect_status_note = ""
+    return status_text
+
 func _refresh_web_effect_status_label() -> void:
-    pass
+    if not _is_ui_ready():
+        return
+    boss_label.text = _trf("MINING_HUD_STATUS", [_get_display_run_status(false)])
 
 func _apply_web_effect_debug_state() -> void:
     if _is_web_effect_enabled(WEB_EFFECT_HIGH_RES_DIRT_MASK):
@@ -2773,11 +2917,13 @@ func _on_web_effect_plus_button_pressed() -> void:
         return
     if web_effects_enabled_count >= WEB_EFFECT_LABELS.size():
         web_effect_last_message = "All web effects already enabled"
+        web_effect_status_note = web_effect_last_message
         _refresh_web_effect_status_label()
         return
     var effect_index: int = web_effects_enabled_count
     web_effects_enabled_count += 1
     web_effect_last_message = "Added: %s" % _web_effect_label(effect_index)
+    web_effect_status_note = "Effect added: %s" % _web_effect_label(effect_index)
     print(web_effect_last_message)
     _apply_web_effect_debug_state()
 
@@ -2786,10 +2932,12 @@ func _on_web_effect_minus_button_pressed() -> void:
         return
     if web_effects_enabled_count <= 0:
         web_effect_last_message = "Already at web baseline"
+        web_effect_status_note = web_effect_last_message
         _refresh_web_effect_status_label()
         return
     web_effects_enabled_count -= 1
     web_effect_last_message = "Removed: %s" % _web_effect_label(web_effects_enabled_count)
+    web_effect_status_note = "Effect removed: %s" % _web_effect_label(web_effects_enabled_count)
     print(web_effect_last_message)
     _apply_web_effect_debug_state()
 
@@ -3046,6 +3194,9 @@ func _draw_nodes(origin: Vector2) -> void:
                     Color(1.0, 1.0, 1.0, 0.12)
                 )
             continue
+        if OS.has_feature("web"):
+            _draw_cached_node_detail(node, node_screen, mined_progress, node_color, grey_color)
+            continue
         var rock_points: PackedVector2Array = _get_translated_shape_points(node, node_screen)
         draw_colored_polygon(rock_points, outer_color)
 
@@ -3078,6 +3229,29 @@ func _draw_nodes(origin: Vector2) -> void:
             1.15
         )
         _draw_node_sparkles(node_screen, radius, float(node.get("sparkle", 0.0)))
+
+func _draw_cached_node_detail(node: Dictionary, node_screen: Vector2, mined_progress: float, node_color: Color, grey_color: Color) -> void:
+    var node_texture: Texture2D = node.get("cached_detail_texture", null)
+    var node_mined_texture: Texture2D = node.get("cached_detail_mined_texture", null)
+    var draw_offset: Vector2 = node.get("cached_detail_offset", Vector2.ZERO)
+    var draw_size: Vector2 = node.get("cached_detail_size", Vector2.ZERO)
+    if node_texture == null or node_mined_texture == null or draw_size == Vector2.ZERO:
+        var rock_points: PackedVector2Array = _get_translated_shape_points(node, node_screen)
+        draw_colored_polygon(rock_points, node_color)
+        if mined_progress > 0.001:
+            var local_points: PackedVector2Array = node.get("shape_points", PackedVector2Array())
+            var inner_points: PackedVector2Array = PackedVector2Array()
+            for local_point in local_points:
+                inner_points.append(node_screen + local_point * mined_progress)
+            var inner_color: Color = node_color.lerp(grey_color, 0.55)
+            draw_colored_polygon(inner_points, inner_color)
+        return
+    var outer_rect: Rect2 = Rect2(node_screen - draw_offset, draw_size)
+    draw_texture_rect(node_texture, outer_rect, false)
+    if mined_progress > 0.001:
+        var inner_size: Vector2 = draw_size * mined_progress
+        var inner_rect: Rect2 = Rect2(node_screen - inner_size * 0.5, inner_size)
+        draw_texture_rect(node_mined_texture, inner_rect, false)
 
 func _draw_node_sparkles(node_screen: Vector2, radius: float, sparkle: float) -> void:
     if sparkle <= 0.0:
@@ -3895,6 +4069,177 @@ func _draw_seeded_crack_lines_with_strength(center: Vector2, base_radius: float,
         var branch_len := base_radius * (0.14 + 0.12 * _depth_noise(seed_base, fi * 4.63 + 1.61))
         var branch_dir := Vector2.RIGHT.rotated(branch_angle + span_sign * (0.55 + 0.2 * _depth_noise(seed_base, fi * 5.21 + 0.94)))
         draw_line(mid_pos, mid_pos + branch_dir * branch_len, crack_color, crack_width * 0.72)
+
+func _build_node_render_cache(node: Dictionary) -> Dictionary:
+    var local_points: PackedVector2Array = node.get("shape_points", PackedVector2Array())
+    if local_points.is_empty():
+        return {}
+
+    var node_seed: float = float(int(node.get("id", 0))) * 17.0 + float(active_depth_level) * 7.0
+    var radius: float = float(node.get("radius", 20.0))
+    var node_color: Color = _apply_material_color_variation(node.get("material_color", Color(0.5, 0.5, 0.5, 1.0)), node_seed + 0.9, 0.9)
+    var luma: float = node_color.r * 0.299 + node_color.g * 0.587 + node_color.b * 0.114
+    var grey_color: Color = Color(luma, luma, luma, node_color.a)
+    var inner_color: Color = node_color.lerp(grey_color, 0.55)
+    var sparkle: float = float(node.get("sparkle", 0.0))
+    var padding: float = 14.0 + sparkle * 4.0
+    var min_x: float = local_points[0].x
+    var max_x: float = local_points[0].x
+    var min_y: float = local_points[0].y
+    var max_y: float = local_points[0].y
+    for point in local_points:
+        min_x = minf(min_x, point.x)
+        max_x = maxf(max_x, point.x)
+        min_y = minf(min_y, point.y)
+        max_y = maxf(max_y, point.y)
+
+    var draw_size: Vector2 = Vector2(
+        ceil(max_x - min_x + padding * 2.0),
+        ceil(max_y - min_y + padding * 2.0)
+    )
+    var center_in_image: Vector2 = Vector2(-min_x + padding, -min_y + padding)
+    var image_points: PackedVector2Array = PackedVector2Array()
+    for point in local_points:
+        image_points.append(point + center_in_image)
+
+    var detail_image: Image = Image.create(int(draw_size.x), int(draw_size.y), false, Image.FORMAT_RGBA8)
+    detail_image.fill(Color(0.0, 0.0, 0.0, 0.0))
+    _fill_polygon_on_image(detail_image, image_points, node_color)
+
+    var node_spot_color: Color = _apply_material_color_variation(node.get("material_bg_color", node_color.darkened(0.46)), node_seed + 3.4, 0.55)
+    node_spot_color.a = 0.13
+    _paint_seeded_variation_spots_on_image(detail_image, center_in_image, radius, node_seed, node_spot_color, 2, 0.42, 0.16, 0.27)
+    _paint_seeded_variation_highlight_on_image(
+        detail_image,
+        center_in_image,
+        radius,
+        node_seed + 2.6,
+        Color(1.0, 1.0, 1.0, 0.028 + sparkle * 0.014),
+        0.24
+    )
+    _paint_seeded_crack_lines_on_image(
+        detail_image,
+        center_in_image,
+        radius,
+        node_seed + 7.8,
+        Color(0.04, 0.05, 0.06, 0.14),
+        1,
+        1.15
+    )
+    _paint_node_sparkles_on_image(detail_image, center_in_image, radius, sparkle)
+
+    var mined_image: Image = Image.create(int(draw_size.x), int(draw_size.y), false, Image.FORMAT_RGBA8)
+    mined_image.fill(Color(0.0, 0.0, 0.0, 0.0))
+    _fill_polygon_on_image(mined_image, image_points, inner_color)
+
+    return {
+        "cached_detail_texture": ImageTexture.create_from_image(detail_image),
+        "cached_detail_mined_texture": ImageTexture.create_from_image(mined_image),
+        "cached_detail_offset": center_in_image,
+        "cached_detail_size": draw_size
+    }
+
+func _fill_polygon_on_image(image: Image, points: PackedVector2Array, color: Color) -> void:
+    if image == null or points.size() < 3:
+        return
+    var indices: PackedInt32Array = Geometry2D.triangulate_polygon(points)
+    if indices.is_empty():
+        return
+    for triangle_index in range(0, indices.size(), 3):
+        var a: Vector2 = points[indices[triangle_index]]
+        var b: Vector2 = points[indices[triangle_index + 1]]
+        var c: Vector2 = points[indices[triangle_index + 2]]
+        _fill_triangle_on_image(image, a, b, c, color)
+
+func _fill_triangle_on_image(image: Image, a: Vector2, b: Vector2, c: Vector2, color: Color) -> void:
+    var min_x: int = maxi(0, int(floor(minf(a.x, minf(b.x, c.x)))))
+    var max_x: int = mini(image.get_width() - 1, int(ceil(maxf(a.x, maxf(b.x, c.x)))))
+    var min_y: int = maxi(0, int(floor(minf(a.y, minf(b.y, c.y)))))
+    var max_y: int = mini(image.get_height() - 1, int(ceil(maxf(a.y, maxf(b.y, c.y)))))
+    for y in range(min_y, max_y + 1):
+        for x in range(min_x, max_x + 1):
+            var sample_point: Vector2 = Vector2(float(x) + 0.5, float(y) + 0.5)
+            if _point_in_triangle(sample_point, a, b, c):
+                image.set_pixel(x, y, color)
+
+func _point_in_triangle(point: Vector2, a: Vector2, b: Vector2, c: Vector2) -> bool:
+    var d1: float = _triangle_edge_sign(point, a, b)
+    var d2: float = _triangle_edge_sign(point, b, c)
+    var d3: float = _triangle_edge_sign(point, c, a)
+    var has_neg: bool = d1 < 0.0 or d2 < 0.0 or d3 < 0.0
+    var has_pos: bool = d1 > 0.0 or d2 > 0.0 or d3 > 0.0
+    return not (has_neg and has_pos)
+
+func _triangle_edge_sign(point: Vector2, a: Vector2, b: Vector2) -> float:
+    return (point.x - b.x) * (a.y - b.y) - (a.x - b.x) * (point.y - b.y)
+
+func _paint_seeded_variation_spots_on_image(image: Image, center: Vector2, base_radius: float, seed_base: float, color: Color, spot_count: int = 2, spread: float = 0.38, scale_min: float = 0.18, scale_max: float = 0.28) -> void:
+    if image == null or base_radius <= 0.0 or color.a <= 0.0 or spot_count <= 0:
+        return
+    var strength: float = _get_effective_dot_variation_strength()
+    var effective_count: int = max(1, int(round(float(spot_count) * (0.72 + strength * 0.38))))
+    var alpha_scale: float = 0.52 + strength * 0.48
+    var radius_scale: float = 0.86 + strength * 0.14
+    var spread_scale: float = 0.92 + strength * 0.08
+    for spot_index in range(effective_count):
+        var fi: float = float(spot_index)
+        var orbit_angle: float = TAU * _depth_noise(seed_base, fi * 1.93 + 0.37)
+        var orbit_distance: float = base_radius * spread * spread_scale * _depth_noise(seed_base, fi * 2.17 + 1.91)
+        var spot_radius: float = base_radius * radius_scale * lerpf(scale_min, scale_max, _depth_noise(seed_base, fi * 2.71 + 3.11))
+        var spot_center: Vector2 = center + Vector2.RIGHT.rotated(orbit_angle) * orbit_distance
+        var outer_color: Color = color
+        outer_color.a *= alpha_scale * (0.55 + 0.35 * _depth_noise(seed_base, fi * 3.19 + 4.73))
+        _paint_image_variation_spot(image, spot_center, spot_radius * 1.12, spot_radius * 1.12, 0.0, outer_color)
+        var inner_color: Color = color.darkened(0.18)
+        inner_color.a = outer_color.a * 0.92
+        var inner_offset: Vector2 = Vector2.RIGHT.rotated(orbit_angle + PI * (0.18 + 0.22 * _depth_noise(seed_base, fi * 3.73 + 2.41))) * spot_radius * 0.16
+        _paint_image_variation_spot(image, spot_center + inner_offset, spot_radius * 0.72, spot_radius * 0.72, 0.0, inner_color)
+
+func _paint_seeded_variation_highlight_on_image(image: Image, center: Vector2, base_radius: float, seed_base: float, color: Color, offset_strength: float = 0.24) -> void:
+    if image == null or base_radius <= 0.0 or color.a <= 0.0:
+        return
+    var strength: float = _get_effective_dot_variation_strength()
+    var angle: float = -PI * 0.62 + (_depth_noise(seed_base, 0.61) - 0.5) * 0.75
+    var offset: Vector2 = Vector2.RIGHT.rotated(angle) * base_radius * offset_strength
+    var highlight_radius: float = base_radius * (0.3 + 0.08 * strength + 0.12 * _depth_noise(seed_base, 1.67))
+    var highlight_color: Color = color
+    highlight_color.a *= 0.5 + strength * 0.42
+    _paint_image_variation_spot(image, center + offset, highlight_radius, highlight_radius, 0.0, highlight_color)
+
+func _paint_seeded_crack_lines_on_image(image: Image, center: Vector2, base_radius: float, seed_base: float, color: Color, strength: float, line_count: int = 2, width: float = 1.4) -> void:
+    if image == null or base_radius <= 0.0 or color.a <= 0.0 or line_count <= 0:
+        return
+    var effective_count: int = max(1, int(round(float(line_count) * (0.65 + strength * 0.45))))
+    var alpha_scale: float = 0.46 + strength * 0.34
+    var width_scale: float = 0.8 + strength * 0.14
+    for crack_index in range(effective_count):
+        var fi: float = float(crack_index)
+        var start_angle: float = TAU * _depth_noise(seed_base, fi * 1.31 + 0.17)
+        var span_sign: float = -1.0 if int(fi) % 2 == 0 else 1.0
+        var branch_angle: float = start_angle + span_sign * (0.28 + 0.45 * _depth_noise(seed_base, fi * 1.93 + 0.81))
+        var start_radius: float = base_radius * (0.08 + 0.18 * _depth_noise(seed_base, fi * 2.27 + 1.43))
+        var mid_radius: float = base_radius * (0.28 + 0.2 * _depth_noise(seed_base, fi * 2.71 + 2.19))
+        var end_radius: float = base_radius * (0.54 + 0.24 * _depth_noise(seed_base, fi * 3.19 + 2.77))
+        var start_pos: Vector2 = center + Vector2.RIGHT.rotated(start_angle) * start_radius
+        var mid_pos: Vector2 = center + Vector2.RIGHT.rotated(start_angle + span_sign * 0.1) * mid_radius
+        var end_pos: Vector2 = center + Vector2.RIGHT.rotated(branch_angle) * end_radius
+        var crack_color: Color = color
+        crack_color.a *= alpha_scale * (0.64 + 0.24 * _depth_noise(seed_base, fi * 3.61 + 3.41))
+        var crack_width: float = maxf(0.85, width * width_scale * (0.85 + 0.2 * _depth_noise(seed_base, fi * 4.07 + 4.33)))
+        _paint_image_variation_crack(image, start_pos, mid_pos, crack_color, crack_width)
+        _paint_image_variation_crack(image, mid_pos, end_pos, crack_color, crack_width * 0.9)
+        var branch_len: float = base_radius * (0.14 + 0.12 * _depth_noise(seed_base, fi * 4.63 + 1.61))
+        var branch_dir: Vector2 = Vector2.RIGHT.rotated(branch_angle + span_sign * (0.55 + 0.2 * _depth_noise(seed_base, fi * 5.21 + 0.94)))
+        _paint_image_variation_crack(image, mid_pos, mid_pos + branch_dir * branch_len, crack_color, crack_width * 0.72)
+
+func _paint_node_sparkles_on_image(image: Image, center: Vector2, radius: float, sparkle: float) -> void:
+    if image == null or sparkle <= 0.0:
+        return
+    var sparkle_count: int = int(round(2.0 + sparkle * 4.0))
+    for sparkle_index in range(sparkle_count):
+        var angle: float = TAU * float(sparkle_index) / float(max(1, sparkle_count))
+        var pos: Vector2 = center + Vector2.RIGHT.rotated(angle) * (radius * 0.58)
+        _paint_image_variation_spot(image, pos, 2.0 + sparkle, 2.0 + sparkle, 0.0, Color(1.0, 1.0, 1.0, 0.75))
 
 func _draw_seeded_crack_lines(center: Vector2, base_radius: float, seed_base: float, color: Color, line_count: int = 2, width: float = 1.4) -> void:
     _draw_seeded_crack_lines_with_strength(center, base_radius, seed_base, color, _get_effective_crack_variation_strength(), line_count, width)

@@ -5,9 +5,15 @@ const MINING_BALANCE := preload("res://Games/Mining/MiningBalance.gd")
 const SAVE_PATH := "user://mining_mode_save_v1.json"
 const MAX_DEPTH_LEVEL := MINING_BALANCE.MAX_DEPTH_LEVEL
 const MIN_START_DEPTH_LEVEL := 1
+const RANK_XP_KEY := "rig_xp"
+const RANK_LEVEL_KEY := "rig_rank"
+const LEGACY_XP_KEY := "xp"
+const LEGACY_LEVEL_KEY := "player_level"
 
 const DEFAULT_DATA := {
     "wallet": 0,
+    "rig_xp": 0,
+    "rig_rank": 1,
     "xp": 0,
     "player_level": 1,
     "deepest_level_unlocked": MIN_START_DEPTH_LEVEL,
@@ -47,7 +53,8 @@ static func load_data() -> Dictionary:
     var parsed: Variant = JSON.parse_string(file.get_as_text())
     if parsed is Dictionary:
         data = data.merged(parsed, true)
-    data["player_level"] = max(1, int(data.get("player_level", 1)))
+    var had_rank_fields: bool = data.has(RANK_XP_KEY) and data.has(RANK_LEVEL_KEY)
+    _sync_rank_progress_fields(data)
     var deepest_before_refresh: int = clampi(int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
     var selected_before_refresh: int = clampi(int(data.get("selected_depth_level", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, deepest_before_refresh)
     data["deepest_level_unlocked"] = deepest_before_refresh
@@ -55,7 +62,7 @@ static func load_data() -> Dictionary:
     _refresh_depth_unlocks(data)
     data["deepest_level_unlocked"] = clampi(int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
     data["selected_depth_level"] = clampi(int(data.get("selected_depth_level", selected_before_refresh)), MIN_START_DEPTH_LEVEL, int(data["deepest_level_unlocked"]))
-    var repaired_missing_fields := false
+    var repaired_missing_fields := not had_rank_fields
     if not (data.get("depth_frontier_attempts", {}) is Dictionary):
         data["depth_frontier_attempts"] = {}
         repaired_missing_fields = true
@@ -67,6 +74,7 @@ static func load_data() -> Dictionary:
     return data
 
 static func save_data(data: Dictionary) -> void:
+    _sync_rank_progress_fields(data)
     var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
     if file == null:
         return
@@ -109,12 +117,12 @@ static func apply_tree_sale(upgrade_id: String, level: int, wallet_after_sale: i
 
 static func apply_run_results(results: Dictionary) -> Dictionary:
     var data: Dictionary = load_data()
-    var previous_level: int = max(1, int(data.get("player_level", 1)))
+    var previous_level: int = get_rank(data)
     var previous_deepest_level: int = max(MIN_START_DEPTH_LEVEL, int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)))
     data["wallet"] = max(0, int(data.get("wallet", 0)) + int(results.get("money", 0)))
-    data["xp"] = max(0, int(data.get("xp", 0)) + int(results.get("xp", 0)))
-    data["player_level"] = get_level_for_total_xp(int(data["xp"]))
-    var new_level: int = max(1, int(data.get("player_level", previous_level)))
+    var total_rank_xp: int = get_rank_xp(data) + int(results.get("xp", 0))
+    _set_rank_progress(data, total_rank_xp)
+    var new_level: int = get_rank(data)
     data["last_run_summary"] = str(results.get("summary_text", "Mining run complete."))
     data["last_run_breakdown"] = results.duplicate(true)
     data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)), int(results.get("depth_level", MIN_START_DEPTH_LEVEL)))
@@ -124,7 +132,7 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
         data["selected_depth_level"] = new_deepest_level
     save_data(data)
     _track_depth_frontier_progression_event(previous_deepest_level, new_deepest_level, results, data)
-    _track_level_progression_events(previous_level, new_level, int(data.get("xp", 0)), results)
+    _track_rank_progression_events(previous_level, new_level, get_rank_xp(data), results)
     return data
 
 static func track_run_start(depth_level: int, data: Dictionary = {}) -> void:
@@ -153,8 +161,10 @@ static func track_run_start(depth_level: int, data: Dictionary = {}) -> void:
             "selected_depth_tier": get_display_depth_tier(int(snapshot.get("selected_depth_level", safe_depth_level))),
             "deepest_depth_unlocked": int(snapshot.get("deepest_level_unlocked", safe_depth_level)),
             "frontier_depth_tier_before_run": get_display_depth_tier(frontier_depth_before_run),
-            "player_level": int(snapshot.get("player_level", 1)),
-            "total_xp": int(snapshot.get("xp", 0)),
+            "rig_rank": get_rank(snapshot),
+            "survey_xp": get_rank_xp(snapshot),
+            "player_level": get_rank(snapshot),
+            "total_xp": get_rank_xp(snapshot),
             "wallet": int(snapshot.get("wallet", 0)),
         }
     )
@@ -174,10 +184,27 @@ static func get_xp_to_next_level(level: int) -> int:
 static func get_level_progress(data: Dictionary) -> Dictionary:
     return MINING_BALANCE.get_level_progress(data)
 
+static func get_rank(data: Dictionary = {}) -> int:
+    var snapshot: Dictionary = data if not data.is_empty() else load_data()
+    return max(1, int(snapshot.get(RANK_LEVEL_KEY, snapshot.get(LEGACY_LEVEL_KEY, 1))))
+
+static func get_rank_xp(data: Dictionary = {}) -> int:
+    var snapshot: Dictionary = data if not data.is_empty() else load_data()
+    return max(0, int(snapshot.get(RANK_XP_KEY, snapshot.get(LEGACY_XP_KEY, 0))))
+
+static func get_rank_for_total_xp(total_xp: int) -> int:
+    return MINING_BALANCE.get_rank_for_total_xp(total_xp)
+
+static func get_rank_xp_to_next(rank: int) -> int:
+    return MINING_BALANCE.get_rank_xp_to_next(rank)
+
+static func get_rank_progress(data: Dictionary) -> Dictionary:
+    return MINING_BALANCE.get_rank_progress(data)
+
 static func _refresh_depth_unlocks(data: Dictionary) -> void:
     MINING_BALANCE.refresh_depth_unlocks(data)
 
-static func _track_level_progression_events(previous_level: int, new_level: int, total_xp: int, results: Dictionary) -> void:
+static func _track_rank_progression_events(previous_level: int, new_level: int, total_xp: int, results: Dictionary) -> void:
     if new_level <= previous_level:
         return
     var ga_manager: Node = _get_game_analytics_manager()
@@ -190,10 +217,13 @@ static func _track_level_progression_events(previous_level: int, new_level: int,
             "track_progression_event",
             "complete",
             "mining",
-            "player_level",
-            "level_%d" % completed_level,
+            "rig_rank",
+            "rank_%d" % completed_level,
             total_xp,
             {
+                "completed_rank": completed_level,
+                "new_rig_rank": new_level,
+                "survey_xp": total_xp,
                 "completed_level": completed_level,
                 "new_player_level": new_level,
                 "total_xp": total_xp,
@@ -205,10 +235,12 @@ static func _track_level_progression_events(previous_level: int, new_level: int,
         "track_progression_event",
         "start",
         "mining",
-        "player_level",
-        "level_%d" % new_level,
+        "rig_rank",
+        "rank_%d" % new_level,
         null,
         {
+            "rig_rank": new_level,
+            "survey_xp": total_xp,
             "player_level": new_level,
             "total_xp": total_xp,
             "depth_level": depth_level,
@@ -249,8 +281,10 @@ static func _track_depth_frontier_progression_event(previous_deepest_level: int,
         "xp_earned": int(results.get("xp", 0)),
         "nodes_broken": int(results.get("nodes_broken", 0)),
         "ore_banked": int(results.get("ore_banked", 0)),
-        "player_level": int(data.get("player_level", 1)),
-        "total_xp": int(data.get("xp", 0)),
+        "rig_rank": get_rank(data),
+        "survey_xp": get_rank_xp(data),
+        "player_level": get_rank(data),
+        "total_xp": get_rank_xp(data),
         "wallet": int(data.get("wallet", 0)),
         "attempt_num": attempt_num,
     }
@@ -285,3 +319,15 @@ static func _get_depth_frontier_attempts(data: Dictionary) -> Dictionary:
     if attempts_variant is Dictionary:
         return (attempts_variant as Dictionary).duplicate(true)
     return {}
+
+static func _sync_rank_progress_fields(data: Dictionary) -> void:
+    var total_rank_xp: int = max(0, int(data.get(RANK_XP_KEY, data.get(LEGACY_XP_KEY, 0))))
+    _set_rank_progress(data, total_rank_xp)
+
+static func _set_rank_progress(data: Dictionary, total_rank_xp: int) -> void:
+    var safe_total_rank_xp: int = max(0, total_rank_xp)
+    var rank: int = get_rank_for_total_xp(safe_total_rank_xp)
+    data[RANK_XP_KEY] = safe_total_rank_xp
+    data[RANK_LEVEL_KEY] = rank
+    data[LEGACY_XP_KEY] = safe_total_rank_xp
+    data[LEGACY_LEVEL_KEY] = rank

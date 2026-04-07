@@ -837,10 +837,9 @@ func _refresh_demo_mode_label_visibility() -> void:
     if demo_mode_label != null and is_instance_valid(demo_mode_label):
         demo_mode_label.visible = _is_demo_mode_enabled() and not _is_any_popup_visible()
     if game_mode_label != null and is_instance_valid(game_mode_label):
-        game_mode_label.visible = not _is_any_popup_visible() and (Util.is_mining_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active())
+        game_mode_label.visible = not _is_any_popup_visible() and (Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active())
         if Util.is_mining_game_active():
-            game_mode_label.text = tr("MINING_MODE_TITLE")
-            game_mode_label.add_theme_color_override("font_color", Color(0.96, 0.84, 0.45, 1.0))
+            game_mode_label.text = ""
         elif Util.is_red_sky_game_active():
             game_mode_label.text = "RED SKY MODE"
             game_mode_label.add_theme_color_override("font_color", Color(0.98, 0.62, 0.42, 1.0))

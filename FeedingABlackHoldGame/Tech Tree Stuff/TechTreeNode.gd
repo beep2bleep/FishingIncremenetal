@@ -14,6 +14,7 @@ const TURKEY_PROGRESS_SCRIPT = preload("res://Games/Turkey/TurkeyProgress.gd")
 const REEL_INTO_DARKNESS_PROGRESS_SCRIPT = preload("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
 const RED_SKY_ICON_FACTORY = preload("res://Games/RedSkyDefense/RedSkyIconFactory.gd")
 static var _icon_texture_cache: Dictionary = {}
+static var _active_tooltip_node: TechTreeNode = null
 
 signal state_changed
 signal selected(node: TechTreeNode)
@@ -68,6 +69,7 @@ var is_highlighted: bool:
         if _is_highlighted != new_value and new_value == true:
             _close_other_tooltips()
             AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER)
+            _active_tooltip_node = self
 
             custom_tween_component.do_tween(1.0)
             tooltip_custom_tween_component.do_tween(1.0)
@@ -75,6 +77,8 @@ var is_highlighted: bool:
         elif new_value == false:
             custom_tween_component.kill_tweens()
             custom_tween_component.reset()
+            if _active_tooltip_node == self:
+                _active_tooltip_node = null
 
         _is_highlighted = new_value
 
@@ -884,11 +888,13 @@ func _is_cursor_over_any_tooltip_or_node() -> bool:
     return false
 
 func _close_other_tooltips() -> void:
-    for node: Node in get_tree().get_nodes_in_group(TOOLTIP_GROUP):
-        if node == self:
-            continue
-        if node is TechTreeNode:
-            (node as TechTreeNode)._force_close_tooltip()
+    if _active_tooltip_node == null:
+        return
+    if not is_instance_valid(_active_tooltip_node):
+        _active_tooltip_node = null
+        return
+    if _active_tooltip_node != self:
+        _active_tooltip_node._force_close_tooltip()
 
 func _close_all_tooltips() -> void:
     for node: Node in get_tree().get_nodes_in_group(TOOLTIP_GROUP):
@@ -902,6 +908,8 @@ func _force_close_tooltip() -> void:
     _cancel_complete_tooltip_expire()
     tooltip_layout_request_id += 1
     _is_highlighted = false
+    if _active_tooltip_node == self:
+        _active_tooltip_node = null
     %"Tool Tip".modulate.a = 1.0
     %"Tool Tip".hide()
     _update_hover_regions()

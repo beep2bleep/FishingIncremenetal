@@ -26,13 +26,15 @@ func _ready() -> void:
 	var material := ShaderMaterial.new()
 	material.shader = CRT_SHADER
 	if OS.has_feature("web"):
-		material.set_shader_parameter("fast_mode", true)
-		material.set_shader_parameter("target_vertical_resolution", 300.0)
-		material.set_shader_parameter("barrel_distortion", 0.045)
-		material.set_shader_parameter("scanline_strength", 0.16)
-		material.set_shader_parameter("grille_strength", 0.06)
-		material.set_shader_parameter("vignette_strength", 0.34)
-		material.set_shader_parameter("noise_strength", 0.008)
-		material.set_shader_parameter("chroma_offset", 0.0)
+		# The mining scene now carries more of the web perf budget, so keep the CRT
+		# close to the original look instead of forcing the single-sample fallback.
+		material.set_shader_parameter("fast_mode", false)
+		material.set_shader_parameter("target_vertical_resolution", 320.0)
+		material.set_shader_parameter("barrel_distortion", 0.052)
+		material.set_shader_parameter("scanline_strength", 0.18)
+		material.set_shader_parameter("grille_strength", 0.08)
+		material.set_shader_parameter("vignette_strength", 0.37)
+		material.set_shader_parameter("noise_strength", 0.012)
+		material.set_shader_parameter("chroma_offset", 0.52)
 	overlay.material = material
 	add_child(overlay)

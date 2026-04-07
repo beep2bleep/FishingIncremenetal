@@ -79,7 +79,7 @@ Demo=true
 DemoWishlistUrl="https://store.steampowered.com/app/4519820/Vanguard__Idle_Auto_Battler/"
 ActiveGame="mining"
 StartScreen="upgrade"
-mining_demo_max_group=6
+mining_demo_max_group=3
 
 [input]
 

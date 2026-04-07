@@ -19,6 +19,7 @@ var scene_change_started_msec: int = 0
 
 func _ready() -> void :
     _apply_transition_speed(node_transition_duration)
+    $AnimationPlayer.animation_finished.connect(_on_transition_animation_finished)
 
 
     SignalBus.pallet_updated.connect(_on_pallet_updated)
@@ -42,6 +43,7 @@ func change_to_new_scene(path, _to_state = null, duration_override: float = -1.0
             scene_change_max_duration
         )
     _apply_transition_speed(estimated_total_duration)
+    _set_web_transition_music_paused(true)
     $AudioStreamPlayer.play()
     $AnimationPlayer.play("Change Scene")
 
@@ -50,6 +52,7 @@ func do_transition(_from_node, _to_node):
     from_node = _from_node
     to_node = _to_node
     _apply_transition_speed(node_transition_duration)
+    _set_web_transition_music_paused(true)
     $AudioStreamPlayer.play()
     $AnimationPlayer.play("Do Transisiton")
 
@@ -119,3 +122,15 @@ func _apply_transition_speed(duration_seconds: float) -> void :
         speed *= 8.0
 
     $AnimationPlayer.speed_scale = speed
+
+func _on_transition_animation_finished(animation_name: StringName) -> void:
+    if animation_name == &"Change Scene" or animation_name == &"Do Transisiton":
+        _set_web_transition_music_paused(false)
+
+func _set_web_transition_music_paused(should_pause: bool) -> void:
+    if not OS.has_feature("web"):
+        return
+    var music_player: AudioStreamPlayer = get_node_or_null("/root/MusicPlayer") as AudioStreamPlayer
+    if music_player == null:
+        return
+    music_player.stream_paused = should_pause

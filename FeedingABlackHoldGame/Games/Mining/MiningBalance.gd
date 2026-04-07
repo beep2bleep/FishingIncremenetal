@@ -4,6 +4,9 @@ class_name MiningBalance
 const MAX_DEPTH_LEVEL := 100
 const MAX_UPGRADE_LEVEL := 100
 const MAX_MATERIAL_TYPES_PER_LEVEL := 8
+const RANK_LABEL := "Rig Rank"
+const RANK_XP_LABEL := "Survey XP"
+const RANK_UP_LABEL := "(RIG RANK UP!)"
 const UPGRADE_EFFECT_GROUP_SIZE := 5
 const EARLY_UPGRADE_LEVELS := 5
 const LATE_COST_MULTIPLIER_START := 1.8
@@ -84,34 +87,54 @@ static func get_material_by_id(material_id: String) -> Dictionary:
             return material.duplicate(true)
     return _localize_material_entry(_build_material_tier_for_depth(1))
 
-static func get_level_for_total_xp(total_xp: int) -> int:
-    var level: int = 1
+static func get_rank_label() -> String:
+    return RANK_LABEL
+
+static func get_rank_xp_label() -> String:
+    return RANK_XP_LABEL
+
+static func get_rank_up_label() -> String:
+    return RANK_UP_LABEL
+
+static func get_rank_for_total_xp(total_xp: int) -> int:
+    var rank: int = 1
     var remaining_xp: int = max(0, total_xp)
-    while remaining_xp >= get_xp_to_next_level(level):
-        remaining_xp -= get_xp_to_next_level(level)
-        level += 1
-    return level
+    while remaining_xp >= get_rank_xp_to_next(rank):
+        remaining_xp -= get_rank_xp_to_next(rank)
+        rank += 1
+    return rank
 
-static func get_xp_to_next_level(level: int) -> int:
-    var level_value: float = float(max(level, 1))
-    return int(round(65.0 + 16.0 * level_value + 12.5 * pow(level_value, 1.53)))
+static func get_rank_xp_to_next(rank: int) -> int:
+    var rank_value: float = float(max(rank, 1))
+    return int(round(65.0 + 16.0 * rank_value + 12.5 * pow(rank_value, 1.53)))
 
-static func get_level_progress(data: Dictionary) -> Dictionary:
-    var current_level: int = max(1, int(data.get("player_level", 1)))
-    var total_xp: int = max(0, int(data.get("xp", 0)))
+static func get_rank_progress(data: Dictionary) -> Dictionary:
+    var current_rank: int = _get_rank_value(data)
+    var total_rank_xp: int = _get_rank_xp_value(data)
     var spent_xp: int = 0
-    for level in range(1, current_level):
-        spent_xp += get_xp_to_next_level(level)
-    var current_level_xp: int = max(0, total_xp - spent_xp)
-    var next_level_cost: int = get_xp_to_next_level(current_level)
+    for rank in range(1, current_rank):
+        spent_xp += get_rank_xp_to_next(rank)
+    var current_rank_xp: int = max(0, total_rank_xp - spent_xp)
+    var next_rank_cost: int = get_rank_xp_to_next(current_rank)
     return {
-        "current_level": current_level,
-        "current_xp": current_level_xp,
-        "next_level_xp": next_level_cost
+        "current_rank": current_rank,
+        "current_xp": current_rank_xp,
+        "next_rank_xp": next_rank_cost,
+        "current_level": current_rank,
+        "next_level_xp": next_rank_cost
     }
 
+static func get_level_for_total_xp(total_xp: int) -> int:
+    return get_rank_for_total_xp(total_xp)
+
+static func get_xp_to_next_level(level: int) -> int:
+    return get_rank_xp_to_next(level)
+
+static func get_level_progress(data: Dictionary) -> Dictionary:
+    return get_rank_progress(data)
+
 static func refresh_depth_unlocks(data: Dictionary) -> void:
-    var player_level: int = max(1, int(data.get("player_level", 1)))
+    var player_level: int = _get_rank_value(data)
     var scanner_level: int = int(data.get("upgrades", {}).get("depth_scanner", 0))
     var unlocked_depth: int = 1 + int(floor(float(player_level + 1) / 3.2)) + int(floor(float(scanner_level) * 0.7))
     data["deepest_level_unlocked"] = max(int(data.get("deepest_level_unlocked", 1)), clampi(unlocked_depth, 1, MAX_DEPTH_LEVEL))
@@ -552,6 +575,12 @@ static func _localize_material_entry(entry: Dictionary) -> Dictionary:
     var base_name: String = _translate(base_name_key)
     localized["name"] = base_name if cycle_number <= 1 else _trf("MINING_MATERIAL_CYCLE_FORMAT", [base_name, cycle_number])
     return localized
+
+static func _get_rank_value(data: Dictionary) -> int:
+    return max(1, int(data.get("rig_rank", data.get("player_level", 1))))
+
+static func _get_rank_xp_value(data: Dictionary) -> int:
+    return max(0, int(data.get("rig_xp", data.get("xp", 0))))
 
 static func _build_material_tier_for_depth(depth_level: int, previous_material: Dictionary = {}) -> Dictionary:
     var base_count: int = BASE_MATERIAL_TIERS.size()
