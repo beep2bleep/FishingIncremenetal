@@ -5,12 +5,12 @@ const TURKEY_PROGRESS := preload("res://Games/Turkey/TurkeyProgress.gd")
 
 const FRAME_COUNT := 3
 const LANE_WIDTH := 1.05
-const LANE_LENGTH := 18.288
+const LANE_LENGTH := 9.144
 const GUTTER_WIDTH := 0.34
 const LANE_SURFACE_Y := 0.0
 const BALL_RADIUS := 0.109
 const PIN_MASS_KG := 1.53
-const HEAD_PIN_Z := 17.0
+const HEAD_PIN_Z := 8.45
 const PIN_ROW_SPACING_Z := 0.264
 const PIN_ROW_SPACING_X := 0.1524
 const BALL_START_Z := -0.35
@@ -57,6 +57,7 @@ enum RunState {
 @onready var start_location_row: HBoxContainer = %StartLocationRow
 @onready var spin_row: HBoxContainer = %SpinRow
 @onready var aiming_help_label: Label = %AimingHelpLabel
+@onready var power_label: Label = %PowerLabel
 @onready var power_bar: ProgressBar = %PowerBar
 @onready var end_panel: PanelContainer = %EndPanel
 @onready var end_title_label: Label = %EndTitleLabel
@@ -100,6 +101,7 @@ func _ready() -> void:
 	_build_lane()
 	_setup_option_buttons()
 	_connect_ui()
+	_configure_ui_mouse_filters()
 	_load_progression()
 	_begin_series()
 
@@ -147,14 +149,22 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _setup_environment() -> void:
 	var environment := Environment.new()
-	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color(0.02, 0.02, 0.025, 1.0)
+	var sky := Sky.new()
+	var sky_material := ProceduralSkyMaterial.new()
+	sky_material.sky_top_color = Color(0.02, 0.04, 0.08, 1.0)
+	sky_material.sky_horizon_color = Color(0.18, 0.11, 0.03, 1.0)
+	sky_material.ground_bottom_color = Color(0.01, 0.01, 0.015, 1.0)
+	sky_material.ground_horizon_color = Color(0.08, 0.06, 0.05, 1.0)
+	sky_material.energy_multiplier = 0.7
+	sky.sky_material = sky_material
+	environment.background_mode = Environment.BG_SKY
+	environment.sky = sky
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(0.46, 0.47, 0.5, 1.0)
 	environment.ambient_light_energy = 0.65
 	environment.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	world_environment.environment = environment
-	camera_3d.look_at(Vector3(0.0, 0.5, 10.0), Vector3.UP)
+	camera_3d.look_at(Vector3(0.0, 0.55, HEAD_PIN_Z * 0.62), Vector3.UP)
 
 func _setup_materials() -> void:
 	lane_material = StandardMaterial3D.new()
@@ -189,6 +199,15 @@ func _build_lane() -> void:
 	_add_box_surface("LeftRail", Vector3(-(LANE_WIDTH * 0.5 + GUTTER_WIDTH), 0.18, LANE_LENGTH * 0.5), Vector3(0.05, 0.36, LANE_LENGTH + 1.1), Color(0.11, 0.11, 0.12, 1.0), 0.7, 0.04)
 	_add_box_surface("RightRail", Vector3(LANE_WIDTH * 0.5 + GUTTER_WIDTH, 0.18, LANE_LENGTH * 0.5), Vector3(0.05, 0.36, LANE_LENGTH + 1.1), Color(0.11, 0.11, 0.12, 1.0), 0.7, 0.04)
 	_add_box_surface("Backstop", Vector3(0.0, 0.52, LANE_LENGTH + 0.65), Vector3(2.0, 1.1, 0.08), Color(0.16, 0.06, 0.05, 1.0), 0.8, 0.1)
+	_add_decor_box("LeftWall", Vector3(-1.25, 1.4, LANE_LENGTH * 0.45), Vector3(0.08, 2.8, LANE_LENGTH + 1.5), Color(0.05, 0.05, 0.06, 1.0), Color(0.03, 0.0, 0.0, 1.0))
+	_add_decor_box("RightWall", Vector3(1.25, 1.4, LANE_LENGTH * 0.45), Vector3(0.08, 2.8, LANE_LENGTH + 1.5), Color(0.05, 0.05, 0.06, 1.0), Color(0.03, 0.0, 0.0, 1.0))
+	_add_decor_box("CeilingBar", Vector3(0.0, 2.4, LANE_LENGTH * 0.35), Vector3(2.2, 0.12, LANE_LENGTH * 0.9), Color(0.08, 0.08, 0.09, 1.0), Color(0.25, 0.18, 0.05, 1.0))
+	_add_decor_box("BackGlow", Vector3(0.0, 1.1, LANE_LENGTH + 0.35), Vector3(1.8, 1.4, 0.05), Color(0.17, 0.08, 0.05, 1.0), Color(0.42, 0.2, 0.08, 1.0))
+	_add_decor_box("BackSign", Vector3(0.0, 1.45, LANE_LENGTH + 0.3), Vector3(1.1, 0.28, 0.03), Color(0.2, 0.14, 0.04, 1.0), Color(0.6, 0.45, 0.1, 1.0))
+	_add_decor_box("LaneLightLeft", Vector3(-0.78, 1.95, LANE_LENGTH * 0.35), Vector3(0.04, 0.04, LANE_LENGTH * 0.7), Color(0.22, 0.18, 0.07, 1.0), Color(0.75, 0.62, 0.22, 1.0))
+	_add_decor_box("LaneLightRight", Vector3(0.78, 1.95, LANE_LENGTH * 0.35), Vector3(0.04, 0.04, LANE_LENGTH * 0.7), Color(0.22, 0.18, 0.07, 1.0), Color(0.75, 0.62, 0.22, 1.0))
+	_add_accent_orb(Vector3(-1.7, 1.9, LANE_LENGTH * 0.3), 0.18, Color(0.75, 0.32, 0.1, 1.0))
+	_add_accent_orb(Vector3(1.7, 1.85, LANE_LENGTH * 0.55), 0.14, Color(0.82, 0.68, 0.18, 1.0))
 
 func _add_box_surface(name: String, position: Vector3, size: Vector3, color: Color, friction: float, bounce: float) -> void:
 	var body := StaticBody3D.new()
@@ -217,6 +236,57 @@ func _add_box_surface(name: String, position: Vector3, size: Vector3, color: Col
 	physics_material.friction = friction
 	physics_material.bounce = bounce
 	body.physics_material_override = physics_material
+
+func _add_decor_box(name: String, position: Vector3, size: Vector3, color: Color, emission: Color = Color(0, 0, 0, 1)) -> void:
+	var mesh_instance := MeshInstance3D.new()
+	mesh_instance.name = name
+	mesh_instance.position = position
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	mesh_instance.mesh = mesh
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.26
+	if emission != Color(0, 0, 0, 1):
+		material.emission_enabled = true
+		material.emission = emission
+		material.emission_energy_multiplier = 0.8
+	mesh_instance.material_override = material
+	lane_root.add_child(mesh_instance)
+
+func _add_accent_orb(position: Vector3, radius: float, emission: Color) -> void:
+	var orb := MeshInstance3D.new()
+	orb.position = position
+	var sphere := SphereMesh.new()
+	sphere.radius = radius
+	sphere.height = radius * 2.0
+	orb.mesh = sphere
+	var material := StandardMaterial3D.new()
+	material.albedo_color = emission
+	material.emission_enabled = true
+	material.emission = emission
+	material.emission_energy_multiplier = 1.3
+	material.roughness = 0.15
+	orb.material_override = material
+	lane_root.add_child(orb)
+
+func _configure_ui_mouse_filters() -> void:
+	_set_mouse_filter_recursive($CanvasLayer, Control.MOUSE_FILTER_IGNORE)
+	for button in start_buttons:
+		button.mouse_filter = Control.MOUSE_FILTER_STOP
+	for button in spin_buttons:
+		button.mouse_filter = Control.MOUSE_FILTER_STOP
+	play_again_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	upgrade_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	menu_button.mouse_filter = Control.MOUSE_FILTER_STOP
+
+func _set_mouse_filter_recursive(node: Node, filter: Control.MouseFilter) -> void:
+	if node is BaseButton:
+		return
+	if node is Control:
+		(node as Control).mouse_filter = filter
+	for child in node.get_children():
+		_set_mouse_filter_recursive(child, filter)
 
 func _setup_option_buttons() -> void:
 	for entry in START_POSITIONS:
@@ -504,6 +574,7 @@ func _is_frame_complete(frame_index: int) -> bool:
 func _complete_series(latest_message: String) -> void:
 	run_state = RunState.ROUND_OVER
 	aim_line.visible = false
+	_update_power_bar()
 	_update_scoreboard()
 
 	var score_details: Dictionary = _calculate_score_details()
@@ -725,6 +796,15 @@ func _update_wallet_label() -> void:
 
 func _update_power_bar() -> void:
 	power_bar.value = current_power_norm * 100.0
+	match run_state:
+		RunState.READY:
+			power_label.text = "Power Gauge: click once to begin."
+		RunState.AIMING:
+			power_label.text = "Power Gauge: %d%%" % int(round(power_bar.value))
+		RunState.BALL_IN_PLAY:
+			power_label.text = "Power Locked: %d%%" % int(round(power_bar.value))
+		RunState.ROUND_OVER:
+			power_label.text = "Power Gauge: series finished."
 
 func _update_target_from_mouse(mouse_x: float) -> void:
 	var viewport_width: float = max(1.0, get_viewport().get_visible_rect().size.x)

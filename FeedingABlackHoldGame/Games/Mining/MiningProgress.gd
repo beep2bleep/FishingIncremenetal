@@ -13,6 +13,7 @@ const DEFAULT_DATA := {
     "deepest_level_unlocked": MIN_START_DEPTH_LEVEL,
     "selected_depth_level": MIN_START_DEPTH_LEVEL,
     "upgrades": {},
+    "depth_frontier_attempts": {},
     "last_run_summary": "No mining run completed yet.",
     "last_run_breakdown": {},
     "summary_hint_history": []
@@ -26,6 +27,9 @@ static func get_depth_level_for_display_tier(display_tier: int) -> int:
 
 static func get_max_display_depth_tier() -> int:
     return get_display_depth_tier(MAX_DEPTH_LEVEL)
+
+static func get_depth_tier_progression_token(depth_level: int) -> String:
+    return "tier_%d" % get_display_depth_tier(depth_level)
 
 static func get_default_data() -> Dictionary:
     return DEFAULT_DATA.duplicate(true)
@@ -51,9 +55,14 @@ static func load_data() -> Dictionary:
     _refresh_depth_unlocks(data)
     data["deepest_level_unlocked"] = clampi(int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
     data["selected_depth_level"] = clampi(int(data.get("selected_depth_level", selected_before_refresh)), MIN_START_DEPTH_LEVEL, int(data["deepest_level_unlocked"]))
+    var repaired_missing_fields := false
+    if not (data.get("depth_frontier_attempts", {}) is Dictionary):
+        data["depth_frontier_attempts"] = {}
+        repaired_missing_fields = true
     if not (data.get("summary_hint_history", []) is Array):
         data["summary_hint_history"] = []
-    if int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)) != deepest_before_refresh or int(data.get("selected_depth_level", selected_before_refresh)) != selected_before_refresh:
+        repaired_missing_fields = true
+    if repaired_missing_fields or int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)) != deepest_before_refresh or int(data.get("selected_depth_level", selected_before_refresh)) != selected_before_refresh:
         save_data(data)
     return data
 
@@ -114,7 +123,7 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
     if new_deepest_level > previous_deepest_level:
         data["selected_depth_level"] = new_deepest_level
     save_data(data)
-    _track_depth_tier_progression_events(previous_deepest_level, new_deepest_level, results, data)
+    _track_depth_frontier_progression_event(previous_deepest_level, new_deepest_level, results, data)
     _track_level_progression_events(previous_level, new_level, int(data.get("xp", 0)), results)
     return data
 
@@ -124,17 +133,26 @@ static func track_run_start(depth_level: int, data: Dictionary = {}) -> void:
         return
     var snapshot: Dictionary = data if not data.is_empty() else load_data()
     var safe_depth_level: int = max(1, depth_level)
+    # Treat only the current frontier tier as a progression attempt so replay/farm dives
+    # do not dilute the depth funnel with intentional backfills.
+    if not _is_frontier_depth_attempt(safe_depth_level, snapshot):
+        return
+    var safe_display_tier: int = get_display_depth_tier(safe_depth_level)
+    var frontier_depth_before_run: int = clampi(int(snapshot.get("deepest_level_unlocked", safe_depth_level)), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
     ga_manager.call(
         "track_progression_event",
         "start",
         "mining",
-        "depth_tier",
-        "tier_%d" % safe_depth_level,
+        "depth_frontier",
+        get_depth_tier_progression_token(safe_depth_level),
         null,
         {
             "depth_level": safe_depth_level,
+            "depth_tier": safe_display_tier,
             "selected_depth_level": int(snapshot.get("selected_depth_level", safe_depth_level)),
+            "selected_depth_tier": get_display_depth_tier(int(snapshot.get("selected_depth_level", safe_depth_level))),
             "deepest_depth_unlocked": int(snapshot.get("deepest_level_unlocked", safe_depth_level)),
+            "frontier_depth_tier_before_run": get_display_depth_tier(frontier_depth_before_run),
             "player_level": int(snapshot.get("player_level", 1)),
             "total_xp": int(snapshot.get("xp", 0)),
             "wallet": int(snapshot.get("wallet", 0)),
@@ -197,50 +215,55 @@ static func _track_level_progression_events(previous_level: int, new_level: int,
         }
     )
 
-static func _track_depth_tier_progression_events(previous_deepest_level: int, new_deepest_level: int, results: Dictionary, data: Dictionary) -> void:
+static func _track_depth_frontier_progression_event(previous_deepest_level: int, new_deepest_level: int, results: Dictionary, data: Dictionary) -> void:
+    var run_depth_level: int = clampi(int(results.get("depth_level", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+    var frontier_depth_before_run: int = clampi(previous_deepest_level, MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+    if run_depth_level != frontier_depth_before_run:
+        return
     var ga_manager: Node = _get_game_analytics_manager()
+    var progression_token: String = get_depth_tier_progression_token(run_depth_level)
+    var attempts: Dictionary = _get_depth_frontier_attempts(data)
+    var previous_attempt_failures: int = max(0, int(attempts.get(progression_token, 0)))
+    var attempt_num: int = previous_attempt_failures + 1
+    var unlocked_new_frontier: bool = new_deepest_level > previous_deepest_level
+    if unlocked_new_frontier:
+        attempts.erase(progression_token)
+    else:
+        attempts[progression_token] = attempt_num
+    data["depth_frontier_attempts"] = attempts
+    save_data(data)
     if ga_manager == null:
         return
-    var run_depth_level: int = max(1, int(results.get("depth_level", 1)))
     var completion_fields: Dictionary = {
-        "completed_depth_tier": run_depth_level,
-        "run_depth_tier": run_depth_level,
+        "depth_level": run_depth_level,
+        "depth_tier": get_display_depth_tier(run_depth_level),
+        "frontier_depth_level_before_run": frontier_depth_before_run,
+        "frontier_depth_tier_before_run": get_display_depth_tier(frontier_depth_before_run),
+        "frontier_depth_level_after_run": new_deepest_level,
+        "frontier_depth_tier_after_run": get_display_depth_tier(new_deepest_level),
+        "new_frontier_unlocked": unlocked_new_frontier,
+        "new_tiers_unlocked": max(0, new_deepest_level - previous_deepest_level),
+        "reason_key": str(results.get("reason_key", "")),
         "reason": str(results.get("reason", "")),
         "money_earned": int(results.get("money", 0)),
         "xp_earned": int(results.get("xp", 0)),
         "nodes_broken": int(results.get("nodes_broken", 0)),
         "ore_banked": int(results.get("ore_banked", 0)),
-        "deepest_before": previous_deepest_level,
-        "deepest_after": new_deepest_level,
         "player_level": int(data.get("player_level", 1)),
         "total_xp": int(data.get("xp", 0)),
         "wallet": int(data.get("wallet", 0)),
-        "completion_source": "run_end",
+        "attempt_num": attempt_num,
     }
     ga_manager.call(
         "track_progression_event",
-        "complete",
+        "complete" if unlocked_new_frontier else "fail",
         "mining",
-        "depth_tier",
-        "tier_%d" % run_depth_level,
+        "depth_frontier",
+        progression_token,
         int(results.get("money", 0)),
-        completion_fields
+        completion_fields,
+        attempt_num
     )
-
-    for unlocked_depth in range(max(previous_deepest_level + 1, run_depth_level + 1), new_deepest_level + 1):
-        var unlock_fields: Dictionary = completion_fields.duplicate(true)
-        unlock_fields["completed_depth_tier"] = unlocked_depth
-        unlock_fields["completion_source"] = "skip_unlock"
-        unlock_fields["skipped_from_run_depth"] = run_depth_level
-        ga_manager.call(
-            "track_progression_event",
-            "complete",
-            "mining",
-            "depth_tier",
-            "tier_%d" % unlocked_depth,
-            int(results.get("money", 0)),
-            unlock_fields
-        )
 
 static func _get_game_analytics_manager() -> Node:
     var main_loop: MainLoop = Engine.get_main_loop()
@@ -251,3 +274,14 @@ static func _get_game_analytics_manager() -> Node:
             ga_manager = root.get_node_or_null("GameAnalyticsManager")
         return ga_manager
     return null
+
+static func _is_frontier_depth_attempt(depth_level: int, data: Dictionary) -> bool:
+    var safe_depth_level: int = clampi(depth_level, MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+    var frontier_depth_level: int = clampi(int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+    return safe_depth_level == frontier_depth_level
+
+static func _get_depth_frontier_attempts(data: Dictionary) -> Dictionary:
+    var attempts_variant: Variant = data.get("depth_frontier_attempts", {})
+    if attempts_variant is Dictionary:
+        return (attempts_variant as Dictionary).duplicate(true)
+    return {}

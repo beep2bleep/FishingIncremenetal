@@ -8,6 +8,8 @@ const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const MINING_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/Mining/MiningUpgradeTreeAdapter.gd")
 const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
 const RED_SKY_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyUpgradeTreeAdapter.gd")
+const TURKEY_PROGRESS_SCRIPT = preload("res://Games/Turkey/TurkeyProgress.gd")
+const TURKEY_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/Turkey/TurkeyUpgradeTreeAdapter.gd")
 const REEL_INTO_DARKNESS_PROGRESS_SCRIPT = preload("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
 const REEL_INTO_DARKNESS_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/ReelIntoDarkness/ReelIntoDarknessUpgradeTreeAdapter.gd")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
@@ -306,8 +308,33 @@ func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: i
     if is_active == true:
         update_input(input_type)
 
+func _is_editor_return_to_launcher_shortcut(event: InputEvent) -> bool:
+    if not OS.has_feature("editor"):
+        return false
+    if not (event is InputEventKey):
+        return false
+    var key_event := event as InputEventKey
+    if not key_event.pressed or key_event.echo:
+        return false
+    var is_o_key := key_event.keycode == KEY_O or key_event.physical_keycode == KEY_O
+    var is_p_key := key_event.keycode == KEY_P or key_event.physical_keycode == KEY_P
+    if not is_o_key and not is_p_key:
+        return false
+    var o_pressed := Input.is_key_pressed(KEY_O) or Input.is_physical_key_pressed(KEY_O)
+    var p_pressed := Input.is_key_pressed(KEY_P) or Input.is_physical_key_pressed(KEY_P)
+    return o_pressed and p_pressed
+
+func _return_to_game_launcher() -> void:
+    _refresh_virtual_cursor_state()
+    Global.clear_upgrade_tree_cache()
+    SceneChanger.change_to_new_scene(Util.PATH_GAME_LAUNCHER, null, 0.2)
+
 func _input(event: InputEvent) -> void :
     if Global.game_state == Util.GAME_STATES.UPGRADES:
+        if _is_editor_return_to_launcher_shortcut(event):
+            _return_to_game_launcher()
+            get_viewport().set_input_as_handled()
+            return
         if event is InputEventMouseButton and event.pressed and not event.is_echo():
             if not _is_any_popup_visible() and state == STATES.SHOWING_TREE and tech_tree != null and is_instance_valid(tech_tree):
                 var mouse_event := event as InputEventMouseButton
@@ -412,6 +439,10 @@ func update_colors():
         %"Click Mask".color = Color(0.19, 0.095, 0.085, 1.0)
         %"GPUParticles2D Light".modulate = Color(0.81, 0.39, 0.24, 0.64)
         %"GPUParticles2D2 Dark".modulate = Color(0.36, 0.135, 0.095, 0.6)
+    elif Util.is_turkey_game_active():
+        %"Click Mask".color = Color(0.04, 0.04, 0.045, 1.0)
+        %"GPUParticles2D Light".modulate = Color(0.62, 0.52, 0.28, 0.48)
+        %"GPUParticles2D2 Dark".modulate = Color(0.12, 0.12, 0.13, 0.56)
     elif Util.is_reel_into_darkness_game_active():
         %"Click Mask".color = Color(0.05, 0.11, 0.16, 1.0)
         %"GPUParticles2D Light".modulate = Color(0.37, 0.7, 0.84, 0.62)
@@ -675,6 +706,11 @@ func _on_go_again_pressed() -> void :
         _cache_tech_tree_for_reuse()
         SceneChanger.change_to_new_scene(Util.get_main_scene_path())
         return
+    if Util.is_turkey_game_active():
+        _refresh_virtual_cursor_state()
+        _cache_tech_tree_for_reuse()
+        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        return
     if Util.is_reel_into_darkness_game_active():
         _refresh_virtual_cursor_state()
         _cache_tech_tree_for_reuse()
@@ -728,6 +764,8 @@ func _ensure_tree_initialized(force_rebuild: bool = false) -> void:
             MINING_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
         elif Util.is_red_sky_game_active():
             RED_SKY_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
+        elif Util.is_turkey_game_active():
+            TURKEY_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
         elif Util.is_reel_into_darkness_game_active():
             REEL_INTO_DARKNESS_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
         else:
@@ -753,6 +791,8 @@ func _get_upgrade_wallet_amount() -> int:
         return MINING_PROGRESS_SCRIPT.get_wallet()
     if Util.is_red_sky_game_active():
         return RED_SKY_PROGRESS_SCRIPT.get_wallet()
+    if Util.is_turkey_game_active():
+        return TURKEY_PROGRESS_SCRIPT.get_wallet()
     if Util.is_reel_into_darkness_game_active():
         return REEL_INTO_DARKNESS_PROGRESS_SCRIPT.get_wallet()
     return int(SaveHandler.fishing_currency)
@@ -806,13 +846,16 @@ func _refresh_demo_mode_label_visibility() -> void:
     if demo_mode_label != null and is_instance_valid(demo_mode_label):
         demo_mode_label.visible = _is_demo_mode_enabled() and not _is_any_popup_visible()
     if game_mode_label != null and is_instance_valid(game_mode_label):
-        game_mode_label.visible = not _is_any_popup_visible() and (Util.is_mining_game_active() or Util.is_red_sky_game_active() or Util.is_reel_into_darkness_game_active())
+        game_mode_label.visible = not _is_any_popup_visible() and (Util.is_mining_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active())
         if Util.is_mining_game_active():
             game_mode_label.text = tr("MINING_MODE_TITLE")
             game_mode_label.add_theme_color_override("font_color", Color(0.96, 0.84, 0.45, 1.0))
         elif Util.is_red_sky_game_active():
             game_mode_label.text = "RED SKY MODE"
             game_mode_label.add_theme_color_override("font_color", Color(0.98, 0.62, 0.42, 1.0))
+        elif Util.is_turkey_game_active():
+            game_mode_label.text = "TURKEY MODE"
+            game_mode_label.add_theme_color_override("font_color", Color(0.96, 0.84, 0.45, 1.0))
         elif Util.is_reel_into_darkness_game_active():
             game_mode_label.text = "REEL INTO DARKNESS"
             game_mode_label.add_theme_color_override("font_color", Color(0.56, 0.84, 0.94, 1.0))
@@ -1327,6 +1370,11 @@ func _launch_battle_at_level(level: int) -> void:
         _cache_tech_tree_for_reuse()
         SceneChanger.change_to_new_scene(Util.get_main_scene_path())
         return
+    if Util.is_turkey_game_active():
+        _refresh_virtual_cursor_state()
+        _cache_tech_tree_for_reuse()
+        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        return
     if Util.is_reel_into_darkness_game_active():
         _refresh_virtual_cursor_state()
         _cache_tech_tree_for_reuse()
@@ -1580,6 +1628,8 @@ func _perform_editor_sell() -> void:
         MINING_PROGRESS_SCRIPT.apply_tree_sale(node.upgrade.sim_key, new_level, wallet_after_sale)
     elif Util.is_red_sky_game_active():
         RED_SKY_PROGRESS_SCRIPT.apply_tree_sale(node.upgrade.sim_key, new_level, wallet_after_sale)
+    elif Util.is_turkey_game_active():
+        TURKEY_PROGRESS_SCRIPT.apply_tree_sale(node.upgrade.sim_key, new_level, wallet_after_sale)
     elif Util.is_reel_into_darkness_game_active():
         REEL_INTO_DARKNESS_PROGRESS_SCRIPT.apply_tree_sale(node.upgrade.sim_key, new_level, wallet_after_sale)
     else:
@@ -1719,7 +1769,7 @@ func _recenter_tech_tree_on_core() -> void:
         tech_tree.call("recenter_on_core")
 
 func _should_recenter_upgrade_tree_on_core() -> bool:
-    return Util.is_mining_game_active() or Util.is_red_sky_game_active() or Util.is_reel_into_darkness_game_active()
+    return Util.is_mining_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active()
 
 func _on_editor_center_offset_rebuild_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -1848,6 +1898,8 @@ func _perform_progress_reset() -> void:
         MINING_PROGRESS_SCRIPT.reset_progress()
     elif Util.is_red_sky_game_active():
         RED_SKY_PROGRESS_SCRIPT.reset_progress()
+    elif Util.is_turkey_game_active():
+        TURKEY_PROGRESS_SCRIPT.reset_progress()
     elif Util.is_reel_into_darkness_game_active():
         REEL_INTO_DARKNESS_PROGRESS_SCRIPT.reset_progress()
     else:
@@ -1897,6 +1949,13 @@ func _on_editor_unlock_all_pressed() -> void:
             var key: String = str(key_variant)
             red_sky_data["meta_upgrades"][key] = int(max_level_by_key[key])
         RED_SKY_PROGRESS_SCRIPT.save_data(red_sky_data)
+    elif Util.is_turkey_game_active():
+        var turkey_data: Dictionary = TURKEY_PROGRESS_SCRIPT.load_data()
+        turkey_data["meta_upgrades"] = {}
+        for key_variant: Variant in max_level_by_key.keys():
+            var key: String = str(key_variant)
+            turkey_data["meta_upgrades"][key] = int(max_level_by_key[key])
+        TURKEY_PROGRESS_SCRIPT.save_data(turkey_data)
     elif Util.is_reel_into_darkness_game_active():
         var reel_data: Dictionary = REEL_INTO_DARKNESS_PROGRESS_SCRIPT.load_data()
         reel_data["meta_upgrades"] = {}
@@ -2151,7 +2210,7 @@ func _hide_settings_panel() -> void:
         settings_panel.hide()
 
 func _can_continue_to_battle() -> bool:
-    if Util.is_red_sky_game_active() or Util.is_reel_into_darkness_game_active():
+    if Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active():
         return true
     if not _is_simulation_upgrade_tree():
         return true
@@ -2172,6 +2231,12 @@ func _update_go_again_button_state() -> void:
         go_again_button.tooltip_text = ""
         go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return
+    if Util.is_turkey_game_active():
+        go_again_button.disabled = false
+        go_again_button.text = "CONTINUE TO LANE"
+        go_again_button.tooltip_text = ""
+        go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        return
     if Util.is_reel_into_darkness_game_active():
         go_again_button.disabled = false
         go_again_button.text = "START FISHING"
@@ -2184,7 +2249,7 @@ func _update_go_again_button_state() -> void:
     go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0) if can_continue else Color(0.7, 0.7, 0.7, 1.0)
 
 func _is_standalone_mode_upgrade_scene() -> bool:
-    return Util.is_mining_game_active() or Util.is_red_sky_game_active() or Util.is_reel_into_darkness_game_active()
+    return Util.is_mining_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active()
 
 func _setup_continue_locked_dialog() -> void:
     var parent_layer: CanvasLayer = %CanvasLayer2

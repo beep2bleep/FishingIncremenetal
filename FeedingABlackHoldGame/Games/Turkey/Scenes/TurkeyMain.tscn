@@ -132,12 +132,18 @@ layout_mode = 2
 text = "Default line is center. Starter gear is weak on purpose, so a strike should feel rare."
 autowrap_mode = 3
 
+[node name="PowerLabel" type="Label" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel/BottomMargin/BottomVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Power Gauge: click once to begin."
+
 [node name="PowerBar" type="ProgressBar" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel/BottomMargin/BottomVBox"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 max_value = 100.0
 value = 0.0
-show_percentage = false
+show_percentage = true
 
 [node name="EndPanel" type="PanelContainer" parent="CanvasLayer/MarginContainer"]
 unique_name_in_owner = true

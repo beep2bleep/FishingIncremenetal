@@ -10,6 +10,7 @@ uniform float vignette_strength : hint_range(0.0, 1.0) = 0.38;
 uniform float noise_strength : hint_range(0.0, 0.15) = 0.02;
 uniform float chroma_offset : hint_range(0.0, 2.0) = 0.7;
 uniform vec3 tint : source_color = vec3(1.0, 0.98, 0.92);
+uniform bool fast_mode = false;
 
 vec2 curve_uv(vec2 uv, float distortion) {
 	vec2 centered = uv * 2.0 - 1.0;
@@ -35,12 +36,16 @@ void fragment() {
 		float pixel_height = 1.0 / target_vertical_resolution;
 		vec2 pixel_size = vec2(pixel_height / aspect, pixel_height);
 		vec2 snapped_uv = (floor(curved_uv / pixel_size) + 0.5) * pixel_size;
-		vec2 chroma_shift = vec2(pixel_size.x * chroma_offset, 0.0);
-
-		float red = texture(SCREEN_TEXTURE, snapped_uv + chroma_shift).r;
-		float green = texture(SCREEN_TEXTURE, snapped_uv).g;
-		float blue = texture(SCREEN_TEXTURE, snapped_uv - chroma_shift).b;
-		vec3 color = vec3(red, green, blue);
+		vec3 color;
+		if (fast_mode) {
+			color = texture(SCREEN_TEXTURE, snapped_uv).rgb;
+		} else {
+			vec2 chroma_shift = vec2(pixel_size.x * chroma_offset, 0.0);
+			float red = texture(SCREEN_TEXTURE, snapped_uv + chroma_shift).r;
+			float green = texture(SCREEN_TEXTURE, snapped_uv).g;
+			float blue = texture(SCREEN_TEXTURE, snapped_uv - chroma_shift).b;
+			color = vec3(red, green, blue);
+		}
 
 		float scanline = 0.5 + 0.5 * sin(snapped_uv.y * viewport_size.y * 3.14159265);
 		float grille = 0.5 + 0.5 * sin(snapped_uv.x * viewport_size.x * 6.2831853);

@@ -10,6 +10,7 @@ const MOUSE_TOOLTIP_EXTRA_OFFSET: float = 18.0
 const TOOLTIP_GROUP: StringName = &"tech_tree_tooltips"
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
+const TURKEY_PROGRESS_SCRIPT = preload("res://Games/Turkey/TurkeyProgress.gd")
 const REEL_INTO_DARKNESS_PROGRESS_SCRIPT = preload("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
 const RED_SKY_ICON_FACTORY = preload("res://Games/RedSkyDefense/RedSkyIconFactory.gd")
 static var _icon_texture_cache: Dictionary = {}
@@ -406,6 +407,8 @@ func _purchase_upgrade() -> void:
             MINING_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
         elif Util.is_red_sky_game_active():
             RED_SKY_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
+        elif Util.is_turkey_game_active():
+            TURKEY_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
         elif Util.is_reel_into_darkness_game_active():
             REEL_INTO_DARKNESS_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
         else:

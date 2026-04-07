@@ -25,5 +25,14 @@ func _ready() -> void:
 
 	var material := ShaderMaterial.new()
 	material.shader = CRT_SHADER
+	if OS.has_feature("web"):
+		material.set_shader_parameter("fast_mode", true)
+		material.set_shader_parameter("target_vertical_resolution", 300.0)
+		material.set_shader_parameter("barrel_distortion", 0.045)
+		material.set_shader_parameter("scanline_strength", 0.16)
+		material.set_shader_parameter("grille_strength", 0.06)
+		material.set_shader_parameter("vignette_strength", 0.34)
+		material.set_shader_parameter("noise_strength", 0.008)
+		material.set_shader_parameter("chroma_offset", 0.0)
 	overlay.material = material
 	add_child(overlay)

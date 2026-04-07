@@ -359,6 +359,7 @@ func load_local_settings():
         money_text = true
         touch_input_mode = true
         confirm_upgrade_purchase = false
+        save_local_settings()
 
 func _load_bool_local_setting(data: Dictionary, key: String, default_value: bool) -> bool:
     if not data.has(key):

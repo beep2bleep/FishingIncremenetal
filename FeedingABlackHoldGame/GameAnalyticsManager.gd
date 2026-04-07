@@ -135,7 +135,7 @@ func track_design_event(event_id: String, value: Variant = null, custom_fields: 
         options["customFields"] = JSON.stringify(custom_fields)
     addDesignEvent(options)
 
-func track_progression_event(status: String, progression01: String, progression02: String = "", progression03: String = "", score: Variant = null, custom_fields: Dictionary = {}) -> void:
+func track_progression_event(status: String, progression01: String, progression02: String = "", progression03: String = "", score: Variant = null, custom_fields: Dictionary = {}, attempt_num: int = 0) -> void:
     var options: Dictionary = {
         "progressionStatus": status,
         "progression01": progression01,
@@ -146,6 +146,8 @@ func track_progression_event(status: String, progression01: String, progression0
         options["score"] = int(round(float(score)))
     if not custom_fields.is_empty():
         options["customFields"] = JSON.stringify(custom_fields)
+    if attempt_num > 0:
+        options["attemptNum"] = attempt_num
     addProgressionEvent(options)
 
 func refresh_active_game_session(force_restart: bool = false) -> void:
@@ -239,6 +241,18 @@ func _send_active_game_progression_start_event() -> void:
             null,
             {
                 "wave": 1,
+            }
+        )
+        return
+    if Util.is_turkey_game_active():
+        track_progression_event(
+            "start",
+            Util.ACTIVE_GAME_TURKEY,
+            "frame",
+            "frame_1",
+            null,
+            {
+                "frame": 1,
             }
         )
         return
@@ -415,6 +429,12 @@ func _get_active_credentials() -> Dictionary:
     if Util.is_red_sky_game_active():
         return {
             "game_id": Util.ACTIVE_GAME_RED_SKY,
+            "game_key": _default_vanguard_game_key,
+            "secret_key": _default_vanguard_secret_key,
+        }
+    if Util.is_turkey_game_active():
+        return {
+            "game_id": Util.ACTIVE_GAME_TURKEY,
             "game_key": _default_vanguard_game_key,
             "secret_key": _default_vanguard_secret_key,
         }

@@ -196,6 +196,8 @@ var attached_contact_point := Vector2.ZERO
 var attached_push_direction := Vector2.DOWN
 var dirt_image: Image
 var dirt_texture: ImageTexture
+var dirt_texture_dirty := false
+var dirt_texture_flush_accumulator := 0.0
 var background_noise_texture: ImageTexture
 var last_background_noise_depth_level := -1
 var settings_button: Button
@@ -250,6 +252,7 @@ var run_end_spark_timer := 0.0
 var summary_transition_active := false
 var summary_transition_timer := 0.0
 var summary_transition_start_dim_alpha := 0.0
+var hud_refresh_accumulator := 0.0
 
 func _notification(what: int) -> void:
     if what == NOTIFICATION_TRANSLATION_CHANGED:
@@ -295,7 +298,9 @@ func _process(delta: float) -> void:
         _process_run_ending(delta)
     _process_summary_chart_animation(delta)
     _process_summary_transition(delta)
-    _refresh_hud()
+    if _should_refresh_hud_this_frame(delta):
+        _refresh_hud()
+    _flush_dirt_texture_updates(delta)
     if not simulation_mode_active:
         queue_redraw()
 
@@ -404,6 +409,8 @@ func _begin_run() -> void:
     summary_transition_active = false
     summary_transition_timer = 0.0
     summary_transition_start_dim_alpha = 0.0
+    hud_refresh_accumulator = 0.0
+    dirt_texture_flush_accumulator = 0.0
     trail_history.clear()
     drill_copies.clear()
     delivery_drone_visuals.clear()
@@ -2653,6 +2660,17 @@ func _ensure_crt_overlay() -> void:
         add_child(overlay)
     overlay.visible = true
 
+func _should_refresh_hud_this_frame(delta: float) -> bool:
+    if not OS.has_feature("web"):
+        return true
+    if run_state != RUN_STATES.RUNNING and run_state != RUN_STATES.ENDING:
+        return true
+    hud_refresh_accumulator += delta
+    if hud_refresh_accumulator < 0.05:
+        return false
+    hud_refresh_accumulator = 0.0
+    return true
+
 func _get_drill_heading() -> Vector2:
     var heading: Vector2 = _get_pointer_direction()
     if heading == Vector2.ZERO:
@@ -3287,14 +3305,14 @@ func _ensure_background_noise_texture() -> void:
 
 func _make_background_noise_texture(depth_level: int) -> ImageTexture:
     # Small seeded speckle texture, tiled across the world rect.
-    const NOISE_SIZE := 256
-    var img: Image = Image.create(NOISE_SIZE, NOISE_SIZE, false, Image.FORMAT_RGBA8)
+    var noise_size: int = 256
+    var img: Image = Image.create(noise_size, noise_size, false, Image.FORMAT_RGBA8)
     var nrng := RandomNumberGenerator.new()
     # Deterministic seed per depth level.
     nrng.seed = 1337 + depth_level * 10007 + visual_style_reroll_index * 7919
 
-    for y in range(NOISE_SIZE):
-        for x in range(NOISE_SIZE):
+    for y in range(noise_size):
+        for x in range(noise_size):
             # Mix of "grain" and rarer "dots" for a subtle CRT-ish texture.
             var n1 := nrng.randf()
             var n2 := nrng.randf()
@@ -3320,7 +3338,6 @@ func _draw_background_doodads(world_rect: Rect2) -> void:
     var smudge_color := bg.darkened(0.22)
     smudge_color.a = 0.05
     var seed_base := float(active_depth_level) * 97.0 + _get_visual_style_seed_offset()
-
     for index in range(DEPTH_DOODAD_COUNT):
         var fi := float(index)
         var px := world_rect.position.x + world_rect.size.x * (0.08 + 0.84 * _depth_noise(seed_base, fi * 1.37 + 0.2))
@@ -3343,7 +3360,6 @@ func _draw_background_dark_spots(world_rect: Rect2, bg: Color, accent: Color) ->
     outer_color.a = 0.17
     var inner_color := bg.darkened(0.38)
     inner_color.a = 0.11
-
     for index in range(DEPTH_DARK_SPOT_COUNT):
         var fi := float(index)
         var center := Vector2(
@@ -3356,13 +3372,13 @@ func _draw_background_dark_spots(world_rect: Rect2, bg: Color, accent: Color) ->
         _draw_soft_dark_spot(center, radius_x, radius_y, angle, outer_color, inner_color)
 
 func _draw_soft_dark_spot(center: Vector2, radius_x: float, radius_y: float, angle: float, outer_color: Color, inner_color: Color) -> void:
-    var ring_count := 4
+    var ring_count: int = 4
+    var point_count: int = 22
     for ring_index in range(ring_count, 0, -1):
         var t := float(ring_index) / float(ring_count)
         var ring_color := outer_color.lerp(inner_color, 1.0 - t)
         ring_color.a *= 0.55 + 0.45 * (1.0 - t)
         var points := PackedVector2Array()
-        var point_count := 22
         for point_index in range(point_count):
             var phase := TAU * float(point_index) / float(point_count)
             var wobble := 0.88 + 0.18 * sin(phase * 3.0 + angle * 1.7)
@@ -3495,7 +3511,9 @@ func _get_translated_shape_points(node: Dictionary, center: Vector2) -> PackedVe
     return translated
 
 func _initialize_dirt_mask() -> void:
-    dirt_image = Image.create(512, 640, false, Image.FORMAT_RGBA8)
+    var dirt_width: int = 256 if OS.has_feature("web") else 512
+    var dirt_height: int = 320 if OS.has_feature("web") else 640
+    dirt_image = Image.create(dirt_width, dirt_height, false, Image.FORMAT_RGBA8)
     var bg := _get_level_bg_color()
     # Dirt overlays the rock, so make it inherit the depth palette a bit.
     var depth_factor: float = float(active_depth_level - 1) / float(max(1, material_tiers.size() - 1))
@@ -3516,6 +3534,7 @@ func _initialize_dirt_mask() -> void:
     dirt_image.fill(base_dirt)
     _apply_dirt_variation(dirt_image)
     dirt_texture = ImageTexture.create_from_image(dirt_image)
+    dirt_texture_dirty = false
 
 func _apply_dirt_variation(image: Image) -> void:
     if image == null:
@@ -3702,6 +3721,7 @@ func _carve_dirt_circle(world_pos: Vector2, radius: float) -> void:
         return
     var pixel_center: Vector2i = _world_to_dirt_pixel(world_pos)
     var pixel_radius: int = int(round(radius * float(dirt_image.get_width()) / _get_world_size().x))
+    var changed := false
     for x in range(pixel_center.x - pixel_radius, pixel_center.x + pixel_radius + 1):
         if x < 0 or x >= dirt_image.get_width():
             continue
@@ -3710,8 +3730,12 @@ func _carve_dirt_circle(world_pos: Vector2, radius: float) -> void:
                 continue
             if Vector2(float(x - pixel_center.x), float(y - pixel_center.y)).length() > float(pixel_radius):
                 continue
+            if dirt_image.get_pixel(x, y).a <= 0.001:
+                continue
             dirt_image.set_pixel(x, y, Color(0.0, 0.0, 0.0, 0.0))
-    dirt_texture.update(dirt_image)
+            changed = true
+    if changed:
+        dirt_texture_dirty = true
 
 func _refresh_dirt_visual_texture() -> void:
     if dirt_image == null:
@@ -3726,6 +3750,20 @@ func _refresh_dirt_visual_texture() -> void:
             rebuilt_pixel.a = previous_mask.get_pixel(x, y).a
             dirt_image.set_pixel(x, y, rebuilt_pixel)
     dirt_texture.update(dirt_image)
+    dirt_texture_dirty = false
+    dirt_texture_flush_accumulator = 0.0
+
+func _flush_dirt_texture_updates(delta: float) -> void:
+    if not dirt_texture_dirty or dirt_texture == null or dirt_image == null:
+        dirt_texture_flush_accumulator = 0.0
+        return
+    if OS.has_feature("web"):
+        dirt_texture_flush_accumulator += delta
+        if dirt_texture_flush_accumulator < 0.08:
+            return
+    dirt_texture_flush_accumulator = 0.0
+    dirt_texture.update(dirt_image)
+    dirt_texture_dirty = false
 
 func _setup_system_controls() -> void:
     settings_button = Button.new()

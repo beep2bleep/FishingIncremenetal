@@ -75,10 +75,10 @@ info_log=true
 [global]
 
 Build="v1.3.1"
-Demo=false
+Demo=true
 DemoWishlistUrl="https://store.steampowered.com/app/4519820/Vanguard__Idle_Auto_Battler/"
 ActiveGame="mining"
-StartScreen="menu"
+StartScreen="upgrade"
 mining_demo_max_group=6
 
 [input]
