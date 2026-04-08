@@ -48,10 +48,10 @@ corner_radius_bottom_left = 10
 corner_detail = 5
 
 [node name="GameModePanel" type="PanelContainer"]
-custom_minimum_size = Vector2(350, 400)
-offset_right = 350.0
-offset_bottom = 400.0
-pivot_offset = Vector2(150, 306)
+custom_minimum_size = Vector2(410, 480)
+offset_right = 410.0
+offset_bottom = 480.0
+pivot_offset = Vector2(205, 408)
 size_flags_horizontal = 4
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_ie2wx")

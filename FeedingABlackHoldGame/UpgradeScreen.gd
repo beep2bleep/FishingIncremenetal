@@ -71,6 +71,7 @@ func _trf(key: String, args: Array = []) -> String:
 var reset_progress_confirm_dialog: ConfirmationDialog
 var legacy_reset_dialog: ConfirmationDialog
 var settings_button: Button
+var return_to_main_menu_button: Button
 var fullscreen_button: Button
 var touch_input_button: Button
 var settings_panel: PanelContainer
@@ -112,6 +113,8 @@ func _notification(what: int) -> void:
 func _refresh_localized_text() -> void:
     if settings_button != null and is_instance_valid(settings_button):
         settings_button.text = tr("UI_SETTINGS")
+    if return_to_main_menu_button != null and is_instance_valid(return_to_main_menu_button):
+        return_to_main_menu_button.text = tr("MAIN MENU")
     if settings_title_label != null and is_instance_valid(settings_title_label):
         settings_title_label.text = tr("UI_SETTINGS_TITLE")
     if settings_close_button != null and is_instance_valid(settings_close_button):
@@ -224,6 +227,7 @@ func _ready() -> void :
     _setup_reset_progress_controls()
     _setup_version_label()
     _setup_settings_controls()
+    _setup_return_to_main_menu_button()
     _setup_fullscreen_button()
     _setup_touch_input_button()
     go_again_button = get_node_or_null("%Go Again")
@@ -605,6 +609,7 @@ func show_screen():
     _refresh_leaderboard_panel()
     _refresh_fullscreen_button_icon()
     _refresh_touch_input_button()
+    _update_return_to_main_menu_button_visibility()
     _update_go_again_button_state()
     _refresh_mining_crt_overlay()
 
@@ -2151,6 +2156,9 @@ func _update_upgrade_top_button_positions() -> void:
     if viewport == null:
         return
     var vertical_shift := viewport.get_visible_rect().size.y * UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO
+    if return_to_main_menu_button != null and is_instance_valid(return_to_main_menu_button):
+        return_to_main_menu_button.offset_top = 16.0 + vertical_shift
+        return_to_main_menu_button.offset_bottom = 104.0 + vertical_shift
     if settings_button != null and is_instance_valid(settings_button):
         settings_button.offset_top = 16.0 + vertical_shift
         settings_button.offset_bottom = 104.0 + vertical_shift
@@ -2162,6 +2170,44 @@ func _on_viewport_size_changed() -> void:
     _update_upgrade_top_button_positions()
     if tech_tree != null and is_instance_valid(tech_tree):
         tech_tree.clamp_tech_tree_pos()
+
+func _setup_return_to_main_menu_button() -> void:
+    if return_to_main_menu_button != null and is_instance_valid(return_to_main_menu_button):
+        return
+    return_to_main_menu_button = Button.new()
+    return_to_main_menu_button.name = "ReturnToMainMenuButton"
+    return_to_main_menu_button.anchor_left = 0.0
+    return_to_main_menu_button.anchor_top = 0.0
+    return_to_main_menu_button.anchor_right = 0.0
+    return_to_main_menu_button.anchor_bottom = 0.0
+    return_to_main_menu_button.offset_left = 72.0
+    return_to_main_menu_button.offset_top = 16.0
+    return_to_main_menu_button.offset_right = 256.0
+    return_to_main_menu_button.offset_bottom = 104.0
+    return_to_main_menu_button.z_index = 210
+    return_to_main_menu_button.focus_mode = Control.FOCUS_NONE
+    return_to_main_menu_button.custom_minimum_size = Vector2(184, 88)
+    return_to_main_menu_button.add_theme_font_size_override("font_size", 26)
+    return_to_main_menu_button.pressed.connect(_on_return_to_main_menu_pressed)
+    _style_utility_button(return_to_main_menu_button)
+    %CanvasLayer2.add_child(return_to_main_menu_button)
+    _refresh_localized_text()
+    _update_return_to_main_menu_button_visibility()
+    _update_upgrade_top_button_positions()
+
+func _update_return_to_main_menu_button_visibility() -> void:
+    if return_to_main_menu_button == null or not is_instance_valid(return_to_main_menu_button):
+        return
+    return_to_main_menu_button.visible = Util.is_all_high_level_mode_active()
+
+func _on_return_to_main_menu_pressed() -> void:
+    _hide_settings_panel()
+    _hide_continue_locked_panel()
+    if _is_battle_level_choice_open():
+        _on_battle_level_choice_cancel_pressed()
+    _refresh_virtual_cursor_state()
+    Global.clear_upgrade_tree_cache()
+    SceneChanger.change_to_new_scene(Util.get_game_hub_scene_path(), null, 0.2)
 
 func _is_settings_open() -> bool:
     return settings_panel != null and is_instance_valid(settings_panel) and settings_panel.visible

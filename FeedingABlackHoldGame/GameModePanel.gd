@@ -7,6 +7,7 @@ var index = 0
 var base_min_size
 
 signal selected(index)
+signal hover_entered(index)
 
 var is_active = false:
     set(new_value):
@@ -36,6 +37,7 @@ func _ready() -> void :
 
     SignalBus.settings_updated.connect(_on_settings_updated_changed)
     _on_settings_updated_changed()
+    $Button.mouse_entered.connect(_on_button_mouse_entered)
 
 
 func setup(_game_mode_data: GameModeData):
@@ -137,3 +139,7 @@ func _on_resized() -> void :
 
 func _on_button_pressed() -> void :
     selected.emit(index)
+
+
+func _on_button_mouse_entered() -> void :
+    hover_entered.emit(index)

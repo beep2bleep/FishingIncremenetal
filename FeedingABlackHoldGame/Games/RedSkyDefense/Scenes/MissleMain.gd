@@ -6,6 +6,8 @@ const RED_SKY_PROGRESS = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
 const RED_SKY_ICON_FACTORY = preload("res://Games/RedSkyDefense/RedSkyIconFactory.gd")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
+const IN_GAME_PAUSE_MENU_SCRIPT = preload("res://Core/InGamePauseMenu.gd")
+const RED_SKY_DEFEAT_SOUND = preload("res://Black Hole Game Over.mp3")
 
 const SKY_TOP_COLOR := Color(0.22, 0.05, 0.06, 1.0)
 const SKY_BOTTOM_COLOR := Color(0.66, 0.22, 0.13, 1.0)
@@ -38,8 +40,14 @@ const NUKE_SPEED := 720.0
 const FLOATING_TEXT_DURATION := 0.85
 const TEXT_FILTER_SCALE_STEP := 0.1
 const SUPPORT_EFFECT_DURATION := 0.12
+const RUN_START_BANNER_HOLD_DURATION := 1.45
+const RUN_START_BANNER_FADE_DURATION := 0.26
+const DEFEAT_SEQUENCE_DURATION := 1.35
+const DEFEAT_EXPLOSION_INTERVAL := 0.09
+const DEFEAT_OVERLAY_MAX_ALPHA := 0.46
+const ENEMY_TYPE_ORDER := ["raider", "runner", "gunship", "bomber", "brute", "skimmer", "siege", "carrier", "dronelet"]
 
-enum RUN_STATES {RUNNING, UPGRADE, SUMMARY}
+enum RUN_STATES {RUNNING, UPGRADE, DEFEAT, SUMMARY}
 
 @onready var mode_label: Label = $CanvasLayer/HudMargin/HudPanel/HudMargin/HudVBox/ModeLabel
 @onready var wave_label: Label = $CanvasLayer/HudMargin/HudPanel/HudMargin/HudVBox/WaveLabel
@@ -61,8 +69,19 @@ enum RUN_STATES {RUNNING, UPGRADE, SUMMARY}
 @onready var summary_title_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryTitleLabel
 @onready var summary_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryLabel
 @onready var summary_stats_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryStatsLabel
+@onready var start_wave_section: VBoxContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/StartWaveSection
+@onready var start_wave_header_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/StartWaveSection/StartWaveHeaderLabel
+@onready var start_wave_info_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/StartWaveSection/StartWaveInfoLabel
+@onready var start_wave_buttons_grid: GridContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/StartWaveSection/StartWaveButtons
 @onready var continue_button: Button = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryButtons/ContinueButton
 @onready var retry_button: Button = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryButtons/RetryButton
+
+var run_start_banner_panel: PanelContainer
+var run_start_banner_title_label: Label
+var run_start_banner_detail_label: Label
+var run_start_banner_tween: Tween
+var defeat_sound_player: AudioStreamPlayer
+var pause_menu
 
 var rng := RandomNumberGenerator.new()
 var persistent_data: Dictionary = {}
@@ -75,6 +94,12 @@ var text_node_base_sizes: Dictionary = {}
 var environment_darkness := 0.0
 var sun_progress := 0.0
 var support_time := 0.0
+
+var selected_start_wave := 1
+var run_start_wave := 1
+var pending_start_upgrade_picks := 0
+var used_start_upgrade_picks := 0
+var showing_pre_run_panel := false
 
 var current_wave := 1
 var waves_cleared := 0
@@ -150,7 +175,12 @@ var enemy_kill_counts := {
 	"raider": 0,
 	"runner": 0,
 	"gunship": 0,
-	"bomber": 0
+	"bomber": 0,
+	"brute": 0,
+	"skimmer": 0,
+	"siege": 0,
+	"carrier": 0,
+	"dronelet": 0
 }
 
 var player_bullets: Array[Dictionary] = []
@@ -165,14 +195,21 @@ var tower_fire_timers: Array = []
 var drone_fire_timers: Array = []
 var tentacle_cooldowns: Array = []
 var upgrade_buttons: Array[Button] = []
+var start_wave_buttons: Array[Button] = []
+var defeat_sequence_timer := 0.0
+var defeat_explosion_timer := 0.0
+var pending_finish_reason := ""
 
 func _ready() -> void:
 	rng.randomize()
 	persistent_data = RED_SKY_PROGRESS.load_data()
 	_ensure_crt_overlay()
 	_connect_ui()
+	_setup_pause_menu()
 	_setup_text_presentation()
-	_begin_run()
+	_setup_run_start_banner()
+	_setup_defeat_audio()
+	_show_pre_run_panel()
 
 func _exit_tree() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -196,8 +233,17 @@ func _connect_ui() -> void:
 		button.add_theme_font_size_override("font_size", 18)
 	mode_label.hide()
 	status_label.hide()
+	start_wave_header_label.add_theme_font_size_override("font_size", 24)
+	start_wave_info_label.add_theme_font_size_override("font_size", 18)
 	continue_button.pressed.connect(_on_continue_pressed)
 	retry_button.pressed.connect(_on_retry_pressed)
+
+func _setup_pause_menu() -> void:
+	pause_menu = IN_GAME_PAUSE_MENU_SCRIPT.new()
+	pause_menu.name = "InGamePauseMenu"
+	pause_menu.resume_requested.connect(_on_pause_resume_requested)
+	pause_menu.end_run_requested.connect(_on_pause_end_run_requested)
+	add_child(pause_menu)
 
 func _ensure_crt_overlay() -> void:
 	var overlay: CanvasLayer = get_node_or_null("MiningCrtOverlay") as CanvasLayer
@@ -235,25 +281,238 @@ func _apply_text_filter_scale() -> void:
 		var base_size: int = int(text_node_base_sizes[control_id])
 		control.add_theme_font_size_override("font_size", maxi(14, int(round(float(base_size) * combat_text_scale))))
 
+func _setup_run_start_banner() -> void:
+	if run_start_banner_panel != null:
+		return
+	var canvas_layer := get_node_or_null("OverlayCanvasLayer") as CanvasLayer
+	if canvas_layer == null:
+		return
+
+	run_start_banner_panel = PanelContainer.new()
+	run_start_banner_panel.name = "RunStartBanner"
+	run_start_banner_panel.anchor_left = 0.5
+	run_start_banner_panel.anchor_top = 0.0
+	run_start_banner_panel.anchor_right = 0.5
+	run_start_banner_panel.anchor_bottom = 0.0
+	run_start_banner_panel.offset_left = -290.0
+	run_start_banner_panel.offset_top = 34.0
+	run_start_banner_panel.offset_right = 290.0
+	run_start_banner_panel.offset_bottom = 162.0
+	run_start_banner_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	run_start_banner_panel.visible = false
+	run_start_banner_panel.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	canvas_layer.add_child(run_start_banner_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	run_start_banner_panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	margin.add_child(vbox)
+
+	var accent_line := ColorRect.new()
+	accent_line.custom_minimum_size = Vector2(0.0, 5.0)
+	accent_line.color = Color(0.99, 0.5, 0.26, 0.95)
+	vbox.add_child(accent_line)
+
+	run_start_banner_title_label = Label.new()
+	run_start_banner_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	run_start_banner_title_label.add_theme_font_size_override("font_size", 28)
+	run_start_banner_title_label.add_theme_color_override("font_color", Color(1.0, 0.91, 0.82, 1.0))
+	vbox.add_child(run_start_banner_title_label)
+
+	run_start_banner_detail_label = Label.new()
+	run_start_banner_detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	run_start_banner_detail_label.add_theme_font_size_override("font_size", 18)
+	run_start_banner_detail_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.7, 0.96))
+	vbox.add_child(run_start_banner_detail_label)
+
+func _show_run_start_banner() -> void:
+	if run_start_banner_panel == null or run_start_banner_title_label == null or run_start_banner_detail_label == null:
+		return
+	if run_start_banner_tween != null and run_start_banner_tween.is_running():
+		run_start_banner_tween.kill()
+
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.11, 0.03, 0.04, 0.93)
+	style.border_color = Color(0.96, 0.44, 0.25, 0.96)
+	style.set_border_width_all(2)
+	style.corner_radius_top_left = 7
+	style.corner_radius_top_right = 7
+	style.corner_radius_bottom_left = 7
+	style.corner_radius_bottom_right = 7
+	style.shadow_size = 10
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.32)
+	run_start_banner_panel.add_theme_stylebox_override("panel", style)
+
+	var run_number: int = int(persistent_data.get("runs", 0)) + 1
+	var wallet: int = int(persistent_data.get("wallet", 0))
+	var best_wave: int = int(persistent_data.get("best_wave", 0))
+	run_start_banner_title_label.text = "RED SKY DEFENSE  |  WAVE %02d ALERT" % current_wave
+	run_start_banner_detail_label.text = "Run %02d   |   Scrap reserve %d   |   Best wave %d   |   Start wave %d" % [run_number, wallet, best_wave, run_start_wave]
+
+	run_start_banner_panel.visible = true
+	run_start_banner_panel.scale = Vector2(0.96, 0.96)
+	run_start_banner_panel.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	run_start_banner_tween = create_tween()
+	run_start_banner_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	run_start_banner_tween.parallel().tween_property(run_start_banner_panel, "modulate:a", 1.0, 0.18)
+	run_start_banner_tween.parallel().tween_property(run_start_banner_panel, "scale", Vector2.ONE, 0.18)
+	run_start_banner_tween.tween_interval(RUN_START_BANNER_HOLD_DURATION)
+	run_start_banner_tween.tween_property(run_start_banner_panel, "modulate:a", 0.0, RUN_START_BANNER_FADE_DURATION)
+	run_start_banner_tween.finished.connect(func() -> void:
+		if run_start_banner_panel != null:
+			run_start_banner_panel.visible = false
+	)
+
+func _setup_defeat_audio() -> void:
+	if defeat_sound_player != null:
+		return
+	defeat_sound_player = AudioStreamPlayer.new()
+	defeat_sound_player.name = "RedSkyDefeatAudio"
+	defeat_sound_player.bus = "Effects"
+	defeat_sound_player.stream = RED_SKY_DEFEAT_SOUND
+	defeat_sound_player.volume_db = -6.0
+	add_child(defeat_sound_player)
+
+func _play_defeat_sound() -> void:
+	if defeat_sound_player == null:
+		return
+	defeat_sound_player.stop()
+	defeat_sound_player.pitch_scale = 1.0 + rng.randf_range(-0.03, 0.03)
+	defeat_sound_player.play()
+
 func tune_text_pixel_filter(delta: float) -> void:
 	combat_text_scale = clampf(combat_text_scale + delta, 1.0, 3.2)
 	_apply_text_filter_scale()
 	print("Red Sky text filter scale: ", snappedf(combat_text_scale, 0.01))
 
-func _begin_run() -> void:
+func _show_pre_run_panel() -> void:
+	_close_pause_menu()
 	persistent_data = RED_SKY_PROGRESS.load_data()
+	selected_start_wave = RED_SKY_PROGRESS.get_selected_start_wave(persistent_data)
+	run_start_wave = selected_start_wave
+	current_wave = selected_start_wave
+	waves_cleared = max(0, run_start_wave - 1)
 	meta_bonuses = RED_SKY_DATA.build_meta_bonuses(persistent_data.get("meta_upgrades", {}))
-	last_run_results.clear()
-	run_state = RUN_STATES.RUNNING
-	Global.game_state = Util.GAME_STATES.PLAYING
-	current_wave = 1
-	waves_cleared = 0
+	_apply_meta_bonuses()
+	_clear_runtime_entities()
+	_reset_defeat_sequence_state()
+	run_state = RUN_STATES.SUMMARY
+	showing_pre_run_panel = true
+	Global.game_state = Util.GAME_STATES.UPGRADES
+	upgrade_panel.hide()
+	summary_title_label.text = "Red Sky Deployment"
+	summary_label.text = _build_pre_run_summary_text()
+	summary_stats_label.text = _build_pre_run_stats_text()
+	continue_button.text = "Return to Upgrades"
+	retry_button.text = "Deploy"
+	_refresh_start_wave_selector()
+	summary_panel.show()
+	_reset_aim_cursor()
+	_refresh_mouse_capture_state()
+	_refresh_ui()
+
+func _build_pre_run_summary_text() -> String:
+	var best_wave: int = int(persistent_data.get("best_wave", 0))
+	var last_run_summary: String = str(persistent_data.get("last_run_summary", "No Red Sky Defense run completed yet.")).strip_edges()
+	var highest_start_wave: int = RED_SKY_PROGRESS.get_unlocked_start_waves(persistent_data).back()
+	var lines := PackedStringArray([
+		"Best wave cleared: %d" % best_wave,
+		"Selected start wave: %d" % selected_start_wave,
+		"Highest unlocked checkpoint: Wave %d" % highest_start_wave
+	])
+	if selected_start_wave > 1:
+		lines.append("Prep picks before launch: %d" % max(0, selected_start_wave - 1))
+	if not last_run_summary.is_empty():
+		lines.append("")
+		lines.append("Last run:")
+		lines.append(last_run_summary)
+	return "\n".join(lines)
+
+func _build_pre_run_stats_text() -> String:
+	return "Wallet: %d    Best Score: %d    Total Runs: %d" % [
+		int(persistent_data.get("wallet", 0)),
+		int(persistent_data.get("best_score", 0)),
+		int(persistent_data.get("runs", 0))
+	]
+
+func _refresh_start_wave_selector() -> void:
+	if start_wave_buttons_grid == null:
+		return
+	selected_start_wave = RED_SKY_PROGRESS.get_selected_start_wave(persistent_data)
+	start_wave_header_label.text = "Start Wave"
+	start_wave_info_label.text = _build_start_wave_info_text()
+	for child in start_wave_buttons_grid.get_children():
+		child.queue_free()
+	start_wave_buttons.clear()
+	var unlocked_start_waves: Array[int] = RED_SKY_PROGRESS.get_unlocked_start_waves(persistent_data)
+	start_wave_buttons_grid.columns = mini(3, maxi(1, unlocked_start_waves.size()))
+	for start_wave in unlocked_start_waves:
+		var button := Button.new()
+		button.toggle_mode = true
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		button.custom_minimum_size = Vector2(0.0, 86.0 if unlocked_start_waves.size() >= 4 else 100.0)
+		button.text = _format_start_wave_button_text(start_wave)
+		button.set_meta("start_wave", start_wave)
+		button.pressed.connect(_on_start_wave_button_pressed.bind(start_wave))
+		start_wave_buttons_grid.add_child(button)
+		start_wave_buttons.append(button)
+	_refresh_start_wave_button_styles()
+
+func _build_start_wave_info_text() -> String:
+	var unlocked_start_waves: Array[int] = RED_SKY_PROGRESS.get_unlocked_start_waves(persistent_data)
+	var highest_start_wave: int = unlocked_start_waves.back()
+	var next_start_wave: int = RED_SKY_PROGRESS.START_WAVE_STEP if highest_start_wave <= 1 else highest_start_wave + RED_SKY_PROGRESS.START_WAVE_STEP
+	var next_unlock_wave: int = next_start_wave + RED_SKY_PROGRESS.START_WAVE_STEP
+	var info := "Wave %d selected. Prep picks: %d." % [selected_start_wave, max(0, selected_start_wave - 1)]
+	if next_unlock_wave > 0:
+		info += " Beat wave %d to unlock Wave %d starts." % [next_unlock_wave, next_start_wave]
+	return info
+
+func _format_start_wave_button_text(start_wave: int) -> String:
+	if start_wave <= 1:
+		return "Wave 1\nFull warm-up"
+	return "Wave %d\nPrep picks %d" % [start_wave, max(0, start_wave - 1)]
+
+func _refresh_start_wave_button_styles() -> void:
+	for button in start_wave_buttons:
+		if button == null:
+			continue
+		var button_start_wave: int = int(button.get_meta("start_wave", 1))
+		var is_selected: bool = button_start_wave == selected_start_wave
+		button.button_pressed = is_selected
+		var border_color: Color = Color(1.0, 0.78, 0.34, 1.0) if is_selected else Color(0.54, 0.56, 0.62, 1.0)
+		button.add_theme_stylebox_override("normal", _make_upgrade_button_style(border_color, 0.12 if is_selected else 0.06, 4.0 if is_selected else 2.0))
+		button.add_theme_stylebox_override("hover", _make_upgrade_button_style(border_color.lightened(0.08), 0.18 if is_selected else 0.10, 4.0 if is_selected else 2.0))
+		button.add_theme_stylebox_override("pressed", _make_upgrade_button_style(border_color.lightened(0.14), 0.22 if is_selected else 0.12, 4.0 if is_selected else 2.0))
+		button.add_theme_stylebox_override("focus", _make_upgrade_button_style(border_color.lightened(0.18), 0.2 if is_selected else 0.12, 4.0 if is_selected else 2.0))
+		button.add_theme_color_override("font_color", Color(0.97, 0.96, 0.92, 1.0))
+		button.add_theme_color_override("font_hover_color", Color(1.0, 0.99, 0.96, 1.0))
+		button.add_theme_color_override("font_pressed_color", Color(1.0, 0.99, 0.96, 1.0))
+		button.add_theme_constant_override("outline_size", 2)
+		button.add_theme_color_override("font_outline_color", Color(0.04, 0.04, 0.05, 0.92))
+
+func _on_start_wave_button_pressed(start_wave: int) -> void:
+	persistent_data = RED_SKY_PROGRESS.set_selected_start_wave(start_wave)
+	selected_start_wave = RED_SKY_PROGRESS.get_selected_start_wave(persistent_data)
+	run_start_wave = selected_start_wave
+	current_wave = selected_start_wave
+	waves_cleared = max(0, run_start_wave - 1)
+	_refresh_start_wave_selector()
+	if showing_pre_run_panel:
+		summary_label.text = _build_pre_run_summary_text()
+		summary_stats_label.text = _build_pre_run_stats_text()
+	_refresh_ui()
+
+func _clear_runtime_entities() -> void:
 	wave_spawn_queue.clear()
-	wave_spawn_timer = 0.0
-	fire_timer = 0.0
-	support_time = 0.0
-	wave_upgrade_levels.clear()
-	offered_wave_upgrades.clear()
 	player_bullets.clear()
 	nukes.clear()
 	explosions.clear()
@@ -265,6 +524,29 @@ func _begin_run() -> void:
 	tower_fire_timers.clear()
 	drone_fire_timers.clear()
 	tentacle_cooldowns.clear()
+
+func _begin_run() -> void:
+	_close_pause_menu()
+	persistent_data = RED_SKY_PROGRESS.load_data()
+	meta_bonuses = RED_SKY_DATA.build_meta_bonuses(persistent_data.get("meta_upgrades", {}))
+	last_run_results.clear()
+	selected_start_wave = RED_SKY_PROGRESS.get_selected_start_wave(persistent_data)
+	run_start_wave = selected_start_wave
+	run_state = RUN_STATES.RUNNING
+	showing_pre_run_panel = false
+	Global.game_state = Util.GAME_STATES.PLAYING
+	current_wave = run_start_wave
+	waves_cleared = max(0, run_start_wave - 1)
+	pending_start_upgrade_picks = max(0, run_start_wave - 1)
+	used_start_upgrade_picks = 0
+	wave_spawn_queue.clear()
+	wave_spawn_timer = 0.0
+	fire_timer = 0.0
+	support_time = 0.0
+	wave_upgrade_levels.clear()
+	offered_wave_upgrades.clear()
+	_clear_runtime_entities()
+	_reset_defeat_sequence_state()
 	score = 0
 	damage_dealt = 0.0
 	damage_taken = 0.0
@@ -281,14 +563,26 @@ func _begin_run() -> void:
 	salvage_collected = 0
 	salvage_lost = 0
 	bonus_scrap_earned = 0
-	enemy_kill_counts = {"raider": 0, "runner": 0, "gunship": 0, "bomber": 0}
+	enemy_kill_counts.clear()
+	for enemy_type in ENEMY_TYPE_ORDER:
+		enemy_kill_counts[enemy_type] = 0
 	_apply_meta_bonuses()
 	summary_panel.hide()
 	upgrade_panel.hide()
 	_reset_aim_cursor()
-	_start_wave(current_wave)
+	if pending_start_upgrade_picks > 0:
+		_show_start_upgrade_panel()
+	else:
+		_start_wave(current_wave)
 	_refresh_mouse_capture_state()
 	_refresh_ui()
+
+func _reset_defeat_sequence_state() -> void:
+	defeat_sequence_timer = 0.0
+	defeat_explosion_timer = 0.0
+	pending_finish_reason = ""
+	if defeat_sound_player != null:
+		defeat_sound_player.stop()
 
 func _apply_meta_bonuses() -> void:
 	base_max_health = float(meta_bonuses.get("base_health", 154.0))
@@ -341,25 +635,52 @@ func _start_wave(wave: int) -> void:
 	wave_spawn_queue = _build_wave_spawn_list(wave)
 	wave_spawn_timer = 0.12
 	_spawn_floating_text("WAVE %d" % wave, get_viewport_rect().size * Vector2(0.5, 0.28), Color(1.0, 0.88, 0.58, 1.0), 34)
+	if current_wave == run_start_wave:
+		_show_run_start_banner()
 
 func _build_wave_spawn_list(wave: int) -> Array[Dictionary]:
 	var queue: Array[Dictionary] = []
-	var total_spawns: int = 5 + wave * 2 + int(wave / 2)
-	var gunship_count: int = 0 if wave < 2 else min(1 + int((wave - 2) / 3), maxi(1, total_spawns / 4))
-	var bomber_count: int = 0 if wave < 5 else min(1 + int((wave - 5) / 4), maxi(1, total_spawns / 5))
-	var runner_count: int = 1 if wave >= 2 else 0
-	runner_count += int(max(wave - 3, 0) / 3)
-	runner_count = min(runner_count, maxi(1, total_spawns / 3))
-	var raider_count: int = maxi(1, total_spawns - gunship_count - bomber_count - runner_count)
+	var total_spawns: int = 6 + wave * 2 + int(pow(float(wave), 1.08))
 	var enemy_types: Array[String] = []
-	for _i in range(raider_count):
-		enemy_types.append("raider")
-	for _i in range(runner_count):
-		enemy_types.append("runner")
-	for _i in range(gunship_count):
-		enemy_types.append("gunship")
+	var remaining_spawns: int = total_spawns
+	var carrier_count: int = 0 if wave < 10 else min(1 + int((wave - 10) / 8), maxi(1, total_spawns / 18))
+	carrier_count = min(carrier_count, maxi(0, remaining_spawns - 1))
+	remaining_spawns -= carrier_count
+	for _i in range(carrier_count):
+		enemy_types.append("carrier")
+	var siege_count: int = 0 if wave < 8 else min(1 + int((wave - 8) / 7), maxi(1, total_spawns / 14))
+	siege_count = min(siege_count, maxi(0, remaining_spawns - 1))
+	remaining_spawns -= siege_count
+	for _i in range(siege_count):
+		enemy_types.append("siege")
+	var brute_count: int = 0 if wave < 4 else min(1 + int((wave - 4) / 4), maxi(1, total_spawns / 9))
+	brute_count = min(brute_count, maxi(0, remaining_spawns - 1))
+	remaining_spawns -= brute_count
+	for _i in range(brute_count):
+		enemy_types.append("brute")
+	var bomber_count: int = 0 if wave < 5 else min(1 + int((wave - 5) / 4), maxi(1, total_spawns / 8))
+	bomber_count = min(bomber_count, maxi(0, remaining_spawns - 1))
+	remaining_spawns -= bomber_count
 	for _i in range(bomber_count):
 		enemy_types.append("bomber")
+	var gunship_count: int = 0 if wave < 2 else min(1 + int((wave - 2) / 3), maxi(1, total_spawns / 7))
+	gunship_count = min(gunship_count, maxi(0, remaining_spawns - 1))
+	remaining_spawns -= gunship_count
+	for _i in range(gunship_count):
+		enemy_types.append("gunship")
+	var skimmer_count: int = 0 if wave < 6 else min(1 + int((wave - 6) / 5), maxi(1, total_spawns / 10))
+	skimmer_count = min(skimmer_count, maxi(0, remaining_spawns - 1))
+	remaining_spawns -= skimmer_count
+	for _i in range(skimmer_count):
+		enemy_types.append("skimmer")
+	var runner_count: int = 1 if wave >= 2 else 0
+	runner_count += int(max(wave - 3, 0) / 3)
+	runner_count = min(runner_count, maxi(0, remaining_spawns - 1))
+	remaining_spawns -= runner_count
+	for _i in range(runner_count):
+		enemy_types.append("runner")
+	for _i in range(maxi(1, remaining_spawns)):
+		enemy_types.append("raider")
 	enemy_types.shuffle()
 	for spawn_index in range(enemy_types.size()):
 		queue.append(_build_enemy_def(enemy_types[spawn_index], wave, spawn_index))
@@ -390,52 +711,190 @@ func _build_enemy_def(enemy_type: String, wave: int, spawn_index: int) -> Dictio
 		"orbit_radius": rng.randf_range(32.0, 76.0),
 		"arc_direction": -1.0 if rng.randf() < 0.5 else 1.0,
 		"slow_timer": 0.0,
-		"slow_amount": 0.0
+		"slow_amount": 0.0,
+		"spawn_timer": rng.randf_range(1.0, 1.8),
+		"spawned_count": 0,
+		"max_spawned": 0
 	}
-	match enemy_type:
-		"runner":
-			data["radius"] = 14.0
-			data["health"] = 20.0 + float(wave) * 4.5
-			data["speed"] = 176.0 + float(wave) * 7.4
-			data["contact_damage"] = 8.0 + float(wave) * 1.4
-			data["score_value"] = 18 + wave * 3
-			data["mass"] = 2.0
-			data["drift_strength"] = rng.randf_range(90.0, 160.0)
-		"gunship":
-			data["radius"] = 22.0
-			data["health"] = 44.0 + float(wave) * 9.0
-			data["speed"] = 92.0 + float(wave) * 4.0
-			data["contact_damage"] = 16.0 + float(wave) * 1.9
-			data["score_value"] = 24 + wave * 4
-			data["mass"] = 4.0
-			data["standoff_y"] = viewport.y * rng.randf_range(0.24, 0.42)
-			data["orbit_radius"] = rng.randf_range(48.0, 94.0)
-		"bomber":
-			data["radius"] = 27.0
-			data["health"] = 82.0 + float(wave) * 12.5
-			data["speed"] = 86.0 + float(wave) * 4.0
-			data["contact_damage"] = 28.0 + float(wave) * 2.8
-			data["score_value"] = 34 + wave * 5
-			data["mass"] = 7.5
-			data["drift_strength"] = rng.randf_range(70.0, 120.0)
-		_:
-			data["health"] = 30.0 + float(wave) * 6.5
-			data["speed"] = 116.0 + float(wave) * 5.4
-			data["contact_damage"] = 12.0 + float(wave) * 2.2
-			data["score_value"] = 12 + wave * 3
-			data["mass"] = 3.2
-			data["drift_strength"] = rng.randf_range(50.0, 95.0)
+	data.merge(_get_enemy_archetype_stats(enemy_type, wave, viewport), true)
+	data["max_health"] = float(data.get("health", 1.0))
 	return data
 
+func _get_enemy_archetype_stats(enemy_type: String, wave: int, viewport: Vector2) -> Dictionary:
+	var stats := {}
+	match enemy_type:
+		"runner":
+			stats = {
+				"radius": 14.0,
+				"health": 20.0 + float(wave) * 4.5,
+				"speed": 176.0 + float(wave) * 7.4,
+				"contact_damage": 8.0 + float(wave) * 1.4,
+				"score_value": 18 + wave * 3,
+				"mass": 2.0,
+				"drift_strength": rng.randf_range(90.0, 160.0)
+			}
+		"gunship":
+			stats = {
+				"radius": 22.0,
+				"health": 44.0 + float(wave) * 9.0,
+				"speed": 92.0 + float(wave) * 4.0,
+				"contact_damage": 16.0 + float(wave) * 1.9,
+				"score_value": 24 + wave * 4,
+				"mass": 4.0,
+				"standoff_y": viewport.y * rng.randf_range(0.24, 0.42),
+				"orbit_radius": rng.randf_range(48.0, 94.0)
+			}
+		"bomber":
+			stats = {
+				"radius": 27.0,
+				"health": 82.0 + float(wave) * 12.5,
+				"speed": 86.0 + float(wave) * 4.0,
+				"contact_damage": 28.0 + float(wave) * 2.8,
+				"score_value": 34 + wave * 5,
+				"mass": 7.5,
+				"drift_strength": rng.randf_range(70.0, 120.0)
+			}
+		"brute":
+			stats = {
+				"radius": 32.0,
+				"health": (38.0 + float(wave) * 7.8) * 4.6,
+				"speed": 74.0 + float(wave) * 3.0,
+				"contact_damage": 22.0 + float(wave) * 3.6,
+				"score_value": 42 + wave * 6,
+				"mass": 9.5,
+				"drift_strength": rng.randf_range(20.0, 50.0)
+			}
+		"skimmer":
+			stats = {
+				"radius": 16.0,
+				"health": 28.0 + float(wave) * 5.6,
+				"speed": 154.0 + float(wave) * 6.4,
+				"contact_damage": 10.0 + float(wave) * 1.9,
+				"score_value": 26 + wave * 4,
+				"mass": 2.6,
+				"standoff_y": viewport.y * rng.randf_range(0.18, 0.28),
+				"orbit_radius": rng.randf_range(96.0, 142.0),
+				"drift_strength": rng.randf_range(110.0, 170.0)
+			}
+		"siege":
+			stats = {
+				"radius": 29.0,
+				"health": 124.0 + float(wave) * 15.0,
+				"speed": 68.0 + float(wave) * 2.6,
+				"contact_damage": 26.0 + float(wave) * 3.2,
+				"score_value": 58 + wave * 8,
+				"mass": 11.5,
+				"standoff_y": viewport.y * rng.randf_range(0.18, 0.24),
+				"orbit_radius": rng.randf_range(72.0, 118.0),
+				"shoot_timer": rng.randf_range(0.9, 1.45),
+				"drift_strength": rng.randf_range(18.0, 42.0)
+			}
+		"carrier":
+			stats = {
+				"radius": 38.0,
+				"health": 176.0 + float(wave) * 18.0,
+				"speed": 58.0 + float(wave) * 1.7,
+				"contact_damage": 32.0 + float(wave) * 3.9,
+				"score_value": 84 + wave * 10,
+				"mass": 16.0,
+				"standoff_y": viewport.y * rng.randf_range(0.14, 0.20),
+				"orbit_radius": rng.randf_range(104.0, 156.0),
+				"shoot_timer": rng.randf_range(1.1, 1.8),
+				"spawn_timer": rng.randf_range(1.0, 1.5),
+				"max_spawned": 4 + int(wave / 6),
+				"drift_strength": rng.randf_range(16.0, 28.0)
+			}
+		"dronelet":
+			stats = {
+				"radius": 12.0,
+				"health": 16.0 + float(wave) * 3.5,
+				"speed": 188.0 + float(wave) * 7.2,
+				"contact_damage": 7.0 + float(wave) * 1.2,
+				"score_value": 12 + wave * 2,
+				"mass": 1.7,
+				"drift_strength": rng.randf_range(120.0, 180.0)
+			}
+		_:
+			stats = {
+				"health": 30.0 + float(wave) * 6.5,
+				"speed": 116.0 + float(wave) * 5.4,
+				"contact_damage": 12.0 + float(wave) * 2.2,
+				"score_value": 12 + wave * 3,
+				"mass": 3.2,
+				"drift_strength": rng.randf_range(50.0, 95.0)
+			}
+	var health_scale: float = _get_enemy_health_scale(wave, enemy_type)
+	var damage_scale: float = _get_enemy_damage_scale(wave, enemy_type)
+	var reward_scale: float = _get_enemy_reward_scale(wave, enemy_type)
+	stats["health"] = float(stats.get("health", 1.0)) * health_scale
+	stats["contact_damage"] = float(stats.get("contact_damage", 1.0)) * damage_scale
+	stats["score_value"] = max(1, int(round(float(stats.get("score_value", 1)) * reward_scale)))
+	if enemy_type != "carrier":
+		stats["speed"] = float(stats.get("speed", 100.0)) * _get_enemy_speed_scale(wave, enemy_type)
+	return stats
+
+func _get_enemy_health_scale(wave: int, enemy_type: String) -> float:
+	var late_wave_scale: float = 1.0 + max(0.0, float(wave - 6)) * 0.075
+	late_wave_scale *= 1.0 + max(0.0, float(wave - 12)) * 0.035
+	if enemy_type in ["brute", "siege", "carrier"]:
+		late_wave_scale *= 1.1
+	return late_wave_scale
+
+func _get_enemy_damage_scale(wave: int, enemy_type: String) -> float:
+	var scale: float = 1.0 + max(0.0, float(wave - 4)) * 0.045
+	scale *= 1.0 + max(0.0, float(wave - 12)) * 0.018
+	if enemy_type in ["brute", "siege", "carrier"]:
+		scale *= 1.06
+	return scale
+
+func _get_enemy_reward_scale(wave: int, enemy_type: String) -> float:
+	var scale: float = 1.0 + max(0.0, float(wave - 3)) * 0.05
+	if enemy_type in ["brute", "siege", "carrier"]:
+		scale *= 1.1
+	return scale
+
+func _get_enemy_speed_scale(wave: int, enemy_type: String) -> float:
+	var scale: float = 1.0 + max(0.0, float(wave - 8)) * 0.01
+	if enemy_type == "brute":
+		scale *= 0.92
+	return scale
+
 func _process(delta: float) -> void:
+	if _is_pause_menu_open():
+		return
 	_update_environment(delta)
 	if run_state == RUN_STATES.RUNNING:
 		_process_running(delta)
+	elif run_state == RUN_STATES.DEFEAT:
+		_process_defeat_sequence(delta)
 	_process_explosions(delta)
 	_process_support_effects(delta)
 	_process_floating_texts(delta)
 	_refresh_ui()
 	queue_redraw()
+
+func _process_defeat_sequence(delta: float) -> void:
+	defeat_sequence_timer += delta
+	defeat_explosion_timer -= delta
+	if defeat_explosion_timer <= 0.0:
+		defeat_explosion_timer = DEFEAT_EXPLOSION_INTERVAL
+		_spawn_defeat_explosion()
+	if defeat_sequence_timer >= DEFEAT_SEQUENCE_DURATION:
+		_finish_run(pending_finish_reason if not pending_finish_reason.is_empty() else "Base destroyed.")
+
+func _spawn_defeat_explosion() -> void:
+	var base_pos := _get_base_position()
+	var angle: float = rng.randf_range(0.0, TAU)
+	var distance: float = rng.randf_range(6.0, BASE_RADIUS + 34.0)
+	var blast_pos := base_pos + Vector2(cos(angle), sin(angle)) * distance + Vector2(rng.randf_range(-8.0, 8.0), rng.randf_range(-8.0, 8.0))
+	explosions.append({
+		"pos": blast_pos,
+		"radius": 18.0,
+		"max_radius": rng.randf_range(52.0, 118.0),
+		"age": 0.0,
+		"duration": rng.randf_range(0.18, 0.34),
+		"color": EXPLOSION_COLOR
+	})
 
 func _process_running(delta: float) -> void:
 	support_time += delta
@@ -582,6 +1041,65 @@ func _process_enemies(delta: float) -> void:
 		var lateral: Vector2 = Vector2(-forward_to_base.y, forward_to_base.x)
 
 		match enemy_type:
+			"carrier":
+				var carrier_orbit_angle: float = lifetime * 0.85 + movement_seed * 0.65
+				var carrier_center := Vector2(
+					clampf(base_pos.x + lane_offset * 0.55 + sin(lifetime * 0.42 + movement_seed) * 120.0, 90.0, viewport.x - 90.0),
+					float(enemy.get("standoff_y", viewport.y * 0.17)) + sin(lifetime * 0.75 + movement_seed) * 20.0
+				)
+				var carrier_target := carrier_center + Vector2(cos(carrier_orbit_angle), sin(carrier_orbit_angle) * 0.48) * float(enemy.get("orbit_radius", 132.0))
+				desired_velocity = (carrier_target - pos).normalized() * float(enemy.get("speed", 100.0)) * slow_mult
+				enemy["shoot_timer"] = float(enemy.get("shoot_timer", 1.0)) - delta
+				if float(enemy.get("shoot_timer", 0.0)) <= 0.0:
+					_spawn_enemy_projectile(
+						pos,
+						(base_pos - pos).normalized(),
+						int(enemy.get("wave", current_wave)) + 4,
+						{"radius": 16.0, "speed": 220.0 + float(current_wave) * 10.0, "damage": 16.0 + float(current_wave) * 2.3, "lifetime": 5.8}
+					)
+					enemy["shoot_timer"] = max(1.15, 2.2 - float(enemy.get("wave", current_wave)) * 0.025 + rng.randf_range(0.0, 0.24))
+				enemy["spawn_timer"] = float(enemy.get("spawn_timer", 1.0)) - delta
+				if float(enemy.get("spawn_timer", 0.0)) <= 0.0 and int(enemy.get("spawned_count", 0)) < int(enemy.get("max_spawned", 0)):
+					_spawn_carrier_dronelet(enemy)
+					enemy["spawned_count"] = int(enemy.get("spawned_count", 0)) + 1
+					enemy["spawn_timer"] = rng.randf_range(0.95, 1.45)
+			"siege":
+				var siege_center := Vector2(
+					clampf(base_pos.x + lane_offset * 0.35 + sin(lifetime * 0.4 + movement_seed) * 90.0, 80.0, viewport.x - 80.0),
+					float(enemy.get("standoff_y", viewport.y * 0.22))
+				)
+				var siege_target := siege_center + Vector2(cos(lifetime * 0.8 + movement_seed), sin(lifetime * 0.8 + movement_seed) * 0.24) * float(enemy.get("orbit_radius", 96.0))
+				var siege_to_target: Vector2 = siege_target - pos
+				if siege_to_target.length() > 16.0:
+					desired_velocity = siege_to_target.normalized() * float(enemy.get("speed", 100.0)) * slow_mult
+				enemy["shoot_timer"] = float(enemy.get("shoot_timer", 1.0)) - delta
+				if float(enemy.get("shoot_timer", 0.0)) <= 0.0:
+					_spawn_enemy_projectile(
+						pos,
+						(base_pos - pos).normalized(),
+						int(enemy.get("wave", current_wave)) + 5,
+						{"radius": 18.0, "speed": 198.0 + float(current_wave) * 7.0, "damage": 18.0 + float(current_wave) * 2.5, "lifetime": 6.0}
+					)
+					enemy["shoot_timer"] = max(1.25, 2.35 - float(enemy.get("wave", current_wave)) * 0.02 + rng.randf_range(0.05, 0.24))
+			"brute":
+				var brute_target := base_pos + lateral * sin(lifetime * 1.25 + movement_seed) * float(enemy.get("drift_strength", 32.0))
+				desired_velocity = (brute_target - pos).normalized() * float(enemy.get("speed", 100.0)) * slow_mult
+			"skimmer":
+				var skim_height: float = float(enemy.get("standoff_y", viewport.y * 0.24)) + sin(lifetime * 1.8 + movement_seed) * 28.0
+				var skim_target := Vector2(
+					clampf(base_pos.x + lane_offset * 0.85 + sin(lifetime * 2.6 + movement_seed) * float(enemy.get("orbit_radius", 118.0)), 42.0, viewport.x - 42.0),
+					skim_height
+				)
+				desired_velocity = (skim_target - pos).normalized() * float(enemy.get("speed", 100.0)) * slow_mult
+				enemy["shoot_timer"] = float(enemy.get("shoot_timer", 1.0)) - delta
+				if float(enemy.get("shoot_timer", 0.0)) <= 0.0:
+					_spawn_enemy_projectile(
+						pos,
+						(base_pos - pos).normalized(),
+						int(enemy.get("wave", current_wave)),
+						{"radius": 10.0, "speed": 286.0 + float(current_wave) * 12.0, "damage": 7.0 + float(current_wave) * 1.4, "lifetime": 4.6}
+					)
+					enemy["shoot_timer"] = max(0.55, 1.25 - float(enemy.get("wave", current_wave)) * 0.015 + rng.randf_range(-0.02, 0.08))
 			"gunship":
 				var orbit_angle: float = lifetime * 1.4 + movement_seed
 				var orbit_center := Vector2(
@@ -596,6 +1114,9 @@ func _process_enemies(delta: float) -> void:
 				if float(enemy.get("shoot_timer", 0.0)) <= 0.0:
 					_spawn_enemy_projectile(pos, (base_pos - pos).normalized(), int(enemy.get("wave", current_wave)))
 					enemy["shoot_timer"] = max(0.72, 1.7 - float(enemy.get("wave", current_wave)) * 0.04 + rng.randf_range(-0.04, 0.16))
+			"dronelet":
+				var dronelet_target := base_pos + lateral * sin(lifetime * 4.6 + movement_seed) * float(enemy.get("drift_strength", 140.0)) * 0.25
+				desired_velocity = (dronelet_target - pos).normalized() * float(enemy.get("speed", 100.0)) * slow_mult
 			"runner":
 				var escape_target := Vector2(
 					clampf(base_pos.x + lane_offset * 0.3 + sin(lifetime * 5.0 + movement_seed) * float(enemy.get("drift_strength", 120.0)), 32.0, viewport.x - 32.0),
@@ -642,17 +1163,7 @@ func _process_enemies(delta: float) -> void:
 		enemies[enemy_index] = enemy
 
 func _get_enemy_max_health(enemy: Dictionary) -> float:
-	var enemy_type: String = String(enemy.get("type", "raider"))
-	var wave: int = int(enemy.get("wave", current_wave))
-	match enemy_type:
-		"runner":
-			return 20.0 + float(wave) * 4.5
-		"gunship":
-			return 44.0 + float(wave) * 9.0
-		"bomber":
-			return 82.0 + float(wave) * 12.5
-		_:
-			return 30.0 + float(wave) * 6.5
+	return float(enemy.get("max_health", enemy.get("health", 1.0)))
 
 func _process_enemy_projectiles(delta: float) -> void:
 	var base_pos := _get_base_position()
@@ -764,19 +1275,28 @@ func _fire_player_bullet() -> void:
 	})
 	shots_fired += 1
 
-func _spawn_enemy_projectile(origin: Vector2, direction: Vector2, wave: int) -> void:
+func _spawn_enemy_projectile(origin: Vector2, direction: Vector2, wave: int, options: Dictionary = {}) -> void:
 	var normalized_direction := direction.normalized()
 	if normalized_direction == Vector2.ZERO:
 		normalized_direction = Vector2.DOWN
 	enemy_projectiles.append({
 		"pos": origin,
-		"vel": normalized_direction * (248.0 + float(wave) * 14.0),
-		"radius": 12.0,
-		"lifetime": 5.0,
-		"damage": 8.0 + float(wave) * 1.7,
+		"vel": normalized_direction * float(options.get("speed", 248.0 + float(wave) * 14.0)),
+		"radius": float(options.get("radius", 12.0)),
+		"lifetime": float(options.get("lifetime", 5.0)),
+		"damage": float(options.get("damage", 8.0 + float(wave) * 1.7)),
 		"mass": 2.0 + float(wave) * 0.22,
 		"team": "enemy"
 	})
+
+func _spawn_carrier_dronelet(carrier: Dictionary) -> void:
+	var carrier_pos: Vector2 = carrier.get("pos", Vector2.ZERO)
+	var spawned_enemy: Dictionary = _build_enemy_def("dronelet", int(carrier.get("wave", current_wave)), int(carrier.get("spawned_count", 0)))
+	spawned_enemy["pos"] = carrier_pos + Vector2(rng.randf_range(-34.0, 34.0), rng.randf_range(-20.0, 20.0))
+	spawned_enemy["vel"] = Vector2(rng.randf_range(-24.0, 24.0), rng.randf_range(8.0, 34.0))
+	spawned_enemy["lane_offset"] = float(carrier.get("lane_offset", 0.0)) + rng.randf_range(-90.0, 90.0)
+	enemies.append(spawned_enemy)
+	_spawn_floating_text("LAUNCH", carrier_pos + Vector2(0.0, 18.0), Color(1.0, 0.74, 0.38, 1.0), 20)
 
 func _damage_enemy(enemy_index: int, damage_amount: float, hit_position: Vector2, source: String) -> void:
 	if enemy_index < 0 or enemy_index >= enemies.size():
@@ -880,7 +1400,26 @@ func _damage_base(amount: float, hit_position: Vector2) -> void:
 	damage_taken += final_damage
 	_spawn_floating_text("-%d" % int(round(final_damage)), hit_position.lerp(_get_base_position(), 0.4), Color(1.0, 0.48, 0.42, 1.0), 24)
 	if base_health <= 0.0:
-		_finish_run("Base destroyed.")
+		_start_defeat_sequence("Base destroyed.")
+
+func _start_defeat_sequence(reason: String) -> void:
+	if run_state == RUN_STATES.DEFEAT or run_state == RUN_STATES.SUMMARY:
+		return
+	run_state = RUN_STATES.DEFEAT
+	Global.game_state = Util.GAME_STATES.UPGRADES
+	pending_finish_reason = reason
+	defeat_sequence_timer = 0.0
+	defeat_explosion_timer = 0.0
+	wave_spawn_queue.clear()
+	player_bullets.clear()
+	nukes.clear()
+	upgrade_panel.hide()
+	_spawn_floating_text("COMMAND LOST", _get_base_position() + Vector2(0.0, -112.0), Color(1.0, 0.86, 0.72, 1.0), 34)
+	_spawn_floating_text("HOLD FAILED", _get_base_position() + Vector2(0.0, -76.0), Color(1.0, 0.52, 0.44, 1.0), 24)
+	for _burst_index in range(6):
+		_spawn_defeat_explosion()
+	_play_defeat_sound()
+	_refresh_mouse_capture_state()
 
 func _check_wave_clear() -> void:
 	if run_state != RUN_STATES.RUNNING:
@@ -902,10 +1441,23 @@ func _show_upgrade_panel() -> void:
 	base_health = min(base_max_health, base_health + repair_between_waves)
 	if shield_max > 0.0:
 		shield_health = min(shield_max, shield_health + repair_between_waves * 0.5)
+	_show_upgrade_offer_panel("Wave %d Cleared" % current_wave, "Pick one.")
+
+func _show_start_upgrade_panel() -> void:
+	run_state = RUN_STATES.UPGRADE
+	Global.game_state = Util.GAME_STATES.UPGRADES
+	var used_picks: int = used_start_upgrade_picks + 1
+	var total_picks: int = max(1, max(0, run_start_wave - 1))
+	_show_upgrade_offer_panel(
+		"Command Calibration",
+		"Pick prep upgrade %d/%d before wave %d." % [used_picks, total_picks, run_start_wave]
+	)
+
+func _show_upgrade_offer_panel(title: String, description: String) -> void:
 	offered_wave_upgrades = _roll_wave_upgrade_offers(min(level_up_choice_count, upgrade_buttons.size()))
 	_update_upgrade_offer_layout(offered_wave_upgrades.size())
-	upgrade_title_label.text = "Wave %d Cleared" % current_wave
-	upgrade_desc_label.text = "Pick one."
+	upgrade_title_label.text = title
+	upgrade_desc_label.text = description
 	for button_index in range(upgrade_buttons.size()):
 		var button: Button = upgrade_buttons[button_index]
 		if button_index >= offered_wave_upgrades.size():
@@ -977,6 +1529,18 @@ func _apply_wave_upgrade(offered_upgrade: Dictionary) -> void:
 	var scaled_effects: Dictionary = RED_SKY_DATA.get_scaled_wave_effects(upgrade_id, upgrade_power_multiplier, offer_tier)
 	_apply_effect_bundle(scaled_effects)
 	_spawn_floating_text(str(RED_SKY_DATA.get_wave_upgrade_definition(upgrade_id).get("label", "UPGRADE")).to_upper(), get_viewport_rect().size * Vector2(0.5, 0.3), Color(1.0, 0.86, 0.56, 1.0), 26)
+	if pending_start_upgrade_picks > 0:
+		pending_start_upgrade_picks -= 1
+		used_start_upgrade_picks += 1
+		if pending_start_upgrade_picks > 0:
+			_show_start_upgrade_panel()
+		else:
+			upgrade_panel.hide()
+			run_state = RUN_STATES.RUNNING
+			Global.game_state = Util.GAME_STATES.PLAYING
+			_start_wave(current_wave)
+			_refresh_mouse_capture_state()
+		return
 	upgrade_panel.hide()
 	run_state = RUN_STATES.RUNNING
 	Global.game_state = Util.GAME_STATES.PLAYING
@@ -1015,8 +1579,12 @@ func _apply_effect_bundle(bundle: Dictionary) -> void:
 				crit_chance += amount
 			"tower_count":
 				tower_count += _round_upgrade_count(amount)
+			"tower_range":
+				tower_range += amount
 			"drone_count":
 				drone_count += _round_upgrade_count(amount)
+			"drone_range":
+				drone_range += amount
 			"tentacle_count":
 				tentacle_count += _round_upgrade_count(amount)
 			"tentacle_slow":
@@ -1031,6 +1599,8 @@ func _apply_effect_bundle(bundle: Dictionary) -> void:
 				wave_scrap_bonus += amount
 			"wave_auto_bank_ratio":
 				wave_auto_bank_ratio = min(1.0, wave_auto_bank_ratio + amount)
+			"level_up_choice_count":
+				level_up_choice_count = clampi(level_up_choice_count + _round_upgrade_count(amount), 3, upgrade_buttons.size())
 	_ensure_support_arrays()
 
 	var mult_effects: Dictionary = bundle.get("mult", {})
@@ -1071,6 +1641,7 @@ func _finish_run(reason: String) -> void:
 	if run_state == RUN_STATES.SUMMARY:
 		return
 	run_state = RUN_STATES.SUMMARY
+	showing_pre_run_panel = false
 	Global.game_state = Util.GAME_STATES.UPGRADES
 	upgrade_panel.hide()
 	_bank_remaining_salvage(1.0)
@@ -1081,6 +1652,7 @@ func _finish_run(reason: String) -> void:
 	summary_stats_label.text = str(last_run_results.get("summary_stats_text", ""))
 	continue_button.text = "Return to Upgrades"
 	retry_button.text = "Run Again"
+	_refresh_start_wave_selector()
 	summary_panel.show()
 	_refresh_mouse_capture_state()
 
@@ -1091,16 +1663,25 @@ func _build_run_results(reason: String) -> Dictionary:
 		"meta_reward_multiplier": meta_reward_multiplier
 	}, {"meta_reward_multiplier": meta_reward_multiplier})
 	var wallet_bonus: int = max(0, wallet_gain - score)
+	var waves_cleared_this_run: int = max(0, waves_cleared - max(run_start_wave - 1, 0))
 	var kill_lines := PackedStringArray()
-	for enemy_type in ["raider", "runner", "gunship", "bomber"]:
-		kill_lines.append("%s x%d" % [_get_enemy_display_name(enemy_type), int(enemy_kill_counts.get(enemy_type, 0))])
+	for enemy_type in ENEMY_TYPE_ORDER:
+		var kill_count: int = int(enemy_kill_counts.get(enemy_type, 0))
+		if kill_count <= 0:
+			continue
+		kill_lines.append("%s x%d" % [_get_enemy_display_name(enemy_type), kill_count])
+	if kill_lines.is_empty():
+		kill_lines.append("No kills recorded")
 	var summary_lines := PackedStringArray([
 		"Run complete: %s" % reason,
 		"",
-		"Waves cleared: %d" % waves_cleared,
+		"Started on wave: %d" % run_start_wave,
+		"Waves cleared this run: %d" % waves_cleared_this_run,
+		"Deepest cleared wave: %d" % waves_cleared,
 		"Final wave reached: %d" % current_wave,
 		"Scrap banked: %d" % score,
 		"Wave bonus scrap: %d" % bonus_scrap_earned,
+		"Prep picks used: %d" % used_start_upgrade_picks,
 		"Damage dealt: %d" % int(round(damage_dealt)),
 		"Hull damage taken: %d" % int(round(damage_taken)),
 		"Shield damage absorbed: %d" % int(round(shield_damage_absorbed)),
@@ -1117,14 +1698,17 @@ func _build_run_results(reason: String) -> Dictionary:
 	if wallet_bonus > 0:
 		summary_lines.insert(5, "Command scrap bonus: %d    Meta scrap payout: %d" % [wallet_bonus, wallet_gain])
 	var summary_text := "\n".join(summary_lines)
-	var summary_stats_text := "Best Score: %d    Best Wave: %d    Total Runs: %d    Shots Fired: %d" % [
+	var summary_stats_text := "Best Score: %d    Best Wave: %d    Selected Start: %d    Total Runs: %d    Shots Fired: %d" % [
 		max(int(persistent_data.get("best_score", 0)), score),
 		max(int(persistent_data.get("best_wave", 0)), waves_cleared),
+		selected_start_wave,
 		int(persistent_data.get("runs", 0)) + 1,
 		shots_fired
 	]
 	return {
 		"reason": reason,
+		"start_wave": run_start_wave,
+		"waves_cleared_this_run": waves_cleared_this_run,
 		"waves_cleared": waves_cleared,
 		"final_wave": current_wave,
 		"score": score,
@@ -1145,13 +1729,17 @@ func _build_run_results(reason: String) -> Dictionary:
 		"salvage_collected": salvage_collected,
 		"salvage_lost": salvage_lost,
 		"bonus_scrap_earned": bonus_scrap_earned,
+		"prep_picks_used": used_start_upgrade_picks,
 		"enemy_kill_counts": enemy_kill_counts.duplicate(true),
 		"summary_text": summary_text,
 		"summary_stats_text": summary_stats_text
 	}
 
 func _refresh_ui() -> void:
-	wave_label.text = "Wave %d  Clear %d" % [current_wave, waves_cleared]
+	if run_start_wave > 1:
+		wave_label.text = "Wave %d  Clear %d  Start %d" % [current_wave, waves_cleared, run_start_wave]
+	else:
+		wave_label.text = "Wave %d  Clear %d" % [current_wave, waves_cleared]
 	if shield_max > 0.0:
 		health_label.text = "Hull %d/%d  Shield %d/%d" % [int(round(base_health)), int(round(base_max_health)), int(round(shield_health)), int(round(shield_max))]
 	else:
@@ -1257,13 +1845,24 @@ func _draw() -> void:
 	_draw_floating_texts()
 	if run_state == RUN_STATES.RUNNING:
 		_draw_aim_cursor()
+	if run_state == RUN_STATES.DEFEAT:
+		_draw_defeat_overlay()
 
 func _draw_base() -> void:
-	var base_pos := _get_base_position()
-	draw_circle(base_pos, BASE_RADIUS, BASE_COLOR)
-	draw_circle(base_pos, BASE_RADIUS - 18.0, BASE_DARK_COLOR)
+	var base_pos := _get_base_position() + _get_base_visual_offset()
+	var base_radius := BASE_RADIUS
+	if run_state == RUN_STATES.DEFEAT:
+		var defeat_progress := _get_defeat_progress()
+		var pulse := 1.0 + sin(defeat_sequence_timer * 26.0) * 0.08 * (1.0 - defeat_progress)
+		base_radius = BASE_RADIUS * (1.0 - 0.14 * defeat_progress) * pulse
+		draw_circle(base_pos, base_radius + 20.0 + defeat_progress * 26.0, Color(1.0, 0.35, 0.22, 0.14 + 0.08 * (1.0 - defeat_progress)))
+		draw_circle(base_pos, base_radius + 8.0, Color(0.34, 0.06, 0.07, 0.5))
+		draw_arc(base_pos, base_radius + 28.0 + defeat_progress * 30.0, 0.0, TAU, 40, Color(1.0, 0.76, 0.5, 0.42 * (1.0 - defeat_progress * 0.45)), 6.0)
+	draw_circle(base_pos, base_radius, BASE_COLOR.lerp(Color(0.94, 0.44, 0.34, 1.0), 0.7 if run_state == RUN_STATES.DEFEAT else 0.0))
+	draw_circle(base_pos, max(base_radius - 18.0, 8.0), BASE_DARK_COLOR.lerp(Color(0.14, 0.04, 0.05, 1.0), 0.8 if run_state == RUN_STATES.DEFEAT else 0.0))
 	draw_rect(Rect2(base_pos.x - 120.0, base_pos.y + 26.0, 240.0, 18.0), Color(0.25, 0.19, 0.14, 1.0), true)
-	draw_line(base_pos + Vector2(-22.0, -16.0), aim_cursor_screen_pos, Color(1.0, 0.79, 0.49, 0.12), 2.0)
+	if run_state == RUN_STATES.RUNNING:
+		draw_line(base_pos + Vector2(-22.0, -16.0), aim_cursor_screen_pos, Color(1.0, 0.79, 0.49, 0.12), 2.0)
 	var health_ratio := clampf(base_health / max(base_max_health, 1.0), 0.0, 1.0)
 	draw_rect(Rect2(base_pos.x - 84.0, base_pos.y - 92.0, 168.0, 12.0), Color(0.18, 0.09, 0.09, 0.9), true)
 	draw_rect(Rect2(base_pos.x - 82.0, base_pos.y - 90.0, 164.0 * health_ratio, 8.0), Color(0.84, 0.35, 0.3, 1.0), true)
@@ -1273,6 +1872,7 @@ func _draw_base() -> void:
 		draw_arc(base_pos, BASE_RADIUS + 14.0, PI * 0.12, PI * (0.12 + 0.76 * shield_ratio), 24, SHIELD_COLOR, 8.0)
 
 func _draw_support_units() -> void:
+	var base_visual_pos := _get_base_position() + _get_base_visual_offset()
 	for tower_pos in _get_tower_positions():
 		draw_rect(Rect2(tower_pos.x - 10.0, tower_pos.y - 8.0, 20.0, 16.0), Color(0.16, 0.22, 0.28, 1.0), true)
 		draw_line(tower_pos, tower_pos + Vector2(18.0, -10.0), TOWER_COLOR, 3.0)
@@ -1280,7 +1880,7 @@ func _draw_support_units() -> void:
 		draw_circle(drone_pos, 7.0, DRONE_COLOR)
 		draw_circle(drone_pos, 3.0, Color(0.12, 0.18, 0.22, 1.0))
 	for anchor in _get_tentacle_anchor_positions():
-		draw_line(_get_base_position(), anchor, Color(TENTACLE_COLOR.r, TENTACLE_COLOR.g, TENTACLE_COLOR.b, 0.35), 2.0)
+		draw_line(base_visual_pos, anchor, Color(TENTACLE_COLOR.r, TENTACLE_COLOR.g, TENTACLE_COLOR.b, 0.35), 2.0)
 		draw_circle(anchor, 5.0, TENTACLE_COLOR)
 
 func _draw_enemies() -> void:
@@ -1290,6 +1890,18 @@ func _draw_enemies() -> void:
 		var enemy_type: String = String(enemy.get("type", "raider"))
 		var rotation := _get_enemy_rotation(enemy)
 		match enemy_type:
+			"carrier":
+				draw_polygon(_build_rotated_points([Vector2(0.0, -radius * 0.7), Vector2(radius * 1.4, -radius * 0.18), Vector2(radius * 1.08, radius * 0.54), Vector2(0.0, radius * 0.9), Vector2(-radius * 1.08, radius * 0.54), Vector2(-radius * 1.4, -radius * 0.18)], rotation, pos), [Color(0.72, 0.31, 0.26, 1.0)])
+				draw_circle(pos, radius * 0.34, Color(0.96, 0.8, 0.54, 1.0))
+			"siege":
+				draw_polygon(_build_rotated_points([Vector2(-radius * 0.82, -radius * 0.48), Vector2(radius * 0.82, -radius * 0.48), Vector2(radius * 1.0, radius * 0.2), Vector2(radius * 0.54, radius * 0.88), Vector2(-radius * 0.54, radius * 0.88), Vector2(-radius * 1.0, radius * 0.2)], rotation, pos), [Color(0.66, 0.4, 0.34, 1.0)])
+			"brute":
+				draw_polygon(_build_rotated_points([Vector2(0.0, -radius * 1.0), Vector2(radius * 0.96, -radius * 0.34), Vector2(radius * 0.82, radius * 0.78), Vector2(0.0, radius * 1.0), Vector2(-radius * 0.82, radius * 0.78), Vector2(-radius * 0.96, -radius * 0.34)], rotation, pos), [Color(0.58, 0.28, 0.24, 1.0)])
+				draw_circle(pos, radius * 0.28, Color(0.95, 0.74, 0.52, 1.0))
+			"skimmer":
+				draw_polygon(_build_rotated_points([Vector2(0.0, -radius * 1.3), Vector2(radius * 0.82, radius * 0.42), Vector2(0.0, radius * 0.22), Vector2(-radius * 0.82, radius * 0.42)], rotation, pos), [Color(0.9, 0.68, 0.4, 1.0)])
+			"dronelet":
+				draw_polygon(_build_rotated_points([Vector2(0.0, -radius * 1.1), Vector2(radius * 0.7, radius * 0.8), Vector2(-radius * 0.7, radius * 0.8)], rotation, pos), [Color(0.96, 0.82, 0.48, 1.0)])
 			"runner":
 				draw_polygon(_build_rotated_points([Vector2(0.0, -radius - 4.0), Vector2(radius * 0.65, radius * 0.95), Vector2(0.0, radius * 0.4), Vector2(-radius * 0.65, radius * 0.95)], rotation, pos), [Color(0.98, 0.8, 0.4, 1.0)])
 			"gunship":
@@ -1352,7 +1964,26 @@ func _draw_aim_cursor() -> void:
 	draw_line(aim_cursor_screen_pos + Vector2(0.0, -AIM_CURSOR_RADIUS - 5.0), aim_cursor_screen_pos + Vector2(0.0, AIM_CURSOR_RADIUS + 5.0), Color(0.99, 0.86, 0.42, 0.95), 2.0)
 	draw_circle(aim_cursor_screen_pos, 2.0, Color(0.16, 0.08, 0.04, 1.0))
 
+func _draw_defeat_overlay() -> void:
+	var progress := _get_defeat_progress()
+	var pulse := 0.5 + 0.5 * sin(defeat_sequence_timer * 18.0)
+	var alpha: float = clampf(0.18 + progress * 0.12 + pulse * 0.12 * (1.0 - progress * 0.45), 0.0, DEFEAT_OVERLAY_MAX_ALPHA)
+	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color(0.34, 0.02, 0.02, alpha), true)
+
+func _get_defeat_progress() -> float:
+	if run_state != RUN_STATES.DEFEAT:
+		return 0.0
+	return clampf(defeat_sequence_timer / max(DEFEAT_SEQUENCE_DURATION, 0.01), 0.0, 1.0)
+
+func _get_base_visual_offset() -> Vector2:
+	if run_state != RUN_STATES.DEFEAT:
+		return Vector2.ZERO
+	var shake_strength: float = (1.0 - _get_defeat_progress()) * 10.0
+	return Vector2(sin(defeat_sequence_timer * 39.0), cos(defeat_sequence_timer * 27.0)) * shake_strength
+
 func _input(event: InputEvent) -> void:
+	if _handle_pause_menu_input(event):
+		return
 	if event is InputEventKey:
 		var key_event := event as InputEventKey
 		if key_event.pressed and not key_event.echo:
@@ -1518,7 +2149,7 @@ func _ensure_support_arrays() -> void:
 
 func _get_tower_positions() -> Array[Vector2]:
 	var positions: Array[Vector2] = []
-	var base_pos := _get_base_position()
+	var base_pos := _get_base_position() + _get_base_visual_offset()
 	for tower_index in range(tower_count):
 		var angle: float = lerpf(-0.75, -PI + 0.75, float(tower_index + 1) / float(tower_count + 1))
 		positions.append(base_pos + Vector2(cos(angle), sin(angle)) * (BASE_RADIUS + 34.0))
@@ -1526,7 +2157,7 @@ func _get_tower_positions() -> Array[Vector2]:
 
 func _get_drone_positions() -> Array[Vector2]:
 	var positions: Array[Vector2] = []
-	var base_pos := _get_base_position()
+	var base_pos := _get_base_position() + _get_base_visual_offset()
 	for drone_index in range(drone_count):
 		var angle: float = support_time * 1.5 + float(drone_index) * TAU / max(float(drone_count), 1.0)
 		positions.append(base_pos + Vector2(cos(angle), sin(angle) * 0.55) * (BASE_RADIUS + 52.0))
@@ -1534,7 +2165,7 @@ func _get_drone_positions() -> Array[Vector2]:
 
 func _get_tentacle_anchor_positions() -> Array[Vector2]:
 	var positions: Array[Vector2] = []
-	var base_pos := _get_base_position()
+	var base_pos := _get_base_position() + _get_base_visual_offset()
 	for tentacle_index in range(tentacle_count):
 		var angle: float = lerpf(-PI * 0.82, -PI * 0.18, float(tentacle_index + 1) / float(tentacle_count + 1))
 		positions.append(base_pos + Vector2(cos(angle), sin(angle)) * (BASE_RADIUS + 14.0))
@@ -1562,6 +2193,16 @@ func _process_floating_texts(delta: float) -> void:
 
 func _get_enemy_display_name(enemy_type: String) -> String:
 	match enemy_type:
+		"dronelet":
+			return "Dronelet"
+		"brute":
+			return "Brute"
+		"skimmer":
+			return "Skimmer"
+		"siege":
+			return "Siege Barge"
+		"carrier":
+			return "Mothership"
 		"runner":
 			return "Runner"
 		"gunship":
@@ -1579,13 +2220,58 @@ func _clamp_cursor_to_viewport(position: Vector2) -> Vector2:
 	return Vector2(clampf(position.x, 0.0, max(viewport_size.x - 1.0, 0.0)), clampf(position.y, 0.0, max(viewport_size.y - 1.0, 0.0)))
 
 func _refresh_mouse_capture_state() -> void:
+	if _is_pause_menu_open():
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		return
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if run_state == RUN_STATES.RUNNING else Input.MOUSE_MODE_VISIBLE
+
+func _handle_pause_menu_input(event: InputEvent) -> bool:
+	if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+		if _is_pause_menu_open():
+			_close_pause_menu()
+		elif _can_open_pause_menu():
+			_open_pause_menu()
+		get_viewport().set_input_as_handled()
+		return true
+	if _is_pause_menu_open():
+		return true
+	return false
+
+func _can_open_pause_menu() -> bool:
+	return run_state == RUN_STATES.RUNNING and not summary_panel.visible and not upgrade_panel.visible
+
+func _is_pause_menu_open() -> bool:
+	return pause_menu != null and pause_menu.is_open()
+
+func _open_pause_menu() -> void:
+	if pause_menu == null:
+		return
+	pause_menu.open_menu()
+	_refresh_mouse_capture_state()
+
+func _close_pause_menu() -> void:
+	if pause_menu == null:
+		return
+	pause_menu.close_menu()
+	_refresh_mouse_capture_state()
+
+func _on_pause_resume_requested() -> void:
+	_close_pause_menu()
+
+func _on_pause_end_run_requested() -> void:
+	_close_pause_menu()
+	_end_run_to_summary()
+
+func _end_run_to_summary() -> void:
+	_finish_run("Run ended early.")
 
 func _update_environment(delta: float) -> void:
 	var base_darkness := clampf(float(max(current_wave - 1, 0)) / 11.0, 0.0, 0.82)
 	var target_darkness := base_darkness
 	if run_state == RUN_STATES.UPGRADE:
 		target_darkness = max(0.0, base_darkness - 0.2)
+	elif run_state == RUN_STATES.DEFEAT:
+		target_darkness = min(0.96, base_darkness + 0.22)
 	elif run_state == RUN_STATES.SUMMARY:
 		target_darkness = min(0.9, base_darkness + 0.08)
 	environment_darkness = lerpf(environment_darkness, target_darkness, clampf(delta * 1.2, 0.0, 1.0))

@@ -3,6 +3,7 @@ class_name ReelIntoDarknessMain
 
 const REEL_DATA := preload("res://Games/ReelIntoDarkness/ReelIntoDarknessData.gd")
 const REEL_PROGRESS := preload("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
+const IN_GAME_PAUSE_MENU_SCRIPT := preload("res://Core/InGamePauseMenu.gd")
 
 const SURFACE_RATIO := 0.2
 const WATER_SIDE_MARGIN := 96.0
@@ -11,20 +12,26 @@ const BOAT_INTRO_SPEED := 520.0
 const BOAT_EXIT_SPEED := 560.0
 const BOAT_BOB_SPEED := 2.2
 const BOAT_BOB_HEIGHT := 5.0
-const HOOK_X_SPRING := 4.2
-const HOOK_X_DAMPING := 2.6
-const HOOK_MOUSE_DECAY := 5.0
-const HOOK_GRAVITY := 18.0
-const HOOK_MAX_SWING_SPEED := 260.0
-const HOOK_DESCENT_GRAVITY_MULT := 2.35
-const HOOK_REEL_GRAVITY_MULT := 0.7
-const HOOK_REEL_ACCEL := 18.0
+const HOOK_GRAVITY := 880.0
+const HOOK_SWING_DAMPING := 1.8
+const HOOK_WATER_DRAG := 1.45
+const HOOK_GRAB_RADIUS := 36.0
+const HOOK_GRAB_FORCE := 0.11
+const HOOK_MAX_SPEED := 760.0
+const HOOK_SURFACE_THROW_HEIGHT := 84.0
+const HOOK_RETRACT_SNAP := 12.0
+const HOOK_LINE_SEGMENTS := 22
+const CURSOR_RING_RADIUS := 11.0
+const HOOK_CAST_MIN_DURATION := 0.18
+const HOOK_CAST_MAX_DURATION := 0.42
+const HOOK_CAST_ARC_HEIGHT := 78.0
 const BITE_DISTANCE := 34.0
 const BITE_INTEREST_GAIN := 1.2
 const BITE_INTEREST_LOSS := 0.65
 const FIGHT_SIDE_MARGIN := 10.0
 const FIGHT_PHASE_MIN := 0.55
 const FIGHT_PHASE_MAX := 1.0
+const LANDING_LINE_REEL_MULT := 3.6
 const SUMMARY_BAR_MIN_DURATION := 0.8
 const SUMMARY_BAR_MAX_DURATION := 2.6
 const SUMMARY_MONEY_MIN_DURATION := 0.9
@@ -39,9 +46,11 @@ const GUIDANCE_GLOW_ALPHA := 0.22
 enum RunState {
 	INTRO,
 	READY,
+	IDLE,
 	DESCENDING,
 	REELING,
 	HOOKED,
+	LANDING,
 	RUN_END_RETRACT,
 	RUN_END_EXIT,
 	SUMMARY,
@@ -59,11 +68,24 @@ var boat_size := Vector2(190.0, 54.0)
 var boat_bob_time := 0.0
 
 var hook_x := 0.0
-var hook_target_x := 0.0
 var hook_depth := 0.0
 var hook_horizontal_velocity := 0.0
 var hook_vertical_velocity := 0.0
-var mouse_sway_velocity := 0.0
+var hook_position := Vector2.ZERO
+var hook_velocity := Vector2.ZERO
+var hook_line_length := 0.0
+var hook_target_line_length := 0.0
+var cursor_screen_pos := Vector2.ZERO
+var cursor_velocity := Vector2.ZERO
+var left_mouse_down := false
+var hook_hovered := false
+var hook_grabbed := false
+var cast_in_progress := false
+var cast_start_position := Vector2.ZERO
+var cast_target_position := Vector2.ZERO
+var cast_control_position := Vector2.ZERO
+var cast_progress := 0.0
+var cast_duration := 0.0
 
 var timer_left := 0.0
 var deepest_depth_reached := 0.0
@@ -77,6 +99,7 @@ var fish_stamina := 0.0
 var meters_per_fish_stamina := 1.0
 var fight_phase_timer := 0.0
 var fight_phase_duration := 0.0
+var hook_reel_pull_remaining := 0.0
 var desired_hold := true
 var desired_side := 0
 var fight_feedback_text := ""
@@ -85,6 +108,9 @@ var total_mistakes := 0
 var total_bites := 0
 var total_fish_lost := 0
 var total_clean_pulls := 0
+var landing_species_name := ""
+var landing_species_value := 0
+var landing_catch_depth := 0.0
 
 var summary_results: Dictionary = {}
 var summary_money_target := 0
@@ -116,14 +142,21 @@ var summary_species_chart: VBoxContainer
 var summary_run_chart: VBoxContainer
 var summary_continue_button: Button
 var summary_again_button: Button
+var pause_menu
 
 func _ready() -> void:
 	Global.game_state = Util.GAME_STATES.PLAYING
 	rng.randomize()
 	run_config = REEL_PROGRESS.get_run_config()
 	fish_catalog = REEL_DATA.get_fish_catalog()
+	cursor_screen_pos = get_viewport().get_mouse_position()
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	_build_ui()
+	_setup_pause_menu()
 	_begin_run()
+
+func _exit_tree() -> void:
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
 func _build_ui() -> void:
 	canvas_layer = CanvasLayer.new()
@@ -282,8 +315,16 @@ func _build_ui() -> void:
 	summary_continue_button.pressed.connect(_on_summary_continue_pressed)
 	button_row.add_child(summary_continue_button)
 
+func _setup_pause_menu() -> void:
+	pause_menu = IN_GAME_PAUSE_MENU_SCRIPT.new()
+	pause_menu.name = "InGamePauseMenu"
+	pause_menu.resume_requested.connect(_on_pause_resume_requested)
+	pause_menu.end_run_requested.connect(_on_pause_end_run_requested)
+	add_child(pause_menu)
+
 func _begin_run() -> void:
 	run_config = REEL_PROGRESS.get_run_config()
+	_close_pause_menu()
 	summary_results = {
 		"money_earned": 0,
 		"fish_caught": 0,
@@ -306,12 +347,16 @@ func _begin_run() -> void:
 	meters_per_fish_stamina = 1.0
 	fight_phase_timer = 0.0
 	fight_phase_duration = 0.0
+	hook_reel_pull_remaining = 0.0
 	fight_feedback_text = ""
 	fight_feedback_timer = 0.0
 	total_mistakes = 0
 	total_bites = 0
 	total_fish_lost = 0
 	total_clean_pulls = 0
+	landing_species_name = ""
+	landing_species_value = 0
+	landing_catch_depth = 0.0
 	summary_ready_for_input = false
 	_clear_summary_animation()
 	_clear_chart(summary_species_chart)
@@ -325,14 +370,23 @@ func _begin_run() -> void:
 	boat_pos = Vector2(viewport_size.x + boat_size.x, boat_target_pos.y)
 	boat_bob_time = 0.0
 	hook_x = boat_target_pos.x - boat_size.x * 0.2
-	hook_target_x = hook_x
 	hook_depth = 0.0
 	hook_horizontal_velocity = 0.0
 	hook_vertical_velocity = 0.0
-	mouse_sway_velocity = 0.0
+	hook_position = _boat_anchor()
+	hook_velocity = Vector2.ZERO
+	hook_line_length = 0.0
+	hook_target_line_length = 0.0
+	cursor_velocity = Vector2.ZERO
+	left_mouse_down = false
+	hook_hovered = false
+	hook_grabbed = false
+	cast_in_progress = false
+	cast_progress = 0.0
 	hook_blink_timer = 0.0
 	run_state = RunState.INTRO
 	_spawn_fish_population()
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	_update_hud()
 	queue_redraw()
 
@@ -362,8 +416,11 @@ func _create_fish_entity(depth_meters: float) -> Dictionary:
 	}
 
 func _process(delta: float) -> void:
+	if _is_pause_menu_open():
+		return
 	boat_bob_time += delta
 	hook_blink_timer += delta
+	_refresh_cursor_state(delta)
 	if fight_feedback_timer > 0.0:
 		fight_feedback_timer = max(0.0, fight_feedback_timer - delta)
 		if fight_feedback_timer <= 0.0:
@@ -371,17 +428,18 @@ func _process(delta: float) -> void:
 	match run_state:
 		RunState.INTRO:
 			_process_intro(delta)
-		RunState.READY, RunState.DESCENDING, RunState.REELING:
+		RunState.READY, RunState.IDLE, RunState.DESCENDING, RunState.REELING:
 			_process_active_run(delta)
 		RunState.HOOKED:
 			_process_hooked_run(delta)
+		RunState.LANDING:
+			_process_landing_run(delta)
 		RunState.RUN_END_RETRACT:
 			_process_run_end_retract(delta)
 		RunState.RUN_END_EXIT:
 			_process_run_end_exit(delta)
 		RunState.SUMMARY:
 			pass
-	mouse_sway_velocity = move_toward(mouse_sway_velocity, 0.0, HOOK_MOUSE_DECAY * delta * 120.0)
 	_update_hud()
 	queue_redraw()
 
@@ -390,6 +448,7 @@ func _process_intro(delta: float) -> void:
 	if absf(boat_pos.x - boat_target_pos.x) <= 1.0:
 		boat_pos.x = boat_target_pos.x
 		run_state = RunState.READY
+		_snap_hook_to_anchor()
 
 func _process_active_run(delta: float) -> void:
 	timer_left = max(0.0, timer_left - delta)
@@ -398,9 +457,8 @@ func _process_active_run(delta: float) -> void:
 		return
 	_update_hook_motion(delta)
 	_update_fish(delta)
-	if run_state == RunState.REELING and hook_depth <= 0.0:
-		hook_depth = 0.0
-		hook_vertical_velocity = 0.0
+	if run_state == RunState.REELING and hook_line_length <= HOOK_RETRACT_SNAP:
+		_snap_hook_to_anchor()
 		run_state = RunState.READY
 	deepest_depth_reached = max(deepest_depth_reached, hook_depth)
 	summary_results["deepest_depth"] = deepest_depth_reached
@@ -420,16 +478,32 @@ func _process_hooked_run(delta: float) -> void:
 	deepest_depth_reached = max(deepest_depth_reached, hook_depth)
 	summary_results["deepest_depth"] = deepest_depth_reached
 
+func _process_landing_run(delta: float) -> void:
+	timer_left = max(0.0, timer_left - delta)
+	_update_hook_motion(delta)
+	_update_hooked_fish_motion(delta)
+	deepest_depth_reached = max(deepest_depth_reached, hook_depth)
+	summary_results["deepest_depth"] = deepest_depth_reached
+	if hook_line_length <= HOOK_RETRACT_SNAP or hook_depth <= 0.15:
+		_finish_landed_fish()
+
 func _process_run_end_retract(delta: float) -> void:
-	hook_depth = move_toward(hook_depth, 0.0, float(run_config.get("auto_retract_speed", 72.0)) * delta)
-	hook_x = move_toward(hook_x, _boat_anchor().x, 520.0 * delta)
-	hook_horizontal_velocity = 0.0
+	hook_grabbed = false
+	cast_in_progress = false
+	hook_target_line_length = 0.0
+	hook_reel_pull_remaining = 0.0
+	hook_line_length = move_toward(hook_line_length, hook_target_line_length, float(run_config.get("auto_retract_speed", 72.0)) * _pixels_per_meter() * delta)
+	var anchor := _boat_anchor()
+	var line_dir := _safe_line_direction(anchor)
+	hook_position = anchor + line_dir * hook_line_length
+	hook_velocity = Vector2.ZERO
+	_sync_hook_state_from_position()
 	if hooked_fish_index >= 0 and hooked_fish_index < fish_entities.size():
 		var fish := fish_entities[hooked_fish_index]
-		fish["pos"] = fish["pos"].lerp(Vector2(hook_x, _depth_to_y(hook_depth)), clampf(delta * 6.0, 0.0, 1.0))
+		fish["pos"] = fish["pos"].lerp(hook_position, clampf(delta * 6.0, 0.0, 1.0))
 		fish_entities[hooked_fish_index] = fish
-	if hook_depth <= 0.0 and absf(hook_x - _boat_anchor().x) <= 2.0:
-		hook_depth = 0.0
+	if hook_line_length <= 0.01 and hook_position.distance_to(anchor) <= 2.0:
+		_snap_hook_to_anchor()
 		run_state = RunState.RUN_END_EXIT
 		_show_summary()
 
@@ -442,35 +516,68 @@ func _process_run_end_exit(delta: float) -> void:
 		summary_ready_for_input = true
 
 func _update_hook_motion(delta: float) -> void:
-	var water_rect := _water_rect()
-	var sink_speed: float = float(run_config.get("sink_speed", 15.0))
-	var reel_speed: float = float(run_config.get("reel_speed", 17.0))
-	hook_target_x = clampf(hook_target_x, water_rect.position.x + 20.0, water_rect.end.x - 20.0)
-	var x_accel: float = (hook_target_x - hook_x) * HOOK_X_SPRING + mouse_sway_velocity * float(run_config.get("mouse_impulse", 0.9))
-	hook_horizontal_velocity += x_accel * delta * float(run_config.get("hook_control", 1.0))
-	hook_horizontal_velocity = move_toward(hook_horizontal_velocity, 0.0, HOOK_X_DAMPING * delta * 40.0)
-	hook_horizontal_velocity = clampf(hook_horizontal_velocity, -HOOK_MAX_SWING_SPEED, HOOK_MAX_SWING_SPEED)
-	hook_x += hook_horizontal_velocity * delta
-	hook_x = clampf(hook_x, water_rect.position.x + 16.0, water_rect.end.x - 16.0)
+	var anchor := _boat_anchor()
+	if run_state == RunState.READY:
+		_snap_hook_to_anchor()
+		return
 
-	match run_state:
-		RunState.DESCENDING:
-			hook_vertical_velocity += HOOK_GRAVITY * HOOK_DESCENT_GRAVITY_MULT * delta
-			hook_vertical_velocity = min(hook_vertical_velocity, sink_speed)
-		RunState.REELING:
-			hook_vertical_velocity += HOOK_GRAVITY * HOOK_REEL_GRAVITY_MULT * delta
-			hook_vertical_velocity = move_toward(hook_vertical_velocity, -reel_speed, delta * HOOK_REEL_ACCEL)
-		RunState.HOOKED:
-			hook_vertical_velocity = move_toward(hook_vertical_velocity, 0.0, delta * 22.0)
-		_:
-			hook_vertical_velocity = move_toward(hook_vertical_velocity, 0.0, delta * 22.0)
+	var sink_speed: float = float(run_config.get("sink_speed", 15.0)) * _pixels_per_meter()
+	var reel_speed: float = float(run_config.get("reel_speed", 17.0)) * _pixels_per_meter()
+	if cast_in_progress:
+		_update_cast_motion(delta, anchor)
+		return
 
 	if run_state == RunState.DESCENDING:
-		hook_depth = min(float(run_config.get("max_depth", 24.0)), hook_depth + max(0.0, hook_vertical_velocity) * delta)
+		hook_target_line_length = min(_max_hook_line_length(), hook_target_line_length + sink_speed * delta)
 	elif run_state == RunState.REELING:
-		hook_depth = max(0.0, hook_depth + hook_vertical_velocity * delta)
+		hook_target_line_length = max(0.0, hook_target_line_length - reel_speed * delta)
+	elif run_state == RunState.IDLE:
+		hook_target_line_length = hook_line_length
 	elif run_state == RunState.HOOKED:
-		hook_depth = clampf(hook_depth + hook_vertical_velocity * delta * 0.25, 0.0, float(run_config.get("max_depth", 24.0)))
+		if hook_reel_pull_remaining > 0.0:
+			var reel_step: float = min(hook_reel_pull_remaining, reel_speed * 1.25 * delta)
+			hook_target_line_length = max(0.0, hook_target_line_length - reel_step)
+			hook_reel_pull_remaining -= reel_step
+		hook_target_line_length = max(0.0, min(hook_target_line_length, _max_hook_line_length()))
+	elif run_state == RunState.LANDING:
+		hook_target_line_length = 0.0
+
+	var line_adjust_speed: float = sink_speed
+	if run_state == RunState.REELING or run_state == RunState.HOOKED:
+		line_adjust_speed = reel_speed
+	elif run_state == RunState.LANDING:
+		line_adjust_speed = reel_speed * LANDING_LINE_REEL_MULT
+	elif run_state == RunState.IDLE:
+		line_adjust_speed = sink_speed * 0.8
+	hook_line_length = move_toward(hook_line_length, hook_target_line_length, max(line_adjust_speed, 1.0) * delta)
+
+	hook_velocity += Vector2.DOWN * HOOK_GRAVITY * delta
+	hook_velocity *= max(0.0, 1.0 - (HOOK_WATER_DRAG + float(run_config.get("hook_control", 1.0)) * 0.08) * delta)
+	if run_state == RunState.IDLE:
+		hook_velocity = hook_velocity.move_toward(Vector2.ZERO, HOOK_SWING_DAMPING * _pixels_per_meter() * delta)
+	elif run_state == RunState.REELING:
+		hook_velocity = hook_velocity.move_toward(Vector2.ZERO, HOOK_SWING_DAMPING * 1.35 * _pixels_per_meter() * delta)
+	elif run_state == RunState.LANDING:
+		hook_velocity = hook_velocity.move_toward(Vector2.ZERO, HOOK_SWING_DAMPING * 1.7 * _pixels_per_meter() * delta)
+
+	if hook_grabbed:
+		_apply_hook_grab_impulse(delta)
+
+	hook_velocity = hook_velocity.limit_length(HOOK_MAX_SPEED)
+	hook_position += hook_velocity * delta
+
+	var line_vector := hook_position - anchor
+	if line_vector.length_squared() <= 0.0001:
+		line_vector = Vector2.DOWN * max(hook_line_length, 1.0)
+	hook_position = anchor + line_vector.normalized() * hook_line_length
+
+	var line_dir := _safe_line_direction(anchor)
+	hook_velocity -= line_dir * hook_velocity.dot(line_dir)
+	_clamp_hook_position(anchor)
+	_sync_hook_state_from_position()
+
+	if run_state != RunState.HOOKED and hook_line_length <= 0.01:
+		_snap_hook_to_anchor()
 
 func _update_fish(delta: float) -> void:
 	var hook_pos := _hook_position()
@@ -491,7 +598,7 @@ func _update_fish(delta: float) -> void:
 		var target: Vector2 = fish.get("roam_target", pos)
 		var attraction_radius: float = float(run_config.get("attraction_radius", 34.0))
 		var distance_to_hook: float = pos.distance_to(hook_pos)
-		if (run_state == RunState.DESCENDING or run_state == RunState.REELING) and distance_to_hook <= attraction_radius * 3.1:
+		if (run_state == RunState.IDLE or run_state == RunState.DESCENDING or run_state == RunState.REELING) and distance_to_hook <= attraction_radius * 3.1:
 			var seek_strength: float = clampf(1.0 - (distance_to_hook / max(attraction_radius * 3.1, 1.0)), 0.0, 1.0)
 			target = target.lerp(hook_pos, seek_strength * 0.65)
 			fish["interest"] = min(1.25, float(fish.get("interest", 0.0)) + delta * (BITE_INTEREST_GAIN + seek_strength))
@@ -533,6 +640,14 @@ func _update_hooked_fish_motion(delta: float) -> void:
 	if not desired_hold:
 		side_target = 18.0 if int(Time.get_ticks_msec() / 220) % 2 == 0 else -18.0
 	var desired_pos := hook_pos + Vector2(side_target, sin(Time.get_ticks_msec() * 0.006) * 8.0)
+	var active_reel_in: bool = run_state == RunState.LANDING or hook_target_line_length < hook_line_length - 0.5 or hook_velocity.y < -18.0
+	if active_reel_in:
+		fish["pos"] = hook_pos
+		fish["vel"] = Vector2.ZERO
+		if absf(hook_velocity.x) > 0.01:
+			fish["facing"] = signf(hook_velocity.x)
+		fish_entities[hooked_fish_index] = fish
+		return
 	var escape_strength: float = 54.0 + fish_stamina * 0.3
 	var desired_velocity := (desired_pos - pos).normalized() * escape_strength
 	vel = vel.move_toward(desired_velocity, delta * 130.0)
@@ -549,6 +664,7 @@ func _update_hooked_fish_motion(delta: float) -> void:
 func _start_hooked_fish(index: int) -> void:
 	if index < 0 or index >= fish_entities.size():
 		return
+	hook_grabbed = false
 	run_state = RunState.HOOKED
 	hooked_fish_index = index
 	var fish: Dictionary = fish_entities[index]
@@ -558,6 +674,8 @@ func _start_hooked_fish(index: int) -> void:
 	fish_stamina_max = float(species.get("stamina", 5.0))
 	fish_stamina = fish_stamina_max
 	meters_per_fish_stamina = max(0.35, hook_depth / max(fish_stamina_max, 1.0))
+	hook_target_line_length = hook_line_length
+	hook_reel_pull_remaining = 0.0
 	total_bites += 1
 	summary_results["bites"] = total_bites
 	fight_feedback_text = "Fish on!"
@@ -572,7 +690,7 @@ func _roll_next_fight_phase() -> void:
 
 func _resolve_fight_phase() -> void:
 	if hooked_fish_index < 0 or hooked_fish_index >= fish_entities.size():
-		run_state = RunState.REELING
+		run_state = RunState.IDLE
 		return
 	var fish: Dictionary = fish_entities[hooked_fish_index]
 	var fish_pos: Vector2 = fish.get("pos", _hook_position())
@@ -594,16 +712,16 @@ func _resolve_fight_phase() -> void:
 			_apply_fight_mistake(beat_cost)
 			return
 	else:
-		if not is_holding:
-			fish_loss = beat_cost * 2.6 * float(run_config.get("fish_drain_multiplier", 1.0))
-		else:
+		if is_holding:
 			_apply_fight_mistake(beat_cost)
 			return
 
 	player_stamina = max(0.0, player_stamina - player_loss)
 	fish_stamina = max(0.0, fish_stamina - fish_loss)
-	hook_depth = max(0.0, hook_depth - fish_loss * meters_per_fish_stamina)
-	hook_vertical_velocity = min(hook_vertical_velocity, -float(run_config.get("reel_speed", 17.0)) * 0.8)
+	hook_reel_pull_remaining += fish_loss * meters_per_fish_stamina * _pixels_per_meter()
+	hook_velocity.y = min(hook_velocity.y, -float(run_config.get("reel_speed", 17.0)) * _pixels_per_meter() * 0.8)
+	hook_position = _boat_anchor() + _safe_line_direction(_boat_anchor()) * hook_line_length
+	_sync_hook_state_from_position()
 	total_clean_pulls += 1
 	summary_results["clean_pulls"] = total_clean_pulls
 	fight_feedback_text = "Clean pull!" if desired_hold else "Tension held."
@@ -626,7 +744,7 @@ func _apply_fight_mistake(beat_cost: float) -> void:
 
 func _lose_hooked_fish() -> void:
 	if hooked_fish_index < 0 or hooked_fish_index >= fish_entities.size():
-		run_state = RunState.REELING
+		run_state = RunState.IDLE
 		return
 	var fish: Dictionary = fish_entities[hooked_fish_index]
 	fish["interest"] = 0.0
@@ -636,11 +754,16 @@ func _lose_hooked_fish() -> void:
 	hooked_fish_index = -1
 	player_stamina = 0.0
 	fish_stamina = 0.0
+	hook_reel_pull_remaining = 0.0
+	hook_target_line_length = hook_line_length
+	landing_species_name = ""
+	landing_species_value = 0
+	landing_catch_depth = 0.0
 	total_fish_lost += 1
 	summary_results["fish_lost"] = total_fish_lost
 	fight_feedback_text = "The fish got away."
 	fight_feedback_timer = 0.9
-	run_state = RunState.REELING
+	run_state = RunState.IDLE
 
 func _land_hooked_fish() -> void:
 	if hooked_fish_index < 0 or hooked_fish_index >= fish_entities.size():
@@ -648,37 +771,55 @@ func _land_hooked_fish() -> void:
 		return
 	var fish: Dictionary = fish_entities[hooked_fish_index]
 	var species: Dictionary = fish.get("species", {})
-	var species_name: String = str(species.get("name", "Unknown Fish"))
-	var value: int = int(round(float(species.get("value", 0)) * float(run_config.get("reward_multiplier", 1.0))))
-	var catch_depth: float = max(0.0, hook_depth)
-	summary_results["money_earned"] = int(summary_results.get("money_earned", 0)) + value
+	landing_species_name = str(species.get("name", "Unknown Fish"))
+	landing_species_value = int(round(float(species.get("value", 0)) * float(run_config.get("reward_multiplier", 1.0))))
+	landing_catch_depth = max(0.0, hook_depth)
+	player_stamina = 0.0
+	fish_stamina = 0.0
+	hook_reel_pull_remaining = 0.0
+	hook_target_line_length = hook_line_length
+	fight_feedback_text = "Hauling in %s!" % landing_species_name
+	fight_feedback_timer = 0.85
+	run_state = RunState.LANDING
+
+func _finish_landed_fish() -> void:
+	if hooked_fish_index < 0 or hooked_fish_index >= fish_entities.size():
+		_snap_hook_to_anchor()
+		run_state = RunState.READY
+		return
+	summary_results["money_earned"] = int(summary_results.get("money_earned", 0)) + landing_species_value
 	summary_results["fish_caught"] = int(summary_results.get("fish_caught", 0)) + 1
 	var catch_log: Array = summary_results.get("catch_log", [])
-	catch_log.append({"name": species_name, "value": value, "depth": catch_depth})
+	catch_log.append({"name": landing_species_name, "value": landing_species_value, "depth": landing_catch_depth})
 	summary_results["catch_log"] = catch_log
 	var species_counts: Dictionary = summary_results.get("species_counts", {})
-	species_counts[species_name] = int(species_counts.get(species_name, 0)) + 1
+	species_counts[landing_species_name] = int(species_counts.get(landing_species_name, 0)) + 1
 	summary_results["species_counts"] = species_counts
 	var species_values: Dictionary = summary_results.get("species_values", {})
-	species_values[species_name] = int(species_values.get(species_name, 0)) + value
+	species_values[landing_species_name] = int(species_values.get(landing_species_name, 0)) + landing_species_value
 	summary_results["species_values"] = species_values
-	fight_feedback_text = "Landed %s!" % species_name
+	fight_feedback_text = "Landed %s!" % landing_species_name
 	fight_feedback_timer = 0.85
 	fish_entities[hooked_fish_index] = _create_fish_entity(rng.randf_range(2.0, float(run_config.get("max_depth", 24.0))))
 	hooked_fish_index = -1
 	player_stamina = 0.0
 	fish_stamina = 0.0
-	hook_depth = 0.0
-	hook_vertical_velocity = 0.0
-	hook_target_x = _boat_anchor().x
+	landing_species_name = ""
+	landing_species_value = 0
+	landing_catch_depth = 0.0
+	_snap_hook_to_anchor()
 	run_state = RunState.READY
 
 func _begin_run_end() -> void:
 	run_state = RunState.RUN_END_RETRACT
-	hook_target_x = _boat_anchor().x
+	hook_grabbed = false
 	hooked_fish_index = -1
 	player_stamina = 0.0
 	fish_stamina = 0.0
+	hook_reel_pull_remaining = 0.0
+	landing_species_name = ""
+	landing_species_value = 0
+	landing_catch_depth = 0.0
 	fight_feedback_text = "Horn's up. Dragging the line home."
 	fight_feedback_timer = 1.0
 
@@ -688,6 +829,7 @@ func _show_summary() -> void:
 	var deepest_depth: float = float(summary_results.get("deepest_depth", 0.0))
 	summary_results["summary_text"] = "Caught %d fish for $%d and reached %.1fm." % [total_fish, total_money, deepest_depth]
 	REEL_PROGRESS.apply_run_results(summary_results)
+	_clear_summary_animation()
 
 	summary_title_label.text = "Night Haul"
 	summary_money_target = total_money
@@ -710,6 +852,7 @@ func _show_summary() -> void:
 	summary_overlay.visible = true
 	summary_overlay.color.a = 0.0
 	summary_panel.modulate.a = 0.0
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	_play_summary_money_animation()
 
 func _build_catch_log_text() -> String:
@@ -809,17 +952,14 @@ func _build_summary_chart(container: VBoxContainer, rows: Array[Dictionary]) -> 
 		)
 
 func _clear_summary_animation() -> void:
-	if summary_money_tween != null and summary_money_tween.is_running():
-		summary_money_tween.kill()
-	if summary_money_pop_tween != null and summary_money_pop_tween.is_running():
-		summary_money_pop_tween.kill()
+	_clear_summary_money_animation()
 	for tween in summary_chart_tweens:
 		if tween != null and tween.is_running():
 			tween.kill()
 	summary_chart_tweens.clear()
 
 func _play_summary_money_animation() -> void:
-	_clear_summary_animation()
+	_clear_summary_money_animation()
 	var duration: float = clampf(float(summary_money_target) / 120.0, SUMMARY_MONEY_MIN_DURATION, SUMMARY_MONEY_MAX_DURATION)
 	summary_money_tween = create_tween()
 	summary_money_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
@@ -840,13 +980,18 @@ func _play_summary_money_animation() -> void:
 	)
 
 func _play_summary_money_pop() -> void:
-	if summary_money_pop_tween != null and summary_money_pop_tween.is_running():
-		summary_money_pop_tween.kill()
+	_clear_summary_money_animation()
 	summary_money_label.scale = Vector2.ONE
 	summary_money_pop_tween = create_tween()
 	summary_money_pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	summary_money_pop_tween.tween_property(summary_money_label, "scale", Vector2.ONE * SUMMARY_MONEY_POP_SCALE, 0.14)
 	summary_money_pop_tween.tween_property(summary_money_label, "scale", Vector2.ONE, 0.12)
+
+func _clear_summary_money_animation() -> void:
+	if summary_money_tween != null and summary_money_tween.is_running():
+		summary_money_tween.kill()
+	if summary_money_pop_tween != null and summary_money_pop_tween.is_running():
+		summary_money_pop_tween.kill()
 
 func _summary_duration_for_value(value: float, max_value: float) -> float:
 	if max_value <= 0.0:
@@ -948,11 +1093,12 @@ func _update_hud() -> void:
 	timer_label.text = "Time %.1fs" % timer_left
 	depth_label.text = "Depth %.1fm" % hook_depth
 	wallet_label.text = "Haul $%s" % Util.get_number_short_text(int(summary_results.get("money_earned", 0)))
-	player_stamina_bar.visible = run_state == RunState.HOOKED
-	fish_stamina_bar.visible = run_state == RunState.HOOKED
-	player_stamina_value_label.visible = run_state == RunState.HOOKED
-	fish_stamina_value_label.visible = run_state == RunState.HOOKED
-	if run_state == RunState.HOOKED:
+	var fight_hud_visible: bool = run_state == RunState.HOOKED
+	player_stamina_bar.visible = fight_hud_visible
+	fish_stamina_bar.visible = fight_hud_visible
+	player_stamina_value_label.visible = fight_hud_visible
+	fish_stamina_value_label.visible = fight_hud_visible
+	if fight_hud_visible:
 		player_stamina_bar.max_value = max(player_stamina_max, 1.0)
 		player_stamina_bar.value = player_stamina
 		player_stamina_value_label.text = "%.1f / %.1f" % [player_stamina, player_stamina_max]
@@ -970,15 +1116,19 @@ func _current_prompt_text() -> String:
 		RunState.INTRO:
 			return "The boat is chugging in from the dark..."
 		RunState.READY:
-			return "Click the water left or right of the boat to cast."
+			return "Click to cast toward the cursor. Hold after the cast to keep feeding line out."
+		RunState.IDLE:
+			return "The lure is holding still. Grab it to shove the swing, or hold above/below it to reel or feed line."
 		RunState.DESCENDING:
-			return "The line is falling under gravity. Click once to start reeling and move the mouse to swing it."
+			return "The lure is dropping. Keep holding to feed line out, or release to let it settle."
 		RunState.REELING:
-			return "Reeling stays active now. Swing the line with the mouse and line the hook up with fish."
+			return "Holding pulls line in. Release and the lure will stay put."
 		RunState.HOOKED:
 			if desired_hold:
 				return "Hold the mouse and keep the hook %s of the fish." % ("left" if desired_side < 0 else "right")
 			return "Release the mouse. Wait for the fish to stop surging."
+		RunState.LANDING:
+			return "The catch is on the line. Reeling it back to deck."
 		RunState.RUN_END_RETRACT:
 			return "Time's up. Dragging the hook back to deck."
 		RunState.RUN_END_EXIT, RunState.SUMMARY:
@@ -986,27 +1136,39 @@ func _current_prompt_text() -> String:
 	return ""
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion:
-		var motion_event := event as InputEventMouseMotion
-		mouse_sway_velocity = clampf(mouse_sway_velocity + motion_event.relative.x * 2.6, -180.0, 180.0)
+	if _handle_pause_menu_input(event):
+		return
 	if summary_overlay.visible:
+		return
+	if event is InputEventMouseMotion:
+		cursor_screen_pos = (event as InputEventMouseMotion).position
 		return
 	if not (event is InputEventMouseButton):
 		return
 	var mouse_event := event as InputEventMouseButton
-	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed or mouse_event.is_echo():
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT or mouse_event.is_echo():
 		return
-	if run_state == RunState.READY:
-		hook_target_x = clampf(mouse_event.position.x, _water_rect().position.x + 20.0, _water_rect().end.x - 20.0)
-		hook_x = _boat_anchor().x
-		hook_depth = 0.0
-		hook_vertical_velocity = 0.0
-		run_state = RunState.DESCENDING
-	elif run_state == RunState.DESCENDING:
-		hook_target_x = clampf(mouse_event.position.x, _water_rect().position.x + 20.0, _water_rect().end.x - 20.0)
-		run_state = RunState.REELING
-	elif run_state == RunState.REELING:
-		hook_target_x = clampf(mouse_event.position.x, _water_rect().position.x + 20.0, _water_rect().end.x - 20.0)
+	cursor_screen_pos = mouse_event.position
+	left_mouse_down = mouse_event.pressed
+	if mouse_event.pressed:
+		if _can_grab_hook() and _is_cursor_near_hook(cursor_screen_pos):
+			run_state = RunState.IDLE
+			hook_grabbed = true
+			return
+		match run_state:
+			RunState.READY:
+				_start_cast_to(cursor_screen_pos)
+			RunState.IDLE, RunState.DESCENDING, RunState.REELING:
+				hook_grabbed = false
+				run_state = _free_line_state_for_cursor(cursor_screen_pos)
+	else:
+		hook_grabbed = false
+		if cast_in_progress:
+			return
+		if run_state == RunState.DESCENDING or run_state == RunState.REELING:
+			run_state = RunState.IDLE if hook_line_length > HOOK_RETRACT_SNAP else RunState.READY
+			if run_state == RunState.READY:
+				_snap_hook_to_anchor()
 
 func _draw() -> void:
 	var viewport_size := get_viewport_rect().size
@@ -1030,6 +1192,7 @@ func _draw() -> void:
 	_draw_fish()
 	_draw_line_and_hook()
 	_draw_reel_guidance_glyphs()
+	_draw_cursor()
 
 func _draw_depth_markers(water_rect: Rect2) -> void:
 	var max_depth: float = float(run_config.get("max_depth", 24.0))
@@ -1096,20 +1259,24 @@ func _draw_line_and_hook() -> void:
 	if run_state == RunState.READY or run_state == RunState.INTRO:
 		hook_pos = anchor
 	var points := PackedVector2Array()
-	var gravity_pull: float = max(0.0, hook_vertical_velocity)
-	var sag: float = clampf(12.0 + absf(hook_horizontal_velocity) * 0.12 + hook_depth * 0.3 + gravity_pull * 0.45, 10.0, 110.0)
-	for i in range(18):
-		var t: float = float(i) / 17.0
+	var swing_amount: float = hook_velocity.length()
+	var sag: float = clampf(8.0 + hook_line_length * 0.04 + swing_amount * 0.015, 8.0, 42.0)
+	for i in range(HOOK_LINE_SEGMENTS):
+		var t: float = float(i) / float(HOOK_LINE_SEGMENTS - 1)
 		var base_point := anchor.lerp(hook_pos, t)
 		var bend: float = sin(t * PI) * sag
-		var sway: float = sin((t * 6.0) + boat_bob_time * 3.4) * absf(mouse_sway_velocity) * 0.02
-		points.append(base_point + Vector2((bend + sway) * 0.15, bend))
+		var lateral: float = sin((t * 4.5) + boat_bob_time * 2.8) * hook_velocity.x * 0.005
+		points.append(base_point + Vector2(lateral, bend))
 	draw_polyline(points, Color(0.83, 0.91, 1.0, 0.92), 2.0, true)
 	if run_state != RunState.INTRO:
 		var hook_color: Color = Color(1.0, 0.9, 0.56, 1.0) if int(hook_blink_timer * 5.0) % 2 == 0 else Color(0.84, 0.92, 1.0, 1.0)
 		draw_circle(hook_pos, 6.0, hook_color)
 		draw_line(hook_pos, hook_pos + Vector2(8.0, 12.0), hook_color, 2.0)
 		draw_arc(hook_pos + Vector2(8.0, 12.0), 8.0, -PI * 0.1, PI * 0.95, 14, hook_color, 2.0)
+		if hook_hovered and run_state != RunState.HOOKED:
+			var hover_color := Color(0.98, 0.84, 0.46, 0.26)
+			draw_circle(hook_pos, 18.0, hover_color)
+			draw_arc(hook_pos, 24.0, 0.0, TAU, 28, Color(0.98, 0.84, 0.46, 0.92), 2.0)
 
 func _draw_reel_guidance_glyphs() -> void:
 	if run_state != RunState.HOOKED:
@@ -1150,6 +1317,24 @@ func _draw_reel_guidance_glyphs() -> void:
 		draw_circle(_hook_position(), 18.0 + pulse * 5.0, Color(0.98, 0.84, 0.46, 0.18))
 		draw_arc(_hook_position(), 12.0 + pulse * 5.0, 0.0, TAU, 24, accent_color, 3.0)
 
+func _draw_cursor() -> void:
+	if summary_overlay.visible or _is_pause_menu_open():
+		return
+	var ring_color := Color(0.58, 0.88, 0.99, 0.96)
+	if hook_hovered:
+		ring_color = Color(0.98, 0.84, 0.46, 0.98)
+	if hook_grabbed:
+		ring_color = Color(1.0, 0.95, 0.72, 1.0)
+	draw_circle(cursor_screen_pos, 2.8, Color(0.96, 0.98, 1.0, 0.98))
+	draw_arc(cursor_screen_pos, CURSOR_RING_RADIUS, 0.0, TAU, 24, ring_color, 2.0)
+	draw_line(cursor_screen_pos + Vector2(-6.0, 0.0), cursor_screen_pos + Vector2(6.0, 0.0), ring_color, 1.5)
+	draw_line(cursor_screen_pos + Vector2(0.0, -6.0), cursor_screen_pos + Vector2(0.0, 6.0), ring_color, 1.5)
+	if hook_hovered and not hook_grabbed:
+		var font: Font = ThemeDB.fallback_font
+		if font != null:
+			var hint_text := "GRAB"
+			draw_string(font, cursor_screen_pos + Vector2(16.0, -12.0), hint_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(0.98, 0.94, 0.74, 0.96))
+
 func _water_rect() -> Rect2:
 	var viewport_size := get_viewport_rect().size
 	return Rect2(
@@ -1173,7 +1358,182 @@ func _boat_anchor() -> Vector2:
 	return boat_pos + Vector2(-boat_size.x * 0.18, boat_size.y * 0.16 + bob_offset)
 
 func _hook_position() -> Vector2:
-	return Vector2(hook_x, _depth_to_y(hook_depth))
+	return hook_position
+
+func _handle_pause_menu_input(event: InputEvent) -> bool:
+	if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+		if _is_pause_menu_open():
+			_close_pause_menu()
+		elif _can_open_pause_menu():
+			_open_pause_menu()
+		get_viewport().set_input_as_handled()
+		return true
+	if _is_pause_menu_open():
+		return true
+	return false
+
+func _can_open_pause_menu() -> bool:
+	return not summary_overlay.visible and run_state != RunState.RUN_END_EXIT and run_state != RunState.SUMMARY
+
+func _is_pause_menu_open() -> bool:
+	return pause_menu != null and pause_menu.is_open()
+
+func _open_pause_menu() -> void:
+	if pause_menu == null:
+		return
+	pause_menu.open_menu()
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	queue_redraw()
+
+func _close_pause_menu() -> void:
+	if pause_menu == null:
+		return
+	pause_menu.close_menu()
+	if not summary_overlay.visible:
+		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	queue_redraw()
+
+func _on_pause_resume_requested() -> void:
+	_close_pause_menu()
+
+func _on_pause_end_run_requested() -> void:
+	_close_pause_menu()
+	_end_run_to_summary()
+
+func _end_run_to_summary() -> void:
+	if summary_overlay.visible:
+		return
+	run_state = RunState.SUMMARY
+	hook_grabbed = false
+	left_mouse_down = false
+	cast_in_progress = false
+	hooked_fish_index = -1
+	player_stamina = 0.0
+	fish_stamina = 0.0
+	hook_reel_pull_remaining = 0.0
+	landing_species_name = ""
+	landing_species_value = 0
+	landing_catch_depth = 0.0
+	summary_ready_for_input = true
+	_show_summary()
+	summary_overlay.color.a = 0.78
+	summary_panel.modulate.a = 1.0
+
+func _pixels_per_meter() -> float:
+	var max_depth: float = max(1.0, float(run_config.get("max_depth", 24.0)))
+	return _water_rect().size.y / max_depth
+
+func _max_hook_line_length() -> float:
+	var anchor := _boat_anchor()
+	return anchor.distance_to(Vector2(anchor.x, _depth_to_y(float(run_config.get("max_depth", 24.0))))) + HOOK_SURFACE_THROW_HEIGHT
+
+func _safe_line_direction(anchor: Vector2) -> Vector2:
+	var line_vector := hook_position - anchor
+	if line_vector.length_squared() <= 0.0001:
+		return Vector2.DOWN
+	return line_vector.normalized()
+
+func _sync_hook_state_from_position() -> void:
+	hook_x = hook_position.x
+	hook_depth = max(0.0, _y_to_depth(hook_position.y))
+	hook_horizontal_velocity = hook_velocity.x
+	hook_vertical_velocity = hook_velocity.y / max(_pixels_per_meter(), 0.001)
+
+func _snap_hook_to_anchor() -> void:
+	var anchor := _boat_anchor()
+	hook_position = anchor
+	hook_velocity = Vector2.ZERO
+	hook_line_length = 0.0
+	hook_target_line_length = 0.0
+	hook_reel_pull_remaining = 0.0
+	cast_in_progress = false
+	cast_progress = 0.0
+	_sync_hook_state_from_position()
+
+func _start_cast_to(screen_pos: Vector2) -> void:
+	var anchor := _boat_anchor()
+	var target := _clamp_cast_target(screen_pos)
+	cast_start_position = anchor
+	cast_target_position = target
+	cast_control_position = Vector2(
+		(anchor.x + target.x) * 0.5,
+		min(anchor.y, target.y) - HOOK_CAST_ARC_HEIGHT - absf(target.x - anchor.x) * 0.08
+	)
+	cast_progress = 0.0
+	cast_duration = clampf(anchor.distance_to(target) / 1180.0, HOOK_CAST_MIN_DURATION, HOOK_CAST_MAX_DURATION)
+	cast_in_progress = true
+	hook_grabbed = false
+	run_state = RunState.DESCENDING
+	hook_position = anchor
+	hook_velocity = Vector2.ZERO
+	hook_line_length = 0.0
+	hook_target_line_length = 0.0
+	_sync_hook_state_from_position()
+
+func _update_cast_motion(delta: float, anchor: Vector2) -> void:
+	var previous_position := hook_position
+	cast_progress = min(1.0, cast_progress + delta / max(cast_duration, 0.001))
+	var t: float = cast_progress
+	var one_minus_t: float = 1.0 - t
+	hook_position = one_minus_t * one_minus_t * cast_start_position \
+		+ 2.0 * one_minus_t * t * cast_control_position \
+		+ t * t * cast_target_position
+	hook_velocity = (hook_position - previous_position) / max(delta, 0.001)
+	hook_line_length = min(_max_hook_line_length(), hook_position.distance_to(anchor))
+	hook_target_line_length = hook_line_length
+	_sync_hook_state_from_position()
+	if cast_progress >= 1.0:
+		cast_in_progress = false
+		hook_velocity *= 0.92
+		if not left_mouse_down:
+			run_state = RunState.IDLE if hook_line_length > HOOK_RETRACT_SNAP else RunState.READY
+			if run_state == RunState.READY:
+				_snap_hook_to_anchor()
+
+func _clamp_cast_target(screen_pos: Vector2) -> Vector2:
+	var water_rect := _water_rect()
+	var min_pos := Vector2(water_rect.position.x + 16.0, water_rect.position.y - HOOK_SURFACE_THROW_HEIGHT * 0.35)
+	var max_pos := Vector2(water_rect.end.x - 16.0, water_rect.end.y - 12.0)
+	return screen_pos.clamp(min_pos, max_pos)
+
+func _refresh_cursor_state(delta: float) -> void:
+	var current_pos := get_viewport().get_mouse_position()
+	if delta > 0.0:
+		cursor_velocity = (current_pos - cursor_screen_pos) / delta
+	else:
+		cursor_velocity = Vector2.ZERO
+	cursor_screen_pos = current_pos
+	hook_hovered = _can_grab_hook() and _is_cursor_near_hook(cursor_screen_pos)
+
+func _apply_hook_grab_impulse(delta: float) -> void:
+	var anchor := _boat_anchor()
+	var radial := _safe_line_direction(anchor)
+	var tangent := Vector2(-radial.y, radial.x)
+	var tangential_speed := tangent.dot(cursor_velocity) * HOOK_GRAB_FORCE * float(run_config.get("hook_control", 1.0))
+	hook_velocity += tangent * tangential_speed * delta
+	hook_velocity += (cursor_screen_pos - hook_position) * min(delta * 8.0, 0.24)
+
+func _clamp_hook_position(anchor: Vector2) -> void:
+	var water_rect := _water_rect()
+	var min_pos := Vector2(water_rect.position.x + 14.0, water_rect.position.y - HOOK_SURFACE_THROW_HEIGHT)
+	var max_pos := Vector2(water_rect.end.x - 14.0, water_rect.end.y - 8.0)
+	var clamped := hook_position.clamp(min_pos, max_pos)
+	if clamped.is_equal_approx(hook_position):
+		return
+	hook_position = clamped
+	hook_line_length = min(hook_position.distance_to(anchor), _max_hook_line_length())
+	hook_velocity *= 0.55
+
+func _can_grab_hook() -> bool:
+	return run_state == RunState.IDLE or run_state == RunState.DESCENDING or run_state == RunState.REELING
+
+func _is_cursor_near_hook(screen_pos: Vector2) -> bool:
+	return hook_line_length > HOOK_RETRACT_SNAP and screen_pos.distance_to(_hook_position()) <= HOOK_GRAB_RADIUS
+
+func _free_line_state_for_cursor(screen_pos: Vector2) -> RunState:
+	if hook_line_length <= HOOK_RETRACT_SNAP:
+		return RunState.DESCENDING
+	return RunState.DESCENDING if screen_pos.y >= _hook_position().y else RunState.REELING
 
 func _on_summary_continue_pressed() -> void:
 	if not summary_ready_for_input:

@@ -9,6 +9,7 @@ var PATH_FISHING_UPGRADES = "res://UpgradeScreen.tscn"
 var PATH_FISHING_BATTLE = "res://Fishing/BattleScene.tscn"
 
 const ACTIVE_GAME_PROJECT_SETTING := "global/ActiveGame"
+const HIGH_LEVEL_MODE_PROJECT_SETTING := "global/HighLevelMode"
 const START_SCREEN_PROJECT_SETTING := "global/StartScreen"
 
 const ACTIVE_GAME_VANGUARD := "vanguard"
@@ -16,6 +17,7 @@ const ACTIVE_GAME_MINING := "mining"
 const ACTIVE_GAME_RED_SKY := "redsky"
 const ACTIVE_GAME_TURKEY := "turkey"
 const ACTIVE_GAME_REEL_INTO_DARKNESS := "reelintodarkness"
+const HIGH_LEVEL_MODE_ALL := "all"
 
 const START_SCREEN_MENU := "menu"
 const START_SCREEN_UPGRADES := "upgrade"
@@ -40,10 +42,16 @@ var dark_pallet = "res://Pallets/Dark_Pallet.tres"
 var light_pallet = "res://Pallets/Light_Pallet.tres"
 
 func get_active_game_id() -> String:
-    var active_game: String = str(ProjectSettings.get_setting(ACTIVE_GAME_PROJECT_SETTING, ACTIVE_GAME_VANGUARD)).strip_edges().to_lower()
-    if active_game != ACTIVE_GAME_MINING and active_game != ACTIVE_GAME_RED_SKY and active_game != ACTIVE_GAME_TURKEY and active_game != ACTIVE_GAME_REEL_INTO_DARKNESS:
-        return ACTIVE_GAME_VANGUARD
-    return active_game
+    return _normalize_game_id(ProjectSettings.get_setting(ACTIVE_GAME_PROJECT_SETTING, ACTIVE_GAME_VANGUARD))
+
+func get_high_level_mode_id() -> String:
+    var high_level_mode: String = str(ProjectSettings.get_setting(HIGH_LEVEL_MODE_PROJECT_SETTING, HIGH_LEVEL_MODE_ALL)).strip_edges().to_lower()
+    if high_level_mode == HIGH_LEVEL_MODE_ALL:
+        return HIGH_LEVEL_MODE_ALL
+    return _normalize_game_id(high_level_mode)
+
+func is_all_high_level_mode_active() -> bool:
+    return get_high_level_mode_id() == HIGH_LEVEL_MODE_ALL
 
 func is_mining_game_active() -> bool:
     return get_active_game_id() == ACTIVE_GAME_MINING
@@ -61,10 +69,14 @@ func is_reel_into_darkness_game_active() -> bool:
     return get_active_game_id() == ACTIVE_GAME_REEL_INTO_DARKNESS
 
 func set_active_game_id(game_id: String) -> void:
-    var normalized_game_id: String = str(game_id).strip_edges().to_lower()
-    if normalized_game_id != ACTIVE_GAME_MINING and normalized_game_id != ACTIVE_GAME_RED_SKY and normalized_game_id != ACTIVE_GAME_TURKEY and normalized_game_id != ACTIVE_GAME_REEL_INTO_DARKNESS:
-        normalized_game_id = ACTIVE_GAME_VANGUARD
-    ProjectSettings.set_setting(ACTIVE_GAME_PROJECT_SETTING, normalized_game_id)
+    ProjectSettings.set_setting(ACTIVE_GAME_PROJECT_SETTING, _normalize_game_id(game_id))
+
+func set_high_level_mode_id(mode_id: String) -> void:
+    var normalized_mode_id: String = str(mode_id).strip_edges().to_lower()
+    if normalized_mode_id == HIGH_LEVEL_MODE_ALL:
+        ProjectSettings.set_setting(HIGH_LEVEL_MODE_PROJECT_SETTING, HIGH_LEVEL_MODE_ALL)
+        return
+    ProjectSettings.set_setting(HIGH_LEVEL_MODE_PROJECT_SETTING, _normalize_game_id(normalized_mode_id))
 
 func get_start_screen_id() -> String:
     var start_screen: String = str(ProjectSettings.get_setting(START_SCREEN_PROJECT_SETTING, START_SCREEN_MENU)).strip_edges().to_lower()
@@ -73,11 +85,20 @@ func get_start_screen_id() -> String:
     return start_screen
 
 func get_configured_start_scene_path() -> String:
-    if get_start_screen_id() == START_SCREEN_UPGRADES:
-        if is_mining_game_active() or is_red_sky_game_active() or is_turkey_game_active() or is_reel_into_darkness_game_active():
-            return get_upgrade_scene_path()
-        return get_main_scene_path()
+    if is_all_high_level_mode_active():
+        return get_game_hub_scene_path()
+    return get_direct_launch_scene_path()
+
+func should_start_in_upgrade_scene_from_configuration() -> bool:
+    return not is_all_high_level_mode_active()
+
+func get_game_hub_scene_path() -> String:
     return PATH_GAME_LAUNCHER
+
+func get_direct_launch_scene_path() -> String:
+    if is_mining_game_active() or is_red_sky_game_active() or is_turkey_game_active() or is_reel_into_darkness_game_active():
+        return get_upgrade_scene_path()
+    return get_main_scene_path()
 
 func get_main_scene_path() -> String:
     if is_mining_game_active():
@@ -114,6 +135,18 @@ func get_battle_scene_path() -> String:
     if is_reel_into_darkness_game_active():
         return PATH_REEL_INTO_DARKNESS_MAIN
     return PATH_VANGUARD_BATTLE
+
+func _normalize_game_id(game_id: Variant) -> String:
+    var normalized_game_id: String = str(game_id).strip_edges().to_lower()
+    if normalized_game_id == ACTIVE_GAME_MINING:
+        return ACTIVE_GAME_MINING
+    if normalized_game_id == ACTIVE_GAME_RED_SKY:
+        return ACTIVE_GAME_RED_SKY
+    if normalized_game_id == ACTIVE_GAME_TURKEY:
+        return ACTIVE_GAME_TURKEY
+    if normalized_game_id == ACTIVE_GAME_REEL_INTO_DARKNESS:
+        return ACTIVE_GAME_REEL_INTO_DARKNESS
+    return ACTIVE_GAME_VANGUARD
 
 
 enum GAME_MODES{

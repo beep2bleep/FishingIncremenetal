@@ -2384,6 +2384,10 @@ func _unhandled_input(event: InputEvent) -> void:
         if event.is_action_pressed("escape") or event.is_action_pressed("back"):
             _hide_settings_panel()
         return
+    if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+        _on_settings_button_pressed()
+        get_viewport().set_input_as_handled()
+        return
     if SaveHandler.touch_input_mode:
         if event is InputEventScreenTouch and event.pressed:
             _try_activate_hero_from_world_pos(_screen_to_world_pos(event.position))
@@ -5448,6 +5452,16 @@ func _setup_settings_controls() -> void:
         settings_content.scale = Vector2(1.7, 1.7)
         vbox.add_child(settings_content)
 
+    var end_run_button := Button.new()
+    end_run_button.name = "SettingsEndRunButton"
+    end_run_button.text = tr("MINING_END_RUN")
+    end_run_button.focus_mode = Control.FOCUS_NONE
+    end_run_button.custom_minimum_size = Vector2(0, 120)
+    end_run_button.add_theme_font_size_override("font_size", 30)
+    end_run_button.pressed.connect(_on_settings_end_run_pressed)
+    _style_mute_like_button(end_run_button)
+    vbox.add_child(end_run_button)
+
     var close_button := Button.new()
     close_button.name = "SettingsCloseButton"
     close_button.text = tr("UI_BACK")
@@ -5606,6 +5620,10 @@ func _on_settings_button_pressed() -> void:
 
 func _on_settings_close_pressed() -> void:
     _hide_settings_panel()
+
+func _on_settings_end_run_pressed() -> void:
+    _hide_settings_panel()
+    _on_exit_battle_button_pressed()
 
 func _hide_settings_panel() -> void:
     if settings_panel != null and is_instance_valid(settings_panel):

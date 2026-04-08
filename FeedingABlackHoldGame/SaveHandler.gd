@@ -22,8 +22,23 @@ var supported_locales = {
     "vi": "Tiếng Việt", 
 }
 
+func _normalize_supported_locale_names() -> void:
+    supported_locales["es"] = "Español"
+    supported_locales["pt"] = "Português"
+    supported_locales["fr"] = "Français"
+    supported_locales["zh"] = "简体中文"
+    supported_locales["ja"] = "日本語"
+    supported_locales["ko"] = "한국어"
+    supported_locales["ru"] = "Русский"
+    supported_locales["tr"] = "Türkçe"
+    supported_locales["th"] = "ไทย"
+    supported_locales["cs"] = "Čeština"
+    supported_locales["ca"] = "Català"
+    supported_locales["vi"] = "Tiếng Việt"
+
 func _ready():
     print("Save Handler _ready()")
+    _normalize_supported_locale_names()
 
     load_local_settings()
 

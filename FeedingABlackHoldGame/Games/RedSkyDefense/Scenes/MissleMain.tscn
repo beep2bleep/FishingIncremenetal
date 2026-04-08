@@ -166,6 +166,25 @@ layout_mode = 2
 autowrap_mode = 3
 text = "Stats"
 
+[node name="StartWaveSection" type="VBoxContainer" parent="OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StartWaveHeaderLabel" type="Label" parent="OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/StartWaveSection"]
+layout_mode = 2
+text = "Start Wave"
+
+[node name="StartWaveInfoLabel" type="Label" parent="OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/StartWaveSection"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Beat later waves to unlock deeper starts."
+
+[node name="StartWaveButtons" type="GridContainer" parent="OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/StartWaveSection"]
+layout_mode = 2
+columns = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+
 [node name="SummaryButtons" type="HBoxContainer" parent="OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox"]
 layout_mode = 2
 theme_override_constants/separation = 10

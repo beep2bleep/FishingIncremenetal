@@ -595,7 +595,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Main gun damage up.",
 		"weight": 1.25,
 		"rarity": 0,
-		"max_stacks": 12,
+		"max_stacks": 18,
 		"requires": [],
 		"effects": {"add": {"gun_damage": 3.5}, "mult": {}}
 	},
@@ -605,7 +605,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Fire faster.",
 		"weight": 1.2,
 		"rarity": 0,
-		"max_stacks": 10,
+		"max_stacks": 16,
 		"requires": [],
 		"effects": {"add": {}, "mult": {"fire_rate": 1.08}}
 	},
@@ -625,7 +625,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Increase max hull and repair some damage.",
 		"weight": 1.18,
 		"rarity": 0,
-		"max_stacks": 10,
+		"max_stacks": 14,
 		"requires": [],
 		"effects": {"add": {"base_max_health": 18.0, "repair": 24.0}, "mult": {}}
 	},
@@ -635,7 +635,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "More shield capacity right now.",
 		"weight": 1.0,
 		"rarity": 0,
-		"max_stacks": 8,
+		"max_stacks": 12,
 		"requires": ["shield"],
 		"effects": {"add": {"shield_max": 22.0, "shield_fill": 22.0}, "mult": {}}
 	},
@@ -645,7 +645,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Shields recover faster.",
 		"weight": 0.95,
 		"rarity": 1,
-		"max_stacks": 8,
+		"max_stacks": 10,
 		"requires": ["shield"],
 		"effects": {"add": {"shield_regen": 3.5}, "mult": {}}
 	},
@@ -655,7 +655,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Add one nuke to the stockpile.",
 		"weight": 0.76,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 8,
 		"requires": [],
 		"effects": {"add": {"nukes": 1.0}, "mult": {}}
 	},
@@ -665,7 +665,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Nukes hit harder.",
 		"weight": 0.78,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 8,
 		"requires": [],
 		"effects": {"add": {}, "mult": {"nuke_damage": 1.18}}
 	},
@@ -675,7 +675,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Nukes cover more ground.",
 		"weight": 0.78,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 8,
 		"requires": [],
 		"effects": {"add": {}, "mult": {"nuke_radius": 1.14}}
 	},
@@ -685,7 +685,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Shots punch through one more target.",
 		"weight": 0.72,
 		"rarity": 1,
-		"max_stacks": 5,
+		"max_stacks": 7,
 		"requires": ["pierce"],
 		"effects": {"add": {"bullet_pierce": 1.0}, "mult": {}}
 	},
@@ -695,7 +695,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Shots gain a small blast on impact.",
 		"weight": 0.72,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 8,
 		"requires": ["blast"],
 		"effects": {"add": {"bullet_blast_radius": 18.0}, "mult": {"bullet_blast_damage": 1.12}}
 	},
@@ -705,7 +705,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Critical chance up.",
 		"weight": 0.96,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 10,
 		"requires": [],
 		"effects": {"add": {"crit_chance": 0.05}, "mult": {}}
 	},
@@ -715,7 +715,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Critical hits deal more damage.",
 		"weight": 0.82,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 10,
 		"requires": [],
 		"effects": {"add": {}, "mult": {"crit_bonus": 1.18}}
 	},
@@ -725,7 +725,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Add one defensive tower.",
 		"weight": 0.82,
 		"rarity": 1,
-		"max_stacks": 4,
+		"max_stacks": 8,
 		"requires": ["tower"],
 		"effects": {"add": {"tower_count": 1.0}, "mult": {}}
 	},
@@ -735,7 +735,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Tower damage up.",
 		"weight": 0.88,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 10,
 		"requires": ["tower"],
 		"effects": {"add": {}, "mult": {"tower_damage": 1.22}}
 	},
@@ -745,7 +745,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Towers fire faster.",
 		"weight": 0.88,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 10,
 		"requires": ["tower"],
 		"effects": {"add": {}, "mult": {"tower_fire_rate": 1.14}}
 	},
@@ -755,7 +755,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Add one support drone.",
 		"weight": 0.82,
 		"rarity": 1,
-		"max_stacks": 4,
+		"max_stacks": 8,
 		"requires": ["drone"],
 		"effects": {"add": {"drone_count": 1.0}, "mult": {}}
 	},
@@ -765,7 +765,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Drone damage up.",
 		"weight": 0.88,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 10,
 		"requires": ["drone"],
 		"effects": {"add": {}, "mult": {"drone_damage": 1.18}}
 	},
@@ -775,7 +775,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Drones move and cycle faster.",
 		"weight": 0.88,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 10,
 		"requires": ["drone"],
 		"effects": {"add": {}, "mult": {"drone_fire_rate": 1.12, "drone_speed": 1.12}}
 	},
@@ -785,7 +785,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Add one biomass guardian.",
 		"weight": 0.82,
 		"rarity": 1,
-		"max_stacks": 4,
+		"max_stacks": 8,
 		"requires": ["tentacle"],
 		"effects": {"add": {"tentacle_count": 1.0}, "mult": {}}
 	},
@@ -795,7 +795,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Tentacles hit harder.",
 		"weight": 0.88,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 10,
 		"requires": ["tentacle"],
 		"effects": {"add": {}, "mult": {"tentacle_damage": 1.22}}
 	},
@@ -805,7 +805,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Tentacles reach farther and slow more.",
 		"weight": 0.88,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 10,
 		"requires": ["tentacle"],
 		"effects": {"add": {"tentacle_slow": 0.04}, "mult": {"tentacle_range": 1.12}}
 	},
@@ -815,7 +815,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Better odds to redirect incoming projectiles.",
 		"weight": 0.72,
 		"rarity": 2,
-		"max_stacks": 6,
+		"max_stacks": 8,
 		"requires": ["reflector"],
 		"effects": {"add": {"projectile_redirect_chance": 0.07}, "mult": {}}
 	},
@@ -825,7 +825,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Enemies spill more scrap.",
 		"weight": 0.86,
 		"rarity": 1,
-		"max_stacks": 8,
+		"max_stacks": 12,
 		"requires": ["salvage"],
 		"effects": {"add": {}, "mult": {"salvage_multiplier": 1.18}}
 	},
@@ -835,7 +835,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Pickups collect from farther away.",
 		"weight": 0.82,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 10,
 		"requires": ["salvage"],
 		"effects": {"add": {"pickup_radius": 20.0}, "mult": {}}
 	},
@@ -845,7 +845,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Future wave upgrades become slightly stronger.",
 		"weight": 0.62,
 		"rarity": 2,
-		"max_stacks": 5,
+		"max_stacks": 8,
 		"requires": ["rare"],
 		"effects": {"add": {}, "mult": {"upgrade_power_multiplier": 1.07}}
 	},
@@ -855,7 +855,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Each cleared wave pays bonus scrap.",
 		"weight": 0.82,
 		"rarity": 1,
-		"max_stacks": 6,
+		"max_stacks": 10,
 		"requires": ["salvage"],
 		"effects": {"add": {"wave_scrap_bonus": 4.0}, "mult": {}}
 	},
@@ -865,7 +865,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "More leftover salvage auto-banks between waves.",
 		"weight": 0.74,
 		"rarity": 1,
-		"max_stacks": 5,
+		"max_stacks": 8,
 		"requires": ["salvage"],
 		"effects": {"add": {"wave_auto_bank_ratio": 0.06}, "mult": {}}
 	},
@@ -875,7 +875,7 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Salvage lingers longer before it fades.",
 		"weight": 0.72,
 		"rarity": 1,
-		"max_stacks": 5,
+		"max_stacks": 8,
 		"requires": ["salvage"],
 		"effects": {"add": {"salvage_lifetime": 1.25}, "mult": {}}
 	},
@@ -885,9 +885,169 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"summary": "Scrap pulls harder and cashes out better.",
 		"weight": 0.64,
 		"rarity": 2,
-		"max_stacks": 5,
+		"max_stacks": 8,
 		"requires": ["salvage", "rare"],
 		"effects": {"add": {"pickup_radius": 14.0, "wave_auto_bank_ratio": 0.03}, "mult": {"salvage_multiplier": 1.08}}
+	},
+	{
+		"id": "reinforced_plating",
+		"label": "Reinforced Plating",
+		"summary": "Thicken the hull for tougher late-wave holds.",
+		"weight": 1.04,
+		"rarity": 1,
+		"max_stacks": 12,
+		"requires": [],
+		"effects": {"add": {"base_max_health": 28.0, "repair": 18.0}, "mult": {}}
+	},
+	{
+		"id": "field_repairs",
+		"label": "Field Repairs",
+		"summary": "Recover more hull between spikes and boss dives.",
+		"weight": 0.96,
+		"rarity": 1,
+		"max_stacks": 10,
+		"requires": [],
+		"effects": {"add": {"repair": 42.0}, "mult": {}}
+	},
+	{
+		"id": "shield_capacitors",
+		"label": "Shield Capacitors",
+		"summary": "Wider shield banks for hard projectile waves.",
+		"weight": 0.9,
+		"rarity": 1,
+		"max_stacks": 10,
+		"requires": ["shield"],
+		"effects": {"add": {"shield_max": 30.0, "shield_fill": 20.0}, "mult": {}}
+	},
+	{
+		"id": "battery_loop",
+		"label": "Battery Loop",
+		"summary": "Shield systems and fire control cycle faster together.",
+		"weight": 0.82,
+		"rarity": 2,
+		"max_stacks": 8,
+		"requires": ["shield"],
+		"effects": {"add": {"shield_regen": 4.5}, "mult": {"fire_rate": 1.06}}
+	},
+	{
+		"id": "ammo_hoppers",
+		"label": "Ammo Hoppers",
+		"summary": "Feed the main battery harder without flooding the screen.",
+		"weight": 0.98,
+		"rarity": 1,
+		"max_stacks": 12,
+		"requires": [],
+		"effects": {"add": {"gun_damage": 2.5}, "mult": {"fire_rate": 1.06}}
+	},
+	{
+		"id": "warhead_racks",
+		"label": "Warhead Racks",
+		"summary": "Carry more ordnance and make every blast count.",
+		"weight": 0.72,
+		"rarity": 2,
+		"max_stacks": 6,
+		"requires": [],
+		"effects": {"add": {"nukes": 1.0}, "mult": {"nuke_damage": 1.10}}
+	},
+	{
+		"id": "flak_wall",
+		"label": "Flak Wall",
+		"summary": "Raise another tower and juice its first volleys.",
+		"weight": 0.74,
+		"rarity": 2,
+		"max_stacks": 8,
+		"requires": ["tower"],
+		"effects": {"add": {"tower_count": 1.0}, "mult": {"tower_damage": 1.10}}
+	},
+	{
+		"id": "tower_rangefinder",
+		"label": "Tower Rangefinder",
+		"summary": "Let towers engage earlier and cover more lanes.",
+		"weight": 0.8,
+		"rarity": 1,
+		"max_stacks": 10,
+		"requires": ["tower"],
+		"effects": {"add": {"tower_range": 34.0}, "mult": {"tower_damage": 1.08}}
+	},
+	{
+		"id": "drone_swarm",
+		"label": "Drone Swarm",
+		"summary": "Release another interceptor and tighten its cadence.",
+		"weight": 0.74,
+		"rarity": 2,
+		"max_stacks": 8,
+		"requires": ["drone"],
+		"effects": {"add": {"drone_count": 1.0}, "mult": {"drone_fire_rate": 1.08}}
+	},
+	{
+		"id": "hunter_link",
+		"label": "Hunter Link",
+		"summary": "Support drones strike farther and hit with better focus.",
+		"weight": 0.82,
+		"rarity": 1,
+		"max_stacks": 10,
+		"requires": ["drone"],
+		"effects": {"add": {"drone_range": 26.0}, "mult": {"drone_damage": 1.14, "drone_speed": 1.06}}
+	},
+	{
+		"id": "brood_nest",
+		"label": "Brood Nest",
+		"summary": "Grow another tentacle and keep the front line sticky.",
+		"weight": 0.74,
+		"rarity": 2,
+		"max_stacks": 8,
+		"requires": ["tentacle"],
+		"effects": {"add": {"tentacle_count": 1.0}, "mult": {"tentacle_damage": 1.10}}
+	},
+	{
+		"id": "tendon_network",
+		"label": "Tendon Network",
+		"summary": "Tentacles reach wider arcs and drag targets longer.",
+		"weight": 0.82,
+		"rarity": 1,
+		"max_stacks": 10,
+		"requires": ["tentacle"],
+		"effects": {"add": {"tentacle_slow": 0.03}, "mult": {"tentacle_range": 1.14}}
+	},
+	{
+		"id": "salvage_convoys",
+		"label": "Salvage Convoys",
+		"summary": "Late waves spill better scrap and pay more per clear.",
+		"weight": 0.78,
+		"rarity": 1,
+		"max_stacks": 10,
+		"requires": ["salvage"],
+		"effects": {"add": {"wave_scrap_bonus": 3.0}, "mult": {"salvage_multiplier": 1.12}}
+	},
+	{
+		"id": "magnetic_funnels",
+		"label": "Magnetic Funnels",
+		"summary": "Sweep wider arcs of salvage into the command core.",
+		"weight": 0.74,
+		"rarity": 1,
+		"max_stacks": 10,
+		"requires": ["salvage"],
+		"effects": {"add": {"pickup_radius": 18.0, "wave_auto_bank_ratio": 0.03}, "mult": {}}
+	},
+	{
+		"id": "command_node",
+		"label": "Command Node",
+		"summary": "Open one more choice after each future wave.",
+		"weight": 0.58,
+		"rarity": 2,
+		"max_stacks": 3,
+		"requires": ["rare"],
+		"effects": {"add": {"level_up_choice_count": 1.0}, "mult": {}}
+	},
+	{
+		"id": "refinement_protocols",
+		"label": "Refinement Protocols",
+		"summary": "Scale future picks and battlefield scrap together.",
+		"weight": 0.56,
+		"rarity": 2,
+		"max_stacks": 8,
+		"requires": ["rare", "salvage"],
+		"effects": {"add": {}, "mult": {"upgrade_power_multiplier": 1.06, "salvage_multiplier": 1.06}}
 	},
 ]
 
@@ -1240,6 +1400,81 @@ static func get_wave_upgrade_button_text(upgrade_id: String, upgrade_power_multi
 			]
 		"command_overclock":
 			subtitle = "Future picks +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("upgrade_power_multiplier", 1.0))
+		"reinforced_plating":
+			subtitle = "Hull +%s, repair %s" % [
+				_format_amount(scaled_effects["add"].get("base_max_health", 0.0), 0),
+				_format_amount(scaled_effects["add"].get("repair", 0.0), 0)
+			]
+		"field_repairs":
+			subtitle = "Repair +%s" % _format_amount(scaled_effects["add"].get("repair", 0.0), 0)
+		"shield_capacitors":
+			subtitle = "Shield +%s" % _format_amount(scaled_effects["add"].get("shield_max", 0.0), 0)
+		"battery_loop":
+			subtitle = "Shield regen +%s, fire rate +%s%%" % [
+				_format_amount(scaled_effects["add"].get("shield_regen", 0.0), 1),
+				_format_percent_from_mult(scaled_effects["mult"].get("fire_rate", 1.0))
+			]
+		"ammo_hoppers":
+			subtitle = "Gun damage +%s, fire rate +%s%%" % [
+				_format_amount(scaled_effects["add"].get("gun_damage", 0.0), 1),
+				_format_percent_from_mult(scaled_effects["mult"].get("fire_rate", 1.0))
+			]
+		"warhead_racks":
+			subtitle = "Gain +%s %s, nuke damage +%s%%" % [
+				_format_count_with_word(scaled_effects["add"].get("nukes", 1.0), "nuke")[0],
+				_format_count_with_word(scaled_effects["add"].get("nukes", 1.0), "nuke")[1],
+				_format_percent_from_mult(scaled_effects["mult"].get("nuke_damage", 1.0))
+			]
+		"flak_wall":
+			subtitle = "Deploy +%s %s, tower damage +%s%%" % [
+				_format_count_with_word(scaled_effects["add"].get("tower_count", 1.0), "tower")[0],
+				_format_count_with_word(scaled_effects["add"].get("tower_count", 1.0), "tower")[1],
+				_format_percent_from_mult(scaled_effects["mult"].get("tower_damage", 1.0))
+			]
+		"tower_rangefinder":
+			subtitle = "Tower range +%s, damage +%s%%" % [
+				_format_amount(scaled_effects["add"].get("tower_range", 0.0), 0),
+				_format_percent_from_mult(scaled_effects["mult"].get("tower_damage", 1.0))
+			]
+		"drone_swarm":
+			subtitle = "Deploy +%s %s, drone fire rate +%s%%" % [
+				_format_count_with_word(scaled_effects["add"].get("drone_count", 1.0), "drone")[0],
+				_format_count_with_word(scaled_effects["add"].get("drone_count", 1.0), "drone")[1],
+				_format_percent_from_mult(scaled_effects["mult"].get("drone_fire_rate", 1.0))
+			]
+		"hunter_link":
+			subtitle = "Drone range +%s, damage +%s%%" % [
+				_format_amount(scaled_effects["add"].get("drone_range", 0.0), 0),
+				_format_percent_from_mult(scaled_effects["mult"].get("drone_damage", 1.0))
+			]
+		"brood_nest":
+			subtitle = "Grow +%s %s, tentacle damage +%s%%" % [
+				_format_count_with_word(scaled_effects["add"].get("tentacle_count", 1.0), "tentacle")[0],
+				_format_count_with_word(scaled_effects["add"].get("tentacle_count", 1.0), "tentacle")[1],
+				_format_percent_from_mult(scaled_effects["mult"].get("tentacle_damage", 1.0))
+			]
+		"tendon_network":
+			subtitle = "Tentacle reach +%s%%, slow +%s%%" % [
+				_format_percent_from_mult(scaled_effects["mult"].get("tentacle_range", 1.0)),
+				_format_percent_from_add(scaled_effects["add"].get("tentacle_slow", 0.0))
+			]
+		"salvage_convoys":
+			subtitle = "Yield +%s%%, wave bonus +%s x wave" % [
+				_format_percent_from_mult(scaled_effects["mult"].get("salvage_multiplier", 1.0)),
+				_format_amount(scaled_effects["add"].get("wave_scrap_bonus", 0.0), 0)
+			]
+		"magnetic_funnels":
+			subtitle = "Pickup radius +%s, bank +%s%%" % [
+				_format_amount(scaled_effects["add"].get("pickup_radius", 0.0), 0),
+				_format_percent_from_add(scaled_effects["add"].get("wave_auto_bank_ratio", 0.0))
+			]
+		"command_node":
+			subtitle = "Future choice count +%s" % _format_amount(scaled_effects["add"].get("level_up_choice_count", 0.0), 0)
+		"refinement_protocols":
+			subtitle = "Future picks +%s%%, yield +%s%%" % [
+				_format_percent_from_mult(scaled_effects["mult"].get("upgrade_power_multiplier", 1.0)),
+				_format_percent_from_mult(scaled_effects["mult"].get("salvage_multiplier", 1.0))
+			]
 		_:
 			subtitle = str(def.get("summary", "Battlefield bonus"))
 	var summary: String = str(def.get("summary", "")).strip_edges()
@@ -1278,7 +1513,8 @@ static func _should_ignore_power_scaling_for_add(key: String) -> bool:
 		"bullet_pierce",
 		"tower_count",
 		"drone_count",
-		"tentacle_count"
+		"tentacle_count",
+		"level_up_choice_count"
 	]
 
 static func _should_round_up_additive_effect(key: String) -> bool:

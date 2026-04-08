@@ -105,12 +105,19 @@ func _create_mode_panel(index: int) -> GameModePanel:
     panel.name = "ModePanel_" + str(index)
     panel.index = index
     panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    panel.setup(game_mode_datas[index])
-    panel.selected.connect(_on_panel_selected)
-    return panel
+        panel.setup(game_mode_datas[index])
+        panel.selected.connect(_on_panel_selected)
+        panel.hover_entered.connect(_on_panel_hover_entered)
+        return panel
 
 
 func _on_panel_selected(index = 0):
+    _scroll_to_mode(index)
+
+
+func _on_panel_hover_entered(index: int) -> void :
+    if state != STATES.ACTIVE or is_transitioning:
+        return
     _scroll_to_mode(index)
 
 func _on_settings_updated_changed():

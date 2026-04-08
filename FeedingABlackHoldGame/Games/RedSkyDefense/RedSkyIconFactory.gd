@@ -26,15 +26,15 @@ static func get_icon(icon_id: String) -> Texture2D:
 	return texture
 
 static func _palette_for_key(key: String) -> Dictionary:
-	if key in ["command_armor", "shield_array", "shield_relay", "emergency_bulkheads", "repair_crews", "tentacle_vat", "tentacle_spines", "tentacle_reach", "engineer_crew", "tactical_briefing", "overclock_protocol", "armor_patch", "shield_boost", "shield_relay_burst", "tentacle_pod", "serrated_tentacles", "grasping_reach"]:
+	if key in ["command_armor", "shield_array", "shield_relay", "emergency_bulkheads", "repair_crews", "tentacle_vat", "tentacle_spines", "tentacle_reach", "engineer_crew", "tactical_briefing", "overclock_protocol", "armor_patch", "shield_boost", "shield_relay_burst", "tentacle_pod", "serrated_tentacles", "grasping_reach", "reinforced_plating", "field_repairs", "shield_capacitors", "battery_loop", "brood_nest", "tendon_network"]:
 		return {"frame": Color(0.94, 0.78, 0.63, 1.0), "fill": Color(0.19, 0.1, 0.1, 1.0), "accent": Color(0.92, 0.36, 0.28, 1.0)}
-	if key in ["damage_uplink", "rapid_loader", "tracking_array", "capacitor_bank", "high_energy_cells", "focused_barrels", "cooling_jackets", "seeker_ammo", "piercing_rounds", "shrapnel_rounds", "capacitor_overdrive", "critical_mass", "command_overclock"]:
+	if key in ["damage_uplink", "rapid_loader", "tracking_array", "capacitor_bank", "high_energy_cells", "focused_barrels", "cooling_jackets", "seeker_ammo", "piercing_rounds", "shrapnel_rounds", "capacitor_overdrive", "critical_mass", "command_overclock", "ammo_hoppers"]:
 		return {"frame": Color(0.96, 0.88, 0.62, 1.0), "fill": Color(0.16, 0.12, 0.08, 1.0), "accent": Color(1.0, 0.76, 0.18, 1.0)}
-	if key in ["reserve_nukes", "bigger_blasts", "fusion_payload", "piercing_rifling", "blast_chambers", "reserve_nuke_pick", "fusion_warhead", "blast_shells"]:
+	if key in ["reserve_nukes", "bigger_blasts", "fusion_payload", "piercing_rifling", "blast_chambers", "reserve_nuke_pick", "fusion_warhead", "blast_shells", "warhead_racks"]:
 		return {"frame": Color(0.98, 0.82, 0.56, 1.0), "fill": Color(0.18, 0.1, 0.07, 1.0), "accent": Color(1.0, 0.48, 0.22, 1.0)}
-	if key in ["tower_fabrication", "tower_targeting", "tower_cooling", "reflector_grid", "signal_decoder", "flak_turret", "tower_overclock", "tower_autoloader", "reflector_pylon", "drone_hangar", "drone_ai", "drone_flight_pack", "interceptor_drone", "drone_firmware", "drone_afterburners", "sweep_drones"]:
+	if key in ["tower_fabrication", "tower_targeting", "tower_cooling", "reflector_grid", "signal_decoder", "flak_turret", "tower_overclock", "tower_autoloader", "reflector_pylon", "drone_hangar", "drone_ai", "drone_flight_pack", "interceptor_drone", "drone_firmware", "drone_afterburners", "sweep_drones", "flak_wall", "tower_rangefinder", "drone_swarm", "hunter_link", "command_node"]:
 		return {"frame": Color(0.8, 0.92, 1.0, 1.0), "fill": Color(0.08, 0.13, 0.16, 1.0), "accent": Color(0.36, 0.88, 0.98, 1.0)}
-	if key in ["magnet_array", "salvage_bays", "scrap_ledgers", "contract_bounties", "recovery_barges", "salvage_markets", "profit_directive", "salvage_burst", "magnet_sweep", "bounty_contracts", "claim_adjusters", "recovery_net", "scavenger_grid"]:
+	if key in ["magnet_array", "salvage_bays", "scrap_ledgers", "contract_bounties", "recovery_barges", "salvage_markets", "profit_directive", "salvage_burst", "magnet_sweep", "bounty_contracts", "claim_adjusters", "recovery_net", "scavenger_grid", "salvage_convoys", "magnetic_funnels", "refinement_protocols"]:
 		return {"frame": Color(0.99, 0.92, 0.68, 1.0), "fill": Color(0.15, 0.12, 0.07, 1.0), "accent": Color(0.98, 0.78, 0.26, 1.0)}
 	return {"frame": Color(0.8, 0.92, 1.0, 1.0), "fill": Color(0.08, 0.13, 0.16, 1.0), "accent": Color(0.36, 0.88, 0.98, 1.0)}
 

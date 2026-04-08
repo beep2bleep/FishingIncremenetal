@@ -1,0 +1,1019 @@
+# Unused assets (static scan)
+
+## Method
+- **Roots:** `AppBootstrap.tscn`, `GameLauncher.tscn`, `UpgradeScreen.tscn`, main game scenes (Mining, Turkey, Red Sky, Vanguard main + battle, Reel Into Darkness), `Fishing/BattleScene.tscn`, `ReelIntoDarknessMain.gd`, plus every `res://` path found in `project.godot` (main scene, icon, autoloads, translations, plugins, etc.).
+- **Traversal:** Textual `res://...` references inside reachable `.gd`, `.tscn`, `.tres`, `.res`, `.gdshader`, `.cfg`, `.import`, `.json`, `.csv`, and similar. If a reference resolves to a **directory**, every file under that directory is treated as used (covers folder constants combined with dynamic filenames).
+- **Limitations:** Paths built without a discoverable folder prefix, `uid://` without a `path=` in scanned text, C# resources, editor-only assignments, and `StoreAssets_*` / tooling folders may still produce false positives or misses.
+- **Regenerate:** `python FeedingABlackHoldGame/tools/scan_unused_assets.py` (writes this file next to the `FeedingABlackHoldGame` folder).
+
+**Reachable `res://` path strings (count):** 2903
+**Unused asset files listed below (count):** 1006
+
+## Unused files (under `FeedingABlackHoldGame/`, excluding `addons/` and `.godot/`)
+
+- `FeedingABlackHoldGame/Art/arrow_basic_w.png`
+- `FeedingABlackHoldGame/Art/arrow_basic_w.png.import`
+- `FeedingABlackHoldGame/Art/arrow_decorative_e.png.import`
+- `FeedingABlackHoldGame/Art/arrow_decorative_s_small.png.import`
+- `FeedingABlackHoldGame/Art/arrow_decorative_w.png.import`
+- `FeedingABlackHoldGame/Art/Artboard1.png`
+- `FeedingABlackHoldGame/Art/Artboard1.png.import`
+- `FeedingABlackHoldGame/Art/Asteroid/Asteroid Base.png`
+- `FeedingABlackHoldGame/Art/Asteroid/Asteroid Base.png.import`
+- `FeedingABlackHoldGame/Art/Asteroid/pattern_0011.png`
+- `FeedingABlackHoldGame/Art/Asteroid/pattern_0011.png.import`
+- `FeedingABlackHoldGame/Art/Asteroid/pattern_03.png.import`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.ca.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.cs.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.csv`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.csv.import`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.de.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.en.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.es.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.fr.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.id.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.it.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.ja.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.ko.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.pl.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.pt.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.ru.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.th.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.tr.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.vi.translation`
+- `FeedingABlackHoldGame/Art/Blackhole Translations - Sheet1.zh.translation`
+- `FeedingABlackHoldGame/Art/book_closed.png`
+- `FeedingABlackHoldGame/Art/book_closed.png.import`
+- `FeedingABlackHoldGame/Art/button_round_depth_border.png`
+- `FeedingABlackHoldGame/Art/button_round_depth_border.png.import`
+- `FeedingABlackHoldGame/Art/button_round_depth_flat.png`
+- `FeedingABlackHoldGame/Art/button_round_depth_flat.png.import`
+- `FeedingABlackHoldGame/Art/button_square_border.png`
+- `FeedingABlackHoldGame/Art/button_square_border.png.import`
+- `FeedingABlackHoldGame/Art/check_round_grey_circle.png`
+- `FeedingABlackHoldGame/Art/check_round_grey_circle.png.import`
+- `FeedingABlackHoldGame/Art/check_round_round_circle.png`
+- `FeedingABlackHoldGame/Art/check_round_round_circle.png.import`
+- `FeedingABlackHoldGame/Art/check_square_color.png.import`
+- `FeedingABlackHoldGame/Art/check_square_color_checkmark.png.import`
+- `FeedingABlackHoldGame/Art/check_square_color_cross.png`
+- `FeedingABlackHoldGame/Art/check_square_color_cross.png.import`
+- `FeedingABlackHoldGame/Art/check_square_color_square.png`
+- `FeedingABlackHoldGame/Art/check_square_color_square.png.import`
+- `FeedingABlackHoldGame/Art/check_square_grey_checkmark.png`
+- `FeedingABlackHoldGame/Art/check_square_grey_checkmark.png.import`
+- `FeedingABlackHoldGame/Art/check_square_grey_cross.png`
+- `FeedingABlackHoldGame/Art/check_square_grey_cross.png.import`
+- `FeedingABlackHoldGame/Art/checkmark.png`
+- `FeedingABlackHoldGame/Art/checkmark.png.import`
+- `FeedingABlackHoldGame/Art/Circle 32.png`
+- `FeedingABlackHoldGame/Art/Circle 32.png.import`
+- `FeedingABlackHoldGame/Art/Circle 62.png`
+- `FeedingABlackHoldGame/Art/Circle 62.png.import`
+- `FeedingABlackHoldGame/Art/Circle.png.import`
+- `FeedingABlackHoldGame/Art/Collector Ship.png`
+- `FeedingABlackHoldGame/Art/Collector Ship.png.import`
+- `FeedingABlackHoldGame/Art/CombatWeapons/arrow.png.import`
+- `FeedingABlackHoldGame/Art/CombatWeapons/bow.png.import`
+- `FeedingABlackHoldGame/Art/CombatWeapons/shield.png.import`
+- `FeedingABlackHoldGame/Art/CombatWeapons/sword.png.import`
+- `FeedingABlackHoldGame/Art/CombatWeapons/wand.png.import`
+- `FeedingABlackHoldGame/Art/CRIT.png.import`
+- `FeedingABlackHoldGame/Art/Cross.png`
+- `FeedingABlackHoldGame/Art/Cross.png.import`
+- `FeedingABlackHoldGame/Art/crosshair118.png`
+- `FeedingABlackHoldGame/Art/crosshair118.png.import`
+- `FeedingABlackHoldGame/Art/crosshair120.png`
+- `FeedingABlackHoldGame/Art/crosshair120.png.import`
+- `FeedingABlackHoldGame/Art/DAMAGE ICON.png.import`
+- `FeedingABlackHoldGame/Art/Demo/Asteroid Small.png.import`
+- `FeedingABlackHoldGame/Art/Demo/Asteroid.png.import`
+- `FeedingABlackHoldGame/Art/Demo/Black Hole.png.import`
+- `FeedingABlackHoldGame/Art/Demo/Bomb.png.import`
+- `FeedingABlackHoldGame/Art/Demo/Electric.png.import`
+- `FeedingABlackHoldGame/Art/Demo/noise08.png.import`
+- `FeedingABlackHoldGame/Art/Demo/noise09.png.import`
+- `FeedingABlackHoldGame/Art/Demo/noise10.png.import`
+- `FeedingABlackHoldGame/Art/Demo/noise11.png.import`
+- `FeedingABlackHoldGame/Art/Demo/noise12.png.import`
+- `FeedingABlackHoldGame/Art/Demo/noise13.png.import`
+- `FeedingABlackHoldGame/Art/Demo/noise14.png.import`
+- `FeedingABlackHoldGame/Art/Demo/noise15.png.import`
+- `FeedingABlackHoldGame/Art/Demo/Planet Resource.png`
+- `FeedingABlackHoldGame/Art/Demo/Planet Resource.png.import`
+- `FeedingABlackHoldGame/Art/Demo/Planet Small.png`
+- `FeedingABlackHoldGame/Art/Demo/Planet Small.png.import`
+- `FeedingABlackHoldGame/Art/Demo/Planet.png.import`
+- `FeedingABlackHoldGame/Art/Demo/Radioactive.png.import`
+- `FeedingABlackHoldGame/Art/Demo/smoke_02.png`
+- `FeedingABlackHoldGame/Art/Demo/smoke_02.png.import`
+- `FeedingABlackHoldGame/Art/Demo/smoke_04.png.import`
+- `FeedingABlackHoldGame/Art/Demo/smoke_10.png`
+- `FeedingABlackHoldGame/Art/Demo/smoke_10.png.import`
+- `FeedingABlackHoldGame/Art/Demo/Star Small.png.import`
+- `FeedingABlackHoldGame/Art/Demo/Star.png.import`
+- `FeedingABlackHoldGame/Art/Demo/UI/divider-fade-001.png`
+- `FeedingABlackHoldGame/Art/Demo/UI/divider-fade-001.png.import`
+- `FeedingABlackHoldGame/Art/Demo/UI/panel-008.png`
+- `FeedingABlackHoldGame/Art/Demo/UI/panel-008.png.import`
+- `FeedingABlackHoldGame/Art/Demo/UI/panel-009.png`
+- `FeedingABlackHoldGame/Art/Demo/UI/panel-009.png.import`
+- `FeedingABlackHoldGame/Art/Demo/UI/panel-border-008.png`
+- `FeedingABlackHoldGame/Art/Demo/UI/panel-border-008.png.import`
+- `FeedingABlackHoldGame/Art/Demo/UI/panel-transparent-border-009.png`
+- `FeedingABlackHoldGame/Art/Demo/UI/panel-transparent-border-009.png.import`
+- `FeedingABlackHoldGame/Art/Demo/UI/panel-transparent-center-009.png`
+- `FeedingABlackHoldGame/Art/Demo/UI/panel-transparent-center-009.png.import`
+- `FeedingABlackHoldGame/Art/Demo/UI/panel-transparent-center-022.png`
+- `FeedingABlackHoldGame/Art/Demo/UI/panel-transparent-center-022.png.import`
+- `FeedingABlackHoldGame/Art/Demo/UI/Planet Small.png.import`
+- `FeedingABlackHoldGame/Art/Discord-Symbol-White.png`
+- `FeedingABlackHoldGame/Art/Discord-Symbol-White.png.import`
+- `FeedingABlackHoldGame/Art/Discord.png`
+- `FeedingABlackHoldGame/Art/Discord.png.import`
+- `FeedingABlackHoldGame/Art/Favor.png`
+- `FeedingABlackHoldGame/Art/Favor.png.import`
+- `FeedingABlackHoldGame/Art/Frozen.png`
+- `FeedingABlackHoldGame/Art/Frozen.png.import`
+- `FeedingABlackHoldGame/Art/game_icon.png.import`
+- `FeedingABlackHoldGame/Art/game_icon_128.png`
+- `FeedingABlackHoldGame/Art/game_icon_128.png.import`
+- `FeedingABlackHoldGame/Art/game_icon_144.png`
+- `FeedingABlackHoldGame/Art/game_icon_144.png.import`
+- `FeedingABlackHoldGame/Art/game_icon_180.png`
+- `FeedingABlackHoldGame/Art/game_icon_180.png.import`
+- `FeedingABlackHoldGame/Art/game_icon_512.png`
+- `FeedingABlackHoldGame/Art/game_icon_512.png.import`
+- `FeedingABlackHoldGame/Art/Giant Grid.png.import`
+- `FeedingABlackHoldGame/Art/GoldColors.jpg`
+- `FeedingABlackHoldGame/Art/GoldColors.jpg.import`
+- `FeedingABlackHoldGame/Art/Golden Texture.png.import`
+- `FeedingABlackHoldGame/Art/Hexagon.png.import`
+- `FeedingABlackHoldGame/Art/hourglass.png.import`
+- `FeedingABlackHoldGame/Art/hourglass_bottom.png`
+- `FeedingABlackHoldGame/Art/hourglass_bottom.png.import`
+- `FeedingABlackHoldGame/Art/Icon.png`
+- `FeedingABlackHoldGame/Art/Icon.png.import`
+- `FeedingABlackHoldGame/Art/icon.svg.import`
+- `FeedingABlackHoldGame/Art/icon_circle.png.import`
+- `FeedingABlackHoldGame/Art/icon_outline_circle.png.import`
+- `FeedingABlackHoldGame/Art/icon_play_light - Copy.png`
+- `FeedingABlackHoldGame/Art/icon_play_light - Copy.png.import`
+- `FeedingABlackHoldGame/Art/icon_play_light.png`
+- `FeedingABlackHoldGame/Art/icon_play_light.png.import`
+- `FeedingABlackHoldGame/Art/keyboard_a_outline.png`
+- `FeedingABlackHoldGame/Art/keyboard_a_outline.png.import`
+- `FeedingABlackHoldGame/Art/keyboard_d_outline.png`
+- `FeedingABlackHoldGame/Art/keyboard_d_outline.png.import`
+- `FeedingABlackHoldGame/Art/keyboard_s_outline.png`
+- `FeedingABlackHoldGame/Art/keyboard_s_outline.png.import`
+- `FeedingABlackHoldGame/Art/keyboard_space (2).png`
+- `FeedingABlackHoldGame/Art/keyboard_space (2).png.import`
+- `FeedingABlackHoldGame/Art/left.png.import`
+- `FeedingABlackHoldGame/Art/Level_Up_Sound_1.mp3`
+- `FeedingABlackHoldGame/Art/Level_Up_Sound_1.mp3.import`
+- `FeedingABlackHoldGame/Art/Level_Up_Sound_2.mp3`
+- `FeedingABlackHoldGame/Art/Level_Up_Sound_2.mp3.import`
+- `FeedingABlackHoldGame/Art/Level_Up_Sound_3.mp3`
+- `FeedingABlackHoldGame/Art/Level_Up_Sound_3.mp3.import`
+- `FeedingABlackHoldGame/Art/Level_Up_Sound_4.mp3`
+- `FeedingABlackHoldGame/Art/Level_Up_Sound_4.mp3.import`
+- `FeedingABlackHoldGame/Art/Library Logo.png`
+- `FeedingABlackHoldGame/Art/Library Logo.png.import`
+- `FeedingABlackHoldGame/Art/locked.png.import`
+- `FeedingABlackHoldGame/Art/Logo Base White.png.import`
+- `FeedingABlackHoldGame/Art/Logo Base.png`
+- `FeedingABlackHoldGame/Art/Logo Base.png.import`
+- `FeedingABlackHoldGame/Art/Matter 32.png.import`
+- `FeedingABlackHoldGame/Art/Matter Base Outline.png.import`
+- `FeedingABlackHoldGame/Art/Matter Base.png.import`
+- `FeedingABlackHoldGame/Art/Menu.png`
+- `FeedingABlackHoldGame/Art/Menu.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Asteroid Small.png`
+- `FeedingABlackHoldGame/Art/Mods/Asteroid Small.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Asteroid.png`
+- `FeedingABlackHoldGame/Art/Mods/Asteroid.png.import`
+- `FeedingABlackHoldGame/Art/Mods/ASTEROID_DENSITY.png.import`
+- `FeedingABlackHoldGame/Art/Mods/ASTEROIDS_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW .png.import`
+- `FeedingABlackHoldGame/Art/Mods/ASTEROIDS_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW _2.png`
+- `FeedingABlackHoldGame/Art/Mods/ASTEROIDS_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW _2.png.import`
+- `FeedingABlackHoldGame/Art/Mods/ASTEROIDS_TO_SPAWN.png.import`
+- `FeedingABlackHoldGame/Art/Mods/BASE_DAMAGE_PER_CLICK.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Black Hole.png`
+- `FeedingABlackHoldGame/Art/Mods/Black Hole.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Black Hole_2.png`
+- `FeedingABlackHoldGame/Art/Mods/Black Hole_2.png.import`
+- `FeedingABlackHoldGame/Art/Mods/BLACK_HOLE_MAX_SIZE.png`
+- `FeedingABlackHoldGame/Art/Mods/BLACK_HOLE_MAX_SIZE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/BLACK_HOLE_MAX_SIZE_2.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Bomb.png`
+- `FeedingABlackHoldGame/Art/Mods/Bomb.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CHANCE_TO_ADD_TIME_ON_ASTEROID_DESTROYED.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CHANCE_TO_ADD_TIME_ON_PLANET_DESTROYED.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CHANCE_TO_ADD_TIME_ON_STAR_DESTROYED.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CHANCE_TO_RESPAWN_ASTEROID_ON_BREAK.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CHANCE_TO_RESPAWN_PLANET_ON_BREAK.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CHANCE_TO_RESPAWN_STAR_ON_BREAK.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CHANCE_TO_SPAWN_SPECIAL_ASTEROID_ELECTRIC.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CHANCE_TO_SPAWN_SPECIAL_ASTEROID_GOLDEN.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CHANCE_TO_SPAWN_SPECIAL_ASTEROID_RADIOACTIVE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CLICK_AOE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CLICK_RATE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CLICKER_BONUS_DAMAGE_TO_PLANETS.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CLICKER_BONUS_DAMAGE_TO_STAR.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CLICKER_ELECTRIC_CLICKS_TO_START_WITH.png.import`
+- `FeedingABlackHoldGame/Art/Mods/COMET_CHANCE_FOR_COMET_SHOWER.png.import`
+- `FeedingABlackHoldGame/Art/Mods/COMET_CRIT_BONUS_DAMAGE_BUFF_SCALE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/COMET_CRIT_CHANCE_BUFF_DURATION.png.import`
+- `FeedingABlackHoldGame/Art/Mods/COMET_CRIT_CHANCE_BUFF_SCALE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/COMET_SHOWER_SIZE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/COMET_SPAWN_CHANCE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CRIT_BONUS.png.import`
+- `FeedingABlackHoldGame/Art/Mods/CRIT_CHANCE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Cross.png`
+- `FeedingABlackHoldGame/Art/Mods/Cross.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Discord.png`
+- `FeedingABlackHoldGame/Art/Mods/Discord.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Electric.png`
+- `FeedingABlackHoldGame/Art/Mods/Electric.png.import`
+- `FeedingABlackHoldGame/Art/Mods/ELECTRIC_CRIT_BONUS.png.import`
+- `FeedingABlackHoldGame/Art/Mods/ELECTRIC_CRIT_CHANCE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Frozen.png`
+- `FeedingABlackHoldGame/Art/Mods/Frozen.png.import`
+- `FeedingABlackHoldGame/Art/Mods/FrozenShard.png`
+- `FeedingABlackHoldGame/Art/Mods/FrozenShard.png.import`
+- `FeedingABlackHoldGame/Art/Mods/LASER_CRIT_BONUS.png.import`
+- `FeedingABlackHoldGame/Art/Mods/LASER_CRIT_CHANCE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/LASER_DAMAGE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/LASER_WIDTH_SCALE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/MAX_ASTEROID_SIZE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/MAX_PLANET_SIZE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/MAX_STAR_SIZE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/MONEY_PER_MATTER.png.import`
+- `FeedingABlackHoldGame/Art/Mods/MOON_LIMIT_HARD_CAP.png.import`
+- `FeedingABlackHoldGame/Art/Mods/NUMBER_OF_ASTEROIDS_INTO_PLANETS.png.import`
+- `FeedingABlackHoldGame/Art/Mods/NUMBER_OF_PLANETS_INTO_STARS.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Planet Small.png`
+- `FeedingABlackHoldGame/Art/Mods/Planet Small.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Planet.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Planet_2.png`
+- `FeedingABlackHoldGame/Art/Mods/Planet_2.png.import`
+- `FeedingABlackHoldGame/Art/Mods/PLANET_DENSITY.png.import`
+- `FeedingABlackHoldGame/Art/Mods/PLANET_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW.png.import`
+- `FeedingABlackHoldGame/Art/Mods/PLANETS_TO_SPAWN.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Press Kit.png`
+- `FeedingABlackHoldGame/Art/Mods/Press Kit.png.import`
+- `FeedingABlackHoldGame/Art/Mods/question.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Radioactive.png`
+- `FeedingABlackHoldGame/Art/Mods/Radioactive.png.import`
+- `FeedingABlackHoldGame/Art/Mods/RUN_TIMER_AMOUNT_ON_BLACK_HOLE_GROW.png.import`
+- `FeedingABlackHoldGame/Art/Mods/RUN_TIMER_BASE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_ASTEROID_CHAIN_DISTANCE_SCALE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_ASTEROID_CHANCE_TO_FORK.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_ASTEROID_ELECTRIC_DAMAGE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_ASTEROID_ELECTRIC_DAMAGE_2.png`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_ASTEROID_ELECTRIC_DAMAGE_2.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_ASTEROID_ELECTRIC_MAX_CHAINS.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_ASTEROID_GOLDEN_BONUS_MONEY_SCALE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_ASTEROID_GOLDEN_CRIT_BONUS_MONEY_SCALE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_ASTEROID_GOLDEN_CRIT_CHANCE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_ASTEROID_RADIOACTIVE_AOE_SCALE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_ASTEROID_RADIOACTIVE_DOT.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_ASTEROID_RADIOACTIVE_DURATION.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_PLANET_ASTEROID_PINATA_AMOUNT_OF_ASTEROID.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_PLANET_ASTEROID_PINATA_SPAWN_CHANCE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_PLANET_MOON_BUFF_DURATION.png`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_PLANET_MOON_BUFF_DURATION.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_PLANET_MOON_CLIKCER_AOE_BUFF_SCALE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_PLANET_MOON_CLIKCER_RATE_BUFF_SCALE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_PLANET_MOON_SPAWN_CHANCE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_STAR_CHAIN_DISTANCE_SCALE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_STAR_CHANCE_TO_FORK.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_STAR_ELECTRIC_CRIT_BONUS.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_STAR_ELECTRIC_CRIT_CHANCE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_STAR_ELECTRIC_DAMAGE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_STAR_ELECTRIC_MAX_CHAINS.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_STAR_LASER_SPAWN_CHANCE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_STAR_LASER_SPAWN_CHANCE_2.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SPECIAL_STAR_SUPERNOVA_SPAWN_CHANCE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Star Small.png`
+- `FeedingABlackHoldGame/Art/Mods/Star Small.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Star.png`
+- `FeedingABlackHoldGame/Art/Mods/Star.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Star_2.png`
+- `FeedingABlackHoldGame/Art/Mods/Star_2.png.import`
+- `FeedingABlackHoldGame/Art/Mods/STAR_DENSITY.png.import`
+- `FeedingABlackHoldGame/Art/Mods/STAR_PERCENT_TO_RESPAWN_ON_BLACK_HOLE_GROW.png.import`
+- `FeedingABlackHoldGame/Art/Mods/STARS_TO_SPAWN.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Steam.png`
+- `FeedingABlackHoldGame/Art/Mods/Steam.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SUPERNOVA_DAMAGE_PERCENT_CURRENT_HEALTH.png.import`
+- `FeedingABlackHoldGame/Art/Mods/SUPERNOVA_RADIUS_SCALE.png.import`
+- `FeedingABlackHoldGame/Art/Mods/Wrench.png`
+- `FeedingABlackHoldGame/Art/Mods/Wrench.png.import`
+- `FeedingABlackHoldGame/Art/MONEY ICON.png.import`
+- `FeedingABlackHoldGame/Art/Moon.png.import`
+- `FeedingABlackHoldGame/Art/mouse_move.png.import`
+- `FeedingABlackHoldGame/Art/Pentagon.png`
+- `FeedingABlackHoldGame/Art/Pentagon.png.import`
+- `FeedingABlackHoldGame/Art/Plat Colors.png.import`
+- `FeedingABlackHoldGame/Art/Player/keyboard_w_outline.png`
+- `FeedingABlackHoldGame/Art/Player/keyboard_w_outline.png.import`
+- `FeedingABlackHoldGame/Art/Player/Ship.png.import`
+- `FeedingABlackHoldGame/Art/plus.png`
+- `FeedingABlackHoldGame/Art/plus.png.import`
+- `FeedingABlackHoldGame/Art/pointer_b.png`
+- `FeedingABlackHoldGame/Art/pointer_b.png.import`
+- `FeedingABlackHoldGame/Art/pointer_c.png.import`
+- `FeedingABlackHoldGame/Art/polygon-150x150.jpg`
+- `FeedingABlackHoldGame/Art/polygon-150x150.jpg.import`
+- `FeedingABlackHoldGame/Art/Press Kit.png`
+- `FeedingABlackHoldGame/Art/Press Kit.png.import`
+- `FeedingABlackHoldGame/Art/Resource Basic.png`
+- `FeedingABlackHoldGame/Art/Resource Basic.png.import`
+- `FeedingABlackHoldGame/Art/ship_sidesC.png`
+- `FeedingABlackHoldGame/Art/ship_sidesC.png.import`
+- `FeedingABlackHoldGame/Art/slide_hangle.png`
+- `FeedingABlackHoldGame/Art/slide_hangle.png.import`
+- `FeedingABlackHoldGame/Art/Space/Circle 32.png.import`
+- `FeedingABlackHoldGame/Art/Space/Circle 400.png.import`
+- `FeedingABlackHoldGame/Art/Space/Circle 70.png.import`
+- `FeedingABlackHoldGame/Art/Space/Donut 500.png`
+- `FeedingABlackHoldGame/Art/Space/Donut 500.png.import`
+- `FeedingABlackHoldGame/Art/Space/Donut 600.png`
+- `FeedingABlackHoldGame/Art/Space/Donut 600.png.import`
+- `FeedingABlackHoldGame/Art/Space/Large Circle.png.import`
+- `FeedingABlackHoldGame/Art/spark_05_rotated.png`
+- `FeedingABlackHoldGame/Art/spark_05_rotated.png.import`
+- `FeedingABlackHoldGame/Art/Square.png`
+- `FeedingABlackHoldGame/Art/Square.png.import`
+- `FeedingABlackHoldGame/Art/Star.png`
+- `FeedingABlackHoldGame/Art/Star.png.import`
+- `FeedingABlackHoldGame/Art/star_medium.png`
+- `FeedingABlackHoldGame/Art/star_medium.png.import`
+- `FeedingABlackHoldGame/Art/star_small.png`
+- `FeedingABlackHoldGame/Art/star_small.png.import`
+- `FeedingABlackHoldGame/Art/star_tiny.png.import`
+- `FeedingABlackHoldGame/Art/Steam-Emblem.png`
+- `FeedingABlackHoldGame/Art/Steam-Emblem.png.import`
+- `FeedingABlackHoldGame/Art/Steam.png`
+- `FeedingABlackHoldGame/Art/Steam.png.import`
+- `FeedingABlackHoldGame/Art/Steam_Logo.png`
+- `FeedingABlackHoldGame/Art/Steam_Logo.png.import`
+- `FeedingABlackHoldGame/Art/The Line.png.import`
+- `FeedingABlackHoldGame/Art/Triangle.png`
+- `FeedingABlackHoldGame/Art/Triangle.png.import`
+- `FeedingABlackHoldGame/Art/trophy.png.import`
+- `FeedingABlackHoldGame/Art/UI Panel.tscn`
+- `FeedingABlackHoldGame/Art/unlocked.png`
+- `FeedingABlackHoldGame/Art/unlocked.png.import`
+- `FeedingABlackHoldGame/Art/Very Large Circle.png`
+- `FeedingABlackHoldGame/Art/Very Large Circle.png.import`
+- `FeedingABlackHoldGame/Art/Work.png`
+- `FeedingABlackHoldGame/Art/Work.png.import`
+- `FeedingABlackHoldGame/Art/Wrench.png`
+- `FeedingABlackHoldGame/Art/Wrench.png.import`
+- `FeedingABlackHoldGame/Art/zapsplat_multimedia_game_sound_padlock_unlock_level_secret_bonus_027_73593.mp3`
+- `FeedingABlackHoldGame/Art/zapsplat_multimedia_game_sound_padlock_unlock_level_secret_bonus_027_73593.mp3.import`
+- `FeedingABlackHoldGame/Art/Zen Mode.png.import`
+- `FeedingABlackHoldGame/Audio/bong_001.mp3.import`
+- `FeedingABlackHoldGame/Audio/bong_001.ogg`
+- `FeedingABlackHoldGame/Audio/bong_001.ogg.import`
+- `FeedingABlackHoldGame/Audio/cartoon_success_fanfair.mp3.import`
+- `FeedingABlackHoldGame/Audio/dice_tap.mp3`
+- `FeedingABlackHoldGame/Audio/dice_tap.mp3.import`
+- `FeedingABlackHoldGame/Audio/dice_tap_repeat.mp3`
+- `FeedingABlackHoldGame/Audio/dice_tap_repeat.mp3.import`
+- `FeedingABlackHoldGame/Audio/electric.mp3`
+- `FeedingABlackHoldGame/Audio/electric.mp3.import`
+- `FeedingABlackHoldGame/Audio/esm_chill_victory_sound_fx_arcade_synth_musical_chord_bling_electronic_casino_kids_mobile_positive_achievement_score.mp3`
+- `FeedingABlackHoldGame/Audio/esm_chill_victory_sound_fx_arcade_synth_musical_chord_bling_electronic_casino_kids_mobile_positive_achievement_score.mp3.import`
+- `FeedingABlackHoldGame/Audio/esm_victory_horns_alert_sound_fx_arcade_synth_musical_chord_bling_electronic_casino_kids_mobile_positive_achievement_score.mp3.import`
+- `FeedingABlackHoldGame/Audio/golden.mp3.import`
+- `FeedingABlackHoldGame/Audio/ice freeze.mp3.import`
+- `FeedingABlackHoldGame/Audio/julien_matthey_impact_snowball_on_cement_002.mp3.import`
+- `FeedingABlackHoldGame/Audio/Laser.mp3.import`
+- `FeedingABlackHoldGame/Audio/little_robot_sound_factory_Jingle_Win_Synth_01.mp3.import`
+- `FeedingABlackHoldGame/Audio/lvl_up_sound.mp3`
+- `FeedingABlackHoldGame/Audio/lvl_up_sound.mp3.import`
+- `FeedingABlackHoldGame/Audio/lvl_up_sound_2.mp3`
+- `FeedingABlackHoldGame/Audio/lvl_up_sound_2.mp3.import`
+- `FeedingABlackHoldGame/Audio/Marble_OnCollide.mp3.import`
+- `FeedingABlackHoldGame/Audio/Music/1 - Phat Phrog Studio - Shadow Exile - Synth Shogun.wav.import`
+- `FeedingABlackHoldGame/Audio/Music/1 - Phat Phrog Studio - Wayward Realm - Celestial Veil.wav.import`
+- `FeedingABlackHoldGame/Audio/Music/2 - Phat Phrog Studio - Shadow Exile - Night Splice.wav.import`
+- `FeedingABlackHoldGame/Audio/Music/2 - Phat Phrog Studio - Wayward Realm - Astral Winds.wav.import`
+- `FeedingABlackHoldGame/Audio/Music/3 - Phat Phrog Studio - Verdant Glade - Roots of Serenity.wav.import`
+- `FeedingABlackHoldGame/Audio/Music/3 - Phat Phrog Studio - Wayward Realm - Moonsong Kingdom.wav.import`
+- `FeedingABlackHoldGame/Audio/Music/7 - Phat Phrog Studio - Hellfire Tempest - Carnage Cabaret - LOOP.wav.import`
+- `FeedingABlackHoldGame/Audio/Music/7 - Phat Phrog Studio - Shadow Exile - Tokyo Uprising.wav.import`
+- `FeedingABlackHoldGame/Audio/Music/7 - Phat Phrog Studio - Skyward Spire - Nova Rift.wav.import`
+- `FeedingABlackHoldGame/Audio/Music/7 - Phat Phrog Studio - Verdant Glade - The Quiet Wild.wav.import`
+- `FeedingABlackHoldGame/Audio/Music/8 - Phat Phrog Studio - Verdant Glade - Fernsong.wav.import`
+- `FeedingABlackHoldGame/Audio/robot_land_metal_tray.mp3`
+- `FeedingABlackHoldGame/Audio/robot_land_metal_tray.mp3.import`
+- `FeedingABlackHoldGame/Audio/skyclad_sound_gong_sound_design_muffled_low_heavy_ponderous_262.mp3.import`
+- `FeedingABlackHoldGame/Audio/sound_ex_machina_Button_Tick_Loop.mp3.import`
+- `FeedingABlackHoldGame/Audio/Supernova.mp3.import`
+- `FeedingABlackHoldGame/Audio/Swipe.mp3.import`
+- `FeedingABlackHoldGame/Audio/Voicy_Hitmarker Sound.mp3.import`
+- `FeedingABlackHoldGame/Audio/wood_thin_small_panel_knock.mp3`
+- `FeedingABlackHoldGame/Audio/wood_thin_small_panel_knock.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_cartoon_bubble_pop_003_40275.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_cartoon_impact_bounce_heavy_single_50530.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_cartoon_impact_bounce_heavy_single_50530.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_cartoon_orchestral_musical_tone_ta_da_reveal_103156.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_cartoon_pop_bubble_etc_002_77425.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_cartoon_pop_bubble_etc_007_77430.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_cartoon_pop_bubble_etc_007_77430.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_cartoon_pop_bubble_high_pitched_002_80360.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_cartoon_pop_bubble_high_pitched_002_80360.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_cartoon_pop_mouth_011_46674.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_cartoon_pops_bubbles_several_fast_001_73442.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_foley_stick_medium_swing_in_air_whoosh_fast_001_110466.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_foley_wood_hit_tap_knock_hollow_single_002_74791.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_foley_wood_hit_tap_knock_hollow_single_002_74791.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_foley_wood_thick_dense_light_single_tap_could_be_wooden_ball_sriking_another_001_76774.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_foley_wood_thick_dense_light_single_tap_could_be_wooden_ball_sriking_another_001_76774.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_foley_wood_thick_dense_light_single_tap_could_be_wooden_ball_sriking_another_002_76775.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_foley_wood_thick_dense_light_single_tap_could_be_wooden_ball_sriking_another_003_76776.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_foley_wood_thick_dense_light_single_tap_could_be_wooden_ball_sriking_another_003_76776.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_impacts_hammer_hit_rock_break_smash_3_short.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_impacts_hammer_hit_rock_break_smash_3_short.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_impacts_rock_chunk_piece_throw_drop_into_plastic_container_short.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_impacts_rock_chunk_piece_throw_drop_into_plastic_container_short.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_leisure_board_game_monopoly_token_metal_set_down_on_playing_board_002_37302.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_leisure_board_game_monopoly_token_metal_set_down_on_playing_board_002_37302.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_magic_wand_zap_spark_power_001_12551.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_magic_wand_zap_spark_power_001_12551.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_button_click_001_68773.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_button_click_004_78081 (1).mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_button_click_004_78081 (1).mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_button_click_bright_001_92098.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_button_click_bright_001_92098.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_game_sound_classic_arcade_coin_collect_simple_fast_113878.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_game_sound_clunk_generic_item_tone_003_49778.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_game_sound_coins_collect_hit_001_73725.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_game_sound_coins_collect_hit_001_73725.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_game_sound_cube_game_win_collect_bonus_001_104484.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_game_sound_cube_game_win_collect_bonus_001_104484.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_game_sound_electricity_injure_002_78087.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_game_sound_electricity_injure_002_78087.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_game_sound_fanfare_synth_brass_93243.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_game_sound_fanfare_synth_brass_93243.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_game_sound_treasure_chest_win_thud_coins_synth_warm_002_52068.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_multimedia_game_sound_treasure_chest_win_thud_coins_synth_warm_002_52068.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_office_pen_biro_nib_tap_on_wood_001_33612.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_science_fiction_laser_hit_thud_zap_delay_002_65400.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_science_fiction_laser_hit_thud_zap_delay_002_65400.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_shockwave_designed_001_93120.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_shockwave_designed_002_93121.mp3`
+- `FeedingABlackHoldGame/Audio/zapsplat_shockwave_designed_002_93121.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_sound_design_electricity_zap_spark_28906.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_sound_design_hit_thud_into_descending_slowing_tail_slow_motion_001_65460.mp3.import`
+- `FeedingABlackHoldGame/Audio/zapsplat_sound_design_whoosh_slow_mo_timewarp_001_106393.mp3.import`
+- `FeedingABlackHoldGame/Black Hole Collapse.mp3.import`
+- `FeedingABlackHoldGame/Black Hole Game Over.mp3.import`
+- `FeedingABlackHoldGame/Black Hole Shockwave.tres`
+- `FeedingABlackHoldGame/BlackHoleMassUI.tscn`
+- `FeedingABlackHoldGame/CircleComponent.tscn`
+- `FeedingABlackHoldGame/Controls.tscn`
+- `FeedingABlackHoldGame/Data/Blackhole Translations - Sheet1.ar.translation`
+- `FeedingABlackHoldGame/Data/Blackhole Translations - Sheet1.csv`
+- `FeedingABlackHoldGame/Data/Blackhole Translations - Sheet1.csv.import`
+- `FeedingABlackHoldGame/Data/Blackhole Translations - Sheet1.he.translation`
+- `FeedingABlackHoldGame/Data/Demo Data.json`
+- `FeedingABlackHoldGame/Data/Example Black Hole Data.json`
+- `FeedingABlackHoldGame/Data/FishingUpgradeData.json`
+- `FeedingABlackHoldGame/Data/tobetranslatedfile.csv`
+- `FeedingABlackHoldGame/Data/tobetranslatedfile.csv.import`
+- `FeedingABlackHoldGame/Data/tobetranslatedfile.en.translation`
+- `FeedingABlackHoldGame/Data/vitality_tree.json`
+- `FeedingABlackHoldGame/default_bus_layout.tres`
+- `FeedingABlackHoldGame/demo/icon_respect.tres`
+- `FeedingABlackHoldGame/demo/IconRemapper.tscn`
+- `FeedingABlackHoldGame/demo/Showcase.tscn`
+- `FeedingABlackHoldGame/Explosion.gdshader`
+- `FeedingABlackHoldGame/exports/web/index.apple-touch-icon.png`
+- `FeedingABlackHoldGame/exports/web/index.apple-touch-icon.png.import`
+- `FeedingABlackHoldGame/exports/web/index.icon.png`
+- `FeedingABlackHoldGame/exports/web/index.icon.png.import`
+- `FeedingABlackHoldGame/exports/web/index.png`
+- `FeedingABlackHoldGame/exports/web/index.png.import`
+- `FeedingABlackHoldGame/FeedingABlackHoldGame/Games/Mining/Reports/mining_validation_input.json`
+- `FeedingABlackHoldGame/Fireball.gdshader`
+- `FeedingABlackHoldGame/FlingComponent.tscn`
+- `FeedingABlackHoldGame/FrozenShard.png.import`
+- `FeedingABlackHoldGame/Game Modes/Demo Demo.tres`
+- `FeedingABlackHoldGame/Games/Mining/Reports/mining_balance_campaign_summary.json`
+- `FeedingABlackHoldGame/Games/Mining/Reports/mining_fast_sim_results.json`
+- `FeedingABlackHoldGame/Games/Mining/Reports/mining_validation_input.json`
+- `FeedingABlackHoldGame/Games/Mining/Reports/mining_validation_output.json`
+- `FeedingABlackHoldGame/Games/Mining/Reports/mining_validation_smoke_input.json`
+- `FeedingABlackHoldGame/Games/Mining/UI/MiningUpgradePanel.tscn`
+- `FeedingABlackHoldGame/generatedicon/archer_drill_1_60.png`
+- `FeedingABlackHoldGame/generatedicon/archer_drill_1_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/archer_drill_2_60.png`
+- `FeedingABlackHoldGame/generatedicon/archer_drill_2_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/archer_pierce_unlock.png`
+- `FeedingABlackHoldGame/generatedicon/archer_pierce_unlock.png.import`
+- `FeedingABlackHoldGame/generatedicon/archer_piercing_geometry_60.png`
+- `FeedingABlackHoldGame/generatedicon/archer_piercing_geometry_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/auto_attack_unlock.png`
+- `FeedingABlackHoldGame/generatedicon/auto_attack_unlock.png.import`
+- `FeedingABlackHoldGame/generatedicon/boss_armor_mesh_60.png`
+- `FeedingABlackHoldGame/generatedicon/boss_armor_mesh_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/boss_bastion.png`
+- `FeedingABlackHoldGame/generatedicon/boss_bastion.png.import`
+- `FeedingABlackHoldGame/generatedicon/boss_fracture_study_60.png`
+- `FeedingABlackHoldGame/generatedicon/boss_fracture_study_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/boss_pattern_map.png`
+- `FeedingABlackHoldGame/generatedicon/boss_pattern_map.png.import`
+- `FeedingABlackHoldGame/generatedicon/boss_readiness_60.png`
+- `FeedingABlackHoldGame/generatedicon/boss_readiness_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/boss_rend_protocol.png`
+- `FeedingABlackHoldGame/generatedicon/boss_rend_protocol.png.import`
+- `FeedingABlackHoldGame/generatedicon/boss_stance_60.png`
+- `FeedingABlackHoldGame/generatedicon/boss_stance_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/cadence_lock.png`
+- `FeedingABlackHoldGame/generatedicon/cadence_lock.png.import`
+- `FeedingABlackHoldGame/generatedicon/collector_drone.png`
+- `FeedingABlackHoldGame/generatedicon/collector_drone.png.import`
+- `FeedingABlackHoldGame/generatedicon/condensed_cores_2_60.png`
+- `FeedingABlackHoldGame/generatedicon/condensed_cores_2_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/condensed_cores_60.png`
+- `FeedingABlackHoldGame/generatedicon/condensed_cores_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_archer_active_cap.png`
+- `FeedingABlackHoldGame/generatedicon/core_archer_active_cap.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_archer_damage.png`
+- `FeedingABlackHoldGame/generatedicon/core_archer_damage.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_archer_speed.png`
+- `FeedingABlackHoldGame/generatedicon/core_archer_speed.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_armor.png`
+- `FeedingABlackHoldGame/generatedicon/core_armor.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_density.png`
+- `FeedingABlackHoldGame/generatedicon/core_density.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_drop.png`
+- `FeedingABlackHoldGame/generatedicon/core_drop.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_guardian_active_cap.png`
+- `FeedingABlackHoldGame/generatedicon/core_guardian_active_cap.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_guardian_damage.png`
+- `FeedingABlackHoldGame/generatedicon/core_guardian_damage.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_guardian_speed.png`
+- `FeedingABlackHoldGame/generatedicon/core_guardian_speed.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_knight_active_cap.png`
+- `FeedingABlackHoldGame/generatedicon/core_knight_active_cap.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_knight_damage.png`
+- `FeedingABlackHoldGame/generatedicon/core_knight_damage.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_knight_speed.png`
+- `FeedingABlackHoldGame/generatedicon/core_knight_speed.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_mage_active_cap.png`
+- `FeedingABlackHoldGame/generatedicon/core_mage_active_cap.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_mage_damage.png`
+- `FeedingABlackHoldGame/generatedicon/core_mage_damage.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_mage_speed.png`
+- `FeedingABlackHoldGame/generatedicon/core_mage_speed.png.import`
+- `FeedingABlackHoldGame/generatedicon/core_power.png`
+- `FeedingABlackHoldGame/generatedicon/core_power.png.import`
+- `FeedingABlackHoldGame/generatedicon/crowd_ecology.png`
+- `FeedingABlackHoldGame/generatedicon/crowd_ecology.png.import`
+- `FeedingABlackHoldGame/generatedicon/cursor_pickup_unlock.png`
+- `FeedingABlackHoldGame/generatedicon/cursor_pickup_unlock.png.import`
+- `FeedingABlackHoldGame/generatedicon/dot_deflector.png`
+- `FeedingABlackHoldGame/generatedicon/dot_deflector.png.import`
+- `FeedingABlackHoldGame/generatedicon/encroaching_horde.png`
+- `FeedingABlackHoldGame/generatedicon/encroaching_horde.png.import`
+- `FeedingABlackHoldGame/generatedicon/extended_channel_1_60.png`
+- `FeedingABlackHoldGame/generatedicon/extended_channel_1_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/extended_channel_2_60.png`
+- `FeedingABlackHoldGame/generatedicon/extended_channel_2_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_001.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_001.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_002.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_002.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_003.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_003.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_004.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_004.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_005.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_005.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_006.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_006.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_007.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_007.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_008.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_008.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_009.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_009.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_010.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_010.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_011.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_011.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_012.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_012.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_013.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_013.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_014.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_014.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_015.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_015.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_016.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_016.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_017.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_017.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_018.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_018.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_019.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_019.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_020.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_020.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_021.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_021.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_022.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_022.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_023.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_023.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_024.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_024.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_025.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_025.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_026.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_026.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_027.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_027.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_028.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_028.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_029.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_029.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_030.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_030.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_031.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_031.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_032.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_032.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_033.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_033.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_034.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_034.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_035.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_035.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_036.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_036.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_037.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_037.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_038.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_038.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_039.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_039.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_040.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_040.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_041.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_041.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_042.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_042.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_043.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_043.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_044.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_044.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_045.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_045.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_046.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_046.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_047.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_047.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_048.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_048.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_049.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_049.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_050.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_050.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_051.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_051.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_052.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_052.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_053.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_053.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_054.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_054.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_055.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_055.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_056.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_056.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_057.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_057.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_058.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_058.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_059.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_059.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_060.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_060.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_061.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_061.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_062.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_062.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_063.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_063.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_064.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_064.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_065.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_065.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_066.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_066.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_067.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_067.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_068.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_068.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_069.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_069.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_070.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_070.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_071.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_071.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_072.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_072.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_073.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_073.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_074.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_074.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_075.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_075.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_076.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_076.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_077.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_077.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_078.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_078.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_079.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_079.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_080.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_080.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_081.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_081.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_082.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_082.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_083.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_083.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_084.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_084.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_085.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_085.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_086.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_086.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_087.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_087.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_088.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_088.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_089.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_089.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_090.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_090.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_091.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_091.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_092.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_092.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_093.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_093.png.import`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_094.png`
+- `FeedingABlackHoldGame/generatedicon/extra_skill_094.png.import`
+- `FeedingABlackHoldGame/generatedicon/field_magnet.png`
+- `FeedingABlackHoldGame/generatedicon/field_magnet.png.import`
+- `FeedingABlackHoldGame/generatedicon/focused_breathing_60.png`
+- `FeedingABlackHoldGame/generatedicon/focused_breathing_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/front_compression.png`
+- `FeedingABlackHoldGame/generatedicon/front_compression.png.import`
+- `FeedingABlackHoldGame/generatedicon/guardian_bulwark_1_60.png`
+- `FeedingABlackHoldGame/generatedicon/guardian_bulwark_1_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/guardian_bulwark_2_60.png`
+- `FeedingABlackHoldGame/generatedicon/guardian_bulwark_2_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/guardian_fortify_unlock.png`
+- `FeedingABlackHoldGame/generatedicon/guardian_fortify_unlock.png.import`
+- `FeedingABlackHoldGame/generatedicon/hemostasis_mesh.png`
+- `FeedingABlackHoldGame/generatedicon/hemostasis_mesh.png.import`
+- `FeedingABlackHoldGame/generatedicon/impact_weave.png`
+- `FeedingABlackHoldGame/generatedicon/impact_weave.png.import`
+- `FeedingABlackHoldGame/generatedicon/knight_bloodline_1_60.png`
+- `FeedingABlackHoldGame/generatedicon/knight_bloodline_1_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/knight_bloodline_2_60.png`
+- `FeedingABlackHoldGame/generatedicon/knight_bloodline_2_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/knight_vamp_unlock.png`
+- `FeedingABlackHoldGame/generatedicon/knight_vamp_unlock.png.import`
+- `FeedingABlackHoldGame/generatedicon/layered_carapace.png`
+- `FeedingABlackHoldGame/generatedicon/layered_carapace.png.import`
+- `FeedingABlackHoldGame/generatedicon/line_pressure_1.png`
+- `FeedingABlackHoldGame/generatedicon/line_pressure_1.png.import`
+- `FeedingABlackHoldGame/generatedicon/long_march.png`
+- `FeedingABlackHoldGame/generatedicon/long_march.png.import`
+- `FeedingABlackHoldGame/generatedicon/mage_sigil_1_60.png`
+- `FeedingABlackHoldGame/generatedicon/mage_sigil_1_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/mage_sigil_2_60.png`
+- `FeedingABlackHoldGame/generatedicon/mage_sigil_2_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/mage_storm_unlock.png`
+- `FeedingABlackHoldGame/generatedicon/mage_storm_unlock.png.import`
+- `FeedingABlackHoldGame/generatedicon/market_routing.png`
+- `FeedingABlackHoldGame/generatedicon/market_routing.png.import`
+- `FeedingABlackHoldGame/generatedicon/momentum_carry.png`
+- `FeedingABlackHoldGame/generatedicon/momentum_carry.png.import`
+- `FeedingABlackHoldGame/generatedicon/overclock_window.png`
+- `FeedingABlackHoldGame/generatedicon/overclock_window.png.import`
+- `FeedingABlackHoldGame/generatedicon/overflow_capture.png`
+- `FeedingABlackHoldGame/generatedicon/overflow_capture.png.import`
+- `FeedingABlackHoldGame/generatedicon/party_power_suite.png`
+- `FeedingABlackHoldGame/generatedicon/party_power_suite.png.import`
+- `FeedingABlackHoldGame/generatedicon/pathline_sprint.png`
+- `FeedingABlackHoldGame/generatedicon/pathline_sprint.png.import`
+- `FeedingABlackHoldGame/generatedicon/power_echo.png`
+- `FeedingABlackHoldGame/generatedicon/power_echo.png.import`
+- `FeedingABlackHoldGame/generatedicon/power_harvest_unlock.png`
+- `FeedingABlackHoldGame/generatedicon/power_harvest_unlock.png.import`
+- `FeedingABlackHoldGame/generatedicon/power_reservoir_1_60.png`
+- `FeedingABlackHoldGame/generatedicon/power_reservoir_1_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/power_reservoir_2_60.png`
+- `FeedingABlackHoldGame/generatedicon/power_reservoir_2_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/power_reservoir_3_60.png`
+- `FeedingABlackHoldGame/generatedicon/power_reservoir_3_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/pressure_ladder.png`
+- `FeedingABlackHoldGame/generatedicon/pressure_ladder.png.import`
+- `FeedingABlackHoldGame/generatedicon/quick_invocation_1_60.png`
+- `FeedingABlackHoldGame/generatedicon/quick_invocation_1_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/quick_invocation_2_60.png`
+- `FeedingABlackHoldGame/generatedicon/quick_invocation_2_60.png.import`
+- `FeedingABlackHoldGame/generatedicon/quickstep_chain.png`
+- `FeedingABlackHoldGame/generatedicon/quickstep_chain.png.import`
+- `FeedingABlackHoldGame/generatedicon/recruit_archer.png`
+- `FeedingABlackHoldGame/generatedicon/recruit_archer.png.import`
+- `FeedingABlackHoldGame/generatedicon/recruit_guardian.png`
+- `FeedingABlackHoldGame/generatedicon/recruit_guardian.png.import`
+- `FeedingABlackHoldGame/generatedicon/recruit_mage.png`
+- `FeedingABlackHoldGame/generatedicon/recruit_mage.png.import`
+- `FeedingABlackHoldGame/generatedicon/reinforced_plates.png`
+- `FeedingABlackHoldGame/generatedicon/reinforced_plates.png.import`
+- `FeedingABlackHoldGame/generatedicon/route_memory.png`
+- `FeedingABlackHoldGame/generatedicon/route_memory.png.import`
+- `FeedingABlackHoldGame/generatedicon/run_yield_matrix.png`
+- `FeedingABlackHoldGame/generatedicon/run_yield_matrix.png.import`
+- `FeedingABlackHoldGame/generatedicon/salvage_hooks.png`
+- `FeedingABlackHoldGame/generatedicon/salvage_hooks.png.import`
+- `FeedingABlackHoldGame/generatedicon/salvage_hooks_2.png`
+- `FeedingABlackHoldGame/generatedicon/salvage_hooks_2.png.import`
+- `FeedingABlackHoldGame/generatedicon/scrap_broker.png`
+- `FeedingABlackHoldGame/generatedicon/scrap_broker.png.import`
+- `FeedingABlackHoldGame/generatedicon/shock_padding.png`
+- `FeedingABlackHoldGame/generatedicon/shock_padding.png.import`
+- `FeedingABlackHoldGame/generatedicon/shock_sink.png`
+- `FeedingABlackHoldGame/generatedicon/shock_sink.png.import`
+- `FeedingABlackHoldGame/generatedicon/stride_rhythm.png`
+- `FeedingABlackHoldGame/generatedicon/stride_rhythm.png.import`
+- `FeedingABlackHoldGame/generatedicon/supply_lenses.png`
+- `FeedingABlackHoldGame/generatedicon/supply_lenses.png.import`
+- `FeedingABlackHoldGame/generatedicon/taxonomy_scanner.png`
+- `FeedingABlackHoldGame/generatedicon/taxonomy_scanner.png.import`
+- `FeedingABlackHoldGame/generatedicon/trail_boots.png`
+- `FeedingABlackHoldGame/generatedicon/trail_boots.png.import`
+- `FeedingABlackHoldGame/generatedicon/wave_bringer_1.png`
+- `FeedingABlackHoldGame/generatedicon/wave_bringer_1.png.import`
+- `FeedingABlackHoldGame/generatedicon/wave_bringer_2.png`
+- `FeedingABlackHoldGame/generatedicon/wave_bringer_2.png.import`
+- `FeedingABlackHoldGame/GlobalResourceUI.tscn`
+- `FeedingABlackHoldGame/Level Up Flair.tscn`
+- `FeedingABlackHoldGame/MatterPerSecond.tscn`
+- `FeedingABlackHoldGame/Minions/Breaker Minion.tscn`
+- `FeedingABlackHoldGame/Minions/Collector Minion.tscn`
+- `FeedingABlackHoldGame/Minions/Player.tscn`
+- `FeedingABlackHoldGame/Minions/Tether.tscn`
+- `FeedingABlackHoldGame/ObjectDestoryedParticlesMaterials.tres`
+- `FeedingABlackHoldGame/Objects Destroyed.png.import`
+- `FeedingABlackHoldGame/Rainbow.tres`
+- `FeedingABlackHoldGame/Resource Basic.png`
+- `FeedingABlackHoldGame/Resource Basic.png.import`
+- `FeedingABlackHoldGame/ShowHideComponent.tscn`
+- `FeedingABlackHoldGame/simulation/20_run_simluations/pass_01.json`
+- `FeedingABlackHoldGame/simulation/20_run_simluations/pass_01_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/20_run_simluations/pass_02.json`
+- `FeedingABlackHoldGame/simulation/20_run_simluations/pass_02_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/20_run_simluations/pass_03.json`
+- `FeedingABlackHoldGame/simulation/20_run_simluations/pass_03_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/guided_l3_pricing_recommendation.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/mult_1.80_pass_01_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/mult_1.80_pass_02_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/mult_1.80_pass_03_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/mult_2.00_pass_01_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/mult_2.00_pass_02_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/mult_2.00_pass_03_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/mult_2.15_pass_01_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/mult_2.15_pass_02_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/mult_2.15_pass_03_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/mult_2.30_pass_01_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/mult_2.30_pass_02_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/mult_2.30_pass_03_to_l3_boss.json`
+- `FeedingABlackHoldGame/simulation/3_2_2026_20_Sims/upgrade_effectiveness.json`
+- `FeedingABlackHoldGame/simulation/simulation_results_2h_battlescene_progression.json`
+- `FeedingABlackHoldGame/simulation/upgrade_cost_efficiency_report_data.json`
+- `FeedingABlackHoldGame/simulation/upgrade_effectiveness_report_data.json`
+- `FeedingABlackHoldGame/simulation/upgrade_phase_buy_order_data.json`
+- `FeedingABlackHoldGame/Sound Effect Settings/ON_ASTEROID_SPAWNED.tres`
+- `FeedingABlackHoldGame/Sound Effect Settings/ON_ASTEROID_SUCK_UP.tres`
+- `FeedingABlackHoldGame/Sound Effect Settings/ON_RESOURCE_SUCKED_UP.tres`
+- `FeedingABlackHoldGame/sound_ex_machina_Button_Tick.mp3`
+- `FeedingABlackHoldGame/sound_ex_machina_Button_Tick.mp3.import`
+- `FeedingABlackHoldGame/Space/GravityArea.gdshader`
+- `FeedingABlackHoldGame/Space/HealthOverlay.gdshader`
+- `FeedingABlackHoldGame/Space/Highlight.gdshader`
+- `FeedingABlackHoldGame/Space/Mask.gdshader`
+- `FeedingABlackHoldGame/Space/Maw.gdshader`
+- `FeedingABlackHoldGame/Space/noise08.png`
+- `FeedingABlackHoldGame/Space/noise08.png.import`
+- `FeedingABlackHoldGame/Space/noise09.png`
+- `FeedingABlackHoldGame/Space/noise09.png.import`
+- `FeedingABlackHoldGame/Space/noise10.png`
+- `FeedingABlackHoldGame/Space/noise10.png.import`
+- `FeedingABlackHoldGame/Space/noise11.png`
+- `FeedingABlackHoldGame/Space/noise11.png.import`
+- `FeedingABlackHoldGame/Space/noise12.png`
+- `FeedingABlackHoldGame/Space/noise12.png.import`
+- `FeedingABlackHoldGame/Space/noise13.png`
+- `FeedingABlackHoldGame/Space/noise13.png.import`
+- `FeedingABlackHoldGame/Space/noise14.png`
+- `FeedingABlackHoldGame/Space/noise14.png.import`
+- `FeedingABlackHoldGame/Space/noise15.png`
+- `FeedingABlackHoldGame/Space/noise15.png.import`
+- `FeedingABlackHoldGame/Space/Pixelate.gdshader`
+- `FeedingABlackHoldGame/Space/PlanetClouds.gdshader`
+- `FeedingABlackHoldGame/Space/PlantPinataEffect.gdshader`
+- `FeedingABlackHoldGame/Space/RainbowRamp.tres`
+- `FeedingABlackHoldGame/Space/Shimmer.gdshader`
+- `FeedingABlackHoldGame/Space/Shine.gdshader`
+- `FeedingABlackHoldGame/Space/Space.tscn`
+- `FeedingABlackHoldGame/Space/Star 980.png.import`
+- `FeedingABlackHoldGame/Space/Star Outline.tres`
+- `FeedingABlackHoldGame/Space/Star.gdshader`
+- `FeedingABlackHoldGame/Space/TextureOverlay.gdshader`
+- `FeedingABlackHoldGame/Star Electric.mp3.import`
+- `FeedingABlackHoldGame/star_small.png`
+- `FeedingABlackHoldGame/star_small.png.import`
+- `FeedingABlackHoldGame/StoreAssets/templates/itch_banner_1200x540.svg`
+- `FeedingABlackHoldGame/StoreAssets/templates/itch_banner_1200x540.svg.import`
+- `FeedingABlackHoldGame/StoreAssets/templates/itch_cover_1200x900.svg`
+- `FeedingABlackHoldGame/StoreAssets/templates/itch_cover_1200x900.svg.import`
+- `FeedingABlackHoldGame/StoreAssets/templates/itch_screenshot_1920x1080.svg`
+- `FeedingABlackHoldGame/StoreAssets/templates/itch_screenshot_1920x1080.svg.import`
+- `FeedingABlackHoldGame/StoreAssets/templates/steam_header_capsule_920x430.svg`
+- `FeedingABlackHoldGame/StoreAssets/templates/steam_header_capsule_920x430.svg.import`
+- `FeedingABlackHoldGame/StoreAssets/templates/steam_library_capsule_600x900.svg`
+- `FeedingABlackHoldGame/StoreAssets/templates/steam_library_capsule_600x900.svg.import`
+- `FeedingABlackHoldGame/StoreAssets/templates/steam_library_hero_3840x1240.svg`
+- `FeedingABlackHoldGame/StoreAssets/templates/steam_library_hero_3840x1240.svg.import`
+- `FeedingABlackHoldGame/StoreAssets/templates/steam_main_capsule_1232x706.svg`
+- `FeedingABlackHoldGame/StoreAssets/templates/steam_main_capsule_1232x706.svg.import`
+- `FeedingABlackHoldGame/StoreAssets/templates/steam_small_capsule_462x174.svg`
+- `FeedingABlackHoldGame/StoreAssets/templates/steam_small_capsule_462x174.svg.import`
+- `FeedingABlackHoldGame/StoreAssets/templates/steam_vertical_capsule_748x896.svg`
+- `FeedingABlackHoldGame/StoreAssets/templates/steam_vertical_capsule_748x896.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_ARCHIVE_20260304/itchio/itch_banner_1200x540.svg`
+- `FeedingABlackHoldGame/StoreAssets_ARCHIVE_20260304/itchio/itch_banner_1200x540.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_ARCHIVE_20260304/itchio/logo.svg`
+- `FeedingABlackHoldGame/StoreAssets_ARCHIVE_20260304/itchio/logo.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_ARCHIVE_20260304/screenshots/screenshot_1280x720_1.svg`
+- `FeedingABlackHoldGame/StoreAssets_ARCHIVE_20260304/screenshots/screenshot_1280x720_1.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_ARCHIVE_20260304/steam/capsule_231x87.svg`
+- `FeedingABlackHoldGame/StoreAssets_ARCHIVE_20260304/steam/capsule_231x87.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_ARCHIVE_20260304/steam/steam_header_616x353.svg`
+- `FeedingABlackHoldGame/StoreAssets_ARCHIVE_20260304/steam/steam_header_616x353.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/itch_banner_1200x540.svg`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/itch_banner_1200x540.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/itch_cover_1200x900.svg`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/itch_cover_1200x900.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/itch_screenshot_1920x1080.svg`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/itch_screenshot_1920x1080.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_header_capsule_920x430.svg`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_header_capsule_920x430.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_library_capsule_600x900.svg`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_library_capsule_600x900.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_library_hero_3840x1240.svg`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_library_hero_3840x1240.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_library_logo_transparent.svg`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_library_logo_transparent.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_main_capsule_1232x706.svg`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_main_capsule_1232x706.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_small_capsule_462x174.svg`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_small_capsule_462x174.svg.import`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_vertical_capsule_748x896.svg`
+- `FeedingABlackHoldGame/StoreAssets_MiningMode/templates/steam_vertical_capsule_748x896.svg.import`
+- `FeedingABlackHoldGame/Tendril Material.tres`
+- `FeedingABlackHoldGame/Test.tscn`
+- `FeedingABlackHoldGame/Theme/Exo2-Bold.ttf.import`
+- `FeedingABlackHoldGame/Theme/Exo2-BoldItalic.ttf.import`
+- `FeedingABlackHoldGame/Theme/Montserrat-SemiBold.ttf.import`
+- `FeedingABlackHoldGame/Theme/mouse_move.png`
+- `FeedingABlackHoldGame/Theme/mouse_move.png.import`
+- `FeedingABlackHoldGame/Theme/Panel Texture.tres`
+- `FeedingABlackHoldGame/Theme/Poppins-Bold.ttf.import`
+- `FeedingABlackHoldGame/Theme/Poppins-Regular.ttf`
+- `FeedingABlackHoldGame/Theme/Poppins-Regular.ttf.import`
+- `FeedingABlackHoldGame/Theme/Poppins-SemiBold.ttf.import`
+- `FeedingABlackHoldGame/Theme/RobotoMono-SemiBold.ttf.import`
+- `FeedingABlackHoldGame/Theme/White Panel.tres`
+- `FeedingABlackHoldGame/zapsplat_multimedia_game_sound_hit_thud_success_win_finish_73561.mp3.import`
+- `FeedingABlackHoldGame/zapsplat_multimedia_game_sound_padlock_unlock_level_secret_bonus_030_73596.mp3`
+- `FeedingABlackHoldGame/zapsplat_multimedia_game_sound_padlock_unlock_level_secret_bonus_030_73596.mp3.import`
+- `FeedingABlackHoldGame/zapsplat_multimedia_game_sound_retro_coin_blip_113278.mp3`
+- `FeedingABlackHoldGame/zapsplat_multimedia_game_sound_retro_coin_blip_113278.mp3.import`
