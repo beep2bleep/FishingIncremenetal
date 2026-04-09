@@ -4,11 +4,31 @@ class_name RedSkyData
 const ICON_PREFIX := "redsky://"
 const META_COST_MULTIPLIER := 0.78
 const META_FIRST_TIER_DISCOUNT := 0.92
-## When `global/Demo` is true, only the first N rows in `META_UPGRADES` (catalog order) can hold progress. Override cap via `global/red_sky_demo_max_meta_nodes`.
-const DEMO_MAX_UNLOCKABLE_META_NODES := 12
+## Demo: lock meta nodes past this `step` on each branch (`META_UPGRADES`). Step 1–N stay buyable; step N+1+ show demo lock. Override: `global/red_sky_demo_max_meta_step`.
+const DEMO_MAX_META_STEP_DEFAULT := 3
+## Demo: this entire `branch` stays locked regardless of step (tentacle vat line).
+const DEMO_ALWAYS_LOCKED_META_BRANCH_TENTACLES := 6
 
-static func get_demo_meta_node_cap() -> int:
-	return maxi(1, int(ProjectSettings.get_setting("global/red_sky_demo_max_meta_nodes", DEMO_MAX_UNLOCKABLE_META_NODES)))
+static func get_demo_max_meta_step() -> int:
+	return maxi(1, int(ProjectSettings.get_setting("global/red_sky_demo_max_meta_step", DEMO_MAX_META_STEP_DEFAULT)))
+
+static func should_lock_meta_upgrade_in_demo(entry: Dictionary) -> bool:
+	if not bool(ProjectSettings.get_setting("global/Demo", false)):
+		return false
+	if int(entry.get("branch", 0)) == DEMO_ALWAYS_LOCKED_META_BRANCH_TENTACLES:
+		return true
+	return int(entry.get("step", 0)) > get_demo_max_meta_step()
+
+static func count_eligible_meta_nodes_in_demo_slice() -> int:
+	var max_step: int = get_demo_max_meta_step()
+	var count := 0
+	for raw_entry in META_UPGRADES:
+		if int(raw_entry.get("branch", 0)) == DEMO_ALWAYS_LOCKED_META_BRANCH_TENTACLES:
+			continue
+		if int(raw_entry.get("step", 0)) <= max_step:
+			count += 1
+	return maxi(1, count)
+
 const WAVE_OFFER_TIERS := [
 	{"id": "poor", "label": "Poor", "multiplier": 0.75, "border": Color(0.55, 0.56, 0.60, 1.0)},
 	{"id": "common", "label": "Common", "multiplier": 1.0, "border": Color(0.94, 0.94, 0.96, 1.0)},

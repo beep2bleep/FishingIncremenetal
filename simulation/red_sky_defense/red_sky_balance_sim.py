@@ -134,8 +134,10 @@ def load_red_sky_data() -> dict:
     text = DATA_PATH.read_text(encoding="utf-8")
     meta_cost_multiplier = float(re.search(r"META_COST_MULTIPLIER := ([0-9.]+)", text).group(1))
     meta_first_tier_discount = float(re.search(r"META_FIRST_TIER_DISCOUNT := ([0-9.]+)", text).group(1))
-    demo_cap_m = re.search(r"DEMO_MAX_UNLOCKABLE_META_NODES := (\d+)", text)
-    demo_max_unlockable_meta_nodes = int(demo_cap_m.group(1)) if demo_cap_m else 12
+    max_step_m = re.search(r"DEMO_MAX_META_STEP_DEFAULT := (\d+)", text)
+    demo_max_meta_step_default = int(max_step_m.group(1)) if max_step_m else 3
+    tentacle_branch_m = re.search(r"DEMO_ALWAYS_LOCKED_META_BRANCH_TENTACLES := (\d+)", text)
+    demo_always_locked_tentacle_branch = int(tentacle_branch_m.group(1)) if tentacle_branch_m else 6
 
     base_config_text = _extract_dict(text, "BASE_RUN_CONFIG")
     base_config = {
@@ -153,6 +155,8 @@ def load_red_sky_data() -> dict:
                 "label": _find_string(entry_text, "label"),
                 "summary": _find_string(entry_text, "summary"),
                 "dependency": _find_string(entry_text, "dependency"),
+                "branch": _find_int(entry_text, "branch", 0),
+                "step": _find_int(entry_text, "step", 0),
                 "base_cost": _find_int(entry_text, "base_cost"),
                 "cost_scale": _find_number(entry_text, "cost_scale", 1.5),
                 "max_tier": _find_int(entry_text, "max_tier", 5),
@@ -178,14 +182,33 @@ def load_red_sky_data() -> dict:
             }
         )
 
+    demo_eligible_meta_node_count = _count_demo_eligible_meta_nodes_demo_slice(
+        meta_upgrades, demo_max_meta_step_default, demo_always_locked_tentacle_branch
+    )
+
     return {
         "meta_cost_multiplier": meta_cost_multiplier,
         "meta_first_tier_discount": meta_first_tier_discount,
-        "demo_max_unlockable_meta_nodes": demo_max_unlockable_meta_nodes,
+        "demo_max_meta_step_default": demo_max_meta_step_default,
+        "demo_always_locked_tentacle_branch": demo_always_locked_tentacle_branch,
+        "demo_eligible_meta_node_count": demo_eligible_meta_node_count,
         "base_config": base_config,
         "meta_upgrades": meta_upgrades,
         "wave_upgrades": wave_upgrades,
     }
+
+
+def _count_demo_eligible_meta_nodes_demo_slice(
+    meta_upgrades: list[dict], max_step: int, tentacle_branch: int
+) -> int:
+    ms = max(1, int(max_step))
+    tb = int(tentacle_branch)
+    n = sum(
+        1
+        for u in meta_upgrades
+        if int(u.get("branch", 0)) != tb and int(u.get("step", 0)) <= ms
+    )
+    return max(1, n)
 
 
 def build_tier_costs(base_cost: int, cost_scale: float, max_tier: int, meta_cost_multiplier: float, first_tier_discount: float) -> list[int]:
@@ -419,7 +442,7 @@ class RedSkyBalanceSim:
         default_targets = Targets(
             demo_minutes=40.0,
             full_minutes=120.0,
-            demo_node_target=int(data.get("demo_max_unlockable_meta_nodes", 12)),
+            demo_node_target=int(data.get("demo_eligible_meta_node_count", node_count)),
             practical_max_tier=3,
             full_tier_target=node_count * 3,
         )
@@ -914,7 +937,7 @@ def main() -> None:
     demo_node_target = (
         args.demo_node_target
         if args.demo_node_target is not None
-        else int(data.get("demo_max_unlockable_meta_nodes", 12))
+        else int(data.get("demo_eligible_meta_node_count", len(data["meta_upgrades"])))
     )
     targets = Targets(
         demo_minutes=args.demo_minutes,

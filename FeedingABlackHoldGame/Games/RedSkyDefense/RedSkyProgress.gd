@@ -150,13 +150,12 @@ static func _sanitize_loaded_data(data: Dictionary) -> Dictionary:
 
 static func _strip_demo_locked_meta_upgrades(meta_upgrades: Dictionary) -> Dictionary:
 	var out: Dictionary = meta_upgrades.duplicate(true)
-	var cap: int = RED_SKY_DATA.get_demo_meta_node_cap()
-	var catalog: Array[Dictionary] = RED_SKY_DATA.get_meta_upgrade_catalog()
-	for i in range(cap, catalog.size()):
-		var upgrade_id: String = str(catalog[i].get("id", ""))
+	for entry in RED_SKY_DATA.get_meta_upgrade_catalog():
+		var upgrade_id: String = str(entry.get("id", ""))
 		if upgrade_id.is_empty():
 			continue
-		out.erase(upgrade_id)
+		if RED_SKY_DATA.should_lock_meta_upgrade_in_demo(entry):
+			out.erase(upgrade_id)
 	return out
 
 static func _clamp_selected_start_wave(start_wave: int, data: Dictionary) -> int:

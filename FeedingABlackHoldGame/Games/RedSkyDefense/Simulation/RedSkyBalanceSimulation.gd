@@ -50,7 +50,7 @@ func _run_report(pass_name: String) -> Dictionary:
 		"wave_upgrade_count": RED_SKY_DATA.get_wave_upgrade_catalog().size(),
 		"demo_target_minutes": 40,
 		"full_target_minutes": 120,
-		"demo_node_target": RED_SKY_DATA.DEMO_MAX_UNLOCKABLE_META_NODES,
+		"demo_node_target": RED_SKY_DATA.count_eligible_meta_nodes_in_demo_slice(),
 		"full_node_target": full_node_target,
 		"full_tier_target": full_tier_target,
 		"avg_minutes_to_demo_nodes": snappedf(demo_minutes, 0.1),
@@ -87,7 +87,7 @@ func _simulate_campaign(seed: int) -> Dictionary:
 
 		var unique_nodes: int = _count_unique_nodes(meta_levels)
 		var total_tiers: int = _count_total_tiers(meta_levels)
-		if minutes_to_demo < 0.0 and unique_nodes >= RED_SKY_DATA.DEMO_MAX_UNLOCKABLE_META_NODES:
+		if minutes_to_demo < 0.0 and unique_nodes >= RED_SKY_DATA.count_eligible_meta_nodes_in_demo_slice():
 			minutes_to_demo = total_minutes
 		if minutes_to_full_nodes < 0.0 and unique_nodes >= full_node_target:
 			minutes_to_full_nodes = total_minutes

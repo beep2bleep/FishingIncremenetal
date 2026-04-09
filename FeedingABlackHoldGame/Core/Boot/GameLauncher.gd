@@ -536,7 +536,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
             return {
                 "title": RED_SKY_BUTTON_TEXT,
                 "detail": "Defend the base and survive the next wave.",
-                "asset_rel_path": "ChatGPT Image Mar 12, 2026, 04_18_10 PM.png",
+                "asset_rel_path": "RedSky/Gemini_Generated_Image_v8hbpqv8hbpqv8hb.png",
                 "accent": Color(0.98, 0.62, 0.42, 1.0),
                 "bg_top": Color(0.22, 0.05, 0.06, 1.0),
                 "bg_bottom": Color(0.1, 0.02, 0.03, 1.0)
@@ -582,14 +582,18 @@ func _get_game_card_texture(game_id: String) -> Texture2D:
 func _load_external_asset_texture(relative_asset_path: String) -> Texture2D:
     if relative_asset_path.is_empty():
         return null
+    # Shipped builds (especially Web) only bundle `res://`; `res://../assets` is editor-only.
+    var res_path: String = "res://Core/Boot/game_capsules/%s" % relative_asset_path
+    if ResourceLoader.exists(res_path):
+        var shipped: Resource = load(res_path)
+        if shipped is Texture2D:
+            return shipped as Texture2D
     var absolute_path: String = ProjectSettings.globalize_path("res://../assets/%s" % relative_asset_path)
-    if not FileAccess.file_exists(absolute_path):
-        return null
-    var image := Image.new()
-    var load_error: Error = image.load(absolute_path)
-    if load_error != OK:
-        return null
-    return ImageTexture.create_from_image(image)
+    if FileAccess.file_exists(absolute_path):
+        var image := Image.new()
+        if image.load(absolute_path) == OK:
+            return ImageTexture.create_from_image(image)
+    return null
 
 func _build_fallback_game_card_texture(game_id: String) -> Texture2D:
     var card_def: Dictionary = _get_game_card_definition(game_id)

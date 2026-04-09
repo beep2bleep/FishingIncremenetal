@@ -39,6 +39,7 @@ var editor_add_cash_button: Button
 var editor_reset_add_button: Button
 var editor_unlock_all_button: Button
 var editor_crt_toggle_button: Button
+var editor_demo_toggle_button: Button
 var editor_sell_popup_menu: PopupMenu
 var editor_sell_target_node: TechTreeNode
 var editor_center_offset_controls: VBoxContainer
@@ -149,6 +150,7 @@ func _refresh_localized_text() -> void:
     if leaderboard_title_label != null and is_instance_valid(leaderboard_title_label):
         leaderboard_title_label.text = tr("MINING_LEADERBOARDS_TITLE")
     _refresh_demo_mode_label_visibility()
+    _refresh_editor_demo_toggle_button_text()
     _update_go_again_button_state()
     if battle_level_choice_dialog != null and is_instance_valid(battle_level_choice_dialog) and battle_level_choice_dialog.visible:
         _show_battle_level_choice_dialog(battle_level_choice_max_level)
@@ -1650,7 +1652,7 @@ func _setup_editor_cash_controls() -> void:
     editor_cash_controls.anchor_top = 0.0
     editor_cash_controls.anchor_right = 1.0
     editor_cash_controls.anchor_bottom = 0.0
-    editor_cash_controls.offset_left = -520.0
+    editor_cash_controls.offset_left = -640.0
     editor_cash_controls.offset_top = 12.0
     editor_cash_controls.offset_right = -12.0
     editor_cash_controls.offset_bottom = 56.0
@@ -1680,9 +1682,15 @@ func _setup_editor_cash_controls() -> void:
     editor_crt_toggle_button.pressed.connect(_on_editor_crt_toggle_pressed)
     editor_cash_controls.add_child(editor_crt_toggle_button)
 
+    editor_demo_toggle_button = Button.new()
+    editor_demo_toggle_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    editor_demo_toggle_button.pressed.connect(_on_editor_demo_toggle_pressed)
+    editor_cash_controls.add_child(editor_demo_toggle_button)
+
     %CanvasLayer2.add_child(editor_cash_controls)
     _refresh_editor_cash_button_text()
     _refresh_editor_crt_button_text()
+    _refresh_editor_demo_toggle_button_text()
 
 func _setup_editor_sell_popup_menu() -> void:
     if not OS.has_feature("editor"):
@@ -1782,6 +1790,26 @@ func _refresh_editor_crt_button_text() -> void:
         return
     editor_crt_toggle_button.visible = Util.is_vanguard_game_active()
     editor_crt_toggle_button.text = tr("CRT Preview: %s") % [tr("On") if editor_crt_preview_enabled else tr("Off")]
+
+func _refresh_editor_demo_toggle_button_text() -> void:
+    if editor_demo_toggle_button == null:
+        return
+    var demo_on: bool = bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
+    editor_demo_toggle_button.text = "%s: %s" % [tr("UPGRADE_DEMO_MODE"), tr("On") if demo_on else tr("Off")]
+
+func _on_editor_demo_toggle_pressed() -> void:
+    if not OS.has_feature("editor"):
+        return
+    var new_demo: bool = not bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
+    ProjectSettings.set_setting(DEMO_PROJECT_SETTING, new_demo)
+    _refresh_editor_demo_toggle_button_text()
+    _refresh_demo_mode_label_visibility()
+    _setup_wishlist_button()
+    if tech_tree != null and is_instance_valid(tech_tree):
+        _ensure_tree_initialized(true)
+        tech_tree.update_active()
+    _update_go_again_button_state()
+    update()
 
 func _on_editor_crt_toggle_pressed() -> void:
     if not OS.has_feature("editor"):
