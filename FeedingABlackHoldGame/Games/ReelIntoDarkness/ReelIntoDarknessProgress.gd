@@ -1,21 +1,24 @@
 extends RefCounted
 class_name ReelIntoDarknessProgress
 
-static var REEL_DATA = load("res://Games/ReelIntoDarkness/ReelIntoDarknessData.gd")
+const REEL_DATA := preload("res://Games/ReelIntoDarkness/ReelIntoDarknessData.gd")
 const SAVE_PATH := "user://reel_into_darkness_save_v1.json"
+const STARTING_WALLET := ReelIntoDarknessData.STARTING_WALLET
+
+const DEFAULT_DATA := {
+    "wallet": STARTING_WALLET,
+    "best_haul": 0,
+    "best_depth": 0.0,
+    "total_money": 0,
+    "total_fish_caught": 0,
+    "runs": 0,
+    "last_run_summary": "No Reel Into Darkness run completed yet.",
+    "last_run_breakdown": {},
+    "meta_upgrades": {}
+}
 
 static func get_default_data() -> Dictionary:
-    return {
-        "wallet": int(REEL_DATA.STARTING_WALLET),
-        "best_haul": 0,
-        "best_depth": 0.0,
-        "total_money": 0,
-        "total_fish_caught": 0,
-        "runs": 0,
-        "last_run_summary": "No Reel Into Darkness run completed yet.",
-        "last_run_breakdown": {},
-        "meta_upgrades": {}
-    }
+    return DEFAULT_DATA.duplicate(true)
 
 static func get_meta_upgrade_catalog() -> Array[Dictionary]:
     return REEL_DATA.get_meta_upgrade_catalog()
@@ -45,7 +48,7 @@ static func reset_progress() -> Dictionary:
     return data
 
 static func get_wallet() -> int:
-    return int(load_data().get("wallet", REEL_DATA.STARTING_WALLET))
+    return int(load_data().get("wallet", STARTING_WALLET))
 
 static func get_upgrade_levels() -> Dictionary:
     return load_data().get("meta_upgrades", {}).duplicate(true)

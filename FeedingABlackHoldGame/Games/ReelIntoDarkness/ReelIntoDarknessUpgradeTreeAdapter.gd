@@ -1,8 +1,8 @@
 extends RefCounted
 class_name ReelIntoDarknessUpgradeTreeAdapter
 
-static var REEL_DATA = load("res://Games/ReelIntoDarkness/ReelIntoDarknessData.gd")
-static var REEL_PROGRESS = load("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
+const REEL_DATA := preload("res://Games/ReelIntoDarkness/ReelIntoDarknessData.gd")
+const REEL_PROGRESS := preload("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
 
 const ICON_MODS: Array[int] = [
     Util.MODS.RUN_TIMER_BASE,

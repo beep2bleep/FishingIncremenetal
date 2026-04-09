@@ -557,6 +557,9 @@ const REEL_DEPTH_TIER_LABELS: Dictionary = {
     "leviathan_contracts": "Leviathan routes",
 }
 
+static func _tt(text: String) -> String:
+    return TranslationServer.translate(text)
+
 static func _reel_tier_cap_already_listed(caps_seen: Array, cap: float) -> bool:
     for c in caps_seen:
         if absf(float(c) - cap) < 0.35:
@@ -583,8 +586,8 @@ static func get_reel_depth_tier_options(upgrades: Dictionary) -> Array:
         options,
         caps_seen,
         base_cap,
-        tr("Shallows - max ~%.0f m") % base_cap,
-        tr("Easiest pool - depth-chart upgrades ignored for this launch.")
+        _tt("Shallows - max ~%.0f m") % base_cap,
+        _tt("Easiest pool - depth-chart upgrades ignored for this launch.")
     )
     var u_step: Dictionary = u0.duplicate(true)
     for key in DEPTH_CAP_UPGRADE_KEYS:
@@ -598,16 +601,16 @@ static func get_reel_depth_tier_options(upgrades: Dictionary) -> Array:
             options,
             caps_seen,
             cap,
-            tr("%s - max ~%.0f m") % [tier_name, cap],
-            tr("Includes depth from your %s unlock.") % tier_name
+            _tt("%s - max ~%.0f m") % [tier_name, cap],
+            _tt("Includes depth from your %s unlock.") % tier_name
         )
     if not _reel_tier_cap_already_listed(caps_seen, full_cap):
         _push_reel_depth_tier(
             options,
             caps_seen,
             full_cap,
-            tr("Full chart - max ~%.0f m") % full_cap,
-            tr("Every meter your unlocks allow.")
+            _tt("Full chart - max ~%.0f m") % full_cap,
+            _tt("Every meter your unlocks allow.")
         )
     options.sort_custom(func(a, b): return float(a["max_depth_cap"]) < float(b["max_depth_cap"]))
     return options

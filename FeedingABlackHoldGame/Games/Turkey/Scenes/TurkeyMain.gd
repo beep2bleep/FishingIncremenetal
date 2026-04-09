@@ -884,7 +884,6 @@ func _setup_lane_tier_selector() -> void:
     lane_tier_option.add_theme_font_size_override("font_size", 19)
     lane_tier_option.item_selected.connect(_on_lane_tier_option_selected)
     var tier_pop: PopupMenu = lane_tier_option.get_popup()
-    tier_pop.max_height = 0
     tier_pop.add_theme_font_size_override("font_size", 19)
     lane_tier_row.add_child(tier_lbl)
     lane_tier_row.add_child(lane_tier_option)
@@ -948,15 +947,15 @@ func _rebuild_lane_tier_start_dialog_content() -> void:
     expl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     expl.text = _trf(
         "Higher tiers use bigger racks and pay more. Your unlock progress uses the better of:\n"
-        + "• League Pass level %d → lane tier %d\n"
-        + "• Veteran: %d completed series → lane tier %d\n"
-        + "You may select lane tiers 1–%d. Choose one for this series:",
+        + "- League Pass level %d -> lane tier %d\n"
+        + "- Veteran: %d completed series -> lane tier %d\n"
+        + "You may select lane tiers 1-%d. Choose one for this series:",
         [
-        int(bd.get("league_pass_level", 0)),
-        int(bd.get("tier_from_league_pass", 0)) + 1,
-        int(bd.get("completed_series", 0)),
-        int(bd.get("tier_from_veteran_runs", 0)) + 1,
-        int(bd.get("max_tier", 0)) + 1,
+            int(bd.get("league_pass_level", 0)),
+            int(bd.get("tier_from_league_pass", 0)) + 1,
+            int(bd.get("completed_series", 0)),
+            int(bd.get("tier_from_veteran_runs", 0)) + 1,
+            int(bd.get("max_tier", 0)) + 1,
         ]
     )
     vb.add_child(expl)
@@ -966,12 +965,11 @@ func _rebuild_lane_tier_start_dialog_content() -> void:
     lane_tier_start_option.custom_minimum_size = Vector2(0.0, 48.0)
     lane_tier_start_option.add_theme_font_size_override("font_size", 20)
     var start_pop: PopupMenu = lane_tier_start_option.get_popup()
-    start_pop.max_height = 0
     start_pop.add_theme_font_size_override("font_size", 20)
     var max_cap: int = int(bd.get("max_tier", 0))
     for i in range(TURKEY_DATA.LANE_TIERS.size()):
         var td: Dictionary = TURKEY_DATA.LANE_TIERS[i]
-        var line: String = _trf("%d. %s — %d pins, %d gold (front)", [
+        var line: String = _trf("%d. %s - %d pins, %d gold (front)", [
             i + 1,
             str(td.get("label", "?")),
             int(td.get("pin_count", 10)),
@@ -1023,12 +1021,12 @@ func _refresh_lane_tier_option_items() -> void:
     var max_cap: int = int(player_stats.get("max_selectable_lane_tier", 0)) if not player_stats.is_empty() else 0
     for i in range(TURKEY_DATA.LANE_TIERS.size()):
         var td: Dictionary = TURKEY_DATA.LANE_TIERS[i]
-        var line: String = "%d. %s — %d pins, %d gold (front)" % [
+        var line: String = _trf("%d. %s - %d pins, %d gold (front)", [
             i + 1,
             str(td.get("label", "?")),
             int(td.get("pin_count", 10)),
             int(td.get("gold_pin_count", 0)),
-        ]
+        ])
         lane_tier_option.add_item(line)
         lane_tier_option.set_item_disabled(i, i > max_cap)
     var sel: int = clampi(selected_lane_tier, 0, maxi(0, lane_tier_option.item_count - 1))
@@ -1085,7 +1083,7 @@ func _apply_lane_tier_index(index: int) -> void:
     if _should_refresh_rack_for_tier_change():
         _rebuild_lane_geometry()
         _spawn_full_rack()
-        _prepare_for_next_shot("Frame 1. Click once to start the power swing.")
+        _prepare_for_next_shot(tr("Frame 1. Click once to start the power swing."))
     _update_lane_tier_control_state()
 
 
@@ -1119,7 +1117,7 @@ func _begin_series() -> void:
     spin_curve_in_play = 0.0
     series_gold_pins_knocked = 0
     _spawn_full_rack()
-    _prepare_for_next_shot("Frame 1. Click once to start the power swing.")
+    _prepare_for_next_shot(tr("Frame 1. Click once to start the power swing."))
     _update_scoreboard()
     _update_lane_tier_control_state()
     call_deferred("_maybe_show_lane_tier_start_dialog")
@@ -1138,7 +1136,7 @@ func _prepare_for_next_shot(message: String) -> void:
     result_label.text = message
     var gold_note := ""
     if _any_gold_pin_standing():
-        gold_note = tr(" Gold pins still up in front—they need a harder hit but pay more when they fall.")
+        gold_note = tr(" Gold pins still up in front - they need a harder hit but pay more when they fall.")
     aiming_help_label.text = _trf("Tier %d: %s. %d pins, %d gold up front (heavier, bigger payout per knock).%s Negative slider = left, positive = right.", [int(player_stats.get("lane_tier", 0)) + 1, str(player_stats.get("lane_tier_label", tr("Practice House"))), current_series_pin_target, int(player_stats.get("tier_gold_pin_count", 0)), gold_note])
     _update_lane_tier_control_state()
 
@@ -1157,7 +1155,7 @@ func _begin_aiming() -> void:
     result_label.text = tr("Move the mouse to pick the line. Click again when the power bar feels right.")
     var gold_aim := ""
     if int(player_stats.get("tier_gold_pin_count", 0)) > 0:
-        gold_aim = " Gold pins are in the front row(s)—check the rack map."
+        gold_aim = tr(" Gold pins are in the front row(s) - check the rack map.")
     aiming_help_label.text = _trf("Mouse left aims left, mouse right aims right. %s is active with %d pins in the rack.%s", [str(player_stats.get("lane_tier_label", tr("Practice House"))), current_series_pin_target, gold_aim])
 
 func _throw_ball() -> void:
@@ -1580,7 +1578,7 @@ func _finish_throw() -> void:
         else:
             current_frame_index += 1
             _spawn_full_rack()
-            _prepare_for_next_shot("%s Next up: frame %d." % [message, current_frame_index + 1])
+            _prepare_for_next_shot(_trf("%s Next up: frame %d.", [message, current_frame_index + 1]))
     else:
         if _should_reset_full_rack_before_next_throw(current_frame_index, throws):
             _spawn_full_rack()
@@ -2015,7 +2013,7 @@ func _refresh_turkey_stats_chart(results: Dictionary) -> void:
     root.add_theme_constant_override("separation", 10)
     margin.add_child(root)
     root.add_child(
-        _make_end_chart_label("Series stats", 0.0, 22, HORIZONTAL_ALIGNMENT_CENTER, TURKEY_UPGRADE_ACCENT.lerp(END_SUM_TEXT_PRIMARY, 0.25))
+        _make_end_chart_label(tr("Series stats"), 0.0, 22, HORIZONTAL_ALIGNMENT_CENTER, TURKEY_UPGRADE_ACCENT.lerp(END_SUM_TEXT_PRIMARY, 0.25))
     )
 
     var rows: Array[Dictionary] = _turkey_stats_chart_rows(results)
@@ -2103,13 +2101,12 @@ func _build_end_panel_summary_lines(
 ) -> String:
     var lines: PackedStringArray = PackedStringArray()
     lines.append(
-        "%s\nTier: %s  ·  Rack: %d pins  ·  Gold value $%d/pin"
-        % [
+        _trf("%s\nTier: %s | Rack: %d pins | Gold value $%d/pin", [
             latest_message,
             str(player_stats.get("lane_tier_label", "Practice House")),
             current_series_pin_target,
             int(player_stats.get("tier_gold_pin_value", 0.0)),
-        ]
+        ])
     )
     lines.append(_trf("Strike %d  ·  Spare %d  ·  Open %d  ·  Pinfall score %d", [strikes, spares, open_frames, final_score]))
     if turkey_bonus:
@@ -2147,24 +2144,24 @@ func _describe_throw_result(frame_index: int, throws: Array, knocked: int, stand
                 return _trf("Strike on frame %d. Cleared the %d-pin rack.", [frame_index + 1, frame_target])
             return _trf("Frame %d ball 1: %d pins down, %d still standing.", [frame_index + 1, knocked, standing_after])
         if int(throws[0]) + int(throws[1]) >= frame_target:
-            return "Spare in frame %d." % (frame_index + 1)
-        return "Open frame %d: %d and %d for %d." % [frame_index + 1, int(throws[0]), int(throws[1]), int(throws[0]) + int(throws[1])]
+            return _trf("Spare in frame %d.", [frame_index + 1])
+        return _trf("Open frame %d: %d and %d for %d.", [frame_index + 1, int(throws[0]), int(throws[1]), int(throws[0]) + int(throws[1])])
 
     if throws.size() == 1:
         if _is_strike_roll(frame_index, knocked):
-            return "Strike in the final frame. Two bonus balls coming."
-        return "Final frame ball 1: %d pins down, %d left." % [knocked, standing_after]
+            return tr("Strike in the final frame. Two bonus balls coming.")
+        return _trf("Final frame ball 1: %d pins down, %d left.", [knocked, standing_after])
     if throws.size() == 2:
         if _is_strike_roll(frame_index, int(throws[0])):
             if _is_strike_roll(frame_index, int(throws[1])):
-                return "Double in the final frame. One bonus ball left."
-            return "Final frame bonus ball 1: %d pins down, %d left." % [knocked, standing_after]
+                return tr("Double in the final frame. One bonus ball left.")
+            return _trf("Final frame bonus ball 1: %d pins down, %d left.", [knocked, standing_after])
         if int(throws[0]) + int(throws[1]) >= frame_target:
-            return "Final-frame spare. One fill ball left."
-        return "Final frame closes open with %d total." % (int(throws[0]) + int(throws[1]))
+            return tr("Final-frame spare. One fill ball left.")
+        return _trf("Final frame closes open with %d total.", [int(throws[0]) + int(throws[1])])
     if _is_strike_roll(frame_index, int(throws[0])) and _is_strike_roll(frame_index, int(throws[1])) and _is_strike_roll(frame_index, int(throws[2])):
-        return "Triple strike finish."
-    return "Final bonus ball drops %d." % knocked
+        return tr("Triple strike finish.")
+    return _trf("Final bonus ball drops %d.", [knocked])
 
 func _calculate_score_details() -> Dictionary:
     var flat_rolls: Array = []
@@ -2230,9 +2227,9 @@ func _build_scorecard_text(include_final_summary: bool = false) -> String:
         var total_text := "--"
         if frame_index < cumulative_scores.size() and cumulative_scores[frame_index] != null:
             total_text = str(cumulative_scores[frame_index])
-        lines.append("F%d: %s | %s" % [frame_index + 1, " ".join(marks), total_text])
+        lines.append(_trf("F%d: %s | %s", [frame_index + 1, " ".join(marks), total_text]))
     if include_final_summary:
-        lines.append("Total: %d" % _get_best_available_series_score(cumulative_scores))
+        lines.append(_trf("Total: %d", [_get_best_available_series_score(cumulative_scores)]))
     return "\n".join(lines)
 
 func _frame_marks(frame_index: int, throws: Array) -> Array[String]:
@@ -2537,4 +2534,4 @@ func _end_run_to_summary() -> void:
     if end_panel.visible:
         return
     _clear_dynamic_objects()
-    _complete_series("Series ended early.")
+    _complete_series(tr("Series ended early."))

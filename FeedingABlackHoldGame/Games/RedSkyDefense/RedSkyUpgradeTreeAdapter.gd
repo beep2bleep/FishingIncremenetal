@@ -15,13 +15,16 @@ static func apply_simulation_upgrades() -> void:
 	Global.game_mode_data_manager.upgrades = {}
 	Global.game_mode_data_manager.unlocked_upgrades = {}
 
+	var demo_mode_enabled: bool = bool(ProjectSettings.get_setting("global/Demo", false))
+	var demo_meta_cap: int = RED_SKY_DATA.get_demo_meta_node_cap()
 	var upgrade_catalog: Array[Dictionary] = RED_SKY_PROGRESS.get_meta_upgrade_catalog()
 	var id_to_cell: Dictionary = {}
 	for entry in upgrade_catalog:
 		id_to_cell[str(entry.get("id", ""))] = Vector2(entry.get("cell", Vector2.ZERO))
 
 	var next_id := 0
-	for entry in upgrade_catalog:
+	for catalog_index in range(upgrade_catalog.size()):
+		var entry: Dictionary = upgrade_catalog[catalog_index]
 		var upgrade_key: String = str(entry.get("id", ""))
 		if upgrade_key.is_empty():
 			continue
@@ -37,6 +40,8 @@ static func apply_simulation_upgrades() -> void:
 		upgrade.cost_scale = 0.0
 		upgrade.tier_costs = entry.get("tier_costs", [])
 		upgrade.demo_locked = 0
+		if demo_mode_enabled and catalog_index >= demo_meta_cap:
+			upgrade.demo_locked = 1
 		upgrade.section = 0
 		upgrade.act = int(entry.get("act", 1))
 		upgrade.epilogue = 0
@@ -55,6 +60,8 @@ static func apply_simulation_upgrades() -> void:
 		Global.game_mode_data_manager.upgrades[upgrade.cell] = upgrade
 
 		var owned_level: int = RED_SKY_PROGRESS.get_upgrade_level(upgrade.sim_key)
+		if upgrade.demo_locked == 1:
+			owned_level = 0
 		if owned_level > 0:
 			upgrade.current_tier = clampi(owned_level, 0, upgrade.max_tier)
 			Global.game_mode_data_manager.unlocked_upgrades[upgrade.cell] = upgrade.to_dict()

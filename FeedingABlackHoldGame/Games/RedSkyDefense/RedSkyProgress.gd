@@ -144,7 +144,20 @@ static func _sanitize_loaded_data(data: Dictionary) -> Dictionary:
 	safe_data["total_waves_cleared"] = max(0, int(safe_data.get("total_waves_cleared", 0)))
 	safe_data["runs"] = max(0, int(safe_data.get("runs", 0)))
 	safe_data["selected_start_wave"] = _clamp_selected_start_wave(int(safe_data.get("selected_start_wave", MIN_START_WAVE)), safe_data)
+	if bool(ProjectSettings.get_setting("global/Demo", false)):
+		safe_data["meta_upgrades"] = _strip_demo_locked_meta_upgrades(safe_data.get("meta_upgrades", {}))
 	return safe_data
+
+static func _strip_demo_locked_meta_upgrades(meta_upgrades: Dictionary) -> Dictionary:
+	var out: Dictionary = meta_upgrades.duplicate(true)
+	var cap: int = RED_SKY_DATA.get_demo_meta_node_cap()
+	var catalog: Array[Dictionary] = RED_SKY_DATA.get_meta_upgrade_catalog()
+	for i in range(cap, catalog.size()):
+		var upgrade_id: String = str(catalog[i].get("id", ""))
+		if upgrade_id.is_empty():
+			continue
+		out.erase(upgrade_id)
+	return out
 
 static func _clamp_selected_start_wave(start_wave: int, data: Dictionary) -> int:
 	var desired_start_wave: int = max(MIN_START_WAVE, start_wave)

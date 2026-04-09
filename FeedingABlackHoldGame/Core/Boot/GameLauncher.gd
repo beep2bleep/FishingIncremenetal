@@ -29,8 +29,12 @@ const FLAG_ICON_WIDTH := 56
 const FLAG_ICON_HEIGHT := 36
 const GAME_CARD_COLUMNS := 2
 const GAME_CARD_IMAGE_HEIGHT := 208
+# Do not shrink preview below ~77% of GAME_CARD_IMAGE_HEIGHT; long translations use taller cards first.
+const GAME_CARD_MIN_IMAGE_HEIGHT := 160
 const GAME_CARD_TITLE_FONT_SIZE := 30
-const GAME_CARD_DETAIL_FONT_SIZE := 18
+const GAME_CARD_MIN_TITLE_FONT_SIZE := 22
+const GAME_CARD_DETAIL_FONT_SIZE := 14
+const GAME_CARD_MIN_DETAIL_FONT_SIZE := 12
 const BACKGROUND_TWEEN_DURATION := 2.0
 const MENU_NEUTRAL_BG := Color(0.09, 0.1, 0.12, 1.0)
 const GAME_LAUNCHER_PANEL_MIN_WIDTH := 1080.0
@@ -38,9 +42,9 @@ const GAME_LAUNCHER_PANEL_MAX_WIDTH := 1680.0
 const GAME_LAUNCHER_PANEL_VIEWPORT_RATIO := 0.94
 const GAME_LAUNCHER_RIGHT_MARGIN := 16.0
 const GAME_CARD_HOVER_VOLUME_DB_OFFSET := -12.0
-const GAME_CARD_TITLE_HOVER_SCALE := 1.08
-const GAME_CARD_TITLE_HOVER_DURATION := 0.16
-const GAME_CARD_TITLE_RESET_DURATION := 0.12
+const GAME_CARD_HOVER_SCALE := 1.04
+const GAME_CARD_HOVER_DURATION := 0.16
+const GAME_CARD_RESET_DURATION := 0.3
 
 @onready var background_rect: ColorRect = get_node_or_null("Background") as ColorRect
 @onready var center_container: CenterContainer = get_node_or_null("CenterContainer") as CenterContainer
@@ -76,6 +80,7 @@ var background_particles_light: GPUParticles2D
 var background_particles_dark: GPUParticles2D
 var background_color_tween: Tween
 var last_hovered_game_id: String = ""
+var game_card_fit_queued: bool = false
 
 func _ready() -> void:
     Global.game_state = Util.GAME_STATES.MAIN_MENU
@@ -103,6 +108,13 @@ func _ready() -> void:
 
     if vanguard_button != null:
         vanguard_button.grab_focus()
+
+    Callable(self, "_initial_game_card_layout_after_ready").call_deferred()
+
+func _initial_game_card_layout_after_ready() -> void:
+    await get_tree().process_frame
+    await get_tree().process_frame
+    _queue_fit_game_cards()
 
 func _on_viewport_size_changed() -> void:
     _layout_background_fx()
@@ -194,6 +206,7 @@ func _refresh_text() -> void:
 
     _rebuild_language_buttons()
     _rebuild_language_button_preview()
+    _queue_fit_game_cards()
 
 func _setup_settings_panel() -> void:
     if settings_button != null and is_instance_valid(settings_button):
@@ -353,7 +366,7 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
     preview_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
     preview_panel.custom_minimum_size = Vector2(0.0, GAME_CARD_IMAGE_HEIGHT)
     preview_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    preview_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    preview_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
     preview_panel.add_theme_stylebox_override("panel", _make_preview_style(Color(card_def.get("accent", Color(0.78, 0.84, 0.96, 1.0)))))
     vbox.add_child(preview_panel)
 
@@ -371,6 +384,7 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
 
     var title := Label.new()
     title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     title.add_theme_font_size_override("font_size", GAME_CARD_TITLE_FONT_SIZE)
@@ -381,6 +395,7 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
 
     var detail := Label.new()
     detail.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     detail.add_theme_font_size_override("font_size", GAME_CARD_DETAIL_FONT_SIZE)
@@ -389,8 +404,11 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
 
     button.set_meta("game_card_ready", true)
     button.set_meta("game_id", game_id)
+    button.set_meta("card_preview_panel", preview_panel)
+    button.set_meta("card_preview_texture", texture_rect)
     button.set_meta("card_title_label", title)
     button.set_meta("card_detail_label", detail)
+    _queue_fit_game_cards()
 
 func _refresh_game_card_layout() -> void:
     if game_cards_grid == null or not is_instance_valid(game_cards_grid):
@@ -398,11 +416,12 @@ func _refresh_game_card_layout() -> void:
     var viewport_width: float = get_viewport_rect().size.x
     game_cards_grid.columns = 3 if viewport_width >= 1340.0 else 2
     var card_min_width: float = 360.0 if game_cards_grid.columns >= 3 else 460.0
-    var card_height: float = 344.0 if game_cards_grid.columns >= 3 else 372.0
+    var card_height: float = 368.0 if game_cards_grid.columns >= 3 else 408.0
     for button in [vanguard_button, mining_button, red_sky_button, turkey_button, reel_button]:
         if button == null or not is_instance_valid(button):
             continue
         button.custom_minimum_size = Vector2(card_min_width, card_height)
+    _queue_fit_game_cards()
 
 func _refresh_launcher_panel_layout() -> void:
     if center_container == null or not is_instance_valid(center_container):
@@ -432,6 +451,66 @@ func _refresh_game_card_text(button: Button, game_id: String) -> void:
         title.text = tr(str(card_def.get("title", game_id)))
     if detail != null and is_instance_valid(detail):
         detail.text = tr(str(card_def.get("detail", "")))
+    _queue_fit_game_cards()
+
+func _queue_fit_game_cards() -> void:
+    if game_card_fit_queued:
+        return
+    game_card_fit_queued = true
+    call_deferred("_fit_game_cards")
+
+func _fit_game_cards() -> void:
+    game_card_fit_queued = false
+    for button in [vanguard_button, mining_button, red_sky_button, turkey_button, reel_button]:
+        _fit_game_card_content(button)
+
+func _fit_game_card_content(button: Button) -> void:
+    if button == null or not is_instance_valid(button):
+        return
+    var preview_panel := button.get_meta("card_preview_panel", null) as PanelContainer
+    var preview_texture := button.get_meta("card_preview_texture", null) as TextureRect
+    var title := button.get_meta("card_title_label", null) as Label
+    var detail := button.get_meta("card_detail_label", null) as Label
+    if preview_panel == null or not is_instance_valid(preview_panel):
+        return
+    if preview_texture == null or not is_instance_valid(preview_texture):
+        return
+    if title == null or not is_instance_valid(title):
+        return
+    if detail == null or not is_instance_valid(detail):
+        return
+
+    var target_height := button.size.y if button.size.y > 0.0 else button.custom_minimum_size.y
+    if target_height <= 0.0:
+        return
+
+    var preview_height := GAME_CARD_IMAGE_HEIGHT
+    var title_font_size := GAME_CARD_TITLE_FONT_SIZE
+    var detail_font_size := GAME_CARD_DETAIL_FONT_SIZE
+    var available_content_height := target_height - 24.0
+    var content_padding := 14.0
+
+    for _i in range(32):
+        preview_panel.custom_minimum_size.y = preview_height
+        preview_texture.custom_minimum_size.y = preview_height
+        title.add_theme_font_size_override("font_size", title_font_size)
+        detail.add_theme_font_size_override("font_size", detail_font_size)
+        title.reset_size()
+        detail.reset_size()
+
+        var required_height := preview_height + title.get_combined_minimum_size().y + detail.get_combined_minimum_size().y + content_padding
+        if required_height <= available_content_height:
+            break
+        if title_font_size > GAME_CARD_MIN_TITLE_FONT_SIZE:
+            title_font_size -= 1
+            continue
+        if detail_font_size > GAME_CARD_MIN_DETAIL_FONT_SIZE:
+            detail_font_size -= 1
+            continue
+        if preview_height > GAME_CARD_MIN_IMAGE_HEIGHT:
+            preview_height = maxf(float(GAME_CARD_MIN_IMAGE_HEIGHT), preview_height - 8.0)
+            continue
+        break
 
 func _get_game_card_definition(game_id: String) -> Dictionary:
     match game_id:
@@ -825,11 +904,11 @@ func _on_game_button_hovered(game_id: String) -> void:
         last_hovered_game_id = game_id
         _play_game_card_hover_sound()
     var hovered_button := _get_game_button_for_id(game_id)
-    _animate_game_card_title(hovered_button, true)
+    _animate_game_card(hovered_button, true)
     _apply_background_palette(_get_background_palette_for_game(game_id), true)
 
 func _on_game_button_unhovered(button: Button) -> void:
-    _animate_game_card_title(button, false)
+    _animate_game_card(button, false)
 
 func _play_game_card_hover_sound() -> void:
     if AudioManager == null:
@@ -839,28 +918,28 @@ func _play_game_card_hover_sound() -> void:
         GAME_CARD_HOVER_VOLUME_DB_OFFSET
     )
 
-func _animate_game_card_title(button: Button, is_hovered: bool) -> void:
+func _animate_game_card(button: Button, is_hovered: bool) -> void:
     if button == null or not is_instance_valid(button):
         return
-    var title := button.get_meta("card_title_label", null) as Label
-    if title == null or not is_instance_valid(title):
-        return
-    var existing_tween := button.get_meta("card_title_tween", null) as Tween
+    button.pivot_offset = button.size * 0.5
+    var existing_tween := button.get_meta("card_hover_tween", null) as Tween
     if existing_tween != null and existing_tween.is_running():
         existing_tween.kill()
-    title.pivot_offset = title.size * 0.5
     var tween := create_tween()
-    button.set_meta("card_title_tween", tween)
+    button.set_meta("card_hover_tween", tween)
     if is_hovered:
         tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-        tween.tween_property(title, "scale", Vector2.ONE * GAME_CARD_TITLE_HOVER_SCALE, GAME_CARD_TITLE_HOVER_DURATION)
-        tween.parallel().tween_property(title, "rotation_degrees", _get_game_card_title_hover_rotation(button), GAME_CARD_TITLE_HOVER_DURATION)
+        tween.tween_property(button, "scale", Vector2.ONE * GAME_CARD_HOVER_SCALE, GAME_CARD_HOVER_DURATION)
+        tween.parallel().tween_property(button, "rotation_degrees", _get_game_card_hover_rotation(button), GAME_CARD_HOVER_DURATION)
+        tween.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+        tween.tween_property(button, "scale", Vector2.ONE, GAME_CARD_RESET_DURATION)
+        tween.parallel().tween_property(button, "rotation_degrees", 0.0, GAME_CARD_RESET_DURATION)
         return
     tween.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-    tween.tween_property(title, "scale", Vector2.ONE, GAME_CARD_TITLE_RESET_DURATION)
-    tween.parallel().tween_property(title, "rotation_degrees", 0.0, GAME_CARD_TITLE_RESET_DURATION)
+    tween.tween_property(button, "scale", Vector2.ONE, GAME_CARD_RESET_DURATION)
+    tween.parallel().tween_property(button, "rotation_degrees", 0.0, GAME_CARD_RESET_DURATION)
 
-func _get_game_card_title_hover_rotation(button: Button) -> float:
+func _get_game_card_hover_rotation(button: Button) -> float:
     if button == null or not is_instance_valid(button):
         return 0.0
     var game_id := str(button.get_meta("game_id", ""))

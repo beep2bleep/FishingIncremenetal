@@ -2101,3 +2101,100 @@ Y -20,Y -20,,Y -20,Y -20,Y -20,-20,Y-20,,Y -20,Y-20,Y-20,와이 -20,Y-20,A-20,Д
 Y -5,Y -5,,Y -5,Y-5,Y -5,-5,Y-5,,Y -5,Y-5,Y-5,와이 -5,Y-5,A-5,Д-5,ใช่ -5,Y-5,Y -5,Y-5
 "Yield +%s%%, bank +%s%%","Yield +%s%%, bank +%s%%",,"Rendiment +%s%%, banc +%s%%","Výnos +%s%%, bankovní +%s%%","Rendite +%s%%, Bank +%s%%","Rendimiento +%s%%, banco +%s%%","Rendement +%s%%, banque +%s%%",,"Hasil +%s%%, bank +%s%%","Rendimento +%s%%, banca +%s%%",利回り +%s%%、銀行 +%s%%,"수익률 +%s%%, 은행 +%s%%","Rentowność +%s%%, bank +%s%%","Rendimento +%s%%, banco +%s%%","Доходность +%s%%, банк +%s%%","อัตราผลตอบแทน +%s%%, ธนาคาร +%s%%","Getiri +%s%%, banka +%s%%","Lợi suất +%s%%, ngân hàng +%s%%",收益率+%s%%，银行+%s%%
 "Yield +%s%%, wave bonus +%s x wave","Yield +%s%%, wave bonus +%s x wave",,"Rendiment +%s%%, bonificació d'onada +%s x onada","Výnos +%s%%, bonus za vlnu +%s x vlna","Rendite +%s%%, Wellenbonus +%s x Welle","Rendimiento +%s%%, bonificación de oleada +%s x oleada","Rendement +%s%%, bonus de vague +%s x vague",,"Hasil +%s%%, bonus gelombang +%s x gelombang","Rendimento +%s%%, bonus ondata +%s x ondata",利回り +%s%%、ウェーブボーナス +%s x ウェーブ,"수확량 +%s%%, 웨이브 보너스 +%s x 웨이브","Zysk +%s%%, premia za falę +%s x fala","Rendimento +%s%%, bônus de onda +%s x onda","Доходность +%s%%, волновой бонус +%s x волна","อัตราผลตอบแทน +%s%%, โบนัสคลื่น +%s x คลื่น","Verim +%s%%, dalga bonusu +%s x dalga","Lợi nhuận +%s%%, tiền thưởng đợt +%s x đợt",收益率+%s%%，波数加成+%s x波
+"Higher tiers use bigger racks and pay more. Your unlock progress uses the better of:
+- League Pass level %d -> lane tier %d
+- Veteran: %d completed series -> lane tier %d
+You may select lane tiers 1-%d. Choose one for this series:","Higher tiers use bigger racks and pay more. Your unlock progress uses the better of:
+- League Pass level %d -> lane tier %d
+- Veteran: %d completed series -> lane tier %d
+You may select lane tiers 1-%d. Choose one for this series:","تستخدم المستويات الأعلى رفوفًا أكبر وتدفع أكثر. يستخدم تقدم الفتح الخاص بك أفضل ما يلي: 
+- مستوى تمرير الدوري %d -> مستوى المسار %d
+- المخضرم: %d السلسلة المكتملة -> مستوى المسار %d
+يمكنك تحديد مستويات المسار 1-%d. اختر واحدًا لهذه السلسلة:","Els nivells més alts utilitzen bastidors més grans i paguen més. El vostre progrés de desbloqueig utilitza el millor de:
+- Nivell de la Lliga %d -> nivell de carril %d
+- Veteran: %d sèrie completada -> nivell de carril %d
+Podeu seleccionar els nivells de carril 1-%d. Trieu-ne un per a aquesta sèrie:","Vyšší úrovně používají větší stojany a platí více. Váš postup odemykání využívá to nejlepší z:
+- úrovně League Pass %d -> úroveň pruhu %d
+- veterán: %d dokončená série -> úroveň pruhu %d
+Můžete vybrat úrovně pruhu 1-%d. Vyberte si jeden pro tuto sérii:","Höhere Stufen nutzen größere Racks und zahlen mehr. Ihr Freischaltfortschritt verwendet den besseren Wert von:
+- League Pass-Level %d -> Lane-Stufe %d
+- Veteran: %d abgeschlossene Serie -> Lane-Stufe %d
+Sie können die Lane-Stufen 1-%d auswählen. Wählen Sie eines für diese Serie:","Los niveles más altos utilizan bastidores más grandes y pagan más. Su progreso de desbloqueo utiliza lo mejor de: 
+- Nivel de League Pass %d -> nivel de carril %d
+- Veterano: %d serie completa -> nivel de carril %d
+Puede seleccionar niveles de carril 1-%d. Elija uno para esta serie:","Les niveaux supérieurs utilisent des racks plus grands et paient plus. Votre progression de déverrouillage utilise le meilleur des éléments suivants :
+- Niveau League Pass %d -> niveau de voie %d
+- Vétéran : %d série terminée -> niveau de voie %d
+Vous pouvez sélectionner les niveaux de voie 1 à %d. Choisissez-en un pour cette série :","שכבות גבוהות יותר משתמשות במדפים גדולים יותר ומשלמים יותר. התקדמות פתיחת הנעילה שלך משתמשת במיטב מ:
+- רמת מעבר ליגה %d -> שכבת נתיב %d
+- ותיק: %d סידרה שהושלמה -> שכבת נתיב %d
+אתה יכול לבחור שכבות נתיב 1-%d. בחר אחד עבור סדרה זו:","Tingkat yang lebih tinggi menggunakan rak yang lebih besar dan membayar lebih banyak. Kemajuan pembukaan kunci Anda menggunakan yang lebih baik dari:
+- Level League Pass %d -> tingkat jalur %d
+- Veteran: %d seri yang diselesaikan -> tingkat jalur %d
+Anda dapat memilih tingkat jalur 1-%d. Pilih satu untuk seri ini:","I livelli più alti utilizzano rack più grandi e pagano di più. I tuoi progressi di sblocco utilizzano il meglio di:
+- Livello League Pass %d -> livello corsia %d
+- Veterano: %d serie completate -> livello corsia %d
+Puoi selezionare i livelli corsia 1-%d. Scegline uno per questa serie:","上位層ではより大きなラックが使用され、料金も高くなります。ロック解除の進行状況は、
+- リーグパスレベル %d -> レーン層 %d
+- ベテラン: %d 完了したシリーズ -> レーン層 %d
+ レーン層 1 ～ %d のいずれかを選択できます。このシリーズから 1 つ選択してください:","상위 계층은 더 큰 랙을 사용하고 더 많은 비용을 지불합니다. 잠금 해제 진행 상황에서는 다음 중 더 나은 방법을 사용합니다.
+- 리그 패스 레벨 %d -> 레인 등급 %d
+- 베테랑: %d 완료된 시리즈 -> 레인 등급 %d
+레인 등급 1~%d을 선택할 수 있습니다. 이 시리즈 중 하나를 선택하세요.","Wyższe poziomy korzystają z większych stojaków i płacą więcej. Twój postęp w odblokowaniu wykorzystuje lepsze z:
+- Poziom przepustki ligowej %d -> poziom linii %d
+- Weteran: %d ukończona seria -> poziom linii %d
+Możesz wybrać poziomy linii 1-%d. Wybierz jeden z tej serii:","As camadas mais altas usam racks maiores e pagam mais. Seu progresso de desbloqueio usa o melhor de:
+- Nível do League Pass %d -> nível de pista %d
+- Veterano: %d série concluída -> nível de pista %d
+Você pode selecionar os níveis de pista 1-%d. Escolha um para esta série:","На более высоких уровнях используются стойки большего размера и за них платят больше. В вашем прогрессе разблокировки используется лучшее из:
+- Уровень League Pass %d -> уровень полосы %d
+- Ветеран: %d завершенной серии -> уровень полосы %d
+Вы можете выбрать уровни дорожек 1-%d. Выберите один из этой серии:","ระดับที่สูงกว่าจะใช้ชั้นวางที่ใหญ่กว่าและจ่ายเงินมากขึ้น ความคืบหน้าในการปลดล็อคของคุณใช้ดีกว่า:
+- ระดับผ่านลีก %d -> ระดับเลน %d
+- ทหารผ่านศึก: %d ซีรีส์ที่เสร็จสมบูรณ์ -> ระดับเลน %d
+คุณสามารถเลือกระดับเลน 1-%d เลือกหนึ่งรายการสำหรับซีรี่ส์นี้:","Daha yüksek katmanlar daha büyük raflar kullanır ve daha fazla öder. Kilit açma ilerlemeniz aşağıdakilerden daha iyi olanı kullanır:
+- Lig Geçiş seviyesi %d -> koridor kademesi %d
+- Kıdemli: %d tamamlanmış seri -> koridor kademesi %d
+Şerit kademeleri 1-%d'ü seçebilirsiniz. Bu seri için birini seçin:","Cấp cao hơn sử dụng giá đỡ lớn hơn và trả nhiều tiền hơn. Tiến trình mở khóa của bạn sử dụng mức tốt hơn của:
+- Cấp độ League Pass %d -> cấp làn đường %d
+- Cựu chiến binh: %d đã hoàn thành chuỗi -> cấp làn đường %d
+Bạn có thể chọn cấp độ làn 1-%d. Chọn một cho loạt bài này:","更高的层使用更大的机架并支付更多费用。您的解锁进度使用以下两者中的较高者：
+- 联盟通行证级别 %d -> 泳道层 %d
+- 老兵：%d 已完成系列 -> 泳道层 %d
+ 您可以选择泳道层 1-%d。为本系列选择一个："
+"%d. %s - %d pins, %d gold (front)","%d. %s - %d pins, %d gold (front)",%d. %s - %d دبابيس، %d ذهبي (أمامي),"%d. %s - %d agulles, %d daurat (frontal)","%d. %s - %d kolíky, %d zlaté (přední)","%d. %s - %d Stifte, %d Gold (vorne)","%d. %s - pines %d, %d dorado (frontal)","%d. Épingles %s - %d, %d dorées (avant)","%d. %s - %d סיכות, %d זהב (קדמי)","%d. %s - %d pin, %d emas (depan)","%d. %s - %d spille, %d oro (anteriore)",%d。 %s - %d ピン、%d ゴールド (前面),"%d. %s - %d 핀, %d 금(전면)","%d. %s - kołki %d, %d złote (przód)","%d. %s - %d alfinetes, %d dourado (frente)","%d. %s — контакты %d, %d золото (спереди)","%d. %s - %d หมุด, %d ทอง (ด้านหน้า)","%d. %s - %d pimleri, %d altın (ön)","%d. %s - %d ghim, %d vàng (mặt trước)",%d。 %s - %d 引脚，%d 金色（正面）
+Frame 1. Click once to start the power swing.,Frame 1. Click once to start the power swing.,الإطار 1. انقر مرة واحدة لبدء تأرجح الطاقة.,Fotograma 1. Feu clic una vegada per iniciar el swing de potència.,Rámeček 1. Jedním kliknutím spustíte power swing.,"Bild 1. Klicken Sie einmal, um den Power Swing zu starten.",Cuadro 1. Haga clic una vez para iniciar el movimiento de potencia.,Image 1. Cliquez une fois pour démarrer le swing de puissance.,מסגרת 1. לחץ פעם אחת כדי להתחיל את נדנדת הכוח.,Bingkai 1. Klik sekali untuk memulai power swing.,Telaio 1. Fare clic una volta per avviare l'oscillazione di potenza.,フレーム 1。1 回クリックしてパワースイングを開始します。,프레임 1. 파워 스윙을 시작하려면 한 번 클릭합니다.,"Ramka 1. Kliknij raz, aby rozpocząć zamach mocy.",Quadro 1. Clique uma vez para iniciar o balanço de potência.,"Кадр 1. Щелкните один раз, чтобы начать качание мощности.",เฟรมที่ 1 คลิกหนึ่งครั้งเพื่อเริ่มการสวิงพาวเวอร์,Çerçeve 1. Güç salınımını başlatmak için bir kez tıklayın.,Khung 1. Nhấp một lần để bắt đầu xoay lực.,帧 1. 单击一次以开始功率摆动。
+ Gold pins still up in front - they need a harder hit but pay more when they fall., Gold pins still up in front - they need a harder hit but pay more when they fall.,لا تزال دبابيس الذهب في المقدمة - فهي تحتاج إلى ضربة أقوى ولكنها تدفع أكثر عندما تسقط.,"Les agulles d'or encara estan al davant: necessiten un cop més fort, però paguen més quan cauen.","Zlaté kolíky jsou stále vepředu – potřebují tvrdší zásah, ale při pádu zaplatí více.","Die Gold-Pins liegen immer noch vorne – sie brauchen einen härteren Schlag, zahlen aber mehr, wenn sie fallen.","Los bolos dorados siguen al frente: necesitan un golpe más fuerte, pero pagan más cuando caen.",Les épingles en or sont toujours devant - elles ont besoin d'un coup plus fort mais paient plus lorsqu'elles tombent.,סיכות זהב עדיין מקדימות - הם צריכים מכה קשה יותר אבל משלמים יותר כשהם נופלים.,Pin emas masih ada di depan - pin tersebut memerlukan pukulan yang lebih keras namun harus membayar lebih jika terjatuh.,I birilli d'oro sono ancora davanti: hanno bisogno di un colpo più forte ma pagano di più quando cadono.,金のピンはまだ前にあります - より強い攻撃が必要ですが、落ちるとより多くのお金がかかります。,금색 핀이 여전히 앞에 있습니다. 더 세게 쳐야 하지만 떨어지면 더 많은 비용을 지불해야 합니다.,"Złote kręgle wciąż na czele – potrzebują mocniejszego uderzenia, ale płacą więcej, gdy upadają.","Alfinetes de ouro ainda na frente - eles precisam de um golpe mais forte, mas pagam mais quando caem.","Золотые значки все еще впереди — им нужен более сильный удар, но за падение они платят больше.",หมุดทองยังคงอยู่ข้างหน้า - พวกมันต้องการการตีที่หนักกว่าแต่ต้องจ่ายเพิ่มเมื่อล้ม,Altın lobutlar hâlâ önde; daha sert bir darbeye ihtiyaçları var ama düştüklerinde daha fazla para ödüyorlar.,Những chiếc ghim vàng vẫn ở phía trước - chúng cần một cú đánh mạnh hơn nhưng phải trả nhiều tiền hơn khi rơi xuống.,金针仍然在前面 - 他们需要更严厉的打击，但当他们跌倒时付出更多。
+ Gold pins are in the front row(s) - check the rack map., Gold pins are in the front row(s) - check the rack map.,توجد الدبابيس الذهبية في الصف (الصفوف) الأمامية - تحقق من خريطة الحامل.,Els pins daurats es troben a les primeres files: comproveu el mapa del bastidor.,Zlaté odznaky jsou v přední řadě (řadách) - zkontrolujte mapu stojanu.,Goldnadeln befinden sich in der/den ersten Reihe(n) – überprüfen Sie die Rack-Karte.,Los pines dorados están en las primeras filas; consulte el mapa del bastidor.,Des pins dorés se trouvent dans la(les) première(s) rangée(s) – vérifiez le plan du rack.,סיכות זהב נמצאות בשורה הראשונה - בדוק את מפת המתלה.,Pin emas ada di barisan depan - periksa peta rak.,I pin dorati sono in prima fila: controlla la mappa del rack.,金のピンは最前列にあります - ラックマップを確認してください。,금색 핀은 맨 앞줄에 있습니다. 랙 맵을 확인하세요.,Złote szpilki znajdują się w pierwszych rzędach – sprawdź mapę stojaków.,Os pinos dourados estão na(s) primeira(s) fila(s) - verifique o mapa do rack.,Золотые значки находятся в первом ряду (проверьте схему стойки).,หมุดสีทองอยู่ที่แถวหน้า - ตรวจสอบแผนผังชั้นวาง,Altın pimler ön sıralardadır - raf haritasını kontrol edin.,Các chốt vàng nằm ở (các) hàng trước - hãy kiểm tra bản đồ giá đỡ.,金针位于前排 - 检查机架图。
+Series stats,Series stats,إحصائيات السلسلة,Estadístiques de la sèrie,Statistiky série,Serienstatistiken,Estadísticas de la serie,Statistiques de la série,נתונים סטטיסטיים של הסדרה,Statistik seri,Statistiche della serie,シリーズ統計,시리즈 통계,Statystyki serii,Estatísticas da série,Статистика серии,สถิติซีรีส์,Seri istatistikleri,Số liệu thống kê về loạt phim,系列统计数据
+"%s
+Tier: %s | Rack: %d pins | Gold value $%d/pin","%s
+Tier: %s | Rack: %d pins | Gold value $%d/pin","%s
+المستوى: %s | الرف: %d دبابيس | قيمة الذهب $%d/دبوس","%s
+Nivell: %s | Bastidor: %d pins | Valor d'or $%d/pin","%s
+Úroveň: %s | Stojan: %d kolíky | Hodnota zlata %d/pin","%s
+Stufe: %s | Rack: %d Stifte | Goldwert $%d/Pin","%s
+Nivel: %s | Bastidor: %d pines | Valor del oro $%d/pin","%s
+Niveau : %s | Rack : %d broches | Valeur en or %d $/épingle","%s
+שכבה: %s | מתלה: %d סיכות | ערך זהב $%d/סיכה","%s
+Tingkat: %s | Rak: %d pin | Nilai emas $%d/pin","%s
+Livello: %s | Cremagliera: %d perni | Valore in oro $%d/pin","%s
+階層: %s |ラック: %d ピン |金価格 $%d/ピン","%s
+계층: %s | 랙: %d 핀 | 금 가치 $%d/핀","%s
+Poziom: %s | Stojak: %d kołki | Wartość złota %d/szpilka","%s
+Nível: %s | Rack: pinos %d | Valor do ouro $%d/pin","%s
+Уровень: %s | Стойка: контакты %d | Стоимость золота $%d/булавка","%s
+ระดับ: %s | แร็ค: %d พิน | มูลค่าทองคำ $%d/พิน","%s
+Kademe: %s | Raf: %d pimleri | Altın değeri $%d/pin","%s
+Cấp: %s | Giá đỡ: chân %d | Giá trị vàng $%d/pin","%s
+等级：%s |机架：%d 引脚 |黄金价值 $%d/pin"
+Command Calibration,Command Calibration,معايرة الأوامر,Calibració de comandaments,Kalibrace příkazů,Befehlskalibrierung,Calibración de comando,Calibrage des commandes,כיול פקודה,Kalibrasi Perintah,Calibrazione dei comandi,コマンドキャリブレーション,명령 교정,Kalibracja poleceń,Calibração de Comando,Командная калибровка,การปรับเทียบคำสั่ง,Komut Kalibrasyonu,Hiệu chỉnh lệnh,命令校准
+Pick prep upgrade %d/%d before wave %d.,Pick prep upgrade %d/%d before wave %d.,اختر ترقية الإعدادية %d/%d قبل الموجة %d.,Trieu l'actualització de preparació %d/%d abans de l'onada %d.,Vyberte přípravný upgrade %d/%d před vlnou %d.,Wählen Sie Vorbereitungs-Upgrade %d/%d vor Welle %d.,Elija la actualización de preparación %d/%d antes de la oleada %d.,Choisissez la mise à niveau de préparation %d/%d avant la vague %d.,בחר שדרוג הכנה %d/%d לפני גל %d.,Pilih peningkatan persiapan %d/%d sebelum gelombang %d.,Scegli l'aggiornamento di preparazione %d/%d prima dell'ondata %d.,ウェーブ %d の前に、準備アップグレード %d/%d を選択してください。,웨이브 %d 전에 준비 업그레이드 %d/%d을 선택하세요.,Wybierz aktualizację przygotowawczą %d/%d przed falą %d.,Escolha a atualização de preparação %d/%d antes da onda %d.,Выберите подготовительное обновление %d/%d перед волной %d.,เลือกเตรียมการอัปเกรด %d/%d ก่อนเวฟ %d,%d dalgasından önce %d/%d hazırlık yükseltmesini seçin.,Chọn nâng cấp chuẩn bị %d/%d trước đợt %d.,在浪潮 %d 之前选择准备升级 %d/%d。
+%s earned: %d%s,%s earned: %d%s,%s المكتسبة: %d%s,%s guanyat: %d%s,%s získané: %d%s,%s verdient: %d%s,%s ganado: %d%s,%s gagné : %d%s,%s שנצברו: %d%s,%s diperoleh: %d%s,%s guadagnato: %d%s,%s 獲得: %d%s,%s 획득: %d%s,%s zarobione: %d%s,%s ganhou: %d%s,%s заработано: %d%s,%s ได้รับ: %d%s,%s kazanılan: %d%s,%s kiếm được: %d_PH2__,%s 获得： %d%s
++%d speed,+%d speed,+%d السرعة,+%d velocitat,+%d rychlost,+%d Geschwindigkeit,+%d velocidad,+%d vitesse,+%d מהירות,+%d kecepatan,+%d velocità,+%d 速度,+%d 속도,+%d prędkość,+%d velocidade,+%d скорость,+%d ความเร็ว,+%d hız,+%d tốc độ,+%d 速度
++%d drill health,+%d drill health,+%d صحة الحفر,+%d salut del trepant,+%d vrtání zdraví,+%d Bohrergesundheit,+%d salud del taladro,+%d état de santé de la foreuse,+%d בריאות המקדחה,+%d kesehatan bor,+%d salute dell'esercitazione,+%d ドリルの健全性,+%d 드릴 상태,+%d stan ćwiczeń,+%d perfurar integridade,+%d здоровье тренировок,+%d สุขภาพการเจาะ,+%d tatbikat sağlığı,+%d sức khỏe máy khoan,+%d 钻头健康状况
++%.1fs timing,+%.1fs timing,+%.1fs التوقيت,+%.1fs temps,+%.1fs načasování,+%.1fs Timing,+%.1fs sincronización,+%.1fs timing,+%.1fs תזמון,+%.1fs waktu,+%.1fs tempistica,+%.1fs タイミング,+%.1fs 타이밍,+%.1fs czas,Tempo +%.1fs,+%.1fs время,+%.1fs จังหวะเวลา,+%.1fs zamanlama,+%.1fs thời gian,+%.1fs 计时
+%s Next up: frame %d.,%s Next up: frame %d.,%s التالي: الإطار %d.,%s A continuació: marc %d.,%s Další: snímek %d.,%s Als nächstes: Frame %d.,%s Siguiente: cuadro %d.,%s Ensuite : image %d.,%s הבא: מסגרת %d.,%s Selanjutnya: bingkai %d.,%s Prossimo: frame %d.,%s 次はフレーム %d です。,%s 다음: 프레임 %d.,%s Następna w kolejce: ramka %d.,%s Próximo: quadro %d.,%s Далее: кадр %d.,%s ต่อไป: เฟรม %d,%s Sıradaki: çerçeve %d.,%s Tiếp theo: khung %d.,%s 接下来：框架 %d。
+Series ended early.,Series ended early.,انتهت السلسلة في وقت مبكر.,La sèrie va acabar aviat.,Série skončila předčasně.,Die Serie endete vorzeitig.,La serie terminó temprano.,La série s'est terminée tôt.,הסדרה הסתיימה מוקדם.,Seri berakhir lebih awal.,La serie è finita presto.,シリーズは早々に終了しました。,시리즈가 일찍 종료되었습니다.,Seria zakończyła się wcześniej.,A série terminou mais cedo.,Серия закончилась раньше времени.,ซีรีส์จบเร็ว,Seri erken bitti.,Bộ truyện kết thúc sớm.,系列赛提前结束。
+%s %d / %d   Dive +%d,%s %d / %d   Dive +%d,%s %d / %d الغوص +%d,%s %d / %d Immersió +%d,%s %d / %d ponor +%d,%s %d / %d Tauchgang +%d,%s %d / %d Inmersión +%d,%s %d / %d Plongée +%d,%s %d / %d צלילה +%d,%s %d / %d Menyelam +%d,%s %d / %d Immersione +%d,%s %d / %d ダイブ +%d,%s %d / %d 다이빙 +%d,%s %d / %d Nurkowanie +%d,%s %d / %d Mergulho +%d,%s %d / %d Погружение +%d,%s %d / %d ดำน้ำ +%d,%s %d / %d Dalış +%d,%s %d / %d Lặn +%d,%s %d / %d 潜水 +%d
+%s %d   %s %d/%d,%s %d   %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d,%s %d %s %d/%d

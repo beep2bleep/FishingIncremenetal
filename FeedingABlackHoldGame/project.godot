@@ -81,6 +81,7 @@ ActiveGame="vanguard"
 HighLevelMode="all"
 StartScreen="menu"
 mining_demo_max_group=3
+red_sky_demo_max_meta_nodes=12
 
 [input]
 

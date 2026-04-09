@@ -2,8 +2,13 @@ extends RefCounted
 class_name RedSkyData
 
 const ICON_PREFIX := "redsky://"
-const META_COST_MULTIPLIER := 0.68
-const META_FIRST_TIER_DISCOUNT := 0.82
+const META_COST_MULTIPLIER := 0.78
+const META_FIRST_TIER_DISCOUNT := 0.92
+## When `global/Demo` is true, only the first N rows in `META_UPGRADES` (catalog order) can hold progress. Override cap via `global/red_sky_demo_max_meta_nodes`.
+const DEMO_MAX_UNLOCKABLE_META_NODES := 12
+
+static func get_demo_meta_node_cap() -> int:
+	return maxi(1, int(ProjectSettings.get_setting("global/red_sky_demo_max_meta_nodes", DEMO_MAX_UNLOCKABLE_META_NODES)))
 const WAVE_OFFER_TIERS := [
 	{"id": "poor", "label": "Poor", "multiplier": 0.75, "border": Color(0.55, 0.56, 0.60, 1.0)},
 	{"id": "common", "label": "Common", "multiplier": 1.0, "border": Color(0.94, 0.94, 0.96, 1.0)},
@@ -54,6 +59,15 @@ const BASE_RUN_CONFIG := {
 	"tentacle_slow": 0.18,
 	"projectile_redirect_chance": 0.0,
 	"upgrade_power_multiplier": 1.0,
+	"enemy_count_scale": 1.0,
+	"enemy_speed_scale": 1.0,
+	"enemy_projectile_speed_scale": 1.0,
+	"enemy_projectile_damage_scale": 1.0,
+	"elite_spawn_scale": 1.0,
+	"heavy_enemy_health_scale": 1.0,
+	"heavy_enemy_damage_scale": 1.0,
+	"apex_enemy_health_scale": 1.0,
+	"apex_enemy_damage_scale": 1.0,
 	"offer_quality_bonus": 0.0,
 	"offer_roll_bonus": 0,
 	"level_up_choice_count": 3,
@@ -588,6 +602,76 @@ const META_UPGRADES: Array[Dictionary] = [
 		"cost_scale": 1.66,
 		"max_tier": 5
 	},
+	{
+		"id": "threat_analysis",
+		"label": "Threat Analysis",
+		"summary": "Reduce total hostile wave count so later runs can reach deeper lines.",
+		"icon": ICON_PREFIX + "threat_analysis",
+		"act": 6,
+		"cell": Vector2(-5, 7),
+		"dependency": "",
+		"branch": 8,
+		"step": 1,
+		"base_cost": 145,
+		"cost_scale": 1.52,
+		"max_tier": 5
+	},
+	{
+		"id": "gravitic_dragnet",
+		"label": "Gravitic Dragnet",
+		"summary": "Slow incoming formations so rushers and bombers are easier to read.",
+		"icon": ICON_PREFIX + "gravitic_dragnet",
+		"act": 6,
+		"cell": Vector2(-6, 8),
+		"dependency": "threat_analysis",
+		"branch": 8,
+		"step": 2,
+		"base_cost": 200,
+		"cost_scale": 1.56,
+		"max_tier": 5
+	},
+	{
+		"id": "signal_jammers",
+		"label": "Signal Jammers",
+		"summary": "Cut hostile projectile pressure by slowing and weakening incoming volleys.",
+		"icon": ICON_PREFIX + "signal_jammers",
+		"act": 6,
+		"cell": Vector2(-7, 9),
+		"dependency": "gravitic_dragnet",
+		"branch": 8,
+		"step": 3,
+		"base_cost": 255,
+		"cost_scale": 1.60,
+		"max_tier": 5
+	},
+	{
+		"id": "hunter_killer_doctrine",
+		"label": "Hunter-Killer Doctrine",
+		"summary": "Specialize command fire plans against heavy enemy hulls and late-wave bruisers.",
+		"icon": ICON_PREFIX + "hunter_killer_doctrine",
+		"act": 6,
+		"cell": Vector2(-8, 10),
+		"dependency": "signal_jammers",
+		"branch": 8,
+		"step": 4,
+		"base_cost": 320,
+		"cost_scale": 1.62,
+		"max_tier": 5
+	},
+	{
+		"id": "apex_countermeasures",
+		"label": "Apex Countermeasures",
+		"summary": "Blunt the deadliest elite and boss arrivals so solo monsters stop ending runs outright.",
+		"icon": ICON_PREFIX + "apex_countermeasures",
+		"act": 6,
+		"cell": Vector2(-9, 11),
+		"dependency": "hunter_killer_doctrine",
+		"branch": 8,
+		"step": 5,
+		"base_cost": 390,
+		"cost_scale": 1.64,
+		"max_tier": 5
+	},
 ]
 
 const WAVE_UPGRADES: Array[Dictionary] = [
@@ -1071,6 +1155,61 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"requires": ["rare", "salvage"],
 		"effects": {"add": {}, "mult": {"upgrade_power_multiplier": 1.06, "salvage_multiplier": 1.06}}
 	},
+	{
+		"id": "traffic_control",
+		"label": "Traffic Control",
+		"summary": "Future waves field fewer attackers.",
+		"weight": 0.82,
+		"rarity": 1,
+		"max_stacks": 9,
+		"min_wave": 3,
+		"requires": [],
+		"effects": {"add": {}, "mult": {"enemy_count_scale": 0.92}}
+	},
+	{
+		"id": "gravity_well",
+		"label": "Gravity Well",
+		"summary": "Future enemies approach more slowly.",
+		"weight": 0.8,
+		"rarity": 1,
+		"max_stacks": 8,
+		"min_wave": 4,
+		"requires": [],
+		"effects": {"add": {}, "mult": {"enemy_speed_scale": 0.9}}
+	},
+	{
+		"id": "counterbattery_jammers",
+		"label": "Counterbattery Jammers",
+		"summary": "Hostile volleys travel slower and hit softer.",
+		"weight": 0.7,
+		"rarity": 2,
+		"max_stacks": 7,
+		"min_wave": 5,
+		"requires": ["rare"],
+		"effects": {"add": {}, "mult": {"enemy_projectile_speed_scale": 0.88, "enemy_projectile_damage_scale": 0.92}}
+	},
+	{
+		"id": "elite_kill_orders",
+		"label": "Elite Kill Orders",
+		"summary": "Heavy enemies enter thinner and break faster.",
+		"weight": 0.66,
+		"rarity": 2,
+		"max_stacks": 7,
+		"min_wave": 6,
+		"requires": ["rare"],
+		"effects": {"add": {}, "mult": {"elite_spawn_scale": 0.92, "heavy_enemy_health_scale": 0.84}}
+	},
+	{
+		"id": "boss_breakers",
+		"label": "Boss Breakers",
+		"summary": "The nastiest solo monsters lose health and impact.",
+		"weight": 0.58,
+		"rarity": 2,
+		"max_stacks": 6,
+		"min_wave": 8,
+		"requires": ["rare"],
+		"effects": {"add": {}, "mult": {"apex_enemy_health_scale": 0.8, "apex_enemy_damage_scale": 0.88}}
+	},
 ]
 
 static func get_base_run_config() -> Dictionary:
@@ -1246,6 +1385,19 @@ static func build_meta_bonuses(meta_levels: Dictionary) -> Dictionary:
 			"profit_directive":
 				bonuses["meta_reward_multiplier"] *= 1.0 + 0.06 * float(level)
 				bonuses["wave_scrap_bonus"] += 3.0 * float(level)
+			"threat_analysis":
+				bonuses["enemy_count_scale"] *= pow(0.95, float(level))
+			"gravitic_dragnet":
+				bonuses["enemy_speed_scale"] *= pow(0.955, float(level))
+			"signal_jammers":
+				bonuses["enemy_projectile_speed_scale"] *= pow(0.95, float(level))
+				bonuses["enemy_projectile_damage_scale"] *= pow(0.955, float(level))
+			"hunter_killer_doctrine":
+				bonuses["heavy_enemy_health_scale"] *= pow(0.91, float(level))
+				bonuses["elite_spawn_scale"] *= pow(0.96, float(level))
+			"apex_countermeasures":
+				bonuses["apex_enemy_health_scale"] *= pow(0.88, float(level))
+				bonuses["apex_enemy_damage_scale"] *= pow(0.93, float(level))
 			"tentacle_vat":
 				bonuses["tentacle_count"] += int(level / 2)
 			"tentacle_spines":
@@ -1508,6 +1660,25 @@ static func get_wave_upgrade_button_text(upgrade_id: String, upgrade_power_multi
 			subtitle = TranslationServer.translate("Future picks +%s%%, yield +%s%%") % [
 				_format_percent_from_mult(scaled_effects["mult"].get("upgrade_power_multiplier", 1.0)),
 				_format_percent_from_mult(scaled_effects["mult"].get("salvage_multiplier", 1.0))
+			]
+		"traffic_control":
+			subtitle = TranslationServer.translate("Future enemy count %s%%") % _format_percent_from_mult(scaled_effects["mult"].get("enemy_count_scale", 1.0))
+		"gravity_well":
+			subtitle = TranslationServer.translate("Enemy speed %s%%") % _format_percent_from_mult(scaled_effects["mult"].get("enemy_speed_scale", 1.0))
+		"counterbattery_jammers":
+			subtitle = TranslationServer.translate("Shot speed %s%%, shot damage %s%%") % [
+				_format_percent_from_mult(scaled_effects["mult"].get("enemy_projectile_speed_scale", 1.0)),
+				_format_percent_from_mult(scaled_effects["mult"].get("enemy_projectile_damage_scale", 1.0))
+			]
+		"elite_kill_orders":
+			subtitle = TranslationServer.translate("Elite count %s%%, elite hull %s%%") % [
+				_format_percent_from_mult(scaled_effects["mult"].get("elite_spawn_scale", 1.0)),
+				_format_percent_from_mult(scaled_effects["mult"].get("heavy_enemy_health_scale", 1.0))
+			]
+		"boss_breakers":
+			subtitle = TranslationServer.translate("Boss hull %s%%, boss damage %s%%") % [
+				_format_percent_from_mult(scaled_effects["mult"].get("apex_enemy_health_scale", 1.0)),
+				_format_percent_from_mult(scaled_effects["mult"].get("apex_enemy_damage_scale", 1.0))
 			]
 		_:
 			subtitle = TranslationServer.translate(str(def.get("summary", "Battlefield bonus")))

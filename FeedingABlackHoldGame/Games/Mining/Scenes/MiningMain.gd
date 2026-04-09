@@ -1242,7 +1242,7 @@ func _build_run_results(reason_key: String) -> Dictionary:
     summary_lines.append("")
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_DEPTH_TIER", [display_depth_level, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME")))]))
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_NODES_BROKEN", [nodes_broken]))
-    summary_lines.append("%s earned: %d%s" % [MINING_BALANCE.get_rank_xp_label(), run_xp, "  %s" % MINING_BALANCE.get_rank_up_label() if level_gain > 0 else ""])
+    summary_lines.append(_trf("%s earned: %d%s", [MINING_BALANCE.get_rank_xp_label(), run_xp, "  %s" % MINING_BALANCE.get_rank_up_label() if level_gain > 0 else ""]))
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_MONEY_EARNED", ["$%d" % total_money]))
     summary_lines.append("")
     summary_lines.append(tr("MINING_SUMMARY_TEXT_CARGO_PAYOUT"))
@@ -1499,13 +1499,13 @@ func _make_rank_progress_data(rank: int, rank_xp: int) -> Dictionary:
     }
 
 func _format_depth_status_text(unlocked_depth: int, current_rank: int) -> String:
-    return "Unlocked Depth: %d   %s: %d" % [unlocked_depth, MINING_BALANCE.get_rank_label(), current_rank]
+    return _trf("Unlocked Depth: %d   %s: %d", [unlocked_depth, MINING_BALANCE.get_rank_label(), current_rank])
 
 func _format_rank_xp_status_text(current_xp: int, next_xp: int, run_gain: int) -> String:
-    return "%s %d / %d   Dive +%d" % [MINING_BALANCE.get_rank_xp_label(), current_xp, next_xp, run_gain]
+    return _trf("%s %d / %d   Dive +%d", [MINING_BALANCE.get_rank_xp_label(), current_xp, next_xp, run_gain])
 
 func _format_rank_summary_text(rank: int, current_xp: int, next_xp: int) -> String:
-    return "%s %d   %s %d/%d" % [MINING_BALANCE.get_rank_label(), rank, MINING_BALANCE.get_rank_xp_label(), current_xp, next_xp]
+    return _trf("%s %d   %s %d/%d", [MINING_BALANCE.get_rank_label(), rank, MINING_BALANCE.get_rank_xp_label(), current_xp, next_xp])
 
 func _setup_run_start_banner() -> void:
     if top_bar == null or run_start_banner_panel != null:
@@ -2340,11 +2340,11 @@ func _render_summary_text(summary_view_model: Dictionary, progress: float) -> vo
         String(summary_view_model.get("depth_material_name", tr("MINING_MATERIAL_STONE_NAME")))
     ]))
     lines.append(_trf("MINING_SUMMARY_TEXT_NODES_BROKEN", [int(summary_view_model.get("nodes_broken", 0))]))
-    lines.append("%s earned: %d%s" % [
+    lines.append(_trf("%s earned: %d%s", [
         MINING_BALANCE.get_rank_xp_label(),
         int(summary_view_model.get("xp_earned", 0)),
         "  %s" % MINING_BALANCE.get_rank_up_label() if bool(summary_view_model.get("ranked_up", false)) else ""
-    ])
+    ]))
     lines.append(_trf("MINING_SUMMARY_TEXT_MONEY_EARNED", [_format_summary_money_span(
         _get_animated_money_value(total_money, progress),
         total_money,
@@ -2431,14 +2431,14 @@ func _format_level_bonus_summary(level_bonus_gains: Dictionary) -> String:
     var drill_health_gain: float = float(level_bonus_gains.get("drill_health", 0.0))
     var time_gain: float = float(level_bonus_gains.get("run_time", 0.0))
     if speed_gain > 0.0:
-        bonus_parts.append("+%d speed" % int(round(speed_gain)))
+        bonus_parts.append(_trf("+%d speed", [int(round(speed_gain))]))
     if drill_health_gain > 0.0:
-        bonus_parts.append("+%d drill health" % int(round(drill_health_gain)))
+        bonus_parts.append(_trf("+%d drill health", [int(round(drill_health_gain))]))
     if time_gain > 0.0:
-        bonus_parts.append("+%.1fs timing" % snappedf(time_gain, 0.1))
+        bonus_parts.append(_trf("+%.1fs timing", [snappedf(time_gain, 0.1)]))
     if bonus_parts.is_empty():
         return ""
-    return "Level bonus%s: %s" % ["es" if bonus_parts.size() > 1 else "", ", ".join(bonus_parts)]
+    return _trf("Level bonus%s: %s", ["es" if bonus_parts.size() > 1 else "", ", ".join(bonus_parts)])
 
 func _format_depth_unlock_summary(previous_depth_unlock: int, new_depth_unlock: int) -> String:
     if new_depth_unlock <= previous_depth_unlock:
@@ -2446,8 +2446,8 @@ func _format_depth_unlock_summary(previous_depth_unlock: int, new_depth_unlock: 
     var first_new_display_tier: int = _get_display_depth_tier_for_run_depth(previous_depth_unlock + 1)
     var latest_display_tier: int = _get_display_depth_tier_for_run_depth(new_depth_unlock)
     if first_new_display_tier == latest_display_tier:
-        return "New depth tier unlocked: %d" % latest_display_tier
-    return "New depth tiers unlocked: %d-%d" % [first_new_display_tier, latest_display_tier]
+        return _trf("New depth tier unlocked: %d", [latest_display_tier])
+    return _trf("New depth tiers unlocked: %d-%d", [first_new_display_tier, latest_display_tier])
 
 func _color_to_bbcode(color: Color) -> String:
     return color.to_html(false)

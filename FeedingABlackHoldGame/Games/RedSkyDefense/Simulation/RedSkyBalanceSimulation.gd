@@ -3,8 +3,6 @@ extends SceneTree
 const RED_SKY_DATA = preload("res://Games/RedSkyDefense/RedSkyData.gd")
 
 const CAMPAIGN_SEEDS := [11, 23, 47, 89, 131, 233]
-const DEMO_NODE_TARGET := 12
-const FULL_TIER_TARGET := 72
 
 func _init() -> void:
 	var pass_name: String = "pass"
@@ -29,7 +27,9 @@ func _run_report(pass_name: String) -> Dictionary:
 	var avg_run_waves := _average_nested_key(campaigns, "average_waves")
 	var avg_run_score := _average_nested_key(campaigns, "average_score")
 	var avg_run_reward := _average_nested_key(campaigns, "average_wallet_gain")
-	var full_node_target := RED_SKY_DATA.get_meta_upgrade_catalog().size()
+	var catalog: Array = RED_SKY_DATA.get_meta_upgrade_catalog()
+	var full_node_target := catalog.size()
+	var full_tier_target := full_node_target * 3
 
 	var assessment := "baseline"
 	if demo_minutes < 34.0:
@@ -50,9 +50,9 @@ func _run_report(pass_name: String) -> Dictionary:
 		"wave_upgrade_count": RED_SKY_DATA.get_wave_upgrade_catalog().size(),
 		"demo_target_minutes": 40,
 		"full_target_minutes": 120,
-		"demo_node_target": DEMO_NODE_TARGET,
+		"demo_node_target": RED_SKY_DATA.DEMO_MAX_UNLOCKABLE_META_NODES,
 		"full_node_target": full_node_target,
-		"full_tier_target": FULL_TIER_TARGET,
+		"full_tier_target": full_tier_target,
 		"avg_minutes_to_demo_nodes": snappedf(demo_minutes, 0.1),
 		"avg_minutes_to_full_nodes": snappedf(full_minutes, 0.1),
 		"avg_minutes_to_full_tiers": snappedf(tier_minutes, 0.1),
@@ -67,7 +67,9 @@ func _run_report(pass_name: String) -> Dictionary:
 func _simulate_campaign(seed: int) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
-	var full_node_target := RED_SKY_DATA.get_meta_upgrade_catalog().size()
+	var catalog: Array = RED_SKY_DATA.get_meta_upgrade_catalog()
+	var full_node_target := catalog.size()
+	var full_tier_target := full_node_target * 3
 	var meta_levels: Dictionary = {}
 	var wallet := 0
 	var total_minutes := 0.0
@@ -85,13 +87,13 @@ func _simulate_campaign(seed: int) -> Dictionary:
 
 		var unique_nodes: int = _count_unique_nodes(meta_levels)
 		var total_tiers: int = _count_total_tiers(meta_levels)
-		if minutes_to_demo < 0.0 and unique_nodes >= DEMO_NODE_TARGET:
+		if minutes_to_demo < 0.0 and unique_nodes >= RED_SKY_DATA.DEMO_MAX_UNLOCKABLE_META_NODES:
 			minutes_to_demo = total_minutes
 		if minutes_to_full_nodes < 0.0 and unique_nodes >= full_node_target:
 			minutes_to_full_nodes = total_minutes
-		if minutes_to_full_tiers < 0.0 and total_tiers >= FULL_TIER_TARGET:
+		if minutes_to_full_tiers < 0.0 and total_tiers >= full_tier_target:
 			minutes_to_full_tiers = total_minutes
-		if unique_nodes >= full_node_target and total_tiers >= FULL_TIER_TARGET:
+		if unique_nodes >= full_node_target and total_tiers >= full_tier_target:
 			break
 
 	return {

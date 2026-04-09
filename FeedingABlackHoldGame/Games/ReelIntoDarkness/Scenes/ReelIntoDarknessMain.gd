@@ -27,8 +27,8 @@ const HOOK_SURFACE_THROW_HEIGHT := 84.0
 const HOOK_RETRACT_SNAP := 12.0
 const HOOK_LINE_SEGMENTS := 22
 const CURSOR_RING_RADIUS := 11.0
-const HOOK_CAST_MIN_DURATION := 0.18
-const HOOK_CAST_MAX_DURATION := 0.42
+const HOOK_CAST_MIN_DURATION := 0.34
+const HOOK_CAST_MAX_DURATION := 0.72
 const HOOK_CAST_ARC_HEIGHT := 78.0
 const BITE_DISTANCE := 34.0
 const BITE_INTEREST_GAIN := 1.2
@@ -101,7 +101,7 @@ var line_surface_anchor_active := false
 var automation_timer := 0.0
 var automation_catch_flash := 0.0
 
-var crt_level := 0
+var crt_level := 4
 var crt_overlay_layer: CanvasLayer
 var crt_overlay_rect: ColorRect
 var crt_material: ShaderMaterial
@@ -476,7 +476,7 @@ func _begin_run() -> void:
 	summary_panel.modulate.a = 0.0
 
 	var viewport_size := get_viewport_rect().size
-	boat_target_pos = Vector2(viewport_size.x * 0.8, viewport_size.y * (SURFACE_RATIO * 0.66))
+	boat_target_pos = Vector2(viewport_size.x * 0.8, viewport_size.y * SURFACE_RATIO - 8.0)
 	boat_pos = Vector2(viewport_size.x + boat_size.x, boat_target_pos.y)
 	boat_bob_time = 0.0
 	hook_x = boat_target_pos.x - boat_size.x * 0.2
@@ -1383,7 +1383,7 @@ func _draw() -> void:
 		)
 		draw_rect(Rect2(Vector2(0.0, band_y), Vector2(viewport_size.x, band_h)), band_color, true)
 	_draw_water_decorations(water_rect, viewport_size, surface_y)
-	draw_line(Vector2(0.0, surface_y), Vector2(viewport_size.x, surface_y), Color(0.62, 0.85, 0.96, 0.9), 3.0)
+	draw_line(Vector2(0.0, surface_y), Vector2(viewport_size.x, surface_y), Color(0.42, 0.67, 0.78, 0.38), 2.0)
 	_draw_depth_markers(water_rect)
 	_draw_boat()
 	_draw_automation_gear()
@@ -1400,33 +1400,44 @@ func _draw_sky_moon_stars(viewport_size: Vector2, surface_y: float) -> void:
 		var u: float = float(s) / float(max(strips - 1, 1))
 		var y0: float = lerpf(0.0, surface_y, u)
 		var y1: float = lerpf(0.0, surface_y, (float(s) + 1.0) / float(strips))
-		var v: float = lerpf(0.034, 0.076, u)
+		var v: float = lerpf(0.03, 0.075, u)
 		# Slight R/B nudge so it reads as cool grey, not tinted blue.
-		var sky := Color(v + 0.002, v, v + 0.0015)
+		var sky := Color(v + 0.003, v + 0.001, v + 0.005)
 		draw_rect(Rect2(Vector2(0.0, y0), Vector2(viewport_size.x, y1 - y0 + 1.0)), sky, true)
 	# Very soft grey haze at horizon — low contrast handoff to water.
-	var haze_h: float = clampf(surface_y * 0.045, 5.0, 18.0)
+	var haze_h: float = clampf(surface_y * 0.12, 12.0, 36.0)
 	draw_rect(
 		Rect2(Vector2(0.0, surface_y - haze_h), Vector2(viewport_size.x, haze_h)),
-		Color(0.065, 0.065, 0.068, 0.1),
+		Color(0.08, 0.084, 0.09, 0.22),
 		true
 	)
 	# Few dim grey pinpricks; almost no twinkle.
-	var star_count: int = 14
-	var margin_x: float = 28.0
-	var margin_top: float = 12.0
-	var margin_bot: float = maxf(surface_y * 0.14, 16.0)
+	var star_count: int = 18
+	var margin_x: float = 34.0
+	var star_top: float = maxf(surface_y * 0.48, 18.0)
+	var star_band_h: float = maxf(surface_y * 0.34, 30.0)
 	for i in range(star_count):
 		var sx: float = fposmod(sin(float(i) * 12.9898 + 3.14) * 7821.37, viewport_size.x - margin_x * 2.0) + margin_x
-		var sy: float = fposmod(cos(float(i) * 78.233 + 1.618) * 5912.11, surface_y - margin_top - margin_bot) + margin_top
-		var tw: float = 0.14 + 0.025 * sin(ambient_anim_time * 0.35 + float(i) * 1.73)
-		tw = clampf(tw, 0.11, 0.18)
-		var r: float = 0.45 + fposmod(sin(float(i) * 9.1), 1.0) * 0.4
-		draw_circle(Vector2(sx, sy), r, Color(0.72, 0.72, 0.74, tw))
+		var sy: float = star_top + fposmod(cos(float(i) * 78.233 + 1.618) * 5912.11, star_band_h)
+		var blink: float = 0.35 + 0.65 * (0.5 + 0.5 * sin(ambient_anim_time * (1.2 + float(i % 4) * 0.22) + float(i) * 1.73))
+		var alpha: float = lerpf(0.1, 0.42, blink)
+		var r: float = 0.8 + fposmod(sin(float(i) * 9.1), 1.0) * 0.9
+		draw_circle(Vector2(sx, sy), r + 0.5, Color(0.78, 0.82, 0.88, alpha * 0.18))
+		draw_circle(Vector2(sx, sy), r, Color(0.82, 0.86, 0.94, alpha))
 	# Hazy grey moon: faint bloom, dull disc (no crisp white).
-	var moon_center := Vector2(viewport_size.x * 0.76, surface_y * 0.28)
-	draw_circle(moon_center, 28.0, Color(0.42, 0.42, 0.44, 0.035))
-	draw_circle(moon_center, 14.0, Color(0.62, 0.62, 0.64, 0.62))
+	for c in range(4):
+		var cloud_w: float = 74.0 + float(c) * 16.0
+		var cloud_h: float = 12.0 + float(c % 2) * 4.0
+		var cloud_x: float = fposmod(float(c) * 233.0 + sin(float(c) * 2.7) * 90.0 + ambient_anim_time * (4.0 + float(c) * 1.2), viewport_size.x + cloud_w * 2.0) - cloud_w
+		var cloud_y: float = surface_y - 22.0 - float(c) * 10.0 + sin(ambient_anim_time * (0.16 + float(c) * 0.05) + float(c)) * 3.0
+		var cloud_color := Color(0.72, 0.76, 0.82, 0.07)
+		draw_circle(Vector2(cloud_x, cloud_y), cloud_h, cloud_color)
+		draw_circle(Vector2(cloud_x + cloud_w * 0.22, cloud_y - 3.0), cloud_h * 1.1, cloud_color)
+		draw_circle(Vector2(cloud_x + cloud_w * 0.45, cloud_y + 1.0), cloud_h * 0.95, cloud_color)
+		draw_circle(Vector2(cloud_x + cloud_w * 0.68, cloud_y - 2.0), cloud_h * 0.85, cloud_color)
+	var moon_center := Vector2(viewport_size.x * 0.78, surface_y - 42.0)
+	draw_circle(moon_center, 22.0, Color(0.45, 0.47, 0.5, 0.04))
+	draw_circle(moon_center, 11.0, Color(0.66, 0.69, 0.74, 0.52))
 
 func _draw_water_decorations(water_rect: Rect2, viewport_size: Vector2, surface_y: float) -> void:
 	var wleft: float = water_rect.position.x
@@ -1815,7 +1826,7 @@ func _start_cast_to(screen_pos: Vector2) -> void:
 		min(anchor.y, target.y) - HOOK_CAST_ARC_HEIGHT - absf(target.x - anchor.x) * 0.08
 	)
 	cast_progress = 0.0
-	cast_duration = clampf(anchor.distance_to(target) / 1180.0, HOOK_CAST_MIN_DURATION, HOOK_CAST_MAX_DURATION)
+	cast_duration = clampf(anchor.distance_to(target) / 760.0, HOOK_CAST_MIN_DURATION, HOOK_CAST_MAX_DURATION)
 	cast_in_progress = true
 	hook_grabbed = false
 	run_state = RunState.DESCENDING
