@@ -26,6 +26,7 @@ func _input(event: InputEvent) -> void :
             _on_hide_settings_button_up()
         else:
             toggle_screen()
+        get_viewport().set_input_as_handled()
 
 
 func toggle_screen():

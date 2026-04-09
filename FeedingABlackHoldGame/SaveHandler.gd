@@ -58,10 +58,19 @@ func _ready():
     set_audio()
 
 
+func set_bus_volume_from_slider(bus_name: String, slider_unit: float) -> void:
+    var idx: int = AudioServer.get_bus_index(bus_name)
+    if idx < 0:
+        push_warning("SaveHandler: audio bus not found: %s" % bus_name)
+        return
+    var linear_gain: float = clampf(slider_unit * 3.0, 0.0001, 1.0)
+    AudioServer.set_bus_volume_db(idx, linear_to_db(linear_gain))
+
+
 func set_audio():
-    AudioServer.set_bus_volume_db(0, linear_to_db(main_volume * 3.0))
-    AudioServer.set_bus_volume_db(1, linear_to_db(music_volume * 3.0))
-    AudioServer.set_bus_volume_db(2, linear_to_db(effect_volume * 3.0))
+    set_bus_volume_from_slider("Master", main_volume)
+    set_bus_volume_from_slider("Music", music_volume)
+    set_bus_volume_from_slider("Effects", effect_volume)
     apply_audio_mute()
 
 
@@ -292,6 +301,8 @@ var run_timer = true
 var audio_muted = false
 var touch_input_mode = true
 var confirm_upgrade_purchase = false
+const VANGUARD_CRT_LEVEL_MAX := 11
+var vanguard_battle_crt_level: int = 0
 
 
 
@@ -331,6 +342,7 @@ func save_local_settings():
     save_data["audio_muted"] = audio_muted
     save_data["touch_input_mode"] = touch_input_mode
     save_data["confirm_upgrade_purchase"] = confirm_upgrade_purchase
+    save_data["vanguard_battle_crt_level"] = vanguard_battle_crt_level
     var file = FileAccess.open(local_settings_file_path, FileAccess.WRITE)
     file.store_string(str(save_data))
     file.close()
@@ -360,6 +372,7 @@ func load_local_settings():
         audio_muted = bool(json_data["audio_muted"]) if json_data.has("audio_muted") else false
         touch_input_mode = _load_bool_local_setting(json_data, "touch_input_mode", true)
         confirm_upgrade_purchase = _load_bool_local_setting(json_data, "confirm_upgrade_purchase", false)
+        vanguard_battle_crt_level = clampi(int(json_data["vanguard_battle_crt_level"]) if json_data.has("vanguard_battle_crt_level") else 0, 0, VANGUARD_CRT_LEVEL_MAX)
         # Migrate: if save had mouse mode, switch to touch and persist
         if not touch_input_mode:
             touch_input_mode = true
@@ -374,6 +387,7 @@ func load_local_settings():
         money_text = true
         touch_input_mode = true
         confirm_upgrade_purchase = false
+        vanguard_battle_crt_level = 0
         save_local_settings()
 
 func _load_bool_local_setting(data: Dictionary, key: String, default_value: bool) -> bool:
@@ -412,16 +426,19 @@ func update_first_time_load(value):
 
 func update_main_volume(new_value):
     main_volume = new_value
+    set_bus_volume_from_slider("Master", main_volume)
     save_local_settings()
 
 
 func update_music_volume(new_value):
     music_volume = new_value
+    set_bus_volume_from_slider("Music", music_volume)
     save_local_settings()
 
 
 func update_effect_volume(new_value):
     effect_volume = new_value
+    set_bus_volume_from_slider("Effects", effect_volume)
     save_local_settings()
 
 
@@ -521,6 +538,10 @@ func update_touch_input_mode(value: bool) -> void:
 func update_confirm_upgrade_purchase(value: bool) -> void:
     confirm_upgrade_purchase = value
     SignalBus.settings_updated.emit()
+    save_local_settings()
+
+func update_vanguard_battle_crt_level(value: int) -> void:
+    vanguard_battle_crt_level = clampi(value, 0, VANGUARD_CRT_LEVEL_MAX)
     save_local_settings()
 
 

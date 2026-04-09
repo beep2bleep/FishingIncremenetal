@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://cxdlrum1536e1"]
+[gd_scene format=3 uid="uid://cxdlrum1536e1"]
 
 [ext_resource type="Script" uid="uid://bupt471gcss2y" path="res://Minions/Tether.gd" id="1"]
 

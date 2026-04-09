@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SoundEffectSettings" format=3 uid="uid://c8k2rdsygun01"]
+
+[ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
+[ext_resource type="AudioStream" uid="uid://cmots47w0qyt8" path="res://Audio/Laser.mp3" id="2"]
+
+[resource]
+script = ExtResource("1")
+limit = 8
+type = 37
+sound_effect = ExtResource("2")
+volume = -18
+pitch_scale = 1.05
+pitch_randomness = 0.07
+taper_fall_off_curve = null
+metadata/_custom_type_script = "uid://blskskrd6wv02"

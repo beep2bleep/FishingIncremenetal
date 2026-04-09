@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://bn65yxx8f2rtf"]
+[gd_scene format=3 uid="uid://bn65yxx8f2rtf"]
 
 [ext_resource type="Script" uid="uid://dk3ujowc43m6m" path="res://MatterPerSecond.gd" id="1"]
 

@@ -2,6 +2,9 @@ extends CanvasLayer
 
 var new_scene_path: String
 
+## Path used for the *current* wipe. Do not read `new_scene_path` mid-transition for loads — it can be overwritten if another change is requested.
+var _sealed_transition_path: String = ""
+
 var from_node: Node
 var to_node: Node
 var to_state
@@ -17,7 +20,7 @@ const LOAD_TIME_SMOOTHING: float = 0.35
 var estimated_scene_load_seconds: float = 0.22
 var scene_change_started_msec: int = 0
 
-var _hold_wipe_until_load: bool = false
+const MAX_SCENE_SWAP_WAIT_FRAMES: int = 600
 
 func _ready() -> void :
     set_process(false)
@@ -37,12 +40,9 @@ func update_color():
 
 func change_to_new_scene(path, _to_state = null, duration_override: float = -1.0):
     new_scene_path = path
+    _sealed_transition_path = path
     to_state = _to_state
-    _hold_wipe_until_load = false
     set_process(false)
-    var req_err: Error = ResourceLoader.load_threaded_request(path, "", true)
-    if req_err == ERR_INVALID_PARAMETER:
-        push_warning("SceneChanger: invalid scene path for threaded load: %s" % path)
     var estimated_total_duration: float = duration_override
     if estimated_total_duration <= 0.0:
         estimated_total_duration = clamp(
@@ -99,48 +99,28 @@ func set_state():
 
 
 
-func _process(_delta: float) -> void :
-    if not _hold_wipe_until_load or new_scene_path.is_empty():
-        set_process(false)
-        return
-
-    var status: ResourceLoader.ThreadLoadStatus = ResourceLoader.load_threaded_get_status(new_scene_path)
-    if status == ResourceLoader.THREAD_LOAD_LOADED:
-        _hold_wipe_until_load = false
-        set_process(false)
-        _apply_packed_scene_change(true)
-    elif status == ResourceLoader.THREAD_LOAD_FAILED:
-        _hold_wipe_until_load = false
-        set_process(false)
-        _apply_fallback_scene_change()
-        _resume_transition_after_deferred_change()
-
-
 func do_scene_change() -> void :
     set_state()
 
-    if new_scene_path.is_empty():
+    var path_to_load: String = _sealed_transition_path
+    if path_to_load.is_empty():
+        path_to_load = new_scene_path
+    if path_to_load.is_empty():
         return
 
-    var status: ResourceLoader.ThreadLoadStatus = ResourceLoader.load_threaded_get_status(new_scene_path)
-    if status == ResourceLoader.THREAD_LOAD_LOADED:
-        _apply_packed_scene_change(false)
-        return
-    if status == ResourceLoader.THREAD_LOAD_FAILED:
-        _apply_fallback_scene_change()
-        return
+    # Single synchronous load — avoids threaded + sync races that produced wrong PackedScene / wrong scene.
+    var load_started_msec: int = Time.get_ticks_msec()
+    var packed: PackedScene = ResourceLoader.load(path_to_load, "", ResourceLoader.CACHE_MODE_REUSE) as PackedScene
+    var load_elapsed_s: float = float(Time.get_ticks_msec() - load_started_msec) / 1000.0
+    if load_elapsed_s > 0.0:
+        estimated_scene_load_seconds = lerp(estimated_scene_load_seconds, load_elapsed_s, LOAD_TIME_SMOOTHING)
 
-    $AnimationPlayer.pause()
-    _hold_wipe_until_load = true
-    set_process(true)
-
-
-func _apply_packed_scene_change(was_waiting: bool) -> void :
-    var packed: PackedScene = ResourceLoader.load_threaded_get(new_scene_path) as PackedScene
     if packed == null:
-        _apply_fallback_scene_change()
-        if was_waiting:
-            _resume_transition_after_deferred_change()
+        push_warning("SceneChanger: failed to load scene resource: %s — trying change_scene_to_file" % path_to_load)
+        scene_change_started_msec = Time.get_ticks_msec()
+        var previous_scene: Node = get_tree().current_scene
+        get_tree().call_deferred("change_scene_to_file", path_to_load)
+        _capture_scene_load_time(previous_scene)
         return
 
     scene_change_started_msec = Time.get_ticks_msec()
@@ -148,27 +128,17 @@ func _apply_packed_scene_change(was_waiting: bool) -> void :
     get_tree().call_deferred("change_scene_to_packed", packed)
     _capture_scene_load_time(previous_scene)
 
-    if was_waiting:
-        _resume_transition_after_deferred_change()
-
-
-func _apply_fallback_scene_change() -> void :
-    scene_change_started_msec = Time.get_ticks_msec()
-    var previous_scene: Node = get_tree().current_scene
-    get_tree().call_deferred("change_scene_to_file", new_scene_path)
-    _capture_scene_load_time(previous_scene)
-
-
-func _resume_transition_after_deferred_change() -> void :
-    await get_tree().process_frame
-    $AnimationPlayer.play()
 
 func _capture_scene_load_time(previous_scene: Node) -> void :
     await get_tree().process_frame
 
     # Wait until SceneTree swaps current_scene; this approximates blocking load duration.
-    while get_tree().current_scene == previous_scene:
+    var safety_frames: int = 0
+    while get_tree().current_scene == previous_scene and safety_frames < MAX_SCENE_SWAP_WAIT_FRAMES:
         await get_tree().process_frame
+        safety_frames += 1
+    if safety_frames >= MAX_SCENE_SWAP_WAIT_FRAMES:
+        push_warning("SceneChanger: current_scene did not change after scene swap (stuck on %s)" % previous_scene)
 
     if scene_change_started_msec <= 0:
         return
@@ -190,6 +160,8 @@ func _apply_transition_speed(duration_seconds: float) -> void :
     $AnimationPlayer.speed_scale = speed
 
 func _on_transition_animation_finished(animation_name: StringName) -> void:
+    if animation_name == &"Change Scene":
+        _sealed_transition_path = ""
     if animation_name == &"Change Scene" or animation_name == &"Do Transisiton":
         _set_web_transition_music_paused(false)
 

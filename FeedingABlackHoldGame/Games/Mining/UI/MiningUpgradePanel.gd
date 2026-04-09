@@ -141,9 +141,9 @@ func _style_button(button: Button) -> void:
 	button.add_theme_color_override("font_color", Color(0.97, 0.93, 0.82, 1.0))
 
 func _refresh_ui() -> void:
-	title_label.text = "MINING UPGRADES"
-	wallet_label.text = "Wallet: $%s    Best Depth: %dm    Start Depth: %dm" % [Util.get_number_short_text(int(persistent_data.get("wallet", 0))), int(round(float(persistent_data.get("best_depth", 0.0)))), int(persistent_data.get("selected_checkpoint", 0))]
-	summary_label.text = String(persistent_data.get("last_run_summary", "No mining run completed yet."))
+	title_label.text = tr("MINING UPGRADES")
+	wallet_label.text = tr("Wallet: $%s    Best Depth: %dm    Start Depth: %dm") % [Util.get_number_short_text(int(persistent_data.get("wallet", 0))), int(round(float(persistent_data.get("best_depth", 0.0)))), int(persistent_data.get("selected_checkpoint", 0))]
+	summary_label.text = tr(String(persistent_data.get("last_run_summary", "No mining run completed yet.")))
 	for checkpoint in checkpoint_buttons.keys():
 		var button: Button = checkpoint_buttons[checkpoint]
 		var owned := bool(persistent_data["checkpoint_owned"].get(str(checkpoint), false))
@@ -152,26 +152,26 @@ func _refresh_ui() -> void:
 		var cost := _get_checkpoint_cost(checkpoint)
 		button.icon = _get_icon_texture("checkpoint")
 		if owned:
-			button.text = "%dm beacon%s" % [checkpoint, " (selected)" if selected else ""]
+			button.text = tr("%dm beacon%s") % [checkpoint, tr(" (selected)") if selected else ""]
 			button.disabled = false
 		elif unlocked:
-			button.text = "Buy %dm beacon - $%d" % [checkpoint, cost]
+			button.text = tr("Buy %dm beacon - $%d") % [checkpoint, cost]
 			button.disabled = int(persistent_data.get("wallet", 0)) < cost
 		else:
-			button.text = "%dm beacon locked" % checkpoint
+			button.text = tr("%dm beacon locked") % checkpoint
 			button.disabled = true
 	var equipped: Array = persistent_data.get("equipped", ["pistol", ""])
 	for slot_index in range(loadout_buttons.size()):
 		var weapon_id := String(equipped[slot_index])
 		loadout_buttons[slot_index].icon = _get_icon_texture("weapon")
-		loadout_buttons[slot_index].text = "Gun %d: %s" % [slot_index + 1, "Empty" if weapon_id.is_empty() else weapon_labels.get(weapon_id, weapon_id)]
+		loadout_buttons[slot_index].text = tr("Gun %d: %s") % [slot_index + 1, tr("Empty") if weapon_id.is_empty() else tr(str(weapon_labels.get(weapon_id, weapon_id)))]
 	for upgrade_def in upgrade_catalog:
 		var id := String(upgrade_def["id"])
 		var button: Button = upgrade_buttons[id]
 		var level := _get_upgrade_level(id)
 		var cost := _get_upgrade_cost(upgrade_def)
 		button.icon = _get_icon_texture(String(upgrade_def.get("icon", "ore")))
-		button.text = "%s  Lv %d/%d  $%d\n%s%s" % [String(upgrade_def["label"]), level, int(upgrade_def["max_level"]), cost, String(upgrade_def["summary"]), _get_requirement_text(upgrade_def)]
+		button.text = tr("%s  Lv %d/%d  $%d\n%s%s") % [tr(String(upgrade_def["label"])), level, int(upgrade_def["max_level"]), cost, tr(String(upgrade_def["summary"])), _get_requirement_text(upgrade_def)]
 		button.disabled = level >= int(upgrade_def["max_level"]) or int(persistent_data.get("wallet", 0)) < cost or not _meets_requirements(upgrade_def)
 
 func _on_reset_pressed() -> void:
@@ -278,7 +278,7 @@ func _get_requirement_text(upgrade_def: Dictionary) -> String:
 	var parts := PackedStringArray()
 	var reqs: Dictionary = upgrade_def.get("requires", {})
 	for req_id in reqs.keys():
-		parts.append(" needs %s %d" % [String(_get_upgrade_def(String(req_id)).get("label", req_id)), int(reqs[req_id])])
+		parts.append(tr(" needs %s %d") % [tr(String(_get_upgrade_def(String(req_id)).get("label", req_id))), int(reqs[req_id])])
 	return "\n" + ", ".join(parts)
 
 func _get_unlocked_weapons() -> Array[String]:

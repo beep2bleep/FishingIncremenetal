@@ -5,6 +5,10 @@ const COIN_SCENE: PackedScene = preload("res://Fishing/CoinPickup.tscn")
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
+const VANGUARD_CRT_SHADER: Shader = preload("res://Games/Mining/UI/MiningCrt.gdshader")
+const VANGUARD_CRT_LEVEL_MAX := 11
+const VANGUARD_CRT_CANVAS_LAYER := 90
+const VANGUARD_CRT_TEXT_MIRROR_CANVAS_LAYER := 91
 const DEMO_PROJECT_SETTING := "global/Demo"
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
 const DEMO_THANK_YOU_LEVELS := [7, 8]
@@ -418,7 +422,7 @@ var settings_panel: PanelContainer
 var settings_content: Settings
 var fullscreen_button: Button
 var touch_input_button: Button
-var editor_crt_preview_button: Button
+var vanguard_crt_button: Button
 var hero_set_toggle_button: Button
 var level_choice_dialog: ConfirmationDialog
 var level_choice_selected_level: int = 1
@@ -440,7 +444,10 @@ var hero_new_y_debug: Dictionary = {
     "mage": 2.0,
 }
 var weapon_debug_panel: PanelContainer
-var editor_crt_preview_enabled: bool = false
+var vanguard_crt_overlay_layer: CanvasLayer
+var vanguard_crt_overlay_rect: ColorRect
+var vanguard_crt_material: ShaderMaterial
+var vanguard_crt_text_mirror: CrtTextMirrorOverlay
 var weapon_debug_value_labels: Dictionary = {}
 var weapon_debug_transforms: Dictionary = {
     "knight": {"rot": -45.0, "x": 56.0, "y": 12.0},
@@ -674,7 +681,7 @@ func _ready() -> void:
     _setup_settings_controls()
     _setup_fullscreen_button()
     _setup_touch_input_button()
-    _setup_editor_crt_preview_button()
+    _setup_vanguard_crt_button()
     _setup_hero_set_toggle_button()
     _layout_battle_utility_buttons()
     _setup_background_debug_controls()
@@ -688,9 +695,9 @@ func _ready() -> void:
     _update_speed_button_enabled_state()
     _refresh_fullscreen_button_icon()
     _refresh_touch_input_button()
-    _refresh_editor_crt_preview_button()
+    _refresh_vanguard_crt_button()
     _refresh_hero_set_toggle_button()
-    _refresh_editor_crt_overlay()
+    _refresh_vanguard_crt_overlay()
     _refresh_new_hero_scale_debug_panel()
     _update_ui()
 
@@ -700,9 +707,9 @@ func _on_battle_viewport_size_changed() -> void:
         _apply_battle_summary_layout(Vector2(9999.0, 9999.0))
     _refresh_fullscreen_button_icon()
     _refresh_touch_input_button()
-    _refresh_editor_crt_preview_button()
+    _refresh_vanguard_crt_button()
     _refresh_hero_set_toggle_button()
-    _refresh_editor_crt_overlay()
+    _refresh_vanguard_crt_overlay()
     _refresh_new_hero_scale_debug_panel()
     _update_ui()
 
@@ -726,11 +733,11 @@ func _layout_battle_utility_buttons() -> void:
         touch_input_button.offset_top = 244.0
         touch_input_button.offset_right = -16.0
         touch_input_button.offset_bottom = 288.0
-    if editor_crt_preview_button != null:
-        editor_crt_preview_button.offset_left = -136.0
-        editor_crt_preview_button.offset_top = 296.0
-        editor_crt_preview_button.offset_right = -16.0
-        editor_crt_preview_button.offset_bottom = 340.0
+    if vanguard_crt_button != null:
+        vanguard_crt_button.offset_left = -136.0
+        vanguard_crt_button.offset_top = 296.0
+        vanguard_crt_button.offset_right = -16.0
+        vanguard_crt_button.offset_bottom = 340.0
     if hero_set_toggle_button != null:
         hero_set_toggle_button.offset_left = -136.0
         hero_set_toggle_button.offset_top = 348.0
@@ -2368,6 +2375,15 @@ func _draw() -> void:
     draw_rect(touch_area, Color(0.18, 0.9, 0.95, 0.9), false, 4.0)
 
 func _unhandled_input(event: InputEvent) -> void:
+    if _is_settings_open():
+        if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+            _hide_settings_panel()
+            get_viewport().set_input_as_handled()
+        return
+    if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+        _on_settings_button_pressed()
+        get_viewport().set_input_as_handled()
+        return
     if battle_completed:
         return
     if summary_panel != null and summary_panel.visible:
@@ -2375,18 +2391,8 @@ func _unhandled_input(event: InputEvent) -> void:
             if _activate_summary_or_level_choice_from_controller():
                 get_viewport().set_input_as_handled()
             return
-        if event.is_action_pressed("escape") or event.is_action_pressed("back"):
-            if level_choice_dialog != null and level_choice_dialog.visible:
-                _on_level_choice_cancel_pressed()
-            return
         return
-    if _is_settings_open():
-        if event.is_action_pressed("escape") or event.is_action_pressed("back"):
-            _hide_settings_panel()
-        return
-    if event.is_action_pressed("escape") or event.is_action_pressed("back"):
-        _on_settings_button_pressed()
-        get_viewport().set_input_as_handled()
+    if _handle_vanguard_crt_hotkey(event):
         return
     if SaveHandler.touch_input_mode:
         if event is InputEventScreenTouch and event.pressed:
@@ -5523,63 +5529,144 @@ func _setup_touch_input_button() -> void:
     _style_mute_like_button(touch_input_button)
     canvas_layer.add_child(touch_input_button)
 
-func _should_show_editor_only_vanguard_crt_toggle() -> bool:
-    return OS.has_feature("editor") and Util.is_vanguard_game_active()
+func _should_show_vanguard_crt_controls() -> bool:
+    return Util.is_vanguard_game_active()
 
-func _setup_editor_crt_preview_button() -> void:
-    if not _should_show_editor_only_vanguard_crt_toggle():
+func _setup_vanguard_crt_button() -> void:
+    if not _should_show_vanguard_crt_controls():
         return
-    if editor_crt_preview_button != null and is_instance_valid(editor_crt_preview_button):
+    if vanguard_crt_button != null and is_instance_valid(vanguard_crt_button):
         return
     var canvas_layer: CanvasLayer = get_node_or_null("CanvasLayer")
     if canvas_layer == null:
         return
-    editor_crt_preview_button = Button.new()
-    editor_crt_preview_button.name = "EditorCrtPreviewButton"
-    editor_crt_preview_button.anchor_left = 1.0
-    editor_crt_preview_button.anchor_top = 0.0
-    editor_crt_preview_button.anchor_right = 1.0
-    editor_crt_preview_button.anchor_bottom = 0.0
-    editor_crt_preview_button.z_index = 30
-    editor_crt_preview_button.focus_mode = Control.FOCUS_NONE
-    editor_crt_preview_button.custom_minimum_size = Vector2(120, 44)
-    editor_crt_preview_button.add_theme_font_size_override("font_size", 14)
-    editor_crt_preview_button.pressed.connect(_on_editor_crt_preview_button_pressed)
-    _style_mute_like_button(editor_crt_preview_button)
-    canvas_layer.add_child(editor_crt_preview_button)
+    vanguard_crt_button = Button.new()
+    vanguard_crt_button.name = "VanguardCrtButton"
+    vanguard_crt_button.anchor_left = 1.0
+    vanguard_crt_button.anchor_top = 0.0
+    vanguard_crt_button.anchor_right = 1.0
+    vanguard_crt_button.anchor_bottom = 0.0
+    vanguard_crt_button.z_index = 30
+    vanguard_crt_button.focus_mode = Control.FOCUS_NONE
+    vanguard_crt_button.custom_minimum_size = Vector2(140, 44)
+    vanguard_crt_button.add_theme_font_size_override("font_size", 14)
+    vanguard_crt_button.tooltip_text = tr("Retro CRT filter (world only; HUD text bends with the screen but stays sharp). Click to cycle. [ and ] to tune.")
+    vanguard_crt_button.pressed.connect(_on_vanguard_crt_button_pressed)
+    _style_mute_like_button(vanguard_crt_button)
+    canvas_layer.add_child(vanguard_crt_button)
 
-func _refresh_editor_crt_preview_button() -> void:
-    if editor_crt_preview_button == null:
+func _refresh_vanguard_crt_button() -> void:
+    if vanguard_crt_button == null:
         return
-    editor_crt_preview_button.visible = _should_show_editor_only_vanguard_crt_toggle()
-    editor_crt_preview_button.text = "CRT Preview: %s" % ("On" if editor_crt_preview_enabled else "Off")
-
-func _on_editor_crt_preview_button_pressed() -> void:
-    if not _should_show_editor_only_vanguard_crt_toggle():
-        return
-    editor_crt_preview_enabled = not editor_crt_preview_enabled
-    _refresh_editor_crt_preview_button()
-    _refresh_editor_crt_overlay()
-
-func _refresh_editor_crt_overlay() -> void:
-    var overlay: CanvasLayer = get_node_or_null("EditorCrtOverlay") as CanvasLayer
-    var text_mirror_overlay: CanvasLayer = get_node_or_null("EditorCrtTextMirrorOverlay") as CanvasLayer
-    if _should_show_editor_only_vanguard_crt_toggle() and editor_crt_preview_enabled:
-        if overlay == null:
-            overlay = MINING_CRT_OVERLAY_SCRIPT.new().configure(2)
-            overlay.name = "EditorCrtOverlay"
-            add_child(overlay)
-        if text_mirror_overlay == null:
-            text_mirror_overlay = CRT_TEXT_MIRROR_OVERLAY_SCRIPT.new().configure(self, 3)
-            text_mirror_overlay.name = "EditorCrtTextMirrorOverlay"
-            add_child(text_mirror_overlay)
-        overlay.visible = true
-        text_mirror_overlay.visible = true
+    vanguard_crt_button.visible = _should_show_vanguard_crt_controls()
+    var level: int = SaveHandler.vanguard_battle_crt_level
+    if level <= 0:
+        vanguard_crt_button.text = tr("CRT: Off")
     else:
-        if overlay != null:
-            overlay.visible = false
-        if text_mirror_overlay != null:
-            text_mirror_overlay.visible = false
+        vanguard_crt_button.text = tr("CRT: %d/%d") % [level, VANGUARD_CRT_LEVEL_MAX]
+
+func _on_vanguard_crt_button_pressed() -> void:
+    if not _should_show_vanguard_crt_controls():
+        return
+    var next_level: int = (SaveHandler.vanguard_battle_crt_level + 1) % (VANGUARD_CRT_LEVEL_MAX + 1)
+    SaveHandler.update_vanguard_battle_crt_level(next_level)
+    _refresh_vanguard_crt_button()
+    _refresh_vanguard_crt_overlay()
+
+func _handle_vanguard_crt_hotkey(event: InputEvent) -> bool:
+    if not _should_show_vanguard_crt_controls():
+        return false
+    if not (event is InputEventKey):
+        return false
+    var key_event := event as InputEventKey
+    if not key_event.pressed or key_event.echo:
+        return false
+    if key_event.keycode == KEY_BRACKETLEFT:
+        _change_vanguard_crt_level(-1)
+        get_viewport().set_input_as_handled()
+        return true
+    if key_event.keycode == KEY_BRACKETRIGHT:
+        _change_vanguard_crt_level(1)
+        get_viewport().set_input_as_handled()
+        return true
+    return false
+
+func _change_vanguard_crt_level(delta: int) -> void:
+    if not _should_show_vanguard_crt_controls():
+        return
+    var new_level: int = clampi(SaveHandler.vanguard_battle_crt_level + delta, 0, VANGUARD_CRT_LEVEL_MAX)
+    if new_level == SaveHandler.vanguard_battle_crt_level:
+        return
+    SaveHandler.update_vanguard_battle_crt_level(new_level)
+    _refresh_vanguard_crt_button()
+    _refresh_vanguard_crt_overlay()
+
+func _ensure_vanguard_crt_overlay_nodes() -> void:
+    if vanguard_crt_overlay_layer != null and is_instance_valid(vanguard_crt_overlay_layer):
+        return
+    vanguard_crt_overlay_layer = CanvasLayer.new()
+    vanguard_crt_overlay_layer.name = "VanguardCrtOverlay"
+    vanguard_crt_overlay_layer.layer = VANGUARD_CRT_CANVAS_LAYER
+    vanguard_crt_overlay_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+    add_child(vanguard_crt_overlay_layer)
+    vanguard_crt_overlay_rect = ColorRect.new()
+    vanguard_crt_overlay_rect.name = "ScreenFx"
+    vanguard_crt_overlay_rect.anchor_left = 0.0
+    vanguard_crt_overlay_rect.anchor_top = 0.0
+    vanguard_crt_overlay_rect.anchor_right = 1.0
+    vanguard_crt_overlay_rect.anchor_bottom = 1.0
+    vanguard_crt_overlay_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    vanguard_crt_overlay_rect.color = Color(1.0, 1.0, 1.0, 1.0)
+    vanguard_crt_material = ShaderMaterial.new()
+    vanguard_crt_material.shader = VANGUARD_CRT_SHADER
+    vanguard_crt_overlay_rect.material = vanguard_crt_material
+    vanguard_crt_overlay_layer.add_child(vanguard_crt_overlay_rect)
+
+func _apply_vanguard_crt_shader_for_level(level: int) -> void:
+    if vanguard_crt_overlay_rect == null or vanguard_crt_material == null:
+        return
+    if level <= 0:
+        vanguard_crt_overlay_rect.visible = false
+        return
+    var strength: float = float(level) / float(VANGUARD_CRT_LEVEL_MAX)
+    var curved_strength: float = pow(strength, 1.12)
+    var barrel: float = lerpf(0.0, 0.055, curved_strength)
+    vanguard_crt_material.set_shader_parameter("fast_mode", false)
+    vanguard_crt_material.set_shader_parameter("target_vertical_resolution", lerpf(900.0, 320.0, curved_strength))
+    vanguard_crt_material.set_shader_parameter("barrel_distortion", barrel)
+    vanguard_crt_material.set_shader_parameter("scanline_strength", lerpf(0.0, 0.18, strength))
+    vanguard_crt_material.set_shader_parameter("grille_strength", lerpf(0.0, 0.08, strength))
+    vanguard_crt_material.set_shader_parameter("vignette_strength", lerpf(0.0, 0.38, curved_strength))
+    vanguard_crt_material.set_shader_parameter("noise_strength", lerpf(0.0, 0.02, curved_strength))
+    vanguard_crt_material.set_shader_parameter("chroma_offset", lerpf(0.0, 0.7, curved_strength))
+    vanguard_crt_material.set_shader_parameter("tint", Vector3(1.0, 0.98, 0.92))
+    vanguard_crt_overlay_rect.visible = true
+    if vanguard_crt_text_mirror != null and is_instance_valid(vanguard_crt_text_mirror):
+        vanguard_crt_text_mirror.sync_text_crt_from(vanguard_crt_material)
+
+func _release_vanguard_crt_text_mirror() -> void:
+    if vanguard_crt_text_mirror != null and is_instance_valid(vanguard_crt_text_mirror):
+        vanguard_crt_text_mirror.restore_source_text_colors()
+        vanguard_crt_text_mirror.queue_free()
+    vanguard_crt_text_mirror = null
+
+func _refresh_vanguard_crt_overlay() -> void:
+    if not _should_show_vanguard_crt_controls():
+        return
+    var level: int = SaveHandler.vanguard_battle_crt_level
+    if level <= 0:
+        if vanguard_crt_overlay_rect != null and is_instance_valid(vanguard_crt_overlay_rect):
+            vanguard_crt_overlay_rect.visible = false
+        _release_vanguard_crt_text_mirror()
+        return
+    _ensure_vanguard_crt_overlay_nodes()
+    if vanguard_crt_text_mirror == null or not is_instance_valid(vanguard_crt_text_mirror):
+        vanguard_crt_text_mirror = CRT_TEXT_MIRROR_OVERLAY_SCRIPT.new().configure(self, VANGUARD_CRT_TEXT_MIRROR_CANVAS_LAYER, true)
+        vanguard_crt_text_mirror.name = "VanguardCrtTextMirrorOverlay"
+        add_child(vanguard_crt_text_mirror)
+    else:
+        vanguard_crt_text_mirror.visible = true
+    _apply_vanguard_crt_shader_for_level(level)
 
 func _refresh_fullscreen_button_icon() -> void:
     if fullscreen_button == null:

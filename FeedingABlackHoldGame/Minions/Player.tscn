@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://bsrydvmplh26r"]
+[gd_scene format=3 uid="uid://bsrydvmplh26r"]
 
 [ext_resource type="Script" uid="uid://dp5hq27jtdwr" path="res://Minions/Player.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://hhagkp563ya4" path="res://Art/Circle 32.png" id="2"]

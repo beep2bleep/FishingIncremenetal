@@ -41,8 +41,8 @@ static func apply_simulation_upgrades() -> void:
 		upgrade.epilogue = 0
 		upgrade.type = Util.NODE_TYPES.NORMAL
 		upgrade.sim_key = upgrade_key
-		upgrade.sim_name = str(entry.get("label", upgrade_key))
-		upgrade.sim_description = str(entry.get("summary", "Turkey meta upgrade."))
+		upgrade.sim_name = TranslationServer.translate(str(entry.get("label", upgrade_key)))
+		upgrade.sim_description = TranslationServer.translate(str(entry.get("summary", "Turkey meta upgrade.")))
 		upgrade.sim_icon = str(entry.get("icon", "T"))
 		upgrade.sim_group = int(entry.get("branch", 0))
 		upgrade.sim_level = 1

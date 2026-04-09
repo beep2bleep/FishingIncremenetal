@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SoundEffectSettings" format=3 uid="uid://bgl8qjkx26hks"]
+
+[ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
+[ext_resource type="AudioStream" path="res://Audio/Sonniss/GDC2024/WHSH_Airy-Whoosh_Wind_Gust_11_RSCPC_DW.wav" id="2"]
+
+[resource]
+script = ExtResource("1")
+limit = 2
+type = 41
+sound_effect = ExtResource("2")
+volume = -16
+pitch_scale = 1.05
+pitch_randomness = 0.08
+taper_fall_off_curve = null
+metadata/_custom_type_script = "uid://blskskrd6wv02"

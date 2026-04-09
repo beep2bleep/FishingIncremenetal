@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="GameModeData" load_steps=3 format=3 uid="uid://c2dkopdidua12"]
+[gd_resource type="Resource" script_class="GameModeData" format=3 uid="uid://c2dkopdidua12"]
 
 [ext_resource type="Texture2D" uid="uid://j46l1lw3j3eu" path="res://Art/DAMAGE ICON.png" id="1"]
 [ext_resource type="Script" uid="uid://ftm4fwuq2swm" path="res://GameModeData.gd" id="2"]

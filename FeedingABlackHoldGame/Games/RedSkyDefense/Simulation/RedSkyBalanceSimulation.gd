@@ -124,6 +124,9 @@ func _simulate_run(meta_levels: Dictionary, seed: int) -> Dictionary:
 			break
 		waves_cleared = wave
 		score += float(wave_result.get("score", 0.0))
+		var cap: int = int(state.get("nuke_max", 5))
+		var regen: int = maxi(int(state.get("nuke_regen_per_wave", 1)), 1)
+		state["remaining_nukes"] = mini(int(state.get("remaining_nukes", 0)) + regen, cap)
 		state["hull"] = min(float(state.get("base_max_health", 0.0)), float(state.get("hull", 0.0)) + float(state.get("repair_between_waves", 0.0)))
 		state["shield"] = min(float(state.get("shield_max", 0.0)), float(state.get("shield", 0.0)) + float(state.get("shield_regen", 0.0)) * 2.2)
 		var offers: Array[String] = _roll_wave_offers(state, wave, rng)
@@ -246,7 +249,15 @@ func _apply_effect_bundle_to_state(state: Dictionary, bundle: Dictionary) -> voi
 				state["shield"] = float(state.get("shield", 0.0)) + value
 			"shield_fill":
 				state["shield"] = min(float(state.get("shield_max", 0.0)), float(state.get("shield", 0.0)) + value)
-			"nukes", "bullet_pierce", "tower_count", "drone_count", "tentacle_count":
+			"nukes":
+				state["remaining_nukes"] = int(state.get("remaining_nukes", 0)) + int(round(value))
+				state["remaining_nukes"] = mini(int(state.get("remaining_nukes", 0)), int(state.get("nuke_max", 5)))
+			"nuke_max":
+				state["nuke_max"] = int(state.get("nuke_max", 5)) + int(round(value))
+				state["remaining_nukes"] = mini(int(state.get("remaining_nukes", 0)), int(state.get("nuke_max", 5)))
+			"nuke_regen_per_wave":
+				state["nuke_regen_per_wave"] = maxi(int(state.get("nuke_regen_per_wave", 1)) + int(round(value)), 1)
+			"bullet_pierce", "tower_count", "drone_count", "tentacle_count":
 				state[key] = int(state.get(key, 0)) + int(round(value))
 			_:
 				state[key] = float(state.get(key, 0.0)) + value
@@ -263,6 +274,8 @@ func _apply_effect_bundle_to_state(state: Dictionary, bundle: Dictionary) -> voi
 				state["drone_fire_interval"] = float(state.get("drone_fire_interval", 1.0)) / value
 			_:
 				state[key] = float(state.get(key, 1.0)) * value
+
+	state["remaining_nukes"] = mini(int(state.get("remaining_nukes", 0)), int(state.get("nuke_max", 5)))
 
 func _purchase_meta_upgrades(meta_levels: Dictionary, wallet: int) -> int:
 	while true:
@@ -326,7 +339,9 @@ func _build_run_state(meta_levels: Dictionary) -> Dictionary:
 		"bullet_blast_damage": float(bonuses.get("bullet_blast_damage", 1.0)),
 		"nuke_damage": float(bonuses.get("nuke_damage", 0.0)),
 		"nuke_radius": float(bonuses.get("nuke_radius", 0.0)),
-		"remaining_nukes": int(bonuses.get("starting_nukes", 0)),
+		"nuke_max": int(bonuses.get("nuke_max", 5)),
+		"nuke_regen_per_wave": maxi(int(bonuses.get("nuke_regen_per_wave", 1)), 1),
+		"remaining_nukes": clampi(int(bonuses.get("starting_nukes", 1)), 0, int(bonuses.get("nuke_max", 5))),
 		"tower_count": int(bonuses.get("tower_count", 0)),
 		"tower_damage": float(bonuses.get("tower_damage", 0.0)),
 		"tower_fire_interval": float(bonuses.get("tower_fire_interval", 1.0)),

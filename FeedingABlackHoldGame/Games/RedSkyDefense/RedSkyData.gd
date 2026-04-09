@@ -23,7 +23,9 @@ const BASE_RUN_CONFIG := {
 	"fire_interval": 0.17,
 	"crit_chance": 0.04,
 	"crit_bonus": 1.65,
-	"starting_nukes": 2,
+	"starting_nukes": 1,
+	"nuke_max": 5,
+	"nuke_regen_per_wave": 1,
 	"nuke_damage": 128.0,
 	"nuke_radius": 292.0,
 	"pickup_radius": 28.0,
@@ -211,7 +213,7 @@ const META_UPGRADES: Array[Dictionary] = [
 	{
 		"id": "reserve_nukes",
 		"label": "Reserve Nukes",
-		"summary": "Start with extra ordnance so emergencies do not end the run.",
+		"summary": "More starting nukes and a higher stockpile cap for wave-to-wave rearming.",
 		"icon": ICON_PREFIX + "reserve_nukes",
 		"act": 3,
 		"cell": Vector2(2, 1),
@@ -652,12 +654,12 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 	{
 		"id": "reserve_nuke_pick",
 		"label": "Reserve Nuke",
-		"summary": "Add one nuke to the stockpile.",
+		"summary": "Add a nuke now and expand your max stockpile.",
 		"weight": 0.76,
 		"rarity": 1,
-		"max_stacks": 8,
+		"max_stacks": 6,
 		"requires": [],
-		"effects": {"add": {"nukes": 1.0}, "mult": {}}
+		"effects": {"add": {"nuke_max": 1.0, "nukes": 1.0}, "mult": {}}
 	},
 	{
 		"id": "fusion_warhead",
@@ -942,12 +944,32 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 	{
 		"id": "warhead_racks",
 		"label": "Warhead Racks",
-		"summary": "Carry more ordnance and make every blast count.",
+		"summary": "Load a spare warhead, speed up per-wave rearming, and sharpen the payload.",
 		"weight": 0.72,
 		"rarity": 2,
 		"max_stacks": 6,
 		"requires": [],
-		"effects": {"add": {"nukes": 1.0}, "mult": {"nuke_damage": 1.10}}
+		"effects": {"add": {"nuke_regen_per_wave": 1.0, "nukes": 1.0}, "mult": {"nuke_damage": 1.10}}
+	},
+	{
+		"id": "nuke_silo_extension",
+		"label": "Silo Extension",
+		"summary": "Expand how many nukes you can hold at once.",
+		"weight": 0.88,
+		"rarity": 0,
+		"max_stacks": 6,
+		"requires": [],
+		"effects": {"add": {"nuke_max": 2.0}, "mult": {}}
+	},
+	{
+		"id": "reactor_rearm_cycle",
+		"label": "Reactor Rearm",
+		"summary": "Fabricate more nukes each time a wave begins.",
+		"weight": 0.82,
+		"rarity": 1,
+		"max_stacks": 5,
+		"requires": [],
+		"effects": {"add": {"nuke_regen_per_wave": 1.0}, "mult": {}}
 	},
 	{
 		"id": "flak_wall",
@@ -1177,6 +1199,8 @@ static func build_meta_bonuses(meta_levels: Dictionary) -> Dictionary:
 				bonuses["crit_bonus"] += 0.18 * float(level)
 			"reserve_nukes":
 				bonuses["starting_nukes"] += int((level + 1) / 2)
+				bonuses["nuke_max"] += 1 + int(level / 2)
+				bonuses["nuke_regen_per_wave"] += int(level / 3)
 			"bigger_blasts":
 				bonuses["nuke_radius"] *= 1.0 + 0.055 * float(level)
 			"fusion_payload":
@@ -1236,6 +1260,9 @@ static func build_meta_bonuses(meta_levels: Dictionary) -> Dictionary:
 			"overclock_protocol":
 				bonuses["upgrade_power_multiplier"] *= 1.0 + 0.08 * float(level)
 
+	var start_nukes: int = int(bonuses.get("starting_nukes", 1))
+	var cap: int = int(bonuses.get("nuke_max", 5))
+	bonuses["nuke_max"] = maxi(cap, start_nukes)
 	return bonuses
 
 static func can_offer_wave_upgrade(
@@ -1328,167 +1355,174 @@ static func get_scaled_wave_effects(upgrade_id: String, upgrade_power_multiplier
 static func get_wave_upgrade_button_text(upgrade_id: String, upgrade_power_multiplier: float, offer_tier: int = 1) -> String:
 	var def: Dictionary = get_wave_upgrade_definition(upgrade_id)
 	if def.is_empty():
-		return "Unknown Upgrade"
+		return TranslationServer.translate("Unknown Upgrade")
 
 	var tier_def: Dictionary = get_wave_offer_tier_definition(offer_tier)
 	var scaled_effects: Dictionary = get_scaled_wave_effects(upgrade_id, upgrade_power_multiplier, offer_tier)
 	var subtitle := ""
 	match upgrade_id:
 		"focused_barrels":
-			subtitle = "Gun damage +%s" % _format_amount(scaled_effects["add"].get("gun_damage", 0.0), 1)
+			subtitle = TranslationServer.translate("Gun damage +%s") % _format_amount(scaled_effects["add"].get("gun_damage", 0.0), 1)
 		"cooling_jackets":
-			subtitle = "Fire rate +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("fire_rate", 1.0))
+			subtitle = TranslationServer.translate("Fire rate +%s%%") % _format_percent_from_mult(scaled_effects["mult"].get("fire_rate", 1.0))
 		"seeker_ammo":
-			subtitle = "Bullet speed +%s" % _format_amount(scaled_effects["add"].get("bullet_speed", 0.0), 0)
+			subtitle = TranslationServer.translate("Bullet speed +%s") % _format_amount(scaled_effects["add"].get("bullet_speed", 0.0), 0)
 		"armor_patch":
-			subtitle = "Hull +%s, repair %s" % [
+			subtitle = TranslationServer.translate("Hull +%s, repair %s") % [
 				_format_amount(scaled_effects["add"].get("base_max_health", 0.0), 0),
 				_format_amount(scaled_effects["add"].get("repair", 0.0), 0)
 			]
 		"shield_boost":
-			subtitle = "Shield +%s" % _format_amount(scaled_effects["add"].get("shield_max", 0.0), 0)
+			subtitle = TranslationServer.translate("Shield +%s") % _format_amount(scaled_effects["add"].get("shield_max", 0.0), 0)
 		"shield_relay_burst":
-			subtitle = "Shield regen +%s" % _format_amount(scaled_effects["add"].get("shield_regen", 0.0), 1)
+			subtitle = TranslationServer.translate("Shield regen +%s") % _format_amount(scaled_effects["add"].get("shield_regen", 0.0), 1)
 		"reserve_nuke_pick":
-			subtitle = "Gain +%s %s" % _format_count_with_word(scaled_effects["add"].get("nukes", 1.0), "nuke")
+			var rn: Array = _format_count_with_word(scaled_effects["add"].get("nukes", 1.0), "nuke")
+			subtitle = TranslationServer.translate("Gain +%s %s, max +%s") % [rn[0], rn[1], _format_amount(scaled_effects["add"].get("nuke_max", 1.0), 0)]
 		"fusion_warhead":
-			subtitle = "Nuke damage +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("nuke_damage", 1.0))
+			subtitle = TranslationServer.translate("Nuke damage +%s%%") % _format_percent_from_mult(scaled_effects["mult"].get("nuke_damage", 1.0))
 		"blast_shells":
-			subtitle = "Nuke radius +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("nuke_radius", 1.0))
+			subtitle = TranslationServer.translate("Nuke radius +%s%%") % _format_percent_from_mult(scaled_effects["mult"].get("nuke_radius", 1.0))
 		"piercing_rounds":
-			subtitle = "Pierce +%s" % _format_amount(scaled_effects["add"].get("bullet_pierce", 1.0), 0)
+			subtitle = TranslationServer.translate("Pierce +%s") % _format_amount(scaled_effects["add"].get("bullet_pierce", 1.0), 0)
 		"shrapnel_rounds":
-			subtitle = "Impact blast +%s" % _format_amount(scaled_effects["add"].get("bullet_blast_radius", 0.0), 0)
+			subtitle = TranslationServer.translate("Impact blast +%s") % _format_amount(scaled_effects["add"].get("bullet_blast_radius", 0.0), 0)
 		"capacitor_overdrive":
-			subtitle = "Crit chance +%s%%" % _format_percent_from_add(scaled_effects["add"].get("crit_chance", 0.0))
+			subtitle = TranslationServer.translate("Crit chance +%s%%") % _format_percent_from_add(scaled_effects["add"].get("crit_chance", 0.0))
 		"critical_mass":
-			subtitle = "Crit damage +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("crit_bonus", 1.0))
+			subtitle = TranslationServer.translate("Crit damage +%s%%") % _format_percent_from_mult(scaled_effects["mult"].get("crit_bonus", 1.0))
 		"flak_turret":
-			subtitle = "Deploy +%s %s" % _format_count_with_word(scaled_effects["add"].get("tower_count", 1.0), "tower")
+			subtitle = TranslationServer.translate("Deploy +%s %s") % _format_count_with_word(scaled_effects["add"].get("tower_count", 1.0), "tower")
 		"tower_overclock":
-			subtitle = "Tower damage +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("tower_damage", 1.0))
+			subtitle = TranslationServer.translate("Tower damage +%s%%") % _format_percent_from_mult(scaled_effects["mult"].get("tower_damage", 1.0))
 		"tower_autoloader":
-			subtitle = "Tower fire rate +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("tower_fire_rate", 1.0))
+			subtitle = TranslationServer.translate("Tower fire rate +%s%%") % _format_percent_from_mult(scaled_effects["mult"].get("tower_fire_rate", 1.0))
 		"interceptor_drone":
-			subtitle = "Deploy +%s %s" % _format_count_with_word(scaled_effects["add"].get("drone_count", 1.0), "drone")
+			subtitle = TranslationServer.translate("Deploy +%s %s") % _format_count_with_word(scaled_effects["add"].get("drone_count", 1.0), "drone")
 		"drone_firmware":
-			subtitle = "Drone damage +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("drone_damage", 1.0))
+			subtitle = TranslationServer.translate("Drone damage +%s%%") % _format_percent_from_mult(scaled_effects["mult"].get("drone_damage", 1.0))
 		"drone_afterburners":
-			subtitle = "Drone speed +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("drone_speed", 1.0))
+			subtitle = TranslationServer.translate("Drone speed +%s%%") % _format_percent_from_mult(scaled_effects["mult"].get("drone_speed", 1.0))
 		"tentacle_pod":
-			subtitle = "Grow +%s %s" % _format_count_with_word(scaled_effects["add"].get("tentacle_count", 1.0), "tentacle")
+			subtitle = TranslationServer.translate("Grow +%s %s") % _format_count_with_word(scaled_effects["add"].get("tentacle_count", 1.0), "tentacle")
 		"serrated_tentacles":
-			subtitle = "Tentacle damage +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("tentacle_damage", 1.0))
+			subtitle = TranslationServer.translate("Tentacle damage +%s%%") % _format_percent_from_mult(scaled_effects["mult"].get("tentacle_damage", 1.0))
 		"grasping_reach":
-			subtitle = "Tentacle reach +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("tentacle_range", 1.0))
+			subtitle = TranslationServer.translate("Tentacle reach +%s%%") % _format_percent_from_mult(scaled_effects["mult"].get("tentacle_range", 1.0))
 		"reflector_pylon":
-			subtitle = "Redirect chance +%s%%" % _format_percent_from_add(scaled_effects["add"].get("projectile_redirect_chance", 0.0))
+			subtitle = TranslationServer.translate("Redirect chance +%s%%") % _format_percent_from_add(scaled_effects["add"].get("projectile_redirect_chance", 0.0))
 		"salvage_burst":
-			subtitle = "Scrap yield +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("salvage_multiplier", 1.0))
+			subtitle = TranslationServer.translate("Scrap yield +%s%%") % _format_percent_from_mult(scaled_effects["mult"].get("salvage_multiplier", 1.0))
 		"magnet_sweep":
-			subtitle = "Pickup radius +%s" % _format_amount(scaled_effects["add"].get("pickup_radius", 0.0), 0)
+			subtitle = TranslationServer.translate("Pickup radius +%s") % _format_amount(scaled_effects["add"].get("pickup_radius", 0.0), 0)
 		"bounty_contracts":
-			subtitle = "Wave bonus +%s x wave" % _format_amount(scaled_effects["add"].get("wave_scrap_bonus", 0.0), 0)
+			subtitle = TranslationServer.translate("Wave bonus +%s x wave") % _format_amount(scaled_effects["add"].get("wave_scrap_bonus", 0.0), 0)
 		"claim_adjusters":
-			subtitle = "Auto-bank +%s%%" % _format_percent_from_add(scaled_effects["add"].get("wave_auto_bank_ratio", 0.0))
+			subtitle = TranslationServer.translate("Auto-bank +%s%%") % _format_percent_from_add(scaled_effects["add"].get("wave_auto_bank_ratio", 0.0))
 		"recovery_net":
-			subtitle = "Salvage life +%ss" % _format_amount(scaled_effects["add"].get("salvage_lifetime", 0.0), 1)
+			subtitle = TranslationServer.translate("Salvage life +%ss") % _format_amount(scaled_effects["add"].get("salvage_lifetime", 0.0), 1)
 		"scavenger_grid":
-			subtitle = "Yield +%s%%, bank +%s%%" % [
+			subtitle = TranslationServer.translate("Yield +%s%%, bank +%s%%") % [
 				_format_percent_from_mult(scaled_effects["mult"].get("salvage_multiplier", 1.0)),
 				_format_percent_from_add(scaled_effects["add"].get("wave_auto_bank_ratio", 0.0))
 			]
 		"command_overclock":
-			subtitle = "Future picks +%s%%" % _format_percent_from_mult(scaled_effects["mult"].get("upgrade_power_multiplier", 1.0))
+			subtitle = TranslationServer.translate("Future picks +%s%%") % _format_percent_from_mult(scaled_effects["mult"].get("upgrade_power_multiplier", 1.0))
 		"reinforced_plating":
-			subtitle = "Hull +%s, repair %s" % [
+			subtitle = TranslationServer.translate("Hull +%s, repair %s") % [
 				_format_amount(scaled_effects["add"].get("base_max_health", 0.0), 0),
 				_format_amount(scaled_effects["add"].get("repair", 0.0), 0)
 			]
 		"field_repairs":
-			subtitle = "Repair +%s" % _format_amount(scaled_effects["add"].get("repair", 0.0), 0)
+			subtitle = TranslationServer.translate("Repair +%s") % _format_amount(scaled_effects["add"].get("repair", 0.0), 0)
 		"shield_capacitors":
-			subtitle = "Shield +%s" % _format_amount(scaled_effects["add"].get("shield_max", 0.0), 0)
+			subtitle = TranslationServer.translate("Shield +%s") % _format_amount(scaled_effects["add"].get("shield_max", 0.0), 0)
 		"battery_loop":
-			subtitle = "Shield regen +%s, fire rate +%s%%" % [
+			subtitle = TranslationServer.translate("Shield regen +%s, fire rate +%s%%") % [
 				_format_amount(scaled_effects["add"].get("shield_regen", 0.0), 1),
 				_format_percent_from_mult(scaled_effects["mult"].get("fire_rate", 1.0))
 			]
 		"ammo_hoppers":
-			subtitle = "Gun damage +%s, fire rate +%s%%" % [
+			subtitle = TranslationServer.translate("Gun damage +%s, fire rate +%s%%") % [
 				_format_amount(scaled_effects["add"].get("gun_damage", 0.0), 1),
 				_format_percent_from_mult(scaled_effects["mult"].get("fire_rate", 1.0))
 			]
 		"warhead_racks":
-			subtitle = "Gain +%s %s, nuke damage +%s%%" % [
-				_format_count_with_word(scaled_effects["add"].get("nukes", 1.0), "nuke")[0],
-				_format_count_with_word(scaled_effects["add"].get("nukes", 1.0), "nuke")[1],
+			var wr: Array = _format_count_with_word(scaled_effects["add"].get("nukes", 1.0), "nuke")
+			subtitle = TranslationServer.translate("Gain +%s %s, +%s/wave, damage +%s%%") % [
+				wr[0],
+				wr[1],
+				_format_amount(scaled_effects["add"].get("nuke_regen_per_wave", 1.0), 0),
 				_format_percent_from_mult(scaled_effects["mult"].get("nuke_damage", 1.0))
 			]
+		"nuke_silo_extension":
+			subtitle = TranslationServer.translate("Max stockpile +%s") % _format_amount(scaled_effects["add"].get("nuke_max", 2.0), 0)
+		"reactor_rearm_cycle":
+			subtitle = TranslationServer.translate("Per-wave regen +%s") % _format_amount(scaled_effects["add"].get("nuke_regen_per_wave", 1.0), 0)
 		"flak_wall":
-			subtitle = "Deploy +%s %s, tower damage +%s%%" % [
+			subtitle = TranslationServer.translate("Deploy +%s %s, tower damage +%s%%") % [
 				_format_count_with_word(scaled_effects["add"].get("tower_count", 1.0), "tower")[0],
 				_format_count_with_word(scaled_effects["add"].get("tower_count", 1.0), "tower")[1],
 				_format_percent_from_mult(scaled_effects["mult"].get("tower_damage", 1.0))
 			]
 		"tower_rangefinder":
-			subtitle = "Tower range +%s, damage +%s%%" % [
+			subtitle = TranslationServer.translate("Tower range +%s, damage +%s%%") % [
 				_format_amount(scaled_effects["add"].get("tower_range", 0.0), 0),
 				_format_percent_from_mult(scaled_effects["mult"].get("tower_damage", 1.0))
 			]
 		"drone_swarm":
-			subtitle = "Deploy +%s %s, drone fire rate +%s%%" % [
+			subtitle = TranslationServer.translate("Deploy +%s %s, drone fire rate +%s%%") % [
 				_format_count_with_word(scaled_effects["add"].get("drone_count", 1.0), "drone")[0],
 				_format_count_with_word(scaled_effects["add"].get("drone_count", 1.0), "drone")[1],
 				_format_percent_from_mult(scaled_effects["mult"].get("drone_fire_rate", 1.0))
 			]
 		"hunter_link":
-			subtitle = "Drone range +%s, damage +%s%%" % [
+			subtitle = TranslationServer.translate("Drone range +%s, damage +%s%%") % [
 				_format_amount(scaled_effects["add"].get("drone_range", 0.0), 0),
 				_format_percent_from_mult(scaled_effects["mult"].get("drone_damage", 1.0))
 			]
 		"brood_nest":
-			subtitle = "Grow +%s %s, tentacle damage +%s%%" % [
+			subtitle = TranslationServer.translate("Grow +%s %s, tentacle damage +%s%%") % [
 				_format_count_with_word(scaled_effects["add"].get("tentacle_count", 1.0), "tentacle")[0],
 				_format_count_with_word(scaled_effects["add"].get("tentacle_count", 1.0), "tentacle")[1],
 				_format_percent_from_mult(scaled_effects["mult"].get("tentacle_damage", 1.0))
 			]
 		"tendon_network":
-			subtitle = "Tentacle reach +%s%%, slow +%s%%" % [
+			subtitle = TranslationServer.translate("Tentacle reach +%s%%, slow +%s%%") % [
 				_format_percent_from_mult(scaled_effects["mult"].get("tentacle_range", 1.0)),
 				_format_percent_from_add(scaled_effects["add"].get("tentacle_slow", 0.0))
 			]
 		"salvage_convoys":
-			subtitle = "Yield +%s%%, wave bonus +%s x wave" % [
+			subtitle = TranslationServer.translate("Yield +%s%%, wave bonus +%s x wave") % [
 				_format_percent_from_mult(scaled_effects["mult"].get("salvage_multiplier", 1.0)),
 				_format_amount(scaled_effects["add"].get("wave_scrap_bonus", 0.0), 0)
 			]
 		"magnetic_funnels":
-			subtitle = "Pickup radius +%s, bank +%s%%" % [
+			subtitle = TranslationServer.translate("Pickup radius +%s, bank +%s%%") % [
 				_format_amount(scaled_effects["add"].get("pickup_radius", 0.0), 0),
 				_format_percent_from_add(scaled_effects["add"].get("wave_auto_bank_ratio", 0.0))
 			]
 		"command_node":
-			subtitle = "Future choice count +%s" % _format_amount(scaled_effects["add"].get("level_up_choice_count", 0.0), 0)
+			subtitle = TranslationServer.translate("Future choice count +%s") % _format_amount(scaled_effects["add"].get("level_up_choice_count", 0.0), 0)
 		"refinement_protocols":
-			subtitle = "Future picks +%s%%, yield +%s%%" % [
+			subtitle = TranslationServer.translate("Future picks +%s%%, yield +%s%%") % [
 				_format_percent_from_mult(scaled_effects["mult"].get("upgrade_power_multiplier", 1.0)),
 				_format_percent_from_mult(scaled_effects["mult"].get("salvage_multiplier", 1.0))
 			]
 		_:
-			subtitle = str(def.get("summary", "Battlefield bonus"))
-	var summary: String = str(def.get("summary", "")).strip_edges()
+			subtitle = TranslationServer.translate(str(def.get("summary", "Battlefield bonus")))
+	var summary: String = TranslationServer.translate(str(def.get("summary", ""))).strip_edges()
 	var detail_line := ""
 	if summary.is_empty():
 		detail_line = subtitle
 	elif subtitle.is_empty():
 		detail_line = summary
 	else:
-		detail_line = "%s %s" % [summary, subtitle]
+		detail_line = TranslationServer.translate("%s %s") % [summary, subtitle]
 	var lines := PackedStringArray()
 	if offer_tier >= 2:
-		lines.append(str(tier_def.get("label", "")))
-	lines.append(str(def.get("label", upgrade_id)))
+		lines.append(TranslationServer.translate(str(tier_def.get("label", ""))))
+	lines.append(TranslationServer.translate(str(def.get("label", upgrade_id))))
 	if not detail_line.is_empty():
 		lines.append(detail_line)
 	return "\n".join(lines)
@@ -1510,6 +1544,8 @@ static func _build_tier_costs(base_cost: int, cost_scale: float, max_tier: int) 
 static func _should_ignore_power_scaling_for_add(key: String) -> bool:
 	return key in [
 		"nukes",
+		"nuke_max",
+		"nuke_regen_per_wave",
 		"bullet_pierce",
 		"tower_count",
 		"drone_count",
@@ -1520,6 +1556,8 @@ static func _should_ignore_power_scaling_for_add(key: String) -> bool:
 static func _should_round_up_additive_effect(key: String) -> bool:
 	return key in [
 		"nukes",
+		"nuke_max",
+		"nuke_regen_per_wave",
 		"bullet_pierce",
 		"tower_count",
 		"drone_count",
@@ -1542,7 +1580,7 @@ static func _format_amount(value: Variant, decimals: int) -> String:
 
 static func _format_count_with_word(value: Variant, singular_word: String) -> Array:
 	var amount: int = _round_up_effect_amount(float(value))
-	var word: String = singular_word if amount == 1 else "%ss" % singular_word
+	var word: String = TranslationServer.translate(singular_word if amount == 1 else "%ss" % singular_word)
 	return [str(amount), word]
 
 static func _format_percent_from_add(value: Variant) -> String:

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SoundEffectSettings" format=3 uid="uid://bgl8qjuybwo6s"]
+
+[ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
+[ext_resource type="AudioStream" path="res://Audio/Sonniss/GDC2024/WOODFric_Scrapes09_InMotionAudio_Wood.wav" id="2"]
+
+[resource]
+script = ExtResource("1")
+limit = 10
+type = 42
+sound_effect = ExtResource("2")
+volume = -32
+pitch_scale = 0.92
+pitch_randomness = 0.12
+taper_fall_off_curve = null
+metadata/_custom_type_script = "uid://blskskrd6wv02"

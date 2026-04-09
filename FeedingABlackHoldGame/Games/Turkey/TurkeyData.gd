@@ -3,7 +3,10 @@ class_name TurkeyData
 
 const DEFAULT_BALL_WEIGHT_LB := 8.0
 const KG_PER_LB := 0.45359237
+## League Pass upgrade level required to reach each lane tier index (0..4).
 const LANE_TIER_UNLOCK_LEVELS := [0, 2, 4, 6, 8]
+## Completed Turkey series (runs) — parallel unlock so higher tiers are reachable without maxing League Pass.
+const VETERAN_RUN_MILESTONES := [0, 2, 7, 18, 40]
 
 ## Extra mass multiplier on top of lane tier mass; multiplied per-tier by `gold_mass_scale` on gold pins.
 const GOLD_PIN_MASS_MULT := 6.75
@@ -294,7 +297,7 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 	{
 		"id": "league_pass",
 		"label": "League Pass",
-		"summary": "Promote into harder lane tiers with more pins, heavier decks, and better rewards.",
+		"summary": "Promote into harder lane tiers with more pins, heavier decks, and better rewards. You also unlock tiers by finishing series (see lane tier prompt).",
 		"icon": "J",
 		"max_tier": 8,
 		"base_cost": 120,
@@ -486,6 +489,34 @@ static func get_lane_tier(index: int) -> Dictionary:
 	var clamped_index: int = clampi(index, 0, LANE_TIERS.size() - 1)
 	return LANE_TIERS[clamped_index].duplicate(true)
 
+static func _get_lane_tier_from_veteran_runs(runs: int) -> int:
+	var tier := 0
+	for index in range(VETERAN_RUN_MILESTONES.size()):
+		if runs >= int(VETERAN_RUN_MILESTONES[index]):
+			tier = index
+	return mini(tier, LANE_TIERS.size() - 1)
+
+## Highest lane tier index the player may select: best of League Pass unlocks and veteran (completed series) unlocks.
+static func get_max_selectable_lane_tier(data: Dictionary) -> int:
+	var league_pass: int = int(data.get("meta_upgrades", {}).get("league_pass", 0))
+	var runs: int = int(data.get("runs", 0))
+	var from_league: int = _get_lane_tier_from_league_level(league_pass)
+	var from_veteran: int = _get_lane_tier_from_veteran_runs(runs)
+	return mini(LANE_TIERS.size() - 1, maxi(from_league, from_veteran))
+
+static func get_lane_tier_cap_breakdown(data: Dictionary) -> Dictionary:
+	var league_pass: int = int(data.get("meta_upgrades", {}).get("league_pass", 0))
+	var runs: int = int(data.get("runs", 0))
+	var from_league: int = _get_lane_tier_from_league_level(league_pass)
+	var from_veteran: int = _get_lane_tier_from_veteran_runs(runs)
+	return {
+		"max_tier": get_max_selectable_lane_tier(data),
+		"tier_from_league_pass": from_league,
+		"tier_from_veteran_runs": from_veteran,
+		"league_pass_level": league_pass,
+		"completed_series": runs,
+	}
+
 static func build_meta_stats(data: Dictionary, gameplay_lane_tier: int = -1) -> Dictionary:
 	var upgrades: Dictionary = data.get("meta_upgrades", {})
 	var power_training: int = int(upgrades.get("power_training", 0))
@@ -508,7 +539,6 @@ static func build_meta_stats(data: Dictionary, gameplay_lane_tier: int = -1) -> 
 	var turkey_bonus: int = int(upgrades.get("turkey_bonus", 0))
 	var pin_science: int = int(upgrades.get("pin_science", 0))
 	var kingpin_hunter: int = int(upgrades.get("kingpin_hunter", 0))
-	var league_pass: int = int(upgrades.get("league_pass", 0))
 	var challenge_notes: int = int(upgrades.get("challenge_notes", 0))
 	var gutter_whisper: int = int(upgrades.get("gutter_whisper", 0))
 	var purse_bump: int = int(upgrades.get("purse_bump", 0))
@@ -516,7 +546,7 @@ static func build_meta_stats(data: Dictionary, gameplay_lane_tier: int = -1) -> 
 	var ball_return_ai: int = int(upgrades.get("ball_return_ai", 0))
 	var champion_purse: int = int(upgrades.get("champion_purse", 0))
 
-	var league_lane_cap: int = _get_lane_tier_from_league_level(league_pass)
+	var league_lane_cap: int = get_max_selectable_lane_tier(data)
 	var lane_tier: int = league_lane_cap
 	if gameplay_lane_tier >= 0:
 		lane_tier = clampi(gameplay_lane_tier, 0, league_lane_cap)
@@ -560,7 +590,7 @@ static func build_meta_stats(data: Dictionary, gameplay_lane_tier: int = -1) -> 
 		"tier_reward_bonus": float(purse_bump) * 0.08 + float(champion_purse) * 0.12,
 		"lane_tier": lane_tier,
 		"max_selectable_lane_tier": league_lane_cap,
-		"lane_tier_label": str(lane_tier_data.get("label", "Practice House")),
+		"lane_tier_label": TranslationServer.translate(str(lane_tier_data.get("label", "Practice House"))),
 		"tier_pin_count": int(lane_tier_data.get("pin_count", 10)),
 		"tier_gold_pin_count": gold_pin_count,
 		"tier_gold_mass_scale": float(lane_tier_data.get("gold_mass_scale", 1.0)),
@@ -578,8 +608,7 @@ static func calculate_meta_reward(results: Dictionary, data: Dictionary) -> int:
 	var strikes: int = max(0, int(results.get("strikes", 0)))
 	var spares: int = max(0, int(results.get("spares", 0)))
 	var pinfall_total: int = max(score, int(results.get("pinfall_total", score)))
-	var league_pass: int = int(data.get("meta_upgrades", {}).get("league_pass", 0))
-	var league_lane_cap: int = _get_lane_tier_from_league_level(league_pass)
+	var league_lane_cap: int = get_max_selectable_lane_tier(data)
 	var lane_tier: int = clampi(int(results.get("lane_tier", 0)), 0, league_lane_cap)
 	var gold_pins_knocked: int = max(0, int(results.get("gold_pins_knocked", 0)))
 	var turkey_cash: int = 70 if bool(results.get("turkey_bonus", false)) else 0
@@ -603,6 +632,82 @@ static func calculate_meta_reward(results: Dictionary, data: Dictionary) -> int:
 	base_reward *= 1.0 + tier_reward_bonus * float(lane_tier)
 	base_reward *= float(meta_stats.get("reward_multiplier", 1.0))
 	return max(18, int(round(base_reward)))
+
+## Bar chart rows for the series summary: each `money` is a share of the final payout (sums to the wallet gain).
+static func get_summary_wallet_chart_rows(results: Dictionary, data: Dictionary) -> Array:
+	var score: int = max(0, int(results.get("score", 0)))
+	var strikes: int = max(0, int(results.get("strikes", 0)))
+	var spares: int = max(0, int(results.get("spares", 0)))
+	var pinfall_total: int = max(score, int(results.get("pinfall_total", score)))
+	var gold_pins_knocked: int = max(0, int(results.get("gold_pins_knocked", 0)))
+	var league_lane_cap: int = get_max_selectable_lane_tier(data)
+	var lane_tier: int = clampi(int(results.get("lane_tier", 0)), 0, league_lane_cap)
+	var turkey_cash: int = 70 if bool(results.get("turkey_bonus", false)) else 0
+	var meta_stats: Dictionary = build_meta_stats(data, lane_tier)
+	var strike_reward_bonus: float = float(meta_stats.get("strike_reward_bonus", 0.0))
+	var spare_reward_bonus: float = float(meta_stats.get("spare_reward_bonus", 0.0))
+	var gold_val: float = float(meta_stats.get("tier_gold_pin_value", 0.0))
+
+	var pinfall_base: float = 28.0 + float(score) * 2.4 + float(pinfall_total) * 0.9
+	var strike_c: float = float(strikes) * 22.0 + float(strikes) * 10.0 * strike_reward_bonus
+	var spare_c: float = float(spares) * 15.0 + float(spares) * 8.0 * spare_reward_bonus
+	var lane_c: float = float(lane_tier) * 35.0
+	var gold_c: float = float(gold_pins_knocked) * gold_val
+	var turkey_c: float = float(turkey_cash)
+
+	var weights: Array[float] = [
+		maxf(0.0, pinfall_base),
+		maxf(0.0, strike_c),
+		maxf(0.0, spare_c),
+		maxf(0.0, lane_c),
+		maxf(0.0, gold_c),
+		maxf(0.0, turkey_c),
+	]
+	var labels: Array[String] = [
+		"Base & pinfall",
+		"Strikes",
+		"Spares",
+		"Lane tier",
+		"Gold pins",
+		"Turkey bonus",
+	]
+	var colors: Array[Color] = [
+		Color(0.5, 0.82, 0.98, 1.0),
+		Color(0.98, 0.72, 0.38, 1.0),
+		Color(0.62, 0.9, 0.58, 1.0),
+		Color(0.86, 0.65, 1.0, 1.0),
+		Color(0.98, 0.92, 0.4, 1.0),
+		Color(0.98, 0.42, 0.55, 1.0),
+	]
+
+	var final_reward: int = calculate_meta_reward(results, data)
+	var total_weight: float = 0.0
+	for w in weights:
+		total_weight += w
+
+	var rows: Array[Dictionary] = []
+	if total_weight <= 0.0:
+		rows.append({"label": TranslationServer.translate("Series payout"), "money": float(final_reward), "color": Color(0.37, 0.86, 0.61, 1.0)})
+		return rows
+
+	var n: int = weights.size()
+	var portions: Array[int] = []
+	portions.resize(n)
+	var acc := 0
+	for i in range(n - 1):
+		var p: int = 0
+		if weights[i] > 0.0:
+			p = int(round(float(final_reward) * weights[i] / total_weight))
+		p = maxi(0, p)
+		portions[i] = p
+		acc += p
+	portions[n - 1] = maxi(0, final_reward - acc)
+	for i in range(n):
+		if portions[i] > 0:
+			rows.append({"label": TranslationServer.translate(labels[i]), "money": float(portions[i]), "color": colors[i]})
+	if rows.is_empty():
+		rows.append({"label": TranslationServer.translate("Series payout"), "money": float(final_reward), "color": Color(0.37, 0.86, 0.61, 1.0)})
+	return rows
 
 static func _build_tier_costs(base_cost: int, max_tier: int, cost_mult: float) -> Array[int]:
 	var costs: Array[int] = []

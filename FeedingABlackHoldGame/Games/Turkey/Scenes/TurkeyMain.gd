@@ -5,6 +5,9 @@ const TURKEY_PROGRESS := preload("res://Games/Turkey/TurkeyProgress.gd")
 const IN_GAME_PAUSE_MENU_SCRIPT := preload("res://Core/InGamePauseMenu.gd")
 const CRT_SHADER := preload("res://Games/Mining/UI/MiningCrt.gdshader")
 
+func _trf(text: String, args: Array = []) -> String:
+    return tr(text) % args if not args.is_empty() else tr(text)
+
 const FRAME_COUNT := 3
 const BASE_LANE_WIDTH := 1.05
 const LANE_LENGTH := 9.144
@@ -21,18 +24,21 @@ const POWER_SWEEP_TOP_SPEED := 0.42
 const POWER_SWEEP_CURVE := 1.45
 const THROW_MIN_SPEED := 6.0
 const THROW_MAX_SPEED := 8.8
-const SHOT_SETTLE_TIMEOUT := 5.0
 const SHOT_SETTLE_GRACE := 0.45
-const SHOT_SETTLE_CONFIRM := 0.28
+## Seconds after the ball leaves the pin-deck zone before we may score (wall-clock).
+const POST_BALL_EXIT_SCORE_DELAY := 1.5
+## If pins still move fast after that, wait at most this much longer before scoring anyway.
+const PIN_MOTION_EXTRA_AFTER_EXIT := 1.0
+const PIN_SIGNIFICANT_LINEAR_SPEED := 0.42
+const PIN_SIGNIFICANT_ANGULAR_SPEED := 0.68
+## If the ball never crosses the exit line (e.g. stuck), start the post-exit timer from here.
+const FORCED_BALL_EXIT_AFTER_SHOT_ELAPSED := 7.5
+const SHOT_ABSOLUTE_FAILSAFE := 14.0
 const STANDING_UP_DOT := 0.84
 const START_POSITION_WIDEN_MULT := 1.5
 const START_X_LIMIT := 0.34 * START_POSITION_WIDEN_MULT
 const TARGET_X_LIMIT := 0.48 * 1.5 * 1.5
 const MAX_LATERAL_SPEED := 2.1 * 1.5 * 1.5
-const FAST_FINISH_PIN_LINEAR_SPEED := 0.24
-const FAST_FINISH_PIN_ANGULAR_SPEED := 0.42
-const FAST_FINISH_BALL_FORWARD_SPEED := 0.55
-const FAST_FINISH_BALL_TOTAL_SPEED := 1.1
 ## Lane / gutter floor collision ends here; open pit beyond so the ball drops instead of hugging a tall backstop.
 const LANE_WORLD_Z_START := -0.55
 const PIT_BACK_WALL_Z := LANE_LENGTH + 0.82
@@ -40,11 +46,20 @@ const PIT_FLOOR_Y := -2.45
 const PIT_HALF_WIDTH_MIN := 1.22
 const CRT_LEVEL_MAX := 11
 const CRT_LAYER := 2
-const PIN_DECK_MINIMAP_LAYER := 10
 const EDITOR_DEBUG_LAYER := 3
-const PIN_DECK_MINIMAP_VIEWPORT_SIZE := Vector2i(420, 300)
-const PIN_DECK_MINIMAP_DISPLAY_SIZE := Vector2(210, 150)
+## Below main HUD (layer 0) so pin deck preview sits under UI; pause/settings uses layer 50.
+const PIN_DECK_MINIMAP_LAYER := -1
+const PIN_DECK_MINIMAP_VIEWPORT_SIZE := Vector2i(560, 400)
+const PIN_DECK_MINIMAP_DISPLAY_SIZE := Vector2(280, 200)
 const PIN_DECK_MINIMAP_CAMERA_HEIGHT := 14.0
+## Same gold as UpgradeScreen "TURKEY MODE" label — Turkey meta chrome.
+const TURKEY_UPGRADE_ACCENT := Color(0.96, 0.84, 0.45, 1.0)
+const END_SUM_PANEL_BG := Color(0.07, 0.06, 0.05, 0.97)
+const END_SUM_CHART_PANEL_BG := Color(0.1, 0.09, 0.07, 0.94)
+const END_SUM_CHART_PANEL_BORDER := Color(0.72, 0.58, 0.28, 0.88)
+const END_SUM_TEXT_PRIMARY := Color(0.95, 0.91, 0.82, 1.0)
+const END_SUM_TEXT_MUTED := Color(0.82, 0.76, 0.62, 0.92)
+const END_SUM_BAR_TRACK := Color(0.16, 0.14, 0.11, 0.96)
 const META_PIN_KIND := "turkey_pin_kind"
 const PIN_KIND_NORMAL := "normal"
 const PIN_KIND_GOLD := "gold"
@@ -56,6 +71,12 @@ const SPIN_RIGHT_COLOR := Color(0.36, 0.58, 0.96, 1.0)
 const POWER_BAR_LOW_COLOR := Color(0.58, 0.6, 0.62, 1.0)
 const POWER_BAR_HIGH_COLOR := Color(0.24, 0.82, 0.36, 1.0)
 const POWER_BAR_BG_COLOR := Color(0.14, 0.15, 0.16, 1.0)
+
+const END_SUM_CHART_ANIM_MIN_DURATION := 0.8
+const END_SUM_CHART_ANIM_MAX_DURATION := 3.2
+const END_SUM_CHART_TICK_INTERVAL := 0.085
+const END_SUM_CHART_POP_SCALE := 1.08
+const END_SUM_WALLET_POP_SCALE := 1.12
 
 enum RunState {
     READY,
@@ -72,6 +93,7 @@ enum RunState {
 @onready var title_label: Label = %TitleLabel
 @onready var wallet_label: Label = %WalletLabel
 @onready var top_ui_vbox: VBoxContainer = %TopVBox
+@onready var ui_canvas_layer: CanvasLayer = $CanvasLayer
 @onready var scorecard_label: Label = %ScorecardLabel
 @onready var frame_status_label: Label = %FrameStatusLabel
 @onready var result_label: Label = %ResultLabel
@@ -82,11 +104,13 @@ enum RunState {
 @onready var power_bar: ProgressBar = %PowerBar
 @onready var end_panel: PanelContainer = %EndPanel
 @onready var end_title_label: Label = %EndTitleLabel
+@onready var summary_wallet_label: Label = %SummaryWalletLabel
+@onready var turkey_money_chart: PanelContainer = %TurkeyMoneyChart
+@onready var turkey_stats_chart: PanelContainer = %TurkeyStatsChart
 @onready var end_scorecard_label: Label = %EndScorecardLabel
 @onready var end_summary_label: Label = %EndSummaryLabel
 @onready var play_again_button: Button = %PlayAgainButton
 @onready var upgrade_button: Button = %UpgradeButton
-@onready var menu_button: Button = %MenuButton
 
 var rng := RandomNumberGenerator.new()
 var run_state: RunState = RunState.READY
@@ -101,7 +125,8 @@ var current_target_x := 0.0
 var current_power_norm := 0.0
 var power_direction := 1.0
 var shot_elapsed := 0.0
-var shot_settled_elapsed := 0.0
+## `shot_elapsed` when the ball first clears the pin deck for scoring; -1 until then.
+var ball_exit_anchor_shot_elapsed := -1.0
 var standing_before_throw := 10
 var current_series_pin_target := 10
 var current_pin_standing_dot := STANDING_UP_DOT
@@ -130,6 +155,8 @@ var editor_debug_label: Label
 var power_bar_fill_style: StyleBoxFlat
 var power_bar_background_style: StyleBoxFlat
 var pin_deck_minimap_layer: CanvasLayer
+var pin_deck_minimap_panel: PanelContainer
+var pin_deck_minimap_viewport_container: SubViewportContainer
 var pin_deck_minimap_camera: Camera3D
 var pin_deck_minimap_subviewport: SubViewport
 var runtime_lane_width: float = BASE_LANE_WIDTH
@@ -137,6 +164,7 @@ var gutter_finish_x: float = BASE_LANE_WIDTH * 0.5 + GUTTER_WIDTH * 0.7
 var pin_deck_back_z: float = HEAD_PIN_Z + PIN_ROW_SPACING_Z * 3.0
 var shot_clearance_z: float = HEAD_PIN_Z + PIN_ROW_SPACING_Z * 3.0 + 0.38
 var lane_surface_back_z: float = HEAD_PIN_Z + PIN_ROW_SPACING_Z * 3.0 + 0.48
+var runtime_pit_back_wall_z: float = PIT_BACK_WALL_Z
 var pit_half_width_active: float = PIT_HALF_WIDTH_MIN
 var current_rack_has_gold_pin := false
 var selected_lane_tier: int = 0
@@ -144,11 +172,26 @@ var series_gold_pins_knocked: int = 0
 var standing_gold_before_throw: int = 0
 var lane_tier_option: OptionButton
 var lane_tier_row: HBoxContainer
+var lane_tier_start_dialog: ConfirmationDialog
+var lane_tier_start_option: OptionButton
+var lane_tier_start_skip: CheckBox
+
+var end_sum_chart_entries: Array = []
+var end_sum_chart_active := false
+var end_sum_chart_tick_timer := 0.0
+var end_sum_pop_tween_count := 0
+var end_sum_ding_played := false
+var end_sum_session_id := 0
+var end_sum_wallet_tween: Tween
+var end_sum_wallet_pop_tween: Tween
+var end_sum_wallet_target := 0
+var turkey_pin_hit_last_ms: Dictionary = {}
+var turkey_ball_roll_phase := 0.0
 
 func _ready() -> void:
     rng.randomize()
     Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-    title_label.text = "TURKEY"
+    title_label.text = tr("TURKEY")
     end_panel.hide()
     _setup_environment()
     _setup_materials()
@@ -161,11 +204,15 @@ func _ready() -> void:
     _setup_editor_debug_ui()
     _setup_power_bar_visuals()
     _configure_ui_mouse_filters()
+    _apply_end_summary_theme()
     _setup_pin_deck_minimap()
+    _setup_lane_tier_start_dialog()
     _begin_series()
 
 func _process(delta: float) -> void:
     _update_editor_debug_ui()
+    if end_panel.visible:
+        _process_end_summary_chart_animation(delta)
     if _is_pause_menu_open():
         return
     if run_state == RunState.AIMING:
@@ -183,19 +230,14 @@ func _physics_process(delta: float) -> void:
     shot_elapsed += delta
     _apply_spin_force()
     _apply_ball_guidance_force()
+    _update_ball_exit_anchor()
+    _turkey_update_ball_roll_audio(delta)
 
     var settle_speed: float = max(0.45, float(player_stats.get("settle_speed_mult", 1.0)) / max(0.75, float(player_stats.get("tier_settle_mult", 1.0))))
     if shot_elapsed < SHOT_SETTLE_GRACE / settle_speed:
         return
 
-    if _is_shot_settled():
-        shot_settled_elapsed += delta
-    else:
-        shot_settled_elapsed = 0.0
-
-    if _should_finish_shot_early():
-        _finish_throw()
-    elif shot_settled_elapsed >= SHOT_SETTLE_CONFIRM / settle_speed or shot_elapsed >= SHOT_SETTLE_TIMEOUT / settle_speed:
+    if _can_score_throw_now():
         _finish_throw()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -289,6 +331,7 @@ func _rebuild_lane_geometry() -> void:
     pin_deck_back_z = HEAD_PIN_Z + head_off + float(rows - 1) * spacing_z + spacing_z * 0.42
     shot_clearance_z = pin_deck_back_z + 0.38
     lane_surface_back_z = pin_deck_back_z + 0.48
+    runtime_pit_back_wall_z = maxf(PIT_BACK_WALL_Z, lane_surface_back_z + 0.58)
     pit_half_width_active = maxf(PIT_HALF_WIDTH_MIN, runtime_lane_width * 0.58 + 0.62)
     _build_lane()
     _update_pin_deck_minimap_camera(pin_count, spacing_mult, head_off, rows)
@@ -308,6 +351,11 @@ func _build_lane() -> void:
     var lane_light_x: float = lane_half * 1.485
     var gutter_light_x: float = lane_half + 0.355
     var head_pin_world_z: float = HEAD_PIN_Z + float(player_stats.get("tier_head_pin_z_offset", 0.0))
+    var spacing_z_build: float = PIN_ROW_SPACING_Z * float(player_stats.get("tier_pin_spacing_mult", 1.0))
+    var rows_build: int = _count_rack_rows(max(10, int(player_stats.get("tier_pin_count", 10))))
+    var rack_geom_back_z: float = HEAD_PIN_Z + float(player_stats.get("tier_head_pin_z_offset", 0.0)) + float(rows_build - 1) * spacing_z_build
+    var lane_visual_len_z: float = maxf(maxf(LANE_LENGTH, pin_deck_back_z + 0.35), rack_geom_back_z + spacing_z_build * 0.65)
+    var back_panel_z: float = maxf(maxf(pin_deck_back_z + 0.38, rack_geom_back_z + spacing_z_build * 0.5), lane_surface_back_z + 0.06)
 
     _add_box_surface("Approach", Vector3(0.0, -0.03, -1.7), Vector3(approach_width, 0.06, 4.2), Color(0.18, 0.17, 0.15, 1.0), 0.75, 0.05)
     _add_box_surface("Lane", Vector3(0.0, -0.02, lane_z_center), Vector3(runtime_lane_width, 0.04, lane_z_size), lane_material.albedo_color, 0.85, 0.02)
@@ -316,15 +364,15 @@ func _build_lane() -> void:
     _add_box_surface("LeftRail", Vector3(-(lane_half + GUTTER_WIDTH), 0.18, lane_z_center), Vector3(0.05, 0.36, lane_z_size), Color(0.11, 0.11, 0.12, 1.0), 0.7, 0.04)
     _add_box_surface("RightRail", Vector3(lane_half + GUTTER_WIDTH, 0.18, lane_z_center), Vector3(0.05, 0.36, lane_z_size), Color(0.11, 0.11, 0.12, 1.0), 0.7, 0.04)
     _add_ball_return_pit()
-    _add_decor_box("LeftWall", Vector3(-wall_out, 1.4, LANE_LENGTH * 0.45), Vector3(0.08, 2.8, LANE_LENGTH + 1.5), Color(0.05, 0.05, 0.06, 1.0), Color(0.03, 0.0, 0.0, 1.0))
-    _add_decor_box("RightWall", Vector3(wall_out, 1.4, LANE_LENGTH * 0.45), Vector3(0.08, 2.8, LANE_LENGTH + 1.5), Color(0.05, 0.05, 0.06, 1.0), Color(0.03, 0.0, 0.0, 1.0))
-    _add_decor_box("CeilingBar", Vector3(0.0, 2.4, LANE_LENGTH * 0.35), Vector3(ceiling_w, 0.12, LANE_LENGTH * 0.9), Color(0.08, 0.08, 0.09, 1.0), Color(0.25, 0.18, 0.05, 1.0))
-    _add_decor_box("BackGlow", Vector3(0.0, 1.1, LANE_LENGTH + 0.35), Vector3(back_glow_w, 1.4, 0.05), Color(0.17, 0.08, 0.05, 1.0), Color(0.42, 0.2, 0.08, 1.0))
-    _add_decor_box("BackSign", Vector3(0.0, 1.45, LANE_LENGTH + 0.3), Vector3(maxf(1.1, runtime_lane_width * 0.52 + 0.35), 0.28, 0.03), Color(0.2, 0.14, 0.04, 1.0), Color(0.6, 0.45, 0.1, 1.0))
-    _add_decor_box("LaneLightLeft", Vector3(-lane_light_x, 1.95, LANE_LENGTH * 0.35), Vector3(0.04, 0.04, LANE_LENGTH * 0.7), Color(0.22, 0.18, 0.07, 1.0), Color(0.75, 0.62, 0.22, 1.0))
-    _add_decor_box("LaneLightRight", Vector3(lane_light_x, 1.95, LANE_LENGTH * 0.35), Vector3(0.04, 0.04, LANE_LENGTH * 0.7), Color(0.22, 0.18, 0.07, 1.0), Color(0.75, 0.62, 0.22, 1.0))
-    _add_accent_orb(Vector3(-(wall_out + 0.45), 1.9, LANE_LENGTH * 0.3), 0.18, Color(0.75, 0.32, 0.1, 1.0))
-    _add_accent_orb(Vector3(wall_out + 0.45, 1.85, LANE_LENGTH * 0.55), 0.14, Color(0.82, 0.68, 0.18, 1.0))
+    _add_decor_box("LeftWall", Vector3(-wall_out, 1.4, lane_visual_len_z * 0.45), Vector3(0.08, 2.8, lane_visual_len_z + 1.5), Color(0.05, 0.05, 0.06, 1.0), Color(0.03, 0.0, 0.0, 1.0))
+    _add_decor_box("RightWall", Vector3(wall_out, 1.4, lane_visual_len_z * 0.45), Vector3(0.08, 2.8, lane_visual_len_z + 1.5), Color(0.05, 0.05, 0.06, 1.0), Color(0.03, 0.0, 0.0, 1.0))
+    _add_decor_box("CeilingBar", Vector3(0.0, 2.4, lane_visual_len_z * 0.35), Vector3(ceiling_w, 0.12, lane_visual_len_z * 0.9), Color(0.08, 0.08, 0.09, 1.0), Color(0.25, 0.18, 0.05, 1.0))
+    _add_decor_box("BackGlow", Vector3(0.0, 1.1, back_panel_z), Vector3(back_glow_w, 1.4, 0.05), Color(0.17, 0.08, 0.05, 1.0), Color(0.42, 0.2, 0.08, 1.0))
+    _add_decor_box("BackSign", Vector3(0.0, 1.45, back_panel_z + 0.04), Vector3(maxf(1.1, runtime_lane_width * 0.52 + 0.35), 0.28, 0.03), Color(0.2, 0.14, 0.04, 1.0), Color(0.6, 0.45, 0.1, 1.0))
+    _add_decor_box("LaneLightLeft", Vector3(-lane_light_x, 1.95, lane_visual_len_z * 0.35), Vector3(0.04, 0.04, lane_visual_len_z * 0.7), Color(0.22, 0.18, 0.07, 1.0), Color(0.75, 0.62, 0.22, 1.0))
+    _add_decor_box("LaneLightRight", Vector3(lane_light_x, 1.95, lane_visual_len_z * 0.35), Vector3(0.04, 0.04, lane_visual_len_z * 0.7), Color(0.22, 0.18, 0.07, 1.0), Color(0.75, 0.62, 0.22, 1.0))
+    _add_accent_orb(Vector3(-(wall_out + 0.45), 1.9, lane_visual_len_z * 0.3), 0.18, Color(0.75, 0.32, 0.1, 1.0))
+    _add_accent_orb(Vector3(wall_out + 0.45, 1.85, lane_visual_len_z * 0.55), 0.14, Color(0.82, 0.68, 0.18, 1.0))
     _add_omni_fill_light("LaneFillNear", Vector3(0.0, 1.7, 1.9), Color(1.0, 0.9, 0.72, 1.0), 0.95, 4.9)
     _add_omni_fill_light("LaneFillMid", Vector3(0.0, 1.8, 5.3), Color(1.0, 0.88, 0.7, 1.0), 1.05, 5.5)
     _add_omni_fill_light("LeftGutterFill", Vector3(-gutter_light_x, 0.55, 4.5), Color(0.82, 0.88, 1.0, 1.0), 1.0, 3.1)
@@ -360,7 +408,7 @@ func _add_box_surface(name: String, position: Vector3, size: Vector3, color: Col
     body.physics_material_override = physics_material
 
 func _add_ball_return_pit() -> void:
-    var pit_depth: float = maxf(0.35, PIT_BACK_WALL_Z - lane_surface_back_z)
+    var pit_depth: float = maxf(0.35, runtime_pit_back_wall_z - lane_surface_back_z)
     var pit_z_center: float = lane_surface_back_z + pit_depth * 0.5
     var pit_width: float = pit_half_width_active * 2.0
     _add_box_surface(
@@ -373,7 +421,7 @@ func _add_ball_return_pit() -> void:
     )
     _add_box_surface(
         "BallReturnPitBack",
-        Vector3(0.0, -0.62, PIT_BACK_WALL_Z),
+        Vector3(0.0, -0.62, runtime_pit_back_wall_z),
         Vector3(pit_width, 1.45, 0.14),
         Color(0.1, 0.04, 0.035, 1.0),
         0.72,
@@ -464,22 +512,53 @@ func _widest_row_pin_count(pin_count: int) -> int:
     return widest
 
 
+func _pin_deck_minimap_ui_scale(pin_count: int, rows: int) -> float:
+    return clampf(1.28 + float(rows - 4) * 0.1 + float(pin_count - 10) * 0.02, 1.25, 3.15)
+
+
+func _update_pin_deck_minimap_ui_sizes(pin_count: int, rows: int) -> void:
+    if pin_deck_minimap_subviewport == null or not is_instance_valid(pin_deck_minimap_subviewport):
+        return
+    var sc: float = _pin_deck_minimap_ui_scale(pin_count, rows)
+    var vp_w: int = maxi(64, int(round(float(PIN_DECK_MINIMAP_VIEWPORT_SIZE.x) * sc)))
+    var vp_h: int = maxi(48, int(round(float(PIN_DECK_MINIMAP_VIEWPORT_SIZE.y) * sc)))
+    pin_deck_minimap_subviewport.size = Vector2i(vp_w, vp_h)
+    var disp: Vector2 = Vector2(PIN_DECK_MINIMAP_DISPLAY_SIZE.x * sc, PIN_DECK_MINIMAP_DISPLAY_SIZE.y * sc)
+    if pin_deck_minimap_viewport_container != null and is_instance_valid(pin_deck_minimap_viewport_container):
+        pin_deck_minimap_viewport_container.custom_minimum_size = disp
+    if pin_deck_minimap_panel != null and is_instance_valid(pin_deck_minimap_panel):
+        pin_deck_minimap_panel.offset_left = -disp.x - 28.0
+        pin_deck_minimap_panel.offset_bottom = 96.0 + disp.y + 44.0
+
+
 func _update_pin_deck_minimap_camera(pin_count: int, spacing_mult: float, head_off: float, rows: int) -> void:
     if pin_deck_minimap_camera == null or not is_instance_valid(pin_deck_minimap_camera):
         return
+    _update_pin_deck_minimap_ui_sizes(pin_count, rows)
     var spacing_z: float = PIN_ROW_SPACING_Z * spacing_mult
     var deck_front: float = HEAD_PIN_Z + head_off
     var deck_back: float = HEAD_PIN_Z + head_off + float(rows - 1) * spacing_z
-    var center_z: float = (deck_front + deck_back) * 0.5
-    var depth: float = maxf(0.55, deck_back - deck_front + spacing_z * 0.95)
-    var half_w: float = maxf(
-        runtime_lane_width * 0.5,
-        float(_widest_row_pin_count(pin_count) - 1) * PIN_ROW_SPACING_X * spacing_mult + 0.16
-    )
-    var aspect: float = float(PIN_DECK_MINIMAP_VIEWPORT_SIZE.x) / float(PIN_DECK_MINIMAP_VIEWPORT_SIZE.y)
+    var widest: int = _widest_row_pin_count(pin_count)
+    var pin_foot_r: float = 0.083 * maxf(1.0, TURKEY_DATA.GOLD_PIN_SCALE)
+    var z_pad_forward: float = maxf(spacing_z * 0.48, pin_foot_r * 1.25 + 0.14)
+    var z_pad_back: float = maxf(spacing_z * 0.52, pin_foot_r * 1.3 + 0.16) + float(rows) * 0.022
+    var z_lo: float = deck_front - z_pad_forward
+    var z_hi: float = deck_back + z_pad_back
+    var center_z: float = (z_lo + z_hi) * 0.5
+    var z_extent: float = z_hi - z_lo
+    var half_triangle_x: float = float(widest - 1) * PIN_ROW_SPACING_X * spacing_mult
+    var x_extent: float = maxf(runtime_lane_width, half_triangle_x * 2.0 + pin_foot_r * 2.8 + 0.32)
+
+    var vp_sz: Vector2i = pin_deck_minimap_subviewport.size
+    var aspect: float = float(max(1, vp_sz.x)) / float(max(1, vp_sz.y))
+    var fit_z_vert: float = maxf(z_extent * 0.5, x_extent / (2.0 * aspect))
+    var fit_z_horz: float = maxf(x_extent * 0.5, z_extent / (2.0 * aspect))
+    var ortho_half: float = maxf(fit_z_vert, fit_z_horz) * 1.22
+
     pin_deck_minimap_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-    pin_deck_minimap_camera.size = maxf(depth * 0.52, half_w / aspect + 0.1)
-    pin_deck_minimap_camera.position = Vector3(0.0, PIN_DECK_MINIMAP_CAMERA_HEIGHT, center_z)
+    pin_deck_minimap_camera.size = ortho_half
+    var cam_y: float = PIN_DECK_MINIMAP_CAMERA_HEIGHT + float(rows - 4) * 0.55 + float(pin_count - 10) * 0.045
+    pin_deck_minimap_camera.position = Vector3(0.0, cam_y, center_z)
     pin_deck_minimap_camera.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
     pin_deck_minimap_camera.current = true
 
@@ -495,6 +574,7 @@ func _setup_pin_deck_minimap() -> void:
 
     var panel := PanelContainer.new()
     panel.name = "PinDeckMinimapPanel"
+    pin_deck_minimap_panel = panel
     panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
     panel.offset_left = -PIN_DECK_MINIMAP_DISPLAY_SIZE.x - 28.0
     panel.offset_top = 96.0
@@ -517,11 +597,12 @@ func _setup_pin_deck_minimap() -> void:
     margin.add_child(vbox)
 
     var title := Label.new()
-    title.text = "Pin deck (top)"
+    title.text = tr("Pin deck (top)")
     title.mouse_filter = Control.MOUSE_FILTER_IGNORE
     vbox.add_child(title)
 
     var viewport_container := SubViewportContainer.new()
+    pin_deck_minimap_viewport_container = viewport_container
     viewport_container.custom_minimum_size = PIN_DECK_MINIMAP_DISPLAY_SIZE
     viewport_container.stretch = true
     viewport_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -545,12 +626,71 @@ func _setup_pin_deck_minimap() -> void:
     pin_deck_minimap_camera.far = 80.0
     sub_viewport.add_child(pin_deck_minimap_camera)
 
+
 func _bind_pin_deck_minimap_world(sub_viewport: SubViewport) -> void:
     if sub_viewport == null or not is_instance_valid(sub_viewport):
         return
     var vp := get_viewport()
     if vp != null:
         sub_viewport.world_3d = vp.world_3d
+
+
+func _style_end_summary_flat_panel(panel: PanelContainer, background_color: Color, border_color: Color, corner_radius: int) -> void:
+    if panel == null:
+        return
+    var box := StyleBoxFlat.new()
+    box.bg_color = background_color
+    box.border_color = border_color
+    box.border_width_left = 2
+    box.border_width_top = 2
+    box.border_width_right = 2
+    box.border_width_bottom = 2
+    box.corner_radius_top_left = corner_radius
+    box.corner_radius_top_right = corner_radius
+    box.corner_radius_bottom_left = corner_radius
+    box.corner_radius_bottom_right = corner_radius
+    panel.add_theme_stylebox_override("panel", box)
+
+
+func _style_end_summary_utility_button(button: Button) -> void:
+    if button == null:
+        return
+    var normal := StyleBoxFlat.new()
+    normal.bg_color = Color(0.1, 0.09, 0.07, 0.96)
+    normal.border_color = TURKEY_UPGRADE_ACCENT.lerp(Color.WHITE, 0.22)
+    normal.border_width_left = 2
+    normal.border_width_top = 2
+    normal.border_width_right = 2
+    normal.border_width_bottom = 2
+    normal.corner_radius_top_left = 4
+    normal.corner_radius_top_right = 4
+    normal.corner_radius_bottom_left = 4
+    normal.corner_radius_bottom_right = 4
+    var hover := normal.duplicate(true)
+    hover.bg_color = Color(0.16, 0.14, 0.1, 0.98)
+    button.add_theme_stylebox_override("normal", normal)
+    button.add_theme_stylebox_override("hover", hover)
+    button.add_theme_stylebox_override("pressed", hover)
+    button.add_theme_color_override("font_color", END_SUM_TEXT_PRIMARY)
+    button.add_theme_font_size_override("font_size", 30)
+
+
+func _apply_end_summary_theme() -> void:
+    _style_end_summary_flat_panel(end_panel, END_SUM_PANEL_BG, TURKEY_UPGRADE_ACCENT.lerp(Color.WHITE, 0.12), 6)
+    _style_end_summary_flat_panel(turkey_money_chart, END_SUM_CHART_PANEL_BG, END_SUM_CHART_PANEL_BORDER, 6)
+    _style_end_summary_flat_panel(turkey_stats_chart, END_SUM_CHART_PANEL_BG, END_SUM_CHART_PANEL_BORDER, 6)
+    end_title_label.add_theme_color_override("font_color", TURKEY_UPGRADE_ACCENT.lerp(END_SUM_TEXT_PRIMARY, 0.35))
+    end_title_label.add_theme_font_size_override("font_size", 28)
+    end_scorecard_label.add_theme_color_override("font_color", END_SUM_TEXT_PRIMARY)
+    end_scorecard_label.add_theme_font_size_override("font_size", 17)
+    end_summary_label.add_theme_color_override("font_color", END_SUM_TEXT_MUTED)
+    end_summary_label.add_theme_font_size_override("font_size", 17)
+    var min_btn := Vector2(300.0, 56.0)
+    upgrade_button.custom_minimum_size = min_btn
+    play_again_button.custom_minimum_size = min_btn
+    _style_end_summary_utility_button(upgrade_button)
+    _style_end_summary_utility_button(play_again_button)
+
 
 func _configure_ui_mouse_filters() -> void:
     _set_mouse_filter_recursive($CanvasLayer, Control.MOUSE_FILTER_IGNORE)
@@ -562,7 +702,6 @@ func _configure_ui_mouse_filters() -> void:
         lane_tier_option.mouse_filter = Control.MOUSE_FILTER_STOP
     play_again_button.mouse_filter = Control.MOUSE_FILTER_STOP
     upgrade_button.mouse_filter = Control.MOUSE_FILTER_STOP
-    menu_button.mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _set_mouse_filter_recursive(node: Node, filter: Control.MouseFilter) -> void:
     if node is BaseButton:
@@ -618,7 +757,6 @@ func _build_option_value_box(row: HBoxContainer) -> Label:
 func _connect_ui() -> void:
     play_again_button.pressed.connect(_on_play_again_pressed)
     upgrade_button.pressed.connect(_on_upgrade_button_pressed)
-    menu_button.pressed.connect(_on_menu_button_pressed)
 
 func _setup_pause_menu() -> void:
     pause_menu = IN_GAME_PAUSE_MENU_SCRIPT.new()
@@ -726,7 +864,7 @@ func _load_progression() -> void:
     progress_data = TURKEY_PROGRESS.load_data()
     var cap_stats: Dictionary = TURKEY_DATA.build_meta_stats(progress_data)
     var max_cap: int = int(cap_stats.get("max_selectable_lane_tier", 0))
-    selected_lane_tier = clampi(int(progress_data.get("turkey_selected_lane_tier", max_cap)), 0, max_cap)
+    selected_lane_tier = clampi(int(progress_data.get("turkey_selected_lane_tier", 0)), 0, max_cap)
     player_stats = TURKEY_DATA.build_meta_stats(progress_data, selected_lane_tier)
     _refresh_series_settings_from_stats()
     _update_wallet_label()
@@ -737,15 +875,144 @@ func _setup_lane_tier_selector() -> void:
     lane_tier_row = HBoxContainer.new()
     lane_tier_row.add_theme_constant_override("separation", 10)
     var tier_lbl := Label.new()
-    tier_lbl.text = "Lane tier"
-    tier_lbl.custom_minimum_size = Vector2(92, 0)
+    tier_lbl.text = tr("Lane tier")
+    tier_lbl.custom_minimum_size = Vector2(110, 0)
+    tier_lbl.add_theme_font_size_override("font_size", 20)
     lane_tier_option = OptionButton.new()
     lane_tier_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    lane_tier_option.custom_minimum_size = Vector2(0.0, 44.0)
+    lane_tier_option.add_theme_font_size_override("font_size", 19)
     lane_tier_option.item_selected.connect(_on_lane_tier_option_selected)
+    var tier_pop: PopupMenu = lane_tier_option.get_popup()
+    tier_pop.max_height = 0
+    tier_pop.add_theme_font_size_override("font_size", 19)
     lane_tier_row.add_child(tier_lbl)
     lane_tier_row.add_child(lane_tier_option)
     top_ui_vbox.add_child(lane_tier_row)
     top_ui_vbox.move_child(lane_tier_row, mini(wallet_label.get_index() + 1, top_ui_vbox.get_child_count() - 1))
+
+
+func _setup_lane_tier_start_dialog() -> void:
+    if lane_tier_start_dialog != null:
+        return
+    lane_tier_start_dialog = ConfirmationDialog.new()
+    lane_tier_start_dialog.name = "LaneTierStartDialog"
+    lane_tier_start_dialog.title = tr("Choose lane tier")
+    lane_tier_start_dialog.ok_button_text = tr("Start series")
+    lane_tier_start_dialog.dialog_text = ""
+    lane_tier_start_dialog.unresizable = true
+    var cancel_btn: Button = lane_tier_start_dialog.get_cancel_button()
+    if cancel_btn != null:
+        cancel_btn.hide()
+    lane_tier_start_dialog.confirmed.connect(_on_lane_tier_start_confirmed)
+    ui_canvas_layer.add_child(lane_tier_start_dialog)
+    var dlg_lbl: Label = lane_tier_start_dialog.get_label()
+    if dlg_lbl != null:
+        dlg_lbl.visible = false
+
+
+func _rebuild_lane_tier_start_dialog_content() -> void:
+    if lane_tier_start_dialog == null:
+        return
+    var old_root: Node = lane_tier_start_dialog.get_node_or_null("LaneTierStartRoot")
+    if old_root != null:
+        lane_tier_start_dialog.remove_child(old_root)
+        old_root.free()
+
+    var margin := MarginContainer.new()
+    margin.name = "LaneTierStartRoot"
+    margin.add_theme_constant_override("margin_left", 18)
+    margin.add_theme_constant_override("margin_right", 18)
+    margin.add_theme_constant_override("margin_top", 14)
+    margin.add_theme_constant_override("margin_bottom", 16)
+    lane_tier_start_dialog.add_child(margin)
+
+    var vp: Vector2 = lane_tier_start_dialog.get_viewport().get_visible_rect().size
+    if vp.y < 32.0:
+        vp = Vector2(1280, 720)
+    var dialog_w: float = maxf(520.0, mini(920.0, vp.x * 0.92))
+
+    var vb := VBoxContainer.new()
+    vb.add_theme_constant_override("separation", 16)
+    vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    margin.add_child(vb)
+
+    var inner_w: float = dialog_w - 36.0
+    vb.custom_minimum_size.x = inner_w
+
+    var bd: Dictionary = TURKEY_DATA.get_lane_tier_cap_breakdown(progress_data)
+    var expl := Label.new()
+    expl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    expl.custom_minimum_size.x = inner_w
+    expl.add_theme_font_size_override("font_size", 20)
+    expl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    expl.text = _trf(
+        "Higher tiers use bigger racks and pay more. Your unlock progress uses the better of:\n"
+        + "• League Pass level %d → lane tier %d\n"
+        + "• Veteran: %d completed series → lane tier %d\n"
+        + "You may select lane tiers 1–%d. Choose one for this series:",
+        [
+        int(bd.get("league_pass_level", 0)),
+        int(bd.get("tier_from_league_pass", 0)) + 1,
+        int(bd.get("completed_series", 0)),
+        int(bd.get("tier_from_veteran_runs", 0)) + 1,
+        int(bd.get("max_tier", 0)) + 1,
+        ]
+    )
+    vb.add_child(expl)
+
+    lane_tier_start_option = OptionButton.new()
+    lane_tier_start_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    lane_tier_start_option.custom_minimum_size = Vector2(0.0, 48.0)
+    lane_tier_start_option.add_theme_font_size_override("font_size", 20)
+    var start_pop: PopupMenu = lane_tier_start_option.get_popup()
+    start_pop.max_height = 0
+    start_pop.add_theme_font_size_override("font_size", 20)
+    var max_cap: int = int(bd.get("max_tier", 0))
+    for i in range(TURKEY_DATA.LANE_TIERS.size()):
+        var td: Dictionary = TURKEY_DATA.LANE_TIERS[i]
+        var line: String = _trf("%d. %s — %d pins, %d gold (front)", [
+            i + 1,
+            str(td.get("label", "?")),
+            int(td.get("pin_count", 10)),
+            int(td.get("gold_pin_count", 0)),
+        ])
+        lane_tier_start_option.add_item(line)
+        lane_tier_start_option.set_item_disabled(i, i > max_cap)
+    lane_tier_start_option.select(clampi(selected_lane_tier, 0, maxi(0, lane_tier_start_option.item_count - 1)))
+    vb.add_child(lane_tier_start_option)
+
+    lane_tier_start_skip = CheckBox.new()
+    lane_tier_start_skip.text = tr("Don't show this again (change tier on the top bar)")
+    lane_tier_start_skip.add_theme_font_size_override("font_size", 18)
+    lane_tier_start_skip.button_pressed = bool(progress_data.get("turkey_skip_start_lane_dialog", false))
+    vb.add_child(lane_tier_start_skip)
+
+
+func _maybe_show_lane_tier_start_dialog() -> void:
+    if lane_tier_start_dialog == null:
+        return
+    if bool(progress_data.get("turkey_skip_start_lane_dialog", false)):
+        return
+    if TURKEY_DATA.get_max_selectable_lane_tier(progress_data) < 1:
+        return
+    _rebuild_lane_tier_start_dialog_content()
+    var vp: Vector2 = lane_tier_start_dialog.get_viewport().get_visible_rect().size
+    if vp.y < 32.0:
+        vp = Vector2(1280, 720)
+    var max_w: int = mini(960, int(vp.x * 0.96))
+    var max_h: int = int(vp.y * 0.92)
+    lane_tier_start_dialog.max_size = Vector2i(max_w, max_h)
+    var dlg_min: Vector2i = Vector2i(mini(880, max_w), mini(520, max_h - 80))
+    lane_tier_start_dialog.popup_centered(dlg_min)
+
+
+func _on_lane_tier_start_confirmed() -> void:
+    if lane_tier_start_skip != null and is_instance_valid(lane_tier_start_skip):
+        progress_data["turkey_skip_start_lane_dialog"] = lane_tier_start_skip.button_pressed
+        TURKEY_PROGRESS.save_data(progress_data)
+    if lane_tier_start_option != null and is_instance_valid(lane_tier_start_option):
+        _apply_lane_tier_index(lane_tier_start_option.selected)
 
 
 func _refresh_lane_tier_option_items() -> void:
@@ -807,11 +1074,8 @@ func _update_lane_tier_control_state() -> void:
         lane_tier_option.set_item_disabled(i, i > max_cap)
 
 
-func _on_lane_tier_option_selected(index: int) -> void:
-    if not _can_change_lane_tier():
-        _sync_lane_tier_option_to_selection()
-        return
-    var max_cap: int = int(player_stats.get("max_selectable_lane_tier", 0))
+func _apply_lane_tier_index(index: int) -> void:
+    var max_cap: int = TURKEY_DATA.get_max_selectable_lane_tier(progress_data)
     selected_lane_tier = clampi(index, 0, max_cap)
     progress_data["turkey_selected_lane_tier"] = selected_lane_tier
     TURKEY_PROGRESS.save_data(progress_data)
@@ -823,6 +1087,13 @@ func _on_lane_tier_option_selected(index: int) -> void:
         _spawn_full_rack()
         _prepare_for_next_shot("Frame 1. Click once to start the power swing.")
     _update_lane_tier_control_state()
+
+
+func _on_lane_tier_option_selected(index: int) -> void:
+    if not _can_change_lane_tier():
+        _sync_lane_tier_option_to_selection()
+        return
+    _apply_lane_tier_index(index)
 
 
 func _refresh_series_settings_from_stats() -> void:
@@ -844,12 +1115,14 @@ func _begin_series() -> void:
     current_power_norm = 0.0
     power_direction = 1.0
     end_panel.hide()
+    _reset_end_summary_animation_state()
     spin_curve_in_play = 0.0
     series_gold_pins_knocked = 0
     _spawn_full_rack()
     _prepare_for_next_shot("Frame 1. Click once to start the power swing.")
     _update_scoreboard()
     _update_lane_tier_control_state()
+    call_deferred("_maybe_show_lane_tier_start_dialog")
 
 func _prepare_for_next_shot(message: String) -> void:
     run_state = RunState.READY
@@ -857,7 +1130,7 @@ func _prepare_for_next_shot(message: String) -> void:
     power_direction = 1.0
     current_target_x = _get_selected_start_x()
     shot_elapsed = 0.0
-    shot_settled_elapsed = 0.0
+    ball_exit_anchor_shot_elapsed = -1.0
     spin_curve_in_play = 0.0
     aim_line.visible = false
     _update_power_bar()
@@ -865,8 +1138,8 @@ func _prepare_for_next_shot(message: String) -> void:
     result_label.text = message
     var gold_note := ""
     if _any_gold_pin_standing():
-        gold_note = " Gold pins still up in front—they need a harder hit but pay more when they fall."
-    aiming_help_label.text = "Tier %d: %s. %d pins, %d gold up front (heavier, bigger payout per knock).%s Negative slider = left, positive = right." % [int(player_stats.get("lane_tier", 0)) + 1, str(player_stats.get("lane_tier_label", "Practice House")), current_series_pin_target, int(player_stats.get("tier_gold_pin_count", 0)), gold_note]
+        gold_note = tr(" Gold pins still up in front—they need a harder hit but pay more when they fall.")
+    aiming_help_label.text = _trf("Tier %d: %s. %d pins, %d gold up front (heavier, bigger payout per knock).%s Negative slider = left, positive = right.", [int(player_stats.get("lane_tier", 0)) + 1, str(player_stats.get("lane_tier_label", tr("Practice House"))), current_series_pin_target, int(player_stats.get("tier_gold_pin_count", 0)), gold_note])
     _update_lane_tier_control_state()
 
 func _begin_aiming() -> void:
@@ -881,17 +1154,19 @@ func _begin_aiming() -> void:
     _update_aim_line()
     _update_status_labels()
     _update_lane_tier_control_state()
-    result_label.text = "Move the mouse to pick the line. Click again when the power bar feels right."
+    result_label.text = tr("Move the mouse to pick the line. Click again when the power bar feels right.")
     var gold_aim := ""
     if int(player_stats.get("tier_gold_pin_count", 0)) > 0:
         gold_aim = " Gold pins are in the front row(s)—check the rack map."
-    aiming_help_label.text = "Mouse left aims left, mouse right aims right. %s is active with %d pins in the rack.%s" % [str(player_stats.get("lane_tier_label", "Practice House")), current_series_pin_target, gold_aim]
+    aiming_help_label.text = _trf("Mouse left aims left, mouse right aims right. %s is active with %d pins in the rack.%s", [str(player_stats.get("lane_tier_label", tr("Practice House"))), current_series_pin_target, gold_aim])
 
 func _throw_ball() -> void:
     run_state = RunState.BALL_IN_PLAY
     aim_line.visible = false
     shot_elapsed = 0.0
-    shot_settled_elapsed = 0.0
+    ball_exit_anchor_shot_elapsed = -1.0
+    turkey_pin_hit_last_ms.clear()
+    turkey_ball_roll_phase = 0.0
     standing_before_throw = active_pins.size()
     standing_gold_before_throw = _count_standing_gold_pins()
     spin_curve_in_play = _get_selected_spin_curve() * float(player_stats.get("spin_multiplier", 1.0))
@@ -903,9 +1178,14 @@ func _throw_ball() -> void:
     var max_lateral_speed: float = MAX_LATERAL_SPEED * pow(float(player_stats.get("target_range_mult", 1.0)), 0.4)
     var lateral_speed: float = clamp((target_x - start_x) * 2.15, -max_lateral_speed, max_lateral_speed)
     active_ball.linear_velocity = Vector3(lateral_speed, 0.0, power_speed)
-    active_ball.angular_velocity = Vector3(power_speed / max(BALL_RADIUS, 0.01), spin_curve_in_play * 5.5, 0.0)
-    result_label.text = "Ball away. Watching the lane..."
-    aiming_help_label.text = "The ball is live. Once everything settles, the pins will be scored automatically."
+    var hook_yaw: float = spin_curve_in_play * 5.5
+    var roll_pitch: float = 0.0
+    if absf(spin_curve_in_play) >= 0.01:
+        roll_pitch = power_speed / max(BALL_RADIUS, 0.01)
+    active_ball.angular_velocity = Vector3(roll_pitch, hook_yaw, 0.0)
+    result_label.text = tr("Ball away. Watching the lane...")
+    aiming_help_label.text = tr("The ball is live. Scoring starts 1.5s after the ball clears the deck (extra wait if pins still move fast).")
+    _turkey_play_ball_release()
 
 func _create_ball() -> RigidBody3D:
     if active_ball != null and is_instance_valid(active_ball):
@@ -938,8 +1218,73 @@ func _create_ball() -> RigidBody3D:
     physics_material.bounce = 0.03
     body.physics_material_override = physics_material
 
+    var hit_area := Area3D.new()
+    hit_area.name = "TurkeyBallHitProbe"
+    hit_area.collision_layer = 0
+    hit_area.collision_mask = 1
+    var hit_shape := CollisionShape3D.new()
+    var hit_sphere := SphereShape3D.new()
+    hit_sphere.radius = BALL_RADIUS * 1.14
+    hit_shape.shape = hit_sphere
+    hit_area.add_child(hit_shape)
+    hit_area.body_entered.connect(_on_turkey_ball_hit_area_body_entered)
+    body.add_child(hit_area)
+
     dynamic_root.add_child(body)
     return body
+
+
+func _turkey_play_ball_release() -> void:
+    if AudioManager == null:
+        return
+    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TURKEY_BALL_RELEASE, rng.randf_range(-2.0, 1.0), rng.randf_range(-0.06, 0.08))
+
+
+func _turkey_update_ball_roll_audio(delta: float) -> void:
+    if run_state != RunState.BALL_IN_PLAY or active_ball == null or not is_instance_valid(active_ball):
+        return
+    var v: float = active_ball.linear_velocity.length()
+    if v < 0.42:
+        return
+    turkey_ball_roll_phase += delta * lerpf(0.85, 2.4, clampf(v / 10.5, 0.0, 1.0))
+    var interval: float = clampf(0.26 - v * 0.018, 0.095, 0.28)
+    while turkey_ball_roll_phase >= interval:
+        turkey_ball_roll_phase -= interval
+        var vol_off: float = lerpf(-24.0, -5.0, clampf(v / 11.0, 0.0, 1.0))
+        if AudioManager != null:
+            AudioManager.create_audio(
+                SoundEffectSettings.SOUND_EFFECT_TYPE.TURKEY_BALL_ROLL,
+                vol_off + rng.randf_range(-1.5, 1.5),
+                rng.randf_range(-0.1, 0.1)
+            )
+
+
+func _on_turkey_ball_hit_area_body_entered(body: Node3D) -> void:
+    if run_state != RunState.BALL_IN_PLAY or active_ball == null or not is_instance_valid(active_ball):
+        return
+    if not (body is RigidBody3D):
+        return
+    var rb: RigidBody3D = body as RigidBody3D
+    if not rb.name.begins_with("Pin"):
+        return
+    var rid: int = rb.get_instance_id()
+    var now: int = Time.get_ticks_msec()
+    if now - int(turkey_pin_hit_last_ms.get(rid, -99999)) < 95:
+        return
+    turkey_pin_hit_last_ms[rid] = now
+
+    var rel: float = active_ball.linear_velocity.length() + rb.linear_velocity.length()
+    var vol_off: float = lerpf(-16.0, 5.0, clampf(rel / 16.0, 0.0, 1.0))
+    var pitch_off: float = lerpf(-0.18, 0.22, clampf((rel - 3.5) / 12.0, 0.0, 1.0))
+    if str(rb.get_meta(META_PIN_KIND, PIN_KIND_NORMAL)) == PIN_KIND_GOLD:
+        pitch_off -= 0.1
+    if AudioManager != null:
+        AudioManager.create_audio(
+            SoundEffectSettings.SOUND_EFFECT_TYPE.TURKEY_PIN_HIT,
+            vol_off + rng.randf_range(-2.0, 2.0),
+            pitch_off + rng.randf_range(-0.05, 0.05)
+        )
+
 
 func _spawn_full_rack() -> void:
     _clear_pins()
@@ -1174,43 +1519,47 @@ func _apply_ball_guidance_force() -> void:
     )
     active_ball.apply_central_force(Vector3(inward_direction * inward_force, 0.0, 0.0))
 
-func _is_shot_settled() -> bool:
-    if active_ball != null and is_instance_valid(active_ball):
-        if active_ball.linear_velocity.length() > 0.18 or active_ball.angular_velocity.length() > 0.32:
-            return false
-    for pin in active_pins:
-        if not is_instance_valid(pin):
-            continue
-        if pin.linear_velocity.length() > 0.14 or pin.angular_velocity.length() > 0.28:
-            return false
-    return true
-
-func _should_finish_shot_early() -> bool:
-    if active_ball == null or not is_instance_valid(active_ball):
+func _ball_has_exited_pin_deck(ball: RigidBody3D) -> bool:
+    var p: Vector3 = ball.position
+    if p.z >= shot_clearance_z:
         return true
-    if not _are_pins_ready_for_fast_finish():
-        return false
-    var ball_position: Vector3 = active_ball.position
-    var ball_linear_speed: float = active_ball.linear_velocity.length()
-    var ball_forward_speed: float = max(0.0, active_ball.linear_velocity.z)
-    var ball_cleared_pin_deck: bool = ball_position.z >= shot_clearance_z
-    var ball_hit_pit_back: bool = ball_position.z >= PIT_BACK_WALL_Z - 0.12
-    var ball_past_lane_surface: bool = ball_position.z >= lane_surface_back_z - 0.03
-    var ball_dropped_toward_pit: bool = ball_past_lane_surface and ball_position.y < LANE_SURFACE_Y + BALL_RADIUS * 0.45
-    var ball_settled_in_pit: bool = (ball_dropped_toward_pit or ball_position.y < -0.18) and ball_linear_speed <= FAST_FINISH_BALL_TOTAL_SPEED * 1.4
-    var ball_is_in_gutter: bool = absf(ball_position.x) >= gutter_finish_x and ball_forward_speed <= FAST_FINISH_BALL_FORWARD_SPEED
-    var ball_has_slowed_after_deck: bool = ball_cleared_pin_deck and ball_linear_speed <= FAST_FINISH_BALL_TOTAL_SPEED
-    return ball_hit_pit_back or ball_settled_in_pit or ball_is_in_gutter or ball_has_slowed_after_deck
+    if absf(p.x) >= gutter_finish_x - 0.02 and p.z >= HEAD_PIN_Z + 0.12:
+        return true
+    if p.z >= lane_surface_back_z - 0.12 and p.y < LANE_SURFACE_Y + BALL_RADIUS * 0.5:
+        return true
+    return false
 
-func _are_pins_ready_for_fast_finish() -> bool:
+func _update_ball_exit_anchor() -> void:
+    if ball_exit_anchor_shot_elapsed >= 0.0:
+        return
+    if active_ball != null and is_instance_valid(active_ball):
+        if _ball_has_exited_pin_deck(active_ball):
+            ball_exit_anchor_shot_elapsed = shot_elapsed
+            return
+    if shot_elapsed >= FORCED_BALL_EXIT_AFTER_SHOT_ELAPSED:
+        ball_exit_anchor_shot_elapsed = shot_elapsed - POST_BALL_EXIT_SCORE_DELAY
+
+func _pins_have_significant_speed() -> bool:
     for pin in active_pins:
         if not is_instance_valid(pin):
             continue
-        if pin.linear_velocity.length() > FAST_FINISH_PIN_LINEAR_SPEED:
-            return false
-        if pin.angular_velocity.length() > FAST_FINISH_PIN_ANGULAR_SPEED:
-            return false
-    return true
+        if pin.linear_velocity.length() > PIN_SIGNIFICANT_LINEAR_SPEED:
+            return true
+        if pin.angular_velocity.length() > PIN_SIGNIFICANT_ANGULAR_SPEED:
+            return true
+    return false
+
+func _can_score_throw_now() -> bool:
+    if shot_elapsed >= SHOT_ABSOLUTE_FAILSAFE:
+        return true
+    if ball_exit_anchor_shot_elapsed < 0.0:
+        return false
+    var since_exit: float = shot_elapsed - ball_exit_anchor_shot_elapsed
+    if since_exit < POST_BALL_EXIT_SCORE_DELAY:
+        return false
+    if since_exit >= POST_BALL_EXIT_SCORE_DELAY + PIN_MOTION_EXTRA_AFTER_EXIT:
+        return true
+    return not _pins_have_significant_speed()
 
 func _finish_throw() -> void:
     var standing_after: int = _count_standing_pins()
@@ -1364,6 +1713,9 @@ func _complete_series(latest_message: String) -> void:
     results["wallet_gain"] = TURKEY_DATA.calculate_meta_reward(results, progress_data)
     results["summary_text"] = _build_series_summary(final_score, int(results["wallet_gain"]), strikes, spares, open_frames, first_three_strikes, latest_message)
 
+    var chart_data: Dictionary = progress_data.duplicate(true)
+    _prepare_and_show_turkey_end_summary(results, chart_data, final_score, strikes, spares, open_frames, first_three_strikes, latest_message)
+
     progress_data = TURKEY_PROGRESS.apply_run_results(results)
     var post_cap: Dictionary = TURKEY_DATA.build_meta_stats(progress_data)
     var post_max: int = int(post_cap.get("max_selectable_lane_tier", 0))
@@ -1371,36 +1723,420 @@ func _complete_series(latest_message: String) -> void:
     player_stats = TURKEY_DATA.build_meta_stats(progress_data, selected_lane_tier)
     _refresh_series_settings_from_stats()
     _update_wallet_label()
-    frame_status_label.text = "Series complete."
+    frame_status_label.text = tr("Series complete.")
     result_label.text = latest_message
     _refresh_lane_tier_option_items()
 
-    end_title_label.text = "SERIES COMPLETE"
+
+func _prepare_and_show_turkey_end_summary(
+    results: Dictionary,
+    chart_data: Dictionary,
+    final_score: int,
+    strikes: int,
+    spares: int,
+    open_frames: int,
+    turkey_bonus: bool,
+    latest_message: String
+) -> void:
+    _reset_end_summary_animation_state()
+    end_title_label.text = tr("SERIES COMPLETE")
+    summary_wallet_label.text = tr("$0")
+    summary_wallet_label.scale = Vector2.ONE
+    summary_wallet_label.add_theme_color_override("font_color", TURKEY_UPGRADE_ACCENT)
     end_scorecard_label.text = String(results.get("scorecard_text", ""))
-    end_summary_label.text = String(results.get("summary_text", ""))
+    end_summary_label.text = _build_end_panel_summary_lines(
+        final_score, strikes, spares, open_frames, turkey_bonus, latest_message
+    )
+    _clear_turkey_chart_panel(turkey_money_chart)
+    _clear_turkey_chart_panel(turkey_stats_chart)
+    _refresh_turkey_money_chart(results, chart_data)
+    _refresh_turkey_stats_chart(results)
     end_panel.show()
+    call_deferred("_deferred_start_turkey_end_summary_animations", int(results.get("wallet_gain", 0)))
+
+
+func _deferred_start_turkey_end_summary_animations(wallet_target: int) -> void:
+    _start_end_summary_chart_animation()
+    _start_turkey_wallet_count_animation(wallet_target)
+
+
+func _reset_end_summary_animation_state() -> void:
+    end_sum_chart_active = false
+    end_sum_chart_tick_timer = 0.0
+    end_sum_chart_entries.clear()
+    end_sum_pop_tween_count = 0
+    end_sum_ding_played = false
+    end_sum_session_id += 1
+    if end_sum_wallet_tween != null and end_sum_wallet_tween.is_running():
+        end_sum_wallet_tween.kill()
+    if end_sum_wallet_pop_tween != null and end_sum_wallet_pop_tween.is_running():
+        end_sum_wallet_pop_tween.kill()
+    end_sum_wallet_target = 0
+
+
+func _clear_turkey_chart_panel(panel: PanelContainer) -> void:
+    if panel == null:
+        return
+    for child in panel.get_children():
+        panel.remove_child(child)
+        child.queue_free()
+
+
+func _make_end_chart_margin(parent: Control) -> MarginContainer:
+    var margin := MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 12)
+    margin.add_theme_constant_override("margin_top", 10)
+    margin.add_theme_constant_override("margin_right", 12)
+    margin.add_theme_constant_override("margin_bottom", 10)
+    parent.add_child(margin)
+    return margin
+
+
+func _make_end_chart_label(text: String, width: float, font_size: int, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, color: Color = END_SUM_TEXT_PRIMARY) -> Label:
+    var label := Label.new()
+    label.text = text
+    label.custom_minimum_size = Vector2(width, 0.0)
+    label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN if width > 0.0 else Control.SIZE_EXPAND_FILL
+    label.horizontal_alignment = align
+    label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    label.add_theme_font_size_override("font_size", font_size)
+    label.add_theme_color_override("font_color", color)
+    return label
+
+
+func _make_end_chart_bar_bundle(max_value: float, color: Color) -> Dictionary:
+    var root := HBoxContainer.new()
+    root.custom_minimum_size = Vector2(200.0, 0.0)
+    root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    root.add_theme_constant_override("separation", 8)
+
+    var meter := ProgressBar.new()
+    meter.custom_minimum_size = Vector2(130.0, 18.0)
+    meter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    meter.show_percentage = false
+    meter.max_value = max(1.0, max_value)
+    meter.value = 0.0
+
+    var background := StyleBoxFlat.new()
+    background.bg_color = END_SUM_BAR_TRACK
+    background.corner_radius_top_left = 3
+    background.corner_radius_top_right = 3
+    background.corner_radius_bottom_left = 3
+    background.corner_radius_bottom_right = 3
+    meter.add_theme_stylebox_override("background", background)
+
+    var fill := background.duplicate(true)
+    fill.bg_color = color
+    meter.add_theme_stylebox_override("fill", fill)
+    root.add_child(meter)
+    var value_label := _make_end_chart_label("0", 52.0, 15, HORIZONTAL_ALIGNMENT_RIGHT, END_SUM_TEXT_MUTED)
+    root.add_child(value_label)
+    return {"root": root, "meter": meter, "value_label": value_label}
+
+
+func _format_end_chart_value(value: float) -> String:
+    if value >= 1000.0:
+        return "%0.1fk" % (value / 1000.0)
+    if value >= 100.0:
+        return str(int(round(value)))
+    return "%0.1f" % value if value != floor(value) else str(int(value))
+
+
+func _register_end_chart_animation(row: Control, meter: ProgressBar, value_label: Label, target_value: float, duration: float) -> void:
+    if row == null or meter == null or value_label == null:
+        return
+    row.scale = Vector2.ONE
+    row.pivot_offset = row.size * 0.5
+    end_sum_chart_entries.append({
+        "row": row,
+        "meter": meter,
+        "value_label": value_label,
+        "target_value": max(0.0, target_value),
+        "duration": max(0.01, duration),
+        "elapsed": 0.0,
+        "popped": false,
+    })
+
+
+func _end_chart_anim_duration(target_value: float, max_value: float) -> float:
+    if max_value <= 0.0:
+        return END_SUM_CHART_ANIM_MIN_DURATION
+    var normalized: float = clampf(target_value / max_value, 0.0, 1.0)
+    return lerpf(END_SUM_CHART_ANIM_MIN_DURATION, END_SUM_CHART_ANIM_MAX_DURATION, pow(normalized, 0.58))
+
+
+func _start_end_summary_chart_animation() -> void:
+    end_sum_session_id += 1
+    end_sum_pop_tween_count = 0
+    end_sum_ding_played = false
+    end_sum_chart_tick_timer = 0.0
+    end_sum_chart_active = not end_sum_chart_entries.is_empty()
+    for entry_index in range(end_sum_chart_entries.size()):
+        var entry: Dictionary = end_sum_chart_entries[entry_index]
+        var meter: ProgressBar = entry.get("meter", null)
+        var value_label: Label = entry.get("value_label", null)
+        if meter != null:
+            meter.value = 0.0
+        if value_label != null:
+            value_label.text = "0"
+        entry["elapsed"] = 0.0
+        entry["popped"] = false
+        end_sum_chart_entries[entry_index] = entry
+
+
+func _process_end_summary_chart_animation(delta: float) -> void:
+    if not end_sum_chart_active:
+        return
+    var any_active: bool = false
+    for entry_index in range(end_sum_chart_entries.size()):
+        var entry: Dictionary = end_sum_chart_entries[entry_index]
+        var meter: ProgressBar = entry.get("meter", null)
+        var value_label: Label = entry.get("value_label", null)
+        var row: Control = entry.get("row", null)
+        var target_value: float = float(entry.get("target_value", 0.0))
+        var duration: float = float(entry.get("duration", END_SUM_CHART_ANIM_MIN_DURATION))
+        var elapsed: float = min(duration, float(entry.get("elapsed", 0.0)) + delta)
+        var progress: float = 1.0 if duration <= 0.0 else clampf(elapsed / duration, 0.0, 1.0)
+        var eased_progress: float = 1.0 - pow(1.0 - progress, 3.0)
+        var current_value: float = target_value * eased_progress
+        if meter != null:
+            meter.value = current_value
+        if value_label != null:
+            value_label.text = _format_end_chart_value(current_value)
+        if progress < 1.0:
+            any_active = true
+        elif not bool(entry.get("popped", false)):
+            if meter != null:
+                meter.value = target_value
+            if value_label != null:
+                value_label.text = _format_end_chart_value(target_value)
+            _play_end_chart_row_pop(row)
+            entry["popped"] = true
+        entry["elapsed"] = elapsed
+        end_sum_chart_entries[entry_index] = entry
+    if any_active:
+        end_sum_chart_tick_timer += delta
+        while end_sum_chart_tick_timer >= END_SUM_CHART_TICK_INTERVAL:
+            end_sum_chart_tick_timer -= END_SUM_CHART_TICK_INTERVAL
+            if AudioManager != null:
+                AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER)
+    else:
+        end_sum_chart_active = false
+        end_sum_chart_tick_timer = 0.0
+        _try_play_end_summary_completion_ding()
+
+
+func _try_play_end_summary_completion_ding() -> void:
+    if end_sum_ding_played:
+        return
+    if end_sum_chart_active:
+        return
+    if end_sum_pop_tween_count > 0:
+        return
+    if end_sum_wallet_tween != null and end_sum_wallet_tween.is_running():
+        return
+    end_sum_ding_played = true
+    if AudioManager != null:
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.MINING_SUMMARY_DING)
+
+
+func _on_end_chart_pop_tween_finished(session_id: int) -> void:
+    if session_id != end_sum_session_id:
+        return
+    if not end_panel.visible:
+        return
+    end_sum_pop_tween_count = maxi(0, end_sum_pop_tween_count - 1)
+    _try_play_end_summary_completion_ding()
+
+
+func _play_end_chart_row_pop(row: Control) -> void:
+    if row == null:
+        return
+    row.scale = Vector2.ONE
+    row.pivot_offset = row.size * 0.5
+    end_sum_pop_tween_count += 1
+    var pop_tween: Tween = create_tween()
+    pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    pop_tween.tween_property(row, "scale", Vector2.ONE * END_SUM_CHART_POP_SCALE, 0.12)
+    pop_tween.tween_property(row, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    var session_id := end_sum_session_id
+    pop_tween.finished.connect(_on_end_chart_pop_tween_finished.bind(session_id))
+
+
+func _refresh_turkey_money_chart(results: Dictionary, chart_data: Dictionary) -> void:
+    var margin := _make_end_chart_margin(turkey_money_chart)
+    var root := VBoxContainer.new()
+    root.add_theme_constant_override("separation", 10)
+    margin.add_child(root)
+    root.add_child(
+        _make_end_chart_label(tr("Payout breakdown ($)"), 0.0, 22, HORIZONTAL_ALIGNMENT_CENTER, TURKEY_UPGRADE_ACCENT.lerp(END_SUM_TEXT_PRIMARY, 0.25))
+    )
+
+    var rows: Array = TURKEY_DATA.get_summary_wallet_chart_rows(results, chart_data)
+    if rows.is_empty():
+        root.add_child(_make_end_chart_label(tr("No payout rows"), 0.0, 16, HORIZONTAL_ALIGNMENT_CENTER, END_SUM_TEXT_MUTED))
+        return
+    var max_money: float = 0.0
+    for row_variant in rows:
+        var row_data: Dictionary = row_variant
+        max_money = maxf(max_money, float(row_data.get("money", 0.0)))
+    for row_variant in rows:
+        var row_data: Dictionary = row_variant
+        var row := HBoxContainer.new()
+        row.add_theme_constant_override("separation", 8)
+        root.add_child(row)
+        row.add_child(_make_end_chart_label("%s" % str(row_data.get("label", "")), 168.0, 16))
+        var target_value: float = float(row_data.get("money", 0.0))
+        var bar_bundle: Dictionary = _make_end_chart_bar_bundle(max_money, row_data.get("color", Color(0.75, 0.8, 0.88, 1.0)))
+        row.add_child(bar_bundle.get("root", HBoxContainer.new()))
+        _register_end_chart_animation(
+            row,
+            bar_bundle.get("meter", null),
+            bar_bundle.get("value_label", null),
+            target_value,
+            _end_chart_anim_duration(target_value, max_money)
+        )
+
+
+func _turkey_stats_chart_rows(results: Dictionary) -> Array[Dictionary]:
+    return [
+        {"label": tr("Strikes"), "value": float(results.get("strikes", 0)), "color": Color(0.98, 0.72, 0.38, 1.0)},
+        {"label": tr("Spares"), "value": float(results.get("spares", 0)), "color": Color(0.62, 0.9, 0.58, 1.0)},
+        {"label": tr("Open frames"), "value": float(results.get("open_frames", 0)), "color": Color(0.93, 0.38, 0.35, 1.0)},
+        {"label": tr("Gold pins"), "value": float(results.get("gold_pins_knocked", 0)), "color": Color(0.98, 0.92, 0.4, 1.0)},
+        {"label": tr("Score"), "value": float(results.get("score", 0)), "color": Color(0.5, 0.82, 0.98, 1.0)},
+    ]
+
+
+func _refresh_turkey_stats_chart(results: Dictionary) -> void:
+    var margin := _make_end_chart_margin(turkey_stats_chart)
+    var root := VBoxContainer.new()
+    root.add_theme_constant_override("separation", 10)
+    margin.add_child(root)
+    root.add_child(
+        _make_end_chart_label("Series stats", 0.0, 22, HORIZONTAL_ALIGNMENT_CENTER, TURKEY_UPGRADE_ACCENT.lerp(END_SUM_TEXT_PRIMARY, 0.25))
+    )
+
+    var rows: Array[Dictionary] = _turkey_stats_chart_rows(results)
+    var max_value: float = 0.0
+    for row_data in rows:
+        max_value = maxf(max_value, float(row_data.get("value", 0.0)))
+    if max_value <= 0.0:
+        max_value = 1.0
+    for row_data in rows:
+        var row := HBoxContainer.new()
+        row.add_theme_constant_override("separation", 8)
+        root.add_child(row)
+        row.add_child(_make_end_chart_label(str(row_data.get("label", "")), 168.0, 16))
+        var target_value: float = float(row_data.get("value", 0.0))
+        var bar_bundle: Dictionary = _make_end_chart_bar_bundle(max_value, row_data.get("color", Color.WHITE))
+        row.add_child(bar_bundle.get("root", HBoxContainer.new()))
+        _register_end_chart_animation(
+            row,
+            bar_bundle.get("meter", null),
+            bar_bundle.get("value_label", null),
+            target_value,
+            _end_chart_anim_duration(target_value, max_value)
+        )
+
+
+func _turkey_wallet_count_duration(amount: int) -> float:
+    return clampf(0.85 + float(amount) / 220.0, 0.9, 3.4)
+
+
+func _start_turkey_wallet_count_animation(wallet_target: int) -> void:
+    end_sum_wallet_target = maxi(0, wallet_target)
+    if end_sum_wallet_tween != null and end_sum_wallet_tween.is_running():
+        end_sum_wallet_tween.kill()
+    summary_wallet_label.text = "$0"
+    summary_wallet_label.scale = Vector2.ONE
+    if end_sum_wallet_target <= 0:
+        _play_turkey_wallet_pop()
+        return
+    var duration: float = _turkey_wallet_count_duration(end_sum_wallet_target)
+    end_sum_wallet_tween = create_tween()
+    end_sum_wallet_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    end_sum_wallet_tween.tween_method(
+        func(v: float) -> void:
+            summary_wallet_label.text = "$%d" % int(round(v)),
+        0.0,
+        float(end_sum_wallet_target),
+        duration
+    )
+    end_sum_wallet_tween.finished.connect(_on_turkey_wallet_count_finished, CONNECT_ONE_SHOT)
+
+
+func _on_turkey_wallet_count_finished() -> void:
+    summary_wallet_label.text = "$%d" % end_sum_wallet_target
+    _play_turkey_wallet_pop()
+
+
+func _play_turkey_wallet_pop() -> void:
+    if summary_wallet_label == null:
+        _try_play_end_summary_completion_ding()
+        return
+    var sz: Vector2 = summary_wallet_label.size
+    if sz.x < 2.0 or sz.y < 2.0:
+        sz = Vector2(240.0, 44.0)
+    summary_wallet_label.pivot_offset = sz * 0.5
+    if end_sum_wallet_pop_tween != null and end_sum_wallet_pop_tween.is_running():
+        end_sum_wallet_pop_tween.kill()
+    end_sum_pop_tween_count += 1
+    end_sum_wallet_pop_tween = create_tween()
+    end_sum_wallet_pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    end_sum_wallet_pop_tween.tween_property(summary_wallet_label, "scale", Vector2.ONE * END_SUM_WALLET_POP_SCALE, 0.14)
+    end_sum_wallet_pop_tween.tween_property(summary_wallet_label, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+    var session_id := end_sum_session_id
+    end_sum_wallet_pop_tween.finished.connect(
+        _on_end_chart_pop_tween_finished.bind(session_id), CONNECT_ONE_SHOT
+    )
+
+
+func _build_end_panel_summary_lines(
+    final_score: int,
+    strikes: int,
+    spares: int,
+    open_frames: int,
+    turkey_bonus: bool,
+    latest_message: String
+) -> String:
+    var lines: PackedStringArray = PackedStringArray()
+    lines.append(
+        "%s\nTier: %s  ·  Rack: %d pins  ·  Gold value $%d/pin"
+        % [
+            latest_message,
+            str(player_stats.get("lane_tier_label", "Practice House")),
+            current_series_pin_target,
+            int(player_stats.get("tier_gold_pin_value", 0.0)),
+        ]
+    )
+    lines.append(_trf("Strike %d  ·  Spare %d  ·  Open %d  ·  Pinfall score %d", [strikes, spares, open_frames, final_score]))
+    if turkey_bonus:
+        lines.append(tr("Turkey bonus on the first three frames."))
+    return "\n".join(lines)
+
 
 func _build_series_summary(final_score: int, reward: int, strikes: int, spares: int, open_frames: int, turkey_bonus: bool, latest_message: String) -> String:
     var lines: Array[String] = []
-    lines.append("Final score: %d" % final_score)
-    lines.append("Reward: $%d" % reward)
+    lines.append(_trf("Final score: %d", [final_score]))
+    lines.append(_trf("Reward: $%d", [reward]))
     lines.append(
-        "Tier: %s   |   Rack: %d pins   |   Gold down: %d ($%d each)"
-        % [
+        _trf("Tier: %s   |   Rack: %d pins   |   Gold down: %d ($%d each)", [
             str(player_stats.get("lane_tier_label", "Practice House")),
             current_series_pin_target,
             series_gold_pins_knocked,
             int(player_stats.get("tier_gold_pin_value", 0.0)),
-        ]
+        ])
     )
-    lines.append("Frames: %d strike, %d spare, %d open." % [strikes, spares, open_frames])
+    lines.append(_trf("Frames: %d strike, %d spare, %d open.", [strikes, spares, open_frames]))
     lines.append(latest_message)
     if turkey_bonus:
-        lines.append("Three straight opening strikes. Real turkey money.")
+        lines.append(tr("Three straight opening strikes. Real turkey money."))
     elif final_score >= current_series_pin_target * 4:
-        lines.append("That was a sharp little set. The upgrade lane should feel better next time.")
+        lines.append(tr("That was a sharp little set. The upgrade lane should feel better next time."))
     else:
-        lines.append("Starter gear did its job. Grab upgrades and the pocket will open up later.")
+        lines.append(tr("Starter gear did its job. Grab upgrades and the pocket will open up later."))
     return "\n".join(lines)
 
 func _describe_throw_result(frame_index: int, throws: Array, knocked: int, standing_after: int) -> String:
@@ -1408,8 +2144,8 @@ func _describe_throw_result(frame_index: int, throws: Array, knocked: int, stand
     if frame_index < FRAME_COUNT - 1:
         if throws.size() == 1:
             if _is_strike_roll(frame_index, knocked):
-                return "Strike on frame %d. Cleared the %d-pin rack." % [frame_index + 1, frame_target]
-            return "Frame %d ball 1: %d pins down, %d still standing." % [frame_index + 1, knocked, standing_after]
+                return _trf("Strike on frame %d. Cleared the %d-pin rack.", [frame_index + 1, frame_target])
+            return _trf("Frame %d ball 1: %d pins down, %d still standing.", [frame_index + 1, knocked, standing_after])
         if int(throws[0]) + int(throws[1]) >= frame_target:
             return "Spare in frame %d." % (frame_index + 1)
         return "Open frame %d: %d and %d for %d." % [frame_index + 1, int(throws[0]), int(throws[1]), int(throws[0]) + int(throws[1])]
@@ -1551,29 +2287,29 @@ func _update_scoreboard() -> void:
 
 func _update_status_labels() -> void:
     if current_frame_index >= FRAME_COUNT:
-        frame_status_label.text = "Series complete."
+        frame_status_label.text = tr("Series complete.")
         return
     var throws: Array = frame_records[current_frame_index].get("throws", [])
     var ball_number: int = throws.size() + 1
-    frame_status_label.text = "Frame %d, Ball %d" % [current_frame_index + 1, ball_number]
+    frame_status_label.text = _trf("Frame %d, Ball %d", [current_frame_index + 1, ball_number])
 
 func _update_wallet_label() -> void:
     var wallet: int = int(progress_data.get("wallet", 0))
     var weight_lb: float = float(player_stats.get("ball_weight_lb", 8.0))
-    wallet_label.text = "Wallet: $%d   Ball: %.1f lb   Tier: %s" % [wallet, weight_lb, str(player_stats.get("lane_tier_label", "Practice House"))]
+    wallet_label.text = _trf("Wallet: $%d   Ball: %.1f lb   Tier: %s", [wallet, weight_lb, str(player_stats.get("lane_tier_label", tr("Practice House")))])
 
 func _update_power_bar() -> void:
     power_bar.value = current_power_norm * 100.0
     _update_power_bar_visuals()
     match run_state:
         RunState.READY:
-            power_label.text = "Power Gauge: click once to begin."
+            power_label.text = tr("Power Gauge: click once to begin.")
         RunState.AIMING:
-            power_label.text = "Power Gauge: %d%%" % int(round(power_bar.value))
+            power_label.text = _trf("Power Gauge: %d%%", [int(round(power_bar.value))])
         RunState.BALL_IN_PLAY:
-            power_label.text = "Power Locked: %d%%" % int(round(power_bar.value))
+            power_label.text = _trf("Power Locked: %d%%", [int(round(power_bar.value))])
         RunState.ROUND_OVER:
-            power_label.text = "Power Gauge: series finished."
+            power_label.text = tr("Power Gauge: series finished.")
 
 func _update_power_bar_visuals() -> void:
     if power_bar_fill_style == null:
@@ -1641,7 +2377,11 @@ func _update_editor_debug_ui() -> void:
     lines.append("Start Slider: %+d  ->  %.2f m" % [int(round(selected_start_value)), _get_selected_start_x()])
     lines.append("Curve Slider: %+d  ->  %.2f" % [int(round(selected_spin_value)), _get_selected_spin_curve()])
     lines.append("Aim Target X: %.2f / %.2f  |  Power: %d%%" % [current_target_x, _get_active_target_x_limit(), int(round(current_power_norm * 100.0))])
-    lines.append("Pins Standing: %d  |  Shot: %.2fs / %.2fs" % [standing_pins, shot_elapsed, shot_settled_elapsed])
+    var since_bexit := 0.0 if ball_exit_anchor_shot_elapsed < 0.0 else shot_elapsed - ball_exit_anchor_shot_elapsed
+    var pin_spd := ""
+    if run_state == RunState.BALL_IN_PLAY and ball_exit_anchor_shot_elapsed >= 0.0:
+        pin_spd = " pins:%s" % ("fast" if _pins_have_significant_speed() else "ok")
+    lines.append("Pins Standing: %d  |  Shot: %.2fs  |  since deck exit: %.2fs%s" % [standing_pins, shot_elapsed, since_bexit, pin_spd])
     lines.append("Ball: %s" % ball_summary)
     editor_debug_label.text = "\n".join(lines)
 
@@ -1758,9 +2498,6 @@ func _on_upgrade_button_pressed() -> void:
 func _end_run_to_upgrades() -> void:
     SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
 
-func _on_menu_button_pressed() -> void:
-    SceneChanger.change_to_new_scene(Util.PATH_APP_BOOTSTRAP, null, 0.2)
-
 func _handle_pause_menu_input(event: InputEvent) -> bool:
     if event.is_action_pressed("escape") or event.is_action_pressed("back"):
         if _is_pause_menu_open():
@@ -1774,7 +2511,7 @@ func _handle_pause_menu_input(event: InputEvent) -> bool:
     return false
 
 func _can_open_pause_menu() -> bool:
-    return not end_panel.visible
+    return true
 
 func _is_pause_menu_open() -> bool:
     return pause_menu != null and pause_menu.is_open()

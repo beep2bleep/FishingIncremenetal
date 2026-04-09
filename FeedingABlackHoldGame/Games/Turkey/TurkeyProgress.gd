@@ -13,6 +13,8 @@ const DEFAULT_DATA := {
 	"last_run_summary": "No turkey series completed yet.",
 	"last_run_breakdown": {},
 	"meta_upgrades": {},
+	"turkey_selected_lane_tier": 0,
+	"turkey_skip_start_lane_dialog": false,
 }
 
 static func get_default_data() -> Dictionary:

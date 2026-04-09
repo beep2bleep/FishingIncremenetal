@@ -1583,8 +1583,8 @@ func _show_run_start_banner() -> void:
 
     var rank: int = MINING_PROGRESS_SCRIPT.get_rank(persistent_data)
     var depth_tier: int = _get_display_depth_tier_for_run_depth(active_depth_level)
-    run_start_banner_title_label.text = "DIVE %02d  |  %s STRATUM" % [depth_tier, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME"))).to_upper()]
-    run_start_banner_detail_label.text = "%s %d   |   Surface rig hot   |   Cargo lane online" % [MINING_BALANCE.get_rank_label(), rank]
+    run_start_banner_title_label.text = tr("DIVE %02d  |  %s STRATUM") % [depth_tier, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME"))).to_upper()]
+    run_start_banner_detail_label.text = tr("%s %d   |   Surface rig hot   |   Cargo lane online") % [MINING_BALANCE.get_rank_label(), rank]
     run_start_banner_title_label.add_theme_color_override("font_color", accent.lightened(0.18))
 
     run_start_banner_panel.visible = true

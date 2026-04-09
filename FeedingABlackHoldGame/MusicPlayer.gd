@@ -4,12 +4,8 @@ extends AudioStreamPlayer
 var playing_game_over: = false
 
 func _ready() -> void :
-    AudioServer.set_bus_volume_db(
-        1, 
-        linear_to_db(SaveHandler.music_volume * 3.0)
-    )
+    # Volumes come from SaveHandler.set_audio() on startup; keep playlist flags in sync.
     update()
-
 
     stream = playlist
     play()

@@ -3,8 +3,8 @@ class_name CoinPickup
 
 signal collected(coin: CoinPickup, by_cursor: bool)
 const CURSOR_PICKUP_RADIUS := 30.0
-const COIN_GOLD_TEXTURE_PATH := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites/Tiles/Double/coin_gold.png"
-const COIN_GOLD_SIDE_TEXTURE_PATH := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites/Tiles/Double/coin_gold_side.png"
+const COIN_GOLD_TEXTURE_PATH := "res://PlatformingPack/Sprites/Tiles/Default/coin_gold.png"
+const COIN_GOLD_SIDE_TEXTURE_PATH := "res://PlatformingPack/Sprites/Tiles/Default/coin_gold_side.png"
 const COIN_ANIM_FPS := 10.0
 const COIN_ANIM_FRAME_TIME := 1.0 / COIN_ANIM_FPS
 

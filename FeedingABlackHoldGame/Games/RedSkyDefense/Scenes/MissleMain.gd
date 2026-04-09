@@ -9,6 +9,9 @@ const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.
 const IN_GAME_PAUSE_MENU_SCRIPT = preload("res://Core/InGamePauseMenu.gd")
 const RED_SKY_DEFEAT_SOUND = preload("res://Black Hole Game Over.mp3")
 
+func _trf(text: String, args: Array = []) -> String:
+	return tr(text) % args if not args.is_empty() else tr(text)
+
 const SKY_TOP_COLOR := Color(0.22, 0.05, 0.06, 1.0)
 const SKY_BOTTOM_COLOR := Color(0.66, 0.22, 0.13, 1.0)
 const SKY_TOP_NIGHT_COLOR := Color(0.03, 0.03, 0.08, 1.0)
@@ -46,6 +49,28 @@ const DEFEAT_SEQUENCE_DURATION := 1.35
 const DEFEAT_EXPLOSION_INTERVAL := 0.09
 const DEFEAT_OVERLAY_MAX_ALPHA := 0.46
 const ENEMY_TYPE_ORDER := ["raider", "runner", "gunship", "bomber", "brute", "skimmer", "siege", "carrier", "dronelet"]
+const SHOOTER_FORMATION_TYPES := ["gunship", "skimmer", "siege", "bomber"]
+const SHOOTER_FORMATION_SPACING := 70.0
+const SUMMARY_CHART_ANIM_MIN_DURATION := 0.75
+const SUMMARY_CHART_ANIM_MAX_DURATION := 2.85
+const SUMMARY_CHART_TICK_INTERVAL := 0.085
+const SUMMARY_CHART_POP_SCALE := 1.08
+const SUMMARY_TEXT_MONEY_BASE_FONT_SIZE := 22
+const SUMMARY_TEXT_MONEY_POP_FONT_SIZE := 30
+const SUMMARY_TEXT_BASE_COLOR := Color(0.88, 0.94, 1.0, 0.96)
+const SUMMARY_TEXT_MONEY_GREY := Color(0.62, 0.68, 0.74, 1.0)
+const SUMMARY_TEXT_MONEY_HIGH := Color(0.37, 0.86, 0.61, 1.0)
+const SUMMARY_PANEL_BG := Color(0.04, 0.06, 0.1, 0.97)
+const SUMMARY_PANEL_BORDER := Color(0.88, 0.92, 1.0, 0.95)
+const SUMMARY_CHART_PANEL_BG := Color(0.05, 0.09, 0.16, 0.94)
+const SUMMARY_CHART_PANEL_BORDER := Color(0.31, 0.63, 0.89, 0.9)
+const SUMMARY_METER_TRACK := Color(0.12, 0.18, 0.28, 0.96)
+const SUMMARY_CHART_TITLE_COLOR := Color(0.76, 0.9, 1.0, 1.0)
+const SUMMARY_CHART_MUTED_COLOR := Color(0.82, 0.88, 0.96, 0.92)
+const SUMMARY_CHART_VALUE_COLOR := Color(0.82, 0.9, 1.0, 1.0)
+const UPGRADE_PANEL_MARGIN := Vector2(22.0, 22.0)
+const UPGRADE_PANEL_MARGIN_RATIO := Vector2(0.05, 0.06)
+const UPGRADE_PANEL_MAX_SIZE := Vector2(920.0, 620.0)
 
 enum RUN_STATES {RUNNING, UPGRADE, DEFEAT, SUMMARY}
 
@@ -58,16 +83,20 @@ enum RUN_STATES {RUNNING, UPGRADE, DEFEAT, SUMMARY}
 @onready var upgrade_panel: PanelContainer = $OverlayCanvasLayer/UpgradePanel
 @onready var upgrade_title_label: Label = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeTitleLabel
 @onready var upgrade_desc_label: Label = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeDescLabel
-@onready var upgrade_buttons_grid: GridContainer = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons
-@onready var damage_button: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons/DamageButton
-@onready var speed_button: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons/SpeedButton
-@onready var health_button: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons/HealthButton
-@onready var choice_button_4: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons/ChoiceButton4
-@onready var choice_button_5: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons/ChoiceButton5
-@onready var choice_button_6: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons/ChoiceButton6
+@onready var upgrade_buttons_scroll: ScrollContainer = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll
+@onready var upgrade_buttons_grid: GridContainer = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons
+@onready var damage_button: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons/DamageButton
+@onready var speed_button: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons/SpeedButton
+@onready var health_button: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons/HealthButton
+@onready var choice_button_4: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons/ChoiceButton4
+@onready var choice_button_5: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons/ChoiceButton5
+@onready var choice_button_6: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons/ChoiceButton6
 @onready var summary_panel: PanelContainer = $OverlayCanvasLayer/SummaryPanel
 @onready var summary_title_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryTitleLabel
-@onready var summary_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryLabel
+@onready var summary_label: RichTextLabel = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryLabel
+@onready var summary_charts_row: HBoxContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryChartsRow
+@onready var summary_payout_chart: PanelContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryChartsRow/SummaryPayoutChart
+@onready var summary_combat_chart: PanelContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryChartsRow/SummaryCombatChart
 @onready var summary_stats_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryStatsLabel
 @onready var start_wave_section: VBoxContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/StartWaveSection
 @onready var start_wave_header_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/StartWaveSection/StartWaveHeaderLabel
@@ -133,6 +162,9 @@ var wave_scrap_bonus := 0.0
 var wave_auto_bank_ratio := 0.68
 var level_up_choice_count := 3
 var remaining_nukes := 0
+var nuke_max := 5
+var nuke_regen_per_wave := 1
+var last_started_wave := -1
 var nuke_damage := 128.0
 var nuke_blast_radius := 292.0
 var repair_between_waves := 0.0
@@ -200,15 +232,28 @@ var defeat_sequence_timer := 0.0
 var defeat_explosion_timer := 0.0
 var pending_finish_reason := ""
 
+var summary_chart_animation_active := false
+var summary_chart_animation_entries: Array[Dictionary] = []
+var summary_chart_animation_session_id := 0
+var summary_chart_tick_timer := 0.0
+var summary_text_tween: Tween
+var summary_text_pop_tween: Tween
+var summary_text_view_model: Dictionary = {}
+var summary_text_progress := 0.0
+var summary_text_money_pop_progress := 0.0
+
 func _ready() -> void:
 	rng.randomize()
 	persistent_data = RED_SKY_PROGRESS.load_data()
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	_ensure_crt_overlay()
 	_connect_ui()
 	_setup_pause_menu()
 	_setup_text_presentation()
 	_setup_run_start_banner()
 	_setup_defeat_audio()
+	_apply_summary_theme()
+	_refresh_upgrade_panel_layout()
 	_show_pre_run_panel()
 
 func _exit_tree() -> void:
@@ -237,6 +282,9 @@ func _connect_ui() -> void:
 	start_wave_info_label.add_theme_font_size_override("font_size", 18)
 	continue_button.pressed.connect(_on_continue_pressed)
 	retry_button.pressed.connect(_on_retry_pressed)
+
+func _on_viewport_size_changed() -> void:
+	_refresh_upgrade_panel_layout(offered_wave_upgrades.size())
 
 func _setup_pause_menu() -> void:
 	pause_menu = IN_GAME_PAUSE_MENU_SCRIPT.new()
@@ -352,8 +400,8 @@ func _show_run_start_banner() -> void:
 	var run_number: int = int(persistent_data.get("runs", 0)) + 1
 	var wallet: int = int(persistent_data.get("wallet", 0))
 	var best_wave: int = int(persistent_data.get("best_wave", 0))
-	run_start_banner_title_label.text = "RED SKY DEFENSE  |  WAVE %02d ALERT" % current_wave
-	run_start_banner_detail_label.text = "Run %02d   |   Scrap reserve %d   |   Best wave %d   |   Start wave %d" % [run_number, wallet, best_wave, run_start_wave]
+	run_start_banner_title_label.text = _trf("RED SKY DEFENSE  |  WAVE %02d ALERT", [current_wave])
+	run_start_banner_detail_label.text = _trf("Run %02d   |   Scrap reserve %d   |   Best wave %d   |   Start wave %d", [run_number, wallet, best_wave, run_start_wave])
 
 	run_start_banner_panel.visible = true
 	run_start_banner_panel.scale = Vector2(0.96, 0.96)
@@ -386,6 +434,11 @@ func _play_defeat_sound() -> void:
 	defeat_sound_player.pitch_scale = 1.0 + rng.randf_range(-0.03, 0.03)
 	defeat_sound_player.play()
 
+func _play_red_sky_sfx(effect_type: SoundEffectSettings.SOUND_EFFECT_TYPE, volume_db_offset: float = 0.0, pitch_offset: float = 0.0) -> void:
+	if AudioManager == null:
+		return
+	AudioManager.create_audio(effect_type, volume_db_offset, pitch_offset)
+
 func tune_text_pixel_filter(delta: float) -> void:
 	combat_text_scale = clampf(combat_text_scale + delta, 1.0, 3.2)
 	_apply_text_filter_scale()
@@ -406,46 +459,31 @@ func _show_pre_run_panel() -> void:
 	showing_pre_run_panel = true
 	Global.game_state = Util.GAME_STATES.UPGRADES
 	upgrade_panel.hide()
-	summary_title_label.text = "Red Sky Deployment"
-	summary_label.text = _build_pre_run_summary_text()
+	summary_title_label.text = tr("Red Sky Deployment")
+	_reset_summary_presentation_state()
+	summary_charts_row.hide()
+	summary_label.clear()
+	summary_label.append_text(_build_pre_run_summary_bbcode())
 	summary_stats_label.text = _build_pre_run_stats_text()
-	continue_button.text = "Return to Upgrades"
-	retry_button.text = "Deploy"
+	continue_button.text = tr("Return to Upgrades")
+	retry_button.text = tr("Deploy")
 	_refresh_start_wave_selector()
 	summary_panel.show()
 	_reset_aim_cursor()
 	_refresh_mouse_capture_state()
 	_refresh_ui()
 
-func _build_pre_run_summary_text() -> String:
-	var best_wave: int = int(persistent_data.get("best_wave", 0))
-	var last_run_summary: String = str(persistent_data.get("last_run_summary", "No Red Sky Defense run completed yet.")).strip_edges()
-	var highest_start_wave: int = RED_SKY_PROGRESS.get_unlocked_start_waves(persistent_data).back()
-	var lines := PackedStringArray([
-		"Best wave cleared: %d" % best_wave,
-		"Selected start wave: %d" % selected_start_wave,
-		"Highest unlocked checkpoint: Wave %d" % highest_start_wave
-	])
-	if selected_start_wave > 1:
-		lines.append("Prep picks before launch: %d" % max(0, selected_start_wave - 1))
-	if not last_run_summary.is_empty():
-		lines.append("")
-		lines.append("Last run:")
-		lines.append(last_run_summary)
-	return "\n".join(lines)
+func _build_pre_run_summary_bbcode() -> String:
+	return tr("[color=%s]Choose a start wave below, then press Deploy.\n\nReturn to Upgrades opens the meta tree.[/color]") % _color_to_bbcode(SUMMARY_TEXT_BASE_COLOR)
 
 func _build_pre_run_stats_text() -> String:
-	return "Wallet: %d    Best Score: %d    Total Runs: %d" % [
-		int(persistent_data.get("wallet", 0)),
-		int(persistent_data.get("best_score", 0)),
-		int(persistent_data.get("runs", 0))
-	]
+	return ""
 
 func _refresh_start_wave_selector() -> void:
 	if start_wave_buttons_grid == null:
 		return
 	selected_start_wave = RED_SKY_PROGRESS.get_selected_start_wave(persistent_data)
-	start_wave_header_label.text = "Start Wave"
+	start_wave_header_label.text = tr("Start Wave")
 	start_wave_info_label.text = _build_start_wave_info_text()
 	for child in start_wave_buttons_grid.get_children():
 		child.queue_free()
@@ -471,15 +509,15 @@ func _build_start_wave_info_text() -> String:
 	var highest_start_wave: int = unlocked_start_waves.back()
 	var next_start_wave: int = RED_SKY_PROGRESS.START_WAVE_STEP if highest_start_wave <= 1 else highest_start_wave + RED_SKY_PROGRESS.START_WAVE_STEP
 	var next_unlock_wave: int = next_start_wave + RED_SKY_PROGRESS.START_WAVE_STEP
-	var info := "Wave %d selected. Prep picks: %d." % [selected_start_wave, max(0, selected_start_wave - 1)]
+	var info := _trf("Wave %d selected. Prep picks: %d.", [selected_start_wave, max(0, selected_start_wave - 1)])
 	if next_unlock_wave > 0:
-		info += " Beat wave %d to unlock Wave %d starts." % [next_unlock_wave, next_start_wave]
+		info += _trf(" Beat wave %d to unlock Wave %d starts.", [next_unlock_wave, next_start_wave])
 	return info
 
 func _format_start_wave_button_text(start_wave: int) -> String:
 	if start_wave <= 1:
-		return "Wave 1\nFull warm-up"
-	return "Wave %d\nPrep picks %d" % [start_wave, max(0, start_wave - 1)]
+		return tr("Wave 1\nFull warm-up")
+	return _trf("Wave %d\nPrep picks %d", [start_wave, max(0, start_wave - 1)])
 
 func _refresh_start_wave_button_styles() -> void:
 	for button in start_wave_buttons:
@@ -507,7 +545,8 @@ func _on_start_wave_button_pressed(start_wave: int) -> void:
 	waves_cleared = max(0, run_start_wave - 1)
 	_refresh_start_wave_selector()
 	if showing_pre_run_panel:
-		summary_label.text = _build_pre_run_summary_text()
+		summary_label.clear()
+		summary_label.append_text(_build_pre_run_summary_bbcode())
 		summary_stats_label.text = _build_pre_run_stats_text()
 	_refresh_ui()
 
@@ -545,6 +584,7 @@ func _begin_run() -> void:
 	support_time = 0.0
 	wave_upgrade_levels.clear()
 	offered_wave_upgrades.clear()
+	last_started_wave = -1
 	_clear_runtime_entities()
 	_reset_defeat_sequence_state()
 	score = 0
@@ -567,6 +607,8 @@ func _begin_run() -> void:
 	for enemy_type in ENEMY_TYPE_ORDER:
 		enemy_kill_counts[enemy_type] = 0
 	_apply_meta_bonuses()
+	summary_charts_row.hide()
+	_reset_summary_presentation_state()
 	summary_panel.hide()
 	upgrade_panel.hide()
 	_reset_aim_cursor()
@@ -608,7 +650,9 @@ func _apply_meta_bonuses() -> void:
 	wave_scrap_bonus = float(meta_bonuses.get("wave_scrap_bonus", 0.0))
 	wave_auto_bank_ratio = float(meta_bonuses.get("wave_auto_bank_ratio", 0.68))
 	level_up_choice_count = clampi(int(meta_bonuses.get("level_up_choice_count", 3)), 3, 6)
-	remaining_nukes = int(meta_bonuses.get("starting_nukes", 2))
+	nuke_max = maxi(int(meta_bonuses.get("nuke_max", 5)), 1)
+	nuke_regen_per_wave = maxi(int(meta_bonuses.get("nuke_regen_per_wave", 1)), 1)
+	remaining_nukes = clampi(int(meta_bonuses.get("starting_nukes", 1)), 0, nuke_max)
 	nuke_damage = float(meta_bonuses.get("nuke_damage", 128.0))
 	nuke_blast_radius = float(meta_bonuses.get("nuke_radius", 292.0))
 	repair_between_waves = float(meta_bonuses.get("repair_between_waves", 0.0))
@@ -631,6 +675,9 @@ func _apply_meta_bonuses() -> void:
 	_ensure_support_arrays()
 
 func _start_wave(wave: int) -> void:
+	if last_started_wave >= 0 and wave > last_started_wave:
+		remaining_nukes = mini(remaining_nukes + nuke_regen_per_wave, nuke_max)
+	last_started_wave = wave
 	current_wave = wave
 	wave_spawn_queue = _build_wave_spawn_list(wave)
 	wave_spawn_timer = 0.12
@@ -684,7 +731,43 @@ func _build_wave_spawn_list(wave: int) -> Array[Dictionary]:
 	enemy_types.shuffle()
 	for spawn_index in range(enemy_types.size()):
 		queue.append(_build_enemy_def(enemy_types[spawn_index], wave, spawn_index))
+	_apply_shooter_formations(queue)
 	return queue
+
+func _apply_shooter_formations(queue: Array[Dictionary]) -> void:
+	if queue.is_empty():
+		return
+	var viewport := get_viewport_rect().size
+	for shooter_type in SHOOTER_FORMATION_TYPES:
+		var indices: Array[int] = []
+		for queue_index in range(queue.size()):
+			if str(queue[queue_index].get("type", "")) == shooter_type:
+				indices.append(queue_index)
+		if indices.size() < 2:
+			continue
+		var base_lane: float = rng.randf_range(-210.0, 210.0)
+		var group_seed: float = rng.randf_range(0.0, TAU)
+		var shared_standoff: float = viewport.y * rng.randf_range(0.22, 0.36)
+		if shooter_type == "skimmer":
+			shared_standoff = viewport.y * rng.randf_range(0.18, 0.26)
+		elif shooter_type == "siege":
+			shared_standoff = viewport.y * rng.randf_range(0.18, 0.24)
+		elif shooter_type == "bomber":
+			shared_standoff = viewport.y * rng.randf_range(0.38, 0.48)
+		var n: int = indices.size()
+		var shared_orbit: float = 0.0
+		for idx in indices:
+			shared_orbit += float(queue[idx].get("orbit_radius", 72.0))
+		shared_orbit /= float(n)
+		var volley_timer: float = rng.randf_range(0.65, 1.05)
+		for formation_slot in range(n):
+			var enemy: Dictionary = queue[indices[formation_slot]]
+			var slot_offset: float = (float(formation_slot) - float(n - 1) * 0.5) * SHOOTER_FORMATION_SPACING
+			enemy["lane_offset"] = base_lane + slot_offset
+			enemy["standoff_y"] = shared_standoff
+			enemy["orbit_radius"] = shared_orbit
+			enemy["movement_seed"] = group_seed + float(formation_slot) * 0.09
+			enemy["shoot_timer"] = volley_timer + float(formation_slot) * 0.04
 
 func _build_enemy_def(enemy_type: String, wave: int, spawn_index: int) -> Dictionary:
 	var viewport := get_viewport_rect().size
@@ -867,6 +950,8 @@ func _process(delta: float) -> void:
 		_process_running(delta)
 	elif run_state == RUN_STATES.DEFEAT:
 		_process_defeat_sequence(delta)
+	elif run_state == RUN_STATES.SUMMARY and not showing_pre_run_panel:
+		_process_summary_chart_animation(delta)
 	_process_explosions(delta)
 	_process_support_effects(delta)
 	_process_floating_texts(delta)
@@ -1274,6 +1359,7 @@ func _fire_player_bullet() -> void:
 		"crit": is_crit
 	})
 	shots_fired += 1
+	_play_red_sky_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.RED_SKY_GUN_FIRE)
 
 func _spawn_enemy_projectile(origin: Vector2, direction: Vector2, wave: int, options: Dictionary = {}) -> void:
 	var normalized_direction := direction.normalized()
@@ -1323,6 +1409,8 @@ func _trigger_explosion(position: Vector2, blast_radius: float, damage_amount: f
 		"duration": 0.42 if is_nuke else 0.22,
 		"color": EXPLOSION_COLOR
 	})
+	if is_nuke:
+		_play_red_sky_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.RED_SKY_NUKE_EXPLOSION)
 	for enemy_index in range(enemies.size() - 1, -1, -1):
 		var enemy: Dictionary = enemies[enemy_index]
 		var enemy_pos: Vector2 = enemy.get("pos", Vector2.ZERO)
@@ -1360,6 +1448,7 @@ func _process_support_effects(delta: float) -> void:
 
 func _kill_enemy(enemy_index: int, source: String) -> void:
 	var enemy: Dictionary = enemies[enemy_index]
+	_play_red_sky_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.RED_SKY_ENEMY_KILL)
 	var enemy_type: String = String(enemy.get("type", "raider"))
 	total_kills += 1
 	enemy_kill_counts[enemy_type] = int(enemy_kill_counts.get(enemy_type, 0)) + 1
@@ -1434,6 +1523,7 @@ func _check_wave_clear() -> void:
 	_show_upgrade_panel()
 
 func _show_upgrade_panel() -> void:
+	_play_red_sky_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.RED_SKY_WAVE_CLEAR, -2.0, rng.randf_range(-0.04, 0.06))
 	run_state = RUN_STATES.UPGRADE
 	Global.game_state = Util.GAME_STATES.UPGRADES
 	_bank_remaining_salvage(wave_auto_bank_ratio)
@@ -1473,6 +1563,7 @@ func _show_upgrade_offer_panel(title: String, description: String) -> void:
 		button.icon = _get_upgrade_icon_texture(upgrade_id)
 		_apply_upgrade_button_rarity_style(button, offer_tier)
 	upgrade_panel.show()
+	_refresh_upgrade_panel_layout(offered_wave_upgrades.size())
 	_refresh_mouse_capture_state()
 
 func _roll_wave_upgrade_offers(count: int) -> Array[Dictionary]:
@@ -1571,6 +1662,14 @@ func _apply_effect_bundle(bundle: Dictionary) -> void:
 				shield_regen_rate += amount
 			"nukes":
 				remaining_nukes += _round_upgrade_count(amount)
+				remaining_nukes = mini(remaining_nukes, nuke_max)
+			"nuke_max":
+				nuke_max += _round_upgrade_count(amount)
+				nuke_max = maxi(nuke_max, 1)
+				remaining_nukes = mini(remaining_nukes, nuke_max)
+			"nuke_regen_per_wave":
+				nuke_regen_per_wave += _round_upgrade_count(amount)
+				nuke_regen_per_wave = maxi(nuke_regen_per_wave, 1)
 			"bullet_pierce":
 				bullet_pierce += _round_upgrade_count(amount)
 			"bullet_blast_radius":
@@ -1637,6 +1736,8 @@ func _apply_effect_bundle(bundle: Dictionary) -> void:
 			"upgrade_power_multiplier":
 				upgrade_power_multiplier *= multiplier
 
+	remaining_nukes = mini(remaining_nukes, nuke_max)
+
 func _finish_run(reason: String) -> void:
 	if run_state == RUN_STATES.SUMMARY:
 		return
@@ -1647,12 +1748,13 @@ func _finish_run(reason: String) -> void:
 	_bank_remaining_salvage(1.0)
 	last_run_results = _build_run_results(reason)
 	persistent_data = RED_SKY_PROGRESS.apply_run_results(last_run_results)
-	summary_title_label.text = "Red Sky Defense Summary"
-	summary_label.text = str(last_run_results.get("summary_text", "Run complete."))
+	summary_title_label.text = tr("Red Sky Defense Summary")
 	summary_stats_label.text = str(last_run_results.get("summary_stats_text", ""))
-	continue_button.text = "Return to Upgrades"
-	retry_button.text = "Run Again"
+	continue_button.text = tr("Return to Upgrades")
+	retry_button.text = tr("Run Again")
 	_refresh_start_wave_selector()
+	_show_post_run_summary(last_run_results)
+	summary_charts_row.show()
 	summary_panel.show()
 	_refresh_mouse_capture_state()
 
@@ -1664,47 +1766,38 @@ func _build_run_results(reason: String) -> Dictionary:
 	}, {"meta_reward_multiplier": meta_reward_multiplier})
 	var wallet_bonus: int = max(0, wallet_gain - score)
 	var waves_cleared_this_run: int = max(0, waves_cleared - max(run_start_wave - 1, 0))
-	var kill_lines := PackedStringArray()
-	for enemy_type in ENEMY_TYPE_ORDER:
-		var kill_count: int = int(enemy_kill_counts.get(enemy_type, 0))
-		if kill_count <= 0:
-			continue
-		kill_lines.append("%s x%d" % [_get_enemy_display_name(enemy_type), kill_count])
-	if kill_lines.is_empty():
-		kill_lines.append("No kills recorded")
-	var summary_lines := PackedStringArray([
-		"Run complete: %s" % reason,
-		"",
-		"Started on wave: %d" % run_start_wave,
-		"Waves cleared this run: %d" % waves_cleared_this_run,
-		"Deepest cleared wave: %d" % waves_cleared,
-		"Final wave reached: %d" % current_wave,
-		"Scrap banked: %d" % score,
-		"Wave bonus scrap: %d" % bonus_scrap_earned,
-		"Prep picks used: %d" % used_start_upgrade_picks,
-		"Damage dealt: %d" % int(round(damage_dealt)),
-		"Hull damage taken: %d" % int(round(damage_taken)),
-		"Shield damage absorbed: %d" % int(round(shield_damage_absorbed)),
-		"Nukes launched: %d" % nukes_launched,
-		"Enemy projectiles destroyed: %d" % enemy_projectiles_destroyed,
-		"Enemy projectiles redirected: %d" % enemy_projectiles_deflected,
-		"Runners escaped: %d" % escape_scores,
-		"Salvage collected: %d    Salvage lost: %d" % [salvage_collected, salvage_lost],
-		"Tower kills: %d    Drone kills: %d    Tentacle kills: %d" % [tower_kills, drone_kills, tentacle_kills],
-		"",
-		"Kills by type:",
-		"\n".join(kill_lines)
-	])
+	var payout_chart: Array[Dictionary] = []
+	payout_chart.append({
+		"label": "Scrap banked (run)",
+		"money": float(score),
+		"color": Color(0.96, 0.78, 0.42, 1.0)
+	})
 	if wallet_bonus > 0:
-		summary_lines.insert(5, "Command scrap bonus: %d    Meta scrap payout: %d" % [wallet_bonus, wallet_gain])
-	var summary_text := "\n".join(summary_lines)
-	var summary_stats_text := "Best Score: %d    Best Wave: %d    Selected Start: %d    Total Runs: %d    Shots Fired: %d" % [
+		payout_chart.append({
+			"label": "Meta multiplier bonus",
+			"money": float(wallet_bonus),
+			"color": Color(0.42, 0.88, 0.62, 1.0)
+		})
+	var combat_chart: Array[Dictionary] = [
+		{"label": "Enemy kills", "money": float(total_kills), "color": Color(0.45, 0.87, 0.99, 1.0)},
+		{"label": "Waves cleared (run)", "money": float(waves_cleared_this_run), "color": Color(0.83, 0.74, 1.0, 1.0)},
+		{"label": tr("Damage dealt"), "money": float(damage_dealt), "color": Color(1.0, 0.55, 0.38, 1.0)},
+		{"label": tr("Enemy shots destroyed"), "money": float(enemy_projectiles_destroyed), "color": Color(0.67, 0.94, 1.0, 1.0)}
+	]
+	var summary_text := _trf("%s — Cleared %d waves this run — +%d scrap to wallet", [reason, waves_cleared_this_run, wallet_gain])
+	var summary_stats_text := _trf("Best score: %d    Best wave: %d    Total runs: %d    Shots fired: %d", [
 		max(int(persistent_data.get("best_score", 0)), score),
 		max(int(persistent_data.get("best_wave", 0)), waves_cleared),
-		selected_start_wave,
 		int(persistent_data.get("runs", 0)) + 1,
 		shots_fired
-	]
+	])
+	var summary_view_model := {
+		"reason": reason,
+		"waves_cleared_this_run": waves_cleared_this_run,
+		"wallet_gain": wallet_gain,
+		"run_scrap": score,
+		"wallet_bonus": wallet_bonus
+	}
 	return {
 		"reason": reason,
 		"start_wave": run_start_wave,
@@ -1732,34 +1825,40 @@ func _build_run_results(reason: String) -> Dictionary:
 		"prep_picks_used": used_start_upgrade_picks,
 		"enemy_kill_counts": enemy_kill_counts.duplicate(true),
 		"summary_text": summary_text,
-		"summary_stats_text": summary_stats_text
+		"summary_stats_text": summary_stats_text,
+		"payout_breakdown_chart": payout_chart,
+		"combat_breakdown_chart": combat_chart,
+		"summary_view_model": summary_view_model
 	}
 
 func _refresh_ui() -> void:
 	if run_start_wave > 1:
-		wave_label.text = "Wave %d  Clear %d  Start %d" % [current_wave, waves_cleared, run_start_wave]
+		wave_label.text = _trf("Wave %d  Clear %d  Start %d", [current_wave, waves_cleared, run_start_wave])
 	else:
-		wave_label.text = "Wave %d  Clear %d" % [current_wave, waves_cleared]
+		wave_label.text = _trf("Wave %d  Clear %d", [current_wave, waves_cleared])
 	if shield_max > 0.0:
-		health_label.text = "Hull %d/%d  Shield %d/%d" % [int(round(base_health)), int(round(base_max_health)), int(round(shield_health)), int(round(shield_max))]
+		health_label.text = _trf("Hull %d/%d  Shield %d/%d", [int(round(base_health)), int(round(base_max_health)), int(round(shield_health)), int(round(shield_max))])
 	else:
-		health_label.text = "Hull %d/%d" % [int(round(base_health)), int(round(base_max_health))]
-	score_label.text = "Scrap %s" % Util.get_number_short_text(score)
-	nukes_label.text = "Nukes %d" % remaining_nukes
+		health_label.text = _trf("Hull %d/%d", [int(round(base_health)), int(round(base_max_health))])
+	score_label.text = _trf("Scrap %s", [Util.get_number_short_text(score)])
+	nukes_label.text = _trf("Nukes %d/%d (+%d)", [remaining_nukes, nuke_max, nuke_regen_per_wave])
 
 func _update_upgrade_offer_layout(visible_count: int) -> void:
 	if upgrade_buttons_grid == null:
 		return
 	var clamped_count: int = maxi(1, visible_count)
-	if clamped_count <= 1:
+	var panel_size: Vector2 = _get_upgrade_panel_target_size()
+	var available_width: float = maxf(220.0, panel_size.x - 52.0)
+	if clamped_count <= 1 or available_width < 470.0:
 		upgrade_buttons_grid.columns = 1
 	elif clamped_count == 2:
 		upgrade_buttons_grid.columns = 2
-	elif clamped_count <= 4:
+	elif clamped_count <= 4 or available_width < 760.0:
 		upgrade_buttons_grid.columns = 2
 	else:
 		upgrade_buttons_grid.columns = 3
 	var min_height: float = 128.0
+	var compact_height: float = maxf(320.0, panel_size.y)
 	match clamped_count:
 		1:
 			min_height = 240.0
@@ -1771,10 +1870,38 @@ func _update_upgrade_offer_layout(visible_count: int) -> void:
 			min_height = 148.0
 		_:
 			min_height = 128.0
+	if compact_height < 520.0:
+		min_height = minf(min_height, 124.0)
+	if compact_height < 430.0:
+		min_height = minf(min_height, 102.0)
 	for button in upgrade_buttons:
 		if button == null:
 			continue
 		button.custom_minimum_size = Vector2(0.0, min_height)
+
+func _get_upgrade_panel_target_size() -> Vector2:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var margin := Vector2(
+		maxf(UPGRADE_PANEL_MARGIN.x, viewport_size.x * UPGRADE_PANEL_MARGIN_RATIO.x),
+		maxf(UPGRADE_PANEL_MARGIN.y, viewport_size.y * UPGRADE_PANEL_MARGIN_RATIO.y)
+	)
+	return Vector2(
+		maxf(200.0, minf(UPGRADE_PANEL_MAX_SIZE.x, viewport_size.x - margin.x * 2.0)),
+		maxf(220.0, minf(UPGRADE_PANEL_MAX_SIZE.y, viewport_size.y - margin.y * 2.0))
+	)
+
+func _refresh_upgrade_panel_layout(visible_count: int = 0) -> void:
+	if upgrade_panel == null:
+		return
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var panel_size: Vector2 = _get_upgrade_panel_target_size()
+	upgrade_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	upgrade_panel.position = (viewport_size - panel_size) * 0.5
+	upgrade_panel.size = panel_size
+	if upgrade_buttons_scroll != null:
+		upgrade_buttons_scroll.scroll_vertical = 0
+	if visible_count > 0:
+		_update_upgrade_offer_layout(visible_count)
 
 func _apply_upgrade_button_rarity_style(button: Button, offer_tier: int) -> void:
 	if button == null:
@@ -2018,6 +2145,7 @@ func _launch_nuke() -> void:
 	remaining_nukes -= 1
 	nukes_launched += 1
 	nukes.append({"pos": base_pos, "target": target, "vel": (target - base_pos).normalized() * NUKE_SPEED})
+	_play_red_sky_sfx(SoundEffectSettings.SOUND_EFFECT_TYPE.RED_SKY_NUKE_LAUNCH)
 
 func _process_salvage_pickups(delta: float) -> void:
 	var collectors: Array[Vector2] = [aim_cursor_screen_pos]
@@ -2194,23 +2322,23 @@ func _process_floating_texts(delta: float) -> void:
 func _get_enemy_display_name(enemy_type: String) -> String:
 	match enemy_type:
 		"dronelet":
-			return "Dronelet"
+			return tr("Dronelet")
 		"brute":
-			return "Brute"
+			return tr("Brute")
 		"skimmer":
-			return "Skimmer"
+			return tr("Skimmer")
 		"siege":
-			return "Siege Barge"
+			return tr("Siege Barge")
 		"carrier":
-			return "Mothership"
+			return tr("Mothership")
 		"runner":
-			return "Runner"
+			return tr("Runner")
 		"gunship":
-			return "Gunship"
+			return tr("Gunship")
 		"bomber":
-			return "Bomber"
+			return tr("Bomber")
 		_:
-			return "Raider"
+			return tr("Raider")
 
 func _reset_aim_cursor() -> void:
 	aim_cursor_screen_pos = get_viewport_rect().size * 0.5
@@ -2238,7 +2366,7 @@ func _handle_pause_menu_input(event: InputEvent) -> bool:
 	return false
 
 func _can_open_pause_menu() -> bool:
-	return run_state == RUN_STATES.RUNNING and not summary_panel.visible and not upgrade_panel.visible
+	return true
 
 func _is_pause_menu_open() -> bool:
 	return pause_menu != null and pause_menu.is_open()
@@ -2288,6 +2416,384 @@ func _build_rotated_points(local_points: Array[Vector2], rotation: float, center
 	for point in local_points:
 		points.append(center + point.rotated(rotation))
 	return points
+
+func _color_to_bbcode(color: Color) -> String:
+	return color.to_html(false)
+
+func _style_summary_panel_box(panel: PanelContainer, background_color: Color, border_color: Color, corner_radius: int) -> void:
+	if panel == null:
+		return
+	var box := StyleBoxFlat.new()
+	box.bg_color = background_color
+	box.border_color = border_color
+	box.border_width_left = 2
+	box.border_width_top = 2
+	box.border_width_right = 2
+	box.border_width_bottom = 2
+	box.corner_radius_top_left = corner_radius
+	box.corner_radius_top_right = corner_radius
+	box.corner_radius_bottom_left = corner_radius
+	box.corner_radius_bottom_right = corner_radius
+	panel.add_theme_stylebox_override("panel", box)
+
+func _apply_summary_theme() -> void:
+	_style_summary_panel_box(summary_panel, SUMMARY_PANEL_BG, SUMMARY_PANEL_BORDER, 6)
+	_style_summary_panel_box(summary_payout_chart, SUMMARY_CHART_PANEL_BG, SUMMARY_CHART_PANEL_BORDER, 6)
+	_style_summary_panel_box(summary_combat_chart, SUMMARY_CHART_PANEL_BG, SUMMARY_CHART_PANEL_BORDER, 6)
+	if summary_title_label != null:
+		summary_title_label.add_theme_color_override("font_color", Color(0.96, 0.98, 1.0, 1.0))
+		summary_title_label.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.08, 0.85))
+		summary_title_label.add_theme_constant_override("outline_size", 1)
+	if summary_stats_label != null:
+		summary_stats_label.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0, 1.0))
+	if start_wave_header_label != null:
+		start_wave_header_label.add_theme_color_override("font_color", Color(0.76, 0.9, 1.0, 1.0))
+	if start_wave_info_label != null:
+		start_wave_info_label.add_theme_color_override("font_color", Color(0.83, 0.9, 1.0, 1.0))
+	if summary_label != null:
+		summary_label.add_theme_font_size_override("normal_font_size", 20)
+		summary_label.add_theme_color_override("default_color", SUMMARY_TEXT_BASE_COLOR)
+		summary_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.55))
+		summary_label.add_theme_constant_override("shadow_offset_x", 1)
+		summary_label.add_theme_constant_override("shadow_offset_y", 1)
+	if continue_button != null:
+		continue_button.add_theme_color_override("font_color", Color(0.92, 0.96, 1.0, 1.0))
+	if retry_button != null:
+		retry_button.add_theme_color_override("font_color", Color(0.92, 0.96, 1.0, 1.0))
+
+func _reset_summary_presentation_state() -> void:
+	_reset_summary_chart_animation_state()
+	if summary_text_tween != null and summary_text_tween.is_running():
+		summary_text_tween.kill()
+	if summary_text_pop_tween != null and summary_text_pop_tween.is_running():
+		summary_text_pop_tween.kill()
+	summary_text_view_model.clear()
+	summary_text_progress = 0.0
+	summary_text_money_pop_progress = 0.0
+
+func _show_post_run_summary(results: Dictionary) -> void:
+	_reset_summary_presentation_state()
+	_refresh_summary_payout_chart(results)
+	_refresh_summary_combat_chart(results)
+	_start_summary_chart_animation()
+	var view_model: Dictionary = results.get("summary_view_model", {})
+	summary_text_view_model = view_model.duplicate(true)
+	if summary_text_tween != null and summary_text_tween.is_running():
+		summary_text_tween.kill()
+	summary_text_progress = 0.0
+	summary_text_money_pop_progress = 0.0
+	_render_post_run_summary_text(view_model, 0.0)
+	var wallet_gain: float = float(view_model.get("wallet_gain", 0))
+	var duration: float = _get_summary_text_animation_duration(wallet_gain)
+	if duration <= 0.0:
+		summary_text_progress = 1.0
+		_render_post_run_summary_text(view_model, 1.0)
+		_play_summary_text_pop()
+		return
+	summary_text_tween = create_tween()
+	summary_text_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	summary_text_tween.tween_method(
+		func(progress: float) -> void:
+			summary_text_progress = progress
+			_render_post_run_summary_text(view_model, progress),
+		0.0,
+		1.0,
+		duration
+	)
+	summary_text_tween.finished.connect(func() -> void:
+		summary_text_progress = 1.0
+		_render_post_run_summary_text(view_model, 1.0)
+		_play_summary_text_pop()
+	)
+
+func _get_animated_money_value(target_value: int, progress: float) -> int:
+	var eased_progress: float = 0.5 - 0.5 * cos(PI * clampf(progress, 0.0, 1.0))
+	return int(round(float(target_value) * eased_progress))
+
+func _format_summary_money_span(current_value: int, target_value: int, progress: float) -> String:
+	var animated_color: Color = SUMMARY_TEXT_MONEY_GREY.lerp(SUMMARY_TEXT_MONEY_HIGH, clampf(progress, 0.0, 1.0))
+	var shown_value: int = clampi(current_value, 0, max(0, target_value))
+	var money_font_size: int = int(round(lerpf(
+		float(SUMMARY_TEXT_MONEY_BASE_FONT_SIZE),
+		float(SUMMARY_TEXT_MONEY_POP_FONT_SIZE),
+		clampf(summary_text_money_pop_progress, 0.0, 1.0)
+	)))
+	return "[font_size=%d][color=%s]%s scrap[/color][/font_size]" % [
+		money_font_size,
+		_color_to_bbcode(animated_color),
+		Util.get_number_short_text(shown_value)
+	]
+
+func _render_post_run_summary_text(view_model: Dictionary, progress: float) -> void:
+	var reason: String = String(view_model.get("reason", "Run complete"))
+	var waves_run: int = int(view_model.get("waves_cleared_this_run", 0))
+	var wallet_gain: int = int(view_model.get("wallet_gain", 0))
+	var animated_wallet: int = _get_animated_money_value(wallet_gain, progress)
+	var lines := PackedStringArray([
+		"[color=%s]Run ended: %s[/color]" % [_color_to_bbcode(SUMMARY_TEXT_BASE_COLOR), reason],
+		"",
+		"[color=%s]Waves cleared this run: %d[/color]" % [_color_to_bbcode(SUMMARY_TEXT_BASE_COLOR), waves_run],
+		"",
+		"[color=%s]Meta scrap earned[/color]" % _color_to_bbcode(SUMMARY_TEXT_BASE_COLOR),
+		"%s" % _format_summary_money_span(animated_wallet, wallet_gain, progress)
+	])
+	summary_label.clear()
+	summary_label.append_text("\n".join(lines))
+
+func _get_summary_text_animation_duration(total_wallet: float) -> float:
+	var chart_duration: float = _get_summary_chart_max_duration()
+	if chart_duration > 0.0:
+		return chart_duration
+	if total_wallet <= 0.0:
+		return 0.0
+	return _summary_chart_animation_duration(total_wallet, total_wallet)
+
+func _make_summary_chart_label(text: String, min_width: float, font_size: int, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, color: Color = Color(0.9, 0.95, 1.0, 1.0)) -> Label:
+	var label := Label.new()
+	label.text = text
+	if min_width > 0.0:
+		label.custom_minimum_size.x = min_width
+	label.horizontal_alignment = align
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	return label
+
+func _make_summary_chart_bar_bundle(max_value: float, color: Color) -> Dictionary:
+	var root := HBoxContainer.new()
+	root.custom_minimum_size = Vector2(200.0, 0.0)
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.add_theme_constant_override("separation", 10)
+	var meter := ProgressBar.new()
+	meter.custom_minimum_size = Vector2(120.0, 18.0)
+	meter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	meter.show_percentage = false
+	meter.max_value = max(1.0, max_value)
+	meter.value = 0.0
+	var background := StyleBoxFlat.new()
+	background.bg_color = SUMMARY_METER_TRACK
+	background.corner_radius_top_left = 3
+	background.corner_radius_top_right = 3
+	background.corner_radius_bottom_left = 3
+	background.corner_radius_bottom_right = 3
+	meter.add_theme_stylebox_override("background", background)
+	var fill := background.duplicate(true)
+	fill.bg_color = color
+	meter.add_theme_stylebox_override("fill", fill)
+	root.add_child(meter)
+	var value_label := _make_summary_chart_label("0", 52.0, 15, HORIZONTAL_ALIGNMENT_RIGHT, SUMMARY_CHART_VALUE_COLOR)
+	root.add_child(value_label)
+	return {"root": root, "meter": meter, "value_label": value_label}
+
+func _format_summary_chart_value(value: float) -> String:
+	if value >= 1000.0:
+		return "%0.1fk" % (value / 1000.0)
+	if value >= 100.0:
+		return str(int(round(value)))
+	return "%0.1f" % value if value != floor(value) else str(int(value))
+
+func _clear_chart_children(panel: Control) -> void:
+	for child in panel.get_children():
+		panel.remove_child(child)
+		child.queue_free()
+
+func _make_chart_margin(parent: Control) -> MarginContainer:
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	parent.add_child(margin)
+	return margin
+
+func _refresh_summary_payout_chart(results: Dictionary) -> void:
+	_clear_chart_children(summary_payout_chart)
+	var margin := _make_chart_margin(summary_payout_chart)
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 10)
+	margin.add_child(root)
+	root.add_child(_make_summary_chart_label("Scrap payout", 0.0, 20, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_TITLE_COLOR))
+	var rows: Array = results.get("payout_breakdown_chart", [])
+	var max_money: float = 0.0
+	for row_variant in rows:
+		max_money = max(max_money, float(row_variant.get("money", 0.0)))
+	if rows.is_empty():
+		root.add_child(_make_summary_chart_label("No scrap recorded", 0.0, 16, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_MUTED_COLOR))
+		return
+	for row_variant in rows:
+		var row_data: Dictionary = row_variant
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		root.add_child(row)
+		row.add_child(_make_summary_chart_label(str(row_data.get("label", "")), 150.0, 15))
+		var target_value: float = float(row_data.get("money", 0.0))
+		var bar_bundle: Dictionary = _make_summary_chart_bar_bundle(max_money, row_data.get("color", Color(0.9, 0.75, 0.4, 1.0)))
+		row.add_child(bar_bundle.get("root", HBoxContainer.new()))
+		_register_summary_chart_animation(
+			row,
+			bar_bundle.get("meter", null),
+			bar_bundle.get("value_label", null),
+			target_value,
+			_summary_chart_animation_duration(target_value, max_money)
+		)
+
+func _refresh_summary_combat_chart(results: Dictionary) -> void:
+	_clear_chart_children(summary_combat_chart)
+	var margin := _make_chart_margin(summary_combat_chart)
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 10)
+	margin.add_child(root)
+	root.add_child(_make_summary_chart_label("Run performance", 0.0, 20, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_TITLE_COLOR))
+	var rows: Array = results.get("combat_breakdown_chart", [])
+	var max_value: float = 0.0
+	for row_variant in rows:
+		max_value = max(max_value, float(row_variant.get("money", 0.0)))
+	if rows.is_empty():
+		root.add_child(_make_summary_chart_label("No combat data", 0.0, 16, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_MUTED_COLOR))
+		return
+	for row_variant in rows:
+		var row_data: Dictionary = row_variant
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		root.add_child(row)
+		row.add_child(_make_summary_chart_label(str(row_data.get("label", "")), 150.0, 15))
+		var target_value: float = float(row_data.get("money", 0.0))
+		var bar_bundle: Dictionary = _make_summary_chart_bar_bundle(max_value, row_data.get("color", Color.WHITE))
+		row.add_child(bar_bundle.get("root", HBoxContainer.new()))
+		_register_summary_chart_animation(
+			row,
+			bar_bundle.get("meter", null),
+			bar_bundle.get("value_label", null),
+			target_value,
+			_summary_chart_animation_duration(target_value, max_value)
+		)
+
+func _register_summary_chart_animation(row: Control, meter: ProgressBar, value_label: Label, target_value: float, duration: float) -> void:
+	if row == null or meter == null or value_label == null:
+		return
+	row.scale = Vector2.ONE
+	row.pivot_offset = row.size * 0.5
+	summary_chart_animation_entries.append({
+		"row": row,
+		"meter": meter,
+		"value_label": value_label,
+		"target_value": max(0.0, target_value),
+		"duration": max(0.01, duration),
+		"elapsed": 0.0,
+		"popped": false
+	})
+
+func _summary_chart_animation_duration(target_value: float, max_value: float) -> float:
+	if max_value <= 0.0:
+		return SUMMARY_CHART_ANIM_MIN_DURATION
+	var normalized: float = clampf(target_value / max_value, 0.0, 1.0)
+	return lerpf(SUMMARY_CHART_ANIM_MIN_DURATION, SUMMARY_CHART_ANIM_MAX_DURATION, pow(normalized, 0.58))
+
+func _start_summary_chart_animation() -> void:
+	summary_chart_animation_session_id += 1
+	summary_chart_tick_timer = 0.0
+	summary_chart_animation_active = not summary_chart_animation_entries.is_empty()
+	for entry_index in range(summary_chart_animation_entries.size()):
+		var entry: Dictionary = summary_chart_animation_entries[entry_index]
+		var meter: ProgressBar = entry.get("meter", null)
+		var value_label: Label = entry.get("value_label", null)
+		if meter != null:
+			meter.value = 0.0
+		if value_label != null:
+			value_label.text = "0"
+		entry["elapsed"] = 0.0
+		entry["popped"] = false
+		summary_chart_animation_entries[entry_index] = entry
+
+func _reset_summary_chart_animation_state() -> void:
+	summary_chart_animation_active = false
+	summary_chart_tick_timer = 0.0
+	summary_chart_animation_entries.clear()
+	summary_chart_animation_session_id += 1
+
+func _get_summary_chart_max_duration() -> float:
+	var longest_duration := 0.0
+	for entry in summary_chart_animation_entries:
+		longest_duration = max(longest_duration, float(entry.get("duration", 0.0)))
+	return longest_duration
+
+func _process_summary_chart_animation(delta: float) -> void:
+	if not summary_chart_animation_active:
+		return
+	var any_active: bool = false
+	for entry_index in range(summary_chart_animation_entries.size()):
+		var entry: Dictionary = summary_chart_animation_entries[entry_index]
+		var meter: ProgressBar = entry.get("meter", null)
+		var value_label: Label = entry.get("value_label", null)
+		var row: Control = entry.get("row", null)
+		var target_value: float = float(entry.get("target_value", 0.0))
+		var duration: float = float(entry.get("duration", SUMMARY_CHART_ANIM_MIN_DURATION))
+		var elapsed: float = min(duration, float(entry.get("elapsed", 0.0)) + delta)
+		var progress: float = 1.0 if duration <= 0.0 else clampf(elapsed / duration, 0.0, 1.0)
+		var eased_progress: float = 1.0 - pow(1.0 - progress, 3.0)
+		var current_value: float = target_value * eased_progress
+		if meter != null:
+			meter.value = current_value
+		if value_label != null:
+			value_label.text = _format_summary_chart_value(current_value)
+		if progress < 1.0:
+			any_active = true
+		elif not bool(entry.get("popped", false)):
+			if meter != null:
+				meter.value = target_value
+			if value_label != null:
+				value_label.text = _format_summary_chart_value(target_value)
+			_play_summary_chart_pop(row)
+			entry["popped"] = true
+		entry["elapsed"] = elapsed
+		summary_chart_animation_entries[entry_index] = entry
+	if any_active:
+		summary_chart_tick_timer += delta
+		while summary_chart_tick_timer >= SUMMARY_CHART_TICK_INTERVAL:
+			summary_chart_tick_timer -= SUMMARY_CHART_TICK_INTERVAL
+			AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER)
+	else:
+		summary_chart_animation_active = false
+		summary_chart_tick_timer = 0.0
+
+func _play_summary_chart_pop(row: Control) -> void:
+	if row == null:
+		return
+	row.scale = Vector2.ONE
+	row.pivot_offset = row.size * 0.5
+	var pop_tween: Tween = create_tween()
+	pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pop_tween.tween_property(row, "scale", Vector2.ONE * SUMMARY_CHART_POP_SCALE, 0.12)
+	pop_tween.tween_property(row, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _play_summary_text_pop() -> void:
+	if summary_label == null or summary_text_view_model.is_empty():
+		return
+	if summary_text_pop_tween != null and summary_text_pop_tween.is_running():
+		summary_text_pop_tween.kill()
+	summary_text_money_pop_progress = 0.0
+	summary_text_pop_tween = create_tween()
+	summary_text_pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	summary_text_pop_tween.tween_method(
+		func(pop_progress: float) -> void:
+			summary_text_money_pop_progress = pop_progress
+			_render_post_run_summary_text(summary_text_view_model, summary_text_progress),
+		0.0,
+		1.0,
+		0.14
+	)
+	summary_text_pop_tween.tween_method(
+		func(pop_progress: float) -> void:
+			summary_text_money_pop_progress = pop_progress
+			_render_post_run_summary_text(summary_text_view_model, summary_text_progress),
+		1.0,
+		0.0,
+		0.12
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	summary_text_pop_tween.finished.connect(func() -> void:
+		summary_text_money_pop_progress = 0.0
+		_render_post_run_summary_text(summary_text_view_model, summary_text_progress)
+		AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.MINING_SUMMARY_DING)
+	, CONNECT_ONE_SHOT)
 
 func _on_continue_pressed() -> void:
 	Global.start_in_upgrade_scene = true

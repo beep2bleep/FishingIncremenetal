@@ -28,13 +28,23 @@ const LANGUAGE_ENTRY_HEIGHT := 112
 const FLAG_ICON_WIDTH := 56
 const FLAG_ICON_HEIGHT := 36
 const GAME_CARD_COLUMNS := 2
-const GAME_CARD_IMAGE_HEIGHT := 188
+const GAME_CARD_IMAGE_HEIGHT := 208
 const GAME_CARD_TITLE_FONT_SIZE := 30
 const GAME_CARD_DETAIL_FONT_SIZE := 18
 const BACKGROUND_TWEEN_DURATION := 2.0
 const MENU_NEUTRAL_BG := Color(0.09, 0.1, 0.12, 1.0)
+const GAME_LAUNCHER_PANEL_MIN_WIDTH := 1080.0
+const GAME_LAUNCHER_PANEL_MAX_WIDTH := 1680.0
+const GAME_LAUNCHER_PANEL_VIEWPORT_RATIO := 0.94
+const GAME_LAUNCHER_RIGHT_MARGIN := 16.0
+const GAME_CARD_HOVER_VOLUME_DB_OFFSET := -12.0
+const GAME_CARD_TITLE_HOVER_SCALE := 1.08
+const GAME_CARD_TITLE_HOVER_DURATION := 0.16
+const GAME_CARD_TITLE_RESET_DURATION := 0.12
 
 @onready var background_rect: ColorRect = get_node_or_null("Background") as ColorRect
+@onready var center_container: CenterContainer = get_node_or_null("CenterContainer") as CenterContainer
+@onready var launcher_panel: PanelContainer = get_node_or_null("CenterContainer/PanelContainer") as PanelContainer
 @onready var title_label: Label = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/TitleLabel") as Label
 @onready var subtitle_label: Label = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/SubtitleLabel") as Label
 @onready var vanguard_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/VanguardButton") as Button
@@ -65,6 +75,7 @@ var background_particles_root: Node2D
 var background_particles_light: GPUParticles2D
 var background_particles_dark: GPUParticles2D
 var background_color_tween: Tween
+var last_hovered_game_id: String = ""
 
 func _ready() -> void:
     Global.game_state = Util.GAME_STATES.MAIN_MENU
@@ -75,6 +86,7 @@ func _ready() -> void:
     _setup_language_panel()
     _refresh_text()
     _apply_background_palette(_get_background_palette_for_game(""), false)
+    _refresh_launcher_panel_layout()
     if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
         get_viewport().size_changed.connect(_on_viewport_size_changed)
 
@@ -94,6 +106,7 @@ func _ready() -> void:
 
 func _on_viewport_size_changed() -> void:
     _layout_background_fx()
+    _refresh_launcher_panel_layout()
     _refresh_game_card_layout()
 
 func _notification(what: int) -> void:
@@ -294,7 +307,7 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
 
     var card_def: Dictionary = _get_game_card_definition(game_id)
     button.text = ""
-    button.tooltip_text = str(card_def.get("title", game_id))
+    button.tooltip_text = tr(str(card_def.get("title", game_id)))
     button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     button.focus_mode = Control.FOCUS_ALL
     button.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -302,6 +315,10 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
         button.mouse_entered.connect(_on_game_button_hovered.bind(game_id))
     if not button.focus_entered.is_connected(_on_game_button_hovered.bind(game_id)):
         button.focus_entered.connect(_on_game_button_hovered.bind(game_id))
+    if not button.mouse_exited.is_connected(_on_game_button_unhovered.bind(button)):
+        button.mouse_exited.connect(_on_game_button_unhovered.bind(button))
+    if not button.focus_exited.is_connected(_on_game_button_unhovered.bind(button)):
+        button.focus_exited.connect(_on_game_button_unhovered.bind(button))
     button.add_theme_stylebox_override("normal", _make_game_card_style(Color(card_def.get("accent", Color(0.78, 0.84, 0.96, 1.0))), 0.0))
     button.add_theme_stylebox_override("hover", _make_game_card_style(Color(card_def.get("accent", Color(0.78, 0.84, 0.96, 1.0))), 0.06))
     button.add_theme_stylebox_override("pressed", _make_game_card_style(Color(card_def.get("accent", Color(0.78, 0.84, 0.96, 1.0))).darkened(0.08), 0.1))
@@ -379,13 +396,31 @@ func _refresh_game_card_layout() -> void:
     if game_cards_grid == null or not is_instance_valid(game_cards_grid):
         return
     var viewport_width: float = get_viewport_rect().size.x
-    game_cards_grid.columns = 2 if viewport_width < 1560.0 else 3
-    var card_min_width: float = 320.0 if game_cards_grid.columns >= 3 else 400.0
-    var card_height: float = 312.0 if game_cards_grid.columns >= 3 else 336.0
+    game_cards_grid.columns = 3 if viewport_width >= 1340.0 else 2
+    var card_min_width: float = 360.0 if game_cards_grid.columns >= 3 else 460.0
+    var card_height: float = 344.0 if game_cards_grid.columns >= 3 else 372.0
     for button in [vanguard_button, mining_button, red_sky_button, turkey_button, reel_button]:
         if button == null or not is_instance_valid(button):
             continue
         button.custom_minimum_size = Vector2(card_min_width, card_height)
+
+func _refresh_launcher_panel_layout() -> void:
+    if center_container == null or not is_instance_valid(center_container):
+        return
+    if launcher_panel == null or not is_instance_valid(launcher_panel):
+        return
+    var viewport_width: float = get_viewport_rect().size.x
+    var available_width := maxf(
+        viewport_width - SETTINGS_PANEL_LEFT_GUTTER - GAME_LAUNCHER_RIGHT_MARGIN,
+        GAME_LAUNCHER_PANEL_MIN_WIDTH
+    )
+    center_container.offset_left = SETTINGS_PANEL_LEFT_GUTTER
+    center_container.offset_right = -GAME_LAUNCHER_RIGHT_MARGIN
+    launcher_panel.custom_minimum_size.x = clampf(
+        available_width * GAME_LAUNCHER_PANEL_VIEWPORT_RATIO,
+        GAME_LAUNCHER_PANEL_MIN_WIDTH,
+        GAME_LAUNCHER_PANEL_MAX_WIDTH
+    )
 
 func _refresh_game_card_text(button: Button, game_id: String) -> void:
     if button == null or not is_instance_valid(button):
@@ -394,9 +429,9 @@ func _refresh_game_card_text(button: Button, game_id: String) -> void:
     var title := button.get_meta("card_title_label", null) as Label
     var detail := button.get_meta("card_detail_label", null) as Label
     if title != null and is_instance_valid(title):
-        title.text = str(card_def.get("title", game_id))
+        title.text = tr(str(card_def.get("title", game_id)))
     if detail != null and is_instance_valid(detail):
-        detail.text = str(card_def.get("detail", ""))
+        detail.text = tr(str(card_def.get("detail", "")))
 
 func _get_game_card_definition(game_id: String) -> Dictionary:
     match game_id:
@@ -414,7 +449,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
                 "title": MINING_BUTTON_TEXT,
                 "detail": "Drill deeper, haul ore, and upgrade the rig.",
                 "asset_rel_path": "Mining/1232x706.png",
-                "accent": Color(0.95, 0.73, 0.25, 1.0),
+                "accent": Color(0.86, 0.69, 0.33, 1.0),
                 "bg_top": Color(0.18, 0.12, 0.05, 1.0),
                 "bg_bottom": Color(0.06, 0.04, 0.02, 1.0)
             }
@@ -423,7 +458,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
                 "title": RED_SKY_BUTTON_TEXT,
                 "detail": "Defend the base and survive the next wave.",
                 "asset_rel_path": "ChatGPT Image Mar 12, 2026, 04_18_10 PM.png",
-                "accent": Color(0.98, 0.4, 0.24, 1.0),
+                "accent": Color(0.98, 0.62, 0.42, 1.0),
                 "bg_top": Color(0.22, 0.05, 0.06, 1.0),
                 "bg_bottom": Color(0.1, 0.02, 0.03, 1.0)
             }
@@ -432,7 +467,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
                 "title": TURKEY_BUTTON_TEXT,
                 "detail": "Arcade chaos with fast dodging and scoring.",
                 "asset_rel_path": "ChatGPT Image Mar 12, 2026, 04_16_15 PM.png",
-                "accent": Color(0.96, 0.76, 0.34, 1.0),
+                "accent": Color(0.96, 0.84, 0.45, 1.0),
                 "bg_top": Color(0.24, 0.1, 0.03, 1.0),
                 "bg_bottom": Color(0.11, 0.04, 0.01, 1.0)
             }
@@ -441,7 +476,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
                 "title": REEL_BUTTON_TEXT,
                 "detail": "Haunted fishing in the dark with eerie catches.",
                 "asset_rel_path": "ChatGPT Image Mar 12, 2026, 04_13_25 PM.png",
-                "accent": Color(0.52, 0.86, 0.98, 1.0),
+                "accent": Color(0.56, 0.84, 0.94, 1.0),
                 "bg_top": Color(0.03, 0.08, 0.12, 1.0),
                 "bg_bottom": Color(0.01, 0.03, 0.06, 1.0)
             }
@@ -786,7 +821,75 @@ func _layout_background_fx() -> void:
         background_particles_dark.position = Vector2.ZERO
 
 func _on_game_button_hovered(game_id: String) -> void:
+    if last_hovered_game_id != game_id:
+        last_hovered_game_id = game_id
+        _play_game_card_hover_sound()
+    var hovered_button := _get_game_button_for_id(game_id)
+    _animate_game_card_title(hovered_button, true)
     _apply_background_palette(_get_background_palette_for_game(game_id), true)
+
+func _on_game_button_unhovered(button: Button) -> void:
+    _animate_game_card_title(button, false)
+
+func _play_game_card_hover_sound() -> void:
+    if AudioManager == null:
+        return
+    AudioManager.create_audio(
+        SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER,
+        GAME_CARD_HOVER_VOLUME_DB_OFFSET
+    )
+
+func _animate_game_card_title(button: Button, is_hovered: bool) -> void:
+    if button == null or not is_instance_valid(button):
+        return
+    var title := button.get_meta("card_title_label", null) as Label
+    if title == null or not is_instance_valid(title):
+        return
+    var existing_tween := button.get_meta("card_title_tween", null) as Tween
+    if existing_tween != null and existing_tween.is_running():
+        existing_tween.kill()
+    title.pivot_offset = title.size * 0.5
+    var tween := create_tween()
+    button.set_meta("card_title_tween", tween)
+    if is_hovered:
+        tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+        tween.tween_property(title, "scale", Vector2.ONE * GAME_CARD_TITLE_HOVER_SCALE, GAME_CARD_TITLE_HOVER_DURATION)
+        tween.parallel().tween_property(title, "rotation_degrees", _get_game_card_title_hover_rotation(button), GAME_CARD_TITLE_HOVER_DURATION)
+        return
+    tween.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+    tween.tween_property(title, "scale", Vector2.ONE, GAME_CARD_TITLE_RESET_DURATION)
+    tween.parallel().tween_property(title, "rotation_degrees", 0.0, GAME_CARD_TITLE_RESET_DURATION)
+
+func _get_game_card_title_hover_rotation(button: Button) -> float:
+    if button == null or not is_instance_valid(button):
+        return 0.0
+    var game_id := str(button.get_meta("game_id", ""))
+    match game_id:
+        Util.ACTIVE_GAME_MINING:
+            return -2.0
+        Util.ACTIVE_GAME_RED_SKY:
+            return 2.2
+        Util.ACTIVE_GAME_TURKEY:
+            return -1.8
+        Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
+            return 1.8
+        _:
+            return -1.6
+
+func _get_game_button_for_id(game_id: String) -> Button:
+    match game_id:
+        Util.ACTIVE_GAME_VANGUARD:
+            return vanguard_button
+        Util.ACTIVE_GAME_MINING:
+            return mining_button
+        Util.ACTIVE_GAME_RED_SKY:
+            return red_sky_button
+        Util.ACTIVE_GAME_TURKEY:
+            return turkey_button
+        Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
+            return reel_button
+        _:
+            return null
 
 func _get_background_palette_for_game(game_id: String) -> Dictionary:
     var default_palette := _get_default_background_palette()

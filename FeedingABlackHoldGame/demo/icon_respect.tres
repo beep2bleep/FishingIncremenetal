@@ -1,4 +1,4 @@
-[gd_resource type="Texture2D" script_class="ControllerIconTexture" load_steps=2 format=3 uid="uid://5bh1m7kwdsah"]
+[gd_resource type="Texture2D" script_class="ControllerIconTexture" format=3 uid="uid://5bh1m7kwdsah"]
 
 [ext_resource type="Script" uid="uid://c36s4gjs5sv4r" path="res://addons/controller_icons/objects/ControllerIconTexture.gd" id="1"]
 

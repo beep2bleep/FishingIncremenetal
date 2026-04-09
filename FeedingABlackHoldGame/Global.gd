@@ -21,6 +21,11 @@ const G = 100000.0
 var load_saved_run = false
 var start_in_upgrade_scene = true
 
+## Reel Into Darkness: if > 0, next run clamps meta max_depth to this (set from upgrade screen tier pick).
+var reel_run_max_depth_cap: float = -1.0
+## Effective max_depth band last played; restored for "Fish Again" (-1 = full chart, no clamp).
+var reel_repeat_depth_cap: float = -1.0
+
 
 
 var rng: RandomNumberGenerator
@@ -72,6 +77,8 @@ func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: i
 func new_game():
     ensure_default_game_mode_data()
     clear_upgrade_tree_cache()
+    reel_run_max_depth_cap = -1.0
+    reel_repeat_depth_cap = -1.0
 
     rng = RandomNumberGenerator.new()
     rng.randomize()

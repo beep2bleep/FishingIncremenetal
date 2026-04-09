@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://8ypaj35qfhyr"]
+[gd_scene format=3 uid="uid://8ypaj35qfhyr"]
 
 [ext_resource type="Script" uid="uid://c36s4gjs5sv4r" path="res://addons/controller_icons/objects/ControllerIconTexture.gd" id="1"]
 

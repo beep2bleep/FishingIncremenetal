@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SoundEffectSettings" format=3]
+
+[ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
+[ext_resource type="AudioStream" path="res://Audio/zapsplat_multimedia_game_sound_treasure_chest_win_thud_coins_synth_warm_002_52068.mp3" id="2"]
+
+[resource]
+script = ExtResource("1")
+limit = 3
+type = 50
+sound_effect = ExtResource("2")
+volume = -18
+pitch_scale = 1.0
+pitch_randomness = 0.03
+taper_fall_off_curve = null
+metadata/_custom_type_script = "uid://blskskrd6wv02"

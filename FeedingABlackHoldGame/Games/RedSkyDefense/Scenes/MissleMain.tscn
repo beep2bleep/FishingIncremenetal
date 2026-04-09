@@ -59,17 +59,8 @@ layer = 3
 
 [node name="UpgradePanel" type="PanelContainer" parent="OverlayCanvasLayer"]
 visible = false
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -420.0
-offset_top = -280.0
-offset_right = 420.0
-offset_bottom = 280.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_right = 840.0
+offset_bottom = 560.0
 
 [node name="UpgradeMargin" type="MarginContainer" parent="OverlayCanvasLayer/UpgradePanel"]
 layout_mode = 2
@@ -94,33 +85,39 @@ horizontal_alignment = 1
 autowrap_mode = 3
 text = "Choose one upgrade."
 
-[node name="UpgradeButtons" type="GridContainer" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox"]
+[node name="UpgradeButtonsScroll" type="ScrollContainer" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox"]
 layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="UpgradeButtons" type="GridContainer" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 columns = 2
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 10
 
-[node name="DamageButton" type="Button" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons"]
+[node name="DamageButton" type="Button" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons"]
 layout_mode = 2
 text = "Gun Damage +4"
 
-[node name="SpeedButton" type="Button" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons"]
+[node name="SpeedButton" type="Button" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons"]
 layout_mode = 2
 text = "Bullet Speed +120"
 
-[node name="HealthButton" type="Button" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons"]
+[node name="HealthButton" type="Button" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons"]
 layout_mode = 2
 text = "Base Health +30"
 
-[node name="ChoiceButton4" type="Button" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons"]
+[node name="ChoiceButton4" type="Button" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons"]
 layout_mode = 2
 text = "Choice 4"
 
-[node name="ChoiceButton5" type="Button" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons"]
+[node name="ChoiceButton5" type="Button" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons"]
 layout_mode = 2
 text = "Choice 5"
 
-[node name="ChoiceButton6" type="Button" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtons"]
+[node name="ChoiceButton6" type="Button" parent="OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons"]
 layout_mode = 2
 text = "Choice 6"
 
@@ -131,10 +128,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -520.0
-offset_top = -310.0
-offset_right = 520.0
-offset_bottom = 310.0
+offset_left = -540.0
+offset_top = -360.0
+offset_right = 540.0
+offset_bottom = 360.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -155,11 +152,29 @@ theme_override_font_sizes/font_size = 30
 horizontal_alignment = 1
 text = "Red Sky Defense Summary"
 
-[node name="SummaryLabel" type="Label" parent="OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox"]
+[node name="SummaryLabel" type="RichTextLabel" parent="OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox"]
 layout_mode = 2
 size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
 autowrap_mode = 3
 text = "Run complete."
+
+[node name="SummaryChartsRow" type="HBoxContainer" parent="OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="SummaryPayoutChart" type="PanelContainer" parent="OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryChartsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(200, 140)
+
+[node name="SummaryCombatChart" type="PanelContainer" parent="OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryChartsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(200, 140)
 
 [node name="SummaryStatsLabel" type="Label" parent="OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox"]
 layout_mode = 2

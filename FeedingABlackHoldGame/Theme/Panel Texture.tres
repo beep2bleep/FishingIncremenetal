@@ -1,4 +1,4 @@
-[gd_resource type="StyleBoxTexture" load_steps=2 format=3 uid="uid://ceioghxethup5"]
+[gd_resource type="StyleBoxTexture" format=3 uid="uid://ceioghxethup5"]
 
 [ext_resource type="Texture2D" uid="uid://ueflie1khrou" path="res://Art/Demo/UI/panel-transparent-border-009.png" id="1"]
 

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="SoundEffectSettings" load_steps=3 format=3 uid="uid://dl3lkwdykirc1"]
+[gd_resource type="Resource" script_class="SoundEffectSettings" format=3 uid="uid://dl3lkwdykirc1"]
 
 [ext_resource type="Script" uid="uid://blskskrd6wv02" path="res://SoundEffectSettings.gd" id="1"]
 [ext_resource type="AudioStream" uid="uid://cetugtvvk15j2" path="res://Audio/dice_tap.mp3" id="2"]

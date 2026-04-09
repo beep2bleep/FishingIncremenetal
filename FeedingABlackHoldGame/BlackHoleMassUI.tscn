@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://86fkyad8t8hn"]
+[gd_scene format=3 uid="uid://86fkyad8t8hn"]
 
 [ext_resource type="Script" uid="uid://d218gme1mgwsm" path="res://BlackHoleMassUI.gd" id="1"]
 

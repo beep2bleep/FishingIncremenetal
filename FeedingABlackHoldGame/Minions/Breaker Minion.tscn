@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://bw8trreowf5i7"]
+[gd_scene format=3 uid="uid://bw8trreowf5i7"]
 
 [ext_resource type="Script" uid="uid://b3ru4xakih68b" path="res://Minions/Breaker Minion.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://hhagkp563ya4" path="res://Art/Circle 32.png" id="2"]

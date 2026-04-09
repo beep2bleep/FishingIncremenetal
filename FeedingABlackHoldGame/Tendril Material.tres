@@ -1,4 +1,4 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://ceqlj376vf7p2"]
+[gd_resource type="ShaderMaterial" format=3 uid="uid://ceqlj376vf7p2"]
 
 [ext_resource type="Shader" uid="uid://jjye5gn7xqn2" path="res://Tendril.gdshader" id="1"]
 

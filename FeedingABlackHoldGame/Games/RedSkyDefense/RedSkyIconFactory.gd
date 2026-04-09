@@ -30,7 +30,7 @@ static func _palette_for_key(key: String) -> Dictionary:
 		return {"frame": Color(0.94, 0.78, 0.63, 1.0), "fill": Color(0.19, 0.1, 0.1, 1.0), "accent": Color(0.92, 0.36, 0.28, 1.0)}
 	if key in ["damage_uplink", "rapid_loader", "tracking_array", "capacitor_bank", "high_energy_cells", "focused_barrels", "cooling_jackets", "seeker_ammo", "piercing_rounds", "shrapnel_rounds", "capacitor_overdrive", "critical_mass", "command_overclock", "ammo_hoppers"]:
 		return {"frame": Color(0.96, 0.88, 0.62, 1.0), "fill": Color(0.16, 0.12, 0.08, 1.0), "accent": Color(1.0, 0.76, 0.18, 1.0)}
-	if key in ["reserve_nukes", "bigger_blasts", "fusion_payload", "piercing_rifling", "blast_chambers", "reserve_nuke_pick", "fusion_warhead", "blast_shells", "warhead_racks"]:
+	if key in ["reserve_nukes", "bigger_blasts", "fusion_payload", "piercing_rifling", "blast_chambers", "reserve_nuke_pick", "fusion_warhead", "blast_shells", "warhead_racks", "nuke_silo_extension", "reactor_rearm_cycle"]:
 		return {"frame": Color(0.98, 0.82, 0.56, 1.0), "fill": Color(0.18, 0.1, 0.07, 1.0), "accent": Color(1.0, 0.48, 0.22, 1.0)}
 	if key in ["tower_fabrication", "tower_targeting", "tower_cooling", "reflector_grid", "signal_decoder", "flak_turret", "tower_overclock", "tower_autoloader", "reflector_pylon", "drone_hangar", "drone_ai", "drone_flight_pack", "interceptor_drone", "drone_firmware", "drone_afterburners", "sweep_drones", "flak_wall", "tower_rangefinder", "drone_swarm", "hunter_link", "command_node"]:
 		return {"frame": Color(0.8, 0.92, 1.0, 1.0), "fill": Color(0.08, 0.13, 0.16, 1.0), "accent": Color(0.36, 0.88, 0.98, 1.0)}
@@ -101,6 +101,17 @@ static func _draw_symbol(image: Image, key: String, frame: Color, accent: Color)
 		"fusion_warhead":
 			_draw_atom(image, accent, frame)
 			_draw_missile(image, frame, accent)
+		"warhead_racks":
+			_draw_missile(image, accent, frame)
+			_draw_atom(image, frame, accent)
+		"nuke_silo_extension":
+			_draw_rect(image, Rect2i(18, 22, 44, 36), accent)
+			_draw_border(image, Rect2i(18, 22, 44, 36), frame, 2)
+			_draw_missile(image, frame, accent)
+		"reactor_rearm_cycle":
+			_draw_ring(image, Vector2i(40, 40), 22, 4, frame)
+			_draw_clock(image, accent, frame)
+			_draw_missile(image, accent, frame)
 		"piercing_rifling":
 			_draw_spear(image, accent, frame)
 		"piercing_rounds":

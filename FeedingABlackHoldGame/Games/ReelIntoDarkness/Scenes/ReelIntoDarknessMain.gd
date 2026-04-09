@@ -1,9 +1,14 @@
 extends Node2D
 class_name ReelIntoDarknessMain
 
-const REEL_DATA := preload("res://Games/ReelIntoDarkness/ReelIntoDarknessData.gd")
-const REEL_PROGRESS := preload("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
+var REEL_DATA = load("res://Games/ReelIntoDarkness/ReelIntoDarknessData.gd")
+var REEL_PROGRESS = load("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
 const IN_GAME_PAUSE_MENU_SCRIPT := preload("res://Core/InGamePauseMenu.gd")
+const CRT_SHADER := preload("res://Games/Mining/UI/MiningCrt.gdshader")
+
+const CRT_LEVEL_MAX := 11
+const CRT_GAME_LAYER := 1
+const CRT_UI_LAYER := 2
 
 const SURFACE_RATIO := 0.2
 const WATER_SIDE_MARGIN := 96.0
@@ -38,8 +43,10 @@ const SUMMARY_MONEY_MIN_DURATION := 0.9
 const SUMMARY_MONEY_MAX_DURATION := 2.8
 const SUMMARY_MONEY_POP_SCALE := 1.12
 const FISH_SPAWN_PADDING := 44.0
+const FISH_DEPTH_ROAM_PX := 56.0
 const FISH_COUNT_MIN := 14
 const FISH_COUNT_MAX := 24
+const LINE_SURFACE_REEL_NUDGE_SPEED := 36.0
 const GUIDANCE_PULSE_SPEED := 6.0
 const GUIDANCE_GLOW_ALPHA := 0.22
 
@@ -87,6 +94,21 @@ var cast_control_position := Vector2.ZERO
 var cast_progress := 0.0
 var cast_duration := 0.0
 
+## Horizontal anchor where the line meets the water (surface Y comes from `_water_rect()`).
+var line_surface_anchor_x := 0.0
+var line_surface_anchor_active := false
+
+var automation_timer := 0.0
+var automation_catch_flash := 0.0
+
+var crt_level := 0
+var crt_overlay_layer: CanvasLayer
+var crt_overlay_rect: ColorRect
+var crt_material: ShaderMaterial
+var crt_hud_label: Label
+
+var ambient_anim_time := 0.0
+
 var timer_left := 0.0
 var deepest_depth_reached := 0.0
 var hook_blink_timer := 0.0
@@ -102,6 +124,7 @@ var fight_phase_duration := 0.0
 var hook_reel_pull_remaining := 0.0
 var desired_hold := true
 var desired_side := 0
+var last_fight_prompt_signature := ""
 var fight_feedback_text := ""
 var fight_feedback_timer := 0.0
 var total_mistakes := 0
@@ -147,11 +170,12 @@ var pause_menu
 func _ready() -> void:
 	Global.game_state = Util.GAME_STATES.PLAYING
 	rng.randomize()
-	run_config = REEL_PROGRESS.get_run_config()
 	fish_catalog = REEL_DATA.get_fish_catalog()
 	cursor_screen_pos = get_viewport().get_mouse_position()
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	_setup_crt_overlay()
 	_build_ui()
+	_update_crt_hud_label()
 	_setup_pause_menu()
 	_begin_run()
 
@@ -160,6 +184,7 @@ func _exit_tree() -> void:
 
 func _build_ui() -> void:
 	canvas_layer = CanvasLayer.new()
+	canvas_layer.layer = CRT_UI_LAYER
 	add_child(canvas_layer)
 
 	hud_panel = PanelContainer.new()
@@ -201,6 +226,10 @@ func _build_ui() -> void:
 	wallet_label = _make_label("Haul $0", 22, Color(0.68, 0.97, 0.77, 1.0))
 	wallet_label.custom_minimum_size = Vector2(180.0, 32.0)
 	top_row.add_child(wallet_label)
+
+	crt_hud_label = _make_label("CRT off  O/P", 16, Color(0.62, 0.78, 0.9, 0.95))
+	crt_hud_label.custom_minimum_size = Vector2(200.0, 32.0)
+	top_row.add_child(crt_hud_label)
 
 	prompt_label = _make_label("", 24, Color(0.95, 0.98, 1.0, 1.0))
 	prompt_label.custom_minimum_size = Vector2(0.0, 70.0)
@@ -322,8 +351,88 @@ func _setup_pause_menu() -> void:
 	pause_menu.end_run_requested.connect(_on_pause_end_run_requested)
 	add_child(pause_menu)
 
+func _setup_crt_overlay() -> void:
+	if crt_overlay_layer != null and is_instance_valid(crt_overlay_layer):
+		return
+	crt_overlay_layer = CanvasLayer.new()
+	crt_overlay_layer.name = "ReelIntoDarknessCrtOverlay"
+	crt_overlay_layer.layer = CRT_GAME_LAYER
+	crt_overlay_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(crt_overlay_layer)
+	crt_overlay_rect = ColorRect.new()
+	crt_overlay_rect.name = "ScreenFx"
+	crt_overlay_rect.anchor_left = 0.0
+	crt_overlay_rect.anchor_top = 0.0
+	crt_overlay_rect.anchor_right = 1.0
+	crt_overlay_rect.anchor_bottom = 1.0
+	crt_overlay_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	crt_overlay_rect.color = Color(1.0, 1.0, 1.0, 1.0)
+	crt_material = ShaderMaterial.new()
+	crt_material.shader = CRT_SHADER
+	crt_overlay_rect.material = crt_material
+	crt_overlay_layer.add_child(crt_overlay_rect)
+	_apply_crt_level()
+
+func _apply_crt_level() -> void:
+	if crt_overlay_rect == null or crt_material == null:
+		return
+	if crt_level <= 0:
+		crt_overlay_rect.visible = false
+		_update_crt_hud_label()
+		return
+	crt_overlay_rect.visible = true
+	var strength: float = float(crt_level) / float(CRT_LEVEL_MAX)
+	var curved_strength: float = pow(strength, 1.12)
+	crt_material.set_shader_parameter("fast_mode", false)
+	crt_material.set_shader_parameter("target_vertical_resolution", lerpf(900.0, 320.0, curved_strength))
+	crt_material.set_shader_parameter("barrel_distortion", lerpf(0.0, 0.055, curved_strength))
+	crt_material.set_shader_parameter("scanline_strength", lerpf(0.0, 0.18, strength))
+	crt_material.set_shader_parameter("grille_strength", lerpf(0.0, 0.08, strength))
+	crt_material.set_shader_parameter("vignette_strength", lerpf(0.0, 0.38, curved_strength))
+	crt_material.set_shader_parameter("noise_strength", lerpf(0.0, 0.02, curved_strength))
+	crt_material.set_shader_parameter("chroma_offset", lerpf(0.0, 0.7, curved_strength))
+	crt_material.set_shader_parameter("tint", Vector3(1.0, 0.98, 0.92))
+	_update_crt_hud_label()
+
+func _change_crt_level(delta: int) -> void:
+	var new_level: int = clampi(crt_level + delta, 0, CRT_LEVEL_MAX)
+	if new_level == crt_level:
+		return
+	crt_level = new_level
+	_apply_crt_level()
+
+func _update_crt_hud_label() -> void:
+	if crt_hud_label == null:
+		return
+	if crt_level <= 0:
+		crt_hud_label.text = "CRT off  (O −  P +)"
+	else:
+		var pct: int = int(round(float(crt_level) / float(CRT_LEVEL_MAX) * 100.0))
+		crt_hud_label.text = "CRT %d/%d  %d%%  O/P" % [crt_level, CRT_LEVEL_MAX, pct]
+
+func _handle_crt_hotkey_input(event: InputEvent) -> bool:
+	if not (event is InputEventKey):
+		return false
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return false
+	if key_event.keycode == KEY_O:
+		_change_crt_level(-1)
+		return true
+	if key_event.keycode == KEY_P:
+		_change_crt_level(1)
+		return true
+	return false
+
 func _begin_run() -> void:
 	run_config = REEL_PROGRESS.get_run_config()
+	if Global.reel_run_max_depth_cap > 0.0:
+		var cap: float = Global.reel_run_max_depth_cap
+		run_config["max_depth"] = minf(float(run_config.get("max_depth", 24.0)), cap)
+		Global.reel_repeat_depth_cap = float(run_config.get("max_depth", 24.0))
+	else:
+		Global.reel_repeat_depth_cap = -1.0
+	Global.reel_run_max_depth_cap = -1.0
 	_close_pause_menu()
 	summary_results = {
 		"money_earned": 0,
@@ -357,6 +466,7 @@ func _begin_run() -> void:
 	landing_species_name = ""
 	landing_species_value = 0
 	landing_catch_depth = 0.0
+	last_fight_prompt_signature = ""
 	summary_ready_for_input = false
 	_clear_summary_animation()
 	_clear_chart(summary_species_chart)
@@ -384,6 +494,10 @@ func _begin_run() -> void:
 	cast_in_progress = false
 	cast_progress = 0.0
 	hook_blink_timer = 0.0
+	line_surface_anchor_active = false
+	line_surface_anchor_x = 0.0
+	automation_timer = 0.0
+	automation_catch_flash = 0.0
 	run_state = RunState.INTRO
 	_spawn_fish_population()
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
@@ -394,21 +508,27 @@ func _spawn_fish_population() -> void:
 	fish_entities.clear()
 	var max_depth: float = float(run_config.get("max_depth", 24.0))
 	var fish_count: int = clampi(int(round(max_depth * 0.17)), FISH_COUNT_MIN, FISH_COUNT_MAX)
+	var denom: float = float(max(fish_count - 1, 1))
 	for i in range(fish_count):
-		var depth: float = rng.randf_range(2.0, max_depth)
+		var span: float = max(0.001, max_depth - 2.0)
+		var t: float = clampf((float(i) + rng.randf_range(0.12, 0.88)) / denom, 0.0, 1.0)
+		var depth: float = 2.0 + t * span
 		fish_entities.append(_create_fish_entity(depth))
 
 func _create_fish_entity(depth_meters: float) -> Dictionary:
 	var species: Dictionary = REEL_DATA.pick_fish_for_depth(depth_meters, rng)
+	var preferred_y := _depth_to_y(depth_meters)
 	var pos := Vector2(
 		rng.randf_range(_water_rect().position.x + FISH_SPAWN_PADDING, _water_rect().end.x - FISH_SPAWN_PADDING),
-		_depth_to_y(depth_meters)
+		preferred_y
 	)
 	return {
 		"species": species,
 		"pos": pos,
 		"vel": Vector2(rng.randf_range(-18.0, 18.0), rng.randf_range(-10.0, 10.0)),
 		"roam_target": pos,
+		"preferred_depth_m": depth_meters,
+		"preferred_y": preferred_y,
 		"turn_timer": rng.randf_range(0.6, 1.6),
 		"interest": 0.0,
 		"bite_cooldown": 0.0,
@@ -419,7 +539,10 @@ func _process(delta: float) -> void:
 	if _is_pause_menu_open():
 		return
 	boat_bob_time += delta
+	ambient_anim_time += delta
 	hook_blink_timer += delta
+	if automation_catch_flash > 0.0:
+		automation_catch_flash = maxf(0.0, automation_catch_flash - delta)
 	_refresh_cursor_state(delta)
 	if fight_feedback_timer > 0.0:
 		fight_feedback_timer = max(0.0, fight_feedback_timer - delta)
@@ -440,6 +563,7 @@ func _process(delta: float) -> void:
 			_process_run_end_exit(delta)
 		RunState.SUMMARY:
 			pass
+	_update_automation_passive(delta)
 	_update_hud()
 	queue_redraw()
 
@@ -516,7 +640,7 @@ func _process_run_end_exit(delta: float) -> void:
 		summary_ready_for_input = true
 
 func _update_hook_motion(delta: float) -> void:
-	var anchor := _boat_anchor()
+	var anchor := _line_anchor_for_hook()
 	if run_state == RunState.READY:
 		_snap_hook_to_anchor()
 		return
@@ -524,8 +648,14 @@ func _update_hook_motion(delta: float) -> void:
 	var sink_speed: float = float(run_config.get("sink_speed", 15.0)) * _pixels_per_meter()
 	var reel_speed: float = float(run_config.get("reel_speed", 17.0)) * _pixels_per_meter()
 	if cast_in_progress:
-		_update_cast_motion(delta, anchor)
+		_update_cast_motion(delta, _boat_anchor())
 		return
+
+	if line_surface_anchor_active and (run_state == RunState.HOOKED or run_state == RunState.LANDING):
+		var pulling_line: bool = hook_reel_pull_remaining > 0.01 or hook_target_line_length < hook_line_length - 0.45
+		if pulling_line:
+			line_surface_anchor_x = move_toward(line_surface_anchor_x, _boat_anchor().x, LINE_SURFACE_REEL_NUDGE_SPEED * delta)
+		anchor = _line_anchor_for_hook()
 
 	if run_state == RunState.DESCENDING:
 		hook_target_line_length = min(_max_hook_line_length(), hook_target_line_length + sink_speed * delta)
@@ -589,18 +719,27 @@ func _update_fish(delta: float) -> void:
 		var pos: Vector2 = fish.get("pos", Vector2.ZERO)
 		var vel: Vector2 = fish.get("vel", Vector2.ZERO)
 		var species: Dictionary = fish.get("species", {})
+		var preferred_y: float = float(fish.get("preferred_y", pos.y))
 		if float(fish.get("turn_timer", 0.0)) <= 0.0 or pos.distance_to(fish.get("roam_target", pos)) < 18.0:
 			fish["turn_timer"] = rng.randf_range(0.7, 1.7)
 			fish["roam_target"] = Vector2(
 				rng.randf_range(water_rect.position.x + FISH_SPAWN_PADDING, water_rect.end.x - FISH_SPAWN_PADDING),
-				rng.randf_range(water_rect.position.y + 24.0, water_rect.end.y - 28.0)
+				clampf(
+					preferred_y + rng.randf_range(-FISH_DEPTH_ROAM_PX, FISH_DEPTH_ROAM_PX),
+					water_rect.position.y + 18.0,
+					water_rect.end.y - 22.0
+				)
 			)
-		var target: Vector2 = fish.get("roam_target", pos)
+		var base_target: Vector2 = fish.get("roam_target", pos)
+		var target: Vector2 = base_target
 		var attraction_radius: float = float(run_config.get("attraction_radius", 34.0))
 		var distance_to_hook: float = pos.distance_to(hook_pos)
 		if (run_state == RunState.IDLE or run_state == RunState.DESCENDING or run_state == RunState.REELING) and distance_to_hook <= attraction_radius * 3.1:
 			var seek_strength: float = clampf(1.0 - (distance_to_hook / max(attraction_radius * 3.1, 1.0)), 0.0, 1.0)
-			target = target.lerp(hook_pos, seek_strength * 0.65)
+			target = Vector2(
+				lerpf(base_target.x, hook_pos.x, seek_strength * 0.65),
+				base_target.y
+			)
 			fish["interest"] = min(1.25, float(fish.get("interest", 0.0)) + delta * (BITE_INTEREST_GAIN + seek_strength))
 		else:
 			fish["interest"] = max(0.0, float(fish.get("interest", 0.0)) - delta * BITE_INTEREST_LOSS)
@@ -680,6 +819,7 @@ func _start_hooked_fish(index: int) -> void:
 	summary_results["bites"] = total_bites
 	fight_feedback_text = "Fish on!"
 	fight_feedback_timer = 0.8
+	last_fight_prompt_signature = ""
 	_roll_next_fight_phase()
 
 func _roll_next_fight_phase() -> void:
@@ -687,6 +827,10 @@ func _roll_next_fight_phase() -> void:
 	desired_side = -1 if rng.randf() < 0.5 else 1
 	fight_phase_duration = rng.randf_range(FIGHT_PHASE_MIN, FIGHT_PHASE_MAX)
 	fight_phase_timer = fight_phase_duration
+	var prompt_signature := _current_fight_prompt_signature()
+	if prompt_signature != last_fight_prompt_signature:
+		last_fight_prompt_signature = prompt_signature
+		_play_reel_sound(SoundEffectSettings.SOUND_EFFECT_TYPE.REEL_PROMPT_SHIFT, 0.0, rng.randf_range(-0.03, 0.03))
 
 func _resolve_fight_phase() -> void:
 	if hooked_fish_index < 0 or hooked_fish_index >= fish_entities.size():
@@ -720,12 +864,14 @@ func _resolve_fight_phase() -> void:
 	fish_stamina = max(0.0, fish_stamina - fish_loss)
 	hook_reel_pull_remaining += fish_loss * meters_per_fish_stamina * _pixels_per_meter()
 	hook_velocity.y = min(hook_velocity.y, -float(run_config.get("reel_speed", 17.0)) * _pixels_per_meter() * 0.8)
-	hook_position = _boat_anchor() + _safe_line_direction(_boat_anchor()) * hook_line_length
+	var line_anchor := _line_anchor_for_hook()
+	hook_position = line_anchor + _safe_line_direction(line_anchor) * hook_line_length
 	_sync_hook_state_from_position()
 	total_clean_pulls += 1
 	summary_results["clean_pulls"] = total_clean_pulls
 	fight_feedback_text = "Clean pull!" if desired_hold else "Tension held."
 	fight_feedback_timer = 0.48
+	_play_reel_sound(SoundEffectSettings.SOUND_EFFECT_TYPE.REEL_BEAT_SUCCESS, 0.0, rng.randf_range(-0.02, 0.03))
 	if player_stamina <= 0.0:
 		_lose_hooked_fish()
 		return
@@ -739,6 +885,7 @@ func _apply_fight_mistake(beat_cost: float) -> void:
 	summary_results["mistakes"] = total_mistakes
 	fight_feedback_text = "The fish surges!"
 	fight_feedback_timer = 0.64
+	_play_reel_sound(SoundEffectSettings.SOUND_EFFECT_TYPE.REEL_BEAT_FAIL, 0.0, rng.randf_range(-0.03, 0.02))
 	if player_stamina <= 0.0:
 		_lose_hooked_fish()
 
@@ -759,6 +906,7 @@ func _lose_hooked_fish() -> void:
 	landing_species_name = ""
 	landing_species_value = 0
 	landing_catch_depth = 0.0
+	last_fight_prompt_signature = ""
 	total_fish_lost += 1
 	summary_results["fish_lost"] = total_fish_lost
 	fight_feedback_text = "The fish got away."
@@ -780,6 +928,7 @@ func _land_hooked_fish() -> void:
 	hook_target_line_length = hook_line_length
 	fight_feedback_text = "Hauling in %s!" % landing_species_name
 	fight_feedback_timer = 0.85
+	last_fight_prompt_signature = ""
 	run_state = RunState.LANDING
 
 func _finish_landed_fish() -> void:
@@ -800,6 +949,7 @@ func _finish_landed_fish() -> void:
 	summary_results["species_values"] = species_values
 	fight_feedback_text = "Landed %s!" % landing_species_name
 	fight_feedback_timer = 0.85
+	_play_reel_sound(SoundEffectSettings.SOUND_EFFECT_TYPE.REEL_FISH_LANDED, 0.0, rng.randf_range(-0.02, 0.02))
 	fish_entities[hooked_fish_index] = _create_fish_entity(rng.randf_range(2.0, float(run_config.get("max_depth", 24.0))))
 	hooked_fish_index = -1
 	player_stamina = 0.0
@@ -807,6 +957,7 @@ func _finish_landed_fish() -> void:
 	landing_species_name = ""
 	landing_species_value = 0
 	landing_catch_depth = 0.0
+	last_fight_prompt_signature = ""
 	_snap_hook_to_anchor()
 	run_state = RunState.READY
 
@@ -820,6 +971,7 @@ func _begin_run_end() -> void:
 	landing_species_name = ""
 	landing_species_value = 0
 	landing_catch_depth = 0.0
+	last_fight_prompt_signature = ""
 	fight_feedback_text = "Horn's up. Dragging the line home."
 	fight_feedback_timer = 1.0
 
@@ -859,14 +1011,45 @@ func _build_catch_log_text() -> String:
 	var catch_log: Array = summary_results.get("catch_log", [])
 	if catch_log.is_empty():
 		return "No fish made it back over the rail this run."
-	var lines := PackedStringArray(["Catch Log"])
+	var groups: Dictionary = {}
 	for entry_variant in catch_log:
 		var entry: Dictionary = entry_variant
-		lines.append("%s  $%d  %.1fm" % [
-			String(entry.get("name", "Unknown Fish")),
-			int(entry.get("value", 0)),
-			float(entry.get("depth", 0.0)),
-		])
+		var name: String = String(entry.get("name", "Unknown Fish"))
+		var d: float = float(entry.get("depth", 0.0))
+		var is_auto: bool = d < -0.5
+		var key: String = name + ("|a" if is_auto else "|m")
+		if not groups.has(key):
+			groups[key] = {
+				"name": name,
+				"auto": is_auto,
+				"count": 0,
+				"value": 0,
+				"depth_sum": 0.0,
+				"depth_n": 0,
+			}
+		var g: Dictionary = groups[key]
+		g["count"] = int(g["count"]) + 1
+		g["value"] = int(g["value"]) + int(entry.get("value", 0))
+		if not is_auto:
+			g["depth_sum"] = float(g["depth_sum"]) + d
+			g["depth_n"] = int(g["depth_n"]) + 1
+	var keys: Array = groups.keys()
+	keys.sort()
+	var lines := PackedStringArray(["Catch Log"])
+	for k in keys:
+		var g: Dictionary = groups[k]
+		var cnt: int = int(g["count"])
+		var nm: String = String(g["name"])
+		var val: int = int(g["value"])
+		var label: String = nm if cnt <= 1 else "%s  x%d" % [nm, cnt]
+		var depth_col: String
+		if bool(g["auto"]):
+			depth_col = "auto"
+		else:
+			var dn: int = maxi(int(g["depth_n"]), 1)
+			var davg: float = float(g["depth_sum"]) / float(dn)
+			depth_col = "%.1fm" % davg
+		lines.append("%s  $%d  %s" % [label, val, depth_col])
 	return "\n".join(lines)
 
 func _build_species_chart_rows() -> Array[Dictionary]:
@@ -1093,6 +1276,7 @@ func _update_hud() -> void:
 	timer_label.text = "Time %.1fs" % timer_left
 	depth_label.text = "Depth %.1fm" % hook_depth
 	wallet_label.text = "Haul $%s" % Util.get_number_short_text(int(summary_results.get("money_earned", 0)))
+	_update_crt_hud_label()
 	var fight_hud_visible: bool = run_state == RunState.HOOKED
 	player_stamina_bar.visible = fight_hud_visible
 	fish_stamina_bar.visible = fight_hud_visible
@@ -1116,7 +1300,10 @@ func _current_prompt_text() -> String:
 		RunState.INTRO:
 			return "The boat is chugging in from the dark..."
 		RunState.READY:
-			return "Click to cast toward the cursor. Hold after the cast to keep feeding line out."
+			var deck: String = ""
+			if float(run_config.get("automation_tick_interval", 999999.0)) < 900000.0:
+				deck = " Deck gear is also pulling passive catches."
+			return "Click to cast toward the cursor. Hold after the cast to keep feeding line out.%s" % deck
 		RunState.IDLE:
 			return "The lure is holding still. Grab it to shove the swing, or hold above/below it to reel or feed line."
 		RunState.DESCENDING:
@@ -1136,6 +1323,9 @@ func _current_prompt_text() -> String:
 	return ""
 
 func _input(event: InputEvent) -> void:
+	if _handle_crt_hotkey_input(event):
+		get_viewport().set_input_as_handled()
+		return
 	if _handle_pause_menu_input(event):
 		return
 	if summary_overlay.visible:
@@ -1160,7 +1350,13 @@ func _input(event: InputEvent) -> void:
 				_start_cast_to(cursor_screen_pos)
 			RunState.IDLE, RunState.DESCENDING, RunState.REELING:
 				hook_grabbed = false
-				run_state = _free_line_state_for_cursor(cursor_screen_pos)
+				var next_state := _free_line_state_for_cursor(cursor_screen_pos)
+				if next_state != run_state:
+					if next_state == RunState.REELING:
+						_play_reel_sound(SoundEffectSettings.SOUND_EFFECT_TYPE.REEL_LINE_PULL, -2.0, rng.randf_range(-0.03, 0.04))
+					elif next_state == RunState.DESCENDING:
+						_play_reel_sound(SoundEffectSettings.SOUND_EFFECT_TYPE.REEL_LINE_RELEASE, 0.0, rng.randf_range(-0.04, 0.05))
+				run_state = next_state
 	else:
 		hook_grabbed = false
 		if cast_in_progress:
@@ -1174,7 +1370,7 @@ func _draw() -> void:
 	var viewport_size := get_viewport_rect().size
 	var surface_y := viewport_size.y * SURFACE_RATIO
 	var water_rect := _water_rect()
-	draw_rect(Rect2(Vector2.ZERO, Vector2(viewport_size.x, surface_y)), Color(0.03, 0.04, 0.07, 1.0), true)
+	_draw_sky_moon_stars(viewport_size, surface_y)
 	for i in range(16):
 		var t: float = float(i) / 15.0
 		var band_y: float = lerpf(surface_y, water_rect.end.y, t)
@@ -1186,13 +1382,81 @@ func _draw() -> void:
 			1.0
 		)
 		draw_rect(Rect2(Vector2(0.0, band_y), Vector2(viewport_size.x, band_h)), band_color, true)
+	_draw_water_decorations(water_rect, viewport_size, surface_y)
 	draw_line(Vector2(0.0, surface_y), Vector2(viewport_size.x, surface_y), Color(0.62, 0.85, 0.96, 0.9), 3.0)
 	_draw_depth_markers(water_rect)
 	_draw_boat()
+	_draw_automation_gear()
+	_draw_automation_catch_flash(surface_y)
 	_draw_fish()
 	_draw_line_and_hook()
 	_draw_reel_guidance_glyphs()
 	_draw_cursor()
+
+func _draw_sky_moon_stars(viewport_size: Vector2, surface_y: float) -> void:
+	# Muted grey night: almost-neutral gradient (barely cooler at zenith), minimal bands.
+	var strips: int = 5
+	for s in range(strips):
+		var u: float = float(s) / float(max(strips - 1, 1))
+		var y0: float = lerpf(0.0, surface_y, u)
+		var y1: float = lerpf(0.0, surface_y, (float(s) + 1.0) / float(strips))
+		var v: float = lerpf(0.034, 0.076, u)
+		# Slight R/B nudge so it reads as cool grey, not tinted blue.
+		var sky := Color(v + 0.002, v, v + 0.0015)
+		draw_rect(Rect2(Vector2(0.0, y0), Vector2(viewport_size.x, y1 - y0 + 1.0)), sky, true)
+	# Very soft grey haze at horizon — low contrast handoff to water.
+	var haze_h: float = clampf(surface_y * 0.045, 5.0, 18.0)
+	draw_rect(
+		Rect2(Vector2(0.0, surface_y - haze_h), Vector2(viewport_size.x, haze_h)),
+		Color(0.065, 0.065, 0.068, 0.1),
+		true
+	)
+	# Few dim grey pinpricks; almost no twinkle.
+	var star_count: int = 14
+	var margin_x: float = 28.0
+	var margin_top: float = 12.0
+	var margin_bot: float = maxf(surface_y * 0.14, 16.0)
+	for i in range(star_count):
+		var sx: float = fposmod(sin(float(i) * 12.9898 + 3.14) * 7821.37, viewport_size.x - margin_x * 2.0) + margin_x
+		var sy: float = fposmod(cos(float(i) * 78.233 + 1.618) * 5912.11, surface_y - margin_top - margin_bot) + margin_top
+		var tw: float = 0.14 + 0.025 * sin(ambient_anim_time * 0.35 + float(i) * 1.73)
+		tw = clampf(tw, 0.11, 0.18)
+		var r: float = 0.45 + fposmod(sin(float(i) * 9.1), 1.0) * 0.4
+		draw_circle(Vector2(sx, sy), r, Color(0.72, 0.72, 0.74, tw))
+	# Hazy grey moon: faint bloom, dull disc (no crisp white).
+	var moon_center := Vector2(viewport_size.x * 0.76, surface_y * 0.28)
+	draw_circle(moon_center, 28.0, Color(0.42, 0.42, 0.44, 0.035))
+	draw_circle(moon_center, 14.0, Color(0.62, 0.62, 0.64, 0.62))
+
+func _draw_water_decorations(water_rect: Rect2, viewport_size: Vector2, surface_y: float) -> void:
+	var wleft: float = water_rect.position.x
+	var wright: float = water_rect.end.x
+	var wbottom: float = water_rect.end.y
+	for k in range(11):
+		var base_x: float = lerpf(wleft + 40.0, wright - 40.0, float(k) / 10.0)
+		base_x += sin(ambient_anim_time * 0.15 + float(k) * 1.7) * 6.0
+		var sway: float = sin(ambient_anim_time * 0.9 + float(k)) * 4.0
+		var top_y: float = lerpf(surface_y + 40.0, wbottom - 30.0, 0.35 + fposmod(sin(float(k) * 3.1), 0.45))
+		var pts := PackedVector2Array()
+		var segs: int = 9
+		for s in range(segs + 1):
+			var t: float = float(s) / float(segs)
+			var px: float = base_x + sway * sin(t * PI * 1.1)
+			var py: float = lerpf(top_y, wbottom - 8.0, t)
+			pts.append(Vector2(px, py))
+		if pts.size() >= 2:
+			draw_polyline(pts, Color(0.12, 0.28, 0.22, 0.22), 3.0, true)
+	for b in range(4):
+		var bx: float = lerpf(wleft + 80.0, wright - 80.0, 0.2 + float(b) * 0.22)
+		var by: float = lerpf(surface_y + 90.0, water_rect.position.y + water_rect.size.y * 0.55, 0.35 + float(b) * 0.1)
+		var pulse: float = 0.35 + 0.35 * sin(ambient_anim_time * 2.1 + float(b) * 2.0)
+		draw_circle(Vector2(bx, by), 5.0, Color(0.98, 0.92, 0.55, pulse * 0.45))
+		draw_circle(Vector2(bx, by), 2.2, Color(1.0, 1.0, 0.85, pulse * 0.9))
+	for p in range(42):
+		var px: float = fposmod(sin(float(p) * 91.7 + 2.0) * 9123.0, viewport_size.x - 20.0) + 10.0
+		var py: float = lerpf(surface_y + 30.0, wbottom - 20.0, fposmod(cos(float(p) * 55.3) * 7777.0, 1.0))
+		var a: float = 0.04 + 0.06 * fposmod(sin(float(p) + ambient_anim_time * 1.3), 1.0)
+		draw_circle(Vector2(px, py), 1.4, Color(0.55, 0.82, 0.95, a))
 
 func _draw_depth_markers(water_rect: Rect2) -> void:
 	var max_depth: float = float(run_config.get("max_depth", 24.0))
@@ -1222,6 +1486,83 @@ func _draw_boat() -> void:
 		boat_origin + Vector2(-8.0, -34.0 + bob_offset),
 		boat_origin + Vector2(42.0, -56.0 + bob_offset),
 	]), Color(0.82, 0.86, 0.92, 0.95))
+
+func _draw_automation_gear() -> void:
+	if float(run_config.get("automation_tick_interval", 999999.0)) > 900000.0:
+		return
+	var bob_offset: float = sin(boat_bob_time * BOAT_BOB_SPEED) * BOAT_BOB_HEIGHT
+	var seine: int = int(run_config.get("automation_seine_tier", 0))
+	if seine > 0:
+		var origin: Vector2 = boat_pos + Vector2(-boat_size.x * 0.38, 6.0 + bob_offset)
+		var sweep: float = sin(boat_bob_time * 2.15) * 14.0
+		draw_arc(origin + Vector2(sweep, 0.0), 20.0 + float(seine) * 3.2, 0.38 * PI, 0.72 * PI, 14, Color(0.62, 0.84, 0.96, 0.2), 2.2)
+	var pots: int = int(run_config.get("automation_pot_tier", 0))
+	if pots > 0:
+		var po: Vector2 = boat_pos + Vector2(boat_size.x * 0.32, 12.0 + bob_offset)
+		draw_circle(po, 5.0 + float(pots) * 0.35, Color(0.4, 0.36, 0.32, 0.55))
+		draw_line(po + Vector2(-6.0, 2.0), po + Vector2(6.0, 2.0), Color(0.55, 0.48, 0.42, 0.5), 2.0)
+
+
+func _draw_automation_catch_flash(surface_y: float) -> void:
+	if automation_catch_flash <= 0.0:
+		return
+	var bob_offset: float = sin(boat_bob_time * BOAT_BOB_SPEED) * BOAT_BOB_HEIGHT
+	var a: float = clampf(automation_catch_flash / 0.52, 0.0, 1.0)
+	a = a * a * (3.0 - 2.0 * a)
+	var splash_x: float = boat_pos.x - boat_size.x * 0.1 + sin(ambient_anim_time * 11.0) * 9.0
+	var splash_y: float = surface_y + 5.0
+	var ring_r: float = 12.0 + 24.0 * (1.0 - a)
+	draw_arc(Vector2(splash_x, splash_y), ring_r, PI * 0.1, PI * 0.9, 14, Color(0.58, 0.84, 0.98, 0.52 * a), 3.0)
+	for i in range(10):
+		var ang: float = TAU * float(i) / 10.0 + ambient_anim_time * 2.6
+		var lift: float = 30.0 * sqrt(a) * (0.3 + 0.7 * fposmod(sin(float(i) * 4.7 + 0.2), 1.0))
+		var px: float = splash_x + cos(ang) * ring_r * 0.38
+		var py: float = splash_y - lift
+		draw_circle(Vector2(px, py), 2.0 * a + 0.7, Color(0.9, 0.96, 1.0, 0.78 * a))
+	var rail: Vector2 = boat_pos + Vector2(-boat_size.x * 0.24, -boat_size.y * 0.32 + bob_offset)
+	draw_circle(rail, 7.0 + 6.0 * a, Color(1.0, 0.93, 0.58, 0.55 * a))
+	draw_arc(rail, 15.0 + 5.0 * a, -0.4 * PI, 0.4 * PI, 10, Color(0.68, 0.9, 1.0, 0.5 * a), 2.2)
+
+func _update_automation_passive(delta: float) -> void:
+	if run_state == RunState.INTRO or run_state == RunState.SUMMARY or run_state == RunState.RUN_END_EXIT:
+		return
+	var interval: float = float(run_config.get("automation_tick_interval", 999999.0))
+	if interval > 900000.0:
+		return
+	automation_timer += delta
+	if automation_timer < interval:
+		return
+	automation_timer -= interval
+	_fire_automation_catch_burst()
+
+func _fire_automation_catch_burst() -> void:
+	var max_d: float = float(run_config.get("max_depth", 24.0))
+	var exotics: bool = bool(run_config.get("automation_exotics_unlocked", false))
+	var bias: float = float(run_config.get("automation_exotic_bias", 0.0))
+	var n: int = clampi(int(run_config.get("automation_catch_count", 1)), 1, 10)
+	var vmult: float = float(run_config.get("automation_value_mult", 1.0)) * float(run_config.get("reward_multiplier", 1.0))
+	for _i in range(n):
+		var species: Dictionary = REEL_DATA.pick_automation_catch(max_d, rng, exotics, bias)
+		var base_val: int = int(species.get("value", 1))
+		var value: int = maxi(1, int(round(float(base_val) * vmult)))
+		_record_automation_catch(str(species.get("name", "Catch")), value)
+
+func _record_automation_catch(species_name: String, value: int) -> void:
+	summary_results["money_earned"] = int(summary_results.get("money_earned", 0)) + value
+	summary_results["fish_caught"] = int(summary_results.get("fish_caught", 0)) + 1
+	var catch_log: Array = summary_results.get("catch_log", [])
+	catch_log.append({"name": species_name, "value": value, "depth": -1.0})
+	summary_results["catch_log"] = catch_log
+	var species_counts: Dictionary = summary_results.get("species_counts", {})
+	species_counts[species_name] = int(species_counts.get(species_name, 0)) + 1
+	summary_results["species_counts"] = species_counts
+	var species_values: Dictionary = summary_results.get("species_values", {})
+	species_values[species_name] = int(species_values.get(species_name, 0)) + value
+	summary_results["species_values"] = species_values
+	automation_catch_flash = minf(0.82, automation_catch_flash + 0.28)
+	if run_state != RunState.HOOKED and run_state != RunState.LANDING:
+		fight_feedback_text = "%s +$%d (auto)" % [species_name, value]
+		fight_feedback_timer = 0.62
 
 func _draw_fish() -> void:
 	for i in range(fish_entities.size()):
@@ -1254,7 +1595,7 @@ func _draw_fish() -> void:
 func _draw_line_and_hook() -> void:
 	if run_state == RunState.RUN_END_EXIT or run_state == RunState.SUMMARY:
 		return
-	var anchor := _boat_anchor()
+	var anchor := _line_anchor_for_hook()
 	var hook_pos := _hook_position()
 	if run_state == RunState.READY or run_state == RunState.INTRO:
 		hook_pos = anchor
@@ -1357,6 +1698,12 @@ func _boat_anchor() -> Vector2:
 	var bob_offset: float = sin(boat_bob_time * BOAT_BOB_SPEED) * BOAT_BOB_HEIGHT
 	return boat_pos + Vector2(-boat_size.x * 0.18, boat_size.y * 0.16 + bob_offset)
 
+func _line_anchor_for_hook() -> Vector2:
+	var water_rect := _water_rect()
+	if line_surface_anchor_active:
+		return Vector2(line_surface_anchor_x, water_rect.position.y)
+	return _boat_anchor()
+
 func _hook_position() -> Vector2:
 	return hook_position
 
@@ -1373,7 +1720,7 @@ func _handle_pause_menu_input(event: InputEvent) -> bool:
 	return false
 
 func _can_open_pause_menu() -> bool:
-	return not summary_overlay.visible and run_state != RunState.RUN_END_EXIT and run_state != RunState.SUMMARY
+	return true
 
 func _is_pause_menu_open() -> bool:
 	return pause_menu != null and pause_menu.is_open()
@@ -1424,8 +1771,15 @@ func _pixels_per_meter() -> float:
 	return _water_rect().size.y / max_depth
 
 func _max_hook_line_length() -> float:
-	var anchor := _boat_anchor()
-	return anchor.distance_to(Vector2(anchor.x, _depth_to_y(float(run_config.get("max_depth", 24.0))))) + HOOK_SURFACE_THROW_HEIGHT
+	var max_depth: float = float(run_config.get("max_depth", 24.0))
+	var depth_y := _depth_to_y(max_depth)
+	var top: Vector2
+	if line_surface_anchor_active:
+		top = Vector2(line_surface_anchor_x, _water_rect().position.y)
+	else:
+		var ba := _boat_anchor()
+		top = ba
+	return top.distance_to(Vector2(top.x, depth_y)) + HOOK_SURFACE_THROW_HEIGHT
 
 func _safe_line_direction(anchor: Vector2) -> Vector2:
 	var line_vector := hook_position - anchor
@@ -1448,6 +1802,7 @@ func _snap_hook_to_anchor() -> void:
 	hook_reel_pull_remaining = 0.0
 	cast_in_progress = false
 	cast_progress = 0.0
+	line_surface_anchor_active = false
 	_sync_hook_state_from_position()
 
 func _start_cast_to(screen_pos: Vector2) -> void:
@@ -1464,6 +1819,7 @@ func _start_cast_to(screen_pos: Vector2) -> void:
 	cast_in_progress = true
 	hook_grabbed = false
 	run_state = RunState.DESCENDING
+	_play_reel_sound(SoundEffectSettings.SOUND_EFFECT_TYPE.REEL_CAST_THROW, 0.0, rng.randf_range(-0.04, 0.04))
 	hook_position = anchor
 	hook_velocity = Vector2.ZERO
 	hook_line_length = 0.0
@@ -1484,6 +1840,8 @@ func _update_cast_motion(delta: float, anchor: Vector2) -> void:
 	_sync_hook_state_from_position()
 	if cast_progress >= 1.0:
 		cast_in_progress = false
+		line_surface_anchor_x = hook_position.x
+		line_surface_anchor_active = true
 		hook_velocity *= 0.92
 		if not left_mouse_down:
 			run_state = RunState.IDLE if hook_line_length > HOOK_RETRACT_SNAP else RunState.READY
@@ -1506,7 +1864,7 @@ func _refresh_cursor_state(delta: float) -> void:
 	hook_hovered = _can_grab_hook() and _is_cursor_near_hook(cursor_screen_pos)
 
 func _apply_hook_grab_impulse(delta: float) -> void:
-	var anchor := _boat_anchor()
+	var anchor := _line_anchor_for_hook()
 	var radial := _safe_line_direction(anchor)
 	var tangent := Vector2(-radial.y, radial.x)
 	var tangential_speed := tangent.dot(cursor_velocity) * HOOK_GRAB_FORCE * float(run_config.get("hook_control", 1.0))
@@ -1535,6 +1893,16 @@ func _free_line_state_for_cursor(screen_pos: Vector2) -> RunState:
 		return RunState.DESCENDING
 	return RunState.DESCENDING if screen_pos.y >= _hook_position().y else RunState.REELING
 
+func _current_fight_prompt_signature() -> String:
+	if not desired_hold:
+		return "release"
+	return "hold_left" if desired_side < 0 else "hold_right"
+
+func _play_reel_sound(type: SoundEffectSettings.SOUND_EFFECT_TYPE, volume_db_offset: float = 0.0, pitch_scale_offset: float = 0.0) -> void:
+	if AudioManager == null:
+		return
+	AudioManager.create_audio(type, volume_db_offset, pitch_scale_offset)
+
 func _on_summary_continue_pressed() -> void:
 	if not summary_ready_for_input:
 		return
@@ -1547,4 +1915,8 @@ func _on_summary_again_pressed() -> void:
 		return
 	if AudioManager != null:
 		AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
+	if Global.reel_repeat_depth_cap > 0.0:
+		Global.reel_run_max_depth_cap = Global.reel_repeat_depth_cap
+	else:
+		Global.reel_run_max_depth_cap = -1.0
 	SceneChanger.change_to_new_scene(Util.get_main_scene_path(), null, 0.2)

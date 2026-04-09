@@ -159,17 +159,13 @@ func _on_v_sync_enabled_toggled(toggled_on: bool) -> void :
         AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 
 func _on_main_volume_value_changed(value: float) -> void :
-    AudioServer.set_bus_volume_db(
-    0, 
-    linear_to_db(value * 3.0)
-    )
+    if _is_refreshing:
+        return
     SaveHandler.update_main_volume(value)
 
 func _on_music_volume_value_changed(value: float) -> void :
-    AudioServer.set_bus_volume_db(
-    1, 
-    linear_to_db(value * 3.0)
-    )
+    if _is_refreshing:
+        return
     SaveHandler.update_music_volume(value)
 
 
@@ -202,10 +198,8 @@ func _on_touch_input_check_button_toggled(toggled_on: bool) -> void:
 
 
 func _on_effect_volume_slider_value_changed(value: float) -> void :
-    AudioServer.set_bus_volume_db(
-    2, 
-    linear_to_db(value * 3.0)
-    )
+    if _is_refreshing:
+        return
     SaveHandler.update_effect_volume(value)
 
 

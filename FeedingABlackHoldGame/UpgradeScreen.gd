@@ -10,8 +10,9 @@ const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgres
 const RED_SKY_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyUpgradeTreeAdapter.gd")
 const TURKEY_PROGRESS_SCRIPT = preload("res://Games/Turkey/TurkeyProgress.gd")
 const TURKEY_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/Turkey/TurkeyUpgradeTreeAdapter.gd")
-const REEL_INTO_DARKNESS_PROGRESS_SCRIPT = preload("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
-const REEL_INTO_DARKNESS_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/ReelIntoDarkness/ReelIntoDarknessUpgradeTreeAdapter.gd")
+var REEL_INTO_DARKNESS_PROGRESS_SCRIPT = load("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
+var REEL_INTO_DARKNESS_DATA_SCRIPT = load("res://Games/ReelIntoDarkness/ReelIntoDarknessData.gd")
+var REEL_INTO_DARKNESS_UPGRADE_TREE_ADAPTER_SCRIPT = load("res://Games/ReelIntoDarkness/ReelIntoDarknessUpgradeTreeAdapter.gd")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
 const GO_AGAIN_DISABLED_HINT := "UPGRADE_GO_AGAIN_DISABLED_HINT"
@@ -25,6 +26,9 @@ const BATTLE_LEVEL_CHOICE_DIALOG_BUTTON_HEIGHT := 180.0
 const BATTLE_LEVEL_SELECTOR_FONT_SIZE := 52
 const BATTLE_LEVEL_SELECTOR_BUTTON_WIDTH := 140.0
 const BATTLE_LEVEL_SELECTOR_INPUT_WIDTH := 220.0
+const REEL_DEPTH_TIER_DIALOG_SIZE := Vector2(640.0, 520.0)
+const REEL_DEPTH_TIER_BUTTON_FONT := 26
+const REEL_DEPTH_TIER_BUTTON_MIN_H := 72.0
 const UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO := 0.05
 const EDITOR_SELL_MENU_ID := 1
 
@@ -54,6 +58,8 @@ var battle_level_choice_dialog: ConfirmationDialog
 var battle_level_choice_selected_level: int = 1
 var battle_level_choice_line_edit: LineEdit
 var battle_level_choice_max_level: int = 1
+var reel_depth_tier_dialog: ConfirmationDialog
+var reel_depth_tier_cache: Array = []
 var _locale_tree_refresh_queued: bool = false
 var _loaded_tree_locale: String = ""
 
@@ -77,6 +83,7 @@ var touch_input_button: Button
 var settings_panel: PanelContainer
 var settings_content: Settings
 var settings_title_label: Label
+var settings_main_menu_button: Button
 var settings_close_button: Button
 var reset_progress_button: Button
 var go_again_button: Button
@@ -117,6 +124,8 @@ func _refresh_localized_text() -> void:
         return_to_main_menu_button.text = tr("MAIN MENU")
     if settings_title_label != null and is_instance_valid(settings_title_label):
         settings_title_label.text = tr("UI_SETTINGS_TITLE")
+    if settings_main_menu_button != null and is_instance_valid(settings_main_menu_button):
+        settings_main_menu_button.text = tr("MAIN MENU")
     if settings_close_button != null and is_instance_valid(settings_close_button):
         settings_close_button.text = tr("UI_BACK")
     if reset_progress_button != null and is_instance_valid(reset_progress_button):
@@ -143,6 +152,8 @@ func _refresh_localized_text() -> void:
     _update_go_again_button_state()
     if battle_level_choice_dialog != null and is_instance_valid(battle_level_choice_dialog) and battle_level_choice_dialog.visible:
         _show_battle_level_choice_dialog(battle_level_choice_max_level)
+    if _is_reel_depth_tier_dialog_open():
+        _rebuild_reel_depth_tier_dialog_content()
 
 func _queue_upgrade_tree_locale_refresh() -> void:
     if _locale_tree_refresh_queued:
@@ -224,6 +235,7 @@ func _ready() -> void :
     _setup_editor_center_offset_controls()
     _setup_editor_sell_popup_menu()
     _setup_battle_level_choice_dialog()
+    _setup_reel_depth_tier_dialog()
     _setup_reset_progress_controls()
     _setup_version_label()
     _setup_settings_controls()
@@ -346,14 +358,21 @@ func _input(event: InputEvent) -> void :
                     tech_tree.zoom_by(-0.18, mouse_event.position)
                     get_viewport().set_input_as_handled()
                     return
+        if _is_settings_open():
+            if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+                _hide_settings_panel()
+                get_viewport().set_input_as_handled()
+            return
+        if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+            _on_settings_button_pressed()
+            get_viewport().set_input_as_handled()
+            return
+        if _is_reel_depth_tier_dialog_open():
+            return
         if _is_battle_level_choice_open():
             if event.is_action_pressed("ui_accept") or event.is_action_pressed("go again"):
                 if _confirm_battle_level_choice_from_controller():
                     get_viewport().set_input_as_handled()
-                return
-            if event.is_action_pressed("escape") or event.is_action_pressed("back"):
-                _on_battle_level_choice_cancel_pressed()
-                get_viewport().set_input_as_handled()
                 return
             if event.is_action_pressed("up"):
                 _on_battle_level_choice_adjust_pressed(1, battle_level_choice_max_level)
@@ -363,18 +382,10 @@ func _input(event: InputEvent) -> void :
                 _on_battle_level_choice_adjust_pressed(-1, battle_level_choice_max_level)
                 get_viewport().set_input_as_handled()
                 return
+            return
         if _is_continue_locked_open():
-            if event.is_action_pressed("escape") or event.is_action_pressed("back") or event.is_action_pressed("ui_accept"):
+            if event.is_action_pressed("ui_accept"):
                 _hide_continue_locked_panel()
-            return
-        if _is_settings_open():
-            if event.is_action_pressed("escape") or event.is_action_pressed("back"):
-                _hide_settings_panel()
-                get_viewport().set_input_as_handled()
-            return
-        if event.is_action_pressed("escape") or event.is_action_pressed("back"):
-            _on_settings_button_pressed()
-            get_viewport().set_input_as_handled()
             return
         if event.is_action_pressed("go again"):
             _on_go_again_pressed()
@@ -482,6 +493,9 @@ func _on_color_rect_gui_input(event: InputEvent) -> void :
         tech_tree.move_tech_tree(event.relative)
 
 func _poll_battle_level_choice_controller(delta: float) -> void:
+    if _is_reel_depth_tier_dialog_open():
+        _poll_reel_depth_tier_controller(delta)
+        return
     if not _is_battle_level_choice_open():
         _popup_prev_a_pressed = false
         _popup_prev_b_pressed = false
@@ -708,9 +722,13 @@ func _on_go_again_pressed() -> void :
         SceneChanger.change_to_new_scene(Util.get_main_scene_path())
         return
     if Util.is_reel_into_darkness_game_active():
-        _refresh_virtual_cursor_state()
-        _cache_tech_tree_for_reuse()
-        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        var reel_tiers: Array = REEL_INTO_DARKNESS_DATA_SCRIPT.get_reel_depth_tier_options(REEL_INTO_DARKNESS_PROGRESS_SCRIPT.get_upgrade_levels())
+        if reel_tiers.size() <= 1:
+            Global.reel_run_max_depth_cap = -1.0
+            _launch_reel_fishing_scene()
+        else:
+            reel_depth_tier_cache = reel_tiers
+            _show_reel_depth_tier_dialog()
         return
     if not _can_continue_to_battle():
         _show_continue_locked_dialog()
@@ -822,6 +840,8 @@ func _on_popup_layer_child_exiting_tree(_node: Node) -> void:
     _refresh_demo_mode_label_visibility()
 
 func _is_any_popup_visible() -> bool:
+    if _is_reel_depth_tier_dialog_open():
+        return true
     if battle_level_choice_dialog != null and is_instance_valid(battle_level_choice_dialog) and battle_level_choice_dialog.visible:
         return true
     if reset_progress_confirm_dialog != null and is_instance_valid(reset_progress_confirm_dialog) and reset_progress_confirm_dialog.visible:
@@ -846,13 +866,13 @@ func _refresh_demo_mode_label_visibility() -> void:
         if Util.is_mining_game_active():
             game_mode_label.text = ""
         elif Util.is_red_sky_game_active():
-            game_mode_label.text = "RED SKY MODE"
+            game_mode_label.text = tr("RED SKY MODE")
             game_mode_label.add_theme_color_override("font_color", Color(0.98, 0.62, 0.42, 1.0))
         elif Util.is_turkey_game_active():
-            game_mode_label.text = "TURKEY MODE"
+            game_mode_label.text = tr("TURKEY MODE")
             game_mode_label.add_theme_color_override("font_color", Color(0.96, 0.84, 0.45, 1.0))
         elif Util.is_reel_into_darkness_game_active():
-            game_mode_label.text = "REEL INTO DARKNESS"
+            game_mode_label.text = tr("REEL INTO DARKNESS")
             game_mode_label.add_theme_color_override("font_color", Color(0.56, 0.84, 0.94, 1.0))
         else:
             game_mode_label.text = ""
@@ -953,13 +973,13 @@ func _setup_leaderboard_panel() -> void:
         vbox.add_child(editor_button_row)
 
         leaderboard_submit_30m_button = Button.new()
-        leaderboard_submit_30m_button.text = "L7 Submit 30m"
+        leaderboard_submit_30m_button.text = tr("L7 Submit 30m")
         leaderboard_submit_30m_button.mouse_filter = Control.MOUSE_FILTER_STOP
         leaderboard_submit_30m_button.pressed.connect(_on_submit_editor_level7_30m_pressed)
         editor_button_row.add_child(leaderboard_submit_30m_button)
 
         leaderboard_submit_1h_button = Button.new()
-        leaderboard_submit_1h_button.text = "L7 Submit 1h"
+        leaderboard_submit_1h_button.text = tr("L7 Submit 1h")
         leaderboard_submit_1h_button.mouse_filter = Control.MOUSE_FILTER_STOP
         leaderboard_submit_1h_button.pressed.connect(_on_submit_editor_level7_1h_pressed)
         editor_button_row.add_child(leaderboard_submit_1h_button)
@@ -969,13 +989,13 @@ func _setup_leaderboard_panel() -> void:
         vbox.add_child(editor_button_row_2)
 
         leaderboard_submit_2h_level20_button = Button.new()
-        leaderboard_submit_2h_level20_button.text = "L20 Submit 2h"
+        leaderboard_submit_2h_level20_button.text = tr("L20 Submit 2h")
         leaderboard_submit_2h_level20_button.mouse_filter = Control.MOUSE_FILTER_STOP
         leaderboard_submit_2h_level20_button.pressed.connect(_on_submit_editor_level20_2h_pressed)
         editor_button_row_2.add_child(leaderboard_submit_2h_level20_button)
 
         leaderboard_submit_3h_level20_button = Button.new()
-        leaderboard_submit_3h_level20_button.text = "L20 Submit 3h"
+        leaderboard_submit_3h_level20_button.text = tr("L20 Submit 3h")
         leaderboard_submit_3h_level20_button.mouse_filter = Control.MOUSE_FILTER_STOP
         leaderboard_submit_3h_level20_button.pressed.connect(_on_submit_editor_level20_3h_pressed)
         editor_button_row_2.add_child(leaderboard_submit_3h_level20_button)
@@ -1353,6 +1373,129 @@ func _on_battle_level_choice_cancel_pressed() -> void:
         battle_level_choice_dialog.hide()
     _refresh_virtual_cursor_state()
 
+func _is_reel_depth_tier_dialog_open() -> bool:
+    return reel_depth_tier_dialog != null and is_instance_valid(reel_depth_tier_dialog) and reel_depth_tier_dialog.visible
+
+func _setup_reel_depth_tier_dialog() -> void:
+    var parent_layer: CanvasLayer = %CanvasLayer2
+    if parent_layer == null:
+        return
+    reel_depth_tier_dialog = parent_layer.get_node_or_null("ReelDepthTierDialog")
+    if reel_depth_tier_dialog == null:
+        reel_depth_tier_dialog = ConfirmationDialog.new()
+        reel_depth_tier_dialog.name = "ReelDepthTierDialog"
+        reel_depth_tier_dialog.title = tr("Choose depth tier")
+        reel_depth_tier_dialog.get_ok_button().hide()
+        reel_depth_tier_dialog.get_cancel_button().hide()
+        parent_layer.add_child(reel_depth_tier_dialog)
+    _bind_demo_label_visibility_to_popup(reel_depth_tier_dialog)
+    reel_depth_tier_dialog.add_theme_font_size_override("font_size", BATTLE_LEVEL_CHOICE_DIALOG_FONT_SIZE)
+    reel_depth_tier_dialog.add_theme_font_size_override("title_font_size", BATTLE_LEVEL_CHOICE_DIALOG_TITLE_SIZE)
+    reel_depth_tier_dialog.min_size = REEL_DEPTH_TIER_DIALOG_SIZE
+
+func _show_reel_depth_tier_dialog() -> void:
+    if reel_depth_tier_dialog == null:
+        Global.reel_run_max_depth_cap = -1.0
+        _launch_reel_fishing_scene()
+        return
+    _popup_prev_b_pressed = false
+    reel_depth_tier_dialog.title = tr("Choose depth tier")
+    reel_depth_tier_dialog.dialog_text = ""
+    _rebuild_reel_depth_tier_dialog_content()
+    reel_depth_tier_dialog.popup_centered(REEL_DEPTH_TIER_DIALOG_SIZE)
+    _refresh_virtual_cursor_state()
+    _position_virtual_cursor_for_reel_depth_tier()
+
+func _rebuild_reel_depth_tier_dialog_content() -> void:
+    if reel_depth_tier_dialog == null:
+        return
+    var existing: Control = reel_depth_tier_dialog.get_node_or_null("ReelDepthTierContent")
+    if existing != null:
+        existing.queue_free()
+    var margin := MarginContainer.new()
+    margin.name = "ReelDepthTierContent"
+    margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+    margin.offset_left = 20.0
+    margin.offset_top = 16.0
+    margin.offset_right = -20.0
+    margin.offset_bottom = -16.0
+    reel_depth_tier_dialog.add_child(margin)
+    var vbox := VBoxContainer.new()
+    vbox.name = "ReelDepthTierVBox"
+    vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    vbox.add_theme_constant_override("separation", 12)
+    margin.add_child(vbox)
+    var hint := Label.new()
+    hint.text = tr("Easier tiers cap max depth; rewards still use your full upgrades.")
+    hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    hint.add_theme_font_size_override("font_size", 22)
+    vbox.add_child(hint)
+    var idx := 0
+    for tier_variant in reel_depth_tier_cache:
+        var tier: Dictionary = tier_variant
+        var cap: float = float(tier.get("max_depth_cap", 24.0))
+        var btn := Button.new()
+        btn.name = "ReelDepthTierButton%d" % idx
+        btn.text = str(tier.get("title", "Tier"))
+        btn.tooltip_text = str(tier.get("detail", ""))
+        btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        btn.custom_minimum_size = Vector2(0.0, REEL_DEPTH_TIER_BUTTON_MIN_H)
+        btn.add_theme_font_size_override("font_size", REEL_DEPTH_TIER_BUTTON_FONT)
+        btn.pressed.connect(_on_reel_depth_tier_picked.bind(cap))
+        vbox.add_child(btn)
+        idx += 1
+    var cancel_button := Button.new()
+    cancel_button.name = "ReelDepthTierCancelButton"
+    cancel_button.text = tr("UI_CANCEL")
+    cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    cancel_button.custom_minimum_size = Vector2(0.0, REEL_DEPTH_TIER_BUTTON_MIN_H)
+    cancel_button.add_theme_font_size_override("font_size", REEL_DEPTH_TIER_BUTTON_FONT)
+    cancel_button.pressed.connect(_on_reel_depth_tier_cancel_pressed)
+    vbox.add_child(_wrap_control_with_glyph(cancel_button, "joypad/b", false))
+
+func _position_virtual_cursor_for_reel_depth_tier() -> void:
+    if ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER:
+        return
+    VirtualCursor.activate_for_controller()
+    await get_tree().process_frame
+    await get_tree().process_frame
+    if reel_depth_tier_dialog == null or not reel_depth_tier_dialog.visible:
+        return
+    var first: Control = reel_depth_tier_dialog.get_node_or_null("ReelDepthTierContent/ReelDepthTierVBox/ReelDepthTierButton0") as Control
+    if first != null:
+        first.grab_focus()
+        VirtualCursor.move_to_control(first)
+
+func _poll_reel_depth_tier_controller(_delta: float) -> void:
+    if not _is_reel_depth_tier_dialog_open():
+        return
+    if ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER:
+        return
+    var device := _get_popup_controller_device()
+    if device == -1:
+        return
+    var b_pressed := Input.is_joy_button_pressed(device, JOY_BUTTON_B)
+    if b_pressed and not _popup_prev_b_pressed:
+        _on_reel_depth_tier_cancel_pressed()
+    _popup_prev_b_pressed = b_pressed
+
+func _on_reel_depth_tier_picked(cap: float) -> void:
+    if reel_depth_tier_dialog != null:
+        reel_depth_tier_dialog.hide()
+    Global.reel_run_max_depth_cap = cap
+    _launch_reel_fishing_scene()
+
+func _on_reel_depth_tier_cancel_pressed() -> void:
+    if reel_depth_tier_dialog != null:
+        reel_depth_tier_dialog.hide()
+    _refresh_virtual_cursor_state()
+
+func _launch_reel_fishing_scene() -> void:
+    _refresh_virtual_cursor_state()
+    _cache_tech_tree_for_reuse()
+    SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+
 func _launch_battle_at_level(level: int) -> void:
     if Util.is_mining_game_active():
         MINING_PROGRESS_SCRIPT.set_selected_depth_level(level)
@@ -1371,9 +1514,7 @@ func _launch_battle_at_level(level: int) -> void:
         SceneChanger.change_to_new_scene(Util.get_main_scene_path())
         return
     if Util.is_reel_into_darkness_game_active():
-        _refresh_virtual_cursor_state()
-        _cache_tech_tree_for_reuse()
-        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        _launch_reel_fishing_scene()
         return
     var max_level: int = clamp(int(SaveHandler.fishing_max_unlocked_battle_level), 1, SaveHandler.MAX_FISHING_BATTLE_LEVEL)
     SaveHandler.fishing_next_battle_level = clamp(level, 1, max_level)
@@ -1386,6 +1527,7 @@ func _refresh_virtual_cursor_state() -> void:
     var should_enable := is_active and (
         ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER
         or _is_battle_level_choice_open()
+        or _is_reel_depth_tier_dialog_open()
     )
     VirtualCursor.set_scene_enabled(should_enable)
 
@@ -1639,7 +1781,7 @@ func _refresh_editor_crt_button_text() -> void:
     if editor_crt_toggle_button == null:
         return
     editor_crt_toggle_button.visible = Util.is_vanguard_game_active()
-    editor_crt_toggle_button.text = "CRT Preview: %s" % ("On" if editor_crt_preview_enabled else "Off")
+    editor_crt_toggle_button.text = tr("CRT Preview: %s") % [tr("On") if editor_crt_preview_enabled else tr("Off")]
 
 func _on_editor_crt_toggle_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -1670,19 +1812,19 @@ func _setup_editor_center_offset_controls() -> void:
     editor_center_offset_controls.visible = false
 
     editor_center_offset_label = Label.new()
-    editor_center_offset_label.text = "Center Offset"
+    editor_center_offset_label.text = tr("Center Offset")
     editor_center_offset_controls.add_child(editor_center_offset_label)
 
     var x_row := HBoxContainer.new()
     editor_center_offset_controls.add_child(x_row)
 
     editor_center_offset_x_minus_button = Button.new()
-    editor_center_offset_x_minus_button.text = "X -20"
+    editor_center_offset_x_minus_button.text = tr("X -20")
     editor_center_offset_x_minus_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(-20.0, 0.0)))
     x_row.add_child(editor_center_offset_x_minus_button)
 
     editor_center_offset_x_plus_button = Button.new()
-    editor_center_offset_x_plus_button.text = "X +20"
+    editor_center_offset_x_plus_button.text = tr("X +20")
     editor_center_offset_x_plus_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(20.0, 0.0)))
     x_row.add_child(editor_center_offset_x_plus_button)
 
@@ -1690,12 +1832,12 @@ func _setup_editor_center_offset_controls() -> void:
     editor_center_offset_controls.add_child(x_small_row)
 
     editor_center_offset_x_minus_small_button = Button.new()
-    editor_center_offset_x_minus_small_button.text = "X -5"
+    editor_center_offset_x_minus_small_button.text = tr("X -5")
     editor_center_offset_x_minus_small_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(-5.0, 0.0)))
     x_small_row.add_child(editor_center_offset_x_minus_small_button)
 
     editor_center_offset_x_plus_small_button = Button.new()
-    editor_center_offset_x_plus_small_button.text = "X +5"
+    editor_center_offset_x_plus_small_button.text = tr("X +5")
     editor_center_offset_x_plus_small_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(5.0, 0.0)))
     x_small_row.add_child(editor_center_offset_x_plus_small_button)
 
@@ -1703,12 +1845,12 @@ func _setup_editor_center_offset_controls() -> void:
     editor_center_offset_controls.add_child(y_row)
 
     editor_center_offset_y_minus_button = Button.new()
-    editor_center_offset_y_minus_button.text = "Y -20"
+    editor_center_offset_y_minus_button.text = tr("Y -20")
     editor_center_offset_y_minus_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(0.0, -20.0)))
     y_row.add_child(editor_center_offset_y_minus_button)
 
     editor_center_offset_y_plus_button = Button.new()
-    editor_center_offset_y_plus_button.text = "Y +20"
+    editor_center_offset_y_plus_button.text = tr("Y +20")
     editor_center_offset_y_plus_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(0.0, 20.0)))
     y_row.add_child(editor_center_offset_y_plus_button)
 
@@ -1716,17 +1858,17 @@ func _setup_editor_center_offset_controls() -> void:
     editor_center_offset_controls.add_child(y_small_row)
 
     editor_center_offset_y_minus_small_button = Button.new()
-    editor_center_offset_y_minus_small_button.text = "Y -5"
+    editor_center_offset_y_minus_small_button.text = tr("Y -5")
     editor_center_offset_y_minus_small_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(0.0, -5.0)))
     y_small_row.add_child(editor_center_offset_y_minus_small_button)
 
     editor_center_offset_y_plus_small_button = Button.new()
-    editor_center_offset_y_plus_small_button.text = "Y +5"
+    editor_center_offset_y_plus_small_button.text = tr("Y +5")
     editor_center_offset_y_plus_small_button.pressed.connect(_on_editor_center_offset_pressed.bind(Vector2(0.0, 5.0)))
     y_small_row.add_child(editor_center_offset_y_plus_small_button)
 
     editor_center_offset_rebuild_button = Button.new()
-    editor_center_offset_rebuild_button.text = "Rebuild With Offset"
+    editor_center_offset_rebuild_button.text = tr("Rebuild With Offset")
     editor_center_offset_rebuild_button.pressed.connect(_on_editor_center_offset_rebuild_pressed)
     editor_center_offset_controls.add_child(editor_center_offset_rebuild_button)
 
@@ -1736,7 +1878,7 @@ func _setup_editor_center_offset_controls() -> void:
 func _refresh_editor_center_offset_label() -> void:
     if editor_center_offset_label == null:
         return
-    editor_center_offset_label.text = "Center Offset  X: %d  Y: %d" % [int(editor_center_offset.x), int(editor_center_offset.y)]
+    editor_center_offset_label.text = tr("Center Offset  X: %d  Y: %d") % [int(editor_center_offset.x), int(editor_center_offset.y)]
 
 func _on_editor_center_offset_pressed(offset_delta: Vector2) -> void:
     if not OS.has_feature("editor"):
@@ -2087,6 +2229,15 @@ func _setup_settings_controls() -> void:
         settings_content.scale = Vector2(1.7, 1.7)
         vbox.add_child(settings_content)
 
+    settings_main_menu_button = Button.new()
+    settings_main_menu_button.name = "SettingsMainMenuButton"
+    settings_main_menu_button.focus_mode = Control.FOCUS_NONE
+    settings_main_menu_button.custom_minimum_size = Vector2(0, 120)
+    settings_main_menu_button.add_theme_font_size_override("font_size", 30)
+    settings_main_menu_button.pressed.connect(_on_settings_main_menu_pressed)
+    _style_utility_button(settings_main_menu_button)
+    vbox.add_child(settings_main_menu_button)
+
     settings_close_button = Button.new()
     settings_close_button.name = "SettingsCloseButton"
     settings_close_button.text = tr("UI_BACK")
@@ -2203,6 +2354,8 @@ func _update_return_to_main_menu_button_visibility() -> void:
 func _on_return_to_main_menu_pressed() -> void:
     _hide_settings_panel()
     _hide_continue_locked_panel()
+    if _is_reel_depth_tier_dialog_open():
+        _on_reel_depth_tier_cancel_pressed()
     if _is_battle_level_choice_open():
         _on_battle_level_choice_cancel_pressed()
     _refresh_virtual_cursor_state()
@@ -2221,6 +2374,17 @@ func _on_settings_button_pressed() -> void:
 
 func _on_settings_close_pressed() -> void:
     _hide_settings_panel()
+
+func _on_settings_main_menu_pressed() -> void:
+    _hide_settings_panel()
+    _hide_continue_locked_panel()
+    if _is_reel_depth_tier_dialog_open():
+        _on_reel_depth_tier_cancel_pressed()
+    if _is_battle_level_choice_open():
+        _on_battle_level_choice_cancel_pressed()
+    _refresh_virtual_cursor_state()
+    Global.clear_upgrade_tree_cache()
+    SceneChanger.change_to_new_scene(Util.get_game_hub_scene_path(), null, 0.2)
 
 func _hide_settings_panel() -> void:
     if settings_panel != null and is_instance_valid(settings_panel):
@@ -2244,19 +2408,19 @@ func _update_go_again_button_state() -> void:
         return
     if Util.is_red_sky_game_active():
         go_again_button.disabled = false
-        go_again_button.text = "START DEFENSE"
+        go_again_button.text = tr("START DEFENSE")
         go_again_button.tooltip_text = ""
         go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return
     if Util.is_turkey_game_active():
         go_again_button.disabled = false
-        go_again_button.text = "CONTINUE TO LANE"
+        go_again_button.text = tr("CONTINUE TO LANE")
         go_again_button.tooltip_text = ""
         go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return
     if Util.is_reel_into_darkness_game_active():
         go_again_button.disabled = false
-        go_again_button.text = "START FISHING"
+        go_again_button.text = tr("START FISHING")
         go_again_button.tooltip_text = ""
         go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return

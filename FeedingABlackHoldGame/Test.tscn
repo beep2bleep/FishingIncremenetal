@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://dwpo80tbqmd4j"]
+[gd_scene format=3 uid="uid://dwpo80tbqmd4j"]
 
 [ext_resource type="Script" uid="uid://7li16rhcyxap" path="res://Test.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://3ey4ti2j780a" path="res://Space/Asteroid.tscn" id="2"]
