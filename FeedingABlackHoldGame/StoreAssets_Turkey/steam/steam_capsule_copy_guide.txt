@@ -1,0 +1,25 @@
+Steam capsule copy direction — Turkey
+
+Game name lockup:
+Turkey
+
+Primary capsule phrases (short; optional):
+- Arcade Bowling Lane
+- Aim. Power. Spin.
+- Score Chasing Sessions
+
+Visual priorities by asset:
+- Main capsule (1232x706): ball mid-lane + scattered pins + title
+- Header capsule (920x430): title + one clean lane read
+- Small capsule (462x174): title legibility + high contrast
+- Vertical capsule (748x896): dramatic pin scatter or release moment
+- Library hero (3840x1240): lane/pin environment only, no text
+- Library logo: transparent title; export PNG for Steam
+
+Do:
+- Show authentic in-engine lane tone
+- Keep text minimal on small capsules
+
+Do not:
+- Misrepresent as full simulation league bowling if the mode is arcade-first
+- Add text to library hero

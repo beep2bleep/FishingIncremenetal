@@ -7,6 +7,9 @@ const STATE_PATH_TEMPLATE := "user://gameanalytics_state_%s.cfg"
 const MINING_GAME_KEY := "b8a2581219b15c0021b5b3a16949645f"
 const MINING_SECRET_KEY := "fd45f4799dbac827b520bd9963deaa6cc8bad0b0"
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
+const RED_SKY_GAME_KEY := "12617c1402467d51b3ce07143b20ea50"
+const RED_SKY_SECRET_KEY := "6249954fe53e2f5438c7354d9093045fdf47be4c"
+const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
 const PROGRESSION_STATUS_MAP := {
     "start": "Start",
     "complete": "Complete",
@@ -233,14 +236,20 @@ func _send_active_game_progression_start_event() -> void:
         )
         return
     if Util.is_red_sky_game_active():
+        var rs_data: Dictionary = RED_SKY_PROGRESS_SCRIPT.load_data()
+        var best_wave: int = max(0, int(rs_data.get("best_wave", 0)))
+        var profile_wave: int = maxi(1, best_wave)
         track_progression_event(
             "start",
             Util.ACTIVE_GAME_RED_SKY,
-            "wave",
-            "wave_1",
+            "profile",
+            "wave_%d" % profile_wave,
             null,
             {
-                "wave": 1,
+                "best_wave": best_wave,
+                "selected_start_wave": int(RED_SKY_PROGRESS_SCRIPT.get_selected_start_wave(rs_data)),
+                "runs": int(rs_data.get("runs", 0)),
+                "total_waves_cleared": int(rs_data.get("total_waves_cleared", 0)),
             }
         )
         return
@@ -429,8 +438,8 @@ func _get_active_credentials() -> Dictionary:
     if Util.is_red_sky_game_active():
         return {
             "game_id": Util.ACTIVE_GAME_RED_SKY,
-            "game_key": _default_vanguard_game_key,
-            "secret_key": _default_vanguard_secret_key,
+            "game_key": RED_SKY_GAME_KEY,
+            "secret_key": RED_SKY_SECRET_KEY,
         }
     if Util.is_turkey_game_active():
         return {

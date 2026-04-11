@@ -1,0 +1,27 @@
+Steam capsule copy direction — Red Sky Defense
+
+Game name lockup:
+Red Sky Defense
+
+Primary capsule phrases (short; optional if the art carries the read):
+- Wave Defense Incremental
+- Hold the Base. Spend the Scrap.
+- Survive the Next Wave
+
+Visual priorities by asset:
+- Main capsule (1232x706): base under red-sky pressure + clear title
+- Header capsule (920x430): title first; one strong combat read
+- Small capsule (462x174): maximum contrast; title legibility only
+- Vertical capsule (748x896): iconic enemy or impact moment + title stack
+- Library hero (3840x1240): dramatic sky/battle environment, no text
+- Library logo: transparent title treatment only; export PNG for Steam
+
+Do:
+- Show real in-game tone: projectiles, base, wave pressure
+- Keep text minimal at small sizes
+- One consistent palette across capsules
+
+Do not:
+- Stack dense feature lists on capsules
+- Promise systems not in the build
+- Put text on the library hero asset

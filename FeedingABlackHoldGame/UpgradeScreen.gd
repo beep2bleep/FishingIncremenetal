@@ -85,11 +85,13 @@ var settings_panel: PanelContainer
 var settings_content: Settings
 var settings_title_label: Label
 var settings_main_menu_button: Button
+var settings_quit_button: Button
 var settings_close_button: Button
 var reset_progress_button: Button
 var go_again_button: Button
 var demo_mode_label: Label
 var game_mode_label: Label
+var mining_time_label: Label
 var wishlist_button: Button
 var web_wishlist_button: Button
 var leaderboard_panel: PanelContainer
@@ -127,6 +129,8 @@ func _refresh_localized_text() -> void:
         settings_title_label.text = tr("UI_SETTINGS_TITLE")
     if settings_main_menu_button != null and is_instance_valid(settings_main_menu_button):
         settings_main_menu_button.text = tr("MAIN MENU")
+    if settings_quit_button != null and is_instance_valid(settings_quit_button):
+        settings_quit_button.text = tr("QUIT")
     if settings_close_button != null and is_instance_valid(settings_close_button):
         settings_close_button.text = tr("UI_BACK")
     if reset_progress_button != null and is_instance_valid(reset_progress_button):
@@ -148,8 +152,10 @@ func _refresh_localized_text() -> void:
         if legacy_ok_button != null:
             legacy_ok_button.text = tr("UI_CONTINUE")
     if leaderboard_title_label != null and is_instance_valid(leaderboard_title_label):
-        leaderboard_title_label.text = tr("MINING_LEADERBOARDS_TITLE")
+        leaderboard_title_label.text = _get_leaderboard_panel_title()
+    _refresh_leaderboard_panel()
     _refresh_demo_mode_label_visibility()
+    _refresh_mining_time_label()
     _refresh_editor_demo_toggle_button_text()
     _update_go_again_button_state()
     if battle_level_choice_dialog != null and is_instance_valid(battle_level_choice_dialog) and battle_level_choice_dialog.visible:
@@ -184,6 +190,14 @@ func _should_show_editor_only_touch_toggle() -> bool:
 
 func _should_show_leaderboards() -> bool:
     return not OS.has_feature("web")
+
+func _should_show_deepcore_demo_leaderboard() -> bool:
+    return Util.is_mining_game_active() and bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
+
+func _get_leaderboard_panel_title() -> String:
+    if _should_show_deepcore_demo_leaderboard():
+        return tr("DEEPCORE_DEMO_LEADERBOARD_TITLE")
+    return tr("MINING_LEADERBOARDS_TITLE")
 
 var dragging = false
 var scroll_speed = 500
@@ -247,6 +261,7 @@ func _ready() -> void :
     go_again_button = get_node_or_null("%Go Again")
     demo_mode_label = get_node_or_null("%Demo Mode Label")
     game_mode_label = get_node_or_null("%Game Mode Label")
+    _setup_mining_time_label()
     wishlist_button = get_node_or_null("%Wishlist")
     popup_layer = get_node_or_null("%Popup Layer")
     _bind_popup_layer_visibility_updates()
@@ -460,6 +475,7 @@ func update_colors():
 
 func _process(delta: float) -> void :
     _poll_battle_level_choice_controller(delta)
+    _refresh_mining_time_label()
     if is_active == true and state == STATES.SHOWING_TREE:
 
         match ControllerIcons.get_last_input_type():
@@ -878,6 +894,37 @@ func _refresh_demo_mode_label_visibility() -> void:
             game_mode_label.add_theme_color_override("font_color", Color(0.56, 0.84, 0.94, 1.0))
         else:
             game_mode_label.text = ""
+    _refresh_mining_time_label()
+
+func _setup_mining_time_label() -> void:
+    if mining_time_label != null and is_instance_valid(mining_time_label):
+        return
+    var parent_layer: CanvasLayer = %CanvasLayer2
+    if parent_layer == null:
+        return
+    mining_time_label = Label.new()
+    mining_time_label.name = "MiningTimeLabel"
+    mining_time_label.anchor_left = 0.5
+    mining_time_label.anchor_right = 0.5
+    mining_time_label.offset_left = -250.0
+    mining_time_label.offset_top = 114.0
+    mining_time_label.offset_right = 250.0
+    mining_time_label.offset_bottom = 155.0
+    mining_time_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+    mining_time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    mining_time_label.add_theme_color_override("font_color", Color(0.76, 0.93, 0.86, 1.0))
+    mining_time_label.add_theme_font_size_override("font_size", 28)
+    mining_time_label.visible = false
+    parent_layer.add_child(mining_time_label)
+
+func _refresh_mining_time_label() -> void:
+    if mining_time_label == null or not is_instance_valid(mining_time_label):
+        return
+    var show_label: bool = Util.is_mining_game_active() and not _is_any_popup_visible()
+    mining_time_label.visible = show_label
+    if not show_label:
+        return
+    mining_time_label.text = _trf("BATTLE_CLOCK_LABEL", [Util.format_time(SaveHandler.fishing_run_clock_seconds)])
 
 func _get_demo_wishlist_url() -> String:
     if Util.is_mining_game_active():
@@ -957,7 +1004,7 @@ func _setup_leaderboard_panel() -> void:
     margin.add_child(vbox)
 
     leaderboard_title_label = Label.new()
-    leaderboard_title_label.text = tr("MINING_LEADERBOARDS_TITLE")
+    leaderboard_title_label.text = _get_leaderboard_panel_title()
     leaderboard_title_label.add_theme_font_size_override("font_size", 24)
     leaderboard_title_label.add_theme_color_override("font_color", Color(0.9, 0.96, 1.0, 1.0))
     vbox.add_child(leaderboard_title_label)
@@ -969,7 +1016,7 @@ func _setup_leaderboard_panel() -> void:
     leaderboard_body_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
     vbox.add_child(leaderboard_body_label)
 
-    if OS.has_feature("editor"):
+    if OS.has_feature("editor") and Util.is_vanguard_game_active():
         var editor_button_row := HBoxContainer.new()
         editor_button_row.add_theme_constant_override("separation", 8)
         vbox.add_child(editor_button_row)
@@ -1015,32 +1062,40 @@ func _refresh_leaderboard_panel() -> void:
     if not _should_show_leaderboards():
         leaderboard_panel.visible = false
         return
-    var show_panel: bool = Util.is_vanguard_game_active()
+    var configs: Array = SteamHandler.get_active_fishing_leaderboard_configs() if SteamHandler != null and SteamHandler.has_method("get_active_fishing_leaderboard_configs") else []
+    var show_panel: bool = not configs.is_empty()
     leaderboard_panel.visible = show_panel
     if not show_panel:
         return
+    if leaderboard_title_label != null and is_instance_valid(leaderboard_title_label):
+        leaderboard_title_label.text = _get_leaderboard_panel_title()
     var lines: Array[String] = []
-    var configs: Array = SteamHandler.get_active_fishing_leaderboard_configs() if SteamHandler != null and SteamHandler.has_method("get_active_fishing_leaderboard_configs") else []
     for config_variant: Variant in configs:
         if not (config_variant is Dictionary):
             continue
         var config: Dictionary = config_variant
         var level: int = int(config.get("level", -1))
         var board_id: String = str(config.get("id", ""))
-        var title: String = str(config.get("title", "Level %d" % level))
+        var title_key: String = str(config.get("title_key", "")).strip_edges()
+        var description_key: String = str(config.get("description_key", "")).strip_edges()
+        var title: String = tr(title_key) if title_key != "" else str(config.get("title", "Level %d" % level))
         lines.append(title)
-        var local_best: float = SaveHandler.get_fishing_best_boss_clear_time(level)
+        if description_key != "":
+            lines.append(tr(description_key))
+        var local_best: float = SaveHandler.get_deepcore_tier8_time() if board_id == "DeepcoreTimeToTier8" else SaveHandler.get_fishing_best_boss_clear_time(level)
         lines.append("Your best: %s" % (_format_leaderboard_time(local_best) if local_best >= 0.0 else "--"))
         var status: String = SteamHandler.get_cached_leaderboard_status(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_status") else "Unavailable"
         var submitted_score_ms: int = SteamHandler.get_cached_leaderboard_last_submitted_score(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_last_submitted_score") else -1
         if submitted_score_ms >= 0:
             lines.append("Steam submitted: %s" % _format_leaderboard_time(float(submitted_score_ms) / 1000.0))
-        var entries: Array = SteamHandler.get_cached_leaderboard_display_entries(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_display_entries") else []
-        if entries.is_empty():
+        var top_entries: Array = SteamHandler.get_cached_leaderboard_display_entries(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_display_entries") else []
+        var around_entries: Array = SteamHandler.get_cached_leaderboard_around_user_display_entries(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_around_user_display_entries") else []
+        if top_entries.is_empty():
             lines.append("Steam status: %s" % status)
         else:
+            lines.append("Top 5")
             var display_rank: int = 1
-            for entry_variant: Variant in entries:
+            for entry_variant: Variant in top_entries:
                 if not (entry_variant is Dictionary):
                     continue
                 var entry: Dictionary = entry_variant
@@ -1049,6 +1104,17 @@ func _refresh_leaderboard_panel() -> void:
                 var persona: String = SteamHandler.get_leaderboard_entry_display_name(entry) if SteamHandler != null and SteamHandler.has_method("get_leaderboard_entry_display_name") else "Player"
                 lines.append("#%d %s  %s" % [rank, persona, _format_leaderboard_time(float(score_ms) / 1000.0)])
                 display_rank += 1
+        if not around_entries.is_empty():
+            lines.append("")
+            lines.append("Around You")
+            for entry_variant: Variant in around_entries:
+                if not (entry_variant is Dictionary):
+                    continue
+                var entry: Dictionary = entry_variant
+                var rank: int = SteamHandler.get_leaderboard_entry_rank(entry, 0) if SteamHandler != null and SteamHandler.has_method("get_leaderboard_entry_rank") else 0
+                var score_ms: int = int(entry.get("score", 0))
+                var persona: String = SteamHandler.get_leaderboard_entry_display_name(entry) if SteamHandler != null and SteamHandler.has_method("get_leaderboard_entry_display_name") else "Player"
+                lines.append("#%d %s  %s" % [rank, persona, _format_leaderboard_time(float(score_ms) / 1000.0)])
         lines.append("")
     if not lines.is_empty() and lines[lines.size() - 1] == "":
         lines.remove_at(lines.size() - 1)
@@ -2266,6 +2332,15 @@ func _setup_settings_controls() -> void:
     _style_utility_button(settings_main_menu_button)
     vbox.add_child(settings_main_menu_button)
 
+    settings_quit_button = Button.new()
+    settings_quit_button.name = "SettingsQuitButton"
+    settings_quit_button.focus_mode = Control.FOCUS_NONE
+    settings_quit_button.custom_minimum_size = Vector2(0, 120)
+    settings_quit_button.add_theme_font_size_override("font_size", 30)
+    settings_quit_button.pressed.connect(_on_settings_quit_pressed)
+    _style_utility_button(settings_quit_button)
+    vbox.add_child(settings_quit_button)
+
     settings_close_button = Button.new()
     settings_close_button.name = "SettingsCloseButton"
     settings_close_button.text = tr("UI_BACK")
@@ -2277,6 +2352,7 @@ func _setup_settings_controls() -> void:
     vbox.add_child(settings_close_button)
 
     _refresh_localized_text()
+    _update_return_to_main_menu_button_visibility()
 
 func _setup_fullscreen_button() -> void:
     if fullscreen_button != null and is_instance_valid(fullscreen_button):
@@ -2375,9 +2451,11 @@ func _setup_return_to_main_menu_button() -> void:
     _update_upgrade_top_button_positions()
 
 func _update_return_to_main_menu_button_visibility() -> void:
-    if return_to_main_menu_button == null or not is_instance_valid(return_to_main_menu_button):
-        return
-    return_to_main_menu_button.visible = Util.is_all_high_level_mode_active()
+    var show_hub_main_menu := Util.is_all_high_level_mode_active()
+    if return_to_main_menu_button != null and is_instance_valid(return_to_main_menu_button):
+        return_to_main_menu_button.visible = show_hub_main_menu
+    if settings_main_menu_button != null and is_instance_valid(settings_main_menu_button):
+        settings_main_menu_button.visible = show_hub_main_menu
 
 func _on_return_to_main_menu_pressed() -> void:
     _hide_settings_panel()
@@ -2413,6 +2491,13 @@ func _on_settings_main_menu_pressed() -> void:
     _refresh_virtual_cursor_state()
     Global.clear_upgrade_tree_cache()
     SceneChanger.change_to_new_scene(Util.get_game_hub_scene_path(), null, 0.2)
+
+func _on_settings_quit_pressed() -> void:
+    _hide_settings_panel()
+    if SteamHandler != null and SteamHandler.has_method("request_app_quit"):
+        SteamHandler.request_app_quit()
+        return
+    get_tree().quit()
 
 func _hide_settings_panel() -> void:
     if settings_panel != null and is_instance_valid(settings_panel):

@@ -1,0 +1,30 @@
+[h1]Turkey[/h1]
+
+Lane play. Pin chaos. Score chasing.
+
+Turkey is an arcade bowling-style mode built around shot skill. Line up your throw, control power and spin, and watch pins scatter with physics-driven reactions. Clear frames, chase high scores, and use meta progression to push further each session.
+
+[h2]What You Do[/h2]
+[list]
+[*]Set up shots with position, power, and spin
+[*]Release into a 3D lane and read pin motion
+[*]Score frames and chase strikes, spares, and streaks
+[*]Review summaries and invest in meta upgrades between runs
+[/list]
+
+[h2]Key Features[/h2]
+[list]
+[*]Readable arcade pacing with short rounds
+[*]Physics-driven pin reactions
+[*]Score-focused feedback loop
+[*]Meta progression hooks for repeat sessions
+[*]Single-player experience tuned for quick play
+[/list]
+
+[h2]Best For Players Who Enjoy[/h2]
+[list]
+[*]Bowling and lane sports games
+[*]Score attack and skill-based repetition
+[*]Physics-led spectacle without heavy simulation overhead
+[*]Indie arcade experiments with strong session rhythm
+[/list]

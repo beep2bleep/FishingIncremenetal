@@ -14,7 +14,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Vanguard - Idle Auto Battler"
+config/name="Deepcore"
 run/main_scene="res://Core/Boot/AppBootstrap.tscn"
 config/use_custom_user_dir=true
 config/custom_user_dir_name="A Game About Feeding A Black Hole"
@@ -77,8 +77,8 @@ info_log=true
 Build="v1.3.1"
 Demo=true
 DemoWishlistUrl="https://store.steampowered.com/app/4519820/Vanguard__Idle_Auto_Battler/"
-ActiveGame="vanguard"
-HighLevelMode="all"
+ActiveGame="mining"
+HighLevelMode="mining"
 StartScreen="menu"
 mining_demo_max_group=3
 red_sky_demo_max_meta_step=3

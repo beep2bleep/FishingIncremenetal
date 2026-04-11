@@ -1,0 +1,23 @@
+Tags and category strategy — Reel Into Darkness
+
+Primary tags
+- Fishing
+- Incremental
+- Horror (atmospheric — use if tone matches your marketing)
+- Singleplayer
+
+Secondary tags
+- Indie
+- Casual
+- Relaxing (only if you want to stress chill play—may conflict with horror tag)
+- Simulation (light)
+
+Positioning notes
+- Lead with **fishing incremental** so genre searchers find it.
+- Add **atmospheric / haunted** descriptors for tone without promising jump-scare horror unless implemented.
+- Mention **depth progression** and **upgrade tree** as mechanical hooks.
+
+itch.io metadata (starting point)
+- Category: Game
+- Genre: Simulation / Horror (pick the honest combination)
+- Platforms: shipped targets only

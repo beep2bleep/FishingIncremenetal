@@ -536,7 +536,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
             return {
                 "title": RED_SKY_BUTTON_TEXT,
                 "detail": "Defend the base and survive the next wave.",
-                "asset_rel_path": "RedSky/Gemini_Generated_Image_v8hbpqv8hbpqv8hb.png",
+                "asset_rel_path": "RedSky/titlecard with word no gemini star.png",
                 "accent": Color(0.98, 0.62, 0.42, 1.0),
                 "bg_top": Color(0.22, 0.05, 0.06, 1.0),
                 "bg_bottom": Color(0.1, 0.02, 0.03, 1.0)

@@ -16,7 +16,9 @@ const DEFAULT_DATA := {
 	"last_run_summary": "No Red Sky Defense run completed yet.",
 	"last_run_breakdown": {},
 	"selected_start_wave": MIN_START_WAVE,
-	"meta_upgrades": {}
+	"meta_upgrades": {},
+	"wave_frontier_attempts": {},
+	"analytics_sent_first_deploy": false,
 }
 
 static func get_default_data() -> Dictionary:
@@ -144,6 +146,9 @@ static func _sanitize_loaded_data(data: Dictionary) -> Dictionary:
 	safe_data["total_waves_cleared"] = max(0, int(safe_data.get("total_waves_cleared", 0)))
 	safe_data["runs"] = max(0, int(safe_data.get("runs", 0)))
 	safe_data["selected_start_wave"] = _clamp_selected_start_wave(int(safe_data.get("selected_start_wave", MIN_START_WAVE)), safe_data)
+	if not (safe_data.get("wave_frontier_attempts", {}) is Dictionary):
+		safe_data["wave_frontier_attempts"] = {}
+	safe_data["analytics_sent_first_deploy"] = bool(safe_data.get("analytics_sent_first_deploy", false))
 	if bool(ProjectSettings.get_setting("global/Demo", false)):
 		safe_data["meta_upgrades"] = _strip_demo_locked_meta_upgrades(safe_data.get("meta_upgrades", {}))
 	return safe_data
@@ -166,3 +171,136 @@ static func _clamp_selected_start_wave(start_wave: int, data: Dictionary) -> int
 		if unlocked_wave <= desired_start_wave:
 			best_match = unlocked_wave
 	return best_match
+
+
+static func maybe_track_first_deploy() -> void:
+	var data: Dictionary = load_data()
+	if bool(data.get("analytics_sent_first_deploy", false)):
+		return
+	data["analytics_sent_first_deploy"] = true
+	save_data(data)
+	var ga_manager: Node = _get_game_analytics_manager()
+	if ga_manager == null:
+		return
+	ga_manager.call(
+		"track_design_event",
+		"red_sky:first_deploy",
+		null,
+		{
+			"runs_completed": int(data.get("runs", 0)),
+			"best_wave": int(data.get("best_wave", 0)),
+		}
+	)
+
+
+static func track_run_start(run_start_wave: int, snapshot: Dictionary) -> void:
+	var unlocked: Array[int] = get_unlocked_start_waves(snapshot)
+	if unlocked.is_empty():
+		return
+	if run_start_wave != unlocked.back():
+		return
+	var ga_manager: Node = _get_game_analytics_manager()
+	if ga_manager == null:
+		return
+	var career_best: int = max(0, int(snapshot.get("best_wave", 0)))
+	var token: String = "from_%d" % run_start_wave
+	ga_manager.call(
+		"track_progression_event",
+		"start",
+		"redsky",
+		"wave_frontier",
+		token,
+		null,
+		{
+			"run_start_wave": run_start_wave,
+			"career_best_wave": career_best,
+			"runs": int(snapshot.get("runs", 0)),
+		}
+	)
+
+
+static func track_run_end(run_start_wave: int, snapshot_before: Dictionary, waves_cleared: int, score: int, reason: String) -> void:
+	var unlocked: Array[int] = get_unlocked_start_waves(snapshot_before)
+	if unlocked.is_empty() or run_start_wave != unlocked.back():
+		return
+	var prev_best: int = max(0, int(snapshot_before.get("best_wave", 0)))
+	var new_best: int = max(prev_best, waves_cleared)
+	var ga_manager: Node = _get_game_analytics_manager()
+	var token: String = "from_%d" % run_start_wave
+	var data: Dictionary = load_data()
+	var attempts: Dictionary = _get_wave_frontier_attempts(data)
+	var previous_attempt_failures: int = max(0, int(attempts.get(token, 0)))
+	var attempt_num: int = previous_attempt_failures + 1
+	var beat_record: bool = new_best > prev_best
+	if beat_record:
+		attempts.erase(token)
+	else:
+		attempts[token] = attempt_num
+	data["wave_frontier_attempts"] = attempts
+	save_data(data)
+	if ga_manager == null:
+		return
+	var fields: Dictionary = {
+		"run_start_wave": run_start_wave,
+		"waves_cleared": waves_cleared,
+		"career_best_before": prev_best,
+		"career_best_after": new_best,
+		"beat_record": beat_record,
+		"score": score,
+		"reason": reason,
+		"attempt_num": attempt_num,
+	}
+	ga_manager.call(
+		"track_progression_event",
+		"complete" if beat_record else "fail",
+		"redsky",
+		"wave_frontier",
+		token,
+		waves_cleared,
+		fields,
+		attempt_num
+	)
+
+
+static func track_wave_cleared_runtime(
+	waves_cleared: int,
+	run_start_wave: int,
+	career_best_at_run_start: int,
+	run_score: int
+) -> void:
+	var ga_manager: Node = _get_game_analytics_manager()
+	if ga_manager == null:
+		return
+	var fields: Dictionary = {
+		"waves_cleared": waves_cleared,
+		"run_start_wave": run_start_wave,
+		"career_best_at_run_start": career_best_at_run_start,
+		"run_score": run_score,
+	}
+	ga_manager.call("track_design_event", "red_sky:wave_cleared", float(waves_cleared), fields)
+	if waves_cleared > 0 and waves_cleared % 5 == 0:
+		ga_manager.call(
+			"track_design_event",
+			"red_sky:milestone:wave",
+			float(waves_cleared),
+			fields
+		)
+
+
+static func _get_wave_frontier_attempts(data: Dictionary) -> Dictionary:
+	var raw: Variant = data.get("wave_frontier_attempts", {})
+	if raw is Dictionary:
+		return (raw as Dictionary).duplicate(true)
+	return {}
+
+
+static func _get_game_analytics_manager() -> Node:
+	var main_loop: MainLoop = Engine.get_main_loop()
+	if main_loop is SceneTree:
+		var root: Node = (main_loop as SceneTree).root
+		var ga_manager: Node = root.get_node_or_null("GameAnalytics")
+		if ga_manager == null:
+			ga_manager = root.get_node_or_null("GameAnalyticsManager")
+		return ga_manager
+	return null
+

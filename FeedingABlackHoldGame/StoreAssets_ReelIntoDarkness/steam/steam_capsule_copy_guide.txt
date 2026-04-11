@@ -1,0 +1,25 @@
+Steam capsule copy direction — Reel Into Darkness
+
+Game name lockup:
+Reel Into Darkness
+
+Primary capsule phrases (short; optional):
+- Haunted Fishing Incremental
+- Cast Deeper. Stranger Hauls.
+- Dark Water Progression
+
+Visual priorities by asset:
+- Main capsule (1232x706): moonlit/dark water + silhouette fish + title
+- Header capsule (920x430): title + single strong mood read
+- Small capsule (462x174): title legibility + contrast
+- Vertical capsule (748x896): vertical composition with lure/line/fog
+- Library hero (3840x1240): environment mood piece, no text
+- Library logo: transparent title; export PNG for Steam
+
+Do:
+- Lean into atmosphere: limited palette, fog, moon, water line
+- Keep text minimal on small capsules
+
+Do not:
+- Promise intense horror jumps if the build is atmospheric only
+- Add text to library hero

@@ -1,12 +1,16 @@
 extends Node
 
-const STEAM_APP_ID := 4519820
-const STEAM_DEMO_APP_ID := 4524190
+const STEAM_VANGUARD_APP_ID := 4519820
+const STEAM_VANGUARD_DEMO_APP_ID := 4524190
+const STEAM_DEEPCORE_APP_ID := 4562070
+const STEAM_DEEPCORE_DEMO_APP_ID := 4615740
 const STEAM_STORE_PATH := "Vanguard__Idle_Auto_Battler"
 const MINING_WISHLIST_URL := "https://beep2bleep.com"
 const LEADERBOARD_LEVEL7_SHARED := "level7_clear_time"
 const LEADERBOARD_LEVEL20_FULL := "full_level20_clear_time"
+const LEADERBOARD_DEEPCORE_TIME_TO_TIER8 := "DeepcoreTimeToTier8"
 const LEADERBOARD_FETCH_COUNT := 5
+const LEADERBOARD_AROUND_USER_RADIUS := 2
 
 
 enum ACHIVEMENTS{
@@ -44,7 +48,7 @@ enum ACHIVEMENTS{
 
 }
 
-var app_id = STEAM_APP_ID
+var app_id = STEAM_VANGUARD_APP_ID
 signal steamworks_error
 signal leaderboard_data_updated
 var steam_enabled: bool = false
@@ -57,16 +61,19 @@ var statistics: Dictionary = {
 var achievements: Dictionary = {}
 var leaderboard_handles: Dictionary = {}
 var leaderboard_entries: Dictionary = {}
+var leaderboard_entries_around_user: Dictionary = {}
 var leaderboard_statuses: Dictionary = {}
 var leaderboard_entry_counts: Dictionary = {}
 var leaderboard_name_to_id: Dictionary = {}
 var leaderboard_id_to_name: Dictionary = {}
 var leaderboard_pending_submissions: Dictionary = {}
 var leaderboard_last_submitted_scores: Dictionary = {}
+var leaderboard_last_uploaded_ranks: Dictionary = {}
 var _leaderboard_request_queue: Array[String] = []
-var _leaderboard_download_queue: Array[String] = []
+var _leaderboard_download_queue: Array[Dictionary] = []
 var _leaderboard_active_request_id := ""
 var _leaderboard_active_download_id := ""
+var _leaderboard_active_download_scope := ""
 var _leaderboard_active_request_started_msec: int = 0
 var _leaderboard_active_download_started_msec: int = 0
 var _leaderboard_last_polled_handle: int = 0
@@ -77,7 +84,7 @@ var _steam_shutdown_started := false
 func get_store_url() -> String:
     if Util.is_mining_game_active():
         return MINING_WISHLIST_URL
-    return "https://store.steampowered.com/app/%s/%s/" % [STEAM_APP_ID, STEAM_STORE_PATH]
+    return "https://store.steampowered.com/app/%s/%s/" % [_resolve_steam_app_id(), STEAM_STORE_PATH]
 
 func is_steam_deck():
     if not steam_enabled:
@@ -214,11 +221,26 @@ func _is_demo_build() -> bool:
     return bool(ProjectSettings.get_setting("global/Demo", false))
 
 func _resolve_steam_app_id() -> int:
-    if Util.is_vanguard_game_active() and _is_demo_build():
-        return STEAM_DEMO_APP_ID
-    return STEAM_APP_ID
+    if Util.is_mining_game_active():
+        if _is_demo_build():
+            return STEAM_DEEPCORE_DEMO_APP_ID
+        return STEAM_DEEPCORE_APP_ID
+    if _is_demo_build():
+        return STEAM_VANGUARD_DEMO_APP_ID
+    return STEAM_VANGUARD_APP_ID
 
 func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
+    if Util.is_mining_game_active():
+        if _is_demo_build():
+            return [
+                {
+                    "id": LEADERBOARD_DEEPCORE_TIME_TO_TIER8,
+                    "steam_name": LEADERBOARD_DEEPCORE_TIME_TO_TIER8,
+                    "title_key": "DEEPCORE_LEADERBOARD_TIME_TO_TIER8",
+                    "description_key": "DEEPCORE_LEADERBOARD_TIME_TO_TIER8_DESC",
+                }
+            ]
+        return []
     if _is_demo_build():
         return [
             {
@@ -246,6 +268,9 @@ func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
 func get_cached_leaderboard_entries(board_id: String) -> Array:
     return leaderboard_entries.get(board_id, [])
 
+func get_cached_leaderboard_around_user_entries(board_id: String) -> Array:
+    return leaderboard_entries_around_user.get(board_id, [])
+
 func get_cached_leaderboard_status(board_id: String) -> String:
     return str(leaderboard_statuses.get(board_id, "Unavailable"))
 
@@ -262,7 +287,8 @@ func request_leaderboard(board_id: String) -> void:
         leaderboard_data_updated.emit()
         return
     if leaderboard_handles.has(board_id):
-        _queue_leaderboard_download(board_id)
+        _queue_leaderboard_download(board_id, "top")
+        _queue_leaderboard_download(board_id, "around_user")
         return
     if _leaderboard_request_queue.has(board_id) or _leaderboard_active_request_id == board_id:
         return
@@ -316,27 +342,40 @@ func _on_leaderboard_find_result(new_handle: int, was_found: int) -> void:
         return
     leaderboard_handles[board_id] = new_handle
     leaderboard_statuses[board_id] = "Loaded"
-    _download_leaderboard_entries(board_id)
+    _download_leaderboard_entries(board_id, "top")
+    _queue_leaderboard_download(board_id, "around_user")
     _submit_pending_leaderboard_score(board_id)
     leaderboard_data_updated.emit()
 
-func _queue_leaderboard_download(board_id: String) -> void:
+func _queue_leaderboard_download(board_id: String, scope: String = "top") -> void:
     if board_id == "":
         return
-    if _leaderboard_active_download_id == board_id or _leaderboard_download_queue.has(board_id):
+    if _leaderboard_active_download_id == board_id and _leaderboard_active_download_scope == scope:
         return
+    for queued_request_variant: Variant in _leaderboard_download_queue:
+        if not (queued_request_variant is Dictionary):
+            continue
+        var queued_request: Dictionary = queued_request_variant
+        if str(queued_request.get("board_id", "")) == board_id and str(queued_request.get("scope", "top")) == scope:
+            return
     if _leaderboard_active_download_id != "":
-        _leaderboard_download_queue.append(board_id)
+        _leaderboard_download_queue.append({
+            "board_id": board_id,
+            "scope": scope,
+        })
         return
-    _download_leaderboard_entries(board_id)
+    _download_leaderboard_entries(board_id, scope)
 
 func _pump_leaderboard_download_queue() -> void:
     if _leaderboard_active_download_id != "" or _leaderboard_download_queue.is_empty():
         return
-    var next_board_id: String = str(_leaderboard_download_queue.pop_front())
-    _download_leaderboard_entries(next_board_id)
+    var next_request_variant: Variant = _leaderboard_download_queue.pop_front()
+    if not (next_request_variant is Dictionary):
+        return
+    var next_request: Dictionary = next_request_variant
+    _download_leaderboard_entries(str(next_request.get("board_id", "")), str(next_request.get("scope", "top")))
 
-func _download_leaderboard_entries(board_id: String) -> void:
+func _download_leaderboard_entries(board_id: String, scope: String = "top") -> void:
     if not steam_enabled:
         return
     if not leaderboard_handles.has(board_id):
@@ -350,29 +389,42 @@ func _download_leaderboard_entries(board_id: String) -> void:
         Steam.call("set_leaderboard_handle", int(leaderboard_handles[board_id]))
     if Steam.has_method("set_leaderboard_entries"):
         Steam.call("set_leaderboard_entries", [])
-    if Steam.has_method("getLeaderboardEntryCount"):
+    if scope == "top" and Steam.has_method("getLeaderboardEntryCount"):
         leaderboard_entry_counts[board_id] = int(Steam.call("getLeaderboardEntryCount", int(leaderboard_handles[board_id])))
     _leaderboard_active_download_id = board_id
+    _leaderboard_active_download_scope = scope
     _leaderboard_active_download_started_msec = Time.get_ticks_msec()
-    Steam.call("downloadLeaderboardEntries", 1, LEADERBOARD_FETCH_COUNT, 0, int(leaderboard_handles[board_id]))
+    var range_start: int = 1
+    var range_end: int = LEADERBOARD_FETCH_COUNT
+    var request_type: int = 0
+    if scope == "around_user":
+        range_start = -LEADERBOARD_AROUND_USER_RADIUS
+        range_end = LEADERBOARD_AROUND_USER_RADIUS
+        request_type = 1
+    Steam.call("downloadLeaderboardEntries", range_start, range_end, request_type, int(leaderboard_handles[board_id]))
     leaderboard_statuses[board_id] = "Refreshing..."
     leaderboard_data_updated.emit()
 
 func _on_leaderboard_scores_downloaded(this_handle: int, these_results: Array) -> void:
     print("LEADERBOARD DOWNLOAD CALLBACK handle=", this_handle, " results=", these_results)
     var board_id := _leaderboard_active_download_id
+    var scope := _leaderboard_active_download_scope
     if board_id == "":
         for key: Variant in leaderboard_handles.keys():
             if int(leaderboard_handles[key]) == this_handle:
                 board_id = str(key)
                 break
     _leaderboard_active_download_id = ""
+    _leaderboard_active_download_scope = ""
     _leaderboard_active_download_started_msec = 0
     if board_id == "":
         _pump_leaderboard_download_queue()
         return
-    leaderboard_entries[board_id] = these_results
-    leaderboard_entry_counts[board_id] = these_results.size()
+    if scope == "around_user":
+        leaderboard_entries_around_user[board_id] = these_results
+    else:
+        leaderboard_entries[board_id] = these_results
+        leaderboard_entry_counts[board_id] = max(int(leaderboard_entry_counts.get(board_id, 0)), these_results.size())
     leaderboard_statuses[board_id] = "Loaded"
     leaderboard_data_updated.emit()
     _pump_leaderboard_download_queue()
@@ -383,7 +435,9 @@ func _on_leaderboard_score_uploaded(_success: int, _handle: int, _score: int, _s
     for key: Variant in leaderboard_handles.keys():
         if int(leaderboard_handles[key]) == _handle:
             leaderboard_statuses[str(key)] = "Submitted"
-            _queue_leaderboard_download(str(key))
+            leaderboard_last_uploaded_ranks[str(key)] = int(_global_rank_new)
+            _queue_leaderboard_download(str(key), "top")
+            _queue_leaderboard_download(str(key), "around_user")
             break
     leaderboard_data_updated.emit()
 
@@ -398,6 +452,9 @@ func submit_level7_clear_time(clear_time_seconds: float) -> void:
 
 func submit_level20_clear_time(clear_time_seconds: float) -> void:
     _submit_fishing_boss_clear_time_to_board(LEADERBOARD_LEVEL20_FULL, clear_time_seconds)
+
+func submit_deepcore_tier8_time(clear_time_seconds: float) -> void:
+    _submit_fishing_boss_clear_time_to_board(LEADERBOARD_DEEPCORE_TIME_TO_TIER8, clear_time_seconds)
 
 func _submit_fishing_boss_clear_time_to_board(board_id: String, clear_time_seconds: float) -> void:
     if board_id == "" or clear_time_seconds < 0.0:
@@ -428,7 +485,8 @@ func _submit_pending_leaderboard_score(board_id: String) -> void:
     var score: int = int(leaderboard_pending_submissions[board_id])
     Steam.call("uploadLeaderboardScore", score, true, PackedInt32Array(), int(leaderboard_handles[board_id]))
     leaderboard_pending_submissions.erase(board_id)
-    _queue_leaderboard_download(board_id)
+    _queue_leaderboard_download(board_id, "top")
+    _queue_leaderboard_download(board_id, "around_user")
 
 func _get_leaderboard_id_for_level(level: int) -> String:
     for config: Dictionary in get_active_fishing_leaderboard_configs():
@@ -457,6 +515,25 @@ func get_cached_leaderboard_display_entries(board_id: String) -> Array:
             "score": submitted_score,
         }]
     return []
+
+func get_cached_leaderboard_around_user_display_entries(board_id: String) -> Array:
+    var entries: Array = get_cached_leaderboard_around_user_entries(board_id)
+    if not entries.is_empty():
+        return entries
+    var submitted_score: int = get_cached_leaderboard_last_submitted_score(board_id)
+    if submitted_score < 0:
+        return []
+    var fallback_rank: int = int(leaderboard_last_uploaded_ranks.get(board_id, 0))
+    var persona_name := "Player"
+    if steam_enabled and Steam.has_method("getPersonaName"):
+        var resolved_name: String = str(Steam.call("getPersonaName")).strip_edges()
+        if resolved_name != "":
+            persona_name = resolved_name
+    return [{
+        "rank": fallback_rank,
+        "name": persona_name,
+        "score": submitted_score,
+    }]
 
 func get_leaderboard_entry_rank(entry: Dictionary, fallback_rank: int = 0) -> int:
     for key in ["global_rank", "rank", "globalRank", "globalrank"]:
@@ -529,15 +606,19 @@ func _poll_leaderboard_fallbacks() -> void:
                 return
             var expected_handle: int = int(leaderboard_handles.get(_leaderboard_active_download_id, 0))
             var entry_count: int = -1
-            if expected_handle != 0 and Steam.has_method("getLeaderboardEntryCount"):
+            if _leaderboard_active_download_scope == "top" and expected_handle != 0 and Steam.has_method("getLeaderboardEntryCount"):
                 entry_count = int(Steam.call("getLeaderboardEntryCount", expected_handle))
-            if entry_count == 0 and _leaderboard_active_download_started_msec > 0 and Time.get_ticks_msec() - _leaderboard_active_download_started_msec > 1000:
+            if (entry_count == 0 or _leaderboard_active_download_scope == "around_user") and _leaderboard_active_download_started_msec > 0 and Time.get_ticks_msec() - _leaderboard_active_download_started_msec > 1000:
                 _on_leaderboard_scores_downloaded(expected_handle, entries)
                 return
         if _leaderboard_active_download_started_msec > 0 and Time.get_ticks_msec() - _leaderboard_active_download_started_msec > 5000:
-            leaderboard_entries[_leaderboard_active_download_id] = []
+            if _leaderboard_active_download_scope == "around_user":
+                leaderboard_entries_around_user[_leaderboard_active_download_id] = []
+            else:
+                leaderboard_entries[_leaderboard_active_download_id] = []
             leaderboard_statuses[_leaderboard_active_download_id] = "Download timed out"
             _leaderboard_active_download_id = ""
+            _leaderboard_active_download_scope = ""
             _leaderboard_active_download_started_msec = 0
             leaderboard_data_updated.emit()
             _pump_leaderboard_download_queue()

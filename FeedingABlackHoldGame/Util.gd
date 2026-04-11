@@ -68,6 +68,10 @@ func is_turkey_game_active() -> bool:
 func is_reel_into_darkness_game_active() -> bool:
     return get_active_game_id() == ACTIVE_GAME_REEL_INTO_DARKNESS
 
+## Mining / Red Sky / Reel set Input.mouse_mode during PLAYING (capture, hidden, etc.). Global must not override.
+func is_standalone_battle_mouse_managed() -> bool:
+    return is_mining_game_active() or is_red_sky_game_active() or is_reel_into_darkness_game_active()
+
 func set_active_game_id(game_id: String) -> void:
     ProjectSettings.set_setting(ACTIVE_GAME_PROJECT_SETTING, _normalize_game_id(game_id))
 

@@ -108,8 +108,11 @@ func clear_upgrade_tree_cache() -> void:
 func update_mouse():
 
     if ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER:
-        Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
-        return
+        if Util.is_standalone_battle_mouse_managed() and game_state == Util.GAME_STATES.PLAYING:
+            return
+        if not Util.is_standalone_battle_mouse_managed():
+            Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+            return
 
     if get_tree().paused == true:
         Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -120,6 +123,8 @@ func update_mouse():
             Util.GAME_STATES.START_OF_SESSION:
                 Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
             Util.GAME_STATES.PLAYING:
+                if Util.is_standalone_battle_mouse_managed():
+                    return
                 Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
             Util.GAME_STATES.END_OF_SESSION:
                 Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

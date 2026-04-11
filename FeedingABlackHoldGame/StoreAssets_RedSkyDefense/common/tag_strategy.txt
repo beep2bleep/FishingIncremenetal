@@ -1,0 +1,23 @@
+Tags and category strategy — Red Sky Defense
+
+Primary tags
+- Tower Defense (or Strategy)
+- Incremental
+- Singleplayer
+- Indie
+
+Secondary tags
+- Action
+- Bullet Hell (if accurate for your build positioning)
+- Resource Management
+- Replay Value
+
+Positioning notes
+- Lead with **wave defense + incremental** so it is not mistaken for a pure RTS or pure idle clicker.
+- Call out **between-wave offers** and **meta tree** as differentiators.
+- Mention **base under pressure** and **scrap economy** for search intent.
+
+itch.io metadata (suggested starting point)
+- Category: Game
+- Genre: Strategy / Action (pick the best fit for your page)
+- Platforms: only what you ship

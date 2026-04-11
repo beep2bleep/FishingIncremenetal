@@ -1,0 +1,23 @@
+Tags and category strategy — Turkey
+
+Primary tags
+- Sports
+- Arcade
+- Singleplayer
+- Indie
+
+Secondary tags
+- Physics
+- Casual
+- Score Attack
+- Bowling (if available as tag on the platform)
+
+Positioning notes
+- Lead with **arcade bowling-style** or **physics lane game** so expectations match the mode.
+- Mention **short sessions** and **score chasing** for store search intent.
+- Call out **spin/power skill** without overselling simulation fidelity.
+
+itch.io metadata (starting point)
+- Category: Game
+- Genre: Sports / Simulation (pick best fit)
+- Platforms: only shipped targets

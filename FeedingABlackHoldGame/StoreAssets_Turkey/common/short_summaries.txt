@@ -1,0 +1,9 @@
+Short summaries (paragraph or bullet source — trim per field limits)
+
+Turkey is an arcade bowling-style mode built for quick sessions and score chasing. Line up your shot, control power and spin, and watch pins react with physics-driven rolls. Between games, invest in meta progression that changes how you approach the lane and your scoring goals.
+
+Bullets:
+- Intuitive shot setup: position, power, and spin
+- Pin physics and readable scoring feedback
+- Run summaries and progression hooks for repeat play
+- Stylized presentation suited to fast arcade pacing

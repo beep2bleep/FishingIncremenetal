@@ -1242,13 +1242,13 @@ func _build_run_results(reason_key: String) -> Dictionary:
     summary_lines.append("")
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_DEPTH_TIER", [display_depth_level, String(active_material.get("name", tr("MINING_MATERIAL_STONE_NAME")))]))
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_NODES_BROKEN", [nodes_broken]))
-    summary_lines.append(_trf("%s earned: %d%s", [MINING_BALANCE.get_rank_xp_label(), run_xp, "  %s" % MINING_BALANCE.get_rank_up_label() if level_gain > 0 else ""]))
+    summary_lines.append(_trf("MINING_SUMMARY_TEXT_XP_EARNED", [run_xp, " %s" % tr("MINING_SUMMARY_LEVEL_UP") if level_gain > 0 else ""]))
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_MONEY_EARNED", ["$%d" % total_money]))
     summary_lines.append("")
     summary_lines.append(tr("MINING_SUMMARY_TEXT_CARGO_PAYOUT"))
     summary_lines.append(tr("MINING_SUMMARY_TEXT_NO_CARGO") if money_breakdown.is_empty() else "\n".join(money_breakdown))
     summary_lines.append("")
-    summary_lines.append(_format_rank_summary_text(projected_level, int(level_progress.get("current_xp", 0)), int(level_progress.get("next_rank_xp", level_progress.get("next_level_xp", 1)))))
+    summary_lines.append(_trf("MINING_SUMMARY_TEXT_LEVEL", [projected_level, int(level_progress.get("current_xp", 0)), int(level_progress.get("next_rank_xp", level_progress.get("next_level_xp", 1)))]))
     summary_lines.append(_trf("MINING_SUMMARY_TEXT_UNLOCKED_DEPTH", [display_depth_unlock]))
     if level_bonus_note != "":
         summary_lines.append(level_bonus_note)
@@ -1365,8 +1365,21 @@ func _finish_run(reason_key: String) -> void:
 
     var results: Dictionary = _build_run_results(reason_key)
     last_run_results = results.duplicate(true)
+    var previous_rank: int = MINING_PROGRESS_SCRIPT.get_rank(persistent_data)
+    var previous_display_tier: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(int(persistent_data.get("deepest_level_unlocked", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL)))
+    var run_seconds: float = max(0.0, float(results.get("simulated_seconds", 0.0)))
+    var projected_data: Dictionary = results.get("projected_data", persistent_data)
+    var projected_display_tier: int = MINING_PROGRESS_SCRIPT.get_display_depth_tier(int(projected_data.get("deepest_level_unlocked", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL)))
     if simulation_commit_progress:
+        SaveHandler.fishing_run_clock_seconds = max(0.0, SaveHandler.fishing_run_clock_seconds + run_seconds)
         persistent_data = MINING_PROGRESS_SCRIPT.apply_run_results(results)
+        if previous_display_tier < 8 and projected_display_tier >= 8:
+            var tier8_time_seconds: float = SaveHandler.fishing_run_clock_seconds
+            var registered_time: bool = SaveHandler.register_deepcore_tier8_time(tier8_time_seconds)
+            if registered_time and bool(ProjectSettings.get_setting("global/Demo", false)) and SteamHandler != null and SteamHandler.has_method("submit_deepcore_tier8_time"):
+                SteamHandler.submit_deepcore_tier8_time(tier8_time_seconds)
+        else:
+            SaveHandler.save_fishing_progress()
     else:
         persistent_data = results.get("projected_data", persistent_data).duplicate(true)
     run_state = RUN_STATES.SUMMARY
@@ -1772,9 +1785,9 @@ func _build_summary_stats_text(stats: Dictionary) -> String:
     var lines := PackedStringArray()
     lines.append(_trf("MINING_SUMMARY_STATS_LINE_1", [
         float(stats.get("time_spent", 0.0)),
-        float(stats.get("money_per_second", 0.0)),
-        float(stats.get("xp_per_second", 0.0)),
-        float(stats.get("ore_per_second", 0.0))
+        "%.2f" % float(stats.get("money_per_second", 0.0)),
+        "%.2f" % float(stats.get("xp_per_second", 0.0)),
+        "%.2f" % float(stats.get("ore_per_second", 0.0))
     ]))
     lines.append(_trf("MINING_SUMMARY_STATS_LINE_2", [
         int(stats.get("ore_spawned", 0)),
@@ -2340,10 +2353,9 @@ func _render_summary_text(summary_view_model: Dictionary, progress: float) -> vo
         String(summary_view_model.get("depth_material_name", tr("MINING_MATERIAL_STONE_NAME")))
     ]))
     lines.append(_trf("MINING_SUMMARY_TEXT_NODES_BROKEN", [int(summary_view_model.get("nodes_broken", 0))]))
-    lines.append(_trf("%s earned: %d%s", [
-        MINING_BALANCE.get_rank_xp_label(),
+    lines.append(_trf("MINING_SUMMARY_TEXT_XP_EARNED", [
         int(summary_view_model.get("xp_earned", 0)),
-        "  %s" % MINING_BALANCE.get_rank_up_label() if bool(summary_view_model.get("ranked_up", false)) else ""
+        " %s" % tr("MINING_SUMMARY_LEVEL_UP") if bool(summary_view_model.get("ranked_up", false)) else ""
     ]))
     lines.append(_trf("MINING_SUMMARY_TEXT_MONEY_EARNED", [_format_summary_money_span(
         _get_animated_money_value(total_money, progress),
@@ -2371,11 +2383,11 @@ func _render_summary_text(summary_view_model: Dictionary, progress: float) -> vo
                 )
             ]))
     lines.append("")
-    lines.append(_format_rank_summary_text(
+    lines.append(_trf("MINING_SUMMARY_TEXT_LEVEL", [
         int(summary_view_model.get("projected_rank", 1)),
         int(summary_view_model.get("rank_progress_current", 0)),
         int(summary_view_model.get("rank_progress_next", 1))
-    ))
+    ]))
     lines.append(_trf("MINING_SUMMARY_TEXT_UNLOCKED_DEPTH", [_get_display_depth_tier_for_run_depth(int(summary_view_model.get("projected_depth_unlock", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL)))]))
     var level_bonus_note: String = String(summary_view_model.get("level_bonus_note", "")).strip_edges()
     if level_bonus_note != "":

@@ -1,0 +1,10 @@
+Reel Into Darkness is a haunted fishing incremental.
+
+Cast into dark waters, fight fish on the line, and bring catches back to sell. Your wallet funds upgrades that improve how deep you can fish, how you handle harder species, and how efficient each run becomes. The loop is built for steady progression: new depths unlock new fish, and new fish fund the next branch on the tree.
+
+Features:
+- Fishing gameplay with depth-driven species variety
+- Sell-for-upgrade economy tied to catches
+- Upgrade tree expanding capability and reach
+- Atmospheric presentation aimed at eerie, low-key tone
+- Single-player incremental pacing with long-term goals

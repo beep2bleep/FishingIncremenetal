@@ -1,0 +1,9 @@
+Short summaries (paragraph or bullet source — trim per field limits)
+
+Red Sky Defense is a wave-defense incremental. Protect your base through escalating waves, earn scrap, and choose between-wave upgrades. Invest in a deep meta tree that improves hull, firepower, nukes, and unlocks like towers, drones, and tentacle support—then push further as enemies scale up.
+
+Bullets (store-ready):
+- Survive wave after wave while your base takes real pressure
+- Between-wave offers: roll quality, pick upgrades, shape your build
+- Meta progression spanning defense, damage, economy, and unlock branches
+- Readable loop: fight → rewards → upgrade screen → next wave

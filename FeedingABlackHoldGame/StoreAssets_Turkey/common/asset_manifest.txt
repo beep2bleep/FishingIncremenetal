@@ -1,0 +1,33 @@
+Asset manifest (text only — no image files in this pack)
+
+Export finals at the sizes below. Blank SVGs with these artboards live under:
+- ../StoreAssets/templates/
+- ../StoreAssets_MiningMode/templates/
+
+Steam (store + library):
+- Header capsule: 920 x 430
+- Small capsule: 462 x 174
+- Main capsule: 1232 x 706
+- Vertical capsule: 748 x 896
+- Library capsule: 600 x 900
+- Library header: 920 x 430 (can reuse header capsule)
+- Library hero: 3840 x 1240 (no text on hero — Steam rule)
+- Library logo: transparent PNG; width ≥1280 and/or height ≥720
+
+itch.io (practical targets):
+- Cover: 1200 x 900 (or strong landscape equivalent)
+- Page banner: 1200 x 540
+- Screenshots: 1920 x 1080 preferred
+
+Ready-to-paste copy in this pack:
+- steam/steam_short_description.txt
+- steam/steam_short_description_options.txt
+- steam/steam_about_this_game_plain.txt
+- steam/steam_about_this_game_bbcode.txt
+- itchio/itch_short_description.txt
+- itchio/itch_short_description_options.txt
+- itchio/itch_long_description.md
+- common/headlines.txt
+- common/short_summaries.txt
+- common/long_description_master.md
+- common/tag_strategy.txt

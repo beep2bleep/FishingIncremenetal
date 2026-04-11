@@ -1,0 +1,1 @@
+An arcade bowling-style mode: line up shots with aim, power, and spin, watch physics-driven pins fly, and chase scores with meta progression between runs.

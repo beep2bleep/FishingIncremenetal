@@ -45,6 +45,7 @@ const TEXT_FILTER_SCALE_STEP := 0.1
 const SUPPORT_EFFECT_DURATION := 0.12
 const RUN_START_BANNER_HOLD_DURATION := 1.45
 const RUN_START_BANNER_FADE_DURATION := 0.26
+const WAVE_INTRO_MOUSE_VISIBLE_MS := 500
 const DEFEAT_SEQUENCE_DURATION := 1.35
 const DEFEAT_EXPLOSION_INTERVAL := 0.09
 const DEFEAT_OVERLAY_MAX_ALPHA := 0.46
@@ -97,6 +98,7 @@ enum RUN_STATES {RUNNING, UPGRADE, DEFEAT, SUMMARY}
 @onready var summary_charts_row: HBoxContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryChartsRow
 @onready var summary_payout_chart: PanelContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryChartsRow/SummaryPayoutChart
 @onready var summary_combat_chart: PanelContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryChartsRow/SummaryCombatChart
+@onready var summary_damage_chart: PanelContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryDamageChart
 @onready var summary_stats_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryStatsLabel
 @onready var start_wave_section: VBoxContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/StartWaveSection
 @onready var start_wave_header_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/StartWaveSection/StartWaveHeaderLabel
@@ -129,6 +131,8 @@ var run_start_wave := 1
 var pending_start_upgrade_picks := 0
 var used_start_upgrade_picks := 0
 var showing_pre_run_panel := false
+var career_best_wave_at_run_start := 0
+var _suppress_mouse_capture_until_msec: int = 0
 
 var current_wave := 1
 var waves_cleared := 0
@@ -199,6 +203,16 @@ var score := 0
 var damage_dealt := 0.0
 var damage_taken := 0.0
 var shield_damage_absorbed := 0.0
+var damage_dealt_gun := 0.0
+var damage_dealt_tower := 0.0
+var damage_dealt_drone := 0.0
+var damage_dealt_tentacle := 0.0
+var damage_dealt_nuke := 0.0
+var damage_dealt_blast := 0.0
+var damage_dealt_deflection := 0.0
+var hull_damage_mitigated := 0.0
+var intercepted_enemy_shot_damage := 0.0
+var deflected_threat_damage := 0.0
 var nukes_launched := 0
 var enemy_projectiles_destroyed := 0
 var enemy_projectiles_deflected := 0
@@ -256,8 +270,13 @@ var summary_text_view_model: Dictionary = {}
 var summary_text_progress := 0.0
 var summary_text_money_pop_progress := 0.0
 
+const SUMMARY_POINTER_RECOVERY_FRAMES := 3
+var _summary_pointer_recovery_frames_remaining := 0
+
 func _ready() -> void:
     rng.randomize()
+    if ControllerIcons != null and not ControllerIcons.input_type_changed.is_connected(_on_controller_icons_input_type_changed):
+        ControllerIcons.input_type_changed.connect(_on_controller_icons_input_type_changed)
     _sync_virtual_cursor_for_red_sky_ui()
     persistent_data = RED_SKY_PROGRESS.load_data()
     get_viewport().size_changed.connect(_on_viewport_size_changed)
@@ -272,7 +291,13 @@ func _ready() -> void:
     _show_pre_run_panel()
 
 func _exit_tree() -> void:
+    if ControllerIcons != null and ControllerIcons.input_type_changed.is_connected(_on_controller_icons_input_type_changed):
+        ControllerIcons.input_type_changed.disconnect(_on_controller_icons_input_type_changed)
     Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _on_controller_icons_input_type_changed(_input_type: ControllerIcons.InputType, _controller: int) -> void:
+    _sync_virtual_cursor_for_red_sky_ui()
+    _refresh_mouse_capture_state()
 
 func _sync_virtual_cursor_for_red_sky_ui() -> void:
     if VirtualCursor == null:
@@ -298,10 +323,10 @@ func _connect_ui() -> void:
         button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         button.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
         button.clip_text = false
-        button.expand_icon = true
+        button.expand_icon = false
         button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
         button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        button.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
         button.add_theme_font_size_override("font_size", 18)
     mode_label.hide()
     status_label.hide()
@@ -428,7 +453,10 @@ func _show_run_start_banner() -> void:
     var wallet: int = int(persistent_data.get("wallet", 0))
     var best_wave: int = int(persistent_data.get("best_wave", 0))
     run_start_banner_title_label.text = _trf("RED SKY DEFENSE  |  WAVE %02d ALERT", [current_wave])
-    run_start_banner_detail_label.text = _trf("Run %02d   |   Scrap reserve %d   |   Best wave %d   |   Start wave %d", [run_number, wallet, best_wave, run_start_wave])
+    var detail: String = _trf("Run %02d   |   Scrap reserve %d   |   Best wave %d   |   Start wave %d", [run_number, wallet, best_wave, run_start_wave])
+    if int(persistent_data.get("runs", 0)) == 0:
+        detail += "\n" + tr("First deployment — stay sharp, Commander.")
+    run_start_banner_detail_label.text = detail
 
     run_start_banner_panel.visible = true
     run_start_banner_panel.scale = Vector2(0.96, 0.96)
@@ -442,6 +470,7 @@ func _show_run_start_banner() -> void:
     run_start_banner_tween.finished.connect(func() -> void:
         if run_start_banner_panel != null:
             run_start_banner_panel.visible = false
+        _refresh_mouse_capture_state()
     )
 
 func _setup_defeat_audio() -> void:
@@ -489,6 +518,7 @@ func _show_pre_run_panel() -> void:
     summary_title_label.text = tr("Red Sky Deployment")
     _reset_summary_presentation_state()
     summary_charts_row.hide()
+    summary_damage_chart.hide()
     summary_label.clear()
     summary_label.append_text(_build_pre_run_summary_bbcode())
     summary_stats_label.text = _build_pre_run_stats_text()
@@ -593,6 +623,7 @@ func _clear_runtime_entities() -> void:
 
 func _begin_run() -> void:
     _close_pause_menu()
+    _summary_pointer_recovery_frames_remaining = 0
     persistent_data = RED_SKY_PROGRESS.load_data()
     meta_bonuses = RED_SKY_DATA.build_meta_bonuses(persistent_data.get("meta_upgrades", {}))
     last_run_results.clear()
@@ -603,6 +634,9 @@ func _begin_run() -> void:
     Global.game_state = Util.GAME_STATES.PLAYING
     current_wave = run_start_wave
     waves_cleared = max(0, run_start_wave - 1)
+    career_best_wave_at_run_start = int(persistent_data.get("best_wave", 0))
+    RED_SKY_PROGRESS.maybe_track_first_deploy()
+    RED_SKY_PROGRESS.track_run_start(run_start_wave, persistent_data)
     pending_start_upgrade_picks = max(0, run_start_wave - 1)
     used_start_upgrade_picks = 0
     wave_spawn_queue.clear()
@@ -618,6 +652,16 @@ func _begin_run() -> void:
     damage_dealt = 0.0
     damage_taken = 0.0
     shield_damage_absorbed = 0.0
+    damage_dealt_gun = 0.0
+    damage_dealt_tower = 0.0
+    damage_dealt_drone = 0.0
+    damage_dealt_tentacle = 0.0
+    damage_dealt_nuke = 0.0
+    damage_dealt_blast = 0.0
+    damage_dealt_deflection = 0.0
+    hull_damage_mitigated = 0.0
+    intercepted_enemy_shot_damage = 0.0
+    deflected_threat_damage = 0.0
     nukes_launched = 0
     enemy_projectiles_destroyed = 0
     enemy_projectiles_deflected = 0
@@ -635,6 +679,7 @@ func _begin_run() -> void:
         enemy_kill_counts[enemy_type] = 0
     _apply_meta_bonuses()
     summary_charts_row.hide()
+    summary_damage_chart.hide()
     _reset_summary_presentation_state()
     summary_panel.hide()
     upgrade_panel.hide()
@@ -715,6 +760,11 @@ func _start_wave(wave: int) -> void:
         remaining_nukes = mini(remaining_nukes + nuke_regen_per_wave, nuke_max)
     last_started_wave = wave
     current_wave = wave
+    _suppress_mouse_capture_until_msec = Time.get_ticks_msec() + WAVE_INTRO_MOUSE_VISIBLE_MS
+    var intro_timer := get_tree().create_timer(float(WAVE_INTRO_MOUSE_VISIBLE_MS) / 1000.0)
+    intro_timer.timeout.connect(func() -> void:
+        _refresh_mouse_capture_state()
+    , CONNECT_ONE_SHOT)
     wave_spawn_queue = _build_wave_spawn_list(wave)
     wave_spawn_timer = 0.12
     _spawn_floating_text("WAVE %d" % wave, get_viewport_rect().size * Vector2(0.5, 0.28), Color(1.0, 0.88, 0.58, 1.0), 34)
@@ -1105,6 +1155,9 @@ func _is_apex_enemy_type(enemy_type: String) -> bool:
 func _process(delta: float) -> void:
     if _is_pause_menu_open():
         return
+    if _summary_pointer_recovery_frames_remaining > 0 and run_state == RUN_STATES.SUMMARY:
+        _summary_pointer_recovery_frames_remaining -= 1
+        _apply_summary_pointer_recovery()
     _update_environment(delta)
     if run_state == RUN_STATES.RUNNING:
         _process_running(delta)
@@ -1491,6 +1544,7 @@ func _process_enemy_projectiles(delta: float) -> void:
 
         if team == "enemy" and projectile_pos.distance_to(base_pos) <= BASE_COLLISION_RADIUS + projectile_radius:
             if rng.randf() < projectile_redirect_chance:
+                deflected_threat_damage += float(projectile.get("damage", 8.0))
                 projectile["team"] = "player"
                 projectile["vel"] = _get_reflected_projectile_direction(projectile_pos) * max(320.0, projectile.get("vel", Vector2.ZERO).length())
                 projectile["damage"] = float(projectile.get("damage", 8.0)) * 0.9
@@ -1523,6 +1577,7 @@ func _resolve_bullet_enemy_projectile_hits(bullet: Dictionary) -> bool:
         if bullet_pos.distance_to(projectile.get("pos", Vector2.ZERO)) > bullet_radius + float(projectile.get("radius", 10.0)):
             continue
         if rng.randf() < projectile_redirect_chance:
+            deflected_threat_damage += float(projectile.get("damage", 0.0))
             projectile["team"] = "player"
             projectile["vel"] = _get_reflected_projectile_direction(projectile.get("pos", Vector2.ZERO)) * max(360.0, projectile.get("vel", Vector2.ZERO).length())
             projectile["damage"] = max(float(projectile.get("damage", 0.0)), float(bullet.get("damage", gun_damage)) * 0.75)
@@ -1531,6 +1586,7 @@ func _resolve_bullet_enemy_projectile_hits(bullet: Dictionary) -> bool:
             enemy_projectiles[projectile_index] = projectile
             _spawn_floating_text("DEFLECT", bullet_pos, DRONE_COLOR, 22)
         else:
+            intercepted_enemy_shot_damage += float(projectile.get("damage", 0.0))
             enemy_projectiles_destroyed += 1
             enemy_projectiles.remove_at(projectile_index)
             _spawn_floating_text("POP", bullet_pos, Color(1.0, 0.82, 0.6, 1.0), 22)
@@ -1636,8 +1692,24 @@ func _damage_enemy(enemy_index: int, damage_amount: float, hit_position: Vector2
         return
     var enemy: Dictionary = enemies[enemy_index]
     var previous_health: float = float(enemy.get("health", 1.0))
+    var applied: float = min(previous_health, damage_amount)
     enemy["health"] = previous_health - damage_amount
-    damage_dealt += min(previous_health, damage_amount)
+    damage_dealt += applied
+    match source:
+        "tower":
+            damage_dealt_tower += applied
+        "drone":
+            damage_dealt_drone += applied
+        "tentacle":
+            damage_dealt_tentacle += applied
+        "nuke":
+            damage_dealt_nuke += applied
+        "blast":
+            damage_dealt_blast += applied
+        "deflection":
+            damage_dealt_deflection += applied
+        _:
+            damage_dealt_gun += applied
     var impulse_dir: Vector2 = (enemy.get("pos", Vector2.ZERO) - hit_position).normalized()
     if impulse_dir == Vector2.ZERO:
         impulse_dir = Vector2.UP
@@ -1669,6 +1741,7 @@ func _trigger_explosion(position: Vector2, blast_radius: float, damage_amount: f
     for projectile_index in range(enemy_projectiles.size() - 1, -1, -1):
         var projectile: Dictionary = enemy_projectiles[projectile_index]
         if position.distance_to(projectile.get("pos", Vector2.ZERO)) <= blast_radius + float(projectile.get("radius", 10.0)):
+            intercepted_enemy_shot_damage += float(projectile.get("damage", 0.0))
             enemy_projectiles_destroyed += 1
             enemy_projectiles.remove_at(projectile_index)
     _spawn_floating_text("NUKE" if is_nuke else "BLAST", position, Color(1.0, 0.82, 0.6, 1.0), 30)
@@ -1731,6 +1804,7 @@ func _damage_base(amount: float, hit_position: Vector2) -> void:
             _spawn_floating_text("SHIELD", hit_position, SHIELD_COLOR, 20)
     if remaining_damage <= 0.0:
         return
+    hull_damage_mitigated += remaining_damage * damage_reduction
     var final_damage: float = remaining_damage * (1.0 - damage_reduction)
     base_health = max(0.0, base_health - final_damage)
     damage_taken += final_damage
@@ -1767,6 +1841,9 @@ func _check_wave_clear() -> void:
     if not enemy_projectiles.is_empty():
         return
     waves_cleared = current_wave
+    RED_SKY_PROGRESS.track_wave_cleared_runtime(waves_cleared, run_start_wave, career_best_wave_at_run_start, score)
+    if waves_cleared > 0 and waves_cleared % 5 == 0:
+        _spawn_floating_text(_trf("SECTOR %d SECURED", [waves_cleared]), get_viewport_rect().size * Vector2(0.5, 0.2), Color(0.72, 0.94, 1.0, 1.0), 30)
     _show_upgrade_panel()
 
 func _show_upgrade_panel() -> void:
@@ -2003,7 +2080,7 @@ func _apply_effect_bundle(bundle: Dictionary) -> void:
 
     remaining_nukes = mini(remaining_nukes, nuke_max)
 
-func _finish_run(reason: String) -> void:
+func _finish_run(reason: String, from_pause_end_run: bool = false) -> void:
     if run_state == RUN_STATES.SUMMARY:
         return
     run_state = RUN_STATES.SUMMARY
@@ -2011,7 +2088,8 @@ func _finish_run(reason: String) -> void:
     Global.game_state = Util.GAME_STATES.UPGRADES
     upgrade_panel.hide()
     _bank_remaining_salvage(1.0)
-    last_run_results = _build_run_results(reason)
+    last_run_results = _build_run_results(reason, from_pause_end_run)
+    RED_SKY_PROGRESS.track_run_end(run_start_wave, persistent_data, waves_cleared, score, reason)
     persistent_data = RED_SKY_PROGRESS.apply_run_results(last_run_results)
     summary_title_label.text = tr("Red Sky Defense Summary")
     summary_stats_label.text = str(last_run_results.get("summary_stats_text", ""))
@@ -2020,10 +2098,25 @@ func _finish_run(reason: String) -> void:
     _refresh_start_wave_selector()
     _show_post_run_summary(last_run_results)
     summary_charts_row.show()
+    summary_damage_chart.show()
     summary_panel.show()
+    _summary_pointer_recovery_frames_remaining = SUMMARY_POINTER_RECOVERY_FRAMES
     _refresh_mouse_capture_state()
+    _apply_summary_pointer_recovery()
 
-func _build_run_results(reason: String) -> Dictionary:
+func _apply_summary_pointer_recovery() -> void:
+    if run_state != RUN_STATES.SUMMARY:
+        _summary_pointer_recovery_frames_remaining = 0
+        return
+    Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+    _sync_virtual_cursor_for_red_sky_ui()
+    if VirtualCursor != null and ControllerIcons != null \
+        and ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER:
+        VirtualCursor.activate_for_controller()
+        if continue_button != null and is_instance_valid(continue_button):
+            VirtualCursor.move_to_control(continue_button)
+
+func _build_run_results(reason: String, from_pause_end_run: bool = false) -> Dictionary:
     var wallet_gain: int = RED_SKY_DATA.calculate_meta_scrap_reward({
         "score": score,
         "waves_cleared": waves_cleared,
@@ -2045,10 +2138,21 @@ func _build_run_results(reason: String) -> Dictionary:
         })
     var combat_chart: Array[Dictionary] = [
         {"label": "Enemy kills", "money": float(total_kills), "color": Color(0.45, 0.87, 0.99, 1.0)},
-        {"label": "Waves cleared (run)", "money": float(waves_cleared_this_run), "color": Color(0.83, 0.74, 1.0, 1.0)},
-        {"label": tr("Damage dealt"), "money": float(damage_dealt), "color": Color(1.0, 0.55, 0.38, 1.0)},
-        {"label": tr("Enemy shots destroyed"), "money": float(enemy_projectiles_destroyed), "color": Color(0.67, 0.94, 1.0, 1.0)}
+        {"label": "Waves cleared (run)", "money": float(waves_cleared_this_run), "color": Color(0.83, 0.74, 1.0, 1.0)}
     ]
+    var damage_dealt_breakdown: Array[Dictionary] = []
+    _append_summary_chart_row_if_positive(damage_dealt_breakdown, tr("Main gun"), damage_dealt_gun, Color(1.0, 0.52, 0.36, 1.0))
+    _append_summary_chart_row_if_positive(damage_dealt_breakdown, tr("Turrets"), damage_dealt_tower, Color(0.72, 0.58, 1.0, 1.0))
+    _append_summary_chart_row_if_positive(damage_dealt_breakdown, tr("Drones"), damage_dealt_drone, Color(0.42, 0.88, 0.95, 1.0))
+    _append_summary_chart_row_if_positive(damage_dealt_breakdown, tr("Tentacles"), damage_dealt_tentacle, Color(0.52, 0.94, 0.62, 1.0))
+    _append_summary_chart_row_if_positive(damage_dealt_breakdown, tr("Nukes"), damage_dealt_nuke, Color(1.0, 0.82, 0.38, 1.0))
+    _append_summary_chart_row_if_positive(damage_dealt_breakdown, tr("Splash / blast"), damage_dealt_blast, Color(1.0, 0.68, 0.48, 1.0))
+    _append_summary_chart_row_if_positive(damage_dealt_breakdown, tr("Redirected shots"), damage_dealt_deflection, Color(0.55, 0.72, 1.0, 1.0))
+    var damage_prevented_breakdown: Array[Dictionary] = []
+    _append_summary_chart_row_if_positive(damage_prevented_breakdown, tr("Shield absorbed"), shield_damage_absorbed, Color(0.38, 0.78, 1.0, 1.0))
+    _append_summary_chart_row_if_positive(damage_prevented_breakdown, tr("Armor / hull mitigation"), hull_damage_mitigated, Color(0.65, 0.7, 0.82, 1.0))
+    _append_summary_chart_row_if_positive(damage_prevented_breakdown, tr("Shots destroyed"), intercepted_enemy_shot_damage, Color(0.48, 0.92, 0.88, 1.0))
+    _append_summary_chart_row_if_positive(damage_prevented_breakdown, tr("Shots redirected (threat)"), deflected_threat_damage, Color(0.78, 0.92, 0.55, 1.0))
     var summary_text := _trf("%s — Cleared %d waves this run — +%d scrap to wallet", [reason, waves_cleared_this_run, wallet_gain])
     var summary_stats_text := _trf("Best score: %d    Best wave: %d    Total runs: %d    Shots fired: %d", [
         max(int(persistent_data.get("best_score", 0)), score),
@@ -2061,7 +2165,8 @@ func _build_run_results(reason: String) -> Dictionary:
         "waves_cleared_this_run": waves_cleared_this_run,
         "wallet_gain": wallet_gain,
         "run_scrap": score,
-        "wallet_bonus": wallet_bonus
+        "wallet_bonus": wallet_bonus,
+        "show_cursor_escape_hint": from_pause_end_run
     }
     return {
         "reason": reason,
@@ -2093,6 +2198,18 @@ func _build_run_results(reason: String) -> Dictionary:
         "summary_stats_text": summary_stats_text,
         "payout_breakdown_chart": payout_chart,
         "combat_breakdown_chart": combat_chart,
+        "damage_dealt_breakdown": damage_dealt_breakdown,
+        "damage_prevented_breakdown": damage_prevented_breakdown,
+        "damage_dealt_gun": damage_dealt_gun,
+        "damage_dealt_tower": damage_dealt_tower,
+        "damage_dealt_drone": damage_dealt_drone,
+        "damage_dealt_tentacle": damage_dealt_tentacle,
+        "damage_dealt_nuke": damage_dealt_nuke,
+        "damage_dealt_blast": damage_dealt_blast,
+        "damage_dealt_deflection": damage_dealt_deflection,
+        "hull_damage_mitigated": hull_damage_mitigated,
+        "intercepted_enemy_shot_damage": intercepted_enemy_shot_damage,
+        "deflected_threat_damage": deflected_threat_damage,
         "summary_view_model": summary_view_model
     }
 
@@ -2116,32 +2233,32 @@ func _update_upgrade_offer_layout(visible_count: int) -> void:
     var available_width: float = maxf(220.0, panel_size.x - 52.0)
     if clamped_count <= 1 or available_width < 470.0:
         upgrade_buttons_grid.columns = 1
-    elif clamped_count <= 4 or available_width < 760.0:
+    elif clamped_count >= 5 or available_width < 760.0:
         upgrade_buttons_grid.columns = 2
     else:
         upgrade_buttons_grid.columns = 3
-    var min_height: float = 128.0
+    var min_height: float = 72.0
     var compact_height: float = maxf(320.0, panel_size.y)
     var font_size := 18
     match clamped_count:
         1:
-            min_height = 240.0
+            min_height = 120.0
         2:
-            min_height = 196.0
+            min_height = 88.0
         3:
-            min_height = 168.0
+            min_height = 76.0
         4:
-            min_height = 148.0
+            min_height = 68.0
         5:
-            min_height = 122.0
+            min_height = 60.0
             font_size = 17
         _:
-            min_height = 112.0
+            min_height = 56.0
             font_size = 16
     if compact_height < 520.0:
-        min_height = minf(min_height, 118.0)
+        min_height = minf(min_height, 68.0)
     if compact_height < 430.0:
-        min_height = minf(min_height, 100.0)
+        min_height = minf(min_height, 56.0)
         font_size = min(font_size, 15)
     for button in upgrade_buttons:
         if button == null:
@@ -2649,7 +2766,16 @@ func _refresh_mouse_capture_state() -> void:
     if _is_pause_menu_open():
         Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
         return
-    Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if run_state == RUN_STATES.RUNNING else Input.MOUSE_MODE_VISIBLE
+    var in_combat := run_state == RUN_STATES.RUNNING and Global.game_state == Util.GAME_STATES.PLAYING
+    if in_combat and _should_keep_mouse_visible_for_wave_intro():
+        Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+        return
+    Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if in_combat else Input.MOUSE_MODE_VISIBLE
+
+func _should_keep_mouse_visible_for_wave_intro() -> bool:
+    if run_start_banner_panel != null and run_start_banner_panel.visible:
+        return true
+    return Time.get_ticks_msec() < _suppress_mouse_capture_until_msec
 
 func _handle_pause_menu_input(event: InputEvent) -> bool:
     if event.is_action_pressed("escape") or event.is_action_pressed("back"):
@@ -2689,7 +2815,8 @@ func _on_pause_end_run_requested() -> void:
     _end_run_to_summary()
 
 func _end_run_to_summary() -> void:
-    _finish_run("Run ended early.")
+    _suppress_mouse_capture_until_msec = 0
+    _finish_run("Run ended early.", true)
 
 func _update_environment(delta: float) -> void:
     var base_darkness := clampf(float(max(current_wave - 1, 0)) / 11.0, 0.0, 0.82)
@@ -2738,6 +2865,7 @@ func _apply_summary_theme() -> void:
     _style_summary_panel_box(summary_panel, SUMMARY_PANEL_BG, SUMMARY_PANEL_BORDER, 6)
     _style_summary_panel_box(summary_payout_chart, SUMMARY_CHART_PANEL_BG, SUMMARY_CHART_PANEL_BORDER, 6)
     _style_summary_panel_box(summary_combat_chart, SUMMARY_CHART_PANEL_BG, SUMMARY_CHART_PANEL_BORDER, 6)
+    _style_summary_panel_box(summary_damage_chart, SUMMARY_CHART_PANEL_BG, SUMMARY_CHART_PANEL_BORDER, 6)
     if summary_title_label != null:
         summary_title_label.add_theme_color_override("font_color", Color(0.96, 0.98, 1.0, 1.0))
         summary_title_label.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.08, 0.85))
@@ -2774,6 +2902,7 @@ func _show_post_run_summary(results: Dictionary) -> void:
     _reset_summary_presentation_state()
     _refresh_summary_payout_chart(results)
     _refresh_summary_combat_chart(results)
+    _refresh_summary_damage_chart(results)
     _start_summary_chart_animation()
     var view_model: Dictionary = results.get("summary_view_model", {})
     summary_text_view_model = view_model.duplicate(true)
@@ -2836,6 +2965,14 @@ func _render_post_run_summary_text(view_model: Dictionary, progress: float) -> v
         "[color=%s]Meta scrap earned[/color]" % _color_to_bbcode(SUMMARY_TEXT_BASE_COLOR),
         "%s" % _format_summary_money_span(animated_wallet, wallet_gain, progress)
     ])
+    if bool(view_model.get("show_cursor_escape_hint", false)):
+        lines.append("")
+        lines.append(
+            "[i][color=%s]%s[/color][/i]" % [
+                _color_to_bbcode(SUMMARY_TEXT_BASE_COLOR),
+                tr("RED_SKY_SUMMARY_PRESS_ESCAPE_IF_CURSOR_MISSING")
+            ]
+        )
     summary_label.clear()
     summary_label.append_text("\n".join(lines))
 
@@ -2894,6 +3031,11 @@ func _clear_chart_children(panel: Control) -> void:
     for child in panel.get_children():
         panel.remove_child(child)
         child.queue_free()
+
+func _append_summary_chart_row_if_positive(rows: Array, label: String, value: float, color: Color) -> void:
+    if value <= 0.0001:
+        return
+    rows.append({"label": label, "money": value, "color": color})
 
 func _make_chart_margin(parent: Control) -> MarginContainer:
     var margin := MarginContainer.new()
@@ -2965,6 +3107,61 @@ func _refresh_summary_combat_chart(results: Dictionary) -> void:
             target_value,
             _summary_chart_animation_duration(target_value, max_value)
         )
+
+func _refresh_summary_damage_chart(results: Dictionary) -> void:
+    _clear_chart_children(summary_damage_chart)
+    var margin := _make_chart_margin(summary_damage_chart)
+    var root := VBoxContainer.new()
+    root.add_theme_constant_override("separation", 8)
+    margin.add_child(root)
+    root.add_child(_make_summary_chart_label(tr("Damage dealt & prevented"), 0.0, 20, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_TITLE_COLOR))
+    var dealt: Array = results.get("damage_dealt_breakdown", [])
+    var prevented: Array = results.get("damage_prevented_breakdown", [])
+    if dealt.is_empty() and prevented.is_empty():
+        root.add_child(_make_summary_chart_label(tr("No damage data"), 0.0, 16, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_MUTED_COLOR))
+        return
+    var max_dealt: float = 0.0
+    for row_variant in dealt:
+        max_dealt = max(max_dealt, float(row_variant.get("money", 0.0)))
+    var max_prevented: float = 0.0
+    for row_variant in prevented:
+        max_prevented = max(max_prevented, float(row_variant.get("money", 0.0)))
+    if not dealt.is_empty():
+        root.add_child(_make_summary_chart_label(tr("Dealt"), 0.0, 14, HORIZONTAL_ALIGNMENT_LEFT, SUMMARY_CHART_MUTED_COLOR))
+        for row_variant in dealt:
+            var row_data: Dictionary = row_variant
+            var row := HBoxContainer.new()
+            row.add_theme_constant_override("separation", 10)
+            root.add_child(row)
+            row.add_child(_make_summary_chart_label(str(row_data.get("label", "")), 150.0, 15))
+            var target_value: float = float(row_data.get("money", 0.0))
+            var bar_bundle: Dictionary = _make_summary_chart_bar_bundle(max_dealt, row_data.get("color", Color.WHITE))
+            row.add_child(bar_bundle.get("root", HBoxContainer.new()))
+            _register_summary_chart_animation(
+                row,
+                bar_bundle.get("meter", null),
+                bar_bundle.get("value_label", null),
+                target_value,
+                _summary_chart_animation_duration(target_value, max_dealt)
+            )
+    if not prevented.is_empty():
+        root.add_child(_make_summary_chart_label(tr("Prevented"), 0.0, 14, HORIZONTAL_ALIGNMENT_LEFT, SUMMARY_CHART_MUTED_COLOR))
+        for row_variant in prevented:
+            var row_data: Dictionary = row_variant
+            var row := HBoxContainer.new()
+            row.add_theme_constant_override("separation", 10)
+            root.add_child(row)
+            row.add_child(_make_summary_chart_label(str(row_data.get("label", "")), 150.0, 15))
+            var target_value: float = float(row_data.get("money", 0.0))
+            var bar_bundle: Dictionary = _make_summary_chart_bar_bundle(max_prevented, row_data.get("color", Color.WHITE))
+            row.add_child(bar_bundle.get("root", HBoxContainer.new()))
+            _register_summary_chart_animation(
+                row,
+                bar_bundle.get("meter", null),
+                bar_bundle.get("value_label", null),
+                target_value,
+                _summary_chart_animation_duration(target_value, max_prevented)
+            )
 
 func _register_summary_chart_animation(row: Control, meter: ProgressBar, value_label: Label, target_value: float, duration: float) -> void:
     if row == null or meter == null or value_label == null:
