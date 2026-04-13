@@ -58,6 +58,25 @@ const SUMMARY_CHART_TICK_INTERVAL := 0.085
 const SUMMARY_CHART_POP_SCALE := 1.08
 const SUMMARY_TEXT_MONEY_BASE_FONT_SIZE := 22
 const SUMMARY_TEXT_MONEY_POP_FONT_SIZE := 30
+const MAX_UPGRADE_BUTTONS := 18
+const POWER_WHEEL_RADIUS := 124.0
+const POWER_WHEEL_INPUT_SPEED := 1.65
+const POWER_WHEEL_DISPLAY_MIN := 0.0
+const POWER_WHEEL_FUNCTIONAL_MIN := 0.2
+const POWER_WHEEL_MAX := 3.0
+const POWER_SLOT_KEYS := [
+    "guns",
+    "shields",
+    "hull_regen",
+    "nukes",
+    "towers",
+    "helpers",
+    "tentacles",
+    "construction",
+    "scrap_gain",
+    "scrap_collection"
+]
+const BOSS_TYPE := "war_barge_boss"
 const SUMMARY_TEXT_BASE_COLOR := Color(0.88, 0.94, 1.0, 0.96)
 const SUMMARY_TEXT_MONEY_GREY := Color(0.62, 0.68, 0.74, 1.0)
 const SUMMARY_TEXT_MONEY_HIGH := Color(0.37, 0.86, 0.61, 1.0)
@@ -198,6 +217,30 @@ var tentacle_damage := 19.0
 var tentacle_range := 168.0
 var tentacle_attack_cooldown := 1.05
 var tentacle_slow := 0.18
+var construction_drone_count := 0
+var construction_build_rate := 1.0
+var temporary_turret_limit := 0
+var temporary_turret_damage := 11.0
+var temporary_turret_range := 210.0
+var temporary_turret_fire_interval := 1.05
+var temporary_turret_duration := 16.0
+var temporary_turret_health := 58.0
+var temporary_shield_limit := 0
+var temporary_shield_capacity := 54.0
+var temporary_shield_regen := 4.0
+var temporary_shield_duration := 16.0
+var temporary_shield_health := 54.0
+var helper_drone_count := 0
+var helper_drone_damage := 10.0
+var helper_drone_range := 260.0
+var helper_drone_fire_interval := 0.76
+var helper_drone_speed := 224.0
+var collector_bot_count := 0
+var collector_bot_speed := 176.0
+var scrap_generation_per_second := 0.0
+var scrap_generation_accumulator := 0.0
+var max_level_up_choice_count := 9
+var max_wave_upgrade_choices := MAX_UPGRADE_BUTTONS
 
 var score := 0
 var damage_dealt := 0.0
@@ -254,8 +297,20 @@ var support_effects: Array[Dictionary] = []
 var tower_fire_timers: Array = []
 var drone_fire_timers: Array = []
 var tentacle_cooldowns: Array = []
+var helper_fire_timers: Array = []
+var temporary_turrets: Array[Dictionary] = []
+var temporary_shields: Array[Dictionary] = []
 var upgrade_buttons: Array[Button] = []
 var start_wave_buttons: Array[Button] = []
+var power_slot_order: Array[String] = POWER_SLOT_KEYS.duplicate()
+var power_bias := Vector2.ZERO
+var power_multipliers: Dictionary = {}
+var power_display_values: Dictionary = {}
+var power_customize_panel: PanelContainer
+var power_wheel_label: Label
+var power_warning_label: Label
+var power_customize_button: Button
+var power_slot_buttons: Array[Button] = []
 var defeat_sequence_timer := 0.0
 var defeat_explosion_timer := 0.0
 var pending_finish_reason := ""
@@ -284,6 +339,8 @@ func _ready() -> void:
     _connect_ui()
     _setup_pause_menu()
     _setup_text_presentation()
+    _ensure_upgrade_button_pool()
+    _setup_power_wheel_ui()
     _setup_run_start_banner()
     _setup_defeat_audio()
     _apply_summary_theme()
@@ -334,6 +391,99 @@ func _connect_ui() -> void:
     start_wave_info_label.add_theme_font_size_override("font_size", 18)
     continue_button.pressed.connect(_on_continue_pressed)
     retry_button.pressed.connect(_on_retry_pressed)
+
+func _ensure_upgrade_button_pool() -> void:
+    var current_count: int = upgrade_buttons.size()
+    while current_count < MAX_UPGRADE_BUTTONS:
+        var button := Button.new()
+        button.name = "ExtraChoiceButton%d" % (current_count + 1)
+        button.custom_minimum_size = Vector2(0.0, 96.0)
+        button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+        button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        button.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+        button.clip_text = false
+        button.expand_icon = false
+        button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+        button.add_theme_font_size_override("font_size", 18)
+        button.pressed.connect(_on_wave_upgrade_button_pressed.bind(current_count))
+        upgrade_buttons_grid.add_child(button)
+        upgrade_buttons.append(button)
+        current_count += 1
+
+func _setup_power_wheel_ui() -> void:
+    var hud_root := $CanvasLayer/HudMargin/HudPanel/HudMargin/HudVBox
+    if hud_root == null:
+        return
+    power_wheel_label = Label.new()
+    power_wheel_label.name = "PowerWheelLabel"
+    power_wheel_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    power_wheel_label.add_theme_font_size_override("font_size", 16)
+    hud_root.add_child(power_wheel_label)
+    power_warning_label = Label.new()
+    power_warning_label.name = "PowerWarningLabel"
+    power_warning_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    power_warning_label.add_theme_font_size_override("font_size", 15)
+    power_warning_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.44, 1.0))
+    hud_root.add_child(power_warning_label)
+
+    power_customize_button = Button.new()
+    power_customize_button.name = "CustomizePowerWheelButton"
+    power_customize_button.text = tr("Customize Power Wheel")
+    power_customize_button.pressed.connect(_toggle_power_customize_panel)
+    power_customize_button.visible = false
+    $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox.add_child(power_customize_button)
+
+    power_customize_panel = PanelContainer.new()
+    power_customize_panel.name = "PowerCustomizePanel"
+    power_customize_panel.visible = false
+    power_customize_panel.anchor_left = 0.5
+    power_customize_panel.anchor_top = 0.5
+    power_customize_panel.anchor_right = 0.5
+    power_customize_panel.anchor_bottom = 0.5
+    power_customize_panel.offset_left = -280.0
+    power_customize_panel.offset_top = -240.0
+    power_customize_panel.offset_right = 280.0
+    power_customize_panel.offset_bottom = 240.0
+    $OverlayCanvasLayer.add_child(power_customize_panel)
+
+    var margin := MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 16)
+    margin.add_theme_constant_override("margin_top", 16)
+    margin.add_theme_constant_override("margin_right", 16)
+    margin.add_theme_constant_override("margin_bottom", 16)
+    power_customize_panel.add_child(margin)
+    var vbox := VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 8)
+    margin.add_child(vbox)
+    var title := Label.new()
+    title.text = tr("Power Wheel Layout")
+    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    title.add_theme_font_size_override("font_size", 26)
+    vbox.add_child(title)
+    var info := Label.new()
+    info.text = tr("Press each slot button to cycle what sits in that wheel position.")
+    info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    vbox.add_child(info)
+    var grid := GridContainer.new()
+    grid.columns = 2
+    grid.add_theme_constant_override("h_separation", 10)
+    grid.add_theme_constant_override("v_separation", 10)
+    vbox.add_child(grid)
+    for slot_index in range(POWER_SLOT_KEYS.size()):
+        var slot_button := Button.new()
+        slot_button.custom_minimum_size = Vector2(0.0, 54.0)
+        slot_button.pressed.connect(_on_power_slot_button_pressed.bind(slot_index))
+        grid.add_child(slot_button)
+        power_slot_buttons.append(slot_button)
+    var close_button := Button.new()
+    close_button.text = tr("Close")
+    close_button.pressed.connect(_toggle_power_customize_panel)
+    vbox.add_child(close_button)
+    _recalculate_power_distribution()
+    _refresh_power_slot_buttons()
 
 func _on_viewport_size_changed() -> void:
     _refresh_upgrade_panel_layout(offered_wave_upgrades.size())
@@ -515,6 +665,8 @@ func _show_pre_run_panel() -> void:
     showing_pre_run_panel = true
     Global.game_state = Util.GAME_STATES.UPGRADES
     upgrade_panel.hide()
+    if power_customize_button != null:
+        power_customize_button.visible = false
     summary_title_label.text = tr("Red Sky Deployment")
     _reset_summary_presentation_state()
     summary_charts_row.hide()
@@ -534,7 +686,7 @@ func _build_pre_run_summary_bbcode() -> String:
     return tr("[color=%s]Choose a start wave below, then press Deploy.\n\nReturn to Upgrades opens the meta tree.[/color]") % _color_to_bbcode(SUMMARY_TEXT_BASE_COLOR)
 
 func _build_pre_run_stats_text() -> String:
-    return ""
+    return "Towers hold fixed lanes. Drones orbit close defense. Escort drones roam outward. Collectors chase scrap."
 
 func _refresh_start_wave_selector() -> void:
     if start_wave_buttons_grid == null:
@@ -620,6 +772,9 @@ func _clear_runtime_entities() -> void:
     tower_fire_timers.clear()
     drone_fire_timers.clear()
     tentacle_cooldowns.clear()
+    helper_fire_timers.clear()
+    temporary_turrets.clear()
+    temporary_shields.clear()
 
 func _begin_run() -> void:
     _close_pause_menu()
@@ -674,6 +829,7 @@ func _begin_run() -> void:
     salvage_collected = 0
     salvage_lost = 0
     bonus_scrap_earned = 0
+    scrap_generation_accumulator = 0.0
     enemy_kill_counts.clear()
     for enemy_type in ENEMY_TYPE_ORDER:
         enemy_kill_counts[enemy_type] = 0
@@ -683,6 +839,8 @@ func _begin_run() -> void:
     _reset_summary_presentation_state()
     summary_panel.hide()
     upgrade_panel.hide()
+    if power_customize_button != null:
+        power_customize_button.visible = false
     _reset_aim_cursor()
     if pending_start_upgrade_picks > 0:
         _show_start_upgrade_panel()
@@ -721,7 +879,9 @@ func _apply_meta_bonuses() -> void:
     meta_reward_multiplier = float(meta_bonuses.get("meta_reward_multiplier", 1.0))
     wave_scrap_bonus = float(meta_bonuses.get("wave_scrap_bonus", 0.0))
     wave_auto_bank_ratio = float(meta_bonuses.get("wave_auto_bank_ratio", 0.68))
-    level_up_choice_count = clampi(int(meta_bonuses.get("level_up_choice_count", 3)), 3, 6)
+    max_level_up_choice_count = maxi(3, int(meta_bonuses.get("max_level_up_choice_count", 9)))
+    max_wave_upgrade_choices = maxi(max_level_up_choice_count, int(meta_bonuses.get("max_wave_upgrade_choices", MAX_UPGRADE_BUTTONS)))
+    level_up_choice_count = clampi(int(meta_bonuses.get("level_up_choice_count", 3)), 3, max_level_up_choice_count)
     enemy_count_scale = float(meta_bonuses.get("enemy_count_scale", 1.0))
     enemy_speed_scale = float(meta_bonuses.get("enemy_speed_scale", 1.0))
     enemy_projectile_speed_scale = float(meta_bonuses.get("enemy_projectile_speed_scale", 1.0))
@@ -753,11 +913,37 @@ func _apply_meta_bonuses() -> void:
     tentacle_range = float(meta_bonuses.get("tentacle_range", 168.0))
     tentacle_attack_cooldown = float(meta_bonuses.get("tentacle_cooldown", 1.05))
     tentacle_slow = float(meta_bonuses.get("tentacle_slow", 0.18))
+    construction_drone_count = int(meta_bonuses.get("construction_drone_count", 0))
+    construction_build_rate = float(meta_bonuses.get("construction_build_rate", 1.0))
+    temporary_turret_limit = int(meta_bonuses.get("temporary_turret_limit", 0))
+    temporary_turret_damage = float(meta_bonuses.get("temporary_turret_damage", 11.0))
+    temporary_turret_range = float(meta_bonuses.get("temporary_turret_range", 210.0))
+    temporary_turret_fire_interval = float(meta_bonuses.get("temporary_turret_fire_interval", 1.05))
+    temporary_turret_duration = float(meta_bonuses.get("temporary_turret_duration", 16.0))
+    temporary_turret_health = float(meta_bonuses.get("temporary_turret_health", 58.0))
+    temporary_shield_limit = int(meta_bonuses.get("temporary_shield_limit", 0))
+    temporary_shield_capacity = float(meta_bonuses.get("temporary_shield_capacity", 54.0))
+    temporary_shield_regen = float(meta_bonuses.get("temporary_shield_regen", 4.0))
+    temporary_shield_duration = float(meta_bonuses.get("temporary_shield_duration", 16.0))
+    temporary_shield_health = float(meta_bonuses.get("temporary_shield_health", 54.0))
+    helper_drone_count = int(meta_bonuses.get("helper_drone_count", 0))
+    helper_drone_damage = float(meta_bonuses.get("helper_drone_damage", 10.0))
+    helper_drone_range = float(meta_bonuses.get("helper_drone_range", 260.0))
+    helper_drone_fire_interval = float(meta_bonuses.get("helper_drone_fire_interval", 0.76))
+    helper_drone_speed = float(meta_bonuses.get("helper_drone_speed", 224.0))
+    collector_bot_count = int(meta_bonuses.get("collector_bot_count", 0))
+    collector_bot_speed = float(meta_bonuses.get("collector_bot_speed", 176.0))
+    scrap_generation_per_second = float(meta_bonuses.get("scrap_generation_per_second", 0.0))
     _ensure_support_arrays()
+    _recalculate_power_distribution()
 
 func _start_wave(wave: int) -> void:
     if last_started_wave >= 0 and wave > last_started_wave:
-        remaining_nukes = mini(remaining_nukes + nuke_regen_per_wave, nuke_max)
+        var gained_nukes: int = _get_scaled_nuke_regen_gain()
+        var overflow: int = max(0, remaining_nukes + gained_nukes - nuke_max)
+        remaining_nukes = mini(remaining_nukes + gained_nukes, nuke_max)
+        for _overflow_index in range(overflow):
+            _auto_launch_nuke()
     last_started_wave = wave
     current_wave = wave
     _suppress_mouse_capture_until_msec = Time.get_ticks_msec() + WAVE_INTRO_MOUSE_VISIBLE_MS
@@ -766,6 +952,8 @@ func _start_wave(wave: int) -> void:
         _refresh_mouse_capture_state()
     , CONNECT_ONE_SHOT)
     wave_spawn_queue = _build_wave_spawn_list(wave)
+    if wave >= 5 and wave % 5 == 0:
+        wave_spawn_queue.append(_build_enemy_def(BOSS_TYPE, wave, wave_spawn_queue.size()))
     wave_spawn_timer = 0.12
     _spawn_floating_text("WAVE %d" % wave, get_viewport_rect().size * Vector2(0.5, 0.28), Color(1.0, 0.88, 0.58, 1.0), 34)
     if current_wave == run_start_wave:
@@ -933,6 +1121,19 @@ func _build_enemy_def(enemy_type: String, wave: int, spawn_index: int) -> Dictio
 func _get_enemy_archetype_stats(enemy_type: String, wave: int, viewport: Vector2) -> Dictionary:
     var stats := {}
     match enemy_type:
+        BOSS_TYPE:
+            stats = {
+                "radius": 62.0,
+                "health": 520.0 + float(wave) * 54.0,
+                "speed": 46.0 + float(wave) * 1.6,
+                "contact_damage": 0.0,
+                "score_value": 280 + wave * 20,
+                "mass": 28.0,
+                "standoff_y": viewport.y * rng.randf_range(0.12, 0.16),
+                "orbit_radius": rng.randf_range(84.0, 112.0),
+                "shoot_timer": rng.randf_range(0.85, 1.2),
+                "drift_strength": rng.randf_range(10.0, 20.0)
+            }
         "runner":
             stats = {
                 "radius": 14.0,
@@ -1147,10 +1348,10 @@ func _get_enemy_speed_scale(wave: int, enemy_type: String) -> float:
     return scale
 
 func _is_heavy_enemy_type(enemy_type: String) -> bool:
-    return enemy_type in ["brute", "siege", "carrier", "artillery", "destroyer", "command_ship", "dreadnought"]
+    return enemy_type in ["brute", "siege", "carrier", "artillery", "destroyer", "command_ship", "dreadnought", BOSS_TYPE]
 
 func _is_apex_enemy_type(enemy_type: String) -> bool:
-    return enemy_type in ["command_ship", "dreadnought"]
+    return enemy_type in ["command_ship", "dreadnought", BOSS_TYPE]
 
 func _process(delta: float) -> void:
     if _is_pause_menu_open():
@@ -1196,18 +1397,27 @@ func _spawn_defeat_explosion() -> void:
 
 func _process_running(delta: float) -> void:
     support_time += delta
+    _update_power_wheel_input(delta)
     fire_timer -= delta
     wave_spawn_timer -= delta
     shield_regen_cooldown = max(0.0, shield_regen_cooldown - delta)
     if shield_regen_cooldown <= 0.0 and shield_max > 0.0 and shield_health < shield_max:
-        shield_health = min(shield_max, shield_health + shield_regen_rate * delta)
+        shield_health = min(_get_effective_shield_max(), shield_health + _get_effective_shield_regen() * delta)
+    shield_health = min(shield_health, _get_effective_shield_max())
+    if scrap_generation_per_second > 0.0:
+        scrap_generation_accumulator += _get_effective_scrap_generation_per_second() * delta
+        if scrap_generation_accumulator >= 1.0:
+            var generated_scrap: int = int(floor(scrap_generation_accumulator))
+            score += generated_scrap
+            scrap_generation_accumulator -= float(generated_scrap)
     if fire_timer <= 0.0:
         _fire_player_bullet()
-        fire_timer = max(0.045, fire_interval)
+        fire_timer = max(0.045, _get_effective_fire_interval())
     if wave_spawn_timer <= 0.0 and not wave_spawn_queue.is_empty():
         enemies.append(wave_spawn_queue.pop_front())
         wave_spawn_timer = max(0.08, 0.44 - float(current_wave) * 0.012 + rng.randf_range(-0.025, 0.04))
     _process_support_units(delta)
+    _process_temporary_defenses(delta)
     _process_player_bullets(delta)
     _process_nukes(delta)
     _process_enemies(delta)
@@ -1218,7 +1428,9 @@ func _process_running(delta: float) -> void:
 func _process_support_units(delta: float) -> void:
     _process_towers(delta)
     _process_drones(delta)
+    _process_helper_drones(delta)
     _process_tentacles(delta)
+    _process_construction_drones(delta)
 
 func _process_towers(delta: float) -> void:
     if tower_count <= 0:
@@ -1230,14 +1442,14 @@ func _process_towers(delta: float) -> void:
         if float(tower_fire_timers[tower_index]) > 0.0:
             continue
         var tower_pos: Vector2 = tower_positions[tower_index]
-        var enemy_index: int = _find_nearest_enemy_index(tower_pos, tower_range)
+        var enemy_index: int = _find_nearest_enemy_index(tower_pos, _get_effective_tower_range())
         if enemy_index == -1:
             tower_fire_timers[tower_index] = 0.15
             continue
         var enemy_pos: Vector2 = enemies[enemy_index].get("pos", Vector2.ZERO)
-        tower_fire_timers[tower_index] = max(0.12, tower_fire_interval)
+        tower_fire_timers[tower_index] = max(0.12, _get_effective_tower_fire_interval())
         _spawn_support_effect(tower_pos, enemy_pos, TOWER_COLOR, SUPPORT_EFFECT_DURATION)
-        _damage_enemy(enemy_index, tower_damage, tower_pos, "tower")
+        _damage_enemy(enemy_index, _get_effective_tower_damage(), tower_pos, "tower")
 
 func _process_drones(delta: float) -> void:
     if drone_count <= 0:
@@ -1249,14 +1461,14 @@ func _process_drones(delta: float) -> void:
         if float(drone_fire_timers[drone_index]) > 0.0:
             continue
         var drone_pos: Vector2 = drone_positions[drone_index]
-        var enemy_index: int = _find_nearest_enemy_index(drone_pos, drone_range)
+        var enemy_index: int = _find_nearest_enemy_index(drone_pos, _get_effective_drone_range())
         if enemy_index == -1:
             drone_fire_timers[drone_index] = 0.12
             continue
         var enemy_pos: Vector2 = enemies[enemy_index].get("pos", Vector2.ZERO)
-        drone_fire_timers[drone_index] = max(0.08, drone_fire_interval)
+        drone_fire_timers[drone_index] = max(0.08, _get_effective_drone_fire_interval())
         _spawn_support_effect(drone_pos, enemy_pos, DRONE_COLOR, SUPPORT_EFFECT_DURATION)
-        _damage_enemy(enemy_index, drone_damage, drone_pos, "drone")
+        _damage_enemy(enemy_index, _get_effective_drone_damage(), drone_pos, "drone")
 
 func _process_tentacles(delta: float) -> void:
     if tentacle_count <= 0:
@@ -1268,18 +1480,78 @@ func _process_tentacles(delta: float) -> void:
         if float(tentacle_cooldowns[tentacle_index]) > 0.0:
             continue
         var anchor: Vector2 = anchors[tentacle_index]
-        var enemy_index: int = _find_nearest_enemy_index(anchor, tentacle_range)
+        var enemy_index: int = _find_nearest_enemy_index(anchor, _get_effective_tentacle_range())
         if enemy_index == -1:
             tentacle_cooldowns[tentacle_index] = 0.15
             continue
         var enemy: Dictionary = enemies[enemy_index]
         var enemy_pos: Vector2 = enemy.get("pos", Vector2.ZERO)
         enemy["slow_timer"] = max(float(enemy.get("slow_timer", 0.0)), 1.4)
-        enemy["slow_amount"] = max(float(enemy.get("slow_amount", 0.0)), tentacle_slow)
+        enemy["slow_amount"] = max(float(enemy.get("slow_amount", 0.0)), tentacle_slow * _get_power_multiplier("tentacles"))
         enemies[enemy_index] = enemy
-        tentacle_cooldowns[tentacle_index] = max(0.18, tentacle_attack_cooldown)
+        tentacle_cooldowns[tentacle_index] = max(0.18, _get_effective_tentacle_cooldown())
         _spawn_support_effect(anchor, enemy_pos, TENTACLE_COLOR, SUPPORT_EFFECT_DURATION * 1.4)
-        _damage_enemy(enemy_index, tentacle_damage, anchor, "tentacle")
+        _damage_enemy(enemy_index, _get_effective_tentacle_damage(), anchor, "tentacle")
+
+func _process_helper_drones(delta: float) -> void:
+    if helper_drone_count <= 0:
+        return
+    _ensure_support_arrays()
+    var positions: Array[Vector2] = _get_helper_drone_positions()
+    for helper_index in range(helper_drone_count):
+        helper_fire_timers[helper_index] = float(helper_fire_timers[helper_index]) - delta
+        if float(helper_fire_timers[helper_index]) > 0.0:
+            continue
+        var helper_pos: Vector2 = positions[helper_index]
+        var enemy_index: int = _find_nearest_enemy_index(helper_pos, helper_drone_range * _get_power_multiplier("helpers"))
+        if enemy_index == -1:
+            helper_fire_timers[helper_index] = 0.12
+            continue
+        var enemy_pos: Vector2 = enemies[enemy_index].get("pos", Vector2.ZERO)
+        helper_fire_timers[helper_index] = max(0.08, helper_drone_fire_interval / max(_get_power_multiplier("helpers"), 0.2))
+        _spawn_support_effect(helper_pos, enemy_pos, DRONE_COLOR.lightened(0.18), SUPPORT_EFFECT_DURATION)
+        _damage_enemy(enemy_index, helper_drone_damage * _get_power_multiplier("helpers"), helper_pos, "drone")
+
+func _process_construction_drones(_delta: float) -> void:
+    if construction_drone_count <= 0:
+        return
+    var build_power: float = _get_power_multiplier("construction")
+    var allowed_turrets: int = int(round(float(temporary_turret_limit) * build_power))
+    var allowed_shields: int = int(round(float(temporary_shield_limit) * build_power))
+    while temporary_turrets.size() > allowed_turrets:
+        temporary_turrets.remove_at(temporary_turrets.size() - 1)
+    while temporary_shields.size() > allowed_shields:
+        temporary_shields.remove_at(temporary_shields.size() - 1)
+    while temporary_turrets.size() < allowed_turrets:
+        temporary_turrets.append(_make_temporary_turret())
+    while temporary_shields.size() < allowed_shields:
+        temporary_shields.append(_make_temporary_shield())
+
+func _process_temporary_defenses(delta: float) -> void:
+    for shield_index in range(temporary_shields.size() - 1, -1, -1):
+        var shield: Dictionary = temporary_shields[shield_index]
+        shield["age"] = float(shield.get("age", 0.0)) + delta
+        shield["health"] = min(float(shield.get("max_health", 1.0)), float(shield.get("health", 0.0)) + temporary_shield_regen * _get_power_multiplier("construction") * delta)
+        if float(shield.get("age", 0.0)) >= temporary_shield_duration or float(shield.get("health", 0.0)) <= 0.0:
+            temporary_shields.remove_at(shield_index)
+        else:
+            temporary_shields[shield_index] = shield
+    for turret_index in range(temporary_turrets.size() - 1, -1, -1):
+        var turret: Dictionary = temporary_turrets[turret_index]
+        turret["age"] = float(turret.get("age", 0.0)) + delta
+        turret["cooldown"] = max(0.0, float(turret.get("cooldown", 0.0)) - delta)
+        if float(turret.get("age", 0.0)) >= temporary_turret_duration or float(turret.get("health", 0.0)) <= 0.0:
+            temporary_turrets.remove_at(turret_index)
+            continue
+        if float(turret.get("cooldown", 0.0)) <= 0.0:
+            var turret_pos: Vector2 = turret.get("pos", Vector2.ZERO)
+            var enemy_index: int = _find_nearest_enemy_index(turret_pos, temporary_turret_range * _get_power_multiplier("construction"))
+            if enemy_index != -1:
+                var enemy_pos: Vector2 = enemies[enemy_index].get("pos", Vector2.ZERO)
+                _spawn_support_effect(turret_pos, enemy_pos, TOWER_COLOR.lightened(0.18), SUPPORT_EFFECT_DURATION)
+                _damage_enemy(enemy_index, temporary_turret_damage * _get_power_multiplier("construction"), turret_pos, "tower")
+                turret["cooldown"] = temporary_turret_fire_interval / max(_get_power_multiplier("construction"), 0.2)
+        temporary_turrets[turret_index] = turret
 
 func _process_player_bullets(delta: float) -> void:
     for bullet_index in range(player_bullets.size() - 1, -1, -1):
@@ -1339,6 +1611,19 @@ func _process_enemies(delta: float) -> void:
         var lateral: Vector2 = Vector2(-forward_to_base.y, forward_to_base.x)
 
         match enemy_type:
+            BOSS_TYPE:
+                var boss_center := Vector2(
+                    clampf(base_pos.x + lane_offset * 0.18 + sin(lifetime * 0.22 + movement_seed) * 96.0, 150.0, viewport.x - 150.0),
+                    float(enemy.get("standoff_y", viewport.y * 0.13))
+                )
+                var boss_target := boss_center + Vector2(cos(lifetime * 0.5 + movement_seed), sin(lifetime * 0.5 + movement_seed) * 0.18) * float(enemy.get("orbit_radius", 96.0))
+                var boss_to_target: Vector2 = boss_target - pos
+                if boss_to_target.length() > 12.0:
+                    desired_velocity = boss_to_target.normalized() * float(enemy.get("speed", 100.0)) * slow_mult
+                enemy["shoot_timer"] = float(enemy.get("shoot_timer", 1.0)) - delta
+                if float(enemy.get("shoot_timer", 0.0)) <= 0.0:
+                    _spawn_enemy_projectile_spread(pos, (base_pos - pos).normalized(), int(enemy.get("wave", current_wave)) + 10, 5, 0.52, {"radius": 18.0, "speed": 236.0 + float(current_wave) * 8.0, "damage": 22.0 + float(current_wave) * 2.7, "lifetime": 6.6})
+                    enemy["shoot_timer"] = max(0.95, 1.85 - float(enemy.get("wave", current_wave)) * 0.015 + rng.randf_range(0.02, 0.18))
             "carrier":
                 var carrier_orbit_angle: float = lifetime * 0.85 + movement_seed * 0.65
                 var carrier_center := Vector2(
@@ -1508,7 +1793,7 @@ func _process_enemies(delta: float) -> void:
         enemy["vel"] = vel
         enemy["pos"] = pos
 
-        if pos.distance_to(base_pos) <= BASE_COLLISION_RADIUS + float(enemy.get("radius", 18.0)):
+        if enemy_type != BOSS_TYPE and pos.distance_to(base_pos) <= BASE_COLLISION_RADIUS + float(enemy.get("radius", 18.0)):
             _damage_base(float(enemy.get("contact_damage", 8.0)), pos)
             _spawn_floating_text("HIT", pos, Color(1.0, 0.45, 0.35, 1.0), 26)
             enemies.remove_at(enemy_index)
@@ -1628,7 +1913,7 @@ func _fire_player_bullet() -> void:
         direction = Vector2.UP
     var start_pos := _get_base_position() + direction * (BASE_RADIUS * 0.82)
     var is_crit: bool = rng.randf() < crit_chance
-    var damage_amount: float = gun_damage * (crit_bonus if is_crit else 1.0)
+    var damage_amount: float = gun_damage * _get_power_multiplier("guns") * (crit_bonus if is_crit else 1.0)
     player_bullets.append({
         "pos": start_pos,
         "vel": direction * bullet_speed,
@@ -1691,6 +1976,10 @@ func _damage_enemy(enemy_index: int, damage_amount: float, hit_position: Vector2
     if enemy_index < 0 or enemy_index >= enemies.size():
         return
     var enemy: Dictionary = enemies[enemy_index]
+    if String(enemy.get("type", "")) == BOSS_TYPE:
+        var weak_spot: Vector2 = enemy.get("pos", Vector2.ZERO) + Vector2.RIGHT.rotated(_get_enemy_rotation(enemy)) * float(enemy.get("radius", 18.0)) * 0.55
+        if hit_position.distance_to(weak_spot) > float(enemy.get("radius", 18.0)) * 0.28:
+            damage_amount *= 0.3
     var previous_health: float = float(enemy.get("health", 1.0))
     var applied: float = min(previous_health, damage_amount)
     enemy["health"] = previous_health - damage_amount
@@ -1794,6 +2083,24 @@ func _kill_enemy(enemy_index: int, source: String) -> void:
 
 func _damage_base(amount: float, hit_position: Vector2) -> void:
     var remaining_damage: float = amount
+    for shield_index in range(temporary_shields.size() - 1, -1, -1):
+        var shield: Dictionary = temporary_shields[shield_index]
+        var shield_pos: Vector2 = shield.get("pos", Vector2.ZERO)
+        if hit_position.distance_to(shield_pos) > 74.0:
+            continue
+        var absorbed_by_node: float = min(float(shield.get("shield", 0.0)), remaining_damage)
+        shield["shield"] = float(shield.get("shield", 0.0)) - absorbed_by_node
+        remaining_damage -= absorbed_by_node
+        if float(shield.get("shield", 0.0)) <= 0.0:
+            shield["health"] = float(shield.get("health", 0.0)) - (remaining_damage * 0.5)
+        if float(shield.get("health", 0.0)) <= 0.0:
+            temporary_shields.remove_at(shield_index)
+        else:
+            temporary_shields[shield_index] = shield
+        if remaining_damage <= 0.0:
+            _spawn_floating_text("NODE", hit_position, SHIELD_COLOR, 20)
+            return
+        break
     if shield_health > 0.0:
         var absorbed: float = min(shield_health, remaining_damage)
         shield_health -= absorbed
@@ -1852,9 +2159,9 @@ func _show_upgrade_panel() -> void:
     Global.game_state = Util.GAME_STATES.UPGRADES
     _bank_remaining_salvage(wave_auto_bank_ratio)
     _award_wave_clear_bonus()
-    base_health = min(base_max_health, base_health + repair_between_waves)
+    base_health = min(base_max_health, base_health + repair_between_waves * _get_power_multiplier("hull_regen"))
     if shield_max > 0.0:
-        shield_health = min(shield_max, shield_health + repair_between_waves * 0.5)
+        shield_health = min(_get_effective_shield_max(), shield_health + repair_between_waves * 0.5 * _get_power_multiplier("hull_regen"))
     _show_upgrade_offer_panel("Wave %d Cleared" % current_wave, "Pick one.")
 
 func _show_start_upgrade_panel() -> void:
@@ -1868,10 +2175,12 @@ func _show_start_upgrade_panel() -> void:
     )
 
 func _show_upgrade_offer_panel(title: String, description: String) -> void:
-    offered_wave_upgrades = _roll_wave_upgrade_offers(min(level_up_choice_count, upgrade_buttons.size()))
+    offered_wave_upgrades = _roll_wave_upgrade_offers(min(level_up_choice_count, min(max_wave_upgrade_choices, upgrade_buttons.size())))
     _update_upgrade_offer_layout(offered_wave_upgrades.size())
     upgrade_title_label.text = title
     upgrade_desc_label.text = description
+    if power_customize_button != null:
+        power_customize_button.visible = true
     for button_index in range(upgrade_buttons.size()):
         var button: Button = upgrade_buttons[button_index]
         if button_index >= offered_wave_upgrades.size():
@@ -1951,12 +2260,16 @@ func _apply_wave_upgrade(offered_upgrade: Dictionary) -> void:
             _show_start_upgrade_panel()
         else:
             upgrade_panel.hide()
+            if power_customize_panel != null:
+                power_customize_panel.hide()
             run_state = RUN_STATES.RUNNING
             Global.game_state = Util.GAME_STATES.PLAYING
             _start_wave(current_wave)
             _refresh_mouse_capture_state()
         return
     upgrade_panel.hide()
+    if power_customize_panel != null:
+        power_customize_panel.hide()
     run_state = RUN_STATES.RUNNING
     Global.game_state = Util.GAME_STATES.PLAYING
     _start_wave(current_wave + 1)
@@ -2012,6 +2325,26 @@ func _apply_effect_bundle(bundle: Dictionary) -> void:
                 tentacle_count += _round_upgrade_count(amount)
             "tentacle_slow":
                 tentacle_slow += amount
+            "construction_drone_count":
+                construction_drone_count += _round_upgrade_count(amount)
+            "temporary_turret_limit":
+                temporary_turret_limit += _round_upgrade_count(amount)
+            "temporary_turret_duration":
+                temporary_turret_duration += amount
+            "temporary_shield_limit":
+                temporary_shield_limit += _round_upgrade_count(amount)
+            "temporary_shield_capacity":
+                temporary_shield_capacity += amount
+            "temporary_shield_duration":
+                temporary_shield_duration += amount
+            "helper_drone_count":
+                helper_drone_count += _round_upgrade_count(amount)
+            "helper_drone_range":
+                helper_drone_range += amount
+            "collector_bot_count":
+                collector_bot_count += _round_upgrade_count(amount)
+            "scrap_generation_per_second":
+                scrap_generation_per_second += amount
             "projectile_redirect_chance":
                 projectile_redirect_chance = min(0.85, projectile_redirect_chance + amount)
             "pickup_radius":
@@ -2023,7 +2356,7 @@ func _apply_effect_bundle(bundle: Dictionary) -> void:
             "wave_auto_bank_ratio":
                 wave_auto_bank_ratio = min(1.0, wave_auto_bank_ratio + amount)
             "level_up_choice_count":
-                level_up_choice_count = clampi(level_up_choice_count + _round_upgrade_count(amount), 3, upgrade_buttons.size())
+                level_up_choice_count = clampi(level_up_choice_count + _round_upgrade_count(amount), 3, max_wave_upgrade_choices)
     _ensure_support_arrays()
 
     var mult_effects: Dictionary = bundle.get("mult", {})
@@ -2055,6 +2388,18 @@ func _apply_effect_bundle(bundle: Dictionary) -> void:
                 tentacle_damage *= multiplier
             "tentacle_range":
                 tentacle_range *= multiplier
+            "construction_build_rate":
+                construction_build_rate *= multiplier
+            "temporary_turret_damage":
+                temporary_turret_damage *= multiplier
+            "helper_drone_damage":
+                helper_drone_damage *= multiplier
+            "helper_drone_fire_rate":
+                helper_drone_fire_interval /= multiplier
+            "helper_drone_speed":
+                helper_drone_speed *= multiplier
+            "collector_bot_speed":
+                collector_bot_speed *= multiplier
             "salvage_multiplier":
                 salvage_multiplier *= multiplier
             "enemy_count_scale":
@@ -2219,11 +2564,22 @@ func _refresh_ui() -> void:
     else:
         wave_label.text = _trf("Wave %d  Clear %d", [current_wave, waves_cleared])
     if shield_max > 0.0:
-        health_label.text = _trf("Hull %d/%d  Shield %d/%d", [int(round(base_health)), int(round(base_max_health)), int(round(shield_health)), int(round(shield_max))])
+        health_label.text = _trf("Hull %d/%d  Shield %d/%d", [int(round(base_health)), int(round(base_max_health)), int(round(shield_health)), int(round(_get_effective_shield_max()))])
     else:
         health_label.text = _trf("Hull %d/%d", [int(round(base_health)), int(round(base_max_health))])
     score_label.text = _trf("Scrap %s", [Util.get_number_short_text(score)])
-    nukes_label.text = _trf("Nukes %d/%d (+%d)", [remaining_nukes, nuke_max, nuke_regen_per_wave])
+    nukes_label.text = _trf("Nukes %d/%d (+%d)", [remaining_nukes, nuke_max, _get_scaled_nuke_regen_gain()])
+    if power_wheel_label != null:
+        var lines: Array[String] = []
+        for slot_key in power_slot_order:
+            lines.append("%s %d%%" % [slot_key.replace("_", " ").capitalize(), int(round(float(power_display_values.get(slot_key, 1.0)) * 100.0))])
+        power_wheel_label.text = "Power Wheel\n" + "\n".join(lines)
+    if power_warning_label != null:
+        var warnings: Array[String] = []
+        for slot_key in power_slot_order:
+            if float(power_display_values.get(slot_key, 1.0)) < 0.2:
+                warnings.append(slot_key.replace("_", " ").capitalize())
+        power_warning_label.text = "" if warnings.is_empty() else "Low power: %s" % ", ".join(warnings)
 
 func _update_upgrade_offer_layout(visible_count: int) -> void:
     if upgrade_buttons_grid == null:
@@ -2233,6 +2589,10 @@ func _update_upgrade_offer_layout(visible_count: int) -> void:
     var available_width: float = maxf(220.0, panel_size.x - 52.0)
     if clamped_count <= 1 or available_width < 470.0:
         upgrade_buttons_grid.columns = 1
+    elif clamped_count >= 13 and available_width >= 1100.0:
+        upgrade_buttons_grid.columns = 4
+    elif clamped_count >= 7 and available_width >= 860.0:
+        upgrade_buttons_grid.columns = 3
     elif clamped_count >= 5 or available_width < 760.0:
         upgrade_buttons_grid.columns = 2
     else:
@@ -2361,6 +2721,7 @@ func _draw() -> void:
     _draw_support_effects()
     _draw_explosions()
     _draw_floating_texts()
+    _draw_power_wheel()
     if run_state == RUN_STATES.RUNNING:
         _draw_aim_cursor()
     if run_state == RUN_STATES.DEFEAT:
@@ -2398,8 +2759,44 @@ func _draw_support_units() -> void:
         draw_circle(drone_pos, 7.0, DRONE_COLOR)
         draw_circle(drone_pos, 3.0, Color(0.12, 0.18, 0.22, 1.0))
     for anchor in _get_tentacle_anchor_positions():
-        draw_line(base_visual_pos, anchor, Color(TENTACLE_COLOR.r, TENTACLE_COLOR.g, TENTACLE_COLOR.b, 0.35), 2.0)
-        draw_circle(anchor, 5.0, TENTACLE_COLOR)
+        draw_line(base_visual_pos, anchor, Color(TENTACLE_COLOR.r, TENTACLE_COLOR.g, TENTACLE_COLOR.b, 0.65), 5.0)
+        draw_circle(anchor, 8.0, TENTACLE_COLOR)
+    for helper_pos in _get_helper_drone_positions():
+        draw_circle(helper_pos, 8.0, DRONE_COLOR.lightened(0.22))
+        draw_circle(helper_pos, 3.0, Color(0.1, 0.16, 0.2, 1.0))
+    for collector_pos in _get_collector_bot_positions():
+        draw_circle(collector_pos, 7.0, SALVAGE_COLOR)
+        draw_circle(collector_pos, 3.0, Color(0.2, 0.16, 0.08, 1.0))
+    for constructor_index in range(construction_drone_count):
+        var constructor_angle: float = support_time * 1.1 + float(constructor_index) * TAU / max(float(construction_drone_count), 1.0)
+        var constructor_pos := base_visual_pos + Vector2(cos(constructor_angle), sin(constructor_angle) * 0.62) * (BASE_RADIUS + 66.0)
+        draw_circle(constructor_pos, 7.0, Color(0.95, 0.82, 0.58, 1.0))
+        draw_line(constructor_pos + Vector2(-5.0, 0.0), constructor_pos + Vector2(5.0, 0.0), Color(0.24, 0.18, 0.08, 1.0), 2.0)
+        draw_line(constructor_pos + Vector2(0.0, -5.0), constructor_pos + Vector2(0.0, 5.0), Color(0.24, 0.18, 0.08, 1.0), 2.0)
+    for temp_turret in temporary_turrets:
+        var turret_pos: Vector2 = temp_turret.get("pos", Vector2.ZERO)
+        draw_rect(Rect2(turret_pos.x - 8.0, turret_pos.y - 7.0, 16.0, 14.0), Color(0.22, 0.28, 0.32, 0.95), true)
+        draw_line(turret_pos, turret_pos + Vector2(15.0, -8.0), TOWER_COLOR.lightened(0.16), 2.0)
+    for temp_shield in temporary_shields:
+        var shield_pos: Vector2 = temp_shield.get("pos", Vector2.ZERO)
+        draw_arc(shield_pos, 18.0, PI * 0.1, PI * 0.9, 18, Color(SHIELD_COLOR.r, SHIELD_COLOR.g, SHIELD_COLOR.b, 0.8), 4.0)
+        draw_circle(shield_pos, 4.0, SHIELD_COLOR)
+
+func _draw_power_wheel() -> void:
+    var center := Vector2(160.0, get_viewport_rect().size.y - 156.0)
+    draw_circle(center, POWER_WHEEL_RADIUS, Color(0.04, 0.06, 0.08, 0.32))
+    draw_arc(center, POWER_WHEEL_RADIUS, 0.0, TAU, 48, Color(0.82, 0.88, 0.96, 0.28), 2.0)
+    for slot_index in range(power_slot_order.size()):
+        var angle: float = -PI * 0.5 + TAU * float(slot_index) / float(power_slot_order.size())
+        var dir := Vector2(cos(angle), sin(angle))
+        var slot_key: String = power_slot_order[slot_index]
+        var display_pct: int = int(round(float(power_display_values.get(slot_key, 1.0)) * 100.0))
+        var ring_color := Color(0.88, 0.92, 1.0, 0.34)
+        if float(power_display_values.get(slot_key, 1.0)) < 0.2:
+            ring_color = Color(1.0, 0.52, 0.38, 0.82)
+        draw_line(center + dir * 28.0, center + dir * POWER_WHEEL_RADIUS, ring_color, 2.0)
+        draw_string(ThemeDB.fallback_font, center + dir * (POWER_WHEEL_RADIUS + 8.0), "%d%%" % display_pct, HORIZONTAL_ALIGNMENT_CENTER, 70.0, 16, ring_color)
+    draw_circle(center + power_bias * (POWER_WHEEL_RADIUS - 18.0), 10.0, Color(1.0, 0.84, 0.42, 1.0))
 
 func _draw_enemies() -> void:
     for enemy in enemies:
@@ -2408,6 +2805,10 @@ func _draw_enemies() -> void:
         var enemy_type: String = String(enemy.get("type", "raider"))
         var rotation := _get_enemy_rotation(enemy)
         match enemy_type:
+            BOSS_TYPE:
+                draw_polygon(_build_rotated_points([Vector2(0.0, -radius * 1.02), Vector2(radius * 1.18, -radius * 0.34), Vector2(radius * 1.08, radius * 0.56), Vector2(0.0, radius * 0.92), Vector2(-radius * 1.08, radius * 0.56), Vector2(-radius * 1.18, -radius * 0.34)], rotation, pos), [Color(0.5, 0.18, 0.24, 1.0)])
+                draw_circle(pos, radius * 0.22, Color(0.98, 0.84, 0.58, 1.0))
+                draw_circle(pos + Vector2.RIGHT.rotated(rotation) * radius * 0.55, radius * 0.14, Color(1.0, 0.42, 0.32, 1.0))
             "carrier":
                 draw_polygon(_build_rotated_points([Vector2(0.0, -radius * 0.7), Vector2(radius * 1.4, -radius * 0.18), Vector2(radius * 1.08, radius * 0.54), Vector2(0.0, radius * 0.9), Vector2(-radius * 1.08, radius * 0.54), Vector2(-radius * 1.4, -radius * 0.18)], rotation, pos), [Color(0.72, 0.31, 0.26, 1.0)])
                 draw_circle(pos, radius * 0.34, Color(0.96, 0.8, 0.54, 1.0))
@@ -2555,6 +2956,7 @@ func _launch_nuke() -> void:
 func _process_salvage_pickups(delta: float) -> void:
     var collectors: Array[Vector2] = [aim_cursor_screen_pos]
     collectors.append_array(_get_drone_positions())
+    collectors.append_array(_get_collector_bot_positions())
     for pickup_index in range(salvage_pickups.size() - 1, -1, -1):
         var pickup: Dictionary = salvage_pickups[pickup_index]
         pickup["age"] = float(pickup.get("age", 0.0)) + delta
@@ -2568,7 +2970,8 @@ func _process_salvage_pickups(delta: float) -> void:
                 nearest_distance = dist
                 nearest_collector = collector
         if nearest_distance <= pickup_radius * 3.0:
-            vel += (nearest_collector - pos).normalized() * 420.0 * delta
+            var collector_speed_mult := _get_power_multiplier("scrap_collection")
+            vel += (nearest_collector - pos).normalized() * (420.0 + float(collector_bot_count) * collector_bot_speed * 0.2) * collector_speed_mult * delta
         vel *= 0.94
         pos += vel * delta
         pickup["vel"] = vel
@@ -2679,6 +3082,10 @@ func _ensure_support_arrays() -> void:
         tentacle_cooldowns.append(rng.randf_range(0.08, tentacle_attack_cooldown))
     while tentacle_cooldowns.size() > tentacle_count:
         tentacle_cooldowns.remove_at(tentacle_cooldowns.size() - 1)
+    while helper_fire_timers.size() < helper_drone_count:
+        helper_fire_timers.append(rng.randf_range(0.08, helper_drone_fire_interval))
+    while helper_fire_timers.size() > helper_drone_count:
+        helper_fire_timers.remove_at(helper_fire_timers.size() - 1)
 
 func _get_tower_positions() -> Array[Vector2]:
     var positions: Array[Vector2] = []
@@ -2695,6 +3102,166 @@ func _get_drone_positions() -> Array[Vector2]:
         var angle: float = support_time * 1.5 + float(drone_index) * TAU / max(float(drone_count), 1.0)
         positions.append(base_pos + Vector2(cos(angle), sin(angle) * 0.55) * (BASE_RADIUS + 52.0))
     return positions
+
+func _get_helper_drone_positions() -> Array[Vector2]:
+    var positions: Array[Vector2] = []
+    var base_pos := _get_base_position() + _get_base_visual_offset()
+    for helper_index in range(helper_drone_count):
+        var angle: float = support_time * 0.85 + float(helper_index) * TAU / max(float(helper_drone_count), 1.0)
+        positions.append(base_pos + Vector2(cos(angle), sin(angle) * 0.72) * (BASE_RADIUS + 110.0))
+    return positions
+
+func _get_collector_bot_positions() -> Array[Vector2]:
+    var positions: Array[Vector2] = []
+    var base_pos := _get_base_position() + _get_base_visual_offset()
+    for collector_index in range(collector_bot_count):
+        var angle: float = -support_time * 0.7 + float(collector_index) * TAU / max(float(collector_bot_count), 1.0)
+        positions.append(base_pos + Vector2(cos(angle), sin(angle) * 0.4) * (BASE_RADIUS + 88.0))
+    return positions
+
+func _make_temporary_turret() -> Dictionary:
+    var positions: Array[Vector2] = _get_tower_positions()
+    var ring_index: int = temporary_turrets.size() % maxi(positions.size(), 4)
+    var angle: float = lerpf(-0.6, -PI + 0.6, float(ring_index + 1) / float(maxi(temporary_turret_limit, 1) + 1))
+    var pos := _get_base_position() + Vector2(cos(angle), sin(angle)) * (BASE_RADIUS + 84.0)
+    return {"pos": pos, "age": 0.0, "cooldown": rng.randf_range(0.08, temporary_turret_fire_interval), "health": temporary_turret_health, "max_health": temporary_turret_health}
+
+func _make_temporary_shield() -> Dictionary:
+    var angle: float = lerpf(-0.55, -PI + 0.55, float(temporary_shields.size() + 1) / float(maxi(temporary_shield_limit, 1) + 1))
+    var pos := _get_base_position() + Vector2(cos(angle), sin(angle)) * (BASE_RADIUS + 46.0)
+    return {"pos": pos, "age": 0.0, "health": temporary_shield_health, "max_health": temporary_shield_health, "shield": temporary_shield_capacity}
+
+func _get_power_multiplier(slot_key: String) -> float:
+    return max(POWER_WHEEL_FUNCTIONAL_MIN, float(power_multipliers.get(slot_key, 1.0)))
+
+func _recalculate_power_distribution() -> void:
+    var slot_count: int = power_slot_order.size()
+    if slot_count <= 0:
+        return
+    var weights: Array[float] = []
+    var total_weight := 0.0
+    for slot_index in range(slot_count):
+        var angle: float = -PI * 0.5 + TAU * float(slot_index) / float(slot_count)
+        var direction := Vector2(cos(angle), sin(angle))
+        var weight: float = clampf(1.0 + power_bias.dot(direction) * 2.0, 0.0, POWER_WHEEL_MAX)
+        weights.append(weight)
+        total_weight += weight
+    if total_weight <= 0.0:
+        total_weight = float(slot_count)
+        for slot_index in range(slot_count):
+            weights[slot_index] = 1.0
+    power_multipliers.clear()
+    power_display_values.clear()
+    for slot_index in range(slot_count):
+        var normalized: float = weights[slot_index] * float(slot_count) / total_weight
+        var slot_key: String = power_slot_order[slot_index]
+        power_display_values[slot_key] = clampf(normalized, POWER_WHEEL_DISPLAY_MIN, POWER_WHEEL_MAX)
+        power_multipliers[slot_key] = max(POWER_WHEEL_FUNCTIONAL_MIN, normalized)
+    _refresh_power_slot_buttons()
+
+func _update_power_wheel_input(delta: float) -> void:
+    var input_dir := Vector2.ZERO
+    input_dir.x = Input.get_action_strength("right") - Input.get_action_strength("left")
+    input_dir.y = Input.get_action_strength("down") - Input.get_action_strength("up")
+    if input_dir.length_squared() > 0.0:
+        power_bias += input_dir.normalized() * POWER_WHEEL_INPUT_SPEED * delta
+    if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+        var viewport_center := get_viewport_rect().size * Vector2(0.5, 0.5)
+        var delta_vec := (get_global_mouse_position() - viewport_center) / max(POWER_WHEEL_RADIUS, 1.0)
+        power_bias = delta_vec.clamp(Vector2.ONE * -1.0, Vector2.ONE)
+    power_bias = power_bias.limit_length(1.0)
+    _recalculate_power_distribution()
+
+func _toggle_power_customize_panel() -> void:
+    if power_customize_panel == null:
+        return
+    power_customize_panel.visible = not power_customize_panel.visible
+    _refresh_power_slot_buttons()
+
+func _on_power_slot_button_pressed(slot_index: int) -> void:
+    if slot_index < 0 or slot_index >= power_slot_order.size():
+        return
+    var current_key: String = power_slot_order[slot_index]
+    var current_pos: int = POWER_SLOT_KEYS.find(current_key)
+    var next_key: String = POWER_SLOT_KEYS[(current_pos + 1) % POWER_SLOT_KEYS.size()]
+    var swap_index: int = power_slot_order.find(next_key)
+    if swap_index != -1:
+        power_slot_order[swap_index] = current_key
+    power_slot_order[slot_index] = next_key
+    _recalculate_power_distribution()
+
+func _refresh_power_slot_buttons() -> void:
+    for slot_index in range(power_slot_buttons.size()):
+        var button := power_slot_buttons[slot_index]
+        if button == null:
+            continue
+        var key: String = power_slot_order[slot_index]
+        button.text = "Slot %d: %s" % [slot_index + 1, key.replace("_", " ").capitalize()]
+
+func _get_effective_fire_interval() -> float:
+    return fire_interval / max(_get_power_multiplier("guns"), 0.2)
+
+func _get_effective_shield_max() -> float:
+    return shield_max * _get_power_multiplier("shields")
+
+func _get_effective_shield_regen() -> float:
+    return shield_regen_rate * _get_power_multiplier("shields")
+
+func _get_effective_tower_range() -> float:
+    return tower_range * _get_power_multiplier("towers")
+
+func _get_effective_tower_fire_interval() -> float:
+    return tower_fire_interval / max(_get_power_multiplier("towers"), 0.2)
+
+func _get_effective_tower_damage() -> float:
+    return tower_damage * _get_power_multiplier("towers")
+
+func _get_effective_drone_range() -> float:
+    return drone_range * _get_power_multiplier("helpers")
+
+func _get_effective_drone_fire_interval() -> float:
+    return drone_fire_interval / max(_get_power_multiplier("helpers"), 0.2)
+
+func _get_effective_drone_damage() -> float:
+    return drone_damage * _get_power_multiplier("helpers")
+
+func _get_effective_tentacle_range() -> float:
+    return tentacle_range * _get_power_multiplier("tentacles")
+
+func _get_effective_tentacle_cooldown() -> float:
+    return tentacle_attack_cooldown / max(_get_power_multiplier("tentacles"), 0.2)
+
+func _get_effective_tentacle_damage() -> float:
+    return tentacle_damage * _get_power_multiplier("tentacles")
+
+func _get_effective_scrap_generation_per_second() -> float:
+    return scrap_generation_per_second * _get_power_multiplier("scrap_gain")
+
+func _get_scaled_nuke_regen_gain() -> int:
+    return maxi(1, int(round(float(nuke_regen_per_wave) * _get_power_multiplier("nukes"))))
+
+func _auto_launch_nuke() -> void:
+    if remaining_nukes <= 0 or enemies.is_empty():
+        return
+    var target_pos := _get_highest_threat_enemy_position()
+    if target_pos == Vector2.ZERO:
+        return
+    remaining_nukes -= 1
+    nukes_launched += 1
+    nukes.append({"pos": _get_base_position(), "target": target_pos, "vel": (target_pos - _get_base_position()).normalized() * NUKE_SPEED})
+
+func _get_highest_threat_enemy_position() -> Vector2:
+    var best_pos := Vector2.ZERO
+    var best_threat := -INF
+    var base_pos := _get_base_position()
+    for enemy in enemies:
+        var enemy_pos: Vector2 = enemy.get("pos", Vector2.ZERO)
+        var threat: float = float(enemy.get("health", 0.0)) + float(enemy.get("contact_damage", 0.0)) * 4.0
+        threat += max(0.0, 800.0 - enemy_pos.distance_to(base_pos)) * 0.15
+        if threat > best_threat:
+            best_threat = threat
+            best_pos = enemy_pos
+    return best_pos
 
 func _get_tentacle_anchor_positions() -> Array[Vector2]:
     var positions: Array[Vector2] = []

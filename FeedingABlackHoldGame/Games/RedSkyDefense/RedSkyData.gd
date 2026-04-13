@@ -77,6 +77,27 @@ const BASE_RUN_CONFIG := {
 	"tentacle_range": 168.0,
 	"tentacle_cooldown": 1.05,
 	"tentacle_slow": 0.18,
+	"construction_drone_count": 0,
+	"construction_build_rate": 1.0,
+	"temporary_turret_limit": 0,
+	"temporary_turret_damage": 11.0,
+	"temporary_turret_range": 210.0,
+	"temporary_turret_fire_interval": 1.05,
+	"temporary_turret_duration": 16.0,
+	"temporary_turret_health": 58.0,
+	"temporary_shield_limit": 0,
+	"temporary_shield_capacity": 54.0,
+	"temporary_shield_regen": 4.0,
+	"temporary_shield_duration": 16.0,
+	"temporary_shield_health": 54.0,
+	"helper_drone_count": 0,
+	"helper_drone_damage": 10.0,
+	"helper_drone_range": 260.0,
+	"helper_drone_fire_interval": 0.76,
+	"helper_drone_speed": 224.0,
+	"collector_bot_count": 0,
+	"collector_bot_speed": 176.0,
+	"scrap_generation_per_second": 0.0,
 	"projectile_redirect_chance": 0.0,
 	"upgrade_power_multiplier": 1.0,
 	"enemy_count_scale": 1.0,
@@ -91,10 +112,15 @@ const BASE_RUN_CONFIG := {
 	"offer_quality_bonus": 0.0,
 	"offer_roll_bonus": 0,
 	"level_up_choice_count": 3,
+	"max_level_up_choice_count": 9,
+	"max_wave_upgrade_choices": 18,
 	"rare_offer_unlocks": 0,
 	"unlock_towers": false,
 	"unlock_drones": false,
 	"unlock_tentacles": false,
+	"unlock_construction": false,
+	"unlock_helpers": false,
+	"unlock_collectors": false,
 	"unlock_reflectors": false,
 	"unlock_pierce": false,
 	"unlock_blast": false,
@@ -692,6 +718,90 @@ const META_UPGRADES: Array[Dictionary] = [
 		"cost_scale": 1.64,
 		"max_tier": 5
 	},
+	{
+		"id": "construction_bay",
+		"label": "Construction Bay",
+		"summary": "Deploy invulnerable construction drones that assemble temporary defenses during combat.",
+		"icon": ICON_PREFIX + "construction_bay",
+		"act": 5,
+		"cell": Vector2(6, 7),
+		"dependency": "tower_fabrication",
+		"branch": 9,
+		"step": 1,
+		"base_cost": 170,
+		"cost_scale": 1.56,
+		"max_tier": 5
+	},
+	{
+		"id": "field_fabricators",
+		"label": "Field Fabricators",
+		"summary": "Construction drones build faster and keep temporary defenses online longer.",
+		"icon": ICON_PREFIX + "field_fabricators",
+		"act": 5,
+		"cell": Vector2(7, 8),
+		"dependency": "construction_bay",
+		"branch": 9,
+		"step": 2,
+		"base_cost": 230,
+		"cost_scale": 1.60,
+		"max_tier": 5
+	},
+	{
+		"id": "escort_wing",
+		"label": "Escort Wing",
+		"summary": "Unlock roaming helper drones that chase threats beyond the tower ring.",
+		"icon": ICON_PREFIX + "escort_wing",
+		"act": 5,
+		"cell": Vector2(8, 9),
+		"dependency": "drone_hangar",
+		"branch": 9,
+		"step": 3,
+		"base_cost": 270,
+		"cost_scale": 1.62,
+		"max_tier": 5
+	},
+	{
+		"id": "escort_doctrine",
+		"label": "Escort Doctrine",
+		"summary": "Helper drones hit harder, reach farther, and reposition faster.",
+		"icon": ICON_PREFIX + "escort_doctrine",
+		"act": 5,
+		"cell": Vector2(9, 10),
+		"dependency": "escort_wing",
+		"branch": 9,
+		"step": 4,
+		"base_cost": 325,
+		"cost_scale": 1.64,
+		"max_tier": 5
+	},
+	{
+		"id": "scrap_foundry",
+		"label": "Scrap Foundry",
+		"summary": "Generate passive scrap during waves and unlock collector bots for battlefield cleanup.",
+		"icon": ICON_PREFIX + "scrap_foundry",
+		"act": 5,
+		"cell": Vector2(10, 11),
+		"dependency": "salvage_bays",
+		"branch": 9,
+		"step": 5,
+		"base_cost": 380,
+		"cost_scale": 1.66,
+		"max_tier": 5
+	},
+	{
+		"id": "choice_matrix",
+		"label": "Choice Matrix",
+		"summary": "Raise the wave-upgrade choice cap all the way to nine and improve battlefield flexibility.",
+		"icon": ICON_PREFIX + "choice_matrix",
+		"act": 5,
+		"cell": Vector2(-8, -5),
+		"dependency": "tactical_briefing",
+		"branch": 10,
+		"step": 1,
+		"base_cost": 360,
+		"cost_scale": 1.68,
+		"max_tier": 3
+	},
 ]
 
 const WAVE_UPGRADES: Array[Dictionary] = [
@@ -1230,6 +1340,127 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"requires": ["rare"],
 		"effects": {"add": {}, "mult": {"apex_enemy_health_scale": 0.8, "apex_enemy_damage_scale": 0.88}}
 	},
+	{
+		"id": "constructor_drone",
+		"label": "Constructor Drone",
+		"summary": "Add one construction drone to keep building temporary defenses.",
+		"weight": 0.72,
+		"rarity": 1,
+		"max_stacks": 8,
+		"min_wave": 3,
+		"requires": ["construction"],
+		"effects": {"add": {"construction_drone_count": 1.0}, "mult": {}}
+	},
+	{
+		"id": "field_turret_blueprints",
+		"label": "Field Turret Blueprints",
+		"summary": "Let constructors assemble another temporary turret and improve its damage.",
+		"weight": 0.68,
+		"rarity": 1,
+		"max_stacks": 8,
+		"min_wave": 4,
+		"requires": ["construction"],
+		"effects": {"add": {"temporary_turret_limit": 1.0}, "mult": {"temporary_turret_damage": 1.12}}
+	},
+	{
+		"id": "shield_emitter_blueprints",
+		"label": "Shield Emitter Blueprints",
+		"summary": "Let constructors assemble another temporary shield node and thicken its barrier.",
+		"weight": 0.68,
+		"rarity": 1,
+		"max_stacks": 8,
+		"min_wave": 4,
+		"requires": ["construction"],
+		"effects": {"add": {"temporary_shield_limit": 1.0, "temporary_shield_capacity": 16.0}, "mult": {}}
+	},
+	{
+		"id": "rapid_fabrication",
+		"label": "Rapid Fabrication",
+		"summary": "Construction drones work faster and temporary defenses last longer.",
+		"weight": 0.62,
+		"rarity": 2,
+		"max_stacks": 8,
+		"min_wave": 5,
+		"requires": ["construction", "rare"],
+		"effects": {"add": {"temporary_turret_duration": 2.0, "temporary_shield_duration": 2.0}, "mult": {"construction_build_rate": 1.14}}
+	},
+	{
+		"id": "escort_drone",
+		"label": "Escort Drone",
+		"summary": "Add one roaming helper drone that hunts pressure away from the base.",
+		"weight": 0.72,
+		"rarity": 1,
+		"max_stacks": 8,
+		"min_wave": 3,
+		"requires": ["helper"],
+		"effects": {"add": {"helper_drone_count": 1.0}, "mult": {}}
+	},
+	{
+		"id": "escort_targeting",
+		"label": "Escort Targeting",
+		"summary": "Helper drones hit harder and cover more space.",
+		"weight": 0.66,
+		"rarity": 1,
+		"max_stacks": 10,
+		"min_wave": 4,
+		"requires": ["helper"],
+		"effects": {"add": {"helper_drone_range": 24.0}, "mult": {"helper_drone_damage": 1.14}}
+	},
+	{
+		"id": "escort_thrusters",
+		"label": "Escort Thrusters",
+		"summary": "Helper drones move and cycle faster.",
+		"weight": 0.66,
+		"rarity": 1,
+		"max_stacks": 10,
+		"min_wave": 4,
+		"requires": ["helper"],
+		"effects": {"add": {}, "mult": {"helper_drone_speed": 1.14, "helper_drone_fire_rate": 1.10}}
+	},
+	{
+		"id": "collector_bots",
+		"label": "Collector Bots",
+		"summary": "Deploy a scrap collector bot to scoop value that would otherwise drift away.",
+		"weight": 0.72,
+		"rarity": 1,
+		"max_stacks": 8,
+		"min_wave": 3,
+		"requires": ["collector"],
+		"effects": {"add": {"collector_bot_count": 1.0}, "mult": {}}
+	},
+	{
+		"id": "collector_thrusters",
+		"label": "Collector Thrusters",
+		"summary": "Collector bots move faster and vacuum pickups from farther out.",
+		"weight": 0.66,
+		"rarity": 1,
+		"max_stacks": 10,
+		"min_wave": 4,
+		"requires": ["collector"],
+		"effects": {"add": {"pickup_radius": 14.0}, "mult": {"collector_bot_speed": 1.16}}
+	},
+	{
+		"id": "scrap_printers",
+		"label": "Scrap Printers",
+		"summary": "Generate passive scrap while the line holds.",
+		"weight": 0.58,
+		"rarity": 2,
+		"max_stacks": 10,
+		"min_wave": 5,
+		"requires": ["collector", "rare"],
+		"effects": {"add": {"scrap_generation_per_second": 1.4}, "mult": {}}
+	},
+	{
+		"id": "choice_array",
+		"label": "Choice Array",
+		"summary": "Open two more future wave-upgrade choices.",
+		"weight": 0.42,
+		"rarity": 2,
+		"max_stacks": 6,
+		"min_wave": 6,
+		"requires": ["rare"],
+		"effects": {"add": {"level_up_choice_count": 2.0}, "mult": {}}
+	},
 ]
 
 static func get_base_run_config() -> Dictionary:
@@ -1318,14 +1549,20 @@ static func build_meta_bonuses(meta_levels: Dictionary) -> Dictionary:
 	var pierce_level: int = int(levels.get("piercing_rifling", 0))
 	var blast_level: int = int(levels.get("blast_chambers", 0))
 	var reflector_level: int = int(levels.get("reflector_grid", 0))
+	var construction_level: int = int(levels.get("construction_bay", 0))
+	var helper_level: int = int(levels.get("escort_wing", 0))
+	var collector_level: int = int(levels.get("scrap_foundry", 0))
 
 	bonuses["unlock_towers"] = tower_level > 0
 	bonuses["unlock_drones"] = drone_level > 0
 	bonuses["unlock_tentacles"] = tentacle_level > 0
+	bonuses["unlock_construction"] = construction_level > 0
+	bonuses["unlock_helpers"] = helper_level > 0
+	bonuses["unlock_collectors"] = collector_level > 0
 	bonuses["unlock_reflectors"] = reflector_level > 0
 	bonuses["unlock_pierce"] = pierce_level > 0
 	bonuses["unlock_blast"] = blast_level > 0
-	bonuses["unlock_salvage"] = magnet_level > 0 or int(levels.get("salvage_bays", 0)) > 0
+	bonuses["unlock_salvage"] = magnet_level > 0 or int(levels.get("salvage_bays", 0)) > 0 or collector_level > 0
 	bonuses["unlock_rare"] = signal_level > 0
 	bonuses["rare_offer_unlocks"] = signal_level
 
@@ -1431,6 +1668,27 @@ static func build_meta_bonuses(meta_levels: Dictionary) -> Dictionary:
 				bonuses["level_up_choice_count"] = min(6, int(bonuses.get("level_up_choice_count", 3)) + level)
 			"overclock_protocol":
 				bonuses["upgrade_power_multiplier"] *= 1.0 + 0.08 * float(level)
+			"construction_bay":
+				bonuses["construction_drone_count"] += level
+				bonuses["temporary_turret_limit"] += int(ceil(float(level) * 0.5))
+				bonuses["temporary_shield_limit"] += int(ceil(float(level) * 0.5))
+			"field_fabricators":
+				bonuses["construction_build_rate"] *= 1.0 + 0.12 * float(level)
+				bonuses["temporary_turret_duration"] += 2.0 * float(level)
+				bonuses["temporary_shield_duration"] += 2.0 * float(level)
+			"escort_wing":
+				bonuses["helper_drone_count"] += level
+			"escort_doctrine":
+				bonuses["helper_drone_damage"] *= 1.0 + 0.14 * float(level)
+				bonuses["helper_drone_range"] += 24.0 * float(level)
+				bonuses["helper_drone_speed"] *= 1.0 + 0.08 * float(level)
+			"scrap_foundry":
+				bonuses["collector_bot_count"] += level
+				bonuses["collector_bot_speed"] *= 1.0 + 0.08 * float(level)
+				bonuses["scrap_generation_per_second"] += 0.8 * float(level)
+			"choice_matrix":
+				bonuses["level_up_choice_count"] = min(9, int(bonuses.get("level_up_choice_count", 3)) + level)
+				bonuses["max_level_up_choice_count"] = 9
 
 	var start_nukes: int = int(bonuses.get("starting_nukes", 1))
 	var cap: int = int(bonuses.get("nuke_max", 5))
@@ -1466,6 +1724,15 @@ static func can_offer_wave_upgrade(
 					return false
 			"tentacle":
 				if not bool(meta_bonuses.get("unlock_tentacles", false)):
+					return false
+			"construction":
+				if not bool(meta_bonuses.get("unlock_construction", false)):
+					return false
+			"helper":
+				if not bool(meta_bonuses.get("unlock_helpers", false)):
+					return false
+			"collector":
+				if not bool(meta_bonuses.get("unlock_collectors", false)):
 					return false
 			"reflector":
 				if not bool(meta_bonuses.get("unlock_reflectors", false)):
@@ -1700,6 +1967,46 @@ static func get_wave_upgrade_button_text(upgrade_id: String, upgrade_power_multi
 				_format_percent_from_mult(scaled_effects["mult"].get("apex_enemy_health_scale", 1.0)),
 				_format_percent_from_mult(scaled_effects["mult"].get("apex_enemy_damage_scale", 1.0))
 			]
+		"constructor_drone":
+			subtitle = TranslationServer.translate("Deploy +%s %s") % _format_count_with_word(scaled_effects["add"].get("construction_drone_count", 1.0), "constructor")
+		"field_turret_blueprints":
+			subtitle = TranslationServer.translate("Temp turret cap +%s, damage +%s%%") % [
+				_format_amount(scaled_effects["add"].get("temporary_turret_limit", 1.0), 0),
+				_format_percent_from_mult(scaled_effects["mult"].get("temporary_turret_damage", 1.0))
+			]
+		"shield_emitter_blueprints":
+			subtitle = TranslationServer.translate("Temp shield cap +%s, capacity +%s") % [
+				_format_amount(scaled_effects["add"].get("temporary_shield_limit", 1.0), 0),
+				_format_amount(scaled_effects["add"].get("temporary_shield_capacity", 0.0), 0)
+			]
+		"rapid_fabrication":
+			subtitle = TranslationServer.translate("Build speed +%s%%, duration +%ss") % [
+				_format_percent_from_mult(scaled_effects["mult"].get("construction_build_rate", 1.0)),
+				_format_amount(scaled_effects["add"].get("temporary_turret_duration", 0.0), 1)
+			]
+		"escort_drone":
+			subtitle = TranslationServer.translate("Deploy +%s %s") % _format_count_with_word(scaled_effects["add"].get("helper_drone_count", 1.0), "escort")
+		"escort_targeting":
+			subtitle = TranslationServer.translate("Helper range +%s, damage +%s%%") % [
+				_format_amount(scaled_effects["add"].get("helper_drone_range", 0.0), 0),
+				_format_percent_from_mult(scaled_effects["mult"].get("helper_drone_damage", 1.0))
+			]
+		"escort_thrusters":
+			subtitle = TranslationServer.translate("Helper speed +%s%%, fire rate +%s%%") % [
+				_format_percent_from_mult(scaled_effects["mult"].get("helper_drone_speed", 1.0)),
+				_format_percent_from_mult(scaled_effects["mult"].get("helper_drone_fire_rate", 1.0))
+			]
+		"collector_bots":
+			subtitle = TranslationServer.translate("Deploy +%s %s") % _format_count_with_word(scaled_effects["add"].get("collector_bot_count", 1.0), "collector")
+		"collector_thrusters":
+			subtitle = TranslationServer.translate("Collector speed +%s%%, pickup radius +%s") % [
+				_format_percent_from_mult(scaled_effects["mult"].get("collector_bot_speed", 1.0)),
+				_format_amount(scaled_effects["add"].get("pickup_radius", 0.0), 0)
+			]
+		"scrap_printers":
+			subtitle = TranslationServer.translate("Passive scrap +%s/s") % _format_amount(scaled_effects["add"].get("scrap_generation_per_second", 0.0), 1)
+		"choice_array":
+			subtitle = TranslationServer.translate("Future choice count +%s") % _format_amount(scaled_effects["add"].get("level_up_choice_count", 0.0), 0)
 		_:
 			subtitle = TranslationServer.translate(str(def.get("summary", "Battlefield bonus")))
 	var summary: String = TranslationServer.translate(str(def.get("summary", ""))).strip_edges()
@@ -1741,6 +2048,11 @@ static func _should_ignore_power_scaling_for_add(key: String) -> bool:
 		"tower_count",
 		"drone_count",
 		"tentacle_count",
+		"construction_drone_count",
+		"temporary_turret_limit",
+		"temporary_shield_limit",
+		"helper_drone_count",
+		"collector_bot_count",
 		"level_up_choice_count"
 	]
 
@@ -1752,7 +2064,12 @@ static func _should_round_up_additive_effect(key: String) -> bool:
 		"bullet_pierce",
 		"tower_count",
 		"drone_count",
-		"tentacle_count"
+		"tentacle_count",
+		"construction_drone_count",
+		"temporary_turret_limit",
+		"temporary_shield_limit",
+		"helper_drone_count",
+		"collector_bot_count"
 	]
 
 static func _should_ignore_power_scaling_for_mult(key: String) -> bool:

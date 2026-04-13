@@ -17,9 +17,9 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 config/name="Deepcore"
 run/main_scene="res://Core/Boot/AppBootstrap.tscn"
 config/use_custom_user_dir=true
-config/custom_user_dir_name="A Game About Feeding A Black Hole"
+config/custom_user_dir_name="Beep2Bleep Incremental"
 config/features=PackedStringArray("4.6", "Forward Plus")
-run/max_fps=144
+run/max_fps=60
 boot_splash/bg_color=Color(0.3234, 0.3234, 0.33, 1)
 boot_splash/show_image=false
 config/icon="res://Art/game_icon.png"
@@ -55,7 +55,7 @@ mouse_cursor/custom_image="uid://dn32a26n8jhcq"
 
 [dotnet]
 
-project/assembly_name="A Game About Feeding A Black Hole"
+project/assembly_name="Beep2Bleep Incremental"
 
 [editor_overrides]
 
@@ -78,7 +78,7 @@ Build="v1.3.1"
 Demo=true
 DemoWishlistUrl="https://store.steampowered.com/app/4519820/Vanguard__Idle_Auto_Battler/"
 ActiveGame="mining"
-HighLevelMode="mining"
+HighLevelMode="all"
 StartScreen="menu"
 mining_demo_max_group=3
 red_sky_demo_max_meta_step=3

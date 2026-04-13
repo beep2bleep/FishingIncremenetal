@@ -230,6 +230,8 @@ func _resolve_steam_app_id() -> int:
     return STEAM_VANGUARD_APP_ID
 
 func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
+    if Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active():
+        return []
     if Util.is_mining_game_active():
         if _is_demo_build():
             return [
