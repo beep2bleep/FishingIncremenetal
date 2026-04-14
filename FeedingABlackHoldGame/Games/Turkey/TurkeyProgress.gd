@@ -2,6 +2,7 @@ extends RefCounted
 class_name TurkeyProgress
 
 const TURKEY_DATA := preload("res://Games/Turkey/TurkeyData.gd")
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const SAVE_PATH := "user://turkey_mode_save_v1.json"
 
 const DEFAULT_DATA := {
@@ -68,6 +69,8 @@ static func apply_tree_purchase(key: String, level: int, wallet_after_purchase: 
 	upgrades[key] = max(1, level)
 	data["meta_upgrades"] = upgrades
 	data["wallet"] = max(0, wallet_after_purchase)
+	if key == "league_pass":
+		CROSS_GAME_BONUSES.award_turkey_league_pass_level(int(upgrades.get("league_pass", 0)))
 	save_data(data)
 
 static func apply_tree_sale(key: String, new_level: int, wallet_after_sale: int) -> void:

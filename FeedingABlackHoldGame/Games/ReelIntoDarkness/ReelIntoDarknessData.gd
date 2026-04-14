@@ -1,6 +1,7 @@
 extends RefCounted
 class_name ReelIntoDarknessData
 
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const MODE_TITLE := "Reel Into Darkness"
 const STARTING_WALLET := 0
 const ICON_PREFIX := "reel://"
@@ -325,6 +326,9 @@ const META_UPGRADES: Array[Dictionary] = [
 static func get_meta_upgrade_catalog() -> Array[Dictionary]:
     return META_UPGRADES.duplicate(true)
 
+static func should_lock_meta_upgrade_in_demo(entry: Dictionary) -> bool:
+    return int(entry.get("step", 1)) > 3
+
 static func get_fish_catalog() -> Array[Dictionary]:
     return FISH_CATALOG.duplicate(true)
 
@@ -532,6 +536,9 @@ static func get_run_config(upgrades: Dictionary = {}) -> Dictionary:
     )
     config["automation_seine_tier"] = seine_deployer
     config["automation_pot_tier"] = crab_pot_rack
+    var cross_mult: float = CROSS_GAME_BONUSES.get_target_bonus_multiplier(Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
+    config["fish_drain_multiplier"] *= cross_mult
+    config["reward_multiplier"] *= cross_mult
     return config
 
 ## Depth-related meta keys in cumulative order (used for optional easier run caps).

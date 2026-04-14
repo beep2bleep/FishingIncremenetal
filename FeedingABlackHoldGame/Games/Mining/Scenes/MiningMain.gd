@@ -4,6 +4,7 @@ class_name MiningMain
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const MINING_BALANCE = preload("res://Games/Mining/MiningBalance.gd")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const RUN_REASON_TIMER_EXPIRED := "MINING_REASON_TIMER_EXPIRED"
 const RUN_REASON_DRILL_DEPLETED := "MINING_REASON_DRILL_DEPLETED"
@@ -1184,11 +1185,12 @@ func _build_run_results(reason_key: String) -> Dictionary:
     var money_breakdown: Array[String] = []
     var money_breakdown_chart: Array[Dictionary] = []
     var total_money: int = 0
+    var cross_mult: float = CROSS_GAME_BONUSES.get_target_bonus_multiplier(Util.ACTIVE_GAME_MINING)
     for material_id_variant in banked_counts.keys():
         var material_id: String = String(material_id_variant)
         var count: int = int(banked_counts[material_id])
         var material: Dictionary = _get_material_by_id(material_id)
-        var value_each: int = int(round(int(material.get("value", 1)) * _get_value_multiplier()))
+        var value_each: int = int(round(int(material.get("value", 1)) * _get_value_multiplier() * cross_mult))
         var subtotal: int = count * value_each
         total_money += subtotal
         money_breakdown.append(_trf("MINING_SUMMARY_TEXT_CARGO_LINE_CASH", [String(material.get("name", material_id)), count, subtotal]))
@@ -2477,7 +2479,7 @@ func _get_dirt_drag_multiplier() -> float:
     return MINING_BALANCE.get_dirt_drag_multiplier(active_depth_level, _get_upgrade_levels())
 
 func _get_drill_dps() -> float:
-    return MINING_BALANCE.get_drill_dps(_get_upgrade_levels())
+    return MINING_BALANCE.get_drill_dps(_get_upgrade_levels()) * CROSS_GAME_BONUSES.get_target_bonus_multiplier(Util.ACTIVE_GAME_MINING)
 
 func _get_drill_health_max() -> float:
     return MINING_BALANCE.get_drill_health_max(_get_upgrade_levels(), _get_level_bonus_totals())

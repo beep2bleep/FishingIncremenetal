@@ -5,6 +5,7 @@ const COIN_SCENE: PackedScene = preload("res://Fishing/CoinPickup.tscn")
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const VANGUARD_CRT_SHADER: Shader = preload("res://Games/Mining/UI/MiningCrt.gdshader")
 const VANGUARD_CRT_LEVEL_MAX := 11
 const VANGUARD_CRT_CANVAS_LAYER := 90
@@ -4521,6 +4522,9 @@ func _rebuild_battle_mods() -> void:
     battle_mods["power_cap_mult"] = 1.0 + (float(battle_mods.get("power_cap_mult", 1.0)) - 1.0) * float(UPGRADE_EFFECT_TUNE["power_cap"])
     battle_mods["armor_bonus"] = float(battle_mods["armor_bonus"]) * float(UPGRADE_EFFECT_TUNE["armor"])
     battle_mods["enemy_count_mult"] = 1.0 + (float(battle_mods["enemy_count_mult"]) - 1.0) * float(UPGRADE_EFFECT_TUNE["enemy_count"])
+    var cross_mult: float = CROSS_GAME_BONUSES.get_target_bonus_multiplier(Util.ACTIVE_GAME_VANGUARD)
+    battle_mods["damage_mult_all"] = float(battle_mods["damage_mult_all"]) * cross_mult
+    battle_mods["coin_mult"] = float(battle_mods["coin_mult"]) * cross_mult
 
     var active_cost_reduction: float = 1.0 - float(battle_mods["active_cost_mult"])
     battle_mods["active_cost_mult"] = 1.0 - active_cost_reduction * float(UPGRADE_EFFECT_TUNE["active_cost"])
@@ -5005,6 +5009,7 @@ func _track_first_boss_clear_event(level: int) -> void:
         return
     var app_clock_seconds: float = float(Time.get_ticks_msec()) / 1000.0
     SaveHandler.fishing_first_boss_clear_levels[level_key] = true
+    CROSS_GAME_BONUSES.award_vanguard_level_clear(level)
     _track_ga_event(
         "boss:first_clear:level_%d" % level,
         {

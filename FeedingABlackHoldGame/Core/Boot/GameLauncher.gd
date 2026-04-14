@@ -3,13 +3,16 @@ extends Control
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const STAR_TEXTURE: Texture2D = preload("res://Art/star_tiny.png")
 const BACKGROUND_PARTICLE_MATERIAL: Material = preload("res://Upgrade Tree Particles.tres")
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 
 const TITLE_TEXT_KEY := "MAIN MENU"
 const VANGUARD_BUTTON_TEXT := "VANGUARD"
-const MINING_BUTTON_TEXT := "MINING"
+const MINING_BUTTON_TEXT := "DEEPCORE"
 const RED_SKY_BUTTON_TEXT := "RED SKY DEFENSE"
 const TURKEY_BUTTON_TEXT := "TURKEY"
 const REEL_BUTTON_TEXT := "REEL INTO DARKNESS"
+const COMBINED_BUTTON_TEXT := "COMBINED MODE"
+const COMBINED_DEMO_LOCK_TEXT_KEY := "LOCKED_IN_DEMO_MODE"
 const LANGUAGE_BUTTON_WIDTH := 340.0
 const LANGUAGE_BUTTON_FONT_SIZE := 20
 const LANGUAGE_BUTTON_TITLE_FONT_SIZE := 26
@@ -56,6 +59,7 @@ const GAME_CARD_RESET_DURATION := 0.3
 @onready var red_sky_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/RedSkyButton") as Button
 @onready var turkey_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/TurkeyButton") as Button
 @onready var reel_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ReelButton") as Button
+@onready var combined_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/CombinedButton") as Button
 
 var settings_button: Button
 var settings_panel: PanelContainer
@@ -73,6 +77,8 @@ var language_button_selected_flag: TextureRect
 var language_button_selected_value_label: Label
 var language_button_preview_list: VBoxContainer
 var language_flag_cache: Dictionary = {}
+var currency_strip: HBoxContainer
+var currency_count_labels: Dictionary = {}
 var game_cards_grid: GridContainer
 var game_card_texture_cache: Dictionary = {}
 var background_particles_root: Node2D
@@ -105,6 +111,8 @@ func _ready() -> void:
         turkey_button.pressed.connect(_on_turkey_button_pressed)
     if reel_button != null and not reel_button.pressed.is_connected(_on_reel_button_pressed):
         reel_button.pressed.connect(_on_reel_button_pressed)
+    if combined_button != null and not combined_button.pressed.is_connected(_on_combined_button_pressed):
+        combined_button.pressed.connect(_on_combined_button_pressed)
 
     if vanguard_button != null:
         vanguard_button.grab_focus()
@@ -151,9 +159,17 @@ func _on_turkey_button_pressed() -> void:
 func _on_reel_button_pressed() -> void:
     _start_game(Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
 
+func _on_combined_button_pressed() -> void:
+    _start_game(Util.HIGH_LEVEL_MODE_ALL)
+
 func _start_game(game_id: String) -> void:
     _hide_settings_panel()
     _hide_language_panel()
+    if game_id == Util.HIGH_LEVEL_MODE_ALL:
+        Util.set_active_game_id(Util.ACTIVE_GAME_VANGUARD)
+        Util.set_high_level_mode_id(Util.HIGH_LEVEL_MODE_ALL)
+        SceneChanger.change_to_new_scene(Util.get_game_hub_scene_path(), null, 0.2)
+        return
     Util.set_active_game_id(game_id)
     Util.set_high_level_mode_id(Util.HIGH_LEVEL_MODE_ALL)
     if GameAnalytics != null and GameAnalytics.has_method("refresh_active_game_session"):
@@ -181,6 +197,8 @@ func _refresh_text() -> void:
     _refresh_game_card_text(red_sky_button, Util.ACTIVE_GAME_RED_SKY)
     _refresh_game_card_text(turkey_button, Util.ACTIVE_GAME_TURKEY)
     _refresh_game_card_text(reel_button, Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
+    _refresh_game_card_text(combined_button, Util.HIGH_LEVEL_MODE_ALL)
+    _refresh_currency_strip()
 
     if settings_button != null and is_instance_valid(settings_button):
         settings_button.text = tr("UI_SETTINGS")
@@ -297,13 +315,79 @@ func _setup_game_cards() -> void:
     game_cards_grid.add_theme_constant_override("v_separation", 18)
     root_vbox.add_child(game_cards_grid)
     root_vbox.move_child(game_cards_grid, root_vbox.get_children().find(subtitle_label) + 1)
+    _setup_currency_strip(root_vbox)
 
     _decorate_game_button(vanguard_button, Util.ACTIVE_GAME_VANGUARD)
     _decorate_game_button(mining_button, Util.ACTIVE_GAME_MINING)
     _decorate_game_button(red_sky_button, Util.ACTIVE_GAME_RED_SKY)
     _decorate_game_button(turkey_button, Util.ACTIVE_GAME_TURKEY)
     _decorate_game_button(reel_button, Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
+    _decorate_game_button(combined_button, Util.HIGH_LEVEL_MODE_ALL)
     _refresh_game_card_layout()
+
+func _setup_currency_strip(root_vbox: VBoxContainer) -> void:
+    if currency_strip != null and is_instance_valid(currency_strip):
+        return
+    currency_strip = HBoxContainer.new()
+    currency_strip.name = "CrossCurrencyStrip"
+    currency_strip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+    currency_strip.alignment = BoxContainer.ALIGNMENT_CENTER
+    currency_strip.add_theme_constant_override("separation", 12)
+    root_vbox.add_child(currency_strip)
+    root_vbox.move_child(currency_strip, root_vbox.get_children().find(subtitle_label) + 1)
+
+    for currency_id in CROSS_GAME_BONUSES.CURRENCY_ORDER:
+        var pill := PanelContainer.new()
+        pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        var pill_style := StyleBoxFlat.new()
+        var meta: Dictionary = CROSS_GAME_BONUSES.get_currency_metadata(currency_id)
+        pill_style.bg_color = Color(0.05, 0.07, 0.1, 0.9)
+        pill_style.border_color = Color(meta.get("color", Color.WHITE))
+        pill_style.border_width_left = 2
+        pill_style.border_width_top = 2
+        pill_style.border_width_right = 2
+        pill_style.border_width_bottom = 2
+        pill_style.corner_radius_top_left = 10
+        pill_style.corner_radius_top_right = 10
+        pill_style.corner_radius_bottom_left = 10
+        pill_style.corner_radius_bottom_right = 10
+        pill.add_theme_stylebox_override("panel", pill_style)
+        currency_strip.add_child(pill)
+
+        var margin := MarginContainer.new()
+        margin.add_theme_constant_override("margin_left", 8)
+        margin.add_theme_constant_override("margin_top", 6)
+        margin.add_theme_constant_override("margin_right", 10)
+        margin.add_theme_constant_override("margin_bottom", 6)
+        pill.add_child(margin)
+
+        var row := HBoxContainer.new()
+        row.add_theme_constant_override("separation", 6)
+        margin.add_child(row)
+
+        var icon := TextureRect.new()
+        icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        icon.custom_minimum_size = Vector2(26, 26)
+        icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        icon.texture = CROSS_GAME_BONUSES.get_currency_icon_texture(currency_id, 48)
+        row.add_child(icon)
+
+        var label := Label.new()
+        label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        label.add_theme_font_size_override("font_size", 22)
+        label.add_theme_color_override("font_color", Color(0.95, 0.97, 1.0, 1.0))
+        row.add_child(label)
+        currency_count_labels[currency_id] = label
+
+    _refresh_currency_strip()
+
+func _refresh_currency_strip() -> void:
+    for currency_id in currency_count_labels.keys():
+        var label: Label = currency_count_labels[currency_id] as Label
+        if label == null or not is_instance_valid(label):
+            continue
+        label.text = CROSS_GAME_BONUSES.get_currency_display_text(str(currency_id))
 
 func _decorate_game_button(button: Button, game_id: String) -> void:
     if button == null or not is_instance_valid(button):
@@ -332,6 +416,8 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
         button.mouse_exited.connect(_on_game_button_unhovered.bind(button))
     if not button.focus_exited.is_connected(_on_game_button_unhovered.bind(button)):
         button.focus_exited.connect(_on_game_button_unhovered.bind(button))
+    if not button.resized.is_connected(_on_game_card_control_resized):
+        button.resized.connect(_on_game_card_control_resized)
     button.add_theme_stylebox_override("normal", _make_game_card_style(Color(card_def.get("accent", Color(0.78, 0.84, 0.96, 1.0))), 0.0))
     button.add_theme_stylebox_override("hover", _make_game_card_style(Color(card_def.get("accent", Color(0.78, 0.84, 0.96, 1.0))), 0.06))
     button.add_theme_stylebox_override("pressed", _make_game_card_style(Color(card_def.get("accent", Color(0.78, 0.84, 0.96, 1.0))).darkened(0.08), 0.1))
@@ -365,20 +451,20 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
     var preview_panel := PanelContainer.new()
     preview_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
     preview_panel.custom_minimum_size = Vector2(0.0, GAME_CARD_IMAGE_HEIGHT)
+    preview_panel.clip_contents = true
     preview_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     preview_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
     preview_panel.add_theme_stylebox_override("panel", _make_preview_style(Color(card_def.get("accent", Color(0.78, 0.84, 0.96, 1.0)))))
+    if not preview_panel.resized.is_connected(_on_game_card_control_resized):
+        preview_panel.resized.connect(_on_game_card_control_resized)
     vbox.add_child(preview_panel)
 
     var texture_rect := TextureRect.new()
     texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    texture_rect.anchor_right = 1.0
-    texture_rect.anchor_bottom = 1.0
-    texture_rect.custom_minimum_size = Vector2(0.0, GAME_CARD_IMAGE_HEIGHT)
-    texture_rect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    texture_rect.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    texture_rect.position = Vector2.ZERO
+    texture_rect.size = Vector2(0.0, GAME_CARD_IMAGE_HEIGHT)
     texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-    texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+    texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
     texture_rect.texture = _get_game_card_texture(game_id)
     preview_panel.add_child(texture_rect)
 
@@ -408,6 +494,47 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
     button.set_meta("card_preview_texture", texture_rect)
     button.set_meta("card_title_label", title)
     button.set_meta("card_detail_label", detail)
+
+    if _should_show_demo_lock_overlay(game_id):
+        var lock_band := PanelContainer.new()
+        lock_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        lock_band.anchor_left = 0.08
+        lock_band.anchor_top = 0.37
+        lock_band.anchor_right = 0.92
+        lock_band.anchor_bottom = 0.63
+        lock_band.offset_left = 0.0
+        lock_band.offset_top = 0.0
+        lock_band.offset_right = 0.0
+        lock_band.offset_bottom = 0.0
+        lock_band.rotation_degrees = -11.0
+        lock_band.add_theme_stylebox_override("panel", _make_demo_lock_band_style())
+        button.add_child(lock_band)
+
+        var lock_margin := MarginContainer.new()
+        lock_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        lock_margin.anchor_right = 1.0
+        lock_margin.anchor_bottom = 1.0
+        lock_margin.add_theme_constant_override("margin_left", 18)
+        lock_margin.add_theme_constant_override("margin_top", 10)
+        lock_margin.add_theme_constant_override("margin_right", 18)
+        lock_margin.add_theme_constant_override("margin_bottom", 10)
+        lock_band.add_child(lock_margin)
+
+        var lock_label := Label.new()
+        lock_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        lock_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        lock_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        lock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        lock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+        lock_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        lock_label.add_theme_font_size_override("font_size", 28)
+        lock_label.add_theme_constant_override("outline_size", 3)
+        lock_label.add_theme_color_override("font_outline_color", Color(0.12, 0.02, 0.03, 0.95))
+        lock_label.add_theme_color_override("font_color", Color(1.0, 0.94, 0.9, 1.0))
+        lock_margin.add_child(lock_label)
+
+        button.set_meta("card_demo_lock_label", lock_label)
+
     _queue_fit_game_cards()
 
 func _refresh_game_card_layout() -> void:
@@ -417,7 +544,7 @@ func _refresh_game_card_layout() -> void:
     game_cards_grid.columns = 3 if viewport_width >= 1340.0 else 2
     var card_min_width: float = 360.0 if game_cards_grid.columns >= 3 else 460.0
     var card_height: float = 368.0 if game_cards_grid.columns >= 3 else 408.0
-    for button in [vanguard_button, mining_button, red_sky_button, turkey_button, reel_button]:
+    for button in [vanguard_button, mining_button, red_sky_button, turkey_button, reel_button, combined_button]:
         if button == null or not is_instance_valid(button):
             continue
         button.custom_minimum_size = Vector2(card_min_width, card_height)
@@ -447,10 +574,15 @@ func _refresh_game_card_text(button: Button, game_id: String) -> void:
     var card_def: Dictionary = _get_game_card_definition(game_id)
     var title := button.get_meta("card_title_label", null) as Label
     var detail := button.get_meta("card_detail_label", null) as Label
+    var demo_lock_label: Label = null
+    if button.has_meta("card_demo_lock_label"):
+        demo_lock_label = button.get_meta("card_demo_lock_label") as Label
     if title != null and is_instance_valid(title):
         title.text = tr(str(card_def.get("title", game_id)))
     if detail != null and is_instance_valid(detail):
         detail.text = tr(str(card_def.get("detail", "")))
+    if demo_lock_label != null and is_instance_valid(demo_lock_label):
+        demo_lock_label.text = tr(COMBINED_DEMO_LOCK_TEXT_KEY)
     _queue_fit_game_cards()
 
 func _queue_fit_game_cards() -> void:
@@ -459,9 +591,12 @@ func _queue_fit_game_cards() -> void:
     game_card_fit_queued = true
     call_deferred("_fit_game_cards")
 
+func _on_game_card_control_resized() -> void:
+    _queue_fit_game_cards()
+
 func _fit_game_cards() -> void:
     game_card_fit_queued = false
-    for button in [vanguard_button, mining_button, red_sky_button, turkey_button, reel_button]:
+    for button in [vanguard_button, mining_button, red_sky_button, turkey_button, reel_button, combined_button]:
         _fit_game_card_content(button)
 
 func _fit_game_card_content(button: Button) -> void:
@@ -512,6 +647,47 @@ func _fit_game_card_content(button: Button) -> void:
             continue
         break
 
+    _layout_game_card_preview_texture(button, preview_height)
+
+func _layout_game_card_preview_texture(button: Button, preview_height: float) -> void:
+    var preview_panel := button.get_meta("card_preview_panel", null) as PanelContainer
+    var preview_texture := button.get_meta("card_preview_texture", null) as TextureRect
+    if preview_panel == null or not is_instance_valid(preview_panel):
+        return
+    if preview_texture == null or not is_instance_valid(preview_texture):
+        return
+    if preview_texture.texture == null:
+        return
+
+    var panel_width := preview_panel.size.x
+    if panel_width <= 0.0:
+        panel_width = preview_panel.get_combined_minimum_size().x
+    if panel_width <= 0.0:
+        panel_width = button.size.x - 24.0
+    panel_width = maxf(panel_width, 1.0)
+
+    var texture_size := preview_texture.texture.get_size()
+    if texture_size.x <= 0.0 or texture_size.y <= 0.0:
+        return
+
+    var cover_scale := maxf(panel_width / texture_size.x, preview_height / texture_size.y)
+    var fitted_size := texture_size * cover_scale
+    var overflow_y := maxf(fitted_size.y - preview_height, 0.0)
+    var focus_y := clampf(_get_game_card_preview_focus_y(str(button.get_meta("game_id", ""))), 0.0, 1.0)
+
+    preview_texture.size = fitted_size
+    preview_texture.position = Vector2(
+        (panel_width - fitted_size.x) * 0.5,
+        -overflow_y * focus_y
+    )
+
+func _get_game_card_preview_focus_y(game_id: String) -> float:
+    match game_id:
+        Util.ACTIVE_GAME_TURKEY, Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
+            return 0.2
+        _:
+            return 0.5
+
 func _get_game_card_definition(game_id: String) -> Dictionary:
     match game_id:
         Util.ACTIVE_GAME_VANGUARD:
@@ -544,8 +720,8 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
         Util.ACTIVE_GAME_TURKEY:
             return {
                 "title": TURKEY_BUTTON_TEXT,
-                "detail": "Arcade chaos with fast dodging and scoring.",
-                "asset_rel_path": "ChatGPT Image Mar 12, 2026, 04_16_15 PM.png",
+                "detail": "Arcade bowling with short frames, loud hits, and score chasing.",
+                "asset_rel_path": "Turkey/Title card.png",
                 "accent": Color(0.96, 0.84, 0.45, 1.0),
                 "bg_top": Color(0.24, 0.1, 0.03, 1.0),
                 "bg_bottom": Color(0.11, 0.04, 0.01, 1.0)
@@ -554,10 +730,19 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
             return {
                 "title": REEL_BUTTON_TEXT,
                 "detail": "Haunted fishing in the dark with eerie catches.",
-                "asset_rel_path": "ChatGPT Image Mar 12, 2026, 04_13_25 PM.png",
+                "asset_rel_path": "Reel/reel title.png",
                 "accent": Color(0.56, 0.84, 0.94, 1.0),
                 "bg_top": Color(0.03, 0.08, 0.12, 1.0),
                 "bg_bottom": Color(0.01, 0.03, 0.06, 1.0)
+            }
+        Util.HIGH_LEVEL_MODE_ALL:
+            return {
+                "title": COMBINED_BUTTON_TEXT,
+                "detail": "COMBINED_MODE_LAUNCHER_DESCRIPTION",
+                "asset_rel_path": "Combined/combined with objects remvoed.png",
+                "accent": Color(0.55, 0.96, 0.58, 1.0),
+                "bg_top": Color(0.08, 0.04, 0.1, 1.0),
+                "bg_bottom": Color(0.02, 0.06, 0.09, 1.0)
             }
         _:
             return {
@@ -630,6 +815,11 @@ func _build_fallback_game_card_texture(game_id: String) -> Texture2D:
             _fill_image_rect(image, Rect2i(0, 266, image.get_width(), 100), Color(0.02, 0.08, 0.12, 0.96))
             _fill_image_rect(image, Rect2i(176, 178, 10, 118), Color(0.78, 0.86, 0.92, 0.95))
             _draw_image_circle(image, Vector2i(184, 174), 22, Color(0.74, 0.9, 1.0, 1.0))
+        Util.HIGH_LEVEL_MODE_ALL:
+            _fill_image_rect(image, Rect2i(0, 286, image.get_width(), 64), Color(0.02, 0.08, 0.11, 0.94))
+            _fill_image_rect(image, Rect2i(92, 206, 168, 76), Color(0.32, 0.2, 0.48, 0.9))
+            _fill_image_rect(image, Rect2i(284, 178, 164, 98), Color(0.18, 0.16, 0.08, 0.92))
+            _fill_image_rect(image, Rect2i(492, 154, 124, 108), Color(0.1, 0.18, 0.12, 0.92))
         _:
             _fill_image_rect(image, Rect2i(92, 212, 240, 72), accent)
     return ImageTexture.create_from_image(image)
@@ -663,6 +853,22 @@ func _make_preview_style(border_color: Color) -> StyleBoxFlat:
     style.shadow_size = 4
     style.shadow_color = Color(0.0, 0.0, 0.0, 0.18)
     return style
+
+func _make_demo_lock_band_style() -> StyleBoxFlat:
+    var style := StyleBoxFlat.new()
+    style.bg_color = Color(0.76, 0.16, 0.14, 0.92)
+    style.border_color = Color(1.0, 0.86, 0.66, 0.95)
+    style.set_border_width_all(3)
+    style.corner_radius_top_left = 10
+    style.corner_radius_top_right = 10
+    style.corner_radius_bottom_left = 10
+    style.corner_radius_bottom_right = 10
+    style.shadow_size = 8
+    style.shadow_color = Color(0.0, 0.0, 0.0, 0.35)
+    return style
+
+func _should_show_demo_lock_overlay(game_id: String) -> bool:
+    return bool(ProjectSettings.get_setting("global/Demo", false)) and game_id == Util.HIGH_LEVEL_MODE_ALL
 
 func _setup_language_panel() -> void:
     if language_button != null and is_instance_valid(language_button):
@@ -926,7 +1132,9 @@ func _animate_game_card(button: Button, is_hovered: bool) -> void:
     if button == null or not is_instance_valid(button):
         return
     button.pivot_offset = button.size * 0.5
-    var existing_tween := button.get_meta("card_hover_tween", null) as Tween
+    var existing_tween: Tween = null
+    if button.has_meta("card_hover_tween"):
+        existing_tween = button.get_meta("card_hover_tween") as Tween
     if existing_tween != null and existing_tween.is_running():
         existing_tween.kill()
     var tween := create_tween()
@@ -956,6 +1164,8 @@ func _get_game_card_hover_rotation(button: Button) -> float:
             return -1.8
         Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
             return 1.8
+        Util.HIGH_LEVEL_MODE_ALL:
+            return -1.2
         _:
             return -1.6
 
@@ -971,6 +1181,8 @@ func _get_game_button_for_id(game_id: String) -> Button:
             return turkey_button
         Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
             return reel_button
+        Util.HIGH_LEVEL_MODE_ALL:
+            return combined_button
         _:
             return null
 
@@ -1000,6 +1212,12 @@ func _get_background_palette_for_game(game_id: String) -> Dictionary:
                 "bg": Color(0.05, 0.11, 0.16, 1.0),
                 "light": Color(0.37, 0.7, 0.84, 0.62),
                 "dark": Color(0.02, 0.07, 0.12, 0.58)
+            }
+        Util.HIGH_LEVEL_MODE_ALL:
+            return {
+                "bg": Color(0.08, 0.05, 0.09, 1.0),
+                "light": Color(0.42, 0.92, 0.5, 0.58),
+                "dark": Color(0.09, 0.18, 0.14, 0.56)
             }
         Util.ACTIVE_GAME_VANGUARD:
             return default_palette

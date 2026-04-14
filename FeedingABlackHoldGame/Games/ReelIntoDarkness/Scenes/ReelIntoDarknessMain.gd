@@ -264,14 +264,14 @@ func _build_ui() -> void:
 	canvas_layer.add_child(summary_overlay)
 
 	summary_panel = PanelContainer.new()
-	summary_panel.anchor_left = 0.5
-	summary_panel.anchor_top = 0.5
-	summary_panel.anchor_right = 0.5
-	summary_panel.anchor_bottom = 0.5
-	summary_panel.offset_left = -520.0
-	summary_panel.offset_top = -300.0
-	summary_panel.offset_right = 520.0
-	summary_panel.offset_bottom = 300.0
+	summary_panel.anchor_left = 0.08
+	summary_panel.anchor_top = 0.0
+	summary_panel.anchor_right = 0.92
+	summary_panel.anchor_bottom = 1.0
+	summary_panel.offset_left = 0.0
+	summary_panel.offset_top = 28.0
+	summary_panel.offset_right = 0.0
+	summary_panel.offset_bottom = -24.0
 	summary_panel.modulate.a = 0.0
 	_apply_panel_style(summary_panel, Color(0.04, 0.07, 0.11, 0.96), Color(0.28, 0.64, 0.76, 1.0))
 	summary_overlay.add_child(summary_panel)
@@ -283,9 +283,17 @@ func _build_ui() -> void:
 	summary_margin.add_theme_constant_override("margin_bottom", 18)
 	summary_panel.add_child(summary_margin)
 
+	var summary_scroll := ScrollContainer.new()
+	summary_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	summary_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	summary_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	summary_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	summary_margin.add_child(summary_scroll)
+
 	var summary_root := VBoxContainer.new()
+	summary_root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	summary_root.add_theme_constant_override("separation", 12)
-	summary_margin.add_child(summary_root)
+	summary_scroll.add_child(summary_root)
 
 	summary_title_label = _make_label("Run Summary", 34, Color(0.95, 0.98, 1.0, 1.0))
 	summary_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -772,31 +780,27 @@ func _update_hooked_fish_motion(delta: float) -> void:
 	if hooked_fish_index < 0 or hooked_fish_index >= fish_entities.size():
 		return
 	var fish: Dictionary = fish_entities[hooked_fish_index]
-	var pos: Vector2 = fish.get("pos", _hook_position())
+	var species: Dictionary = fish.get("species", {})
 	var vel: Vector2 = fish.get("vel", Vector2.ZERO)
 	var hook_pos := _hook_position()
-	var side_target: float = 26.0 if desired_side < 0 else -26.0
-	if not desired_hold:
-		side_target = 18.0 if int(Time.get_ticks_msec() / 220) % 2 == 0 else -18.0
-	var desired_pos := hook_pos + Vector2(side_target, sin(Time.get_ticks_msec() * 0.006) * 8.0)
+	var facing: float = float(fish.get("facing", 1.0))
+	if desired_hold:
+		facing = -1.0 if desired_side < 0 else 1.0
+	elif absf(hook_velocity.x) > 0.01:
+		facing = signf(hook_velocity.x)
+	if is_zero_approx(facing):
+		facing = 1.0
 	var active_reel_in: bool = run_state == RunState.LANDING or hook_target_line_length < hook_line_length - 0.5 or hook_velocity.y < -18.0
 	if active_reel_in:
-		fish["pos"] = hook_pos
+		fish["facing"] = facing
+		fish["pos"] = _hooked_fish_center_from_head(species, hook_pos, facing)
 		fish["vel"] = Vector2.ZERO
-		if absf(hook_velocity.x) > 0.01:
-			fish["facing"] = signf(hook_velocity.x)
 		fish_entities[hooked_fish_index] = fish
 		return
-	var escape_strength: float = 54.0 + fish_stamina * 0.3
-	var desired_velocity := (desired_pos - pos).normalized() * escape_strength
-	vel = vel.move_toward(desired_velocity, delta * 130.0)
+	vel = vel.move_toward(Vector2.ZERO, delta * 130.0)
 	vel *= (1.0 - min(delta * 1.05, 0.7))
-	pos += vel * delta
-	pos.x = clampf(pos.x, _water_rect().position.x + FISH_SPAWN_PADDING, _water_rect().end.x - FISH_SPAWN_PADDING)
-	pos.y = clampf(pos.y, _water_rect().position.y + 10.0, _water_rect().end.y - 18.0)
-	if absf(vel.x) > 2.0:
-		fish["facing"] = signf(vel.x)
-	fish["pos"] = pos
+	fish["facing"] = facing
+	fish["pos"] = _hooked_fish_center_from_head(species, hook_pos, facing)
 	fish["vel"] = vel
 	fish_entities[hooked_fish_index] = fish
 
@@ -808,6 +812,9 @@ func _start_hooked_fish(index: int) -> void:
 	hooked_fish_index = index
 	var fish: Dictionary = fish_entities[index]
 	var species: Dictionary = fish.get("species", {})
+	var facing: float = float(fish.get("facing", 1.0))
+	if is_zero_approx(facing):
+		facing = 1.0
 	player_stamina_max = float(run_config.get("player_stamina", 12.0))
 	player_stamina = player_stamina_max
 	fish_stamina_max = float(species.get("stamina", 5.0))
@@ -815,12 +822,22 @@ func _start_hooked_fish(index: int) -> void:
 	meters_per_fish_stamina = max(0.35, hook_depth / max(fish_stamina_max, 1.0))
 	hook_target_line_length = hook_line_length
 	hook_reel_pull_remaining = 0.0
+	fish["facing"] = facing
+	fish["pos"] = _hooked_fish_center_from_head(species, _hook_position(), facing)
+	fish["vel"] = Vector2.ZERO
+	fish_entities[index] = fish
 	total_bites += 1
 	summary_results["bites"] = total_bites
 	fight_feedback_text = "Fish on!"
 	fight_feedback_timer = 0.8
 	last_fight_prompt_signature = ""
 	_roll_next_fight_phase()
+
+func _hooked_fish_center_from_head(species: Dictionary, hook_pos: Vector2, facing: float) -> Vector2:
+	var size: Vector2 = species.get("size", Vector2(36.0, 18.0))
+	var hooked_body_scale := 1.06
+	var head_offset := Vector2(facing * size.x * 0.4 * hooked_body_scale, 0.0)
+	return hook_pos - head_offset
 
 func _roll_next_fight_phase() -> void:
 	desired_hold = rng.randf() < 0.62
@@ -1394,50 +1411,36 @@ func _draw() -> void:
 	_draw_cursor()
 
 func _draw_sky_moon_stars(viewport_size: Vector2, surface_y: float) -> void:
-	# Muted grey night: almost-neutral gradient (barely cooler at zenith), minimal bands.
-	var strips: int = 5
-	for s in range(strips):
-		var u: float = float(s) / float(max(strips - 1, 1))
-		var y0: float = lerpf(0.0, surface_y, u)
-		var y1: float = lerpf(0.0, surface_y, (float(s) + 1.0) / float(strips))
-		var v: float = lerpf(0.03, 0.075, u)
-		# Slight R/B nudge so it reads as cool grey, not tinted blue.
-		var sky := Color(v + 0.003, v + 0.001, v + 0.005)
-		draw_rect(Rect2(Vector2(0.0, y0), Vector2(viewport_size.x, y1 - y0 + 1.0)), sky, true)
-	# Very soft grey haze at horizon — low contrast handoff to water.
-	var haze_h: float = clampf(surface_y * 0.12, 12.0, 36.0)
 	draw_rect(
-		Rect2(Vector2(0.0, surface_y - haze_h), Vector2(viewport_size.x, haze_h)),
-		Color(0.08, 0.084, 0.09, 0.22),
+		Rect2(Vector2.ZERO, Vector2(viewport_size.x, surface_y)),
+		Color(0.03, 0.035, 0.055, 1.0),
 		true
 	)
-	# Few dim grey pinpricks; almost no twinkle.
-	var star_count: int = 18
-	var margin_x: float = 34.0
-	var star_top: float = maxf(surface_y * 0.48, 18.0)
-	var star_band_h: float = maxf(surface_y * 0.34, 30.0)
+	var haze_h: float = clampf(surface_y * 0.14, 16.0, 42.0)
+	draw_rect(
+		Rect2(Vector2(0.0, surface_y - haze_h), Vector2(viewport_size.x, haze_h)),
+		Color(0.08, 0.09, 0.12, 0.18),
+		true
+	)
+	var star_count: int = 24
+	var margin_x: float = 28.0
+	var star_top: float = 18.0
+	var star_band_h: float = maxf(surface_y * 0.62, 36.0)
 	for i in range(star_count):
 		var sx: float = fposmod(sin(float(i) * 12.9898 + 3.14) * 7821.37, viewport_size.x - margin_x * 2.0) + margin_x
 		var sy: float = star_top + fposmod(cos(float(i) * 78.233 + 1.618) * 5912.11, star_band_h)
-		var blink: float = 0.35 + 0.65 * (0.5 + 0.5 * sin(ambient_anim_time * (1.2 + float(i % 4) * 0.22) + float(i) * 1.73))
-		var alpha: float = lerpf(0.1, 0.42, blink)
-		var r: float = 0.8 + fposmod(sin(float(i) * 9.1), 1.0) * 0.9
-		draw_circle(Vector2(sx, sy), r + 0.5, Color(0.78, 0.82, 0.88, alpha * 0.18))
-		draw_circle(Vector2(sx, sy), r, Color(0.82, 0.86, 0.94, alpha))
-	# Hazy grey moon: faint bloom, dull disc (no crisp white).
-	for c in range(4):
-		var cloud_w: float = 74.0 + float(c) * 16.0
-		var cloud_h: float = 12.0 + float(c % 2) * 4.0
-		var cloud_x: float = fposmod(float(c) * 233.0 + sin(float(c) * 2.7) * 90.0 + ambient_anim_time * (4.0 + float(c) * 1.2), viewport_size.x + cloud_w * 2.0) - cloud_w
-		var cloud_y: float = surface_y - 22.0 - float(c) * 10.0 + sin(ambient_anim_time * (0.16 + float(c) * 0.05) + float(c)) * 3.0
-		var cloud_color := Color(0.72, 0.76, 0.82, 0.07)
-		draw_circle(Vector2(cloud_x, cloud_y), cloud_h, cloud_color)
-		draw_circle(Vector2(cloud_x + cloud_w * 0.22, cloud_y - 3.0), cloud_h * 1.1, cloud_color)
-		draw_circle(Vector2(cloud_x + cloud_w * 0.45, cloud_y + 1.0), cloud_h * 0.95, cloud_color)
-		draw_circle(Vector2(cloud_x + cloud_w * 0.68, cloud_y - 2.0), cloud_h * 0.85, cloud_color)
-	var moon_center := Vector2(viewport_size.x * 0.78, surface_y - 42.0)
-	draw_circle(moon_center, 22.0, Color(0.45, 0.47, 0.5, 0.04))
-	draw_circle(moon_center, 11.0, Color(0.66, 0.69, 0.74, 0.52))
+		var twinkle: float = 0.5 + 0.5 * sin(ambient_anim_time * (1.3 + float(i % 5) * 0.18) + float(i) * 1.73)
+		var alpha: float = lerpf(0.25, 0.9, twinkle)
+		var radius: float = 0.9 + fposmod(sin(float(i) * 9.1), 1.0) * 1.2
+		var star_pos := Vector2(sx, sy)
+		draw_circle(star_pos, radius + 1.3, Color(0.78, 0.84, 0.96, alpha * 0.12))
+		draw_circle(star_pos, radius, Color(0.88, 0.92, 1.0, alpha))
+		if i % 4 == 0:
+			draw_circle(star_pos, radius * (1.6 + twinkle * 0.45), Color(0.9, 0.95, 1.0, alpha * 0.08))
+	var moon_center := Vector2(viewport_size.x * 0.78, surface_y * 0.34)
+	draw_circle(moon_center, 24.0, Color(0.72, 0.77, 0.9, 0.12))
+	draw_circle(moon_center, 16.0, Color(0.94, 0.96, 1.0, 0.9))
+	draw_circle(moon_center + Vector2(6.0, -2.0), 14.0, Color(0.03, 0.035, 0.055, 0.96))
 
 func _draw_water_decorations(water_rect: Rect2, viewport_size: Vector2, surface_y: float) -> void:
 	var wleft: float = water_rect.position.x
@@ -1931,3 +1934,4 @@ func _on_summary_again_pressed() -> void:
 	else:
 		Global.reel_run_max_depth_cap = -1.0
 	SceneChanger.change_to_new_scene(Util.get_main_scene_path(), null, 0.2)
+

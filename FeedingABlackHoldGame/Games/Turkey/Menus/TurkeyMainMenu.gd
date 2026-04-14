@@ -2,10 +2,8 @@ extends "res://Main Menu.gd"
 
 const SAVE_PATH := "user://turkey_mode_save_v1.json"
 
-func _ready() -> void:
-	super._ready()
-	if has_node("%MainTitle"):
-		%MainTitle.text = "TURKEY: THREE-FRAME BOWLING"
+func get_main_title_translation_key() -> String:
+	return "TURKEY: THREE-FRAME BOWLING"
 
 func _start_turkey_flow(load_saved_run: bool) -> void:
 	Global.ensure_default_game_mode_data()

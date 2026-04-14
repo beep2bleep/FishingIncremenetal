@@ -1,6 +1,7 @@
 extends RefCounted
 class_name RedSkyData
 
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const ICON_PREFIX := "redsky://"
 const META_COST_MULTIPLIER := 0.78
 const META_FIRST_TIER_DISCOUNT := 0.92
@@ -1711,6 +1712,15 @@ static func build_meta_bonuses(meta_levels: Dictionary) -> Dictionary:
 			"choice_matrix":
 				bonuses["level_up_choice_count"] = min(9, int(bonuses.get("level_up_choice_count", 3)) + level)
 				bonuses["max_level_up_choice_count"] = 9
+
+	var cross_mult: float = CROSS_GAME_BONUSES.get_target_bonus_multiplier(Util.ACTIVE_GAME_RED_SKY)
+	bonuses["gun_damage"] *= cross_mult
+	bonuses["tower_damage"] *= cross_mult
+	bonuses["drone_damage"] *= cross_mult
+	bonuses["tentacle_damage"] *= cross_mult
+	bonuses["helper_drone_damage"] *= cross_mult
+	bonuses["salvage_multiplier"] *= cross_mult
+	bonuses["meta_reward_multiplier"] *= cross_mult
 
 	var start_nukes: int = int(bonuses.get("starting_nukes", 1))
 	var cap: int = int(bonuses.get("nuke_max", 5))

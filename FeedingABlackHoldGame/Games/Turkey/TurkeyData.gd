@@ -1,6 +1,7 @@
 extends RefCounted
 class_name TurkeyData
 
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const DEFAULT_BALL_WEIGHT_LB := 8.0
 const KG_PER_LB := 0.45359237
 ## League Pass upgrade level required to reach each lane tier index (0..4).
@@ -31,7 +32,7 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 	{
 		"id": "power_shot",
 		"label": "Power Shot",
-		"summary": "Unlock a frame-limited pickup: +25% launch speed and triple ball mass for much harder pin hits (lane assists only on bonus balls).",
+		"summary": "Unlock a frame-limited pickup: +25% launch speed and triple ball mass for much harder pin hits.",
 		"icon": ">",
 		"max_tier": 1,
 		"base_cost": 36,
@@ -45,7 +46,7 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 	{
 		"id": "multi_shot",
 		"label": "Multi Shot",
-		"summary": "Unlock a frame-limited pickup: main ball is normal; four extras follow at ±3° then ±6° from your line (no lane assists on extras).",
+		"summary": "Unlock a frame-limited pickup: main ball is normal; four extras follow at +/-3 deg then +/-6 deg from your line.",
 		"icon": "4",
 		"max_tier": 1,
 		"base_cost": 36,
@@ -55,34 +56,6 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 		"act": 1,
 		"branch": 9,
 		"step": 1,
-	},
-	{
-		"id": "lane_reading",
-		"label": "Lane Reading",
-		"summary": "Reduce baseline miss so picked lines land closer to where you aimed.",
-		"icon": "L",
-		"max_tier": 8,
-		"base_cost": 26,
-		"cost_mult": 1.42,
-		"cell": Vector2(-2, -4),
-		"dependency": "power_training",
-		"act": 1,
-		"branch": 1,
-		"step": 2,
-	},
-	{
-		"id": "hook_control",
-		"label": "Hook Control",
-		"summary": "Increase how strongly your spin slider bends the lane.",
-		"icon": "H",
-		"max_tier": 8,
-		"base_cost": 28,
-		"cost_mult": 1.42,
-		"cell": Vector2(2, -4),
-		"dependency": "power_training",
-		"act": 1,
-		"branch": 2,
-		"step": 2,
 	},
 	{
 		"id": "ball_weight",
@@ -99,20 +72,6 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 		"step": 2,
 	},
 	{
-		"id": "release_timing",
-		"label": "Release Timing",
-		"summary": "Shrink wobble further so the power lock and line choice hold up under pressure.",
-		"icon": "R",
-		"max_tier": 7,
-		"base_cost": 38,
-		"cost_mult": 1.46,
-		"cell": Vector2(-4, -3),
-		"dependency": "lane_reading",
-		"act": 2,
-		"branch": 1,
-		"step": 3,
-	},
-	{
 		"id": "approach_rhythm",
 		"label": "Approach Rhythm",
 		"summary": "Slow the power meter so high-power releases are easier to hit consistently.",
@@ -121,80 +80,10 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 		"base_cost": 42,
 		"cost_mult": 1.45,
 		"cell": Vector2(-2, -3),
-		"dependency": "lane_reading",
+		"dependency": "power_training",
 		"act": 2,
 		"branch": 1,
 		"step": 4,
-	},
-	{
-		"id": "spare_focus",
-		"label": "Spare Focus",
-		"summary": "Improve accuracy and payouts on cleanup balls when pins are left standing.",
-		"icon": "S",
-		"max_tier": 6,
-		"base_cost": 48,
-		"cost_mult": 1.47,
-		"cell": Vector2(-3, -2),
-		"dependency": "release_timing",
-		"act": 2,
-		"branch": 1,
-		"step": 5,
-	},
-	{
-		"id": "rev_training",
-		"label": "Rev Training",
-		"summary": "Build stronger backend motion so the ball keeps finishing through the pins.",
-		"icon": "V",
-		"max_tier": 7,
-		"base_cost": 44,
-		"cost_mult": 1.45,
-		"cell": Vector2(4, -3),
-		"dependency": "hook_control",
-		"act": 2,
-		"branch": 2,
-		"step": 3,
-	},
-	{
-		"id": "target_range",
-		"label": "Target Range",
-		"summary": "Open the approach and aiming envelope so tougher tiers still feel playable.",
-		"icon": "T",
-		"max_tier": 6,
-		"base_cost": 46,
-		"cost_mult": 1.46,
-		"cell": Vector2(2, -2),
-		"dependency": "hook_control",
-		"act": 2,
-		"branch": 2,
-		"step": 4,
-	},
-	{
-		"id": "coverstock_resin",
-		"label": "Coverstock Resin",
-		"summary": "Counter slicker tier oil patterns by preserving hook deeper into the lane.",
-		"icon": "C",
-		"max_tier": 6,
-		"base_cost": 54,
-		"cost_mult": 1.48,
-		"cell": Vector2(6, -2),
-		"dependency": "rev_training",
-		"act": 2,
-		"branch": 2,
-		"step": 5,
-	},
-	{
-		"id": "core_balance",
-		"label": "Core Balance",
-		"summary": "On bonus fill deliveries only, the ball self-corrects back toward your line.",
-		"icon": "B",
-		"max_tier": 6,
-		"base_cost": 56,
-		"cost_mult": 1.49,
-		"cell": Vector2(1, -1),
-		"dependency": "ball_weight",
-		"act": 3,
-		"branch": 3,
-		"step": 3,
 	},
 	{
 		"id": "impact_physics",
@@ -209,34 +98,6 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 		"act": 3,
 		"branch": 3,
 		"step": 4,
-	},
-	{
-		"id": "pocket_magnet",
-		"label": "Pocket Magnet",
-		"summary": "Stronger late-lane homing on bonus fill deliveries so extras carry harder.",
-		"icon": "G",
-		"max_tier": 6,
-		"base_cost": 72,
-		"cost_mult": 1.52,
-		"cell": Vector2(0, 0),
-		"dependency": "core_balance",
-		"act": 3,
-		"branch": 4,
-		"step": 4,
-	},
-	{
-		"id": "lane_guides",
-		"label": "Lane Guides",
-		"summary": "Inward gutter rescue on bonus fill deliveries so extras stay recoverable.",
-		"icon": "U",
-		"max_tier": 5,
-		"base_cost": 78,
-		"cost_mult": 1.54,
-		"cell": Vector2(-4, 0),
-		"dependency": "spare_focus",
-		"act": 3,
-		"branch": 4,
-		"step": 3,
 	},
 	{
 		"id": "sweep_crew",
@@ -261,7 +122,7 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 		"base_cost": 48,
 		"cost_mult": 1.45,
 		"cell": Vector2(-6, 1),
-		"dependency": "release_timing",
+		"dependency": "approach_rhythm",
 		"act": 4,
 		"branch": 5,
 		"step": 1,
@@ -331,38 +192,10 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 		"base_cost": 120,
 		"cost_mult": 1.58,
 		"cell": Vector2(0, 3),
-		"dependency": "pocket_magnet",
+		"dependency": "impact_physics",
 		"act": 5,
 		"branch": 7,
 		"step": 1,
-	},
-	{
-		"id": "challenge_notes",
-		"label": "Challenge Notes",
-		"summary": "Study promoted lane tiers to shave down their accuracy and hook penalties.",
-		"icon": "D",
-		"max_tier": 6,
-		"base_cost": 140,
-		"cost_mult": 1.56,
-		"cell": Vector2(2, 4),
-		"dependency": "league_pass",
-		"act": 5,
-		"branch": 7,
-		"step": 2,
-	},
-	{
-		"id": "gutter_whisper",
-		"label": "Gutter Whisper",
-		"summary": "Stronger emergency gutter rescue on bonus fill deliveries at promoted tiers.",
-		"icon": "Y",
-		"max_tier": 5,
-		"base_cost": 132,
-		"cost_mult": 1.55,
-		"cell": Vector2(-2, 4),
-		"dependency": "league_pass",
-		"act": 5,
-		"branch": 7,
-		"step": 3,
 	},
 	{
 		"id": "purse_bump",
@@ -377,34 +210,6 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 		"act": 5,
 		"branch": 8,
 		"step": 2,
-	},
-	{
-		"id": "house_lights",
-		"label": "House Lights",
-		"summary": "Improve readability and composure on harder tiers while adding a reward kicker.",
-		"icon": "O",
-		"max_tier": 5,
-		"base_cost": 156,
-		"cost_mult": 1.56,
-		"cell": Vector2(-4, 5),
-		"dependency": "gutter_whisper",
-		"act": 6,
-		"branch": 8,
-		"step": 3,
-	},
-	{
-		"id": "ball_return_ai",
-		"label": "Ball Return AI",
-		"summary": "Much stronger homing and line correction, but only on bonus fill deliveries.",
-		"icon": "A",
-		"max_tier": 5,
-		"base_cost": 170,
-		"cost_mult": 1.58,
-		"cell": Vector2(0, 5),
-		"dependency": "challenge_notes",
-		"act": 6,
-		"branch": 8,
-		"step": 4,
 	},
 	{
 		"id": "champion_purse",
@@ -550,30 +355,16 @@ static func build_meta_stats(data: Dictionary, gameplay_lane_tier: int = -1) -> 
 	var power_shot: int = int(upgrades.get("power_shot", 0))
 	var multi_shot: int = int(upgrades.get("multi_shot", 0))
 	var power_training: int = int(upgrades.get("power_training", 0))
-	var lane_reading: int = int(upgrades.get("lane_reading", 0))
-	var hook_control: int = int(upgrades.get("hook_control", 0))
 	var ball_weight: int = int(upgrades.get("ball_weight", 0))
-	var release_timing: int = int(upgrades.get("release_timing", 0))
 	var approach_rhythm: int = int(upgrades.get("approach_rhythm", 0))
-	var spare_focus: int = int(upgrades.get("spare_focus", 0))
-	var rev_training: int = int(upgrades.get("rev_training", 0))
-	var target_range: int = int(upgrades.get("target_range", 0))
-	var coverstock_resin: int = int(upgrades.get("coverstock_resin", 0))
-	var core_balance: int = int(upgrades.get("core_balance", 0))
 	var impact_physics: int = int(upgrades.get("impact_physics", 0))
-	var pocket_magnet: int = int(upgrades.get("pocket_magnet", 0))
-	var lane_guides: int = int(upgrades.get("lane_guides", 0))
 	var sweep_crew: int = int(upgrades.get("sweep_crew", 0))
 	var sponsor_patch: int = int(upgrades.get("sponsor_patch", 0))
 	var crowd_favor: int = int(upgrades.get("crowd_favor", 0))
 	var turkey_bonus: int = int(upgrades.get("turkey_bonus", 0))
 	var pin_science: int = int(upgrades.get("pin_science", 0))
 	var kingpin_hunter: int = int(upgrades.get("kingpin_hunter", 0))
-	var challenge_notes: int = int(upgrades.get("challenge_notes", 0))
-	var gutter_whisper: int = int(upgrades.get("gutter_whisper", 0))
 	var purse_bump: int = int(upgrades.get("purse_bump", 0))
-	var house_lights: int = int(upgrades.get("house_lights", 0))
-	var ball_return_ai: int = int(upgrades.get("ball_return_ai", 0))
 	var champion_purse: int = int(upgrades.get("champion_purse", 0))
 
 	var league_lane_cap: int = get_max_selectable_lane_tier(data)
@@ -581,16 +372,9 @@ static func build_meta_stats(data: Dictionary, gameplay_lane_tier: int = -1) -> 
 	if gameplay_lane_tier >= 0:
 		lane_tier = clampi(gameplay_lane_tier, 0, league_lane_cap)
 	var lane_tier_data: Dictionary = get_lane_tier(lane_tier)
-	var tier_relief: float = 1.0 - (float(challenge_notes) * 0.035)
-	var tier_hook_relief: float = 1.0 + float(challenge_notes) * 0.04 + float(coverstock_resin) * 0.03
 	var ball_weight_lb: float = DEFAULT_BALL_WEIGHT_LB + float(ball_weight) * 1.35 + float(impact_physics) * 0.35
 	var base_aim_error: float = 0.23
-	base_aim_error -= float(lane_reading) * 0.015
-	base_aim_error -= float(release_timing) * 0.013
-	base_aim_error -= float(spare_focus) * 0.006
-	base_aim_error -= float(house_lights) * 0.004
-	var aim_error_m: float = max(0.026, base_aim_error * float(lane_tier_data.get("aim_error_mult", 1.0)) * max(0.72, tier_relief))
-	var target_range_mult: float = 1.0 + float(target_range) * 0.05
+	var aim_error_m: float = max(0.026, base_aim_error * float(lane_tier_data.get("aim_error_mult", 1.0)))
 	var reward_multiplier: float = 1.0
 	reward_multiplier += float(sponsor_patch) * 0.12
 	reward_multiplier += float(crowd_favor) * 0.08
@@ -598,6 +382,9 @@ static func build_meta_stats(data: Dictionary, gameplay_lane_tier: int = -1) -> 
 	reward_multiplier += float(champion_purse) * 0.1
 	reward_multiplier *= float(lane_tier_data.get("reward_mult", 1.0))
 	reward_multiplier *= 1.0 + float(purse_bump + champion_purse) * 0.025 * float(lane_tier)
+	var cross_mult: float = CROSS_GAME_BONUSES.get_target_bonus_multiplier(Util.ACTIVE_GAME_TURKEY)
+	ball_weight_lb *= cross_mult
+	reward_multiplier *= cross_mult
 
 	var gold_pin_count: int = clampi(int(lane_tier_data.get("gold_pin_count", 0)), 0, int(lane_tier_data.get("pin_count", 10)))
 	return {
@@ -606,19 +393,19 @@ static func build_meta_stats(data: Dictionary, gameplay_lane_tier: int = -1) -> 
 		"ball_weight_lb": ball_weight_lb,
 		"ball_mass_kg": ball_weight_lb * KG_PER_LB,
 		"power_bonus": float(power_training) * 0.58,
-		"spin_multiplier": 1.0 + float(hook_control) * 0.12 + float(rev_training) * 0.08,
-		"hook_force_scale": max(0.72, float(lane_tier_data.get("hook_damp", 1.0)) * tier_hook_relief) * (1.0 + float(hook_control) * 0.11 + float(rev_training) * 0.1),
+		"spin_multiplier": 1.0,
+		"hook_force_scale": max(0.72, float(lane_tier_data.get("hook_damp", 1.0))),
 		"aim_error_m": aim_error_m,
 		"reward_multiplier": reward_multiplier,
 		"power_meter_speed_mult": max(0.56, 1.0 - float(approach_rhythm) * 0.045),
-		"target_range_mult": target_range_mult,
-		"target_assist_force": float(core_balance) * 2.8 + float(pocket_magnet) * 4.1 + float(ball_return_ai) * 5.3,
-		"gutter_return_force": float(lane_guides) * 1.45 + float(gutter_whisper) * 2.1,
+		"target_range_mult": 1.0,
+		"target_assist_force": 0.0,
+		"gutter_return_force": 0.0,
 		"settle_speed_mult": 1.0 + float(sweep_crew) * 0.18,
 		"pin_break_force_mult": 1.0 + float(impact_physics) * 0.08 + float(kingpin_hunter) * 0.05,
 		"pin_score_bonus": float(pin_science) * 0.1 + float(crowd_favor) * 0.04,
 		"strike_reward_bonus": float(turkey_bonus) * 0.14 + float(kingpin_hunter) * 0.09,
-		"spare_reward_bonus": float(spare_focus) * 0.12,
+		"spare_reward_bonus": 0.0,
 		"tier_reward_bonus": float(purse_bump) * 0.08 + float(champion_purse) * 0.12,
 		"lane_tier": lane_tier,
 		"max_selectable_lane_tier": league_lane_cap,

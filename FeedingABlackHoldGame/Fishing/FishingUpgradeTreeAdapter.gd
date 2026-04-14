@@ -2,6 +2,7 @@ extends RefCounted
 class_name FishingUpgradeTreeAdapter
 
 const DATA_PATH: String = "res://Data/FishingUpgradeData.json"
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const GROUPED_TIER_MAX := 5
 const MAX_CHILDREN_PER_NODE := 4
 const LAYOUT_DIRS: Array[Vector2] = [
@@ -65,6 +66,7 @@ static func apply_simulation_upgrades() -> void:
     _enforce_branch_anchors(grouped_upgrades)
     _enforce_tier_chain_order(grouped_upgrades)
     _sanitize_dependency_graph(grouped_upgrades)
+    grouped_upgrades.append(CROSS_GAME_BONUSES.get_cross_bonus_node_definition(Util.ACTIVE_GAME_VANGUARD))
     if OS.has_feature("editor"):
         _validate_dependencies_reach_center(grouped_upgrades)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
@@ -124,6 +126,8 @@ static func apply_simulation_upgrades() -> void:
         Global.game_mode_data_manager.upgrades[upgrade.cell] = upgrade
 
         var owned_level: int = SaveHandler.get_fishing_upgrade_level(upgrade.sim_key)
+        if CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
+            owned_level = CROSS_GAME_BONUSES.get_target_bonus_level(Util.ACTIVE_GAME_VANGUARD)
         if upgrade.demo_locked == 1:
             owned_level = min(owned_level, upgrade.sim_level - 1)
         if owned_level >= upgrade.sim_level:
@@ -1229,6 +1233,7 @@ static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cell
         "battle_speed_unlock_2x": Vector2(2, -3),
         "old_art_unlock": Vector2(6, -5),
         "vitality_foundation": Vector2(-3, 2),
+        "cross_bonus_vanguard": Vector2(0, -6),
     }
     if fixed_root_targets.has(key):
         target = fixed_root_targets[key]

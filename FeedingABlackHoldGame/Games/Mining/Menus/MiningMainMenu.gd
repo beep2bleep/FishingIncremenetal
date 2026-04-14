@@ -2,10 +2,8 @@ extends "res://Main Menu.gd"
 
 const SAVE_PATH := "user://mining_mode_save_v1.json"
 
-func _ready() -> void:
-    super._ready()
-    if has_node("%MainTitle"):
-        %MainTitle.text = tr("MINING_MODE_TITLE")
+func get_main_title_translation_key() -> String:
+    return "MINING_MODE_TITLE"
 
 func _start_mining_flow(load_saved_run: bool) -> void:
     Global.ensure_default_game_mode_data()

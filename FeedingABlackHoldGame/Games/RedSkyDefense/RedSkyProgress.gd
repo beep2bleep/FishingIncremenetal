@@ -2,6 +2,7 @@ extends RefCounted
 class_name RedSkyProgress
 
 const RED_SKY_DATA := preload("res://Games/RedSkyDefense/RedSkyData.gd")
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const SAVE_PATH := "user://red_sky_defense_save_v1.json"
 const START_WAVE_STEP := 5
 const MIN_START_WAVE := 1
@@ -126,6 +127,7 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
 	data["total_score"] = int(data.get("total_score", 0)) + score
 	data["best_score"] = max(int(data.get("best_score", 0)), score)
 	data["best_wave"] = max(int(data.get("best_wave", 0)), waves_cleared)
+	CROSS_GAME_BONUSES.award_red_sky_wave(int(data["best_wave"]))
 	data["total_waves_cleared"] = int(data.get("total_waves_cleared", 0)) + waves_cleared
 	data["last_run_summary"] = str(results.get("summary_text", "Red Sky Defense run complete."))
 	data["last_run_breakdown"] = results.duplicate(true)
@@ -303,4 +305,3 @@ static func _get_game_analytics_manager() -> Node:
 			ga_manager = root.get_node_or_null("GameAnalyticsManager")
 		return ga_manager
 	return null
-

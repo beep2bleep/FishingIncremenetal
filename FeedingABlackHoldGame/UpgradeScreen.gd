@@ -30,6 +30,8 @@ const REEL_DEPTH_TIER_DIALOG_SIZE := Vector2(640.0, 520.0)
 const REEL_DEPTH_TIER_BUTTON_FONT := 26
 const REEL_DEPTH_TIER_BUTTON_MIN_H := 72.0
 const UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO := 0.05
+const LEADERBOARD_PANEL_TOP_DEFAULT := 120.0
+const LEADERBOARD_PANEL_TOP_MARGIN_FROM_MENU := 16.0
 const SETTINGS_EXIT_MAIN_MENU_MIN_H_DEFAULT := 120.0
 const SETTINGS_EXIT_QUIT_MIN_H_DEFAULT := 120.0
 const SETTINGS_EXIT_BACK_MIN_H_DEFAULT := 150.0
@@ -988,9 +990,9 @@ func _setup_leaderboard_panel() -> void:
     leaderboard_panel.anchor_right = 0.0
     leaderboard_panel.anchor_bottom = 0.0
     leaderboard_panel.offset_left = 16.0
-    leaderboard_panel.offset_top = 120.0
+    leaderboard_panel.offset_top = _get_leaderboard_panel_top_offset()
     leaderboard_panel.offset_right = 420.0
-    leaderboard_panel.offset_bottom = 430.0
+    leaderboard_panel.offset_bottom = leaderboard_panel.offset_top + 310.0
     leaderboard_panel.custom_minimum_size = Vector2(404.0, 0.0)
     leaderboard_panel.z_index = 210
     leaderboard_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1070,6 +1072,25 @@ func _setup_leaderboard_panel() -> void:
     if SteamHandler != null and SteamHandler.has_method("request_active_fishing_leaderboards"):
         SteamHandler.request_active_fishing_leaderboards()
     _refresh_leaderboard_panel()
+
+func _get_leaderboard_panel_top_offset() -> float:
+    var top_offset := LEADERBOARD_PANEL_TOP_DEFAULT
+    if not Util.is_all_high_level_mode_active():
+        return top_offset
+    var viewport: Viewport = get_viewport()
+    if viewport == null:
+        return top_offset
+    var vertical_shift := viewport.get_visible_rect().size.y * UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO
+    var shifted_button_bottom := 104.0 + vertical_shift
+    return max(top_offset, shifted_button_bottom + LEADERBOARD_PANEL_TOP_MARGIN_FROM_MENU)
+
+func _update_leaderboard_panel_position() -> void:
+    if leaderboard_panel == null or not is_instance_valid(leaderboard_panel):
+        return
+    var top_offset := _get_leaderboard_panel_top_offset()
+    var panel_height := leaderboard_panel.offset_bottom - leaderboard_panel.offset_top
+    leaderboard_panel.offset_top = top_offset
+    leaderboard_panel.offset_bottom = top_offset + panel_height
 
 func _refresh_leaderboard_panel() -> void:
     if leaderboard_panel == null or not is_instance_valid(leaderboard_panel):
@@ -2473,6 +2494,7 @@ func _update_upgrade_top_button_positions() -> void:
 
 func _on_viewport_size_changed() -> void:
     _update_upgrade_top_button_positions()
+    _update_leaderboard_panel_position()
     _update_upgrade_settings_exit_buttons_layout()
     if tech_tree != null and is_instance_valid(tech_tree):
         tech_tree.clamp_tech_tree_pos()

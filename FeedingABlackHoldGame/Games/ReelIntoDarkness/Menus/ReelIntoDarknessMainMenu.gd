@@ -2,10 +2,8 @@ extends "res://Main Menu.gd"
 
 const SAVE_PATH := "user://reel_into_darkness_save_v1.json"
 
-func _ready() -> void:
-	super._ready()
-	if has_node("%MainTitle"):
-		%MainTitle.text = "REEL INTO DARKNESS"
+func get_main_title_translation_key() -> String:
+	return "REEL INTO DARKNESS"
 
 func _start_reel_flow(load_saved_run: bool) -> void:
 	Global.ensure_default_game_mode_data()

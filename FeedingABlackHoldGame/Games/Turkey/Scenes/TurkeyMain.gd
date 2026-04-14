@@ -4,6 +4,7 @@ const TURKEY_DATA := preload("res://Games/Turkey/TurkeyData.gd")
 const TURKEY_PROGRESS := preload("res://Games/Turkey/TurkeyProgress.gd")
 const IN_GAME_PAUSE_MENU_SCRIPT := preload("res://Core/InGamePauseMenu.gd")
 const CRT_SHADER := preload("res://Games/Mining/UI/MiningCrt.gdshader")
+const TURKEY_TRANSLATION_CSV_PATH := "res://Data/Blackhole Translations - Sheet1.csv"
 
 func _trf(text: String, args: Array = []) -> String:
     return tr(text) % args if not args.is_empty() else tr(text)
@@ -203,6 +204,8 @@ var end_sum_wallet_pop_tween: Tween
 var end_sum_wallet_target := 0
 var turkey_pin_hit_last_ms: Dictionary = {}
 var turkey_ball_roll_phase := 0.0
+var _turkey_translation_csv_loaded := false
+var _turkey_translation_csv_by_key: Dictionary = {}
 
 func _ready() -> void:
     rng.randomize()
@@ -793,8 +796,8 @@ func _setup_shot_power_selector() -> void:
         return
     shot_power_option.clear()
     shot_power_option.add_item(tr("Normal shot"), 0)
-    shot_power_option.add_item(tr("Power shot (+25% speed, 3× mass / pin hit, once/frame)"), 1)
-    shot_power_option.add_item(tr("Multi shot (+4 balls at ±3°/±6°, no lane assist, once/frame)"), 2)
+    shot_power_option.add_item(tr("Power shot (+25% speed, 3x mass / pin hit, once/frame)"), 1)
+    shot_power_option.add_item(tr("Multi shot (+4 balls at +/-3 deg / +/-6 deg, once/frame)"), 2)
     shot_power_option.select(0)
     _refresh_shot_power_option()
 
@@ -2043,6 +2046,58 @@ func _make_end_chart_label(text: String, width: float, font_size: int, align: Ho
     return label
 
 
+func _translate_turkey_chart_label(key: String) -> String:
+    var translated := tr(key)
+    if translated != key:
+        return translated
+    _ensure_turkey_translation_csv_loaded()
+    if not _turkey_translation_csv_by_key.has(key):
+        return translated
+    var row: Dictionary = _turkey_translation_csv_by_key.get(key, {})
+    var locale_code: String = TranslationServer.get_locale().strip_edges().to_lower()
+    if row.has(locale_code):
+        var locale_value := str(row[locale_code]).strip_edges()
+        if not locale_value.is_empty():
+            return locale_value
+    if locale_code.contains("-"):
+        var base_locale := locale_code.split("-")[0]
+        if row.has(base_locale):
+            var base_value := str(row[base_locale]).strip_edges()
+            if not base_value.is_empty():
+                return base_value
+    if row.has("en"):
+        var english_value := str(row["en"]).strip_edges()
+        if not english_value.is_empty():
+            return english_value
+    return translated
+
+
+func _ensure_turkey_translation_csv_loaded() -> void:
+    if _turkey_translation_csv_loaded:
+        return
+    _turkey_translation_csv_loaded = true
+    var file := FileAccess.open(TURKEY_TRANSLATION_CSV_PATH, FileAccess.READ)
+    if file == null:
+        return
+    if file.eof_reached():
+        return
+    var headers: PackedStringArray = file.get_csv_line(",")
+    if headers.is_empty():
+        return
+    while not file.eof_reached():
+        var row_values: PackedStringArray = file.get_csv_line(",")
+        if row_values.is_empty():
+            continue
+        var key := str(row_values[0]).strip_edges()
+        if key.is_empty():
+            continue
+        var row: Dictionary = {}
+        var max_count := mini(headers.size(), row_values.size())
+        for index in range(max_count):
+            row[str(headers[index]).strip_edges()] = row_values[index]
+        _turkey_translation_csv_by_key[key] = row
+
+
 func _make_end_chart_bar_bundle(max_value: float, color: Color) -> Dictionary:
     var root := HBoxContainer.new()
     root.custom_minimum_size = Vector2(200.0, 0.0)
@@ -2224,7 +2279,7 @@ func _refresh_turkey_money_chart(results: Dictionary, chart_data: Dictionary) ->
         var row := HBoxContainer.new()
         row.add_theme_constant_override("separation", 8)
         root.add_child(row)
-        row.add_child(_make_end_chart_label("%s" % str(row_data.get("label", "")), 168.0, 16))
+        row.add_child(_make_end_chart_label(_translate_turkey_chart_label(str(row_data.get("label", ""))), 168.0, 16))
         var target_value: float = float(row_data.get("money", 0.0))
         var bar_bundle: Dictionary = _make_end_chart_bar_bundle(max_money, row_data.get("color", Color(0.75, 0.8, 0.88, 1.0)))
         row.add_child(bar_bundle.get("root", HBoxContainer.new()))

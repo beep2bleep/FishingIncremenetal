@@ -2,6 +2,7 @@ extends RefCounted
 class_name MiningProgress
 
 const MINING_BALANCE := preload("res://Games/Mining/MiningBalance.gd")
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const SAVE_PATH := "user://mining_mode_save_v1.json"
 const MAX_DEPTH_LEVEL := MINING_BALANCE.MAX_DEPTH_LEVEL
 const MIN_START_DEPTH_LEVEL := 1
@@ -130,6 +131,7 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
     var new_deepest_level: int = max(previous_deepest_level, int(data.get("deepest_level_unlocked", previous_deepest_level)))
     if new_deepest_level > previous_deepest_level:
         data["selected_depth_level"] = new_deepest_level
+    CROSS_GAME_BONUSES.award_mining_depth(new_deepest_level)
     save_data(data)
     _track_depth_frontier_progression_event(previous_deepest_level, new_deepest_level, results, data)
     _track_rank_progression_events(previous_level, new_level, get_rank_xp(data), results)

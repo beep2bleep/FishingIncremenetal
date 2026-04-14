@@ -7,6 +7,13 @@ const PLATFORMING_PACK_SPRITES := "C:/Godot Projects/FishingIncremental/Platform
 
 enum STATES{MENU, SETTINGS, GAME_MODE}
 
+func get_main_title_translation_key() -> String:
+    return "VANGUARD: IDLE AUTO-BATTLER"
+
+func _refresh_localized_text() -> void:
+    if has_node("%MainTitle"):
+        %MainTitle.text = tr(get_main_title_translation_key())
+
 var state: STATES = STATES.MENU:
     set(new_value):
         var old_value = state
@@ -79,6 +86,10 @@ func _input(event: InputEvent) -> void :
     if event.is_action_pressed("back"):
         state = STATES.MENU
 
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_TRANSLATION_CHANGED:
+        _refresh_localized_text()
+
 func _ready():
 
 
@@ -150,8 +161,7 @@ func _ready():
     var logo_node = get_node_or_null("CanvasLayer/MarginContainer2/Logo")
     if logo_node:
         logo_node.visible = false
-    if has_node("%MainTitle"):
-        %MainTitle.text = "VANGUARD: IDLE AUTO-BATTLER"
+    _refresh_localized_text()
     if has_node("%Discord"):
         %Discord.disabled = true
     if has_node("%Press Kit"):

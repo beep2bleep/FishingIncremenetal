@@ -13,6 +13,7 @@ const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgres
 const TURKEY_PROGRESS_SCRIPT = preload("res://Games/Turkey/TurkeyProgress.gd")
 var REEL_INTO_DARKNESS_PROGRESS_SCRIPT = load("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
 const RED_SKY_ICON_FACTORY = preload("res://Games/RedSkyDefense/RedSkyIconFactory.gd")
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 static var _icon_texture_cache: Dictionary = {}
 static var _active_tooltip_node: TechTreeNode = null
 
@@ -375,7 +376,7 @@ func _on_click_mask_gui_input(event: InputEvent) -> void:
         return
     if mouse_event.button_index != MOUSE_BUTTON_RIGHT:
         return
-    if upgrade == null or upgrade.current_tier <= 0 or upgrade.sim_key == "":
+    if upgrade == null or upgrade.current_tier <= 0 or upgrade.sim_key == "" or CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
         return
     var upgrade_screen := _get_active_upgrade_screen()
     if upgrade_screen != null and upgrade_screen.has_method("request_editor_sell_for_node"):
@@ -385,7 +386,13 @@ func _on_click_mask_gui_input(event: InputEvent) -> void:
 func _purchase_upgrade() -> void:
     if state != STATES.AVAILABLE or not can_pay_cost:
         return
-    Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, - cost)
+    if upgrade != null and CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
+        var target_game_id: String = CROSS_GAME_BONUSES.get_target_from_cross_bonus_key(upgrade.sim_key)
+        if not CROSS_GAME_BONUSES.purchase_target_bonus(target_game_id):
+            update()
+            return
+    else:
+        Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, - cost)
 
     custom_tween_component.do_rotation = true
     custom_tween_component.do_tween(1.0)
@@ -405,6 +412,9 @@ func _purchase_upgrade() -> void:
         upgrade_screen.on_node_unlocked(self)
 
     if upgrade != null and upgrade.sim_key != "":
+        if CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
+            SaveHandler.save_player_last_run()
+            return
         var new_amount: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
         var target_level: int = int(upgrade.sim_level) + int(upgrade.current_tier) - 1
         if Util.is_mining_game_active():
@@ -598,7 +608,10 @@ func update():
 
     cost = upgrade.get_cost()
     %Cost.visible = cost != 0
-    %Cost.text = str("$", Util.get_number_short_text(cost))
+    if upgrade != null and CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
+        %Cost.text = "%d gem%s" % [int(cost), "" if int(cost) == 1 else "s"]
+    else:
+        %Cost.text = str("$", Util.get_number_short_text(cost))
     if cost == 0:
         %HSeparator2.hide()
 
@@ -678,7 +691,10 @@ func _refresh_tooltip_visibility() -> void:
 
 func update_can_pay_cost():
     var check = true
-    if cost > Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY):
+    if upgrade != null and CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
+        var target_game_id: String = CROSS_GAME_BONUSES.get_target_from_cross_bonus_key(upgrade.sim_key)
+        check = CROSS_GAME_BONUSES.can_afford_target_bonus(target_game_id, upgrade.current_tier)
+    elif cost > Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY):
         check = false
 
     if upgrade and upgrade.demo_locked == 1:
@@ -707,6 +723,11 @@ func _is_texture_icon_path(icon_value: String) -> bool:
 
 func _get_upgrade_icon_texture() -> Texture2D:
     if upgrade != null and upgrade.sim_icon != "":
+        if upgrade.sim_icon.begins_with("cross://"):
+            var currency_id: String = upgrade.sim_icon.trim_prefix("cross://")
+            var cross_texture: Texture2D = CROSS_GAME_BONUSES.get_currency_icon_texture(currency_id, 72)
+            if cross_texture != null:
+                return cross_texture
         if upgrade.sim_icon.begins_with("redsky://"):
             if _icon_texture_cache.has(upgrade.sim_icon):
                 return _icon_texture_cache[upgrade.sim_icon]

@@ -2,6 +2,7 @@ extends RefCounted
 class_name TurkeyUpgradeTreeAdapter
 
 const TURKEY_PROGRESS := preload("res://Games/Turkey/TurkeyProgress.gd")
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 
 const ICON_MODS: Array[int] = [
 	Util.MODS.BASE_DAMAGE_PER_CLICK,
@@ -15,6 +16,7 @@ static func apply_simulation_upgrades() -> void:
 	Global.game_mode_data_manager.unlocked_upgrades = {}
 
 	var upgrade_catalog: Array[Dictionary] = TURKEY_PROGRESS.get_meta_upgrade_catalog()
+	upgrade_catalog.append(CROSS_GAME_BONUSES.get_cross_bonus_node_definition(Util.ACTIVE_GAME_TURKEY))
 	var id_to_cell: Dictionary = {}
 	for entry in upgrade_catalog:
 		id_to_cell[str(entry.get("id", ""))] = Vector2(entry.get("cell", Vector2.ZERO))
@@ -53,6 +55,8 @@ static func apply_simulation_upgrades() -> void:
 		Global.game_mode_data_manager.upgrades[upgrade.cell] = upgrade
 
 		var owned_level: int = TURKEY_PROGRESS.get_upgrade_level(upgrade.sim_key)
+		if CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
+			owned_level = CROSS_GAME_BONUSES.get_target_bonus_level(Util.ACTIVE_GAME_TURKEY)
 		if owned_level > 0:
 			upgrade.current_tier = clampi(owned_level, 0, upgrade.max_tier)
 			Global.game_mode_data_manager.unlocked_upgrades[upgrade.cell] = upgrade.to_dict()

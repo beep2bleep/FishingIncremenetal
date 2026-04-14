@@ -2,10 +2,8 @@ extends "res://Main Menu.gd"
 
 const SAVE_PATH := "user://red_sky_defense_save_v1.json"
 
-func _ready() -> void:
-    super._ready()
-    if has_node("%MainTitle"):
-        %MainTitle.text = "RED SKY DEFENSE"
+func get_main_title_translation_key() -> String:
+    return "RED SKY DEFENSE"
 
 func _start_red_sky_flow(load_saved_run: bool) -> void:
     Global.ensure_default_game_mode_data()

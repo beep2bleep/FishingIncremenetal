@@ -1,9 +1,7 @@
 extends "res://Main Menu.gd"
 
-func _ready() -> void:
-    super._ready()
-    if has_node("%MainTitle"):
-        %MainTitle.text = "VANGUARD: IDLE AUTO-BATTLER"
+func get_main_title_translation_key() -> String:
+    return "VANGUARD: IDLE AUTO-BATTLER"
 
 func _start_upgrade_flow(load_saved_run: bool) -> void:
     Global.ensure_default_game_mode_data()

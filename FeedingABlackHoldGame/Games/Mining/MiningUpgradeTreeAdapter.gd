@@ -3,6 +3,7 @@ class_name MiningUpgradeTreeAdapter
 
 const MINING_BALANCE_SCRIPT = preload("res://Games/Mining/MiningBalance.gd")
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 
 const GROUPED_TIER_MAX := 5
 const DEMO_PROJECT_SETTING := "global/Demo"
@@ -52,7 +53,10 @@ static func apply_simulation_upgrades() -> void:
     var demo_max_group: int = _get_demo_max_group()
     var upgrade_catalog: Array[Dictionary] = MINING_PROGRESS_SCRIPT.get_upgrade_catalog()
     var grouped_upgrades: Array[Dictionary] = _group_upgrades(upgrade_catalog)
+    var cross_entry: Dictionary = CROSS_GAME_BONUSES.get_cross_bonus_node_definition(Util.ACTIVE_GAME_MINING)
+    grouped_upgrades.append(cross_entry)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
+    id_to_cell[str(cross_entry.get("id", ""))] = Vector2(cross_entry.get("cell", Vector2(4, -1)))
 
     var next_id := 0
     for entry in grouped_upgrades:
@@ -98,6 +102,8 @@ static func apply_simulation_upgrades() -> void:
         Global.game_mode_data_manager.upgrades[upgrade.cell] = upgrade
 
         var owned_level: int = int(saved_upgrades.get(upgrade_key, 0))
+        if CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade_key):
+            owned_level = CROSS_GAME_BONUSES.get_target_bonus_level(Util.ACTIVE_GAME_MINING)
         if upgrade.demo_locked == 1:
             owned_level = min(owned_level, upgrade.sim_level - 1)
         if owned_level >= upgrade.sim_level:
