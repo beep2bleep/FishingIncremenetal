@@ -53,10 +53,13 @@ static func apply_simulation_upgrades() -> void:
     var demo_max_group: int = _get_demo_max_group()
     var upgrade_catalog: Array[Dictionary] = MINING_PROGRESS_SCRIPT.get_upgrade_catalog()
     var grouped_upgrades: Array[Dictionary] = _group_upgrades(upgrade_catalog)
-    var cross_entry: Dictionary = CROSS_GAME_BONUSES.get_cross_bonus_node_definition(Util.ACTIVE_GAME_MINING)
-    grouped_upgrades.append(cross_entry)
+    var cross_entry: Dictionary = {}
+    if Util.is_all_high_level_mode_active():
+        cross_entry = CROSS_GAME_BONUSES.get_cross_bonus_node_definition(Util.ACTIVE_GAME_MINING)
+        grouped_upgrades.append(cross_entry)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
-    id_to_cell[str(cross_entry.get("id", ""))] = Vector2(cross_entry.get("cell", Vector2(0, -1)))
+    if not cross_entry.is_empty():
+        id_to_cell[str(cross_entry.get("id", ""))] = Vector2(cross_entry.get("cell", Vector2(0, -1)))
 
     var next_id := 0
     for entry in grouped_upgrades:

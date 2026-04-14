@@ -944,8 +944,6 @@ func _refresh_mining_time_label() -> void:
     mining_time_label.text = _trf("BATTLE_CLOCK_LABEL", [Util.format_time(SaveHandler.fishing_run_clock_seconds)])
 
 func _get_demo_wishlist_url() -> String:
-    if Util.is_mining_game_active():
-        return SteamHandler.get_store_url().strip_edges()
     var configured_url: String = str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()
     if configured_url != "":
         return configured_url

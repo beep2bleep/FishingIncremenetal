@@ -5,7 +5,6 @@ const STEAM_VANGUARD_DEMO_APP_ID := 4524190
 const STEAM_DEEPCORE_APP_ID := 4562070
 const STEAM_DEEPCORE_DEMO_APP_ID := 4615740
 const STEAM_STORE_PATH := "Vanguard__Idle_Auto_Battler"
-const MINING_WISHLIST_URL := "https://beep2bleep.com"
 const LEADERBOARD_LEVEL7_SHARED := "level7_clear_time"
 const LEADERBOARD_LEVEL20_FULL := "full_level20_clear_time"
 const LEADERBOARD_DEEPCORE_TIME_TO_TIER8 := "DeepcoreTimeToTier8"
@@ -83,7 +82,7 @@ var _steam_shutdown_started := false
 
 func get_store_url() -> String:
     if Util.is_mining_game_active():
-        return MINING_WISHLIST_URL
+        return "https://store.steampowered.com/app/%s/Deepcore/" % STEAM_DEEPCORE_APP_ID
     return "https://store.steampowered.com/app/%s/%s/" % [_resolve_steam_app_id(), STEAM_STORE_PATH]
 
 func is_steam_deck():

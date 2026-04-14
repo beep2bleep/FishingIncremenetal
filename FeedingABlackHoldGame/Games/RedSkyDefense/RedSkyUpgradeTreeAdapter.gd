@@ -18,7 +18,8 @@ static func apply_simulation_upgrades() -> void:
 
 	var demo_mode_enabled: bool = bool(ProjectSettings.get_setting("global/Demo", false))
 	var upgrade_catalog: Array[Dictionary] = RED_SKY_PROGRESS.get_meta_upgrade_catalog()
-	upgrade_catalog.append(CROSS_GAME_BONUSES.get_cross_bonus_node_definition(Util.ACTIVE_GAME_RED_SKY))
+	if Util.is_all_high_level_mode_active():
+		upgrade_catalog.append(CROSS_GAME_BONUSES.get_cross_bonus_node_definition(Util.ACTIVE_GAME_RED_SKY))
 	var id_to_cell: Dictionary = {}
 	for entry in upgrade_catalog:
 		id_to_cell[str(entry.get("id", ""))] = Vector2(entry.get("cell", Vector2.ZERO))

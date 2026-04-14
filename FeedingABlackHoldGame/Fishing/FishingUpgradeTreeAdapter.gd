@@ -66,7 +66,8 @@ static func apply_simulation_upgrades() -> void:
     _enforce_branch_anchors(grouped_upgrades)
     _enforce_tier_chain_order(grouped_upgrades)
     _sanitize_dependency_graph(grouped_upgrades)
-    grouped_upgrades.append(CROSS_GAME_BONUSES.get_cross_bonus_node_definition(Util.ACTIVE_GAME_VANGUARD))
+    if Util.is_all_high_level_mode_active():
+        grouped_upgrades.append(CROSS_GAME_BONUSES.get_cross_bonus_node_definition(Util.ACTIVE_GAME_VANGUARD))
     if OS.has_feature("editor"):
         _validate_dependencies_reach_center(grouped_upgrades)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)

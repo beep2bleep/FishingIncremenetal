@@ -99,6 +99,8 @@ static func get_all_currency_counts() -> Dictionary:
     return load_data().get("currencies", {}).duplicate(true)
 
 static func grant_currency_if_new(currency_id: String, token: String) -> bool:
+    if not Util.is_all_high_level_mode_active():
+        return false
     if not CURRENCY_DATA.has(currency_id):
         return false
     var data: Dictionary = load_data()
@@ -121,6 +123,8 @@ static func award_vanguard_level_clear(level: int) -> bool:
     return grant_currency_if_new(Util.ACTIVE_GAME_VANGUARD, "level_%d" % level)
 
 static func count_vanguard_level_rewards(level: int) -> int:
+    if not Util.is_all_high_level_mode_active():
+        return 0
     return 1 if VANGUARD_LEVEL_MILESTONES.has(level) else 0
 
 static func award_mining_depth(depth_level: int) -> int:
@@ -131,6 +135,8 @@ static func award_mining_depth(depth_level: int) -> int:
     return awarded
 
 static func count_mining_depth_rewards_between(previous_depth_level: int, new_depth_level: int) -> int:
+    if not Util.is_all_high_level_mode_active():
+        return 0
     var awarded := 0
     for milestone in MINING_LEVEL_MILESTONES:
         if previous_depth_level < milestone and new_depth_level >= milestone:
@@ -145,6 +151,8 @@ static func award_red_sky_wave(wave: int) -> int:
     return awarded
 
 static func count_red_sky_wave_rewards_between(previous_wave: int, new_wave: int) -> int:
+    if not Util.is_all_high_level_mode_active():
+        return 0
     var awarded := 0
     for milestone in RED_SKY_WAVE_MILESTONES:
         if previous_wave < milestone and new_wave >= milestone:
@@ -204,6 +212,8 @@ static func can_afford_target_bonus(target_game_id: String, tier_index: int) -> 
     return get_available_currency_total_for_target(target_game_id) >= int(CROSS_NODE_COSTS[tier_index])
 
 static func purchase_target_bonus(target_game_id: String) -> bool:
+    if not Util.is_all_high_level_mode_active():
+        return false
     var data: Dictionary = load_data()
     var levels: Dictionary = data.get("target_bonus_tiers", {}).duplicate(true)
     var current_level: int = clampi(int(levels.get(target_game_id, 0)), 0, MAX_BONUS_TIER)
@@ -277,6 +287,8 @@ static func _get_cross_gem_name_translation_key(currency_id: String) -> String:
             return ""
 
 static func get_reward_summary_line(currency_id: String, amount: int) -> String:
+    if not Util.is_all_high_level_mode_active():
+        return ""
     if amount <= 0:
         return ""
     var info: Dictionary = CURRENCY_DATA.get(currency_id, {})

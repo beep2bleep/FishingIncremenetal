@@ -1792,7 +1792,7 @@ func _style_panel(panel: PanelContainer, background_color: Color, border_color: 
 func _build_summary_stats_text(stats: Dictionary) -> String:
     var lines := PackedStringArray()
     lines.append(_trf("MINING_SUMMARY_STATS_LINE_1", [
-        float(stats.get("time_spent", 0.0)),
+        "%.2f" % float(stats.get("time_spent", 0.0)),
         "%.2f" % float(stats.get("money_per_second", 0.0)),
         "%.2f" % float(stats.get("xp_per_second", 0.0)),
         "%.2f" % float(stats.get("ore_per_second", 0.0))
