@@ -1,6 +1,7 @@
 extends RefCounted
 class_name TurkeyUpgradeTreeAdapter
 
+const TURKEY_DATA := preload("res://Games/Turkey/TurkeyData.gd")
 const TURKEY_PROGRESS := preload("res://Games/Turkey/TurkeyProgress.gd")
 const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 
@@ -15,6 +16,7 @@ static func apply_simulation_upgrades() -> void:
 	Global.game_mode_data_manager.upgrades = {}
 	Global.game_mode_data_manager.unlocked_upgrades = {}
 
+	var demo_mode_enabled: bool = bool(ProjectSettings.get_setting("global/Demo", false))
 	var upgrade_catalog: Array[Dictionary] = TURKEY_PROGRESS.get_meta_upgrade_catalog()
 	upgrade_catalog.append(CROSS_GAME_BONUSES.get_cross_bonus_node_definition(Util.ACTIVE_GAME_TURKEY))
 	var id_to_cell: Dictionary = {}
@@ -38,6 +40,8 @@ static func apply_simulation_upgrades() -> void:
 		upgrade.cost_scale = 0.0
 		upgrade.tier_costs = entry.get("tier_costs", [])
 		upgrade.demo_locked = 0
+		if demo_mode_enabled and TURKEY_DATA.should_lock_meta_upgrade_in_demo(entry) and not CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade_key):
+			upgrade.demo_locked = 1
 		upgrade.section = 0
 		upgrade.act = int(entry.get("act", 1))
 		upgrade.epilogue = 0
@@ -57,6 +61,8 @@ static func apply_simulation_upgrades() -> void:
 		var owned_level: int = TURKEY_PROGRESS.get_upgrade_level(upgrade.sim_key)
 		if CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
 			owned_level = CROSS_GAME_BONUSES.get_target_bonus_level(Util.ACTIVE_GAME_TURKEY)
+		if upgrade.demo_locked == 1:
+			owned_level = 0
 		if owned_level > 0:
 			upgrade.current_tier = clampi(owned_level, 0, upgrade.max_tier)
 			Global.game_mode_data_manager.unlocked_upgrades[upgrade.cell] = upgrade.to_dict()

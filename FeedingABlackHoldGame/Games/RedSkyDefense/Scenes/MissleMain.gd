@@ -4,6 +4,7 @@ class_name MissleMain
 const RED_SKY_DATA = preload("res://Games/RedSkyDefense/RedSkyData.gd")
 const RED_SKY_PROGRESS = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
 const RED_SKY_ICON_FACTORY = preload("res://Games/RedSkyDefense/RedSkyIconFactory.gd")
+const CROSS_GAME_BONUSES = preload("res://CrossGameBonuses.gd")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
 const IN_GAME_PAUSE_MENU_SCRIPT = preload("res://Core/InGamePauseMenu.gd")
@@ -2861,6 +2862,10 @@ func _build_run_results(reason: String, from_pause_end_run: bool = false) -> Dic
     }, {"meta_reward_multiplier": meta_reward_multiplier})
     var wallet_bonus: int = max(0, wallet_gain - score)
     var waves_cleared_this_run: int = max(0, waves_cleared - max(run_start_wave - 1, 0))
+    var previous_best_wave: int = max(0, int(persistent_data.get("best_wave", 0)))
+    var projected_best_wave: int = max(previous_best_wave, waves_cleared)
+    var gem_reward_count: int = CROSS_GAME_BONUSES.count_red_sky_wave_rewards_between(previous_best_wave, projected_best_wave)
+    var gem_reward_line: String = CROSS_GAME_BONUSES.get_reward_summary_line(Util.ACTIVE_GAME_RED_SKY, gem_reward_count)
     var payout_chart: Array[Dictionary] = []
     payout_chart.append({
         "label": "Scrap banked (run)",
@@ -2891,6 +2896,8 @@ func _build_run_results(reason: String, from_pause_end_run: bool = false) -> Dic
     _append_summary_chart_row_if_positive(damage_prevented_breakdown, tr("Shots destroyed"), intercepted_enemy_shot_damage, Color(0.48, 0.92, 0.88, 1.0))
     _append_summary_chart_row_if_positive(damage_prevented_breakdown, tr("Shots redirected (threat)"), deflected_threat_damage, Color(0.78, 0.92, 0.55, 1.0))
     var summary_text := _trf("%s — Cleared %d waves this run — +%d scrap to wallet", [reason, waves_cleared_this_run, wallet_gain])
+    if gem_reward_line != "":
+        summary_text += "\n" + gem_reward_line
     var summary_stats_text := _trf("Best score: %d    Best wave: %d    Total runs: %d    Shots fired: %d", [
         max(int(persistent_data.get("best_score", 0)), score),
         max(int(persistent_data.get("best_wave", 0)), waves_cleared),
@@ -2903,6 +2910,8 @@ func _build_run_results(reason: String, from_pause_end_run: bool = false) -> Dic
         "wallet_gain": wallet_gain,
         "run_scrap": score,
         "wallet_bonus": wallet_bonus,
+        "gem_reward_count": gem_reward_count,
+        "gem_reward_line": gem_reward_line,
         "show_cursor_escape_hint": from_pause_end_run
     }
     return {
@@ -2914,6 +2923,8 @@ func _build_run_results(reason: String, from_pause_end_run: bool = false) -> Dic
         "score": score,
         "wallet_bonus": wallet_bonus,
         "wallet_gain": wallet_gain,
+        "gem_reward_count": gem_reward_count,
+        "gem_reward_line": gem_reward_line,
         "damage_dealt": int(round(damage_dealt)),
         "damage_taken": int(round(damage_taken)),
         "shield_damage_absorbed": int(round(shield_damage_absorbed)),

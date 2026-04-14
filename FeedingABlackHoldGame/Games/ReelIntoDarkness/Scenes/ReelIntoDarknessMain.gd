@@ -49,6 +49,9 @@ const FISH_COUNT_MAX := 24
 const LINE_SURFACE_REEL_NUDGE_SPEED := 36.0
 const GUIDANCE_PULSE_SPEED := 6.0
 const GUIDANCE_GLOW_ALPHA := 0.22
+const MOON_SKY_X_START_FRAC := 0.78
+## When the run timer hits zero the moon sits here: two thirds of a full-width journey from the right edge toward the left (one third from the left edge).
+const MOON_SKY_X_END_FRAC := 1.0 / 3.0
 
 enum RunState {
 	INTRO,
@@ -110,6 +113,7 @@ var crt_hud_label: Label
 var ambient_anim_time := 0.0
 
 var timer_left := 0.0
+var run_time_limit := 0.0
 var deepest_depth_reached := 0.0
 var hook_blink_timer := 0.0
 
@@ -454,7 +458,8 @@ func _begin_run() -> void:
 		"species_counts": {},
 		"species_values": {},
 	}
-	timer_left = float(run_config.get("time_limit", 30.0))
+	run_time_limit = maxf(0.001, float(run_config.get("time_limit", 30.0)))
+	timer_left = run_time_limit
 	deepest_depth_reached = 0.0
 	hooked_fish_index = -1
 	player_stamina_max = 0.0
@@ -1437,7 +1442,10 @@ func _draw_sky_moon_stars(viewport_size: Vector2, surface_y: float) -> void:
 		draw_circle(star_pos, radius, Color(0.88, 0.92, 1.0, alpha))
 		if i % 4 == 0:
 			draw_circle(star_pos, radius * (1.6 + twinkle * 0.45), Color(0.9, 0.95, 1.0, alpha * 0.08))
-	var moon_center := Vector2(viewport_size.x * 0.78, surface_y * 0.34)
+	var moon_x_start: float = viewport_size.x * MOON_SKY_X_START_FRAC
+	var moon_x_end: float = viewport_size.x * MOON_SKY_X_END_FRAC
+	var moon_travel_t: float = 1.0 - clampf(timer_left / run_time_limit, 0.0, 1.0)
+	var moon_center := Vector2(lerpf(moon_x_start, moon_x_end, moon_travel_t), surface_y * 0.34)
 	draw_circle(moon_center, 24.0, Color(0.72, 0.77, 0.9, 0.12))
 	draw_circle(moon_center, 16.0, Color(0.94, 0.96, 1.0, 0.9))
 	draw_circle(moon_center + Vector2(6.0, -2.0), 14.0, Color(0.03, 0.035, 0.055, 0.96))

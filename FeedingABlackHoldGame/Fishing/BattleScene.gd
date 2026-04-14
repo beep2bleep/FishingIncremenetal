@@ -491,6 +491,8 @@ var next_enemy_stack_id: int = 1
 var sim_accumulator: float = 0.0
 var battle_completed: bool = false
 var battle_victory: bool = false
+var battle_gem_reward_count: int = 0
+var battle_gem_reward_line: String = ""
 var defeat_summary_reveal_pending: bool = false
 var defeat_summary_reveal_time: float = 0.0
 var enemy_opening_rush_active: bool = true
@@ -669,6 +671,8 @@ func _ready() -> void:
     _load_editor_new_hero_scale_debug()
     _setup_actor_sheets()
     current_level = clamp(SaveHandler.fishing_next_battle_level, 1, _max_unlocked_level())
+    battle_gem_reward_count = 0
+    battle_gem_reward_line = ""
     _rebuild_battle_mods()
     player_health = _max_health()
     _setup_visuals()
@@ -5009,7 +5013,8 @@ func _track_first_boss_clear_event(level: int) -> void:
         return
     var app_clock_seconds: float = float(Time.get_ticks_msec()) / 1000.0
     SaveHandler.fishing_first_boss_clear_levels[level_key] = true
-    CROSS_GAME_BONUSES.award_vanguard_level_clear(level)
+    battle_gem_reward_count = 1 if CROSS_GAME_BONUSES.award_vanguard_level_clear(level) else 0
+    battle_gem_reward_line = CROSS_GAME_BONUSES.get_reward_summary_line(Util.ACTIVE_GAME_VANGUARD, battle_gem_reward_count)
     _track_ga_event(
         "boss:first_clear:level_%d" % level,
         {
@@ -5177,6 +5182,8 @@ func _build_battle_summary_text(is_live: bool) -> String:
         ])
     if battle_victory and current_level == 3 and SaveHandler.fishing_l3_boss_clear_clock_seconds >= 0.0:
         summary_text += "\n\n" + _trf("BATTLE_LEVEL3_CLEAR_TIME", [Util.format_time(SaveHandler.fishing_l3_boss_clear_clock_seconds)])
+    if battle_gem_reward_line != "":
+        summary_text += "\n\n" + battle_gem_reward_line
     return summary_text
 
 func _is_first_level_20_clear() -> bool:

@@ -56,7 +56,7 @@ static func apply_simulation_upgrades() -> void:
     var cross_entry: Dictionary = CROSS_GAME_BONUSES.get_cross_bonus_node_definition(Util.ACTIVE_GAME_MINING)
     grouped_upgrades.append(cross_entry)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)
-    id_to_cell[str(cross_entry.get("id", ""))] = Vector2(cross_entry.get("cell", Vector2(4, -1)))
+    id_to_cell[str(cross_entry.get("id", ""))] = Vector2(cross_entry.get("cell", Vector2(0, -1)))
 
     var next_id := 0
     for entry in grouped_upgrades:
@@ -90,7 +90,7 @@ static func apply_simulation_upgrades() -> void:
         upgrade.sim_group = int(entry.get("group", 1))
         upgrade.sim_level = int(entry.get("level", 1))
         upgrade.sim_group_pos = 1
-        if demo_mode_enabled and upgrade.sim_group > demo_max_group:
+        if demo_mode_enabled and upgrade.sim_group > demo_max_group and not CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade_key):
             upgrade.demo_locked = 1
 
         var dep_id: String = str(entry.get("dependency", ""))

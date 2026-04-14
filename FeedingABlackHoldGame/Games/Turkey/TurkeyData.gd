@@ -4,6 +4,7 @@ class_name TurkeyData
 const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const DEFAULT_BALL_WEIGHT_LB := 8.0
 const KG_PER_LB := 0.45359237
+const DEMO_LOCKED_LAYER_TAG := "demo_locked_layer"
 ## League Pass upgrade level required to reach each lane tier index (0..4).
 const LANE_TIER_UNLOCK_LEVELS := [0, 2, 4, 6, 8]
 ## Completed Turkey series (runs) — parallel unlock so higher tiers are reachable without maxing League Pass.
@@ -225,6 +226,141 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 		"branch": 8,
 		"step": 5,
 	},
+	{
+		"id": "afterburn",
+		"label": "Afterburn",
+		"summary": "Power Shot finishes with extra drive so the boosted ball keeps punching through the deck.",
+		"icon": "!",
+		"max_tier": 5,
+		"base_cost": 290,
+		"cost_mult": 1.64,
+		"cell": Vector2(-5, -6),
+		"dependency": "power_shot",
+		"act": 6,
+		"branch": 0,
+		"step": 6,
+		"demo_locked_layer": true,
+	},
+	{
+		"id": "release_window",
+		"label": "Release Window",
+		"summary": "Give the approach a calmer finish with tighter timing and cleaner launch consistency.",
+		"icon": "R",
+		"max_tier": 5,
+		"base_cost": 232,
+		"cost_mult": 1.6,
+		"cell": Vector2(-2, -2),
+		"dependency": "approach_rhythm",
+		"act": 5,
+		"branch": 1,
+		"step": 6,
+		"demo_locked_layer": true,
+	},
+	{
+		"id": "deck_cracker",
+		"label": "Deck Cracker",
+		"summary": "Turn impact upgrades into nastier chain reactions across the full rack.",
+		"icon": "D",
+		"max_tier": 5,
+		"base_cost": 248,
+		"cost_mult": 1.61,
+		"cell": Vector2(5, -2),
+		"dependency": "impact_physics",
+		"act": 5,
+		"branch": 3,
+		"step": 6,
+		"demo_locked_layer": true,
+	},
+	{
+		"id": "lane_crew",
+		"label": "Lane Crew",
+		"summary": "Quick cleanup crews keep frames moving and nudge guttered balls back toward the lane edge.",
+		"icon": "L",
+		"max_tier": 5,
+		"base_cost": 276,
+		"cost_mult": 1.62,
+		"cell": Vector2(7, 1),
+		"dependency": "sweep_crew",
+		"act": 6,
+		"branch": 4,
+		"step": 6,
+		"demo_locked_layer": true,
+	},
+	{
+		"id": "headline_act",
+		"label": "Headline Act",
+		"summary": "The crowd really shows up now: strike, spare, and series payouts all climb harder.",
+		"icon": "H",
+		"max_tier": 5,
+		"base_cost": 254,
+		"cost_mult": 1.61,
+		"cell": Vector2(-1, 3),
+		"dependency": "turkey_bonus",
+		"act": 5,
+		"branch": 5,
+		"step": 6,
+		"demo_locked_layer": true,
+	},
+	{
+		"id": "rack_geometry",
+		"label": "Rack Geometry",
+		"summary": "Fine-tune how promoted racks break so pinfall, clears, and gold conversions pay off more often.",
+		"icon": "G",
+		"max_tier": 5,
+		"base_cost": 268,
+		"cost_mult": 1.62,
+		"cell": Vector2(7, 3),
+		"dependency": "kingpin_hunter",
+		"act": 5,
+		"branch": 6,
+		"step": 6,
+		"demo_locked_layer": true,
+	},
+	{
+		"id": "tour_badges",
+		"label": "Tour Badges",
+		"summary": "League reps smooth out hard-lane entries with better line guidance and stronger promoted-tier payouts.",
+		"icon": "B",
+		"max_tier": 5,
+		"base_cost": 320,
+		"cost_mult": 1.64,
+		"cell": Vector2(0, 5),
+		"dependency": "league_pass",
+		"act": 6,
+		"branch": 7,
+		"step": 6,
+		"demo_locked_layer": true,
+	},
+	{
+		"id": "broadcast_deal",
+		"label": "Broadcast Deal",
+		"summary": "Big-stage coverage adds another payout layer on top of your high-tier purse scaling.",
+		"icon": "@",
+		"max_tier": 5,
+		"base_cost": 360,
+		"cost_mult": 1.66,
+		"cell": Vector2(5, 6),
+		"dependency": "champion_purse",
+		"act": 6,
+		"branch": 8,
+		"step": 6,
+		"demo_locked_layer": true,
+	},
+	{
+		"id": "split_doctor",
+		"label": "Split Doctor",
+		"summary": "Tighten multi-ball control so angled follow-up shots rescue more ugly frames.",
+		"icon": "S",
+		"max_tier": 5,
+		"base_cost": 290,
+		"cost_mult": 1.64,
+		"cell": Vector2(5, -6),
+		"dependency": "multi_shot",
+		"act": 6,
+		"branch": 9,
+		"step": 6,
+		"demo_locked_layer": true,
+	},
 ]
 
 const LANE_TIERS: Array[Dictionary] = [
@@ -318,6 +454,11 @@ static func get_meta_upgrade_catalog() -> Array[Dictionary]:
 		catalog.append(entry)
 	return catalog
 
+static func should_lock_meta_upgrade_in_demo(entry: Dictionary) -> bool:
+	if not bool(ProjectSettings.get_setting("global/Demo", false)):
+		return false
+	return bool(entry.get(DEMO_LOCKED_LAYER_TAG, false))
+
 static func get_lane_tier(index: int) -> Dictionary:
 	var clamped_index: int = clampi(index, 0, LANE_TIERS.size() - 1)
 	return LANE_TIERS[clamped_index].duplicate(true)
@@ -366,22 +507,33 @@ static func build_meta_stats(data: Dictionary, gameplay_lane_tier: int = -1) -> 
 	var kingpin_hunter: int = int(upgrades.get("kingpin_hunter", 0))
 	var purse_bump: int = int(upgrades.get("purse_bump", 0))
 	var champion_purse: int = int(upgrades.get("champion_purse", 0))
+	var afterburn: int = int(upgrades.get("afterburn", 0))
+	var release_window: int = int(upgrades.get("release_window", 0))
+	var deck_cracker: int = int(upgrades.get("deck_cracker", 0))
+	var lane_crew: int = int(upgrades.get("lane_crew", 0))
+	var headline_act: int = int(upgrades.get("headline_act", 0))
+	var rack_geometry: int = int(upgrades.get("rack_geometry", 0))
+	var tour_badges: int = int(upgrades.get("tour_badges", 0))
+	var broadcast_deal: int = int(upgrades.get("broadcast_deal", 0))
+	var split_doctor: int = int(upgrades.get("split_doctor", 0))
 
 	var league_lane_cap: int = get_max_selectable_lane_tier(data)
 	var lane_tier: int = league_lane_cap
 	if gameplay_lane_tier >= 0:
 		lane_tier = clampi(gameplay_lane_tier, 0, league_lane_cap)
 	var lane_tier_data: Dictionary = get_lane_tier(lane_tier)
-	var ball_weight_lb: float = DEFAULT_BALL_WEIGHT_LB + float(ball_weight) * 1.35 + float(impact_physics) * 0.35
+	var ball_weight_lb: float = DEFAULT_BALL_WEIGHT_LB + float(ball_weight) * 1.35 + float(impact_physics) * 0.35 + float(deck_cracker) * 0.4
 	var base_aim_error: float = 0.23
-	var aim_error_m: float = max(0.026, base_aim_error * float(lane_tier_data.get("aim_error_mult", 1.0)))
+	var aim_error_m: float = max(0.02, base_aim_error * float(lane_tier_data.get("aim_error_mult", 1.0)) * (1.0 - float(release_window + split_doctor) * 0.045))
 	var reward_multiplier: float = 1.0
 	reward_multiplier += float(sponsor_patch) * 0.12
 	reward_multiplier += float(crowd_favor) * 0.08
 	reward_multiplier += float(purse_bump) * 0.06
 	reward_multiplier += float(champion_purse) * 0.1
+	reward_multiplier += float(headline_act) * 0.08
+	reward_multiplier += float(broadcast_deal) * 0.1
 	reward_multiplier *= float(lane_tier_data.get("reward_mult", 1.0))
-	reward_multiplier *= 1.0 + float(purse_bump + champion_purse) * 0.025 * float(lane_tier)
+	reward_multiplier *= 1.0 + (float(purse_bump + champion_purse) * 0.025 + float(tour_badges + broadcast_deal) * 0.02) * float(lane_tier)
 	var cross_mult: float = CROSS_GAME_BONUSES.get_target_bonus_multiplier(Util.ACTIVE_GAME_TURKEY)
 	ball_weight_lb *= cross_mult
 	reward_multiplier *= cross_mult
@@ -392,30 +544,30 @@ static func build_meta_stats(data: Dictionary, gameplay_lane_tier: int = -1) -> 
 		"shot_multi_shot_unlocked": multi_shot > 0,
 		"ball_weight_lb": ball_weight_lb,
 		"ball_mass_kg": ball_weight_lb * KG_PER_LB,
-		"power_bonus": float(power_training) * 0.58,
-		"spin_multiplier": 1.0,
-		"hook_force_scale": max(0.72, float(lane_tier_data.get("hook_damp", 1.0))),
+		"power_bonus": float(power_training) * 0.58 + float(afterburn) * 0.4,
+		"spin_multiplier": 1.0 + float(split_doctor) * 0.035,
+		"hook_force_scale": max(0.72, float(lane_tier_data.get("hook_damp", 1.0))) * (1.0 + float(split_doctor) * 0.03),
 		"aim_error_m": aim_error_m,
 		"reward_multiplier": reward_multiplier,
-		"power_meter_speed_mult": max(0.56, 1.0 - float(approach_rhythm) * 0.045),
+		"power_meter_speed_mult": max(0.42, 1.0 - float(approach_rhythm) * 0.045 - float(release_window) * 0.03),
 		"target_range_mult": 1.0,
-		"target_assist_force": 0.0,
-		"gutter_return_force": 0.0,
-		"settle_speed_mult": 1.0 + float(sweep_crew) * 0.18,
-		"pin_break_force_mult": 1.0 + float(impact_physics) * 0.08 + float(kingpin_hunter) * 0.05,
-		"pin_score_bonus": float(pin_science) * 0.1 + float(crowd_favor) * 0.04,
-		"strike_reward_bonus": float(turkey_bonus) * 0.14 + float(kingpin_hunter) * 0.09,
-		"spare_reward_bonus": 0.0,
-		"tier_reward_bonus": float(purse_bump) * 0.08 + float(champion_purse) * 0.12,
+		"target_assist_force": float(tour_badges) * 22.0 + float(split_doctor) * 18.0,
+		"gutter_return_force": float(lane_crew) * 4.0,
+		"settle_speed_mult": 1.0 + float(sweep_crew) * 0.18 + float(lane_crew) * 0.15,
+		"pin_break_force_mult": 1.0 + float(impact_physics) * 0.08 + float(kingpin_hunter) * 0.05 + float(deck_cracker + afterburn) * 0.04,
+		"pin_score_bonus": float(pin_science) * 0.1 + float(crowd_favor) * 0.04 + float(rack_geometry) * 0.08,
+		"strike_reward_bonus": float(turkey_bonus) * 0.14 + float(kingpin_hunter) * 0.09 + float(headline_act) * 0.08,
+		"spare_reward_bonus": float(headline_act) * 0.08 + float(split_doctor) * 0.06,
+		"tier_reward_bonus": float(purse_bump) * 0.08 + float(champion_purse) * 0.12 + float(tour_badges) * 0.08 + float(broadcast_deal) * 0.1,
 		"lane_tier": lane_tier,
 		"max_selectable_lane_tier": league_lane_cap,
 		"lane_tier_label": TranslationServer.translate(str(lane_tier_data.get("label", "Practice House"))),
 		"tier_pin_count": int(lane_tier_data.get("pin_count", 10)),
 		"tier_gold_pin_count": gold_pin_count,
 		"tier_gold_mass_scale": float(lane_tier_data.get("gold_mass_scale", 1.0)),
-		"tier_gold_pin_value": float(lane_tier_data.get("gold_pin_value", 0)),
+		"tier_gold_pin_value": float(lane_tier_data.get("gold_pin_value", 0)) + float(rack_geometry) * 6.0,
 		"tier_pin_mass_mult": float(lane_tier_data.get("pin_mass_mult", 1.0)) / max(0.75, 1.0 + float(impact_physics) * 0.035),
-		"tier_pin_standing_dot": max(0.76, float(lane_tier_data.get("pin_standing_dot", 0.84)) - float(impact_physics) * 0.006 - float(kingpin_hunter) * 0.004),
+		"tier_pin_standing_dot": max(0.72, float(lane_tier_data.get("pin_standing_dot", 0.84)) - float(impact_physics) * 0.006 - float(kingpin_hunter) * 0.004 - float(rack_geometry) * 0.004),
 		"tier_pin_spacing_mult": float(lane_tier_data.get("pin_spacing_mult", 1.0)),
 		"tier_head_pin_z_offset": float(lane_tier_data.get("head_pin_z_offset", 0.0)),
 		"tier_settle_mult": float(lane_tier_data.get("settle_speed_mult", 1.0)),

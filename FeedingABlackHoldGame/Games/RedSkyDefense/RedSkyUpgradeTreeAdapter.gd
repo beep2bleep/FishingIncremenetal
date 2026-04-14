@@ -40,7 +40,7 @@ static func apply_simulation_upgrades() -> void:
 		upgrade.cost_scale = 0.0
 		upgrade.tier_costs = entry.get("tier_costs", [])
 		upgrade.demo_locked = 0
-		if demo_mode_enabled and RED_SKY_DATA.should_lock_meta_upgrade_in_demo(entry):
+		if demo_mode_enabled and RED_SKY_DATA.should_lock_meta_upgrade_in_demo(entry) and not CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade_key):
 			upgrade.demo_locked = 1
 		upgrade.section = 0
 		upgrade.act = int(entry.get("act", 1))

@@ -12,6 +12,7 @@ const RED_SKY_BUTTON_TEXT := "RED SKY DEFENSE"
 const TURKEY_BUTTON_TEXT := "TURKEY"
 const REEL_BUTTON_TEXT := "REEL INTO DARKNESS"
 const COMBINED_BUTTON_TEXT := "COMBINED MODE"
+const VANGUARD_LAUNCHER_DETAIL_KEY := "GAME_LAUNCHER_VANGUARD_CARD_DETAIL"
 const COMBINED_DEMO_LOCK_TEXT_KEY := "LOCKED_IN_DEMO_MODE"
 const LANGUAGE_BUTTON_WIDTH := 340.0
 const LANGUAGE_BUTTON_FONT_SIZE := 20
@@ -693,7 +694,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
         Util.ACTIVE_GAME_VANGUARD:
             return {
                 "title": VANGUARD_BUTTON_TEXT,
-                "detail": "Feed the black hole and break planets apart.",
+                "detail": VANGUARD_LAUNCHER_DETAIL_KEY,
                 "asset_rel_path": "1232x706maincap.png",
                 "accent": Color(0.43, 0.68, 1.0, 1.0),
                 "bg_top": Color(0.07, 0.11, 0.19, 1.0),

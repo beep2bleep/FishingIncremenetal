@@ -1233,7 +1233,7 @@ static func _find_layout_cell_for_root(branch: int, branch_count: int, used_cell
         "battle_speed_unlock_2x": Vector2(2, -3),
         "old_art_unlock": Vector2(6, -5),
         "vitality_foundation": Vector2(-3, 2),
-        "cross_bonus_vanguard": Vector2(0, -6),
+        "cross_bonus_vanguard": Vector2(0, -1),
     }
     if fixed_root_targets.has(key):
         target = fixed_root_targets[key]

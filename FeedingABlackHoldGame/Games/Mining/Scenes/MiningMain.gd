@@ -1225,6 +1225,8 @@ func _build_run_results(reason_key: String) -> Dictionary:
     MINING_BALANCE.refresh_depth_unlocks(projected_data)
     projected_depth_unlock = int(projected_data.get("deepest_level_unlocked", projected_depth_unlock))
     var unlocked_depth_before_run: int = int(persistent_data.get("deepest_level_unlocked", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL))
+    var gem_reward_count: int = CROSS_GAME_BONUSES.count_mining_depth_rewards_between(unlocked_depth_before_run, projected_depth_unlock)
+    var gem_reward_line: String = CROSS_GAME_BONUSES.get_reward_summary_line(Util.ACTIVE_GAME_MINING, gem_reward_count)
     var display_depth_level: int = _get_display_depth_tier_for_run_depth(active_depth_level)
     var display_depth_unlock: int = _get_display_depth_tier_for_run_depth(projected_depth_unlock)
     var level_bonus_note: String = _format_level_bonus_summary(level_bonus_gains)
@@ -1256,6 +1258,8 @@ func _build_run_results(reason_key: String) -> Dictionary:
         summary_lines.append(level_bonus_note)
     if tier_unlock_note != "":
         summary_lines.append(tier_unlock_note)
+    if gem_reward_line != "":
+        summary_lines.append(gem_reward_line)
     var summary_text: String = "\n".join(summary_lines)
     return {
         "money": total_money,
@@ -1276,7 +1280,9 @@ func _build_run_results(reason_key: String) -> Dictionary:
             "rank_progress_next": int(level_progress.get("next_rank_xp", level_progress.get("next_level_xp", 1))),
             "projected_depth_unlock": projected_depth_unlock,
             "level_bonus_note": level_bonus_note,
-            "tier_unlock_note": tier_unlock_note
+            "tier_unlock_note": tier_unlock_note,
+            "gem_reward_count": gem_reward_count,
+            "gem_reward_line": gem_reward_line
         },
         "summary_text": summary_text,
         "summary_stats_text": _build_summary_stats_text({
