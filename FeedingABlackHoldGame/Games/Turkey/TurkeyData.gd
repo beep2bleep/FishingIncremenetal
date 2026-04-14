@@ -8,8 +8,8 @@ const LANE_TIER_UNLOCK_LEVELS := [0, 2, 4, 6, 8]
 ## Completed Turkey series (runs) — parallel unlock so higher tiers are reachable without maxing League Pass.
 const VETERAN_RUN_MILESTONES := [0, 2, 7, 18, 40]
 
-## Extra mass multiplier on top of lane tier mass; multiplied per-tier by `gold_mass_scale` on gold pins.
-const GOLD_PIN_MASS_MULT := 6.75
+## Gold pin mass vs a normal pin of the same tier (before `gold_mass_scale`).
+const GOLD_PIN_MASS_MULT := 2.0
 ## Visual + collision scale so the gold pin reads instantly from the approach camera.
 const GOLD_PIN_SCALE := 1.38
 
@@ -26,6 +26,34 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 		"dependency": "",
 		"act": 1,
 		"branch": 1,
+		"step": 1,
+	},
+	{
+		"id": "power_shot",
+		"label": "Power Shot",
+		"summary": "Unlock a frame-limited pickup: +25% launch speed and triple ball mass for much harder pin hits (lane assists only on bonus balls).",
+		"icon": ">",
+		"max_tier": 1,
+		"base_cost": 36,
+		"cost_mult": 1.0,
+		"cell": Vector2(-3, -5),
+		"dependency": "power_training",
+		"act": 1,
+		"branch": 0,
+		"step": 1,
+	},
+	{
+		"id": "multi_shot",
+		"label": "Multi Shot",
+		"summary": "Unlock a frame-limited pickup: main ball is normal; four extras follow at ±3° then ±6° from your line (no lane assists on extras).",
+		"icon": "4",
+		"max_tier": 1,
+		"base_cost": 36,
+		"cost_mult": 1.0,
+		"cell": Vector2(3, -5),
+		"dependency": "power_training",
+		"act": 1,
+		"branch": 9,
 		"step": 1,
 	},
 	{
@@ -157,7 +185,7 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 	{
 		"id": "core_balance",
 		"label": "Core Balance",
-		"summary": "Add subtle target assist so the ball self-corrects back toward your line.",
+		"summary": "On bonus fill deliveries only, the ball self-corrects back toward your line.",
 		"icon": "B",
 		"max_tier": 6,
 		"base_cost": 56,
@@ -185,7 +213,7 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 	{
 		"id": "pocket_magnet",
 		"label": "Pocket Magnet",
-		"summary": "Add stronger late-lane homing so high-tier carries feel more intentional.",
+		"summary": "Stronger late-lane homing on bonus fill deliveries so extras carry harder.",
 		"icon": "G",
 		"max_tier": 6,
 		"base_cost": 72,
@@ -199,7 +227,7 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 	{
 		"id": "lane_guides",
 		"label": "Lane Guides",
-		"summary": "Add inward correction near the gutter so good shots are not lost quite as easily.",
+		"summary": "Inward gutter rescue on bonus fill deliveries so extras stay recoverable.",
 		"icon": "U",
 		"max_tier": 5,
 		"base_cost": 78,
@@ -325,7 +353,7 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 	{
 		"id": "gutter_whisper",
 		"label": "Gutter Whisper",
-		"summary": "Strengthen emergency gutter rescue so promoted tiers stay recoverable.",
+		"summary": "Stronger emergency gutter rescue on bonus fill deliveries at promoted tiers.",
 		"icon": "Y",
 		"max_tier": 5,
 		"base_cost": 132,
@@ -367,7 +395,7 @@ const UPGRADE_DEFINITIONS: Array[Dictionary] = [
 	{
 		"id": "ball_return_ai",
 		"label": "Ball Return AI",
-		"summary": "Stack homing and line-correction upgrades into a much stronger high-end assist package.",
+		"summary": "Much stronger homing and line correction, but only on bonus fill deliveries.",
 		"icon": "A",
 		"max_tier": 5,
 		"base_cost": 170,
@@ -519,6 +547,8 @@ static func get_lane_tier_cap_breakdown(data: Dictionary) -> Dictionary:
 
 static func build_meta_stats(data: Dictionary, gameplay_lane_tier: int = -1) -> Dictionary:
 	var upgrades: Dictionary = data.get("meta_upgrades", {})
+	var power_shot: int = int(upgrades.get("power_shot", 0))
+	var multi_shot: int = int(upgrades.get("multi_shot", 0))
 	var power_training: int = int(upgrades.get("power_training", 0))
 	var lane_reading: int = int(upgrades.get("lane_reading", 0))
 	var hook_control: int = int(upgrades.get("hook_control", 0))
@@ -571,6 +601,8 @@ static func build_meta_stats(data: Dictionary, gameplay_lane_tier: int = -1) -> 
 
 	var gold_pin_count: int = clampi(int(lane_tier_data.get("gold_pin_count", 0)), 0, int(lane_tier_data.get("pin_count", 10)))
 	return {
+		"shot_power_shot_unlocked": power_shot > 0,
+		"shot_multi_shot_unlocked": multi_shot > 0,
 		"ball_weight_lb": ball_weight_lb,
 		"ball_mass_kg": ball_weight_lb * KG_PER_LB,
 		"power_bonus": float(power_training) * 0.58,

@@ -133,6 +133,19 @@ layout_mode = 2
 text = "Default line is center. Starter gear is weak on purpose, so a strike should feel rare."
 autowrap_mode = 3
 
+[node name="ShotPowerTitle" type="Label" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel/BottomMargin/BottomVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+text = "Shot power-up (each once per frame when unlocked)"
+autowrap_mode = 3
+
+[node name="ShotPowerOption" type="OptionButton" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel/BottomMargin/BottomVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+size_flags_horizontal = 3
+
 [node name="PowerLabel" type="Label" parent="CanvasLayer/MarginContainer/RootVBox/BottomPanel/BottomMargin/BottomVBox"]
 unique_name_in_owner = true
 layout_mode = 2

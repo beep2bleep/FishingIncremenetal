@@ -30,6 +30,21 @@ const REEL_DEPTH_TIER_DIALOG_SIZE := Vector2(640.0, 520.0)
 const REEL_DEPTH_TIER_BUTTON_FONT := 26
 const REEL_DEPTH_TIER_BUTTON_MIN_H := 72.0
 const UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO := 0.05
+const SETTINGS_EXIT_MAIN_MENU_MIN_H_DEFAULT := 120.0
+const SETTINGS_EXIT_QUIT_MIN_H_DEFAULT := 120.0
+const SETTINGS_EXIT_BACK_MIN_H_DEFAULT := 150.0
+const SETTINGS_EXIT_MAIN_MENU_FONT_DEFAULT := 30
+const SETTINGS_EXIT_QUIT_FONT_DEFAULT := 30
+const SETTINGS_EXIT_BACK_FONT_DEFAULT := 34
+const SETTINGS_EXIT_BUTTON_MIN_H_COMPACT := 68.0
+const SETTINGS_EXIT_BACK_MIN_H_COMPACT := 78.0
+const SETTINGS_EXIT_BUTTON_FONT_COMPACT := 22
+const SETTINGS_EXIT_BACK_FONT_COMPACT := 24
+const SETTINGS_EXIT_VIEWPORT_H_EXTRA_COMPACT := 780.0
+const SETTINGS_EXIT_BUTTON_MIN_H_EXTRA_COMPACT := 56.0
+const SETTINGS_EXIT_BACK_MIN_H_EXTRA_COMPACT := 64.0
+const SETTINGS_EXIT_BUTTON_FONT_EXTRA_COMPACT := 18
+const SETTINGS_EXIT_BACK_FONT_EXTRA_COMPACT := 20
 const EDITOR_SELL_MENU_ID := 1
 
 var is_active = false
@@ -2353,6 +2368,41 @@ func _setup_settings_controls() -> void:
 
     _refresh_localized_text()
     _update_return_to_main_menu_button_visibility()
+    _update_upgrade_settings_exit_buttons_layout()
+
+func _update_upgrade_settings_exit_buttons_layout() -> void:
+    if settings_main_menu_button == null or not is_instance_valid(settings_main_menu_button):
+        return
+    if settings_quit_button == null or not is_instance_valid(settings_quit_button):
+        return
+    if settings_close_button == null or not is_instance_valid(settings_close_button):
+        return
+    var trio := Util.is_all_high_level_mode_active()
+    if not trio:
+        settings_main_menu_button.custom_minimum_size = Vector2(0.0, SETTINGS_EXIT_MAIN_MENU_MIN_H_DEFAULT)
+        settings_main_menu_button.add_theme_font_size_override("font_size", SETTINGS_EXIT_MAIN_MENU_FONT_DEFAULT)
+        settings_quit_button.custom_minimum_size = Vector2(0.0, SETTINGS_EXIT_QUIT_MIN_H_DEFAULT)
+        settings_quit_button.add_theme_font_size_override("font_size", SETTINGS_EXIT_QUIT_FONT_DEFAULT)
+        settings_close_button.custom_minimum_size = Vector2(0.0, SETTINGS_EXIT_BACK_MIN_H_DEFAULT)
+        settings_close_button.add_theme_font_size_override("font_size", SETTINGS_EXIT_BACK_FONT_DEFAULT)
+        return
+    var viewport: Viewport = get_viewport()
+    var vp_h: float = viewport.get_visible_rect().size.y if viewport != null else 1080.0
+    var min_h: float = SETTINGS_EXIT_BUTTON_MIN_H_COMPACT
+    var back_h: float = SETTINGS_EXIT_BACK_MIN_H_COMPACT
+    var btn_font: int = SETTINGS_EXIT_BUTTON_FONT_COMPACT
+    var back_font: int = SETTINGS_EXIT_BACK_FONT_COMPACT
+    if vp_h < SETTINGS_EXIT_VIEWPORT_H_EXTRA_COMPACT:
+        min_h = SETTINGS_EXIT_BUTTON_MIN_H_EXTRA_COMPACT
+        back_h = SETTINGS_EXIT_BACK_MIN_H_EXTRA_COMPACT
+        btn_font = SETTINGS_EXIT_BUTTON_FONT_EXTRA_COMPACT
+        back_font = SETTINGS_EXIT_BACK_FONT_EXTRA_COMPACT
+    settings_main_menu_button.custom_minimum_size = Vector2(0.0, min_h)
+    settings_main_menu_button.add_theme_font_size_override("font_size", btn_font)
+    settings_quit_button.custom_minimum_size = Vector2(0.0, min_h)
+    settings_quit_button.add_theme_font_size_override("font_size", btn_font)
+    settings_close_button.custom_minimum_size = Vector2(0.0, back_h)
+    settings_close_button.add_theme_font_size_override("font_size", back_font)
 
 func _setup_fullscreen_button() -> void:
     if fullscreen_button != null and is_instance_valid(fullscreen_button):
@@ -2423,6 +2473,7 @@ func _update_upgrade_top_button_positions() -> void:
 
 func _on_viewport_size_changed() -> void:
     _update_upgrade_top_button_positions()
+    _update_upgrade_settings_exit_buttons_layout()
     if tech_tree != null and is_instance_valid(tech_tree):
         tech_tree.clamp_tech_tree_pos()
 
@@ -2456,6 +2507,7 @@ func _update_return_to_main_menu_button_visibility() -> void:
         return_to_main_menu_button.visible = show_hub_main_menu
     if settings_main_menu_button != null and is_instance_valid(settings_main_menu_button):
         settings_main_menu_button.visible = show_hub_main_menu
+    _update_upgrade_settings_exit_buttons_layout()
 
 func _on_return_to_main_menu_pressed() -> void:
     _hide_settings_panel()
@@ -2477,6 +2529,7 @@ func _on_settings_button_pressed() -> void:
         settings_content.refresh_from_save()
     if settings_panel != null:
         settings_panel.show()
+    call_deferred("_update_upgrade_settings_exit_buttons_layout")
 
 func _on_settings_close_pressed() -> void:
     _hide_settings_panel()

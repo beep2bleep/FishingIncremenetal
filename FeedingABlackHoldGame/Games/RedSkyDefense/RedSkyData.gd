@@ -1461,6 +1461,28 @@ const WAVE_UPGRADES: Array[Dictionary] = [
 		"requires": ["rare"],
 		"effects": {"add": {"level_up_choice_count": 2.0}, "mult": {}}
 	},
+	{
+		"id": "fox_seeker_salvo",
+		"label": "Fox Seeker Salvo",
+		"summary": "Some main-gun rounds curve toward targets near your crosshair.",
+		"weight": 0.74,
+		"rarity": 1,
+		"max_stacks": 10,
+		"min_wave": 2,
+		"requires": [],
+		"effects": {"add": {"homing_missile_level": 1.0}, "mult": {}}
+	},
+	{
+		"id": "polarized_weave",
+		"label": "Polarized Weave",
+		"summary": "Tune the hull against unblockable penetrators when the wheel favors countermeasures.",
+		"weight": 0.68,
+		"rarity": 1,
+		"max_stacks": 10,
+		"min_wave": 3,
+		"requires": [],
+		"effects": {"add": {"countermeasures_rating": 0.07}, "mult": {}}
+	},
 ]
 
 static func get_base_run_config() -> Dictionary:
@@ -2007,6 +2029,10 @@ static func get_wave_upgrade_button_text(upgrade_id: String, upgrade_power_multi
 			subtitle = TranslationServer.translate("Passive scrap +%s/s") % _format_amount(scaled_effects["add"].get("scrap_generation_per_second", 0.0), 1)
 		"choice_array":
 			subtitle = TranslationServer.translate("Future choice count +%s") % _format_amount(scaled_effects["add"].get("level_up_choice_count", 0.0), 0)
+		"fox_seeker_salvo":
+			subtitle = TranslationServer.translate("Homing missile tier +%s") % _format_amount(scaled_effects["add"].get("homing_missile_level", 1.0), 0)
+		"polarized_weave":
+			subtitle = TranslationServer.translate("Countermeasures rating +%s") % _format_amount(scaled_effects["add"].get("countermeasures_rating", 0.07), 2)
 		_:
 			subtitle = TranslationServer.translate(str(def.get("summary", "Battlefield bonus")))
 	var summary: String = TranslationServer.translate(str(def.get("summary", ""))).strip_edges()
@@ -2053,7 +2079,8 @@ static func _should_ignore_power_scaling_for_add(key: String) -> bool:
 		"temporary_shield_limit",
 		"helper_drone_count",
 		"collector_bot_count",
-		"level_up_choice_count"
+		"level_up_choice_count",
+		"homing_missile_level"
 	]
 
 static func _should_round_up_additive_effect(key: String) -> bool:
@@ -2069,7 +2096,8 @@ static func _should_round_up_additive_effect(key: String) -> bool:
 		"temporary_turret_limit",
 		"temporary_shield_limit",
 		"helper_drone_count",
-		"collector_bot_count"
+		"collector_bot_count",
+		"homing_missile_level"
 	]
 
 static func _should_ignore_power_scaling_for_mult(key: String) -> bool:

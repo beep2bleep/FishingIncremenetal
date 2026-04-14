@@ -2,6 +2,7 @@ extends CanvasLayer
 class_name CrtTextMirrorOverlay
 
 const TEXT_MIRROR_CRT_SHADER: Shader = preload("res://Core/CrtTextMirrorComposite.gdshader")
+const TEXT_MIRROR_WARP_ONLY_SHADER: Shader = preload("res://Core/CrtTextMirrorWarpOnly.gdshader")
 
 const CRT_SHADER_SYNC_KEYS: Array[String] = [
     "target_vertical_resolution",
@@ -33,22 +34,35 @@ const BUTTON_COLOR_KEYS := [
 
 var source_root: Node
 var apply_screen_barrel_warp := false
+var clean_warp_only := false
+var required_control_group: StringName = &""
 var mirror_host: Control
 var warp_canvas_group: CanvasGroup
 var text_crt_composite_material: ShaderMaterial
 var mirror_root: Control
 var mirrored_entries: Array[Dictionary] = []
 
-func configure(target_root: Node, layer_index: int = 2, p_apply_screen_barrel_warp: bool = false) -> CrtTextMirrorOverlay:
+func configure(
+    target_root: Node,
+    layer_index: int = 2,
+    p_apply_screen_barrel_warp: bool = false,
+    p_required_control_group: StringName = &"",
+    p_clean_warp_only: bool = false
+) -> CrtTextMirrorOverlay:
     source_root = target_root
     layer = layer_index
     apply_screen_barrel_warp = p_apply_screen_barrel_warp
+    required_control_group = p_required_control_group
+    clean_warp_only = p_clean_warp_only
     if is_node_ready():
         _rebuild()
     return self
 
 func sync_text_crt_from(source_material: ShaderMaterial) -> void:
     if text_crt_composite_material == null or source_material == null:
+        return
+    if clean_warp_only:
+        text_crt_composite_material.set_shader_parameter("barrel_distortion", source_material.get_shader_parameter("barrel_distortion"))
         return
     for key: String in CRT_SHADER_SYNC_KEYS:
         text_crt_composite_material.set_shader_parameter(key, source_material.get_shader_parameter(key))
@@ -82,7 +96,7 @@ func _build_mirror_host_tree() -> void:
         warp_canvas_group.clear_margin = 96.0
         warp_canvas_group.fit_margin = 96.0
         text_crt_composite_material = ShaderMaterial.new()
-        text_crt_composite_material.shader = TEXT_MIRROR_CRT_SHADER
+        text_crt_composite_material.shader = TEXT_MIRROR_WARP_ONLY_SHADER if clean_warp_only else TEXT_MIRROR_CRT_SHADER
         warp_canvas_group.material = text_crt_composite_material
         mirror_host.add_child(warp_canvas_group)
         warp_canvas_group.add_child(mirror_root)
@@ -131,11 +145,21 @@ func _collect_text_controls(node: Node) -> void:
             "TextWarpCanvasGroup",
         ]:
             continue
-        if child is Label:
+        if child is Label and _matches_required_group(child):
             _register_label(child as Label)
-        elif child is Button:
+        elif child is Button and _matches_required_group(child):
             _register_button(child as Button)
         _collect_text_controls(child)
+
+func _matches_required_group(node: Node) -> bool:
+    if required_control_group == &"":
+        return true
+    var current: Node = node
+    while current != null:
+        if current.is_in_group(required_control_group):
+            return true
+        current = current.get_parent()
+    return false
 
 func _register_label(source: Label) -> void:
     var captured_colors := _capture_theme_colors(source, LABEL_COLOR_KEYS)

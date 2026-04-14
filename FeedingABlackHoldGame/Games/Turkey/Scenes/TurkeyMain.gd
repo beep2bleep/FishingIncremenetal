@@ -61,8 +61,14 @@ const END_SUM_TEXT_PRIMARY := Color(0.95, 0.91, 0.82, 1.0)
 const END_SUM_TEXT_MUTED := Color(0.82, 0.76, 0.62, 0.92)
 const END_SUM_BAR_TRACK := Color(0.16, 0.14, 0.11, 0.96)
 const META_PIN_KIND := "turkey_pin_kind"
+const META_TURKEY_LANE_ASSIST := "turkey_lane_assist"
 const PIN_KIND_NORMAL := "normal"
 const PIN_KIND_GOLD := "gold"
+const POWER_SHOT_SPEED_MULT := 1.25
+const POWER_SHOT_MASS_MULT := 3.0
+const MULTISHOT_EXTRA_DELAY_SEC := 0.1
+const MULTISHOT_EXTRA_TOTAL := 4
+const MULTISHOT_EXTRA_AIM_DEGREES: Array[float] = [-3.0, 3.0, -6.0, 6.0]
 const OPTION_NEUTRAL_COLOR := Color(0.84, 0.82, 0.76, 1.0)
 const START_LEFT_COLOR := Color(0.23, 0.78, 0.86, 1.0)
 const START_RIGHT_COLOR := Color(0.95, 0.64, 0.24, 1.0)
@@ -100,6 +106,8 @@ enum RunState {
 @onready var start_location_row: HBoxContainer = %StartLocationRow
 @onready var spin_row: HBoxContainer = %SpinRow
 @onready var aiming_help_label: Label = %AimingHelpLabel
+@onready var shot_power_title: Label = %ShotPowerTitle
+@onready var shot_power_option: OptionButton = %ShotPowerOption
 @onready var power_label: Label = %PowerLabel
 @onready var power_bar: ProgressBar = %PowerBar
 @onready var end_panel: PanelContainer = %EndPanel
@@ -130,7 +138,15 @@ var ball_exit_anchor_shot_elapsed := -1.0
 var standing_before_throw := 10
 var current_series_pin_target := 10
 var current_pin_standing_dot := STANDING_UP_DOT
-var active_ball: RigidBody3D
+var turkey_active_balls: Array[RigidBody3D] = []
+var _multishot_spawns_done: int = 0
+var _multishot_base_lateral: float = 0.0
+var _multishot_start_x: float = 0.0
+var _multishot_power_speed: float = 0.0
+var frame_power_shot_used := false
+var frame_multi_shot_used := false
+## Frame index whose last `throws` entry may gain extra pinfall after scoring (READY/AIMING only); -1 when disabled.
+var _late_pin_amend_frame_index: int = -1
 var active_pins: Array[RigidBody3D] = []
 var lane_material: StandardMaterial3D
 var pin_material: StandardMaterial3D
@@ -199,6 +215,7 @@ func _ready() -> void:
     _load_progression()
     _setup_option_sliders()
     _connect_ui()
+    _setup_shot_power_selector()
     _setup_pause_menu()
     _setup_crt_overlay()
     _setup_editor_debug_ui()
@@ -224,14 +241,24 @@ func _process(delta: float) -> void:
 func _physics_process(delta: float) -> void:
     if _is_pause_menu_open():
         return
-    if run_state != RunState.BALL_IN_PLAY or active_ball == null or not is_instance_valid(active_ball):
+    if run_state == RunState.READY or run_state == RunState.AIMING:
+        _turkey_try_apply_late_fallen_pins()
+    if run_state != RunState.BALL_IN_PLAY or turkey_active_balls.is_empty():
         return
 
     shot_elapsed += delta
-    _apply_spin_force()
-    _apply_ball_guidance_force()
+    for ball in turkey_active_balls:
+        if ball == null or not is_instance_valid(ball):
+            continue
+        _apply_spin_force(ball)
+        _apply_ball_guidance_force(ball)
     _update_ball_exit_anchor()
     _turkey_update_ball_roll_audio(delta)
+    while _multishot_spawns_done < MULTISHOT_EXTRA_TOTAL:
+        if shot_elapsed < float(_multishot_spawns_done + 1) * MULTISHOT_EXTRA_DELAY_SEC:
+            break
+        _spawn_multishot_follow_ball()
+        _multishot_spawns_done += 1
 
     var settle_speed: float = max(0.45, float(player_stats.get("settle_speed_mult", 1.0)) / max(0.75, float(player_stats.get("tier_settle_mult", 1.0))))
     if shot_elapsed < SHOT_SETTLE_GRACE / settle_speed:
@@ -700,6 +727,8 @@ func _configure_ui_mouse_filters() -> void:
         spin_slider.mouse_filter = Control.MOUSE_FILTER_STOP
     if lane_tier_option != null:
         lane_tier_option.mouse_filter = Control.MOUSE_FILTER_STOP
+    if shot_power_option != null:
+        shot_power_option.mouse_filter = Control.MOUSE_FILTER_STOP
     play_again_button.mouse_filter = Control.MOUSE_FILTER_STOP
     upgrade_button.mouse_filter = Control.MOUSE_FILTER_STOP
 
@@ -757,6 +786,63 @@ func _build_option_value_box(row: HBoxContainer) -> Label:
 func _connect_ui() -> void:
     play_again_button.pressed.connect(_on_play_again_pressed)
     upgrade_button.pressed.connect(_on_upgrade_button_pressed)
+
+
+func _setup_shot_power_selector() -> void:
+    if shot_power_option == null or not is_instance_valid(shot_power_option):
+        return
+    shot_power_option.clear()
+    shot_power_option.add_item(tr("Normal shot"), 0)
+    shot_power_option.add_item(tr("Power shot (+25% speed, 3× mass / pin hit, once/frame)"), 1)
+    shot_power_option.add_item(tr("Multi shot (+4 balls at ±3°/±6°, no lane assist, once/frame)"), 2)
+    shot_power_option.select(0)
+    _refresh_shot_power_option()
+
+
+func _refresh_shot_power_option() -> void:
+    if shot_power_option == null or not is_instance_valid(shot_power_option):
+        return
+    if shot_power_option.item_count < 3:
+        return
+    var pw_unlock: bool = bool(player_stats.get("shot_power_shot_unlocked", false))
+    var mu_unlock: bool = bool(player_stats.get("shot_multi_shot_unlocked", false))
+    var any_unlock: bool = pw_unlock or mu_unlock
+    shot_power_option.visible = any_unlock
+    if shot_power_title != null and is_instance_valid(shot_power_title):
+        shot_power_title.visible = any_unlock
+    if not any_unlock:
+        return
+    shot_power_option.set_item_disabled(1, not pw_unlock or frame_power_shot_used)
+    shot_power_option.set_item_disabled(2, not mu_unlock or frame_multi_shot_used)
+    if shot_power_option.is_item_disabled(shot_power_option.selected):
+        shot_power_option.select(0)
+
+
+func _consume_shot_power_selection() -> int:
+    if shot_power_option == null or not is_instance_valid(shot_power_option) or not shot_power_option.visible:
+        return 0
+    var idx: int = shot_power_option.selected
+    var pw_unlock: bool = bool(player_stats.get("shot_power_shot_unlocked", false))
+    var mu_unlock: bool = bool(player_stats.get("shot_multi_shot_unlocked", false))
+    if idx == 1 and pw_unlock and not frame_power_shot_used:
+        frame_power_shot_used = true
+        return 1
+    if idx == 2 and mu_unlock and not frame_multi_shot_used:
+        frame_multi_shot_used = true
+        return 2
+    return 0
+
+
+func _current_throw_is_bonus_delivery() -> bool:
+    if current_frame_index != FRAME_COUNT - 1:
+        return false
+    var throws: Array = frame_records[current_frame_index].get("throws", [])
+    if throws.is_empty():
+        return false
+    if throws.size() == 1:
+        return _is_strike_roll(current_frame_index, int(throws[0]))
+    return throws.size() >= 2
+
 
 func _setup_pause_menu() -> void:
     pause_menu = IN_GAME_PAUSE_MENU_SCRIPT.new()
@@ -1070,6 +1156,7 @@ func _update_lane_tier_control_state() -> void:
     var max_cap: int = int(player_stats.get("max_selectable_lane_tier", 0))
     for i in range(lane_tier_option.item_count):
         lane_tier_option.set_item_disabled(i, i > max_cap)
+    _refresh_shot_power_option()
 
 
 func _apply_lane_tier_index(index: int) -> void:
@@ -1101,6 +1188,7 @@ func _refresh_series_settings_from_stats() -> void:
     current_pin_standing_dot = float(player_stats.get("tier_pin_standing_dot", STANDING_UP_DOT))
 
 func _begin_series() -> void:
+    _late_pin_amend_frame_index = -1
     _close_pause_menu()
     _clear_dynamic_objects()
     _refresh_series_settings_from_stats()
@@ -1109,6 +1197,8 @@ func _begin_series() -> void:
     for _i in range(FRAME_COUNT):
         frame_records.append({"throws": []})
     current_frame_index = 0
+    frame_power_shot_used = false
+    frame_multi_shot_used = false
     run_state = RunState.READY
     current_power_norm = 0.0
     power_direction = 1.0
@@ -1120,6 +1210,7 @@ func _begin_series() -> void:
     _prepare_for_next_shot(tr("Frame 1. Click once to start the power swing."))
     _update_scoreboard()
     _update_lane_tier_control_state()
+    _refresh_shot_power_option()
     call_deferred("_maybe_show_lane_tier_start_dialog")
 
 func _prepare_for_next_shot(message: String) -> void:
@@ -1139,6 +1230,7 @@ func _prepare_for_next_shot(message: String) -> void:
         gold_note = tr(" Gold pins still up in front - they need a harder hit but pay more when they fall.")
     aiming_help_label.text = _trf("Tier %d: %s. %d pins, %d gold up front (heavier, bigger payout per knock).%s Negative slider = left, positive = right.", [int(player_stats.get("lane_tier", 0)) + 1, str(player_stats.get("lane_tier_label", tr("Practice House"))), current_series_pin_target, int(player_stats.get("tier_gold_pin_count", 0)), gold_note])
     _update_lane_tier_control_state()
+    _refresh_shot_power_option()
 
 func _begin_aiming() -> void:
     if current_frame_index >= FRAME_COUNT:
@@ -1157,42 +1249,76 @@ func _begin_aiming() -> void:
     if int(player_stats.get("tier_gold_pin_count", 0)) > 0:
         gold_aim = tr(" Gold pins are in the front row(s) - check the rack map.")
     aiming_help_label.text = _trf("Mouse left aims left, mouse right aims right. %s is active with %d pins in the rack.%s", [str(player_stats.get("lane_tier_label", tr("Practice House"))), current_series_pin_target, gold_aim])
+    _refresh_shot_power_option()
 
 func _throw_ball() -> void:
+    _late_pin_amend_frame_index = -1
+    _refresh_shot_power_option()
+    var shot_power_kind: int = _consume_shot_power_selection()
+    var use_power_shot: bool = shot_power_kind == 1
+    var use_multi_shot: bool = shot_power_kind == 2
+
     run_state = RunState.BALL_IN_PLAY
     aim_line.visible = false
     shot_elapsed = 0.0
     ball_exit_anchor_shot_elapsed = -1.0
     turkey_pin_hit_last_ms.clear()
     turkey_ball_roll_phase = 0.0
+    _clear_turkey_balls()
     standing_before_throw = active_pins.size()
     standing_gold_before_throw = _count_standing_gold_pins()
     spin_curve_in_play = _get_selected_spin_curve() * float(player_stats.get("spin_multiplier", 1.0))
 
-    active_ball = _create_ball()
+    var lane_assist_main: bool = _current_throw_is_bonus_delivery()
+    if use_multi_shot or use_power_shot:
+        lane_assist_main = false
+
+    var power_mass_mult: float = POWER_SHOT_MASS_MULT if use_power_shot else 1.0
+    var main_ball: RigidBody3D = _build_turkey_ball_rigidbody(lane_assist_main, power_mass_mult)
+    turkey_active_balls.append(main_ball)
+
     var start_x: float = _get_selected_start_x()
     var target_x: float = _get_launch_target_x()
     var power_speed: float = lerpf(THROW_MIN_SPEED, THROW_MAX_SPEED + float(player_stats.get("power_bonus", 0.0)), current_power_norm)
     var max_lateral_speed: float = MAX_LATERAL_SPEED * pow(float(player_stats.get("target_range_mult", 1.0)), 0.4)
-    var lateral_speed: float = clamp((target_x - start_x) * 2.15, -max_lateral_speed, max_lateral_speed)
-    active_ball.linear_velocity = Vector3(lateral_speed, 0.0, power_speed)
+    var lateral_speed: float = clampf((target_x - start_x) * 2.15, -max_lateral_speed, max_lateral_speed)
+    var launch_vel := Vector3(lateral_speed, 0.0, power_speed)
+    if use_power_shot:
+        launch_vel *= POWER_SHOT_SPEED_MULT
+    main_ball.linear_velocity = launch_vel
     var hook_yaw: float = spin_curve_in_play * 5.5
     var roll_pitch: float = 0.0
     if absf(spin_curve_in_play) >= 0.01:
-        roll_pitch = power_speed / max(BALL_RADIUS, 0.01)
-    active_ball.angular_velocity = Vector3(roll_pitch, hook_yaw, 0.0)
+        roll_pitch = launch_vel.z / max(BALL_RADIUS, 0.01)
+    main_ball.angular_velocity = Vector3(roll_pitch, hook_yaw, 0.0)
+
+    if use_multi_shot:
+        _multishot_spawns_done = 0
+        _multishot_start_x = start_x
+        _multishot_base_lateral = lateral_speed
+        _multishot_power_speed = lerpf(THROW_MIN_SPEED, THROW_MAX_SPEED + float(player_stats.get("power_bonus", 0.0)), current_power_norm)
+    else:
+        _multishot_spawns_done = MULTISHOT_EXTRA_TOTAL
+
     result_label.text = tr("Ball away. Watching the lane...")
     aiming_help_label.text = tr("The ball is live. Scoring starts 1.5s after the ball clears the deck (extra wait if pins still move fast).")
     _turkey_play_ball_release()
+    _refresh_shot_power_option()
 
-func _create_ball() -> RigidBody3D:
-    if active_ball != null and is_instance_valid(active_ball):
-        active_ball.queue_free()
 
+func _clear_turkey_balls() -> void:
+    for ball in turkey_active_balls:
+        if ball != null and is_instance_valid(ball):
+            ball.queue_free()
+    turkey_active_balls.clear()
+
+
+func _build_turkey_ball_rigidbody(lane_assist: bool, mass_mult: float = 1.0) -> RigidBody3D:
     var body := RigidBody3D.new()
     body.name = "BowlingBall"
+    body.set_meta(META_TURKEY_LANE_ASSIST, lane_assist)
     body.continuous_cd = true
-    body.mass = float(player_stats.get("ball_mass_kg", 3.63))
+    body.mass = float(player_stats.get("ball_mass_kg", 3.63)) * maxf(0.01, mass_mult)
     body.position = Vector3(_get_selected_start_x(), BALL_RADIUS + 0.015, BALL_START_Z)
     body.linear_damp = 0.1
     body.angular_damp = 0.08
@@ -1225,11 +1351,27 @@ func _create_ball() -> RigidBody3D:
     hit_sphere.radius = BALL_RADIUS * 1.14
     hit_shape.shape = hit_sphere
     hit_area.add_child(hit_shape)
-    hit_area.body_entered.connect(_on_turkey_ball_hit_area_body_entered)
+    hit_area.body_entered.connect(func(hit_body: Node3D) -> void: _on_turkey_ball_hit_area_body_entered(hit_body, body))
     body.add_child(hit_area)
 
     dynamic_root.add_child(body)
     return body
+
+
+func _spawn_multishot_follow_ball() -> void:
+    var ball: RigidBody3D = _build_turkey_ball_rigidbody(false)
+    ball.position = Vector3(_multishot_start_x, BALL_RADIUS + 0.015, BALL_START_Z)
+    var idx: int = clampi(_multishot_spawns_done, 0, MULTISHOT_EXTRA_AIM_DEGREES.size() - 1)
+    var angle_deg: float = MULTISHOT_EXTRA_AIM_DEGREES[idx]
+    var base_vel := Vector3(_multishot_base_lateral, 0.0, _multishot_power_speed)
+    var vel: Vector3 = base_vel.rotated(Vector3.UP, deg_to_rad(angle_deg))
+    ball.linear_velocity = vel
+    var hook_yaw: float = spin_curve_in_play * 5.5
+    var roll_pitch: float = 0.0
+    if absf(spin_curve_in_play) >= 0.01:
+        roll_pitch = vel.z / max(BALL_RADIUS, 0.01)
+    ball.angular_velocity = Vector3(roll_pitch, hook_yaw, 0.0)
+    turkey_active_balls.append(ball)
 
 
 func _turkey_play_ball_release() -> void:
@@ -1239,9 +1381,12 @@ func _turkey_play_ball_release() -> void:
 
 
 func _turkey_update_ball_roll_audio(delta: float) -> void:
-    if run_state != RunState.BALL_IN_PLAY or active_ball == null or not is_instance_valid(active_ball):
+    if run_state != RunState.BALL_IN_PLAY or turkey_active_balls.is_empty():
         return
-    var v: float = active_ball.linear_velocity.length()
+    var v: float = 0.0
+    for ball in turkey_active_balls:
+        if ball != null and is_instance_valid(ball):
+            v = maxf(v, ball.linear_velocity.length())
     if v < 0.42:
         return
     turkey_ball_roll_phase += delta * lerpf(0.85, 2.4, clampf(v / 10.5, 0.0, 1.0))
@@ -1257,8 +1402,10 @@ func _turkey_update_ball_roll_audio(delta: float) -> void:
             )
 
 
-func _on_turkey_ball_hit_area_body_entered(body: Node3D) -> void:
-    if run_state != RunState.BALL_IN_PLAY or active_ball == null or not is_instance_valid(active_ball):
+func _on_turkey_ball_hit_area_body_entered(body: Node3D, ball: RigidBody3D) -> void:
+    if run_state != RunState.BALL_IN_PLAY or ball == null or not is_instance_valid(ball):
+        return
+    if not turkey_active_balls.has(ball):
         return
     if not (body is RigidBody3D):
         return
@@ -1271,7 +1418,7 @@ func _on_turkey_ball_hit_area_body_entered(body: Node3D) -> void:
         return
     turkey_pin_hit_last_ms[rid] = now
 
-    var rel: float = active_ball.linear_velocity.length() + rb.linear_velocity.length()
+    var rel: float = ball.linear_velocity.length() + rb.linear_velocity.length()
     var vol_off: float = lerpf(-16.0, 5.0, clampf(rel / 16.0, 0.0, 1.0))
     var pitch_off: float = lerpf(-0.18, 0.22, clampf((rel - 3.5) / 12.0, 0.0, 1.0))
     if str(rb.get_meta(META_PIN_KIND, PIN_KIND_NORMAL)) == PIN_KIND_GOLD:
@@ -1458,9 +1605,7 @@ func _make_pin_ring_mesh(radius: float) -> PrimitiveMesh:
 
 func _clear_dynamic_objects() -> void:
     _clear_pins()
-    if active_ball != null and is_instance_valid(active_ball):
-        active_ball.queue_free()
-    active_ball = null
+    _clear_turkey_balls()
 
 func _clear_pins() -> void:
     for pin in active_pins:
@@ -1468,18 +1613,18 @@ func _clear_pins() -> void:
             pin.queue_free()
     active_pins.clear()
 
-func _apply_spin_force() -> void:
-    if active_ball == null or not is_instance_valid(active_ball):
+func _apply_spin_force(ball: RigidBody3D) -> void:
+    if ball == null or not is_instance_valid(ball):
         return
     if absf(spin_curve_in_play) < 0.01:
         return
-    if active_ball.position.z < 1.0:
+    if ball.position.z < 1.0:
         return
-    var forward_speed: float = max(0.0, active_ball.linear_velocity.z)
+    var forward_speed: float = max(0.0, ball.linear_velocity.z)
     if forward_speed <= 0.05:
         return
-    var hook_force: float = spin_curve_in_play * forward_speed * 0.82 * float(player_stats.get("hook_force_scale", 1.0)) * active_ball.mass
-    active_ball.apply_central_force(Vector3(hook_force, 0.0, 0.0))
+    var hook_force: float = spin_curve_in_play * forward_speed * 0.82 * float(player_stats.get("hook_force_scale", 1.0)) * ball.mass
+    ball.apply_central_force(Vector3(hook_force, 0.0, 0.0))
 
 func _lane_assist_gutter_falloff(abs_x: float) -> float:
     var edge: float = runtime_lane_width * 0.5
@@ -1489,18 +1634,20 @@ func _lane_assist_gutter_falloff(abs_x: float) -> float:
     var span: float = maxf(0.025, gutter_finish_x - edge)
     return clampf(1.0 - depth / span, 0.0, 1.0)
 
-func _apply_ball_guidance_force() -> void:
-    if active_ball == null or not is_instance_valid(active_ball):
+func _apply_ball_guidance_force(ball: RigidBody3D) -> void:
+    if ball == null or not is_instance_valid(ball):
         return
-    if active_ball.position.z < 0.5:
+    if not bool(ball.get_meta(META_TURKEY_LANE_ASSIST, false)):
         return
-    var abs_x_ball: float = absf(active_ball.position.x)
+    if ball.position.z < 0.5:
+        return
+    var abs_x_ball: float = absf(ball.position.x)
     var gutter_falloff: float = _lane_assist_gutter_falloff(abs_x_ball)
     var target_assist_force: float = float(player_stats.get("target_assist_force", 0.0))
     if target_assist_force > 0.0:
         var desired_x: float = clampf(current_target_x, -_get_active_target_x_limit(), _get_active_target_x_limit())
-        var x_delta: float = desired_x - active_ball.position.x
-        active_ball.apply_central_force(Vector3(x_delta * target_assist_force * active_ball.mass * gutter_falloff, 0.0, 0.0))
+        var x_delta: float = desired_x - ball.position.x
+        ball.apply_central_force(Vector3(x_delta * target_assist_force * ball.mass * gutter_falloff, 0.0, 0.0))
 
     var gutter_return_force: float = float(player_stats.get("gutter_return_force", 0.0))
     if gutter_return_force <= 0.0:
@@ -1508,14 +1655,14 @@ func _apply_ball_guidance_force() -> void:
     var gutter_edge: float = runtime_lane_width * 0.5
     if abs_x_ball <= gutter_edge:
         return
-    var inward_direction: float = -signf(active_ball.position.x)
+    var inward_direction: float = -signf(ball.position.x)
     var inward_force: float = (
         gutter_return_force
         * gutter_falloff
         * float(player_stats.get("tier_gutter_penalty_mult", 1.0))
-        * active_ball.mass
+        * ball.mass
     )
-    active_ball.apply_central_force(Vector3(inward_direction * inward_force, 0.0, 0.0))
+    ball.apply_central_force(Vector3(inward_direction * inward_force, 0.0, 0.0))
 
 func _ball_has_exited_pin_deck(ball: RigidBody3D) -> bool:
     var p: Vector3 = ball.position
@@ -1530,10 +1677,18 @@ func _ball_has_exited_pin_deck(ball: RigidBody3D) -> bool:
 func _update_ball_exit_anchor() -> void:
     if ball_exit_anchor_shot_elapsed >= 0.0:
         return
-    if active_ball != null and is_instance_valid(active_ball):
-        if _ball_has_exited_pin_deck(active_ball):
-            ball_exit_anchor_shot_elapsed = shot_elapsed
-            return
+    if turkey_active_balls.is_empty():
+        return
+    var all_exited: bool = true
+    for ball in turkey_active_balls:
+        if ball == null or not is_instance_valid(ball):
+            continue
+        if not _ball_has_exited_pin_deck(ball):
+            all_exited = false
+            break
+    if all_exited:
+        ball_exit_anchor_shot_elapsed = shot_elapsed
+        return
     if shot_elapsed >= FORCED_BALL_EXIT_AFTER_SHOT_ELAPSED:
         ball_exit_anchor_shot_elapsed = shot_elapsed - POST_BALL_EXIT_SCORE_DELAY
 
@@ -1560,6 +1715,7 @@ func _can_score_throw_now() -> bool:
     return not _pins_have_significant_speed()
 
 func _finish_throw() -> void:
+    var amend_owner_frame: int = current_frame_index
     var standing_after: int = _count_standing_pins()
     var gold_standing_after: int = _count_standing_gold_pins()
     series_gold_pins_knocked += maxi(0, standing_gold_before_throw - gold_standing_after)
@@ -1572,27 +1728,37 @@ func _finish_throw() -> void:
     _remove_ball()
 
     var message: String = _describe_throw_result(current_frame_index, throws, knocked, standing_after)
+    var series_ended := false
+    var spawned_full_rack := false
     if _is_frame_complete(current_frame_index):
         if current_frame_index == FRAME_COUNT - 1:
             _complete_series(message)
+            series_ended = true
         else:
             current_frame_index += 1
+            frame_power_shot_used = false
+            frame_multi_shot_used = false
             _spawn_full_rack()
+            spawned_full_rack = true
             _prepare_for_next_shot(_trf("%s Next up: frame %d.", [message, current_frame_index + 1]))
     else:
         if _should_reset_full_rack_before_next_throw(current_frame_index, throws):
             _spawn_full_rack()
+            spawned_full_rack = true
         else:
             _remove_knocked_pins()
         _prepare_for_next_shot(message)
+
+    if series_ended or spawned_full_rack:
+        _late_pin_amend_frame_index = -1
+    else:
+        _late_pin_amend_frame_index = amend_owner_frame
 
     _update_scoreboard()
     _update_lane_tier_control_state()
 
 func _remove_ball() -> void:
-    if active_ball != null and is_instance_valid(active_ball):
-        active_ball.queue_free()
-    active_ball = null
+    _clear_turkey_balls()
 
 func _remove_knocked_pins() -> void:
     var still_standing: Array[RigidBody3D] = []
@@ -1604,6 +1770,80 @@ func _remove_knocked_pins() -> void:
         else:
             pin.queue_free()
     active_pins = still_standing
+
+
+func _turkey_try_apply_late_fallen_pins() -> void:
+    if end_panel.visible:
+        return
+    if run_state == RunState.ROUND_OVER:
+        return
+    if _late_pin_amend_frame_index < 0 or _late_pin_amend_frame_index >= frame_records.size():
+        return
+    if active_pins.is_empty():
+        return
+    var down_count: int = 0
+    var still_standing: Array[RigidBody3D] = []
+    for pin in active_pins:
+        if pin == null or not is_instance_valid(pin):
+            continue
+        if _is_pin_standing(pin):
+            still_standing.append(pin)
+        else:
+            down_count += 1
+            if str(pin.get_meta(META_PIN_KIND, PIN_KIND_NORMAL)) == PIN_KIND_GOLD:
+                series_gold_pins_knocked += 1
+            pin.queue_free()
+    if down_count <= 0:
+        return
+    active_pins = still_standing
+    var fi: int = _late_pin_amend_frame_index
+    var frame_data: Dictionary = frame_records[fi]
+    var throws: Array = frame_data.get("throws", [])
+    if throws.is_empty():
+        _late_pin_amend_frame_index = -1
+        return
+    var last_idx: int = throws.size() - 1
+    throws[last_idx] = int(throws[last_idx]) + down_count
+    frame_data["throws"] = throws
+    frame_records[fi] = frame_data
+
+    var standing_now: int = _count_standing_pins()
+    var last_knocked: int = int(throws[last_idx])
+    var message: String = _describe_throw_result(fi, throws, last_knocked, standing_now)
+    _reconcile_frame_state_after_late_pinfall(message)
+    _update_scoreboard()
+    _update_lane_tier_control_state()
+
+
+func _reconcile_frame_state_after_late_pinfall(message: String) -> void:
+    var fi: int = _late_pin_amend_frame_index
+    if fi < 0 or fi >= frame_records.size():
+        return
+    var throws: Array = frame_records[fi].get("throws", [])
+    if throws.is_empty():
+        _late_pin_amend_frame_index = -1
+        return
+
+    if _is_frame_complete(fi):
+        _late_pin_amend_frame_index = -1
+        if fi == FRAME_COUNT - 1:
+            _complete_series(message)
+        else:
+            current_frame_index = fi + 1
+            frame_power_shot_used = false
+            frame_multi_shot_used = false
+            _spawn_full_rack()
+            _prepare_for_next_shot(_trf("%s Next up: frame %d.", [message, current_frame_index + 1]))
+        return
+
+    if _should_reset_full_rack_before_next_throw(fi, throws):
+        _late_pin_amend_frame_index = -1
+        _spawn_full_rack()
+        _prepare_for_next_shot(message)
+        return
+
+    result_label.text = message
+
 
 func _count_standing_pins() -> int:
     var count := 0
@@ -2365,8 +2605,9 @@ func _update_editor_debug_ui() -> void:
         return
     var standing_pins: int = _count_standing_pins()
     var ball_summary := "none"
-    if active_ball != null and is_instance_valid(active_ball):
-        ball_summary = "x %.2f  z %.2f  v %.2f" % [active_ball.position.x, active_ball.position.z, active_ball.linear_velocity.length()]
+    if not turkey_active_balls.is_empty() and turkey_active_balls[0] != null and is_instance_valid(turkey_active_balls[0]):
+        var b0: RigidBody3D = turkey_active_balls[0]
+        ball_summary = "x %.2f  z %.2f  v %.2f  n=%d" % [b0.position.x, b0.position.z, b0.linear_velocity.length(), turkey_active_balls.size()]
     var lines: Array[String] = []
     lines.append("CRT %d/%d  |  %s  |  [ / ]" % [crt_level, CRT_LEVEL_MAX, "Off" if crt_level == 0 else "%d%%" % int(round(float(crt_level) / float(CRT_LEVEL_MAX) * 100.0))])
     lines.append("State: %s" % _get_run_state_name())

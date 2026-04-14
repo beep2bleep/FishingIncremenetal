@@ -54,6 +54,7 @@ enum SOUND_EFFECT_TYPE{
     REEL_BEAT_SUCCESS,
     REEL_FISH_LANDED,
     RED_SKY_WAVE_CLEAR,
+    RED_SKY_BOSS_WARNING,
 }
 
 @export_range(0, 20) var limit: int = 5
