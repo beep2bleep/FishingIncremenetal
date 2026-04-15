@@ -5,6 +5,7 @@ var REEL_DATA = load("res://Games/ReelIntoDarkness/ReelIntoDarknessData.gd")
 var REEL_PROGRESS = load("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
 const IN_GAME_PAUSE_MENU_SCRIPT := preload("res://Core/InGamePauseMenu.gd")
 const CRT_SHADER := preload("res://Games/Mining/UI/MiningCrt.gdshader")
+const MULTI_GAME_MODE := preload("res://MultiGameMode.gd")
 
 const CRT_LEVEL_MAX := 11
 const CRT_GAME_LAYER := 1
@@ -146,6 +147,12 @@ var summary_money_tween: Tween
 var summary_money_pop_tween: Tween
 var summary_chart_tweens: Array[Tween] = []
 var summary_ready_for_input := false
+var multi_mode_step: Dictionary = {}
+var multi_mode_intro_timer := 0.0
+var multi_mode_step_reported := false
+var multi_mode_intro_overlay: ColorRect
+var multi_mode_intro_countdown_label: Label
+var multi_mode_intro_note_label: Label
 
 var canvas_layer: CanvasLayer
 var hud_panel: PanelContainer
@@ -175,10 +182,12 @@ func _ready() -> void:
 	Global.game_state = Util.GAME_STATES.PLAYING
 	rng.randomize()
 	fish_catalog = REEL_DATA.get_fish_catalog()
+	multi_mode_step = MULTI_GAME_MODE.get_active_step_for_game(Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
 	cursor_screen_pos = get_viewport().get_mouse_position()
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	_setup_crt_overlay()
 	_build_ui()
+	_setup_multi_mode_overlay()
 	_update_crt_hud_label()
 	_setup_pause_menu()
 	_begin_run()
@@ -356,6 +365,57 @@ func _build_ui() -> void:
 	summary_continue_button.pressed.connect(_on_summary_continue_pressed)
 	button_row.add_child(summary_continue_button)
 
+func _setup_multi_mode_overlay() -> void:
+	if multi_mode_step.is_empty():
+		return
+	multi_mode_intro_timer = 2.0
+	multi_mode_intro_overlay = ColorRect.new()
+	multi_mode_intro_overlay.anchor_right = 1.0
+	multi_mode_intro_overlay.anchor_bottom = 1.0
+	multi_mode_intro_overlay.color = Color(0.0, 0.0, 0.0, 0.28)
+	multi_mode_intro_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	canvas_layer.add_child(multi_mode_intro_overlay)
+	var center := CenterContainer.new()
+	center.anchor_right = 1.0
+	center.anchor_bottom = 1.0
+	multi_mode_intro_overlay.add_child(center)
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 8)
+	center.add_child(vbox)
+	multi_mode_intro_countdown_label = Label.new()
+	multi_mode_intro_countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	multi_mode_intro_countdown_label.add_theme_font_size_override("font_size", 84)
+	multi_mode_intro_countdown_label.add_theme_color_override("font_color", Color(0.95, 0.22, 0.22, 1.0))
+	vbox.add_child(multi_mode_intro_countdown_label)
+	multi_mode_intro_note_label = Label.new()
+	multi_mode_intro_note_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	multi_mode_intro_note_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	multi_mode_intro_note_label.custom_minimum_size = Vector2(760.0, 0.0)
+	multi_mode_intro_note_label.add_theme_font_size_override("font_size", 24)
+	multi_mode_intro_note_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.92, 1.0))
+	multi_mode_intro_note_label.text = MULTI_GAME_MODE.get_active_intro_text()
+	vbox.add_child(multi_mode_intro_note_label)
+	_update_multi_mode_overlay()
+
+func _is_multi_mode_challenge_active() -> bool:
+	return not multi_mode_step.is_empty()
+
+func _update_multi_mode_overlay() -> void:
+	if multi_mode_intro_countdown_label == null:
+		return
+	multi_mode_intro_countdown_label.text = str(maxi(1, int(ceil(multi_mode_intro_timer))))
+
+func _process_multi_mode_intro(delta: float) -> bool:
+	if not _is_multi_mode_challenge_active() or multi_mode_intro_timer <= 0.0:
+		return false
+	multi_mode_intro_timer = maxf(0.0, multi_mode_intro_timer - delta)
+	_update_multi_mode_overlay()
+	if multi_mode_intro_timer <= 0.0 and multi_mode_intro_overlay != null:
+		multi_mode_intro_overlay.queue_free()
+		multi_mode_intro_overlay = null
+	return multi_mode_intro_timer > 0.0
+
 func _setup_pause_menu() -> void:
 	pause_menu = IN_GAME_PAUSE_MENU_SCRIPT.new()
 	pause_menu.name = "InGamePauseMenu"
@@ -438,6 +498,16 @@ func _handle_crt_hotkey_input(event: InputEvent) -> bool:
 
 func _begin_run() -> void:
 	run_config = REEL_PROGRESS.get_run_config()
+	if _is_multi_mode_challenge_active():
+		var forced_upgrades: Dictionary = REEL_PROGRESS.get_upgrade_levels()
+		var forced_depth_tier_index: int = max(0, int(multi_mode_step.get("depth_tier_index", 0)))
+		for i in range(min(forced_depth_tier_index, REEL_DATA.DEPTH_CAP_UPGRADE_KEYS.size())):
+			var upgrade_key: String = str(REEL_DATA.DEPTH_CAP_UPGRADE_KEYS[i])
+			forced_upgrades[upgrade_key] = max(int(forced_upgrades.get(upgrade_key, 0)), 1)
+		var depth_options: Array = REEL_DATA.get_reel_depth_tier_options(forced_upgrades)
+		var depth_tier_index: int = clampi(int(multi_mode_step.get("depth_tier_index", 0)), 0, max(depth_options.size() - 1, 0))
+		if depth_tier_index >= 0 and depth_tier_index < depth_options.size():
+			Global.reel_run_max_depth_cap = float((depth_options[depth_tier_index] as Dictionary).get("max_depth_cap", run_config.get("max_depth", 24.0)))
 	if Global.reel_run_max_depth_cap > 0.0:
 		var cap: float = Global.reel_run_max_depth_cap
 		run_config["max_depth"] = minf(float(run_config.get("max_depth", 24.0)), cap)
@@ -459,6 +529,9 @@ func _begin_run() -> void:
 		"species_values": {},
 	}
 	run_time_limit = maxf(0.001, float(run_config.get("time_limit", 30.0)))
+	if _is_multi_mode_challenge_active():
+		run_time_limit = maxf(0.001, float(multi_mode_step.get("time_limit", run_time_limit)))
+		run_config["time_limit"] = run_time_limit
 	timer_left = run_time_limit
 	deepest_depth_reached = 0.0
 	hooked_fish_index = -1
@@ -512,6 +585,7 @@ func _begin_run() -> void:
 	automation_timer = 0.0
 	automation_catch_flash = 0.0
 	run_state = RunState.INTRO
+	multi_mode_step_reported = false
 	_spawn_fish_population()
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	_update_hud()
@@ -549,6 +623,8 @@ func _create_fish_entity(depth_meters: float) -> Dictionary:
 	}
 
 func _process(delta: float) -> void:
+	if _process_multi_mode_intro(delta):
+		return
 	if _is_pause_menu_open():
 		return
 	boat_bob_time += delta
@@ -969,6 +1045,18 @@ func _finish_landed_fish() -> void:
 	var species_values: Dictionary = summary_results.get("species_values", {})
 	species_values[landing_species_name] = int(species_values.get(landing_species_name, 0)) + landing_species_value
 	summary_results["species_values"] = species_values
+	if _is_multi_mode_challenge_active() and not multi_mode_step_reported:
+		var fish_caught: int = int(summary_results.get("fish_caught", 0))
+		if fish_caught >= int(multi_mode_step.get("fish_goal", 999999)):
+			multi_mode_step_reported = true
+			MULTI_GAME_MODE.complete_current_step(true, {
+				"fish_caught": fish_caught,
+				"max_depth": float(run_config.get("max_depth", 24.0)),
+				"elapsed": maxf(0.0, run_time_limit - timer_left),
+				"time_remaining": maxf(0.0, timer_left),
+				"time_limit": run_time_limit
+			})
+			return
 	fight_feedback_text = "Landed %s!" % landing_species_name
 	fight_feedback_timer = 0.85
 	_play_reel_sound(SoundEffectSettings.SOUND_EFFECT_TYPE.REEL_FISH_LANDED, 0.0, rng.randf_range(-0.02, 0.02))
@@ -998,6 +1086,17 @@ func _begin_run_end() -> void:
 	fight_feedback_timer = 1.0
 
 func _show_summary() -> void:
+	if _is_multi_mode_challenge_active() and not multi_mode_step_reported:
+		multi_mode_step_reported = true
+		MULTI_GAME_MODE.complete_current_step(false, {
+			"reason": "summary",
+			"fish_caught": int(summary_results.get("fish_caught", 0)),
+			"deepest_depth": float(summary_results.get("deepest_depth", 0.0)),
+			"elapsed": maxf(0.0, run_time_limit - timer_left),
+			"time_remaining": maxf(0.0, timer_left),
+			"time_limit": run_time_limit,
+		})
+		return
 	var total_money: int = int(summary_results.get("money_earned", 0))
 	var total_fish: int = int(summary_results.get("fish_caught", 0))
 	var deepest_depth: float = float(summary_results.get("deepest_depth", 0.0))
@@ -1942,4 +2041,3 @@ func _on_summary_again_pressed() -> void:
 	else:
 		Global.reel_run_max_depth_cap = -1.0
 	SceneChanger.change_to_new_scene(Util.get_main_scene_path(), null, 0.2)
-

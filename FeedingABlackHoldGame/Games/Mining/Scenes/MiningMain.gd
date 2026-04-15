@@ -5,6 +5,7 @@ const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const MINING_BALANCE = preload("res://Games/Mining/MiningBalance.gd")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
+const MULTI_GAME_MODE := preload("res://MultiGameMode.gd")
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const RUN_REASON_TIMER_EXPIRED := "MINING_REASON_TIMER_EXPIRED"
 const RUN_REASON_DRILL_DEPLETED := "MINING_REASON_DRILL_DEPLETED"
@@ -302,6 +303,12 @@ var run_start_banner_panel: PanelContainer
 var run_start_banner_title_label: Label
 var run_start_banner_detail_label: Label
 var run_start_banner_tween: Tween
+var multi_mode_step: Dictionary = {}
+var multi_mode_intro_timer := 0.0
+var multi_mode_intro_overlay: ColorRect
+var multi_mode_intro_countdown_label: Label
+var multi_mode_intro_note_label: Label
+var multi_mode_step_reported := false
 
 func _notification(what: int) -> void:
     if what == NOTIFICATION_TRANSLATION_CHANGED:
@@ -318,6 +325,8 @@ func _trf(key: String, args: Array = []) -> String:
 
 func _ready() -> void:
     Global.game_state = Util.GAME_STATES.PLAYING
+    multi_mode_step = MULTI_GAME_MODE.get_active_step_for_game(Util.ACTIVE_GAME_MINING)
+    multi_mode_step_reported = false
     if simulation_seed_override >= 0:
         rng.seed = simulation_seed_override
     else:
@@ -335,12 +344,66 @@ func _ready() -> void:
     hint_left_button.pressed.connect(_on_summary_hint_left_button_pressed)
     hint_right_button.pressed.connect(_on_summary_hint_right_button_pressed)
     _ensure_crt_overlay()
+    _setup_multi_mode_overlay()
     _begin_run()
+
+func _setup_multi_mode_overlay() -> void:
+    if multi_mode_step.is_empty():
+        return
+    multi_mode_intro_timer = 2.0
+    multi_mode_intro_overlay = ColorRect.new()
+    multi_mode_intro_overlay.anchor_right = 1.0
+    multi_mode_intro_overlay.anchor_bottom = 1.0
+    multi_mode_intro_overlay.color = Color(0.0, 0.0, 0.0, 0.28)
+    multi_mode_intro_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    $CanvasLayer.add_child(multi_mode_intro_overlay)
+    var center := CenterContainer.new()
+    center.anchor_right = 1.0
+    center.anchor_bottom = 1.0
+    multi_mode_intro_overlay.add_child(center)
+    var vbox := VBoxContainer.new()
+    vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+    vbox.add_theme_constant_override("separation", 8)
+    center.add_child(vbox)
+    multi_mode_intro_countdown_label = Label.new()
+    multi_mode_intro_countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    multi_mode_intro_countdown_label.add_theme_font_size_override("font_size", 84)
+    multi_mode_intro_countdown_label.add_theme_color_override("font_color", Color(0.95, 0.22, 0.22, 1.0))
+    vbox.add_child(multi_mode_intro_countdown_label)
+    multi_mode_intro_note_label = Label.new()
+    multi_mode_intro_note_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    multi_mode_intro_note_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    multi_mode_intro_note_label.custom_minimum_size = Vector2(760.0, 0.0)
+    multi_mode_intro_note_label.add_theme_font_size_override("font_size", 24)
+    multi_mode_intro_note_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.92, 1.0))
+    multi_mode_intro_note_label.text = MULTI_GAME_MODE.get_active_intro_text()
+    vbox.add_child(multi_mode_intro_note_label)
+    _update_multi_mode_overlay()
+
+func _is_multi_mode_challenge_active() -> bool:
+    return not multi_mode_step.is_empty()
+
+func _update_multi_mode_overlay() -> void:
+    if multi_mode_intro_countdown_label == null:
+        return
+    multi_mode_intro_countdown_label.text = str(maxi(1, int(ceil(multi_mode_intro_timer))))
+
+func _process_multi_mode_intro(delta: float) -> bool:
+    if not _is_multi_mode_challenge_active() or multi_mode_intro_timer <= 0.0:
+        return false
+    multi_mode_intro_timer = maxf(0.0, multi_mode_intro_timer - delta)
+    _update_multi_mode_overlay()
+    if multi_mode_intro_timer <= 0.0 and multi_mode_intro_overlay != null:
+        multi_mode_intro_overlay.queue_free()
+        multi_mode_intro_overlay = null
+    return multi_mode_intro_timer > 0.0
 
 func _exit_tree() -> void:
     Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _process(delta: float) -> void:
+    if _process_multi_mode_intro(delta):
+        return
     if run_state == RUN_STATES.RUNNING and not _is_settings_open():
         _update_autoplay_pointer()
         _process_running(delta)
@@ -411,6 +474,10 @@ func _draw() -> void:
 
 func _begin_run() -> void:
     persistent_data = simulation_data_override.duplicate(true) if not simulation_data_override.is_empty() else MINING_PROGRESS_SCRIPT.load_data()
+    if _is_multi_mode_challenge_active():
+        var forced_depth: int = int(multi_mode_step.get("depth_level", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL))
+        persistent_data["deepest_level_unlocked"] = max(int(persistent_data.get("deepest_level_unlocked", forced_depth)), forced_depth)
+        persistent_data["selected_depth_level"] = forced_depth
     var min_depth: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
     var selected_depth: int = int(persistent_data.get("selected_depth_level", min_depth))
     if simulation_depth_override > 0:
@@ -1134,6 +1201,16 @@ func _break_node(node_index: int) -> void:
     world_nodes.remove_at(node_index)
     _handle_removed_node_index(node_index)
     nodes_broken += 1
+    if _is_multi_mode_challenge_active() and not multi_mode_step_reported and nodes_broken >= int(multi_mode_step.get("nodes_goal", 999999)):
+        multi_mode_step_reported = true
+        MULTI_GAME_MODE.complete_current_step(true, {
+            "nodes_broken": nodes_broken,
+            "depth_level": active_depth_level,
+            "elapsed": maxf(0.0, _get_run_time_limit() - time_left),
+            "time_remaining": maxf(0.0, time_left),
+            "time_limit": _get_run_time_limit()
+        })
+        return
     var xp_reward: int = int(round(int(node.get("xp", 0)) * _get_xp_multiplier()))
     run_xp += xp_reward
     var drop_count: int = MINING_BALANCE.get_drop_count_for_node(node)
@@ -1360,6 +1437,18 @@ func _trigger_run_end(reason_key: String) -> void:
 
 func _finish_run(reason_key: String) -> void:
     if run_state == RUN_STATES.SUMMARY:
+        return
+    if _is_multi_mode_challenge_active() and not multi_mode_step_reported:
+        multi_mode_step_reported = true
+        run_state = RUN_STATES.SUMMARY
+        MULTI_GAME_MODE.complete_current_step(false, {
+            "reason": reason_key,
+            "nodes_broken": nodes_broken,
+            "depth_level": active_depth_level,
+            "elapsed": maxf(0.0, _get_run_time_limit() - time_left),
+            "time_remaining": maxf(0.0, time_left),
+            "time_limit": _get_run_time_limit()
+        })
         return
     var was_ending: bool = run_state == RUN_STATES.ENDING
     var ending_overlay_alpha: float = _get_run_end_overlay_alpha() if was_ending else 0.0
@@ -2491,6 +2580,8 @@ func _get_drill_health_max() -> float:
     return MINING_BALANCE.get_drill_health_max(_get_upgrade_levels(), _get_level_bonus_totals())
 
 func _get_run_time_limit() -> float:
+    if _is_multi_mode_challenge_active():
+        return float(multi_mode_step.get("time_limit", 20.0))
     return MINING_BALANCE.get_run_time_limit(_get_upgrade_levels(), _get_level_bonus_totals())
 
 func _get_time_drain_rate() -> float:

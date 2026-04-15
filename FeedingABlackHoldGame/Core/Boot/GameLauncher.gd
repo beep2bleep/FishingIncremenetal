@@ -4,6 +4,7 @@ const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const STAR_TEXTURE: Texture2D = preload("res://Art/star_tiny.png")
 const BACKGROUND_PARTICLE_MATERIAL: Material = preload("res://Upgrade Tree Particles.tres")
 const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
+const MULTI_GAME_MODE := preload("res://MultiGameMode.gd")
 
 const TITLE_TEXT_KEY := "MAIN MENU"
 const VANGUARD_BUTTON_TEXT := "VANGUARD"
@@ -63,10 +64,12 @@ const GAME_CARD_RESET_DURATION := 0.3
 @onready var combined_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/CombinedButton") as Button
 
 var settings_button: Button
+var reset_all_meta_progress_button: Button
 var settings_panel: PanelContainer
 var settings_title_label: Label
 var settings_content: Settings
 var settings_close_button: Button
+var reset_all_meta_progress_dialog: ConfirmationDialog
 var language_button: Button
 var language_panel: PanelContainer
 var language_title_label: Label
@@ -80,6 +83,8 @@ var language_button_preview_list: VBoxContainer
 var language_flag_cache: Dictionary = {}
 var currency_strip: HBoxContainer
 var currency_count_labels: Dictionary = {}
+var multi_tier_dialog: ConfirmationDialog
+var multi_summary_overlay: ColorRect
 var game_cards_grid: GridContainer
 var game_card_texture_cache: Dictionary = {}
 var background_particles_root: Node2D
@@ -95,7 +100,10 @@ func _ready() -> void:
     _setup_background_fx()
     _setup_game_cards()
     _setup_settings_panel()
+    _setup_reset_all_meta_progress_controls()
     _setup_language_panel()
+    _setup_multi_tier_dialog()
+    _setup_multi_summary_overlay()
     _refresh_text()
     _apply_background_palette(_get_background_palette_for_game(""), false)
     _refresh_launcher_panel_layout()
@@ -118,6 +126,7 @@ func _ready() -> void:
     if vanguard_button != null:
         vanguard_button.grab_focus()
 
+    call_deferred("_show_pending_multi_mode_summary")
     Callable(self, "_initial_game_card_layout_after_ready").call_deferred()
 
 func _initial_game_card_layout_after_ready() -> void:
@@ -161,7 +170,11 @@ func _on_reel_button_pressed() -> void:
     _start_game(Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
 
 func _on_combined_button_pressed() -> void:
-    _start_game(Util.HIGH_LEVEL_MODE_ALL)
+    var highest_completed_tier: int = MULTI_GAME_MODE.get_highest_completed_tier()
+    if highest_completed_tier <= 0:
+        MULTI_GAME_MODE.start_tier(1)
+        return
+    _show_multi_tier_dialog()
 
 func _start_game(game_id: String) -> void:
     _hide_settings_panel()
@@ -200,13 +213,25 @@ func _refresh_text() -> void:
     _refresh_game_card_text(reel_button, Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
     _refresh_game_card_text(combined_button, Util.HIGH_LEVEL_MODE_ALL)
     _refresh_currency_strip()
+    _refresh_multi_tier_dialog_text()
 
     if settings_button != null and is_instance_valid(settings_button):
         settings_button.text = tr("UI_SETTINGS")
+    if reset_all_meta_progress_button != null and is_instance_valid(reset_all_meta_progress_button):
+        reset_all_meta_progress_button.text = tr("MAIN_RESET_ALL_META_PROGRESS")
     if settings_title_label != null and is_instance_valid(settings_title_label):
         settings_title_label.text = tr("UI_SETTINGS_TITLE")
     if settings_close_button != null and is_instance_valid(settings_close_button):
         settings_close_button.text = tr("UI_BACK")
+    if reset_all_meta_progress_dialog != null and is_instance_valid(reset_all_meta_progress_dialog):
+        reset_all_meta_progress_dialog.title = tr("MAIN_CONFIRM_RESET_ALL_META_TITLE")
+        reset_all_meta_progress_dialog.dialog_text = tr("MAIN_CONFIRM_RESET_ALL_META_BODY")
+        var reset_ok_button: Button = reset_all_meta_progress_dialog.get_ok_button()
+        if reset_ok_button != null:
+            reset_ok_button.text = tr("UI_YES")
+        var reset_cancel_button: Button = reset_all_meta_progress_dialog.get_cancel_button()
+        if reset_cancel_button != null:
+            reset_cancel_button.text = tr("UI_NO")
     if language_button != null and is_instance_valid(language_button):
         language_button.text = ""
         language_button.tooltip_text = ""
@@ -297,6 +322,32 @@ func _setup_settings_panel() -> void:
     settings_close_button.pressed.connect(_hide_settings_panel)
     _style_utility_button(settings_close_button)
     vbox.add_child(settings_close_button)
+
+func _setup_reset_all_meta_progress_controls() -> void:
+    if reset_all_meta_progress_button != null and is_instance_valid(reset_all_meta_progress_button):
+        return
+
+    reset_all_meta_progress_button = Button.new()
+    reset_all_meta_progress_button.name = "ResetAllMetaProgressButton"
+    reset_all_meta_progress_button.anchor_left = 1.0
+    reset_all_meta_progress_button.anchor_top = 0.0
+    reset_all_meta_progress_button.anchor_right = 1.0
+    reset_all_meta_progress_button.anchor_bottom = 0.0
+    reset_all_meta_progress_button.offset_left = -280.0
+    reset_all_meta_progress_button.offset_top = 112.0
+    reset_all_meta_progress_button.offset_right = -16.0
+    reset_all_meta_progress_button.offset_bottom = 200.0
+    reset_all_meta_progress_button.focus_mode = Control.FOCUS_NONE
+    reset_all_meta_progress_button.custom_minimum_size = Vector2(264.0, 88.0)
+    reset_all_meta_progress_button.add_theme_font_size_override("font_size", 22)
+    reset_all_meta_progress_button.pressed.connect(_on_reset_all_meta_progress_pressed)
+    _style_utility_button(reset_all_meta_progress_button)
+    add_child(reset_all_meta_progress_button)
+
+    reset_all_meta_progress_dialog = ConfirmationDialog.new()
+    reset_all_meta_progress_dialog.name = "ResetAllMetaProgressDialog"
+    reset_all_meta_progress_dialog.confirmed.connect(_on_reset_all_meta_progress_confirmed)
+    add_child(reset_all_meta_progress_dialog)
 
 func _setup_game_cards() -> void:
     if game_cards_grid != null and is_instance_valid(game_cards_grid):
@@ -389,6 +440,322 @@ func _refresh_currency_strip() -> void:
         if label == null or not is_instance_valid(label):
             continue
         label.text = CROSS_GAME_BONUSES.get_currency_display_text(str(currency_id))
+
+func _setup_multi_tier_dialog() -> void:
+    if multi_tier_dialog != null and is_instance_valid(multi_tier_dialog):
+        return
+    multi_tier_dialog = ConfirmationDialog.new()
+    multi_tier_dialog.name = "MultiTierDialog"
+    multi_tier_dialog.get_ok_button().hide()
+    multi_tier_dialog.get_cancel_button().hide()
+    add_child(multi_tier_dialog)
+
+func _setup_multi_summary_overlay() -> void:
+    if multi_summary_overlay != null and is_instance_valid(multi_summary_overlay):
+        return
+    multi_summary_overlay = ColorRect.new()
+    multi_summary_overlay.name = "MultiSummaryOverlay"
+    multi_summary_overlay.anchor_right = 1.0
+    multi_summary_overlay.anchor_bottom = 1.0
+    multi_summary_overlay.color = Color(0.01, 0.02, 0.04, 0.8)
+    multi_summary_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+    multi_summary_overlay.visible = false
+    add_child(multi_summary_overlay)
+
+func _refresh_multi_tier_dialog_text() -> void:
+    if multi_tier_dialog == null or not is_instance_valid(multi_tier_dialog):
+        return
+    multi_tier_dialog.title = tr("MULTI_MODE_SELECT_TIER_TITLE")
+    if multi_tier_dialog.visible:
+        _rebuild_multi_tier_dialog_content()
+
+func _show_multi_tier_dialog() -> void:
+    if multi_tier_dialog == null or not is_instance_valid(multi_tier_dialog):
+        return
+    _rebuild_multi_tier_dialog_content()
+    multi_tier_dialog.popup_centered(Vector2i(780, 640))
+
+func _rebuild_multi_tier_dialog_content() -> void:
+    if multi_tier_dialog == null:
+        return
+    var existing: Control = multi_tier_dialog.get_node_or_null("MultiTierRoot")
+    if existing != null:
+        existing.queue_free()
+    var root := MarginContainer.new()
+    root.name = "MultiTierRoot"
+    root.set_anchors_preset(Control.PRESET_FULL_RECT)
+    root.offset_left = 20.0
+    root.offset_top = 20.0
+    root.offset_right = -20.0
+    root.offset_bottom = -20.0
+    multi_tier_dialog.add_child(root)
+    var vbox := VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 12)
+    root.add_child(vbox)
+
+    var highest_completed_tier: int = MULTI_GAME_MODE.get_highest_completed_tier()
+    var note := Label.new()
+    note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    note.add_theme_font_size_override("font_size", 22)
+    note.text = tr("MULTI_MODE_SELECT_TIER_NOTE") % [highest_completed_tier]
+    vbox.add_child(note)
+
+    for tier in MULTI_GAME_MODE.get_selectable_tiers():
+        var button := Button.new()
+        button.custom_minimum_size = Vector2(0.0, 72.0)
+        button.add_theme_font_size_override("font_size", 28)
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        var reward_text: String = tr("MULTI_MODE_TIER_REWARD_READY") if MULTI_GAME_MODE.tier_has_reward(tier) else tr("MULTI_MODE_TIER_REWARD_DONE")
+        button.text = tr("MULTI_MODE_TIER_BUTTON") % [tier, reward_text]
+        button.pressed.connect(_on_multi_tier_selected.bind(tier))
+        vbox.add_child(button)
+
+    var cancel_button := Button.new()
+    cancel_button.custom_minimum_size = Vector2(0.0, 64.0)
+    cancel_button.add_theme_font_size_override("font_size", 24)
+    cancel_button.text = tr("UI_CANCEL")
+    cancel_button.pressed.connect(func() -> void:
+        if multi_tier_dialog != null:
+            multi_tier_dialog.hide()
+    )
+    vbox.add_child(cancel_button)
+
+func _on_multi_tier_selected(tier: int) -> void:
+    if multi_tier_dialog != null:
+        multi_tier_dialog.hide()
+    MULTI_GAME_MODE.start_tier(tier)
+
+func _show_pending_multi_mode_summary() -> void:
+    var summary: Dictionary = MULTI_GAME_MODE.consume_pending_summary()
+    if summary.is_empty():
+        return
+    _refresh_currency_strip()
+    _show_multi_summary_overlay(summary)
+
+func _show_multi_summary_overlay(summary: Dictionary) -> void:
+    if multi_summary_overlay == null:
+        return
+    for child in multi_summary_overlay.get_children():
+        child.queue_free()
+    var root := MarginContainer.new()
+    root.set_anchors_preset(Control.PRESET_FULL_RECT)
+    root.offset_left = 60.0
+    root.offset_top = 44.0
+    root.offset_right = -60.0
+    root.offset_bottom = -44.0
+    multi_summary_overlay.add_child(root)
+
+    var panel := PanelContainer.new()
+    panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    panel.add_theme_stylebox_override("panel", _make_multi_summary_panel_style())
+    root.add_child(panel)
+
+    var margin := MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 28)
+    margin.add_theme_constant_override("margin_top", 24)
+    margin.add_theme_constant_override("margin_right", 28)
+    margin.add_theme_constant_override("margin_bottom", 24)
+    panel.add_child(margin)
+
+    var vbox := VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 16)
+    margin.add_child(vbox)
+
+    var success: bool = bool(summary.get("success", false))
+    var tier: int = int(summary.get("tier", 0))
+    var rewarded_gems: int = int(summary.get("rewarded_gems", 0))
+    var completed_steps: Array = summary.get("completed_steps", [])
+
+    var title := Label.new()
+    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    title.add_theme_font_size_override("font_size", 38)
+    var title_color: Color = Color(0.98, 0.98, 1.0, 1.0) if success else Color(1.0, 0.78, 0.72, 1.0)
+    title.add_theme_color_override("font_color", title_color)
+    title.text = tr("MULTI_MODE_SUMMARY_TITLE_SUCCESS") if success else tr("MULTI_MODE_SUMMARY_TITLE_FAILURE")
+    vbox.add_child(title)
+
+    var summary_label := Label.new()
+    summary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    summary_label.add_theme_font_size_override("font_size", 22)
+    summary_label.add_theme_color_override("font_color", Color(0.86, 0.91, 0.98, 0.96))
+    if success:
+        summary_label.text = tr("MULTI_MODE_RESULT_SUCCESS") % [tier, rewarded_gems] if rewarded_gems > 0 else tr("MULTI_MODE_RESULT_SUCCESS_NO_REWARD") % [tier]
+    else:
+        summary_label.text = tr("MULTI_MODE_RESULT_FAILURE") % [tier]
+    vbox.add_child(summary_label)
+
+    var total_meta := 0
+    for step_variant in completed_steps:
+        total_meta += int((step_variant as Dictionary).get("meta_reward", 0))
+    var totals_label := Label.new()
+    totals_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    totals_label.add_theme_font_size_override("font_size", 18)
+    totals_label.add_theme_color_override("font_color", Color(0.76, 0.84, 0.94, 0.94))
+    totals_label.text = tr("MULTI_MODE_SUMMARY_TOTALS") % [completed_steps.size(), total_meta]
+    vbox.add_child(totals_label)
+
+    var steps_row := HBoxContainer.new()
+    steps_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    steps_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    steps_row.alignment = BoxContainer.ALIGNMENT_CENTER
+    steps_row.add_theme_constant_override("separation", 12)
+    steps_row.custom_minimum_size = Vector2(0.0, 420.0)
+    vbox.add_child(steps_row)
+
+    for step_variant in completed_steps:
+        var step_data: Dictionary = step_variant
+        steps_row.add_child(_build_multi_summary_step_card(step_data))
+
+    var close_button := Button.new()
+    close_button.text = tr("UI_CONTINUE")
+    close_button.custom_minimum_size = Vector2(240.0, 56.0)
+    close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+    _style_utility_button(close_button)
+    close_button.pressed.connect(func() -> void:
+        if multi_summary_overlay != null:
+            multi_summary_overlay.visible = false
+    )
+    vbox.add_child(close_button)
+    multi_summary_overlay.visible = true
+
+func _build_multi_summary_step_card(step_data: Dictionary) -> Control:
+    var panel := PanelContainer.new()
+    panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    panel.custom_minimum_size = Vector2(210.0, 0.0)
+    panel.add_theme_stylebox_override("panel", _make_multi_summary_step_style(bool(step_data.get("success", false))))
+    var margin := MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 14)
+    margin.add_theme_constant_override("margin_top", 14)
+    margin.add_theme_constant_override("margin_right", 14)
+    margin.add_theme_constant_override("margin_bottom", 14)
+    panel.add_child(margin)
+    var vbox := VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 8)
+    margin.add_child(vbox)
+
+    var header := Label.new()
+    header.add_theme_font_size_override("font_size", 20)
+    header.add_theme_color_override("font_color", Color(0.98, 0.98, 1.0, 1.0))
+    var step_result_text: String = tr("MULTI_MODE_STEP_WON") if bool(step_data.get("success", false)) else tr("MULTI_MODE_STEP_FAILED")
+    header.text = "%s  %s" % [str(step_data.get("game_name", "")), step_result_text]
+    header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    vbox.add_child(header)
+
+    var objective := Label.new()
+    objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    objective.add_theme_font_size_override("font_size", 15)
+    objective.add_theme_color_override("font_color", Color(0.82, 0.9, 0.98, 0.95))
+    objective.text = str(step_data.get("objective_text", ""))
+    vbox.add_child(objective)
+
+    var status := Label.new()
+    status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    status.add_theme_font_size_override("font_size", 15)
+    var status_color: Color = Color(0.96, 0.94, 0.84, 0.96) if bool(step_data.get("success", false)) else Color(1.0, 0.8, 0.76, 0.96)
+    status.add_theme_color_override("font_color", status_color)
+    status.text = str(step_data.get("status_text", ""))
+    vbox.add_child(status)
+
+    var performance_text: String = str(step_data.get("performance_text", "")).strip_edges()
+    if performance_text != "":
+        var performance := Label.new()
+        performance.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        performance.add_theme_font_size_override("font_size", 14)
+        performance.add_theme_color_override("font_color", Color(0.76, 0.88, 1.0, 0.96))
+        performance.text = performance_text
+        vbox.add_child(performance)
+
+    var reward_text: String = str(step_data.get("meta_reward_label", ""))
+    if reward_text != "":
+        var reward := Label.new()
+        reward.add_theme_font_size_override("font_size", 14)
+        reward.add_theme_color_override("font_color", Color(0.7, 0.94, 0.76, 0.96))
+        reward.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        reward.text = tr("MULTI_MODE_STEP_META_REWARD") % [reward_text]
+        vbox.add_child(reward)
+
+    var chart_rows: Array = step_data.get("chart_rows", [])
+    if not chart_rows.is_empty():
+        var chart := VBoxContainer.new()
+        chart.add_theme_constant_override("separation", 6)
+        vbox.add_child(chart)
+        for row_variant in chart_rows:
+            chart.add_child(_build_multi_summary_chart_row(row_variant))
+    return panel
+
+func _build_multi_summary_chart_row(row_data: Dictionary) -> Control:
+    var row := HBoxContainer.new()
+    row.add_theme_constant_override("separation", 8)
+    var label := Label.new()
+    label.custom_minimum_size = Vector2(72.0, 20.0)
+    label.add_theme_font_size_override("font_size", 12)
+    label.add_theme_color_override("font_color", Color(0.88, 0.93, 0.99, 0.96))
+    label.text = str(row_data.get("label", ""))
+    label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    row.add_child(label)
+
+    var bar := ProgressBar.new()
+    bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    bar.max_value = maxf(1.0, float(row_data.get("max_value", row_data.get("value", 0.0))))
+    bar.value = minf(float(row_data.get("value", 0.0)), bar.max_value)
+    bar.show_percentage = false
+    bar.custom_minimum_size = Vector2(0.0, 18.0)
+    var fill := StyleBoxFlat.new()
+    fill.bg_color = Color(row_data.get("color", Color(0.8, 0.8, 0.8, 1.0)))
+    fill.corner_radius_top_left = 8
+    fill.corner_radius_top_right = 8
+    fill.corner_radius_bottom_left = 8
+    fill.corner_radius_bottom_right = 8
+    bar.add_theme_stylebox_override("fill", fill)
+    var bg := StyleBoxFlat.new()
+    bg.bg_color = Color(0.08, 0.11, 0.16, 0.96)
+    bg.corner_radius_top_left = 8
+    bg.corner_radius_top_right = 8
+    bg.corner_radius_bottom_left = 8
+    bg.corner_radius_bottom_right = 8
+    bar.add_theme_stylebox_override("background", bg)
+    row.add_child(bar)
+
+    var value_label := Label.new()
+    value_label.custom_minimum_size = Vector2(62.0, 20.0)
+    value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+    value_label.add_theme_font_size_override("font_size", 12)
+    value_label.add_theme_color_override("font_color", Color(0.96, 0.97, 1.0, 0.96))
+    value_label.text = str(row_data.get("value_text", ""))
+    row.add_child(value_label)
+    return row
+
+func _make_multi_summary_panel_style() -> StyleBoxFlat:
+    var style := StyleBoxFlat.new()
+    style.bg_color = Color(0.03, 0.05, 0.09, 0.97)
+    style.border_color = Color(0.34, 0.62, 0.96, 0.72)
+    style.border_width_left = 2
+    style.border_width_top = 2
+    style.border_width_right = 2
+    style.border_width_bottom = 2
+    style.corner_radius_top_left = 16
+    style.corner_radius_top_right = 16
+    style.corner_radius_bottom_left = 16
+    style.corner_radius_bottom_right = 16
+    return style
+
+func _make_multi_summary_step_style(success: bool) -> StyleBoxFlat:
+    var style := StyleBoxFlat.new()
+    style.bg_color = Color(0.06, 0.09, 0.14, 0.96) if success else Color(0.14, 0.08, 0.09, 0.96)
+    style.border_color = Color(0.48, 0.86, 0.64, 0.78) if success else Color(0.96, 0.52, 0.44, 0.82)
+    style.border_width_left = 2
+    style.border_width_top = 2
+    style.border_width_right = 2
+    style.border_width_bottom = 2
+    style.corner_radius_top_left = 12
+    style.corner_radius_top_right = 12
+    style.corner_radius_bottom_left = 12
+    style.corner_radius_bottom_right = 12
+    return style
 
 func _decorate_game_button(button: Button, game_id: String) -> void:
     if button == null or not is_instance_valid(button):
@@ -1378,6 +1745,8 @@ func _fill_image_rect(image: Image, rect: Rect2i, color: Color) -> void:
             image.set_pixel(x, y, color)
 
 func _on_settings_button_pressed() -> void:
+    if reset_all_meta_progress_dialog != null and is_instance_valid(reset_all_meta_progress_dialog):
+        reset_all_meta_progress_dialog.hide()
     _hide_language_panel()
     if settings_content != null and is_instance_valid(settings_content):
         settings_content.show_screen()
@@ -1393,6 +1762,8 @@ func _is_settings_panel_open() -> bool:
     return settings_panel != null and is_instance_valid(settings_panel) and settings_panel.visible
 
 func _on_language_button_pressed() -> void:
+    if reset_all_meta_progress_dialog != null and is_instance_valid(reset_all_meta_progress_dialog):
+        reset_all_meta_progress_dialog.hide()
     _hide_settings_panel()
     if language_panel != null and is_instance_valid(language_panel):
         language_panel.show()
@@ -1411,6 +1782,16 @@ func _on_language_selected(locale_code: String) -> void:
         settings_content.refresh_from_save()
     _hide_language_panel()
     _refresh_text()
+
+func _on_reset_all_meta_progress_pressed() -> void:
+    _hide_settings_panel()
+    _hide_language_panel()
+    if reset_all_meta_progress_dialog != null and is_instance_valid(reset_all_meta_progress_dialog):
+        reset_all_meta_progress_dialog.popup_centered(Vector2i(760, 0))
+
+func _on_reset_all_meta_progress_confirmed() -> void:
+    SaveHandler.reset_all_meta_progress()
+    _refresh_currency_strip()
 
 func _style_utility_button(button: Button) -> void:
     if button == null:

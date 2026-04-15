@@ -16,6 +16,9 @@ static func get_demo_max_meta_step() -> int:
 static func should_lock_meta_upgrade_in_demo(entry: Dictionary) -> bool:
 	if not bool(ProjectSettings.get_setting("global/Demo", false)):
 		return false
+	## Demo keeps the tentacle branch locked; Choice Matrix must stay buyable without that line.
+	if str(entry.get("id", "")) == "choice_matrix":
+		return false
 	if int(entry.get("branch", 0)) == DEMO_ALWAYS_LOCKED_META_BRANCH_TENTACLES:
 		return true
 	return int(entry.get("step", 0)) > get_demo_max_meta_step()
@@ -24,11 +27,17 @@ static func count_eligible_meta_nodes_in_demo_slice() -> int:
 	var max_step: int = get_demo_max_meta_step()
 	var count := 0
 	for raw_entry in META_UPGRADES:
+		if str(raw_entry.get("id", "")) == "choice_matrix":
+			count += 1
+			continue
 		if int(raw_entry.get("branch", 0)) == DEMO_ALWAYS_LOCKED_META_BRANCH_TENTACLES:
 			continue
 		if int(raw_entry.get("step", 0)) <= max_step:
 			count += 1
 	return maxi(1, count)
+
+## Hull repair per wave clear (and slow in-wave regen); always at least this much before meta `repair_crews`.
+const MIN_REPAIR_BETWEEN_WAVES := 10.0
 
 const WAVE_OFFER_TIERS := [
 	{"id": "poor", "label": "Poor", "multiplier": 0.75, "border": Color(0.55, 0.56, 0.60, 1.0)},
@@ -60,7 +69,7 @@ const BASE_RUN_CONFIG := {
 	"meta_reward_multiplier": 1.0,
 	"wave_scrap_bonus": 0.0,
 	"damage_reduction": 0.0,
-	"repair_between_waves": 0.0,
+	"repair_between_waves": MIN_REPAIR_BETWEEN_WAVES,
 	"bullet_pierce": 0,
 	"bullet_blast_radius": 0.0,
 	"bullet_blast_damage": 1.0,
@@ -100,6 +109,7 @@ const BASE_RUN_CONFIG := {
 	"collector_bot_speed": 176.0,
 	"scrap_generation_per_second": 0.0,
 	"projectile_redirect_chance": 0.0,
+	"countermeasures_rating": 0.2,
 	"upgrade_power_multiplier": 1.0,
 	"enemy_count_scale": 1.0,
 	"enemy_speed_scale": 1.0,
@@ -794,9 +804,9 @@ const META_UPGRADES: Array[Dictionary] = [
 		"label": "Choice Matrix",
 		"summary": "Raise the wave-upgrade choice cap all the way to nine and improve battlefield flexibility.",
 		"icon": ICON_PREFIX + "choice_matrix",
-		"act": 5,
-		"cell": Vector2(-8, -5),
-		"dependency": "tactical_briefing",
+		"act": 1,
+		"cell": Vector2(1, -2),
+		"dependency": "command_armor",
 		"branch": 10,
 		"step": 1,
 		"base_cost": 360,

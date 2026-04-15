@@ -6,6 +6,7 @@ const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
 const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
+const MULTI_GAME_MODE := preload("res://MultiGameMode.gd")
 const VANGUARD_CRT_SHADER: Shader = preload("res://Games/Mining/UI/MiningCrt.gdshader")
 const VANGUARD_CRT_LEVEL_MAX := 11
 const VANGUARD_CRT_CANVAS_LAYER := 90
@@ -588,6 +589,13 @@ var summary_hint_vertical_shift: float = 20.0
 var battle_summary_hints: Array[String] = []
 var battle_summary_hint_index: int = 0
 const BATTLE_SUMMARY_BASE_VIEWPORT := Vector2(1600.0, 900.0)
+var multi_mode_step: Dictionary = {}
+var multi_mode_intro_timer := 0.0
+var multi_mode_intro_layer: CanvasLayer
+var multi_mode_intro_overlay: ColorRect
+var multi_mode_intro_countdown_label: Label
+var multi_mode_intro_note_label: Label
+var multi_mode_step_reported := false
 var touch_camera_left_shift: float = 500.0
 var base_fill_texture: Texture2D
 var mage_pending_strikes: Array[Dictionary] = []
@@ -704,7 +712,65 @@ func _ready() -> void:
     _refresh_hero_set_toggle_button()
     _refresh_vanguard_crt_overlay()
     _refresh_new_hero_scale_debug_panel()
+    _setup_multi_mode_challenge()
     _update_ui()
+
+func _setup_multi_mode_challenge() -> void:
+    multi_mode_step = MULTI_GAME_MODE.get_active_step_for_game(Util.ACTIVE_GAME_VANGUARD)
+    multi_mode_step_reported = false
+    if multi_mode_step.is_empty():
+        return
+    multi_mode_intro_timer = 2.0
+    multi_mode_intro_layer = CanvasLayer.new()
+    multi_mode_intro_layer.layer = 200
+    add_child(multi_mode_intro_layer)
+    multi_mode_intro_overlay = ColorRect.new()
+    multi_mode_intro_overlay.anchor_right = 1.0
+    multi_mode_intro_overlay.anchor_bottom = 1.0
+    multi_mode_intro_overlay.color = Color(0.0, 0.0, 0.0, 0.28)
+    multi_mode_intro_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    multi_mode_intro_layer.add_child(multi_mode_intro_overlay)
+    var center := CenterContainer.new()
+    center.anchor_right = 1.0
+    center.anchor_bottom = 1.0
+    multi_mode_intro_overlay.add_child(center)
+    var vbox := VBoxContainer.new()
+    vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+    vbox.add_theme_constant_override("separation", 8)
+    center.add_child(vbox)
+    multi_mode_intro_countdown_label = Label.new()
+    multi_mode_intro_countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    multi_mode_intro_countdown_label.add_theme_font_size_override("font_size", 84)
+    multi_mode_intro_countdown_label.add_theme_color_override("font_color", Color(0.95, 0.22, 0.22, 1.0))
+    vbox.add_child(multi_mode_intro_countdown_label)
+    multi_mode_intro_note_label = Label.new()
+    multi_mode_intro_note_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    multi_mode_intro_note_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    multi_mode_intro_note_label.custom_minimum_size = Vector2(760.0, 0.0)
+    multi_mode_intro_note_label.add_theme_font_size_override("font_size", 26)
+    multi_mode_intro_note_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.92, 1.0))
+    multi_mode_intro_note_label.text = MULTI_GAME_MODE.get_active_intro_text()
+    vbox.add_child(multi_mode_intro_note_label)
+    _update_multi_mode_intro_labels()
+
+func _is_multi_mode_challenge_active() -> bool:
+    return not multi_mode_step.is_empty()
+
+func _update_multi_mode_intro_labels() -> void:
+    if multi_mode_intro_countdown_label == null:
+        return
+    multi_mode_intro_countdown_label.text = str(maxi(1, int(ceil(multi_mode_intro_timer))))
+
+func _process_multi_mode_intro(delta: float) -> bool:
+    if not _is_multi_mode_challenge_active() or multi_mode_intro_timer <= 0.0:
+        return false
+    multi_mode_intro_timer = maxf(0.0, multi_mode_intro_timer - delta)
+    _update_multi_mode_intro_labels()
+    if multi_mode_intro_timer <= 0.0 and multi_mode_intro_layer != null:
+        multi_mode_intro_layer.queue_free()
+        multi_mode_intro_layer = null
+        multi_mode_intro_overlay = null
+    return multi_mode_intro_timer > 0.0
 
 func _on_battle_viewport_size_changed() -> void:
     _layout_battle_utility_buttons()
@@ -2344,6 +2410,8 @@ func _process(delta: float) -> void:
                 _run_defeat_pose(delta)
         _update_ui()
         return
+    if _process_multi_mode_intro(delta):
+        return
     if summary_panel.visible:
         return
 
@@ -2508,6 +2576,8 @@ func _spawn_loop(delta: float) -> void:
 func _should_spawn_boss_immediately() -> bool:
     if boss_spawned or battle_completed:
         return false
+    if _is_multi_mode_challenge_active() and bool(multi_mode_step.get("spawn_boss_immediately", false)):
+        return true
     var lp: Dictionary = _level_params(current_level)
     var regular_count: int = int(lp["regular_count"])
     if regular_spawned < regular_count:
@@ -4941,6 +5011,9 @@ func _on_boss_defeated() -> void:
     print("DEBUG: _on_boss_defeated() called")
     if battle_completed:
         return
+    if _is_multi_mode_challenge_active():
+        _end_battle(true)
+        return
     var level_key: String = str(current_level)
     _track_level_completion_event(current_level)
     _track_first_boss_clear_event(current_level)
@@ -5044,6 +5117,10 @@ func _end_battle(victory: bool) -> void:
     defeat_summary_reveal_pending = false
     defeat_summary_reveal_time = 0.0
     _apply_battle_summary_layout(Vector2(9999.0, 9999.0))
+    if _is_multi_mode_challenge_active() and not multi_mode_step_reported:
+        multi_mode_step_reported = true
+        MULTI_GAME_MODE.complete_current_step(victory, {"level": current_level, "victory": victory})
+        return
     _setup_battle_summary_hints()
     summary_panel.modulate.a = 1.0
     summary_panel.scale = Vector2.ONE

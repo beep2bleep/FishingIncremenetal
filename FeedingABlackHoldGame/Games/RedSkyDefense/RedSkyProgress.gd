@@ -6,6 +6,7 @@ const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const SAVE_PATH := "user://red_sky_defense_save_v1.json"
 const START_WAVE_STEP := 5
 const MIN_START_WAVE := 1
+const FIRST_SKIP_START_WAVE := MIN_START_WAVE + START_WAVE_STEP
 
 const DEFAULT_DATA := {
 	"wallet": 0,
@@ -72,11 +73,16 @@ static func set_selected_start_wave(start_wave: int) -> Dictionary:
 static func _build_unlocked_start_waves(data: Dictionary) -> Array[int]:
 	var best_wave: int = max(0, int(data.get("best_wave", 0)))
 	var unlocked: Array[int] = [MIN_START_WAVE]
-	var candidate_start_wave: int = START_WAVE_STEP
-	while candidate_start_wave + START_WAVE_STEP <= best_wave:
+	var candidate_start_wave: int = FIRST_SKIP_START_WAVE
+	while get_required_best_wave_for_start_wave(candidate_start_wave) <= best_wave:
 		unlocked.append(candidate_start_wave)
 		candidate_start_wave += START_WAVE_STEP
 	return unlocked
+
+static func get_required_best_wave_for_start_wave(start_wave: int) -> int:
+	if start_wave <= MIN_START_WAVE:
+		return 0
+	return max(start_wave, FIRST_SKIP_START_WAVE) + START_WAVE_STEP - 1
 
 static func get_wallet() -> int:
 	return int(load_data().get("wallet", 0))

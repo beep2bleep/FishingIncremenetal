@@ -2,10 +2,11 @@ extends RefCounted
 class_name CrossGameBonuses
 
 const SAVE_PATH := "user://cross_game_bonuses_v1.json"
-const MAX_BONUS_TIER := 3
+const MAX_BONUS_TIER := 4
 const BONUS_MULT_PER_TIER := 0.5
 const CROSS_NODE_KEY_PREFIX := "cross_bonus_"
-const CROSS_NODE_COSTS := [1, 2, 3]
+const CROSS_NODE_COSTS := [1, 2, 3, 4]
+const UNIVERSAL_GEM_ID := "multi"
 const CROSS_NODE_CELL_BY_TARGET := {
     Util.ACTIVE_GAME_VANGUARD: Vector2(0, -1),
     Util.ACTIVE_GAME_MINING: Vector2(0, -1),
@@ -13,12 +14,20 @@ const CROSS_NODE_CELL_BY_TARGET := {
     Util.ACTIVE_GAME_TURKEY: Vector2(0, -1),
     Util.ACTIVE_GAME_REEL_INTO_DARKNESS: Vector2(0, -1),
 }
+const TARGET_GAME_IDS := [
+    Util.ACTIVE_GAME_VANGUARD,
+    Util.ACTIVE_GAME_MINING,
+    Util.ACTIVE_GAME_RED_SKY,
+    Util.ACTIVE_GAME_TURKEY,
+    Util.ACTIVE_GAME_REEL_INTO_DARKNESS,
+]
 const CURRENCY_ORDER := [
     Util.ACTIVE_GAME_VANGUARD,
     Util.ACTIVE_GAME_MINING,
     Util.ACTIVE_GAME_RED_SKY,
     Util.ACTIVE_GAME_TURKEY,
     Util.ACTIVE_GAME_REEL_INTO_DARKNESS,
+    UNIVERSAL_GEM_ID,
 ]
 const CURRENCY_DATA := {
     Util.ACTIVE_GAME_VANGUARD: {
@@ -50,6 +59,12 @@ const CURRENCY_DATA := {
         "name": "Reel Into Darkness",
         "color": Color(0.42, 0.44, 0.48, 1.0),
         "dark": Color(0.12, 0.13, 0.14, 1.0),
+    },
+    UNIVERSAL_GEM_ID: {
+        "code": "M",
+        "name": "M Gems",
+        "color": Color(0.56, 0.92, 0.88, 1.0),
+        "dark": Color(0.08, 0.23, 0.23, 1.0),
     },
 }
 const VANGUARD_LEVEL_MILESTONES := [7, 9, 11, 13, 15, 17]
@@ -91,17 +106,31 @@ static func save_data(data: Dictionary) -> void:
         return
     file.store_string(JSON.stringify(safe_data, "\t"))
 
+static func reset_progress() -> Dictionary:
+    var data: Dictionary = DEFAULT_DATA.duplicate(true)
+    save_data(data)
+    return _sanitize_data(data)
+
 static func get_currency_count(currency_id: String) -> int:
     var data: Dictionary = load_data()
-    return int(data.get("currencies", {}).get(currency_id, 0))
+    var currencies: Dictionary = data.get("currencies", {})
+    var resolved_id: String = currency_id if CURRENCY_DATA.has(currency_id) else UNIVERSAL_GEM_ID
+    return int(currencies.get(resolved_id, 0))
 
 static func get_all_currency_counts() -> Dictionary:
     return load_data().get("currencies", {}).duplicate(true)
 
+static func grant_multi_gems(amount: int) -> void:
+    if amount <= 0:
+        return
+    var data: Dictionary = load_data()
+    var currencies: Dictionary = data.get("currencies", {}).duplicate(true)
+    currencies[UNIVERSAL_GEM_ID] = max(0, int(currencies.get(UNIVERSAL_GEM_ID, 0)) + amount)
+    data["currencies"] = currencies
+    save_data(data)
+
 static func grant_currency_if_new(currency_id: String, token: String) -> bool:
-    if not Util.is_all_high_level_mode_active():
-        return false
-    if not CURRENCY_DATA.has(currency_id):
+    if not TARGET_GAME_IDS.has(currency_id):
         return false
     var data: Dictionary = load_data()
     var awarded_tokens: Dictionary = data.get("awarded_tokens", {}).duplicate(true)
@@ -123,8 +152,6 @@ static func award_vanguard_level_clear(level: int) -> bool:
     return grant_currency_if_new(Util.ACTIVE_GAME_VANGUARD, "level_%d" % level)
 
 static func count_vanguard_level_rewards(level: int) -> int:
-    if not Util.is_all_high_level_mode_active():
-        return 0
     return 1 if VANGUARD_LEVEL_MILESTONES.has(level) else 0
 
 static func award_mining_depth(depth_level: int) -> int:
@@ -135,8 +162,6 @@ static func award_mining_depth(depth_level: int) -> int:
     return awarded
 
 static func count_mining_depth_rewards_between(previous_depth_level: int, new_depth_level: int) -> int:
-    if not Util.is_all_high_level_mode_active():
-        return 0
     var awarded := 0
     for milestone in MINING_LEVEL_MILESTONES:
         if previous_depth_level < milestone and new_depth_level >= milestone:
@@ -151,8 +176,6 @@ static func award_red_sky_wave(wave: int) -> int:
     return awarded
 
 static func count_red_sky_wave_rewards_between(previous_wave: int, new_wave: int) -> int:
-    if not Util.is_all_high_level_mode_active():
-        return 0
     var awarded := 0
     for milestone in RED_SKY_WAVE_MILESTONES:
         if previous_wave < milestone and new_wave >= milestone:
@@ -193,17 +216,20 @@ static func get_target_from_cross_bonus_key(sim_key: String) -> String:
     return raw_key.trim_prefix(CROSS_NODE_KEY_PREFIX)
 
 static func get_eligible_currency_ids_for_target(target_game_id: String) -> Array[String]:
-    var eligible: Array[String] = []
-    for currency_id in CURRENCY_ORDER:
+    if not TARGET_GAME_IDS.has(target_game_id):
+        return []
+    var eligible: Array[String] = [UNIVERSAL_GEM_ID]
+    for currency_id in TARGET_GAME_IDS:
         if currency_id != target_game_id:
             eligible.append(currency_id)
     return eligible
 
 static func get_available_currency_total_for_target(target_game_id: String) -> int:
-    var counts: Dictionary = get_all_currency_counts()
+    if not TARGET_GAME_IDS.has(target_game_id):
+        return 0
     var total := 0
     for currency_id in get_eligible_currency_ids_for_target(target_game_id):
-        total += int(counts.get(currency_id, 0))
+        total += get_currency_count(currency_id)
     return total
 
 static func can_afford_target_bonus(target_game_id: String, tier_index: int) -> bool:
@@ -214,6 +240,8 @@ static func can_afford_target_bonus(target_game_id: String, tier_index: int) -> 
 static func purchase_target_bonus(target_game_id: String) -> bool:
     if not Util.is_all_high_level_mode_active():
         return false
+    if not TARGET_GAME_IDS.has(target_game_id):
+        return false
     var data: Dictionary = load_data()
     var levels: Dictionary = data.get("target_bonus_tiers", {}).duplicate(true)
     var current_level: int = clampi(int(levels.get(target_game_id, 0)), 0, MAX_BONUS_TIER)
@@ -221,17 +249,17 @@ static func purchase_target_bonus(target_game_id: String) -> bool:
         return false
     var cost: int = int(CROSS_NODE_COSTS[current_level])
     var currencies: Dictionary = data.get("currencies", {}).duplicate(true)
-    var remaining: int = cost
+    var remaining_cost: int = cost
     for currency_id in get_eligible_currency_ids_for_target(target_game_id):
-        if remaining <= 0:
-            break
         var available: int = int(currencies.get(currency_id, 0))
         if available <= 0:
             continue
-        var spend: int = min(available, remaining)
+        var spend: int = min(available, remaining_cost)
         currencies[currency_id] = available - spend
-        remaining -= spend
-    if remaining > 0:
+        remaining_cost -= spend
+        if remaining_cost <= 0:
+            break
+    if remaining_cost > 0:
         return false
     levels[target_game_id] = current_level + 1
     data["currencies"] = currencies
@@ -240,16 +268,18 @@ static func purchase_target_bonus(target_game_id: String) -> bool:
     return true
 
 static func get_cross_bonus_node_definition(target_game_id: String) -> Dictionary:
-    var source_names: Array[String] = []
-    for currency_id in get_eligible_currency_ids_for_target(target_game_id):
-        source_names.append(str(CURRENCY_DATA.get(currency_id, {}).get("code", "?")))
     var game_name: String = _get_game_display_name(target_game_id)
     var effect_text: String = _get_effect_text_for_target(target_game_id)
+    var source_codes: Array[String] = []
+    for currency_id in get_eligible_currency_ids_for_target(target_game_id):
+        var code: String = str(CURRENCY_DATA.get(currency_id, {}).get("code", ""))
+        if code != "":
+            source_codes.append(code)
     return {
         "id": get_cross_bonus_key_for_target(target_game_id),
         "key": get_cross_bonus_key_for_target(target_game_id),
         "label": "%s Cross Bonus" % game_name,
-        "summary": "%s Costs foreign gems: %s." % [effect_text, "/".join(source_names)],
+        "summary": "%s %s" % [effect_text, TranslationServer.translate("MULTI_MODE_CROSS_BONUS_COSTS_M_GEMS") % ["/".join(source_codes)]],
         "icon": "cross://%s" % target_game_id,
         "max_tier": MAX_BONUS_TIER,
         "base_cost": CROSS_NODE_COSTS[0],
@@ -265,10 +295,11 @@ static func get_cross_bonus_node_definition(target_game_id: String) -> Dictionar
     }
 
 static func get_currency_metadata(currency_id: String) -> Dictionary:
-    return CURRENCY_DATA.get(currency_id, {}).duplicate(true)
+    var resolved_id: String = currency_id if CURRENCY_DATA.has(currency_id) else UNIVERSAL_GEM_ID
+    return CURRENCY_DATA.get(resolved_id, {}).duplicate(true)
 
 static func get_currency_display_text(currency_id: String) -> String:
-    var info: Dictionary = CURRENCY_DATA.get(currency_id, {})
+    var info: Dictionary = get_currency_metadata(currency_id)
     return "%s %d" % [str(info.get("code", "?")), get_currency_count(currency_id)]
 
 static func _get_cross_gem_name_translation_key(currency_id: String) -> String:
@@ -283,27 +314,32 @@ static func _get_cross_gem_name_translation_key(currency_id: String) -> String:
             return "CROSS_GAME_GEM_NAME_TURKEY"
         Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
             return "CROSS_GAME_GEM_NAME_REEL_INTO_DARKNESS"
+        UNIVERSAL_GEM_ID:
+            return "CROSS_GAME_GEM_NAME_MULTI"
         _:
             return ""
 
 static func get_reward_summary_line(currency_id: String, amount: int) -> String:
-    if not Util.is_all_high_level_mode_active():
-        return ""
     if amount <= 0:
         return ""
-    var info: Dictionary = CURRENCY_DATA.get(currency_id, {})
+    var info: Dictionary = get_currency_metadata(currency_id)
+    var code: String = str(info.get("code", "?"))
+    if currency_id == UNIVERSAL_GEM_ID:
+        if amount == 1:
+            return TranslationServer.translate("CROSS_GEM_REWARD_SINGULAR_M") % [code]
+        return TranslationServer.translate("CROSS_GEM_REWARD_PLURAL_M") % [amount, code]
     var name_key: String = _get_cross_gem_name_translation_key(currency_id)
     var gem_name: String = TranslationServer.translate(name_key) if name_key != "" else str(info.get("name", currency_id))
-    var code: String = str(info.get("code", "?"))
     if amount == 1:
         return TranslationServer.translate("CROSS_GEM_REWARD_SINGULAR") % [gem_name, code]
     return TranslationServer.translate("CROSS_GEM_REWARD_PLURAL") % [amount, gem_name, code]
 
 static func get_currency_icon_texture(currency_id: String, size: int = 72) -> Texture2D:
-    var cache_key := "%s:%d" % [currency_id, size]
+    var resolved_id: String = currency_id if CURRENCY_DATA.has(currency_id) else UNIVERSAL_GEM_ID
+    var cache_key := "%s:%d" % [resolved_id, size]
     if _icon_cache.has(cache_key):
         return _icon_cache[cache_key]
-    var info: Dictionary = CURRENCY_DATA.get(currency_id, {})
+    var info: Dictionary = CURRENCY_DATA.get(resolved_id, {})
     if info.is_empty():
         return null
     var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
@@ -384,6 +420,14 @@ static func _draw_glyph_letter(image: Image, text: String, color: Color) -> void
             "..#......",
             "#####....",
         ],
+        "M": [
+            "#.....#..",
+            "##...##..",
+            "#.#.#.#..",
+            "#..#..#..",
+            "#.....#..",
+            "#.....#..",
+        ],
     }
     var pattern: Array = patterns.get(text, ["###", ".#.", ".#."])
     var rows: int = pattern.size()
@@ -409,14 +453,16 @@ static func _draw_glyph_letter(image: Image, text: String, color: Color) -> void
 
 static func _sanitize_data(data: Dictionary) -> Dictionary:
     var safe_data: Dictionary = DEFAULT_DATA.merged(data, true)
-    var currencies: Dictionary = safe_data.get("currencies", {})
+    var currencies_variant: Variant = safe_data.get("currencies", {})
+    var currencies: Dictionary = currencies_variant.duplicate(true) if currencies_variant is Dictionary else {}
     var awarded_tokens: Dictionary = safe_data.get("awarded_tokens", {})
     var target_bonus_tiers: Dictionary = safe_data.get("target_bonus_tiers", {})
     for currency_id in CURRENCY_ORDER:
         currencies[currency_id] = max(0, int(currencies.get(currency_id, 0)))
-        if not (awarded_tokens.get(currency_id, {}) is Dictionary):
-            awarded_tokens[currency_id] = {}
-        target_bonus_tiers[currency_id] = clampi(int(target_bonus_tiers.get(currency_id, 0)), 0, MAX_BONUS_TIER)
+    for source_game_id in TARGET_GAME_IDS:
+        if not (awarded_tokens.get(source_game_id, {}) is Dictionary):
+            awarded_tokens[source_game_id] = {}
+        target_bonus_tiers[source_game_id] = clampi(int(target_bonus_tiers.get(source_game_id, 0)), 0, MAX_BONUS_TIER)
     safe_data["currencies"] = currencies
     safe_data["awarded_tokens"] = awarded_tokens
     safe_data["target_bonus_tiers"] = target_bonus_tiers

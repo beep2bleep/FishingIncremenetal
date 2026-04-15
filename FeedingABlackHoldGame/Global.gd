@@ -14,6 +14,9 @@ var tier_stats: TierStats
 var run_stats: RunStats
 var cached_upgrade_tech_tree: Node = null
 var cached_upgrade_tree_locale: String = ""
+var multi_game_run: Dictionary = {}
+var multi_game_pending_summary: Dictionary = {}
+var multi_game_step_config: Dictionary = {}
 
 
 const G = 100000.0
@@ -79,6 +82,7 @@ func new_game():
     clear_upgrade_tree_cache()
     reel_run_max_depth_cap = -1.0
     reel_repeat_depth_cap = -1.0
+    multi_game_step_config = {}
 
     rng = RandomNumberGenerator.new()
     rng.randomize()

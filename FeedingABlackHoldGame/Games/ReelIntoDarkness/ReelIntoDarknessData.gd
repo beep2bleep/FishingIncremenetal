@@ -5,6 +5,8 @@ const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const MODE_TITLE := "Reel Into Darkness"
 const STARTING_WALLET := 0
 const ICON_PREFIX := "reel://"
+## Demo: lock meta nodes past this `step` on each branch. Step 1-N stay buyable; step N+1+ show the demo lock.
+const DEMO_MAX_META_STEP_DEFAULT := 3
 
 const FISH_CATALOG: Array[Dictionary] = [
     {
@@ -326,8 +328,13 @@ const META_UPGRADES: Array[Dictionary] = [
 static func get_meta_upgrade_catalog() -> Array[Dictionary]:
     return META_UPGRADES.duplicate(true)
 
+static func get_demo_max_meta_step() -> int:
+    return maxi(1, int(ProjectSettings.get_setting("global/reel_demo_max_meta_step", DEMO_MAX_META_STEP_DEFAULT)))
+
 static func should_lock_meta_upgrade_in_demo(entry: Dictionary) -> bool:
-    return int(entry.get("step", 1)) > 3
+    if not bool(ProjectSettings.get_setting("global/Demo", false)):
+        return false
+    return int(entry.get("step", 0)) > get_demo_max_meta_step()
 
 static func get_fish_catalog() -> Array[Dictionary]:
     return FISH_CATALOG.duplicate(true)

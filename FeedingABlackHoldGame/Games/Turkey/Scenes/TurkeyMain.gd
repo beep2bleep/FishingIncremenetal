@@ -4,6 +4,7 @@ const TURKEY_DATA := preload("res://Games/Turkey/TurkeyData.gd")
 const TURKEY_PROGRESS := preload("res://Games/Turkey/TurkeyProgress.gd")
 const IN_GAME_PAUSE_MENU_SCRIPT := preload("res://Core/InGamePauseMenu.gd")
 const CRT_SHADER := preload("res://Games/Mining/UI/MiningCrt.gdshader")
+const MULTI_GAME_MODE := preload("res://MultiGameMode.gd")
 const TURKEY_TRANSLATION_CSV_PATH := "res://Data/Blackhole Translations - Sheet1.csv"
 
 func _trf(text: String, args: Array = []) -> String:
@@ -206,9 +207,18 @@ var turkey_pin_hit_last_ms: Dictionary = {}
 var turkey_ball_roll_phase := 0.0
 var _turkey_translation_csv_loaded := false
 var _turkey_translation_csv_by_key: Dictionary = {}
+var multi_mode_step: Dictionary = {}
+var multi_mode_intro_timer := 0.0
+var multi_mode_elapsed := 0.0
+var multi_mode_intro_overlay: ColorRect
+var multi_mode_intro_countdown_label: Label
+var multi_mode_intro_note_label: Label
+var multi_mode_step_reported := false
 
 func _ready() -> void:
     rng.randomize()
+    multi_mode_step = MULTI_GAME_MODE.get_active_step_for_game(Util.ACTIVE_GAME_TURKEY)
+    multi_mode_step_reported = false
     Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
     title_label.text = tr("TURKEY")
     end_panel.hide()
@@ -227,10 +237,76 @@ func _ready() -> void:
     _apply_end_summary_theme()
     _setup_pin_deck_minimap()
     _setup_lane_tier_start_dialog()
+    _setup_multi_mode_overlay()
     _begin_series()
+
+func _setup_multi_mode_overlay() -> void:
+    if multi_mode_step.is_empty():
+        return
+    multi_mode_intro_timer = 2.0
+    multi_mode_elapsed = 0.0
+    multi_mode_intro_overlay = ColorRect.new()
+    multi_mode_intro_overlay.anchor_right = 1.0
+    multi_mode_intro_overlay.anchor_bottom = 1.0
+    multi_mode_intro_overlay.color = Color(0.0, 0.0, 0.0, 0.28)
+    multi_mode_intro_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    ui_canvas_layer.add_child(multi_mode_intro_overlay)
+    var center := CenterContainer.new()
+    center.anchor_right = 1.0
+    center.anchor_bottom = 1.0
+    multi_mode_intro_overlay.add_child(center)
+    var vbox := VBoxContainer.new()
+    vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+    vbox.add_theme_constant_override("separation", 8)
+    center.add_child(vbox)
+    multi_mode_intro_countdown_label = Label.new()
+    multi_mode_intro_countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    multi_mode_intro_countdown_label.add_theme_font_size_override("font_size", 84)
+    multi_mode_intro_countdown_label.add_theme_color_override("font_color", Color(0.95, 0.22, 0.22, 1.0))
+    vbox.add_child(multi_mode_intro_countdown_label)
+    multi_mode_intro_note_label = Label.new()
+    multi_mode_intro_note_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    multi_mode_intro_note_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    multi_mode_intro_note_label.custom_minimum_size = Vector2(760.0, 0.0)
+    multi_mode_intro_note_label.add_theme_font_size_override("font_size", 24)
+    multi_mode_intro_note_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.92, 1.0))
+    multi_mode_intro_note_label.text = MULTI_GAME_MODE.get_active_intro_text()
+    vbox.add_child(multi_mode_intro_note_label)
+    _update_multi_mode_overlay()
+
+func _is_multi_mode_challenge_active() -> bool:
+    return not multi_mode_step.is_empty()
+
+func _update_multi_mode_overlay() -> void:
+    if multi_mode_intro_countdown_label == null:
+        return
+    multi_mode_intro_countdown_label.text = str(maxi(1, int(ceil(multi_mode_intro_timer))))
+
+func _process_multi_mode_intro(delta: float) -> bool:
+    if not _is_multi_mode_challenge_active() or multi_mode_intro_timer <= 0.0:
+        return false
+    multi_mode_intro_timer = maxf(0.0, multi_mode_intro_timer - delta)
+    _update_multi_mode_overlay()
+    if multi_mode_intro_timer <= 0.0 and multi_mode_intro_overlay != null:
+        multi_mode_intro_overlay.queue_free()
+        multi_mode_intro_overlay = null
+    return multi_mode_intro_timer > 0.0
 
 func _process(delta: float) -> void:
     _update_editor_debug_ui()
+    if _process_multi_mode_intro(delta):
+        return
+    if _is_multi_mode_challenge_active() and not multi_mode_step_reported and run_state != RunState.ROUND_OVER:
+        multi_mode_elapsed += delta
+        if multi_mode_elapsed >= float(multi_mode_step.get("time_limit", 20.0)):
+            multi_mode_step_reported = true
+            MULTI_GAME_MODE.complete_current_step(false, {
+                "reason": "timer",
+                "elapsed": multi_mode_elapsed,
+                "time_remaining": 0.0,
+                "time_limit": float(multi_mode_step.get("time_limit", 20.0))
+            })
+            return
     if end_panel.visible:
         _process_end_summary_chart_animation(delta)
     if _is_pause_menu_open():
@@ -951,6 +1027,11 @@ func _setup_power_bar_visuals() -> void:
 
 func _load_progression() -> void:
     progress_data = TURKEY_PROGRESS.load_data()
+    if _is_multi_mode_challenge_active():
+        var upgrades: Dictionary = progress_data.get("meta_upgrades", {}).duplicate(true)
+        upgrades["league_pass"] = max(int(upgrades.get("league_pass", 0)), int(multi_mode_step.get("lane_tier", 0)) + 1)
+        progress_data["meta_upgrades"] = upgrades
+        progress_data["turkey_selected_lane_tier"] = int(multi_mode_step.get("lane_tier", 0))
     var cap_stats: Dictionary = TURKEY_DATA.build_meta_stats(progress_data)
     var max_cap: int = int(cap_stats.get("max_selectable_lane_tier", 0))
     selected_lane_tier = clampi(int(progress_data.get("turkey_selected_lane_tier", 0)), 0, max_cap)
@@ -1078,6 +1159,8 @@ func _rebuild_lane_tier_start_dialog_content() -> void:
 
 func _maybe_show_lane_tier_start_dialog() -> void:
     if lane_tier_start_dialog == null:
+        return
+    if _is_multi_mode_challenge_active():
         return
     if bool(progress_data.get("turkey_skip_start_lane_dialog", false)):
         return
@@ -1728,6 +1811,20 @@ func _finish_throw() -> void:
     throws.append(knocked)
     frame_data["throws"] = throws
     frame_records[current_frame_index] = frame_data
+    if _is_multi_mode_challenge_active() and not multi_mode_step_reported:
+        var frame_total := 0
+        for pins_variant in throws:
+            frame_total += int(pins_variant)
+        if frame_total >= int(multi_mode_step.get("frame_pin_goal", 999999)):
+            multi_mode_step_reported = true
+            MULTI_GAME_MODE.complete_current_step(true, {
+                "frame_total": frame_total,
+                "frame_index": current_frame_index + 1,
+                "elapsed": multi_mode_elapsed,
+                "time_remaining": maxf(0.0, float(multi_mode_step.get("time_limit", 20.0)) - multi_mode_elapsed),
+                "time_limit": float(multi_mode_step.get("time_limit", 20.0))
+            })
+            return
     _remove_ball()
 
     var message: String = _describe_throw_result(current_frame_index, throws, knocked, standing_after)
@@ -1896,6 +1993,15 @@ func _is_frame_complete(frame_index: int) -> bool:
     return true
 
 func _complete_series(latest_message: String) -> void:
+    if _is_multi_mode_challenge_active() and not multi_mode_step_reported:
+        multi_mode_step_reported = true
+        MULTI_GAME_MODE.complete_current_step(false, {
+            "reason": latest_message,
+            "elapsed": multi_mode_elapsed,
+            "time_remaining": maxf(0.0, float(multi_mode_step.get("time_limit", 20.0)) - multi_mode_elapsed),
+            "time_limit": float(multi_mode_step.get("time_limit", 20.0))
+        })
+        return
     run_state = RunState.ROUND_OVER
     aim_line.visible = false
     _update_power_bar()

@@ -5,6 +5,7 @@ const RED_SKY_DATA = preload("res://Games/RedSkyDefense/RedSkyData.gd")
 const RED_SKY_PROGRESS = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
 const RED_SKY_ICON_FACTORY = preload("res://Games/RedSkyDefense/RedSkyIconFactory.gd")
 const CROSS_GAME_BONUSES = preload("res://CrossGameBonuses.gd")
+const MULTI_GAME_MODE = preload("res://MultiGameMode.gd")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
 const IN_GAME_PAUSE_MENU_SCRIPT = preload("res://Core/InGamePauseMenu.gd")
@@ -66,9 +67,9 @@ const POWER_WHEEL_INPUT_SPEED := 2.05
 const POWER_WHEEL_DISPLAY_MIN := 0.0
 const POWER_WHEEL_FUNCTIONAL_MIN := 0.2
 const POWER_WHEEL_MAX := 3.0
+const GUN_FIXED_POWER_MULTIPLIER := 1.5
 const POWER_WHEEL_WARP_GROUP: StringName = &"red_sky_power_wheel_warp"
 const POWER_SLOT_KEYS: Array[String] = [
-    "guns",
     "shields",
     "hull_regen",
     "nukes",
@@ -86,10 +87,27 @@ const COUNTERMEASURE_MAX_CHARGES := 3
 ## Per second at power wheel multiplier 1.0; scales linearly with countermeasures wheel power.
 ## At max wheel (~3.0) overflow fires roughly every 3.5–4.5s so a full-bias build keeps pace with boss volleys without wave upgrades.
 const COUNTERMEASURE_REGEN_COEFF := 0.088
-const COUNTERMEASURE_SWEEP_VISUAL_DURATION := 0.32
+const COUNTERMEASURE_SWEEP_VISUAL_DURATION := 0.54
 const COUNTERMEASURE_SWEEP_LINE_WIDTH := 14.0
+const PURPLE_SHOT_COUNTERMEASURE_DELAY := 4.0
+const PENETRATOR_CM_IMMINENT_DIST := 98.0
+const PENETRATOR_CM_IMMINENT_TIME := 0.2
 const CONSTRUCTION_BUILD_TIME_BASE := 1.05
 const CONSTRUCTION_FIELD_RADIUS_BASE := BASE_RADIUS + 148.0
+const CONSTRUCTION_FIELD_LAYER_SPACING := 76.0
+const CONSTRUCTION_FIELD_ANGLE_STEP := deg_to_rad(7.0)
+const CONSTRUCTION_FIELD_MAX_ANGLE := deg_to_rad(45.0)
+const CONSTRUCTION_SHIELD_ANGLE_SPREAD_MULT := 1.55
+const CONSTRUCTION_TURRET_FORWARD_Y_RATIO := 0.5
+const CONSTRUCTION_TURRET_ADVANCE_SPEED := 150.0
+const CONSTRUCTION_SHIELD_SHIFT_SPEED := 118.0
+const CONSTRUCTION_SHIELD_INTERCEPT_RADIUS := 190.0
+const CONSTRUCTION_SHIELD_SHIFT_LIMIT := 28.0
+const CONSTRUCTION_ATTACK_SHIP_RADIUS := 13.0
+const CONSTRUCTION_ATTACK_SHIP_BODY_LENGTH := CONSTRUCTION_ATTACK_SHIP_RADIUS * 2.0
+const CONSTRUCTION_ATTACK_SHIP_STANDOFF_MULT := 3.0
+const CONSTRUCTION_ATTACK_SHIP_SPEED := 248.0
+const CONSTRUCTION_ATTACK_SHIP_ORBIT_BLEND := 0.62
 const CONSTRUCTION_TEMP_HIT_RADIUS_TURRET := 26.0
 const CONSTRUCTION_TEMP_HIT_RADIUS_SHIELD := 30.0
 const CM_SWEEP_COLOR := Color(0.45, 0.95, 1.0, 0.92)
@@ -169,11 +187,22 @@ var used_start_upgrade_picks := 0
 var showing_pre_run_panel := false
 var career_best_wave_at_run_start := 0
 var _suppress_mouse_capture_until_msec: int = 0
+var multi_mode_step: Dictionary = {}
+var multi_mode_intro_timer := 0.0
+var multi_mode_intro_overlay: ColorRect
+var multi_mode_intro_countdown_label: Label
+var multi_mode_intro_note_label: Label
+var multi_mode_step_reported := false
 
 var current_wave := 1
 var waves_cleared := 0
 var wave_spawn_queue: Array[Dictionary] = []
 var wave_spawn_timer := 0.0
+var boss_wave_stream_timer := 0.0
+var boss_wave_stream_interval := 0.0
+var boss_wave_stream_types: Array[String] = []
+var boss_wave_stream_pick_index := 0
+var boss_wave_stream_spawn_seq := 0
 var offered_wave_upgrades: Array[Dictionary] = []
 var wave_upgrade_levels: Dictionary = {}
 
@@ -220,10 +249,13 @@ var nuke_blast_radius := 292.0
 var repair_between_waves := 0.0
 var homing_missile_level := 0
 var homing_shot_cycle := 0
-var countermeasures_rating := 0.0
+var countermeasures_rating := 0.2
 var countermeasure_charges := 0
 var countermeasure_regen_bank := 0.0
 var countermeasure_sweep_visuals: Array[Dictionary] = []
+var countermeasure_sweep_cooldown := 0.0
+var purple_shot_countermeasure_timers: Array[float] = []
+var saw_purple_shots_this_run := false
 var countermeasures_hud_label: Label
 var projectile_redirect_chance := 0.0
 var upgrade_power_multiplier := 1.0
@@ -363,6 +395,8 @@ var _summary_pointer_recovery_frames_remaining := 0
 
 func _ready() -> void:
     rng.randomize()
+    multi_mode_step = MULTI_GAME_MODE.get_active_step_for_game(Util.ACTIVE_GAME_RED_SKY)
+    multi_mode_step_reported = false
     if ControllerIcons != null and not ControllerIcons.input_type_changed.is_connected(_on_controller_icons_input_type_changed):
         ControllerIcons.input_type_changed.connect(_on_controller_icons_input_type_changed)
     _sync_virtual_cursor_for_red_sky_ui()
@@ -381,7 +415,65 @@ func _ready() -> void:
     _setup_defeat_audio()
     _apply_summary_theme()
     _refresh_upgrade_panel_layout()
-    _show_pre_run_panel()
+    _setup_multi_mode_overlay()
+    if _is_multi_mode_challenge_active():
+        _begin_run()
+    else:
+        _show_pre_run_panel()
+
+func _setup_multi_mode_overlay() -> void:
+    if multi_mode_step.is_empty():
+        return
+    multi_mode_intro_timer = 2.0
+    multi_mode_intro_overlay = ColorRect.new()
+    multi_mode_intro_overlay.anchor_right = 1.0
+    multi_mode_intro_overlay.anchor_bottom = 1.0
+    multi_mode_intro_overlay.color = Color(0.0, 0.0, 0.0, 0.28)
+    multi_mode_intro_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    add_child(multi_mode_intro_overlay)
+    var center := CenterContainer.new()
+    center.anchor_right = 1.0
+    center.anchor_bottom = 1.0
+    multi_mode_intro_overlay.add_child(center)
+    var vbox := VBoxContainer.new()
+    vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+    vbox.add_theme_constant_override("separation", 8)
+    center.add_child(vbox)
+    multi_mode_intro_countdown_label = Label.new()
+    multi_mode_intro_countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    multi_mode_intro_countdown_label.add_theme_font_size_override("font_size", 84)
+    multi_mode_intro_countdown_label.add_theme_color_override("font_color", Color(0.95, 0.22, 0.22, 1.0))
+    vbox.add_child(multi_mode_intro_countdown_label)
+    multi_mode_intro_note_label = Label.new()
+    multi_mode_intro_note_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    multi_mode_intro_note_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    multi_mode_intro_note_label.custom_minimum_size = Vector2(760.0, 0.0)
+    multi_mode_intro_note_label.add_theme_font_size_override("font_size", 24)
+    multi_mode_intro_note_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.92, 1.0))
+    multi_mode_intro_note_label.text = MULTI_GAME_MODE.get_active_intro_text()
+    vbox.add_child(multi_mode_intro_note_label)
+    _update_multi_mode_overlay()
+
+func _is_multi_mode_challenge_active() -> bool:
+    return not multi_mode_step.is_empty()
+
+func _update_multi_mode_overlay() -> void:
+    if multi_mode_intro_countdown_label == null:
+        return
+    multi_mode_intro_countdown_label.text = str(maxi(1, int(ceil(multi_mode_intro_timer))))
+
+func _process_multi_mode_intro(delta: float) -> bool:
+    if not _is_multi_mode_challenge_active() or multi_mode_intro_timer <= 0.0:
+        return false
+    multi_mode_intro_timer = maxf(0.0, multi_mode_intro_timer - delta)
+    _update_multi_mode_overlay()
+    if multi_mode_intro_timer <= 0.0:
+        if multi_mode_intro_overlay != null:
+            multi_mode_intro_overlay.queue_free()
+            multi_mode_intro_overlay = null
+        if showing_pre_run_panel:
+            _begin_run()
+    return multi_mode_intro_timer > 0.0
 
 func _exit_tree() -> void:
     if power_warp_text_overlay != null and is_instance_valid(power_warp_text_overlay):
@@ -725,7 +817,10 @@ func _show_run_start_banner() -> void:
     run_start_banner_title_label.text = _trf("RED SKY DEFENSE  |  WAVE %02d ALERT", [current_wave])
     var detail: String = _trf("Run %02d   |   Scrap reserve %d   |   Best wave %d   |   Start wave %d", [run_number, wallet, best_wave, run_start_wave])
     if int(persistent_data.get("runs", 0)) == 0:
-        detail += "\n" + tr("First deployment — stay sharp, Commander.")
+        detail += "\n" + tr("First deployment - stay sharp, Commander.")
+    var hint_lines: Array[String] = _get_run_start_hint_lines()
+    if not hint_lines.is_empty():
+        detail += "\n" + "\n".join(hint_lines)
     run_start_banner_detail_label.text = detail
 
     run_start_banner_panel.visible = true
@@ -771,6 +866,9 @@ func tune_text_pixel_filter(delta: float) -> void:
     print("Red Sky text filter scale: ", snappedf(combat_text_scale, 0.01))
 
 func _show_pre_run_panel() -> void:
+    if _is_multi_mode_challenge_active():
+        _begin_run()
+        return
     _close_pause_menu()
     persistent_data = RED_SKY_PROGRESS.load_data()
     selected_start_wave = RED_SKY_PROGRESS.get_selected_start_wave(persistent_data)
@@ -856,8 +954,8 @@ func _refresh_start_wave_selector() -> void:
 func _build_start_wave_info_text() -> String:
     var unlocked_start_waves: Array[int] = RED_SKY_PROGRESS.get_unlocked_start_waves(persistent_data)
     var highest_start_wave: int = unlocked_start_waves.back()
-    var next_start_wave: int = RED_SKY_PROGRESS.START_WAVE_STEP if highest_start_wave <= 1 else highest_start_wave + RED_SKY_PROGRESS.START_WAVE_STEP
-    var next_unlock_wave: int = next_start_wave + RED_SKY_PROGRESS.START_WAVE_STEP
+    var next_start_wave: int = RED_SKY_PROGRESS.FIRST_SKIP_START_WAVE if highest_start_wave <= 1 else highest_start_wave + RED_SKY_PROGRESS.START_WAVE_STEP
+    var next_unlock_wave: int = RED_SKY_PROGRESS.get_required_best_wave_for_start_wave(next_start_wave)
     var info := _trf("Wave %d selected. Prep picks: %d.", [selected_start_wave, max(0, selected_start_wave - 1)])
     if next_unlock_wave > 0:
         info += _trf(" Beat wave %d to unlock Wave %d starts.", [next_unlock_wave, next_start_wave])
@@ -910,8 +1008,52 @@ func _on_start_wave_button_pressed(start_wave: int) -> void:
         summary_stats_label.text = _build_pre_run_stats_text()
     _refresh_ui()
 
+func _reset_boss_wave_stream_state() -> void:
+    boss_wave_stream_timer = 0.0
+    boss_wave_stream_interval = 0.0
+    boss_wave_stream_types.clear()
+    boss_wave_stream_pick_index = 0
+    boss_wave_stream_spawn_seq = 0
+
+
+func _prepare_boss_wave_stream(wave: int) -> void:
+    var previous_wave: int = maxi(1, wave - 1)
+    var previous_wave_queue: Array[Dictionary] = _build_standard_wave_spawn_list(previous_wave)
+    boss_wave_stream_types.clear()
+    for entry in previous_wave_queue:
+        boss_wave_stream_types.append(str(entry.get("type", "raider")))
+    boss_wave_stream_types.shuffle()
+    if boss_wave_stream_types.is_empty():
+        boss_wave_stream_types.assign(["raider", "runner", "dronelet"])
+    var reinforcement_count: int = maxi(1, int(round(float(previous_wave_queue.size()) / 3.0)))
+    var previous_wave_duration: float = _estimate_wave_spawn_duration_seconds(previous_wave, previous_wave_queue.size())
+    var reinforcement_duration: float = max(0.3, previous_wave_duration * 3.0)
+    boss_wave_stream_interval = reinforcement_duration / float(reinforcement_count)
+    boss_wave_stream_pick_index = 0
+    boss_wave_stream_spawn_seq = 0
+    boss_wave_stream_timer = 0.12 + boss_wave_stream_interval
+
+
+func _boss_is_alive() -> bool:
+    for enemy in enemies:
+        if str(enemy.get("type", "")) == BOSS_TYPE:
+            return true
+    return false
+
+
+func _spawn_boss_wave_stream_enemy() -> void:
+    if boss_wave_stream_types.is_empty():
+        return
+    var pick: String = boss_wave_stream_types[boss_wave_stream_pick_index % boss_wave_stream_types.size()]
+    boss_wave_stream_pick_index += 1
+    boss_wave_stream_spawn_seq += 1
+    var spawned_enemy: Dictionary = _build_enemy_def(pick, current_wave, boss_wave_stream_spawn_seq)
+    enemies.append(spawned_enemy)
+
+
 func _clear_runtime_entities() -> void:
     wave_spawn_queue.clear()
+    _reset_boss_wave_stream_state()
     player_bullets.clear()
     nukes.clear()
     explosions.clear()
@@ -927,6 +1069,8 @@ func _clear_runtime_entities() -> void:
     temporary_turrets.clear()
     temporary_shields.clear()
     countermeasure_sweep_visuals.clear()
+    purple_shot_countermeasure_timers.clear()
+    saw_purple_shots_this_run = false
 
 func _begin_run() -> void:
     _close_pause_menu()
@@ -935,6 +1079,8 @@ func _begin_run() -> void:
     meta_bonuses = RED_SKY_DATA.build_meta_bonuses(persistent_data.get("meta_upgrades", {}))
     last_run_results.clear()
     selected_start_wave = RED_SKY_PROGRESS.get_selected_start_wave(persistent_data)
+    if _is_multi_mode_challenge_active():
+        selected_start_wave = int(multi_mode_step.get("target_wave", selected_start_wave))
     run_start_wave = selected_start_wave
     run_state = RUN_STATES.RUNNING
     showing_pre_run_panel = false
@@ -944,10 +1090,11 @@ func _begin_run() -> void:
     career_best_wave_at_run_start = int(persistent_data.get("best_wave", 0))
     RED_SKY_PROGRESS.maybe_track_first_deploy()
     RED_SKY_PROGRESS.track_run_start(run_start_wave, persistent_data)
-    pending_start_upgrade_picks = max(0, run_start_wave - 1)
+    pending_start_upgrade_picks = 0 if _is_multi_mode_challenge_active() else max(0, run_start_wave - 1)
     used_start_upgrade_picks = 0
     wave_spawn_queue.clear()
     wave_spawn_timer = 0.0
+    _reset_boss_wave_stream_state()
     fire_timer = 0.0
     support_time = 0.0
     wave_upgrade_levels.clear()
@@ -956,10 +1103,12 @@ func _begin_run() -> void:
     nuke_regen_bank = 0.0
     homing_shot_cycle = 0
     homing_missile_level = 0
-    countermeasures_rating = 0.0
     countermeasure_charges = 0
     countermeasure_regen_bank = 0.0
+    countermeasure_sweep_cooldown = 0.0
     countermeasure_sweep_visuals.clear()
+    purple_shot_countermeasure_timers.clear()
+    saw_purple_shots_this_run = false
     _clear_runtime_entities()
     _reset_defeat_sequence_state()
     score = 0
@@ -1056,7 +1205,10 @@ func _apply_meta_bonuses() -> void:
     remaining_nukes = clampi(int(meta_bonuses.get("starting_nukes", 1)), 0, nuke_max)
     nuke_damage = float(meta_bonuses.get("nuke_damage", 128.0))
     nuke_blast_radius = float(meta_bonuses.get("nuke_radius", 292.0))
-    repair_between_waves = float(meta_bonuses.get("repair_between_waves", 0.0))
+    repair_between_waves = maxf(
+        float(RED_SKY_DATA.MIN_REPAIR_BETWEEN_WAVES),
+        float(meta_bonuses.get("repair_between_waves", RED_SKY_DATA.MIN_REPAIR_BETWEEN_WAVES))
+    )
     projectile_redirect_chance = float(meta_bonuses.get("projectile_redirect_chance", 0.0))
     upgrade_power_multiplier = float(meta_bonuses.get("upgrade_power_multiplier", 1.0))
     tower_count = int(meta_bonuses.get("tower_count", 0))
@@ -1094,7 +1246,9 @@ func _apply_meta_bonuses() -> void:
     collector_bot_count = int(meta_bonuses.get("collector_bot_count", 0))
     collector_bot_speed = float(meta_bonuses.get("collector_bot_speed", 176.0))
     scrap_generation_per_second = float(meta_bonuses.get("scrap_generation_per_second", 0.0))
+    countermeasures_rating = maxf(0.2, float(meta_bonuses.get("countermeasures_rating", 0.2)))
     _ensure_support_arrays()
+    _rebuild_power_slot_order()
     _recalculate_power_distribution()
 
 func _start_wave(wave: int) -> void:
@@ -1107,6 +1261,9 @@ func _start_wave(wave: int) -> void:
     , CONNECT_ONE_SHOT)
     if _is_boss_wave(wave):
         _show_boss_warning_flash(wave)
+        _prepare_boss_wave_stream(wave)
+    else:
+        _reset_boss_wave_stream_state()
     wave_spawn_queue = _build_wave_spawn_list(wave)
     wave_spawn_timer = 0.12
     _spawn_floating_text("WAVE %d" % wave, get_viewport_rect().size * Vector2(0.5, 0.28), Color(1.0, 0.88, 0.58, 1.0), 34)
@@ -1115,7 +1272,10 @@ func _start_wave(wave: int) -> void:
 
 func _build_wave_spawn_list(wave: int) -> Array[Dictionary]:
     if _is_boss_wave(wave):
-        return [_build_enemy_def(BOSS_TYPE, wave, 0)]
+        return _build_boss_wave_spawn_list(wave)
+    return _build_standard_wave_spawn_list(wave)
+
+func _build_standard_wave_spawn_list(wave: int) -> Array[Dictionary]:
     var queue: Array[Dictionary] = []
     var total_spawns: int = maxi(4, int(round((6 + wave * 2 + int(pow(float(wave), 1.08))) * enemy_count_scale)))
     if wave >= 6:
@@ -1192,6 +1352,17 @@ func _build_wave_spawn_list(wave: int) -> Array[Dictionary]:
         queue.append(_build_enemy_def(enemy_types[spawn_index], wave, spawn_index))
     _apply_shooter_formations(queue)
     return queue
+
+func _build_boss_wave_spawn_list(wave: int) -> Array[Dictionary]:
+    var queue: Array[Dictionary] = [_build_enemy_def(BOSS_TYPE, wave, 0)]
+    queue[0]["spawn_delay"] = boss_wave_stream_interval
+    return queue
+
+func _estimate_wave_spawn_duration_seconds(wave: int, spawn_count: int) -> float:
+    if spawn_count <= 1:
+        return 0.0
+    var base_spawn_delay: float = max(0.08, 0.44 - float(wave) * 0.012)
+    return base_spawn_delay * float(spawn_count - 1)
 
 func _scaled_enemy_count(base_count: int, scale: float) -> int:
     if base_count <= 0:
@@ -1514,6 +1685,10 @@ func _is_apex_enemy_type(enemy_type: String) -> bool:
 func _process(delta: float) -> void:
     if _is_pause_menu_open():
         return
+    if _process_multi_mode_intro(delta):
+        _refresh_ui()
+        queue_redraw()
+        return
     if _summary_pointer_recovery_frames_remaining > 0 and run_state == RUN_STATES.SUMMARY:
         _summary_pointer_recovery_frames_remaining -= 1
         _apply_summary_pointer_recovery()
@@ -1563,7 +1738,7 @@ func _process_running(delta: float) -> void:
         shield_health = min(_get_effective_shield_max(), shield_health + _get_effective_shield_regen() * delta)
     shield_health = min(shield_health, _get_effective_shield_max())
     if repair_between_waves > 0.0 and base_health < base_max_health:
-        var hull_per_sec: float = repair_between_waves * 0.62 / max(20.0, _estimate_typical_wave_duration_seconds()) * _get_power_multiplier("hull_regen")
+        var hull_per_sec: float = repair_between_waves / max(20.0, _estimate_typical_wave_duration_seconds()) * _get_power_multiplier("hull_regen")
         base_health = min(base_max_health, base_health + hull_per_sec * delta)
     var nuke_rate: float = float(_get_scaled_nuke_regen_gain()) / max(20.0, _estimate_typical_wave_duration_seconds())
     nuke_regen_bank += nuke_rate * delta
@@ -1586,8 +1761,18 @@ func _process_running(delta: float) -> void:
         _fire_player_bullet()
         fire_timer = max(0.045, _get_effective_fire_interval())
     if wave_spawn_timer <= 0.0 and not wave_spawn_queue.is_empty():
-        enemies.append(wave_spawn_queue.pop_front())
-        wave_spawn_timer = max(0.08, 0.44 - float(current_wave) * 0.012 + rng.randf_range(-0.025, 0.04))
+        var spawned_enemy: Dictionary = wave_spawn_queue.pop_front()
+        enemies.append(spawned_enemy)
+        var queued_spawn_delay: float = float(spawned_enemy.get("spawn_delay", -1.0))
+        if queued_spawn_delay >= 0.0:
+            wave_spawn_timer = queued_spawn_delay
+        else:
+            wave_spawn_timer = max(0.08, 0.44 - float(current_wave) * 0.012 + rng.randf_range(-0.025, 0.04))
+    if boss_wave_stream_interval > 0.0 and _is_boss_wave(current_wave) and _boss_is_alive():
+        boss_wave_stream_timer -= delta
+        if boss_wave_stream_timer <= 0.0:
+            _spawn_boss_wave_stream_enemy()
+            boss_wave_stream_timer += boss_wave_stream_interval
     _process_support_units(delta)
     _process_temporary_defenses(delta)
     _process_player_bullets(delta)
@@ -1706,14 +1891,20 @@ func _process_temporary_defenses(delta: float) -> void:
     var build_speed: float = construction_build_rate * maxf(0.35, build_power) / CONSTRUCTION_BUILD_TIME_BASE
     for shield_index in range(temporary_shields.size() - 1, -1, -1):
         var shield: Dictionary = temporary_shields[shield_index]
+        var shield_home_pos: Vector2 = _compute_construction_field_position(shield_index, temporary_shields.size(), true)
         var shield_bp: float = float(shield.get("build_progress", 1.0))
+        shield["home_pos"] = shield_home_pos
         if shield_bp < 1.0:
+            shield["pos"] = shield_home_pos
             var shield_next: float = minf(1.0, shield_bp + build_speed * delta)
             if shield_bp < 1.0 and shield_next >= 1.0:
-                _spawn_floating_text("NODE READY", shield.get("pos", Vector2.ZERO) + Vector2(0.0, -16.0), SHIELD_COLOR, 17)
+                _spawn_floating_text("NODE READY", shield_home_pos + Vector2(0.0, -16.0), SHIELD_COLOR, 17)
             shield["build_progress"] = shield_next
             temporary_shields[shield_index] = shield
             continue
+        var shield_target_pos: Vector2 = _get_temporary_shield_target_position(shield_home_pos)
+        var shield_pos: Vector2 = shield.get("pos", shield_home_pos)
+        shield["pos"] = shield_pos.move_toward(shield_target_pos, CONSTRUCTION_SHIELD_SHIFT_SPEED * delta)
         shield["age"] = float(shield.get("age", 0.0)) + delta
         shield["health"] = min(float(shield.get("max_health", 1.0)), float(shield.get("health", 0.0)) + temporary_shield_regen * build_power * delta)
         if float(shield.get("age", 0.0)) >= temporary_shield_duration or float(shield.get("health", 0.0)) <= 0.0:
@@ -1722,23 +1913,56 @@ func _process_temporary_defenses(delta: float) -> void:
             temporary_shields[shield_index] = shield
     for turret_index in range(temporary_turrets.size() - 1, -1, -1):
         var turret: Dictionary = temporary_turrets[turret_index]
+        var turret_home_pos: Vector2 = _compute_construction_field_position(turret_index, temporary_turrets.size(), false)
         var turret_bp: float = float(turret.get("build_progress", 1.0))
+        turret["home_pos"] = turret_home_pos
         if turret_bp < 1.0:
+            turret["pos"] = turret_home_pos
             var turret_next: float = minf(1.0, turret_bp + build_speed * delta)
             if turret_bp < 1.0 and turret_next >= 1.0:
-                _spawn_floating_text("TURRET READY", turret.get("pos", Vector2.ZERO) + Vector2(0.0, -16.0), TOWER_COLOR, 17)
+                _spawn_floating_text("SHIP READY", turret_home_pos + Vector2(0.0, -16.0), TOWER_COLOR, 17)
             turret["build_progress"] = turret_next
             temporary_turrets[turret_index] = turret
             continue
+        var turret_target_pos: Vector2 = _get_temporary_turret_target_position(turret_home_pos, turret_index, temporary_turrets.size())
+        var turret_pos: Vector2 = turret.get("pos", turret_home_pos)
+        var turret_vel: Vector2 = turret.get("vel", Vector2.ZERO)
+        var standoff_distance: float = CONSTRUCTION_ATTACK_SHIP_BODY_LENGTH * CONSTRUCTION_ATTACK_SHIP_STANDOFF_MULT
+        var engage_range: float = temporary_turret_range * build_power
+        var enemy_index: int = _find_nearest_enemy_index(turret_pos, engage_range)
+        var fire_target_valid := false
+        if enemy_index != -1:
+            var enemy_pos: Vector2 = enemies[enemy_index].get("pos", Vector2.ZERO)
+            var to_enemy: Vector2 = enemy_pos - turret_pos
+            var dist_to_enemy: float = to_enemy.length()
+            if dist_to_enemy > 0.001:
+                var enemy_dir: Vector2 = to_enemy / dist_to_enemy
+                var orbit_dir: float = float(turret.get("orbit_dir", 1.0))
+                var radial_sign: float = signf(dist_to_enemy - standoff_distance)
+                var radial_pull: Vector2 = enemy_dir * radial_sign * CONSTRUCTION_ATTACK_SHIP_ORBIT_BLEND
+                var tangent: Vector2 = Vector2(-enemy_dir.y, enemy_dir.x) * orbit_dir
+                var desired_dir: Vector2 = (tangent + radial_pull).normalized()
+                if dist_to_enemy > standoff_distance * 1.35:
+                    desired_dir = enemy_dir
+                elif dist_to_enemy < standoff_distance * 0.72:
+                    desired_dir = -enemy_dir
+                var move_speed: float = CONSTRUCTION_ATTACK_SHIP_SPEED * maxf(0.45, build_power)
+                var desired_vel: Vector2 = desired_dir * move_speed
+                turret_vel = turret_vel.lerp(desired_vel, clampf(delta * 4.2, 0.0, 1.0))
+                fire_target_valid = dist_to_enemy <= standoff_distance * 1.25 and dist_to_enemy >= standoff_distance * 0.55
+        if not fire_target_valid:
+            var fallback_vel: Vector2 = (turret_target_pos - turret_pos).normalized() * CONSTRUCTION_TURRET_ADVANCE_SPEED
+            turret_vel = turret_vel.lerp(fallback_vel, clampf(delta * 2.8, 0.0, 1.0))
+        turret_pos += turret_vel * delta
+        turret["pos"] = turret_pos
+        turret["vel"] = turret_vel
         turret["age"] = float(turret.get("age", 0.0)) + delta
         turret["cooldown"] = max(0.0, float(turret.get("cooldown", 0.0)) - delta)
         if float(turret.get("age", 0.0)) >= temporary_turret_duration or float(turret.get("health", 0.0)) <= 0.0:
             temporary_turrets.remove_at(turret_index)
             continue
         if float(turret.get("cooldown", 0.0)) <= 0.0:
-            var turret_pos: Vector2 = turret.get("pos", Vector2.ZERO)
-            var enemy_index: int = _find_nearest_enemy_index(turret_pos, temporary_turret_range * build_power)
-            if enemy_index != -1:
+            if enemy_index != -1 and fire_target_valid:
                 var enemy_pos: Vector2 = enemies[enemy_index].get("pos", Vector2.ZERO)
                 _spawn_support_effect(turret_pos, enemy_pos, TOWER_COLOR.lightened(0.18), SUPPORT_EFFECT_DURATION)
                 _damage_enemy(enemy_index, temporary_turret_damage * build_power, turret_pos, "tower")
@@ -1801,6 +2025,8 @@ func _process_countermeasure_sweep_visuals(delta: float) -> void:
             countermeasure_sweep_visuals[sweep_index] = sweep
 
 func _countermeasure_regen_per_second() -> float:
+    if countermeasures_rating <= 0.0:
+        return 0.0
     var cm_mult: float = _get_power_multiplier("countermeasures")
     return COUNTERMEASURE_REGEN_COEFF * cm_mult * (1.0 + countermeasures_rating * 0.55)
 
@@ -1808,7 +2034,56 @@ func _enemy_projectiles_include_penetrator() -> bool:
     for projectile in enemy_projectiles:
         if String(projectile.get("team", "enemy")) != "enemy":
             continue
-        if bool(projectile.get("ignore_shields", false)):
+        if bool(projectile.get("penetrator", false)):
+            return true
+    return false
+
+func _queue_purple_shot_countermeasure() -> void:
+    purple_shot_countermeasure_timers.append(PURPLE_SHOT_COUNTERMEASURE_DELAY)
+
+func _has_pending_purple_shots() -> bool:
+    return _enemy_projectiles_include_penetrator()
+
+func _try_consume_countermeasure_charge() -> bool:
+    if countermeasure_charges < 1:
+        return false
+    countermeasure_charges -= 1
+    _fire_countermeasure_sweep_clear()
+    countermeasure_sweep_cooldown = 0.34
+    return true
+
+func _process_purple_shot_countermeasure_timers(delta: float) -> bool:
+    var fired := false
+    for timer_index in range(purple_shot_countermeasure_timers.size() - 1, -1, -1):
+        var time_left: float = float(purple_shot_countermeasure_timers[timer_index]) - delta
+        if time_left > 0.0:
+            purple_shot_countermeasure_timers[timer_index] = time_left
+            continue
+        purple_shot_countermeasure_timers.remove_at(timer_index)
+        if countermeasure_sweep_cooldown > 0.0:
+            continue
+        if not _has_pending_purple_shots():
+            continue
+        if _try_consume_countermeasure_charge():
+            fired = true
+            break
+    return fired
+
+
+func _penetrator_imminent_to_base() -> bool:
+    var base_pos := _get_base_position()
+    for projectile in enemy_projectiles:
+        if String(projectile.get("team", "enemy")) != "enemy":
+            continue
+        if not bool(projectile.get("penetrator", false)):
+            continue
+        var ppos: Vector2 = projectile.get("pos", Vector2.ZERO)
+        var vel: Vector2 = projectile.get("vel", Vector2.ZERO)
+        var dist: float = ppos.distance_to(base_pos)
+        if dist <= PENETRATOR_CM_IMMINENT_DIST:
+            return true
+        var speed: float = vel.length()
+        if speed > 32.0 and dist / speed <= PENETRATOR_CM_IMMINENT_TIME:
             return true
     return false
 
@@ -1846,14 +2121,31 @@ func _fire_countermeasure_sweep_clear() -> void:
     _spawn_floating_text("CM SWEEP", Vector2(viewport_size.x * 0.5, viewport_size.y * 0.2), CM_SWEEP_COLOR, 26)
 
 func _process_countermeasure_regen_and_auto_sweep(delta: float) -> void:
+    countermeasure_sweep_cooldown = maxf(0.0, countermeasure_sweep_cooldown - delta)
     countermeasure_regen_bank += _countermeasure_regen_per_second() * delta
+
+    if _process_purple_shot_countermeasure_timers(delta):
+        return
+
+    var threats: bool = _enemy_projectiles_threat_count() > 0
+    if _is_boss_wave(current_wave) and threats and _penetrator_imminent_to_base():
+        if _try_consume_countermeasure_charge():
+            return
+
     while countermeasure_charges < COUNTERMEASURE_MAX_CHARGES and countermeasure_regen_bank >= 1.0:
         countermeasure_regen_bank -= 1.0
         countermeasure_charges += 1
+
+    if countermeasure_sweep_cooldown > 0.0:
+        if countermeasure_charges >= COUNTERMEASURE_MAX_CHARGES:
+            countermeasure_regen_bank = minf(countermeasure_regen_bank, 1.0)
+        return
+
     if countermeasure_charges >= COUNTERMEASURE_MAX_CHARGES:
         if countermeasure_regen_bank >= 1.0 and _should_auto_fire_countermeasure_overflow():
             countermeasure_regen_bank -= 1.0
             _fire_countermeasure_sweep_clear()
+            countermeasure_sweep_cooldown = 0.34
         countermeasure_regen_bank = minf(countermeasure_regen_bank, 1.0)
 
 func _process_enemies(delta: float) -> void:
@@ -1902,7 +2194,7 @@ func _process_enemies(delta: float) -> void:
                                 pos,
                                 (base_pos - pos).normalized(),
                                 boss_wave + 12,
-                                {"radius": 22.0, "speed": 168.0 + float(boss_wave) * 5.0, "damage": 34.0 + float(boss_wave) * 3.6, "lifetime": 7.2, "ignore_shields": true, "penetrator": true}
+                                {"radius": 22.0, "speed": 168.0 + float(boss_wave) * 5.0, "damage": 34.0 + float(boss_wave) * 3.6, "lifetime": 7.2, "penetrator": true}
                             )
                             _spawn_floating_text("PENETRATOR", pos + Vector2(0.0, -28.0), Color(1.0, 0.45, 0.82, 1.0), 20)
                         2:
@@ -1919,7 +2211,7 @@ func _process_enemies(delta: float) -> void:
                                     pos + Vector2(0.0, 22.0),
                                     (base_pos - pos).normalized().rotated(rng.randf_range(-0.12, 0.12)),
                                     boss_wave + 11,
-                                    {"radius": 19.0, "speed": 152.0 + float(boss_wave) * 4.0, "damage": 30.0 + float(boss_wave) * 3.2, "lifetime": 7.0, "ignore_shields": true, "penetrator": true}
+                                    {"radius": 19.0, "speed": 152.0 + float(boss_wave) * 4.0, "damage": 30.0 + float(boss_wave) * 3.2, "lifetime": 7.0, "penetrator": true}
                                 )
                     enemy["shoot_timer"] = max(0.42, 1.05 - float(boss_wave) * 0.018 + rng.randf_range(0.02, 0.16))
             "carrier":
@@ -2113,6 +2405,9 @@ func _get_enemy_max_health(enemy: Dictionary) -> float:
     return float(enemy.get("max_health", enemy.get("health", 1.0)))
 
 func _try_projectile_hit_temporary_construction(projectile_index: int, projectile_pos: Vector2, projectile_radius: float) -> bool:
+    var projectile: Dictionary = enemy_projectiles[projectile_index]
+    if bool(projectile.get("penetrator", false)):
+        return false
     for turret_index in range(temporary_turrets.size() - 1, -1, -1):
         var turret: Dictionary = temporary_turrets[turret_index]
         if float(turret.get("build_progress", 1.0)) < 1.0:
@@ -2129,7 +2424,7 @@ func _try_projectile_hit_temporary_construction(projectile_index: int, projectil
             "duration": 0.22,
             "color": EXPLOSION_COLOR
         })
-        _spawn_floating_text("TURRET LOST", turret_pos + Vector2(0.0, -18.0), Color(1.0, 0.52, 0.38, 1.0), 22)
+        _spawn_floating_text("SHIP LOST", turret_pos + Vector2(0.0, -18.0), Color(1.0, 0.52, 0.38, 1.0), 22)
         temporary_turrets.remove_at(turret_index)
         enemy_projectiles.remove_at(projectile_index)
         return true
@@ -2173,7 +2468,8 @@ func _process_enemy_projectiles(delta: float) -> void:
 
         if team == "enemy" and projectile_pos.distance_to(base_pos) <= BASE_COLLISION_RADIUS + projectile_radius:
             var ignore_shields_hit: bool = bool(projectile.get("ignore_shields", false))
-            if not ignore_shields_hit and rng.randf() < projectile_redirect_chance:
+            var is_penetrator_hit: bool = bool(projectile.get("penetrator", false))
+            if not ignore_shields_hit and not is_penetrator_hit and rng.randf() < projectile_redirect_chance:
                 deflected_threat_damage += float(projectile.get("damage", 8.0))
                 projectile["team"] = "player"
                 projectile["vel"] = _get_reflected_projectile_direction(projectile_pos) * max(320.0, projectile.get("vel", Vector2.ZERO).length())
@@ -2204,7 +2500,7 @@ func _resolve_bullet_enemy_projectile_hits(bullet: Dictionary) -> bool:
         var projectile: Dictionary = enemy_projectiles[projectile_index]
         if String(projectile.get("team", "enemy")) != "enemy":
             continue
-        if bool(projectile.get("ignore_shields", false)):
+        if bool(projectile.get("penetrator", false)):
             continue
         if bullet_pos.distance_to(projectile.get("pos", Vector2.ZERO)) > bullet_radius + float(projectile.get("radius", 10.0)):
             continue
@@ -2272,7 +2568,7 @@ func _fire_player_bullet() -> void:
         direction = Vector2.UP
     var start_pos := _get_base_position() + direction * (BASE_RADIUS * 0.82)
     var is_crit: bool = rng.randf() < crit_chance
-    var damage_amount: float = gun_damage * _get_power_multiplier("guns") * (crit_bonus if is_crit else 1.0)
+    var damage_amount: float = gun_damage * _get_gun_power_multiplier() * (crit_bonus if is_crit else 1.0)
     var homing := false
     var target_index := -1
     if homing_missile_level > 0:
@@ -2302,6 +2598,7 @@ func _spawn_enemy_projectile(origin: Vector2, direction: Vector2, wave: int, opt
     var normalized_direction := direction.normalized()
     if normalized_direction == Vector2.ZERO:
         normalized_direction = Vector2.DOWN
+    var is_penetrator: bool = bool(options.get("penetrator", false))
     enemy_projectiles.append({
         "pos": origin,
         "vel": normalized_direction * float(options.get("speed", 248.0 + float(wave) * 14.0)) * enemy_projectile_speed_scale,
@@ -2311,8 +2608,11 @@ func _spawn_enemy_projectile(origin: Vector2, direction: Vector2, wave: int, opt
         "mass": 2.0 + float(wave) * 0.22,
         "team": "enemy",
         "ignore_shields": bool(options.get("ignore_shields", false)),
-        "penetrator": bool(options.get("penetrator", options.get("ignore_shields", false)))
+        "penetrator": is_penetrator
     })
+    if is_penetrator:
+        saw_purple_shots_this_run = true
+        _queue_purple_shot_countermeasure()
 
 func _spawn_enemy_projectile_spread(origin: Vector2, direction: Vector2, wave: int, shot_count: int, spread_radians: float, options: Dictionary = {}) -> void:
     var normalized_direction := direction.normalized()
@@ -2516,6 +2816,7 @@ func _start_defeat_sequence(reason: String) -> void:
     defeat_sequence_timer = 0.0
     defeat_explosion_timer = 0.0
     wave_spawn_queue.clear()
+    _reset_boss_wave_stream_state()
     player_bullets.clear()
     nukes.clear()
     countermeasure_sweep_visuals.clear()
@@ -2540,6 +2841,10 @@ func _check_wave_clear() -> void:
     RED_SKY_PROGRESS.track_wave_cleared_runtime(waves_cleared, run_start_wave, career_best_wave_at_run_start, score)
     if waves_cleared > 0 and waves_cleared % 5 == 0:
         _spawn_floating_text(_trf("SECTOR %d SECURED", [waves_cleared]), get_viewport_rect().size * Vector2(0.5, 0.2), Color(0.72, 0.94, 1.0, 1.0), 30)
+    if _is_multi_mode_challenge_active() and not multi_mode_step_reported and waves_cleared >= int(multi_mode_step.get("target_wave", 999999)):
+        multi_mode_step_reported = true
+        MULTI_GAME_MODE.complete_current_step(true, {"waves_cleared": waves_cleared, "target_wave": int(multi_mode_step.get("target_wave", 0))})
+        return
     _show_upgrade_panel()
 
 func _show_upgrade_panel() -> void:
@@ -2551,6 +2856,12 @@ func _show_upgrade_panel() -> void:
     base_health = min(base_max_health, base_health + repair_between_waves * _get_power_multiplier("hull_regen"))
     if shield_max > 0.0:
         shield_health = min(_get_effective_shield_max(), shield_health + repair_between_waves * 0.5 * _get_power_multiplier("hull_regen"))
+    if _is_multi_mode_challenge_active() and bool(multi_mode_step.get("disable_wave_upgrades", false)):
+        run_state = RUN_STATES.RUNNING
+        Global.game_state = Util.GAME_STATES.PLAYING
+        _start_wave(current_wave + 1)
+        _refresh_mouse_capture_state()
+        return
     _show_upgrade_offer_panel("Wave %d Cleared" % current_wave, "Pick one.")
 
 func _show_start_upgrade_panel() -> void:
@@ -2750,7 +3061,9 @@ func _apply_effect_bundle(bundle: Dictionary) -> void:
                 homing_missile_level += _round_upgrade_count(amount)
             "countermeasures_rating":
                 countermeasures_rating += amount
+    countermeasures_rating = maxf(0.2, countermeasures_rating)
     _ensure_support_arrays()
+    _rebuild_power_slot_order()
 
     var mult_effects: Dictionary = bundle.get("mult", {})
     for key_variant in mult_effects.keys():
@@ -2820,6 +3133,11 @@ func _apply_effect_bundle(bundle: Dictionary) -> void:
 
 func _finish_run(reason: String, from_pause_end_run: bool = false) -> void:
     if run_state == RUN_STATES.SUMMARY:
+        return
+    if _is_multi_mode_challenge_active() and not multi_mode_step_reported:
+        multi_mode_step_reported = true
+        run_state = RUN_STATES.SUMMARY
+        MULTI_GAME_MODE.complete_current_step(false, {"reason": reason, "waves_cleared": waves_cleared})
         return
     run_state = RUN_STATES.SUMMARY
     showing_pre_run_panel = false
@@ -2904,6 +3222,7 @@ func _build_run_results(reason: String, from_pause_end_run: bool = false) -> Dic
         int(persistent_data.get("runs", 0)) + 1,
         shots_fired
     ])
+    var show_purple_shot_death_hint: bool = saw_purple_shots_this_run and reason == "Base destroyed."
     var summary_view_model := {
         "reason": reason,
         "waves_cleared_this_run": waves_cleared_this_run,
@@ -2912,6 +3231,7 @@ func _build_run_results(reason: String, from_pause_end_run: bool = false) -> Dic
         "wallet_bonus": wallet_bonus,
         "gem_reward_count": gem_reward_count,
         "gem_reward_line": gem_reward_line,
+        "show_purple_shot_death_hint": show_purple_shot_death_hint,
         "show_cursor_escape_hint": from_pause_end_run
     }
     return {
@@ -3195,9 +3515,18 @@ func _draw_support_units() -> void:
             draw_arc(turret_pos, 24.0, -PI * 0.5, -PI * 0.5 + TAU * turret_bp, maxi(8, int(24.0 * turret_bp)), Color(0.95, 0.82, 0.45, pulse_a), 4.0)
             draw_rect(Rect2(turret_pos.x - 6.0, turret_pos.y - 5.0, 12.0, 10.0), Color(0.35, 0.38, 0.42, 0.88), true)
         else:
-            draw_rect(Rect2(turret_pos.x - 10.0, turret_pos.y - 8.0, 20.0, 16.0), Color(0.2, 0.28, 0.34, 1.0), true)
-            draw_rect(Rect2(turret_pos.x - 8.0, turret_pos.y - 6.0, 16.0, 12.0), Color(0.32, 0.42, 0.5, 0.95), true)
-            draw_line(turret_pos, turret_pos + Vector2(18.0, -10.0), TOWER_COLOR.lightened(0.12), 3.0)
+            var turret_vel: Vector2 = temp_turret.get("vel", Vector2.UP)
+            var ship_rotation: float = (turret_vel.angle() + PI * 0.5) if turret_vel.length_squared() > 0.001 else -PI * 0.5
+            var ship_points := [
+                Vector2(0.0, -CONSTRUCTION_ATTACK_SHIP_RADIUS * 1.16),
+                Vector2(CONSTRUCTION_ATTACK_SHIP_RADIUS * 0.8, CONSTRUCTION_ATTACK_SHIP_RADIUS * 0.72),
+                Vector2(0.0, CONSTRUCTION_ATTACK_SHIP_RADIUS * 0.32),
+                Vector2(-CONSTRUCTION_ATTACK_SHIP_RADIUS * 0.8, CONSTRUCTION_ATTACK_SHIP_RADIUS * 0.72)
+            ]
+            draw_polygon(_build_rotated_points(ship_points, ship_rotation, turret_pos), [Color(0.54, 0.88, 1.0, 1.0)])
+            draw_circle(turret_pos + Vector2.RIGHT.rotated(ship_rotation) * (CONSTRUCTION_ATTACK_SHIP_RADIUS * 0.1), CONSTRUCTION_ATTACK_SHIP_RADIUS * 0.24, Color(0.95, 0.98, 1.0, 1.0))
+            var thruster_offset: Vector2 = Vector2.RIGHT.rotated(ship_rotation + PI) * (CONSTRUCTION_ATTACK_SHIP_RADIUS * 0.68)
+            draw_line(turret_pos + thruster_offset + Vector2.LEFT.rotated(ship_rotation) * 2.0, turret_pos + thruster_offset + Vector2.LEFT.rotated(ship_rotation) * 6.0, Color(1.0, 0.82, 0.45, 0.68), 2.0)
             var tr: float = clampf(float(temp_turret.get("cooldown", 0.0)) / max(temporary_turret_fire_interval, 0.05), 0.0, 1.0)
             draw_arc(turret_pos, 16.0, -PI * 0.5, -PI * 0.5 + TAU * (1.0 - tr), 12, Color(1.0, 0.86, 0.45, 0.35), 2.0)
     for shield_index in range(temporary_shields.size()):
@@ -3227,7 +3556,7 @@ func _draw_countermeasure_sweeps() -> void:
         var t: float = clampf(float(sweep.get("age", 0.0)) / duration, 0.0, 1.0)
         var y_top: float = float(sweep.get("y_top", vp.y * 0.06))
         var y_bottom: float = float(sweep.get("y_bottom", _get_base_position().y - 40.0))
-        var y: float = lerpf(y_top, y_bottom, t)
+        var y: float = lerpf(y_bottom, y_top, t)
         var alpha: float = (1.0 - t) * 0.88
         var half_w: float = COUNTERMEASURE_SWEEP_LINE_WIDTH * 0.5
         draw_rect(Rect2(0.0, y - half_w, vp.x, COUNTERMEASURE_SWEEP_LINE_WIDTH), Color(CM_SWEEP_COLOR.r, CM_SWEEP_COLOR.g, CM_SWEEP_COLOR.b, alpha * 0.32), true)
@@ -3322,7 +3651,7 @@ func _draw_nukes() -> void:
 func _draw_enemy_projectiles() -> void:
     for projectile in enemy_projectiles:
         var color := ENEMY_PROJECTILE_COLOR if String(projectile.get("team", "enemy")) == "enemy" else DEFLECTED_PROJECTILE_COLOR
-        if bool(projectile.get("ignore_shields", false)):
+        if bool(projectile.get("penetrator", false)):
             color = Color(1.0, 0.42, 0.86, 1.0)
         draw_circle(projectile.get("pos", Vector2.ZERO), float(projectile.get("radius", 12.0)), color)
 
@@ -3394,12 +3723,24 @@ func _input(event: InputEvent) -> void:
         var motion_event := event as InputEventMouseMotion
         if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and run_state == RUN_STATES.RUNNING:
             aim_cursor_screen_pos = _clamp_cursor_to_viewport(aim_cursor_screen_pos + motion_event.relative)
+        elif _is_power_wheel_mouse_drag_active():
+            pass
         else:
             aim_cursor_screen_pos = _clamp_cursor_to_viewport(motion_event.position)
     elif event is InputEventMouseButton:
         var mouse_button_event := event as InputEventMouseButton
+        if mouse_button_event.button_index == MOUSE_BUTTON_RIGHT:
+            if run_state == RUN_STATES.RUNNING and Global.game_state == Util.GAME_STATES.PLAYING and not _is_pause_menu_open():
+                if not mouse_button_event.pressed and not _should_keep_mouse_visible_for_wave_intro():
+                    get_viewport().warp_mouse(aim_cursor_screen_pos)
+                _refresh_mouse_capture_state()
         if not (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and run_state == RUN_STATES.RUNNING):
-            aim_cursor_screen_pos = _clamp_cursor_to_viewport(mouse_button_event.position)
+            var skip_aim_from_click := mouse_button_event.button_index == MOUSE_BUTTON_RIGHT
+            if not skip_aim_from_click and run_state == RUN_STATES.RUNNING and mouse_button_event.pressed and mouse_button_event.button_index == MOUSE_BUTTON_LEFT:
+                if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+                    skip_aim_from_click = true
+            if not skip_aim_from_click:
+                aim_cursor_screen_pos = _clamp_cursor_to_viewport(mouse_button_event.position)
         if run_state == RUN_STATES.RUNNING and mouse_button_event.pressed and mouse_button_event.button_index == MOUSE_BUTTON_LEFT:
             _launch_nuke()
 
@@ -3581,21 +3922,81 @@ func _get_collector_bot_positions() -> Array[Vector2]:
         positions.append(base_pos + Vector2(cos(angle), sin(angle) * 0.4) * (BASE_RADIUS + 88.0))
     return positions
 
-func _compute_construction_field_position(structure_index: int, is_shield: bool) -> Vector2:
+func _get_construction_field_slots_per_layer() -> int:
+    return 1 + int(floor(CONSTRUCTION_FIELD_MAX_ANGLE / CONSTRUCTION_FIELD_ANGLE_STEP)) * 2
+
+func _get_construction_field_angle(slot_in_layer: int) -> float:
+    if slot_in_layer <= 0:
+        return -PI * 0.5
+    var step_index: int = int(ceil(float(slot_in_layer) * 0.5))
+    var direction: float = 1.0 if slot_in_layer % 2 == 1 else -1.0
+    return -PI * 0.5 + CONSTRUCTION_FIELD_ANGLE_STEP * float(step_index) * direction
+
+func _get_construction_field_distance(layer_index: int, is_shield: bool) -> float:
+    var base_offset: float = 18.0 if is_shield else 32.0
+    return CONSTRUCTION_FIELD_RADIUS_BASE + base_offset + CONSTRUCTION_FIELD_LAYER_SPACING * float(layer_index)
+
+func _compute_construction_field_position(structure_index: int, structure_count: int, is_shield: bool) -> Vector2:
     var base_pos := _get_base_position()
     var vp: Vector2 = get_viewport_rect().size
-    var limit: int = maxi(1, temporary_shield_limit if is_shield else temporary_turret_limit)
-    var t: float = float(structure_index + 1) / float(limit + 1)
-    var angle: float = lerpf(-PI * 0.84, -PI * 0.16, t)
+    var layer_slots: int = _get_construction_field_slots_per_layer()
+    var safe_count: int = maxi(1, structure_count)
+    var slot_index: int = clampi(structure_index, 0, safe_count - 1)
+    var layer_index: int = int(slot_index / layer_slots)
+    var slot_in_layer: int = slot_index % layer_slots
+    var angle: float = _get_construction_field_angle(slot_in_layer)
     if is_shield:
-        angle += 0.14 * sin(float(structure_index) * 1.73 + 0.35)
-    else:
-        angle += 0.11 * cos(float(structure_index) * 1.51 + 0.2)
-    var dist: float = CONSTRUCTION_FIELD_RADIUS_BASE + (26.0 if is_shield else 44.0) * float(structure_index % 4)
+        angle = -PI * 0.5 + (angle + PI * 0.5) * CONSTRUCTION_SHIELD_ANGLE_SPREAD_MULT
+    var dist: float = _get_construction_field_distance(layer_index, is_shield)
     var pos: Vector2 = base_pos + Vector2(cos(angle), sin(angle)) * dist
     pos.x = clampf(pos.x, 76.0, vp.x - 76.0)
     pos.y = clampf(pos.y, vp.y * 0.06, base_pos.y - 102.0)
     return pos
+
+func _get_temporary_turret_target_position(home_pos: Vector2, structure_index: int, structure_count: int) -> Vector2:
+    var base_pos := _get_base_position()
+    var vp: Vector2 = get_viewport_rect().size
+    var safe_count: int = maxi(1, structure_count)
+    var slot_index: int = clampi(structure_index, 0, safe_count - 1)
+    var target_y: float = vp.y * CONSTRUCTION_TURRET_FORWARD_Y_RATIO
+    var direction: Vector2 = (home_pos - base_pos).normalized()
+    if direction == Vector2.ZERO:
+        direction = Vector2.UP
+    var travel: float = 0.0
+    if direction.y < -0.001:
+        travel = (target_y - base_pos.y) / direction.y
+    if travel <= 0.0:
+        travel = _get_construction_field_distance(int(slot_index / _get_construction_field_slots_per_layer()) + 1, false)
+    var target_pos: Vector2 = base_pos + direction * travel
+    target_pos.x = clampf(target_pos.x, 68.0, vp.x - 68.0)
+    target_pos.y = clampf(target_pos.y, vp.y * 0.18, target_y)
+    return target_pos
+
+func _get_temporary_shield_target_position(home_pos: Vector2) -> Vector2:
+    var vp: Vector2 = get_viewport_rect().size
+    var best_projectile_pos: Vector2 = home_pos
+    var best_score: float = INF
+    for projectile in enemy_projectiles:
+        if String(projectile.get("team", "enemy")) != "enemy":
+            continue
+        var projectile_pos: Vector2 = projectile.get("pos", Vector2.ZERO)
+        var score: float = home_pos.distance_to(projectile_pos)
+        if score > CONSTRUCTION_SHIELD_INTERCEPT_RADIUS:
+            continue
+        if projectile_pos.y > home_pos.y + 36.0:
+            continue
+        if score < best_score:
+            best_score = score
+            best_projectile_pos = projectile_pos
+    if best_score == INF:
+        return home_pos
+    var offset: Vector2 = best_projectile_pos - home_pos
+    if offset.length() > CONSTRUCTION_SHIELD_SHIFT_LIMIT:
+        offset = offset.normalized() * CONSTRUCTION_SHIELD_SHIFT_LIMIT
+    var target_pos: Vector2 = home_pos + offset
+    target_pos.x = clampf(target_pos.x, 72.0, vp.x - 72.0)
+    target_pos.y = clampf(target_pos.y, vp.y * 0.08, _get_base_position().y - 96.0)
+    return target_pos
 
 func _get_construction_drone_anchor_pos(constructor_index: int) -> Vector2:
     var base_visual_pos := _get_base_position() + _get_base_visual_offset()
@@ -3604,21 +4005,25 @@ func _get_construction_drone_anchor_pos(constructor_index: int) -> Vector2:
 
 func _make_temporary_turret() -> Dictionary:
     var idx: int = temporary_turrets.size()
-    var pos: Vector2 = _compute_construction_field_position(idx, false)
+    var pos: Vector2 = _compute_construction_field_position(idx, idx + 1, false)
     return {
         "pos": pos,
+        "home_pos": pos,
         "age": 0.0,
         "cooldown": temporary_turret_fire_interval + rng.randf_range(0.25, 0.75),
         "health": temporary_turret_health,
         "max_health": temporary_turret_health,
+        "vel": Vector2.ZERO,
+        "orbit_dir": -1.0 if rng.randf() < 0.5 else 1.0,
         "build_progress": 0.0,
     }
 
 func _make_temporary_shield() -> Dictionary:
     var idx: int = temporary_shields.size()
-    var pos: Vector2 = _compute_construction_field_position(idx, true)
+    var pos: Vector2 = _compute_construction_field_position(idx, idx + 1, true)
     return {
         "pos": pos,
+        "home_pos": pos,
         "age": 0.0,
         "health": temporary_shield_health,
         "max_health": temporary_shield_health,
@@ -3626,8 +4031,66 @@ func _make_temporary_shield() -> Dictionary:
         "build_progress": 0.0,
     }
 
+func _get_run_start_hint_lines() -> Array[String]:
+    var hint_lines: Array[String] = []
+    var completed_runs: int = int(persistent_data.get("runs", 0))
+    if completed_runs < 6:
+        hint_lines.append(tr("Hint: steer the Power Wheel with WASD or hold right mouse and drag it."))
+    if completed_runs < 8 and countermeasures_rating > 0.0:
+        hint_lines.append(tr("Hint: countermeasures build CM charges over time and spend them to sweep enemy bullets, including purple shots. Nukes can also destroy purple shots."))
+    return hint_lines
+
 func _get_power_multiplier(slot_key: String) -> float:
     return max(POWER_WHEEL_FUNCTIONAL_MIN, float(power_multipliers.get(slot_key, 1.0)))
+
+func _get_gun_power_multiplier() -> float:
+    return GUN_FIXED_POWER_MULTIPLIER
+
+func _is_power_slot_accessible(slot_key: String) -> bool:
+    match slot_key:
+        "shields":
+            return shield_max > 0.0
+        "hull_regen":
+            return repair_between_waves > 0.0
+        "nukes":
+            return nuke_max > 0
+        "homing_missiles":
+            return homing_missile_level > 0
+        "countermeasures":
+            return countermeasures_rating > 0.0
+        "towers":
+            return tower_count > 0
+        "helpers":
+            return drone_count > 0 or helper_drone_count > 0
+        "tentacles":
+            return tentacle_count > 0
+        "construction":
+            return construction_drone_count > 0 or temporary_turret_limit > 0 or temporary_shield_limit > 0
+        "scrap_gain":
+            return scrap_generation_per_second > 0.0
+        "scrap_collection":
+            return pickup_radius > 0.0
+        _:
+            return false
+
+func _rebuild_power_slot_order() -> void:
+    var available_slots: Array[String] = []
+    for slot_key in POWER_SLOT_KEYS:
+        if _is_power_slot_accessible(slot_key):
+            available_slots.append(slot_key)
+    if available_slots.is_empty():
+        available_slots.append("countermeasures")
+
+    var new_order: Array[String] = []
+    for slot_key in power_slot_order:
+        if available_slots.has(slot_key) and not new_order.has(slot_key):
+            new_order.append(slot_key)
+    for slot_key in POWER_SLOT_KEYS:
+        if available_slots.has(slot_key) and not new_order.has(slot_key):
+            new_order.append(slot_key)
+    power_slot_order = new_order
+    if power_swap_source_slot >= power_slot_order.size():
+        power_swap_source_slot = -1
 
 func _recalculate_power_distribution() -> void:
     var slot_count: int = power_slot_order.size()
@@ -3697,6 +4160,12 @@ func _refresh_power_slot_buttons() -> void:
         var button := power_slot_buttons[slot_index]
         if button == null:
             continue
+        if slot_index >= power_slot_order.size():
+            button.visible = false
+            button.disabled = true
+            continue
+        button.visible = true
+        button.disabled = false
         var key: String = power_slot_order[slot_index]
         var label_text := "Slot %d: %s" % [slot_index + 1, key.replace("_", " ").capitalize()]
         if slot_index == power_swap_source_slot:
@@ -3714,7 +4183,7 @@ func _refresh_power_slot_buttons() -> void:
             ]
 
 func _get_effective_fire_interval() -> float:
-    return fire_interval / max(_get_power_multiplier("guns"), 0.2)
+    return fire_interval / max(_get_gun_power_multiplier(), 0.2)
 
 func _get_effective_shield_max() -> float:
     return shield_max * _get_power_multiplier("shields")
@@ -3846,12 +4315,23 @@ func _clamp_cursor_to_viewport(position: Vector2) -> Vector2:
     var viewport_size := get_viewport_rect().size
     return Vector2(clampf(position.x, 0.0, max(viewport_size.x - 1.0, 0.0)), clampf(position.y, 0.0, max(viewport_size.y - 1.0, 0.0)))
 
+func _is_power_wheel_mouse_drag_active() -> bool:
+    return (
+        run_state == RUN_STATES.RUNNING
+        and Global.game_state == Util.GAME_STATES.PLAYING
+        and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+        and not _should_keep_mouse_visible_for_wave_intro()
+    )
+
 func _refresh_mouse_capture_state() -> void:
     if _is_pause_menu_open():
         Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
         return
     var in_combat := run_state == RUN_STATES.RUNNING and Global.game_state == Util.GAME_STATES.PLAYING
     if in_combat and _should_keep_mouse_visible_for_wave_intro():
+        Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+        return
+    if in_combat and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
         Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
         return
     Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if in_combat else Input.MOUSE_MODE_VISIBLE
@@ -3920,10 +4400,11 @@ func _get_enemy_rotation(enemy: Dictionary) -> float:
         velocity = _get_base_position() - enemy.get("pos", Vector2.ZERO)
     return velocity.angle() + PI * 0.5
 
-func _build_rotated_points(local_points: Array[Vector2], rotation: float, center: Vector2) -> PackedVector2Array:
+func _build_rotated_points(local_points: Array, rotation: float, center: Vector2) -> PackedVector2Array:
     var points := PackedVector2Array()
     for point in local_points:
-        points.append(center + point.rotated(rotation))
+        var local_point: Vector2 = point
+        points.append(center + local_point.rotated(rotation))
     return points
 
 func _color_to_bbcode(color: Color) -> String:
@@ -4057,6 +4538,14 @@ func _render_post_run_summary_text(view_model: Dictionary, progress: float) -> v
         "[color=%s]Meta scrap earned[/color]" % _color_to_bbcode(SUMMARY_TEXT_BASE_COLOR),
         "%s" % _format_summary_money_span(animated_wallet, wallet_gain, progress)
     ])
+    if bool(view_model.get("show_purple_shot_death_hint", false)):
+        lines.append("")
+        lines.append(
+            "[i][color=%s]%s[/color][/i]" % [
+                _color_to_bbcode(SUMMARY_TEXT_BASE_COLOR),
+                tr("Purple shots can be cleared with countermeasures, and nukes can destroy them too.")
+            ]
+        )
     if bool(view_model.get("show_cursor_escape_hint", false)):
         lines.append("")
         lines.append(
