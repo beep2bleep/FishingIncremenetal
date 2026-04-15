@@ -136,6 +136,14 @@ static func save_progress(data: Dictionary) -> void:
         return
     file.store_string(JSON.stringify(data, "\t"))
 
+static func reset_progress() -> Dictionary:
+    var data: Dictionary = DEFAULT_PROGRESS.duplicate(true)
+    save_progress(data)
+    Global.multi_game_run = {}
+    Global.multi_game_step_config = {}
+    Global.multi_game_pending_summary = {}
+    return data
+
 static func get_tier_count() -> int:
     return TIER_DEFINITIONS.size()
 
@@ -351,30 +359,30 @@ static func _build_chart_rows(step: Dictionary, success: bool, payload: Dictiona
     match game_id:
         Util.ACTIVE_GAME_VANGUARD:
             var boss_level: int = int(step.get("battle_level", 1))
-            rows.append({"label": "Boss Level", "value": float(boss_level), "max_value": float(max(1, boss_level)), "value_text": "Lv %d" % boss_level, "color": Color(0.76, 0.52, 1.0, 1.0)})
-            rows.append({"label": "Meta Reward", "value": float(meta_reward), "max_value": float(max(1, meta_reward)), "value_text": _get_meta_reward_label(game_id, meta_reward), "color": Color(0.96, 0.8, 0.38, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_BOSS_LEVEL"), "value": float(boss_level), "max_value": float(max(1, boss_level)), "value_text": _trf("MULTI_MODE_VALUE_LEVEL_SHORT", [boss_level]), "color": Color(0.76, 0.52, 1.0, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_META_REWARD"), "value": float(meta_reward), "max_value": float(max(1, meta_reward)), "value_text": _get_meta_reward_label(game_id, meta_reward), "color": Color(0.96, 0.8, 0.38, 1.0)})
         Util.ACTIVE_GAME_MINING:
             var nodes_goal: int = int(step.get("nodes_goal", 0))
             var depth_level: int = int(step.get("depth_level", 1))
-            rows.append({"label": "Nodes Broken", "value": float(payload.get("nodes_broken", 0)), "max_value": float(max(1, nodes_goal)), "value_text": "%d / %d" % [int(payload.get("nodes_broken", 0)), nodes_goal], "color": Color(0.38, 0.86, 0.56, 1.0)})
-            rows.append({"label": "Depth", "value": float(depth_level), "max_value": float(max(1, depth_level)), "value_text": "Depth %d" % depth_level, "color": Color(0.42, 0.82, 0.98, 1.0)})
-            rows.append({"label": "Meta Reward", "value": float(meta_reward), "max_value": float(max(1, meta_reward)), "value_text": _get_meta_reward_label(game_id, meta_reward), "color": Color(0.97, 0.84, 0.42, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_NODES_BROKEN"), "value": float(payload.get("nodes_broken", 0)), "max_value": float(max(1, nodes_goal)), "value_text": _trf("MULTI_MODE_VALUE_PROGRESS", [int(payload.get("nodes_broken", 0)), nodes_goal]), "color": Color(0.38, 0.86, 0.56, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_DEPTH"), "value": float(depth_level), "max_value": float(max(1, depth_level)), "value_text": _trf("MULTI_MODE_VALUE_DEPTH", [depth_level]), "color": Color(0.42, 0.82, 0.98, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_META_REWARD"), "value": float(meta_reward), "max_value": float(max(1, meta_reward)), "value_text": _get_meta_reward_label(game_id, meta_reward), "color": Color(0.97, 0.84, 0.42, 1.0)})
         Util.ACTIVE_GAME_RED_SKY:
             var target_wave: int = int(step.get("target_wave", 0))
-            rows.append({"label": "Wave Cleared", "value": float(payload.get("waves_cleared", 0)), "max_value": float(max(1, target_wave)), "value_text": "%d / %d" % [int(payload.get("waves_cleared", 0)), target_wave], "color": Color(0.98, 0.52, 0.44, 1.0)})
-            rows.append({"label": "Meta Reward", "value": float(meta_reward), "max_value": float(max(1, meta_reward)), "value_text": _get_meta_reward_label(game_id, meta_reward), "color": Color(0.98, 0.84, 0.44, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_WAVE_CLEARED"), "value": float(payload.get("waves_cleared", 0)), "max_value": float(max(1, target_wave)), "value_text": _trf("MULTI_MODE_VALUE_PROGRESS", [int(payload.get("waves_cleared", 0)), target_wave]), "color": Color(0.98, 0.52, 0.44, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_META_REWARD"), "value": float(meta_reward), "max_value": float(max(1, meta_reward)), "value_text": _get_meta_reward_label(game_id, meta_reward), "color": Color(0.98, 0.84, 0.44, 1.0)})
         Util.ACTIVE_GAME_TURKEY:
             var frame_pin_goal: int = int(step.get("frame_pin_goal", 0))
             var lane_tier: int = int(step.get("lane_tier", 0)) + 1
-            rows.append({"label": "Frame Pins", "value": float(payload.get("frame_total", 0)), "max_value": float(max(1, frame_pin_goal)), "value_text": "%d / %d" % [int(payload.get("frame_total", 0)), frame_pin_goal], "color": Color(0.98, 0.78, 0.36, 1.0)})
-            rows.append({"label": "Lane Tier", "value": float(lane_tier), "max_value": float(max(1, lane_tier)), "value_text": "Tier %d" % lane_tier, "color": Color(0.94, 0.58, 0.34, 1.0)})
-            rows.append({"label": "Meta Reward", "value": float(meta_reward), "max_value": float(max(1, meta_reward)), "value_text": _get_meta_reward_label(game_id, meta_reward), "color": Color(0.95, 0.88, 0.46, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_FRAME_PINS"), "value": float(payload.get("frame_total", 0)), "max_value": float(max(1, frame_pin_goal)), "value_text": _trf("MULTI_MODE_VALUE_PROGRESS", [int(payload.get("frame_total", 0)), frame_pin_goal]), "color": Color(0.98, 0.78, 0.36, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_LANE_TIER"), "value": float(lane_tier), "max_value": float(max(1, lane_tier)), "value_text": _trf("MULTI_MODE_VALUE_TIER", [lane_tier]), "color": Color(0.94, 0.58, 0.34, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_META_REWARD"), "value": float(meta_reward), "max_value": float(max(1, meta_reward)), "value_text": _get_meta_reward_label(game_id, meta_reward), "color": Color(0.95, 0.88, 0.46, 1.0)})
         Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
             var fish_goal: int = int(step.get("fish_goal", 0))
             var depth_tier: int = int(step.get("depth_tier_index", 0)) + 1
-            rows.append({"label": "Fish Caught", "value": float(payload.get("fish_caught", 0)), "max_value": float(max(1, fish_goal)), "value_text": "%d / %d" % [int(payload.get("fish_caught", 0)), fish_goal], "color": Color(0.44, 0.86, 0.98, 1.0)})
-            rows.append({"label": "Depth Tier", "value": float(depth_tier), "max_value": float(max(1, depth_tier)), "value_text": "Tier %d" % depth_tier, "color": Color(0.62, 0.78, 0.98, 1.0)})
-            rows.append({"label": "Meta Reward", "value": float(meta_reward), "max_value": float(max(1, meta_reward)), "value_text": _get_meta_reward_label(game_id, meta_reward), "color": Color(0.72, 0.94, 0.72, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_FISH_CAUGHT"), "value": float(payload.get("fish_caught", 0)), "max_value": float(max(1, fish_goal)), "value_text": _trf("MULTI_MODE_VALUE_PROGRESS", [int(payload.get("fish_caught", 0)), fish_goal]), "color": Color(0.44, 0.86, 0.98, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_DEPTH_TIER"), "value": float(depth_tier), "max_value": float(max(1, depth_tier)), "value_text": _trf("MULTI_MODE_VALUE_TIER", [depth_tier]), "color": Color(0.62, 0.78, 0.98, 1.0)})
+            rows.append({"label": _tr("MULTI_MODE_CHART_META_REWARD"), "value": float(meta_reward), "max_value": float(max(1, meta_reward)), "value_text": _get_meta_reward_label(game_id, meta_reward), "color": Color(0.72, 0.94, 0.72, 1.0)})
     _append_time_chart_rows(rows, payload)
     return rows
 
@@ -385,50 +393,50 @@ static func _append_time_chart_rows(rows: Array[Dictionary], payload: Dictionary
     var elapsed: float = clampf(float(payload.get("elapsed", time_limit - float(payload.get("time_remaining", 0.0)))), 0.0, time_limit)
     var remaining: float = clampf(float(payload.get("time_remaining", maxf(0.0, time_limit - elapsed))), 0.0, time_limit)
     rows.append({
-        "label": "Time Used",
+        "label": _tr("MULTI_MODE_CHART_TIME_USED"),
         "value": elapsed,
         "max_value": time_limit,
-        "value_text": "%.1fs" % elapsed,
+        "value_text": _trf("MULTI_MODE_VALUE_SECONDS", [elapsed]),
         "color": Color(0.86, 0.72, 0.98, 1.0)
     })
     rows.append({
-        "label": "Time Left",
+        "label": _tr("MULTI_MODE_CHART_TIME_LEFT"),
         "value": remaining,
         "max_value": time_limit,
-        "value_text": "%.1fs" % remaining,
+        "value_text": _trf("MULTI_MODE_VALUE_SECONDS", [remaining]),
         "color": Color(0.52, 0.9, 0.92, 1.0)
     })
 
 static func _build_status_text(step: Dictionary, success: bool, payload: Dictionary, meta_reward: int) -> String:
     if success:
         var reward_text: String = _get_meta_reward_label(str(step.get("game_id", "")), meta_reward)
-        return "Cleared. %s earned." % reward_text if reward_text != "" else "Cleared."
+        return _trf("MULTI_MODE_STATUS_CLEARED_REWARD", [reward_text]) if reward_text != "" else _tr("MULTI_MODE_STATUS_CLEARED")
     match str(step.get("game_id", "")):
         Util.ACTIVE_GAME_VANGUARD:
-            return "Failed before defeating the boss on level %d." % int(step.get("battle_level", 1))
+            return _trf("MULTI_MODE_STATUS_FAIL_VANGUARD", [int(step.get("battle_level", 1))])
         Util.ACTIVE_GAME_MINING:
             var reason: String = str(payload.get("reason", ""))
             if reason == "MINING_REASON_TIMER_EXPIRED":
-                return "Failed because time ran out at %d / %d nodes." % [int(payload.get("nodes_broken", 0)), int(step.get("nodes_goal", 0))]
+                return _trf("MULTI_MODE_STATUS_FAIL_MINING_TIMER", [int(payload.get("nodes_broken", 0)), int(step.get("nodes_goal", 0))])
             if reason == "MINING_REASON_DRILL_DEPLETED":
-                return "Failed because the drill broke before reaching %d nodes." % int(step.get("nodes_goal", 0))
-            return "Failed at %d / %d nodes." % [int(payload.get("nodes_broken", 0)), int(step.get("nodes_goal", 0))]
+                return _trf("MULTI_MODE_STATUS_FAIL_MINING_DRILL", [int(step.get("nodes_goal", 0))])
+            return _trf("MULTI_MODE_STATUS_FAIL_MINING", [int(payload.get("nodes_broken", 0)), int(step.get("nodes_goal", 0))])
         Util.ACTIVE_GAME_RED_SKY:
-            return "Failed before clearing wave %d. Cleared: %d." % [int(step.get("target_wave", 0)), int(payload.get("waves_cleared", 0))]
+            return _trf("MULTI_MODE_STATUS_FAIL_REDSKY", [int(step.get("target_wave", 0)), int(payload.get("waves_cleared", 0))])
         Util.ACTIVE_GAME_TURKEY:
             if str(payload.get("reason", "")) == "timer":
-                return "Failed because time ran out before reaching %d pins in one frame." % int(step.get("frame_pin_goal", 0))
-            return "Failed before reaching %d pins in one frame." % int(step.get("frame_pin_goal", 0))
+                return _trf("MULTI_MODE_STATUS_FAIL_TURKEY_TIMER", [int(step.get("frame_pin_goal", 0))])
+            return _trf("MULTI_MODE_STATUS_FAIL_TURKEY", [int(step.get("frame_pin_goal", 0))])
         Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
-            return "Failed with %d / %d fish caught." % [int(payload.get("fish_caught", 0)), int(step.get("fish_goal", 0))]
+            return _trf("MULTI_MODE_STATUS_FAIL_REEL", [int(payload.get("fish_caught", 0)), int(step.get("fish_goal", 0))])
         _:
-            return "Failed."
+            return _tr("MULTI_MODE_STATUS_FAILED")
 
 static func _build_performance_text(step: Dictionary, success: bool, payload: Dictionary) -> String:
     var game_id: String = str(step.get("game_id", ""))
     match game_id:
         Util.ACTIVE_GAME_VANGUARD:
-            return "Boss rush clear with the fight starting immediately." if success else "The boss rush ended before the kill."
+            return _tr("MULTI_MODE_PERF_VANGUARD_SUCCESS") if success else _tr("MULTI_MODE_PERF_VANGUARD_FAIL")
         Util.ACTIVE_GAME_MINING:
             var goal: int = int(step.get("nodes_goal", 0))
             var broken: int = int(payload.get("nodes_broken", 0))
@@ -436,23 +444,23 @@ static func _build_performance_text(step: Dictionary, success: bool, payload: Di
                 var remaining: float = float(payload.get("time_remaining", 0.0))
                 var extra_nodes: int = max(0, broken - goal)
                 if extra_nodes > 0:
-                    return "Strong route. Goal hit with %.1fs left and %d extra nodes mined." % [remaining, extra_nodes]
-                return "Strong route. Goal hit with %.1fs left." % remaining
-            return "Progress reached %d of %d nodes." % [broken, goal]
+                    return _trf("MULTI_MODE_PERF_MINING_SUCCESS_EXTRA", [remaining, extra_nodes])
+                return _trf("MULTI_MODE_PERF_MINING_SUCCESS", [remaining])
+            return _trf("MULTI_MODE_PERF_MINING_FAIL", [broken, goal])
         Util.ACTIVE_GAME_RED_SKY:
             var target_wave: int = int(step.get("target_wave", 0))
             var cleared: int = int(payload.get("waves_cleared", 0))
-            return "Clean survival at a forced late-wave start with no wave upgrades." if success else "Reached %d of %d required waves." % [cleared, target_wave]
+            return _tr("MULTI_MODE_PERF_REDSKY_SUCCESS") if success else _trf("MULTI_MODE_PERF_REDSKY_FAIL", [cleared, target_wave])
         Util.ACTIVE_GAME_TURKEY:
             var goal_pins: int = int(step.get("frame_pin_goal", 0))
             var frame_total: int = int(payload.get("frame_total", 0))
             var time_left: float = float(payload.get("time_remaining", 0.0))
-            return "Fast frame. Cleared the target with %.1fs left." % time_left if success else "Best frame stopped at %d of %d pins." % [frame_total, goal_pins]
+            return _trf("MULTI_MODE_PERF_TURKEY_SUCCESS", [time_left]) if success else _trf("MULTI_MODE_PERF_TURKEY_FAIL", [frame_total, goal_pins])
         Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
             var fish_goal: int = int(step.get("fish_goal", 0))
             var fish_caught: int = int(payload.get("fish_caught", 0))
             var reel_time_left: float = float(payload.get("time_remaining", 0.0))
-            return "Quick haul. Target met with %.1fs left." % reel_time_left if success else "Finished with %d of %d fish." % [fish_caught, fish_goal]
+            return _trf("MULTI_MODE_PERF_REEL_SUCCESS", [reel_time_left]) if success else _trf("MULTI_MODE_PERF_REEL_FAIL", [fish_caught, fish_goal])
         _:
             return ""
 
@@ -461,11 +469,11 @@ static func _get_meta_reward_label(game_id: String, amount: int) -> String:
         return ""
     match game_id:
         Util.ACTIVE_GAME_VANGUARD:
-            return "%d coins" % amount
+            return _trf("MULTI_MODE_REWARD_COINS", [amount])
         Util.ACTIVE_GAME_MINING:
             return "$%d" % amount
         Util.ACTIVE_GAME_RED_SKY:
-            return "%d scrap" % amount
+            return _trf("MULTI_MODE_REWARD_SCRAP", [amount])
         Util.ACTIVE_GAME_TURKEY:
             return "$%d" % amount
         Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
@@ -484,17 +492,24 @@ static func _get_intro_text_for_step(step: Dictionary) -> String:
 static func _get_game_name(game_id: String) -> String:
     match game_id:
         Util.ACTIVE_GAME_VANGUARD:
-            return "Vanguard"
+            return _tr("VANGUARD")
         Util.ACTIVE_GAME_MINING:
-            return "Deepcore"
+            return _tr("DEEPCORE")
         Util.ACTIVE_GAME_RED_SKY:
-            return "Red Sky Defense"
+            return _tr("RED SKY DEFENSE")
         Util.ACTIVE_GAME_TURKEY:
-            return "Turkey"
+            return _tr("TURKEY")
         Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
-            return "Reel Into Darkness"
+            return _tr("REEL INTO DARKNESS")
         _:
             return game_id
+
+static func _tr(key: String) -> String:
+    return TranslationServer.translate(key)
+
+static func _trf(key: String, args: Array) -> String:
+    var translated: String = _tr(key)
+    return translated % args if not args.is_empty() else translated
 
 static func _get_scene_path_for_game(game_id: String) -> String:
     match game_id:

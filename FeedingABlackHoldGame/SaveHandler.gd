@@ -1,5 +1,8 @@
 extends Node
 
+const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
+const MULTI_GAME_MODE := preload("res://MultiGameMode.gd")
+
 enum SCREEN_MODES{FULL_SCREEN, WINDOWED, BORDERLESS, BORDERLESS_FULL_SCREEN}
 
 var supported_locales = {
@@ -546,6 +549,7 @@ func update_vanguard_battle_crt_level(value: int) -> void:
 
 
 var fishing_progress_file_path = "user://fishing_incremental_progress.save"
+const LEGACY_MINING_FISHING_PROGRESS_FILE_PATH := "user://mining_incremental_progress.save"
 const FISHING_SAVE_VERSION := "1.0"
 const STARTING_FISHING_CURRENCY := 10
 const MAX_FISHING_BATTLE_LEVEL := 20
@@ -590,7 +594,7 @@ func reset_fishing_progress() -> void:
 
 func _get_fishing_progress_file_path() -> String:
     if Util.is_mining_game_active():
-        return "user://mining_incremental_progress.save"
+        return LEGACY_MINING_FISHING_PROGRESS_FILE_PATH
     return fishing_progress_file_path
 
 func load_fishing_progress():
@@ -638,7 +642,10 @@ func load_fishing_progress():
         save_fishing_progress()
 
 func save_fishing_progress():
-    var save_data = {
+    _save_fishing_progress_to_path(_get_fishing_progress_file_path())
+
+func _build_fishing_progress_save_data() -> Dictionary:
+    return {
         "version": fishing_save_version,
         "currency": fishing_currency,
         "lifetime_coins": fishing_lifetime_coins,
@@ -657,11 +664,17 @@ func save_fishing_progress():
         "ufo_spawn_timer_remaining": fishing_ufo_spawn_timer_remaining,
         "battle_speed_index": fishing_battle_speed_index,
     }
-    var file = FileAccess.open(_get_fishing_progress_file_path(), FileAccess.WRITE)
+
+func _save_fishing_progress_to_path(file_path: String) -> void:
+    var file = FileAccess.open(file_path, FileAccess.WRITE)
     if file == null:
         return
-    file.store_string(JSON.stringify(save_data))
+    file.store_string(JSON.stringify(_build_fishing_progress_save_data()))
     file.close()
+
+func reset_all_meta_progress() -> void:
+    CROSS_GAME_BONUSES.reset_progress()
+    MULTI_GAME_MODE.reset_progress()
 
 func needs_fishing_legacy_reset() -> bool:
     return fishing_requires_legacy_reset

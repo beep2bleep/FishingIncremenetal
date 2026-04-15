@@ -54,6 +54,9 @@ const MOON_SKY_X_START_FRAC := 0.78
 ## When the run timer hits zero the moon sits here: two thirds of a full-width journey from the right edge toward the left (one third from the left edge).
 const MOON_SKY_X_END_FRAC := 1.0 / 3.0
 
+func _trf(text: String, args: Array = []) -> String:
+	return tr(text) % args if not args.is_empty() else tr(text)
+
 enum RunState {
 	INTRO,
 	READY,
@@ -240,7 +243,7 @@ func _build_ui() -> void:
 	wallet_label.custom_minimum_size = Vector2(180.0, 32.0)
 	top_row.add_child(wallet_label)
 
-	crt_hud_label = _make_label("CRT off  O/P", 16, Color(0.62, 0.78, 0.9, 0.95))
+	crt_hud_label = _make_label(tr("CRT off  O/P"), 16, Color(0.62, 0.78, 0.9, 0.95))
 	crt_hud_label.custom_minimum_size = Vector2(200.0, 32.0)
 	top_row.add_child(crt_hud_label)
 
@@ -342,11 +345,11 @@ func _build_ui() -> void:
 
 	summary_species_chart = VBoxContainer.new()
 	summary_species_chart.add_theme_constant_override("separation", 8)
-	right_column.add_child(_wrap_chart("Catch Value", summary_species_chart))
+	right_column.add_child(_wrap_chart(tr("Catch Value"), summary_species_chart))
 
 	summary_run_chart = VBoxContainer.new()
 	summary_run_chart.add_theme_constant_override("separation", 8)
-	right_column.add_child(_wrap_chart("Run Stats", summary_run_chart))
+	right_column.add_child(_wrap_chart(tr("Run Stats"), summary_run_chart))
 
 	var button_row := HBoxContainer.new()
 	button_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -354,13 +357,13 @@ func _build_ui() -> void:
 	summary_root.add_child(button_row)
 
 	summary_again_button = Button.new()
-	summary_again_button.text = "Fish Again"
+	summary_again_button.text = tr("Fish Again")
 	summary_again_button.custom_minimum_size = Vector2(180.0, 52.0)
 	summary_again_button.pressed.connect(_on_summary_again_pressed)
 	button_row.add_child(summary_again_button)
 
 	summary_continue_button = Button.new()
-	summary_continue_button.text = "Upgrades"
+	summary_continue_button.text = tr("Upgrades")
 	summary_continue_button.custom_minimum_size = Vector2(180.0, 52.0)
 	summary_continue_button.pressed.connect(_on_summary_continue_pressed)
 	button_row.add_child(summary_continue_button)
@@ -477,10 +480,10 @@ func _update_crt_hud_label() -> void:
 	if crt_hud_label == null:
 		return
 	if crt_level <= 0:
-		crt_hud_label.text = "CRT off  (O −  P +)"
+		crt_hud_label.text = tr("CRT off  (O -  P +)")
 	else:
 		var pct: int = int(round(float(crt_level) / float(CRT_LEVEL_MAX) * 100.0))
-		crt_hud_label.text = "CRT %d/%d  %d%%  O/P" % [crt_level, CRT_LEVEL_MAX, pct]
+		crt_hud_label.text = _trf("CRT %d/%d  %d%%  O/P", [crt_level, CRT_LEVEL_MAX, pct])
 
 func _handle_crt_hotkey_input(event: InputEvent) -> bool:
 	if not (event is InputEventKey):
@@ -909,7 +912,7 @@ func _start_hooked_fish(index: int) -> void:
 	fish_entities[index] = fish
 	total_bites += 1
 	summary_results["bites"] = total_bites
-	fight_feedback_text = "Fish on!"
+	fight_feedback_text = tr("Fish on!")
 	fight_feedback_timer = 0.8
 	last_fight_prompt_signature = ""
 	_roll_next_fight_phase()
@@ -967,7 +970,7 @@ func _resolve_fight_phase() -> void:
 	_sync_hook_state_from_position()
 	total_clean_pulls += 1
 	summary_results["clean_pulls"] = total_clean_pulls
-	fight_feedback_text = "Clean pull!" if desired_hold else "Tension held."
+	fight_feedback_text = tr("Clean pull!") if desired_hold else tr("Tension held.")
 	fight_feedback_timer = 0.48
 	_play_reel_sound(SoundEffectSettings.SOUND_EFFECT_TYPE.REEL_BEAT_SUCCESS, 0.0, rng.randf_range(-0.02, 0.03))
 	if player_stamina <= 0.0:
@@ -981,7 +984,7 @@ func _apply_fight_mistake(beat_cost: float) -> void:
 	fish_stamina = min(fish_stamina_max, fish_stamina + beat_cost * 0.75)
 	total_mistakes += 1
 	summary_results["mistakes"] = total_mistakes
-	fight_feedback_text = "The fish surges!"
+	fight_feedback_text = tr("The fish surges!")
 	fight_feedback_timer = 0.64
 	_play_reel_sound(SoundEffectSettings.SOUND_EFFECT_TYPE.REEL_BEAT_FAIL, 0.0, rng.randf_range(-0.03, 0.02))
 	if player_stamina <= 0.0:
@@ -1007,7 +1010,7 @@ func _lose_hooked_fish() -> void:
 	last_fight_prompt_signature = ""
 	total_fish_lost += 1
 	summary_results["fish_lost"] = total_fish_lost
-	fight_feedback_text = "The fish got away."
+	fight_feedback_text = tr("The fish got away.")
 	fight_feedback_timer = 0.9
 	run_state = RunState.IDLE
 
@@ -1024,7 +1027,7 @@ func _land_hooked_fish() -> void:
 	fish_stamina = 0.0
 	hook_reel_pull_remaining = 0.0
 	hook_target_line_length = hook_line_length
-	fight_feedback_text = "Hauling in %s!" % landing_species_name
+	fight_feedback_text = _trf("Hauling in %s!", [landing_species_name])
 	fight_feedback_timer = 0.85
 	last_fight_prompt_signature = ""
 	run_state = RunState.LANDING
@@ -1057,7 +1060,7 @@ func _finish_landed_fish() -> void:
 				"time_limit": run_time_limit
 			})
 			return
-	fight_feedback_text = "Landed %s!" % landing_species_name
+	fight_feedback_text = _trf("Landed %s!", [landing_species_name])
 	fight_feedback_timer = 0.85
 	_play_reel_sound(SoundEffectSettings.SOUND_EFFECT_TYPE.REEL_FISH_LANDED, 0.0, rng.randf_range(-0.02, 0.02))
 	fish_entities[hooked_fish_index] = _create_fish_entity(rng.randf_range(2.0, float(run_config.get("max_depth", 24.0))))
@@ -1082,7 +1085,7 @@ func _begin_run_end() -> void:
 	landing_species_value = 0
 	landing_catch_depth = 0.0
 	last_fight_prompt_signature = ""
-	fight_feedback_text = "Horn's up. Dragging the line home."
+	fight_feedback_text = tr("Horn's up. Dragging the line home.")
 	fight_feedback_timer = 1.0
 
 func _show_summary() -> void:
@@ -1104,18 +1107,18 @@ func _show_summary() -> void:
 	REEL_PROGRESS.apply_run_results(summary_results)
 	_clear_summary_animation()
 
-	summary_title_label.text = "Night Haul"
+	summary_title_label.text = tr("Night Haul")
 	summary_money_target = total_money
 	summary_money_value = 0
 	summary_money_label.text = "$0"
 	summary_money_label.scale = Vector2.ONE
 	summary_stats_label.text = "\n".join([
-		"Run time: %.1fs" % float(run_config.get("time_limit", 30.0)),
-		"Fish caught: %d" % total_fish,
-		"Bites: %d" % int(summary_results.get("bites", 0)),
-		"Fish lost: %d" % int(summary_results.get("fish_lost", 0)),
-		"Mistakes: %d" % int(summary_results.get("mistakes", 0)),
-		"Deepest point: %.1fm" % deepest_depth,
+		_trf("Run time: %.1fs", [float(run_config.get("time_limit", 30.0))]),
+		_trf("Fish caught: %d", [total_fish]),
+		_trf("Bites: %d", [int(summary_results.get("bites", 0))]),
+		_trf("Fish lost: %d", [int(summary_results.get("fish_lost", 0))]),
+		_trf("Mistakes: %d", [int(summary_results.get("mistakes", 0))]),
+		_trf("Deepest point: %.1fm", [deepest_depth]),
 	])
 	summary_catch_log_label.text = _build_catch_log_text()
 	_clear_chart(summary_species_chart)
@@ -1131,7 +1134,7 @@ func _show_summary() -> void:
 func _build_catch_log_text() -> String:
 	var catch_log: Array = summary_results.get("catch_log", [])
 	if catch_log.is_empty():
-		return "No fish made it back over the rail this run."
+		return tr("No fish made it back over the rail this run.")
 	var groups: Dictionary = {}
 	for entry_variant in catch_log:
 		var entry: Dictionary = entry_variant

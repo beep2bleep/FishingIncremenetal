@@ -110,6 +110,7 @@ const CONSTRUCTION_ATTACK_SHIP_SPEED := 248.0
 const CONSTRUCTION_ATTACK_SHIP_ORBIT_BLEND := 0.62
 const CONSTRUCTION_TEMP_HIT_RADIUS_TURRET := 26.0
 const CONSTRUCTION_TEMP_HIT_RADIUS_SHIELD := 30.0
+const CONSTRUCTION_TURRET_FIXED_RANGE_MULT := 2.23
 const CM_SWEEP_COLOR := Color(0.45, 0.95, 1.0, 0.92)
 const SUMMARY_TEXT_BASE_COLOR := Color(0.88, 0.94, 1.0, 0.96)
 const SUMMARY_TEXT_MONEY_GREY := Color(0.62, 0.68, 0.74, 1.0)
@@ -146,6 +147,7 @@ enum RUN_STATES {RUNNING, UPGRADE, DEFEAT, SUMMARY}
 @onready var choice_button_5: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons/ChoiceButton5
 @onready var choice_button_6: Button = $OverlayCanvasLayer/UpgradePanel/UpgradeMargin/UpgradeVBox/UpgradeButtonsScroll/UpgradeButtons/ChoiceButton6
 @onready var summary_panel: PanelContainer = $OverlayCanvasLayer/SummaryPanel
+@onready var summary_vbox: VBoxContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox
 @onready var summary_title_label: Label = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryTitleLabel
 @onready var summary_label: RichTextLabel = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryLabel
 @onready var summary_charts_row: HBoxContainer = $OverlayCanvasLayer/SummaryPanel/SummaryMargin/SummaryVBox/SummaryChartsRow
@@ -384,6 +386,13 @@ var summary_chart_animation_active := false
 var summary_chart_animation_entries: Array[Dictionary] = []
 var summary_chart_animation_session_id := 0
 var summary_chart_tick_timer := 0.0
+var summary_hints: Array[String] = []
+var summary_hint_index := 0
+var summary_hint_panel: PanelContainer
+var summary_hint_title_label: Label
+var summary_hint_label: Label
+var summary_hint_left_button: Button
+var summary_hint_right_button: Button
 var summary_text_tween: Tween
 var summary_text_pop_tween: Tween
 var summary_text_view_model: Dictionary = {}
@@ -413,6 +422,7 @@ func _ready() -> void:
     _ensure_power_wheel_text_overlay()
     _setup_run_start_banner()
     _setup_defeat_audio()
+    _setup_summary_hint_ui()
     _apply_summary_theme()
     _refresh_upgrade_panel_layout()
     _setup_multi_mode_overlay()
@@ -838,6 +848,56 @@ func _show_run_start_banner() -> void:
         _refresh_mouse_capture_state()
     )
 
+func _setup_summary_hint_ui() -> void:
+    if summary_vbox == null or summary_hint_panel != null:
+        return
+    summary_hint_panel = PanelContainer.new()
+    summary_hint_panel.name = "SummaryHintPanel"
+    summary_vbox.add_child(summary_hint_panel)
+    if start_wave_section != null:
+        summary_vbox.move_child(summary_hint_panel, start_wave_section.get_index())
+
+    var margin := MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 12)
+    margin.add_theme_constant_override("margin_top", 10)
+    margin.add_theme_constant_override("margin_right", 12)
+    margin.add_theme_constant_override("margin_bottom", 10)
+    summary_hint_panel.add_child(margin)
+
+    var vbox := VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 8)
+    margin.add_child(vbox)
+
+    summary_hint_title_label = Label.new()
+    summary_hint_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    vbox.add_child(summary_hint_title_label)
+
+    summary_hint_label = Label.new()
+    summary_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    summary_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    summary_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    summary_hint_label.custom_minimum_size = Vector2(0.0, 56.0)
+    vbox.add_child(summary_hint_label)
+
+    var nav_row := HBoxContainer.new()
+    nav_row.alignment = BoxContainer.ALIGNMENT_CENTER
+    nav_row.add_theme_constant_override("separation", 10)
+    vbox.add_child(nav_row)
+
+    summary_hint_left_button = Button.new()
+    summary_hint_left_button.text = "<"
+    summary_hint_left_button.custom_minimum_size = Vector2(46.0, 34.0)
+    summary_hint_left_button.pressed.connect(_cycle_summary_hint.bind(-1))
+    nav_row.add_child(summary_hint_left_button)
+
+    summary_hint_right_button = Button.new()
+    summary_hint_right_button.text = ">"
+    summary_hint_right_button.custom_minimum_size = Vector2(46.0, 34.0)
+    summary_hint_right_button.pressed.connect(_cycle_summary_hint.bind(1))
+    nav_row.add_child(summary_hint_right_button)
+
+    summary_hint_panel.hide()
+
 func _setup_defeat_audio() -> void:
     if defeat_sound_player != null:
         return
@@ -891,6 +951,7 @@ func _show_pre_run_panel() -> void:
     summary_damage_chart.hide()
     summary_label.clear()
     summary_label.append_text(_build_pre_run_summary_bbcode())
+    _setup_summary_hints({})
     summary_stats_label.text = _build_pre_run_stats_text()
     continue_button.text = tr("Return to Upgrades")
     retry_button.text = tr("Deploy")
@@ -905,6 +966,43 @@ func _build_pre_run_summary_bbcode() -> String:
 
 func _build_pre_run_stats_text() -> String:
     return "Towers hold fixed lanes. Drones orbit close defense. Escort drones roam outward. Collectors chase scrap."
+
+func _build_summary_hints(view_model: Dictionary = {}) -> Array[String]:
+    var hints: Array[String] = [
+        tr("RED_SKY_HINT_POWER_WHEEL"),
+        tr("RED_SKY_HINT_COUNTERMEASURES"),
+        tr("RED_SKY_HINT_NUKES_PURPLE"),
+    ]
+    if bool(view_model.get("show_purple_shot_death_hint", false)):
+        hints.push_front(tr("RED_SKY_HINT_PURPLE_SHOT_DEFEAT"))
+    return hints
+
+func _setup_summary_hints(view_model: Dictionary = {}) -> void:
+    summary_hints = _build_summary_hints(view_model)
+    summary_hint_index = 0 if summary_hints.is_empty() else randi() % summary_hints.size()
+    _refresh_summary_hint()
+
+func _refresh_summary_hint() -> void:
+    if summary_hint_panel == null or summary_hint_title_label == null or summary_hint_label == null or summary_hint_left_button == null or summary_hint_right_button == null:
+        return
+    if summary_hints.is_empty():
+        summary_hint_panel.hide()
+        summary_hint_title_label.text = ""
+        summary_hint_label.text = ""
+        return
+    summary_hint_index = wrapi(summary_hint_index, 0, summary_hints.size())
+    summary_hint_panel.show()
+    summary_hint_title_label.text = _trf("BATTLE_HINT_NUMBERED", [summary_hint_index + 1, summary_hints.size()])
+    summary_hint_label.text = summary_hints[summary_hint_index]
+    var show_navigation: bool = summary_hints.size() > 1
+    summary_hint_left_button.visible = show_navigation
+    summary_hint_right_button.visible = show_navigation
+
+func _cycle_summary_hint(direction: int) -> void:
+    if summary_hints.is_empty():
+        return
+    summary_hint_index += direction
+    _refresh_summary_hint()
 
 func _refresh_start_wave_selector() -> void:
     if start_wave_buttons_grid == null or start_wave_dropdown == null:
@@ -1928,7 +2026,7 @@ func _process_temporary_defenses(delta: float) -> void:
         var turret_pos: Vector2 = turret.get("pos", turret_home_pos)
         var turret_vel: Vector2 = turret.get("vel", Vector2.ZERO)
         var standoff_distance: float = CONSTRUCTION_ATTACK_SHIP_BODY_LENGTH * CONSTRUCTION_ATTACK_SHIP_STANDOFF_MULT
-        var engage_range: float = temporary_turret_range * build_power
+        var engage_range: float = temporary_turret_range * CONSTRUCTION_TURRET_FIXED_RANGE_MULT
         var enemy_index: int = _find_nearest_enemy_index(turret_pos, engage_range)
         var fire_target_valid := false
         if enemy_index != -1:
@@ -4035,9 +4133,10 @@ func _get_run_start_hint_lines() -> Array[String]:
     var hint_lines: Array[String] = []
     var completed_runs: int = int(persistent_data.get("runs", 0))
     if completed_runs < 6:
-        hint_lines.append(tr("Hint: steer the Power Wheel with WASD or hold right mouse and drag it."))
+        hint_lines.append(tr("RED_SKY_HINT_POWER_WHEEL"))
     if completed_runs < 8 and countermeasures_rating > 0.0:
-        hint_lines.append(tr("Hint: countermeasures build CM charges over time and spend them to sweep enemy bullets, including purple shots. Nukes can also destroy purple shots."))
+        hint_lines.append(tr("RED_SKY_HINT_COUNTERMEASURES"))
+        hint_lines.append(tr("RED_SKY_HINT_NUKES_PURPLE"))
     return hint_lines
 
 func _get_power_multiplier(slot_key: String) -> float:
@@ -4456,6 +4555,18 @@ func _apply_summary_theme() -> void:
         summary_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.55))
         summary_label.add_theme_constant_override("shadow_offset_x", 1)
         summary_label.add_theme_constant_override("shadow_offset_y", 1)
+    if summary_hint_panel != null:
+        _style_summary_panel_box(summary_hint_panel, SUMMARY_CHART_PANEL_BG, SUMMARY_CHART_PANEL_BORDER, 6)
+    if summary_hint_title_label != null:
+        summary_hint_title_label.add_theme_color_override("font_color", SUMMARY_CHART_TITLE_COLOR)
+        summary_hint_title_label.add_theme_font_size_override("font_size", 18)
+    if summary_hint_label != null:
+        summary_hint_label.add_theme_color_override("font_color", SUMMARY_TEXT_BASE_COLOR)
+        summary_hint_label.add_theme_font_size_override("font_size", 19)
+    if summary_hint_left_button != null:
+        summary_hint_left_button.add_theme_color_override("font_color", Color(0.92, 0.96, 1.0, 1.0))
+    if summary_hint_right_button != null:
+        summary_hint_right_button.add_theme_color_override("font_color", Color(0.92, 0.96, 1.0, 1.0))
     if continue_button != null:
         continue_button.add_theme_color_override("font_color", Color(0.92, 0.96, 1.0, 1.0))
     if retry_button != null:
@@ -4470,6 +4581,8 @@ func _reset_summary_presentation_state() -> void:
     summary_text_view_model.clear()
     summary_text_progress = 0.0
     summary_text_money_pop_progress = 0.0
+    summary_hints.clear()
+    _refresh_summary_hint()
 
 func _show_post_run_summary(results: Dictionary) -> void:
     _reset_summary_presentation_state()
@@ -4484,6 +4597,7 @@ func _show_post_run_summary(results: Dictionary) -> void:
     summary_text_progress = 0.0
     summary_text_money_pop_progress = 0.0
     _render_post_run_summary_text(view_model, 0.0)
+    _setup_summary_hints(view_model)
     var wallet_gain: float = float(view_model.get("wallet_gain", 0))
     var duration: float = _get_summary_text_animation_duration(wallet_gain)
     if duration <= 0.0:
@@ -4538,14 +4652,6 @@ func _render_post_run_summary_text(view_model: Dictionary, progress: float) -> v
         "[color=%s]Meta scrap earned[/color]" % _color_to_bbcode(SUMMARY_TEXT_BASE_COLOR),
         "%s" % _format_summary_money_span(animated_wallet, wallet_gain, progress)
     ])
-    if bool(view_model.get("show_purple_shot_death_hint", false)):
-        lines.append("")
-        lines.append(
-            "[i][color=%s]%s[/color][/i]" % [
-                _color_to_bbcode(SUMMARY_TEXT_BASE_COLOR),
-                tr("Purple shots can be cleared with countermeasures, and nukes can destroy them too.")
-            ]
-        )
     if bool(view_model.get("show_cursor_escape_hint", false)):
         lines.append("")
         lines.append(

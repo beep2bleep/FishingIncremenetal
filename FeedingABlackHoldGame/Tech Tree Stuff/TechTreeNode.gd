@@ -17,6 +17,9 @@ const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 static var _icon_texture_cache: Dictionary = {}
 static var _active_tooltip_node: TechTreeNode = null
 
+func _trf(text: String, args: Array = []) -> String:
+    return tr(text) % args if not args.is_empty() else tr(text)
+
 signal state_changed
 signal selected(node: TechTreeNode)
 signal unlocked(node: TechTreeNode)
@@ -446,7 +449,7 @@ func _setup_touch_buy_button() -> void:
         return
     touch_buy_button = Button.new()
     touch_buy_button.name = "TouchBuyButton"
-    touch_buy_button.text = "BUY"
+    touch_buy_button.text = tr("BUY")
     touch_buy_button.focus_mode = Control.FOCUS_NONE
     touch_buy_button.custom_minimum_size = Vector2(0, 112)
     touch_buy_button.visible = false
@@ -470,8 +473,8 @@ func _get_unlock_requirement_text() -> String:
         return ""
     var required_name: String = required_node.upgrade.sim_name.strip_edges()
     if required_name == "":
-        required_name = "the required upgrade"
-    return "LOCKED: Requires %s." % required_name
+        required_name = tr("the required upgrade")
+    return _trf("LOCKED: Requires %s.", [required_name])
 
 func unlock_node(target_tier = 1):
     if upgrade:
@@ -547,16 +550,16 @@ func update():
     if using_sim_display:
         sim_effect_text = upgrade.sim_description.strip_edges()
         if sim_effect_text == "":
-            sim_effect_text = "Upgrade effect applied on unlock."
+            sim_effect_text = tr("Upgrade effect applied on unlock.")
     if using_sim_display:
         %Description.text = "%s\n%s" % [upgrade.sim_name, sim_effect_text]
         %"Node Type".text = _get_sim_icon_fallback_text()
-        %"Upgrade Amount".text = "UNLOCK"
+        %"Upgrade Amount".text = tr("UNLOCK")
     else:
         %"Node Type".text = tr(Util.MODS.find_key(upgrade.mod))
 
     if upgrade.type == Util.NODE_TYPES.ROGUELIKE_DUMMY:
-        %Description.text = "CHOOSE AN UPGRADE"
+        %Description.text = tr("CHOOSE AN UPGRADE")
         %"Cost Hbox".show()
         %TitlePanel.hide()
         %"Upgrade Amount".hide()
@@ -570,7 +573,7 @@ func update():
             %Description.text = Global.mods.get_from_to(upgrade.mod, upgrade.get_current_teir_value())
         %"Mod Icon".texture = locked_texture
         if demo_lock_label != null:
-            demo_lock_label.text = "Locked in Demo"
+            demo_lock_label.text = tr("Locked in Demo")
             demo_lock_label.show()
 
     elif upgrade.is_at_max() == true:
@@ -578,9 +581,9 @@ func update():
             %"Is Max".show()
         if using_sim_display:
             %Description.text = "%s\n%s" % [upgrade.sim_name, sim_effect_text]
-            %"Upgrade Amount".text = "UNLOCKED"
+            %"Upgrade Amount".text = tr("UNLOCKED")
         else:
-            %Description.text = str("Currently: ", Global.mods.get_mod_value(upgrade.mod, Global.mods.get_mod(upgrade.mod)))
+            %Description.text = _trf("Currently: %s", [Global.mods.get_mod_value(upgrade.mod, Global.mods.get_mod(upgrade.mod))])
             %"Upgrade Amount".text = str("$", Util.get_number_short_text(upgrade.get_cost()), " : ", Global.mods.get_mod_value(upgrade.mod, upgrade.get_current_teir_value(), true))
         %"Mod Icon".texture = _get_upgrade_icon_texture()
     else:
@@ -599,7 +602,7 @@ func update():
 
         if using_sim_display:
             %Description.text = "%s\n%s" % [upgrade.sim_name, sim_effect_text]
-            %"Upgrade Amount".text = "UNLOCK"
+            %"Upgrade Amount".text = tr("UNLOCK")
         else:
             %Description.text = Global.mods.get_from_to(upgrade.mod, upgrade.get_current_teir_value())
             %"Upgrade Amount".text = str(Global.mods.get_mod_value(upgrade.mod, upgrade.get_current_teir_value(), true))
@@ -609,7 +612,7 @@ func update():
     cost = upgrade.get_cost()
     %Cost.visible = cost != 0
     if upgrade != null and CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
-        %Cost.text = "%d gem%s" % [int(cost), "" if int(cost) == 1 else "s"]
+        %Cost.text = _trf("%d gem", [int(cost)]) if int(cost) == 1 else _trf("%d gems", [int(cost)])
     else:
         %Cost.text = str("$", Util.get_number_short_text(cost))
     if cost == 0:

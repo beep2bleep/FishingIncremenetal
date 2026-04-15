@@ -38,8 +38,8 @@ static func apply_simulation_upgrades() -> void:
         upgrade.value = 0.0
         upgrade.max_tier = int(entry.get("max_tier", 1))
         upgrade.base_cost = int(entry.get("base_cost", 0))
-        upgrade.cost_scale = float(entry.get("cost_scale", 1.0))
-        upgrade.tier_costs = []
+        upgrade.cost_scale = 0.0
+        upgrade.tier_costs = entry.get("tier_costs", [])
         upgrade.demo_locked = 0
         if demo_mode_enabled and REEL_DATA.should_lock_meta_upgrade_in_demo(entry):
             upgrade.demo_locked = 1

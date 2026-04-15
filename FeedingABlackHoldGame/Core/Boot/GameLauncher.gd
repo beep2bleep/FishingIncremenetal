@@ -14,7 +14,6 @@ const TURKEY_BUTTON_TEXT := "TURKEY"
 const REEL_BUTTON_TEXT := "REEL INTO DARKNESS"
 const COMBINED_BUTTON_TEXT := "COMBINED MODE"
 const VANGUARD_LAUNCHER_DETAIL_KEY := "GAME_LAUNCHER_VANGUARD_CARD_DETAIL"
-const COMBINED_DEMO_LOCK_TEXT_KEY := "LOCKED_IN_DEMO_MODE"
 const LANGUAGE_BUTTON_WIDTH := 340.0
 const LANGUAGE_BUTTON_FONT_SIZE := 20
 const LANGUAGE_BUTTON_TITLE_FONT_SIZE := 26
@@ -942,15 +941,10 @@ func _refresh_game_card_text(button: Button, game_id: String) -> void:
     var card_def: Dictionary = _get_game_card_definition(game_id)
     var title := button.get_meta("card_title_label", null) as Label
     var detail := button.get_meta("card_detail_label", null) as Label
-    var demo_lock_label: Label = null
-    if button.has_meta("card_demo_lock_label"):
-        demo_lock_label = button.get_meta("card_demo_lock_label") as Label
     if title != null and is_instance_valid(title):
         title.text = tr(str(card_def.get("title", game_id)))
     if detail != null and is_instance_valid(detail):
         detail.text = tr(str(card_def.get("detail", "")))
-    if demo_lock_label != null and is_instance_valid(demo_lock_label):
-        demo_lock_label.text = tr(COMBINED_DEMO_LOCK_TEXT_KEY)
     _queue_fit_game_cards()
 
 func _queue_fit_game_cards() -> void:
@@ -1236,7 +1230,7 @@ func _make_demo_lock_band_style() -> StyleBoxFlat:
     return style
 
 func _should_show_demo_lock_overlay(game_id: String) -> bool:
-    return bool(ProjectSettings.get_setting("global/Demo", false)) and game_id == Util.HIGH_LEVEL_MODE_ALL
+    return false
 
 func _setup_language_panel() -> void:
     if language_button != null and is_instance_valid(language_button):

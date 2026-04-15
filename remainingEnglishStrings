@@ -1,0 +1,252 @@
+# Remaining English Strings Audit
+
+Date: 2026-04-15
+Project scanned: `FeedingABlackHoldGame`
+
+## Scope
+
+This audit focused on likely customer-facing strings in first-party Godot scripts and scenes.
+
+Included:
+- `*.gd`
+- `*.tscn`
+
+Excluded from the actionable pass:
+- `addons/`
+- `demo/`
+- `simulation/`
+- build output, assets, third-party packs, and raw translation files
+
+## Summary
+
+There are still multiple hardcoded English strings in player-facing UI and gameplay flow.
+
+The biggest remaining clusters are:
+- shared/core UI scenes
+- `Games/Mining`
+- `Games/RedSkyDefense`
+- `Games/Turkey`
+- `Games/ReelIntoDarkness`
+- `Tech Tree Stuff/TechTreeNode.gd`
+
+Some scene text is clearly placeholder or debug-only, but several strings appear to be visible in normal gameplay.
+
+## Confirmed hardcoded English
+
+### Core shared UI and menus
+
+- `FeedingABlackHoldGame/Core/Boot/GameLauncher.tscn:71` `CHOOSE A GAME`
+- `FeedingABlackHoldGame/Core/Boot/GameLauncher.tscn:78` `Pick which project path to launch.`
+- `FeedingABlackHoldGame/Core/Boot/GameLauncher.tscn:86` `VANGUARD`
+- `FeedingABlackHoldGame/Core/Boot/GameLauncher.tscn:93` `DEEPCORE`
+- `FeedingABlackHoldGame/Core/Boot/GameLauncher.tscn:100` `RED SKY DEFENSE`
+- `FeedingABlackHoldGame/Core/Boot/GameLauncher.tscn:107` `TURKEY`
+- `FeedingABlackHoldGame/Core/Boot/GameLauncher.tscn:114` `REEL INTO DARKNESS`
+- `FeedingABlackHoldGame/Core/Boot/GameLauncher.tscn:121` `COMBINED MODE`
+
+- `FeedingABlackHoldGame/Main Menu.tscn:91` `VANGUARD: IDLE AUTO-BATTLER`
+- `FeedingABlackHoldGame/Main Menu.tscn:135` `PLAY`
+- `FeedingABlackHoldGame/Main Menu.tscn:162` `SETTINGS`
+- `FeedingABlackHoldGame/Main Menu.tscn:184` `DISCORD`
+- `FeedingABlackHoldGame/Main Menu.tscn:207` `PRESS KIT`
+- `FeedingABlackHoldGame/Main Menu.tscn:230` `QUIT`
+- `FeedingABlackHoldGame/Main Menu.tscn:275` `SETTINGS`
+- `FeedingABlackHoldGame/Main Menu.tscn:300` `BACK`
+
+- `FeedingABlackHoldGame/PauseScreen.tscn:95` `PAUSED`
+- `FeedingABlackHoldGame/PauseScreen.tscn:113` `RESUME`
+- `FeedingABlackHoldGame/PauseScreen.tscn:132` `END SESSION`
+- `FeedingABlackHoldGame/PauseScreen.tscn:150` `SETTING`
+- `FeedingABlackHoldGame/PauseScreen.tscn:169` `WISHLIST`
+- `FeedingABlackHoldGame/PauseScreen.tscn:187` `QUIT`
+- `FeedingABlackHoldGame/PauseScreen.tscn:237` `SETTINGS`
+- `FeedingABlackHoldGame/PauseScreen.tscn:260` `BACK`
+
+- `FeedingABlackHoldGame/Settings.tscn:133` `Confirm Upgrade Purchase - Best for Touch`
+
+- `FeedingABlackHoldGame/CustomButton.tscn:23` `UPGRADES`
+- `FeedingABlackHoldGame/Controls.tscn:179` `MINE`
+- `FeedingABlackHoldGame/Controls.tscn:235` `OR`
+
+### Shared result / summary screens
+
+- `FeedingABlackHoldGame/End Of Run Summary.tscn:101` `Baby Black Hole`
+- `FeedingABlackHoldGame/End Of Run Summary.tscn:141` `Size`
+- `FeedingABlackHoldGame/End Of Run Summary.tscn:426` `CONTINUE`
+
+- `FeedingABlackHoldGame/Tier Summary.tscn:81` `Milestone Reached!`
+- `FeedingABlackHoldGame/Tier Summary.tscn:166` `Start at`
+- `FeedingABlackHoldGame/Tier Summary.tscn:241` `Completion Reward`
+- `FeedingABlackHoldGame/Tier Summary.tscn:318` `Current Money`
+
+- `FeedingABlackHoldGame/Resource Gained Summary.tscn:64` `TYPE`
+- `FeedingABlackHoldGame/Resource Gained Summary.tscn:157` `Stat Name`
+- `FeedingABlackHoldGame/SummaryScreenStat.tscn:109` `Stat Name`
+
+### Debug / internal tools with visible English
+
+These are still hardcoded English, but may be lower priority if they never ship:
+
+- `FeedingABlackHoldGame/Debugger.tscn:32` `Debugger`
+- `FeedingABlackHoldGame/Debugger.tscn:38` `FPS: XX`
+- `FeedingABlackHoldGame/Debugger.tscn:43` `Unlock Next Section`
+- `FeedingABlackHoldGame/Debugger.tscn:47` `Unlock Next Act`
+- `FeedingABlackHoldGame/Debugger.tscn:53` `Speed: XXX`
+- `FeedingABlackHoldGame/Debugger.tscn:71` `Asteroid Timer: XX`
+- `FeedingABlackHoldGame/Debugger.tscn:85` `End Run`
+- `FeedingABlackHoldGame/Debugger.tscn:93` `+1k Clicker Damage`
+- `FeedingABlackHoldGame/Debugger.tscn:106` `Comet`
+- `FeedingABlackHoldGame/Debugger.tscn:111` `Planet`
+- `FeedingABlackHoldGame/Debugger.tscn:116` `Add Moon To Clicker`
+- `FeedingABlackHoldGame/Debugger.tscn:124` `Reset Steam Achivements`
+- `FeedingABlackHoldGame/Debugger.tscn:128` `Get Test Achivement`
+- `FeedingABlackHoldGame/Debugger.tscn:140` `Level Up Black Hole`
+- `FeedingABlackHoldGame/Debugger.tscn:144` `+10 Seconds`
+
+- `FeedingABlackHoldGame/Debugger.gd:31` `FPS: `
+
+### Fishing / battle flow
+
+- `FeedingABlackHoldGame/Fishing/BattleScene.gd:5640` `Retro CRT filter (world only; HUD text bends with the screen but stays sharp). Click to cycle. [ and ] to tune.`
+- `FeedingABlackHoldGame/Fishing/BattleScene.gd:5651` `CRT: Off`
+- `FeedingABlackHoldGame/Fishing/BattleScene.gd:5653` `CRT: %d/%d`
+
+Note:
+- `FeedingABlackHoldGame/Fishing/BattleScene.gd` also contains direct symbol text for buttons like `-` and `+`, but those are probably acceptable and not English-localization issues.
+
+### Mining
+
+- `FeedingABlackHoldGame/Games/Mining/UI/MiningUpgradePanel.tscn:32` `MINING UPGRADES`
+- `FeedingABlackHoldGame/Games/Mining/UI/MiningUpgradePanel.tscn:37` `Wallet`
+- `FeedingABlackHoldGame/Games/Mining/UI/MiningUpgradePanel.tscn:53` `Summary`
+- `FeedingABlackHoldGame/Games/Mining/UI/MiningUpgradePanel.tscn:62` `Reset Mining Save`
+- `FeedingABlackHoldGame/Games/Mining/UI/MiningUpgradePanel.tscn:86` `Checkpoint Beacons`
+- `FeedingABlackHoldGame/Games/Mining/UI/MiningUpgradePanel.tscn:94` `Gun Loadout`
+- `FeedingABlackHoldGame/Games/Mining/UI/MiningUpgradePanel.tscn:119` `All Mining Upgrades`
+
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:27` `Wallet`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:31` `Phase`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:35` `Depth`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:45` `Timer`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:60` `Drill`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:75` `Cargo`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:90` `XP`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:100` `Weapons`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:105` `Boss`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:146` `Summary`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:162` `Run stats`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:196` `Hint 1/1`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:224` `Hint`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:228` `Dive`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:232` `Reset Save`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:236` `Checkpoint Beacons`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:244` `Gun Loadout`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:252` `Upgrades`
+- `FeedingABlackHoldGame/Games/Mining/Scenes/MiningMain.tscn:284` `Hint`
+
+### Red Sky Defense
+
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:38` `RED SKY MODE`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:42` `Wave`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:46` `Base`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:50` `Score`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:54` `Nukes`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:59` `Auto-fire online.`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:84` `Wave Cleared`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:90` `Choose one upgrade.`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:106` `Gun Damage +4`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:110` `Bullet Speed +120`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:114` `Base Health +30`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:157` `Red Sky Defense Summary`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:166` `Run complete.`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:192` `Stats`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:200` `Start Wave`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:205` `Beat later waves to unlock deeper starts.`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:226` `Return to Upgrades`
+- `FeedingABlackHoldGame/Games/RedSkyDefense/Scenes/MissleMain.tscn:231` `Run Again`
+
+### Turkey
+
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:69` `TURKEY`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:74` `Wallet: $0`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:84` `Frame 1, Ball 1`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:89` `Click once to start your approach, move the mouse left or right to pick the line, then click again to throw.`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:114` `Starting Position`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:123` `Spin`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:133` `Default line is center. Starter gear is weak on purpose, so a strike should feel rare.`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:140` `Shot power-up (each once per frame when unlocked)`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:152` `Power Gauge: click once to begin.`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:199` `SERIES COMPLETE`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:229` `Summary`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:257` `UPGRADES`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.tscn:262` `PLAY AGAIN`
+
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.gd:2688` `Series complete.`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.gd:2692` `Frame %d, Ball %d`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.gd:2697` `Wallet: $%d   Ball: %.1f lb   Tier: %s`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.gd:2704` `Power Gauge: click once to begin.`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.gd:2706` `Power Gauge: %d%%`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.gd:2708` `Power Locked: %d%%`
+- `FeedingABlackHoldGame/Games/Turkey/Scenes/TurkeyMain.gd:2710` `Power Gauge: series finished.`
+
+### Reel Into Darkness
+
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:357` `Fish Again`
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:363` `Upgrades`
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:480` `CRT off  (O −  P +)`
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:483` `CRT %d/%d  %d%%  O/P`
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:912` `Fish on!`
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:970` `Clean pull!`
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:970` `Tension held.`
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:984` `The fish surges!`
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:1010` `The fish got away.`
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:1027` `Hauling in %s!`
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:1060` `Landed %s!`
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:1085` `Horn's up. Dragging the line home.`
+- `FeedingABlackHoldGame/Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd:1107` `Night Haul`
+
+### Tech tree / upgrade node UI
+
+- `FeedingABlackHoldGame/Tech Tree Stuff/TechTreeNode.gd:449` `BUY`
+- `FeedingABlackHoldGame/Tech Tree Stuff/TechTreeNode.gd:550` `Upgrade effect applied on unlock.`
+- `FeedingABlackHoldGame/Tech Tree Stuff/TechTreeNode.gd:554` `UNLOCK`
+- `FeedingABlackHoldGame/Tech Tree Stuff/TechTreeNode.gd:559` `CHOOSE AN UPGRADE`
+- `FeedingABlackHoldGame/Tech Tree Stuff/TechTreeNode.gd:573` `Locked in Demo`
+- `FeedingABlackHoldGame/Tech Tree Stuff/TechTreeNode.gd:581` `UNLOCKED`
+- `FeedingABlackHoldGame/Tech Tree Stuff/TechTreeNode.gd:602` `UNLOCK`
+- `FeedingABlackHoldGame/Tech Tree Stuff/TechTreeNode.gd:612` `%d gem%s`
+
+### Miscellaneous in gameplay
+
+- `FeedingABlackHoldGame/Space/Star.gd:48` `FIREBALL`
+- `FeedingABlackHoldGame/MoneyUI.gd:29` `$` prefix is hardcoded, but this is probably formatting rather than a localization issue
+
+## Strings that may already be intended as translation keys
+
+These showed up in scenes, but they look like keys/placeholders rather than plain English:
+
+- `CURRENT_MONEY`
+- `STATS`
+- `MODE NAME HERE`
+- `Description Here`
+- `Date Here`
+- `NEW_GAME_CONGIRM_TITLE`
+- `NEW_GAME_CONFRIM_LABEL`
+- `BATTLE_*`
+- `UI_*`
+- `GAME_OVER_*`
+- `SESSION_START_TEXT`
+- `TIMER_RUN_OUT_TEXT`
+
+These likely do not need fixing unless they are leaking to players at runtime.
+
+## Recommended next pass
+
+1. Replace visible scene literals with translation keys or `tr(...)`-driven values.
+2. Move script-generated gameplay/status text to translation keys, especially in:
+   - `Games/ReelIntoDarkness/Scenes/ReelIntoDarknessMain.gd`
+   - `Games/Turkey/Scenes/TurkeyMain.gd`
+   - `Tech Tree Stuff/TechTreeNode.gd`
+   - `Fishing/BattleScene.gd`
+3. Decide whether debug-only UI should be localized or ignored for shipping builds.
+4. Re-scan after those fixes, because several placeholders may hide additional runtime English assembled from code paths not covered by this static pass.
