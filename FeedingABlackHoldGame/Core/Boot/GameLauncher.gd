@@ -5,6 +5,10 @@ const STAR_TEXTURE: Texture2D = preload("res://Art/star_tiny.png")
 const BACKGROUND_PARTICLE_MATERIAL: Material = preload("res://Upgrade Tree Particles.tres")
 const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const MULTI_GAME_MODE := preload("res://MultiGameMode.gd")
+const FONT_FALLBACK_JP: FontFile = preload("res://Theme/Fallbacks/NotoSansCJKjp-Regular.otf")
+const FONT_FALLBACK_SC: FontFile = preload("res://Theme/Fallbacks/NotoSansCJKsc-Regular.otf")
+const FONT_FALLBACK_KR: FontFile = preload("res://Theme/Fallbacks/NotoSansCJKkr-Regular.otf")
+const FONT_FALLBACK_THAI: FontFile = preload("res://Theme/Fallbacks/NotoSansThai-Regular.ttf")
 
 const TITLE_TEXT_KEY := "MAIN MENU"
 const VANGUARD_BUTTON_TEXT := "VANGUARD"
@@ -104,6 +108,7 @@ func _ready() -> void:
     _setup_multi_tier_dialog()
     _setup_multi_summary_overlay()
     _refresh_text()
+    _apply_launcher_multilingual_fonts()
     _apply_background_palette(_get_background_palette_for_game(""), false)
     _refresh_launcher_panel_layout()
     if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
@@ -141,6 +146,7 @@ func _on_viewport_size_changed() -> void:
 func _notification(what: int) -> void:
     if what == NOTIFICATION_TRANSLATION_CHANGED:
         _refresh_text()
+        _apply_launcher_multilingual_fonts()
 
 func _input(event: InputEvent) -> void:
     if not event.is_action_pressed("escape") and not event.is_action_pressed("back"):
@@ -249,7 +255,38 @@ func _refresh_text() -> void:
 
     _rebuild_language_buttons()
     _rebuild_language_button_preview()
+    _apply_launcher_multilingual_fonts()
     _queue_fit_game_cards()
+
+func _get_launcher_multilingual_font() -> FontFile:
+    var fallback_fonts: Array[Font] = [FONT_FALLBACK_JP, FONT_FALLBACK_KR, FONT_FALLBACK_THAI]
+    FONT_FALLBACK_SC.fallbacks = fallback_fonts
+    return FONT_FALLBACK_SC
+
+func _apply_multilingual_font_to_control(control: Control) -> void:
+    if control == null or not is_instance_valid(control):
+        return
+    var multilingual_font: FontFile = _get_launcher_multilingual_font()
+    if control is Label:
+        (control as Label).add_theme_font_override("font", multilingual_font)
+    elif control is Button:
+        (control as Button).add_theme_font_override("font", multilingual_font)
+    elif control is RichTextLabel:
+        var rich_text := control as RichTextLabel
+        rich_text.add_theme_font_override("normal_font", multilingual_font)
+        rich_text.add_theme_font_override("bold_font", multilingual_font)
+        rich_text.add_theme_font_override("italics_font", multilingual_font)
+        rich_text.add_theme_font_override("bold_italics_font", multilingual_font)
+
+func _apply_launcher_multilingual_fonts() -> void:
+    _apply_multilingual_font_to_control(title_label)
+    _apply_multilingual_font_to_control(subtitle_label)
+    _apply_multilingual_font_to_control(language_button)
+    _apply_multilingual_font_to_control(language_title_label)
+    _apply_multilingual_font_to_control(language_close_button)
+    _apply_multilingual_font_to_control(language_button_title_label)
+    _apply_multilingual_font_to_control(language_button_selected_header_label)
+    _apply_multilingual_font_to_control(language_button_selected_value_label)
 
 func _setup_settings_panel() -> void:
     if settings_button != null and is_instance_valid(settings_button):
@@ -1101,7 +1138,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
             return {
                 "title": COMBINED_BUTTON_TEXT,
                 "detail": "COMBINED_MODE_LAUNCHER_DESCRIPTION",
-                "asset_rel_path": "Combined/combined with objects remvoed.png",
+                "asset_rel_path": "Combined/combined title card centered.png",
                 "accent": Color(0.55, 0.96, 0.58, 1.0),
                 "bg_top": Color(0.08, 0.04, 0.1, 1.0),
                 "bg_bottom": Color(0.02, 0.06, 0.09, 1.0)
@@ -1397,6 +1434,7 @@ func _rebuild_language_buttons() -> void:
         button.add_theme_font_size_override("font_size", LANGUAGE_ENTRY_FONT_SIZE)
         button.pressed.connect(_on_language_selected.bind(locale_code))
         _style_utility_button(button)
+        _apply_multilingual_font_to_control(button)
         language_list_container.add_child(button)
 
 func _rebuild_language_button_preview() -> void:
@@ -1429,6 +1467,7 @@ func _rebuild_language_button_preview() -> void:
         label.add_theme_font_size_override("font_size", LANGUAGE_BUTTON_LIST_FONT_SIZE)
         label.add_theme_color_override("font_color", Color(0.95, 0.97, 1.0, 1.0))
         label.modulate = Color(1.0, 1.0, 1.0, 1.0) if locale_code == SaveHandler.locale else Color(0.86, 0.9, 0.96, 0.95)
+        _apply_multilingual_font_to_control(label)
         row.add_child(label)
 
 func _setup_background_fx() -> void:

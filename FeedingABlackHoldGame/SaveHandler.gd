@@ -42,6 +42,7 @@ func _normalize_supported_locale_names() -> void:
 func _ready():
     print("Save Handler _ready()")
     _normalize_supported_locale_names()
+    _force_supported_locale_display_names()
 
     load_local_settings()
 
@@ -59,6 +60,20 @@ func _ready():
     Refs.pallet = load(Util.dark_pallet if dark_mode else Util.light_pallet)
 
     set_audio()
+
+func _force_supported_locale_display_names() -> void:
+    supported_locales["es"] = "Espa\u00f1ol"
+    supported_locales["pt"] = "Portugu\u00eas"
+    supported_locales["fr"] = "Fran\u00e7ais"
+    supported_locales["zh"] = "\u7b80\u4f53\u4e2d\u6587"
+    supported_locales["ja"] = "\u65e5\u672c\u8a9e"
+    supported_locales["ko"] = "\ud55c\uad6d\uc5b4"
+    supported_locales["ru"] = "\u0420\u0443\u0441\u0441\u043a\u0438\u0439"
+    supported_locales["tr"] = "T\u00fcrk\u00e7e"
+    supported_locales["th"] = "\u0e44\u0e17\u0e22"
+    supported_locales["cs"] = "\u010ce\u0161tina"
+    supported_locales["ca"] = "Catal\u00e0"
+    supported_locales["vi"] = "Ti\u1ebfng Vi\u1ec7t"
 
 
 func set_bus_volume_from_slider(bus_name: String, slider_unit: float) -> void:

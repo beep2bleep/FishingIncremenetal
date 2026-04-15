@@ -6,6 +6,7 @@ Godot/*.exe
 /Build/
 /Build - Mining/
 /Build - Red Sky/
+/Build - */
 
 # ignore all Godot project config directories
 **/.godot/

@@ -5619,8 +5619,11 @@ func _setup_touch_input_button() -> void:
 func _should_show_vanguard_crt_controls() -> bool:
     return Util.is_vanguard_game_active()
 
+func _should_show_vanguard_crt_button() -> bool:
+    return false
+
 func _setup_vanguard_crt_button() -> void:
-    if not _should_show_vanguard_crt_controls():
+    if not _should_show_vanguard_crt_button():
         return
     if vanguard_crt_button != null and is_instance_valid(vanguard_crt_button):
         return
@@ -5645,7 +5648,7 @@ func _setup_vanguard_crt_button() -> void:
 func _refresh_vanguard_crt_button() -> void:
     if vanguard_crt_button == null:
         return
-    vanguard_crt_button.visible = _should_show_vanguard_crt_controls()
+    vanguard_crt_button.visible = _should_show_vanguard_crt_button()
     var level: int = SaveHandler.vanguard_battle_crt_level
     if level <= 0:
         vanguard_crt_button.text = tr("CRT: Off")

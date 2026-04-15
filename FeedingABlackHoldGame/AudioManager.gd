@@ -3,10 +3,13 @@ extends Node
 var sound_effect_dict = {}
 var cached_web_audio_players: Dictionary = {}
 var cached_web_audio_last_play_ms: Dictionary = {}
+var pooled_web_audio_players: Dictionary = {}
+var pooled_web_audio_next_index: Dictionary = {}
 
 const WEB_CACHED_AUDIO_COOLDOWN_MS := {
     SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER: 90,
 }
+const WEB_AUDIO_POOL_MAX_PLAYERS_PER_TYPE := 4
 
 @export var sound_effect_settings: Array[SoundEffectSettings]
 
@@ -69,6 +72,9 @@ func create_audio(type: SoundEffectSettings.SOUND_EFFECT_TYPE, volume_db_offset:
         if _should_use_cached_web_audio(type):
             _play_cached_web_audio(sound_effect_setting, type, volume_db_offset, pitch_scale_offset)
             return
+        if _should_use_pooled_web_audio(type):
+            _play_pooled_web_audio(sound_effect_setting, type, volume_db_offset, pitch_scale_offset)
+            return
         if sound_effect_setting.has_open_limit():
             sound_effect_setting.change_audio_count(1)
             sound_effect_setting.run_plays += 1
@@ -95,6 +101,9 @@ func create_audio(type: SoundEffectSettings.SOUND_EFFECT_TYPE, volume_db_offset:
 
 func _should_use_cached_web_audio(type: SoundEffectSettings.SOUND_EFFECT_TYPE) -> bool:
     return OS.has_feature("web") and WEB_CACHED_AUDIO_COOLDOWN_MS.has(type)
+
+func _should_use_pooled_web_audio(type: SoundEffectSettings.SOUND_EFFECT_TYPE) -> bool:
+    return OS.has_feature("web") and not WEB_CACHED_AUDIO_COOLDOWN_MS.has(type)
 
 func _prewarm_cached_web_audio_players() -> void:
     if not OS.has_feature("web"):
@@ -137,3 +146,43 @@ func _play_cached_web_audio(sound_effect_setting: SoundEffectSettings, type: Sou
         sound_effect_setting.pitch_up_count += 1
     cached_audio.pitch_scale += Global.rng.randf_range(-sound_effect_setting.pitch_randomness, sound_effect_setting.pitch_randomness)
     cached_audio.play()
+
+func _get_or_create_pooled_web_audio_players(type: SoundEffectSettings.SOUND_EFFECT_TYPE) -> Array[AudioStreamPlayer]:
+    if pooled_web_audio_players.has(type):
+        var existing_players: Array[AudioStreamPlayer] = pooled_web_audio_players[type]
+        return existing_players
+    if not sound_effect_dict.has(type):
+        return []
+
+    var sound_effect_setting: SoundEffectSettings = sound_effect_dict[type]
+    var player_count: int = clampi(sound_effect_setting.limit, 1, WEB_AUDIO_POOL_MAX_PLAYERS_PER_TYPE)
+    var audio_players: Array[AudioStreamPlayer] = []
+    for _i in range(player_count):
+        var audio_player := AudioStreamPlayer.new()
+        audio_player.bus = "Effects"
+        audio_player.stream = sound_effect_setting.sound_effect
+        add_child(audio_player)
+        audio_players.append(audio_player)
+    pooled_web_audio_players[type] = audio_players
+    pooled_web_audio_next_index[type] = 0
+    return audio_players
+
+func _play_pooled_web_audio(sound_effect_setting: SoundEffectSettings, type: SoundEffectSettings.SOUND_EFFECT_TYPE, volume_db_offset: float, pitch_scale_offset: float) -> void:
+    var audio_players: Array[AudioStreamPlayer] = _get_or_create_pooled_web_audio_players(type)
+    if audio_players.is_empty():
+        return
+
+    var next_index: int = int(pooled_web_audio_next_index.get(type, 0)) % audio_players.size()
+    pooled_web_audio_next_index[type] = (next_index + 1) % audio_players.size()
+
+    var pooled_audio: AudioStreamPlayer = audio_players[next_index]
+    sound_effect_setting.run_plays += 1
+    pooled_audio.stop()
+    pooled_audio.stream = sound_effect_setting.sound_effect
+    pooled_audio.volume_db = sound_effect_setting.get_volume() + volume_db_offset
+    pooled_audio.pitch_scale = sound_effect_setting.pitch_scale + pitch_scale_offset
+    if sound_effect_setting.pitch_up_on_count_enabled == true:
+        pooled_audio.pitch_scale += sound_effect_setting.get_pitch_up_amount()
+        sound_effect_setting.pitch_up_count += 1
+    pooled_audio.pitch_scale += Global.rng.randf_range(-sound_effect_setting.pitch_randomness, sound_effect_setting.pitch_randomness)
+    pooled_audio.play()

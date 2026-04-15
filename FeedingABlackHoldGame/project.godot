@@ -14,7 +14,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Deepcore"
+config/name="Bleepware - Incrementals"
 run/main_scene="res://Core/Boot/AppBootstrap.tscn"
 config/use_custom_user_dir=true
 config/custom_user_dir_name="Beep2Bleep Incremental"
