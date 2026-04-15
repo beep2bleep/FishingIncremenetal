@@ -86,6 +86,9 @@ func get_store_url() -> String:
     return "https://store.steampowered.com/app/%s/%s/" % [_resolve_steam_app_id(), STEAM_STORE_PATH]
 
 func is_steam_deck():
+    if OS.has_feature("web"):
+        return false
+
     if not steam_enabled:
         return false
 

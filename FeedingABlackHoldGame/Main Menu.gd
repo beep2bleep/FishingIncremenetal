@@ -3,11 +3,6 @@ class_name MainMenu
 
 const HERO_SCENE: PackedScene = preload("res://Fishing/CombatSprite.tscn")
 const PLATFORMING_PACK_SPRITES := "C:/Godot Projects/FishingIncremental/PlatformingPack/Sprites"
-const FONT_FALLBACK_JP: FontFile = preload("res://Theme/Fallbacks/NotoSansCJKjp-Regular.otf")
-const FONT_FALLBACK_SC: FontFile = preload("res://Theme/Fallbacks/NotoSansCJKsc-Regular.otf")
-const FONT_FALLBACK_KR: FontFile = preload("res://Theme/Fallbacks/NotoSansCJKkr-Regular.otf")
-const FONT_FALLBACK_THAI: FontFile = preload("res://Theme/Fallbacks/NotoSansThai-Regular.ttf")
-
 
 enum STATES{MENU, SETTINGS, GAME_MODE}
 
@@ -17,7 +12,6 @@ func get_main_title_translation_key() -> String:
 func _refresh_localized_text() -> void:
     if has_node("%MainTitle"):
         %MainTitle.text = tr(get_main_title_translation_key())
-    _apply_locale_font_overrides()
 
 var state: STATES = STATES.MENU:
     set(new_value):
@@ -171,32 +165,6 @@ func _ready():
         %Discord.disabled = true
     if has_node("%Press Kit"):
         %"Press Kit".disabled = true
-    _apply_locale_font_overrides()
-
-func _get_locale_override_font() -> FontFile:
-    var fallback_fonts: Array[Font] = [FONT_FALLBACK_JP, FONT_FALLBACK_KR, FONT_FALLBACK_THAI]
-    FONT_FALLBACK_SC.fallbacks = fallback_fonts
-    return FONT_FALLBACK_SC
-
-func _apply_locale_font_overrides() -> void:
-    _apply_locale_font_overrides_to_node(self, _get_locale_override_font())
-
-func _apply_locale_font_overrides_to_node(node: Node, override_font: FontFile) -> void:
-    if node is Label:
-        var label := node as Label
-        if override_font != null:
-            label.add_theme_font_override("font", override_font)
-        else:
-            label.remove_theme_font_override("font")
-    elif node is Button:
-        var button := node as Button
-        if override_font != null:
-            button.add_theme_font_override("font", override_font)
-        else:
-            button.remove_theme_font_override("font")
-
-    for child: Node in node.get_children():
-        _apply_locale_font_overrides_to_node(child, override_font)
 
 
 func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: int):

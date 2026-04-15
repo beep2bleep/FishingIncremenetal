@@ -612,7 +612,7 @@ func update():
     cost = upgrade.get_cost()
     %Cost.visible = cost != 0
     if upgrade != null and CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
-        %Cost.text = _trf("%d gem", [int(cost)]) if int(cost) == 1 else _trf("%d gems", [int(cost)])
+        %Cost.text = CROSS_GAME_BONUSES.get_cost_text(int(cost))
     else:
         %Cost.text = str("$", Util.get_number_short_text(cost))
     if cost == 0:

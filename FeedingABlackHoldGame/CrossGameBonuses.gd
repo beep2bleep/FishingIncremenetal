@@ -278,7 +278,7 @@ static func get_cross_bonus_node_definition(target_game_id: String) -> Dictionar
     return {
         "id": get_cross_bonus_key_for_target(target_game_id),
         "key": get_cross_bonus_key_for_target(target_game_id),
-        "label": "%s Cross Bonus" % game_name,
+        "label": TranslationServer.translate("MULTI_MODE_CROSS_BONUS_LABEL") % [game_name],
         "summary": "%s %s" % [effect_text, TranslationServer.translate("MULTI_MODE_CROSS_BONUS_COSTS_M_GEMS") % ["/".join(source_codes)]],
         "icon": "cross://%s" % target_game_id,
         "max_tier": MAX_BONUS_TIER,
@@ -301,6 +301,11 @@ static func get_currency_metadata(currency_id: String) -> Dictionary:
 static func get_currency_display_text(currency_id: String) -> String:
     var info: Dictionary = get_currency_metadata(currency_id)
     return "%s %d" % [str(info.get("code", "?")), get_currency_count(currency_id)]
+
+static func get_cost_text(amount: int) -> String:
+    if amount == 1:
+        return TranslationServer.translate("%d gem") % [amount]
+    return TranslationServer.translate("%d gems") % [amount]
 
 static func _get_cross_gem_name_translation_key(currency_id: String) -> String:
     match currency_id:
@@ -469,34 +474,25 @@ static func _sanitize_data(data: Dictionary) -> Dictionary:
     return safe_data
 
 static func _get_game_display_name(game_id: String) -> String:
-    match game_id:
-        Util.ACTIVE_GAME_VANGUARD:
-            return "Vanguard"
-        Util.ACTIVE_GAME_MINING:
-            return "Deepcore"
-        Util.ACTIVE_GAME_RED_SKY:
-            return "Red Sky Defense"
-        Util.ACTIVE_GAME_TURKEY:
-            return "Turkey"
-        Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
-            return "Reel Into Darkness"
-        _:
-            return game_id.capitalize()
+    var key: String = _get_cross_gem_name_translation_key(game_id)
+    if key != "":
+        return TranslationServer.translate(key)
+    return game_id.capitalize()
 
 static func _get_effect_text_for_target(target_game_id: String) -> String:
     match target_game_id:
         Util.ACTIVE_GAME_VANGUARD:
-            return "+50% all damage and +50% money per tier."
+            return TranslationServer.translate("MULTI_MODE_CROSS_BONUS_EFFECT_VANGUARD")
         Util.ACTIVE_GAME_MINING:
-            return "+50% drill damage and +50% money per tier."
+            return TranslationServer.translate("MULTI_MODE_CROSS_BONUS_EFFECT_MINING")
         Util.ACTIVE_GAME_RED_SKY:
-            return "+50% all damage and +50% money per tier."
+            return TranslationServer.translate("MULTI_MODE_CROSS_BONUS_EFFECT_RED_SKY")
         Util.ACTIVE_GAME_TURKEY:
-            return "+50% ball mass and +50% money per tier."
+            return TranslationServer.translate("MULTI_MODE_CROSS_BONUS_EFFECT_TURKEY")
         Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
-            return "+50% fish stamina damage and +50% money per tier."
+            return TranslationServer.translate("MULTI_MODE_CROSS_BONUS_EFFECT_REEL_INTO_DARKNESS")
         _:
-            return "+50% power and +50% money per tier."
+            return TranslationServer.translate("MULTI_MODE_CROSS_BONUS_EFFECT_DEFAULT")
 
 static func _get_target_act(target_game_id: String) -> int:
     match target_game_id:
