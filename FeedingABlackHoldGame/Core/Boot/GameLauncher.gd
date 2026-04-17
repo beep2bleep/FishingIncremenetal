@@ -9,6 +9,8 @@ const MULTI_GAME_MODE := preload("res://MultiGameMode.gd")
 const TITLE_TEXT_KEY := "MAIN MENU"
 const VANGUARD_BUTTON_TEXT := "VANGUARD"
 const MINING_BUTTON_TEXT := "DEEPCORE"
+const OPEN_PIT_BUTTON_TEXT := "OPEN PIT EMPIRE"
+const OPEN_PIT_ORBIT_BUTTON_TEXT := "OPEN PIT ORBIT"
 const RED_SKY_BUTTON_TEXT := "RED SKY DEFENSE"
 const TURKEY_BUTTON_TEXT := "TURKEY"
 const REEL_BUTTON_TEXT := "REEL INTO DARKNESS"
@@ -57,6 +59,8 @@ const GAME_CARD_RESET_DURATION := 0.3
 @onready var subtitle_label: Label = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/SubtitleLabel") as Label
 @onready var vanguard_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/VanguardButton") as Button
 @onready var mining_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/MiningButton") as Button
+@onready var open_pit_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/OpenPitButton") as Button
+@onready var open_pit_orbit_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/OpenPitOrbitButton") as Button
 @onready var red_sky_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/RedSkyButton") as Button
 @onready var turkey_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/TurkeyButton") as Button
 @onready var reel_button: Button = get_node_or_null("CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ReelButton") as Button
@@ -96,6 +100,7 @@ var game_card_fit_queued: bool = false
 func _ready() -> void:
     Global.game_state = Util.GAME_STATES.MAIN_MENU
     Util.set_high_level_mode_id(Util.HIGH_LEVEL_MODE_ALL)
+    _apply_open_pit_launcher_availability()
     _setup_background_fx()
     _setup_game_cards()
     _setup_settings_panel()
@@ -113,6 +118,10 @@ func _ready() -> void:
         vanguard_button.pressed.connect(_on_vanguard_button_pressed)
     if mining_button != null and not mining_button.pressed.is_connected(_on_mining_button_pressed):
         mining_button.pressed.connect(_on_mining_button_pressed)
+    if open_pit_button != null and not open_pit_button.pressed.is_connected(_on_open_pit_button_pressed):
+        open_pit_button.pressed.connect(_on_open_pit_button_pressed)
+    if open_pit_orbit_button != null and not open_pit_orbit_button.pressed.is_connected(_on_open_pit_orbit_button_pressed):
+        open_pit_orbit_button.pressed.connect(_on_open_pit_orbit_button_pressed)
     if red_sky_button != null and not red_sky_button.pressed.is_connected(_on_red_sky_button_pressed):
         red_sky_button.pressed.connect(_on_red_sky_button_pressed)
     if turkey_button != null and not turkey_button.pressed.is_connected(_on_turkey_button_pressed):
@@ -162,6 +171,16 @@ func _on_mining_button_pressed() -> void:
 func _on_red_sky_button_pressed() -> void:
     _start_game(Util.ACTIVE_GAME_RED_SKY)
 
+func _on_open_pit_button_pressed() -> void:
+    if not _is_open_pit_launcher_available():
+        return
+    _start_game(Util.ACTIVE_GAME_OPEN_PIT)
+
+func _on_open_pit_orbit_button_pressed() -> void:
+    if not _is_open_pit_orbit_launcher_available():
+        return
+    _start_game(Util.ACTIVE_GAME_OPEN_PIT_ORBIT)
+
 func _on_turkey_button_pressed() -> void:
     _start_game(Util.ACTIVE_GAME_TURKEY)
 
@@ -195,7 +214,7 @@ func _start_game(game_id: String) -> void:
     Global.start_in_upgrade_scene = true
     Global.load_saved_run = false
 
-    if game_id == Util.ACTIVE_GAME_MINING or game_id == Util.ACTIVE_GAME_RED_SKY or game_id == Util.ACTIVE_GAME_TURKEY or game_id == Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
+    if game_id == Util.ACTIVE_GAME_MINING or game_id == Util.ACTIVE_GAME_OPEN_PIT or game_id == Util.ACTIVE_GAME_OPEN_PIT_ORBIT or game_id == Util.ACTIVE_GAME_RED_SKY or game_id == Util.ACTIVE_GAME_TURKEY or game_id == Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
         SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
         return
     SceneChanger.change_to_new_scene(Util.get_main_scene_path(), null, 0.2)
@@ -207,6 +226,8 @@ func _refresh_text() -> void:
         subtitle_label.text = tr("PLAY_NEW_MODES")
     _refresh_game_card_text(vanguard_button, Util.ACTIVE_GAME_VANGUARD)
     _refresh_game_card_text(mining_button, Util.ACTIVE_GAME_MINING)
+    _refresh_game_card_text(open_pit_button, Util.ACTIVE_GAME_OPEN_PIT)
+    _refresh_game_card_text(open_pit_orbit_button, Util.ACTIVE_GAME_OPEN_PIT_ORBIT)
     _refresh_game_card_text(red_sky_button, Util.ACTIVE_GAME_RED_SKY)
     _refresh_game_card_text(turkey_button, Util.ACTIVE_GAME_TURKEY)
     _refresh_game_card_text(reel_button, Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
@@ -282,6 +303,7 @@ func _setup_settings_panel() -> void:
     settings_panel.offset_top = 16.0
     settings_panel.offset_right = -16.0
     settings_panel.offset_bottom = -16.0
+    settings_panel.z_index = 50
     settings_panel.visible = false
     settings_panel.mouse_filter = Control.MOUSE_FILTER_STOP
     _style_utility_panel(settings_panel)
@@ -336,6 +358,7 @@ func _setup_reset_all_meta_progress_controls() -> void:
     reset_all_meta_progress_button.offset_top = 112.0
     reset_all_meta_progress_button.offset_right = -16.0
     reset_all_meta_progress_button.offset_bottom = 200.0
+    reset_all_meta_progress_button.z_index = 10
     reset_all_meta_progress_button.focus_mode = Control.FOCUS_NONE
     reset_all_meta_progress_button.custom_minimum_size = Vector2(264.0, 88.0)
     reset_all_meta_progress_button.add_theme_font_size_override("font_size", 22)
@@ -370,10 +393,13 @@ func _setup_game_cards() -> void:
 
     _decorate_game_button(vanguard_button, Util.ACTIVE_GAME_VANGUARD)
     _decorate_game_button(mining_button, Util.ACTIVE_GAME_MINING)
+    _decorate_game_button(open_pit_button, Util.ACTIVE_GAME_OPEN_PIT)
+    _decorate_game_button(open_pit_orbit_button, Util.ACTIVE_GAME_OPEN_PIT_ORBIT)
     _decorate_game_button(red_sky_button, Util.ACTIVE_GAME_RED_SKY)
     _decorate_game_button(turkey_button, Util.ACTIVE_GAME_TURKEY)
     _decorate_game_button(reel_button, Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
     _decorate_game_button(combined_button, Util.HIGH_LEVEL_MODE_ALL)
+    _apply_open_pit_launcher_availability()
     _refresh_game_card_layout()
 
 func _setup_currency_strip(root_vbox: VBoxContainer) -> void:
@@ -911,7 +937,7 @@ func _refresh_game_card_layout() -> void:
     game_cards_grid.columns = 3 if viewport_width >= 1340.0 else 2
     var card_min_width: float = 360.0 if game_cards_grid.columns >= 3 else 460.0
     var card_height: float = 368.0 if game_cards_grid.columns >= 3 else 408.0
-    for button in [vanguard_button, mining_button, red_sky_button, turkey_button, reel_button, combined_button]:
+    for button in [vanguard_button, mining_button, open_pit_button, open_pit_orbit_button, red_sky_button, turkey_button, reel_button, combined_button]:
         if button == null or not is_instance_valid(button):
             continue
         button.custom_minimum_size = Vector2(card_min_width, card_height)
@@ -958,8 +984,24 @@ func _on_game_card_control_resized() -> void:
 
 func _fit_game_cards() -> void:
     game_card_fit_queued = false
-    for button in [vanguard_button, mining_button, red_sky_button, turkey_button, reel_button, combined_button]:
+    for button in [vanguard_button, mining_button, open_pit_button, open_pit_orbit_button, red_sky_button, turkey_button, reel_button, combined_button]:
         _fit_game_card_content(button)
+
+func _is_open_pit_launcher_available() -> bool:
+    return OS.has_feature("editor")
+
+func _is_open_pit_orbit_launcher_available() -> bool:
+    return OS.has_feature("editor")
+
+func _apply_open_pit_launcher_availability() -> void:
+    if open_pit_button != null and is_instance_valid(open_pit_button):
+        var is_open_pit_available: bool = _is_open_pit_launcher_available()
+        open_pit_button.visible = is_open_pit_available
+        open_pit_button.disabled = not is_open_pit_available
+    if open_pit_orbit_button != null and is_instance_valid(open_pit_orbit_button):
+        var is_open_pit_orbit_available: bool = _is_open_pit_orbit_launcher_available()
+        open_pit_orbit_button.visible = is_open_pit_orbit_available
+        open_pit_orbit_button.disabled = not is_open_pit_orbit_available
 
 func _fit_game_card_content(button: Button) -> void:
     if button == null or not is_instance_valid(button):
@@ -1047,6 +1089,10 @@ func _get_game_card_preview_focus_y(game_id: String) -> float:
     match game_id:
         Util.ACTIVE_GAME_TURKEY, Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
             return 0.2
+        Util.ACTIVE_GAME_OPEN_PIT:
+            return 0.68
+        Util.ACTIVE_GAME_OPEN_PIT_ORBIT:
+            return 0.38
         _:
             return 0.5
 
@@ -1069,6 +1115,24 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
                 "accent": Color(0.86, 0.69, 0.33, 1.0),
                 "bg_top": Color(0.18, 0.12, 0.05, 1.0),
                 "bg_bottom": Color(0.06, 0.04, 0.02, 1.0)
+            }
+        Util.ACTIVE_GAME_OPEN_PIT:
+            return {
+                "title": OPEN_PIT_BUTTON_TEXT,
+                "detail": "Dash into a giant pit, mine fast, and extract before the timer ends.",
+                "asset_rel_path": "OpenPitEmpire/launcher_preview.png",
+                "accent": Color(0.97, 0.78, 0.32, 1.0),
+                "bg_top": Color(0.22, 0.15, 0.06, 1.0),
+                "bg_bottom": Color(0.08, 0.05, 0.02, 1.0)
+            }
+        Util.ACTIVE_GAME_OPEN_PIT_ORBIT:
+            return {
+                "title": OPEN_PIT_ORBIT_BUTTON_TEXT,
+                "detail": "Mine orbital strata with chain lasers, drones, and volatile ore tech.",
+                "asset_rel_path": "",
+                "accent": Color(0.44, 0.84, 1.0, 1.0),
+                "bg_top": Color(0.04, 0.11, 0.18, 1.0),
+                "bg_bottom": Color(0.02, 0.04, 0.08, 1.0)
             }
         Util.ACTIVE_GAME_RED_SKY:
             return {
@@ -1165,6 +1229,16 @@ func _build_fallback_game_card_texture(game_id: String) -> Texture2D:
             _fill_image_rect(image, Rect2i(82, 118, 140, 196), Color(0.22, 0.18, 0.14, 1.0))
             _fill_image_rect(image, Rect2i(110, 84, 84, 40), Color(0.94, 0.74, 0.28, 1.0))
             _fill_image_rect(image, Rect2i(228, 206, 120, 12), Color(0.98, 0.88, 0.48, 0.92))
+        Util.ACTIVE_GAME_OPEN_PIT:
+            _fill_image_rect(image, Rect2i(42, 80, image.get_width() - 84, 120), Color(0.48, 0.32, 0.16, 0.95))
+            _fill_image_rect(image, Rect2i(84, 160, image.get_width() - 168, 156), Color(0.28, 0.2, 0.1, 1.0))
+            _draw_image_circle(image, Vector2i(236, 116), 48, Color(0.18, 0.58, 0.82, 0.95))
+        Util.ACTIVE_GAME_OPEN_PIT_ORBIT:
+            _draw_image_circle(image, Vector2i(530, 122), 88, Color(0.24, 0.78, 0.96, 0.82))
+            _draw_image_circle(image, Vector2i(520, 122), 52, Color(0.03, 0.08, 0.16, 0.92))
+            _fill_image_rect(image, Rect2i(52, 188, image.get_width() - 104, 118), Color(0.08, 0.18, 0.26, 0.95))
+            _fill_image_rect(image, Rect2i(86, 226, image.get_width() - 172, 84), Color(0.18, 0.34, 0.42, 0.95))
+            _fill_image_rect(image, Rect2i(196, 136, 180, 10), Color(0.78, 0.96, 1.0, 0.92))
         Util.ACTIVE_GAME_RED_SKY:
             _fill_image_rect(image, Rect2i(0, 286, image.get_width(), 64), Color(0.12, 0.04, 0.04, 0.95))
             _fill_image_rect(image, Rect2i(288, 206, 146, 76), Color(0.8, 0.22, 0.18, 1.0))
@@ -1520,6 +1594,10 @@ func _get_game_card_hover_rotation(button: Button) -> float:
     match game_id:
         Util.ACTIVE_GAME_MINING:
             return -2.0
+        Util.ACTIVE_GAME_OPEN_PIT:
+            return -1.2
+        Util.ACTIVE_GAME_OPEN_PIT_ORBIT:
+            return 1.4
         Util.ACTIVE_GAME_RED_SKY:
             return 2.2
         Util.ACTIVE_GAME_TURKEY:
@@ -1537,6 +1615,10 @@ func _get_game_button_for_id(game_id: String) -> Button:
             return vanguard_button
         Util.ACTIVE_GAME_MINING:
             return mining_button
+        Util.ACTIVE_GAME_OPEN_PIT:
+            return open_pit_button
+        Util.ACTIVE_GAME_OPEN_PIT_ORBIT:
+            return open_pit_orbit_button
         Util.ACTIVE_GAME_RED_SKY:
             return red_sky_button
         Util.ACTIVE_GAME_TURKEY:
@@ -1556,6 +1638,18 @@ func _get_background_palette_for_game(game_id: String) -> Dictionary:
                 "bg": Color(0.13, 0.1, 0.08, 1.0),
                 "light": Color(0.72, 0.55, 0.22, 0.65),
                 "dark": Color(0.28, 0.18, 0.1, 0.55)
+            }
+        Util.ACTIVE_GAME_OPEN_PIT:
+            return {
+                "bg": Color(0.16, 0.11, 0.06, 1.0),
+                "light": Color(0.86, 0.62, 0.18, 0.58),
+                "dark": Color(0.34, 0.2, 0.08, 0.56)
+            }
+        Util.ACTIVE_GAME_OPEN_PIT_ORBIT:
+            return {
+                "bg": Color(0.03, 0.09, 0.15, 1.0),
+                "light": Color(0.38, 0.82, 1.0, 0.62),
+                "dark": Color(0.04, 0.2, 0.28, 0.58)
             }
         Util.ACTIVE_GAME_RED_SKY:
             return {

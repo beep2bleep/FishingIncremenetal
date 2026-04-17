@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cfbgm2kixcini"
+
+[deps]
+
+files=["res://translations/translations.en.translation", "res://translations/translations.ja.translation", "res://translations/translations.ko.translation", "res://translations/translations.zh_Hans.translation", "res://translations/translations.ru.translation", "res://translations/translations.pt_BR.translation", "res://translations/translations.de.translation", "res://translations/translations.es.translation", "res://translations/translations.es_MX.translation", "res://translations/translations.fr.translation", "res://translations/translations.pl.translation", "res://translations/translations.tr.translation"]
+
+source_file="res://translations/translations.csv"
+dest_files=["res://translations/translations.en.translation", "res://translations/translations.ja.translation", "res://translations/translations.ko.translation", "res://translations/translations.zh_Hans.translation", "res://translations/translations.ru.translation", "res://translations/translations.pt_BR.translation", "res://translations/translations.de.translation", "res://translations/translations.es.translation", "res://translations/translations.es_MX.translation", "res://translations/translations.fr.translation", "res://translations/translations.pl.translation", "res://translations/translations.tr.translation"]
+
+[params]
+
+compress=true
+delimiter=0

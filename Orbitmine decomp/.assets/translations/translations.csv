@@ -1,0 +1,965 @@
+﻿key,en,ja,ko,zh_Hans,ru,pt_BR,de,es,es_MX,fr,pl,tr
+<!MissingKey:0:⚡ Electric Chain Enhance>,⚡ Electric Chain Enhance,⚡ 電気連鎖強化,⚡ 전기 연쇄 강화,⚡ 电气连锁强化,⚡ Усиление электроцепи,⚡ Cadeia Elétrica Aprimorada,⚡ Elektrokette verstärkt,⚡ Mejora de Cadena Eléctrica,⚡ Mejora de Cadena Eléctrica,⚡ Amélioration Chaîne Électrique,⚡ Ulepszenie Łańcucha Elektrycznego,⚡ Elektrik Zincir Geliştirme
+STAT_CRITICAL,Critical,クリティカル,크리티컬,暴击,Крит,Crítico,Kritisch,Crítico,Crítico,Critique,Krytyczny,Kritik
+<!MissingKey:2:Return Complete>,Return Complete,帰還完了,귀환 완료,返航完成,Возврат завершён,Retorno Completo,Rückkehr abgeschlossen,Retorno Completo,Retorno Completo,Retour Terminé,Powrót Zakończony,Dönüş Tamamlandı
+CURRENCY_FMT,💰 %s,💰 %s,💰 %s,💰 %s,💰 %s,💰 %s,💰 %s,💰 %s,💰 %s,💰 %s,💰 %s,💰 %s
+<!MissingKey:4:Electric blocks appear>,Electric blocks appear,電気ブロック出現,전기 블록 출현,电气方块出现,Появляются электроблоки,Blocos elétricos aparecem,Elektroblöcke erscheinen,Aparecen bloques eléctricos,Aparecen bloques eléctricos,Les blocs électriques apparaissent,Pojawiają się bloki elektryczne,Elektrik blokları belirir
+<!MissingKey:5:+2% resource per stack>,+2% resource per stack,スタックごとに資源 +2%,스택당 자원 +2%,每层资源 +2%,+2% ресурсов за стак,+2% recursos por acúmulo,+2% Ressourcen pro Stufe,+2% recurso por carga,+2% recurso por carga,+2% ressource par charge,+2% zasobów na ładunek,Yük başına +%2 kaynak
+STATS_HISTORY,📋 Sortie History (Latest),📋 出撃記録 (新しい順),📋 출항 기록 (최신순),📋 出击记录 (最新),📋 История вылетов,📋 Histórico de Missões,📋 Einsatzverlauf,📋 Historial de Salidas (Recientes),📋 Historial de Salidas (Recientes),📋 Historique des Sorties (Récentes),📋 Historia Wypraw (Ostatnie),📋 Çıkış Geçmişi (Son)
+LOADING_EDGES,Calculating edges...,露出面を計算中...,노출면 계산 중...,计算露出面中...,Вычисление граней...,Calculando bordas...,Kanten werden berechnet...,Calculando bordes...,Calculando bordes...,Calcul des bords...,Obliczanie krawędzi...,Kenarlar hesaplanıyor...
+MEGA_LASER_LABEL,⚡ Mega Laser,⚡ メガレーザー,⚡ 메가 레이저,⚡ 超级激光,⚡ Мегалазер,⚡ Mega Laser,⚡ Megalaser,⚡ Mega Láser,⚡ Mega Láser,⚡ Méga Laser,⚡ Mega Laser,⚡ Mega Lazer
+STATS_TIME_FMT,⏱ %.0fs,⏱ %.0f秒,⏱ %.0f초,⏱ %.0f秒,⏱ %.0fс,⏱ %.0fs,⏱ %.0fs,⏱ %.0fs,⏱ %.0fs,⏱ %.0fs,⏱ %.0fs,⏱ %.0fs
+<!MissingKey:10:💠 Deep Resonance>,💠 Deep Resonance,💠 深層共鳴,💠 심층 공명,💠 深层共振,💠 Глубокий резонанс,💠 Ressonância Profunda,💠 Tiefenresonanz,💠 Resonancia Profunda,💠 Resonancia Profunda,💠 Résonance Profonde,💠 Głęboka Rezonacja,💠 Derin Rezonans
+<!MissingKey:11:Range Expand I>,Range Expand I,射程拡張 I,사거리 확장 I,射程扩展 I,Расширение дальности I,Expansão de Alcance I,Reichweite I,Expansión de Alcance I,Expansión de Rango I,Extension de Portée I,Rozszerzenie Zasięgu I,Menzil Genişletme I
+<!MissingKey:12:Deploy 1 drone>,"Deploy 1 drone
+Fixed damage 8","ドローン1機配置
+固定ダメージ 8","드론 1기 배치
+고정 데미지 8","部署1架无人机
+固定伤害 8","Запуск 1 дрона
+Урон 8","Implantar 1 drone
+Dano fixo 8","1 Drohne einsetzen
+Fester Schaden 8","Despliega 1 dron
+Daño fijo 8","Despliega 1 dron
+Daño fijo 8","Déploie 1 drone
+Dégâts fixes 8","Wyślij 1 drona
+Stałe obrażenia 8","1 drone yerleştir
+Sabit hasar 8"
+SORTIE_CORES_FMT,🔴 %d cores!,🔴 %dコア!,🔴 %d코어!,🔴 %d核心!,🔴 %d ядер!,🔴 %d núcleos!,🔴 %d Kerne!,🔴 ¡%d núcleos!,🔴 ¡%d núcleos!,🔴 %d noyaux !,🔴 %d rdzeni!,🔴 %d çekirdek!
+CORE_COND_ALLCORE_YES,✔ All cores destroyed,✔ 全コア破壊,✔ 코어 전멸,✔ 全核心消灭,✔ Все ядра уничтожены,✔ Todos os núcleos destruídos,✔ Alle Kerne zerstört,✔ Todos los núcleos destruidos,✔ Todos los núcleos destruidos,✔ Tous les noyaux détruits,✔ Wszystkie rdzenie zniszczone,✔ Tüm çekirdekler yıkıldı
+<!MissingKey:15:💰 Resource Boost II>,💰 Resource Boost II,💰 資源ブースト II,💰 자원 증폭 II,💰 资源增幅 II,💰 Усиление ресурсов II,💰 Amplificação de Recursos II,💰 Ressourcenverstärkung II,💰 Potenciador de Recursos II,💰 Potenciador de Recursos II,💰 Boost de Ressources II,💰 Wzmocnienie Zasobów II,💰 Kaynak Güçlendirme II
+<!MissingKey:16:The problem was the planet next door.>,"The problem was the planet next door.
+Blinding light poured through your window every day.","問題は隣の惑星。毎日まぶしい光が窓から降り注いでいた。
+眩しすぎて眠れなかった。","문제는 옆의 행성. 매일 눈부신 빛이 창문으로 쏟아져 들어왔다.
+너무 눈부셔서 잠을 잘 수가 없었다.","问题出在旁边的行星。每天刺眼的光芒从窗户涌入。
+太刺眼了，根本无法入睡。","Проблема — соседняя планета.
+Каждый день ослепительный свет лился в ваше окно.","O problema era o planeta vizinho.
+Luz ofuscante entrava pela janela todos os dias.","Das Problem war der Nachbarplanet.
+Jeden Tag strömte blendendes Licht durch dein Fenster.","El problema era el planeta vecino.
+Una luz cegadora entraba por tu ventana cada día.","El problema era el planeta vecino.
+Una luz cegadora entraba por tu ventana cada día.","Le problème, c'était la planète voisine.
+Une lumière aveuglante traversait votre fenêtre chaque jour.","Problem stanowiła sąsiednia planeta.
+Oślepiające światło wpadało przez okno każdego dnia.","Sorun komşu gezegendi.
+Her gün pencerenizden göz kamaştırıcı ışık giriyordu."
+<!MissingKey:17:Combo on kills>,"Combo on kills
++2% resource per stack","連続破壊でコンボ増加
+スタック毎に資源+2%","연속 파괴 시 콤보 증가
+스택당 자원 +2%","连续破坏时连击增加
+每层资源+2%","Комбо за уничтожение
++2% ресурсов за стак","Combo ao destruir
++2% recursos por acúmulo","Combo bei Zerstörung
++2% Ressourcen pro Stufe","Combo al destruir
++2% recurso por carga","Combo al destruir
++2% recurso por carga","Combo en détruisant
++2% ressource par charge","Combo przy eliminacji
++2% zasobów na ładunek","Öldürmelerde kombo
+Yük başına +%2 kaynak"
+<!MissingKey:18:Hit 3 blocks at once>,Hit 3 blocks at once,同時に3ブロック攻撃,동시 3블록 타격,同时攻击3个方块,3 блока одновременно,Atingir 3 blocos,3 Blöcke gleichzeitig,Golpea 3 bloques a la vez,Impacta 3 bloques a la vez,Touche 3 blocs à la fois,Traf 3 bloki naraz,Aynı anda 3 blok vur
+<!MissingKey:19:Duration +1.5s Need -10>,Duration +1.5s Need -10,持続+1.5秒 必要-10ブロック,지속+1.5초 필요-10블록,持续+1.5秒 所需-10方块,Длительность +1.5с Требование -10,Duração +1.5s Necessário -10,"Dauer +1,5s Bedarf -10",Duración +1.5s Necesidad -10,Duración +1.5s Necesidad -10,Durée +1.5s Besoin -10,Czas trwania +1.5s Potrzeba -10,Süre +1.5s İhtiyaç -10
+STATS_COMBO_SHORT,🔥 %d combo,🔥 %dコンボ,🔥 %d콤보,🔥 %d连击,🔥 %d комбо,🔥 %d combo,🔥 %d Kombo,🔥 %d combo,🔥 %d combo,🔥 %d combo,🔥 %d combo,🔥 %d kombo
+<!MissingKey:21:Mining Result>,Mining Result,採掘結果,채굴 결과,采矿结果,Результат добычи,Resultado da Mineração,Abbauergebnis,Resultado de Minería,Resultado de Minería,Résultat de Minage,Wynik Wydobycia,Madencilik Sonucu
+<!MissingKey:22:Laser damage +40>,Laser damage +40,レーザーダメージ +40,레이저 데미지 +40,激光伤害 +40,Урон лазера +40,Dano do laser +40,Laserschaden +40,Daño láser +40,Daño láser +40,Dégâts laser +40,Obrażenia lasera +40,Lazer hasarı +40
+STATS_PURCHASED,Purchased: ,購入: ,구매: ,购买: ,Куплено: ,Comprado: ,Gekauft: ,Comprado: ,Comprado: ,Acheté : ,Zakupione: ,Satın Alınan: 
+<!MissingKey:24:Drone laser pierces 2 blocks>,Drone laser pierces 2 blocks,ドローンレーザーが2ブロック貫通,드론 레이저가 2블록 관통,无人机激光贯穿2个方块,Лазер дрона пробивает 2 блока,Laser do drone perfura 2 blocos,Drohnenlaser durchschlägt 2 Blöcke,El láser del dron perfora 2 bloques,El láser del dron atraviesa 2 bloques,Le laser du drone perce 2 blocs,Laser drona przebija 2 bloki,Drone lazeri 2 blok deler
+<!MissingKey:25:🌑 Planet Mastery>,🌑 Planet Mastery,🌑 惑星支配,🌑 행성 지배,🌑 行星支配,🌑 Власть над планетой,🌑 Domínio Planetário,🌑 Planetenherrschaft,🌑 Dominio Planetario,🌑 Dominio Planetario,🌑 Maîtrise Planétaire,🌑 Mistrzostwo Planety,🌑 Gezegen Ustalığı
+<!MissingKey:26:⚡Chain>,⚡Chain,⚡チェイン,⚡체인,⚡链式,⚡Цепь,⚡Cadeia,⚡Kette,⚡Cadena,⚡Cadena,⚡Chaîne,⚡Łańcuch,⚡Zincir
+<!MissingKey:27:⛽ Fuel Tank III>,⛽ Fuel Tank III,⛽ 燃料タンク III,⛽ 연료탱크 III,⛽ 燃料箱 III,⛽ Топливный бак III,⛽ Tanque III,⛽ Kraftstofftank III,⛽ Tanque de Combustible III,⛽ Tanque de Combustible III,⛽ Réservoir III,⛽ Zbiornik Paliwa III,⛽ Yakıt Deposu III
+<!MissingKey:28:Keep 60% resources on fuel empty>,Keep 60% resources on fuel empty,燃料切れ時 資源60%保存,연료 고갈 시 자원 60% 보존,燃料耗尽时保留60%资源,Сохранить 60% при пустом баке,Preserva 60% dos recursos sem combustível,60% Ressourcen behalten bei leerem Tank,Conserva el 60% de recursos sin combustible,Conserva el 60% de recursos al quedarse sin combustible,Conserve 60% des ressources sans carburant,Zachowuje 60% zasobów bez paliwa,Yakıt bitince kaynakların %60'ını koru
+STATS_TOTAL_NODES,Total Nodes,総購入ノード,총 구매 노드,总购买节点,Всего узлов,Total de Nós,Knoten gesamt,Nodos Totales,Nodos Totales,Nœuds Totaux,Łączne Węzły,Toplam Düğümler
+<!MissingKey:30:🤖 Drone Fire Module>,🤖 Drone Fire Module,🤖 ドローン連射モジュール,🤖 드론 연사 모듈,🤖 无人机连射模块,🤖 Модуль огня дрона,🤖 Módulo de Tiro,🤖 Drohnen-Feuermodul,🤖 Módulo de Fuego de Dron,🤖 Módulo de Disparo de Dron,🤖 Module de Tir Drone,🤖 Moduł Ognia Drona,🤖 Drone Ateş Modülü
+<!MissingKey:31:🔥 Combo Enhance>,🔥 Combo Enhance,🔥 コンボ強化,🔥 콤보 강화,🔥 连击强化,🔥 Усиление комбо,🔥 Combo Aprimorado,🔥 Komboverstärkung,🔥 Mejora de Combo,🔥 Mejora de Combo,🔥 Amélioration de Combo,🔥 Ulepszenie Combo,🔥 Kombo Geliştirme
+<!MissingKey:32:💰 Resource Boost IV>,💰 Resource Boost IV,💰 資源ブースト IV,💰 자원 증폭 IV,💰 资源增幅 IV,💰 Усиление ресурсов IV,💰 Amplificação de Recursos IV,💰 Ressourcenverstärkung IV,💰 Potenciador de Recursos IV,💰 Potenciador de Recursos IV,💰 Boost de Ressources IV,💰 Wzmocnienie Zasobów IV,💰 Kaynak Güçlendirme IV
+<!MissingKey:33:Lightning chain +2>,Lightning chain +2,雷連鎖+2回,번개 연쇄 +2회,闪电连锁+2次,Цепь молнии +2,Cadeia +2,Kettung +2,Cadena de rayo +2,Cadena de rayo +2,Chaîne d'éclair +2,Łańcuch błyskawic +2,Yıldırım zinciri +2
+<!MissingKey:34:💢 Overdrive Enhance>,💢 Overdrive Enhance,💢 オーバードライブ強化,💢 오버드라이브 강화,💢 超载强化,💢 Усиление овердрайва,💢 Sobrecarga Aprimorada,💢 Überladung verstärkt,💢 Mejora de Sobremarcha,💢 Mejora de Sobremarcha,💢 Amélioration Surcharge,💢 Ulepszenie Doładowania,💢 Aşırı Güç Geliştirme
+<!MissingKey:35:Fire Rate IV>,Fire Rate IV,連射速度 IV,연사속도 IV,射速 IV,Скорострельность IV,Cadência IV,Feuerrate IV,Cadencia de Fuego IV,Velocidad de Disparo IV,Cadence de Tir IV,Szybkostrzelność IV,Atış Hızı IV
+<!MissingKey:36:30% damage to adjacent blocks>,"30% damage to adjacent blocks
+on laser hit","レーザー命中時に隣接ブロックに
+30%ダメージ","레이저 타격 시 인접 블록에
+30% 데미지","激光击中时邻接方块
+受30%伤害","30% урона соседним блокам
+при попадании лазером","30% de dano em blocos adjacentes
+ao acertar com laser","30% Schaden an Nachbarblöcken
+bei Lasertreffer","30% de daño a bloques adyacentes
+al impactar con láser","30% de daño a bloques adyacentes
+al impactar con láser","30% de dégâts aux blocs adjacents
+lors d'un tir laser","30% obrażeń sąsiednim blokom
+przy trafieniu laserem","Lazer vuruşunda
+komşu bloklara %30 hasar"
+<!MissingKey:37:Fire Rate II>,Fire Rate II,連射速度 II,연사속도 II,射速 II,Скорострельность II,Cadência II,Feuerrate II,Cadencia de Fuego II,Velocidad de Disparo II,Cadence de Tir II,Szybkostrzelność II,Atış Hızı II
+STAT_LASER,Laser,レーザー,레이저,激光,Лазер,Laser,Laser,Láser,Láser,Laser,Laser,Lazer
+<!MissingKey:39:Laser Power II>,Laser Power II,レーザー出力 II,레이저 출력 II,激光功率 II,Мощность лазера II,Potência do Laser II,Laserstärke II,Potencia Láser II,Potencia Láser II,Puissance Laser II,Moc Lasera II,Lazer Gücü II
+<!MissingKey:40:Depth bonus +100%>,Depth bonus +100%,深度ボーナス +100%,깊이 보너스 +100%,深度加成 +100%,Бонус глубины +100%,Bônus de profundidade +100%,Tiefenbonus +100%,Bonificación de profundidad +100%,Bonificación de profundidad +100%,Bonus de profondeur +100%,Bonus głębokości +100%,Derinlik bonusu +%100
+<!MissingKey:41:🧲 Pickup Range Expand>,🧲 Pickup Range Expand,🧲 収集範囲拡大,🧲 수집 범위 확대,🧲 拾取范围扩大,🧲 Радиус сбора,🧲 Alcance de Coleta,🧲 Sammelreichweite,🧲 Expansión de Rango de Recogida,🧲 Expansión de Rango de Recolección,🧲 Extension de Portée de Collecte,🧲 Rozszerzenie Zasięgu Zbierania,🧲 Toplama Menzili Genişletme
+CORE_DESC_BARRIER,Barrier +1 every 30s,30秒ごとにバリア+1,30초마다 배리어 +1 자동 충전,每30秒屏障+1,Барьер +1 каждые 30с,Barreira +1 a cada 30s,Barriere +1 alle 30s,Barrera +1 cada 30s,Barrera +1 cada 30s,Barrière +1 toutes les 30s,Bariera +1 co 30s,Her 30s'de Bariyer +1
+<!MissingKey:43:💠 Final Resonance>,💠 Final Resonance,💠 最終共鳴,💠 최종 공명,💠 终极共振,💠 Финальный резонанс,💠 Ressonância Final,💠 Endresonanz,💠 Resonancia Final,💠 Resonancia Final,💠 Résonance Finale,💠 Finalna Rezonacja,💠 Son Rezonans
+EPILOGUE_RESOURCES,Total Resources,総獲得資源,총 획득 자원,总获得资源,Всего ресурсов,Recursos Totais,Ressourcen gesamt,Recursos totales,Recursos totales,Ressources totales,Łączne zasoby,Toplam Kaynaklar
+<!MissingKey:45:Fuel +5s>,Fuel +5s,燃料 +5秒,연료 +5초,燃料 +5秒,Топливо +5с,Combustível +5s,Treibstoff +5s,Combustible +5s,Combustible +5s,Carburant +5s,Paliwo +5s,Yakıt +5s
+<!MissingKey:46:Resource Efficiency II>,Resource Efficiency II,資源効率 II,자원 효율 II,资源效率 II,Эффективность ресурсов II,Eficiência de Recursos II,Ressourceneffizienz II,Eficiencia de Recursos II,Eficiencia de Recursos II,Efficacité des Ressources II,Efektywność Zasobów II,Kaynak Verimliliği II
+<!MissingKey:47:Cargo +1000>,Cargo +1000,貨物 +1000個,화물칸 +1000개,货舱 +1000个,Трюм +1000,Carga +1000,Fracht +1000,Carga +1000,Carga +1000,Cargaison +1000,Ładownia +1000,Kargo +1000
+TUT_CORE_TITLE,◉ Core,◉ コア,◉ 코어,◉ 核心,◉ Ядро,◉ Núcleo,◉ Kern,◉ Núcleo,◉ Núcleo,◉ Noyau,◉ Rdzeń,◉ Çekirdek
+STATS_TOTAL_BLOCKS,Total Blocks,総破壊ブロック,총 파괴 블록,总破坏方块,Всего блоков,Total de Blocos,Blöcke gesamt,Bloques Totales,Bloques Totales,Blocs Totaux,Łączne Bloki,Toplam Bloklar
+CORE_DESC_CENTER,"Unlock center zone
+Center blocks become destructible","中心エリア解放
+中心ブロック破壊可能","중심 구역 해금
+중심 블록 파괴 가능","解锁中心区域
+中心方块可破坏","Разблокировка центра
+Блоки центра разрушаемы","Desbloquear centro
+Blocos centrais destrutivos","Zentrum freischalten
+Zentrumsblöcke zerstörbar","Desbloquear centro
+Bloques centrales destructibles","Desbloquear centro
+Bloques centrales destructibles","Déverrouiller le centre
+Blocs centraux destructibles","Odblokuj centrum
+Bloki centralne zniszczalne","Merkezi aç
+Merkez bloklar yıkılabilir"
+<!MissingKey:51:Laser damage +15>,Laser damage +15,レーザーダメージ +15,레이저 데미지 +15,激光伤害 +15,Урон лазера +15,Dano do laser +15,Laserschaden +15,Daño láser +15,Daño láser +15,Dégâts laser +15,Obrażenia lasera +15,Lazer hasarı +15
+STATS_RECORD_FMT,%s (Sortie #%d),%s (出撃 #%d),%s (출항 #%d),%s (出击 #%d),%s (Вылет #%d),%s (Missão #%d),%s (Einsatz #%d),%s (Salida #%d),%s (Salida #%d),%s (Sortie #%d),%s (Wyprawa #%d),%s (Çıkış #%d)
+<!MissingKey:53:⚔ Damage Boost I>,⚔ Damage Boost I,⚔ ダメージブースト I,⚔ 데미지 증폭 I,⚔ 伤害增幅 I,⚔ Усиление урона I,⚔ Amplificação de Dano I,⚔ Schadensverstärkung I,⚔ Potenciador de Daño I,⚔ Potenciador de Daño I,⚔ Boost de Dégâts I,⚔ Wzmocnienie Obrażeń I,⚔ Hasar Güçlendirme I
+EPILOGUE_SORTIES,Total Sorties,総出撃回数,총 출항 횟수,总出击次数,Всего вылетов,Total de Missões,Einsätze gesamt,Salidas Totales,Salidas Totales,Sorties Totales,Łączne Wyprawy,Toplam Çıkışlar
+<!MissingKey:55:Barrier +10>,Barrier +10,バリア +10,배리어 +10,护盾 +10,Барьер +10,Barreira +10,Barriere +10,Barrera +10,Barrera +10,Barrière +10,Bariera +10,Bariyer +10
+CORE_CURRENCY_FMT,🔴 Core ×%d,🔴 コア ×%d,🔴 코어 ×%d,🔴 核心 ×%d,🔴 Ядро ×%d,🔴 Núcleo ×%d,🔴 Kern ×%d,🔴 Núcleo ×%d,🔴 Núcleo ×%d,🔴 Noyau ×%d,🔴 Rdzeń ×%d,🔴 Çekirdek ×%d
+CORE_COST_COND_FMT,"🔴 Core ×%d
+%s","🔴 コア ×%d
+%s","🔴 코어 ×%d
+%s","🔴 核心 ×%d
+%s","🔴 Ядро ×%d
+%s","🔴 Núcleo ×%d
+%s","🔴 Kern ×%d
+%s","🔴 Núcleo ×%d
+%s","🔴 Núcleo ×%d
+%s","🔴 Noyau ×%d
+%s","🔴 Rdzeń ×%d
+%s","🔴 Çekirdek ×%d
+%s"
+SORTIE_COMPLETE_FMT,Sortie #%d Complete,出撃 #%d 完了,출항 #%d 완료,出击 #%d 完成,Вылет #%d завершён,Missão #%d Completa,Einsatz #%d abgeschlossen,Salida #%d Completa,Salida #%d Completa,Sortie #%d Terminée,Wyprawa #%d Zakończona,Çıkış #%d Tamamlandı
+<!MissingKey:59:Every 50 kills: 3s>,"Every 50 kills: 3s
+ATK x3 SPD +300","50ブロック破壊毎に3秒間
+攻撃×3 速度+300","50블록 파괴마다 3초간
+공격×3 이속+300","50个方块破坏时3秒
+攻击×3 速度+300","Каждые 50 блоков: 3с
+Атака ×3 Скорость +300","A cada 50 destruições: 3s
+ATQ ×3 VEL +300","Alle 50 Zerstörungen: 3s
+ATK ×3 SPD +300","Cada 50 eliminaciones: 3s
+ATK x3 VEL +300","Cada 50 eliminaciones: 3s
+ATK x3 VEL +300","Toutes les 50 éliminations : 3s
+ATK x3 VIT +300","Co 50 eliminacji: 3s
+ATK x3 SPD +300","Her 50 öldürmede: 3s
+ATK x3 HIZ +300"
+<!MissingKey:60:Laser Power IV>,Laser Power IV,レーザー出力 IV,레이저 출력 IV,激光功率 IV,Мощность лазера IV,Potência do Laser IV,Laserstärke IV,Potencia Láser IV,Potencia Láser IV,Puissance Laser IV,Moc Lasera IV,Lazer Gücü IV
+STAT_MEGA,Mega,メガ,메가,超级,Мега,Mega,Mega,Mega,Mega,Méga,Mega,Mega
+TUT_MOVE_DESC,"Move the mouse away from screen center to fly.
+The farther from center, the faster you go!","マウスを画面中央から離すと飛びます。
+中央から遠いほど速くなります！","마우스를 화면 중앙에서 멀리 움직이면 빠르게 날아갑니다.
+중앙에서 멀수록 더 빨라집니다!","将鼠标移离屏幕中心即可飞行。
+离中心越远飞得越快！","Двигайте мышь от центра экрана.
+Чем дальше от центра, тем быстрее!","Mova o mouse para longe do centro para voar.
+Quanto mais longe, mais rápido!","Bewege die Maus weg von der Bildmitte.
+Je weiter, desto schneller!","Aleja el ratón del centro para volar.
+¡Cuanto más lejos del centro, más rápido!","Mueve el mouse lejos del centro para volar.
+¡Mientras más lejos del centro, más rápido!","Éloignez la souris du centre pour voler.
+Plus loin du centre, plus vite !","Odsuń mysz od centrum, aby lecieć.
+Im dalej od centrum, tym szybciej!","Uçmak için fareyi merkezden uzaklaştır.
+Merkezden ne kadar uzaksa, o kadar hızlı!"
+STAT_MAX_COMBO,Max Combo,最大コンボ,최대콤보,最大连击,Макс. комбо,Combo Máx.,Max. Kombo,Combo Máximo,Combo Máximo,Combo Max,Maks. Combo,Maks Kombo
+WPN_DRONE,🤖 Drone,🤖 ドローン,🤖 드론,🤖 无人机,🤖 Дрон,🤖 Drone,🤖 Drohne,🤖 Dron,🤖 Dron,🤖 Drone,🤖 Dron,🤖 Drone
+SETTINGS_TITLE,⚙ Settings,⚙ 設定,⚙ 설정,⚙ 设置,⚙ Настройки,⚙ Configurações,⚙ Einstellungen,⚙ Ajustes,⚙ Ajustes,⚙ Paramètres,⚙ Ustawienia,⚙ Ayarlar
+CARGO_FULL,📦 FULL!,📦 FULL!,📦 FULL!,📦 FULL!,📦 FULL!,📦 FULL!,📦 FULL!,📦 ¡LLENO!,📦 ¡LLENO!,📦 PLEIN !,📦 PEŁNA!,📦 DOLU!
+<!MissingKey:67:🤖Drone>,🤖Drone,🤖ドローン,🤖드론,🤖无人机,🤖Дрон,🤖Drone,🤖Drohne,🤖Dron,🤖Dron,🤖Drone,🤖Dron,🤖Drone
+TRIGGER_COUNT,Trigger Count,発動回数,발동 횟수,触发次数,Срабатывания,Ativações,Auslösungen,Veces Activado,Veces Activado,Déclenchements,Liczba Aktywacji,Tetikleme Sayısı
+<!MissingKey:69:🎯 Core Focus>,🎯 Core Focus,🎯 コア集中,🎯 코어 집중,🎯 核心集中,🎯 Фокус на ядре,🎯 Foco no Núcleo,🎯 Kernfokus,🎯 Enfoque de Núcleo,🎯 Enfoque de Núcleo,🎯 Focus Noyau,🎯 Fokus na Rdzeń,🎯 Çekirdek Odağı
+<!MissingKey:70:Resources Earned>,Resources Earned,獲得資源,획득 자원,获得资源,Ресурсов получено,Recursos Obtidos,Ressourcen erhalten,Recursos Obtenidos,Recursos Ganados,Ressources Gagnées,Zdobyte Zasoby,Kazanılan Kaynaklar
+CORE_DESC_SHORTCUT,"Return zone time halved
+3s → 1.5s","帰還ゾーン滞在時間半減
+3秒→1.5秒","귀환존 체류 시간 절반 단축
+3초 → 1.5초","返航区停留时间减半
+3秒→1.5秒","Время возврата вдвое
+3с → 1.5с","Tempo da zona de retorno pela metade
+3s → 1.5s","Rückkehrzeit halbiert
+3s → 1,5s","Tiempo de zona de retorno reducido a la mitad
+3s → 1.5s","Tiempo de zona de retorno reducido a la mitad
+3s → 1.5s","Temps de retour divisé par deux
+3s → 1.5s","Czas powrotu zmniejszony o połowę
+3s → 1.5s","Dönüş bölgesi süresi yarıya indi
+3s → 1.5s"
+CORE_COND_ALLCORE_NO,✘ All cores destroyed,✘ 全コア破壊,✘ 코어 전멸,✘ 全核心消灭,✘ Все ядра уничтожены,✘ Todos os núcleos destruídos,✘ Alle Kerne zerstört,✘ Todos los núcleos destruidos,✘ Todos los núcleos destruidos,✘ Tous les noyaux détruits,✘ Wszystkie rdzenie zniszczone,✘ Tüm çekirdekler yıkıldı
+NODE_NO_CURRENCY,(Not enough currency),(資金不足),(재화 부족),(资金不足),(Недостаточно средств),(Moeda insuficiente),(Nicht genug Währung),(Recursos insuficientes),(Recursos insuficientes),(Ressources insuffisantes),(Niewystarczające zasoby),(Yetersiz kaynak)
+STATS_TOTAL_SORTIES,Total Sorties,総出撃数,총 출격,总出击数,Всего вылетов,Total de Surtidas,Einsätze gesamt,Salidas totales,Salidas totales,Sorties totales,Łączne misje,Toplam Çıkış
+<!MissingKey:75:⛽ Fuel Tank I>,⛽ Fuel Tank I,⛽ 燃料タンク I,⛽ 연료탱크 I,⛽ 燃料箱 I,⛽ Топливный бак I,⛽ Tanque I,⛽ Kraftstofftank I,⛽ Tanque de Combustible I,⛽ Tanque de Combustible I,⛽ Réservoir I,⛽ Zbiornik Paliwa I,⛽ Yakıt Deposu I
+<!MissingKey:76:Hit 4 blocks at once>,Hit 4 blocks at once,同時に4ブロック攻撃,동시 4블록 타격,同时攻击4个方块,4 блока одновременно,Atingir 4 blocos,4 Blöcke gleichzeitig,Golpea 4 bloques a la vez,Impacta 4 bloques a la vez,Touche 4 blocs à la fois,Traf 4 bloki naraz,Aynı anda 4 blok vur
+STAT_CHARGED,Charged,チャージ,차지샷,蓄力,Заряд,Carregado,Aufgeladen,Cargado,Cargado,Chargé,Naładowany,Şarjlı
+WPN_CHARGED,🔥 Charged,🔥 チャージ,🔥 차지샷,🔥 蓄力,🔥 Заряд,🔥 Carregado,🔥 Aufgeladen,🔥 Cargado,🔥 Cargado,🔥 Chargé,🔥 Naładowany,🔥 Şarjlı
+STATS_TOTAL_RESOURCE,Total Resources,総収集資源,총 수집 자원,总收集资源,Всего ресурсов,Total de Recursos,Gesamtressourcen,Recursos Totales,Recursos Totales,Ressources Totales,Łączne Zasoby,Toplam Kaynaklar
+<!MissingKey:80:☀️ Scales with Summer destruction>,"☀️ Scales with Summer destruction
+Max resource x2","☀️ 夏の破壊率に比例増加
+最大資源 ×2","☀️ 여름 파괴율에 비례 증가
+최대 자원 ×2","☀️ 随夏季破坏率按比例增加
+最大资源 ×2","☀️ Растёт с разрушением Лета
+Макс. ресурсы ×2","☀️ Escala com destruição do Verão
+Recurso máx. ×2","☀️ Skaliert mit Sommer-Zerstörung
+Max. Ressourcen ×2","☀️ Escala con destrucción de Verano
+Recurso máximo x2","☀️ Escala con destrucción de Verano
+Recurso máximo x2","☀️ Évolue avec la destruction de l'Été
+Ressource max x2","☀️ Skaluje się z destrukcją Lata
+Maks. zasoby x2","☀️ Yaz yıkımıyla ölçeklenir
+Maks kaynak x2"
+STAT_ELECTRIC,Elec Chain,電気連鎖,전기연쇄,电链,Электроцепь,Cadeia Elétrica,E-Kette,Cadena Elec,Cadena Elec,Chaîne Élec,Łańcuch Elek,Elek Zincir
+STATS_CORES_SHORT,🔴 %d cores!,🔴 %dコア!,🔴 %d코어!,🔴 %d核心!,🔴 %d ядер!,🔴 %d núcleos!,🔴 %d Kerne!,🔴 ¡%d núcleos!,🔴 ¡%d núcleos!,🔴 %d noyaux !,🔴 %d rdzeni!,🔴 %d çekirdek!
+<!MissingKey:83:Drone crit 15%>,"Drone crit 15%
+Damage x3","ドローンクリティカル15%
+ダメージ×3","드론 크리티컬 15%
+데미지 ×3","无人机暴击15%
+伤害×3","Крит дрона 15%
+Урон ×3","Crítico 15%
+Dano ×3","Drohnen-Krit 15%
+Schaden ×3","Crítico de dron 15%
+Daño x3","Crítico de dron 15%
+Daño x3","Critique drone 15%
+Dégâts x3","Krytyk drona 15%
+Obrażenia x3","Drone kritik %15
+Hasar x3"
+<!MissingKey:84:🛡 Emergency Return I>,🛡 Emergency Return I,🛡 緊急帰還 I,🛡 비상 귀환 I,🛡 紧急返回 I,🛡 Аварийный возврат I,🛡 Retorno de Emergência I,🛡 Notfallrückkehr I,🛡 Retorno de Emergencia I,🛡 Retorno de Emergencia I,🛡 Retour d'Urgence I,🛡 Powrót Awaryjny I,🛡 Acil Dönüş I
+STAT_DRONE,Drone,ドローン,드론,无人机,Дрон,Drone,Drohne,Dron,Dron,Drone,Dron,Drone
+MINIMAP_CORE_ALIVE,Destroyable Core,破壊可能なコア,파괴 가능한 코어,可破坏核心,Разрушаемое ядро,Núcleo Destruível,Zerstörbarer Kern,Núcleo Destruible,Núcleo Destruible,Noyau Destructible,Rdzeń do Zniszczenia,Yıkılabilir Çekirdek
+<!MissingKey:87:✓ Unlocked>,✓ Unlocked,✓ 解除済み,✓ 해금 완료,✓ 已解锁,✓ Разблокировано,✓ Desbloqueado,✓ Freigeschaltet,✓ Desbloqueado,✓ Desbloqueado,✓ Débloqué,✓ Odblokowane,✓ Açıldı
+STATS_TOTAL_SORTIE_TIME,Total Sortie Time,総出撃時間,총 출항 시간,总出击时间,Общее время вылетов,Tempo Total de Missão,Gesamteinsatzzeit,Tiempo Total de Salida,Tiempo Total de Salida,Temps de Sortie Total,Łączny Czas Wypraw,Toplam Çıkış Süresi
+<!MissingKey:89:Thruster Boost II>,Thruster Boost II,スラスター強化 II,추진기 강화 II,推进器强化 II,Усиление двигателя II,Propulsor II,Triebwerk II,Impulsor II,Propulsor II,Propulseur II,Doładowanie Silnika II,İtici Güçlendirme II
+<!MissingKey:90:Barrier II>,Barrier II,バリア II,배리어 II,护盾 II,Барьер II,Barreira II,Barriere II,Barrera II,Barrera II,Barrière II,Bariera II,Bariyer II
+<!MissingKey:91:❄️ Scales with Winter destruction>,"❄️ Scales with Winter destruction
+Max resource x3","❄️ 冬の破壊率に比例増加
+最大資源 ×3","❄️ 겨울 파괴율에 비례 증가
+최대 자원 ×3","❄️ 随冬季破坏率按比例增加
+最大资源 ×3","❄️ Растёт с разрушением Зимы
+Макс. ресурсы ×3","❄️ Escala com destruição do Inverno
+Recurso máx. ×3","❄️ Skaliert mit Winter-Zerstörung
+Max. Ressourcen ×3","❄️ Escala con destrucción de Invierno
+Recurso máximo x3","❄️ Escala con destrucción de Invierno
+Recurso máximo x3","❄️ Évolue avec la destruction de l'Hiver
+Ressource max x3","❄️ Skaluje się z destrukcją Zimy
+Maks. zasoby x3","❄️ Kış yıkımıyla ölçeklenir
+Maks kaynak x3"
+SETTINGS_BGM,🎵 BGM,🎵 BGM,🎵 BGM,🎵 BGM,🎵 BGM,🎵 BGM,🎵 BGM,🎵 BGM,🎵 BGM,🎵 BGM,🎵 BGM,🎵 BGM
+STATS_BEST_RES,🏆 Best Resources (1 run),🏆 最高資源 (1回),🏆 최고 자원 (1회),🏆 最高资源 (单次),🏆 Лучший ресурс (1 вылет),🏆 Melhor Recurso (1 missão),🏆 Beste Ressourcen (1 Einsatz),🏆 Mejor Recurso (1 salida),🏆 Mejor Recurso (1 salida),🏆 Meilleure Ressource (1 sortie),🏆 Najlepsze Zasoby (1 wyprawa),🏆 En İyi Kaynak (1 çıkış)
+<!MissingKey:94:Gold/Core block resource +5>,Gold/Core block resource +5,金/コアブロック資源 +5,금/코어 블록 자원 +5,金/核心方块资源 +5,Золото/ядро +5 ресурсов,Recurso ouro/núcleo +5,Gold/Kern-Ressource +5,Recurso de bloque dorado/núcleo +5,Recurso de bloque dorado/núcleo +5,Ressource bloc doré/noyau +5,Zasoby złotego/rdzenia +5,Altın/Çekirdek blok kaynağı +5
+<!MissingKey:95:⏱️ Quick Return>,⏱️ Quick Return,⏱️ 帰還短縮,⏱️ 귀환 단축,⏱️ 返航缩短,⏱️ Быстрый возврат,⏱️ Retorno Rápido,⏱️ Schnellrückkehr,⏱️ Retorno Rápido,⏱️ Retorno Rápido,⏱️ Retour Rapide,⏱️ Szybki Powrót,⏱️ Hızlı Dönüş
+<!MissingKey:96:Pickup range 2 → 6 tiles>,Pickup range 2 → 6 tiles,収集範囲 2マス → 6マス,수집 범위 2칸 → 6칸,拾取范围 2格 → 6格,Радиус сбора 2 → 6 клеток,Alcance 2 → 6 blocos,Sammelreichweite 2 → 6 Felder,Rango de recogida 2 → 6 casillas,Rango de recolección 2 → 6 casillas,Portée de collecte 2 → 6 cases,Zasięg zbierania 2 → 6 kratek,Toplama menzili 2 → 6 kare
+<!MissingKey:97:💀 Final>,💀 Final,💀 最終,💀 최종,💀 终极,💀 Финал,💀 Final,💀 Final,💀 Final,💀 Final,💀 Final,💀 Finał,💀 Final
+STAT_SHOCKWAVE,Shockwave,衝撃波,충격파,冲击波,Волна,Onda,Welle,Onda,Onda,Onde,Fala,Dalga
+STATS_TITLE,📊 Sortie Statistics,📊 出撃統計,📊 출항 통계,📊 出击统计,📊 Статистика вылетов,📊 Estatísticas de Missão,📊 Einsatzstatistik,📊 Estadísticas de Salida,📊 Estadísticas de Salida,📊 Statistiques de Sortie,📊 Statystyki Wyprawy,📊 Çıkış İstatistikleri
+STATS_BLOCKS_FMT,%s blocks,%s個,%s개,%s个,%s блоков,%s blocos,%s Blöcke,%s bloques,%s bloques,%s blocs,%s bloków,%s blok
+LOADING_CACHE,Building cache...,キャッシュを構築中...,캐시 구성 중...,构建缓存中...,Построение кэша...,Construindo cache...,Cache wird erstellt...,Construyendo caché...,Construyendo caché...,Construction du cache...,Budowanie cache...,Önbellek oluşturuluyor...
+<!MissingKey:102:🌡️ Heat Shield>,🌡️ Heat Shield,🌡️ 耐熱防御,🌡️ 내열 방어,🌡️ 耐热防御,🌡️ Теплозащита,🌡️ Escudo Térmico,🌡️ Hitzeschild,🌡️ Escudo Térmico,🌡️ Escudo Térmico,🌡️ Bouclier Thermique,🌡️ Osłona Termiczna,🌡️ Isı Kalkanı
+<!MissingKey:103:Every 30 kills>,"Every 30 kills
+5s piercing beam","30ブロック破壊毎に
+5秒間貫通ビーム","30블록 파괴마다
+5초간 관통 빔","30个方块破坏时
+5秒贯穿光束","Каждые 30 блоков
+5с пробивающий луч","A cada 30 destruições
+feixe perfurante 5s","Alle 30 Zerstörungen
+5s Durchschlagsstrahl","Cada 30 eliminaciones
+Rayo perforante 5s","Cada 30 eliminaciones
+Rayo perforante 5s","Toutes les 30 éliminations
+Rayon perçant 5s","Co 30 eliminacji
+Przenikający promień 5s","Her 30 öldürmede
+5s delici ışın"
+<!MissingKey:104:Fire interval -0.02s>,Fire interval -0.02s,発射間隔 -0.02秒,발사간격 -0.02초,发射间隔 -0.02秒,Интервал -0.02с,Intervalo -0.02s,"Intervall -0,02s",Intervalo de disparo -0.02s,Intervalo de disparo -0.02s,Intervalle de tir -0.02s,Interwał strzału -0.02s,Atış aralığı -0.02s
+<!MissingKey:105:🧭 Launch Direction>,🧭 Launch Direction,🧭 出撃方向,🧭 출항 방향,🧭 出击方向,🧭 Направление запуска,🧭 Direção de Lançamento,🧭 Startrichtung,🧭 Dirección de Lanzamiento,🧭 Dirección de Lanzamiento,🧭 Direction de Lancement,🧭 Kierunek Startu,🧭 Fırlatma Yönü
+<!MissingKey:106:Blocks Destroyed>,Blocks Destroyed,ブロック破壊,블록 파괴,方块破坏,Блоков уничтожено,Blocos Destruídos,Blöcke zerstört,Bloques Destruidos,Bloques Destruidos,Blocs Détruits,Zniszczone Bloki,Yıkılan Bloklar
+<!MissingKey:107:💢 Splash Laser>,💢 Splash Laser,💢 スプラッシュレーザー,💢 스플래시 레이저,💢 溅射激光,💢 Лазер с разбросом,💢 Laser Disperso,💢 Flächenlaser,💢 Láser Explosivo,💢 Láser Explosivo,💢 Laser Explosif,💢 Laser Rozbryzgowy,💢 Sıçrama Lazeri
+CORE_DESC_FOCUS,Core block damage x2,コアブロックダメージ×2,코어 블록 데미지 ×2,核心方块伤害×2,Урон по ядру ×2,Dano ao núcleo ×2,Kernschaden ×2,Daño a bloque de núcleo x2,Daño a bloque de núcleo x2,Dégâts bloc noyau x2,Obrażenia bloku rdzenia x2,Çekirdek blok hasarı x2
+TUT_CORE_DESC,"Destroy cores deep inside the planet — that's your goal!
+Clear surrounding blocks to reach them.
+Return to base and upgrade your ship to grow stronger!","惑星深部のコアを破壊するのが目標！
+周囲のブロックを除去して接近。
+基地に戻って船をアップグレードしよう！","행성 내부의 코어를 파괴하는 것이 최종 목표입니다!
+코어 주변 블록을 먼저 제거해야 접근할 수 있습니다.
+기지로 돌아가 우주선을 업그레이드하여 강해지세요!","摧毁行星深处的核心是最终目标！
+先清除周围方块才能接近。
+返回基地升级飞船变得更强！","Уничтожайте ядра в глубине планеты!
+Очищайте блоки, чтобы добраться до них.
+Возвращайтесь и улучшайте корабль!","Destrua os núcleos dentro do planeta!
+Limpe blocos ao redor para alcançá-los.
+Retorne e melhore sua nave!","Zerstöre Kerne tief im Planeten!
+Räume Blöcke aus dem Weg.
+Zurück zur Basis und Schiff verbessern!","Destruye los núcleos en el interior — ¡ese es tu objetivo!
+Elimina los bloques para llegar a ellos.
+¡Vuelve a la base y mejora tu nave!","Destruye los núcleos en el interior — ¡ese es tu objetivo!
+Elimina los bloques para llegar a ellos.
+¡Regresa a la base y mejora tu nave!","Détruisez les noyaux à l'intérieur — c'est votre objectif !
+Éliminez les blocs pour les atteindre.
+Retournez à la base et améliorez votre vaisseau !","Zniszcz rdzenie wewnątrz planety — to twój cel!
+Usuń bloki, aby do nich dotrzeć.
+Wróć do bazy i ulepsz statek!","Gezegenin içindeki çekirdekleri yık — hedefin bu!
+Onlara ulaşmak için blokları temizle.
+Üsse dön ve gemini güçlendir!"
+<!MissingKey:110:📦 Cargo Expand I>,📦 Cargo Expand I,📦 貨物拡張 I,📦 화물칸 확장 I,📦 货舱扩展 I,📦 Расширение трюма I,📦 Expansão de Carga I,📦 Frachterweiterung I,📦 Expansión de Carga I,📦 Expansión de Carga I,📦 Extension de Cargaison I,📦 Rozszerzenie Ładowni I,📦 Kargo Genişletme I
+<!MissingKey:111:Laser Power V>,Laser Power V,レーザー出力 V,레이저 출력 V,激光功率 V,Мощность лазера V,Potência do Laser V,Laserstärke V,Potencia Láser V,Potencia Láser V,Puissance Laser V,Moc Lasera V,Lazer Gücü V
+<!MissingKey:112:Laser Power VI>,Laser Power VI,レーザー出力 VI,레이저 출력 VI,激光功率 VI,Мощность лазера VI,Potência do Laser VI,Laserstärke VI,Potencia Láser VI,Potencia Láser VI,Puissance Laser VI,Moc Lasera VI,Lazer Gücü VI
+<!MissingKey:113:✓ Max Level>,✓ Max Level,✓ 最大レベル,✓ 최대 레벨,✓ 最高等级,✓ Макс. уровень,✓ Nível Máximo,✓ Max. Stufe,✓ Nivel Máximo,✓ Nivel Máximo,✓ Niveau Max,✓ Maks. Poziom,✓ Maks Seviye
+SORTIE_INCOME_FMT,💰 %s  ⛏ %d blocks,💰 %s  ⛏ %dブロック,💰 %s  ⛏ %d블록,💰 %s  ⛏ %d方块,💰 %s  ⛏ %d блоков,💰 %s  ⛏ %d blocos,💰 %s  ⛏ %d Blöcke,💰 %s  ⛏ %d bloques,💰 %s  ⛏ %d bloques,💰 %s  ⛏ %d blocs,💰 %s  ⛏ %d bloków,💰 %s  ⛏ %d blok
+CORE_COST_INSUFFICIENT,🔴 Core ×%d (Not enough),🔴 コア ×%d (コア不足),🔴 코어 ×%d (코어 부족),🔴 核心 ×%d (核心不足),🔴 Ядро ×%d (Не хватает),🔴 Núcleo ×%d (Insuficiente),🔴 Kern ×%d (Nicht genug),🔴 Núcleo ×%d (Insuficiente),🔴 Núcleo ×%d (Insuficiente),🔴 Noyau ×%d (Insuffisant),🔴 Rdzeń ×%d (Niewystarczające),🔴 Çekirdek ×%d (Yetersiz)
+<!MissingKey:116:📦 Cargo Expand V>,📦 Cargo Expand V,📦 貨物拡張 V,📦 화물칸 확장 V,📦 货舱扩展 V,📦 Расширение трюма V,📦 Expansão de Carga V,📦 Frachterweiterung V,📦 Expansión de Carga V,📦 Expansión de Carga V,📦 Extension de Cargaison V,📦 Rozszerzenie Ładowni V,📦 Kargo Genişletme V
+STATS_BLOCKS_SHORT,⛏ %d blocks,⛏ %dブロック,⛏ %d블록,⛏ %d方块,⛏ %d блоков,⛏ %d blocos,⛏ %d Blöcke,⛏ %d bloques,⛏ %d bloques,⛏ %d blocs,⛏ %d bloków,⛏ %d blok
+<!MissingKey:118:⚡ Electric Range II>,⚡ Electric Range II,⚡ 電気範囲強化 II,⚡ 전기 범위 강화 II,⚡ 电气范围强化 II,⚡ Дальность электричества II,⚡ Alcance Elétrico II,⚡ Elektroreichweite II,⚡ Alcance Eléctrico II,⚡ Alcance Eléctrico II,⚡ Portée Électrique II,⚡ Zasięg Elektryczny II,⚡ Elektrik Menzili II
+SETTINGS_SHAKE,📳 Screen Shake,📳 画面振動,📳 화면 흔들림,📳 屏幕震动,📳 Тряска экрана,📳 Tremor de Tela,📳 Bildschirmwackeln,📳 Vibración de Pantalla,📳 Vibración de Pantalla,📳 Tremblement d'Écran,📳 Wstrząs Ekranu,📳 Ekran Titreşimi
+<!MissingKey:120:🌸 Spring>,🌸 Spring,🌸 春,🌸 봄,🌸 春,🌸 Весна,🌸 Primavera,🌸 Frühling,🌸 Primavera,🌸 Primavera,🌸 Printemps,🌸 Wiosna,🌸 Bahar
+BLOCKS_FMT,%d Blocks,%d ブロック,%d 블록,%d 方块,%d блоков,%d blocos,%d Blöcke,%d Bloques,%d Bloques,%d Blocs,%d Bloków,%d Blok
+<!MissingKey:122:Every 15 kills>,"Every 15 kills
+convert nearby to gold","15ブロック破壊毎に
+周囲を金鉱に変換","15블록 파괴마다
+주변 블록 금광 변환","15个方块破坏时
+周围方块变为金矿","Каждые 15 блоков
+превращает в золото","A cada 15 destruições
+converte em ouro","Alle 15 Zerstörungen
+zu Gold umwandeln","Cada 15 eliminaciones
+Convierte los cercanos en oro","Cada 15 eliminaciones
+Convierte los cercanos en oro","Toutes les 15 éliminations
+Convertit les proches en or","Co 15 eliminacji
+Zmienia pobliskie w złoto","Her 15 öldürmede
+yakındakileri altına dönüştür"
+<!MissingKey:123:🎯 Critical Hit>,🎯 Critical Hit,🎯 クリティカルヒット,🎯 크리티컬 히트,🎯 暴击,🎯 Критический удар,🎯 Golpe Crítico,🎯 Kritischer Treffer,🎯 Golpe Crítico,🎯 Golpe Crítico,🎯 Coup Critique,🎯 Trafienie Krytyczne,🎯 Kritik Vuruş
+<!MissingKey:124:💰 Gold Block Enhance>,💰 Gold Block Enhance,💰 ゴールドブロック強化,💰 금블록 강화,💰 金方块强化,💰 Усиление золотого блока,💰 Bloco Dourado Aprimorado,💰 Goldblock verstärkt,💰 Mejora de Bloque Dorado,💰 Mejora de Bloque Dorado,💰 Amélioration Bloc Doré,💰 Ulepszenie Złotego Bloku,💰 Altın Blok Geliştirme
+WPN_MEGA,⚡ Mega,⚡ メガレーザー,⚡ 메가레이저,⚡ 超级激光,⚡ Мега,⚡ Mega,⚡ Mega,⚡ Mega,⚡ Mega,⚡ Méga,⚡ Mega,⚡ Mega
+<!MissingKey:126:Resource gain +12>,Resource gain +12,資源獲得 +12,자원 획득 +12,资源获取 +12,Ресурсы +12,Recursos +12,Ressourcen +12,Recurso +12,Recurso +12,Ressource +12,Zasoby +12,Kaynak +12
+<!MissingKey:127:20% fuel reduction>,20% fuel reduction,燃料消費 20%軽減,연료 소모 20% 감소,燃料消耗降低20%,Расход топлива -20%,Redução de combustível 20%,20% weniger Verbrauch,Reducción de combustible 20%,Reducción de combustible 20%,Réduction de carburant 20%,Redukcja paliwa 20%,%20 yakıt azaltma
+TUT_NODE_DESC,"Left-click a node to purchase upgrades.
+Right-click and drag to scroll the node tree.
+Now upgrade your ship and launch again!","ノードを左クリックで購入。
+右クリックドラッグでノードツリーを移動。
+船をアップグレードして再出撃！","노드를 좌클릭하면 업그레이드를 구매합니다.
+우클릭 드래그로 노드 트리를 이동할 수 있습니다.
+우주선을 업그레이드하고 다시 출항하세요!","左键点击节点购买升级。
+右键拖动移动节点树。
+升级飞船后再次出击！","ЛКМ по узлу — покупка.
+ПКМ + перетаскивание — прокрутка.
+Улучшайте корабль и вперёд!","Clique esquerdo para comprar.
+Clique direito e arraste para navegar.
+Melhore a nave e lance novamente!","Linksklick zum Kauf.
+Rechtsklick + ziehen zum Scrollen.
+Schiff verbessern und erneut starten!","Clic izquierdo en un nodo para comprar.
+Clic derecho y arrastra para desplazar.
+¡Mejora tu nave y lánzate de nuevo!","Clic en un nodo para comprar.
+Clic derecho y arrastra para desplazar.
+¡Mejora tu nave y lánzate de nuevo!","Clic gauche sur un nœud pour acheter.
+Clic droit et glissez pour défiler.
+Améliorez votre vaisseau et relancez !","Kliknij LPM na węzeł, aby kupić.
+PPM i przeciągnij, aby przewijać.
+Ulepsz statek i ruszaj ponownie!","Satın almak için düğüme sol tıkla.
+Kaydırmak için sağ tıkla ve sürükle.
+Gemini geliştir ve tekrar fırlat!"
+CORE_FMT,◉ Core %d / %d,◉ コア %d / %d,◉ 코어 %d / %d,◉ 核心 %d / %d,◉ Ядро %d / %d,◉ Núcleo %d / %d,◉ Kern %d / %d,◉ Núcleo %d / %d,◉ Núcleo %d / %d,◉ Noyau %d / %d,◉ Rdzeń %d / %d,◉ Çekirdek %d / %d
+<!MissingKey:130:Laser damage +1>,Laser damage +1,レーザーダメージ +1,레이저 데미지 +1,激光伤害 +1,Урон лазера +1,Dano do laser +1,Laserschaden +1,Daño láser +1,Daño láser +1,Dégâts laser +1,Obrażenia lasera +1,Lazer hasarı +1
+EPILOGUE_CORES,Cores Destroyed,破壊したコア,파괴한 코어,已摧毁核心,Уничтожено ядер,Núcleos Destruídos,Zerstörte Kerne,Núcleos destruidos,Núcleos destruidos,Noyaux détruits,Zniszczone rdzenie,Yok Edilen Çekirdekler
+<!MissingKey:132:Laser damage +3>,Laser damage +3,レーザーダメージ +3,레이저 데미지 +3,激光伤害 +3,Урон лазера +3,Dano do laser +3,Laserschaden +3,Daño láser +3,Daño láser +3,Dégâts laser +3,Obrażenia lasera +3,Lazer hasarı +3
+<!MissingKey:133:20% chance for x3 damage>,"20% chance for x3 damage
+Big yellow numbers","20%の確率でダメージ×3
+大きな黄色の数字表示","20% 확률로 데미지 ×3
+큰 노란 숫자 표시","20%概率伤害×3
+显示大黄色数字","20% шанс на урон ×3
+Большие жёлтые числа","20% de chance de dano ×3
+Grandes números amarelos","20% Chance auf ×3 Schaden
+Große gelbe Zahlen","20% de probabilidad de daño x3
+Números amarillos grandes","20% de probabilidad de daño x3
+Números amarillos grandes","20% de chance de dégâts x3
+Gros chiffres jaunes","20% szans na obrażenia x3
+Duże żółte liczby","x3 hasar için %20 şans
+Büyük sarı sayılar"
+<!MissingKey:134:Laser Power I>,Laser Power I,レーザー出力 I,레이저 출력 I,激光功率 I,Мощность лазера I,Potência do Laser I,Laserstärke I,Potencia Láser I,Potencia Láser I,Puissance Laser I,Moc Lasera I,Lazer Gücü I
+EPILOGUE_TIME,Play Time,プレイ時間,플레이 시간,游玩时间,Время игры,Tempo de Jogo,Spielzeit,Tiempo de juego,Tiempo de juego,Temps de jeu,Czas gry,Oynama Süresi
+<!MissingKey:136:Laser damage +8>,Laser damage +8,レーザーダメージ +8,레이저 데미지 +8,激光伤害 +8,Урон лазера +8,Dano do laser +8,Laserschaden +8,Daño láser +8,Daño láser +8,Dégâts laser +8,Obrażenia lasera +8,Lazer hasarı +8
+<!MissingKey:137:Cargo +200>,Cargo +200,貨物 +200個,화물칸 +200개,货舱 +200个,Трюм +200,Carga +200,Fracht +200,Carga +200,Carga +200,Cargaison +200,Ładownia +200,Kargo +200
+<!MissingKey:138:💰 Gold Value II>,💰 Gold Value II,💰 金鉱価値 II,💰 금광 가치 II,💰 金矿价值 II,💰 Ценность золота II,💰 Valor do Ouro II,💰 Goldwert II,💰 Valor del Oro II,💰 Valor del Oro II,💰 Valeur de l'Or II,💰 Wartość Złota II,💰 Altın Değeri II
+<!MissingKey:139:Thruster Boost I>,Thruster Boost I,スラスター強化 I,추진기 강화 I,推进器强化 I,Усиление двигателя I,Propulsor I,Triebwerk I,Impulsor I,Propulsor I,Propulseur I,Doładowanie Silnika I,İtici Güçlendirme I
+<!MissingKey:140:Range up Interval down>,Range up Interval down,範囲↑ 発動間隔↓,범위↑ 발동간격↓,范围↑ 触发间隔↓,Дальность↑ Интервал↓,Alcance↑ Intervalo↓,Reichweite↑ Intervall↓,Más alcance Menos intervalo,Más alcance Menos intervalo,Plus de portée Moins d'intervalle,Większy zasięg Mniejszy interwał,Daha fazla menzil Daha az aralık
+<!MissingKey:141:Resource Efficiency III>,Resource Efficiency III,資源効率 III,자원 효율 III,资源效率 III,Эффективность ресурсов III,Eficiência de Recursos III,Ressourceneffizienz III,Eficiencia de Recursos III,Eficiencia de Recursos III,Efficacité des Ressources III,Efektywność Zasobów III,Kaynak Verimliliği III
+STAT_AOE,AoE,広域,광역,范围,ОоУ,AoE,AoE,AoE,AoE,AoE,AoE,AoE
+WPN_CHAIN,⚡ Chain,⚡ チェイン,⚡ 체인,⚡ 链式,⚡ Цепь,⚡ Cadeia,⚡ Kette,⚡ Cadena,⚡ Cadena,⚡ Chaîne,⚡ Łańcuch,⚡ Zincir
+<!MissingKey:144:Barrier III>,Barrier III,バリア III,배리어 III,护盾 III,Барьер III,Barreira III,Barriere III,Barrera III,Barrera III,Barrière III,Bariera III,Bariyer III
+<!MissingKey:145:🌍 New Planet>,🌍 New Planet,🌍 新惑星,🌍 새 행성,🌍 新行星,🌍 Новая планета,🌍 Novo Planeta,🌍 Neuer Planet,🌍 Nuevo Planeta,🌍 Nuevo Planeta,🌍 Nouvelle Planète,🌍 Nowa Planeta,🌍 Yeni Gezegen
+MASTERY_POPUP_DESC,"The 'New Planet' button is now active.
+You can destroy and regenerate the planet as many times as you want.
+All upgrades are kept.","『新惑星』ボタンが有効になりました。
+いつでも惑星を破壊して再生成できます。
+アップグレードは維持されます。","'새 행성' 버튼이 활성화되었습니다.
+행성을 언제든 파괴하고 새로 생성할 수 있습니다.
+업그레이드는 유지됩니다.","'新行星'按钮已激活。
+你可以随时摧毁并重新生成行星。
+升级保持不变。","Кнопка 'Новая планета' активна.
+Вы можете уничтожать и воссоздавать планету сколько угодно.
+Улучшения сохраняются.","O botão 'Novo Planeta' está ativo.
+Você pode destruir e regenerar o planeta quantas vezes quiser.
+Melhorias são mantidas.","Der 'Neuer Planet'-Button ist aktiv.
+Du kannst den Planeten beliebig oft zerstören und neu generieren.
+Upgrades bleiben erhalten.","El botón 'Nuevo Planeta' está activo.
+Puedes destruir y regenerar el planeta tantas veces como quieras.
+Las mejoras se mantienen.","El botón 'Nuevo Planeta' está activo.
+Puedes destruir y regenerar el planeta tantas veces como quieras.
+Las mejoras se mantienen.","Le bouton 'Nouvelle Planète' est actif.
+Vous pouvez détruire et regénérer la planète autant de fois que vous le souhaitez.
+Les améliorations sont conservées.","Przycisk 'Nowa Planeta' jest aktywny.
+Możesz niszczyć i odtwarzać planetę ile razy chcesz.
+Ulepszenia zostają zachowane.","'Yeni Gezegen' butonu aktif.
+Gezegeni istediğiniz kadar yok edip yeniden oluşturabilirsiniz.
+Geliştirmeler korunur."
+SORTIE_NUM,Sortie #%d,出撃 #%d,출항 #%d,出击 #%d,Вылет #%d,Missão #%d,Einsatz #%d,Salida #%d,Salida #%d,Sortie #%d,Wyprawa #%d,Çıkış #%d
+<!MissingKey:148:🍂 Autumn>,🍂 Autumn,🍂 秋,🍂 가을,🍂 秋,🍂 Осень,🍂 Outono,🍂 Herbst,🍂 Otoño,🍂 Otoño,🍂 Automne,🍂 Jesień,🍂 Sonbahar
+<!MissingKey:149:🎯Critical>,🎯Critical,🎯クリティカル,🎯크리티컬,🎯暴击,🎯Крит,🎯Crítico,🎯Kritisch,🎯Crítico,🎯Crítico,🎯Critique,🎯Krytyczny,🎯Kritik
+ENDING_CONTINUE,Continue,コンティニュー,이어하기,继续,Продолжить,Continuar,Weiter,Continuar,Continuar,Continuer,Kontynuuj,Devam Et
+<!MissingKey:151:More damage near center>,"More damage near center
+(up to +100%)","惑星中心に近いほど
+ダメージ増加 (最大+100%)","행성 중심에 가까울수록
+데미지 증가 (최대 +100%)","越靠近行星中心
+伤害越高 (最大+100%)","Больше урона у центра
+(до +100%)","Mais dano perto do centro
+(até +100%)","Mehr Schaden nahe Zentrum
+(bis +100%)","Más daño cerca del centro
+(hasta +100%)","Más daño cerca del centro
+(hasta +100%)","Plus de dégâts près du centre
+(jusqu'à +100%)","Więcej obrażeń blisko centrum
+(do +100%)","Merkeze yakın daha fazla hasar
+(+%100'e kadar)"
+<!MissingKey:152:Cargo +50>,Cargo +50,貨物 +50個,화물칸 +50개,货舱 +50个,Трюм +50,Carga +50,Fracht +50,Carga +50,Carga +50,Cargaison +50,Ładownia +50,Kargo +50
+<!MissingKey:153:Cargo +5000>,Cargo +5000,貨物 +5000個,화물칸 +5000개,货舱 +5000个,Трюм +5000,Carga +5000,Fracht +5000,Carga +5000,Carga +5000,Cargaison +5000,Ładownia +5000,Kargo +5000
+<!MissingKey:154:🤖 Drone Power Chip>,🤖 Drone Power Chip,🤖 ドローン火力チップ,🤖 드론 화력칩,🤖 无人机火力芯片,🤖 Чип мощности дрона,🤖 Chip de Potência,🤖 Drohnen-Powerchip,🤖 Chip de Potencia de Dron,🤖 Chip de Potencia de Dron,🤖 Puce de Puissance Drone,🤖 Chip Mocy Drona,🤖 Drone Güç Çipi
+<!MissingKey:155:🛡️ Barrier Regen>,🛡️ Barrier Regen,🛡️ バリア再生,🛡️ 배리어 재생,🛡️ 屏障再生,🛡️ Регенерация барьера,🛡️ Regeneração de Barreira,🛡️ Barriereregeneration,🛡️ Regeneración de Barrera,🛡️ Regeneración de Barrera,🛡️ Régénération de Barrière,🛡️ Regeneracja Bariery,🛡️ Bariyer Yenilenmesi
+WPN_CRITICAL,🎯 Critical,🎯 クリティカル,🎯 크리티컬,🎯 暴击,🎯 Крит,🎯 Crítico,🎯 Kritisch,🎯 Crítico,🎯 Crítico,🎯 Critique,🎯 Krytyczny,🎯 Kritik
+<!MissingKey:157:🤖 Drone Pierce>,🤖 Drone Pierce,🤖 ドローン貫通,🤖 드론 관통,🤖 无人机穿透,🤖 Пробивание дрона,🤖 Perfuração do Drone,🤖 Drohnen-Durchschlag,🤖 Perforación de Dron,🤖 Perforación de Dron,🤖 Perforation Drone,🤖 Przebicie Drona,🤖 Drone Delme
+<!MissingKey:158:⚡ Mega Laser Enhance>,⚡ Mega Laser Enhance,⚡ メガレーザー強化,⚡ 메가 레이저 강화,⚡ 巨型激光强化,⚡ Усиление мегалазера,⚡ Mega Laser Aprimorado,⚡ Megalaser verstärkt,⚡ Mejora de Mega Láser,⚡ Mejora de Mega Láser,⚡ Amélioration Méga Laser,⚡ Ulepszenie Mega Lasera,⚡ Mega Lazer Geliştirme
+<!MissingKey:159:Laser Power III>,Laser Power III,レーザー出力 III,레이저 출력 III,激光功率 III,Мощность лазера III,Potência do Laser III,Laserstärke III,Potencia Láser III,Potencia Láser III,Puissance Laser III,Moc Lasera III,Lazer Gücü III
+<!MissingKey:160:🍂 Scales with Autumn destruction>,"🍂 Scales with Autumn destruction
+Max resource x2.5","🍂 秋の破壊率に比例増加
+最大資源 ×2.5","🍂 가을 파괴율에 비례 증가
+최대 자원 ×2.5","🍂 随秋季破坏率按比例增加
+最大资源 ×2.5","🍂 Растёт с разрушением Осени
+Макс. ресурсы ×2.5","🍂 Escala com destruição do Outono
+Recurso máx. ×2.5","🍂 Skaliert mit Herbst-Zerstörung
+Max. Ressourcen ×2.5","🍂 Escala con destrucción de Otoño
+Recurso máximo x2.5","🍂 Escala con destrucción de Otoño
+Recurso máximo x2.5","🍂 Évolue avec la destruction de l'Automne
+Ressource max x2.5","🍂 Skaluje się z destrukcją Jesieni
+Maks. zasoby x2.5","🍂 Sonbahar yıkımıyla ölçeklenir
+Maks kaynak x2.5"
+MENU_CONTINUE,Continue,続ける,계속하기,继续,Продолжить,Continuar,Weiter,Continuar,Continuar,Continuer,Kontynuuj,Devam Et
+MINIMAP_CORE_LOCKED,Locked Core (shield active),ロック中（シールド有効）,잠긴 코어 (보호막 활성),已锁定核心（护盾启动）,Защищённое ядро (щит),Núcleo Trancado (escudo ativo),Gesperrter Kern (Schild aktiv),Núcleo Bloqueado (escudo activo),Núcleo Bloqueado (escudo activo),Noyau Verrouillé (bouclier actif),Rdzeń Zablokowany (tarcza aktywna),Kilitli Çekirdek (kalkan aktif)
+STATS_SUMMARY,📈 Cumulative Summary,📈 累計サマリー,📈 누적 요약,📈 累计摘要,📈 Итого,📈 Resumo Acumulado,📈 Gesamtübersicht,📈 Resumen Acumulado,📈 Resumen Acumulado,📈 Résumé Cumulé,📈 Podsumowanie Łączne,📈 Kümülatif Özet
+<!MissingKey:164:⊞ Multi Laser I>,⊞ Multi Laser I,⊞ マルチレーザー I,⊞ 멀티 레이저 I,⊞ 多重激光 I,⊞ Мультилазер I,⊞ Multi Laser I,⊞ Multilaser I,⊞ Multi Láser I,⊞ Multi Láser I,⊞ Multi Laser I,⊞ Multi Laser I,⊞ Çoklu Lazer I
+<!MissingKey:165:Hit 2 blocks at once>,Hit 2 blocks at once,同時に2ブロック攻撃,동시 2블록 타격,同时攻击2个方块,2 блока одновременно,Atingir 2 blocos,2 Blöcke gleichzeitig,Golpea 2 bloques a la vez,Impacta 2 bloques a la vez,Touche 2 blocs à la fois,Traf 2 bloki naraz,Aynı anda 2 blok vur
+<!MissingKey:166:Click to continue...>,Click to continue...,クリックして続ける...,클릭하여 계속...,点击继续...,Нажмите для продолжения...,Clique para continuar...,Klicken zum Fortfahren...,Clic para continuar...,Clic para continuar...,Cliquez pour continuer...,"Kliknij, aby kontynuować...",Devam etmek için tıkla...
+<!MissingKey:167:⊞ Multi Laser III>,⊞ Multi Laser III,⊞ マルチレーザー III,⊞ 멀티 레이저 III,⊞ 多重激光 III,⊞ Мультилазер III,⊞ Multi Laser III,⊞ Multilaser III,⊞ Multi Láser III,⊞ Multi Láser III,⊞ Multi Laser III,⊞ Multi Laser III,⊞ Çoklu Lazer III
+CORE_REWARD_TITLE,🔴 Core Rewards,🔴 コア報酬,🔴 코어 보상,🔴 核心奖励,🔴 Награды за ядро,🔴 Recompensas do Núcleo,🔴 Kernbelohnungen,🔴 Recompensas de Núcleo,🔴 Recompensas de Núcleo,🔴 Récompenses de Noyau,🔴 Nagrody za Rdzeń,🔴 Çekirdek Ödülleri
+<!MissingKey:169:Every 5th shot critical>,"Every 5th shot critical
+Damage ×3","5発ごとにクリティカル
+ダメージ ×3","매 5발째 크리티컬
+데미지 ×3","每5发暴击
+伤害 ×3","Каждый 5-й крит
+Урон ×3","Cada 5 tiros crítico
+Dano ×3","Jeder 5. Schuss kritisch
+Schaden ×3","Cada 5 disparos crítico
+Daño ×3","Cada 5 disparos crítico
+Daño ×3","Chaque 5e tir critique
+Dégâts ×3","Co 5. strzał krytyczny
+Obrażenia ×3","Her 5. atış kritik
+Hasar ×3"
+TUT_MINE_HINT,Destroy the blocks!,ブロックを破壊！,블록을 파괴하세요!,破坏方块！,Уничтожайте блоки!,Destrua os blocos!,Blöcke zerstören!,¡Destruye los bloques!,¡Destruye los bloques!,Détruisez les blocs !,Niszcz bloki!,Blokları yık!
+NODE_CLICK_BUY,(Click to buy),(クリックで購入),(클릭하여 구매),(点击购买),(Купить),(Clique para comprar),(Klick zum Kauf),(Clic para comprar),(Clic para comprar),(Cliquez pour acheter),"(Kliknij, aby kupić)",(Satın almak için tıkla)
+<!MissingKey:172:🍂 Scales with Autumn destruction>,"🍂 Scales with Autumn destruction
+Max damage x2.5
+⚠ Condition: 4 cores destroyed","🍂 秋の破壊率に比例増加
+最大ダメージ ×2.5
+⚠ 条件: コア4個破壊","🍂 가을 파괴율에 비례 증가
+최대 데미지 ×2.5
+⚠ 조건: 코어 4개 파괴","🍂 随秋季破坏率按比例增加
+最大伤害 ×2.5
+⚠ 条件: 摧毁4个核心","🍂 Растёт с разрушением Осени
+Макс. урон ×2.5
+⚠ Условие: 4 ядра уничтожено","🍂 Escala com destruição do Outono
+Dano máx. ×2.5
+⚠ Condição: 4 núcleos destruídos","🍂 Skaliert mit Herbst-Zerstörung
+Max. Schaden ×2.5
+⚠ Bedingung: 4 Kerne zerstört","🍂 Escala con destrucción de Otoño
+Daño máximo x2.5
+⚠ Condición: 4 núcleos destruidos","🍂 Escala con destrucción de Otoño
+Daño máximo x2.5
+⚠ Condición: 4 núcleos destruidos","🍂 Évolue avec la destruction de l'Automne
+Dégâts max x2.5
+⚠ Condition : 4 noyaux détruits","🍂 Skaluje się z destrukcją Jesieni
+Maks. obrażenia x2.5
+⚠ Warunek: 4 rdzenie zniszczone","🍂 Sonbahar yıkımıyla ölçeklenir
+Maks hasar x2.5
+⚠ Koşul: 4 çekirdek yıkılmış"
+DEMO_END_TITLE,Thanks for Playing!,プレイいただきありがとうございます！,플레이해 주셔서 감사합니다!,感谢您的试玩！,Спасибо за игру!,Obrigado por Jogar!,Danke fürs Spielen!,¡Gracias por Jugar!,¡Gracias por Jugar!,Merci d'avoir joué !,Dziękujemy za Grę!,Oynadığınız için Teşekkürler!
+<!MissingKey:174:Fuel +12s>,Fuel +12s,燃料 +12秒,연료 +12초,燃料 +12秒,Топливо +12с,Combustível +12s,Treibstoff +12s,Combustible +12s,Combustible +12s,Carburant +12s,Paliwo +12s,Yakıt +12s
+CORE_DESC_DETECT,"Core HP visualization
+Pulsing + color change as HP drops","コアHPを可視化
+HP低下で脈動＋色変化","코어 블록에 HP 시각화
+HP 낮을수록 맥동 + 색상 변화","核心HP可视化
+HP越低脉动+颜色变化","Визуализация HP ядра
+Пульсация + смена цвета","Visualização HP do núcleo
+Pulsação + mudança de cor","Kern-HP-Anzeige
+Pulsieren + Farbwechsel","Visualización de HP del núcleo
+Pulso + cambio de color al bajar HP","Visualización de HP del núcleo
+Pulso + cambio de color al bajar HP","Visualisation des PV du noyau
+Pulsation + changement de couleur","Wizualizacja HP rdzenia
+Pulsowanie + zmiana koloru","Çekirdek HP görselleştirmesi
+HP düştükçe titreşim + renk değişimi"
+<!MissingKey:176:🧲 Resource Magnet>,🧲 Resource Magnet,🧲 資源マグネット,🧲 자원 자석,🧲 资源磁铁,🧲 Магнит ресурсов,🧲 Ímã de Recursos,🧲 Ressourcenmagnet,🧲 Imán de Recursos,🧲 Imán de Recolección,🧲 Aimant à Ressources,🧲 Magnes Zasobów,🧲 Kaynak Mıknatısı
+TUT_FUEL_LABEL,Fuel Gauge,燃料ゲージ,연료 게이지,燃料表,Топливо,Medidor de Combustível,Tankanzeige,Indicador de Combustible,Indicador de Combustible,Jauge de Carburant,Wskaźnik Paliwa,Yakıt Göstergesi
+<!MissingKey:178:❌ Close>,❌ Close,❌ 閉じる,❌ 닫기,❌ 关闭,❌ Закрыть,❌ Fechar,❌ Schließen,❌ Cerrar,❌ Cerrar,❌ Fermer,❌ Zamknij,❌ Kapat
+DEMO_END_MENU,Main Menu,メインメニュー,메인 메뉴,主菜单,Главное меню,Menu Principal,Hauptmenü,Menú Principal,Menú Principal,Menu Principal,Menu Główne,Ana Menü
+<!MissingKey:180:📍 Minimap>,📍 Minimap,📍 ミニマップ,📍 미니맵,📍 小地图,📍 Миникарта,📍 Minimapa,📍 Minikarte,📍 Minimapa,📍 Minimapa,📍 Minicarte,📍 Minimapa,📍 Mini Harita
+<!MissingKey:181:Gold/Core block resource +12>,Gold/Core block resource +12,金/コアブロック資源 +12,금/코어 블록 자원 +12,金/核心方块资源 +12,Золото/ядро +12 ресурсов,Recurso ouro/núcleo +12,Gold/Kern-Ressource +12,Recurso de bloque dorado/núcleo +12,Recurso de bloque dorado/núcleo +12,Ressource bloc doré/noyau +12,Zasoby złotego/rdzenia +12,Altın/Çekirdek blok kaynağı +12
+<!MissingKey:182:No resource loss on ship destruction>,No resource loss on ship destruction,船体破壊時資源損失率 0%,우주선 파괴 시 자원 손실률 0%,飞船毁坏时资源损失率0%,Без потерь при уничтожении корабля,Sem perda de recursos ao destruir nave,Kein Ressourcenverlust bei Zerstörung,Sin pérdida de recursos al destruirse la nave,Sin pérdida de recursos al destruirse la nave,Aucune perte de ressources à la destruction,Brak strat zasobów przy zniszczeniu statku,Gemi yıkımında kaynak kaybı yok
+CORE_DESC_DIRECTION,3 o'clock launch direction,3時方向出撃選択可能,3시 방향 출항 선택 가능,可选择3点方向出击,Запуск в направлении 3 часов,Direção de lançamento 3 horas,Startrichtung 3 Uhr,Dirección de lanzamiento a las 3 en punto,Dirección de lanzamiento a las 3 en punto,Direction de lancement à 3 heures,Kierunek startu na godzinę 3,Saat 3 yönünde fırlatma
+<!MissingKey:184:⚡Mega>,⚡Mega,⚡メガ,⚡메가,⚡巨型,⚡Мега,⚡Mega,⚡Mega,⚡Mega,⚡Mega,⚡Méga,⚡Mega,⚡Mega
+TUT_FUEL,Fuel empty!,燃料切れ！,연료 고갈!,燃料耗尽！,Топливо кончилось!,Sem combustível!,Tank leer!,¡Sin combustible!,¡Sin combustible!,Plus de carburant !,Brak paliwa!,Yakıt bitti!
+MASTERY_POPUP_TITLE,Planet Mastery Unlocked,惑星支配 解放,행성 지배 해금,行星支配已解锁,Господство над планетой,Domínio do Planeta,Planetenherrschaft,Dominio del Planeta,Dominio del Planeta,Maîtrise Planétaire,Dominacja nad Planetą,Gezegen Hakimiyeti
+<!MissingKey:187:🌀 Shockwave Enhance>,🌀 Shockwave Enhance,🌀 衝撃波強化,🌀 충격파 강화,🌀 冲击波强化,🌀 Усиление волны,🌀 Onda Aprimorada,🌀 Schockwelle verstärkt,🌀 Mejora de Onda de Choque,🌀 Mejora de Onda de Choque,🌀 Amélioration Onde de Choc,🌀 Ulepszenie Fali Uderzeniowej,🌀 Şok Dalgası Geliştirme
+WPN_ELECTRIC,⚡ Electric,⚡ 電気,⚡ 전기,⚡ 电击,⚡ Электро,⚡ Elétrico,⚡ Elektro,⚡ Eléctrico,⚡ Eléctrico,⚡ Électrique,⚡ Elektryczny,⚡ Elektrik
+<!MissingKey:189:🔍 Core Detect>,🔍 Core Detect,🔍 コア探知,🔍 코어 탐지,🔍 核心探测,🔍 Обнаружение ядра,🔍 Detecção de Núcleo,🔍 Kernerkennung,🔍 Detectar Núcleo,🔍 Detectar Núcleo,🔍 Détection de Noyau,🔍 Wykrywanie Rdzenia,🔍 Çekirdek Tespiti
+<!MissingKey:190:Laser damage +25>,Laser damage +25,レーザーダメージ +25,레이저 데미지 +25,激光伤害 +25,Урон лазера +25,Dano do laser +25,Laserschaden +25,Daño láser +25,Daño láser +25,Dégâts laser +25,Obrażenia lasera +25,Lazer hasarı +25
+TUT_CRASH,Crash!,衝突！,충돌!,碰撞！,Столкновение!,Colisão!,Zusammenstoß!,¡Choque!,¡Choque!,Crash !,Zderzenie!,Çarpışma!
+<!MissingKey:192:🌀Shockwave>,🌀Shockwave,🌀衝撃波,🌀충격파,🌀冲击波,🌀Волна,🌀Onda,🌀Welle,🌀Onda,🌀Onda,🌀Onde,🌀Fala,🌀Dalga
+EPILOGUE_CORES,Cores Destroyed,コア破壊,코어 파괴,核心破坏,Ядер уничтожено,Núcleos Destruídos,Kerne zerstört,Núcleos Destruidos,Núcleos Destruidos,Noyaux Détruits,Zniszczone Rdzenie,Yıkılan Çekirdekler
+<!MissingKey:194:⚡Electric>,⚡Electric,⚡電気,⚡전기,⚡电气,⚡Электро,⚡Elétrico,⚡Elektro,⚡Eléctrico,⚡Eléctrico,⚡Électrique,⚡Elektryczny,⚡Elektrik
+CORE_BUY_FMT,🔴 Core ×%d (Click to buy),🔴 コア ×%d (クリックで購入),🔴 코어 ×%d (클릭하여 구매),🔴 核心 ×%d (点击购买),🔴 Ядро ×%d (Купить),🔴 Núcleo ×%d (Clique para comprar),🔴 Kern ×%d (Klick zum Kauf),🔴 Núcleo ×%d (Clic para comprar),🔴 Núcleo ×%d (Clic para comprar),🔴 Noyau ×%d (Cliquez pour acheter),"🔴 Rdzeń ×%d (Kliknij, aby kupić)",🔴 Çekirdek ×%d (Satın almak için tıkla)
+STATS_TOTAL_CORES,Total Cores,総破壊コア,총 파괴 코어,总破坏核心,Всего ядер,Total de Núcleos,Kerne gesamt,Núcleos Totales,Núcleos Totales,Noyaux Totaux,Łączne Rdzenie,Toplam Çekirdekler
+<!MissingKey:197:🌸 Scales with Spring destruction>,"🌸 Scales with Spring destruction
+Max damage x2","🌸 春の破壊率に比例増加
+最大ダメージ ×2","🌸 봄 파괴율에 비례 증가
+최대 데미지 ×2","🌸 随春季破坏率按比例增加
+最大伤害 ×2","🌸 Растёт с разрушением Весны
+Макс. урон ×2","🌸 Escala com destruição da Primavera
+Dano máx. ×2","🌸 Skaliert mit Frühlings-Zerstörung
+Max. Schaden ×2","🌸 Escala con destrucción de Primavera
+Daño máximo x2","🌸 Escala con destrucción de Primavera
+Daño máximo x2","🌸 Évolue avec la destruction du Printemps
+Dégâts max x2","🌸 Skaluje się z destrukcją Wiosny
+Maks. obrażenia x2","🌸 Bahar yıkımıyla ölçeklenir
+Maks hasar x2"
+<!MissingKey:198:⚡ Electric Range I>,⚡ Electric Range I,⚡ 電気範囲強化 I,⚡ 전기 범위 강화 I,⚡ 电气范围强化 I,⚡ Дальность электричества I,⚡ Alcance Elétrico I,⚡ Elektroreichweite I,⚡ Alcance Eléctrico I,⚡ Alcance Eléctrico I,⚡ Portée Électrique I,⚡ Zasięg Elektryczny I,⚡ Elektrik Menzili I
+<!MissingKey:199:💠 Resonance Amplify>,💠 Resonance Amplify,💠 共鳴増幅,💠 공명 증폭,💠 共振增幅,💠 Усиление резонанса,💠 Amplificação de Ressonância,💠 Resonanzverstärkung,💠 Amplificación de Resonancia,💠 Amplificación de Resonancia,💠 Amplification de Résonance,💠 Wzmocnienie Rezonacji,💠 Rezonans Güçlendirme
+CORE_DESC_MASTERY,"Unlock planet regen
+Condition: 100%% destroyed","惑星再生成解放
+条件: 破壊率100%%","행성 재생성 해금
+조건: 행성 파괴률 100%%","解锁行星重生
+条件: 破坏率100%%","Разблокировка регенерации
+Условие: 100%% разрушено","Desbloquear regeneração
+Condição: 100%% destruído","Planetenregeneration
+Bedingung: 100%% zerstört","Desbloquear regeneración del planeta
+Condición: 100%% destruido","Desbloquear regeneración del planeta
+Condición: 100%% destruido","Débloquer la régénération planétaire
+Condition : 100%% détruit","Odblokuj regenerację planety
+Warunek: 100%% zniszczenia","Gezegen yenilenmesini aç
+Koşul: %100 yıkılmış"
+DEMO_END_MSG,"This is the end of the demo.
+The full game will have more zones and upgrades!","デモはここまでです。
+製品版ではもっと多くのエリアとアップグレードが！","데모는 여기까지입니다.
+정식 버전에서는 더 많은 구역과 업그레이드가 기다립니다!","试玩到此结束。
+正式版将有更多区域和升级！","Это конец демо.
+В полной версии больше зон и улучшений!","Este é o fim da demo.
+O jogo completo terá mais zonas e melhorias!","Das war die Demo.
+Das Vollspiel bietet mehr Zonen und Upgrades!","Este es el final de la demo.
+¡El juego completo tendrá más zonas y mejoras!","Este es el final de la demo.
+¡El juego completo tendrá más zonas y mejoras!","C'est la fin de la démo.
+Le jeu complet aura plus de zones et d'améliorations !","To koniec dema.
+Pełna gra będzie miała więcej stref i ulepszeń!","Bu demonun sonudur.
+Tam oyunda daha fazla bölge ve geliştirme olacak!"
+SETTINGS_LANG,🌐 Language,🌐 言語,🌐 언어,🌐 语言,🌐 Язык,🌐 Idioma,🌐 Sprache,🌐 Idioma,🌐 Idioma,🌐 Langue,🌐 Język,🌐 Dil
+STATS_TOTAL_RESOURCE,Total Resources,保有資源,보유 자원,持有资源,Всего ресурсов,Total de Recursos,Gesamtressourcen,Recursos Totales,Recursos Totales,Ressources Totales,Łączne Zasoby,Toplam Kaynaklar
+NODE_NEED_PREREQ,(Prerequisite needed),(前提ノード必要),(선행 노드 필요),(需要前置节点),(Нужно условие),(Pré-requisito necessário),(Voraussetzung nötig),(Requisito previo necesario),(Requisito previo necesario),(Prérequis nécessaire),(Wymagany warunek wstępny),(Ön koşul gerekli)
+<!MissingKey:205:Gold blocks appear>,"Gold blocks appear
+5x resource drop","ゴールドブロック出現
+資源5倍ドロップ","금블록 출현
+자원 5배 드롭","金方块出现
+资源5倍掉落","Появляются золотые блоки
+Ресурсы ×5","Blocos dourados aparecem
+Recurso ×5","Goldblöcke erscheinen
+Ressourcen ×5","Aparecen bloques dorados
+Recurso x5","Aparecen bloques dorados
+Recurso x5","Les blocs dorés apparaissent
+Ressource x5","Pojawiają się złote bloki
+Zasoby x5","Altın bloklar belirir
+Kaynak x5"
+MENU_CONTINUE,Continue,続ける,계속,继续,Продолжить,Continuar,Weiter,Continuar,Continuar,Continuer,Kontynuuj,Devam Et
+<!MissingKey:207:Fuel +3s>,Fuel +3s,燃料 +3秒,연료 +3초,燃料 +3秒,Топливо +3с,Combustível +3s,Treibstoff +3s,Combustible +3s,Combustible +3s,Carburant +3s,Paliwo +3s,Yakıt +3s
+<!MissingKey:208:The planet is gone. Nothing but silence remains.>,"The planet is gone. Nothing but silence remains.
+But somehow... you feel at peace.
+
+Developed by jyj","惑星は消えた。静寂だけが残る。
+だが不思議と…穏やかだ。
+
+Developed by jyj","행성이 사라졌다. 고요함만이 남았다.
+하지만 어쩐지... 평온하다.
+
+Developed by jyj","行星消失了。只剩下寂静。
+但不知为何…你感到平静。
+
+Developed by jyj","Планета исчезла. Осталась лишь тишина.
+Но почему-то… вам спокойно.
+
+Developed by jyj","O planeta se foi. Só resta silêncio.
+Mas de alguma forma... você se sente em paz.
+
+Developed by jyj","Der Planet ist verschwunden. Nur Stille bleibt.
+Aber irgendwie... fühlst du dich friedlich.
+
+Developed by jyj","El planeta ha desaparecido. Solo queda silencio.
+Pero de algún modo... sientes paz.
+
+Developed by jyj","El planeta ha desaparecido. Solo queda silencio.
+Pero de algún modo... sientes paz.
+
+Developed by jyj","La planète a disparu. Seul le silence demeure.
+Mais étrangement... vous êtes en paix.
+
+Developed by jyj","Planeta zniknęła. Została tylko cisza.
+Ale jakoś... czujesz spokój.
+
+Developed by jyj","Gezegen yok oldu. Geriye sadece sessizlik kaldı.
+Ama nedense... huzurlu hissediyorsun.
+
+Developed by jyj"
+<!MissingKey:209:🌡️ Overheat>,🌡️ Overheat,🌡️ オーバーヒート,🌡️ 과열,🌡️ 过热,🌡️ Перегрев,🌡️ Superaquecimento,🌡️ Überhitzung,🌡️ Sobrecalentamiento,🌡️ Sobrecalentamiento,🌡️ Surchauffe,🌡️ Przegrzanie,🌡️ Aşırı Isınma
+CARGO_FMT,📦 %d / %d,📦 %d / %d,📦 %d / %d,📦 %d / %d,📦 %d / %d,📦 %d / %d,📦 %d / %d,📦 %d / %d,📦 %d / %d,📦 %d / %d,📦 %d / %d,📦 %d / %d
+<!MissingKey:211:On laser hit>,"On laser hit
+lightning chains 3 times","レーザー命中時
+雷が3回連鎖","레이저 적중 시
+번개 3회 연쇄","激光命中时
+闪电连锁3次","При попадании лазером
+молния 3 раза","Ao acertar laser
+relâmpago em cadeia 3x","Bei Lasertreffer
+Blitz kettet 3-mal","Al impactar con láser
+El rayo encadena 3 veces","Al impactar con láser
+El rayo encadena 3 veces","Lors d'un tir laser
+L'éclair se propage 3 fois","Przy trafieniu laserem
+Błyskawica łączy 3 razy","Lazer vuruşunda
+yıldırım 3 kez zincirler"
+SETTINGS_SFX,🔊 SFX,🔊 効果音,🔊 효과음,🔊 音效,🔊 Звуки,🔊 Efeitos,🔊 Effekte,🔊 SFX,🔊 SFX,🔊 SFX,🔊 SFX,🔊 SFX
+<!MissingKey:213:⚔ Damage Boost III>,⚔ Damage Boost III,⚔ ダメージブースト III,⚔ 데미지 증폭 III,⚔ 伤害增幅 III,⚔ Усиление урона III,⚔ Amplificação de Dano III,⚔ Schadensverstärkung III,⚔ Potenciador de Daño III,⚔ Potenciador de Daño III,⚔ Boost de Dégâts III,⚔ Wzmocnienie Obrażeń III,⚔ Hasar Güçlendirme III
+TUT_MINE_TITLE,⛏️ Mining,⛏️ 採掘,⛏️ 채굴,⛏️ 采矿,⛏️ Добыча,⛏️ Mineração,⛏️ Abbau,⛏️ Minería,⛏️ Minería,⛏️ Minage,⛏️ Wydobycie,⛏️ Madencilik
+"<!MissingKey:215:Sync 30%, Crit 25%>","Sync 30%, Crit 25%",同期30% クリ25%,"동기화 30%, 크리 25%",同步30% 暴击25%,"Синхр. 30%, Крит 25%","Sinc 30%, Crít 25%","Sync 30%, Krit 25%","Sincronización 30%, Crítico 25%","Sincronización 30%, Crítico 25%","Synchronisation 30%, Critique 25%","Synchronizacja 30%, Krytyk 25%","Senkronizasyon %30, Kritik %25"
+<!MissingKey:216:Overheat gauge speed -30%>,Overheat gauge speed -30%,過熱ゲージ上昇速度-30%,과열 게이지 상승 속도 30% 감소,过热计量速度-30%,Скорость перегрева -30%,Velocidade de superaquecimento -30%,Überhitzung -30%,Velocidad de sobrecalentamiento -30%,Velocidad de sobrecalentamiento -30%,Vitesse de surchauffe -30%,Prędkość przegrzania -30%,Aşırı ısınma hızı -%30
+<!MissingKey:217:Cargo +10>,Cargo +10,貨物 +10個,화물칸 +10개,货舱 +10个,Трюм +10,Carga +10,Fracht +10,Carga +10,Carga +10,Cargaison +10,Ładownia +10,Kargo +10
+<!MissingKey:218:Gauge down Duration up>,Gauge down Duration up,ゲージ↓ 持続時間↑,게이지↓ 지속시간↑,充能↓ 持续时间↑,Шкала↓ Длительность↑,Medidor↓ Duração↑,Ladung↓ Dauer↑,Menos carga Más duración,Menos carga Más duración,Moins de charge Plus de durée,Mniej ładowania Więcej czasu,Daha az şarj Daha fazla süre
+MEGA_GAUGE_FMT,⚡ Mega %d / %d,⚡ メガ %d / %d,⚡ 메가 %d / %d,⚡ 超级 %d / %d,⚡ Мега %d / %d,⚡ Mega %d / %d,⚡ Mega %d / %d,⚡ Mega %d / %d,⚡ Mega %d / %d,⚡ Méga %d / %d,⚡ Mega %d / %d,⚡ Mega %d / %d
+<!MissingKey:220:💰 Resource Boost I>,💰 Resource Boost I,💰 資源ブースト I,💰 자원 증폭 I,💰 资源增幅 I,💰 Усиление ресурсов I,💰 Amplificação de Recursos I,💰 Ressourcenverstärkung I,💰 Potenciador de Recursos I,💰 Potenciador de Recursos I,💰 Boost de Ressources I,💰 Wzmocnienie Zasobów I,💰 Kaynak Güçlendirme I
+<!MissingKey:221:⚡ Electric Block Unlock>,⚡ Electric Block Unlock,⚡ 電気ブロック解放,⚡ 전기 블록 해금,⚡ 电气方块解锁,⚡ Электроблок,⚡ Bloco Elétrico,⚡ Elektroblock,⚡ Desbloqueo de Bloque Eléctrico,⚡ Desbloqueo de Bloque Eléctrico,⚡ Déblocage Bloc Électrique,⚡ Odblokowanie Bloku Elektrycznego,⚡ Elektrik Blok Kilidi Açma
+<!MissingKey:222:Fire interval -0.04s>,Fire interval -0.04s,発射間隔 -0.04秒,발사간격 -0.04초,发射间隔 -0.04秒,Интервал -0.04с,Intervalo -0.04s,"Intervall -0,04s",Intervalo de disparo -0.04s,Intervalo de disparo -0.04s,Intervalle de tir -0.04s,Interwał strzału -0.04s,Atış aralığı -0.04s
+TUT_MOVE_TITLE,📡 Movement,📡 移動,📡 이동,📡 移动,📡 Движение,📡 Movimento,📡 Bewegung,📡 Movimiento,📡 Movimiento,📡 Déplacement,📡 Ruch,📡 Hareket
+DMG_BY_WEAPON,Damage by Weapon,武器別ダメージ,무기별 딜량,各武器伤害,Урон по оружию,Dano por Arma,Schaden nach Waffe,Daño por Arma,Daño por Arma,Dégâts par Arme,Obrażenia wg Broni,Silaha Göre Hasar
+<!MissingKey:225:Chain range +1 tile>,Chain range +1 tile,連鎖範囲 +1マス,연쇄 범위 +1칸,连锁范围 +1格,Дальность цепи +1 клетка,Alcance da cadeia +1 bloco,Kettenreichweite +1 Feld,Alcance de cadena +1 casilla,Alcance de cadena +1 casilla,Portée de chaîne +1 case,Zasięg łańcucha +1 kratka,Zincir menzili +1 kare
+TUT_CARGO_LABEL,Cargo Hold,貨物室,화물칸,货舱,Трюм,Porão de Carga,Frachtraum,Bodega de Carga,Compartimento de Carga,Soute à Cargaison,Ładownia,Kargo Bölmesi
+TUT_MINE_DESC,"Your ship automatically fires lasers at nearby blocks.
+Destroy blocks to collect ore.
+Ore fills your cargo hold — return when full!","船が近くのブロックに自動でレーザーを発射します。
+ブロックを破壊して鉱石を集めましょう。
+貨物室が満杯になったら帰還！","우주선이 근처 블록에 자동으로 레이저를 발사합니다.
+블록을 파괴하면 광석을 얻습니다.
+광석이 화물칸을 채우면 귀환하세요!","飞船会自动向附近方块发射激光。
+破坏方块收集矿石。
+货舱装满后返航！","Корабль автоматически стреляет по блокам.
+Уничтожайте блоки для сбора руды.
+Когда трюм полон — возвращайтесь!","Sua nave dispara lasers automaticamente.
+Destrua blocos para coletar minério.
+Quando a carga lotar — retorne!","Dein Schiff feuert automatisch auf Blöcke.
+Zerstöre Blöcke, um Erz zu sammeln.
+Bei voller Fracht — zurückkehren!","Tu nave dispara láseres automáticamente.
+Destruye bloques para recoger mineral.
+¡Vuelve cuando la carga esté llena!","Tu nave dispara láseres automáticamente.
+Destruye bloques para recolectar mineral.
+¡Regresa cuando la carga esté llena!","Votre vaisseau tire automatiquement.
+Détruisez des blocs pour collecter du minerai.
+Revenez quand la cargaison est pleine !","Twój statek automatycznie strzela laserami.
+Niszcz bloki, aby zbierać minerały.
+Wróć, gdy ładownia jest pełna!","Geminiz otomatik olarak lazer atar.
+Kaynak toplamak için blokları yıkın.
+Kargo dolunca geri dönün!"
+SETTINGS_FULLSCREEN,📺 Fullscreen,📺 フルスクリーン,📺 전체화면,📺 全屏,📺 Полный экран,📺 Tela Cheia,📺 Vollbild,📺 Pantalla Completa,📺 Pantalla Completa,📺 Plein Écran,📺 Pełny Ekran,📺 Tam Ekran
+NODE_NEED_CORE,(⚠ Destroy %d/%d cores first),(⚠ コア %d/%d 破壊必要),(⚠ 코어 %d/%d 파괴 필요),(⚠ 需先消灭 %d/%d 核心),(⚠ Уничтожьте %d/%d ядер),(⚠ Destrua %d/%d núcleos),(⚠ Zerstöre %d/%d Kerne),(⚠ Destruye %d/%d núcleos primero),(⚠ Destruye %d/%d núcleos primero),(⚠ Détruisez d'abord %d/%d noyaux),(⚠ Zniszcz najpierw %d/%d rdzeni),(⚠ Önce %d/%d çekirdek yık)
+CORE_REWARD_TITLE,🔴 Core Rewards,🔴 コア報酬,🔴 코어 보상,🔴 核心奖励,🔴 Награды за ядро,🔴 Recompensas do Núcleo,🔴 Kernbelohnungen,🔴 Recompensas de Núcleo,🔴 Recompensas de Núcleo,🔴 Récompenses de Noyau,🔴 Nagrody za Rdzeń,🔴 Çekirdek Ödülleri
+CORE_DESC_BRAKE,Instant stop on left-click hold,左クリック長押しで即停止,좌클릭 홀드 시 즉시 정지,左键长按立即停止,Мгновенная остановка при зажатии ЛКМ,Parada instantânea ao segurar clique,Sofortstopp bei gehaltenem Linksklick,Parada instantánea al mantener clic izquierdo,Parada instantánea al mantener clic,Arrêt instantané en maintenant le clic gauche,Natychmiastowe zatrzymanie przytrzymaniem LPM,Sol tıklama basılı tutarak anında dur
+TUT_HINT,Click or Space to continue,クリックまたはスペースで次へ,클릭 또는 스페이스바로 계속,点击或空格键继续,Клик или Пробел для продолжения,Clique ou Espaço para continuar,Klick oder Leertaste zum Fortfahren,Clic o Espacio para continuar,Clic o Espacio para continuar,Cliquez ou Espace pour continuer,"Kliknij lub Spacja, aby kontynuować",Devam etmek için tıkla veya Boşluk
+STATS_BEST_BLOCKS,🏆 Most Blocks (1 run),🏆 最多ブロック (1回),🏆 최다 블록 (1회),🏆 最多方块 (单次),🏆 Больше блоков (1 вылет),🏆 Mais Blocos (1 missão),🏆 Meiste Blöcke (1 Einsatz),🏆 Más Bloques (1 salida),🏆 Más Bloques (1 salida),🏆 Plus de Blocs (1 sortie),🏆 Najwięcej Bloków (1 wyprawa),🏆 En Çok Blok (1 çıkış)
+LOADING_DONE,Done!,完了！,완료!,完成！,Готово!,Concluído!,Fertig!,¡Listo!,¡Listo!,Terminé !,Gotowe!,Tamamlandı!
+LOADING_CORES,Placing cores...,コアを配置中...,코어 배치 중...,放置核心中...,Размещение ядер...,Posicionando núcleos...,Kerne werden platziert...,Colocando núcleos...,Colocando núcleos...,Placement des noyaux...,Rozmieszczanie rdzeni...,Çekirdekler yerleştiriliyor...
+STATS_WEAPONS,Weapons: ,武器: ,무기: ,武器: ,Оружие: ,Armas: ,Waffen: ,Armas: ,Armas: ,Armes : ,Bronie: ,Silahlar: 
+<!MissingKey:237:Start here>,Start here,ここからスタート,여기서부터 시작,从这里开始,Начать здесь,Comece aqui,Hier starten,Empieza aquí,Empieza aquí,Commencer ici,Zacznij tutaj,Buradan başla
+<!MissingKey:238:Move speed +60>,Move speed +60,移動速度 +60,이동속도 +60,移动速度 +60,Скорость +60,Velocidade +60,Geschwindigkeit +60,Velocidad +60,Velocidad +60,Vitesse +60,Prędkość +60,Hız +60
+<!MissingKey:239:Resource gain +2>,Resource gain +2,資源獲得 +2,자원 획득 +2,资源获取 +2,Ресурсы +2,Recursos +2,Ressourcen +2,Recurso +2,Recurso +2,Ressource +2,Zasoby +2,Kaynak +2
+<!MissingKey:240:❄️ Winter>,❄️ Winter,❄️ 冬,❄️ 겨울,❄️ 冬,❄️ Зима,❄️ Inverno,❄️ Winter,❄️ Invierno,❄️ Invierno,❄️ Hiver,❄️ Zima,❄️ Kış
+CORE_COST_FMT,🔴×%d,🔴×%d,🔴×%d,🔴×%d,🔴×%d,🔴×%d,🔴×%d,🔴×%d,🔴×%d,🔴×%d,🔴×%d,🔴×%d
+<!MissingKey:242:🤖 Drone Deploy>,🤖 Drone Deploy,🤖 ドローン追加配置,🤖 드론 추가 배치,🤖 额外部署无人机,🤖 Запуск дрона,🤖 Implantar Drone,🤖 Drohne einsetzen,🤖 Despliegue de Dron,🤖 Despliegue de Dron,🤖 Déploiement de Drone,🤖 Rozmieszczenie Drona,🤖 Drone Yerleştirme
+<!MissingKey:243:Drone fire rate +0.2s>,Drone fire rate +0.2s,ドローン攻撃速度 ↑0.2秒,드론 공격속도 ↑0.2초,无人机攻击速度 ↑0.2秒,Скорострельность дрона +0.2с,Cadência do drone +0.2s,"Drohnen-Feuerrate +0,2s",Cadencia de dron +0.2s,Cadencia de dron +0.2s,Cadence drone +0.2s,Szybkostrzelność drona +0.2s,Drone atış hızı +0.2s
+<!MissingKey:244:🔥 Charged Shot>,🔥 Charged Shot,🔥 チャージショット,🔥 차지 샷,🔥 蓄力射击,🔥 Заряженный выстрел,🔥 Tiro Carregado,🔥 Aufgeladener Schuss,🔥 Disparo Cargado,🔥 Disparo Cargado,🔥 Tir Chargé,🔥 Naładowany Strzał,🔥 Şarjlı Atış
+<!MissingKey:245:⚡ Chain Lightning>,⚡ Chain Lightning,⚡ チェインライトニング,⚡ 체인 라이트닝,⚡ 链式闪电,⚡ Цепная молния,⚡ Relâmpago em Cadeia,⚡ Kettenblitz,⚡ Rayo en Cadena,⚡ Rayo en Cadena,⚡ Éclair en Chaîne,⚡ Łańcuch Błyskawic,⚡ Zincir Yıldırım
+TUT_HINT_LAST,Click or Space to start!,クリックまたはスペースでスタート！,클릭 또는 스페이스바로 시작!,点击或空格键开始！,Клик или Пробел для старта!,Clique ou Espaço para começar!,Klick oder Leertaste zum Starten!,¡Clic o Espacio para empezar!,¡Clic o Espacio para empezar!,Cliquez ou Espace pour commencer !,"Kliknij lub Spacja, aby zacząć!",Başlamak için tıkla veya Boşluk!
+WPN_OVERDRIVE,💢 Overdrive,💢 オーバードライブ,💢 오버드라이브,💢 超载,💢 Овердрайв,💢 Sobrecarga,💢 Überladung,💢 Sobremarcha,💢 Sobremarcha,💢 Surcharge,💢 Doładowanie,💢 Aşırı Güç
+<!MissingKey:248:Resource gain +5>,Resource gain +5,資源獲得 +5,자원 획득 +5,资源获取 +5,Ресурсы +5,Recursos +5,Ressourcen +5,Recurso +5,Recurso +5,Ressource +5,Zasoby +5,Kaynak +5
+<!MissingKey:249:Resource gain +8>,Resource gain +8,資源獲得 +8,자원 획득 +8,资源获取 +8,Ресурсы +8,Recursos +8,Ressourcen +8,Recurso +8,Recurso +8,Ressource +8,Zasoby +8,Kaynak +8
+MENU_QUIT,Quit,終了,종료,退出,Выход,Sair,Beenden,Salir,Salir del Juego,Quitter,Wyjdź,Çıkış
+MEGA_ACTIVE_FMT,⚡ Mega Laser! %.1fs,⚡ メガレーザー！%.1f秒,⚡ 메가 레이저! %.1f초,⚡ 超级激光！%.1f秒,⚡ Мегалазер! %.1fс,⚡ Mega Laser! %.1fs,⚡ Megalaser! %.1fs,⚡ ¡Mega Láser! %.1fs,⚡ ¡Mega Láser! %.1fs,⚡ Méga Laser ! %.1fs,⚡ Mega Laser! %.1fs,⚡ Mega Lazer! %.1fs
+<!MissingKey:252:Drone +1>,Drone +1,ドローン +1機,드론 +1기,无人机 +1架,Дрон +1,Drone +1,Drohne +1,Dron +1,Dron +1,Drone +1,Dron +1,Drone +1
+<!MissingKey:253:Range +30px>,Range +30px,射程 +30px,사거리 +30px,射程 +30px,Дальность +30px,Alcance +30px,Reichweite +30px,Alcance +30px,Alcance +30px,Portée +30px,Zasięg +30px,Menzil +30px
+STAT_BARRIER,Barrier,バリア,배리어,屏障,Барьер,Barreira,Barriere,Barrera,Barrera,Barrière,Bariera,Bariyer
+<!MissingKey:255:View obstruction. You cant take it anymore.>,"View obstruction. You cant take it anymore.
+You board your mining ship to destroy the planet.","眺望権侵害。もう我慢できない。
+あなたは採掘船に乗り込み、惑星を壊すことにした。","조망권 침해. 더 이상 참을 수 없다.
+당신은 채굴선에 올라타 행성을 부수기로 했다.","景观权被侵犯。再也忍不了了。
+你登上采矿船，决定摧毁那颗行星。","Нарушение обзора. Больше невыносимо.
+Вы садитесь в корабль и решаете уничтожить планету.","Obstrução da vista. Você não aguenta mais.
+Você embarca na nave para destruir o planeta.","Sichtbehinderung. Du hältst es nicht mehr aus.
+Du besteigst dein Schiff, um den Planeten zu zerstören.","Obstrucción visual. No puedes más.
+Subes a tu nave minera para destruir el planeta.","Obstrucción visual. No puedes más.
+Subes a tu nave minera para destruir el planeta.","Obstruction visuelle. Vous n'en pouvez plus.
+Vous montez dans votre vaisseau minier pour détruire la planète.","Zasłonięty widok. Nie wytrzymujesz.
+Wsiadasz do statku wydobywczego, by zniszczyć planetę.","Görüş engeli. Artık dayanamıyorsunuz.
+Gezegeni yok etmek için madencilik geminize biniyorsunuz."
+<!MissingKey:256:Show minimap while mining>,"Show minimap while mining
+Locate cores & special blocks","採掘中ミニマップ表示
+コア/特殊ブロック位置確認","채굴 중 미니맵 표시
+코어/특수블록 위치 확인","采矿时显示小地图
+确认核心/特殊方块位置","Миникарта при добыче
+Позиции ядер и спецблоков","Minimapa durante mineração
+Localizar núcleos e blocos especiais","Minikarte beim Abbau
+Kerne & Spezialblöcke finden","Muestra el minimapa al minar
+Localiza núcleos y bloques especiales","Muestra el minimapa al minar
+Localiza núcleos y bloques especiales","Affiche la minicarte pendant le minage
+Localise les noyaux et blocs spéciaux","Pokaż minimapę podczas wydobycia
+Zlokalizuj rdzenie i specjalne bloki","Madencilik sırasında mini haritayı göster
+Çekirdekleri ve özel blokları bul"
+WPN_SHOCKWAVE,🌀 Shockwave,🌀 衝撃波,🌀 충격파,🌀 冲击波,🌀 Волна,🌀 Onda,🌀 Welle,🌀 Onda de Choque,🌀 Onda de Choque,🌀 Onde de Choc,🌀 Fala Uderzeniowa,🌀 Şok Dalgası
+<!MissingKey:258:Resource Efficiency I>,Resource Efficiency I,資源効率 I,자원 효율 I,资源效率 I,Эффективность ресурсов I,Eficiência de Recursos I,Ressourceneffizienz I,Eficiencia de Recursos I,Eficiencia de Recursos I,Efficacité des Ressources I,Efektywność Zasobów I,Kaynak Verimliliği I
+<!MissingKey:259:🔥Charged>,🔥Charged,🔥チャージ,🔥차지샷,🔥蓄力,🔥Заряд,🔥Carregado,🔥Aufgeladen,🔥Cargado,🔥Cargado,🔥Chargé,🔥Naładowany,🔥Şarjlı
+<!MissingKey:260:Range Expand II>,Range Expand II,射程拡張 II,사거리 확장 II,射程扩展 II,Расширение дальности II,Expansão de Alcance II,Reichweite II,Expansión de Alcance II,Expansión de Rango II,Extension de Portée II,Rozszerzenie Zasięgu II,Menzil Genişletme II
+<!MissingKey:261:🔥 Combo Counter>,🔥 Combo Counter,🔥 コンボカウンター,🔥 콤보 카운터,🔥 连击计数器,🔥 Счётчик комбо,🔥 Contador de Combo,🔥 Kombozähler,🔥 Contador de Combo,🔥 Contador de Combo,🔥 Compteur de Combo,🔥 Licznik Combo,🔥 Kombo Sayacı
+<!MissingKey:262:Fire interval -0.12s>,Fire interval -0.12s,発射間隔 -0.12秒,발사간격 -0.12초,发射间隔 -0.12秒,Интервал -0.12с,Intervalo -0.12s,"Intervall -0,12s",Intervalo de disparo -0.12s,Intervalo de disparo -0.12s,Intervalle de tir -0.12s,Interwał strzału -0.12s,Atış aralığı -0.12s
+<!MissingKey:263:❄️ Scales with Winter destruction>,"❄️ Scales with Winter destruction
+Max damage x3
+⚠ Condition: 8 cores destroyed","❄️ 冬の破壊率に比例増加
+最大ダメージ ×3
+⚠ 条件: コア8個破壊","❄️ 겨울 파괴율에 비례 증가
+최대 데미지 ×3
+⚠ 조건: 코어 8개 파괴","❄️ 随冬季破坏率按比例增加
+最大伤害 ×3
+⚠ 条件: 摧毁8个核心","❄️ Растёт с разрушением Зимы
+Макс. урон ×3
+⚠ Условие: 8 ядер уничтожено","❄️ Escala com destruição do Inverno
+Dano máx. ×3
+⚠ Condição: 8 núcleos destruídos","❄️ Skaliert mit Winter-Zerstörung
+Max. Schaden ×3
+⚠ Bedingung: 8 Kerne zerstört","❄️ Escala con destrucción de Invierno
+Daño máximo x3
+⚠ Condición: 8 núcleos destruidos","❄️ Escala con destrucción de Invierno
+Daño máximo x3
+⚠ Condición: 8 núcleos destruidos","❄️ Évolue avec la destruction de l'Hiver
+Dégâts max x3
+⚠ Condition : 8 noyaux détruits","❄️ Skaluje się z destrukcją Zimy
+Maks. obrażenia x3
+⚠ Warunek: 8 rdzeni zniszczonych","❄️ Kış yıkımıyla ölçeklenir
+Maks hasar x3
+⚠ Koşul: 8 çekirdek yıkılmış"
+WPN_LASER,Laser,レーザー,레이저,激光,Лазер,Laser,Laser,Láser,Láser,Laser,Laser,Lazer
+CORE_DESC_EMERGENCY,"Unlimited fuel
+No fuel consumption during sortie","燃料無限
+出撃中燃料が消費されない","연료 무한
+출항 중 연료가 소모되지 않음","燃料无限
+出击期间不消耗燃料","Безлимитное топливо
+Нет расхода при вылете","Combustível ilimitado
+Sem consumo durante missão","Unbegrenzter Treibstoff
+Kein Verbrauch im Einsatz","Combustible ilimitado
+Sin consumo durante la salida","Combustible ilimitado
+Sin consumo durante la salida","Carburant illimité
+Aucune consommation en sortie","Nieograniczone paliwo
+Bez zużycia podczas wyprawy","Sınırsız yakıt
+Çıkış sırasında yakıt tüketimi yok"
+<!MissingKey:266:Fire Rate I>,Fire Rate I,連射速度 I,연사속도 I,射速 I,Скорострельность I,Cadência I,Feuerrate I,Cadencia de Fuego I,Velocidad de Disparo I,Cadence de Tir I,Szybkostrzelność I,Atış Hızı I
+TUT_NODE_TITLE,⭐ Upgrade Nodes,⭐ アップグレードノード,⭐ 업그레이드 노드,⭐ 升级节点,⭐ Узлы улучшений,⭐ Nós de Melhoria,⭐ Upgrade-Knoten,⭐ Nodos de Mejora,⭐ Nodos de Mejora,⭐ Nœuds d'Amélioration,⭐ Węzły Ulepszeń,⭐ Geliştirme Düğümleri
+<!MissingKey:268:🚀 Launch>,🚀 Launch,🚀 出撃,🚀 출항,🚀 出击,🚀 Запуск,🚀 Lançar,🚀 Starten,🚀 Lanzar,🚀 Lanzar,🚀 Lancer,🚀 Start,🚀 Fırlat
+<!MissingKey:269:🔥Combo>,🔥Combo,🔥コンボ,🔥콤보,🔥连击,🔥Комбо,🔥Combo,🔥Kombo,🔥Combo,🔥Combo,🔥Combo,🔥Combo,🔥Kombo
+<!MissingKey:270:☀️ Summer>,☀️ Summer,☀️ 夏,☀️ 여름,☀️ 夏,☀️ Лето,☀️ Verão,☀️ Sommer,☀️ Verano,☀️ Verano,☀️ Été,☀️ Lato,☀️ Yaz
+TUT_DANGER_TITLE,⚠️ Danger,⚠️ 危険,⚠️ 위험 요소,⚠️ 危险,⚠️ Опасность,⚠️ Perigo,⚠️ Gefahr,⚠️ Peligro,⚠️ Peligro,⚠️ Danger,⚠️ Niebezpieczeństwo,⚠️ Tehlike
+<!MissingKey:272:💰 Gold Block Unlock>,💰 Gold Block Unlock,💰 ゴールドブロック解放,💰 금블록 해금,💰 金方块解锁,💰 Золотой блок,💰 Bloco Dourado,💰 Goldblock,💰 Desbloqueo de Bloque Dorado,💰 Desbloqueo de Bloque Dorado,💰 Déblocage Bloc Doré,💰 Odblokowanie Złotego Bloku,💰 Altın Blok Kilidi Açma
+<!MissingKey:273:☀️ Scales with Summer destruction>,"☀️ Scales with Summer destruction
+Max damage x2.5
+⚠ Condition: 2 cores destroyed","☀️ 夏の破壊率に比例増加
+最大ダメージ ×2.5
+⚠ 条件: コア2個破壊","☀️ 여름 파괴율에 비례 증가
+최대 데미지 ×2.5
+⚠ 조건: 코어 2개 파괴","☀️ 随夏季破坏率按比例增加
+最大伤害 ×2.5
+⚠ 条件: 摧毁2个核心","☀️ Растёт с разрушением Лета
+Макс. урон ×2.5
+⚠ Условие: 2 ядра уничтожено","☀️ Escala com destruição do Verão
+Dano máx. ×2.5
+⚠ Condição: 2 núcleos destruídos","☀️ Skaliert mit Sommer-Zerstörung
+Max. Schaden ×2.5
+⚠ Bedingung: 2 Kerne zerstört","☀️ Escala con destrucción de Verano
+Daño máximo x2.5
+⚠ Condición: 2 núcleos destruidos","☀️ Escala con destrucción de Verano
+Daño máximo x2.5
+⚠ Condición: 2 núcleos destruidos","☀️ Évolue avec la destruction de l'Été
+Dégâts max x2.5
+⚠ Condition : 2 noyaux détruits","☀️ Skaluje się z destrukcją Lata
+Maks. obrażenia x2.5
+⚠ Warunek: 2 rdzenie zniszczone","☀️ Yaz yıkımıyla ölçeklenir
+Maks hasar x2.5
+⚠ Koşul: 2 çekirdek yıkılmış"
+<!MissingKey:274:💰 Gold Value I>,💰 Gold Value I,💰 金鉱価値 I,💰 금광 가치 I,💰 金矿价值 I,💰 Ценность золота I,💰 Valor do Ouro I,💰 Goldwert I,💰 Valor del Oro I,💰 Valor del Oro I,💰 Valeur de l'Or I,💰 Wartość Złota I,💰 Altın Değeri I
+LOADING_PLANET,Generating planet...,惑星を生成中...,행성 생성 중...,生成行星中...,Генерация планеты...,Gerando planeta...,Planet wird generiert...,Generando planeta...,Generando planeta...,Génération de la planète...,Generowanie planety...,Gezegen oluşturuluyor...
+<!MissingKey:276:Fire Rate III>,Fire Rate III,連射速度 III,연사속도 III,射速 III,Скорострельность III,Cadência III,Feuerrate III,Cadencia de Fuego III,Velocidad de Disparo III,Cadence de Tir III,Szybkostrzelność III,Atış Hızı III
+WPN_OVERDRIVE,💢 Overdrive,💢 オーバードライブ,💢 오버드라이브,💢 超载,💢 Овердрайв,💢 Sobrecarga,💢 Überladung,💢 Sobremarcha,💢 Sobremarcha,💢 Surcharge,💢 Doładowanie,💢 Aşırı Güç
+MENU_SETTINGS,Settings,設定,설정,设置,Настройки,Configurações,Einstellungen,Ajustes,Ajustes,Paramètres,Ustawienia,Ayarlar
+WPN_SHOCKWAVE,🌀 Shockwave,🌀 衝撃波,🌀 충격파,🌀 冲击波,🌀 Волна,🌀 Onda,🌀 Welle,🌀 Onda de Choque,🌀 Onda de Choque,🌀 Onde de Choc,🌀 Fala Uderzeniowa,🌀 Şok Dalgası
+<!MissingKey:280:🤖 Drone Critical>,🤖 Drone Critical,🤖 ドローンクリティカル,🤖 드론 크리티컬,🤖 无人机暴击,🤖 Крит дрона,🤖 Crítico do Drone,🤖 Drohnen-Kritisch,🤖 Crítico de Dron,🤖 Crítico de Dron,🤖 Critique Drone,🤖 Krytyk Drona,🤖 Drone Kritik
+MEGA_LASER_LABEL,⚡ Mega Laser,⚡ メガレーザー,⚡ 메가 레이저,⚡ 巨型激光,⚡ Мегалазер,⚡ Mega Laser,⚡ Megalaser,⚡ Mega Láser,⚡ Mega Láser,⚡ Méga Laser,⚡ Mega Laser,⚡ Mega Lazer
+ENDING_THANKS,Thank you for playing,プレイしていただきありがとうございます,플레이 해주셔서 감사합니다,感谢您的游玩,Спасибо за игру,Obrigado por jogar,Danke fürs Spielen,Gracias por jugar,Gracias por jugar,Merci d'avoir joué,Dziękujemy za grę,Oynadığınız için teşekkürler
+<!MissingKey:283:🤖 Drone Prototype>,🤖 Drone Prototype,🤖 ドローン プロトタイプ,🤖 드론 프로토타입,🤖 无人机原型,🤖 Прототип дрона,🤖 Protótipo de Drone,🤖 Drohnen-Prototyp,🤖 Prototipo de Dron,🤖 Prototipo de Dron,🤖 Prototype de Drone,🤖 Prototyp Drona,🤖 Drone Prototipi
+<!MissingKey:284:📦 Cargo Expand II>,📦 Cargo Expand II,📦 貨物拡張 II,📦 화물칸 확장 II,📦 货舱扩展 II,📦 Расширение трюма II,📦 Expansão de Carga II,📦 Frachterweiterung II,📦 Expansión de Carga II,📦 Expansión de Carga II,📦 Extension de Cargaison II,📦 Rozszerzenie Ładowni II,📦 Kargo Genişletme II
+<!MissingKey:285:Keep 30% resources on fuel empty>,Keep 30% resources on fuel empty,燃料切れ時 資源30%保存,연료 고갈 시 자원 30% 보존,燃料耗尽时保留30%资源,Сохранить 30% при пустом баке,Preserva 30% dos recursos sem combustível,30% Ressourcen behalten bei leerem Tank,Conserva el 30% de recursos sin combustible,Conserva el 30% de recursos al quedarse sin combustible,Conserve 30% des ressources sans carburant,Zachowuje 30% zasobów bez paliwa,Yakıt bitince kaynakların %30'unu koru
+TUT_DANGER_DESC,"Crashing into blocks or running out of fuel costs resources.
+Cargo full? Mining continues, but you earn no more gold.
+Return to the spawn circle and stay 3 seconds to go home!","ブロックに衝突や燃料切れで資源を失います。
+貨物室が満杯？採掘は続きますが報酬はなし。
+出発地点の円内に3秒いると帰還します！","블록에 충돌하거나 연료가 다 떨어지면 자원을 잃습니다.
+화물칸이 꽉 찼나요? 채굴은 계속되지만 돈은 더 벌지 못합니다.
+출발 지점의 원 안에서 3초 머물면 귀환합니다!","撞上方块或燃料耗尽会损失资源。
+货舱满了？可以继续采矿但不再赚钱。
+在出发点圆内停留3秒即可返航！","Столкновение и нехватка топлива стоят ресурсов.
+Трюм полон? Добыча продолжается, но без прибыли.
+Вернитесь в круг старта на 3 секунды!","Colidir ou ficar sem combustível custa recursos.
+Carga cheia? Mineração continua, mas sem lucro.
+Retorne ao círculo de início e fique 3s!","Zusammenstoß und Treibstoffmangel kosten Ressourcen.
+Fracht voll? Abbau geht weiter, aber kein Gold.
+Zum Startkreis zurück und 3s warten!","Chocar o quedarte sin combustible cuesta recursos.
+¿Carga llena? Sigues minando, pero no ganas más oro.
+¡Vuelve al círculo y espera 3 segundos!","Chocar o quedarte sin combustible te cuesta recursos.
+¿Carga llena? Sigues minando, pero no ganas más oro.
+¡Regresa al círculo y espera 3 segundos!","S'écraser ou manquer de carburant coûte des ressources.
+Cargaison pleine ? Le minage continue, mais plus d'or.
+Revenez au cercle et attendez 3 secondes !","Zderzenie lub brak paliwa kosztuje zasoby.
+Pełna ładownia? Wydobycie trwa, ale nie zyskujesz złota.
+Wróć do kręgu i poczekaj 3 sekundy!","Çarpma veya yakıt bitmesi kaynak kaybettirir.
+Kargo dolu mu? Madencilik devam eder ama altın kazanmazsınız.
+Daireye dönüp 3 saniye bekleyin!"
+STATS_EMPTY,"No sortie records yet.
+Launch a sortie to start tracking.","出撃記録がまだありません。
+出撃すると統計が記録されます。","아직 출항 기록이 없습니다.
+출항을 진행하면 여기에 통계가 쌓입니다.","暂无出击记录。
+进行出击后将在此记录统计。","Нет записей.
+Начните вылет для отслеживания.","Sem registros.
+Inicie uma missão para rastrear.","Keine Aufzeichnungen.
+Starte einen Einsatz.","Aún no hay registros.
+Lanza una salida para empezar.","Aún no hay registros.
+Lanza una salida para comenzar.","Pas encore de données.
+Lancez une sortie pour commencer.","Brak danych.
+Wyślij wyprawę, aby zacząć.","Henüz kayıt yok.
+Takip başlatmak için bir çıkış yap."
+MENU_START,Start,スタート,시작하기,开始,Старт,Iniciar,Start,Iniciar,Comenzar,Démarrer,Start,Başla
+<!MissingKey:289:📦 Cargo Expand III>,📦 Cargo Expand III,📦 貨物拡張 III,📦 화물칸 확장 III,📦 货舱扩展 III,📦 Расширение трюма III,📦 Expansão de Carga III,📦 Frachterweiterung III,📦 Expansión de Carga III,📦 Expansión de Carga III,📦 Extension de Cargaison III,📦 Rozszerzenie Ładowni III,📦 Kargo Genişletme III
+STATS_BACK,← Back,← 戻る,← 돌아가기,← 返回,← Назад,← Voltar,← Zurück,← Atrás,← Atrás,← Retour,← Wstecz,← Geri
+STATS_TOTAL_PLAYTIME,Total Play Time,総プレイ時間,총 플레이 시간,总游戏时间,Общее время игры,Tempo Total de Jogo,Gesamtspielzeit,Tiempo Total de Juego,Tiempo Total de Juego,Temps de Jeu Total,Łączny Czas Gry,Toplam Oyun Süresi
+WPN_CORE_BREAKER,💥 Core Breaker,💥 コアブレイカー,💥 코어분쇄,💥 核心粉碎,💥 Дробитель ядер,💥 Quebrador de Núcleo,💥 Kernbrecher,💥 Rompe Núcleos,💥 Rompe Núcleos,💥 Briseur de Noyau,💥 Łamacz Rdzeni,💥 Çekirdek Kırıcı
+CORE_COND_PLANET_YES,✔ Planet 100% destroyed,✔ 惑星破壊率100%,✔ 행성 파괴률 100%,✔ 行星破坏率100%,✔ Планета уничтожена 100%,✔ Planeta 100% destruído,✔ Planet 100% zerstört,✔ Planeta 100% destruido,✔ Planeta 100% destruido,✔ Planète détruite à 100%,✔ Planeta zniszczona w 100%,✔ Gezegen %100 yıkıldı
+TIME_MIN_FMT,%.1f min,%.1f分,%.1f분,%.1f分,%.1f мин,%.1f min,%.1f Min,%.1f min,%.1f min,%.1f min,%.1f min,%.1f dk
+SETTINGS_CLOSE,Close (ESC),閉じる (ESC),닫기 (ESC),关闭 (ESC),Закрыть (ESC),Fechar (ESC),Schließen (ESC),Cerrar (ESC),Cerrar (ESC),Fermer (ESC),Zamknij (ESC),Kapat (ESC)
+WPN_COMBO,🔥 Combo,🔥 コンボ,🔥 콤보,🔥 连击,🔥 Комбо,🔥 Combo,🔥 Kombo,🔥 Combo,🔥 Combo,🔥 Combo,🔥 Combo,🔥 Kombo
+<!MissingKey:297:Range +45px>,Range +45px,射程 +45px,사거리 +45px,射程 +45px,Дальность +45px,Alcance +45px,Reichweite +45px,Alcance +45px,Alcance +45px,Portée +45px,Zasięg +45px,Menzil +45px
+<!MissingKey:298:Upgrades>,Upgrades,アップグレード,업그레이드,升级,Улучшения,Melhorias,Upgrades,Mejoras,Mejoras,Améliorations,Ulepszenia,Geliştirmeler
+WPN_LASER,Laser,レーザー,레이저,激光,Лазер,Laser,Laser,Láser,Láser,Laser,Laser,Lazer
+SETTINGS_MUTE,🔇 Mute,🔇 ミュート,🔇 음소거,🔇 静音,🔇 Без звука,🔇 Mudo,🔇 Stumm,🔇 Silencio,🔇 Silencio,🔇 Muet,🔇 Wyciszenie,🔇 Sessiz
+MINIMAP_CORE_DEAD,Destroyed Core,破壊済みコア,파괴된 코어,已破坏核心,Уничтоженное ядро,Núcleo Destruído,Zerstörter Kern,Núcleo Destruido,Núcleo Destruido,Noyau Détruit,Rdzeń Zniszczony,Yıkılmış Çekirdek
+<!MissingKey:302:🟣 Center Unlock>,🟣 Center Unlock,🟣 中心解放,🟣 중심 해금,🟣 中心解锁,🟣 Разблокировка центра,🟣 Desbloqueio Central,🟣 Zentrumfreischaltung,🟣 Desbloqueo Central,🟣 Desbloqueo Central,🟣 Déverrouillage Central,🟣 Odblokowanie Centrum,🟣 Merkez Kilidi Açma
+<!MissingKey:303:♻️ Infinite Fuel>,♻️ Infinite Fuel,♻️ 燃料無限,♻️ 연료 무한,♻️ 燃料无限,♻️ Бесконечное топливо,♻️ Combustível Infinito,♻️ Unendlich Treibstoff,♻️ Combustible Infinito,♻️ Combustible Infinito,♻️ Carburant Infini,♻️ Nieskończone Paliwo,♻️ Sınırsız Yakıt
+MINING_PROGRESS,Mining: %.1f%%,採掘: %.1f%%,채굴 진행률: %.1f%%,采矿: %.1f%%,Добыча: %.1f%%,Mineração: %.1f%%,Abbau: %.1f%%,Minería: %.1f%%,Minería: %.1f%%,Minage : %.1f%%,Wydobycie: %.1f%%,Madencilik: %.1f%%
+<!MissingKey:305:🌸 Scales with Spring destruction>,"🌸 Scales with Spring destruction
+Max resource x2","🌸 春の破壊率に比例増加
+最大資源 ×2","🌸 봄 파괴율에 비례 증가
+최대 자원 ×2","🌸 随春季破坏率按比例增加
+最大资源 ×2","🌸 Растёт с разрушением Весны
+Макс. ресурсы ×2","🌸 Escala com destruição da Primavera
+Recurso máx. ×2","🌸 Skaliert mit Frühlings-Zerstörung
+Max. Ressourcen ×2","🌸 Escala con destrucción de Primavera
+Recurso máximo x2","🌸 Escala con destrucción de Primavera
+Recurso máximo x2","🌸 Évolue avec la destruction du Printemps
+Ressource max x2","🌸 Skaluje się z destrukcją Wiosny
+Maks. zasoby x2","🌸 Bahar yıkımıyla ölçeklenir
+Maks kaynak x2"
+DEMO_END_WISHLIST,Add to your Wishlist for launch day!,ウィッシュリストに追加してください！,위시리스트에 추가해 주세요!,请加入愿望单！,Добавьте в список желаний!,Adicione à lista de desejos!,Zur Wunschliste hinzufügen!,¡Añádelo a tu Lista de Deseos!,¡Agrégalo a tu Lista de Deseos!,Ajoutez à votre Liste de Souhaits !,Dodaj do Listy Życzeń!,İstek Listenize Ekleyin!
+<!MissingKey:307:⊞ Multi Laser II>,⊞ Multi Laser II,⊞ マルチレーザー II,⊞ 멀티 레이저 II,⊞ 多重激光 II,⊞ Мультилазер II,⊞ Multi Laser II,⊞ Multilaser II,⊞ Multi Láser II,⊞ Multi Láser II,⊞ Multi Laser II,⊞ Multi Laser II,⊞ Çoklu Lazer II
+STAT_CHAIN,Chain,チェーン,체인,连锁,Цепь,Cadeia,Kette,Cadena,Cadena,Chaîne,Łańcuch,Zincir
+LOADING_BLOCKS,Generating blocks...,ブロックを生成中...,행성 블록 생성 중...,生成方块中...,Генерация блоков...,Gerando blocos...,Blöcke werden generiert...,Generando bloques...,Generando bloques...,Génération des blocs...,Generowanie bloków...,Bloklar oluşturuluyor...
+STATS_BEST_COMBO,🏆 Best Combo,🏆 最大コンボ,🏆 최대 콤보,🏆 最大连击,🏆 Лучшее комбо,🏆 Melhor Combo,🏆 Bestes Kombo,🏆 Mejor Combo,🏆 Mejor Combo,🏆 Meilleur Combo,🏆 Najlepsze Combo,🏆 En İyi Kombo
+<!MissingKey:311:📦 Cargo Expand IV>,📦 Cargo Expand IV,📦 貨物拡張 IV,📦 화물칸 확장 IV,📦 货舱扩展 IV,📦 Расширение трюма IV,📦 Expansão de Carga IV,📦 Frachterweiterung IV,📦 Expansión de Carga IV,📦 Expansión de Carga IV,📦 Extension de Cargaison IV,📦 Rozszerzenie Ładowni IV,📦 Kargo Genişletme IV
+<!MissingKey:312:Core block damage x3>,Core block damage x3,コアブロックダメージ×3,코어 블록 데미지 ×3,核心方块伤害×3,Урон по ядру ×3,Dano ao núcleo ×3,Kernschaden ×3,Daño a bloque de núcleo x3,Daño a bloque de núcleo x3,Dégâts bloc noyau x3,Obrażenia bloku rdzenia x3,Çekirdek blok hasarı x3
+<!MissingKey:313:Drone damage +5>,Drone damage +5,ドローンダメージ +5,드론 데미지 +5,无人机伤害 +5,Урон дрона +5,Dano do drone +5,Drohnenschaden +5,Daño de dron +5,Daño de dron +5,Dégâts drone +5,Obrażenia drona +5,Drone hasarı +5
+CORE_COND_PLANET_NO,✘ Planet 100% destroyed,✘ 惑星破壊率100%,✘ 행성 파괴률 100%,✘ 行星破坏率100%,✘ Планета уничтожена 100%,✘ Planeta 100% destruído,✘ Planet 100% zerstört,✘ Planeta 100% destruido,✘ Planeta 100% destruido,✘ Planète détruite à 100%,✘ Planeta zniszczona w 100%,✘ Gezegen %100 yıkıldı
+<!MissingKey:315:Instant resource collect>,"Instant resource collect
+No pickup needed","資源即時取得
+破片回収不要","자원 즉시 획득
+파편 수집 불필요","资源立即获取
+无需拾取碎片","Мгновенный сбор ресурсов
+Без подбора","Coleta instantânea
+Sem necessidade de pegar","Sofortige Sammlung
+Kein Aufheben nötig","Recogida instantánea
+Sin necesidad de recoger","Recolección instantánea
+Sin necesidad de recoger","Collecte instantanée
+Pas besoin de ramasser","Natychmiastowe zbieranie
+Bez potrzeby podnoszenia","Anında kaynak toplama
+Toplama gerekmez"
+<!MissingKey:316:📊 Stats>,📊 Stats,📊 統計,📊 통계,📊 统计,📊 Статистика,📊 Estatísticas,📊 Statistik,📊 Estadísticas,📊 Estadísticas,📊 Statistiques,📊 Statystyki,📊 İstatistikler
+<!MissingKey:317:⚔ Damage Boost IV>,⚔ Damage Boost IV,⚔ ダメージブースト IV,⚔ 데미지 증폭 IV,⚔ 伤害增幅 IV,⚔ Усиление урона IV,⚔ Amplificação de Dano IV,⚔ Schadensverstärkung IV,⚔ Potenciador de Daño IV,⚔ Potenciador de Daño IV,⚔ Boost de Dégâts IV,⚔ Wzmocnienie Obrażeń IV,⚔ Hasar Güçlendirme IV
+<!MissingKey:318:Fuel +2s>,Fuel +2s,燃料 +2秒,연료 +2초,燃料 +2秒,Топливо +2с,Combustível +2s,Treibstoff +2s,Combustible +2s,Combustible +2s,Carburant +2s,Paliwo +2s,Yakıt +2s
+<!MissingKey:319:⛽ Fuel Tank II>,⛽ Fuel Tank II,⛽ 燃料タンク II,⛽ 연료탱크 II,⛽ 燃料箱 II,⛽ Топливный бак II,⛽ Tanque II,⛽ Kraftstofftank II,⛽ Tanque de Combustible II,⛽ Tanque de Combustible II,⛽ Réservoir II,⛽ Zbiornik Paliwa II,⛽ Yakıt Deposu II
+MINIMAP_LEGEND_TITLE,Core Legend,コア色の凡例,코어 색상 범례,核心颜色说明,Легенда ядер,Legenda dos Núcleos,Kernlegende,Leyenda de Núcleos,Leyenda de Núcleos,Légende des Noyaux,Legenda Rdzeni,Çekirdek Açıklaması
+<!MissingKey:321:Barrier I>,Barrier I,バリア I,배리어 I,护盾 I,Барьер I,Barreira I,Barriere I,Barrera I,Barrera I,Barrière I,Bariera I,Bariyer I
+<!MissingKey:322:⚔ Damage Boost II>,⚔ Damage Boost II,⚔ ダメージブースト II,⚔ 데미지 증폭 II,⚔ 伤害增幅 II,⚔ Усиление урона II,⚔ Amplificação de Dano II,⚔ Schadensverstärkung II,⚔ Potenciador de Daño II,⚔ Potenciador de Daño II,⚔ Boost de Dégâts II,⚔ Wzmocnienie Obrażeń II,⚔ Hasar Güçlendirme II
+<!MissingKey:323:💥Breaker>,💥Breaker,💥ブレイカー,💥분쇄기,💥粉碎器,💥Дробитель,💥Quebrador,💥Brecher,💥Rompe,💥Rompe,💥Briseur,💥Łamacz,💥Kırıcı
+<!MissingKey:324:⛽ Fuel Tank IV>,⛽ Fuel Tank IV,⛽ 燃料タンク IV,⛽ 연료탱크 IV,⛽ 燃料箱 IV,⛽ Топливный бак IV,⛽ Tanque IV,⛽ Kraftstofftank IV,⛽ Tanque de Combustible IV,⛽ Tanque de Combustible IV,⛽ Réservoir IV,⛽ Zbiornik Paliwa IV,⛽ Yakıt Deposu IV
+MENU_START,Start,スタート,시작,开始,Старт,Iniciar,Start,Iniciar,Comenzar,Démarrer,Start,Başla
+<!MissingKey:326:⚡ Chain Jump Enhance>,⚡ Chain Jump Enhance,⚡ チェインジャンプ強化,⚡ 체인 점프 강화,⚡ 链式跳跃强化,⚡ Усиление прыжка цепи,⚡ Salto em Cadeia,⚡ Kettensprung-Verstärkung,⚡ Mejora de Cadena,⚡ Mejora de Cadena,⚡ Amélioration de Chaîne,⚡ Ulepszenie Łańcucha,⚡ Zincir Atlama Geliştirme
+<!MissingKey:327:Resource gain +20>,Resource gain +20,資源獲得 +20,자원 획득 +20,资源获取 +20,Ресурсы +20,Recursos +20,Ressourcen +20,Recurso +20,Recurso +20,Ressource +20,Zasoby +20,Kaynak +20
+<!MissingKey:328:A small planet in a corner of space.>,"A small planet in a corner of space.
+You were living there quietly.","宇宙の片隅にある小さな惑星。
+あなたはそこで静かに暮らしていた。","우주 한쪽 구석의 작은 행성.
+당신은 그곳에서 조용히 살고 있었다.","宇宙一角的小行星。
+你曾在那里安静地生活。","Маленькая планета в уголке космоса.
+Вы тихо жили там.","Um pequeno planeta no canto do espaço.
+Você vivia lá tranquilamente.","Ein kleiner Planet in einer Ecke des Alls.
+Du lebtest dort still.","Un pequeño planeta en un rincón del espacio.
+Vivías allí en silencio.","Un pequeño planeta en un rincón del espacio.
+Vivías allí en silencio.","Une petite planète dans un coin de l'espace.
+Vous y viviez tranquillement.","Mała planeta w zakątku kosmosu.
+Żyłeś tam w spokoju.","Uzayın bir köşesinde küçük bir gezegen.
+Orada sessizce yaşıyordunuz."
+<!MissingKey:329:Chain propagates 2 stages>,Chain propagates 2 stages,連鎖2段階伝播,연쇄 2단계 전파,连锁2阶段传播,Цепь распространяется 2 этапа,Cadeia propaga 2 estágios,Kette breitet sich 2 Stufen aus,La cadena se propaga 2 fases,La cadena se propaga 2 fases,La chaîne se propage sur 2 étapes,Łańcuch propaguje się 2 etapy,Zincir 2 aşama yayılır
+TUT_MOVE_HINT,Fly around!,飛び回ろう！,자유롭게 날아보세요!,自由飞行！,Летайте!,Voe por aí!,Herumfliegen!,¡Vuela por ahí!,¡Vuela por ahí!,Volez partout !,Lataj dookoła!,Etrafta uç!
+<!MissingKey:331:🛡 Emergency Return II>,🛡 Emergency Return II,🛡 緊急帰還 II,🛡 비상 귀환 II,🛡 紧急返回 II,🛡 Аварийный возврат II,🛡 Retorno de Emergência II,🛡 Notfallrückkehr II,🛡 Retorno de Emergencia II,🛡 Retorno de Emergencia II,🛡 Retour d'Urgence II,🛡 Powrót Awaryjny II,🛡 Acil Dönüş II
+<!MissingKey:332:⚡ Fuel Efficiency>,⚡ Fuel Efficiency,⚡ 燃料効率,⚡ 연료 효율,⚡ 燃料效率,⚡ Экономия топлива,⚡ Eficiência de Combustível,⚡ Treibstoffeffizienz,⚡ Eficiencia de Combustible,⚡ Eficiencia de Combustible,⚡ Efficacité de Carburant,⚡ Efektywność Paliwa,⚡ Yakıt Verimliliği
+<!MissingKey:333:🌍 Free Planet>,🌍 Free Planet,🌍 フリー惑星,🌍 자유 행성,🌍 自由行星,🌍 Свободная планета,🌍 Planeta Livre,🌍 Freier Planet,🌍 Planeta Libre,🌍 Planeta Libre,🌍 Planète Libre,🌍 Wolna Planeta,🌍 Serbest Gezegen
+STAT_OVERDRIVE,Overdrive,オーバードライブ,오버드라이브,超载,Овердрайв,Sobrecarga,Überladung,Sobremarcha,Sobremarcha,Surcharge,Doładowanie,Aşırı Güç
+<!MissingKey:335:💢Overdrive>,💢Overdrive,💢オーバードライブ,💢오버드라이브,💢超载,💢Овердрайв,💢Sobrecarga,💢Überladung,💢Sobremarcha,💢Sobremarcha,💢Surcharge,💢Doładowanie,💢Aşırı Güç
+<!MissingKey:336:💫 Safety Device>,💫 Safety Device,💫 安全装置,💫 안전 장치,💫 安全装置,💫 Предохранитель,💫 Dispositivo de Segurança,💫 Sicherheitsvorrichtung,💫 Dispositivo de Seguridad,💫 Dispositivo de Seguridad,💫 Dispositif de Sécurité,💫 Urządzenie Bezpieczeństwa,💫 Güvenlik Cihazı
+EPILOGUE_THANKS,Congratulations! You destroyed the entire planet.,おめでとうございます！惑星を完全に破壊しました。,축하합니다! 행성을 완전히 파괴했습니다.,恭喜！你已完全摧毁了行星。,Поздравляем! Вы полностью уничтожили планету.,Parabéns! Você destruiu o planeta inteiro.,Glückwunsch! Du hast den gesamten Planeten zerstört.,¡Felicidades! Has destruido el planeta entero.,¡Felicidades! Has destruido el planeta entero.,Félicitations ! Vous avez entièrement détruit la planète.,Gratulacje! Zniszczyłeś całą planetę.,Tebrikler! Gezegeni tamamen yok ettiniz.
+<!MissingKey:338:💰 Resource Boost III>,💰 Resource Boost III,💰 資源ブースト III,💰 자원 증폭 III,💰 资源增幅 III,💰 Усиление ресурсов III,💰 Amplificação de Recursos III,💰 Ressourcenverstärkung III,💰 Potenciador de Recursos III,💰 Potenciador de Recursos III,💰 Boost de Ressources III,💰 Wzmocnienie Zasobów III,💰 Kaynak Güçlendirme III
+CORES_FMT,%d Cores,%d コア,%d 코어,%d 核心,%d ядер,%d núcleos,%d Kerne,%d Núcleos,%d Núcleos,%d Noyaux,%d Rdzeni,%d Çekirdek
+<!MissingKey:340:💰 Gold Block Value>,💰 Gold Block Value,💰 ゴールドブロック価値,💰 금블록 가치,💰 金方块价值,💰 Ценность золотого блока,💰 Valor do Bloco Dourado,💰 Goldblockwert,💰 Valor del Bloque Dorado,💰 Valor del Bloque Dorado,💰 Valeur du Bloc Doré,💰 Wartość Złotego Bloku,💰 Altın Blok Değeri
+<!MissingKey:341:20% chance damage x3>,20% chance damage x3,20%確率ダメージ×3,20% 확률 데미지 ×3,20%概率伤害×3,20% шанс урон ×3,20% chance dano ×3,20% Chance Schaden ×3,20% de probabilidad de daño x3,20% de probabilidad de daño x3,20% de chance de dégâts x3,20% szans na obrażenia x3,x3 hasar için %20 şans
+SETTINGS_MAIN_MENU,🏠 Main Menu,🏠 メインメニュー,🏠 메인 메뉴,🏠 主菜单,🏠 Главное меню,🏠 Menu Principal,🏠 Hauptmenü,🏠 Menú Principal,🏠 Menú Principal,🏠 Menu Principal,🏠 Menu Główne,🏠 Ana Menü
+<!MissingKey:343:Drone sync>,"Drone sync
++15% of player damage","ドローン同期
+プレイヤー攻撃力の15%追加","드론 동기화
+플레이어 공격력의 15% 추가","无人机同步
+追加玩家攻击力的15%","Синхронизация дрона
++15% урона игрока","Sincronia do drone
++15% do dano do jogador","Drohnen-Sync
++15% Spielerschaden","Sincronización de dron
++15% del daño del jugador","Sincronización de dron
++15% del daño del jugador","Synchronisation drone
++15% des dégâts du joueur","Synchronizacja drona
++15% obrażeń gracza","Drone senkronizasyonu
+Oyuncu hasarının +%15'i"
+<!MissingKey:344:🛑 Emergency Brake>,🛑 Emergency Brake,🛑 緊急ブレーキ,🛑 긴급 제동,🛑 紧急制动,🛑 Экстренное торможение,🛑 Freio de Emergência,🛑 Notbremse,🛑 Freno de Emergencia,🛑 Freno de Emergencia,🛑 Freinage d'Urgence,🛑 Hamulec Awaryjny,🛑 Acil Fren
+STATS_COUNT_FMT,%s runs,%s回,%s회,%s次,%s раз,%s vezes,%s Mal,%s salidas,%s salidas,%s sorties,%s wypraw,%s çıkış
+TIME_HOUR_MIN_FMT,%dh %dm,%d時間%d分,%d시간 %d분,%d小时%d分,%dч %dм,%dh %dm,%dh %dm,%dh %dm,%dh %dm,%dh %dm,%dh %dm,%dh %dm
+WPN_CORE_BREAKER,💥 Core Breaker,💥 コアブレイカー,💥 코어 분쇄기,💥 核心粉碎器,💥 Дробитель ядер,💥 Quebrador de Núcleo,💥 Kernbrecher,💥 Rompe Núcleos,💥 Rompe Núcleos,💥 Briseur de Noyau,💥 Łamacz Rdzeni,💥 Çekirdek Kırıcı
+<!MissingKey:348:🤖 Drone Overclock>,🤖 Drone Overclock,🤖 ドローンオーバークロック,🤖 드론 오버클럭,🤖 无人机超频,🤖 Разгон дрона,🤖 Overclock do Drone,🤖 Drohnen-Übertaktung,🤖 Sobrecarga de Dron,🤖 Sobrecarga de Dron,🤖 Surcadençage Drone,🤖 Podkręcenie Drona,🤖 Drone Hız Aşırtma
+<!MissingKey:349:Barrier +1>,Barrier +1,バリア +1,배리어 +1,护盾 +1,Барьер +1,Barreira +1,Barriere +1,Barrera +1,Barrera +1,Barrière +1,Bariera +1,Bariyer +1
+<!MissingKey:350:🤖 Drone Sync>,🤖 Drone Sync,🤖 ドローン同期,🤖 드론 동기화,🤖 无人机同步,🤖 Синхронизация дрона,🤖 Sincronização,🤖 Drohnen-Sync,🤖 Sincronización de Dron,🤖 Sincronización de Dron,🤖 Synchronisation Drone,🤖 Synchronizacja Drona,🤖 Drone Senkronizasyonu
+STATS_BEST_DPS,🏆 Best DPS,🏆 最大 DPS,🏆 최대 DPS,🏆 最高 DPS,🏆 Лучший DPS,🏆 Melhor DPS,🏆 Bester DPS,🏆 Mejor DPS,🏆 Mejor DPS,🏆 Meilleur DPS,🏆 Najlepsze DPS,🏆 En İyi DPS

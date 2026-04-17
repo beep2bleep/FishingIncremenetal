@@ -9,6 +9,8 @@ const TOOLTIP_SCREEN_HEIGHT_OFFSET_RATIO: float = 0.03
 const MOUSE_TOOLTIP_EXTRA_OFFSET: float = 18.0
 const TOOLTIP_GROUP: StringName = &"tech_tree_tooltips"
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
+const OPEN_PIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitEmpire/OpenPitEmpireProgress.gd")
+const OPEN_PIT_ORBIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd")
 const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
 const TURKEY_PROGRESS_SCRIPT = preload("res://Games/Turkey/TurkeyProgress.gd")
 var REEL_INTO_DARKNESS_PROGRESS_SCRIPT = load("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
@@ -422,6 +424,10 @@ func _purchase_upgrade() -> void:
         var target_level: int = int(upgrade.sim_level) + int(upgrade.current_tier) - 1
         if Util.is_mining_game_active():
             MINING_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
+        elif Util.is_open_pit_game_active():
+            OPEN_PIT_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
+        elif Util.is_open_pit_orbit_game_active():
+            OPEN_PIT_ORBIT_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
         elif Util.is_red_sky_game_active():
             RED_SKY_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
         elif Util.is_turkey_game_active():

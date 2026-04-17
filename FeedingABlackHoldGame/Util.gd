@@ -14,6 +14,8 @@ const START_SCREEN_PROJECT_SETTING := "global/StartScreen"
 
 const ACTIVE_GAME_VANGUARD := "vanguard"
 const ACTIVE_GAME_MINING := "mining"
+const ACTIVE_GAME_OPEN_PIT := "openpit"
+const ACTIVE_GAME_OPEN_PIT_ORBIT := "openpitorbit"
 const ACTIVE_GAME_RED_SKY := "redsky"
 const ACTIVE_GAME_TURKEY := "turkey"
 const ACTIVE_GAME_REEL_INTO_DARKNESS := "reelintodarkness"
@@ -30,6 +32,12 @@ const PATH_VANGUARD_BATTLE := "res://Games/Vanguard/Scenes/VanguardBattleScene.t
 const PATH_MINING_MAIN := "res://Games/Mining/Scenes/MiningMain.tscn"
 const PATH_MINING_MAIN_MENU := "res://Games/Mining/Menus/MiningMainMenu.tscn"
 const PATH_MINING_BATTLE := "res://Games/Mining/Scenes/MiningBattleScene.tscn"
+const PATH_OPEN_PIT_MAIN := "res://Games/OpenPitEmpire/Scenes/OpenPitEmpireMain.tscn"
+const PATH_OPEN_PIT_MAIN_MENU := "res://Games/OpenPitEmpire/Menus/OpenPitEmpireMainMenu.tscn"
+const PATH_OPEN_PIT_BATTLE := "res://Games/OpenPitEmpire/Scenes/OpenPitEmpireMain.tscn"
+const PATH_OPEN_PIT_ORBIT_MAIN := "res://Games/OpenPitOrbit/Scenes/OpenPitOrbitMain.tscn"
+const PATH_OPEN_PIT_ORBIT_MAIN_MENU := "res://Games/OpenPitOrbit/Menus/OpenPitOrbitMainMenu.tscn"
+const PATH_OPEN_PIT_ORBIT_BATTLE := "res://Games/OpenPitOrbit/Scenes/OpenPitOrbitMain.tscn"
 const PATH_RED_SKY_MAIN := "res://Games/RedSkyDefense/Scenes/MissleMain.tscn"
 const PATH_RED_SKY_MAIN_MENU := "res://Games/RedSkyDefense/Menus/RedSkyMainMenu.tscn"
 const PATH_TURKEY_MAIN := "res://Games/Turkey/Scenes/TurkeyMain.tscn"
@@ -56,6 +64,12 @@ func is_all_high_level_mode_active() -> bool:
 func is_mining_game_active() -> bool:
     return get_active_game_id() == ACTIVE_GAME_MINING
 
+func is_open_pit_game_active() -> bool:
+    return get_active_game_id() == ACTIVE_GAME_OPEN_PIT
+
+func is_open_pit_orbit_game_active() -> bool:
+    return get_active_game_id() == ACTIVE_GAME_OPEN_PIT_ORBIT
+
 func is_vanguard_game_active() -> bool:
     return get_active_game_id() == ACTIVE_GAME_VANGUARD
 
@@ -70,7 +84,7 @@ func is_reel_into_darkness_game_active() -> bool:
 
 ## Mining / Red Sky / Reel set Input.mouse_mode during PLAYING (capture, hidden, etc.). Global must not override.
 func is_standalone_battle_mouse_managed() -> bool:
-    return is_mining_game_active() or is_red_sky_game_active() or is_reel_into_darkness_game_active()
+    return is_mining_game_active() or is_open_pit_game_active() or is_open_pit_orbit_game_active() or is_red_sky_game_active() or is_reel_into_darkness_game_active()
 
 func set_active_game_id(game_id: String) -> void:
     ProjectSettings.set_setting(ACTIVE_GAME_PROJECT_SETTING, _normalize_game_id(game_id))
@@ -100,13 +114,17 @@ func get_game_hub_scene_path() -> String:
     return PATH_GAME_LAUNCHER
 
 func get_direct_launch_scene_path() -> String:
-    if is_mining_game_active() or is_red_sky_game_active() or is_turkey_game_active() or is_reel_into_darkness_game_active():
+    if is_mining_game_active() or is_open_pit_game_active() or is_open_pit_orbit_game_active() or is_red_sky_game_active() or is_turkey_game_active() or is_reel_into_darkness_game_active():
         return get_upgrade_scene_path()
     return get_main_scene_path()
 
 func get_main_scene_path() -> String:
     if is_mining_game_active():
         return PATH_MINING_MAIN
+    if is_open_pit_game_active():
+        return PATH_OPEN_PIT_MAIN
+    if is_open_pit_orbit_game_active():
+        return PATH_OPEN_PIT_ORBIT_MAIN
     if is_red_sky_game_active():
         return PATH_RED_SKY_MAIN
     if is_turkey_game_active():
@@ -118,6 +136,10 @@ func get_main_scene_path() -> String:
 func get_main_menu_scene_path() -> String:
     if is_mining_game_active():
         return PATH_MINING_MAIN_MENU
+    if is_open_pit_game_active():
+        return PATH_OPEN_PIT_MAIN_MENU
+    if is_open_pit_orbit_game_active():
+        return PATH_OPEN_PIT_ORBIT_MAIN_MENU
     if is_red_sky_game_active():
         return PATH_RED_SKY_MAIN_MENU
     if is_turkey_game_active():
@@ -132,6 +154,10 @@ func get_upgrade_scene_path() -> String:
 func get_battle_scene_path() -> String:
     if is_mining_game_active():
         return PATH_MINING_BATTLE
+    if is_open_pit_game_active():
+        return PATH_OPEN_PIT_BATTLE
+    if is_open_pit_orbit_game_active():
+        return PATH_OPEN_PIT_ORBIT_BATTLE
     if is_red_sky_game_active():
         return PATH_RED_SKY_MAIN
     if is_turkey_game_active():
@@ -144,6 +170,10 @@ func _normalize_game_id(game_id: Variant) -> String:
     var normalized_game_id: String = str(game_id).strip_edges().to_lower()
     if normalized_game_id == ACTIVE_GAME_MINING:
         return ACTIVE_GAME_MINING
+    if normalized_game_id == ACTIVE_GAME_OPEN_PIT:
+        return ACTIVE_GAME_OPEN_PIT
+    if normalized_game_id == ACTIVE_GAME_OPEN_PIT_ORBIT:
+        return ACTIVE_GAME_OPEN_PIT_ORBIT
     if normalized_game_id == ACTIVE_GAME_RED_SKY:
         return ACTIVE_GAME_RED_SKY
     if normalized_game_id == ACTIVE_GAME_TURKEY:

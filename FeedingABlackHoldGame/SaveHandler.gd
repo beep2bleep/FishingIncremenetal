@@ -43,8 +43,12 @@ func _ready():
     print("Save Handler _ready()")
     _normalize_supported_locale_names()
     _force_supported_locale_display_names()
+    _remove_web_unsupported_locales()
 
     load_local_settings()
+
+    if OS.has_feature("web") and not supported_locales.has(locale):
+        locale = "en"
 
     load_progression_data()
     load_fishing_progress()
@@ -74,6 +78,14 @@ func _force_supported_locale_display_names() -> void:
     supported_locales["cs"] = "\u010ce\u0161tina"
     supported_locales["ca"] = "Catal\u00e0"
     supported_locales["vi"] = "Ti\u1ebfng Vi\u1ec7t"
+
+func _remove_web_unsupported_locales() -> void:
+    if not OS.has_feature("web"):
+        return
+    supported_locales.erase("zh")
+    supported_locales.erase("ja")
+    supported_locales.erase("ko")
+    supported_locales.erase("th")
 
 
 func set_bus_volume_from_slider(bus_name: String, slider_unit: float) -> void:

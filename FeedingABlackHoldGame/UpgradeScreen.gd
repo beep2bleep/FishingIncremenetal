@@ -6,6 +6,10 @@ const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const CONTROLLER_GLYPH_SCENE: PackedScene = preload("res://Controller Glyph.tscn")
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const MINING_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/Mining/MiningUpgradeTreeAdapter.gd")
+const OPEN_PIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitEmpire/OpenPitEmpireProgress.gd")
+const OPEN_PIT_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/OpenPitEmpire/OpenPitEmpireUpgradeTreeAdapter.gd")
+const OPEN_PIT_ORBIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd")
+const OPEN_PIT_ORBIT_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/OpenPitOrbit/OpenPitOrbitUpgradeTreeAdapter.gd")
 const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
 const RED_SKY_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyUpgradeTreeAdapter.gd")
 const TURKEY_PROGRESS_SCRIPT = preload("res://Games/Turkey/TurkeyProgress.gd")
@@ -476,6 +480,10 @@ func update_colors():
         %"Click Mask".color = Color(0.13, 0.1, 0.08, 1.0)
         %"GPUParticles2D Light".modulate = Color(0.72, 0.55, 0.22, 0.65)
         %"GPUParticles2D2 Dark".modulate = Color(0.28, 0.18, 0.1, 0.55)
+    elif Util.is_open_pit_orbit_game_active():
+        %"Click Mask".color = Color(0.03, 0.06, 0.1, 1.0)
+        %"GPUParticles2D Light".modulate = Color(0.4, 0.82, 1.0, 0.58)
+        %"GPUParticles2D2 Dark".modulate = Color(0.08, 0.18, 0.3, 0.56)
     elif Util.is_red_sky_game_active():
         %"Click Mask".color = Color(0.19, 0.095, 0.085, 1.0)
         %"GPUParticles2D Light".modulate = Color(0.81, 0.39, 0.24, 0.64)
@@ -746,6 +754,24 @@ func _on_go_again_pressed() -> void :
         else:
             _show_battle_level_choice_dialog(max_depth)
         return
+    if Util.is_open_pit_game_active():
+        var open_pit_data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
+        var open_pit_min_depth: int = OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+        var open_pit_max_depth: int = clampi(int(open_pit_data.get("deepest_level_unlocked", open_pit_min_depth)), open_pit_min_depth, OPEN_PIT_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL)
+        if OPEN_PIT_PROGRESS_SCRIPT.get_display_depth_tier(open_pit_max_depth) <= 1:
+            _launch_battle_at_level(open_pit_min_depth)
+        else:
+            _show_battle_level_choice_dialog(open_pit_max_depth)
+        return
+    if Util.is_open_pit_orbit_game_active():
+        var orbit_data: Dictionary = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.load_data()
+        var orbit_min_depth: int = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+        var orbit_max_depth: int = clampi(int(orbit_data.get("deepest_level_unlocked", orbit_min_depth)), orbit_min_depth, OPEN_PIT_ORBIT_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL)
+        if OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_display_depth_tier(orbit_max_depth) <= 1:
+            _launch_battle_at_level(orbit_min_depth)
+        else:
+            _show_battle_level_choice_dialog(orbit_max_depth)
+        return
     if Util.is_red_sky_game_active():
         _refresh_virtual_cursor_state()
         _cache_tech_tree_for_reuse()
@@ -811,6 +837,10 @@ func _ensure_tree_initialized(force_rebuild: bool = false) -> void:
     if _is_simulation_upgrade_tree_requested() or _is_simulation_upgrade_tree():
         if Util.is_mining_game_active():
             MINING_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
+        elif Util.is_open_pit_game_active():
+            OPEN_PIT_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
+        elif Util.is_open_pit_orbit_game_active():
+            OPEN_PIT_ORBIT_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
         elif Util.is_red_sky_game_active():
             RED_SKY_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
         elif Util.is_turkey_game_active():
@@ -838,6 +868,10 @@ func _sync_simulation_currency_from_save() -> void:
 func _get_upgrade_wallet_amount() -> int:
     if Util.is_mining_game_active():
         return MINING_PROGRESS_SCRIPT.get_wallet()
+    if Util.is_open_pit_game_active():
+        return OPEN_PIT_PROGRESS_SCRIPT.get_wallet()
+    if Util.is_open_pit_orbit_game_active():
+        return OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_wallet()
     if Util.is_red_sky_game_active():
         return RED_SKY_PROGRESS_SCRIPT.get_wallet()
     if Util.is_turkey_game_active():
@@ -897,9 +931,15 @@ func _refresh_demo_mode_label_visibility() -> void:
     if demo_mode_label != null and is_instance_valid(demo_mode_label):
         demo_mode_label.visible = _is_demo_mode_enabled() and not _is_any_popup_visible()
     if game_mode_label != null and is_instance_valid(game_mode_label):
-        game_mode_label.visible = not _is_any_popup_visible() and (Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active())
+        game_mode_label.visible = not _is_any_popup_visible() and (Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active())
         if Util.is_mining_game_active():
             game_mode_label.text = ""
+        elif Util.is_open_pit_game_active():
+            game_mode_label.text = "OPEN PIT EMPIRE"
+            game_mode_label.add_theme_color_override("font_color", Color(0.95, 0.76, 0.38, 1.0))
+        elif Util.is_open_pit_orbit_game_active():
+            game_mode_label.text = "OPEN PIT ORBIT"
+            game_mode_label.add_theme_color_override("font_color", Color(0.54, 0.86, 1.0, 1.0))
         elif Util.is_red_sky_game_active():
             game_mode_label.text = tr("RED SKY MODE")
             game_mode_label.add_theme_color_override("font_color", Color(0.98, 0.62, 0.42, 1.0))
@@ -937,11 +977,16 @@ func _setup_mining_time_label() -> void:
 func _refresh_mining_time_label() -> void:
     if mining_time_label == null or not is_instance_valid(mining_time_label):
         return
-    var show_label: bool = Util.is_mining_game_active() and not _is_any_popup_visible()
+    var show_label: bool = (Util.is_mining_game_active() or Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active()) and not _is_any_popup_visible()
     mining_time_label.visible = show_label
     if not show_label:
         return
-    mining_time_label.text = _trf("BATTLE_CLOCK_LABEL", [Util.format_time(SaveHandler.fishing_run_clock_seconds)])
+    if Util.is_open_pit_game_active():
+        mining_time_label.text = "Open Pit runs are 30-second sorties. Mine and return to the ring."
+    elif Util.is_open_pit_orbit_game_active():
+        mining_time_label.text = "Open Pit Orbit runs use orbit-tech weapons. Mine, dock, and cash out before fuel ends."
+    else:
+        mining_time_label.text = _trf("BATTLE_CLOCK_LABEL", [Util.format_time(SaveHandler.fishing_run_clock_seconds)])
 
 func _get_demo_wishlist_url() -> String:
     var configured_url: String = str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()
@@ -1305,6 +1350,14 @@ func _show_battle_level_choice_dialog(max_level: int) -> void:
             var mining_fallback_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
             var min_depth: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
             _launch_battle_at_level(clampi(int(mining_fallback_data.get("selected_depth_level", max_level)), min_depth, max_level))
+        elif Util.is_open_pit_game_active():
+            var open_pit_fallback_data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
+            var open_pit_min_depth: int = OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+            _launch_battle_at_level(clampi(int(open_pit_fallback_data.get("selected_depth_level", max_level)), open_pit_min_depth, max_level))
+        elif Util.is_open_pit_orbit_game_active():
+            var orbit_fallback_data: Dictionary = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.load_data()
+            var orbit_min_depth: int = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+            _launch_battle_at_level(clampi(int(orbit_fallback_data.get("selected_depth_level", max_level)), orbit_min_depth, max_level))
         else:
             _launch_battle_at_level(clamp(SaveHandler.fishing_next_battle_level, 1, max_level))
         return
@@ -1315,6 +1368,16 @@ func _show_battle_level_choice_dialog(max_level: int) -> void:
         var min_depth: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
         battle_level_choice_selected_level = clampi(int(mining_data.get("selected_depth_level", max_level)), min_depth, max_level)
         battle_level_choice_dialog.title = tr("MINING_CHOOSE_DEPTH_TIER_TITLE")
+    elif Util.is_open_pit_game_active():
+        var open_pit_data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
+        var open_pit_min_depth: int = OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+        battle_level_choice_selected_level = clampi(int(open_pit_data.get("selected_depth_level", max_level)), open_pit_min_depth, max_level)
+        battle_level_choice_dialog.title = "Choose Pit Layer"
+    elif Util.is_open_pit_orbit_game_active():
+        var orbit_data: Dictionary = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.load_data()
+        var orbit_min_depth: int = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+        battle_level_choice_selected_level = clampi(int(orbit_data.get("selected_depth_level", max_level)), orbit_min_depth, max_level)
+        battle_level_choice_dialog.title = "Choose Orbit Layer"
     else:
         battle_level_choice_selected_level = clamp(SaveHandler.fishing_next_battle_level, 1, max_level)
         battle_level_choice_dialog.title = tr("UI_CHOOSE_BATTLE_LEVEL")
@@ -1605,6 +1668,18 @@ func _launch_battle_at_level(level: int) -> void:
         _cache_tech_tree_for_reuse()
         SceneChanger.change_to_new_scene(Util.get_main_scene_path())
         return
+    if Util.is_open_pit_game_active():
+        OPEN_PIT_PROGRESS_SCRIPT.set_selected_depth_level(level)
+        _refresh_virtual_cursor_state()
+        _cache_tech_tree_for_reuse()
+        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        return
+    if Util.is_open_pit_orbit_game_active():
+        OPEN_PIT_ORBIT_PROGRESS_SCRIPT.set_selected_depth_level(level)
+        _refresh_virtual_cursor_state()
+        _cache_tech_tree_for_reuse()
+        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        return
     if Util.is_red_sky_game_active():
         _refresh_virtual_cursor_state()
         _cache_tech_tree_for_reuse()
@@ -1871,6 +1946,10 @@ func _perform_editor_sell() -> void:
 
     if Util.is_mining_game_active():
         MINING_PROGRESS_SCRIPT.apply_tree_sale(node.upgrade.sim_key, new_level, wallet_after_sale)
+    elif Util.is_open_pit_game_active():
+        OPEN_PIT_PROGRESS_SCRIPT.apply_tree_sale(node.upgrade.sim_key, new_level, wallet_after_sale)
+    elif Util.is_open_pit_orbit_game_active():
+        OPEN_PIT_ORBIT_PROGRESS_SCRIPT.apply_tree_sale(node.upgrade.sim_key, new_level, wallet_after_sale)
     elif Util.is_red_sky_game_active():
         RED_SKY_PROGRESS_SCRIPT.apply_tree_sale(node.upgrade.sim_key, new_level, wallet_after_sale)
     elif Util.is_turkey_game_active():
@@ -2034,7 +2113,7 @@ func _recenter_tech_tree_on_core() -> void:
         tech_tree.call("recenter_on_core")
 
 func _should_recenter_upgrade_tree_on_core() -> bool:
-    return Util.is_mining_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active()
+    return Util.is_mining_game_active() or Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active()
 
 func _on_editor_center_offset_rebuild_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -2161,6 +2240,10 @@ func _on_legacy_reset_canceled() -> void:
 func _perform_progress_reset() -> void:
     if Util.is_mining_game_active():
         MINING_PROGRESS_SCRIPT.reset_progress()
+    elif Util.is_open_pit_game_active():
+        OPEN_PIT_PROGRESS_SCRIPT.reset_progress()
+    elif Util.is_open_pit_orbit_game_active():
+        OPEN_PIT_ORBIT_PROGRESS_SCRIPT.reset_progress()
     elif Util.is_red_sky_game_active():
         RED_SKY_PROGRESS_SCRIPT.reset_progress()
     elif Util.is_turkey_game_active():
@@ -2207,6 +2290,24 @@ func _on_editor_unlock_all_pressed() -> void:
         data["deepest_level_unlocked"] = MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL
         data["selected_depth_level"] = MINING_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL
         MINING_PROGRESS_SCRIPT.save_data(data)
+    elif Util.is_open_pit_game_active():
+        var open_pit_data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
+        open_pit_data["upgrades"] = {}
+        for key_variant: Variant in max_level_by_key.keys():
+            var open_pit_key: String = str(key_variant)
+            open_pit_data["upgrades"][open_pit_key] = int(max_level_by_key[open_pit_key])
+        open_pit_data["deepest_level_unlocked"] = OPEN_PIT_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL
+        open_pit_data["selected_depth_level"] = OPEN_PIT_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL
+        OPEN_PIT_PROGRESS_SCRIPT.save_data(open_pit_data)
+    elif Util.is_open_pit_orbit_game_active():
+        var orbit_data: Dictionary = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.load_data()
+        orbit_data["upgrades"] = {}
+        for key_variant: Variant in max_level_by_key.keys():
+            var orbit_key: String = str(key_variant)
+            orbit_data["upgrades"][orbit_key] = int(max_level_by_key[orbit_key])
+        orbit_data["deepest_level_unlocked"] = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL
+        orbit_data["selected_depth_level"] = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL
+        OPEN_PIT_ORBIT_PROGRESS_SCRIPT.save_data(orbit_data)
     elif Util.is_red_sky_game_active():
         var red_sky_data: Dictionary = RED_SKY_PROGRESS_SCRIPT.load_data()
         red_sky_data["meta_upgrades"] = {}
@@ -2577,7 +2678,7 @@ func _hide_settings_panel() -> void:
         settings_panel.hide()
 
 func _can_continue_to_battle() -> bool:
-    if Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active():
+    if Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active():
         return true
     if not _is_simulation_upgrade_tree():
         return true
@@ -2589,6 +2690,18 @@ func _update_go_again_button_state() -> void:
     if Util.is_mining_game_active():
         go_again_button.disabled = false
         go_again_button.text = tr("MINING_START")
+        go_again_button.tooltip_text = ""
+        go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        return
+    if Util.is_open_pit_game_active():
+        go_again_button.disabled = false
+        go_again_button.text = "START DIG"
+        go_again_button.tooltip_text = ""
+        go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
+        return
+    if Util.is_open_pit_orbit_game_active():
+        go_again_button.disabled = false
+        go_again_button.text = "START SORTIE"
         go_again_button.tooltip_text = ""
         go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return
@@ -2616,7 +2729,7 @@ func _update_go_again_button_state() -> void:
     go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0) if can_continue else Color(0.7, 0.7, 0.7, 1.0)
 
 func _is_standalone_mode_upgrade_scene() -> bool:
-    return Util.is_mining_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active()
+    return Util.is_mining_game_active() or Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active()
 
 func _setup_continue_locked_dialog() -> void:
     var parent_layer: CanvasLayer = %CanvasLayer2

@@ -1,0 +1,79 @@
+[gd_scene load_steps=7 format=3 uid="uid://d01bh7nfneoy8"]
+
+[ext_resource type="Script" uid="uid://db2umo5r5pqhi" path="res://scripts/mining_scene.gd" id="1"]
+[ext_resource type="Script" uid="uid://bm8bchcqro1es" path="res://scripts/planet_renderer.gd" id="2"]
+[ext_resource type="Script" uid="uid://sdnx1003s73a" path="res://scripts/mining_ship.gd" id="3"]
+
+[sub_resource type="Environment" id="SubResource_env"]
+background_mode = 3
+glow_enabled = true
+glow_levels/1 = 1.0
+glow_levels/2 = 0.6
+glow_levels/3 = 0.3
+glow_levels/4 = 0.15
+glow_levels/5 = 0.0
+glow_strength = 1.2
+glow_bloom = 0.3
+glow_blend_mode = 0
+glow_hdr_threshold = 0.8
+glow_map_strength = 0.0
+
+[sub_resource type="CameraAttributesPractical" id="SubResource_cam_attr"]
+
+[sub_resource type="CircleShape2D" id="SubResource_ship_collision"]
+radius = 12.0
+
+[node name="MiningScene" type="Node2D"]
+script = ExtResource("1")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("SubResource_env")
+camera_attributes = SubResource("SubResource_cam_attr")
+
+[node name="PlanetRenderer" type="Node2D" parent="."]
+script = ExtResource("2")
+
+[node name="MiningShip" type="CharacterBody2D" parent="."]
+script = ExtResource("3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MiningShip"]
+shape = SubResource("SubResource_ship_collision")
+
+[node name="Camera2D" type="Camera2D" parent="MiningShip"]
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="TimerLabel" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 300.0
+offset_bottom = 50.0
+theme_override_font_sizes/font_size = 20
+text = "시간: 60초"
+
+[node name="ResourceLabel" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 55.0
+offset_right = 300.0
+offset_bottom = 85.0
+theme_override_font_sizes/font_size = 20
+text = "자원: 0"
+
+[node name="CoreLabel" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 90.0
+offset_right = 300.0
+offset_bottom = 120.0
+theme_override_font_sizes/font_size = 20
+text = "코어: 6 / 6"
+
+[node name="ReturnButton" type="Button" parent="UI"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -160.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 55.0
+theme_override_font_sizes/font_size = 18
+text = "⏎ 귀환"

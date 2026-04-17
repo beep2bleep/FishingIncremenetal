@@ -15,7 +15,7 @@ const DEMO_PROJECT_SETTING := "global/Demo"
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
 const DEMO_THANK_YOU_LEVELS := [7, 8]
 const BATTLE_SUMMARY_WIDTH_SCALE := 0.9
-const BATTLE_SUMMARY_HEIGHT_SCALE := 0.84
+const BATTLE_SUMMARY_HEIGHT_SCALE := 0.8
 const DEFAULT_BATTLE_HINTS := [
     "BATTLE_HINT_DEFAULT_01",
     "BATTLE_HINT_DEFAULT_02",
@@ -5340,13 +5340,13 @@ func _apply_battle_summary_layout(scale: Vector2) -> void:
     )
     _set_control_offsets_from_rect(summary_panel, panel_rect)
 
-    var inner_margin: float = clampf(28.0 * scale_hint, 20.0, 34.0)
-    var content_gap: float = clampf(24.0 * scale_hint, 16.0, 28.0)
-    var hint_button_size: float = clampf(60.0 * scale_hint, 50.0, 64.0)
-    var continue_size := Vector2(clampf(320.0 * scale_hint, 240.0, 360.0), clampf(76.0 * scale_hint, 60.0, 84.0))
-    var hint_block_height: float = clampf(110.0 * scale_hint, 90.0, 132.0)
-    var bottom_spacing: float = clampf(18.0 * scale_hint, 12.0, 24.0)
-    var chart_bottom_padding: float = clampf(28.0 * scale_hint, 22.0, 40.0)
+    var inner_margin: float = clampf(24.0 * scale_hint, 16.0, 28.0)
+    var content_gap: float = clampf(18.0 * scale_hint, 12.0, 22.0)
+    var hint_button_size: float = clampf(50.0 * scale_hint, 40.0, 54.0)
+    var continue_size := Vector2(clampf(300.0 * scale_hint, 220.0, 340.0), clampf(68.0 * scale_hint, 52.0, 76.0))
+    var hint_block_height: float = clampf(84.0 * scale_hint, 68.0, 96.0)
+    var bottom_spacing: float = clampf(12.0 * scale_hint, 8.0, 16.0)
+    var chart_bottom_padding: float = clampf(18.0 * scale_hint, 12.0, 24.0)
     var content_bottom_y: float = panel_rect.size.y - inner_margin - continue_size.y - bottom_spacing - hint_block_height - chart_bottom_padding
     var chart_width: float = clampf(panel_rect.size.x * 0.43, 520.0, 860.0)
     chart_width = minf(chart_width, panel_rect.size.x - inner_margin * 2.0 - 280.0)
@@ -5359,27 +5359,29 @@ func _apply_battle_summary_layout(scale: Vector2) -> void:
     _set_control_offsets_from_rect(summary_label, label_rect)
 
     if summary_chart != null:
-        var chart_height: float = maxf(180.0, (content_bottom_y - inner_margin) * 0.58)
+        var chart_height: float = maxf(180.0, (content_bottom_y - inner_margin) * 0.54)
         var chart_rect := Rect2(
             Vector2(panel_rect.size.x - inner_margin - chart_width, inner_margin),
             Vector2(chart_width, chart_height)
         )
         _set_control_offsets_from_rect(summary_chart, chart_rect)
 
-    var hint_y: float = panel_rect.size.y - inner_margin - continue_size.y - bottom_spacing - hint_block_height + (viewport_size.y * 0.05)
+    var hint_y: float = panel_rect.size.y - inner_margin - continue_size.y - bottom_spacing - hint_block_height
+    var hint_content_x: float = inner_margin + hint_button_size + 16.0
+    var hint_content_width: float = panel_rect.size.x - hint_content_x * 2.0
     if summary_hint_title_label != null:
         _set_control_offsets_from_rect(
             summary_hint_title_label,
             Rect2(
-                Vector2(inner_margin + hint_button_size + 20.0, hint_y),
-                Vector2(panel_rect.size.x - (inner_margin + hint_button_size + 20.0) * 2.0, 28.0)
+                Vector2(hint_content_x, hint_y),
+                Vector2(hint_content_width, 22.0)
             )
         )
     if summary_hint_left_button != null:
         _set_control_offsets_from_rect(
             summary_hint_left_button,
             Rect2(
-                Vector2(inner_margin, hint_y + 34.0),
+                Vector2(inner_margin, hint_y + 24.0),
                 Vector2(hint_button_size, hint_button_size)
             )
         )
@@ -5387,7 +5389,7 @@ func _apply_battle_summary_layout(scale: Vector2) -> void:
         _set_control_offsets_from_rect(
             summary_hint_right_button,
             Rect2(
-                Vector2(panel_rect.size.x - inner_margin - hint_button_size, hint_y + 34.0),
+                Vector2(panel_rect.size.x - inner_margin - hint_button_size, hint_y + 24.0),
                 Vector2(hint_button_size, hint_button_size)
             )
         )
@@ -5395,8 +5397,8 @@ func _apply_battle_summary_layout(scale: Vector2) -> void:
         _set_control_offsets_from_rect(
             summary_hint_label,
             Rect2(
-                Vector2(inner_margin + hint_button_size + 20.0, hint_y + 34.0),
-                Vector2(panel_rect.size.x - (inner_margin + hint_button_size + 20.0) * 2.0, hint_button_size)
+                Vector2(hint_content_x, hint_y + 24.0),
+                Vector2(hint_content_width, hint_button_size)
             )
         )
 
@@ -5930,7 +5932,7 @@ func _style_battle_summary_ui() -> void:
     summary_panel.add_theme_stylebox_override("panel", panel_style)
 
     summary_label.add_theme_color_override("font_color", Color(0.92, 0.97, 1.0, 1.0))
-    summary_label.add_theme_font_size_override("font_size", 32)
+    summary_label.add_theme_font_size_override("font_size", 30)
     summary_label.autowrap_mode = 2
     summary_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
     summary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -5948,10 +5950,10 @@ func _style_battle_summary_ui() -> void:
         chart_style.corner_radius_bottom_right = 4
         summary_chart.add_theme_stylebox_override("panel", chart_style)
     summary_hint_title_label.add_theme_color_override("font_color", Color(0.76, 0.9, 1.0, 1.0))
-    summary_hint_title_label.add_theme_font_size_override("font_size", 20)
+    summary_hint_title_label.add_theme_font_size_override("font_size", 18)
     summary_hint_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     summary_hint_label.add_theme_color_override("font_color", Color(0.92, 0.97, 1.0, 0.94))
-    summary_hint_label.add_theme_font_size_override("font_size", 22)
+    summary_hint_label.add_theme_font_size_override("font_size", 18)
     summary_hint_label.autowrap_mode = 2
     summary_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     summary_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -5971,14 +5973,14 @@ func _style_battle_summary_ui() -> void:
     hover.bg_color = Color(0.08, 0.22, 0.55, 0.98)
 
     continue_button.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0, 1.0))
-    continue_button.add_theme_font_size_override("font_size", 26)
+    continue_button.add_theme_font_size_override("font_size", 24)
     continue_button.add_theme_stylebox_override("normal", normal)
     continue_button.add_theme_stylebox_override("hover", hover)
     continue_button.add_theme_stylebox_override("pressed", hover)
     summary_hint_left_button.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0, 1.0))
     summary_hint_right_button.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0, 1.0))
-    summary_hint_left_button.add_theme_font_size_override("font_size", 28)
-    summary_hint_right_button.add_theme_font_size_override("font_size", 28)
+    summary_hint_left_button.add_theme_font_size_override("font_size", 24)
+    summary_hint_right_button.add_theme_font_size_override("font_size", 24)
     summary_hint_left_button.add_theme_stylebox_override("normal", normal)
     summary_hint_left_button.add_theme_stylebox_override("hover", hover)
     summary_hint_left_button.add_theme_stylebox_override("pressed", hover)

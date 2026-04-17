@@ -1,0 +1,73 @@
+GDRE Tools v2.5.0-beta.5
+Windows 10.0.26200, AMD Radeon RX 6800 XT, vulkan
+Opening file: C:/Vuze Downloads/Orbitmine/Orbitmine/game/Orbitmine.exe
+Loaded 137 imported files
+Detected Engine Version: 4.5.1
+Detected Bytecode Revision: 4.5.0-stable (ebc36a7)
+Verified 295 files, no errors detected!
+Extracted 295 files, no errors detected!
+Found matching plugin in cache: godotsteam, version: v4.17.1-gde, download url: https://codeberg.org/godotsteam/godotsteam/releases/download/v4.17.1-gde/godotsteam-4.17-gdextension-plugin-4.4.tar.xz
+Loading resource strings, this may take a while!!
+ERROR: Failed to load resource: res://translations/_old_en.translation
+ERROR: Unrecognized binary resource file: 'res://translations/_old_en.translation'.
+ 
+   at: ResourceLoaderCompatBinary::open (modules\gdsdecomp\compat\resource_compat_binary.cpp:1164)
+
+   at: GDRESettings::_do_string_load (modules\gdsdecomp\utility\gdre_settings.cpp:2513)
+Resource strings loaded!
+ERROR: Failed to unzip plugin zip to C:/Orbitmine decomp/.tmp/1776451222
+   at: ImportExporter::unzip_and_copy_addon (modules\gdsdecomp\utility\import_exporter.cpp:636)
+Saved project config.
+ERROR: Unrecognized binary resource file: 'C:/Orbitmine decomp/translations/_old_en.translation'.
+   at: ResourceLoaderCompatBinary::open (modules\gdsdecomp\compat\resource_compat_binary.cpp:1164)
+
+
+********************************EXPORT REPORT********************************
+
+Totals:                                 
+Decompiled scripts:                     55
+Failed scripts:                         0
+Imported resources for export session:  137
+Successfully converted:                 136
+Lossy:                                  17
+Rewrote metadata:                       68
+Non-importable conversions:             1
+Not converted:                          0
+Failed conversions:                     1
+-------------
+
+------
+
+The following native plugins failed to have their libraries copied:
+godotsteam
+------
+
+The following files were converted and saved to a non-original path, but did not have their import data rewritten.
+These files will not be re-imported when loading the project.
+res://translations/translations.en.translation to res://.assets/translations/translations.csv
+
+
+
+---------------------------------IMPORTANT NOTES----------------------------------
+
+
+Translation Export Incomplete:
+Could not recover 199/352 keys for res://translations/translations.csv
+Too inaccurate, saved translations.csv to res://.assets/translations/translations.csv
+
+
+------
+Missing GDExtension Libraries:
+The following GDExtension addons could not be detected and downloaded.
+Tip: Try finding the plugin in the Godot Asset Library or Github.
+
+ - godotsteam
+
+
+
+------------------------------------------------------------------------------------
+
+Use Godot editor version 4.5.1 to edit the project.
+
+*******************************************************************************
+
