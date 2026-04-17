@@ -4,9 +4,9 @@ const PROGRESS := preload("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd")
 const PLANET_DATA_SCRIPT := preload("res://Games/OpenPitOrbit/OpenPitOrbitPlanetData.gd")
 const BALANCE := preload("res://Games/OpenPitOrbit/OpenPitOrbitBalance.gd")
 
-@onready var status_label: Label = %StatusLabel
-@onready var progress_bar: ProgressBar = %ProgressBar
-@onready var detail_label: Label = %DetailLabel
+@onready var status_label: Label = get_node("Center/Panel/Margin/VBox/StatusLabel")
+@onready var progress_bar: ProgressBar = get_node("Center/Panel/Margin/VBox/ProgressBar")
+@onready var detail_label: Label = get_node("Center/Panel/Margin/VBox/DetailLabel")
 
 var _transition_started: bool = false
 
