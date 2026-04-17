@@ -3,6 +3,45 @@ class_name OpenPitOrbitBalance
 
 const MAX_DEPTH_LEVEL := 5
 const MIN_START_DEPTH_LEVEL := 1
+const CORE_PREFIX := "core:"
+const CORE_ORDER := [
+    "core_detect", "brake", "barrier_regen", "spawn_direction",
+    "return_shortcut", "core_focus", "emergency_return", "center_unlock",
+    "planet_mastery"
+]
+const CORE_LAYOUT := {
+    "core:core_detect": Vector2(-10, 4),
+    "core:brake": Vector2(-8, 2),
+    "core:barrier_regen": Vector2(-6, 2),
+    "core:spawn_direction": Vector2(-4, 4),
+    "core:return_shortcut": Vector2(-4, 6),
+    "core:core_focus": Vector2(-6, 8),
+    "core:emergency_return": Vector2(-8, 8),
+    "core:center_unlock": Vector2(-10, 6),
+    "core:planet_mastery": Vector2(-12, 5),
+}
+const CORE_CONNECTIONS := {
+    "core:core_detect": [],
+    "core:brake": ["core:core_detect"],
+    "core:barrier_regen": ["core:brake"],
+    "core:spawn_direction": ["core:barrier_regen"],
+    "core:return_shortcut": ["core:spawn_direction"],
+    "core:core_focus": ["core:return_shortcut"],
+    "core:emergency_return": ["core:core_focus"],
+    "core:center_unlock": ["core:emergency_return"],
+    "core:planet_mastery": ["core:center_unlock"],
+}
+const CORE_UPGRADES := {
+    "core_detect": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Core Detect", "summary": "Shows core health and weak points."},
+    "brake": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Brake", "summary": "Improves return control near dense shell."},
+    "barrier_regen": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Barrier Regen", "summary": "Restores one barrier between successful returns."},
+    "spawn_direction": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Spawn Direction", "summary": "Unlocks more favorable insertion vectors."},
+    "return_shortcut": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Return Shortcut", "summary": "Return zone is easier to secure."},
+    "core_focus": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Core Focus", "summary": "Core-targeting systems lock faster."},
+    "emergency_return": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Emergency Return", "summary": "Emergency extraction preserves the run."},
+    "center_unlock": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Center Unlock", "summary": "Unlocks attacks against the planet center."},
+    "planet_mastery": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Planet Mastery", "summary": "Allows a full planet regeneration once cleared."},
+}
 
 const PHASE_BRIDGES := {
     2: {"gate": "multi1", "entry": "electric_unlock"},
@@ -148,6 +187,41 @@ static func get_upgrade_cost(upgrade_id: String, current_level: int) -> int:
         return 0
     return int(round(float(raw.get("base_cost", 0)) * pow(float(raw.get("cost_mult", 1.0)), current_level)))
 
+static func get_core_upgrade_catalog() -> Array[Dictionary]:
+    var result: Array[Dictionary] = []
+    for upgrade_id in CORE_ORDER:
+        var raw: Dictionary = CORE_UPGRADES.get(upgrade_id, {})
+        if raw.is_empty():
+            continue
+        result.append({
+            "id": CORE_PREFIX + upgrade_id,
+            "label": str(raw.get("label", upgrade_id)),
+            "summary": str(raw.get("summary", "Core upgrade.")),
+            "base_cost": int(raw.get("base_cost", 0)),
+            "cost_mult": float(raw.get("cost_mult", 1.0)),
+            "max_level": int(raw.get("max_level", 1)),
+            "phase": 1,
+            "icon": "C",
+        })
+    return result
+
+static func get_core_upgrade_cost(prefixed_upgrade_id: String, current_level: int) -> int:
+    var upgrade_id: String = prefixed_upgrade_id.trim_prefix(CORE_PREFIX)
+    var raw: Dictionary = CORE_UPGRADES.get(upgrade_id, {})
+    if raw.is_empty():
+        return 0
+    return int(round(float(raw.get("base_cost", 0)) * pow(float(raw.get("cost_mult", 1.0)), current_level)))
+
+static func get_core_upgrade_cell(prefixed_upgrade_id: String) -> Vector2:
+    return Vector2(CORE_LAYOUT.get(prefixed_upgrade_id, Vector2(-10, 4)))
+
+static func get_core_upgrade_dependency(prefixed_upgrade_id: String) -> String:
+    var deps: Array = CORE_CONNECTIONS.get(prefixed_upgrade_id, [])
+    return str(deps[0]) if not deps.is_empty() else ""
+
+static func is_core_upgrade(upgrade_id: String) -> bool:
+    return upgrade_id.begins_with(CORE_PREFIX)
+
 static func get_upgrade_cell(upgrade_id: String) -> Vector2:
     for phase in PHASE_NODE_ORDER.keys():
         var order: Array = PHASE_NODE_ORDER[phase]
@@ -282,9 +356,9 @@ static func build_runtime_stats(upgrades: Dictionary) -> Dictionary:
         "barriers": barrier_bonus,
         "combo_bonus_per_stack": combo_bonus,
         "crit_chance": 0.2 if flags["critical_unlock"] else 0.0,
-        "crit_bonus": 3.0,
+        "crit_bonus": 2.0,
         "charged_interval": 5,
-        "charged_bonus": 3.0,
+        "charged_bonus": 2.0,
         "charged_enabled": flags["charged_shot_unlock"],
         "electric_enabled": flags["electric_unlock"],
         "electric_range": 2 + electric_range_bonus,
@@ -298,7 +372,7 @@ static func build_runtime_stats(upgrades: Dictionary) -> Dictionary:
         "drone_sync_unlock": flags["drone_sync_unlock"],
         "drone_sync_ratio": 0.3 if flags["drone_overclock"] else 0.15,
         "drone_crit_chance": 0.25 if flags["drone_overclock"] else (0.15 if flags["drone_crit_unlock"] else 0.0),
-        "drone_crit_bonus": 3.0,
+        "drone_crit_bonus": 2.0,
         "chain_lightning_enabled": flags["chain_lightning_unlock"],
         "chain_lightning_jumps": 3 + int(upgrades.get("chain_jump", 0)) * 2,
         "resonance_enabled": flags["resonance_unlock"],

@@ -397,7 +397,10 @@ func _purchase_upgrade() -> void:
             update()
             return
     else:
-        Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, - cost)
+        if _is_open_pit_orbit_core_upgrade():
+            OPEN_PIT_ORBIT_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, int(upgrade.sim_level) + int(upgrade.current_tier)), _get_tree_currency_amount() - int(cost))
+        else:
+            Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, - cost)
 
     custom_tween_component.do_rotation = true
     custom_tween_component.do_tween(1.0)
@@ -420,7 +423,10 @@ func _purchase_upgrade() -> void:
         if CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
             SaveHandler.save_player_last_run()
             return
-        var new_amount: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
+        if _is_open_pit_orbit_core_upgrade():
+            SaveHandler.save_player_last_run()
+            return
+        var new_amount: int = _get_tree_currency_amount()
         var target_level: int = int(upgrade.sim_level) + int(upgrade.current_tier) - 1
         if Util.is_mining_game_active():
             MINING_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
@@ -703,7 +709,7 @@ func update_can_pay_cost():
     if upgrade != null and CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
         var target_game_id: String = CROSS_GAME_BONUSES.get_target_from_cross_bonus_key(upgrade.sim_key)
         check = CROSS_GAME_BONUSES.can_afford_target_bonus(target_game_id, upgrade.current_tier)
-    elif cost > Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY):
+    elif cost > _get_tree_currency_amount():
         check = false
 
     if upgrade and upgrade.demo_locked == 1:
@@ -717,6 +723,14 @@ func _get_theme_dark_color() -> Color:
     if upgrade != null:
         return Refs.get_act_dark_color(upgrade.act)
     return Refs.pallet.act_1_dark
+
+func _get_tree_currency_amount() -> int:
+    if _is_open_pit_orbit_core_upgrade():
+        return OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet()
+    return int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
+
+func _is_open_pit_orbit_core_upgrade() -> bool:
+    return Util.is_open_pit_orbit_game_active() and upgrade != null and str(upgrade.sim_key).begins_with("core:")
 
 func _is_texture_icon_path(icon_value: String) -> bool:
     var trimmed: String = icon_value.strip_edges()

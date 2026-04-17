@@ -59,6 +59,7 @@ var editor_cash_controls: HBoxContainer
 var editor_add_cash_button: Button
 var editor_reset_add_button: Button
 var editor_unlock_all_button: Button
+var editor_regenerate_planet_button: Button
 var editor_crt_toggle_button: Button
 var editor_demo_toggle_button: Button
 var editor_sell_popup_menu: PopupMenu
@@ -178,6 +179,7 @@ func _refresh_localized_text() -> void:
     _refresh_demo_mode_label_visibility()
     _refresh_mining_time_label()
     _refresh_editor_demo_toggle_button_text()
+    _refresh_editor_regenerate_planet_button()
     _update_go_again_button_state()
     if battle_level_choice_dialog != null and is_instance_valid(battle_level_choice_dialog) and battle_level_choice_dialog.visible:
         _show_battle_level_choice_dialog(battle_level_choice_max_level)
@@ -440,6 +442,8 @@ func _input(event: InputEvent) -> void :
 
 func setup():
     prefers_simulation_tree = Global.start_in_upgrade_scene
+    if Util.is_open_pit_orbit_game_active():
+        Global.clear_upgrade_tree_cache()
     _restore_cached_tech_tree_if_available()
     if prefers_simulation_tree:
         return
@@ -766,11 +770,8 @@ func _on_go_again_pressed() -> void :
     if Util.is_open_pit_orbit_game_active():
         var orbit_data: Dictionary = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.load_data()
         var orbit_min_depth: int = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
-        var orbit_max_depth: int = clampi(int(orbit_data.get("deepest_level_unlocked", orbit_min_depth)), orbit_min_depth, OPEN_PIT_ORBIT_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL)
-        if OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_display_depth_tier(orbit_max_depth) <= 1:
-            _launch_battle_at_level(orbit_min_depth)
-        else:
-            _show_battle_level_choice_dialog(orbit_max_depth)
+        var orbit_selected_depth: int = clampi(int(orbit_data.get("selected_depth_level", orbit_min_depth)), orbit_min_depth, int(orbit_data.get("deepest_level_unlocked", orbit_min_depth)))
+        _launch_battle_at_level(orbit_selected_depth)
         return
     if Util.is_red_sky_game_active():
         _refresh_virtual_cursor_state()
@@ -984,7 +985,7 @@ func _refresh_mining_time_label() -> void:
     if Util.is_open_pit_game_active():
         mining_time_label.text = "Open Pit runs are 30-second sorties. Mine and return to the ring."
     elif Util.is_open_pit_orbit_game_active():
-        mining_time_label.text = "Open Pit Orbit runs use orbit-tech weapons. Mine, dock, and cash out before fuel ends."
+        mining_time_label.text = "Open Pit Orbit runs use orbit-tech weapons. Mine, dock, and cash out before fuel ends. Core shards: %d." % OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet()
     else:
         mining_time_label.text = _trf("BATTLE_CLOCK_LABEL", [Util.format_time(SaveHandler.fishing_run_clock_seconds)])
 
@@ -1678,7 +1679,10 @@ func _launch_battle_at_level(level: int) -> void:
         OPEN_PIT_ORBIT_PROGRESS_SCRIPT.set_selected_depth_level(level)
         _refresh_virtual_cursor_state()
         _cache_tech_tree_for_reuse()
-        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        var orbit_target_scene: String = Util.get_main_scene_path()
+        if OPEN_PIT_ORBIT_PROGRESS_SCRIPT.load_runtime_planet_data(level) == null:
+            orbit_target_scene = Util.PATH_OPEN_PIT_ORBIT_GENERATING
+        SceneChanger.change_to_new_scene(orbit_target_scene)
         return
     if Util.is_red_sky_game_active():
         _refresh_virtual_cursor_state()
@@ -1852,6 +1856,11 @@ func _setup_editor_cash_controls() -> void:
     editor_unlock_all_button.pressed.connect(_on_editor_unlock_all_pressed)
     editor_cash_controls.add_child(editor_unlock_all_button)
 
+    editor_regenerate_planet_button = Button.new()
+    editor_regenerate_planet_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    editor_regenerate_planet_button.pressed.connect(_on_editor_regenerate_planet_pressed)
+    editor_cash_controls.add_child(editor_regenerate_planet_button)
+
     editor_crt_toggle_button = Button.new()
     editor_crt_toggle_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
     editor_crt_toggle_button.pressed.connect(_on_editor_crt_toggle_pressed)
@@ -1866,6 +1875,7 @@ func _setup_editor_cash_controls() -> void:
     _refresh_editor_cash_button_text()
     _refresh_editor_crt_button_text()
     _refresh_editor_demo_toggle_button_text()
+    _refresh_editor_regenerate_planet_button()
 
 func _setup_editor_sell_popup_menu() -> void:
     if not OS.has_feature("editor"):
@@ -1939,8 +1949,12 @@ func _perform_editor_sell() -> void:
         return
 
     var refund_amount: int = int(round(node.upgrade.get_last_purchased_cost()))
-    var current_money: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
-    var wallet_after_sale: int = current_money + refund_amount
+    var wallet_after_sale: int
+    if Util.is_open_pit_orbit_game_active() and str(node.upgrade.sim_key).begins_with("core:"):
+        wallet_after_sale = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet() + refund_amount
+    else:
+        var current_money: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
+        wallet_after_sale = current_money + refund_amount
     var new_tier: int = max(0, int(node.upgrade.current_tier) - 1)
     var new_level: int = max(0, int(node.upgrade.sim_level) + new_tier - 1)
 
@@ -1976,6 +1990,14 @@ func _refresh_editor_demo_toggle_button_text() -> void:
     var demo_on: bool = bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
     editor_demo_toggle_button.text = "%s: %s" % [tr("UPGRADE_DEMO_MODE"), tr("On") if demo_on else tr("Off")]
 
+func _refresh_editor_regenerate_planet_button() -> void:
+    if editor_regenerate_planet_button == null or not is_instance_valid(editor_regenerate_planet_button):
+        return
+    var is_orbit_mode: bool = Util.is_open_pit_orbit_game_active()
+    editor_regenerate_planet_button.visible = is_orbit_mode
+    editor_regenerate_planet_button.disabled = not is_orbit_mode
+    editor_regenerate_planet_button.text = "REGENERATE PLANET"
+
 func _on_editor_demo_toggle_pressed() -> void:
     if not OS.has_feature("editor"):
         return
@@ -1996,6 +2018,14 @@ func _on_editor_crt_toggle_pressed() -> void:
     editor_crt_preview_enabled = not editor_crt_preview_enabled
     _refresh_editor_crt_button_text()
     _refresh_mining_crt_overlay()
+
+func _on_editor_regenerate_planet_pressed() -> void:
+    if not OS.has_feature("editor"):
+        return
+    if not Util.is_open_pit_orbit_game_active():
+        return
+    OPEN_PIT_ORBIT_PROGRESS_SCRIPT.regenerate_planet_state()
+    update()
 
 func _setup_editor_center_offset_controls() -> void:
     if not OS.has_feature("editor"):

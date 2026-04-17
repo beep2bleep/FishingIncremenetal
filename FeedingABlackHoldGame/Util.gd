@@ -38,6 +38,7 @@ const PATH_OPEN_PIT_BATTLE := "res://Games/OpenPitEmpire/Scenes/OpenPitEmpireMai
 const PATH_OPEN_PIT_ORBIT_MAIN := "res://Games/OpenPitOrbit/Scenes/OpenPitOrbitMain.tscn"
 const PATH_OPEN_PIT_ORBIT_MAIN_MENU := "res://Games/OpenPitOrbit/Menus/OpenPitOrbitMainMenu.tscn"
 const PATH_OPEN_PIT_ORBIT_BATTLE := "res://Games/OpenPitOrbit/Scenes/OpenPitOrbitMain.tscn"
+const PATH_OPEN_PIT_ORBIT_GENERATING := "res://Games/OpenPitOrbit/Scenes/OpenPitOrbitGenerating.tscn"
 const PATH_RED_SKY_MAIN := "res://Games/RedSkyDefense/Scenes/MissleMain.tscn"
 const PATH_RED_SKY_MAIN_MENU := "res://Games/RedSkyDefense/Menus/RedSkyMainMenu.tscn"
 const PATH_TURKEY_MAIN := "res://Games/Turkey/Scenes/TurkeyMain.tscn"

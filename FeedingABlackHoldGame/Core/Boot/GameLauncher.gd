@@ -51,6 +51,7 @@ const GAME_CARD_HOVER_VOLUME_DB_OFFSET := -12.0
 const GAME_CARD_HOVER_SCALE := 1.04
 const GAME_CARD_HOVER_DURATION := 0.16
 const GAME_CARD_RESET_DURATION := 0.3
+const SHOW_ALL_MODES_IN_BUILD_SETTING := "global/ShowAllModesInBuild"
 
 @onready var background_rect: ColorRect = get_node_or_null("Background") as ColorRect
 @onready var center_container: CenterContainer = get_node_or_null("CenterContainer") as CenterContainer
@@ -988,10 +989,13 @@ func _fit_game_cards() -> void:
         _fit_game_card_content(button)
 
 func _is_open_pit_launcher_available() -> bool:
-    return OS.has_feature("editor")
+    return OS.has_feature("editor") or _should_show_all_modes_in_build()
 
 func _is_open_pit_orbit_launcher_available() -> bool:
-    return OS.has_feature("editor")
+    return OS.has_feature("editor") or _should_show_all_modes_in_build()
+
+func _should_show_all_modes_in_build() -> bool:
+    return bool(ProjectSettings.get_setting(SHOW_ALL_MODES_IN_BUILD_SETTING, false))
 
 func _apply_open_pit_launcher_availability() -> void:
     if open_pit_button != null and is_instance_valid(open_pit_button):
