@@ -7,13 +7,21 @@ var _last_cam_origin := Vector2.INF
 var _fill_image: Image
 var _fill_texture: ImageTexture
 var _fill_grid_size := Vector2i.ZERO
-var _stars: Array[Dictionary] = []
+var _fill_grid_origin := Vector2i(2147483647, 2147483647)
+var _fill_dirty := true
+var _time_elapsed := 0.0
+var _palette_cache: Dictionary = {}
+var _screen_stars: Array[Dictionary] = []
 
 const SPACE_BG := Color(0.025, 0.025, 0.035, 1.0)
 const HIT_GLOW := Color(2.3, 1.2, 0.4, 0.55)
 const GOLD_GLOW := Color(2.6, 2.0, 0.4, 0.45)
-const STAR_COUNT := 200
-const STAR_AREA := 3000.0
+const STAR_COLORS := [
+    Color(1.0, 0.96, 0.9, 1.0),
+    Color(0.95, 0.98, 1.0, 1.0),
+    Color(0.86, 0.96, 1.0, 1.0),
+]
+const SCREEN_STAR_COUNT := 90
 const BLOCK_GAP := 1.5
 const ZONE_SPRING := 0
 const ZONE_SUMMER := 1
@@ -21,11 +29,11 @@ const ZONE_AUTUMN := 2
 const ZONE_WINTER := 3
 const ZONE_CENTER := 4
 const ZONE_FILLS := {
-    ZONE_SPRING: Color(0.01, 0.04, 0.015),
-    ZONE_SUMMER: Color(0.04, 0.03, 0.005),
-    ZONE_AUTUMN: Color(0.04, 0.015, 0.01),
-    ZONE_WINTER: Color(0.01, 0.015, 0.045),
-    ZONE_CENTER: Color(0.03, 0.01, 0.04),
+    ZONE_SPRING: Color(0.07, 0.15, 0.09, 1.0),
+    ZONE_SUMMER: Color(0.19, 0.15, 0.06, 1.0),
+    ZONE_AUTUMN: Color(0.18, 0.08, 0.06, 1.0),
+    ZONE_WINTER: Color(0.07, 0.09, 0.19, 1.0),
+    ZONE_CENTER: Color(0.13, 0.08, 0.17, 1.0),
 }
 const ZONE_EDGE_COLORS := {
     ZONE_SPRING: Color(0.3, 1.8, 0.5),
@@ -41,25 +49,22 @@ const ZONE_RING_COLORS := {
     ZONE_WINTER: Color(0.3, 0.8, 2.0, 0.3),
     ZONE_CENTER: Color(1.2, 0.25, 2.0, 0.3),
 }
+const THORN_FILL := Color(0.04, 0.01, 0.03, 1.0)
+const THORN_EDGE := Color(2.0, 0.4, 1.5, 1.0)
+const REGEN_FILL := Color(0.06, 0.015, 0.015, 1.0)
+const REGEN_EDGE := Color(1.2, 0.2, 0.08, 1.0)
 
 func _ready() -> void:
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-    var rng := RandomNumberGenerator.new()
-    rng.randomize()
-    _stars.clear()
-    for _idx in range(STAR_COUNT):
-        _stars.append({
-            "pos": Vector2(rng.randf_range(-STAR_AREA, STAR_AREA), rng.randf_range(-STAR_AREA, STAR_AREA)),
-            "size": rng.randf_range(0.5, 2.5),
-            "alpha": rng.randf_range(0.2, 0.8),
-            "twinkle_speed": rng.randf_range(0.5, 3.0),
-            "twinkle_offset": rng.randf() * TAU,
-        })
+    _rebuild_screen_stars()
 
 func mark_dirty() -> void:
     _force_redraw = true
+    _fill_dirty = true
+    _palette_cache.clear()
 
 func _process(_delta: float) -> void:
+    _time_elapsed += _delta
     var needs_redraw := _force_redraw
     _force_redraw = false
     var cam_origin := get_canvas_transform().origin
@@ -90,51 +95,57 @@ func _draw() -> void:
     var grid_max := scene_ref.world_to_grid(bottom_right + Vector2(margin, margin))
     var grid_w: int = grid_max.x - grid_min.x + 1
     var grid_h: int = grid_max.y - grid_min.y + 1
+    var fill_needs_rebuild := _fill_dirty or _fill_grid_origin != grid_min or _fill_grid_size != Vector2i(grid_w, grid_h)
 
     var radius_world: float = scene_ref.planet_radius_cells * scene_ref.BLOCK_SIZE
     draw_circle(scene_ref.planet_center, radius_world + 18.0, Color(0.02, 0.03, 0.05, 1.0))
     draw_circle(scene_ref.planet_center, radius_world + 6.0, Color(0.08, 0.11, 0.16, 0.35))
+    draw_circle(scene_ref.planet_center, radius_world - scene_ref.BLOCK_SIZE * 0.35, Color(0.01, 0.015, 0.025, 0.6))
 
     if _fill_image == null or _fill_grid_size.x != grid_w or _fill_grid_size.y != grid_h:
         _fill_image = Image.create(grid_w, grid_h, false, Image.FORMAT_RGBA8)
         _fill_grid_size = Vector2i(grid_w, grid_h)
+        _fill_grid_origin = grid_min
         _fill_texture = null
-    else:
+        fill_needs_rebuild = true
+    if fill_needs_rebuild:
+        _fill_grid_origin = grid_min
         _fill_image.fill(Color.TRANSPARENT)
-
-    for x in range(grid_min.x, grid_max.x + 1):
-        for y in range(grid_min.y, grid_max.y + 1):
-            var grid := Vector2i(x, y)
-            if scene_ref.is_grid_empty(grid):
-                continue
-            var block: Dictionary = scene_ref.blocks.get(grid, {})
-            var colors: Dictionary = _get_block_palette(block)
-            _fill_image.set_pixel(x - grid_min.x, y - grid_min.y, colors.get("fill", Color.WHITE))
-
-    if _fill_texture == null:
-        _fill_texture = ImageTexture.create_from_image(_fill_image)
-    else:
-        _fill_texture.update(_fill_image)
+        for x in range(grid_min.x, grid_max.x + 1):
+            for y in range(grid_min.y, grid_max.y + 1):
+                var grid := Vector2i(x, y)
+                var block: Dictionary = scene_ref.blocks.get(grid, {})
+                if block.is_empty():
+                    continue
+                var colors: Dictionary = _get_block_palette(block)
+                _fill_image.set_pixel(x - grid_min.x, y - grid_min.y, colors.get("fill", Color.WHITE))
+        if _fill_texture == null:
+            _fill_texture = ImageTexture.create_from_image(_fill_image)
+        else:
+            _fill_texture.update(_fill_image)
+        _fill_dirty = false
     var tex_rect := Rect2(
         float(grid_min.x) * scene_ref.BLOCK_SIZE,
         float(grid_min.y) * scene_ref.BLOCK_SIZE,
         float(grid_w) * scene_ref.BLOCK_SIZE,
         float(grid_h) * scene_ref.BLOCK_SIZE
     )
-    draw_texture_rect(_fill_texture, tex_rect, false)
+    if _fill_texture != null:
+        draw_texture_rect(_fill_texture, tex_rect, false)
 
+    var gold_pulse_t := Time.get_ticks_msec() * 0.001 * 1.8
     for x in range(grid_min.x, grid_max.x + 1):
         for y in range(grid_min.y, grid_max.y + 1):
             var grid := Vector2i(x, y)
-            if scene_ref.is_grid_empty(grid):
-                continue
             var block: Dictionary = scene_ref.blocks.get(grid, {})
+            if block.is_empty():
+                continue
+            var colors: Dictionary = _get_block_palette(block)
             var world := scene_ref.grid_to_world(grid)
             var rect := Rect2(
                 world - Vector2.ONE * scene_ref.BLOCK_SIZE * 0.5 + Vector2.ONE * BLOCK_GAP,
                 Vector2.ONE * (scene_ref.BLOCK_SIZE - BLOCK_GAP * 2.0)
             )
-            var colors: Dictionary = _get_block_palette(block)
             if scene_ref.exposed_edges.has(grid):
                 _draw_block_edges(grid, rect, colors.get("edge", Color.WHITE), int(scene_ref.exposed_edges.get(grid, 0)), 2.0)
 
@@ -150,7 +161,7 @@ func _draw() -> void:
             if gold_timer > 0.0:
                 draw_rect(rect.grow(-2.0), Color(GOLD_GLOW.r, GOLD_GLOW.g, GOLD_GLOW.b, gold_timer / scene_ref.GOLD_CONVERT_DURATION), false, 2.0)
             if int(block.get("type", 0)) == scene_ref.BlockType.GOLD and bool(scene_ref.runtime_stats.get("gold_enabled", false)):
-                var gp := (sin(Time.get_ticks_msec() * 0.001 * 1.8 + grid.x * 1.3 + grid.y * 0.7) + 1.0) * 0.5
+                var gp := (sin(gold_pulse_t + grid.x * 1.3 + grid.y * 0.7) + 1.0) * 0.5
                 var ga := 0.1 + gp * 0.12
                 var gc := Color(1.0, 0.85, 0.3, ga)
                 var m := scene_ref.BLOCK_SIZE * 0.25
@@ -180,19 +191,43 @@ func _draw() -> void:
             Color(1.0, 0.85, 0.2, alpha),
             2.0
         )
+    _draw_summer_lasers()
+    _draw_autumn_debris()
+    _draw_winter_cross_lasers()
     _draw_core_shields()
 
 func _draw_background_stars() -> void:
-    var t := Time.get_ticks_msec() * 0.001
-    var canvas_transform := get_canvas_transform()
-    var cam_scale := canvas_transform.get_scale()
-    var cam_world := -canvas_transform.origin / cam_scale
-    for star in _stars:
-        var base_pos: Vector2 = star.get("pos", Vector2.ZERO)
-        var screen_pos := base_pos - cam_world * 0.08
-        var alpha := float(star.get("alpha", 0.5)) + 0.15 * sin(t * float(star.get("twinkle_speed", 1.0)) + float(star.get("twinkle_offset", 0.0)))
-        alpha = clampf(alpha, 0.1, 1.0)
-        draw_circle(screen_pos, float(star.get("size", 1.0)), Color(1.0, 1.0, 1.0, alpha))
+    var viewport_size := get_viewport_rect().size
+    if _screen_stars.is_empty():
+        _rebuild_screen_stars()
+    for star in _screen_stars:
+        var uv: Vector2 = star.get("uv", Vector2.ZERO)
+        var pos := Vector2(uv.x * viewport_size.x, uv.y * viewport_size.y)
+        var twinkle_seed: float = float(star.get("twinkle_seed", 0.0))
+        var alpha := float(star.get("alpha", 0.6)) * (0.82 + 0.18 * sin(_time_elapsed * (0.7 + twinkle_seed * 1.2) + twinkle_seed * TAU))
+        alpha = clampf(alpha, 0.12, 1.0)
+        var color: Color = star.get("color", Color.WHITE)
+        var size_px: float = float(star.get("size", 1.2))
+        if size_px > 1.35:
+            draw_circle(pos, size_px * 1.8, Color(color.r, color.g, color.b, alpha * 0.14))
+        draw_circle(pos, size_px, Color(color.r, color.g, color.b, alpha))
+
+func _rebuild_screen_stars() -> void:
+    _screen_stars.clear()
+    for idx in range(SCREEN_STAR_COUNT):
+        var seed := _star_hash_float(float(idx) * 3.17)
+        var color_idx := mini(int(floor(_star_hash_float(float(idx) * 4.91) * float(STAR_COLORS.size()))), STAR_COLORS.size() - 1)
+        _screen_stars.append({
+            "uv": Vector2(_star_hash_float(float(idx) * 1.37), _star_hash_float(float(idx) * 2.71)),
+            "size": lerpf(0.8, 2.2, seed),
+            "alpha": lerpf(0.28, 0.85, _star_hash_float(float(idx) * 5.73)),
+            "color": STAR_COLORS[color_idx],
+            "twinkle_seed": _star_hash_float(float(idx) * 7.11),
+        })
+
+func _star_hash_float(seed: float) -> float:
+    var n := sin(seed * 127.1 + 311.7) * 43758.5453
+    return n - floor(n)
 
 func _draw_block_edges(_grid: Vector2i, rect: Rect2, color: Color, mask: int, width: float) -> void:
     if (mask & 1) != 0:
@@ -206,21 +241,41 @@ func _draw_block_edges(_grid: Vector2i, rect: Rect2, color: Color, mask: int, wi
 
 func _get_block_palette(block: Dictionary) -> Dictionary:
     var zone: int = int(block.get("zone", ZONE_AUTUMN))
+    var block_type: int = int(block.get("type", 0))
+    var regenerated: bool = bool(block.get("regenerated", false))
+    var electric_enabled: bool = bool(scene_ref.runtime_stats.get("electric_enabled", false))
+    var gold_enabled: bool = bool(scene_ref.runtime_stats.get("gold_enabled", false))
+    var cache_key := "%d:%d:%d:%d:%d" % [zone, block_type, int(regenerated), int(electric_enabled), int(gold_enabled)]
+    if _palette_cache.has(cache_key):
+        return _palette_cache[cache_key]
     var fill: Color = ZONE_FILLS.get(zone, SPACE_BG)
-    var edge: Color = ZONE_EDGE_COLORS.get(zone, Color(1.0, 1.0, 1.0, 1.0))
-    match int(block.get("type", 0)):
+    var edge: Color = ZONE_EDGE_COLORS.get(zone, Color.WHITE)
+    match block_type:
         scene_ref.BlockType.CORE:
-            fill = ZONE_FILLS.get(zone, Color(0.06, 0.01, 0.01, 1.0)).lightened(0.05)
+            fill = _mix_fill_with_edge(ZONE_FILLS.get(zone, Color(0.11, 0.07, 0.08, 1.0)), ZONE_EDGE_COLORS.get(zone, Color(1.0, 1.0, 1.0, 1.0)), 0.32)
             edge = ZONE_EDGE_COLORS.get(zone, Color(2.5, 0.3, 0.08, 1.0))
         scene_ref.BlockType.ELECTRIC:
-            fill = Color(0.01, 0.06, 0.1, 1.0) if bool(scene_ref.runtime_stats.get("electric_enabled", false)) else fill.darkened(0.2)
+            fill = Color(0.08, 0.17, 0.23, 1.0) if electric_enabled else _mix_fill_with_edge(fill, edge, 0.18).darkened(0.15)
             edge = Color(0.5, 1.8, 2.5, 1.0)
         scene_ref.BlockType.GOLD:
-            fill = Color(0.05, 0.04, 0.01, 1.0) if bool(scene_ref.runtime_stats.get("gold_enabled", false)) else fill.darkened(0.15)
+            fill = Color(0.24, 0.18, 0.07, 1.0) if gold_enabled else _mix_fill_with_edge(fill, edge, 0.22).darkened(0.08)
             edge = Color(2.0, 1.6, 0.3, 1.0)
+        scene_ref.BlockType.THORN:
+            fill = _mix_fill_with_edge(THORN_FILL, THORN_EDGE, 0.24)
+            edge = THORN_EDGE
         _:
-            fill = fill
-    return {"fill": fill, "edge": edge}
+            if regenerated:
+                fill = _mix_fill_with_edge(REGEN_FILL, REGEN_EDGE, 0.22)
+                edge = REGEN_EDGE
+            else:
+                fill = _mix_fill_with_edge(fill, edge, 0.22)
+    var palette := {"fill": fill, "edge": edge}
+    _palette_cache[cache_key] = palette
+    return palette
+
+func _mix_fill_with_edge(fill: Color, edge: Color, amount: float) -> Color:
+    var edge_clamped := Color(min(edge.r, 1.0), min(edge.g, 1.0), min(edge.b, 1.0), 1.0)
+    return fill.lerp(edge_clamped, amount)
 
 func _draw_core_zones() -> void:
     if scene_ref == null or scene_ref.planet_data == null:
@@ -248,3 +303,54 @@ func _draw_core_shields() -> void:
         var dome_radius := (float(int(core.get("size", 3))) * 0.5 + 2.0) * scene_ref.BLOCK_SIZE
         draw_circle(center, dome_radius, Color(0.2, 0.5, 1.0, 0.08))
         draw_arc(center, dome_radius, 0.0, TAU, 40, Color(0.3, 0.6, 1.0, 0.65), 1.5)
+
+func _draw_summer_lasers() -> void:
+    for state_variant in scene_ref.summer_laser_states.values():
+        var state: Dictionary = state_variant
+        var origin: Vector2 = state.get("origin", Vector2.ZERO)
+        var dir: Vector2 = Vector2(state.get("dir", Vector2.RIGHT)).normalized()
+        if dir.length() < 0.01:
+            continue
+        var end := origin + dir * scene_ref.BLOCK_SIZE * 40.0
+        var color := Color(2.2, 0.9, 0.2, 0.9)
+        if str(state.get("state", "idle")) == "warning":
+            var pulse := 0.35 + 0.25 * (sin(_time_elapsed * 10.0) + 1.0) * 0.5
+            draw_line(origin, end, Color(color.r, color.g, color.b, pulse), 3.0)
+        elif str(state.get("state", "idle")) == "firing":
+            draw_line(origin, end, Color(color.r, color.g, color.b, 0.2), 12.0)
+            draw_line(origin, end, color, 3.0)
+
+func _draw_autumn_debris() -> void:
+    for debris_variant in scene_ref.autumn_debris:
+        var debris: Dictionary = debris_variant
+        var pos: Vector2 = debris.get("pos", Vector2.ZERO)
+        draw_circle(pos, 8.0, Color(1.0, 0.35, 0.12, 0.12))
+        draw_circle(pos, 4.0, Color(1.0, 0.45, 0.18, 0.95))
+
+func _draw_winter_cross_lasers() -> void:
+    for state_variant in scene_ref.winter_cross_lasers.values():
+        var state: Dictionary = state_variant
+        var origin: Vector2 = state.get("origin", Vector2.ZERO)
+        var length: float = float(state.get("length", 0.0))
+        var gaps: Array = state.get("gaps", [])
+        var edge_ratio: float = float(state.get("core_edge_ratio", 0.1))
+        for arm_i in range(4):
+            var angle: float = float(state.get("angle", 0.0)) + float(arm_i) * PI * 0.5
+            var dir := Vector2.from_angle(angle)
+            var gap_center: float = 0.5
+            if arm_i < gaps.size():
+                gap_center = float(Dictionary(gaps[arm_i]).get("pos", 0.5))
+            var gap_half := scene_ref.WINTER_CROSS_LASER_GAP_SIZE * 0.5
+            var segments := [
+                [edge_ratio, max(edge_ratio, gap_center - gap_half)],
+                [min(gap_center + gap_half, 1.0), 1.0],
+            ]
+            for segment in segments:
+                var start_t: float = segment[0]
+                var end_t: float = segment[1]
+                if end_t <= start_t:
+                    continue
+                var start := origin + dir * (length * start_t)
+                var finish := origin + dir * (length * end_t)
+                draw_line(start, finish, Color(0.3, 0.8, 2.0, 0.18), 10.0)
+                draw_line(start, finish, Color(0.4, 1.0, 2.5, 0.85), 2.0)

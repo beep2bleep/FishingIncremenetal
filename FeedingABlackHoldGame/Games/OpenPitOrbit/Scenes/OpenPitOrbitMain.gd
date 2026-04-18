@@ -35,8 +35,37 @@ const DRONE_BEHIND_DIST := 25.0
 const DEFENSE_BLOCK_INTERVAL := 5.0
 const CORE_SHOCKWAVE_INTERVAL := 7.0
 const CORE_SHOCKWAVE_PUSH := 280.0
+const SUMMER_LASER_INTERVAL_OUTER := 5.5
+const SUMMER_LASER_INTERVAL_BOSS := 4.5
+const SUMMER_LASER_INTERVAL_BOSS_LOW := 2.0
+const SUMMER_LASER_WARN_OUTER := 1.5
+const SUMMER_LASER_WARN_BOSS := 1.5
+const SUMMER_LASER_FIRE_DURATION := 0.3
+const SUMMER_LASER_WIDTH := 24.0
+const SUMMER_LASER_BOSS_HP_THRESHOLD := 0.5
+const AUTUMN_DEBRIS_INTERVAL_OUTER := 4.5
+const AUTUMN_DEBRIS_INTERVAL_BOSS := 2.5
+const AUTUMN_DEBRIS_INTERVAL_BOSS_LOW := 1.5
+const AUTUMN_DEBRIS_COUNT_OUTER := 2
+const AUTUMN_DEBRIS_COUNT_BOSS := 3
+const AUTUMN_DEBRIS_COUNT_BOSS_LOW := 5
+const AUTUMN_DEBRIS_SPEED := 175.0
+const AUTUMN_DEBRIS_HOMING_STRENGTH := 1.8
+const AUTUMN_DEBRIS_LIFETIME := 5.0
+const AUTUMN_DEBRIS_HIT_RADIUS := 16.0
+const AUTUMN_DEBRIS_MAX_ACTIVE := 20
+const WINTER_CROSS_LASER_SPEED_BASE := 0.4
+const WINTER_CROSS_LASER_SPEED_ATTACKED := 0.6
+const WINTER_CROSS_LASER_SPEED_BOSS_LOW := 1.0
+const WINTER_CROSS_LASER_WIDTH := 20.0
+const WINTER_CROSS_LASER_BOSS_HP_THRESHOLD := 0.5
+const WINTER_CROSS_LASER_HIT_COOLDOWN := 0.5
+const WINTER_CROSS_LASER_GAP_SIZE := 0.18
+const WINTER_CROSS_LASER_GAP_SLIDE_SPEED := 0.15
+const WINTER_CROSS_LASER_GAP_MAX := 0.85
+const CORE_HAZARD_KNOCKBACK := 500.0
 
-enum BlockType { NORMAL, CORE, ELECTRIC, GOLD }
+enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
 
 var rng := RandomNumberGenerator.new()
 var persistent_data: Dictionary = {}
@@ -107,6 +136,10 @@ var drone_positions: Array[Vector2] = []
 var drone_beams: Array[Dictionary] = []
 var drone_timers: Array[float] = []
 var drone_targets: Array[Vector2] = []
+var summer_laser_states: Dictionary = {}
+var autumn_debris: Array[Dictionary] = []
+var winter_cross_lasers: Dictionary = {}
+var autumn_debris_timers: Dictionary = {}
 
 var planet_renderer: Node2D
 var drop_renderer: Node2D
@@ -124,6 +157,11 @@ var fps_label: Label
 var minimap: Control
 var summary_overlay: ColorRect
 var summary_label: RichTextLabel
+var summary_status_label: Label
+var summary_return_button: Button
+var summary_save_anim_time := 0.0
+var summary_save_pending := false
+var summary_save_phase := "idle"
 
 func _ready() -> void:
     Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
@@ -133,6 +171,9 @@ func _ready() -> void:
     _build_ui()
     _start_run()
     set_process(true)
+
+func _exit_tree() -> void:
+    _save_planet_snapshot()
 
 func _build_runtime_nodes() -> void:
     planet_renderer = PLANET_RENDERER_SCRIPT.new()
@@ -242,11 +283,16 @@ func _build_ui() -> void:
     summary_label.custom_minimum_size = Vector2(560.0, 180.0)
     summary_vbox.add_child(summary_label)
 
-    var return_button := Button.new()
-    return_button.text = "Return To Upgrades"
-    return_button.custom_minimum_size = Vector2(260.0, 74.0)
-    return_button.pressed.connect(_return_to_upgrades)
-    summary_vbox.add_child(return_button)
+    summary_status_label = Label.new()
+    summary_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    summary_status_label.add_theme_color_override("font_color", Color(0.78, 0.88, 1.0, 0.95))
+    summary_vbox.add_child(summary_status_label)
+
+    summary_return_button = Button.new()
+    summary_return_button.text = "Return To Upgrades"
+    summary_return_button.custom_minimum_size = Vector2(260.0, 74.0)
+    summary_return_button.pressed.connect(_return_to_upgrades)
+    summary_vbox.add_child(summary_return_button)
 
 func _start_run() -> void:
     persistent_data = PROGRESS.load_data()
@@ -283,6 +329,10 @@ func _start_run() -> void:
     electric_arcs.clear()
     chain_arcs.clear()
     shockwave_rings.clear()
+    summer_laser_states.clear()
+    autumn_debris.clear()
+    autumn_debris_timers.clear()
+    winter_cross_lasers.clear()
     drone_beams.clear()
     _reset_drone_state()
     current_combo = 0
@@ -296,19 +346,27 @@ func _start_run() -> void:
 func _build_planet() -> void:
     damaged_cells.clear()
     var persistent_destroyed := {}
-    for saved_variant in persistent_data.get("destroyed_cells", []):
-        if saved_variant is String:
-            var parts := str(saved_variant).split(",")
-            if parts.size() == 2:
-                persistent_destroyed[Vector2i(int(parts[0]), int(parts[1]))] = true
-        elif saved_variant is Vector2i:
-            persistent_destroyed[saved_variant] = true
-    persistent_destroyed_count = persistent_destroyed.size()
+    var saved_planet_state: Dictionary = PROGRESS.load_planet_state()
+    if saved_planet_state.is_empty():
+        for saved_variant in persistent_data.get("destroyed_cells", []):
+            if saved_variant is String:
+                var parts := str(saved_variant).split(",")
+                if parts.size() == 2:
+                    persistent_destroyed[Vector2i(int(parts[0]), int(parts[1]))] = true
+            elif saved_variant is Vector2i:
+                persistent_destroyed[saved_variant] = true
+        persistent_destroyed_count = persistent_destroyed.size()
+    else:
+        persistent_destroyed_count = 0
     var cached_runtime_planet = PROGRESS.load_runtime_planet_data(current_depth_level)
     if cached_runtime_planet != null:
         planet_data = cached_runtime_planet
+    elif not saved_planet_state.is_empty():
+        planet_data = PLANET_DATA_SCRIPT.new()
+        planet_data.load_save_data(saved_planet_state)
     else:
         planet_data = PLANET_DATA_SCRIPT.new()
+        planet_data.core_difficulty_mult = pow(1.5, int(persistent_data.get("total_cores_destroyed", 0)))
         planet_data.generate_sync(current_depth_level, persistent_destroyed, BALANCE, rng)
     planet_data.on_core_destroyed_callback = Callable(self, "_on_core_destroyed")
     blocks = planet_data.blocks
@@ -328,6 +386,7 @@ func _setup_minimap() -> void:
 
 func _process(delta: float) -> void:
     if run_finished:
+        _update_finish_summary(delta)
         return
     ship_glow_phase += delta * 3.0
     camera_pos = ship_pos
@@ -340,6 +399,7 @@ func _process(delta: float) -> void:
     _update_drone_visuals(delta)
     _update_zone_return(delta)
     _update_core_behaviors(delta)
+    _update_core_attacks(delta)
     _update_current_layer_name()
     hud_refresh_timer -= delta
     if hud_refresh_timer <= 0.0:
@@ -365,6 +425,19 @@ func _update_timers(delta: float) -> void:
     _tick_effect_array(electric_arcs, delta)
     _tick_effect_array(chain_arcs, delta)
     _tick_effect_array(drone_beams, delta)
+    for core_id_variant in summer_laser_states.keys():
+        var core_id: int = int(core_id_variant)
+        var state: Dictionary = summer_laser_states.get(core_id, {})
+        if float(state.get("hit_timer", 0.0)) > 0.0:
+            state["hit_timer"] = maxf(0.0, float(state.get("hit_timer", 0.0)) - delta)
+        summer_laser_states[core_id] = state
+    for idx in range(autumn_debris.size() - 1, -1, -1):
+        var debris: Dictionary = autumn_debris[idx]
+        debris["life"] = float(debris.get("life", AUTUMN_DEBRIS_LIFETIME)) - delta
+        if float(debris.get("life", 0.0)) <= 0.0:
+            autumn_debris.remove_at(idx)
+            continue
+        autumn_debris[idx] = debris
     for idx in range(shockwave_rings.size() - 1, -1, -1):
         var ring := shockwave_rings[idx]
         ring["radius"] = float(ring.get("radius", 0.0)) + SHOCKWAVE_RING_SPEED * delta
@@ -424,6 +497,7 @@ func _resolve_ship_collision() -> void:
                 ship_vel = push_dir * (40.0 if _has_core_upgrade("brake") else 120.0)
                 if barriers_left > 0:
                     barriers_left -= 1
+                    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK, -10.0, -0.08)
                 else:
                     _finish_run(false, "The rig cracked against the shell.")
                 return
@@ -511,6 +585,7 @@ func _auto_fire_laser() -> void:
                     if bool(aoe_result.get("destroyed", false)):
                         any_destroyed = true
     attack_visible_timer = 0.08
+    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER_CRIT if last_attack_is_crit else SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER)
     if any_destroyed:
         _on_combo_hit()
     if bool(runtime_stats.get("chain_lightning_enabled", false)):
@@ -584,6 +659,7 @@ func _damage_block(pos: Vector2i, damage: float) -> Dictionary:
         destroyed_cells_this_run[pos] = true
         nodes_mined += 1
         overdrive_kills += 1
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.PLANET_BREAK if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE else SoundEffectSettings.SOUND_EFFECT_TYPE.ON_ASTEROID_DESTORY, -6.0 if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE else -10.0)
         var world := grid_to_world(pos)
         _spawn_pickup(world, block_before)
         if int(result.get("type", BlockType.NORMAL)) == BlockType.ELECTRIC and bool(runtime_stats.get("electric_enabled", false)):
@@ -612,6 +688,7 @@ func _damage_block(pos: Vector2i, damage: float) -> Dictionary:
     return result
 
 func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2) -> void:
+    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC, -8.0, -0.05)
     _on_combo_hit()
     var results: Array = planet_data.electric_chain(
         origin_pos,
@@ -645,6 +722,7 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2) -> voi
     planet_renderer.mark_dirty()
 
 func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void:
+    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC_CRIT, -10.0, -0.04)
     var current_pos := start_pos
     var current_world := start_world
     var visited := {start_pos: true}
@@ -696,6 +774,7 @@ func _trigger_shockwave() -> void:
     if shockwave_rings.size() >= MAX_SHOCKWAVE_RINGS:
         shockwave_rings.remove_at(0)
     shockwave_rings.append({"radius": 5.0, "max_radius": max_radius, "alpha": 0.8})
+    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.SUPERNOVA, -10.0, -0.1)
     planet_renderer.mark_dirty()
 
 func _update_mega_beam(delta: float) -> void:
@@ -829,24 +908,21 @@ func _finish_run(returned: bool, reason: String) -> void:
     if run_finished:
         return
     run_finished = true
-    _persist_destroyed_cells()
+    if planet_data != null:
+        planet_data.revert_converted_gold()
+        blocks = planet_data.blocks
+        exposed_edges = planet_data.exposed_edges
+        persistent_destroyed_count = max(0, total_planet_blocks - planet_data.get_total_blocks())
+        planet_renderer.mark_dirty()
     var keep_percent := 1.0 if returned else float(runtime_stats.get("salvage_keep", 0.0))
     var total_money := cargo_money
     for pickup in pickups:
         total_money += int(pickup.get("money", 0))
     var money_award := int(round(float(total_money) * keep_percent))
-    PROGRESS.apply_run_results({
-        "money": money_award,
-        "core_currency": core_currency_earned_this_run,
-        "cores_destroyed": cores_destroyed_this_run,
-        "depth_level": current_depth_level,
-        "nodes_broken": nodes_mined,
-        "boss_defeated": boss_defeated,
-        "destroyed_cells": persistent_data.get("destroyed_cells", []).duplicate(true),
-        "summary_text": "%s Banked $%d." % [reason, money_award],
-    })
-    PROGRESS.save_runtime_planet_data(current_depth_level, planet_data)
     summary_overlay.visible = true
+    summary_save_anim_time = 0.0
+    summary_save_pending = true
+    summary_save_phase = "prepare"
     summary_label.text = "[center]%s\n\nOrbit Tier %d\nBlocks mined: %d\nCores destroyed: %d\nPersistent clear: %.1f%%\nCash banked: $%d\nCore shards banked: %d\nCombo peak: %d\nBarriers left: %d[/center]" % [
         reason,
         current_depth_level,
@@ -858,33 +934,120 @@ func _finish_run(returned: bool, reason: String) -> void:
         combo_peak,
         barriers_left
     ]
+    if summary_return_button != null:
+        summary_return_button.disabled = true
+        summary_return_button.text = "Saving..."
+    if summary_status_label != null:
+        summary_status_label.text = "Preparing save..."
+    call_deferred("_begin_finish_save", money_award, reason)
+
+func _save_planet_snapshot() -> void:
+    if run_finished or planet_data == null:
+        return
+    persistent_data["boss_defeated"] = boss_defeated
+    persistent_data["destroyed_cells"] = []
+    PROGRESS.save_data(persistent_data)
+    var snapshot: Dictionary = planet_data.build_dirty_save_data()
+    var dirty_sections: Dictionary = snapshot.get("sections", {})
+    if not dirty_sections.is_empty():
+        PROGRESS.save_planet_state(snapshot)
+        planet_data.mark_saved_sections_clean(dirty_sections.keys())
+    PROGRESS.save_runtime_planet_data(current_depth_level, planet_data)
+
+func _update_finish_summary(delta: float) -> void:
+    if not summary_save_pending:
+        return
+    summary_save_anim_time += delta
+    var dots := ".".repeat(int(floor(summary_save_anim_time * 3.0)) % 4)
+    if summary_status_label != null:
+        if summary_save_phase == "prepare":
+            summary_status_label.text = "Preparing save%s" % dots
+        else:
+            summary_status_label.text = "Saving planet state%s" % dots
+    if summary_save_phase == "thread" and PROGRESS.update_async_planet_state_save():
+        summary_save_pending = false
+        summary_save_phase = "done"
+        if summary_return_button != null:
+            summary_return_button.disabled = false
+            summary_return_button.text = "Return To Upgrades"
+        if summary_status_label != null:
+            summary_status_label.text = "Save complete." if PROGRESS.was_async_planet_state_save_successful() else "Save failed. Returning may lose progress."
+
+func _begin_finish_save(money_award: int, reason: String) -> void:
+    await _finish_run_save_async(money_award, reason)
+
+func _finish_run_save_async(money_award: int, reason: String) -> void:
+    var planet_snapshot: Dictionary = {}
+    var has_sector_updates := false
+    if planet_data != null:
+        planet_snapshot = await planet_data.build_save_data_async(get_tree(), Callable(self, "_on_finish_save_progress"))
+        has_sector_updates = not Dictionary(planet_snapshot.get("sections", {})).is_empty()
+    PROGRESS.apply_run_results({
+        "money": money_award,
+        "core_currency": core_currency_earned_this_run,
+        "cores_destroyed": cores_destroyed_this_run,
+        "depth_level": current_depth_level,
+        "nodes_broken": nodes_mined,
+        "boss_defeated": boss_defeated,
+        "destroyed_cells": [],
+        "planet_state": planet_snapshot if has_sector_updates else {},
+        "defer_planet_state_save": has_sector_updates,
+        "summary_text": "%s Banked $%d." % [reason, money_award],
+    })
+    if has_sector_updates:
+        PROGRESS.start_async_planet_state_save(planet_snapshot)
+        if planet_data != null:
+            planet_data.mark_saved_sections_clean(planet_snapshot.get("sections", {}).keys())
+        summary_save_phase = "thread"
+        summary_save_pending = PROGRESS.is_async_planet_state_save_pending()
+    else:
+        summary_save_phase = "done"
+        summary_save_pending = false
+    PROGRESS.save_runtime_planet_data(current_depth_level, planet_data)
+    persistent_data = PROGRESS.load_data()
+    if not summary_save_pending:
+        if summary_return_button != null:
+            summary_return_button.disabled = false
+            summary_return_button.text = "Return To Upgrades"
+        if summary_status_label != null:
+            summary_status_label.text = "Save complete."
+
+func _on_finish_save_progress(progress: float) -> void:
+    if not summary_save_pending:
+        return
+    summary_save_phase = "prepare"
+    if summary_status_label != null:
+        summary_status_label.text = "Preparing save %d%%" % int(round(progress * 100.0))
 
 func _persist_destroyed_cells() -> void:
-    var merged := {}
-    for existing_variant in persistent_data.get("destroyed_cells", []):
-        if existing_variant is String:
-            merged[str(existing_variant)] = true
-    for key_variant in destroyed_cells_this_run.keys():
-        if key_variant is Vector2i:
-            var grid: Vector2i = key_variant
-            merged["%d,%d" % [grid.x, grid.y]] = true
-    var cells: Array[String] = []
-    for key_variant in merged.keys():
-        cells.append(str(key_variant))
-    cells.sort()
-    persistent_data["destroyed_cells"] = cells
+    persistent_data["destroyed_cells"] = []
     persistent_data["boss_defeated"] = boss_defeated
     PROGRESS.save_data(persistent_data)
 
 func _refresh_hud() -> void:
     timer_label.text = "Cargo: %d / %d" % [cargo_units, int(runtime_stats.get("cargo_capacity", 15))]
     cargo_label.text = "Fuel: %.1fs  |  Return Zone %.1fs" % [time_left, maxf(0.0, RETURN_ZONE_DELAY - return_zone_timer)]
-    wallet_label.text = "Haul: $%d  |  Wallet: $%d" % [cargo_money, PROGRESS.get_wallet()]
+    wallet_label.text = "Haul: $%d  |  Wallet: $%d" % [cargo_money, int(persistent_data.get("wallet", 0))]
     layer_label.text = "Orbit Tier %d  |  %s  |  Clear %.1f%%" % [current_depth_level, current_layer_name, _get_persistent_clear_percent()]
     status_label.text = "Barriers %d  |  Drones %d  |  Mega %d/%d  |  Alive Cores %d/%d" % [barriers_left, int(runtime_stats.get("drone_count", 0)), mega_gauge, int(runtime_stats.get("mega_gauge_need", 30)), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0]
-    system_label.text = "Combo %d  |  Overdrive %.1fs  |  Core shards %d  |  Move: Mouse / WASD" % [current_combo, overdrive_timer, PROGRESS.get_core_wallet() + core_currency_earned_this_run]
+    system_label.text = "Combo %d  |  Overdrive %.1fs  |  Core shards %d  |  Move: Mouse / WASD" % [current_combo, overdrive_timer, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run]
+    if fps_label != null:
+        var season_lines: Array[String] = []
+        var damage_mults: Array = runtime_stats.get("season_damage_mults", [1.0, 1.0, 1.0, 1.0])
+        var zone_labels: Array[String] = ["Spring", "Summer", "Autumn", "Winter"]
+        for idx in range(mini(4, damage_mults.size())):
+            var mult: float = float(damage_mults[idx])
+            if mult <= 1.0:
+                continue
+            var zone_name: String = zone_labels[idx]
+            season_lines.append("%s %+d%%" % [zone_name.left(2), int(round((mult - 1.0) * 100.0))])
+        if season_lines.is_empty():
+            fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
+        else:
+            fps_label.text = "FPS: %d  |  Debug Dmg: %s" % [Engine.get_frames_per_second(), ", ".join(season_lines)]
 
 func _return_to_upgrades() -> void:
+    _save_planet_snapshot()
     SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
 
 func _tick_timer_dict(dict_ref: Dictionary, delta: float) -> void:
@@ -1005,6 +1168,7 @@ func _get_persistent_clear_percent() -> float:
 func _on_core_destroyed(core: Dictionary) -> void:
     cores_destroyed_this_run += 1
     core_currency_earned_this_run += 1
+    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.PLANET_BREAK, -2.0, -0.08)
     planet_renderer.mark_dirty()
     if int(core.get("id", -1)) == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
         boss_defeated = true
@@ -1040,6 +1204,209 @@ func _fire_core_shockwaves() -> void:
         if dist < push_radius and dist > 0.0:
             var push_dir := (ship_pos - world_center).normalized()
             ship_vel += push_dir * CORE_SHOCKWAVE_PUSH * (1.0 - dist / push_radius)
+
+func _update_core_attacks(delta: float) -> void:
+    if planet_data == null:
+        return
+    _update_summer_lasers(delta)
+    _update_autumn_debris(delta)
+    _update_winter_cross_lasers(delta)
+
+func _is_ship_in_core_influence(core: Dictionary) -> bool:
+    var radius: float = float(planet_data.get_effective_influence_radius(core)) * BLOCK_SIZE
+    return ship_pos.distance_squared_to(grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))) <= radius * radius
+
+func _update_summer_lasers(delta: float) -> void:
+    for core in planet_data.cores:
+        if not bool(core.alive) or int(core.zone) != PLANET_DATA_SCRIPT.Zone.SUMMER:
+            continue
+        var cid: int = int(core.id)
+        var is_boss: bool = str(core.role) == "boss" or str(core.role) == "final"
+        if not _is_ship_in_core_influence(core):
+            summer_laser_states.erase(cid)
+            continue
+        var hp_ratio: float = planet_data.get_core_hp_ratio(core)
+        var interval := SUMMER_LASER_INTERVAL_OUTER
+        if is_boss:
+            interval = SUMMER_LASER_INTERVAL_BOSS_LOW if hp_ratio <= SUMMER_LASER_BOSS_HP_THRESHOLD else SUMMER_LASER_INTERVAL_BOSS
+        var state: Dictionary = summer_laser_states.get(cid, {
+            "state": "idle",
+            "timer": interval,
+            "warn_time": SUMMER_LASER_WARN_BOSS if is_boss else SUMMER_LASER_WARN_OUTER,
+            "origin": grid_to_world(Vector2i(int(core.center.x), int(core.center.y))),
+            "dir": Vector2.RIGHT,
+            "interval": interval,
+            "fire_duration": SUMMER_LASER_FIRE_DURATION,
+            "hit_timer": 0.0,
+        })
+        state["interval"] = interval
+        state["origin"] = grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
+        state["timer"] = float(state.get("timer", interval)) - delta
+        match str(state.get("state", "idle")):
+            "idle":
+                if float(state.get("timer", 0.0)) <= 0.0:
+                    state["state"] = "warning"
+                    state["timer"] = float(state.get("warn_time", SUMMER_LASER_WARN_OUTER))
+                    state["dir"] = (ship_pos - Vector2(state["origin"])).normalized()
+            "warning":
+                if float(state.get("timer", 0.0)) <= 0.0:
+                    state["state"] = "firing"
+                    state["timer"] = float(state.get("fire_duration", SUMMER_LASER_FIRE_DURATION))
+                    state["dir"] = (ship_pos - Vector2(state["origin"])).normalized()
+            "firing":
+                _check_summer_laser_hit(state)
+                if float(state.get("timer", 0.0)) <= 0.0:
+                    state["state"] = "idle"
+                    state["timer"] = interval
+        summer_laser_states[cid] = state
+
+func _check_summer_laser_hit(state: Dictionary) -> void:
+    if float(state.get("hit_timer", 0.0)) > 0.0:
+        return
+    var origin: Vector2 = state.get("origin", Vector2.ZERO)
+    var dir: Vector2 = Vector2(state.get("dir", Vector2.RIGHT)).normalized()
+    if dir.length() < 0.01:
+        return
+    var length: float = BLOCK_SIZE * 40.0
+    var end: Vector2 = origin + dir * length
+    var ab: Vector2 = end - origin
+    var t: float = clampf((ship_pos - origin).dot(ab) / maxf(ab.dot(ab), 1.0), 0.0, 1.0)
+    var closest: Vector2 = origin + ab * t
+    if ship_pos.distance_to(closest) <= SUMMER_LASER_WIDTH * 0.5 + SHIP_RADIUS:
+        state["hit_timer"] = WINTER_CROSS_LASER_HIT_COOLDOWN
+        _apply_ship_hazard_hit((ship_pos - origin).normalized(), "The rig was lanced by a summer core.")
+
+func _update_autumn_debris(delta: float) -> void:
+    if planet_data == null:
+        return
+    for core in planet_data.cores:
+        if not bool(core.alive) or int(core.zone) != PLANET_DATA_SCRIPT.Zone.AUTUMN:
+            continue
+        if not _is_ship_in_core_influence(core):
+            continue
+        var cid: int = int(core.id)
+        var is_boss: bool = str(core.role) == "boss" or str(core.role) == "final"
+        var hp_ratio: float = planet_data.get_core_hp_ratio(core)
+        var timer_key := "debris_%d" % cid
+        var timer: float = float(autumn_debris_timers.get(timer_key, 0.0)) - delta
+        if timer <= 0.0 and autumn_debris.size() < AUTUMN_DEBRIS_MAX_ACTIVE:
+            timer = AUTUMN_DEBRIS_INTERVAL_OUTER
+            var spawn_count := AUTUMN_DEBRIS_COUNT_OUTER
+            if is_boss:
+                if hp_ratio <= SUMMER_LASER_BOSS_HP_THRESHOLD:
+                    timer = AUTUMN_DEBRIS_INTERVAL_BOSS_LOW
+                    spawn_count = AUTUMN_DEBRIS_COUNT_BOSS_LOW
+                else:
+                    timer = AUTUMN_DEBRIS_INTERVAL_BOSS
+                    spawn_count = AUTUMN_DEBRIS_COUNT_BOSS
+            _spawn_autumn_debris(core, spawn_count)
+        autumn_debris_timers[timer_key] = timer
+    for idx in range(autumn_debris.size() - 1, -1, -1):
+        var debris: Dictionary = autumn_debris[idx]
+        var pos: Vector2 = debris.get("pos", Vector2.ZERO)
+        var vel: Vector2 = debris.get("vel", Vector2.ZERO)
+        var desired: Vector2 = (ship_pos - pos).normalized() * AUTUMN_DEBRIS_SPEED
+        vel = vel.lerp(desired, clampf(delta * AUTUMN_DEBRIS_HOMING_STRENGTH, 0.0, 1.0))
+        pos += vel * delta
+        debris["pos"] = pos
+        debris["vel"] = vel
+        autumn_debris[idx] = debris
+        if pos.distance_to(ship_pos) <= AUTUMN_DEBRIS_HIT_RADIUS + SHIP_RADIUS:
+            autumn_debris.remove_at(idx)
+            _apply_ship_hazard_hit((ship_pos - pos).normalized(), "The rig was shredded by autumn debris.")
+
+func _spawn_autumn_debris(core: Dictionary, count: int) -> void:
+    var origin: Vector2 = grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
+    for _idx in range(count):
+        var angle: float = rng.randf() * TAU
+        autumn_debris.append({
+            "pos": origin,
+            "vel": Vector2.from_angle(angle) * AUTUMN_DEBRIS_SPEED,
+            "life": AUTUMN_DEBRIS_LIFETIME,
+            "core_id": int(core.id),
+        })
+
+func _update_winter_cross_lasers(delta: float) -> void:
+    for core in planet_data.cores:
+        if not bool(core.alive) or int(core.zone) != PLANET_DATA_SCRIPT.Zone.WINTER:
+            continue
+        var cid: int = int(core.id)
+        if not _is_ship_in_core_influence(core):
+            winter_cross_lasers.erase(cid)
+            continue
+        var hp_ratio: float = planet_data.get_core_hp_ratio(core)
+        var is_boss: bool = str(core.role) == "boss" or str(core.role) == "final"
+        var speed := WINTER_CROSS_LASER_SPEED_BASE
+        if hp_ratio < 1.0:
+            speed = WINTER_CROSS_LASER_SPEED_BOSS_LOW if is_boss and hp_ratio <= WINTER_CROSS_LASER_BOSS_HP_THRESHOLD else WINTER_CROSS_LASER_SPEED_ATTACKED
+        var beam_length: float = float(planet_data.get_effective_influence_radius(core)) * BLOCK_SIZE
+        var core_pixel_radius: float = float(int(core.get("size", 3))) * 0.5 * BLOCK_SIZE
+        var edge_ratio: float = clampf(core_pixel_radius / maxf(beam_length, 1.0) + 0.05, 0.1, 0.4)
+        var state: Dictionary = winter_cross_lasers.get(cid, {
+            "angle": rng.randf() * TAU,
+            "origin": grid_to_world(Vector2i(int(core.center.x), int(core.center.y))),
+            "length": beam_length,
+            "speed": speed,
+            "hit_timer": 0.0,
+            "core_edge_ratio": edge_ratio,
+            "gaps": [],
+        })
+        if Array(state.get("gaps", [])).is_empty():
+            var gaps: Array = []
+            for _arm_i in range(4):
+                gaps.append({"pos": rng.randf_range(edge_ratio, WINTER_CROSS_LASER_GAP_MAX), "dir": 1.0 if rng.randf() > 0.5 else -1.0})
+            state["gaps"] = gaps
+        state["origin"] = grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
+        state["length"] = beam_length
+        state["speed"] = speed
+        state["core_edge_ratio"] = edge_ratio
+        state["angle"] = float(state.get("angle", 0.0)) + speed * delta
+        var gaps_state: Array = state.get("gaps", [])
+        for gap in gaps_state:
+            gap["pos"] = clampf(float(gap.get("pos", edge_ratio)) + float(gap.get("dir", 1.0)) * WINTER_CROSS_LASER_GAP_SLIDE_SPEED * delta, edge_ratio, WINTER_CROSS_LASER_GAP_MAX)
+            if is_equal_approx(float(gap["pos"]), edge_ratio) or is_equal_approx(float(gap["pos"]), WINTER_CROSS_LASER_GAP_MAX):
+                gap["dir"] = -float(gap.get("dir", 1.0))
+        state["gaps"] = gaps_state
+        _check_winter_cross_laser_hit(state)
+        winter_cross_lasers[cid] = state
+
+func _check_winter_cross_laser_hit(state: Dictionary) -> void:
+    if float(state.get("hit_timer", 0.0)) > 0.0:
+        return
+    var origin: Vector2 = state.get("origin", Vector2.ZERO)
+    var length: float = float(state.get("length", 0.0))
+    var edge_ratio: float = float(state.get("core_edge_ratio", 0.1))
+    var gaps: Array = state.get("gaps", [])
+    for arm_i in range(4):
+        var arm_angle: float = float(state.get("angle", 0.0)) + float(arm_i) * PI * 0.5
+        var arm_dir := Vector2.from_angle(arm_angle)
+        var end := origin + arm_dir * length
+        var ab := end - origin
+        var t: float = clampf((ship_pos - origin).dot(ab) / maxf(ab.dot(ab), 1.0), 0.0, 1.0)
+        var closest := origin + ab * t
+        if ship_pos.distance_to(closest) > WINTER_CROSS_LASER_WIDTH * 0.5 + SHIP_RADIUS:
+            continue
+        if t < edge_ratio:
+            continue
+        if arm_i < gaps.size():
+            var gap: Dictionary = gaps[arm_i]
+            var gap_center: float = float(gap.get("pos", edge_ratio))
+            if t >= gap_center - WINTER_CROSS_LASER_GAP_SIZE * 0.5 and t <= gap_center + WINTER_CROSS_LASER_GAP_SIZE * 0.5:
+                continue
+        state["hit_timer"] = WINTER_CROSS_LASER_HIT_COOLDOWN
+        _apply_ship_hazard_hit((ship_pos - origin).normalized(), "The rig was caught in a winter cross-laser.")
+        return
+
+func _apply_ship_hazard_hit(push_dir: Vector2, reason: String) -> void:
+    if run_finished:
+        return
+    var applied_dir := push_dir if push_dir.length() > 0.01 else Vector2.UP
+    ship_vel += applied_dir * CORE_HAZARD_KNOCKBACK
+    if barriers_left > 0:
+        barriers_left -= 1
+        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK, -10.0, -0.05)
+        return
+    _finish_run(false, reason)
 
 func _has_core_upgrade(upgrade_id: String) -> bool:
     var purchased: Array = persistent_data.get("purchased_core_upgrades", [])

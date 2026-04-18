@@ -436,6 +436,14 @@ static func _get_summary(upgrade_id: String, effects: Dictionary) -> String:
     }
     if summaries.has(upgrade_id):
         return summaries[upgrade_id]
+    if effects.has("season_dmg_mult"):
+        var zone_idx: int = int(effects.get("boost_zone", -1))
+        var pct: int = int(round((float(effects.get("season_dmg_mult", 1.0)) - 1.0) * 100.0))
+        return "%s mining damage +%d%%." % [_get_zone_label(zone_idx), pct]
+    if effects.has("season_res_mult"):
+        var res_zone_idx: int = int(effects.get("boost_zone", -1))
+        var res_pct: int = int(round((float(effects.get("season_res_mult", 1.0)) - 1.0) * 100.0))
+        return "%s mining payout +%d%%." % [_get_zone_label(res_zone_idx), res_pct]
     if effects.has("damage_flat"):
         return "Raises direct mining damage."
     if effects.has("fire_rate"):
@@ -455,6 +463,19 @@ static func _get_summary(upgrade_id: String, effects: Dictionary) -> String:
     if effects.has("barrier"):
         return "Adds impact shields."
     return "Orbit mining upgrade."
+
+static func _get_zone_label(zone_idx: int) -> String:
+    match zone_idx:
+        0:
+            return "Spring"
+        1:
+            return "Summer"
+        2:
+            return "Autumn"
+        3:
+            return "Winter"
+        _:
+            return "Seasonal"
 
 static func _get_icon(upgrade_id: String) -> String:
     if upgrade_id.contains("drone"):
