@@ -165,6 +165,7 @@ var summary_save_phase := "idle"
 
 func _ready() -> void:
     Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+    VirtualCursor.use_open_pit_orbit_cursor(true)
     Global.game_state = Util.GAME_STATES.PLAYING
     rng.randomize()
     _build_runtime_nodes()
@@ -173,6 +174,7 @@ func _ready() -> void:
     set_process(true)
 
 func _exit_tree() -> void:
+    VirtualCursor.use_open_pit_orbit_cursor(false)
     _save_planet_snapshot()
 
 func _build_runtime_nodes() -> void:

@@ -4,6 +4,7 @@ const CURSOR_TEXTURE: Texture2D = preload("res://Art/pointer_c.png")
 const CURSOR_SPEED := 1400.0
 const STICK_DEADZONE := 0.2
 const CURSOR_LAYER := 200
+const OPEN_PIT_ORBIT_CURSOR_SIZE := 5
 
 var _scene_enabled := false
 var _virtual_cursor_active := false
@@ -15,14 +16,18 @@ var _ignore_next_mouse_motion := false
 var _ignore_next_left_mouse_button := false
 var _ignore_next_right_mouse_button := false
 var _cursor_sprite: TextureRect
+var _cursor_texture: Texture2D
+var _cursor_hotspot := Vector2.ZERO
+var _open_pit_orbit_cursor_texture: Texture2D
 
 func _ready() -> void:
     layer = CURSOR_LAYER
     process_mode = Node.PROCESS_MODE_ALWAYS
     _cursor_sprite = TextureRect.new()
     _cursor_sprite.name = "VirtualCursorSprite"
-    _cursor_sprite.texture = CURSOR_TEXTURE
-    _cursor_sprite.size = CURSOR_TEXTURE.get_size()
+    _cursor_texture = CURSOR_TEXTURE
+    _cursor_sprite.texture = _cursor_texture
+    _cursor_sprite.size = _cursor_texture.get_size()
     _cursor_sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _cursor_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     _cursor_sprite.stretch_mode = TextureRect.STRETCH_KEEP
@@ -71,6 +76,14 @@ func get_screen_position() -> Vector2:
 
 func is_injecting_mouse_event() -> bool:
     return _injecting_mouse_event
+
+func use_open_pit_orbit_cursor(enabled: bool) -> void:
+    if enabled:
+        if _open_pit_orbit_cursor_texture == null:
+            _open_pit_orbit_cursor_texture = _build_open_pit_orbit_cursor_texture()
+        _set_cursor_texture(_open_pit_orbit_cursor_texture, Vector2(2.0, 2.0))
+    else:
+        _set_cursor_texture(CURSOR_TEXTURE, Vector2.ZERO)
 
 func _input(event: InputEvent) -> void:
     if not _scene_enabled:
@@ -209,7 +222,24 @@ func _warp_mouse(position: Vector2) -> void:
 func _update_cursor_visual() -> void:
     if _cursor_sprite == null:
         return
-    _cursor_sprite.position = _cursor_position
+    _cursor_sprite.position = _cursor_position - _cursor_hotspot
+
+func _set_cursor_texture(texture: Texture2D, hotspot: Vector2) -> void:
+    _cursor_texture = texture
+    _cursor_hotspot = hotspot
+    if _cursor_sprite != null:
+        _cursor_sprite.texture = texture
+        _cursor_sprite.size = texture.get_size() if texture != null else Vector2.ZERO
+    Input.set_custom_mouse_cursor(texture, Input.CURSOR_ARROW, hotspot)
+    _update_cursor_visual()
+
+func _build_open_pit_orbit_cursor_texture() -> Texture2D:
+    var image := Image.create(OPEN_PIT_ORBIT_CURSOR_SIZE, OPEN_PIT_ORBIT_CURSOR_SIZE, false, Image.FORMAT_RGBA8)
+    image.fill(Color(0.0, 0.0, 0.0, 0.0))
+    for x in range(OPEN_PIT_ORBIT_CURSOR_SIZE):
+        for y in range(OPEN_PIT_ORBIT_CURSOR_SIZE):
+            image.set_pixel(x, y, Color.WHITE)
+    return ImageTexture.create_from_image(image)
 
 func _clamp_to_viewport(position: Vector2) -> Vector2:
     var viewport := get_viewport()

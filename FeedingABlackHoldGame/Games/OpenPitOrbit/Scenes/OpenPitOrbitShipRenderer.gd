@@ -10,6 +10,7 @@ func _draw() -> void:
     if scene_ref == null:
         return
     var vp := scene_ref.get_visual_power()
+    var ship_line: Color = Color(2.5, 0.3, 0.2, 1.0) if scene_ref.overdrive_timer > 0.0 else Color(0.5, 1.8, 2.0, 1.0)
 
     if int(scene_ref.barriers_left) > 0:
         var barrier_alpha := 0.2 + sin(scene_ref.ship_glow_phase * 2.0) * 0.1
@@ -26,14 +27,11 @@ func _draw() -> void:
         Vector2(10.0, 10.0),
     ])
     draw_colored_polygon(ship_points, Color(0.02, 0.04, 0.06, 1.0))
-    var ship_line: Color = Color(2.5, 0.3, 0.2, 1.0) if scene_ref.overdrive_timer > 0.0 else Color(0.5, 1.8, 2.0, 1.0)
     for idx in range(ship_points.size()):
         draw_line(ship_points[idx], ship_points[(idx + 1) % ship_points.size()], ship_line, 2.0)
     draw_circle(Vector2(-5.0, 9.0), 2.5, ship_line)
     draw_circle(Vector2(5.0, 9.0), 2.5, ship_line)
     draw_set_transform(Vector2.ZERO, 0.0)
-
-    draw_arc(Vector2.ZERO, float(scene_ref.runtime_stats.get("attack_radius", 96.0)), 0.0, TAU, 64, Color(0.3, 1.0, 1.2, 0.06), 1.0)
 
     if scene_ref.mega_timer > 0.0:
         _draw_mega_laser()
@@ -70,8 +68,6 @@ func _draw_mega_laser() -> void:
     draw_line(Vector2.ZERO, beam_end, Color(2.0, 0.8, 0.2, 0.35), 20.0)
     draw_line(Vector2.ZERO, beam_end, Color(2.5, 1.2, 0.3, 1.0), 5.0)
     draw_line(Vector2.ZERO, beam_end, Color(3.0, 2.0, 1.0, 0.8), 2.0)
-    for hit_world in scene_ref.mega_beam_hits:
-        draw_circle(hit_world - scene_ref.ship_pos, 3.5, Color(3.0, 1.5, 0.5, 0.5))
 
 func _draw_electric_arcs(vp: float) -> void:
     for arc in scene_ref.electric_arcs:

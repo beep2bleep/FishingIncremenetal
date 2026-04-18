@@ -23,6 +23,7 @@ const STAR_COLORS := [
 ]
 const SCREEN_STAR_COUNT := 90
 const BLOCK_GAP := 1.5
+const LOCAL_SHOCKWAVE_VISUAL_RADIUS := 96.0
 const ZONE_SPRING := 0
 const ZONE_SUMMER := 1
 const ZONE_AUTUMN := 2
@@ -81,26 +82,21 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
     if scene_ref == null:
         return
-    draw_rect(get_viewport_rect(), SPACE_BG, true)
-    _draw_background_stars()
-    _draw_core_zones()
-
     var canvas_transform := get_canvas_transform()
     var viewport_size := get_viewport_rect().size
     var cam_scale := canvas_transform.get_scale()
     var top_left := -canvas_transform.origin / cam_scale
     var bottom_right := top_left + viewport_size / cam_scale
+    draw_rect(Rect2(top_left, viewport_size / cam_scale), SPACE_BG, true)
+    _draw_background_stars()
+    _draw_core_zones()
+
     var margin := scene_ref.BLOCK_SIZE * 2.0
     var grid_min := scene_ref.world_to_grid(top_left - Vector2(margin, margin))
     var grid_max := scene_ref.world_to_grid(bottom_right + Vector2(margin, margin))
     var grid_w: int = grid_max.x - grid_min.x + 1
     var grid_h: int = grid_max.y - grid_min.y + 1
     var fill_needs_rebuild := _fill_dirty or _fill_grid_origin != grid_min or _fill_grid_size != Vector2i(grid_w, grid_h)
-
-    var radius_world: float = scene_ref.planet_radius_cells * scene_ref.BLOCK_SIZE
-    draw_circle(scene_ref.planet_center, radius_world + 18.0, Color(0.02, 0.03, 0.05, 1.0))
-    draw_circle(scene_ref.planet_center, radius_world + 6.0, Color(0.08, 0.11, 0.16, 0.35))
-    draw_circle(scene_ref.planet_center, radius_world - scene_ref.BLOCK_SIZE * 0.35, Color(0.01, 0.015, 0.025, 0.6))
 
     if _fill_image == null or _fill_grid_size.x != grid_w or _fill_grid_size.y != grid_h:
         _fill_image = Image.create(grid_w, grid_h, false, Image.FORMAT_RGBA8)
@@ -179,30 +175,38 @@ func _draw() -> void:
                 draw_line(Vector2(rx + rw, ry + rh), Vector2(rx + rw, ry + rh - m), gc, 1.0)
 
     draw_arc(scene_ref.spawn_position, scene_ref.return_zone_radius, 0.0, TAU, 64, Color(0.3, 1.5, 0.5, 0.25), 2.0)
-
     for ring in scene_ref.shockwave_rings:
+        var radius: float = minf(float(ring.get("radius", 0.0)), LOCAL_SHOCKWAVE_VISUAL_RADIUS)
+        if radius <= 0.0:
+            continue
         var alpha: float = clampf(float(ring.get("alpha", 0.0)), 0.0, 1.0)
+        if radius >= LOCAL_SHOCKWAVE_VISUAL_RADIUS:
+            alpha *= 0.2
         draw_arc(
             scene_ref.ship_pos,
-            float(ring.get("radius", 0.0)),
+            radius,
             0.0,
             TAU,
-            64,
+            48,
             Color(1.0, 0.85, 0.2, alpha),
             2.0
         )
+
     _draw_summer_lasers()
     _draw_autumn_debris()
     _draw_winter_cross_lasers()
     _draw_core_shields()
 
 func _draw_background_stars() -> void:
+    var canvas_transform := get_canvas_transform()
+    var cam_scale := canvas_transform.get_scale()
+    var cam_world := -canvas_transform.origin / cam_scale
     var viewport_size := get_viewport_rect().size
     if _screen_stars.is_empty():
         _rebuild_screen_stars()
     for star in _screen_stars:
         var uv: Vector2 = star.get("uv", Vector2.ZERO)
-        var pos := Vector2(uv.x * viewport_size.x, uv.y * viewport_size.y)
+        var pos := cam_world + Vector2(uv.x * viewport_size.x, uv.y * viewport_size.y)
         var twinkle_seed: float = float(star.get("twinkle_seed", 0.0))
         var alpha := float(star.get("alpha", 0.6)) * (0.82 + 0.18 * sin(_time_elapsed * (0.7 + twinkle_seed * 1.2) + twinkle_seed * TAU))
         alpha = clampf(alpha, 0.12, 1.0)

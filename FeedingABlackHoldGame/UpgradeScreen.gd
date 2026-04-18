@@ -661,6 +661,7 @@ func show_screen():
     %CanvasLayer.show()
     %CanvasLayer2.show()
     _hide_settings_panel()
+    VirtualCursor.use_open_pit_orbit_cursor(Util.is_open_pit_orbit_game_active())
     _refresh_virtual_cursor_state()
 
 
@@ -721,6 +722,7 @@ func hide_screen():
     %CanvasLayer.hide()
     %CanvasLayer2.hide()
     _hide_continue_locked_panel()
+    VirtualCursor.use_open_pit_orbit_cursor(false)
     VirtualCursor.set_scene_enabled(false)
 
 func _refresh_mining_crt_overlay() -> void:
@@ -1705,6 +1707,7 @@ func _launch_battle_at_level(level: int) -> void:
     SceneChanger.change_to_new_scene(Util.get_battle_scene_path())
 
 func _refresh_virtual_cursor_state() -> void:
+    VirtualCursor.use_open_pit_orbit_cursor(is_active and Util.is_open_pit_orbit_game_active())
     var should_enable := is_active and (
         ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER
         or _is_battle_level_choice_open()
