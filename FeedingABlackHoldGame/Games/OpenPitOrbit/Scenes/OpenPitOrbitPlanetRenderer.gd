@@ -30,11 +30,11 @@ const ZONE_AUTUMN := 2
 const ZONE_WINTER := 3
 const ZONE_CENTER := 4
 const ZONE_FILLS := {
-    ZONE_SPRING: Color(0.07, 0.15, 0.09, 1.0),
-    ZONE_SUMMER: Color(0.19, 0.15, 0.06, 1.0),
-    ZONE_AUTUMN: Color(0.18, 0.08, 0.06, 1.0),
-    ZONE_WINTER: Color(0.07, 0.09, 0.19, 1.0),
-    ZONE_CENTER: Color(0.13, 0.08, 0.17, 1.0),
+    ZONE_SPRING: Color(0.07, 0.15, 0.09, 0.68),
+    ZONE_SUMMER: Color(0.19, 0.15, 0.06, 0.68),
+    ZONE_AUTUMN: Color(0.18, 0.08, 0.06, 0.68),
+    ZONE_WINTER: Color(0.07, 0.09, 0.19, 0.68),
+    ZONE_CENTER: Color(0.13, 0.08, 0.17, 0.68),
 }
 const ZONE_EDGE_COLORS := {
     ZONE_SPRING: Color(0.3, 1.8, 0.5),
@@ -50,10 +50,17 @@ const ZONE_RING_COLORS := {
     ZONE_WINTER: Color(0.3, 0.8, 2.0, 0.3),
     ZONE_CENTER: Color(1.2, 0.25, 2.0, 0.3),
 }
-const THORN_FILL := Color(0.04, 0.01, 0.03, 1.0)
+const THORN_FILL := Color(0.04, 0.01, 0.03, 0.7)
 const THORN_EDGE := Color(2.0, 0.4, 1.5, 1.0)
-const REGEN_FILL := Color(0.06, 0.015, 0.015, 1.0)
+const REGEN_FILL := Color(0.06, 0.015, 0.015, 0.7)
 const REGEN_EDGE := Color(1.2, 0.2, 0.08, 1.0)
+const ZONE_HP_VISUAL_RANGE := {
+    ZONE_SPRING: {"min": 15.0, "max": 300.0},
+    ZONE_SUMMER: {"min": 200.0, "max": 12000.0},
+    ZONE_AUTUMN: {"min": 4000.0, "max": 220000.0},
+    ZONE_WINTER: {"min": 120000.0, "max": 20000000.0},
+    ZONE_CENTER: {"min": 5000000.0, "max": 120000000.0},
+}
 
 func _ready() -> void:
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -249,7 +256,8 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
     var regenerated: bool = bool(block.get("regenerated", false))
     var electric_enabled: bool = bool(scene_ref.runtime_stats.get("electric_enabled", false))
     var gold_enabled: bool = bool(scene_ref.runtime_stats.get("gold_enabled", false))
-    var cache_key := "%d:%d:%d:%d:%d" % [zone, block_type, int(regenerated), int(electric_enabled), int(gold_enabled)]
+    var hardness_tier: int = _get_visual_hardness_tier(block)
+    var cache_key := "%d:%d:%d:%d:%d:%d" % [zone, block_type, int(regenerated), int(electric_enabled), int(gold_enabled), hardness_tier]
     if _palette_cache.has(cache_key):
         return _palette_cache[cache_key]
     var fill: Color = ZONE_FILLS.get(zone, SPACE_BG)
@@ -259,10 +267,10 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
             fill = _mix_fill_with_edge(ZONE_FILLS.get(zone, Color(0.11, 0.07, 0.08, 1.0)), ZONE_EDGE_COLORS.get(zone, Color(1.0, 1.0, 1.0, 1.0)), 0.32)
             edge = ZONE_EDGE_COLORS.get(zone, Color(2.5, 0.3, 0.08, 1.0))
         scene_ref.BlockType.ELECTRIC:
-            fill = Color(0.08, 0.17, 0.23, 1.0) if electric_enabled else _mix_fill_with_edge(fill, edge, 0.18).darkened(0.15)
+            fill = Color(0.08, 0.17, 0.23, 0.72) if electric_enabled else _mix_fill_with_edge(fill, edge, 0.18).darkened(0.15)
             edge = Color(0.5, 1.8, 2.5, 1.0)
         scene_ref.BlockType.GOLD:
-            fill = Color(0.24, 0.18, 0.07, 1.0) if gold_enabled else _mix_fill_with_edge(fill, edge, 0.22).darkened(0.08)
+            fill = Color(0.24, 0.18, 0.07, 0.72) if gold_enabled else _mix_fill_with_edge(fill, edge, 0.22).darkened(0.08)
             edge = Color(2.0, 1.6, 0.3, 1.0)
         scene_ref.BlockType.THORN:
             fill = _mix_fill_with_edge(THORN_FILL, THORN_EDGE, 0.24)
@@ -273,6 +281,7 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
                 edge = REGEN_EDGE
             else:
                 fill = _mix_fill_with_edge(fill, edge, 0.22)
+    fill = _apply_hardness_tint(fill, hardness_tier)
     var palette := {"fill": fill, "edge": edge}
     _palette_cache[cache_key] = palette
     return palette
@@ -280,6 +289,36 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
 func _mix_fill_with_edge(fill: Color, edge: Color, amount: float) -> Color:
     var edge_clamped := Color(min(edge.r, 1.0), min(edge.g, 1.0), min(edge.b, 1.0), 1.0)
     return fill.lerp(edge_clamped, amount)
+
+func _get_visual_hardness_tier(block: Dictionary) -> int:
+    var block_type: int = int(block.get("type", 0))
+    if block_type == scene_ref.BlockType.CORE:
+        var core_id: int = int(block.get("core_id", -1))
+        if scene_ref.planet_data != null:
+            return clampi(scene_ref.planet_data.get_core_tier(core_id), 1, 3)
+        return 1
+    if block_type != scene_ref.BlockType.NORMAL:
+        return 1
+    var zone: int = int(block.get("zone", ZONE_AUTUMN))
+    var hp_range: Dictionary = ZONE_HP_VISUAL_RANGE.get(zone, {"min": 1.0, "max": 1.0})
+    var min_hp: float = maxf(float(hp_range.get("min", 1.0)), 1.0)
+    var max_hp: float = maxf(float(hp_range.get("max", min_hp)), min_hp)
+    var block_hp: float = clampf(float(block.get("max_hp", min_hp)), min_hp, max_hp)
+    var ratio := inverse_lerp(min_hp, max_hp, block_hp)
+    if ratio >= 0.72:
+        return 3
+    if ratio >= 0.4:
+        return 2
+    return 1
+
+func _apply_hardness_tint(fill: Color, hardness_tier: int) -> Color:
+    match hardness_tier:
+        3:
+            return fill.darkened(0.16)
+        2:
+            return fill.darkened(0.08)
+        _:
+            return fill
 
 func _draw_core_zones() -> void:
     if scene_ref == null or scene_ref.planet_data == null:

@@ -5,6 +5,7 @@ const BALANCE := preload("res://Games/OpenPitOrbit/OpenPitOrbitBalance.gd")
 const PROGRESS := preload("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd")
 const PLANET_DATA_SCRIPT := preload("res://Games/OpenPitOrbit/OpenPitOrbitPlanetData.gd")
 const PLANET_RENDERER_SCRIPT := preload("res://Games/OpenPitOrbit/Scenes/OpenPitOrbitPlanetRenderer.gd")
+const PERF_GRAPH_SCRIPT := preload("res://Games/OpenPitOrbit/Scenes/OpenPitOrbitPerfGraph.gd")
 const MINIMAP_SCRIPT := preload("res://Games/OpenPitOrbit/Scenes/OpenPitOrbitMiniMap.gd")
 const DROP_RENDERER_SCRIPT := preload("res://Games/OpenPitOrbit/Scenes/OpenPitOrbitDropRenderer.gd")
 const SHIP_RENDERER_SCRIPT := preload("res://Games/OpenPitOrbit/Scenes/OpenPitOrbitShipRenderer.gd")
@@ -27,6 +28,9 @@ const DEAD_ZONE := 30.0
 const MAX_INPUT_DIST := 350.0
 const ROTATION_SPEED := 8.0
 const PICKUP_DRIFT := 24.0
+const CARDINAL_NEIGHBORS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+const SHIP_TRAIL_INTERVAL := 0.03
+const SHIP_TRAIL_MAX := 8
 const HUD_REFRESH_INTERVAL := 0.1
 const DRONE_RANGE := 230.0
 const DRONE_FOLLOW_SPEED := 8.0
@@ -118,6 +122,8 @@ var mega_beam_hits: Array[Vector2] = []
 var visual_rotation := 0.0
 var last_move_dir := Vector2.UP
 var ship_glow_phase := 0.0
+var ship_trail: Array[Dictionary] = []
+var ship_trail_timer := 0.0
 var hud_refresh_timer := 0.0
 var core_defense_timer := DEFENSE_BLOCK_INTERVAL
 var core_shockwave_timer := CORE_SHOCKWAVE_INTERVAL
@@ -154,6 +160,7 @@ var layer_label: Label
 var status_label: Label
 var system_label: Label
 var fps_label: Label
+var perf_graph: Control
 var minimap: Control
 var summary_overlay: ColorRect
 var summary_label: RichTextLabel
@@ -242,6 +249,8 @@ func _build_ui() -> void:
         fps_label = Label.new()
         fps_label.add_theme_color_override("font_color", Color(0.68, 0.96, 0.8, 1.0))
         vbox.add_child(fps_label)
+        perf_graph = PERF_GRAPH_SCRIPT.new()
+        vbox.add_child(perf_graph)
 
     summary_overlay = ColorRect.new()
     summary_overlay.anchor_right = 1.0
@@ -324,6 +333,8 @@ func _start_run() -> void:
     mega_gauge = 0
     mega_timer = 0.0
     mega_damage_timer = 0.0
+    ship_trail.clear()
+    ship_trail_timer = 0.0
     pickups.clear()
     destroyed_cells_this_run.clear()
     cores_destroyed_this_run = 0
@@ -396,6 +407,7 @@ func _process(delta: float) -> void:
     if run_finished:
         return
     _update_ship(delta)
+    _update_ship_trail(delta)
     _update_pickups(delta)
     _update_combat(delta)
     _update_drone_visuals(delta)
@@ -409,7 +421,7 @@ func _process(delta: float) -> void:
         _refresh_hud()
     ship_root.global_position = ship_pos
     if fps_label != null:
-        fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
+        _update_perf_debug(delta)
 
 func _update_timers(delta: float) -> void:
     time_left = maxf(0.0, time_left - delta)
@@ -482,6 +494,27 @@ func _update_ship(delta: float) -> void:
         visual_rotation = lerp_angle(visual_rotation, last_move_dir.angle() + PI * 0.5, ROTATION_SPEED * delta * 0.4)
     _resolve_ship_collision()
 
+func _update_ship_trail(delta: float) -> void:
+    if ship_vel.length() > 45.0:
+        ship_trail_timer += delta
+        if ship_trail_timer >= SHIP_TRAIL_INTERVAL:
+            ship_trail_timer = 0.0
+            ship_trail.append({
+                "pos": ship_pos,
+                "rot": visual_rotation,
+                "alpha": 0.55,
+            })
+            if ship_trail.size() > SHIP_TRAIL_MAX:
+                ship_trail.remove_at(0)
+    else:
+        ship_trail_timer = 0.0
+    for idx in range(ship_trail.size() - 1, -1, -1):
+        var trail := ship_trail[idx]
+        trail["alpha"] = maxf(0.0, float(trail.get("alpha", 0.0)) - delta * 2.8)
+        ship_trail[idx] = trail
+        if float(trail.get("alpha", 0.0)) <= 0.02:
+            ship_trail.remove_at(idx)
+
 func _resolve_ship_collision() -> void:
     var my_grid := world_to_grid(ship_pos)
     for dx in range(-1, 2):
@@ -529,20 +562,9 @@ func _update_combat(delta: float) -> void:
         _update_drones(delta)
 
 func _auto_fire_laser() -> void:
-    var candidates: Array[Dictionary] = []
     var range_world := float(runtime_stats.get("attack_radius", 96.0))
-    var grid_range := int(ceil(range_world / BLOCK_SIZE)) + 1
-    var my_grid := world_to_grid(ship_pos)
-    for dx in range(-grid_range, grid_range + 1):
-        for dy in range(-grid_range, grid_range + 1):
-            var check := Vector2i(my_grid.x + dx, my_grid.y + dy)
-            if is_grid_empty(check):
-                continue
-            var block_world := grid_to_world(check)
-            var dist_sq := ship_pos.distance_squared_to(block_world)
-            if dist_sq < range_world * range_world:
-                candidates.append({"pos": check, "dist_sq": dist_sq, "world": block_world})
-    candidates.sort_custom(func(a: Dictionary, b: Dictionary): return float(a.get("dist_sq", INF)) < float(b.get("dist_sq", INF)))
+    var max_targets := maxi(1, int(runtime_stats.get("multi_target", 1)))
+    var candidates := _find_nearest_attack_targets(range_world, max_targets)
     if candidates.is_empty():
         last_attack_target = Vector2.ZERO
         multi_targets.clear()
@@ -556,8 +578,9 @@ func _auto_fire_laser() -> void:
             charged_shot_counter = 0
             last_attack_is_charged = true
 
-    var hit_count := mini(int(runtime_stats.get("multi_target", 1)), candidates.size())
+    var hit_count := mini(max_targets, candidates.size())
     var any_destroyed := false
+    var visuals_dirty := false
     multi_targets.clear()
     for i in range(hit_count):
         var target: Dictionary = candidates[i]
@@ -568,6 +591,7 @@ func _auto_fire_laser() -> void:
         else:
             multi_targets.append(world)
         hit_timers[pos] = HIT_FLASH_DURATION
+        visuals_dirty = true
         var damage := _compute_laser_damage(pos)
         if last_attack_is_charged:
             damage += float(runtime_stats.get("attack_damage", 8.0)) * float(runtime_stats.get("charged_bonus", 2.0))
@@ -575,23 +599,51 @@ func _auto_fire_laser() -> void:
         if bool(runtime_stats.get("crit_chance", 0.0) > 0.0) and rng.randf() < float(runtime_stats.get("crit_chance", 0.0)):
             damage += float(runtime_stats.get("attack_damage", 8.0)) * float(runtime_stats.get("crit_bonus", 2.0))
             last_attack_is_crit = true
-        var result := _damage_block(pos, damage)
+        var result := _damage_block(pos, damage, true)
         if bool(result.get("destroyed", false)):
             any_destroyed = true
         if bool(runtime_stats.get("aoe_enabled", false)):
-            for adj in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+            for adj in CARDINAL_NEIGHBORS:
                 var adj_pos: Vector2i = pos + adj
                 if not is_grid_empty(adj_pos):
                     hit_timers[adj_pos] = HIT_FLASH_DURATION
-                    var aoe_result := _damage_block(adj_pos, damage * 0.3)
+                    visuals_dirty = true
+                    var aoe_result := _damage_block(adj_pos, damage * 0.3, true)
                     if bool(aoe_result.get("destroyed", false)):
                         any_destroyed = true
+    if visuals_dirty:
+        _sync_planet_runtime_views(true)
     attack_visible_timer = 0.08
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER_CRIT if last_attack_is_crit else SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER)
     if any_destroyed:
         _on_combo_hit()
     if bool(runtime_stats.get("chain_lightning_enabled", false)):
         _trigger_chain_lightning(Vector2i(candidates[0].get("pos", Vector2i.ZERO)), Vector2(candidates[0].get("world", Vector2.ZERO)))
+
+func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array[Dictionary]:
+    var candidates: Array[Dictionary] = []
+    var range_sq := range_world * range_world
+    var grid_range := int(ceil(range_world / BLOCK_SIZE)) + 1
+    var my_grid := world_to_grid(ship_pos)
+    for dx in range(-grid_range, grid_range + 1):
+        for dy in range(-grid_range, grid_range + 1):
+            var check := Vector2i(my_grid.x + dx, my_grid.y + dy)
+            if is_grid_empty(check):
+                continue
+            var block_world := grid_to_world(check)
+            var dist_sq := ship_pos.distance_squared_to(block_world)
+            if dist_sq >= range_sq:
+                continue
+            var candidate := {"pos": check, "dist_sq": dist_sq, "world": block_world}
+            var insert_idx := candidates.size()
+            while insert_idx > 0 and dist_sq < float(candidates[insert_idx - 1].get("dist_sq", INF)):
+                insert_idx -= 1
+            if insert_idx >= max_targets and candidates.size() >= max_targets:
+                continue
+            candidates.insert(insert_idx, candidate)
+            if candidates.size() > max_targets:
+                candidates.resize(max_targets)
+    return candidates
 
 func _update_drones(delta: float) -> void:
     _ensure_drone_state()
@@ -648,13 +700,11 @@ func _compute_laser_damage(pos: Vector2i) -> float:
             damage *= 1.5
     return damage
 
-func _damage_block(pos: Vector2i, damage: float) -> Dictionary:
+func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false) -> Dictionary:
     if is_grid_empty(pos):
         return {}
     var block_before: Dictionary = blocks.get(pos, {})
     var result: Dictionary = planet_data.damage_block(pos, damage, false, _core_unlocks_center())
-    blocks = planet_data.blocks
-    exposed_edges = planet_data.exposed_edges
     if bool(result.get("destroyed", false)):
         damaged_cells.erase(pos)
         persistent_destroyed_count += 1
@@ -665,7 +715,7 @@ func _damage_block(pos: Vector2i, damage: float) -> Dictionary:
         var world := grid_to_world(pos)
         _spawn_pickup(world, block_before)
         if int(result.get("type", BlockType.NORMAL)) == BlockType.ELECTRIC and bool(runtime_stats.get("electric_enabled", false)):
-            _trigger_electric_chain(pos, world)
+            _trigger_electric_chain(pos, world, defer_visual_sync)
         if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE and bool(result.get("final_core", false)):
             boss_defeated = true
             _finish_run(true, "The final core ruptured.")
@@ -685,11 +735,12 @@ func _damage_block(pos: Vector2i, damage: float) -> Dictionary:
             overdrive_kills = 0
             overdrive_timer = float(runtime_stats.get("overdrive_duration", 3.0))
     else:
-        damaged_cells[pos] = float(blocks.get(pos, {}).get("hp", 1.0))
-    planet_renderer.mark_dirty()
+        damaged_cells[pos] = float(planet_data.blocks.get(pos, {}).get("hp", 1.0))
+    if not defer_visual_sync:
+        _sync_planet_runtime_views(true)
     return result
 
-func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2) -> void:
+func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_visual_sync: bool = false) -> void:
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC, -8.0, -0.05)
     _on_combo_hit()
     var results: Array = planet_data.electric_chain(
@@ -700,8 +751,6 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2) -> voi
         0,
         _core_unlocks_center()
     )
-    blocks = planet_data.blocks
-    exposed_edges = planet_data.exposed_edges
     for result in results:
         var next_pos: Vector2i = result.get("pos", Vector2i.ZERO)
         var next_world := grid_to_world(next_pos)
@@ -721,7 +770,8 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2) -> voi
                 boss_defeated = true
                 _finish_run(true, "The final core ruptured.")
                 return
-    planet_renderer.mark_dirty()
+    if not defer_visual_sync:
+        _sync_planet_runtime_views(true)
 
 func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void:
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC_CRIT, -10.0, -0.04)
@@ -729,8 +779,11 @@ func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void
     var current_world := start_world
     var visited := {start_pos: true}
     var jumps := int(runtime_stats.get("chain_lightning_jumps", 3))
+    var visuals_dirty := false
     for _j in range(jumps):
-        var weighted: Array[Dictionary] = []
+        var total_weight := 0
+        var chosen_pos := Vector2i.ZERO
+        var chosen_world := Vector2.ZERO
         for dx in range(-4, 5):
             for dy in range(-4, 5):
                 var dist: int = abs(dx) + abs(dy)
@@ -740,26 +793,31 @@ func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void
                 if is_grid_empty(check) or visited.has(check):
                     continue
                 var weight: int = 5 - dist
-                for _w in range(weight):
-                    weighted.append({"pos": check, "world": grid_to_world(check)})
-        if weighted.is_empty():
+                total_weight += weight
+                if rng.randi_range(1, total_weight) <= weight:
+                    chosen_pos = check
+                    chosen_world = grid_to_world(check)
+        if total_weight <= 0:
             break
-        var chosen: Dictionary = weighted[rng.randi() % weighted.size()]
-        var best_pos: Vector2i = chosen.get("pos", Vector2i.ZERO)
-        var best_world: Vector2 = chosen.get("world", Vector2.ZERO)
+        var best_pos := chosen_pos
+        var best_world := chosen_world
         chain_arcs.append({"from": current_world, "to": best_world, "timer": CHAIN_ARC_DURATION})
         hit_timers[best_pos] = HIT_FLASH_DURATION
+        visuals_dirty = true
         var damage := _compute_laser_damage(best_pos) * 0.5
-        _damage_block(best_pos, damage)
+        _damage_block(best_pos, damage, true)
         visited[best_pos] = true
         current_pos = best_pos
         current_world = best_world
+    if visuals_dirty:
+        _sync_planet_runtime_views(true)
 
 func _trigger_shockwave() -> void:
     shockwave_firing = true
     var my_grid := world_to_grid(ship_pos)
     var radius_cells := int(runtime_stats.get("shockwave_radius_cells", 6))
     var range_sq := radius_cells * radius_cells
+    var changed_any := false
     for dx in range(-radius_cells, radius_cells + 1):
         for dy in range(-radius_cells, radius_cells + 1):
             if dx * dx + dy * dy > range_sq:
@@ -770,14 +828,14 @@ func _trigger_shockwave() -> void:
             if rng.randf() < 0.08:
                 if planet_data.convert_to_gold(pos):
                     gold_convert_timers[pos] = GOLD_CONVERT_DURATION
-    blocks = planet_data.blocks
+                    changed_any = true
     shockwave_firing = false
     var max_radius := float(radius_cells) * BLOCK_SIZE
     if shockwave_rings.size() >= MAX_SHOCKWAVE_RINGS:
         shockwave_rings.remove_at(0)
     shockwave_rings.append({"radius": 5.0, "max_radius": max_radius, "alpha": 0.8})
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.SUPERNOVA, -10.0, -0.1)
-    planet_renderer.mark_dirty()
+    _sync_planet_runtime_views(changed_any)
 
 func _update_mega_beam(delta: float) -> void:
     var mouse_world := get_global_mouse_position()
@@ -785,11 +843,16 @@ func _update_mega_beam(delta: float) -> void:
     if mega_direction.length() < 0.01:
         mega_direction = Vector2.UP
     mega_beam_hits.clear()
-    var step_size := BLOCK_SIZE * 0.4
     var max_dist := float(runtime_stats.get("attack_radius", 96.0)) * 1.5
     mega_beam_end = ship_pos + mega_direction * max_dist
+    mega_damage_timer += delta
+    if mega_damage_timer < MEGA_DAMAGE_INTERVAL:
+        return
+    mega_damage_timer = 0.0
+    var step_size := BLOCK_SIZE * 0.4
     var steps := int(max_dist / step_size)
     var visited := {}
+    var visuals_dirty := false
     for step in range(steps):
         var point := ship_pos + mega_direction * (step_size * float(step + 1))
         var cell := world_to_grid(point)
@@ -798,18 +861,11 @@ func _update_mega_beam(delta: float) -> void:
         visited[cell] = true
         if is_grid_empty(cell):
             continue
-        mega_beam_hits.append(grid_to_world(cell))
-    mega_damage_timer += delta
-    if mega_damage_timer < MEGA_DAMAGE_INTERVAL:
-        return
-    mega_damage_timer = 0.0
-    var damage := 0.0
-    for hit_world in mega_beam_hits:
-        var cell := world_to_grid(hit_world)
-        if is_grid_empty(cell):
-            continue
-        damage = _compute_laser_damage(cell)
-        _damage_block(cell, damage)
+        visuals_dirty = true
+        var damage := _compute_laser_damage(cell)
+        _damage_block(cell, damage, true)
+    if visuals_dirty:
+        _sync_planet_runtime_views(true)
 
 func _spawn_pickup(world_pos: Vector2, block: Dictionary) -> void:
     var payout := float(block.get("resource", 1.0)) + float(runtime_stats.get("resource_flat", 0.0))
@@ -856,6 +912,12 @@ func _collect_pickup(money: int, cargo: int) -> void:
 func _update_drone_visuals(_delta: float) -> void:
     if mega_timer <= 0.0:
         mega_beam_hits.clear()
+
+func _sync_planet_runtime_views(mark_renderer_dirty: bool = false) -> void:
+    blocks = planet_data.blocks
+    exposed_edges = planet_data.exposed_edges
+    if mark_renderer_dirty:
+        planet_renderer.mark_dirty()
 
 func _reset_drone_state() -> void:
     drone_positions.clear()
@@ -1034,19 +1096,37 @@ func _refresh_hud() -> void:
     status_label.text = "Barriers %d  |  Drones %d  |  Mega %d/%d  |  Alive Cores %d/%d" % [barriers_left, int(runtime_stats.get("drone_count", 0)), mega_gauge, int(runtime_stats.get("mega_gauge_need", 30)), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0]
     system_label.text = "Combo %d  |  Overdrive %.1fs  |  Core shards %d  |  Move: Mouse / WASD" % [current_combo, overdrive_timer, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run]
     if fps_label != null:
-        var season_lines: Array[String] = []
-        var damage_mults: Array = runtime_stats.get("season_damage_mults", [1.0, 1.0, 1.0, 1.0])
-        var zone_labels: Array[String] = ["Spring", "Summer", "Autumn", "Winter"]
-        for idx in range(mini(4, damage_mults.size())):
-            var mult: float = float(damage_mults[idx])
-            if mult <= 1.0:
-                continue
-            var zone_name: String = zone_labels[idx]
-            season_lines.append("%s %+d%%" % [zone_name.left(2), int(round((mult - 1.0) * 100.0))])
-        if season_lines.is_empty():
-            fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
-        else:
-            fps_label.text = "FPS: %d  |  Debug Dmg: %s" % [Engine.get_frames_per_second(), ", ".join(season_lines)]
+        _update_perf_debug(0.0)
+
+func _update_perf_debug(frame_delta: float) -> void:
+    if fps_label == null:
+        return
+    var frame_ms := frame_delta * 1000.0 if frame_delta > 0.0 else (1000.0 / maxf(float(max(1, Engine.get_frames_per_second())), 1.0))
+    var process_ms := float(Performance.get_monitor(Performance.TIME_PROCESS)) * 1000.0
+    var physics_ms := float(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)) * 1000.0
+    if perf_graph != null and perf_graph.has_method("push_sample"):
+        perf_graph.call("push_sample", frame_ms, process_ms, physics_ms)
+    var limit_hint: String = str(perf_graph.call("get_hint_text")) if perf_graph != null and perf_graph.has_method("get_hint_text") else "Unknown"
+    var season_lines: Array[String] = []
+    var damage_mults: Array = runtime_stats.get("season_damage_mults", [1.0, 1.0, 1.0, 1.0])
+    var zone_labels: Array[String] = ["Spring", "Summer", "Autumn", "Winter"]
+    for idx in range(mini(4, damage_mults.size())):
+        var mult: float = float(damage_mults[idx])
+        if mult <= 1.0:
+            continue
+        var zone_name: String = zone_labels[idx]
+        season_lines.append("%s %+d%%" % [zone_name.left(2), int(round((mult - 1.0) * 100.0))])
+    var base_text := "FPS: %d  |  Frame %.1fms  |  CPU %.1fms  |  Phys %.1fms  |  %s" % [
+        Engine.get_frames_per_second(),
+        frame_ms,
+        process_ms,
+        physics_ms,
+        str(limit_hint)
+    ]
+    if season_lines.is_empty():
+        fps_label.text = base_text
+    else:
+        fps_label.text = "%s  |  Debug Dmg: %s" % [base_text, ", ".join(season_lines)]
 
 func _return_to_upgrades() -> void:
     _save_planet_snapshot()
