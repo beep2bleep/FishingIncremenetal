@@ -2121,7 +2121,6 @@ func _on_core_destroyed(core: Dictionary) -> void:
     cores_destroyed_this_run += 1
     core_currency_earned_this_run += 1
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.PLANET_BREAK, -2.0, -0.08)
-    planet_renderer.mark_dirty()
     if int(core.get("id", -1)) == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
         boss_defeated = true
 
