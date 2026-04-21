@@ -210,6 +210,37 @@ var pickups_spawned_this_frame := 0
 var _last_block_break_audio_ms := -100000
 var _last_core_break_audio_ms := -100000
 var _perf_probe_enabled := false
+const PERF_PROBE_KEYS := [
+    "process_frame",
+    "update_combat",
+    "update_pickups",
+    "update_core_attacks",
+    "update_perf_debug",
+    "auto_fire_laser",
+    "update_mega_beam",
+    "damage_block",
+    "renderer_draw",
+    "renderer_bg",
+    "renderer_fill",
+    "renderer_fill_resize",
+    "renderer_fill_rebuild",
+    "renderer_fill_upload",
+    "renderer_edge",
+    "renderer_blocks",
+    "renderer_overlays",
+    "perf_graph_draw",
+    "ship_draw",
+]
+const RENDERER_PROBE_KEYS := [
+    "renderer_bg",
+    "renderer_fill",
+    "renderer_fill_resize",
+    "renderer_fill_rebuild",
+    "renderer_fill_upload",
+    "renderer_edge",
+    "renderer_blocks",
+    "renderer_overlays",
+]
 var _perf_probe_history := {
     "process_frame": [],
     "update_combat": [],
@@ -220,6 +251,14 @@ var _perf_probe_history := {
     "update_mega_beam": [],
     "damage_block": [],
     "renderer_draw": [],
+    "renderer_bg": [],
+    "renderer_fill": [],
+    "renderer_fill_resize": [],
+    "renderer_fill_rebuild": [],
+    "renderer_fill_upload": [],
+    "renderer_edge": [],
+    "renderer_blocks": [],
+    "renderer_overlays": [],
     "perf_graph_draw": [],
     "ship_draw": [],
 }
@@ -233,6 +272,14 @@ var _perf_probe_labels := {
     "update_mega_beam": "_update_mega_beam",
     "damage_block": "_damage_block",
     "renderer_draw": "renderer _draw",
+    "renderer_bg": "renderer bg",
+    "renderer_fill": "renderer fill",
+    "renderer_fill_resize": "renderer fill resize",
+    "renderer_fill_rebuild": "renderer fill rebuild",
+    "renderer_fill_upload": "renderer fill upload",
+    "renderer_edge": "renderer edge",
+    "renderer_blocks": "renderer blocks",
+    "renderer_overlays": "renderer overlays",
     "perf_graph_draw": "perf graph _draw",
     "ship_draw": "ship _draw",
 }
@@ -246,6 +293,14 @@ var _perf_probe_last_samples := {
     "update_mega_beam": 0.0,
     "damage_block": 0.0,
     "renderer_draw": 0.0,
+    "renderer_bg": 0.0,
+    "renderer_fill": 0.0,
+    "renderer_fill_resize": 0.0,
+    "renderer_fill_rebuild": 0.0,
+    "renderer_fill_upload": 0.0,
+    "renderer_edge": 0.0,
+    "renderer_blocks": 0.0,
+    "renderer_overlays": 0.0,
     "perf_graph_draw": 0.0,
     "ship_draw": 0.0,
 }
@@ -259,6 +314,14 @@ var _run_perf_peak_samples := {
     "update_mega_beam": 0.0,
     "damage_block": 0.0,
     "renderer_draw": 0.0,
+    "renderer_bg": 0.0,
+    "renderer_fill": 0.0,
+    "renderer_fill_resize": 0.0,
+    "renderer_fill_rebuild": 0.0,
+    "renderer_fill_upload": 0.0,
+    "renderer_edge": 0.0,
+    "renderer_blocks": 0.0,
+    "renderer_overlays": 0.0,
     "perf_graph_draw": 0.0,
     "ship_draw": 0.0,
 }
@@ -289,6 +352,9 @@ func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and not event.echo:
         if event.keycode == KEY_M:
             cycle_render_detail_mode()
+            get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_K:
+            _finish_run(false, "Debug abort (K).")
             get_viewport().set_input_as_handled()
         elif event.keycode == KEY_O:
             cycle_planet_outline_mode()
@@ -1021,19 +1087,26 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
     elif load_tier >= 1:
         max_results = 4
     var destroyed_any := false
-    for result_idx in range(mini(results.size(), max_results)):
+    var fill_positions: Array[Vector2i] = []
+    var requires_full_fill_rebuild := false
+    for result_idx in range(results.size()):
         var result: Dictionary = results[result_idx]
         var next_pos: Vector2i = result.get("pos", Vector2i.ZERO)
         var next_world := grid_to_world(next_pos)
-        if electric_arcs.size() < MAX_ACTIVE_ELECTRIC_ARCS:
+        if result_idx < max_results and electric_arcs.size() < MAX_ACTIVE_ELECTRIC_ARCS:
             electric_arcs.append({"from": origin_world, "to": next_world, "timer": ARC_DURATION})
-        _mark_hit_flash(next_pos)
+        if result_idx < max_results:
+            _mark_hit_flash(next_pos)
         if bool(result.get("destroyed", false)):
             destroyed_any = true
             persistent_destroyed_count += 1
             destroyed_cells_this_run[next_pos] = true
             nodes_mined += 1
             overdrive_kills += 1
+            if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
+                requires_full_fill_rebuild = true
+            else:
+                fill_positions.append(next_pos)
             _spawn_pickup(next_world, {
                 "resource": result.get("resource", 0.0),
                 "type": result.get("type", BlockType.NORMAL),
@@ -1043,6 +1116,11 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
                 boss_defeated = true
                 _finish_run(true, "The final core ruptured.")
                 return
+    if planet_renderer != null:
+        if requires_full_fill_rebuild:
+            planet_renderer.mark_dirty(true)
+        elif not fill_positions.is_empty():
+            planet_renderer.queue_fill_updates(fill_positions)
     if not defer_visual_sync:
         _sync_planet_runtime_views(true, false)
 
@@ -1503,9 +1581,14 @@ func _push_perf_probe_sample(key: String, duration_ms: float) -> void:
     _perf_probe_last_samples[key] = clamped_duration
     _run_perf_peak_samples[key] = maxf(float(_run_perf_peak_samples.get(key, 0.0)), clamped_duration)
 
+func clear_perf_probe_sample(key: String) -> void:
+    if not _perf_probe_last_samples.has(key):
+        return
+    _perf_probe_last_samples[key] = 0.0
+
 func _build_perf_probe_text() -> String:
     var lines: Array[String] = ["Hot Paths Avg | Worst 1%"]
-    for key in ["process_frame", "update_combat", "update_pickups", "update_core_attacks", "update_perf_debug", "auto_fire_laser", "update_mega_beam", "damage_block", "renderer_draw", "perf_graph_draw", "ship_draw"]:
+    for key in PERF_PROBE_KEYS:
         var samples: Array = _perf_probe_history.get(key, [])
         var avg_ms := _sample_average_ms(samples)
         var p99_ms := _sample_worst_one_percent_ms(samples)
@@ -1656,7 +1739,7 @@ func _build_combat_perf_extremes_text() -> String:
 
 func _build_run_perf_peak_probe_text() -> String:
     var lines: Array[String] = ["Run Probe Peaks"]
-    for key in ["process_frame", "update_combat", "update_pickups", "update_core_attacks", "update_perf_debug", "auto_fire_laser", "update_mega_beam", "damage_block", "renderer_draw", "perf_graph_draw", "ship_draw"]:
+    for key in PERF_PROBE_KEYS:
         lines.append("%s  peak %.3fms" % [
             str(_perf_probe_labels.get(key, key)),
             float(_run_perf_peak_samples.get(key, 0.0)),
@@ -1692,6 +1775,18 @@ func _build_run_perf_worst_snapshot_text() -> String:
         float(_run_perf_worst_snapshot.get("damage_block_ms", 0.0)),
         float(_run_perf_worst_snapshot.get("renderer_draw_ms", 0.0)),
         float(_run_perf_worst_snapshot.get("ship_draw_ms", 0.0)),
+    ])
+    lines.append("Worst Renderer Paths  bg %.3fms  fill %.3fms  edge %.3fms  blocks %.3fms  overlays %.3fms" % [
+        float(_run_perf_worst_snapshot.get("renderer_bg_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("renderer_fill_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("renderer_edge_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("renderer_blocks_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("renderer_overlays_ms", 0.0)),
+    ])
+    lines.append("Worst Fill Paths  resize %.3fms  rebuild %.3fms  upload %.3fms" % [
+        float(_run_perf_worst_snapshot.get("renderer_fill_resize_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("renderer_fill_rebuild_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("renderer_fill_upload_ms", 0.0)),
     ])
     lines.append("Worst Debug Paths  perf %.3fms  graph %.3fms" % [
         float(_run_perf_worst_snapshot.get("update_perf_debug_ms", 0.0)),
@@ -1732,6 +1827,18 @@ func _build_combat_perf_worst_snapshot_text() -> String:
         float(_combat_perf_worst_snapshot.get("damage_block_ms", 0.0)),
         float(_combat_perf_worst_snapshot.get("renderer_draw_ms", 0.0)),
         float(_combat_perf_worst_snapshot.get("ship_draw_ms", 0.0)),
+    ])
+    lines.append("Combat Worst Renderer  bg %.3fms  fill %.3fms  edge %.3fms  blocks %.3fms  overlays %.3fms" % [
+        float(_combat_perf_worst_snapshot.get("renderer_bg_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("renderer_fill_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("renderer_edge_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("renderer_blocks_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("renderer_overlays_ms", 0.0)),
+    ])
+    lines.append("Combat Worst Fill  resize %.3fms  rebuild %.3fms  upload %.3fms" % [
+        float(_combat_perf_worst_snapshot.get("renderer_fill_resize_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("renderer_fill_rebuild_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("renderer_fill_upload_ms", 0.0)),
     ])
     lines.append("Combat Worst Debug  perf %.3fms  graph %.3fms" % [
         float(_combat_perf_worst_snapshot.get("update_perf_debug_ms", 0.0)),
@@ -1789,6 +1896,14 @@ func _make_perf_snapshot(fps_now: int, frame_ms: float, cpu_ms: float, phys_ms: 
         "update_mega_beam_ms": float(_perf_probe_last_samples.get("update_mega_beam", 0.0)),
         "damage_block_ms": float(_perf_probe_last_samples.get("damage_block", 0.0)),
         "renderer_draw_ms": float(_perf_probe_last_samples.get("renderer_draw", 0.0)),
+        "renderer_bg_ms": float(_perf_probe_last_samples.get("renderer_bg", 0.0)),
+        "renderer_fill_ms": float(_perf_probe_last_samples.get("renderer_fill", 0.0)),
+        "renderer_fill_resize_ms": float(_perf_probe_last_samples.get("renderer_fill_resize", 0.0)),
+        "renderer_fill_rebuild_ms": float(_perf_probe_last_samples.get("renderer_fill_rebuild", 0.0)),
+        "renderer_fill_upload_ms": float(_perf_probe_last_samples.get("renderer_fill_upload", 0.0)),
+        "renderer_edge_ms": float(_perf_probe_last_samples.get("renderer_edge", 0.0)),
+        "renderer_blocks_ms": float(_perf_probe_last_samples.get("renderer_blocks", 0.0)),
+        "renderer_overlays_ms": float(_perf_probe_last_samples.get("renderer_overlays", 0.0)),
         "perf_graph_draw_ms": float(_perf_probe_last_samples.get("perf_graph_draw", 0.0)),
         "ship_draw_ms": float(_perf_probe_last_samples.get("ship_draw", 0.0)),
         "pickups": pickups.size(),
@@ -2268,13 +2383,48 @@ func _trigger_ship_shield_hit(hit_dir: Vector2) -> bool:
     if move_dir.length() < 0.01:
         move_dir = Vector2.UP
     var bounce_dir := -move_dir
-    ship_pos += bounce_dir * SHIELD_HIT_BOUNCE_DISTANCE
+    var bounced_pos := ship_pos + bounce_dir * SHIELD_HIT_BOUNCE_DISTANCE
+    bounced_pos = _resolve_shield_bounce_destination(bounced_pos)
+    ship_pos = bounced_pos
     ship_vel = Vector2.ZERO
     if ship_pos.length() > 0.0:
         var max_radius := (float(planet_radius_cells) + 10.0) * BLOCK_SIZE
         ship_pos = ship_pos.limit_length(max_radius)
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK, -10.0, -0.08)
     return true
+
+func _resolve_shield_bounce_destination(target_world: Vector2) -> Vector2:
+    var target_grid := world_to_grid(target_world)
+    if is_grid_empty(target_grid):
+        return target_world
+    var fallback_world := _find_closest_empty_world_on_screen(target_world)
+    if fallback_world != Vector2.INF:
+        return fallback_world
+    return target_world
+
+func _find_closest_empty_world_on_screen(preferred_world: Vector2) -> Vector2:
+    var zoom := camera.zoom if camera != null else Vector2.ONE
+    var zoom_x := maxf(absf(zoom.x), 0.001)
+    var zoom_y := maxf(absf(zoom.y), 0.001)
+    var viewport_size := get_viewport_rect().size
+    var half_size := Vector2(viewport_size.x * 0.5 / zoom_x, viewport_size.y * 0.5 / zoom_y)
+    var visible_min_world := camera_pos - half_size
+    var visible_max_world := camera_pos + half_size
+    var min_grid := world_to_grid(visible_min_world - Vector2.ONE * (BLOCK_SIZE * 0.5))
+    var max_grid := world_to_grid(visible_max_world + Vector2.ONE * (BLOCK_SIZE * 0.5))
+    var best_world := Vector2.INF
+    var best_dist_sq := INF
+    for x in range(min_grid.x, max_grid.x + 1):
+        for y in range(min_grid.y, max_grid.y + 1):
+            var grid := Vector2i(x, y)
+            if not is_grid_empty(grid):
+                continue
+            var world := grid_to_world(grid)
+            var dist_sq := preferred_world.distance_squared_to(world)
+            if dist_sq < best_dist_sq:
+                best_dist_sq = dist_sq
+                best_world = world
+    return best_world
 
 func _has_core_upgrade(upgrade_id: String) -> bool:
     var purchased: Array = persistent_data.get("purchased_core_upgrades", [])

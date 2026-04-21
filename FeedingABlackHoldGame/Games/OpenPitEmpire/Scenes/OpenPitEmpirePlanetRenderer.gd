@@ -42,12 +42,13 @@ const LOCAL_SHOCKWAVE_VISUAL_RADIUS := 96.0
 const DRAW_CACHE_PADDING_CELLS := 8
 const FILL_CACHE_PADDING_CELLS := 14
 const FILL_CACHE_ALIGN_CELLS := 8
-const OUTLINE_CACHE_PADDING_CELLS := 2
+const REDUCED_FILL_CACHE_ALIGN_CELLS := 16
+const OUTLINE_CACHE_PADDING_CELLS := 1
+const OUTLINE_CACHE_ALIGN_CELLS := 4
 const GOLD_EFFECT_REDRAW_INTERVAL := 0.05
-const OUTLINE_REBUILD_INTERVAL := 0.12
-const HEAVY_FILL_UPLOAD_INTERVAL := 0.04
-const ULTRA_FILL_UPLOAD_INTERVAL := 0.08
-const FILL_UPLOAD_FORCE_COUNT := 32
+const REDUCED_FILL_UPLOAD_INTERVAL := 0.08
+const REDUCED_FILL_FORCE_UPLOAD_UPDATES := 48
+const OUTLINE_REBUILD_INTERVAL := 0.2
 const HEAVY_OUTLINE_WIDTH_PX := 8
 const ULTRA_OUTLINE_WIDTH_PX := 8
 const HEAVY_OUTLINE_ALPHA := 0.62
@@ -111,20 +112,15 @@ func mark_dirty(rebuild_fill: bool = true) -> void:
 
 func queue_fill_update(grid: Vector2i) -> void:
     _pending_fill_updates[grid] = true
-    var affects_visible_fill := _is_grid_in_current_fill_cache(grid)
-    var affects_visible_edge := _mark_edge_dirty_if_visible(grid)
-    if affects_visible_fill or affects_visible_edge:
-        _force_redraw = true
+    _force_redraw = true
+    _edge_dirty = true
 
 func queue_fill_updates(positions: Array) -> void:
-    var needs_redraw := false
     for pos_variant in positions:
-        var grid := Vector2i(pos_variant)
-        _pending_fill_updates[grid] = true
-        if _is_grid_in_current_fill_cache(grid) or _mark_edge_dirty_if_visible(grid):
-            needs_redraw = true
-    if needs_redraw:
+        _pending_fill_updates[Vector2i(pos_variant)] = true
+    if not positions.is_empty():
         _force_redraw = true
+        _edge_dirty = true
 
 func _process(_delta: float) -> void:
     _time_elapsed += _delta
@@ -149,6 +145,8 @@ func _draw() -> void:
     if scene_ref == null:
         return
     var perf_start_us := scene_ref.perf_probe_begin()
+    for key in ["renderer_bg", "renderer_fill", "renderer_fill_resize", "renderer_fill_rebuild", "renderer_fill_upload", "renderer_edge", "renderer_blocks", "renderer_overlays"]:
+        scene_ref.clear_perf_probe_sample(key)
     var canvas_transform := get_canvas_transform()
     var viewport_size := get_viewport_rect().size
     var cam_scale := canvas_transform.get_scale()
@@ -164,16 +162,6 @@ func _draw() -> void:
     var effect_load: int = scene_ref.hit_timers.size() + scene_ref.electric_arcs.size() + scene_ref.chain_arcs.size() + scene_ref.drone_beams.size()
     var reduce_detail := visible_cell_budget >= HEAVY_VISIBLE_GRID_CELLS or effect_load >= HEAVY_EFFECT_LOAD or scene_ref.mega_timer > 0.0
     var ultra_reduce_detail := visible_cell_budget >= VERY_HEAVY_VISIBLE_GRID_CELLS or effect_load >= VERY_HEAVY_EFFECT_LOAD
-    match int(scene_ref.render_detail_mode):
-        int(scene_ref.RenderDetailMode.FULL):
-            reduce_detail = false
-            ultra_reduce_detail = false
-        int(scene_ref.RenderDetailMode.HEAVY):
-            reduce_detail = true
-            ultra_reduce_detail = false
-        int(scene_ref.RenderDetailMode.ULTRA):
-            reduce_detail = true
-            ultra_reduce_detail = true
     var margin := 0.0 if reduce_detail or ultra_reduce_detail else base_margin
     var visible_grid_min := scene_ref.world_to_grid(top_left - Vector2(margin, margin))
     var visible_grid_max := scene_ref.world_to_grid(bottom_right + Vector2(margin, margin))
@@ -185,15 +173,16 @@ func _draw() -> void:
     _last_reduce_detail = reduce_detail
     _last_ultra_reduce_detail = ultra_reduce_detail
     var fill_padding_cells := 0 if reduce_detail or ultra_reduce_detail else FILL_CACHE_PADDING_CELLS
+    var fill_align_cells := REDUCED_FILL_CACHE_ALIGN_CELLS if reduce_detail or ultra_reduce_detail else FILL_CACHE_ALIGN_CELLS
     var padded_grid_min := visible_grid_min - Vector2i(fill_padding_cells, fill_padding_cells)
     var padded_grid_max := visible_grid_max + Vector2i(fill_padding_cells, fill_padding_cells)
     var cache_grid_min := Vector2i(
-        _floor_to_step(padded_grid_min.x, FILL_CACHE_ALIGN_CELLS),
-        _floor_to_step(padded_grid_min.y, FILL_CACHE_ALIGN_CELLS)
+        _floor_to_step(padded_grid_min.x, fill_align_cells),
+        _floor_to_step(padded_grid_min.y, fill_align_cells)
     )
     var cache_grid_max := Vector2i(
-        _ceil_to_step_inclusive(padded_grid_max.x, FILL_CACHE_ALIGN_CELLS),
-        _ceil_to_step_inclusive(padded_grid_max.y, FILL_CACHE_ALIGN_CELLS)
+        _ceil_to_step_inclusive(padded_grid_max.x, fill_align_cells),
+        _ceil_to_step_inclusive(padded_grid_max.y, fill_align_cells)
     )
     var background_rect := Rect2(
         Vector2(float(cache_grid_min.x) * scene_ref.BLOCK_SIZE, float(cache_grid_min.y) * scene_ref.BLOCK_SIZE),
@@ -202,6 +191,7 @@ func _draw() -> void:
             float(cache_grid_max.y - cache_grid_min.y + 1) * scene_ref.BLOCK_SIZE
         )
     )
+    var section_start_us := scene_ref.perf_probe_begin()
     draw_rect(background_rect, SPACE_BG, true)
     if ultra_reduce_detail:
         _draw_background_stars(true, true)
@@ -210,6 +200,7 @@ func _draw() -> void:
         _draw_core_zones()
     else:
         _draw_background_stars(true)
+    scene_ref.perf_probe_end("renderer_bg", section_start_us)
     var cache_grid_w: int = cache_grid_max.x - cache_grid_min.x + 1
     var cache_grid_h: int = cache_grid_max.y - cache_grid_min.y + 1
     var fill_needs_rebuild := _fill_dirty or _fill_grid_origin != cache_grid_min or _fill_grid_size != Vector2i(cache_grid_w, cache_grid_h)
@@ -217,13 +208,17 @@ func _draw() -> void:
     _draw_grid_max = cache_grid_max
     _last_cam_origin = canvas_transform.origin
 
+    section_start_us = scene_ref.perf_probe_begin()
     if _fill_image == null or _fill_grid_size.x != cache_grid_w or _fill_grid_size.y != cache_grid_h:
+        var fill_resize_start_us := scene_ref.perf_probe_begin()
         _fill_image = Image.create(cache_grid_w, cache_grid_h, false, Image.FORMAT_RGBA8)
         _fill_grid_size = Vector2i(cache_grid_w, cache_grid_h)
         _fill_grid_origin = cache_grid_min
         _fill_texture = null
         fill_needs_rebuild = true
+        scene_ref.perf_probe_end("renderer_fill_resize", fill_resize_start_us)
     if fill_needs_rebuild:
+        var fill_rebuild_start_us := scene_ref.perf_probe_begin()
         _fill_grid_origin = cache_grid_min
         _fill_image.fill(Color.TRANSPARENT)
         for x in range(cache_grid_min.x, cache_grid_max.x + 1):
@@ -234,18 +229,28 @@ func _draw() -> void:
                     continue
                 var colors: Dictionary = _get_block_palette(block)
                 _fill_image.set_pixel(x - cache_grid_min.x, y - cache_grid_min.y, colors.get("fill", Color.WHITE))
+        scene_ref.perf_probe_end("renderer_fill_rebuild", fill_rebuild_start_us)
+        var fill_upload_start_us := scene_ref.perf_probe_begin()
         if _fill_texture == null:
             _fill_texture = ImageTexture.create_from_image(_fill_image)
         else:
             _fill_texture.update(_fill_image)
+        scene_ref.perf_probe_end("renderer_fill_upload", fill_upload_start_us)
         _fill_dirty = false
         _pending_fill_updates.clear()
-    elif _should_apply_pending_fill_updates(reduce_detail, ultra_reduce_detail) and _apply_pending_fill_updates(cache_grid_min, cache_grid_max):
-        if _fill_texture == null:
-            _fill_texture = ImageTexture.create_from_image(_fill_image)
-        else:
-            _fill_texture.update(_fill_image)
         _fill_upload_accum = 0.0
+    else:
+        var should_upload_pending_fill := true
+        if reduce_detail or ultra_reduce_detail:
+            should_upload_pending_fill = _fill_upload_accum >= REDUCED_FILL_UPLOAD_INTERVAL or _pending_fill_updates.size() >= REDUCED_FILL_FORCE_UPLOAD_UPDATES
+        if should_upload_pending_fill and _apply_pending_fill_updates(cache_grid_min, cache_grid_max):
+            var fill_upload_start_us := scene_ref.perf_probe_begin()
+            if _fill_texture == null:
+                _fill_texture = ImageTexture.create_from_image(_fill_image)
+            else:
+                _fill_texture.update(_fill_image)
+            scene_ref.perf_probe_end("renderer_fill_upload", fill_upload_start_us)
+            _fill_upload_accum = 0.0
     var tex_rect := Rect2(
         float(cache_grid_min.x) * scene_ref.BLOCK_SIZE,
         float(cache_grid_min.y) * scene_ref.BLOCK_SIZE,
@@ -254,9 +259,12 @@ func _draw() -> void:
     )
     if _fill_texture != null:
         draw_texture_rect(_fill_texture, tex_rect, false)
+    scene_ref.perf_probe_end("renderer_fill", section_start_us)
+
     if int(scene_ref.planet_outline_mode) != int(scene_ref.OutlineMode.OFF) and (reduce_detail or ultra_reduce_detail):
+        section_start_us = scene_ref.perf_probe_begin()
         var outline_radius_cells := maxi(1, int(scene_ref.planet_outline_radius_cells))
-        var outline_center_grid := scene_ref.world_to_grid(scene_ref.camera_pos)
+        var outline_center_grid := _get_outline_cache_center_grid()
         var edge_grid_min := Vector2i(
             outline_center_grid.x - outline_radius_cells - OUTLINE_CACHE_PADDING_CELLS,
             outline_center_grid.y - outline_radius_cells - OUTLINE_CACHE_PADDING_CELLS
@@ -277,8 +285,10 @@ func _draw() -> void:
                 float(edge_grid_size.y) * scene_ref.BLOCK_SIZE
             )
             draw_texture_rect(_edge_texture, edge_tex_rect, false)
+        scene_ref.perf_probe_end("renderer_edge", section_start_us)
 
     var gold_pulse_t := Time.get_ticks_msec() * 0.001 * 1.8
+    section_start_us = scene_ref.perf_probe_begin()
     if ultra_reduce_detail:
         _draw_active_block_effects(visible_grid_min, visible_grid_max)
     else:
@@ -327,7 +337,12 @@ func _draw() -> void:
                     draw_line(Vector2(rx, ry + rh), Vector2(rx, ry + rh - m), gc, 1.0)
                     draw_line(Vector2(rx + rw, ry + rh), Vector2(rx + rw - m, ry + rh), gc, 1.0)
                     draw_line(Vector2(rx + rw, ry + rh), Vector2(rx + rw, ry + rh - m), gc, 1.0)
+    scene_ref.perf_probe_end("renderer_blocks", section_start_us)
 
+    section_start_us = scene_ref.perf_probe_begin()
+    if not ultra_reduce_detail:
+        var spawn_arc_points := 24 if reduce_detail else 64
+        draw_arc(scene_ref.spawn_position, scene_ref.return_zone_radius, 0.0, TAU, spawn_arc_points, Color(0.3, 1.5, 0.5, 0.25), 2.0)
     if not ultra_reduce_detail:
         for ring in scene_ref.shockwave_rings:
             var radius: float = minf(float(ring.get("radius", 0.0)), LOCAL_SHOCKWAVE_VISUAL_RADIUS)
@@ -353,6 +368,7 @@ func _draw() -> void:
         _draw_winter_cross_lasers()
     if not reduce_detail:
         _draw_core_shields()
+    scene_ref.perf_probe_end("renderer_overlays", section_start_us)
     scene_ref.perf_probe_end("renderer_draw", perf_start_us)
 
 func _draw_background_stars(compact: bool = false, ultra_compact: bool = false) -> void:
@@ -464,37 +480,9 @@ func _apply_pending_fill_updates(grid_min: Vector2i, grid_max: Vector2i) -> bool
         _pending_fill_updates.erase(grid_variant)
     return changed
 
-func _should_apply_pending_fill_updates(reduce_detail: bool, ultra_reduce_detail: bool) -> bool:
-    if _pending_fill_updates.is_empty():
-        return false
-    if _pending_fill_updates.size() >= FILL_UPLOAD_FORCE_COUNT:
-        return true
-    if ultra_reduce_detail:
-        return _fill_upload_accum >= ULTRA_FILL_UPLOAD_INTERVAL
-    if reduce_detail:
-        return _fill_upload_accum >= HEAVY_FILL_UPLOAD_INTERVAL
-    return true
-
-func _mark_edge_dirty_if_visible(grid: Vector2i) -> bool:
-    if _edge_texture == null or _edge_grid_size == Vector2i.ZERO:
-        _edge_dirty = true
-        return true
-    var edge_grid_min := _edge_grid_origin
-    var edge_grid_max := _edge_grid_origin + _edge_grid_size - Vector2i.ONE
-    if grid.x < edge_grid_min.x or grid.x > edge_grid_max.x or grid.y < edge_grid_min.y or grid.y > edge_grid_max.y:
-        return false
-    _edge_dirty = true
-    return true
-
-func _is_grid_in_current_fill_cache(grid: Vector2i) -> bool:
-    if _fill_texture == null or _fill_grid_size == Vector2i.ZERO:
-        return true
-    var fill_grid_min := _fill_grid_origin
-    var fill_grid_max := _fill_grid_origin + _fill_grid_size - Vector2i.ONE
-    return grid.x >= fill_grid_min.x and grid.x <= fill_grid_max.x and grid.y >= fill_grid_min.y and grid.y <= fill_grid_max.y
-
 func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_detail: bool, outline_mode: int) -> void:
     var use_mask_outline := outline_mode == int(scene_ref.OutlineMode.ALL_BLOCKS_MASK)
+    var use_exposed_mask := not use_mask_outline and outline_mode != int(scene_ref.OutlineMode.ALL_BLOCKS)
     var cell_px := MASK_OUTLINE_CELL_PX if use_mask_outline else int(round(scene_ref.BLOCK_SIZE))
     var grid_w: int = grid_max.x - grid_min.x + 1
     var grid_h: int = grid_max.y - grid_min.y + 1
@@ -512,7 +500,7 @@ func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_
         outline_width = 1
         outline_alpha = 0.78 if ultra_reduce_detail else 0.84
     var outline_radius_cells := maxi(1, int(scene_ref.planet_outline_radius_cells))
-    var outline_center_grid := scene_ref.world_to_grid(scene_ref.camera_pos)
+    var outline_center_grid := _get_outline_cache_center_grid()
     var radius_sq := outline_radius_cells * outline_radius_cells
     for x in range(grid_min.x, grid_max.x + 1):
         for y in range(grid_min.y, grid_max.y + 1):
@@ -521,6 +509,11 @@ func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_
             var dy := grid.y - outline_center_grid.y
             if dx * dx + dy * dy > radius_sq:
                 continue
+            var mask := 15
+            if use_exposed_mask:
+                mask = int(scene_ref.exposed_edges.get(grid, 0))
+                if mask == 0:
+                    continue
             var block: Dictionary = scene_ref.blocks.get(grid, {})
             if block.is_empty():
                 continue
@@ -530,9 +523,6 @@ func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_
             var draw_color := Color(lightened_edge.r, lightened_edge.g, lightened_edge.b, outline_alpha)
             var px := (grid.x - grid_min.x) * cell_px
             var py := (grid.y - grid_min.y) * cell_px
-            var mask := 15 if outline_mode == int(scene_ref.OutlineMode.ALL_BLOCKS) or use_mask_outline else int(scene_ref.exposed_edges.get(grid, 0))
-            if mask == 0:
-                continue
             if (mask & 1) != 0:
                 _edge_image.fill_rect(Rect2i(px, py, cell_px, outline_width), draw_color)
             if (mask & 2) != 0:
@@ -547,6 +537,13 @@ func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_
         _edge_texture.update(_edge_image)
     _edge_dirty = false
     _edge_rebuild_accum = 0.0
+
+func _get_outline_cache_center_grid() -> Vector2i:
+    var center_grid := scene_ref.world_to_grid(scene_ref.camera_pos)
+    return Vector2i(
+        _floor_to_step(center_grid.x, OUTLINE_CACHE_ALIGN_CELLS),
+        _floor_to_step(center_grid.y, OUTLINE_CACHE_ALIGN_CELLS)
+    )
 
 func _floor_to_step(value: int, step: int) -> int:
     if step <= 1:
@@ -595,12 +592,11 @@ func _needs_camera_redraw() -> bool:
     )
 
 func get_perf_state_text() -> String:
-    return "Planet vis %d  load %d  detail %s/%s  mode %s  fillQ %d" % [
+    return "Planet vis %d  load %d  detail %s/%s  fillQ %d" % [
         _last_visible_cell_budget,
         _last_effect_load,
         "heavy" if _last_reduce_detail else "full",
         "ultra" if _last_ultra_reduce_detail else "normal",
-        scene_ref.get_render_detail_mode_name(),
         _pending_fill_updates.size(),
     ]
 
