@@ -10,6 +10,7 @@ var _edge_image: Image
 var _edge_texture: ImageTexture
 var _fill_grid_size := Vector2i.ZERO
 var _fill_grid_origin := Vector2i(2147483647, 2147483647)
+var _reduced_fill_cache_size := Vector2i.ZERO
 var _edge_grid_size := Vector2i.ZERO
 var _edge_grid_origin := Vector2i(2147483647, 2147483647)
 var _draw_grid_min := Vector2i(2147483647, 2147483647)
@@ -24,6 +25,10 @@ var _last_visible_cell_budget := 0
 var _last_effect_load := 0
 var _last_reduce_detail := false
 var _last_ultra_reduce_detail := false
+var _last_fill_rebuild_reason := "-"
+var _fill_rebuild_dirty_count := 0
+var _fill_rebuild_origin_count := 0
+var _fill_rebuild_size_count := 0
 var _gold_effect_redraw_accum := 0.0
 var _edge_rebuild_accum := 0.0
 var _fill_upload_accum := 0.0
@@ -176,13 +181,42 @@ func _draw() -> void:
     var fill_align_cells := REDUCED_FILL_CACHE_ALIGN_CELLS if reduce_detail or ultra_reduce_detail else FILL_CACHE_ALIGN_CELLS
     var padded_grid_min := visible_grid_min - Vector2i(fill_padding_cells, fill_padding_cells)
     var padded_grid_max := visible_grid_max + Vector2i(fill_padding_cells, fill_padding_cells)
-    var cache_grid_min := Vector2i(
+    var desired_cache_grid_min := Vector2i(
         _floor_to_step(padded_grid_min.x, fill_align_cells),
         _floor_to_step(padded_grid_min.y, fill_align_cells)
     )
-    var cache_grid_max := Vector2i(
+    var desired_cache_grid_max := Vector2i(
         _ceil_to_step_inclusive(padded_grid_max.x, fill_align_cells),
         _ceil_to_step_inclusive(padded_grid_max.y, fill_align_cells)
+    )
+    var desired_cache_grid_size := Vector2i(
+        desired_cache_grid_max.x - desired_cache_grid_min.x + 1,
+        desired_cache_grid_max.y - desired_cache_grid_min.y + 1
+    )
+    var cache_grid_min := desired_cache_grid_min
+    var cache_grid_size := desired_cache_grid_size
+    if reduce_detail or ultra_reduce_detail:
+        _reduced_fill_cache_size.x = maxi(_reduced_fill_cache_size.x, desired_cache_grid_size.x)
+        _reduced_fill_cache_size.y = maxi(_reduced_fill_cache_size.y, desired_cache_grid_size.y)
+        cache_grid_size = _reduced_fill_cache_size
+        if _fill_grid_origin.x < 2147483647 and _fill_grid_size == _reduced_fill_cache_size:
+            var current_cache_max := Vector2i(
+                _fill_grid_origin.x + _reduced_fill_cache_size.x - 1,
+                _fill_grid_origin.y + _reduced_fill_cache_size.y - 1
+            )
+            var can_keep_fill_origin := (
+                desired_cache_grid_min.x >= _fill_grid_origin.x
+                and desired_cache_grid_min.y >= _fill_grid_origin.y
+                and desired_cache_grid_max.x <= current_cache_max.x
+                and desired_cache_grid_max.y <= current_cache_max.y
+            )
+            if can_keep_fill_origin:
+                cache_grid_min = _fill_grid_origin
+    else:
+        _reduced_fill_cache_size = Vector2i.ZERO
+    var cache_grid_max := Vector2i(
+        cache_grid_min.x + cache_grid_size.x - 1,
+        cache_grid_min.y + cache_grid_size.y - 1
     )
     var background_rect := Rect2(
         Vector2(float(cache_grid_min.x) * scene_ref.BLOCK_SIZE, float(cache_grid_min.y) * scene_ref.BLOCK_SIZE),
@@ -203,7 +237,10 @@ func _draw() -> void:
     scene_ref.perf_probe_end("renderer_bg", section_start_us)
     var cache_grid_w: int = cache_grid_max.x - cache_grid_min.x + 1
     var cache_grid_h: int = cache_grid_max.y - cache_grid_min.y + 1
-    var fill_needs_rebuild := _fill_dirty or _fill_grid_origin != cache_grid_min or _fill_grid_size != Vector2i(cache_grid_w, cache_grid_h)
+    var fill_rebuild_dirty := _fill_dirty
+    var fill_rebuild_origin := _fill_grid_origin != cache_grid_min
+    var fill_rebuild_size := _fill_grid_size != Vector2i(cache_grid_w, cache_grid_h)
+    var fill_needs_rebuild := fill_rebuild_dirty or fill_rebuild_origin or fill_rebuild_size
     _draw_grid_min = cache_grid_min
     _draw_grid_max = cache_grid_max
     _last_cam_origin = canvas_transform.origin
@@ -215,9 +252,21 @@ func _draw() -> void:
         _fill_grid_size = Vector2i(cache_grid_w, cache_grid_h)
         _fill_grid_origin = cache_grid_min
         _fill_texture = null
+        fill_rebuild_size = true
         fill_needs_rebuild = true
         scene_ref.perf_probe_end("renderer_fill_resize", fill_resize_start_us)
     if fill_needs_rebuild:
+        var fill_reason_parts: Array[String] = []
+        if fill_rebuild_dirty:
+            fill_reason_parts.append("dirty")
+            _fill_rebuild_dirty_count += 1
+        if fill_rebuild_origin:
+            fill_reason_parts.append("origin")
+            _fill_rebuild_origin_count += 1
+        if fill_rebuild_size:
+            fill_reason_parts.append("size")
+            _fill_rebuild_size_count += 1
+        _last_fill_rebuild_reason = "+".join(fill_reason_parts) if not fill_reason_parts.is_empty() else "unknown"
         var fill_rebuild_start_us := scene_ref.perf_probe_begin()
         _fill_grid_origin = cache_grid_min
         _fill_image.fill(Color.TRANSPARENT)
@@ -240,6 +289,7 @@ func _draw() -> void:
         _pending_fill_updates.clear()
         _fill_upload_accum = 0.0
     else:
+        _last_fill_rebuild_reason = "-"
         var should_upload_pending_fill := true
         if reduce_detail or ultra_reduce_detail:
             should_upload_pending_fill = _fill_upload_accum >= REDUCED_FILL_UPLOAD_INTERVAL or _pending_fill_updates.size() >= REDUCED_FILL_FORCE_UPLOAD_UPDATES
@@ -265,14 +315,30 @@ func _draw() -> void:
         section_start_us = scene_ref.perf_probe_begin()
         var outline_radius_cells := maxi(1, int(scene_ref.planet_outline_radius_cells))
         var outline_center_grid := _get_outline_cache_center_grid()
-        var edge_grid_min := Vector2i(
+        var desired_edge_grid_min := Vector2i(
             outline_center_grid.x - outline_radius_cells - OUTLINE_CACHE_PADDING_CELLS,
             outline_center_grid.y - outline_radius_cells - OUTLINE_CACHE_PADDING_CELLS
         )
-        var edge_grid_max := Vector2i(
+        var desired_edge_grid_max := Vector2i(
             outline_center_grid.x + outline_radius_cells + OUTLINE_CACHE_PADDING_CELLS,
             outline_center_grid.y + outline_radius_cells + OUTLINE_CACHE_PADDING_CELLS
         )
+        var edge_grid_min := desired_edge_grid_min
+        var edge_grid_max := desired_edge_grid_max
+        if _edge_grid_origin.x < 2147483647 and _edge_grid_size.x > 0 and _edge_grid_size.y > 0:
+            var current_edge_grid_max := Vector2i(
+                _edge_grid_origin.x + _edge_grid_size.x - 1,
+                _edge_grid_origin.y + _edge_grid_size.y - 1
+            )
+            var can_keep_edge_origin := (
+                desired_edge_grid_min.x >= _edge_grid_origin.x
+                and desired_edge_grid_min.y >= _edge_grid_origin.y
+                and desired_edge_grid_max.x <= current_edge_grid_max.x
+                and desired_edge_grid_max.y <= current_edge_grid_max.y
+            )
+            if can_keep_edge_origin:
+                edge_grid_min = _edge_grid_origin
+                edge_grid_max = current_edge_grid_max
         var edge_grid_size := Vector2i(edge_grid_max.x - edge_grid_min.x + 1, edge_grid_max.y - edge_grid_min.y + 1)
         var edge_cache_matches := _edge_grid_origin == edge_grid_min and _edge_grid_size == edge_grid_size
         if _edge_texture == null or not edge_cache_matches or (_edge_dirty and _edge_rebuild_accum >= OUTLINE_REBUILD_INTERVAL):
@@ -592,12 +658,16 @@ func _needs_camera_redraw() -> bool:
     )
 
 func get_perf_state_text() -> String:
-    return "Planet vis %d  load %d  detail %s/%s  fillQ %d" % [
+    return "Planet vis %d  load %d  detail %s/%s  fillQ %d  fillR %s  fillCnt d:%d o:%d s:%d" % [
         _last_visible_cell_budget,
         _last_effect_load,
         "heavy" if _last_reduce_detail else "full",
         "ultra" if _last_ultra_reduce_detail else "normal",
         _pending_fill_updates.size(),
+        _last_fill_rebuild_reason,
+        _fill_rebuild_dirty_count,
+        _fill_rebuild_origin_count,
+        _fill_rebuild_size_count,
     ]
 
 func _rebuild_screen_stars() -> void:
