@@ -184,12 +184,12 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
 
 static func set_selected_depth_level(depth_level: int) -> Dictionary:
     var data := load_data()
-    data["selected_depth_level"] = clampi(depth_level, MIN_START_DEPTH_LEVEL, int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)))
+    data["selected_depth_level"] = MIN_START_DEPTH_LEVEL
     save_data(data)
     return data
 
 static func get_display_depth_tier(depth_level: int) -> int:
-    return clampi(depth_level, MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+    return 1
 
 static func load_planet_state() -> Dictionary:
     if _planet_save_pending:
@@ -251,12 +251,12 @@ static func clear_planet_state() -> void:
 static func load_runtime_planet_data(depth_level: int):
     if _runtime_planet_data == null:
         return null
-    if _runtime_planet_depth != depth_level:
+    if _runtime_planet_depth != MIN_START_DEPTH_LEVEL:
         return null
     return _runtime_planet_data
 
 static func save_runtime_planet_data(depth_level: int, planet_data) -> void:
-    _runtime_planet_depth = depth_level
+    _runtime_planet_depth = MIN_START_DEPTH_LEVEL
     _runtime_planet_data = planet_data
 
 static func clear_runtime_planet_data() -> void:
@@ -276,6 +276,8 @@ static func clear_cache() -> void:
 static func _sanitize_main_data(data: Dictionary) -> Dictionary:
     var sanitized := data.duplicate(true)
     sanitized["planet_state"] = {}
+    sanitized["deepest_level_unlocked"] = MIN_START_DEPTH_LEVEL
+    sanitized["selected_depth_level"] = MIN_START_DEPTH_LEVEL
     var breakdown: Variant = sanitized.get("last_run_breakdown", {})
     if breakdown is Dictionary:
         var breakdown_dict: Dictionary = Dictionary(breakdown).duplicate(true)

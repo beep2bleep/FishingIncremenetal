@@ -11,6 +11,8 @@ var _last_mega_active := false
 var _last_overdrive_active := false
 var _last_invuln_active := false
 var _last_extraction_progress := -1.0
+var _last_extraction_visible := false
+var _last_render_detail_mode := -1
 
 const SOFT_ARC_LOAD_LIMIT := 12
 const HARD_ARC_LOAD_LIMIT := 20
@@ -27,6 +29,8 @@ func _process(_delta: float) -> void:
     var overdrive_active := scene_ref.overdrive_timer > 0.0
     var invuln_active := scene_ref.shield_invuln_timer > 0.0
     var extraction_progress := scene_ref.get_return_zone_progress()
+    var extraction_visible := _is_extraction_zone_visible()
+    var render_detail_mode := int(scene_ref.render_detail_mode)
     var drones_active := not scene_ref.drone_positions.is_empty() or not scene_ref.drone_beams.is_empty()
     var trail_active := not scene_ref.ship_trail.is_empty()
     var arcs_active := not scene_ref.electric_arcs.is_empty() or not scene_ref.chain_arcs.is_empty()
@@ -58,7 +62,13 @@ func _process(_delta: float) -> void:
     if absf(extraction_progress - _last_extraction_progress) > 0.001:
         _last_extraction_progress = extraction_progress
         needs_redraw = true
-    if attack_visible or mega_active or overdrive_active or invuln_active or drones_active or trail_active or arcs_active or extraction_progress > 0.0:
+    if extraction_visible != _last_extraction_visible:
+        _last_extraction_visible = extraction_visible
+        needs_redraw = true
+    if render_detail_mode != _last_render_detail_mode:
+        _last_render_detail_mode = render_detail_mode
+        needs_redraw = true
+    if attack_visible or mega_active or overdrive_active or invuln_active or drones_active or trail_active or arcs_active or extraction_progress > 0.0 or extraction_visible:
         needs_redraw = true
     if needs_redraw:
         queue_redraw()
@@ -111,6 +121,8 @@ func _draw() -> void:
     scene_ref.perf_probe_end("ship_draw", perf_start_us)
 
 func _draw_extraction_zone() -> void:
+    if not _is_extraction_zone_visible():
+        return
     var local_spawn := scene_ref.spawn_position - scene_ref.ship_pos
     var extraction_progress := scene_ref.get_return_zone_progress()
     var extraction_ring_radius := scene_ref.return_zone_radius + 18.0
@@ -128,6 +140,9 @@ func _draw_extraction_zone() -> void:
             Color(0.7, 2.4, 1.1, 1.0),
             12.0
         )
+
+func _is_extraction_zone_visible() -> bool:
+    return scene_ref.should_render_extraction_zone()
 
 func _draw_normal_laser(vp: float) -> void:
     var local_target := scene_ref.last_attack_target - scene_ref.ship_pos

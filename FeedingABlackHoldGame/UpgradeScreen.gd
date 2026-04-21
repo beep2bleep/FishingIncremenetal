@@ -761,13 +761,8 @@ func _on_go_again_pressed() -> void :
             _show_battle_level_choice_dialog(max_depth)
         return
     if Util.is_open_pit_game_active():
-        var open_pit_data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
         var open_pit_min_depth: int = OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
-        var open_pit_max_depth: int = clampi(int(open_pit_data.get("deepest_level_unlocked", open_pit_min_depth)), open_pit_min_depth, OPEN_PIT_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL)
-        if OPEN_PIT_PROGRESS_SCRIPT.get_display_depth_tier(open_pit_max_depth) <= 1:
-            _launch_battle_at_level(open_pit_min_depth)
-        else:
-            _show_battle_level_choice_dialog(open_pit_max_depth)
+        _launch_battle_at_level(open_pit_min_depth)
         return
     if Util.is_open_pit_orbit_game_active():
         var orbit_data: Dictionary = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.load_data()
@@ -1348,15 +1343,16 @@ func _setup_battle_level_choice_dialog() -> void:
         battle_level_choice_dialog.custom_action.connect(_on_battle_level_choice_action)
 
 func _show_battle_level_choice_dialog(max_level: int) -> void:
+    if Util.is_open_pit_game_active():
+        _launch_battle_at_level(OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL)
+        return
     if battle_level_choice_dialog == null:
         if Util.is_mining_game_active():
             var mining_fallback_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
             var min_depth: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
             _launch_battle_at_level(clampi(int(mining_fallback_data.get("selected_depth_level", max_level)), min_depth, max_level))
         elif Util.is_open_pit_game_active():
-            var open_pit_fallback_data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
-            var open_pit_min_depth: int = OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
-            _launch_battle_at_level(clampi(int(open_pit_fallback_data.get("selected_depth_level", max_level)), open_pit_min_depth, max_level))
+            _launch_battle_at_level(OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL)
         elif Util.is_open_pit_orbit_game_active():
             var orbit_fallback_data: Dictionary = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.load_data()
             var orbit_min_depth: int = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
@@ -1672,11 +1668,12 @@ func _launch_battle_at_level(level: int) -> void:
         SceneChanger.change_to_new_scene(Util.get_main_scene_path())
         return
     if Util.is_open_pit_game_active():
-        OPEN_PIT_PROGRESS_SCRIPT.set_selected_depth_level(level)
+        var empire_level: int = OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+        OPEN_PIT_PROGRESS_SCRIPT.set_selected_depth_level(empire_level)
         _refresh_virtual_cursor_state()
         _cache_tech_tree_for_reuse()
         var open_pit_target_scene: String = Util.get_main_scene_path()
-        if OPEN_PIT_PROGRESS_SCRIPT.load_runtime_planet_data(level) == null:
+        if OPEN_PIT_PROGRESS_SCRIPT.load_runtime_planet_data(empire_level) == null:
             open_pit_target_scene = Util.PATH_OPEN_PIT_GENERATING
         SceneChanger.change_to_new_scene(open_pit_target_scene)
         return
@@ -2338,8 +2335,8 @@ func _on_editor_unlock_all_pressed() -> void:
         for key_variant: Variant in max_level_by_key.keys():
             var open_pit_key: String = str(key_variant)
             open_pit_data["upgrades"][open_pit_key] = int(max_level_by_key[open_pit_key])
-        open_pit_data["deepest_level_unlocked"] = OPEN_PIT_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL
-        open_pit_data["selected_depth_level"] = OPEN_PIT_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL
+        open_pit_data["deepest_level_unlocked"] = OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+        open_pit_data["selected_depth_level"] = OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
         OPEN_PIT_PROGRESS_SCRIPT.save_data(open_pit_data)
     elif Util.is_open_pit_orbit_game_active():
         var orbit_data: Dictionary = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.load_data()

@@ -1424,6 +1424,25 @@ func _is_ship_inside_return_zone() -> bool:
 func _get_return_zone_arm_distance() -> float:
     return return_zone_radius * RETURN_ZONE_ARM_DISTANCE_MULT
 
+func should_render_extraction_zone() -> bool:
+    var extraction_ring_radius := return_zone_radius + 18.0
+    var outline_draw_radius := maxf(1.0, float(planet_outline_radius_cells) * BLOCK_SIZE)
+    var spawn_offset := spawn_position - ship_pos
+    if spawn_offset.length() - extraction_ring_radius > outline_draw_radius:
+        return false
+
+    var surface_radius := float(planet_radius_cells) * BLOCK_SIZE
+    if ship_pos.length() >= surface_radius:
+        return true
+
+    var ship_dir := ship_pos.normalized()
+    var spawn_dir := spawn_position.normalized()
+    if ship_dir.length() < 0.01 or spawn_dir.length() < 0.01:
+        return false
+
+    var same_top_segment := ship_dir.dot(spawn_dir) >= 0.72
+    return same_top_segment and ship_pos.y <= 0.0
+
 func _update_perf_debug(frame_delta: float) -> void:
     var perf_start_us := perf_probe_begin()
     if fps_label == null:
