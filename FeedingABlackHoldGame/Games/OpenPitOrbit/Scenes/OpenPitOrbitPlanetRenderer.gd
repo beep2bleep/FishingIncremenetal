@@ -8,10 +8,18 @@ var _fill_image: Image
 var _fill_texture: ImageTexture
 var _fill_grid_size := Vector2i.ZERO
 var _fill_grid_origin := Vector2i(2147483647, 2147483647)
+var _draw_grid_min := Vector2i(2147483647, 2147483647)
+var _draw_grid_max := Vector2i(-2147483647, -2147483647)
 var _fill_dirty := true
+var _pending_fill_updates: Dictionary = {}
 var _time_elapsed := 0.0
 var _palette_cache: Dictionary = {}
 var _screen_stars: Array[Dictionary] = []
+var _last_visible_cell_budget := 0
+var _last_effect_load := 0
+var _last_reduce_detail := false
+var _last_ultra_reduce_detail := false
+var _gold_effect_redraw_accum := 0.0
 
 const SPACE_BG := Color(0.025, 0.025, 0.035, 1.0)
 const HIT_GLOW := Color(2.3, 1.2, 0.4, 0.55)
@@ -24,6 +32,16 @@ const STAR_COLORS := [
 const SCREEN_STAR_COUNT := 90
 const BLOCK_GAP := 1.5
 const LOCAL_SHOCKWAVE_VISUAL_RADIUS := 96.0
+const DRAW_CACHE_PADDING_CELLS := 4
+const FILL_CACHE_PADDING_CELLS := 6
+const FILL_CACHE_ALIGN_CELLS := 8
+const GOLD_EFFECT_REDRAW_INTERVAL := 0.05
+const MAX_ULTRA_ACTIVE_HIT_EFFECTS := 18
+const MAX_ULTRA_ACTIVE_GOLD_EFFECTS := 0
+const HEAVY_VISIBLE_GRID_CELLS := 900
+const HEAVY_EFFECT_LOAD := 24
+const VERY_HEAVY_VISIBLE_GRID_CELLS := 1400
+const VERY_HEAVY_EFFECT_LOAD := 40
 const ZONE_SPRING := 0
 const ZONE_SUMMER := 1
 const ZONE_AUTUMN := 2
@@ -70,18 +88,31 @@ func mark_dirty(rebuild_fill: bool = true) -> void:
     _force_redraw = true
     if rebuild_fill:
         _fill_dirty = true
+        _pending_fill_updates.clear()
         _palette_cache.clear()
+
+func queue_fill_update(grid: Vector2i) -> void:
+    _pending_fill_updates[grid] = true
+    _force_redraw = true
+
+func queue_fill_updates(positions: Array) -> void:
+    for pos_variant in positions:
+        _pending_fill_updates[Vector2i(pos_variant)] = true
+    if not positions.is_empty():
+        _force_redraw = true
 
 func _process(_delta: float) -> void:
     _time_elapsed += _delta
+    _gold_effect_redraw_accum += _delta
     var needs_redraw := _force_redraw
     _force_redraw = false
-    var cam_origin := get_canvas_transform().origin
-    if cam_origin != _last_cam_origin:
-        _last_cam_origin = cam_origin
+    if _needs_camera_redraw():
         needs_redraw = true
-    if not scene_ref.hit_timers.is_empty() or not scene_ref.gold_convert_timers.is_empty():
+    if not scene_ref.hit_timers.is_empty():
         needs_redraw = true
+    elif not scene_ref.gold_convert_timers.is_empty() and _gold_effect_redraw_accum >= GOLD_EFFECT_REDRAW_INTERVAL:
+        needs_redraw = true
+        _gold_effect_redraw_accum = 0.0
     if not scene_ref.shockwave_rings.is_empty():
         needs_redraw = true
     if needs_redraw:
@@ -90,129 +121,176 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
     if scene_ref == null:
         return
+    var perf_start_us := scene_ref.perf_probe_begin()
     var canvas_transform := get_canvas_transform()
     var viewport_size := get_viewport_rect().size
     var cam_scale := canvas_transform.get_scale()
     var top_left := -canvas_transform.origin / cam_scale
     var bottom_right := top_left + viewport_size / cam_scale
     draw_rect(Rect2(top_left, viewport_size / cam_scale), SPACE_BG, true)
-    _draw_background_stars()
-    _draw_core_zones()
 
     var margin := scene_ref.BLOCK_SIZE * 2.0
-    var grid_min := scene_ref.world_to_grid(top_left - Vector2(margin, margin))
-    var grid_max := scene_ref.world_to_grid(bottom_right + Vector2(margin, margin))
-    var grid_w: int = grid_max.x - grid_min.x + 1
-    var grid_h: int = grid_max.y - grid_min.y + 1
-    var fill_needs_rebuild := _fill_dirty or _fill_grid_origin != grid_min or _fill_grid_size != Vector2i(grid_w, grid_h)
+    var visible_grid_min := scene_ref.world_to_grid(top_left - Vector2(margin, margin))
+    var visible_grid_max := scene_ref.world_to_grid(bottom_right + Vector2(margin, margin))
+    var visible_grid_w: int = visible_grid_max.x - visible_grid_min.x + 1
+    var visible_grid_h: int = visible_grid_max.y - visible_grid_min.y + 1
+    var visible_cell_budget: int = visible_grid_w * visible_grid_h
+    var effect_load: int = scene_ref.hit_timers.size() + scene_ref.electric_arcs.size() + scene_ref.chain_arcs.size() + scene_ref.drone_beams.size()
+    var reduce_detail := visible_cell_budget >= HEAVY_VISIBLE_GRID_CELLS or effect_load >= HEAVY_EFFECT_LOAD or scene_ref.mega_timer > 0.0
+    var ultra_reduce_detail := visible_cell_budget >= VERY_HEAVY_VISIBLE_GRID_CELLS or effect_load >= VERY_HEAVY_EFFECT_LOAD
+    _last_visible_cell_budget = visible_cell_budget
+    _last_effect_load = effect_load
+    _last_reduce_detail = reduce_detail
+    _last_ultra_reduce_detail = ultra_reduce_detail
+    if not reduce_detail:
+        _draw_background_stars()
+        _draw_core_zones()
+    elif not ultra_reduce_detail:
+        _draw_background_stars(true)
+    var padded_grid_min := visible_grid_min - Vector2i(FILL_CACHE_PADDING_CELLS, FILL_CACHE_PADDING_CELLS)
+    var padded_grid_max := visible_grid_max + Vector2i(FILL_CACHE_PADDING_CELLS, FILL_CACHE_PADDING_CELLS)
+    var cache_grid_min := Vector2i(
+        _floor_to_step(padded_grid_min.x, FILL_CACHE_ALIGN_CELLS),
+        _floor_to_step(padded_grid_min.y, FILL_CACHE_ALIGN_CELLS)
+    )
+    var cache_grid_max := Vector2i(
+        _ceil_to_step_inclusive(padded_grid_max.x, FILL_CACHE_ALIGN_CELLS),
+        _ceil_to_step_inclusive(padded_grid_max.y, FILL_CACHE_ALIGN_CELLS)
+    )
+    var cache_grid_w: int = cache_grid_max.x - cache_grid_min.x + 1
+    var cache_grid_h: int = cache_grid_max.y - cache_grid_min.y + 1
+    var fill_needs_rebuild := _fill_dirty or _fill_grid_origin != cache_grid_min or _fill_grid_size != Vector2i(cache_grid_w, cache_grid_h)
+    _draw_grid_min = cache_grid_min
+    _draw_grid_max = cache_grid_max
+    _last_cam_origin = canvas_transform.origin
 
-    if _fill_image == null or _fill_grid_size.x != grid_w or _fill_grid_size.y != grid_h:
-        _fill_image = Image.create(grid_w, grid_h, false, Image.FORMAT_RGBA8)
-        _fill_grid_size = Vector2i(grid_w, grid_h)
-        _fill_grid_origin = grid_min
+    if _fill_image == null or _fill_grid_size.x != cache_grid_w or _fill_grid_size.y != cache_grid_h:
+        _fill_image = Image.create(cache_grid_w, cache_grid_h, false, Image.FORMAT_RGBA8)
+        _fill_grid_size = Vector2i(cache_grid_w, cache_grid_h)
+        _fill_grid_origin = cache_grid_min
         _fill_texture = null
         fill_needs_rebuild = true
     if fill_needs_rebuild:
-        _fill_grid_origin = grid_min
+        _fill_grid_origin = cache_grid_min
         _fill_image.fill(Color.TRANSPARENT)
-        for x in range(grid_min.x, grid_max.x + 1):
-            for y in range(grid_min.y, grid_max.y + 1):
+        for x in range(cache_grid_min.x, cache_grid_max.x + 1):
+            for y in range(cache_grid_min.y, cache_grid_max.y + 1):
                 var grid := Vector2i(x, y)
                 var block: Dictionary = scene_ref.blocks.get(grid, {})
                 if block.is_empty():
                     continue
                 var colors: Dictionary = _get_block_palette(block)
-                _fill_image.set_pixel(x - grid_min.x, y - grid_min.y, colors.get("fill", Color.WHITE))
+                _fill_image.set_pixel(x - cache_grid_min.x, y - cache_grid_min.y, colors.get("fill", Color.WHITE))
         if _fill_texture == null:
             _fill_texture = ImageTexture.create_from_image(_fill_image)
         else:
             _fill_texture.update(_fill_image)
         _fill_dirty = false
+        _pending_fill_updates.clear()
+    elif _apply_pending_fill_updates(cache_grid_min, cache_grid_max):
+        if _fill_texture == null:
+            _fill_texture = ImageTexture.create_from_image(_fill_image)
+        else:
+            _fill_texture.update(_fill_image)
     var tex_rect := Rect2(
-        float(grid_min.x) * scene_ref.BLOCK_SIZE,
-        float(grid_min.y) * scene_ref.BLOCK_SIZE,
-        float(grid_w) * scene_ref.BLOCK_SIZE,
-        float(grid_h) * scene_ref.BLOCK_SIZE
+        float(cache_grid_min.x) * scene_ref.BLOCK_SIZE,
+        float(cache_grid_min.y) * scene_ref.BLOCK_SIZE,
+        float(cache_grid_w) * scene_ref.BLOCK_SIZE,
+        float(cache_grid_h) * scene_ref.BLOCK_SIZE
     )
     if _fill_texture != null:
         draw_texture_rect(_fill_texture, tex_rect, false)
 
     var gold_pulse_t := Time.get_ticks_msec() * 0.001 * 1.8
-    for x in range(grid_min.x, grid_max.x + 1):
-        for y in range(grid_min.y, grid_max.y + 1):
-            var grid := Vector2i(x, y)
-            var block: Dictionary = scene_ref.blocks.get(grid, {})
-            if block.is_empty():
+    if ultra_reduce_detail:
+        _draw_active_block_effects(visible_grid_min, visible_grid_max)
+    else:
+        for x in range(visible_grid_min.x, visible_grid_max.x + 1):
+            for y in range(visible_grid_min.y, visible_grid_max.y + 1):
+                var grid := Vector2i(x, y)
+                var block: Dictionary = scene_ref.blocks.get(grid, {})
+                if block.is_empty():
+                    continue
+                var colors: Dictionary = _get_block_palette(block)
+                var world := scene_ref.grid_to_world(grid)
+                var rect := Rect2(
+                    world - Vector2.ONE * scene_ref.BLOCK_SIZE * 0.5 + Vector2.ONE * BLOCK_GAP,
+                    Vector2.ONE * (scene_ref.BLOCK_SIZE - BLOCK_GAP * 2.0)
+                )
+                if not reduce_detail and scene_ref.exposed_edges.has(grid):
+                    _draw_block_edges(grid, rect, colors.get("edge", Color.WHITE), int(scene_ref.exposed_edges.get(grid, 0)), 2.0)
+
+                var health_ratio := 1.0
+                if not reduce_detail or scene_ref.hit_timers.has(grid):
+                    health_ratio = scene_ref.get_block_hp_ratio(grid)
+                if not reduce_detail and health_ratio < 0.999:
+                    draw_rect(Rect2(rect.position + Vector2(3.0, 3.0), Vector2(rect.size.x - 6.0, 3.0)), Color(0.0, 0.0, 0.0, 0.55), true)
+                    draw_rect(Rect2(rect.position + Vector2(3.0, 3.0), Vector2((rect.size.x - 6.0) * health_ratio, 3.0)), Color(0.6, 1.8, 2.4, 0.9), true)
+
+                var hit_timer: float = float(scene_ref.hit_timers.get(grid, 0.0))
+                if hit_timer > 0.0:
+                    draw_rect(rect.grow(-2.0), Color(HIT_GLOW.r, HIT_GLOW.g, HIT_GLOW.b, hit_timer / scene_ref.HIT_FLASH_DURATION), false, 2.0)
+                var gold_timer: float = float(scene_ref.gold_convert_timers.get(grid, 0.0))
+                if gold_timer > 0.0:
+                    draw_rect(rect.grow(-2.0), Color(GOLD_GLOW.r, GOLD_GLOW.g, GOLD_GLOW.b, gold_timer / scene_ref.GOLD_CONVERT_DURATION), false, 2.0)
+                if not reduce_detail and int(block.get("type", 0)) == scene_ref.BlockType.GOLD and bool(scene_ref.runtime_stats.get("gold_enabled", false)):
+                    var gp := (sin(gold_pulse_t + grid.x * 1.3 + grid.y * 0.7) + 1.0) * 0.5
+                    var ga := 0.1 + gp * 0.12
+                    var gc := Color(1.0, 0.85, 0.3, ga)
+                    var m := scene_ref.BLOCK_SIZE * 0.25
+                    var rx := rect.position.x
+                    var ry := rect.position.y
+                    var rw := rect.size.x
+                    var rh := rect.size.y
+                    draw_line(Vector2(rx, ry), Vector2(rx + m, ry), gc, 1.0)
+                    draw_line(Vector2(rx, ry), Vector2(rx, ry + m), gc, 1.0)
+                    draw_line(Vector2(rx + rw, ry), Vector2(rx + rw - m, ry), gc, 1.0)
+                    draw_line(Vector2(rx + rw, ry), Vector2(rx + rw, ry + m), gc, 1.0)
+                    draw_line(Vector2(rx, ry + rh), Vector2(rx + m, ry + rh), gc, 1.0)
+                    draw_line(Vector2(rx, ry + rh), Vector2(rx, ry + rh - m), gc, 1.0)
+                    draw_line(Vector2(rx + rw, ry + rh), Vector2(rx + rw - m, ry + rh), gc, 1.0)
+                    draw_line(Vector2(rx + rw, ry + rh), Vector2(rx + rw, ry + rh - m), gc, 1.0)
+
+    if not ultra_reduce_detail:
+        var spawn_arc_points := 24 if reduce_detail else 64
+        draw_arc(scene_ref.spawn_position, scene_ref.return_zone_radius, 0.0, TAU, spawn_arc_points, Color(0.3, 1.5, 0.5, 0.25), 2.0)
+    if not ultra_reduce_detail:
+        for ring in scene_ref.shockwave_rings:
+            var radius: float = minf(float(ring.get("radius", 0.0)), LOCAL_SHOCKWAVE_VISUAL_RADIUS)
+            if radius <= 0.0:
                 continue
-            var colors: Dictionary = _get_block_palette(block)
-            var world := scene_ref.grid_to_world(grid)
-            var rect := Rect2(
-                world - Vector2.ONE * scene_ref.BLOCK_SIZE * 0.5 + Vector2.ONE * BLOCK_GAP,
-                Vector2.ONE * (scene_ref.BLOCK_SIZE - BLOCK_GAP * 2.0)
+            var alpha: float = clampf(float(ring.get("alpha", 0.0)), 0.0, 1.0)
+            if radius >= LOCAL_SHOCKWAVE_VISUAL_RADIUS:
+                alpha *= 0.2
+            var ring_points := 28 if reduce_detail else 48
+            draw_arc(
+                scene_ref.ship_pos,
+                radius,
+                0.0,
+                TAU,
+                ring_points,
+                Color(1.0, 0.85, 0.2, alpha),
+                2.0
             )
-            if scene_ref.exposed_edges.has(grid):
-                _draw_block_edges(grid, rect, colors.get("edge", Color.WHITE), int(scene_ref.exposed_edges.get(grid, 0)), 2.0)
 
-            var health_ratio := scene_ref.get_block_hp_ratio(grid)
-            if health_ratio < 0.999:
-                draw_rect(Rect2(rect.position + Vector2(3.0, 3.0), Vector2(rect.size.x - 6.0, 3.0)), Color(0.0, 0.0, 0.0, 0.55), true)
-                draw_rect(Rect2(rect.position + Vector2(3.0, 3.0), Vector2((rect.size.x - 6.0) * health_ratio, 3.0)), Color(0.6, 1.8, 2.4, 0.9), true)
+    if not ultra_reduce_detail:
+        _draw_summer_lasers()
+        _draw_autumn_debris()
+        _draw_winter_cross_lasers()
+    if not reduce_detail:
+        _draw_core_shields()
+    scene_ref.perf_probe_end("renderer_draw", perf_start_us)
 
-            var hit_timer: float = float(scene_ref.hit_timers.get(grid, 0.0))
-            if hit_timer > 0.0:
-                draw_rect(rect.grow(-2.0), Color(HIT_GLOW.r, HIT_GLOW.g, HIT_GLOW.b, hit_timer / scene_ref.HIT_FLASH_DURATION), false, 2.0)
-            var gold_timer: float = float(scene_ref.gold_convert_timers.get(grid, 0.0))
-            if gold_timer > 0.0:
-                draw_rect(rect.grow(-2.0), Color(GOLD_GLOW.r, GOLD_GLOW.g, GOLD_GLOW.b, gold_timer / scene_ref.GOLD_CONVERT_DURATION), false, 2.0)
-            if int(block.get("type", 0)) == scene_ref.BlockType.GOLD and bool(scene_ref.runtime_stats.get("gold_enabled", false)):
-                var gp := (sin(gold_pulse_t + grid.x * 1.3 + grid.y * 0.7) + 1.0) * 0.5
-                var ga := 0.1 + gp * 0.12
-                var gc := Color(1.0, 0.85, 0.3, ga)
-                var m := scene_ref.BLOCK_SIZE * 0.25
-                var rx := rect.position.x
-                var ry := rect.position.y
-                var rw := rect.size.x
-                var rh := rect.size.y
-                draw_line(Vector2(rx, ry), Vector2(rx + m, ry), gc, 1.0)
-                draw_line(Vector2(rx, ry), Vector2(rx, ry + m), gc, 1.0)
-                draw_line(Vector2(rx + rw, ry), Vector2(rx + rw - m, ry), gc, 1.0)
-                draw_line(Vector2(rx + rw, ry), Vector2(rx + rw, ry + m), gc, 1.0)
-                draw_line(Vector2(rx, ry + rh), Vector2(rx + m, ry + rh), gc, 1.0)
-                draw_line(Vector2(rx, ry + rh), Vector2(rx, ry + rh - m), gc, 1.0)
-                draw_line(Vector2(rx + rw, ry + rh), Vector2(rx + rw - m, ry + rh), gc, 1.0)
-                draw_line(Vector2(rx + rw, ry + rh), Vector2(rx + rw, ry + rh - m), gc, 1.0)
-
-    draw_arc(scene_ref.spawn_position, scene_ref.return_zone_radius, 0.0, TAU, 64, Color(0.3, 1.5, 0.5, 0.25), 2.0)
-    for ring in scene_ref.shockwave_rings:
-        var radius: float = minf(float(ring.get("radius", 0.0)), LOCAL_SHOCKWAVE_VISUAL_RADIUS)
-        if radius <= 0.0:
-            continue
-        var alpha: float = clampf(float(ring.get("alpha", 0.0)), 0.0, 1.0)
-        if radius >= LOCAL_SHOCKWAVE_VISUAL_RADIUS:
-            alpha *= 0.2
-        draw_arc(
-            scene_ref.ship_pos,
-            radius,
-            0.0,
-            TAU,
-            48,
-            Color(1.0, 0.85, 0.2, alpha),
-            2.0
-        )
-
-    _draw_summer_lasers()
-    _draw_autumn_debris()
-    _draw_winter_cross_lasers()
-    _draw_core_shields()
-
-func _draw_background_stars() -> void:
+func _draw_background_stars(compact: bool = false) -> void:
     var canvas_transform := get_canvas_transform()
     var cam_scale := canvas_transform.get_scale()
     var cam_world := -canvas_transform.origin / cam_scale
     var viewport_size := get_viewport_rect().size
     if _screen_stars.is_empty():
         _rebuild_screen_stars()
-    for star in _screen_stars:
+    var step := 2 if compact else 1
+    for idx in range(0, _screen_stars.size(), step):
+        var star: Dictionary = _screen_stars[idx]
         var uv: Vector2 = star.get("uv", Vector2.ZERO)
         var pos := cam_world + Vector2(uv.x * viewport_size.x, uv.y * viewport_size.y)
         var twinkle_seed: float = float(star.get("twinkle_seed", 0.0))
@@ -220,9 +298,134 @@ func _draw_background_stars() -> void:
         alpha = clampf(alpha, 0.12, 1.0)
         var color: Color = star.get("color", Color.WHITE)
         var size_px: float = float(star.get("size", 1.2))
-        if size_px > 1.35:
+        if not compact and size_px > 1.35:
             draw_circle(pos, size_px * 1.8, Color(color.r, color.g, color.b, alpha * 0.14))
         draw_circle(pos, size_px, Color(color.r, color.g, color.b, alpha))
+
+func _draw_active_block_effects(grid_min: Vector2i, grid_max: Vector2i) -> void:
+    var ship_world := scene_ref.ship_pos
+    var hit_effects: Array[Dictionary] = []
+    for grid_variant in scene_ref.hit_timers.keys():
+        var grid: Vector2i = grid_variant
+        if grid.x < grid_min.x or grid.x > grid_max.x or grid.y < grid_min.y or grid.y > grid_max.y:
+            continue
+        if not scene_ref.blocks.has(grid):
+            continue
+        var hit_timer: float = float(scene_ref.hit_timers.get(grid, 0.0))
+        if hit_timer <= 0.0:
+            continue
+        var world := scene_ref.grid_to_world(grid)
+        _insert_effect_candidate(hit_effects, {"world": world, "timer": hit_timer, "dist_sq": ship_world.distance_squared_to(world)}, MAX_ULTRA_ACTIVE_HIT_EFFECTS)
+    for effect in hit_effects:
+        var world: Vector2 = effect.get("world", Vector2.ZERO)
+        var rect := Rect2(
+            world - Vector2.ONE * scene_ref.BLOCK_SIZE * 0.5 + Vector2.ONE * BLOCK_GAP,
+            Vector2.ONE * (scene_ref.BLOCK_SIZE - BLOCK_GAP * 2.0)
+        )
+        var hit_timer: float = float(effect.get("timer", 0.0))
+        draw_rect(rect.grow(-2.0), Color(HIT_GLOW.r, HIT_GLOW.g, HIT_GLOW.b, hit_timer / scene_ref.HIT_FLASH_DURATION), false, 2.0)
+    if MAX_ULTRA_ACTIVE_GOLD_EFFECTS <= 0:
+        return
+    var gold_effects: Array[Dictionary] = []
+    for grid_variant in scene_ref.gold_convert_timers.keys():
+        var grid: Vector2i = grid_variant
+        if grid.x < grid_min.x or grid.x > grid_max.x or grid.y < grid_min.y or grid.y > grid_max.y:
+            continue
+        if not scene_ref.blocks.has(grid):
+            continue
+        var gold_timer: float = float(scene_ref.gold_convert_timers.get(grid, 0.0))
+        if gold_timer <= 0.0:
+            continue
+        var world := scene_ref.grid_to_world(grid)
+        _insert_effect_candidate(gold_effects, {"world": world, "timer": gold_timer, "dist_sq": ship_world.distance_squared_to(world)}, MAX_ULTRA_ACTIVE_GOLD_EFFECTS)
+    for effect in gold_effects:
+        var world: Vector2 = effect.get("world", Vector2.ZERO)
+        var rect := Rect2(
+            world - Vector2.ONE * scene_ref.BLOCK_SIZE * 0.5 + Vector2.ONE * BLOCK_GAP,
+            Vector2.ONE * (scene_ref.BLOCK_SIZE - BLOCK_GAP * 2.0)
+        )
+        var gold_timer: float = float(effect.get("timer", 0.0))
+        draw_rect(rect.grow(-2.0), Color(GOLD_GLOW.r, GOLD_GLOW.g, GOLD_GLOW.b, gold_timer / scene_ref.GOLD_CONVERT_DURATION), false, 2.0)
+
+func _apply_pending_fill_updates(grid_min: Vector2i, grid_max: Vector2i) -> bool:
+    if _pending_fill_updates.is_empty() or _fill_image == null:
+        return false
+    var changed := false
+    var applied_positions: Array = []
+    for grid_variant in _pending_fill_updates.keys():
+        var grid: Vector2i = grid_variant
+        applied_positions.append(grid)
+        if grid.x < grid_min.x or grid.x > grid_max.x or grid.y < grid_min.y or grid.y > grid_max.y:
+            continue
+        var local_x: int = grid.x - grid_min.x
+        var local_y: int = grid.y - grid_min.y
+        if local_x < 0 or local_x >= _fill_grid_size.x or local_y < 0 or local_y >= _fill_grid_size.y:
+            continue
+        if scene_ref.blocks.has(grid):
+            var block: Dictionary = scene_ref.blocks.get(grid, {})
+            var colors: Dictionary = _get_block_palette(block)
+            _fill_image.set_pixel(local_x, local_y, colors.get("fill", Color.WHITE))
+        else:
+            _fill_image.set_pixel(local_x, local_y, Color.TRANSPARENT)
+        changed = true
+    for grid_variant in applied_positions:
+        _pending_fill_updates.erase(grid_variant)
+    return changed
+
+func _floor_to_step(value: int, step: int) -> int:
+    if step <= 1:
+        return value
+    return int(floor(float(value) / float(step))) * step
+
+func _ceil_to_step_inclusive(value: int, step: int) -> int:
+    if step <= 1:
+        return value
+    return int(ceil(float(value + 1) / float(step))) * step - 1
+
+func _insert_effect_candidate(items: Array[Dictionary], candidate: Dictionary, limit: int) -> void:
+    if limit <= 0:
+        return
+    var dist_sq: float = float(candidate.get("dist_sq", INF))
+    var insert_idx := items.size()
+    while insert_idx > 0 and dist_sq < float(items[insert_idx - 1].get("dist_sq", INF)):
+        insert_idx -= 1
+    if insert_idx >= limit and items.size() >= limit:
+        return
+    items.insert(insert_idx, candidate)
+    if items.size() > limit:
+        items.resize(limit)
+
+func _needs_camera_redraw() -> bool:
+    if scene_ref == null:
+        return false
+    var canvas_transform := get_canvas_transform()
+    var cam_origin := canvas_transform.origin
+    if cam_origin == _last_cam_origin and _draw_grid_min.x <= _draw_grid_max.x:
+        return false
+    if _draw_grid_min.x > _draw_grid_max.x:
+        return true
+    var cam_scale := canvas_transform.get_scale()
+    var viewport_size := get_viewport_rect().size
+    var top_left := -cam_origin / cam_scale
+    var bottom_right := top_left + viewport_size / cam_scale
+    var margin := scene_ref.BLOCK_SIZE * 2.0
+    var visible_grid_min := scene_ref.world_to_grid(top_left - Vector2(margin, margin))
+    var visible_grid_max := scene_ref.world_to_grid(bottom_right + Vector2(margin, margin))
+    return (
+        visible_grid_min.x < _draw_grid_min.x + DRAW_CACHE_PADDING_CELLS
+        or visible_grid_min.y < _draw_grid_min.y + DRAW_CACHE_PADDING_CELLS
+        or visible_grid_max.x > _draw_grid_max.x - DRAW_CACHE_PADDING_CELLS
+        or visible_grid_max.y > _draw_grid_max.y - DRAW_CACHE_PADDING_CELLS
+    )
+
+func get_perf_state_text() -> String:
+    return "Planet vis %d  load %d  detail %s/%s  fillQ %d" % [
+        _last_visible_cell_budget,
+        _last_effect_load,
+        "heavy" if _last_reduce_detail else "full",
+        "ultra" if _last_ultra_reduce_detail else "normal",
+        _pending_fill_updates.size(),
+    ]
 
 func _rebuild_screen_stars() -> void:
     _screen_stars.clear()
@@ -330,10 +533,10 @@ func _draw_core_zones() -> void:
         if bool(core.alive):
             var zone_col: Color = ZONE_RING_COLORS.get(int(core.zone), Color(1.0, 0.2, 0.1, 0.25))
             draw_circle(center, world_radius, Color(zone_col.r, zone_col.g, zone_col.b, zone_col.a * 0.14))
-            draw_arc(center, world_radius, 0.0, TAU, 64, zone_col, 1.5)
+            draw_arc(center, world_radius, 0.0, TAU, 32, zone_col, 1.5)
         else:
             draw_circle(center, world_radius, Color(0.15, 0.8, 1.0, 0.06))
-            draw_arc(center, world_radius, 0.0, TAU, 64, Color(0.15, 0.8, 1.0, 0.12), 1.0)
+            draw_arc(center, world_radius, 0.0, TAU, 24, Color(0.15, 0.8, 1.0, 0.12), 1.0)
 
 func _draw_core_shields() -> void:
     if scene_ref == null or scene_ref.planet_data == null:
@@ -346,7 +549,7 @@ func _draw_core_shields() -> void:
         var center := scene_ref.grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
         var dome_radius := (float(int(core.get("size", 3))) * 0.5 + 2.0) * scene_ref.BLOCK_SIZE
         draw_circle(center, dome_radius, Color(0.2, 0.5, 1.0, 0.08))
-        draw_arc(center, dome_radius, 0.0, TAU, 40, Color(0.3, 0.6, 1.0, 0.65), 1.5)
+        draw_arc(center, dome_radius, 0.0, TAU, 24, Color(0.3, 0.6, 1.0, 0.65), 1.5)
 
 func _draw_summer_lasers() -> void:
     for state_variant in scene_ref.summer_laser_states.values():

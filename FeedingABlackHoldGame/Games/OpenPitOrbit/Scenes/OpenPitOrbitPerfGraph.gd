@@ -1,6 +1,8 @@
 extends Control
 class_name OpenPitOrbitPerfGraph
 
+var scene_ref
+
 const HISTORY_SIZE := 120
 const FRAME_BUDGET_60 := 16.67
 const FRAME_BUDGET_30 := 33.33
@@ -48,10 +50,15 @@ func _estimate_limit(frame_ms: float, cpu_total_ms: float) -> String:
     return "Mixed"
 
 func _draw() -> void:
+    var perf_start_us: int = 0
+    if scene_ref != null and scene_ref.has_method("perf_probe_begin"):
+        perf_start_us = int(scene_ref.perf_probe_begin())
     var rect := Rect2(Vector2.ZERO, size)
     draw_rect(rect, BG_COLOR, true)
     draw_rect(rect, BORDER_COLOR, false, 2.0)
     if size.x < 8.0 or size.y < 8.0:
+        if scene_ref != null and scene_ref.has_method("perf_probe_end"):
+            scene_ref.perf_probe_end("perf_graph_draw", perf_start_us)
         return
 
     var max_ms := maxf(FRAME_BUDGET_30 * 1.2, _max_in_arrays())
@@ -61,6 +68,8 @@ func _draw() -> void:
     _draw_series(plot_rect, _frame_ms, max_ms, FRAME_COLOR, 2.0)
     _draw_series(plot_rect, _cpu_ms, max_ms, CPU_COLOR, 1.5)
     _draw_series(plot_rect, _physics_ms, max_ms, PHYSICS_COLOR, 1.0)
+    if scene_ref != null and scene_ref.has_method("perf_probe_end"):
+        scene_ref.perf_probe_end("perf_graph_draw", perf_start_us)
 
 func _max_in_arrays() -> float:
     var max_value := 0.0

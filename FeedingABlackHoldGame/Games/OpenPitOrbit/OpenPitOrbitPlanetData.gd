@@ -633,10 +633,11 @@ func to_save_data() -> Dictionary:
     for pos_variant in blocks.keys():
         var pos: Vector2i = pos_variant
         var block: Dictionary = blocks[pos]
+        var max_hp: float = float(block.get("max_hp", 0.0))
         block_data["%d,%d" % [pos.x, pos.y]] = [
             int(block.get("type", BlockType.NORMAL)),
-            float(block.get("hp", 0.0)),
-            float(block.get("max_hp", 0.0)),
+            max_hp,
+            max_hp,
             float(block.get("resource", 0.0)),
             int(block.get("core_id", -1)),
             bool(block.get("regenerated", false)),
@@ -695,12 +696,13 @@ func load_save_data_async(tree: SceneTree, data: Dictionary, progress_callback: 
     exposed_edges.clear()
     proximity_cache.clear()
     _emit_generation_progress(progress_callback, 0.0)
-    if int(data.get("format_version", 1)) >= 2 and data.get("sections", {}) is Dictionary:
+    var format_version: int = int(data.get("format_version", 1))
+    if format_version >= 2 and data.get("sections", {}) is Dictionary:
         var sections: Dictionary = data.get("sections", {})
         var section_ids: Array = sections.keys()
         var total_sections: int = max(1, section_ids.size())
         for idx in range(section_ids.size()):
-            _load_section_blocks(sections.get(section_ids[idx], []))
+            _load_section_blocks(sections.get(section_ids[idx], []), format_version)
             if tree != null and ((idx + 1) % 2 == 0):
                 _emit_generation_progress(progress_callback, 0.78 * float(idx + 1) / float(total_sections))
                 await tree.process_frame
@@ -715,10 +717,11 @@ func load_save_data_async(tree: SceneTree, data: Dictionary, progress_callback: 
                 continue
             var pos := Vector2i(int(parts[0]), int(parts[1]))
             var arr: Array = block_data[key]
+            var max_hp: float = float(arr[2])
             blocks[pos] = {
                 "type": int(arr[0]),
-                "hp": float(arr[1]),
-                "max_hp": float(arr[2]),
+                "hp": max_hp,
+                "max_hp": max_hp,
                 "resource": float(arr[3]),
                 "core_id": int(arr[4]),
                 "regenerated": bool(arr[5]) if arr.size() > 5 else false,
@@ -882,7 +885,6 @@ func _serialize_section(section_id: int) -> Array:
             pos.x,
             pos.y,
             int(block.get("type", BlockType.NORMAL)),
-            float(block.get("hp", 0.0)),
             float(block.get("max_hp", 0.0)),
             float(block.get("resource", 0.0)),
             int(block.get("core_id", -1)),
@@ -916,7 +918,7 @@ func _serialize_core_data() -> Array:
 
 func _build_chunked_save_payload(sections: Dictionary) -> Dictionary:
     return {
-        "format_version": 2,
+        "format_version": 3,
         "angle_slices": SAVE_ANGLE_SLICES,
         "depth_slices": SAVE_DEPTH_SLICES,
         "initial_block_count": initial_block_count,
@@ -929,16 +931,33 @@ func _build_chunked_save_payload(sections: Dictionary) -> Dictionary:
         "sections": sections,
     }
 
-func _load_section_blocks(section_blocks: Array) -> void:
+func _load_section_blocks(section_blocks: Array, format_version: int = 2) -> void:
     for row_variant in section_blocks:
         var row: Array = row_variant
+        if format_version >= 3:
+            if row.size() < 9:
+                continue
+            var pos_v3 := Vector2i(int(row[0]), int(row[1]))
+            var max_hp_v3: float = float(row[3])
+            blocks[pos_v3] = {
+                "type": int(row[2]),
+                "hp": max_hp_v3,
+                "max_hp": max_hp_v3,
+                "resource": float(row[4]),
+                "core_id": int(row[5]),
+                "regenerated": bool(row[6]),
+                "zone": int(row[7]),
+                "converted_gold": bool(row[8]),
+            }
+            continue
         if row.size() < 10:
             continue
         var pos := Vector2i(int(row[0]), int(row[1]))
+        var max_hp: float = float(row[4])
         blocks[pos] = {
             "type": int(row[2]),
-            "hp": float(row[3]),
-            "max_hp": float(row[4]),
+            "hp": max_hp,
+            "max_hp": max_hp,
             "resource": float(row[5]),
             "core_id": int(row[6]),
             "regenerated": bool(row[7]),
@@ -977,10 +996,11 @@ func _load_common_save_data(data: Dictionary) -> void:
             initial_block_count += int(destroyed_count_variant)
 
 func _apply_loaded_save_data(data: Dictionary) -> void:
-    if int(data.get("format_version", 1)) >= 2 and data.get("sections", {}) is Dictionary:
+    var format_version: int = int(data.get("format_version", 1))
+    if format_version >= 2 and data.get("sections", {}) is Dictionary:
         var sections: Dictionary = data.get("sections", {})
         for section_blocks_variant in sections.values():
-            _load_section_blocks(section_blocks_variant)
+            _load_section_blocks(section_blocks_variant, format_version)
     else:
         var block_data: Dictionary = data.get("blocks", {})
         for key_variant in block_data.keys():
@@ -990,10 +1010,11 @@ func _apply_loaded_save_data(data: Dictionary) -> void:
                 continue
             var pos := Vector2i(int(parts[0]), int(parts[1]))
             var arr: Array = block_data[key]
+            var max_hp: float = float(arr[2])
             blocks[pos] = {
                 "type": int(arr[0]),
-                "hp": float(arr[1]),
-                "max_hp": float(arr[2]),
+                "hp": max_hp,
+                "max_hp": max_hp,
                 "resource": float(arr[3]),
                 "core_id": int(arr[4]),
                 "regenerated": bool(arr[5]) if arr.size() > 5 else false,

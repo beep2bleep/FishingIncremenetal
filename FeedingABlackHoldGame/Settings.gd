@@ -10,6 +10,7 @@ var screen_modes = {
 
 
 var fps_limits: Dictionary = {
+        0: "UNCAPPED",
         30: "30", 
         60: "60", 
         120: "120", 

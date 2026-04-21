@@ -49,6 +49,7 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
     if scene_ref == null:
         return
+    var perf_start_us := scene_ref.perf_probe_begin()
     var vp := scene_ref.get_visual_power()
     var ship_line: Color = Color(2.5, 0.3, 0.2, 1.0) if scene_ref.overdrive_timer > 0.0 else Color(0.5, 1.8, 2.0, 1.0)
 
@@ -83,6 +84,7 @@ func _draw() -> void:
     _draw_electric_arcs(vp)
     _draw_chain_arcs(vp)
     _draw_drones(vp)
+    scene_ref.perf_probe_end("ship_draw", perf_start_us)
 
 func _draw_normal_laser(vp: float) -> void:
     var local_target := scene_ref.last_attack_target - scene_ref.ship_pos
