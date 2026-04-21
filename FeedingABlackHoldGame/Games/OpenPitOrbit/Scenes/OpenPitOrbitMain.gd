@@ -58,6 +58,7 @@ const SUMMER_LASER_WARN_BOSS := 1.5
 const SUMMER_LASER_FIRE_DURATION := 0.3
 const SUMMER_LASER_WIDTH := 24.0
 const SUMMER_LASER_BOSS_HP_THRESHOLD := 0.5
+const SUMMER_LASER_TRACK_SPEED := 2.4
 const AUTUMN_DEBRIS_INTERVAL_OUTER := 4.5
 const AUTUMN_DEBRIS_INTERVAL_BOSS := 2.5
 const AUTUMN_DEBRIS_INTERVAL_BOSS_LOW := 1.5
@@ -81,11 +82,11 @@ const WINTER_CROSS_LASER_GAP_MAX := 0.85
 const CORE_HAZARD_KNOCKBACK := 500.0
 
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
-enum OutlineMode { OFF, GROUP_EDGES, ALL_BLOCKS }
+enum OutlineMode { OFF, GROUP_EDGES, ALL_BLOCKS, ALL_BLOCKS_MASK }
 const PLANET_OUTLINE_RADIUS_MIN := 6
 const PLANET_OUTLINE_RADIUS_MAX := 64
 const PLANET_OUTLINE_RADIUS_STEP := 2
-const PLANET_OUTLINE_RADIUS_DEFAULT := 22
+const PLANET_OUTLINE_RADIUS_DEFAULT := 32
 
 var rng := RandomNumberGenerator.new()
 var persistent_data: Dictionary = {}
@@ -99,7 +100,7 @@ var hit_timers: Dictionary = {}
 var gold_convert_timers: Dictionary = {}
 var pickups: Array[Dictionary] = []
 var destroyed_cells_this_run: Dictionary = {}
-var planet_outline_mode := OutlineMode.OFF
+var planet_outline_mode := OutlineMode.GROUP_EDGES
 var planet_outline_radius_cells := PLANET_OUTLINE_RADIUS_DEFAULT
 
 var ship_pos := Vector2.ZERO
@@ -303,7 +304,7 @@ func _build_runtime_nodes() -> void:
     camera.make_current()
 
 func set_planet_outline_mode(mode: int) -> void:
-    planet_outline_mode = wrapi(mode, 0, 3)
+    planet_outline_mode = wrapi(mode, 0, 4)
     if planet_renderer != null and planet_renderer.has_method("mark_dirty"):
         planet_renderer.call("mark_dirty", false)
 
@@ -1960,17 +1961,24 @@ func _update_summer_lasers(delta: float) -> void:
         state["interval"] = interval
         state["origin"] = grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
         state["timer"] = float(state.get("timer", interval)) - delta
+        var desired_dir := (ship_pos - Vector2(state["origin"])).normalized()
+        if desired_dir.length() < 0.01:
+            desired_dir = Vector2.RIGHT
         match str(state.get("state", "idle")):
             "idle":
                 if float(state.get("timer", 0.0)) <= 0.0:
                     state["state"] = "warning"
                     state["timer"] = float(state.get("warn_time", SUMMER_LASER_WARN_OUTER))
-                    state["dir"] = (ship_pos - Vector2(state["origin"])).normalized()
+                    state["dir"] = desired_dir
             "warning":
+                var current_dir := Vector2(state.get("dir", Vector2.RIGHT))
+                if current_dir.length() < 0.01:
+                    current_dir = desired_dir
+                state["dir"] = current_dir.slerp(desired_dir, clampf(delta * SUMMER_LASER_TRACK_SPEED, 0.0, 1.0)).normalized()
                 if float(state.get("timer", 0.0)) <= 0.0:
                     state["state"] = "firing"
                     state["timer"] = float(state.get("fire_duration", SUMMER_LASER_FIRE_DURATION))
-                    state["dir"] = (ship_pos - Vector2(state["origin"])).normalized()
+                    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER, -8.0, -0.08)
             "firing":
                 _check_summer_laser_hit(state)
                 if float(state.get("timer", 0.0)) <= 0.0:

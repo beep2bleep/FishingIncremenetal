@@ -48,6 +48,7 @@ const HEAVY_OUTLINE_WIDTH_PX := 8
 const ULTRA_OUTLINE_WIDTH_PX := 8
 const HEAVY_OUTLINE_ALPHA := 0.62
 const ULTRA_OUTLINE_ALPHA := 0.5
+const MASK_OUTLINE_CELL_PX := 4
 const MAX_ULTRA_ACTIVE_HIT_EFFECTS := 24
 const MAX_ULTRA_ACTIVE_GOLD_EFFECTS := 6
 const HEAVY_VISIBLE_GRID_CELLS := 900
@@ -321,8 +322,8 @@ func _draw() -> void:
                 2.0
             )
 
+    _draw_summer_lasers(ultra_reduce_detail)
     if not ultra_reduce_detail:
-        _draw_summer_lasers()
         _draw_autumn_debris()
         _draw_winter_cross_lasers()
     if not reduce_detail:
@@ -379,11 +380,16 @@ func _draw_active_block_effects(grid_min: Vector2i, grid_max: Vector2i) -> void:
         _insert_effect_candidate(hit_effects, {"world": world, "timer": hit_timer, "dist_sq": ship_world.distance_squared_to(world)}, MAX_ULTRA_ACTIVE_HIT_EFFECTS)
     for effect in hit_effects:
         var world: Vector2 = effect.get("world", Vector2.ZERO)
+        var grid := scene_ref.world_to_grid(world)
         var rect := Rect2(
             world - Vector2.ONE * scene_ref.BLOCK_SIZE * 0.5 + Vector2.ONE * BLOCK_GAP,
             Vector2.ONE * (scene_ref.BLOCK_SIZE - BLOCK_GAP * 2.0)
         )
         var hit_timer: float = float(effect.get("timer", 0.0))
+        var health_ratio := scene_ref.get_block_hp_ratio(grid)
+        if health_ratio < 0.999:
+            draw_rect(Rect2(rect.position + Vector2(3.0, 3.0), Vector2(rect.size.x - 6.0, 2.0)), Color(0.0, 0.0, 0.0, 0.5), true)
+            draw_rect(Rect2(rect.position + Vector2(3.0, 3.0), Vector2((rect.size.x - 6.0) * health_ratio, 2.0)), Color(0.6, 1.8, 2.4, 0.88), true)
         draw_rect(rect.grow(-2.0), Color(HIT_GLOW.r, HIT_GLOW.g, HIT_GLOW.b, hit_timer / scene_ref.HIT_FLASH_DURATION), false, 2.0)
     if MAX_ULTRA_ACTIVE_GOLD_EFFECTS <= 0:
         return
@@ -434,7 +440,8 @@ func _apply_pending_fill_updates(grid_min: Vector2i, grid_max: Vector2i) -> bool
     return changed
 
 func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_detail: bool, outline_mode: int) -> void:
-    var cell_px := int(round(scene_ref.BLOCK_SIZE))
+    var use_mask_outline := outline_mode == int(scene_ref.OutlineMode.ALL_BLOCKS_MASK)
+    var cell_px := MASK_OUTLINE_CELL_PX if use_mask_outline else int(round(scene_ref.BLOCK_SIZE))
     var grid_w: int = grid_max.x - grid_min.x + 1
     var grid_h: int = grid_max.y - grid_min.y + 1
     var tex_w := maxi(1, grid_w * cell_px)
@@ -447,6 +454,9 @@ func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_
     _edge_image.fill(Color.TRANSPARENT)
     var outline_width := ULTRA_OUTLINE_WIDTH_PX if ultra_reduce_detail else HEAVY_OUTLINE_WIDTH_PX
     var outline_alpha := ULTRA_OUTLINE_ALPHA if ultra_reduce_detail else HEAVY_OUTLINE_ALPHA
+    if use_mask_outline:
+        outline_width = 1
+        outline_alpha = 0.78 if ultra_reduce_detail else 0.84
     var outline_radius_cells := maxi(1, int(scene_ref.planet_outline_radius_cells))
     var outline_center_grid := scene_ref.world_to_grid(scene_ref.camera_pos)
     var radius_sq := outline_radius_cells * outline_radius_cells
@@ -466,7 +476,7 @@ func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_
             var draw_color := Color(lightened_edge.r, lightened_edge.g, lightened_edge.b, outline_alpha)
             var px := (grid.x - grid_min.x) * cell_px
             var py := (grid.y - grid_min.y) * cell_px
-            var mask := 15 if outline_mode == int(scene_ref.OutlineMode.ALL_BLOCKS) else int(scene_ref.exposed_edges.get(grid, 0))
+            var mask := 15 if outline_mode == int(scene_ref.OutlineMode.ALL_BLOCKS) or use_mask_outline else int(scene_ref.exposed_edges.get(grid, 0))
             if mask == 0:
                 continue
             if (mask & 1) != 0:
@@ -663,7 +673,7 @@ func _draw_core_shields() -> void:
         draw_circle(center, dome_radius, Color(0.2, 0.5, 1.0, 0.08))
         draw_arc(center, dome_radius, 0.0, TAU, 24, Color(0.3, 0.6, 1.0, 0.65), 1.5)
 
-func _draw_summer_lasers() -> void:
+func _draw_summer_lasers(compact: bool = false) -> void:
     for state_variant in scene_ref.summer_laser_states.values():
         var state: Dictionary = state_variant
         var origin: Vector2 = state.get("origin", Vector2.ZERO)
@@ -672,6 +682,13 @@ func _draw_summer_lasers() -> void:
             continue
         var end := origin + dir * scene_ref.BLOCK_SIZE * 40.0
         var color := Color(2.2, 0.9, 0.2, 0.9)
+        if compact:
+            if str(state.get("state", "idle")) == "warning":
+                var compact_pulse := 0.45 + 0.2 * (sin(_time_elapsed * 10.0) + 1.0) * 0.5
+                draw_line(origin, end, Color(color.r, color.g, color.b, compact_pulse), 4.0)
+            elif str(state.get("state", "idle")) == "firing":
+                draw_line(origin, end, Color(1.0, 0.42, 0.12, 0.92), 7.0)
+            continue
         if str(state.get("state", "idle")) == "warning":
             var pulse := 0.35 + 0.25 * (sin(_time_elapsed * 10.0) + 1.0) * 0.5
             draw_line(origin, end, Color(color.r, color.g, color.b, pulse), 3.0)

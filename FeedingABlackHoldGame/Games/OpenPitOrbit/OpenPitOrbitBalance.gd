@@ -344,7 +344,7 @@ static func build_runtime_stats(upgrades: Dictionary) -> Dictionary:
     return {
         "attack_damage": 8.0 + damage_flat,
         "attack_interval": clampf(0.8 + fire_rate_mod, 0.06, 1.2),
-        "move_speed": 280.0 + speed_bonus,
+        "move_speed": 580.0 + speed_bonus,
         "attack_radius": 96.0 + range_bonus,
         "cargo_capacity": int(15 + cargo_bonus),
         "run_time": (30.0 + fuel_bonus) / maxf(0.2, fuel_efficiency),
@@ -386,7 +386,7 @@ static func build_runtime_stats(upgrades: Dictionary) -> Dictionary:
         "overdrive_enabled": flags["overdrive_unlock"],
         "overdrive_kill_need": 40 if flags["overdrive_enhance"] else 50,
         "overdrive_duration": 4.5 if flags["overdrive_enhance"] else 3.0,
-        "overdrive_speed_bonus": 300.0,
+        "overdrive_speed_bonus": 0.0,
         "overdrive_fire_mult": 3.0,
         "core_breaker_mult": 3.0 if flags["core_breaker_unlock"] else 1.0,
         "aoe_enabled": flags["aoe_mining_unlock"],
