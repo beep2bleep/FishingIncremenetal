@@ -6,11 +6,16 @@ var _force_redraw := true
 var _last_cam_origin := Vector2.INF
 var _fill_image: Image
 var _fill_texture: ImageTexture
+var _fill_prewarm_image: Image
 var _edge_image: Image
 var _edge_texture: ImageTexture
 var _fill_grid_size := Vector2i.ZERO
 var _fill_grid_origin := Vector2i(2147483647, 2147483647)
 var _reduced_fill_cache_size := Vector2i.ZERO
+var _fill_prewarm_grid_size := Vector2i.ZERO
+var _fill_prewarm_grid_origin := Vector2i(2147483647, 2147483647)
+var _fill_prewarm_next_row := 0
+var _fill_prewarm_ready := false
 var _edge_grid_size := Vector2i.ZERO
 var _edge_grid_origin := Vector2i(2147483647, 2147483647)
 var _draw_grid_min := Vector2i(2147483647, 2147483647)
@@ -48,17 +53,25 @@ const DRAW_CACHE_PADDING_CELLS := 8
 const FILL_CACHE_PADDING_CELLS := 14
 const FILL_CACHE_ALIGN_CELLS := 8
 const REDUCED_FILL_CACHE_ALIGN_CELLS := 16
-const OUTLINE_CACHE_PADDING_CELLS := 1
+const REDUCED_FILL_CACHE_EXTRA_ALIGN_STEPS := 2
+const HEAVY_REDUCED_FILL_MIN_CELLS := 80
+const ULTRA_REDUCED_FILL_MIN_CELLS := 72
+const REDUCED_FILL_PREWARM_ROWS_PER_DRAW := 16
+const REDUCED_FILL_PREWARM_TRIGGER_CELLS := 16
+const HEAVY_OUTLINE_CACHE_PADDING_CELLS := 1
+const ULTRA_OUTLINE_CACHE_PADDING_CELLS := 0
 const OUTLINE_CACHE_ALIGN_CELLS := 4
 const GOLD_EFFECT_REDRAW_INTERVAL := 0.05
 const REDUCED_FILL_UPLOAD_INTERVAL := 0.08
 const REDUCED_FILL_FORCE_UPLOAD_UPDATES := 48
 const OUTLINE_REBUILD_INTERVAL := 0.2
-const HEAVY_OUTLINE_WIDTH_PX := 8
-const ULTRA_OUTLINE_WIDTH_PX := 8
+const HEAVY_OUTLINE_WIDTH_PX := 2
+const ULTRA_OUTLINE_WIDTH_PX := 2
 const HEAVY_OUTLINE_ALPHA := 0.62
 const ULTRA_OUTLINE_ALPHA := 0.5
 const MASK_OUTLINE_CELL_PX := 4
+const HEAVY_OUTLINE_CELL_PX := 24
+const ULTRA_OUTLINE_CELL_PX := 16
 const MAX_ULTRA_ACTIVE_HIT_EFFECTS := 24
 const MAX_ULTRA_ACTIVE_GOLD_EFFECTS := 6
 const HEAVY_VISIBLE_GRID_CELLS := 900
@@ -114,11 +127,13 @@ func mark_dirty(rebuild_fill: bool = true) -> void:
         _fill_dirty = true
         _pending_fill_updates.clear()
         _palette_cache.clear()
+        _clear_fill_prewarm()
 
 func queue_fill_update(grid: Vector2i) -> void:
     _pending_fill_updates[grid] = true
     _force_redraw = true
     _edge_dirty = true
+    _clear_fill_prewarm()
 
 func queue_fill_updates(positions: Array) -> void:
     for pos_variant in positions:
@@ -126,6 +141,7 @@ func queue_fill_updates(positions: Array) -> void:
     if not positions.is_empty():
         _force_redraw = true
         _edge_dirty = true
+        _clear_fill_prewarm()
 
 func _process(_delta: float) -> void:
     _time_elapsed += _delta
@@ -196,9 +212,14 @@ func _draw() -> void:
     var cache_grid_min := desired_cache_grid_min
     var cache_grid_size := desired_cache_grid_size
     if reduce_detail or ultra_reduce_detail:
+        var reduced_fill_min_cells := ULTRA_REDUCED_FILL_MIN_CELLS if ultra_reduce_detail else HEAVY_REDUCED_FILL_MIN_CELLS
+        var reduced_fill_extra_cells := fill_align_cells * REDUCED_FILL_CACHE_EXTRA_ALIGN_STEPS
+        desired_cache_grid_size.x = maxi(desired_cache_grid_size.x + reduced_fill_extra_cells, reduced_fill_min_cells)
+        desired_cache_grid_size.y = maxi(desired_cache_grid_size.y + reduced_fill_extra_cells, reduced_fill_min_cells)
         _reduced_fill_cache_size.x = maxi(_reduced_fill_cache_size.x, desired_cache_grid_size.x)
         _reduced_fill_cache_size.y = maxi(_reduced_fill_cache_size.y, desired_cache_grid_size.y)
         cache_grid_size = _reduced_fill_cache_size
+        var should_keep_fill_origin := false
         if _fill_grid_origin.x < 2147483647 and _fill_grid_size == _reduced_fill_cache_size:
             var current_cache_max := Vector2i(
                 _fill_grid_origin.x + _reduced_fill_cache_size.x - 1,
@@ -211,9 +232,34 @@ func _draw() -> void:
                 and desired_cache_grid_max.y <= current_cache_max.y
             )
             if can_keep_fill_origin:
+                should_keep_fill_origin = true
                 cache_grid_min = _fill_grid_origin
     else:
         _reduced_fill_cache_size = Vector2i.ZERO
+        _clear_fill_prewarm()
+    if reduce_detail or ultra_reduce_detail:
+        var prewarm_target_min := desired_cache_grid_min
+        var prewarm_target_size := cache_grid_size
+        var needs_fill_prewarm := false
+        if _fill_grid_origin.x < 2147483647:
+            if prewarm_target_min != cache_grid_min or _fill_grid_size != prewarm_target_size:
+                needs_fill_prewarm = true
+            elif should_keep_fill_origin:
+                var current_cache_max := Vector2i(
+                    _fill_grid_origin.x + cache_grid_size.x - 1,
+                    _fill_grid_origin.y + cache_grid_size.y - 1
+                )
+                var distance_to_left := desired_cache_grid_min.x - _fill_grid_origin.x
+                var distance_to_top := desired_cache_grid_min.y - _fill_grid_origin.y
+                var distance_to_right := current_cache_max.x - desired_cache_grid_max.x
+                var distance_to_bottom := current_cache_max.y - desired_cache_grid_max.y
+                if distance_to_left <= REDUCED_FILL_PREWARM_TRIGGER_CELLS or distance_to_top <= REDUCED_FILL_PREWARM_TRIGGER_CELLS or distance_to_right <= REDUCED_FILL_PREWARM_TRIGGER_CELLS or distance_to_bottom <= REDUCED_FILL_PREWARM_TRIGGER_CELLS:
+                    needs_fill_prewarm = true
+        if needs_fill_prewarm and not _fill_dirty and _pending_fill_updates.is_empty():
+            _ensure_fill_prewarm(prewarm_target_min, prewarm_target_size)
+            _advance_fill_prewarm(REDUCED_FILL_PREWARM_ROWS_PER_DRAW)
+        elif not needs_fill_prewarm:
+            _clear_fill_prewarm()
     var cache_grid_max := Vector2i(
         cache_grid_min.x + cache_grid_size.x - 1,
         cache_grid_min.y + cache_grid_size.y - 1
@@ -268,16 +314,15 @@ func _draw() -> void:
             _fill_rebuild_size_count += 1
         _last_fill_rebuild_reason = "+".join(fill_reason_parts) if not fill_reason_parts.is_empty() else "unknown"
         var fill_rebuild_start_us := scene_ref.perf_probe_begin()
-        _fill_grid_origin = cache_grid_min
-        _fill_image.fill(Color.TRANSPARENT)
-        for x in range(cache_grid_min.x, cache_grid_max.x + 1):
-            for y in range(cache_grid_min.y, cache_grid_max.y + 1):
-                var grid := Vector2i(x, y)
-                var block: Dictionary = scene_ref.blocks.get(grid, {})
-                if block.is_empty():
-                    continue
-                var colors: Dictionary = _get_block_palette(block)
-                _fill_image.set_pixel(x - cache_grid_min.x, y - cache_grid_min.y, colors.get("fill", Color.WHITE))
+        var old_fill_grid_origin := _fill_grid_origin
+        if not fill_rebuild_dirty and _can_apply_fill_prewarm(cache_grid_min, Vector2i(cache_grid_w, cache_grid_h)):
+            _apply_fill_prewarm()
+        elif fill_rebuild_origin and not fill_rebuild_dirty and not fill_rebuild_size and _fill_image != null:
+            _shift_fill_image_with_overlap(old_fill_grid_origin, cache_grid_min, Vector2i(cache_grid_w, cache_grid_h))
+        else:
+            _fill_grid_origin = cache_grid_min
+            _fill_image.fill(Color.TRANSPARENT)
+            _paint_fill_region(cache_grid_min, cache_grid_max)
         scene_ref.perf_probe_end("renderer_fill_rebuild", fill_rebuild_start_us)
         var fill_upload_start_us := scene_ref.perf_probe_begin()
         if _fill_texture == null:
@@ -315,13 +360,14 @@ func _draw() -> void:
         section_start_us = scene_ref.perf_probe_begin()
         var outline_radius_cells := maxi(1, int(scene_ref.planet_outline_radius_cells))
         var outline_center_grid := _get_outline_cache_center_grid()
+        var outline_cache_padding_cells := ULTRA_OUTLINE_CACHE_PADDING_CELLS if ultra_reduce_detail else HEAVY_OUTLINE_CACHE_PADDING_CELLS
         var desired_edge_grid_min := Vector2i(
-            outline_center_grid.x - outline_radius_cells - OUTLINE_CACHE_PADDING_CELLS,
-            outline_center_grid.y - outline_radius_cells - OUTLINE_CACHE_PADDING_CELLS
+            outline_center_grid.x - outline_radius_cells - outline_cache_padding_cells,
+            outline_center_grid.y - outline_radius_cells - outline_cache_padding_cells
         )
         var desired_edge_grid_max := Vector2i(
-            outline_center_grid.x + outline_radius_cells + OUTLINE_CACHE_PADDING_CELLS,
-            outline_center_grid.y + outline_radius_cells + OUTLINE_CACHE_PADDING_CELLS
+            outline_center_grid.x + outline_radius_cells + outline_cache_padding_cells,
+            outline_center_grid.y + outline_radius_cells + outline_cache_padding_cells
         )
         var edge_grid_min := desired_edge_grid_min
         var edge_grid_max := desired_edge_grid_max
@@ -546,10 +592,99 @@ func _apply_pending_fill_updates(grid_min: Vector2i, grid_max: Vector2i) -> bool
         _pending_fill_updates.erase(grid_variant)
     return changed
 
+func _paint_fill_region(grid_min: Vector2i, grid_max: Vector2i) -> void:
+    for x in range(grid_min.x, grid_max.x + 1):
+        for y in range(grid_min.y, grid_max.y + 1):
+            var grid := Vector2i(x, y)
+            var block: Dictionary = scene_ref.blocks.get(grid, {})
+            if block.is_empty():
+                continue
+            var colors: Dictionary = _get_block_palette(block)
+            _fill_image.set_pixel(x - _fill_grid_origin.x, y - _fill_grid_origin.y, colors.get("fill", Color.WHITE))
+
+func _paint_fill_region_into(image: Image, image_origin: Vector2i, grid_min: Vector2i, grid_max: Vector2i) -> void:
+    for x in range(grid_min.x, grid_max.x + 1):
+        for y in range(grid_min.y, grid_max.y + 1):
+            var grid := Vector2i(x, y)
+            var block: Dictionary = scene_ref.blocks.get(grid, {})
+            if block.is_empty():
+                continue
+            var colors: Dictionary = _get_block_palette(block)
+            image.set_pixel(x - image_origin.x, y - image_origin.y, colors.get("fill", Color.WHITE))
+
+func _shift_fill_image_with_overlap(old_origin: Vector2i, new_origin: Vector2i, grid_size: Vector2i) -> void:
+    var new_image := Image.create(grid_size.x, grid_size.y, false, Image.FORMAT_RGBA8)
+    new_image.fill(Color.TRANSPARENT)
+    var old_max := Vector2i(old_origin.x + grid_size.x - 1, old_origin.y + grid_size.y - 1)
+    var new_max := Vector2i(new_origin.x + grid_size.x - 1, new_origin.y + grid_size.y - 1)
+    var overlap_min := Vector2i(maxi(old_origin.x, new_origin.x), maxi(old_origin.y, new_origin.y))
+    var overlap_max := Vector2i(mini(old_max.x, new_max.x), mini(old_max.y, new_max.y))
+    var has_overlap := overlap_min.x <= overlap_max.x and overlap_min.y <= overlap_max.y
+    if has_overlap:
+        var src_pos := Vector2i(overlap_min.x - old_origin.x, overlap_min.y - old_origin.y)
+        var overlap_size := Vector2i(overlap_max.x - overlap_min.x + 1, overlap_max.y - overlap_min.y + 1)
+        var dst_pos := Vector2i(overlap_min.x - new_origin.x, overlap_min.y - new_origin.y)
+        new_image.blit_rect(_fill_image, Rect2i(src_pos, overlap_size), dst_pos)
+    _fill_image = new_image
+    _fill_grid_origin = new_origin
+    _fill_grid_size = grid_size
+    if not has_overlap:
+        _paint_fill_region(new_origin, new_max)
+        return
+    if new_origin.y < overlap_min.y:
+        _paint_fill_region(new_origin, Vector2i(new_max.x, overlap_min.y - 1))
+    if overlap_max.y < new_max.y:
+        _paint_fill_region(Vector2i(new_origin.x, overlap_max.y + 1), new_max)
+    if new_origin.x < overlap_min.x:
+        _paint_fill_region(Vector2i(new_origin.x, overlap_min.y), Vector2i(overlap_min.x - 1, overlap_max.y))
+    if overlap_max.x < new_max.x:
+        _paint_fill_region(Vector2i(overlap_max.x + 1, overlap_min.y), Vector2i(new_max.x, overlap_max.y))
+
+func _clear_fill_prewarm() -> void:
+    _fill_prewarm_image = null
+    _fill_prewarm_grid_origin = Vector2i(2147483647, 2147483647)
+    _fill_prewarm_grid_size = Vector2i.ZERO
+    _fill_prewarm_next_row = 0
+    _fill_prewarm_ready = false
+
+func _ensure_fill_prewarm(target_origin: Vector2i, target_size: Vector2i) -> void:
+    if _fill_prewarm_image != null and _fill_prewarm_grid_origin == target_origin and _fill_prewarm_grid_size == target_size:
+        return
+    _fill_prewarm_image = Image.create(target_size.x, target_size.y, false, Image.FORMAT_RGBA8)
+    _fill_prewarm_image.fill(Color.TRANSPARENT)
+    _fill_prewarm_grid_origin = target_origin
+    _fill_prewarm_grid_size = target_size
+    _fill_prewarm_next_row = 0
+    _fill_prewarm_ready = false
+
+func _advance_fill_prewarm(row_count: int) -> void:
+    if _fill_prewarm_image == null or _fill_prewarm_ready or row_count <= 0:
+        return
+    var end_row := mini(_fill_prewarm_grid_size.y, _fill_prewarm_next_row + row_count)
+    if end_row <= _fill_prewarm_next_row:
+        return
+    var row_grid_min := Vector2i(_fill_prewarm_grid_origin.x, _fill_prewarm_grid_origin.y + _fill_prewarm_next_row)
+    var row_grid_max := Vector2i(
+        _fill_prewarm_grid_origin.x + _fill_prewarm_grid_size.x - 1,
+        _fill_prewarm_grid_origin.y + end_row - 1
+    )
+    _paint_fill_region_into(_fill_prewarm_image, _fill_prewarm_grid_origin, row_grid_min, row_grid_max)
+    _fill_prewarm_next_row = end_row
+    _fill_prewarm_ready = _fill_prewarm_next_row >= _fill_prewarm_grid_size.y
+
+func _can_apply_fill_prewarm(target_origin: Vector2i, target_size: Vector2i) -> bool:
+    return _fill_prewarm_ready and _fill_prewarm_grid_origin == target_origin and _fill_prewarm_grid_size == target_size and _fill_prewarm_image != null
+
+func _apply_fill_prewarm() -> void:
+    _fill_image = _fill_prewarm_image
+    _fill_grid_origin = _fill_prewarm_grid_origin
+    _fill_grid_size = _fill_prewarm_grid_size
+    _clear_fill_prewarm()
+
 func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_detail: bool, outline_mode: int) -> void:
     var use_mask_outline := outline_mode == int(scene_ref.OutlineMode.ALL_BLOCKS_MASK)
     var use_exposed_mask := not use_mask_outline and outline_mode != int(scene_ref.OutlineMode.ALL_BLOCKS)
-    var cell_px := MASK_OUTLINE_CELL_PX if use_mask_outline else int(round(scene_ref.BLOCK_SIZE))
+    var cell_px := MASK_OUTLINE_CELL_PX if use_mask_outline else (ULTRA_OUTLINE_CELL_PX if ultra_reduce_detail else HEAVY_OUTLINE_CELL_PX)
     var grid_w: int = grid_max.x - grid_min.x + 1
     var grid_h: int = grid_max.y - grid_min.y + 1
     var tex_w := maxi(1, grid_w * cell_px)
