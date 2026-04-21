@@ -211,6 +211,7 @@ func _draw() -> void:
     )
     var cache_grid_min := desired_cache_grid_min
     var cache_grid_size := desired_cache_grid_size
+    var should_keep_fill_origin := false
     if reduce_detail or ultra_reduce_detail:
         var reduced_fill_min_cells := ULTRA_REDUCED_FILL_MIN_CELLS if ultra_reduce_detail else HEAVY_REDUCED_FILL_MIN_CELLS
         var reduced_fill_extra_cells := fill_align_cells * REDUCED_FILL_CACHE_EXTRA_ALIGN_STEPS
@@ -219,7 +220,6 @@ func _draw() -> void:
         _reduced_fill_cache_size.x = maxi(_reduced_fill_cache_size.x, desired_cache_grid_size.x)
         _reduced_fill_cache_size.y = maxi(_reduced_fill_cache_size.y, desired_cache_grid_size.y)
         cache_grid_size = _reduced_fill_cache_size
-        var should_keep_fill_origin := false
         if _fill_grid_origin.x < 2147483647 and _fill_grid_size == _reduced_fill_cache_size:
             var current_cache_max := Vector2i(
                 _fill_grid_origin.x + _reduced_fill_cache_size.x - 1,
