@@ -326,8 +326,8 @@ func get_active_core_behaviors() -> Dictionary:
         "destroyed_t1": get_destroyed_in_tier(1),
     }
 
-func spawn_defense_blocks() -> int:
-    var spawned := 0
+func spawn_defense_blocks() -> Array[Vector2i]:
+    var spawned_positions: Array[Vector2i] = []
     var used := {}
     for core in cores:
         if not bool(core.alive):
@@ -363,9 +363,9 @@ func spawn_defense_blocks() -> int:
             zone_current_blocks[int(blocks[pos].zone)] = int(zone_current_blocks.get(int(blocks[pos].zone), 0)) + 1
             _mark_section_dirty(pos)
             used[pos] = true
-            spawned += 1
+            spawned_positions.append(pos)
             break
-    return spawned
+    return spawned_positions
 
 func spawn_thorn_ring(core: Dictionary, ring_min: int, ring_max: int) -> int:
     var center: Vector2i = core.center

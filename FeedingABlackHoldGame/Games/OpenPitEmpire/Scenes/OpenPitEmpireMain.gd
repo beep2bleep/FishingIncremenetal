@@ -2132,10 +2132,12 @@ func _update_core_behaviors(delta: float) -> void:
         core_defense_timer -= delta
         if core_defense_timer <= 0.0:
             core_defense_timer = DEFENSE_BLOCK_INTERVAL * (0.6 if bool(behaviors.get("final_rage", false)) else 1.0)
-            if planet_data.spawn_defense_blocks() > 0:
+            var spawned_positions: Array[Vector2i] = planet_data.spawn_defense_blocks()
+            if not spawned_positions.is_empty():
                 blocks = planet_data.blocks
                 exposed_edges = planet_data.exposed_edges
-                planet_renderer.mark_dirty()
+                if planet_renderer != null:
+                    planet_renderer.queue_fill_updates(spawned_positions)
     if bool(behaviors.get("shockwave", false)) or bool(behaviors.get("final_rage", false)):
         core_shockwave_timer -= delta
         if core_shockwave_timer <= 0.0:
