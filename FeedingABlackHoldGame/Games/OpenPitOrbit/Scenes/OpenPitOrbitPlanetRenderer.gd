@@ -6,11 +6,16 @@ var _force_redraw := true
 var _last_cam_origin := Vector2.INF
 var _fill_image: Image
 var _fill_texture: ImageTexture
+var _edge_image: Image
+var _edge_texture: ImageTexture
 var _fill_grid_size := Vector2i.ZERO
 var _fill_grid_origin := Vector2i(2147483647, 2147483647)
+var _edge_grid_size := Vector2i.ZERO
+var _edge_grid_origin := Vector2i(2147483647, 2147483647)
 var _draw_grid_min := Vector2i(2147483647, 2147483647)
 var _draw_grid_max := Vector2i(-2147483647, -2147483647)
 var _fill_dirty := true
+var _edge_dirty := true
 var _pending_fill_updates: Dictionary = {}
 var _time_elapsed := 0.0
 var _palette_cache: Dictionary = {}
@@ -20,6 +25,7 @@ var _last_effect_load := 0
 var _last_reduce_detail := false
 var _last_ultra_reduce_detail := false
 var _gold_effect_redraw_accum := 0.0
+var _edge_rebuild_accum := 0.0
 
 const SPACE_BG := Color(0.025, 0.025, 0.035, 1.0)
 const HIT_GLOW := Color(2.3, 1.2, 0.4, 0.55)
@@ -32,12 +38,18 @@ const STAR_COLORS := [
 const SCREEN_STAR_COUNT := 90
 const BLOCK_GAP := 1.5
 const LOCAL_SHOCKWAVE_VISUAL_RADIUS := 96.0
-const DRAW_CACHE_PADDING_CELLS := 4
-const FILL_CACHE_PADDING_CELLS := 6
+const DRAW_CACHE_PADDING_CELLS := 8
+const FILL_CACHE_PADDING_CELLS := 14
 const FILL_CACHE_ALIGN_CELLS := 8
+const OUTLINE_CACHE_PADDING_CELLS := 2
 const GOLD_EFFECT_REDRAW_INTERVAL := 0.05
-const MAX_ULTRA_ACTIVE_HIT_EFFECTS := 18
-const MAX_ULTRA_ACTIVE_GOLD_EFFECTS := 0
+const OUTLINE_REBUILD_INTERVAL := 0.12
+const HEAVY_OUTLINE_WIDTH_PX := 8
+const ULTRA_OUTLINE_WIDTH_PX := 8
+const HEAVY_OUTLINE_ALPHA := 0.62
+const ULTRA_OUTLINE_ALPHA := 0.5
+const MAX_ULTRA_ACTIVE_HIT_EFFECTS := 24
+const MAX_ULTRA_ACTIVE_GOLD_EFFECTS := 6
 const HEAVY_VISIBLE_GRID_CELLS := 900
 const HEAVY_EFFECT_LOAD := 24
 const VERY_HEAVY_VISIBLE_GRID_CELLS := 1400
@@ -86,6 +98,7 @@ func _ready() -> void:
 
 func mark_dirty(rebuild_fill: bool = true) -> void:
     _force_redraw = true
+    _edge_dirty = true
     if rebuild_fill:
         _fill_dirty = true
         _pending_fill_updates.clear()
@@ -94,16 +107,19 @@ func mark_dirty(rebuild_fill: bool = true) -> void:
 func queue_fill_update(grid: Vector2i) -> void:
     _pending_fill_updates[grid] = true
     _force_redraw = true
+    _edge_dirty = true
 
 func queue_fill_updates(positions: Array) -> void:
     for pos_variant in positions:
         _pending_fill_updates[Vector2i(pos_variant)] = true
     if not positions.is_empty():
         _force_redraw = true
+        _edge_dirty = true
 
 func _process(_delta: float) -> void:
     _time_elapsed += _delta
     _gold_effect_redraw_accum += _delta
+    _edge_rebuild_accum += _delta
     var needs_redraw := _force_redraw
     _force_redraw = false
     if _needs_camera_redraw():
@@ -127,7 +143,6 @@ func _draw() -> void:
     var cam_scale := canvas_transform.get_scale()
     var top_left := -canvas_transform.origin / cam_scale
     var bottom_right := top_left + viewport_size / cam_scale
-    draw_rect(Rect2(top_left, viewport_size / cam_scale), SPACE_BG, true)
 
     var margin := scene_ref.BLOCK_SIZE * 2.0
     var visible_grid_min := scene_ref.world_to_grid(top_left - Vector2(margin, margin))
@@ -142,11 +157,6 @@ func _draw() -> void:
     _last_effect_load = effect_load
     _last_reduce_detail = reduce_detail
     _last_ultra_reduce_detail = ultra_reduce_detail
-    if not reduce_detail:
-        _draw_background_stars()
-        _draw_core_zones()
-    elif not ultra_reduce_detail:
-        _draw_background_stars(true)
     var padded_grid_min := visible_grid_min - Vector2i(FILL_CACHE_PADDING_CELLS, FILL_CACHE_PADDING_CELLS)
     var padded_grid_max := visible_grid_max + Vector2i(FILL_CACHE_PADDING_CELLS, FILL_CACHE_PADDING_CELLS)
     var cache_grid_min := Vector2i(
@@ -157,6 +167,21 @@ func _draw() -> void:
         _ceil_to_step_inclusive(padded_grid_max.x, FILL_CACHE_ALIGN_CELLS),
         _ceil_to_step_inclusive(padded_grid_max.y, FILL_CACHE_ALIGN_CELLS)
     )
+    var background_rect := Rect2(
+        Vector2(float(cache_grid_min.x) * scene_ref.BLOCK_SIZE, float(cache_grid_min.y) * scene_ref.BLOCK_SIZE),
+        Vector2(
+            float(cache_grid_max.x - cache_grid_min.x + 1) * scene_ref.BLOCK_SIZE,
+            float(cache_grid_max.y - cache_grid_min.y + 1) * scene_ref.BLOCK_SIZE
+        )
+    )
+    draw_rect(background_rect, SPACE_BG, true)
+    if ultra_reduce_detail:
+        _draw_background_stars(true, true)
+    elif not reduce_detail:
+        _draw_background_stars()
+        _draw_core_zones()
+    else:
+        _draw_background_stars(true)
     var cache_grid_w: int = cache_grid_max.x - cache_grid_min.x + 1
     var cache_grid_h: int = cache_grid_max.y - cache_grid_min.y + 1
     var fill_needs_rebuild := _fill_dirty or _fill_grid_origin != cache_grid_min or _fill_grid_size != Vector2i(cache_grid_w, cache_grid_h)
@@ -200,6 +225,29 @@ func _draw() -> void:
     )
     if _fill_texture != null:
         draw_texture_rect(_fill_texture, tex_rect, false)
+    if int(scene_ref.planet_outline_mode) != int(scene_ref.OutlineMode.OFF) and (reduce_detail or ultra_reduce_detail):
+        var outline_radius_cells := maxi(1, int(scene_ref.planet_outline_radius_cells))
+        var outline_center_grid := scene_ref.world_to_grid(scene_ref.camera_pos)
+        var edge_grid_min := Vector2i(
+            outline_center_grid.x - outline_radius_cells - OUTLINE_CACHE_PADDING_CELLS,
+            outline_center_grid.y - outline_radius_cells - OUTLINE_CACHE_PADDING_CELLS
+        )
+        var edge_grid_max := Vector2i(
+            outline_center_grid.x + outline_radius_cells + OUTLINE_CACHE_PADDING_CELLS,
+            outline_center_grid.y + outline_radius_cells + OUTLINE_CACHE_PADDING_CELLS
+        )
+        var edge_grid_size := Vector2i(edge_grid_max.x - edge_grid_min.x + 1, edge_grid_max.y - edge_grid_min.y + 1)
+        var edge_cache_matches := _edge_grid_origin == edge_grid_min and _edge_grid_size == edge_grid_size
+        if _edge_texture == null or not edge_cache_matches or (_edge_dirty and _edge_rebuild_accum >= OUTLINE_REBUILD_INTERVAL):
+            _rebuild_edge_texture(edge_grid_min, edge_grid_max, ultra_reduce_detail, int(scene_ref.planet_outline_mode))
+        if _edge_texture != null and _edge_grid_origin == edge_grid_min and _edge_grid_size == edge_grid_size:
+            var edge_tex_rect := Rect2(
+                float(edge_grid_min.x) * scene_ref.BLOCK_SIZE,
+                float(edge_grid_min.y) * scene_ref.BLOCK_SIZE,
+                float(edge_grid_size.x) * scene_ref.BLOCK_SIZE,
+                float(edge_grid_size.y) * scene_ref.BLOCK_SIZE
+            )
+            draw_texture_rect(_edge_texture, edge_tex_rect, false)
 
     var gold_pulse_t := Time.get_ticks_msec() * 0.001 * 1.8
     if ultra_reduce_detail:
@@ -281,24 +329,37 @@ func _draw() -> void:
         _draw_core_shields()
     scene_ref.perf_probe_end("renderer_draw", perf_start_us)
 
-func _draw_background_stars(compact: bool = false) -> void:
+func _draw_background_stars(compact: bool = false, ultra_compact: bool = false) -> void:
     var canvas_transform := get_canvas_transform()
     var cam_scale := canvas_transform.get_scale()
     var cam_world := -canvas_transform.origin / cam_scale
     var viewport_size := get_viewport_rect().size
     if _screen_stars.is_empty():
         _rebuild_screen_stars()
-    var step := 2 if compact else 1
+    var step := 4 if ultra_compact else (2 if compact else 1)
+    var backdrop_alpha := 0.2 if ultra_compact else (0.32 if compact else 0.42)
+    var backdrop_padding := scene_ref.BLOCK_SIZE * float(FILL_CACHE_PADDING_CELLS)
+    draw_rect(
+        Rect2(
+            cam_world - Vector2.ONE * backdrop_padding,
+            viewport_size / cam_scale + Vector2.ONE * (backdrop_padding * 2.0)
+        ),
+        Color(0.04, 0.06, 0.09, backdrop_alpha),
+        true
+    )
     for idx in range(0, _screen_stars.size(), step):
         var star: Dictionary = _screen_stars[idx]
         var uv: Vector2 = star.get("uv", Vector2.ZERO)
         var pos := cam_world + Vector2(uv.x * viewport_size.x, uv.y * viewport_size.y)
         var twinkle_seed: float = float(star.get("twinkle_seed", 0.0))
-        var alpha := float(star.get("alpha", 0.6)) * (0.82 + 0.18 * sin(_time_elapsed * (0.7 + twinkle_seed * 1.2) + twinkle_seed * TAU))
+        var alpha_scale := 0.7 if ultra_compact else (0.82 if compact else 1.0)
+        var alpha := float(star.get("alpha", 0.6)) * alpha_scale * (0.82 + 0.18 * sin(_time_elapsed * (0.7 + twinkle_seed * 1.2) + twinkle_seed * TAU))
         alpha = clampf(alpha, 0.12, 1.0)
         var color: Color = star.get("color", Color.WHITE)
         var size_px: float = float(star.get("size", 1.2))
-        if not compact and size_px > 1.35:
+        if ultra_compact:
+            size_px = minf(size_px, 1.4)
+        if not compact and not ultra_compact and size_px > 1.35:
             draw_circle(pos, size_px * 1.8, Color(color.r, color.g, color.b, alpha * 0.14))
         draw_circle(pos, size_px, Color(color.r, color.g, color.b, alpha))
 
@@ -371,6 +432,57 @@ func _apply_pending_fill_updates(grid_min: Vector2i, grid_max: Vector2i) -> bool
     for grid_variant in applied_positions:
         _pending_fill_updates.erase(grid_variant)
     return changed
+
+func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_detail: bool, outline_mode: int) -> void:
+    var cell_px := int(round(scene_ref.BLOCK_SIZE))
+    var grid_w: int = grid_max.x - grid_min.x + 1
+    var grid_h: int = grid_max.y - grid_min.y + 1
+    var tex_w := maxi(1, grid_w * cell_px)
+    var tex_h := maxi(1, grid_h * cell_px)
+    if _edge_image == null or _edge_image.get_width() != tex_w or _edge_image.get_height() != tex_h:
+        _edge_image = Image.create(tex_w, tex_h, false, Image.FORMAT_RGBA8)
+        _edge_texture = null
+    _edge_grid_origin = grid_min
+    _edge_grid_size = Vector2i(grid_w, grid_h)
+    _edge_image.fill(Color.TRANSPARENT)
+    var outline_width := ULTRA_OUTLINE_WIDTH_PX if ultra_reduce_detail else HEAVY_OUTLINE_WIDTH_PX
+    var outline_alpha := ULTRA_OUTLINE_ALPHA if ultra_reduce_detail else HEAVY_OUTLINE_ALPHA
+    var outline_radius_cells := maxi(1, int(scene_ref.planet_outline_radius_cells))
+    var outline_center_grid := scene_ref.world_to_grid(scene_ref.camera_pos)
+    var radius_sq := outline_radius_cells * outline_radius_cells
+    for x in range(grid_min.x, grid_max.x + 1):
+        for y in range(grid_min.y, grid_max.y + 1):
+            var grid := Vector2i(x, y)
+            var dx := grid.x - outline_center_grid.x
+            var dy := grid.y - outline_center_grid.y
+            if dx * dx + dy * dy > radius_sq:
+                continue
+            var block: Dictionary = scene_ref.blocks.get(grid, {})
+            if block.is_empty():
+                continue
+            var colors: Dictionary = _get_block_palette(block)
+            var edge_color: Color = colors.get("edge", Color.WHITE)
+            var lightened_edge := edge_color.lerp(Color.WHITE, 0.08)
+            var draw_color := Color(lightened_edge.r, lightened_edge.g, lightened_edge.b, outline_alpha)
+            var px := (grid.x - grid_min.x) * cell_px
+            var py := (grid.y - grid_min.y) * cell_px
+            var mask := 15 if outline_mode == int(scene_ref.OutlineMode.ALL_BLOCKS) else int(scene_ref.exposed_edges.get(grid, 0))
+            if mask == 0:
+                continue
+            if (mask & 1) != 0:
+                _edge_image.fill_rect(Rect2i(px, py, cell_px, outline_width), draw_color)
+            if (mask & 2) != 0:
+                _edge_image.fill_rect(Rect2i(px, py + cell_px - outline_width, cell_px, outline_width), draw_color)
+            if (mask & 4) != 0:
+                _edge_image.fill_rect(Rect2i(px, py, outline_width, cell_px), draw_color)
+            if (mask & 8) != 0:
+                _edge_image.fill_rect(Rect2i(px + cell_px - outline_width, py, outline_width, cell_px), draw_color)
+    if _edge_texture == null:
+        _edge_texture = ImageTexture.create_from_image(_edge_image)
+    else:
+        _edge_texture.update(_edge_image)
+    _edge_dirty = false
+    _edge_rebuild_accum = 0.0
 
 func _floor_to_step(value: int, step: int) -> int:
     if step <= 1:

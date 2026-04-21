@@ -29,6 +29,8 @@ const BLOCK_BREAK_AUDIO_COOLDOWN_MS := 45
 const CORE_BREAK_AUDIO_COOLDOWN_MS := 90
 const PERF_PROBE_HISTORY_SIZE := 600
 const PERF_CAPTURE_WARMUP_SECONDS := 0.5
+const ATTACK_LOAD_SOFT_LIMIT := 64
+const ATTACK_LOAD_HARD_LIMIT := 96
 const SHOCKWAVE_RING_SPEED := 520.0
 const MAX_SHOCKWAVE_RINGS := 3
 const MEGA_DAMAGE_INTERVAL := 0.08
@@ -79,6 +81,11 @@ const WINTER_CROSS_LASER_GAP_MAX := 0.85
 const CORE_HAZARD_KNOCKBACK := 500.0
 
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
+enum OutlineMode { OFF, GROUP_EDGES, ALL_BLOCKS }
+const PLANET_OUTLINE_RADIUS_MIN := 6
+const PLANET_OUTLINE_RADIUS_MAX := 64
+const PLANET_OUTLINE_RADIUS_STEP := 2
+const PLANET_OUTLINE_RADIUS_DEFAULT := 22
 
 var rng := RandomNumberGenerator.new()
 var persistent_data: Dictionary = {}
@@ -92,6 +99,8 @@ var hit_timers: Dictionary = {}
 var gold_convert_timers: Dictionary = {}
 var pickups: Array[Dictionary] = []
 var destroyed_cells_this_run: Dictionary = {}
+var planet_outline_mode := OutlineMode.OFF
+var planet_outline_radius_cells := PLANET_OUTLINE_RADIUS_DEFAULT
 
 var ship_pos := Vector2.ZERO
 var ship_vel := Vector2.ZERO
@@ -256,6 +265,20 @@ func _exit_tree() -> void:
     VirtualCursor.use_open_pit_orbit_cursor(false)
     _save_planet_snapshot()
 
+func _unhandled_input(event: InputEvent) -> void:
+    if run_finished:
+        return
+    if event is InputEventKey and event.pressed and not event.echo:
+        if event.keycode == KEY_O:
+            cycle_planet_outline_mode()
+            get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_BRACKETLEFT:
+            adjust_planet_outline_radius(-PLANET_OUTLINE_RADIUS_STEP)
+            get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_BRACKETRIGHT:
+            adjust_planet_outline_radius(PLANET_OUTLINE_RADIUS_STEP)
+            get_viewport().set_input_as_handled()
+
 func _build_runtime_nodes() -> void:
     planet_renderer = PLANET_RENDERER_SCRIPT.new()
     planet_renderer.scene_ref = self
@@ -278,6 +301,23 @@ func _build_runtime_nodes() -> void:
     camera.position_smoothing_speed = 8.0
     ship_root.add_child(camera)
     camera.make_current()
+
+func set_planet_outline_mode(mode: int) -> void:
+    planet_outline_mode = wrapi(mode, 0, 3)
+    if planet_renderer != null and planet_renderer.has_method("mark_dirty"):
+        planet_renderer.call("mark_dirty", false)
+
+func cycle_planet_outline_mode() -> void:
+    set_planet_outline_mode(planet_outline_mode + 1)
+
+func adjust_planet_outline_radius(delta: int) -> void:
+    var next_radius := clampi(planet_outline_radius_cells + delta, PLANET_OUTLINE_RADIUS_MIN, PLANET_OUTLINE_RADIUS_MAX)
+    if next_radius == planet_outline_radius_cells:
+        return
+    planet_outline_radius_cells = next_radius
+    print("Open Pit Orbit outline radius: %d cells" % planet_outline_radius_cells)
+    if planet_renderer != null and planet_renderer.has_method("mark_dirty"):
+        planet_renderer.call("mark_dirty", false)
 
 func _build_ui() -> void:
     hud_layer = CanvasLayer.new()
@@ -655,7 +695,7 @@ func _update_combat(delta: float) -> void:
 func _auto_fire_laser() -> void:
     var perf_start_us := perf_probe_begin()
     var range_world := float(runtime_stats.get("attack_radius", 96.0))
-    var max_targets := maxi(1, int(runtime_stats.get("multi_target", 1)))
+    var max_targets := _get_effective_multi_target_count()
     var candidates := _find_nearest_attack_targets(range_world, max_targets)
     if candidates.is_empty():
         last_attack_target = Vector2.ZERO
@@ -696,7 +736,9 @@ func _auto_fire_laser() -> void:
         if bool(result.get("destroyed", false)):
             any_destroyed = true
         if bool(runtime_stats.get("aoe_enabled", false)):
-            for adj in CARDINAL_NEIGHBORS:
+            var aoe_neighbors := _get_effective_aoe_neighbors()
+            for adj_idx in range(aoe_neighbors.size()):
+                var adj: Vector2i = aoe_neighbors[adj_idx]
                 var adj_pos: Vector2i = pos + adj
                 if not is_grid_empty(adj_pos):
                     _mark_hit_flash(adj_pos)
@@ -705,7 +747,7 @@ func _auto_fire_laser() -> void:
                     if bool(aoe_result.get("destroyed", false)):
                         any_destroyed = true
     if visuals_dirty:
-        _sync_planet_runtime_views(true, any_destroyed)
+        _sync_planet_runtime_views(true, false)
     attack_visible_timer = 0.08
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER_CRIT if last_attack_is_crit else SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER)
     if any_destroyed:
@@ -864,23 +906,38 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
     else:
         damaged_cells[pos] = float(planet_data.blocks.get(pos, {}).get("hp", 1.0))
     if not defer_visual_sync:
-        _sync_planet_runtime_views(true, bool(result.get("destroyed", false)))
+        _sync_planet_runtime_views(true, false)
     perf_probe_end("damage_block", perf_start_us)
     return result
 
 func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_visual_sync: bool = false) -> void:
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC, -8.0, -0.05)
     _on_combo_hit()
+    var load_tier := _get_attack_load_tier()
+    var effective_range := int(runtime_stats.get("electric_range", 2))
+    var effective_depth := int(runtime_stats.get("electric_chain_depth", 1))
+    if load_tier >= 2:
+        effective_range = mini(effective_range, 1)
+        effective_depth = mini(effective_depth, 1)
+    elif load_tier >= 1:
+        effective_range = mini(effective_range, 2)
+        effective_depth = mini(effective_depth, 1)
     var results: Array = planet_data.electric_chain(
         origin_pos,
         float(runtime_stats.get("attack_damage", 8.0)),
-        int(runtime_stats.get("electric_range", 2)),
-        int(runtime_stats.get("electric_chain_depth", 1)),
+        effective_range,
+        effective_depth,
         0,
         _core_unlocks_center()
     )
+    var max_results := 6
+    if load_tier >= 2:
+        max_results = 2
+    elif load_tier >= 1:
+        max_results = 4
     var destroyed_any := false
-    for result in results:
+    for result_idx in range(mini(results.size(), max_results)):
+        var result: Dictionary = results[result_idx]
         var next_pos: Vector2i = result.get("pos", Vector2i.ZERO)
         var next_world := grid_to_world(next_pos)
         if electric_arcs.size() < MAX_ACTIVE_ELECTRIC_ARCS:
@@ -902,14 +959,14 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
                 _finish_run(true, "The final core ruptured.")
                 return
     if not defer_visual_sync:
-        _sync_planet_runtime_views(true, destroyed_any)
+        _sync_planet_runtime_views(true, false)
 
 func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void:
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC_CRIT, -10.0, -0.04)
     var current_pos := start_pos
     var current_world := start_world
     var visited := {start_pos: true}
-    var jumps := int(runtime_stats.get("chain_lightning_jumps", 3))
+    var jumps := _get_effective_chain_lightning_jumps()
     var visuals_dirty := false
     var destroyed_any := false
     for _j in range(jumps):
@@ -945,7 +1002,7 @@ func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void
         current_pos = best_pos
         current_world = best_world
     if visuals_dirty:
-        _sync_planet_runtime_views(true, destroyed_any)
+        _sync_planet_runtime_views(true, false)
 
 func _trigger_shockwave() -> void:
     shockwave_firing = true
@@ -972,7 +1029,8 @@ func _trigger_shockwave() -> void:
         shockwave_rings.remove_at(0)
     shockwave_rings.append({"radius": 5.0, "max_radius": max_radius, "alpha": 0.8})
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.SUPERNOVA, -10.0, -0.1)
-    _sync_planet_runtime_views(true, changed_any)
+    _sync_planet_runtime_views(true, false)
+
 
 func _update_mega_beam(delta: float) -> void:
     var perf_start_us := perf_probe_begin()
@@ -1007,7 +1065,7 @@ func _update_mega_beam(delta: float) -> void:
         if bool(result.get("destroyed", false)):
             destroyed_any = true
     if visuals_dirty:
-        _sync_planet_runtime_views(true, destroyed_any)
+        _sync_planet_runtime_views(true, false)
     perf_probe_end("update_mega_beam", perf_start_us)
 
 func _spawn_pickup(world_pos: Vector2, block: Dictionary) -> void:
@@ -1091,7 +1149,10 @@ func _fire_drone(drone_idx: int) -> void:
     if drone_idx < 0 or drone_idx >= drone_positions.size():
         return
     var drone_world := drone_positions[drone_idx]
-    var target_cells := _find_targets_near_world(drone_world, DRONE_RANGE, int(runtime_stats.get("drone_pierce", 1)))
+    var drone_pierce := int(runtime_stats.get("drone_pierce", 1))
+    if _get_attack_load_tier() >= 2:
+        drone_pierce = 1
+    var target_cells := _find_targets_near_world(drone_world, DRONE_RANGE, drone_pierce)
     if target_cells.is_empty():
         return
     var first_world := grid_to_world(target_cells[0])
@@ -1254,6 +1315,7 @@ func _update_perf_debug(frame_delta: float) -> void:
     var frame_ms := frame_delta * 1000.0 if frame_delta > 0.0 else (1000.0 / maxf(float(max(1, Engine.get_frames_per_second())), 1.0))
     var process_ms := float(Performance.get_monitor(Performance.TIME_PROCESS)) * 1000.0
     var physics_ms := float(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)) * 1000.0
+    var gpu_est_ms := _estimate_gpu_frame_ms(frame_ms, process_ms, physics_ms)
     if perf_graph != null and perf_graph.has_method("push_sample"):
         perf_graph.call("push_sample", frame_ms, process_ms, physics_ms)
     var limit_hint: String = str(perf_graph.call("get_hint_text")) if perf_graph != null and perf_graph.has_method("get_hint_text") else "Unknown"
@@ -1266,10 +1328,11 @@ func _update_perf_debug(frame_delta: float) -> void:
             continue
         var zone_name: String = zone_labels[idx]
         season_lines.append("%s %+d%%" % [zone_name.left(2), int(round((mult - 1.0) * 100.0))])
-    var base_text := "FPS: %d  |  Frame %.1fms  |  CPU %.1fms  |  Phys %.1fms  |  %s" % [
+    var base_text := "FPS: %d  |  Frame %.1fms  |  CPU %.1fms  |  GPU est %.1fms  |  Phys %.1fms  |  %s" % [
         Engine.get_frames_per_second(),
         frame_ms,
         process_ms,
+        gpu_est_ms,
         physics_ms,
         str(limit_hint)
     ]
@@ -1280,6 +1343,9 @@ func _update_perf_debug(frame_delta: float) -> void:
     if perf_probe_label != null:
         perf_probe_label.text = _build_perf_probe_text()
     perf_probe_end("update_perf_debug", perf_start_us)
+
+func _estimate_gpu_frame_ms(frame_ms: float, process_ms: float, physics_ms: float) -> float:
+    return maxf(0.0, frame_ms - minf(frame_ms, process_ms + physics_ms))
 
 func perf_probe_begin() -> int:
     return Time.get_ticks_usec() if _perf_probe_enabled else 0
@@ -1682,6 +1748,43 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
     for idx in range(mini(limit, candidates.size())):
         found.append(candidates[idx].get("pos", Vector2i.ZERO))
     return found
+
+func _get_attack_load_tier() -> int:
+    var load := hit_timers.size() + gold_convert_timers.size() + electric_arcs.size() + chain_arcs.size() + drone_beams.size()
+    if load >= ATTACK_LOAD_HARD_LIMIT:
+        return 2
+    if load >= ATTACK_LOAD_SOFT_LIMIT:
+        return 1
+    return 0
+
+func _get_effective_multi_target_count() -> int:
+    var max_targets := maxi(1, int(runtime_stats.get("multi_target", 1)))
+    match _get_attack_load_tier():
+        2:
+            return 1
+        1:
+            return mini(max_targets, 2)
+        _:
+            return max_targets
+
+func _get_effective_chain_lightning_jumps() -> int:
+    var jumps := int(runtime_stats.get("chain_lightning_jumps", 3))
+    match _get_attack_load_tier():
+        2:
+            return mini(jumps, 1)
+        1:
+            return mini(jumps, 2)
+        _:
+            return jumps
+
+func _get_effective_aoe_neighbors() -> Array:
+    match _get_attack_load_tier():
+        2:
+            return [Vector2i(1, 0), Vector2i(-1, 0)]
+        1:
+            return [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1)]
+        _:
+            return CARDINAL_NEIGHBORS
 
 func _find_nearest_block(origin: Vector2i, range_cells: int, visited: Dictionary) -> Vector2i:
     var best := Vector2i(999999, 999999)

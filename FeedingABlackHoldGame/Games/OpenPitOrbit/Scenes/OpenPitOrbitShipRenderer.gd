@@ -10,6 +10,13 @@ var _last_attack_visible := false
 var _last_mega_active := false
 var _last_overdrive_active := false
 
+const SOFT_ARC_LOAD_LIMIT := 12
+const HARD_ARC_LOAD_LIMIT := 20
+const MAX_SOFT_ELECTRIC_ARCS_DRAWN := 8
+const MAX_HARD_ELECTRIC_ARCS_DRAWN := 4
+const MAX_SOFT_CHAIN_ARCS_DRAWN := 8
+const MAX_HARD_CHAIN_ARCS_DRAWN := 4
+
 func _process(_delta: float) -> void:
     if scene_ref == null:
         return
@@ -135,32 +142,52 @@ func _draw_ship_trail(ship_line: Color) -> void:
         draw_circle(local_pos, 8.0, Color(ship_line.r, ship_line.g, ship_line.b, alpha * 0.25))
 
 func _draw_electric_arcs(vp: float) -> void:
-    for arc in scene_ref.electric_arcs:
+    var arc_count := scene_ref.electric_arcs.size()
+    var max_draw := arc_count
+    var segments := 4
+    if arc_count >= HARD_ARC_LOAD_LIMIT:
+        max_draw = mini(arc_count, MAX_HARD_ELECTRIC_ARCS_DRAWN)
+        segments = 2
+    elif arc_count >= SOFT_ARC_LOAD_LIMIT:
+        max_draw = mini(arc_count, MAX_SOFT_ELECTRIC_ARCS_DRAWN)
+        segments = 3
+    for arc_idx in range(max_draw):
+        var arc: Dictionary = scene_ref.electric_arcs[arc_idx]
         var alpha := clampf(float(arc.get("timer", 0.0)) / scene_ref.ARC_DURATION, 0.0, 1.0)
         var local_from := Vector2(arc.get("from", Vector2.ZERO)) - scene_ref.ship_pos
         var local_to := Vector2(arc.get("to", Vector2.ZERO)) - scene_ref.ship_pos
         var perp := (local_to - local_from).orthogonal().normalized()
         var prev := local_from
-        for seg in range(4):
-            var t_seg := float(seg + 1) / 4.0
+        for seg in range(segments):
+            var t_seg := float(seg + 1) / float(segments)
             var next_pt := local_from.lerp(local_to, t_seg)
-            if seg < 3:
+            if seg < segments - 1:
                 next_pt += perp * sin(scene_ref.ship_glow_phase * 20.0 + seg * 3.7) * (5.0 + vp * 8.0)
             draw_line(prev, next_pt, Color(0.6, 2.0, 3.0, alpha * 0.25), 6.0 + vp * 4.0)
             draw_line(prev, next_pt, Color(0.6, 2.0, 3.0, alpha), 1.5 + vp)
             prev = next_pt
 
 func _draw_chain_arcs(vp: float) -> void:
-    for arc in scene_ref.chain_arcs:
+    var arc_count := scene_ref.chain_arcs.size()
+    var max_draw := arc_count
+    var segments := 5
+    if arc_count >= HARD_ARC_LOAD_LIMIT:
+        max_draw = mini(arc_count, MAX_HARD_CHAIN_ARCS_DRAWN)
+        segments = 3
+    elif arc_count >= SOFT_ARC_LOAD_LIMIT:
+        max_draw = mini(arc_count, MAX_SOFT_CHAIN_ARCS_DRAWN)
+        segments = 4
+    for arc_idx in range(max_draw):
+        var arc: Dictionary = scene_ref.chain_arcs[arc_idx]
         var alpha := clampf(float(arc.get("timer", 0.0)) / scene_ref.CHAIN_ARC_DURATION, 0.0, 1.0)
         var local_from := Vector2(arc.get("from", Vector2.ZERO)) - scene_ref.ship_pos
         var local_to := Vector2(arc.get("to", Vector2.ZERO)) - scene_ref.ship_pos
         var perp := (local_to - local_from).orthogonal().normalized()
         var prev := local_from
-        for seg in range(5):
-            var t_seg := float(seg + 1) / 5.0
+        for seg in range(segments):
+            var t_seg := float(seg + 1) / float(segments)
             var next_pt := local_from.lerp(local_to, t_seg)
-            if seg < 4:
+            if seg < segments - 1:
                 next_pt += perp * sin(scene_ref.ship_glow_phase * 18.0 + seg * 4.3 + alpha * 8.0) * (6.0 + vp * 10.0)
             draw_line(prev, next_pt, Color(0.7, 0.5, 2.0, alpha * 0.3), 5.0 + vp * 5.0)
             draw_line(prev, next_pt, Color(1.0, 0.8, 2.5, alpha), 1.5 + vp)
