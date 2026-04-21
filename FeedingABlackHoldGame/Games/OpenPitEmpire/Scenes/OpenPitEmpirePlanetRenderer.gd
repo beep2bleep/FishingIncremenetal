@@ -574,13 +574,13 @@ func _apply_pending_fill_updates(grid_min: Vector2i, grid_max: Vector2i) -> bool
     var applied_positions: Array = []
     for grid_variant in _pending_fill_updates.keys():
         var grid: Vector2i = grid_variant
-        applied_positions.append(grid)
         if grid.x < grid_min.x or grid.x > grid_max.x or grid.y < grid_min.y or grid.y > grid_max.y:
             continue
         var local_x: int = grid.x - grid_min.x
         var local_y: int = grid.y - grid_min.y
         if local_x < 0 or local_x >= _fill_grid_size.x or local_y < 0 or local_y >= _fill_grid_size.y:
             continue
+        applied_positions.append(grid)
         if scene_ref.blocks.has(grid):
             var block: Dictionary = scene_ref.blocks.get(grid, {})
             var colors: Dictionary = _get_block_palette(block)
