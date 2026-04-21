@@ -66,10 +66,11 @@ func _ready() -> void:
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     _rebuild_screen_stars()
 
-func mark_dirty() -> void:
+func mark_dirty(rebuild_fill: bool = true) -> void:
     _force_redraw = true
-    _fill_dirty = true
-    _palette_cache.clear()
+    if rebuild_fill:
+        _fill_dirty = true
+        _palette_cache.clear()
 
 func _process(_delta: float) -> void:
     _time_elapsed += _delta

@@ -4,6 +4,9 @@ const STEAM_VANGUARD_APP_ID := 4519820
 const STEAM_VANGUARD_DEMO_APP_ID := 4524190
 const STEAM_DEEPCORE_APP_ID := 4562070
 const STEAM_DEEPCORE_DEMO_APP_ID := 4615740
+const STEAM_BLEEPWARE_INCREMENTALS_APP_ID := 4637560
+const STEAM_BLEEPWARE_INCREMENTALS_DEMO_APP_ID := 4642530
+const STEAM_BLEEPWARE_INCREMENTALS_STORE_PATH := "BleepWare_Incrementals"
 const STEAM_STORE_PATH := "Vanguard__Idle_Auto_Battler"
 const LEADERBOARD_LEVEL7_SHARED := "level7_clear_time"
 const LEADERBOARD_LEVEL20_FULL := "full_level20_clear_time"
@@ -81,6 +84,9 @@ var _steam_shutdown_started := false
 
 
 func get_store_url() -> String:
+    var combined_export_url := "https://store.steampowered.com/app/%s/%s/" % [STEAM_BLEEPWARE_INCREMENTALS_APP_ID, STEAM_BLEEPWARE_INCREMENTALS_STORE_PATH]
+    if Util.is_all_high_level_mode_active():
+        return combined_export_url
     if Util.is_mining_game_active():
         return "https://store.steampowered.com/app/%s/Deepcore/" % STEAM_DEEPCORE_APP_ID
     return "https://store.steampowered.com/app/%s/%s/" % [_resolve_steam_app_id(), STEAM_STORE_PATH]
@@ -223,6 +229,10 @@ func _is_demo_build() -> bool:
     return bool(ProjectSettings.get_setting("global/Demo", false))
 
 func _resolve_steam_app_id() -> int:
+    if Util.is_all_high_level_mode_active():
+        if _is_demo_build():
+            return STEAM_BLEEPWARE_INCREMENTALS_DEMO_APP_ID
+        return STEAM_BLEEPWARE_INCREMENTALS_APP_ID
     if Util.is_mining_game_active():
         if _is_demo_build():
             return STEAM_DEEPCORE_DEMO_APP_ID

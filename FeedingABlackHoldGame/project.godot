@@ -76,7 +76,7 @@ info_log=true
 
 Build="v1.3.1"
 Demo=true
-DemoWishlistUrl="https://store.steampowered.com/app/4562070/Deepcore/"
+DemoWishlistUrl="https://store.steampowered.com/app/4637560/BleepWare_Incrementals"
 ShowAllModesInBuild=false
 ActiveGame="mining"
 HighLevelMode="all"

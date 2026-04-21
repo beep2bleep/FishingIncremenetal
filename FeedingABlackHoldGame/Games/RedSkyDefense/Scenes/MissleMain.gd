@@ -83,6 +83,9 @@ const POWER_SLOT_KEYS: Array[String] = [
     "scrap_collection"
 ]
 const BOSS_TYPE := "war_barge_boss"
+## Body hits used to be 0.2× (weak spots 1×), making fights several minutes if not sniping weak points.
+## Tuned so sustained gunfire (~meta baseline DPS) clears wave-10 boss in about one minute without requiring perfect weak hits.
+const BOSS_BODY_DAMAGE_FRACTION := 0.5
 const COUNTERMEASURE_MAX_CHARGES := 3
 ## Per second at power wheel multiplier 1.0; scales linearly with countermeasures wheel power.
 ## At max wheel (~3.0) overflow fires roughly every 3.5–4.5s so a full-bias build keeps pace with boss volleys without wave upgrades.
@@ -853,19 +856,20 @@ func _setup_summary_hint_ui() -> void:
         return
     summary_hint_panel = PanelContainer.new()
     summary_hint_panel.name = "SummaryHintPanel"
+    summary_hint_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
     summary_vbox.add_child(summary_hint_panel)
     if start_wave_section != null:
         summary_vbox.move_child(summary_hint_panel, start_wave_section.get_index())
 
     var margin := MarginContainer.new()
-    margin.add_theme_constant_override("margin_left", 12)
-    margin.add_theme_constant_override("margin_top", 10)
-    margin.add_theme_constant_override("margin_right", 12)
-    margin.add_theme_constant_override("margin_bottom", 10)
+    margin.add_theme_constant_override("margin_left", 8)
+    margin.add_theme_constant_override("margin_top", 4)
+    margin.add_theme_constant_override("margin_right", 8)
+    margin.add_theme_constant_override("margin_bottom", 4)
     summary_hint_panel.add_child(margin)
 
     var vbox := VBoxContainer.new()
-    vbox.add_theme_constant_override("separation", 8)
+    vbox.add_theme_constant_override("separation", 3)
     margin.add_child(vbox)
 
     summary_hint_title_label = Label.new()
@@ -876,23 +880,23 @@ func _setup_summary_hint_ui() -> void:
     summary_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     summary_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     summary_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    summary_hint_label.custom_minimum_size = Vector2(0.0, 56.0)
+    summary_hint_label.custom_minimum_size = Vector2(0.0, 0.0)
     vbox.add_child(summary_hint_label)
 
     var nav_row := HBoxContainer.new()
     nav_row.alignment = BoxContainer.ALIGNMENT_CENTER
-    nav_row.add_theme_constant_override("separation", 10)
+    nav_row.add_theme_constant_override("separation", 6)
     vbox.add_child(nav_row)
 
     summary_hint_left_button = Button.new()
     summary_hint_left_button.text = "<"
-    summary_hint_left_button.custom_minimum_size = Vector2(46.0, 34.0)
+    summary_hint_left_button.custom_minimum_size = Vector2(36.0, 26.0)
     summary_hint_left_button.pressed.connect(_cycle_summary_hint.bind(-1))
     nav_row.add_child(summary_hint_left_button)
 
     summary_hint_right_button = Button.new()
     summary_hint_right_button.text = ">"
-    summary_hint_right_button.custom_minimum_size = Vector2(46.0, 34.0)
+    summary_hint_right_button.custom_minimum_size = Vector2(36.0, 26.0)
     summary_hint_right_button.pressed.connect(_cycle_summary_hint.bind(1))
     nav_row.add_child(summary_hint_right_button)
 
@@ -1549,7 +1553,7 @@ func _get_enemy_archetype_stats(enemy_type: String, wave: int, viewport: Vector2
         BOSS_TYPE:
             stats = {
                 "radius": 74.0,
-                "health": 2680.0 + float(wave) * 210.0,
+                "health": 1880.0 + float(wave) * 165.0,
                 "speed": 44.0 + float(wave) * 1.35,
                 "contact_damage": 0.0,
                 "score_value": 520 + wave * 42,
@@ -2757,7 +2761,7 @@ func _damage_enemy(enemy_index: int, damage_amount: float, hit_position: Vector2
             if hit_position.distance_to(spot_pos) <= boss_radius * 0.24:
                 weak_hit = true
                 break
-        damage_amount *= 1.0 if weak_hit else 0.2
+        damage_amount *= 1.0 if weak_hit else BOSS_BODY_DAMAGE_FRACTION
     var previous_health: float = float(enemy.get("health", 1.0))
     var applied: float = min(previous_health, damage_amount)
     enemy["health"] = previous_health - damage_amount
@@ -4556,13 +4560,13 @@ func _apply_summary_theme() -> void:
         summary_label.add_theme_constant_override("shadow_offset_x", 1)
         summary_label.add_theme_constant_override("shadow_offset_y", 1)
     if summary_hint_panel != null:
-        _style_summary_panel_box(summary_hint_panel, SUMMARY_CHART_PANEL_BG, SUMMARY_CHART_PANEL_BORDER, 6)
+        _style_summary_panel_box(summary_hint_panel, SUMMARY_CHART_PANEL_BG, SUMMARY_CHART_PANEL_BORDER, 4)
     if summary_hint_title_label != null:
         summary_hint_title_label.add_theme_color_override("font_color", SUMMARY_CHART_TITLE_COLOR)
-        summary_hint_title_label.add_theme_font_size_override("font_size", 18)
+        summary_hint_title_label.add_theme_font_size_override("font_size", 14)
     if summary_hint_label != null:
         summary_hint_label.add_theme_color_override("font_color", SUMMARY_TEXT_BASE_COLOR)
-        summary_hint_label.add_theme_font_size_override("font_size", 19)
+        summary_hint_label.add_theme_font_size_override("font_size", 14)
     if summary_hint_left_button != null:
         summary_hint_left_button.add_theme_color_override("font_color", Color(0.92, 0.96, 1.0, 1.0))
     if summary_hint_right_button != null:

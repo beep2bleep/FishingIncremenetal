@@ -612,7 +612,7 @@ func _auto_fire_laser() -> void:
                     if bool(aoe_result.get("destroyed", false)):
                         any_destroyed = true
     if visuals_dirty:
-        _sync_planet_runtime_views(true)
+        _sync_planet_runtime_views(true, any_destroyed)
     attack_visible_timer = 0.08
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER_CRIT if last_attack_is_crit else SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER)
     if any_destroyed:
@@ -737,7 +737,7 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
     else:
         damaged_cells[pos] = float(planet_data.blocks.get(pos, {}).get("hp", 1.0))
     if not defer_visual_sync:
-        _sync_planet_runtime_views(true)
+        _sync_planet_runtime_views(true, bool(result.get("destroyed", false)))
     return result
 
 func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_visual_sync: bool = false) -> void:
@@ -751,12 +751,14 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
         0,
         _core_unlocks_center()
     )
+    var destroyed_any := false
     for result in results:
         var next_pos: Vector2i = result.get("pos", Vector2i.ZERO)
         var next_world := grid_to_world(next_pos)
         electric_arcs.append({"from": origin_world, "to": next_world, "timer": ARC_DURATION})
         hit_timers[next_pos] = HIT_FLASH_DURATION
         if bool(result.get("destroyed", false)):
+            destroyed_any = true
             persistent_destroyed_count += 1
             destroyed_cells_this_run[next_pos] = true
             nodes_mined += 1
@@ -771,7 +773,7 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
                 _finish_run(true, "The final core ruptured.")
                 return
     if not defer_visual_sync:
-        _sync_planet_runtime_views(true)
+        _sync_planet_runtime_views(true, destroyed_any)
 
 func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void:
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC_CRIT, -10.0, -0.04)
@@ -780,6 +782,7 @@ func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void
     var visited := {start_pos: true}
     var jumps := int(runtime_stats.get("chain_lightning_jumps", 3))
     var visuals_dirty := false
+    var destroyed_any := false
     for _j in range(jumps):
         var total_weight := 0
         var chosen_pos := Vector2i.ZERO
@@ -805,12 +808,14 @@ func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void
         hit_timers[best_pos] = HIT_FLASH_DURATION
         visuals_dirty = true
         var damage := _compute_laser_damage(best_pos) * 0.5
-        _damage_block(best_pos, damage, true)
+        var result := _damage_block(best_pos, damage, true)
+        if bool(result.get("destroyed", false)):
+            destroyed_any = true
         visited[best_pos] = true
         current_pos = best_pos
         current_world = best_world
     if visuals_dirty:
-        _sync_planet_runtime_views(true)
+        _sync_planet_runtime_views(true, destroyed_any)
 
 func _trigger_shockwave() -> void:
     shockwave_firing = true
@@ -835,7 +840,7 @@ func _trigger_shockwave() -> void:
         shockwave_rings.remove_at(0)
     shockwave_rings.append({"radius": 5.0, "max_radius": max_radius, "alpha": 0.8})
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.SUPERNOVA, -10.0, -0.1)
-    _sync_planet_runtime_views(changed_any)
+    _sync_planet_runtime_views(true, changed_any)
 
 func _update_mega_beam(delta: float) -> void:
     var mouse_world := get_global_mouse_position()
@@ -853,6 +858,7 @@ func _update_mega_beam(delta: float) -> void:
     var steps := int(max_dist / step_size)
     var visited := {}
     var visuals_dirty := false
+    var destroyed_any := false
     for step in range(steps):
         var point := ship_pos + mega_direction * (step_size * float(step + 1))
         var cell := world_to_grid(point)
@@ -863,9 +869,11 @@ func _update_mega_beam(delta: float) -> void:
             continue
         visuals_dirty = true
         var damage := _compute_laser_damage(cell)
-        _damage_block(cell, damage, true)
+        var result := _damage_block(cell, damage, true)
+        if bool(result.get("destroyed", false)):
+            destroyed_any = true
     if visuals_dirty:
-        _sync_planet_runtime_views(true)
+        _sync_planet_runtime_views(true, destroyed_any)
 
 func _spawn_pickup(world_pos: Vector2, block: Dictionary) -> void:
     var payout := float(block.get("resource", 1.0)) + float(runtime_stats.get("resource_flat", 0.0))
@@ -913,11 +921,11 @@ func _update_drone_visuals(_delta: float) -> void:
     if mega_timer <= 0.0:
         mega_beam_hits.clear()
 
-func _sync_planet_runtime_views(mark_renderer_dirty: bool = false) -> void:
+func _sync_planet_runtime_views(mark_renderer_dirty: bool = false, rebuild_fill: bool = false) -> void:
     blocks = planet_data.blocks
     exposed_edges = planet_data.exposed_edges
     if mark_renderer_dirty:
-        planet_renderer.mark_dirty()
+        planet_renderer.mark_dirty(rebuild_fill)
 
 func _reset_drone_state() -> void:
     drone_positions.clear()
@@ -1151,8 +1159,11 @@ func _tick_effect_array(items: Array[Dictionary], delta: float) -> void:
 
 func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: int) -> Array[Vector2i]:
     var found: Array[Vector2i] = []
+    if limit <= 0:
+        return found
     var center_grid := world_to_grid(world_pos)
     var grid_range := int(ceil(radius_world / BLOCK_SIZE)) + 1
+    var radius_sq := radius_world * radius_world
     var candidates: Array[Dictionary] = []
     for dx in range(-grid_range, grid_range + 1):
         for dy in range(-grid_range, grid_range + 1):
@@ -1160,9 +1171,16 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
             if is_grid_empty(check):
                 continue
             var dist_sq := world_pos.distance_squared_to(grid_to_world(check))
-            if dist_sq <= radius_world * radius_world:
-                candidates.append({"pos": check, "dist_sq": dist_sq})
-    candidates.sort_custom(func(a: Dictionary, b: Dictionary): return float(a.get("dist_sq", INF)) < float(b.get("dist_sq", INF)))
+            if dist_sq > radius_sq:
+                continue
+            var insert_idx := candidates.size()
+            while insert_idx > 0 and dist_sq < float(candidates[insert_idx - 1].get("dist_sq", INF)):
+                insert_idx -= 1
+            if insert_idx >= limit and candidates.size() >= limit:
+                continue
+            candidates.insert(insert_idx, {"pos": check, "dist_sq": dist_sq})
+            if candidates.size() > limit:
+                candidates.resize(limit)
     for idx in range(mini(limit, candidates.size())):
         found.append(candidates[idx].get("pos", Vector2i.ZERO))
     return found
