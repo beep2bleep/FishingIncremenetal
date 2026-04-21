@@ -397,8 +397,12 @@ func _purchase_upgrade() -> void:
             update()
             return
     else:
-        if _is_open_pit_orbit_core_upgrade():
-            OPEN_PIT_ORBIT_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, int(upgrade.sim_level) + int(upgrade.current_tier)), _get_tree_currency_amount() - int(cost))
+        if _is_open_pit_core_upgrade():
+            var core_purchase_level: int = max(1, int(upgrade.sim_level) + int(upgrade.current_tier))
+            if Util.is_open_pit_game_active():
+                OPEN_PIT_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, core_purchase_level, _get_tree_currency_amount() - int(cost))
+            else:
+                OPEN_PIT_ORBIT_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, core_purchase_level, _get_tree_currency_amount() - int(cost))
         else:
             Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, - cost)
 
@@ -423,7 +427,7 @@ func _purchase_upgrade() -> void:
         if CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
             SaveHandler.save_player_last_run()
             return
-        if _is_open_pit_orbit_core_upgrade():
+        if _is_open_pit_core_upgrade():
             SaveHandler.save_player_last_run()
             return
         var new_amount: int = _get_tree_currency_amount()
@@ -725,12 +729,12 @@ func _get_theme_dark_color() -> Color:
     return Refs.pallet.act_1_dark
 
 func _get_tree_currency_amount() -> int:
-    if _is_open_pit_orbit_core_upgrade():
-        return OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet()
+    if _is_open_pit_core_upgrade():
+        return OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet() if Util.is_open_pit_game_active() else OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet()
     return int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
 
-func _is_open_pit_orbit_core_upgrade() -> bool:
-    return Util.is_open_pit_orbit_game_active() and upgrade != null and str(upgrade.sim_key).begins_with("core:")
+func _is_open_pit_core_upgrade() -> bool:
+    return (Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active()) and upgrade != null and str(upgrade.sim_key).begins_with("core:")
 
 func _is_texture_icon_path(icon_value: String) -> bool:
     var trimmed: String = icon_value.strip_edges()

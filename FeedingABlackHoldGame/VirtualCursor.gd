@@ -85,6 +85,9 @@ func use_open_pit_orbit_cursor(enabled: bool) -> void:
     else:
         _set_cursor_texture(CURSOR_TEXTURE, Vector2.ZERO)
 
+func use_open_pit_empire_cursor(enabled: bool) -> void:
+    use_open_pit_orbit_cursor(enabled)
+
 func _input(event: InputEvent) -> void:
     if not _scene_enabled:
         return

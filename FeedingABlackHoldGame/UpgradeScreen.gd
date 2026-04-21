@@ -442,7 +442,7 @@ func _input(event: InputEvent) -> void :
 
 func setup():
     prefers_simulation_tree = Global.start_in_upgrade_scene
-    if Util.is_open_pit_orbit_game_active():
+    if Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active():
         Global.clear_upgrade_tree_cache()
     _restore_cached_tech_tree_if_available()
     if prefers_simulation_tree:
@@ -484,7 +484,7 @@ func update_colors():
         %"Click Mask".color = Color(0.13, 0.1, 0.08, 1.0)
         %"GPUParticles2D Light".modulate = Color(0.72, 0.55, 0.22, 0.65)
         %"GPUParticles2D2 Dark".modulate = Color(0.28, 0.18, 0.1, 0.55)
-    elif Util.is_open_pit_orbit_game_active():
+    elif Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active():
         %"Click Mask".color = Color(0.03, 0.06, 0.1, 1.0)
         %"GPUParticles2D Light".modulate = Color(0.4, 0.82, 1.0, 0.58)
         %"GPUParticles2D2 Dark".modulate = Color(0.08, 0.18, 0.3, 0.56)
@@ -661,7 +661,7 @@ func show_screen():
     %CanvasLayer.show()
     %CanvasLayer2.show()
     _hide_settings_panel()
-    VirtualCursor.use_open_pit_orbit_cursor(Util.is_open_pit_orbit_game_active())
+    VirtualCursor.use_open_pit_orbit_cursor(Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active())
     _refresh_virtual_cursor_state()
 
 
@@ -985,7 +985,7 @@ func _refresh_mining_time_label() -> void:
     if not show_label:
         return
     if Util.is_open_pit_game_active():
-        mining_time_label.text = "Open Pit runs are 30-second sorties. Mine and return to the ring."
+        mining_time_label.text = "Open Pit Empire runs use orbit-tech weapons. Mine, dock, and cash out before fuel ends. Core shards: %d." % OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet()
     elif Util.is_open_pit_orbit_game_active():
         mining_time_label.text = "Open Pit Orbit runs use orbit-tech weapons. Mine, dock, and cash out before fuel ends. Core shards: %d." % OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet()
     else:
@@ -1375,7 +1375,7 @@ func _show_battle_level_choice_dialog(max_level: int) -> void:
         var open_pit_data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
         var open_pit_min_depth: int = OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
         battle_level_choice_selected_level = clampi(int(open_pit_data.get("selected_depth_level", max_level)), open_pit_min_depth, max_level)
-        battle_level_choice_dialog.title = "Choose Pit Layer"
+        battle_level_choice_dialog.title = "Choose Empire Layer"
     elif Util.is_open_pit_orbit_game_active():
         var orbit_data: Dictionary = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.load_data()
         var orbit_min_depth: int = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
@@ -1675,7 +1675,10 @@ func _launch_battle_at_level(level: int) -> void:
         OPEN_PIT_PROGRESS_SCRIPT.set_selected_depth_level(level)
         _refresh_virtual_cursor_state()
         _cache_tech_tree_for_reuse()
-        SceneChanger.change_to_new_scene(Util.get_main_scene_path())
+        var open_pit_target_scene: String = Util.get_main_scene_path()
+        if OPEN_PIT_PROGRESS_SCRIPT.load_runtime_planet_data(level) == null:
+            open_pit_target_scene = Util.PATH_OPEN_PIT_GENERATING
+        SceneChanger.change_to_new_scene(open_pit_target_scene)
         return
     if Util.is_open_pit_orbit_game_active():
         OPEN_PIT_ORBIT_PROGRESS_SCRIPT.set_selected_depth_level(level)
@@ -1707,7 +1710,7 @@ func _launch_battle_at_level(level: int) -> void:
     SceneChanger.change_to_new_scene(Util.get_battle_scene_path())
 
 func _refresh_virtual_cursor_state() -> void:
-    VirtualCursor.use_open_pit_orbit_cursor(is_active and Util.is_open_pit_orbit_game_active())
+    VirtualCursor.use_open_pit_orbit_cursor(is_active and (Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active()))
     var should_enable := is_active and (
         ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER
         or _is_battle_level_choice_open()
@@ -1953,7 +1956,9 @@ func _perform_editor_sell() -> void:
 
     var refund_amount: int = int(round(node.upgrade.get_last_purchased_cost()))
     var wallet_after_sale: int
-    if Util.is_open_pit_orbit_game_active() and str(node.upgrade.sim_key).begins_with("core:"):
+    if Util.is_open_pit_game_active() and str(node.upgrade.sim_key).begins_with("core:"):
+        wallet_after_sale = OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet() + refund_amount
+    elif Util.is_open_pit_orbit_game_active() and str(node.upgrade.sim_key).begins_with("core:"):
         wallet_after_sale = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet() + refund_amount
     else:
         var current_money: int = int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
@@ -1996,7 +2001,7 @@ func _refresh_editor_demo_toggle_button_text() -> void:
 func _refresh_editor_regenerate_planet_button() -> void:
     if editor_regenerate_planet_button == null or not is_instance_valid(editor_regenerate_planet_button):
         return
-    var is_orbit_mode: bool = Util.is_open_pit_orbit_game_active()
+    var is_orbit_mode: bool = Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active()
     editor_regenerate_planet_button.visible = is_orbit_mode
     editor_regenerate_planet_button.disabled = not is_orbit_mode
     editor_regenerate_planet_button.text = "REGENERATE PLANET"
@@ -2024,6 +2029,10 @@ func _on_editor_crt_toggle_pressed() -> void:
 
 func _on_editor_regenerate_planet_pressed() -> void:
     if not OS.has_feature("editor"):
+        return
+    if Util.is_open_pit_game_active():
+        OPEN_PIT_PROGRESS_SCRIPT.regenerate_planet_state()
+        update()
         return
     if not Util.is_open_pit_orbit_game_active():
         return
@@ -2728,7 +2737,7 @@ func _update_go_again_button_state() -> void:
         return
     if Util.is_open_pit_game_active():
         go_again_button.disabled = false
-        go_again_button.text = "START DIG"
+        go_again_button.text = "START SORTIE"
         go_again_button.tooltip_text = ""
         go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return
