@@ -192,6 +192,8 @@ static func get_display_depth_tier(depth_level: int) -> int:
     return clampi(depth_level, MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
 
 static func load_planet_state() -> Dictionary:
+    if _planet_save_pending:
+        flush_async_planet_state_save()
     if _cached_planet_state.is_empty():
         var parsed: Variant = _read_planet_state_binary()
         if parsed is Dictionary:
@@ -204,7 +206,7 @@ static func load_planet_state() -> Dictionary:
 
 static func save_planet_state(state: Dictionary) -> void:
     _cached_planet_state = _merge_planet_state(state)
-    _write_planet_state_binary(state)
+    _write_planet_state_binary(_cached_planet_state)
 
 static func start_async_planet_state_save(state: Dictionary) -> void:
     flush_async_planet_state_save()
@@ -212,7 +214,7 @@ static func start_async_planet_state_save(state: Dictionary) -> void:
     _planet_save_ok = true
     _planet_save_pending = true
     _planet_save_thread = Thread.new()
-    var err := _planet_save_thread.start(Callable(OpenPitOrbitProgress, "_thread_write_planet_state").bind(state.duplicate(true)))
+    var err := _planet_save_thread.start(Callable(OpenPitOrbitProgress, "_thread_write_planet_state").bind(_cached_planet_state.duplicate(true)))
     if err != OK:
         _planet_save_pending = false
         _planet_save_thread = null
@@ -260,6 +262,9 @@ static func save_runtime_planet_data(depth_level: int, planet_data) -> void:
 static func clear_runtime_planet_data() -> void:
     _runtime_planet_data = null
     _runtime_planet_depth = -1
+
+static func peek_cached_planet_state() -> Dictionary:
+    return _cached_planet_state.duplicate(true)
 
 static func clear_cache() -> void:
     flush_async_planet_state_save()

@@ -326,7 +326,7 @@ func _build_ui() -> void:
     var panel := PanelContainer.new()
     panel.offset_left = 16.0
     panel.offset_top = 16.0
-    panel.offset_right = 500.0
+    panel.offset_right = 360.0
     panel.offset_bottom = 224.0
     hud_layer.add_child(panel)
 
@@ -357,22 +357,21 @@ func _build_ui() -> void:
     for label in [timer_label, cargo_label, wallet_label, layer_label, status_label, system_label]:
         label.add_theme_color_override("font_color", Color(0.86, 0.94, 1.0, 1.0))
         vbox.add_child(label)
-    if OS.has_feature("editor"):
-        fps_label = Label.new()
-        fps_label.add_theme_color_override("font_color", Color(0.68, 0.96, 0.8, 1.0))
-        vbox.add_child(fps_label)
-        perf_graph = PERF_GRAPH_SCRIPT.new()
-        perf_graph.scene_ref = self
-        vbox.add_child(perf_graph)
-        perf_probe_label = RichTextLabel.new()
-        perf_probe_label.bbcode_enabled = false
-        perf_probe_label.fit_content = true
-        perf_probe_label.scroll_active = false
-        perf_probe_label.custom_minimum_size = Vector2(360.0, 220.0)
-        perf_probe_label.add_theme_font_size_override("normal_font_size", 12)
-        perf_probe_label.add_theme_color_override("default_color", Color(0.84, 0.92, 1.0, 0.95))
-        vbox.add_child(perf_probe_label)
-        _perf_probe_enabled = true
+    fps_label = Label.new()
+    fps_label.add_theme_color_override("font_color", Color(0.68, 0.96, 0.8, 1.0))
+    vbox.add_child(fps_label)
+    perf_graph = PERF_GRAPH_SCRIPT.new()
+    perf_graph.scene_ref = self
+    vbox.add_child(perf_graph)
+    perf_probe_label = RichTextLabel.new()
+    perf_probe_label.bbcode_enabled = false
+    perf_probe_label.fit_content = true
+    perf_probe_label.scroll_active = false
+    perf_probe_label.custom_minimum_size = Vector2(235.0, 220.0)
+    perf_probe_label.add_theme_font_size_override("normal_font_size", 12)
+    perf_probe_label.add_theme_color_override("default_color", Color(0.84, 0.92, 1.0, 0.95))
+    vbox.add_child(perf_probe_label)
+    _perf_probe_enabled = true
 
     summary_overlay = ColorRect.new()
     summary_overlay.anchor_right = 1.0
@@ -690,6 +689,7 @@ func _update_combat(delta: float) -> void:
         _auto_fire_laser()
     if bool(runtime_stats.get("drone_enabled", false)):
         _update_drones(delta)
+    _flush_pending_exposed_edges()
     perf_probe_end("update_combat", perf_start_us)
 
 func _auto_fire_laser() -> void:
@@ -1123,6 +1123,12 @@ func _sync_planet_runtime_views(mark_renderer_dirty: bool = false, rebuild_fill:
     if mark_renderer_dirty:
         planet_renderer.mark_dirty(rebuild_fill)
 
+func _flush_pending_exposed_edges() -> void:
+    if planet_data == null or not planet_data.has_method("flush_pending_exposed_edges"):
+        return
+    planet_data.call("flush_pending_exposed_edges")
+    exposed_edges = planet_data.exposed_edges
+
 func _reset_drone_state() -> void:
     drone_positions.clear()
     drone_timers.clear()
@@ -1180,6 +1186,7 @@ func _finish_run(returned: bool, reason: String) -> void:
     if run_finished:
         return
     run_finished = true
+    _flush_pending_exposed_edges()
     if planet_data != null:
         planet_data.revert_converted_gold()
         blocks = planet_data.blocks
@@ -1217,6 +1224,7 @@ func _finish_run(returned: bool, reason: String) -> void:
 func _save_planet_snapshot() -> void:
     if run_finished or planet_data == null:
         return
+    _flush_pending_exposed_edges()
     persistent_data["boss_defeated"] = boss_defeated
     persistent_data["destroyed_cells"] = []
     PROGRESS.save_data(persistent_data)
@@ -1276,7 +1284,13 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
     else:
         summary_save_phase = "done"
         summary_save_pending = false
-    PROGRESS.clear_runtime_planet_data()
+    var cached_planet_state: Dictionary = PROGRESS.peek_cached_planet_state()
+    if not cached_planet_state.is_empty():
+        var next_runtime_planet = PLANET_DATA_SCRIPT.new()
+        next_runtime_planet.load_save_data(cached_planet_state)
+        PROGRESS.save_runtime_planet_data(current_depth_level, next_runtime_planet)
+    else:
+        PROGRESS.clear_runtime_planet_data()
     persistent_data = PROGRESS.load_data()
     if not summary_save_pending:
         if summary_return_button != null:
@@ -1328,7 +1342,7 @@ func _update_perf_debug(frame_delta: float) -> void:
             continue
         var zone_name: String = zone_labels[idx]
         season_lines.append("%s %+d%%" % [zone_name.left(2), int(round((mult - 1.0) * 100.0))])
-    var base_text := "FPS: %d  |  Frame %.1fms  |  CPU %.1fms  |  GPU est %.1fms  |  Phys %.1fms  |  %s" % [
+    var base_text := "FPS: %d  |  Frame %.1fms  |  CPU %.1fms\nGPU est %.1fms  |  Phys %.1fms  |  %s" % [
         Engine.get_frames_per_second(),
         frame_ms,
         process_ms,
@@ -1339,7 +1353,7 @@ func _update_perf_debug(frame_delta: float) -> void:
     if season_lines.is_empty():
         fps_label.text = base_text
     else:
-        fps_label.text = "%s  |  Debug Dmg: %s" % [base_text, ", ".join(season_lines)]
+        fps_label.text = "%s\nDebug Dmg: %s" % [base_text, ", ".join(season_lines)]
     if perf_probe_label != null:
         perf_probe_label.text = _build_perf_probe_text()
     perf_probe_end("update_perf_debug", perf_start_us)

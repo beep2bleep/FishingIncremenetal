@@ -88,6 +88,7 @@ var zone_initial_blocks: Dictionary = {}
 var zone_destroyed_blocks: Dictionary = {}
 var zone_current_blocks: Dictionary = {}
 var exposed_edges: Dictionary = {}
+var _pending_edge_positions: Dictionary = {}
 var initial_block_count: int = 0
 var on_core_destroyed_callback: Callable = Callable()
 var final_boss_active: bool = false
@@ -463,7 +464,7 @@ func damage_block(pos: Vector2i, damage: float, indirect: bool = false, free_pla
         var block_zone: int = int(block.get("zone", get_zone(pos)))
         blocks.erase(pos)
         minimap_block_erased.emit(pos)
-        _update_edges_around(pos)
+        _queue_edge_update(pos)
         _mark_section_dirty(pos)
         if block_type != BlockType.THORN:
             zone_destroyed_blocks[block_zone] = int(zone_destroyed_blocks.get(block_zone, 0)) + 1
@@ -557,7 +558,7 @@ func regenerate_around_cores() -> int:
                 regen_positions.append(pos)
                 regenerated += 1
     if not regen_positions.is_empty():
-        _update_edges_batch(regen_positions)
+        _queue_edge_updates(regen_positions)
         changed_positions.append_array(regen_positions)
     if not changed_positions.is_empty():
         _mark_dirty_positions(changed_positions)
@@ -589,7 +590,7 @@ func electric_chain(origin: Vector2i, damage: float, chain_range: int, chain_dep
             if int(result.get("type", BlockType.NORMAL)) == BlockType.ELECTRIC:
                 results.append_array(electric_chain(pos, damage, chain_range, chain_depth, current_depth + 1, free_planet_mode))
     if not erased_positions.is_empty():
-        _update_edges_batch(erased_positions)
+        _queue_edge_updates(erased_positions)
     return results
 
 func get_core_proximity(pos: Vector2i) -> float:
@@ -1103,7 +1104,7 @@ func _damage_core(_hit_pos: Vector2i, core_id: int, damage: float, free_planet_m
                 minimap_block_erased.emit(pos)
                 erased_positions.append(pos)
                 zone_destroyed_blocks[core_zone] = int(zone_destroyed_blocks.get(core_zone, 0)) + 1
-    _update_edges_batch(erased_positions)
+    _queue_edge_updates(erased_positions)
     _mark_dirty_positions(erased_positions)
     _on_core_destroyed(core)
     return {
@@ -1181,6 +1182,32 @@ func _rebuild_exposed_edges() -> void:
         exposed_edges[pos] = _calc_edges(pos)
 
 func _update_edges_around(pos: Vector2i) -> void:
+    _queue_edge_update(pos)
+
+func _queue_edge_update(pos: Vector2i) -> void:
+    _pending_edge_positions[pos] = true
+    for neighbor in [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]:
+        _pending_edge_positions[pos + neighbor] = true
+
+func _queue_edge_updates(positions: Array) -> void:
+    for pos_variant in positions:
+        _queue_edge_update(Vector2i(pos_variant))
+
+func flush_pending_exposed_edges() -> void:
+    if _pending_edge_positions.is_empty():
+        return
+    for pos_variant in _pending_edge_positions.keys():
+        var pos: Vector2i = pos_variant
+        if blocks.has(pos):
+            exposed_edges[pos] = _calc_edges(pos)
+        else:
+            exposed_edges.erase(pos)
+    _pending_edge_positions.clear()
+
+func _update_edges_batch(positions: Array) -> void:
+    _queue_edge_updates(positions)
+
+func _update_edges_around_immediate(pos: Vector2i) -> void:
     if blocks.has(pos):
         exposed_edges[pos] = _calc_edges(pos)
     else:
@@ -1190,7 +1217,7 @@ func _update_edges_around(pos: Vector2i) -> void:
         if blocks.has(npos):
             exposed_edges[npos] = _calc_edges(npos)
 
-func _update_edges_batch(positions: Array) -> void:
+func _update_edges_batch_immediate(positions: Array) -> void:
     var dirty := {}
     for pos_variant in positions:
         var pos: Vector2i = pos_variant

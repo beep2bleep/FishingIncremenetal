@@ -20,7 +20,7 @@ var _physics_ms: Array[float] = []
 var _latest_hint := "Unknown"
 
 func _ready() -> void:
-    custom_minimum_size = Vector2(220.0, 96.0)
+    custom_minimum_size = Vector2(140.0, 96.0)
     mouse_filter = Control.MOUSE_FILTER_IGNORE
     queue_redraw()
 
