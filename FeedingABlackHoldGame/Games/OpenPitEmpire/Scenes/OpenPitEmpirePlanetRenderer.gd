@@ -16,6 +16,7 @@ var _fill_prewarm_grid_size := Vector2i.ZERO
 var _fill_prewarm_grid_origin := Vector2i(2147483647, 2147483647)
 var _fill_prewarm_next_row := 0
 var _fill_prewarm_ready := false
+var _fill_prewarm_waiting_for_swap := false
 var _edge_grid_size := Vector2i.ZERO
 var _edge_grid_origin := Vector2i(2147483647, 2147483647)
 var _draw_grid_min := Vector2i(2147483647, 2147483647)
@@ -35,6 +36,8 @@ var _fill_rebuild_dirty_count := 0
 var _fill_rebuild_origin_count := 0
 var _fill_rebuild_size_count := 0
 var _fill_prewarm_miss_count := 0
+var _fill_prewarm_apply_count := 0
+var _fill_prewarm_defer_count := 0
 var _gold_effect_redraw_accum := 0.0
 var _edge_rebuild_accum := 0.0
 var _fill_upload_accum := 0.0
@@ -64,11 +67,12 @@ const ULTRA_REDUCED_FILL_MIN_CELLS := 72
 const REDUCED_FILL_PREWARM_ROWS_PER_DRAW := 16
 const REDUCED_FILL_PREWARM_TRIGGER_CELLS := 20
 const REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS := 4
+const REDUCED_FILL_RECENTER_MARGIN_CELLS := 12
 const HEAVY_OUTLINE_CACHE_PADDING_CELLS := 0
 const ULTRA_OUTLINE_CACHE_PADDING_CELLS := 0
 const OUTLINE_CACHE_ALIGN_CELLS := 4
 const GOLD_EFFECT_REDRAW_INTERVAL := 0.05
-const FILL_SCRUB_INTERVAL := 3.0
+const FILL_SCRUB_INTERVAL := 1.0
 const FILL_SCRUB_ROWS_PER_DRAW := 8
 const REDUCED_FILL_UPLOAD_INTERVAL := 0.08
 const REDUCED_FILL_FORCE_UPLOAD_UPDATES := 48
@@ -244,11 +248,30 @@ func _draw() -> void:
                 _fill_grid_origin.x + _reduced_fill_cache_size.x - 1,
                 _fill_grid_origin.y + _reduced_fill_cache_size.y - 1
             )
+            var safe_cache_min := Vector2i(
+                _fill_grid_origin.x + REDUCED_FILL_RECENTER_MARGIN_CELLS,
+                _fill_grid_origin.y + REDUCED_FILL_RECENTER_MARGIN_CELLS
+            )
+            var safe_cache_max := Vector2i(
+                current_cache_max.x - REDUCED_FILL_RECENTER_MARGIN_CELLS,
+                current_cache_max.y - REDUCED_FILL_RECENTER_MARGIN_CELLS
+            )
+            var stays_within_safe_region := (
+                safe_cache_min.x <= safe_cache_max.x
+                and safe_cache_min.y <= safe_cache_max.y
+                and desired_cache_grid_min.x >= safe_cache_min.x
+                and desired_cache_grid_min.y >= safe_cache_min.y
+                and desired_cache_grid_max.x <= safe_cache_max.x
+                and desired_cache_grid_max.y <= safe_cache_max.y
+            )
             var can_keep_fill_origin := (
-                desired_cache_grid_min.x >= _fill_grid_origin.x - REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS
-                and desired_cache_grid_min.y >= _fill_grid_origin.y - REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS
-                and desired_cache_grid_max.x <= current_cache_max.x + REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS
-                and desired_cache_grid_max.y <= current_cache_max.y + REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS
+                stays_within_safe_region
+                or (
+                    desired_cache_grid_min.x >= _fill_grid_origin.x - REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS
+                    and desired_cache_grid_min.y >= _fill_grid_origin.y - REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS
+                    and desired_cache_grid_max.x <= current_cache_max.x + REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS
+                    and desired_cache_grid_max.y <= current_cache_max.y + REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS
+                )
             )
             if can_keep_fill_origin:
                 should_keep_fill_origin = true
@@ -267,26 +290,18 @@ func _draw() -> void:
                 prewarm_target_size = _fill_grid_size
                 needs_fill_prewarm = true
                 should_wait_for_fill_prewarm = true
-            elif prewarm_target_min != cache_grid_min or _fill_grid_size != prewarm_target_size:
-                needs_fill_prewarm = true
-                should_wait_for_fill_prewarm = true
-            elif should_keep_fill_origin:
-                var current_cache_max := Vector2i(
-                    _fill_grid_origin.x + cache_grid_size.x - 1,
-                    _fill_grid_origin.y + cache_grid_size.y - 1
-                )
-                var distance_to_left := desired_cache_grid_min.x - _fill_grid_origin.x
-                var distance_to_top := desired_cache_grid_min.y - _fill_grid_origin.y
-                var distance_to_right := current_cache_max.x - desired_cache_grid_max.x
-                var distance_to_bottom := current_cache_max.y - desired_cache_grid_max.y
-                if distance_to_left <= REDUCED_FILL_PREWARM_TRIGGER_CELLS or distance_to_top <= REDUCED_FILL_PREWARM_TRIGGER_CELLS or distance_to_right <= REDUCED_FILL_PREWARM_TRIGGER_CELLS or distance_to_bottom <= REDUCED_FILL_PREWARM_TRIGGER_CELLS:
-                    needs_fill_prewarm = true
-        if needs_fill_prewarm and not _fill_dirty and _pending_fill_updates.is_empty():
+        if needs_fill_prewarm and _fill_dirty and _pending_fill_updates.is_empty():
             _ensure_fill_prewarm(prewarm_target_min, prewarm_target_size)
             _advance_fill_prewarm(REDUCED_FILL_PREWARM_ROWS_PER_DRAW)
-            if should_wait_for_fill_prewarm and not _can_apply_fill_prewarm(prewarm_target_min, prewarm_target_size) and _fill_grid_size.x > 0 and _fill_grid_size.y > 0:
+            var waiting_for_target := should_wait_for_fill_prewarm and not _can_apply_fill_prewarm(prewarm_target_min, prewarm_target_size) and _fill_grid_size.x > 0 and _fill_grid_size.y > 0
+            if waiting_for_target:
+                if not _fill_prewarm_waiting_for_swap:
+                    _fill_prewarm_defer_count += 1
+                _fill_prewarm_waiting_for_swap = true
                 cache_grid_min = _fill_grid_origin
                 cache_grid_size = _fill_grid_size
+            elif _can_apply_fill_prewarm(prewarm_target_min, prewarm_target_size):
+                _fill_prewarm_waiting_for_swap = false
         elif not needs_fill_prewarm:
             _clear_fill_prewarm()
     var cache_grid_max := Vector2i(
@@ -316,7 +331,7 @@ func _draw() -> void:
     var fill_rebuild_origin := _fill_grid_origin != cache_grid_min
     var fill_rebuild_size := _fill_grid_size != Vector2i(cache_grid_w, cache_grid_h)
     var fill_needs_rebuild := fill_rebuild_dirty or fill_rebuild_origin or fill_rebuild_size
-    var fill_prewarm_ready_for_cache := _can_apply_fill_prewarm(cache_grid_min, Vector2i(cache_grid_w, cache_grid_h))
+    var fill_prewarm_ready_for_cache := fill_rebuild_dirty and _can_apply_fill_prewarm(cache_grid_min, Vector2i(cache_grid_w, cache_grid_h))
     var fill_prewarm_missed := false
     var should_defer_dirty_rebuild := (
         fill_rebuild_dirty
@@ -360,11 +375,15 @@ func _draw() -> void:
         var fill_rebuild_start_us := scene_ref.perf_probe_begin()
         var old_fill_grid_origin := _fill_grid_origin
         if fill_prewarm_ready_for_cache:
+            _fill_prewarm_apply_count += 1
+            _fill_prewarm_waiting_for_swap = false
             _apply_fill_prewarm()
         elif fill_rebuild_origin and not fill_rebuild_dirty and not fill_rebuild_size and _fill_image != null:
+            _fill_prewarm_waiting_for_swap = false
             _shift_fill_image_with_overlap(old_fill_grid_origin, cache_grid_min, Vector2i(cache_grid_w, cache_grid_h))
         else:
-            fill_prewarm_missed = (reduce_detail or ultra_reduce_detail) and (fill_rebuild_origin or fill_rebuild_size) and _fill_grid_size.x > 0 and _fill_grid_size.y > 0
+            fill_prewarm_missed = (reduce_detail or ultra_reduce_detail) and fill_rebuild_dirty and (fill_rebuild_origin or fill_rebuild_size) and _fill_grid_size.x > 0 and _fill_grid_size.y > 0
+            _fill_prewarm_waiting_for_swap = false
             _fill_grid_origin = cache_grid_min
             _fill_image.fill(Color.TRANSPARENT)
             _paint_fill_region(cache_grid_min, cache_grid_max)
@@ -741,6 +760,7 @@ func _clear_fill_prewarm() -> void:
     _fill_prewarm_grid_size = Vector2i.ZERO
     _fill_prewarm_next_row = 0
     _fill_prewarm_ready = false
+    _fill_prewarm_waiting_for_swap = false
 
 func _ensure_fill_prewarm(target_origin: Vector2i, target_size: Vector2i) -> void:
     if _fill_prewarm_image != null and _fill_prewarm_grid_origin == target_origin and _fill_prewarm_grid_size == target_size:
@@ -751,6 +771,7 @@ func _ensure_fill_prewarm(target_origin: Vector2i, target_size: Vector2i) -> voi
     _fill_prewarm_grid_size = target_size
     _fill_prewarm_next_row = 0
     _fill_prewarm_ready = false
+    _fill_prewarm_waiting_for_swap = false
 
 func _advance_fill_prewarm(row_count: int) -> void:
     if _fill_prewarm_image == null or _fill_prewarm_ready or row_count <= 0:
@@ -815,8 +836,7 @@ func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_
                 continue
             var colors: Dictionary = _get_block_palette(block)
             var edge_color: Color = colors.get("edge", Color.WHITE)
-            var lightened_edge := edge_color.lerp(Color.WHITE, 0.08)
-            var draw_color := Color(lightened_edge.r, lightened_edge.g, lightened_edge.b, outline_alpha)
+            var draw_color := Color(edge_color.r, edge_color.g, edge_color.b, outline_alpha)
             var px := (grid.x - grid_min.x) * cell_px
             var py := (grid.y - grid_min.y) * cell_px
             if (mask & 1) != 0:
@@ -888,7 +908,7 @@ func _needs_camera_redraw() -> bool:
     )
 
 func get_perf_state_text() -> String:
-    return "Planet vis %d  load %d  detail %s/%s  fillQ %d  fillR %s  fillCnt d:%d o:%d s:%d  fillMiss %d" % [
+    return "Planet vis %d  load %d  detail %s/%s  fillQ %d  fillR %s  fillCnt d:%d o:%d s:%d  fillMiss %d  fillSwap a:%d d:%d" % [
         _last_visible_cell_budget,
         _last_effect_load,
         "heavy" if _last_reduce_detail else "full",
@@ -899,6 +919,8 @@ func get_perf_state_text() -> String:
         _fill_rebuild_origin_count,
         _fill_rebuild_size_count,
         _fill_prewarm_miss_count,
+        _fill_prewarm_apply_count,
+        _fill_prewarm_defer_count,
     ]
 
 func _rebuild_screen_stars() -> void:
