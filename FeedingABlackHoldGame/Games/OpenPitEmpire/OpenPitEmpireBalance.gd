@@ -31,14 +31,14 @@ const XP_CONNECTIONS := {
     "xp:zero_day": ["xp:sidechannel"],
 }
 const XP_UPGRADES := {
-    "packet_sniffer": {"base_cost": 30, "cost_mult": 1.8, "max_level": 4, "label": "Packet Sniffer", "summary": "Gain more XP from every mined block.", "icon": "X", "effects": {"xp_gain_mult": 0.15}},
-    "cache_warmers": {"base_cost": 45, "cost_mult": 1.9, "max_level": 3, "label": "Cache Warmers", "summary": "Move faster through the breach pit.", "icon": "X", "effects": {"speed": 45.0}},
-    "sandbox_break": {"base_cost": 75, "cost_mult": 2.0, "max_level": 3, "label": "Sandbox Break", "summary": "Raises direct mining damage.", "icon": "X", "effects": {"damage_flat": 2.0}},
-    "trace_scrubber": {"base_cost": 40, "cost_mult": 1.8, "max_level": 3, "label": "Trace Scrubber", "summary": "Stretch fuel and time on each run.", "icon": "X", "effects": {"fuel_expand": 2.0}},
-    "heap_climber": {"base_cost": 60, "cost_mult": 1.9, "max_level": 3, "label": "Heap Climber", "summary": "Increase cargo capacity.", "icon": "X", "effects": {"cargo_expand": 15.0}},
-    "deep_scan": {"base_cost": 85, "cost_mult": 2.0, "max_level": 3, "label": "Deep Scan", "summary": "See and reach blocks a bit farther out.", "icon": "X", "effects": {"range": 18.0, "magnet": 18.0}},
-    "sidechannel": {"base_cost": 125, "cost_mult": 2.1, "max_level": 2, "label": "Sidechannel", "summary": "Increase payout from mined blocks.", "icon": "X", "effects": {"resource_flat": 4.0}},
-    "zero_day": {"base_cost": 220, "cost_mult": 2.2, "max_level": 2, "label": "Zero-Day", "summary": "Push XP gain even harder.", "icon": "X", "effects": {"xp_gain_mult": 0.35}},
+    "packet_sniffer": {"base_cost": 30, "cost_mult": 1.8, "max_level": 4, "label": "Packet Sniffer", "summary": "+15% XP from mined blocks per level.", "icon": "X", "effects": {"xp_gain_mult": 0.15}},
+    "cache_warmers": {"base_cost": 45, "cost_mult": 1.9, "max_level": 3, "label": "Cache Warmers", "summary": "+45 move speed per level.", "icon": "X", "effects": {"speed": 45.0}},
+    "sandbox_break": {"base_cost": 75, "cost_mult": 2.0, "max_level": 3, "label": "Sandbox Break", "summary": "+2 laser damage per level.", "icon": "X", "effects": {"damage_flat": 2.0}},
+    "trace_scrubber": {"base_cost": 40, "cost_mult": 1.8, "max_level": 3, "label": "Trace Scrubber", "summary": "+2 seconds of run time per level.", "icon": "X", "effects": {"fuel_expand": 2.0}},
+    "heap_climber": {"base_cost": 60, "cost_mult": 1.9, "max_level": 3, "label": "Heap Climber", "summary": "+15 cargo capacity per level.", "icon": "X", "effects": {"cargo_expand": 15.0}},
+    "deep_scan": {"base_cost": 85, "cost_mult": 2.0, "max_level": 3, "label": "Deep Scan", "summary": "+18 mining range and pickup radius per level.", "icon": "X", "effects": {"range": 18.0, "magnet": 18.0}},
+    "sidechannel": {"base_cost": 125, "cost_mult": 2.1, "max_level": 2, "label": "Sidechannel", "summary": "+4 payout per mined block per level.", "icon": "X", "effects": {"resource_flat": 4.0}},
+    "zero_day": {"base_cost": 220, "cost_mult": 2.2, "max_level": 2, "label": "Zero-Day", "summary": "+35% XP from mined blocks per level.", "icon": "X", "effects": {"xp_gain_mult": 0.35}},
 }
 const CORE_ORDER := [
     "core_detect", "brake", "barrier_regen",
@@ -68,15 +68,15 @@ const CORE_CONNECTIONS := {
     "core:planet_mastery": ["core:center_unlock"],
 }
 const CORE_UPGRADES := {
-    "core_detect": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Signal Sniffer", "summary": "Reveals daemon health and weak points."},
-    "brake": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Brake Injector", "summary": "Improves return control near dense code walls."},
-    "barrier_regen": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Barrier Patch", "summary": "Restores one barrier between successful returns."},
-    "spawn_direction": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Ghost Entry", "summary": "Unlocks cleaner insertion angles into the pit."},
-    "return_shortcut": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Backdoor Exit", "summary": "Makes the extraction zone easier to secure."},
-    "core_focus": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Daemon Focus", "summary": "Daemon-targeting systems lock faster."},
-    "emergency_return": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Panic Tunnel", "summary": "Emergency extraction preserves the run."},
-    "center_unlock": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Root Access", "summary": "Unlocks attacks against the deepest root kernel."},
-    "planet_mastery": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Admin Override", "summary": "Allows a full pit regeneration once cleared."},
+    "core_detect": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Signal Sniffer", "summary": "Shows daemon core health and weak points during runs."},
+    "brake": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Brake Injector", "summary": "Improves ship braking and control while extracting through tight walls."},
+    "barrier_regen": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Barrier Patch", "summary": "Restore 1 barrier after each successful return."},
+    "spawn_direction": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Ghost Entry", "summary": "Unlock new insertion directions when starting a run."},
+    "return_shortcut": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Backdoor Exit", "summary": "Makes the extraction zone larger and easier to reach."},
+    "core_focus": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Daemon Focus", "summary": "Improves lock-on and targeting behavior against daemon cores."},
+    "emergency_return": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Panic Tunnel", "summary": "Fuel failure triggers an emergency extraction instead of losing the run."},
+    "center_unlock": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Root Access", "summary": "Unlock attacks against the deepest root kernel at the center."},
+    "planet_mastery": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Admin Override", "summary": "After clearing the pit, unlock full regeneration control."},
 }
 
 const PHASE_BRIDGES := {
@@ -510,49 +510,87 @@ static func _get_label(upgrade_id: String) -> String:
 
 static func _get_summary(upgrade_id: String, effects: Dictionary) -> String:
     var summaries := {
-        "critical_hit": "Unlocks crits for your mining laser.",
-        "charged_shot": "Every fifth shot lands hard.",
-        "drone_proto": "Deploys a helper drone.",
-        "chain_unlock": "Laser hits jump between blocks.",
-        "resonance_unlock": "Damage rises deeper in the orbit pit.",
-        "shockwave_unlock": "Burst nearby code after enough kills.",
-        "overdrive1": "Kills can trigger a short combat spike.",
-        "mega_laser_unlock": "Charge a piercing breach.",
-        "core_breaker": "Deals huge bonus damage to the core vault.",
-        "aoe_mining": "Breaker splashes nearby blocks.",
-        "combo_unlock": "Fast breaks add payout bonus.",
-        "minimap": "Shows the pit layout and ship position.",
-        "fuel_safe": "Lose nothing if the rig breaks.",
+        "critical_hit": "Unlock 20% crit chance with 2x damage.",
+        "charged_shot": "Every 5th shot deals 2x damage.",
+        "drone_proto": "Unlock 1 helper drone.",
+        "chain_unlock": "Unlock chain lightning with 3 jumps.",
+        "resonance_unlock": "Unlock resonance damage scaling in deeper layers.",
+        "shockwave_unlock": "Unlock shockwaves every 15 kills in a 6-cell radius.",
+        "overdrive1": "Unlock overdrive after 50 kills for 3 seconds of rapid fire.",
+        "mega_laser_unlock": "Unlock Mega Laser after charging 30 kills.",
+        "core_breaker": "Deal 3x damage to daemon cores.",
+        "aoe_mining": "Shots splash into nearby blocks.",
+        "combo_unlock": "Unlock combo payouts at +2% per stack.",
+        "minimap": "Show the pit map and your ship position.",
+        "fuel_safe": "Keep 100% of payout if the run fails.",
     }
     if summaries.has(upgrade_id):
         return summaries[upgrade_id]
     if effects.has("season_dmg_mult"):
         var zone_idx: int = int(effects.get("boost_zone", -1))
         var pct: int = int(round((float(effects.get("season_dmg_mult", 1.0)) - 1.0) * 100.0))
-        return "%s mining damage +%d%%." % [_get_zone_label(zone_idx), pct]
+        return "+%d%% mining damage in the %s layer." % [pct, _get_zone_label(zone_idx)]
     if effects.has("season_res_mult"):
         var res_zone_idx: int = int(effects.get("boost_zone", -1))
         var res_pct: int = int(round((float(effects.get("season_res_mult", 1.0)) - 1.0) * 100.0))
-        return "%s mining payout +%d%%." % [_get_zone_label(res_zone_idx), res_pct]
+        return "+%d%% payout in the %s layer." % [res_pct, _get_zone_label(res_zone_idx)]
     if effects.has("damage_flat"):
-        return "Raises direct mining damage."
+        return "+%s laser damage per level." % _format_effect_number(float(effects.get("damage_flat", 0.0)))
     if effects.has("fire_rate"):
-        return "Fires the breaker faster."
+        return "-%ss shot interval per level." % _format_effect_number(absf(float(effects.get("fire_rate", 0.0))))
     if effects.has("speed"):
-        return "Moves the rig faster."
+        return "+%s move speed per level." % _format_effect_number(float(effects.get("speed", 0.0)))
     if effects.has("cargo_expand"):
-        return "Lets each sortie carry more ore."
+        return "+%s cargo capacity per level." % _format_effect_number(float(effects.get("cargo_expand", 0.0)))
     if effects.has("fuel_expand"):
-        return "Extends sortie time."
+        return "+%s seconds of run time per level." % _format_effect_number(float(effects.get("fuel_expand", 0.0)))
+    if effects.has("fuel_efficiency"):
+        var efficiency_pct: int = int(round((1.0 - float(effects.get("fuel_efficiency", 1.0))) * 100.0))
+        return "%d%% less fuel drain." % efficiency_pct
+    if effects.has("fuel_loss_reduce"):
+        var keep_pct: int = int(round(float(effects.get("fuel_loss_reduce", 0.0)) * 100.0))
+        return "Keep %d%% of payout after a failed run." % keep_pct
     if effects.has("resource_flat"):
-        return "Adds more payout to each mined block."
+        return "+%s payout per mined block per level." % _format_effect_number(float(effects.get("resource_flat", 0.0)))
     if effects.has("gold_bonus_flat"):
-        return "Makes rich nodes worth more."
-    if effects.has("range") or effects.has("magnet"):
-        return "Improves range and collection control."
+        return "+%s bonus value on gold blocks per level." % _format_effect_number(float(effects.get("gold_bonus_flat", 0.0)))
+    if effects.has("range") and effects.has("magnet"):
+        return "+%s mining range and pickup radius per level." % _format_effect_number(float(effects.get("range", 0.0)))
+    if effects.has("range"):
+        return "+%s mining range per level." % _format_effect_number(float(effects.get("range", 0.0)))
+    if effects.has("magnet"):
+        return "+%s pickup radius per level." % _format_effect_number(float(effects.get("magnet", 0.0)))
     if effects.has("barrier"):
-        return "Adds impact shields."
-    return "Orbit mining upgrade."
+        return "+%d barrier." % int(effects.get("barrier", 0))
+    if effects.has("multi_laser"):
+        return "+%d extra target per shot." % int(effects.get("multi_laser", 0))
+    if effects.has("combo_bonus"):
+        var combo_pct: int = int(round(float(effects.get("combo_bonus", 0.0)) * 100.0))
+        return "+%d%% payout per combo stack." % combo_pct
+    if effects.has("electric_range"):
+        return "Electric arcs reach %d extra cells per level." % int(effects.get("electric_range", 0))
+    if effects.has("electric_chain"):
+        return "Electric shots gain %d extra chain depth per level." % int(effects.get("electric_chain", 0))
+    if effects.has("drone_damage_up"):
+        return "+%s drone damage per level." % _format_effect_number(float(effects.get("drone_damage_up", 0.0)))
+    if effects.has("drone_add"):
+        return "+%d drone per level." % int(effects.get("drone_add", 0))
+    if effects.has("drone_fire_rate"):
+        return "-%ss drone shot interval per level." % _format_effect_number(float(effects.get("drone_fire_rate", 0.0)))
+    if effects.has("drone_pierce_up"):
+        return "+%d drone pierce." % int(effects.get("drone_pierce_up", 0))
+    if effects.has("resonance_enhance"):
+        return "+%s resonance multiplier per level." % _format_effect_number(float(effects.get("resonance_enhance", 0.0)))
+    if effects.has("mega_enhance"):
+        return "Mega Laser charges 5 kills sooner and lasts 1 second longer per level."
+    if effects.has("shockwave_enhance"):
+        return "Shockwave triggers 2 kills sooner and reaches 2 more cells per level."
+    return "Open Pit Empire upgrade."
+
+static func _format_effect_number(value: float) -> String:
+    if is_equal_approx(value, round(value)):
+        return str(int(round(value)))
+    return str(snappedf(value, 0.01))
 
 static func _get_zone_label(zone_idx: int) -> String:
     match zone_idx:

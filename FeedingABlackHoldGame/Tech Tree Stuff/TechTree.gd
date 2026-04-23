@@ -659,6 +659,17 @@ func recenter_on_core() -> void:
     update_min_max_for_all_nodes()
     set_tech_tree_pos(-center_node.position)
 
+func frame_all_nodes() -> void:
+    if node_dict.is_empty():
+        return
+    update_min_max_for_all_nodes()
+    var content_center := Vector2(
+        (float(min_x) + float(max_x)) * 0.5,
+        (float(min_y) + float(max_y)) * 0.5
+    )
+    set_zoom(_get_min_zoom())
+    set_tech_tree_pos(-content_center)
+
 func _recenter_on_core_after_build() -> void:
     if center_node == null or not is_instance_valid(center_node):
         return
