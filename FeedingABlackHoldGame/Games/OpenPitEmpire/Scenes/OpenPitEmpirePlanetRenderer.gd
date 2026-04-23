@@ -91,6 +91,8 @@ const HEAVY_OUTLINE_CELL_PX := 20
 const ULTRA_OUTLINE_CELL_PX := 12
 const MAX_ULTRA_ACTIVE_HIT_EFFECTS := 12
 const MAX_ULTRA_ACTIVE_GOLD_EFFECTS := 3
+const HEAVY_FOCAL_DETAIL_RADIUS_CELLS := 10
+const ULTRA_FOCAL_DETAIL_RADIUS_CELLS := 7
 const HEAVY_VISIBLE_GRID_CELLS := 900
 const HEAVY_EFFECT_LOAD := 24
 const VERY_HEAVY_VISIBLE_GRID_CELLS := 1400
@@ -215,6 +217,7 @@ func _draw() -> void:
     var effect_load: int = scene_ref.hit_timers.size() + scene_ref.electric_arcs.size() + scene_ref.chain_arcs.size() + scene_ref.drone_beams.size()
     var reduce_detail := visible_cell_budget >= HEAVY_VISIBLE_GRID_CELLS or effect_load >= HEAVY_EFFECT_LOAD or scene_ref.mega_timer > 0.0
     var ultra_reduce_detail := visible_cell_budget >= VERY_HEAVY_VISIBLE_GRID_CELLS or effect_load >= VERY_HEAVY_EFFECT_LOAD
+    var reduce_detail_changed := reduce_detail != _last_reduce_detail or ultra_reduce_detail != _last_ultra_reduce_detail
     var margin := 0.0 if reduce_detail or ultra_reduce_detail else base_margin
     var visible_grid_min := scene_ref.world_to_grid(top_left - Vector2(margin, margin))
     var visible_grid_max := scene_ref.world_to_grid(bottom_right + Vector2(margin, margin))
@@ -225,6 +228,11 @@ func _draw() -> void:
     _last_effect_load = effect_load
     _last_reduce_detail = reduce_detail
     _last_ultra_reduce_detail = ultra_reduce_detail
+    if reduce_detail_changed:
+        _fill_dirty = true
+        _pending_fill_updates.clear()
+        _fill_upload_accum = REDUCED_FILL_UPLOAD_INTERVAL
+        _clear_fill_prewarm()
     var fill_padding_cells := 0 if reduce_detail or ultra_reduce_detail else FILL_CACHE_PADDING_CELLS
     var fill_align_cells := REDUCED_FILL_CACHE_ALIGN_CELLS if reduce_detail or ultra_reduce_detail else FILL_CACHE_ALIGN_CELLS
     var padded_grid_min := visible_grid_min - Vector2i(fill_padding_cells, fill_padding_cells)
@@ -331,7 +339,6 @@ func _draw() -> void:
         _draw_background_stars(true, true)
     elif not reduce_detail:
         _draw_background_stars()
-        _draw_core_zones()
     else:
         _draw_background_stars(true)
     scene_ref.perf_probe_end("renderer_bg", section_start_us)
@@ -494,7 +501,10 @@ func _draw() -> void:
     var gold_pulse_t := Time.get_ticks_msec() * 0.001 * 1.8
     section_start_us = scene_ref.perf_probe_begin()
     if ultra_reduce_detail:
+        _draw_focal_live_blocks(visible_grid_min, visible_grid_max, ULTRA_FOCAL_DETAIL_RADIUS_CELLS)
         _draw_active_block_effects(visible_grid_min, visible_grid_max)
+    elif reduce_detail:
+        _draw_focal_live_blocks(visible_grid_min, visible_grid_max, HEAVY_FOCAL_DETAIL_RADIUS_CELLS)
     else:
         for x in range(visible_grid_min.x, visible_grid_max.x + 1):
             for y in range(visible_grid_min.y, visible_grid_max.y + 1):
@@ -659,6 +669,30 @@ func _draw_active_block_effects(grid_min: Vector2i, grid_max: Vector2i) -> void:
         )
         var gold_timer: float = float(effect.get("timer", 0.0))
         draw_rect(rect.grow(-2.0), Color(GOLD_GLOW.r, GOLD_GLOW.g, GOLD_GLOW.b, gold_timer / scene_ref.GOLD_CONVERT_DURATION), false, 2.0)
+
+func _draw_focal_live_blocks(visible_grid_min: Vector2i, visible_grid_max: Vector2i, radius_cells: int) -> void:
+    if radius_cells <= 0:
+        return
+    var center_grid := scene_ref.world_to_grid(scene_ref.camera_pos)
+    var min_x := maxi(visible_grid_min.x, center_grid.x - radius_cells)
+    var max_x := mini(visible_grid_max.x, center_grid.x + radius_cells)
+    var min_y := maxi(visible_grid_min.y, center_grid.y - radius_cells)
+    var max_y := mini(visible_grid_max.y, center_grid.y + radius_cells)
+    for x in range(min_x, max_x + 1):
+        for y in range(min_y, max_y + 1):
+            var grid := Vector2i(x, y)
+            if maxi(absi(grid.x - center_grid.x), absi(grid.y - center_grid.y)) > radius_cells:
+                continue
+            var block: Dictionary = scene_ref.blocks.get(grid, {})
+            if block.is_empty():
+                continue
+            var colors: Dictionary = _get_block_palette(block)
+            var world := scene_ref.grid_to_world(grid)
+            var rect := Rect2(
+                world - Vector2.ONE * scene_ref.BLOCK_SIZE * 0.5 + Vector2.ONE * BLOCK_GAP,
+                Vector2.ONE * (scene_ref.BLOCK_SIZE - BLOCK_GAP * 2.0)
+            )
+            draw_rect(rect, colors.get("fill", Color.WHITE), true)
 
 func _apply_pending_fill_updates(grid_min: Vector2i, grid_max: Vector2i) -> bool:
     if _pending_fill_updates.is_empty() or _fill_image == null:
