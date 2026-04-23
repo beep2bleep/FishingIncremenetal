@@ -241,7 +241,9 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
     if results.get("planet_state", {}) is Dictionary:
         var planet_state: Dictionary = results.get("planet_state", {}).duplicate(true)
         if bool(results.get("defer_planet_state_save", false)):
-            _cached_planet_state = planet_state
+            var merge_result: Dictionary = _try_merge_planet_state(planet_state)
+            if bool(merge_result.get("ok", false)):
+                _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(true)
         else:
             save_planet_state(planet_state)
     else:
@@ -275,13 +277,22 @@ static func load_planet_state(depth_level: int = -1) -> Dictionary:
             return {}
     return _cached_planet_state.duplicate(true)
 
-static func save_planet_state(state: Dictionary) -> void:
-    _cached_planet_state = _merge_planet_state(state)
-    _write_planet_state_binary(_cached_planet_state)
+static func save_planet_state(state: Dictionary) -> bool:
+    var merge_result: Dictionary = _try_merge_planet_state(state)
+    if not bool(merge_result.get("ok", false)):
+        return false
+    _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(true)
+    return _write_planet_state_binary(_cached_planet_state)
 
 static func start_async_planet_state_save(state: Dictionary) -> void:
     flush_async_planet_state_save()
-    _cached_planet_state = _merge_planet_state(state)
+    var merge_result: Dictionary = _try_merge_planet_state(state)
+    if not bool(merge_result.get("ok", false)):
+        _planet_save_ok = false
+        _planet_save_pending = false
+        _planet_save_thread = null
+        return
+    _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(true)
     _planet_save_ok = true
     _planet_save_pending = true
     _planet_save_thread = Thread.new()
@@ -289,7 +300,7 @@ static func start_async_planet_state_save(state: Dictionary) -> void:
     if err != OK:
         _planet_save_pending = false
         _planet_save_thread = null
-        save_planet_state(_cached_planet_state)
+        _planet_save_ok = save_planet_state(_cached_planet_state)
 
 static func update_async_planet_state_save() -> bool:
     if not _planet_save_pending:
@@ -388,18 +399,19 @@ static func _read_planet_state_binary() -> Variant:
     if int(state.get("planet_layout_version", 0)) != BALANCE.PLANET_LAYOUT_VERSION:
         return null
     var sections := {}
-    var section_count: int = int(state.get("angle_slices", 10)) * int(state.get("depth_slices", 10))
-    for section_id in range(section_count):
-        var section_path := _planet_section_path(section_id)
-        if not FileAccess.file_exists(section_path):
-            continue
-        var section_file := FileAccess.open(section_path, FileAccess.READ)
-        if section_file == null:
-            continue
-        var section_data: Variant = section_file.get_var()
-        section_file.close()
-        if section_data is Array:
-            sections[section_id] = Array(section_data).duplicate(true)
+    var expected_section_ids: Array = state.get("section_ids", [])
+    if expected_section_ids.is_empty():
+        var section_count: int = int(state.get("angle_slices", 10)) * int(state.get("depth_slices", 10))
+        for section_id in range(section_count):
+            var fallback_path := _planet_section_path(section_id)
+            if FileAccess.file_exists(fallback_path):
+                expected_section_ids.append(section_id)
+    for section_id_variant in expected_section_ids:
+        var section_id: int = int(section_id_variant)
+        var section_data: Variant = _read_planet_section_file(_planet_section_path(section_id))
+        if not (section_data is Array):
+            return null
+        sections[section_id] = Array(section_data).duplicate(true)
     state["sections"] = sections
     return state
 
@@ -409,20 +421,17 @@ static func _write_planet_state_binary(state: Dictionary) -> bool:
     var payload: Dictionary = state.duplicate(true)
     payload["planet_layout_version"] = BALANCE.PLANET_LAYOUT_VERSION
     var sections: Dictionary = payload.get("sections", {})
+    var section_ids: Array = []
+    for section_id_variant in sections.keys():
+        section_ids.append(int(section_id_variant))
+    section_ids.sort()
+    payload["section_ids"] = section_ids
     payload.erase("sections")
-    var meta_file := FileAccess.open(PLANET_META_PATH, FileAccess.WRITE)
-    if meta_file == null:
-        return false
-    meta_file.store_var(payload, true)
-    meta_file.close()
     for section_id_variant in sections.keys():
         var section_id: int = int(section_id_variant)
-        var section_file := FileAccess.open(_planet_section_path(section_id), FileAccess.WRITE)
-        if section_file == null:
+        if not _write_var_file_atomically(_planet_section_path(section_id), sections[section_id_variant]):
             return false
-        section_file.store_var(sections[section_id_variant], true)
-        section_file.close()
-    return true
+    return _write_var_file_atomically(PLANET_META_PATH, payload)
 
 static func _clear_planet_state_binary() -> void:
     for section_id in range(100):
@@ -437,22 +446,81 @@ static func _clear_planet_state_binary() -> void:
 static func _planet_section_path(section_id: int) -> String:
     return "%s/section_%03d.save" % [PLANET_SAVE_DIR, section_id]
 
+static func _planet_temp_path(path: String) -> String:
+    return "%s.tmp" % path
+
+static func _planet_backup_path(path: String) -> String:
+    return "%s.bak" % path
+
+static func _read_planet_section_file(path: String) -> Variant:
+    if not FileAccess.file_exists(path):
+        return null
+    var file := FileAccess.open(path, FileAccess.READ)
+    if file == null:
+        return null
+    var data: Variant = file.get_var()
+    file.close()
+    return data
+
+static func _write_var_file_atomically(path: String, data: Variant) -> bool:
+    var temp_path := _planet_temp_path(path)
+    var backup_path := _planet_backup_path(path)
+    if FileAccess.file_exists(temp_path):
+        DirAccess.remove_absolute(temp_path)
+    if FileAccess.file_exists(backup_path):
+        DirAccess.remove_absolute(backup_path)
+    var temp_file := FileAccess.open(temp_path, FileAccess.WRITE)
+    if temp_file == null:
+        return false
+    temp_file.store_var(data, true)
+    temp_file.close()
+    if FileAccess.file_exists(path):
+        if DirAccess.rename_absolute(path, backup_path) != OK:
+            DirAccess.remove_absolute(temp_path)
+            return false
+    if DirAccess.rename_absolute(temp_path, path) != OK:
+        if FileAccess.file_exists(backup_path):
+            DirAccess.rename_absolute(backup_path, path)
+        DirAccess.remove_absolute(temp_path)
+        return false
+    if FileAccess.file_exists(backup_path):
+        DirAccess.remove_absolute(backup_path)
+    return true
+
 static func _merge_planet_state(update: Dictionary) -> Dictionary:
+    var merge_result: Dictionary = _try_merge_planet_state(update)
+    if bool(merge_result.get("ok", false)):
+        return Dictionary(merge_result.get("state", {})).duplicate(true)
+    return {}
+
+static func _try_merge_planet_state(update: Dictionary) -> Dictionary:
     var merged: Dictionary = {}
+    var has_full_base := false
     if not _cached_planet_state.is_empty():
         if int(_cached_planet_state.get("planet_layout_version", 0)) == BALANCE.PLANET_LAYOUT_VERSION:
             merged = _cached_planet_state.duplicate(true)
+            has_full_base = true
     else:
         var existing: Variant = _read_planet_state_binary()
         if existing is Dictionary:
             merged = Dictionary(existing).duplicate(true)
+            has_full_base = true
     if int(merged.get("planet_layout_version", 0)) != BALANCE.PLANET_LAYOUT_VERSION:
         merged = {}
+        has_full_base = false
+    var update_sections: Dictionary = update.get("sections", {})
+    var expected_section_count: int = int(update.get("angle_slices", 10)) * int(update.get("depth_slices", 10))
+    var is_partial_update: bool = not update_sections.is_empty() and update_sections.size() < max(1, expected_section_count)
+    if is_partial_update and not has_full_base:
+        return {"ok": false, "state": {}}
     var update_depth_level: int = int(update.get("depth_level", -1))
     if update_depth_level >= MIN_START_DEPTH_LEVEL:
         var merged_depth_level: int = int(merged.get("depth_level", update_depth_level))
         if merged_depth_level != update_depth_level:
             merged = {}
+            has_full_base = false
+            if is_partial_update:
+                return {"ok": false, "state": {}}
     for key_variant in update.keys():
         var key: String = str(key_variant)
         if key == "sections":
@@ -460,8 +528,7 @@ static func _merge_planet_state(update: Dictionary) -> Dictionary:
         merged[key] = update[key_variant]
     merged["planet_layout_version"] = BALANCE.PLANET_LAYOUT_VERSION
     var merged_sections: Dictionary = merged.get("sections", {}).duplicate(true)
-    var update_sections: Dictionary = update.get("sections", {})
     for section_id_variant in update_sections.keys():
         merged_sections[int(section_id_variant)] = update_sections[section_id_variant]
     merged["sections"] = merged_sections
-    return merged
+    return {"ok": true, "state": merged}

@@ -7,193 +7,205 @@ const PLANET_LAYOUT_VERSION := 3
 const XP_PREFIX := "xp:"
 const CORE_PREFIX := "core:"
 const XP_ORDER := [
-    "packet_sniffer", "cache_warmers", "sandbox_break", "trace_scrubber",
-    "heap_climber", "deep_scan", "sidechannel", "zero_day"
+    "packet_sniffer", "trace_scrubber", "heap_climber", "cache_warmers",
+    "deep_scan", "sidechannel", "zero_day", "crash_cartography",
+    "kernel_rehearsal", "deep_manifest", "thermal_mapping", "vault_heuristics",
+    "graveyard_index", "mirror_daemons", "inversion_ledger", "fault_oracles",
+    "null_archive", "ash_scriptures"
 ]
 const XP_LAYOUT := {
-    "xp:packet_sniffer": Vector2(-16, 2),
-    "xp:cache_warmers": Vector2(-14, 2),
-    "xp:sandbox_break": Vector2(-12, 2),
-    "xp:trace_scrubber": Vector2(-16, 6),
-    "xp:heap_climber": Vector2(-14, 6),
-    "xp:deep_scan": Vector2(-12, 6),
-    "xp:sidechannel": Vector2(-14, 10),
-    "xp:zero_day": Vector2(-12, 10),
+    "xp:packet_sniffer": Vector2(-24, 2),
+    "xp:trace_scrubber": Vector2(-22, 2),
+    "xp:heap_climber": Vector2(-20, 2),
+    "xp:cache_warmers": Vector2(-24, 6),
+    "xp:deep_scan": Vector2(-22, 6),
+    "xp:sidechannel": Vector2(-20, 6),
+    "xp:zero_day": Vector2(-24, 10),
+    "xp:crash_cartography": Vector2(-22, 10),
+    "xp:kernel_rehearsal": Vector2(-20, 10),
+    "xp:deep_manifest": Vector2(-24, 14),
+    "xp:thermal_mapping": Vector2(-22, 14),
+    "xp:vault_heuristics": Vector2(-20, 14),
+    "xp:graveyard_index": Vector2(-24, 18),
+    "xp:mirror_daemons": Vector2(-22, 18),
+    "xp:inversion_ledger": Vector2(-20, 18),
+    "xp:fault_oracles": Vector2(-24, 22),
+    "xp:null_archive": Vector2(-22, 22),
+    "xp:ash_scriptures": Vector2(-20, 22),
 }
 const XP_CONNECTIONS := {
     "xp:packet_sniffer": [],
-    "xp:cache_warmers": ["xp:packet_sniffer"],
-    "xp:sandbox_break": ["xp:cache_warmers"],
-    "xp:trace_scrubber": [],
+    "xp:trace_scrubber": ["xp:packet_sniffer"],
     "xp:heap_climber": ["xp:trace_scrubber"],
-    "xp:deep_scan": ["xp:heap_climber"],
-    "xp:sidechannel": ["xp:sandbox_break"],
+    "xp:cache_warmers": ["xp:heap_climber"],
+    "xp:deep_scan": ["xp:cache_warmers"],
+    "xp:sidechannel": ["xp:deep_scan"],
     "xp:zero_day": ["xp:sidechannel"],
+    "xp:crash_cartography": ["xp:zero_day"],
+    "xp:kernel_rehearsal": ["xp:crash_cartography"],
+    "xp:deep_manifest": ["xp:kernel_rehearsal"],
+    "xp:thermal_mapping": ["xp:deep_manifest"],
+    "xp:vault_heuristics": ["xp:thermal_mapping"],
+    "xp:graveyard_index": ["xp:vault_heuristics"],
+    "xp:mirror_daemons": ["xp:graveyard_index"],
+    "xp:inversion_ledger": ["xp:mirror_daemons"],
+    "xp:fault_oracles": ["xp:inversion_ledger"],
+    "xp:null_archive": ["xp:fault_oracles"],
+    "xp:ash_scriptures": ["xp:null_archive"],
 }
 const XP_UPGRADES := {
-    "packet_sniffer": {"base_cost": 30, "cost_mult": 1.8, "max_level": 4, "label": "Packet Sniffer", "summary": "+15% XP from mined blocks per level.", "icon": "X", "effects": {"xp_gain_mult": 0.15}},
-    "cache_warmers": {"base_cost": 45, "cost_mult": 1.9, "max_level": 3, "label": "Cache Warmers", "summary": "+45 move speed per level.", "icon": "X", "effects": {"speed": 45.0}},
-    "sandbox_break": {"base_cost": 75, "cost_mult": 2.0, "max_level": 3, "label": "Sandbox Break", "summary": "+2 laser damage per level.", "icon": "X", "effects": {"damage_flat": 2.0}},
-    "trace_scrubber": {"base_cost": 40, "cost_mult": 1.8, "max_level": 3, "label": "Trace Scrubber", "summary": "+2 seconds of run time per level.", "icon": "X", "effects": {"fuel_expand": 2.0}},
-    "heap_climber": {"base_cost": 60, "cost_mult": 1.9, "max_level": 3, "label": "Heap Climber", "summary": "+15 cargo capacity per level.", "icon": "X", "effects": {"cargo_expand": 15.0}},
-    "deep_scan": {"base_cost": 85, "cost_mult": 2.0, "max_level": 3, "label": "Deep Scan", "summary": "+18 mining range and pickup radius per level.", "icon": "X", "effects": {"range": 18.0, "magnet": 18.0}},
-    "sidechannel": {"base_cost": 125, "cost_mult": 2.1, "max_level": 2, "label": "Sidechannel", "summary": "+4 payout per mined block per level.", "icon": "X", "effects": {"resource_flat": 4.0}},
-    "zero_day": {"base_cost": 220, "cost_mult": 2.2, "max_level": 2, "label": "Zero-Day", "summary": "+35% XP from mined blocks per level.", "icon": "X", "effects": {"xp_gain_mult": 0.35}},
+    "packet_sniffer": {"base_cost": 24, "cost_mult": 1.75, "max_level": 4, "label": "Packet Sniffer", "summary": "+28% XP from mined blocks per level.", "icon": "X", "effects": {"xp_gain_mult": 0.28}},
+    "trace_scrubber": {"base_cost": 36, "cost_mult": 1.75, "max_level": 4, "label": "Trace Scrubber", "summary": "+5 seconds of run time per level.", "icon": "T", "effects": {"fuel_expand": 5.0}},
+    "heap_climber": {"base_cost": 42, "cost_mult": 1.80, "max_level": 4, "label": "Heap Climber", "summary": "+18 cargo capacity per level.", "icon": "H", "effects": {"cargo_expand": 18.0}},
+    "cache_warmers": {"base_cost": 34, "cost_mult": 1.75, "max_level": 4, "label": "Cache Warmers", "summary": "+30 move speed per level.", "icon": "C", "effects": {"speed": 30.0}},
+    "deep_scan": {"base_cost": 54, "cost_mult": 1.85, "max_level": 4, "label": "Deep Scan", "summary": "+14 range and pickup radius per level.", "icon": "D", "effects": {"range": 14.0, "magnet": 14.0}},
+    "sidechannel": {"base_cost": 70, "cost_mult": 1.90, "max_level": 4, "label": "Sidechannel", "summary": "+4 payout per block per level.", "icon": "S", "effects": {"resource_flat": 4.0}},
+    "zero_day": {"base_cost": 120, "cost_mult": 2.00, "max_level": 3, "label": "Zero-Day", "summary": "+32% XP from mined blocks per level.", "icon": "Z", "effects": {"xp_gain_mult": 0.32}},
+    "crash_cartography": {"base_cost": 150, "cost_mult": 2.00, "max_level": 3, "label": "Crash Cartography", "summary": "+8% global damage per level.", "icon": "M", "effects": {"global_damage_mult": 0.08}},
+    "kernel_rehearsal": {"base_cost": 180, "cost_mult": 2.05, "max_level": 3, "label": "Kernel Rehearsal", "summary": "+12% damage to daemon cores per level.", "icon": "K", "effects": {"core_damage_mult": 0.12}},
+    "deep_manifest": {"base_cost": 260, "cost_mult": 2.00, "max_level": 4, "label": "Deep Manifest", "summary": "+6 payout and +5% global damage per level.", "icon": "M", "effects": {"resource_flat": 6.0, "global_damage_mult": 0.05}},
+    "thermal_mapping": {"base_cost": 520, "cost_mult": 2.05, "max_level": 4, "label": "Thermal Mapping", "summary": "+16 range and +20 move speed per level.", "icon": "T", "effects": {"range": 16.0, "speed": 20.0}},
+    "vault_heuristics": {"base_cost": 340, "cost_mult": 2.05, "max_level": 4, "label": "Vault Heuristics", "summary": "+5 damage and +10 range per level.", "icon": "V", "effects": {"damage_flat": 5.0, "range": 10.0}},
+    "graveyard_index": {"base_cost": 750, "cost_mult": 2.05, "max_level": 4, "label": "Graveyard Index", "summary": "+14% XP and +6 payout per level.", "icon": "G", "effects": {"xp_gain_mult": 0.14, "resource_flat": 6.0}},
+    "mirror_daemons": {"base_cost": 1100, "cost_mult": 2.10, "max_level": 4, "label": "Mirror Daemons", "summary": "Unlocks deeper electric chaining and +1 range step per level.", "icon": "M", "effects": {"electric_unlock": true, "electric_range": 1}},
+    "inversion_ledger": {"base_cost": 1850, "cost_mult": 2.10, "max_level": 4, "label": "Inversion Ledger", "summary": "+16% XP and +8 payout per level.", "icon": "I", "effects": {"xp_gain_mult": 0.16, "resource_flat": 8.0}},
+    "fault_oracles": {"base_cost": 2800, "cost_mult": 2.12, "max_level": 4, "label": "Fault Oracles", "summary": "Unlock chain lightning and add +1 chain depth per level.", "icon": "F", "effects": {"chain_lightning_unlock": true, "electric_chain": 1}},
+    "null_archive": {"base_cost": 4300, "cost_mult": 2.12, "max_level": 4, "label": "Null Archive", "summary": "Boost resonance and chain depth per level.", "icon": "N", "effects": {"resonance_enhance": 0.25, "electric_chain": 1}},
+    "ash_scriptures": {"base_cost": 6800, "cost_mult": 2.14, "max_level": 4, "label": "Ash Scriptures", "summary": "Late inversion scripture: more XP and resonance per level.", "icon": "A", "effects": {"xp_gain_mult": 0.18, "resonance_enhance": 0.2}},
 }
 const CORE_ORDER := [
-    "core_detect", "brake", "barrier_regen",
-    "spawn_direction", "return_shortcut", "emergency_return",
-    "core_focus", "center_unlock", "planet_mastery"
+    "core_detect", "spawn_direction", "brake",
+    "barrier_regen", "return_shortcut", "emergency_return",
+    "core_focus", "kernel_breach", "center_unlock",
+    "core_siphon", "salvage_limiter", "mantle_permits",
+    "inversion_tether", "voidfire_brakes", "mirror_keys",
+    "fault_insulation", "null_anchor", "ash_ward",
+    "planet_mastery"
 ]
 const CORE_LAYOUT := {
-    "core:core_detect": Vector2(-10, 2),
-    "core:brake": Vector2(-8, 2),
-    "core:barrier_regen": Vector2(-6, 2),
-    "core:spawn_direction": Vector2(-10, 6),
-    "core:return_shortcut": Vector2(-8, 6),
-    "core:emergency_return": Vector2(-6, 6),
-    "core:core_focus": Vector2(-10, 10),
-    "core:center_unlock": Vector2(-8, 10),
-    "core:planet_mastery": Vector2(-6, 10),
+    "core:core_detect": Vector2(24, 2),
+    "core:spawn_direction": Vector2(26, 2),
+    "core:brake": Vector2(28, 2),
+    "core:barrier_regen": Vector2(24, 6),
+    "core:return_shortcut": Vector2(26, 6),
+    "core:emergency_return": Vector2(28, 6),
+    "core:core_focus": Vector2(24, 10),
+    "core:kernel_breach": Vector2(26, 10),
+    "core:center_unlock": Vector2(28, 10),
+    "core:core_siphon": Vector2(24, 14),
+    "core:salvage_limiter": Vector2(26, 14),
+    "core:mantle_permits": Vector2(28, 14),
+    "core:inversion_tether": Vector2(24, 18),
+    "core:voidfire_brakes": Vector2(26, 18),
+    "core:mirror_keys": Vector2(28, 18),
+    "core:fault_insulation": Vector2(24, 22),
+    "core:null_anchor": Vector2(26, 22),
+    "core:ash_ward": Vector2(28, 22),
+    "core:planet_mastery": Vector2(26, 26),
 }
 const CORE_CONNECTIONS := {
     "core:core_detect": [],
-    "core:brake": ["core:core_detect"],
+    "core:spawn_direction": ["core:core_detect"],
+    "core:brake": ["core:spawn_direction"],
     "core:barrier_regen": ["core:brake"],
-    "core:spawn_direction": [],
-    "core:return_shortcut": ["core:spawn_direction"],
+    "core:return_shortcut": ["core:barrier_regen"],
     "core:emergency_return": ["core:return_shortcut"],
-    "core:core_focus": [],
-    "core:center_unlock": ["core:core_focus"],
-    "core:planet_mastery": ["core:center_unlock"],
+    "core:core_focus": ["core:emergency_return"],
+    "core:kernel_breach": ["core:core_focus"],
+    "core:center_unlock": ["core:kernel_breach"],
+    "core:core_siphon": ["core:center_unlock"],
+    "core:salvage_limiter": ["core:core_siphon"],
+    "core:mantle_permits": ["core:salvage_limiter"],
+    "core:inversion_tether": ["core:mantle_permits"],
+    "core:voidfire_brakes": ["core:inversion_tether"],
+    "core:mirror_keys": ["core:voidfire_brakes"],
+    "core:fault_insulation": ["core:mirror_keys"],
+    "core:null_anchor": ["core:fault_insulation"],
+    "core:ash_ward": ["core:null_anchor"],
+    "core:planet_mastery": ["core:ash_ward"],
 }
 const CORE_UPGRADES := {
-    "core_detect": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Signal Sniffer", "summary": "Shows daemon core health and weak points during runs."},
-    "brake": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Brake Injector", "summary": "Improves ship braking and control while extracting through tight walls."},
-    "barrier_regen": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Barrier Patch", "summary": "Restore 1 barrier after each successful return."},
-    "spawn_direction": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Ghost Entry", "summary": "Unlock new insertion directions when starting a run."},
-    "return_shortcut": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Backdoor Exit", "summary": "Makes the extraction zone larger and easier to reach."},
-    "core_focus": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Daemon Focus", "summary": "Improves lock-on and targeting behavior against daemon cores."},
-    "emergency_return": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Panic Tunnel", "summary": "Fuel failure triggers an emergency extraction instead of losing the run."},
-    "center_unlock": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Root Access", "summary": "Unlock attacks against the deepest root kernel at the center."},
-    "planet_mastery": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Admin Override", "summary": "After clearing the pit, unlock full regeneration control."},
+    "core_detect": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Signal Sniffer", "summary": "Shows daemon weak points and adds +10% core damage.", "icon": "C", "effects": {"core_damage_mult": 0.10}},
+    "spawn_direction": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Ghost Entry", "summary": "Unlock alternate insertion vectors when starting a run.", "icon": "G", "effects": {}},
+    "brake": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Pressure Vent", "summary": "Improves steering response and adds +35 move speed.", "icon": "P", "effects": {"speed": 35.0}},
+    "barrier_regen": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Barrier Patch", "summary": "Restore 1 barrier after each successful extraction.", "icon": "B", "effects": {"barrier": 1}},
+    "return_shortcut": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Backdoor Exit", "summary": "Makes the extraction zone larger and easier to reach.", "icon": "E", "effects": {}},
+    "emergency_return": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Panic Tunnel", "summary": "Fuel failure triggers an emergency extraction instead of losing the run.", "icon": "P", "effects": {}},
+    "core_focus": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Daemon Focus", "summary": "Improves lock-on against daemon cores and adds +25% core damage.", "icon": "D", "effects": {"core_damage_mult": 0.25}},
+    "kernel_breach": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Kernel Breach", "summary": "Breach the kernel tier and add +12% core damage.", "icon": "K", "effects": {"core_damage_mult": 0.12}},
+    "center_unlock": {"base_cost": 4, "cost_mult": 1.0, "max_level": 1, "label": "Root Access", "summary": "Unlock attacks against the deepest root kernel at the center.", "icon": "R", "effects": {}},
+    "core_siphon": {"base_cost": 4, "cost_mult": 1.0, "max_level": 1, "label": "Core Siphon", "summary": "Add +10 payout per block after each daemon breach.", "icon": "S", "effects": {"resource_flat": 10.0}},
+    "salvage_limiter": {"base_cost": 5, "cost_mult": 1.0, "max_level": 1, "label": "Salvage Limiter", "summary": "Keep 50% of your haul even on a failed run.", "icon": "L", "effects": {"fuel_loss_reduce": 0.5}},
+    "mantle_permits": {"base_cost": 7, "cost_mult": 1.0, "max_level": 1, "label": "Mantle Permits", "summary": "Deep permit layer breaker. Adds +12% global damage.", "icon": "M", "effects": {"global_damage_mult": 0.12}},
+    "inversion_tether": {"base_cost": 6, "cost_mult": 1.0, "max_level": 1, "label": "Inversion Tether", "summary": "Unlock deeper resonance control and add +0.3 resonance power.", "icon": "I", "effects": {"resonance_unlock": true, "resonance_enhance": 0.3}},
+    "voidfire_brakes": {"base_cost": 8, "cost_mult": 1.0, "max_level": 1, "label": "Voidfire Brakes", "summary": "Stabilize late pits and add +45 move speed.", "icon": "V", "effects": {"speed": 45.0}},
+    "mirror_keys": {"base_cost": 9, "cost_mult": 1.0, "max_level": 1, "label": "Mirror Keys", "summary": "Unlock crit routing and add +12 damage.", "icon": "M", "effects": {"critical_unlock": true, "damage_flat": 12.0}},
+    "fault_insulation": {"base_cost": 10, "cost_mult": 1.0, "max_level": 1, "label": "Fault Insulation", "summary": "Adds 1 barrier for late inversion routes.", "icon": "F", "effects": {"barrier": 1}},
+    "null_anchor": {"base_cost": 12, "cost_mult": 1.0, "max_level": 1, "label": "Null Anchor", "summary": "Anchors extra targeting lanes for one more multi-target beam.", "icon": "N", "effects": {"multi_laser": 1}},
+    "ash_ward": {"base_cost": 14, "cost_mult": 1.0, "max_level": 1, "label": "Ash Ward", "summary": "Adds 1 barrier and empowers overdrive.", "icon": "A", "effects": {"barrier": 1, "overdrive_enhance": true}},
+    "planet_mastery": {"base_cost": 14, "cost_mult": 1.0, "max_level": 1, "label": "Demo Lock Override", "summary": "After clearing the pit, unlock full regeneration control.", "icon": "O", "effects": {"global_resource_mult": 0.15}},
 }
 
 const PHASE_BRIDGES := {
-    2: {"gate": "multi1", "entry": "electric_unlock"},
-    3: {"gate": "fuel_save1", "entry": "chain_unlock"},
-    4: {"gate": "fuel_save2", "entry": "shockwave_unlock"},
-    5: {"gate": "overdrive1", "entry": "mega_laser_unlock"},
+    2: {"gate": "ore_appraisal", "entry": "barrier_mesh"},
+    3: {"gate": "daemon_lances", "entry": "root_breaker"},
+    4: {"gate": "fault_charges", "entry": "void_cutters"},
+    5: {"gate": "abyssal_rigs", "entry": "mirror_saws"},
 }
 
 const PHASE_NODE_ORDER := {
-    1: ["start", "dmg1", "fuel_tank1", "resource1", "fire_rate1", "cargo_expand1", "speed1", "minimap", "combo_unlock", "aoe_mining", "critical_hit", "multi1"],
-    2: ["electric_unlock", "cargo_expand2", "dmg2", "fuel_tank2", "drone_proto", "combo_enhance", "range1", "value1", "dmg_boost1", "gold_unlock", "pickup_expand", "drone_dmg", "res_boost1", "charged_shot", "fire_rate2", "gold_value", "fuel_save1"],
-    3: ["chain_unlock", "cargo_expand3", "dmg3", "fuel_tank3", "drone_deploy", "resource2", "fire_rate3", "drone_speed", "chain_jump", "dmg_boost2", "electric_range", "value2", "res_boost2", "drone_pierce", "magnet1", "range2", "fuel_save2", "multi2", "barrier1", "overheat_shield"],
-    4: ["drone_sync", "speed2", "resonance_unlock", "shockwave_unlock", "dmg4", "dmg_boost3", "shockwave_enhance", "cargo_expand4", "drone_crit", "electric_range2", "gold_enhance", "resonance_enhance", "drone_overclock", "barrier2", "fuel_efficiency1", "fuel_tank4", "overdrive1", "res_boost3"],
-    5: ["mega_laser_unlock", "dmg5", "mega_enhance", "electric_chain", "resource3", "cargo_expand5", "dmg_boost4", "final_resonance", "overdrive_enhance", "fire_rate4", "multi3", "res_boost4", "dmg6", "core_breaker", "barrier3", "fuel_safe"],
+    1: ["start", "laser_cutter", "cargo_racks", "fuel_cells", "auto_salvage", "minimap", "rapid_cycle", "ore_appraisal"],
+    2: ["barrier_mesh", "shock_bits", "breach_drones", "salvage_contract", "funnel_resonance", "daemon_lances"],
+    3: ["root_breaker", "overburn_reactors", "seismic_lattice", "mantle_drills", "fault_charges"],
+    4: ["void_cutters", "inversion_drives", "vault_pulsers", "gravity_wells", "abyssal_rigs"],
+    5: ["mirror_saws", "fault_harpoons", "null_borers", "ash_crowns"],
 }
 
-const PHASE_COLS := 4
+const PHASE_COLS := 3
 const PHASE_OFFSETS := {
     1: Vector2(2, 2),
     2: Vector2(12, 2),
-    3: Vector2(12, 14),
-    4: Vector2(2, 14),
-    5: Vector2(2, 26),
+    3: Vector2(12, 12),
+    4: Vector2(2, 12),
+    5: Vector2(2, 22),
 }
 
 const RAW_NODE_DATA := {
-    "dmg1": {"base_cost": 20, "cost_mult": 2.0, "max_level": 3, "phase": 1, "effects": {"damage_flat": 1.0}},
-    "fire_rate1": {"base_cost": 30, "cost_mult": 1.8, "max_level": 3, "phase": 1, "effects": {"fire_rate": -0.12}},
-    "critical_hit": {"base_cost": 150, "cost_mult": 1.0, "max_level": 1, "phase": 1, "effects": {"critical_unlock": true}},
-    "resource1": {"base_cost": 25, "cost_mult": 2.0, "max_level": 2, "phase": 1, "effects": {"resource_flat": 2.0}},
-    "value1": {"base_cost": 800, "cost_mult": 2.0, "max_level": 2, "phase": 2, "effects": {"gold_bonus_flat": 5.0}},
-    "speed1": {"base_cost": 30, "cost_mult": 2.0, "max_level": 2, "phase": 1, "effects": {"speed": 60.0}},
-    "multi1": {"base_cost": 200, "cost_mult": 1.0, "max_level": 1, "phase": 1, "effects": {"multi_laser": 1}},
-    "dmg_boost1": {"base_cost": 1300, "cost_mult": 1.0, "max_level": 1, "phase": 2, "effects": {"season_dmg_mult": 2.0, "boost_zone": 0}},
-    "res_boost1": {"base_cost": 2000, "cost_mult": 1.0, "max_level": 1, "phase": 2, "effects": {"season_res_mult": 2.0, "boost_zone": 0}},
-    "electric_unlock": {"base_cost": 500, "cost_mult": 1.0, "max_level": 1, "phase": 2, "effects": {"electric_unlock": true}},
-    "electric_range": {"base_cost": 30000, "cost_mult": 1.5, "max_level": 2, "phase": 3, "effects": {"electric_range": 1}},
-    "electric_range2": {"base_cost": 1000000, "cost_mult": 1.5, "max_level": 2, "phase": 4, "effects": {"electric_range": 1}},
-    "gold_unlock": {"base_cost": 1300, "cost_mult": 1.0, "max_level": 1, "phase": 2, "effects": {"gold_unlock": true}},
-    "gold_value": {"base_cost": 3000, "cost_mult": 1.0, "max_level": 1, "phase": 2, "effects": {"resource_flat": 5.0}},
-    "pickup_expand": {"base_cost": 1300, "cost_mult": 1.0, "max_level": 1, "phase": 2, "effects": {"magnet": 128.0}},
-    "dmg2": {"base_cost": 500, "cost_mult": 1.5, "max_level": 3, "phase": 2, "effects": {"damage_flat": 3.0}},
-    "range1": {"base_cost": 800, "cost_mult": 1.5, "max_level": 2, "phase": 2, "effects": {"range": 45.0}},
-    "fire_rate2": {"base_cost": 2000, "cost_mult": 1.0, "max_level": 1, "phase": 2, "effects": {"fire_rate": -0.12}},
-    "charged_shot": {"base_cost": 2000, "cost_mult": 1.0, "max_level": 1, "phase": 2, "effects": {"charged_shot_unlock": true}},
-    "dmg_boost2": {"base_cost": 30000, "cost_mult": 1.0, "max_level": 1, "phase": 3, "effects": {"season_dmg_mult": 2.5, "boost_zone": 1}},
-    "res_boost2": {"base_cost": 80000, "cost_mult": 1.0, "max_level": 1, "phase": 3, "effects": {"season_res_mult": 2.0, "boost_zone": 1}},
-    "drone_proto": {"base_cost": 800, "cost_mult": 1.0, "max_level": 1, "phase": 2, "effects": {"drone_unlock": true}},
-    "drone_dmg": {"base_cost": 1300, "cost_mult": 1.6, "max_level": 3, "phase": 2, "effects": {"drone_damage_up": 5.0}},
-    "drone_deploy": {"base_cost": 15000, "cost_mult": 2.0, "max_level": 2, "phase": 3, "effects": {"drone_add": 1}},
-    "drone_speed": {"base_cost": 15000, "cost_mult": 1.8, "max_level": 2, "phase": 3, "effects": {"drone_fire_rate": 0.2}},
-    "drone_pierce": {"base_cost": 80000, "cost_mult": 1.0, "max_level": 1, "phase": 3, "effects": {"drone_pierce_up": 1}},
-    "chain_unlock": {"base_cost": 8000, "cost_mult": 1.0, "max_level": 1, "phase": 3, "effects": {"chain_lightning_unlock": true}},
-    "chain_jump": {"base_cost": 30000, "cost_mult": 2.0, "max_level": 2, "phase": 3, "effects": {"chain_jump": 2}},
-    "dmg3": {"base_cost": 8000, "cost_mult": 2.0, "max_level": 4, "phase": 3, "effects": {"damage_flat": 8.0}},
-    "resource2": {"base_cost": 15000, "cost_mult": 2.0, "max_level": 3, "phase": 3, "effects": {"resource_flat": 8.0}},
-    "value2": {"base_cost": 30000, "cost_mult": 2.0, "max_level": 2, "phase": 3, "effects": {"gold_bonus_flat": 12.0}},
-    "multi2": {"base_cost": 200000, "cost_mult": 1.0, "max_level": 1, "phase": 3, "effects": {"multi_laser": 1}},
-    "magnet1": {"base_cost": 80000, "cost_mult": 1.0, "max_level": 1, "phase": 3, "effects": {"instant_collect": true}},
-    "range2": {"base_cost": 80000, "cost_mult": 2.0, "max_level": 2, "phase": 3, "effects": {"range": 30.0}},
-    "barrier1": {"base_cost": 200000, "cost_mult": 1.0, "max_level": 1, "phase": 3, "effects": {"barrier": 1}},
-    "overheat_shield": {"base_cost": 200000, "cost_mult": 1.0, "max_level": 1, "phase": 3, "effects": {"overheat_resist": 0.3}},
-    "dmg_boost3": {"base_cost": 500000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "effects": {"season_dmg_mult": 2.5, "boost_zone": 2}},
-    "res_boost3": {"base_cost": 2000000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "effects": {"season_res_mult": 2.5, "boost_zone": 2}},
-    "speed2": {"base_cost": 250000, "cost_mult": 2.0, "max_level": 2, "phase": 4, "effects": {"speed": 60.0}},
-    "drone_sync": {"base_cost": 250000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "effects": {"drone_sync_unlock": true}},
-    "drone_crit": {"base_cost": 500000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "effects": {"drone_crit_unlock": true}},
-    "drone_overclock": {"base_cost": 1000000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "effects": {"drone_overclock": true}},
-    "resonance_unlock": {"base_cost": 250000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "effects": {"resonance_unlock": true}},
-    "shockwave_unlock": {"base_cost": 250000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "effects": {"shockwave_unlock": true}},
-    "overdrive1": {"base_cost": 5000000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "effects": {"overdrive_unlock": true}},
-    "dmg4": {"base_cost": 250000, "cost_mult": 2.0, "max_level": 4, "phase": 4, "effects": {"damage_flat": 15.0}},
-    "fire_rate3": {"base_cost": 15000, "cost_mult": 2.0, "max_level": 2, "phase": 3, "effects": {"fire_rate": -0.04}},
-    "resonance_enhance": {"base_cost": 1000000, "cost_mult": 2.0, "max_level": 2, "phase": 4, "effects": {"resonance_enhance": 1.0}},
-    "shockwave_enhance": {"base_cost": 500000, "cost_mult": 2.0, "max_level": 2, "phase": 4, "effects": {"shockwave_enhance": true}},
-    "gold_enhance": {"base_cost": 1000000, "cost_mult": 2.0, "max_level": 2, "phase": 4, "effects": {"resource_flat": 12.0}},
-    "barrier2": {"base_cost": 2000000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "effects": {"barrier": 1}},
-    "dmg_boost4": {"base_cost": 100000000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "effects": {"season_dmg_mult": 3.0, "boost_zone": 3}},
-    "res_boost4": {"base_cost": 200000000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "effects": {"season_res_mult": 3.0, "boost_zone": 3}},
-    "mega_laser_unlock": {"base_cost": 30000000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "effects": {"mega_laser_unlock": true}},
-    "mega_enhance": {"base_cost": 40000000, "cost_mult": 2.0, "max_level": 3, "phase": 5, "effects": {"mega_enhance": true}},
-    "multi3": {"base_cost": 150000000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "effects": {"multi_laser": 1}},
-    "core_breaker": {"base_cost": 300000000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "effects": {"core_breaker_unlock": true}},
-    "dmg5": {"base_cost": 30000000, "cost_mult": 2.0, "max_level": 4, "phase": 5, "effects": {"damage_flat": 25.0}},
-    "electric_chain": {"base_cost": 50000000, "cost_mult": 2.0, "max_level": 2, "phase": 5, "effects": {"electric_chain": 1}},
-    "final_resonance": {"base_cost": 120000000, "cost_mult": 2.0, "max_level": 2, "phase": 5, "effects": {"resonance_enhance": 1.0}},
-    "overdrive_enhance": {"base_cost": 200000000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "effects": {"overdrive_enhance": true}},
-    "fire_rate4": {"base_cost": 150000000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "effects": {"fire_rate": -0.02}},
-    "barrier3": {"base_cost": 350000000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "effects": {"barrier": 1}},
-    "dmg6": {"base_cost": 200000000, "cost_mult": 2.0, "max_level": 3, "phase": 5, "effects": {"damage_flat": 40.0}},
-    "resource3": {"base_cost": 80000000, "cost_mult": 2.5, "max_level": 2, "phase": 5, "effects": {"resource_flat": 20.0}},
-    "aoe_mining": {"base_cost": 120, "cost_mult": 1.0, "max_level": 1, "phase": 1, "effects": {"aoe_mining_unlock": true}},
-    "combo_unlock": {"base_cost": 80, "cost_mult": 1.0, "max_level": 1, "phase": 1, "effects": {"combo_unlock": true, "combo_bonus": 0.02}},
-    "combo_enhance": {"base_cost": 800, "cost_mult": 1.5, "max_level": 3, "phase": 2, "effects": {"combo_bonus": 0.02}},
-    "minimap": {"base_cost": 60, "cost_mult": 1.0, "max_level": 1, "phase": 1, "effects": {"minimap_unlock": true}},
-    "fuel_tank1": {"base_cost": 25, "cost_mult": 2.0, "max_level": 3, "phase": 1, "effects": {"fuel_expand": 2.0}},
-    "fuel_tank2": {"base_cost": 500, "cost_mult": 1.8, "max_level": 3, "phase": 2, "effects": {"fuel_expand": 3.0}},
-    "fuel_tank3": {"base_cost": 8000, "cost_mult": 1.8, "max_level": 3, "phase": 3, "effects": {"fuel_expand": 5.0}},
-    "fuel_tank4": {"base_cost": 2000000, "cost_mult": 1.8, "max_level": 3, "phase": 4, "effects": {"fuel_expand": 12.0}},
-    "fuel_save1": {"base_cost": 3000, "cost_mult": 1.0, "max_level": 1, "phase": 2, "effects": {"fuel_loss_reduce": 0.3}},
-    "fuel_save2": {"base_cost": 200000, "cost_mult": 1.0, "max_level": 1, "phase": 3, "effects": {"fuel_loss_reduce": 0.6}},
-    "fuel_efficiency1": {"base_cost": 2000000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "effects": {"fuel_efficiency": 0.8}},
-    "fuel_safe": {"base_cost": 250000000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "effects": {"fuel_loss_reduce": 1.0}},
-    "cargo_expand1": {"base_cost": 30, "cost_mult": 2.0, "max_level": 3, "phase": 1, "effects": {"cargo_expand": 10.0}},
-    "cargo_expand2": {"base_cost": 500, "cost_mult": 1.8, "max_level": 3, "phase": 2, "effects": {"cargo_expand": 50.0}},
-    "cargo_expand3": {"base_cost": 8000, "cost_mult": 1.8, "max_level": 3, "phase": 3, "effects": {"cargo_expand": 200.0}},
-    "cargo_expand4": {"base_cost": 500000, "cost_mult": 1.8, "max_level": 3, "phase": 4, "effects": {"cargo_expand": 1000.0}},
-    "cargo_expand5": {"base_cost": 80000000, "cost_mult": 1.8, "max_level": 3, "phase": 5, "effects": {"cargo_expand": 5000.0}},
+    "laser_cutter": {"base_cost": 60, "cost_mult": 1.55, "max_level": 8, "phase": 1, "label": "Laser Cutter", "summary": "+2 laser damage per level.", "icon": "L", "effects": {"damage_flat": 2.0}},
+    "cargo_racks": {"base_cost": 65, "cost_mult": 1.52, "max_level": 7, "phase": 1, "label": "Cargo Racks", "summary": "+20 cargo capacity per level.", "icon": "C", "effects": {"cargo_expand": 20.0}},
+    "fuel_cells": {"base_cost": 60, "cost_mult": 1.55, "max_level": 6, "phase": 1, "label": "Fuel Cells", "summary": "+3 seconds of run time and +20 move speed per level.", "icon": "F", "effects": {"fuel_expand": 3.0, "speed": 20.0}},
+    "auto_salvage": {"base_cost": 95, "cost_mult": 1.0, "max_level": 1, "phase": 1, "label": "Auto Salvage", "summary": "Automatically collects mined cash instantly with no world pickups.", "icon": "A", "effects": {"instant_collect": true}},
+    "minimap": {"base_cost": 85, "cost_mult": 1.0, "max_level": 1, "phase": 1, "label": "Minimap", "summary": "Unlock the pit minimap during runs.", "icon": "M", "effects": {"minimap_unlock": true}},
+    "rapid_cycle": {"base_cost": 70, "cost_mult": 1.58, "max_level": 7, "phase": 1, "label": "Rapid Cycle", "summary": "-0.04 attack interval per level.", "icon": "R", "effects": {"fire_rate": -0.04}},
+    "ore_appraisal": {"base_cost": 80, "cost_mult": 1.60, "max_level": 6, "phase": 1, "label": "Ore Appraisal", "summary": "+3 payout per mined block per level.", "icon": "$", "effects": {"resource_flat": 3.0}},
+    "barrier_mesh": {"base_cost": 140, "cost_mult": 1.90, "max_level": 3, "phase": 2, "label": "Barrier Mesh", "summary": "+1 barrier per level. Buying any phase-2 node unlocks Empire Layer 2 runs after clearing the first layer.", "icon": "B", "effects": {"barrier": 1}},
+    "shock_bits": {"base_cost": 190, "cost_mult": 1.75, "max_level": 4, "phase": 2, "label": "Shock Bits", "summary": "+3 damage per level, unlock electric shots, and extend electric reach.", "icon": "E", "effects": {"damage_flat": 3.0, "electric_unlock": true, "electric_range": 1}},
+    "breach_drones": {"base_cost": 260, "cost_mult": 1.80, "max_level": 4, "phase": 2, "label": "Breach Drones", "summary": "Unlock drones; each level adds a drone and improves drone damage.", "icon": "D", "effects": {"drone_unlock": true, "drone_add": 1, "drone_damage_up": 4.0}},
+    "salvage_contract": {"base_cost": 220, "cost_mult": 1.75, "max_level": 4, "phase": 2, "label": "Salvage Contract", "summary": "Keep 8% of your haul on failed runs per level.", "icon": "S", "effects": {"fuel_loss_reduce": 0.08}},
+    "funnel_resonance": {"base_cost": 420, "cost_mult": 1.90, "max_level": 4, "phase": 2, "label": "Funnel Resonance", "summary": "Unlock resonance and add +0.25 resonance power per level.", "icon": "N", "effects": {"resonance_unlock": true, "resonance_enhance": 0.25}},
+    "daemon_lances": {"base_cost": 520, "cost_mult": 1.85, "max_level": 4, "phase": 2, "label": "Daemon Lances", "summary": "+6 damage per level focused into daemon cores.", "icon": "K", "effects": {"damage_flat": 6.0, "core_damage_mult": 0.06}},
+    "root_breaker": {"base_cost": 980, "cost_mult": 2.00, "max_level": 3, "phase": 3, "label": "Root Breaker", "summary": "Unlock 3x damage against daemon cores. Buying any phase-3 node unlocks Empire Layer 3 runs after clearing the second layer.", "icon": "X", "effects": {"core_breaker_unlock": true}},
+    "overburn_reactors": {"base_cost": 1800, "cost_mult": 1.85, "max_level": 4, "phase": 3, "label": "Overburn Reactors", "summary": "Unlock shockwaves and reduce kill requirements per level.", "icon": "O", "effects": {"shockwave_unlock": true, "shockwave_enhance": true}},
+    "seismic_lattice": {"base_cost": 2600, "cost_mult": 1.85, "max_level": 4, "phase": 3, "label": "Seismic Lattice", "summary": "Unlock splash mining and further improve shockwaves.", "icon": "S", "effects": {"aoe_mining_unlock": true, "shockwave_enhance": true}},
+    "mantle_drills": {"base_cost": 9000, "cost_mult": 1.92, "max_level": 4, "phase": 3, "label": "Mantle Drills", "summary": "+8 damage and +10 range per level.", "icon": "M", "effects": {"damage_flat": 8.0, "range": 10.0}},
+    "fault_charges": {"base_cost": 11000, "cost_mult": 1.95, "max_level": 4, "phase": 3, "label": "Fault Charges", "summary": "Unlock charged shots and add +6 damage per level.", "icon": "F", "effects": {"charged_shot_unlock": true, "damage_flat": 6.0}},
+    "void_cutters": {"base_cost": 4200, "cost_mult": 1.95, "max_level": 5, "phase": 4, "label": "Void Cutters", "summary": "+16 range and +6 damage per level. Buying any phase-4 node unlocks Empire Layer 4 runs after clearing the third layer.", "icon": "V", "effects": {"range": 16.0, "damage_flat": 6.0}},
+    "inversion_drives": {"base_cost": 5800, "cost_mult": 1.90, "max_level": 4, "phase": 4, "label": "Inversion Drives", "summary": "+40 move speed per level and unlock overdrive.", "icon": "I", "effects": {"speed": 40.0, "overdrive_unlock": true}},
+    "vault_pulsers": {"base_cost": 18000, "cost_mult": 1.95, "max_level": 5, "phase": 4, "label": "Vault Pulsers", "summary": "Unlock mega laser and improve its charge rate per level.", "icon": "P", "effects": {"mega_laser_unlock": true, "mega_enhance": true}},
+    "gravity_wells": {"base_cost": 26000, "cost_mult": 1.90, "max_level": 4, "phase": 4, "label": "Gravity Wells", "summary": "+18 pickup radius and +0.2 resonance power per level.", "icon": "G", "effects": {"magnet": 18.0, "resonance_enhance": 0.2}},
+    "abyssal_rigs": {"base_cost": 42000, "cost_mult": 1.92, "max_level": 5, "phase": 4, "label": "Abyssal Rigs", "summary": "+40 cargo capacity and +8 payout per level.", "icon": "A", "effects": {"cargo_expand": 40.0, "resource_flat": 8.0}},
+    "mirror_saws": {"base_cost": 62000, "cost_mult": 1.94, "max_level": 4, "phase": 5, "label": "Mirror Saws", "summary": "Unlock crits and add +12 damage per level. Buying any phase-5 node unlocks Empire Layer 5 runs after clearing the fourth layer.", "icon": "M", "effects": {"critical_unlock": true, "damage_flat": 12.0}},
+    "fault_harpoons": {"base_cost": 92000, "cost_mult": 1.95, "max_level": 4, "phase": 5, "label": "Fault Harpoons", "summary": "Unlock chain lightning and add +1 chain depth per level.", "icon": "H", "effects": {"chain_lightning_unlock": true, "electric_chain": 1}},
+    "null_borers": {"base_cost": 138000, "cost_mult": 1.96, "max_level": 4, "phase": 5, "label": "Null Borers", "summary": "+14 damage, +1 multi-target, and deeper electric chains per level.", "icon": "N", "effects": {"damage_flat": 14.0, "multi_laser": 1, "electric_chain": 1}},
+    "ash_crowns": {"base_cost": 220000, "cost_mult": 1.98, "max_level": 5, "phase": 5, "label": "Ash Crowns", "summary": "Late inversion crown: boosts payout and empowers mega and overdrive.", "icon": "A", "effects": {"resource_flat": 12.0, "mega_enhance": true, "overdrive_enhance": true}},
 }
 
 const LAYER_DATA := [
-    {"name": "Surface Cache", "value": 4, "health": 24.0, "color": Color(0.16, 0.21, 0.29, 1.0), "accent": Color(0.52, 0.74, 0.98, 1.0)},
-    {"name": "Access Trench", "value": 14, "health": 68.0, "color": Color(0.22, 0.28, 0.24, 1.0), "accent": Color(0.25, 0.9, 0.72, 1.0)},
-    {"name": "Firewall Shelf", "value": 42, "health": 168.0, "color": Color(0.3, 0.18, 0.12, 1.0), "accent": Color(0.96, 0.64, 0.24, 1.0)},
-    {"name": "Blacksite Kernel", "value": 110, "health": 360.0, "color": Color(0.2, 0.14, 0.28, 1.0), "accent": Color(0.84, 0.5, 1.0, 1.0)},
-    {"name": "Root Vault", "value": 320, "health": 920.0, "color": Color(0.32, 0.06, 0.08, 1.0), "accent": Color(1.0, 0.36, 0.28, 1.0)},
+    {"name": "Proxy Cache", "value": 4, "health": 24.0, "color": Color(0.16, 0.21, 0.29, 1.0), "accent": Color(0.52, 0.74, 0.98, 1.0)},
+    {"name": "Cipher Depths", "value": 14, "health": 68.0, "color": Color(0.22, 0.28, 0.24, 1.0), "accent": Color(0.25, 0.9, 0.72, 1.0)},
+    {"name": "Ghost Sector", "value": 42, "health": 168.0, "color": Color(0.3, 0.18, 0.12, 1.0), "accent": Color(0.96, 0.64, 0.24, 1.0)},
+    {"name": "Kernel Vault", "value": 110, "health": 360.0, "color": Color(0.2, 0.14, 0.28, 1.0), "accent": Color(0.84, 0.5, 1.0, 1.0)},
+    {"name": "Root Well", "value": 320, "health": 920.0, "color": Color(0.32, 0.06, 0.08, 1.0), "accent": Color(1.0, 0.36, 0.28, 1.0)},
 ]
 
 static func get_upgrade_catalog() -> Array[Dictionary]:
@@ -207,13 +219,13 @@ static func get_upgrade_catalog() -> Array[Dictionary]:
                 continue
             result.append({
                 "id": upgrade_id,
-                "label": _get_label(upgrade_id),
-                "summary": _get_summary(upgrade_id, raw.get("effects", {})),
+                "label": str(raw.get("label", _get_label(upgrade_id))),
+                "summary": str(raw.get("summary", _get_summary(upgrade_id, raw.get("effects", {})))),
                 "base_cost": int(raw.get("base_cost", 0)),
                 "cost_mult": float(raw.get("cost_mult", 1.0)),
                 "max_level": int(raw.get("max_level", 1)),
                 "phase": int(raw.get("phase", phase)),
-                "icon": _get_icon(upgrade_id),
+                "icon": str(raw.get("icon", _get_icon(upgrade_id))),
             })
     return result
 
@@ -333,7 +345,7 @@ static func refresh_depth_unlocks(data: Dictionary) -> void:
 static func get_layer_for_depth(depth_level: int) -> Dictionary:
     return LAYER_DATA[clampi(depth_level - 1, 0, LAYER_DATA.size() - 1)].duplicate(true)
 
-static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = {}) -> Dictionary:
+static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = {}, core_upgrades: Dictionary = {}) -> Dictionary:
     var damage_flat := 0.0
     var fire_rate_mod := 0.0
     var speed_bonus := 0.0
@@ -358,6 +370,9 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
     var resonance_bonus := 0.0
     var mega_enhance_count := 0
     var shockwave_enhance_count := 0
+    var global_damage_mult := 1.0
+    var global_resource_mult := 1.0
+    var core_damage_mult := 1.0
     var zone_dmg := [1.0, 1.0, 1.0, 1.0]
     var zone_res := [1.0, 1.0, 1.0, 1.0]
     var flags := {
@@ -399,6 +414,9 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
                 "resonance_enhance": resonance_bonus += float(effect_value) * level
                 "mega_enhance": mega_enhance_count += level
                 "shockwave_enhance": shockwave_enhance_count += level
+                "global_damage_mult": global_damage_mult *= pow(1.0 + float(effect_value), level)
+                "global_resource_mult": global_resource_mult *= pow(1.0 + float(effect_value), level)
+                "core_damage_mult": core_damage_mult *= pow(1.0 + float(effect_value), level)
                 "season_dmg_mult":
                     var zone_idx: int = int(effects.get("boost_zone", -1))
                     if zone_idx >= 0 and zone_idx < zone_dmg.size():
@@ -427,6 +445,41 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
                 "resource_flat": resource_flat += float(xp_effect_value) * xp_level
                 "magnet": magnet_bonus += float(xp_effect_value) * xp_level
                 "xp_gain_mult": xp_gain_mult += float(xp_effect_value) * xp_level
+                "electric_range": electric_range_bonus += int(xp_effect_value) * xp_level
+                "electric_chain": electric_chain_bonus += int(xp_effect_value) * xp_level
+                "resonance_enhance": resonance_bonus += float(xp_effect_value) * xp_level
+                "global_damage_mult": global_damage_mult *= pow(1.0 + float(xp_effect_value), xp_level)
+                "global_resource_mult": global_resource_mult *= pow(1.0 + float(xp_effect_value), xp_level)
+                "core_damage_mult": core_damage_mult *= pow(1.0 + float(xp_effect_value), xp_level)
+                _:
+                    if xp_effect_value is bool and bool(xp_effect_value):
+                        flags[xp_effect_id] = true
+    for upgrade_id in core_upgrades.keys():
+        var core_level: int = int(core_upgrades.get(upgrade_id, 0))
+        if core_level <= 0:
+            continue
+        var core_effects: Dictionary = CORE_UPGRADES.get(str(upgrade_id).trim_prefix(CORE_PREFIX), {}).get("effects", {})
+        for core_effect_key in core_effects.keys():
+            var core_effect_id: String = str(core_effect_key)
+            var core_effect_value: Variant = core_effects[core_effect_key]
+            match core_effect_id:
+                "damage_flat": damage_flat += float(core_effect_value) * core_level
+                "speed": speed_bonus += float(core_effect_value) * core_level
+                "range": range_bonus += float(core_effect_value) * core_level
+                "cargo_expand": cargo_bonus += float(core_effect_value) * core_level
+                "fuel_expand": fuel_bonus += float(core_effect_value) * core_level
+                "resource_flat": resource_flat += float(core_effect_value) * core_level
+                "magnet": magnet_bonus += float(core_effect_value) * core_level
+                "fuel_loss_reduce": salvage_keep = maxf(salvage_keep, float(core_effect_value) * core_level)
+                "barrier": barrier_bonus += int(core_effect_value) * core_level
+                "multi_laser": multi_laser_bonus += int(core_effect_value) * core_level
+                "resonance_enhance": resonance_bonus += float(core_effect_value) * core_level
+                "global_damage_mult": global_damage_mult *= pow(1.0 + float(core_effect_value), core_level)
+                "global_resource_mult": global_resource_mult *= pow(1.0 + float(core_effect_value), core_level)
+                "core_damage_mult": core_damage_mult *= pow(1.0 + float(core_effect_value), core_level)
+                _:
+                    if core_effect_value is bool and bool(core_effect_value):
+                        flags[core_effect_id] = true
     if flags["drone_overclock"]:
         flags["drone_sync_unlock"] = true
         flags["drone_crit_unlock"] = true
@@ -483,6 +536,9 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
         "minimap_enabled": flags["minimap_unlock"],
         "instant_collect": flags["instant_collect"],
         "xp_gain_mult": xp_gain_mult,
+        "global_damage_mult": global_damage_mult,
+        "global_resource_mult": global_resource_mult,
+        "core_damage_mult": core_damage_mult,
         "zone_damage_mults": zone_dmg,
         "zone_resource_mults": zone_res,
     }
@@ -595,15 +651,15 @@ static func _format_effect_number(value: float) -> String:
 static func _get_zone_label(zone_idx: int) -> String:
     match zone_idx:
         0:
-            return "Proxy"
+            return "Proxy Cache"
         1:
-            return "Cipher"
+            return "Cipher Depths"
         2:
-            return "Ghost"
+            return "Ghost Sector"
         3:
-            return "Root"
+            return "Root Well"
         _:
-            return "Network"
+            return "Kernel Vault"
 
 static func _get_icon(upgrade_id: String) -> String:
     if upgrade_id.contains("drone"):

@@ -51,18 +51,36 @@ const DRONE_RANGE := 230.0
 const DRONE_FOLLOW_SPEED := 11.0
 const DRONE_SPACING := 16.0
 const DRONE_BEHIND_DIST := 18.0
-const CAMERA_ZOOM_MIN := 1.0
-const CAMERA_ZOOM_MAX := 1.0
-const CAMERA_ZOOM_LERP := 5.0
+const CAMERA_ZOOM_STOPPED := 1.2
+const CAMERA_ZOOM_FULL_SPEED := 0.8
+const CAMERA_ZOOM_BLEND_TIME := 0.35
 const BREACH_LOG_MAX_LINES := 8
 const BREACH_LOG_IDLE_INTERVAL := 2.8
-const HACKER_TYPER_IDLE_TEXT := "idle :: waiting for breach window"
-const HACKER_TYPER_SAMPLE_LINES := [
-    "inject shell --quiet --reroute clinic ledgers",
-    "spoof trace :: rotate certs :: shadow jump",
-    "pull ration audits && dump black budget shards",
-    "ghost tunnel open // escrow teeth grinding",
-    "decrypt civic injunction cache // push receipts",
+const HACKER_TYPER_MAX_LINES := 4
+const HACKER_TYPER_IDLE_LINES := [
+    "def mask_telemetry(trace):\n    trace.route = dead_mall_mirrors\n    return trace.fade_out()",
+    "for watcher in audit_glass:\n    watcher.feed(decoy_noise)\n    watcher.forget(real_entry)",
+    "while shell.is_sleeping():\n    reroute(lookup_pings, toward=\"salt_archive\")\n    drift.deeper()",
+    "if ledger.pings_back():\n    ledger.echo_into(sacrificial_accounts)\n    sleep(0.2)",
+    "with ghost_handshake() as tunnel:\n    tunnel.borrow(clean_credentials)\n    tunnel.leave_no_names()",
+]
+const HACKER_TYPER_ACTIVE_LINES := [
+    "def reroute_clinic_ledgers(batch):\n    for ledger in batch:\n        ledger.owner = \"public\"\n        receipts.push(ledger)",
+    "for cert in rotate(stolen_certs):\n    spoof(trace=cert)\n    shadow_jump(next_shell)",
+    "if ration_audits.locked:\n    ration_audits.decrypt()\n    black_budget_shards.dump(to=dropbox)",
+    "with ghost_tunnel(\"escrow\") as hole:\n    hole.grind(teeth=True)\n    push_receipts(hole.exfil())",
+    "for injunction in civic_cache:\n    injunction.unseal()\n    archive.publish(injunction)",
+    "gap = permissions.fork(warm=True)\nif gap.open:\n    rig.walk_through(gap)\n    shell.bleed()",
+    "debt_index.poison(seed=feralroot_key)\nfor debtor in trapped_accounts:\n    debtor.release()",
+    "while counter_hack_weather.spinning():\n    counter_hack_weather.crack()\n    drill.deeper()",
+    "exec_auth.salt(level=\"panic\")\nclean_money = siphon(executive_reserve)\nreturn clean_money",
+]
+const HACKER_TYPER_PRESSURE_LINES := [
+    "if core.handshake.wobbling():\n    pry(core.seam, wider=True)\n    keep_pressure_on()",
+    "command_throat = seize(core)\nwhile command_throat.blinking():\n    hold_fast(command_throat)",
+    "retaliation_loop.jam()\nif shell.opens():\n    punch_through(shell)\n    mark_exit_later()",
+    "for cert in clean_room_certs:\n    cert.burn()\n    lock.peel_back(layer=1)",
+    "watchdog_queue.bleed(rate=\"slow\")\nif watchdog_queue.forgets_us():\n    take_the_core()",
 ]
 const POWERUP_TYPES := ["haste", "magnet", "payload"]
 const POWERUP_DURATION := 12.0
@@ -213,18 +231,19 @@ var drone_positions: Array[Vector2] = []
 var drone_beams: Array[Dictionary] = []
 var drone_timers: Array[float] = []
 var drone_targets: Array[Vector2] = []
-var summer_laser_states: Dictionary = {}
-var autumn_debris: Array[Dictionary] = []
-var winter_cross_lasers: Dictionary = {}
-var autumn_debris_timers: Dictionary = {}
+var cipher_laser_states: Dictionary = {}
+var ghost_debris: Array[Dictionary] = []
+var root_cross_lasers: Dictionary = {}
+var ghost_debris_timers: Dictionary = {}
 var hacker_typer_label: RichTextLabel
-var hacker_typer_visible_text := HACKER_TYPER_IDLE_TEXT
-var hacker_typer_target_text := HACKER_TYPER_IDLE_TEXT
+var hacker_typer_current_text := ""
+var hacker_typer_revealed_chars := 0
 var hacker_typer_cursor_on := true
 var hacker_typer_char_timer := 0.0
 var hacker_typer_hold_timer := 0.0
 var hacker_typer_is_attacking := false
 var hacker_typer_im_in_timer := 0.0
+var hacker_typer_history: Array[String] = []
 var combo_milestones_hit: Dictionary = {}
 var roaming_powerups: Array[Dictionary] = []
 var active_powerup_timers := {"haste": 0.0, "magnet": 0.0, "payload": 0.0}
@@ -258,6 +277,7 @@ var summary_return_button: Button
 var summary_save_anim_time := 0.0
 var summary_save_pending := false
 var summary_save_phase := "idle"
+var summary_pending_saved_section_ids: Array = []
 var breach_log_label: RichTextLabel
 var bottom_cinematic_overlay: Control
 var bottom_letterbox_top: ColorRect
@@ -498,7 +518,7 @@ func _build_runtime_nodes() -> void:
     camera = Camera2D.new()
     camera.position_smoothing_enabled = true
     camera.position_smoothing_speed = 8.0
-    camera.zoom = Vector2.ONE * CAMERA_ZOOM_MIN
+    camera.zoom = Vector2.ONE * CAMERA_ZOOM_STOPPED
     ship_root.add_child(camera)
     camera.make_current()
 
@@ -738,7 +758,7 @@ func _build_ui() -> void:
 func _start_run() -> void:
     persistent_data = PROGRESS.load_data()
     upgrades = persistent_data.get("upgrades", {}).duplicate(true)
-    runtime_stats = BALANCE.build_runtime_stats(upgrades, PROGRESS.get_xp_upgrade_levels())
+    runtime_stats = BALANCE.build_runtime_stats(upgrades, PROGRESS.get_xp_upgrade_levels(), PROGRESS.get_core_upgrade_levels())
     current_depth_level = clampi(int(persistent_data.get("selected_depth_level", 1)), 1, BALANCE.MAX_DEPTH_LEVEL)
     bottom_phase_unlocked = bool(persistent_data.get("bottom_phase_unlocked", false))
     current_layer_depth = 1
@@ -762,7 +782,7 @@ func _start_run() -> void:
     ship_pos = spawn_position
     ship_root.global_position = ship_pos
     camera_pos = ship_pos
-    current_layer_name = "Surface Cache"
+    current_layer_name = "Proxy Cache"
     final_core_exposed = false
     return_zone_radius = RETURN_ZONE_RADIUS + (36.0 if _has_core_upgrade("return_shortcut") else 0.0)
     extracting = false
@@ -792,9 +812,9 @@ func _start_run() -> void:
     electric_arcs.clear()
     chain_arcs.clear()
     shockwave_rings.clear()
-    autumn_debris.clear()
-    autumn_debris_timers.clear()
-    winter_cross_lasers.clear()
+    ghost_debris.clear()
+    ghost_debris_timers.clear()
+    root_cross_lasers.clear()
     drone_beams.clear()
     _reset_drone_state()
     current_combo = 0
@@ -802,12 +822,13 @@ func _start_run() -> void:
     combo_milestones_hit.clear()
     if VirtualCursor != null:
         VirtualCursor.set_open_pit_empire_cursor_combo(0.0)
-    hacker_typer_visible_text = HACKER_TYPER_IDLE_TEXT
-    hacker_typer_target_text = HACKER_TYPER_IDLE_TEXT
+    hacker_typer_current_text = ""
+    hacker_typer_revealed_chars = 0
     hacker_typer_im_in_timer = 0.0
     hacker_typer_hold_timer = 0.0
     hacker_typer_char_timer = 0.0
     hacker_typer_is_attacking = false
+    hacker_typer_history.clear()
     for key in active_powerup_timers.keys():
         active_powerup_timers[key] = 0.0
     _spawn_roaming_powerups()
@@ -969,13 +990,13 @@ func _update_timers(delta: float) -> void:
     _tick_effect_array(electric_arcs, delta)
     _tick_effect_array(chain_arcs, delta)
     _tick_effect_array(drone_beams, delta)
-    for idx in range(autumn_debris.size() - 1, -1, -1):
-        var debris: Dictionary = autumn_debris[idx]
+    for idx in range(ghost_debris.size() - 1, -1, -1):
+        var debris: Dictionary = ghost_debris[idx]
         debris["life"] = float(debris.get("life", AUTUMN_DEBRIS_LIFETIME)) - delta
         if float(debris.get("life", 0.0)) <= 0.0:
-            autumn_debris.remove_at(idx)
+            ghost_debris.remove_at(idx)
             continue
-        autumn_debris[idx] = debris
+        ghost_debris[idx] = debris
     for idx in range(shockwave_rings.size() - 1, -1, -1):
         var ring := shockwave_rings[idx]
         ring["radius"] = float(ring.get("radius", 0.0)) + SHOCKWAVE_RING_SPEED * delta
@@ -991,8 +1012,8 @@ func _update_camera_zoom(delta: float) -> void:
         return
     var move_speed := maxf(float(runtime_stats.get("move_speed", 580.0)) + (float(runtime_stats.get("overdrive_speed_bonus", 300.0)) if overdrive_timer > 0.0 else 0.0), 1.0)
     var speed_ratio := clampf(ship_vel.length() / move_speed, 0.0, 1.0)
-    var target_zoom := lerpf(CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX, speed_ratio)
-    camera.zoom = camera.zoom.lerp(Vector2.ONE * target_zoom, clampf(delta * CAMERA_ZOOM_LERP, 0.0, 1.0))
+    var target_zoom := lerpf(CAMERA_ZOOM_STOPPED, CAMERA_ZOOM_FULL_SPEED, speed_ratio)
+    camera.zoom = camera.zoom.lerp(Vector2.ONE * target_zoom, clampf(delta / CAMERA_ZOOM_BLEND_TIME, 0.0, 1.0))
 
 func _update_breach_log(delta: float) -> void:
     if breach_chat == null:
@@ -1004,31 +1025,86 @@ func _update_breach_log(delta: float) -> void:
 func _update_hacker_typer(delta: float) -> void:
     if hacker_typer_label == null:
         return
-    var actively_attacking := attack_visible_timer > 0.0 or not multi_targets.is_empty() or mega_timer > 0.0
-    if hacker_typer_im_in_timer > 0.0:
+    var actively_attacking := _has_live_hacker_targets()
+    var showing_im_in := hacker_typer_im_in_timer > 0.0
+    if showing_im_in:
         hacker_typer_im_in_timer = maxf(0.0, hacker_typer_im_in_timer - delta)
-        hacker_typer_target_text = "I'M IN"
-    elif actively_attacking:
-        if not hacker_typer_is_attacking or hacker_typer_hold_timer <= 0.0:
-            hacker_typer_target_text = HACKER_TYPER_SAMPLE_LINES[rng.randi_range(0, HACKER_TYPER_SAMPLE_LINES.size() - 1)]
-            hacker_typer_hold_timer = rng.randf_range(0.9, 1.7)
-        else:
-            hacker_typer_hold_timer = maxf(0.0, hacker_typer_hold_timer - delta)
-    else:
-        hacker_typer_target_text = HACKER_TYPER_IDLE_TEXT
-        hacker_typer_hold_timer = 0.0
+        if hacker_typer_current_text != "I'M IN":
+            _start_hacker_typer_line("I'M IN")
+    elif not actively_attacking:
+        hacker_typer_cursor_on = false
+        _render_hacker_typer()
+        return
+    elif hacker_typer_current_text == "I'M IN":
+        hacker_typer_current_text = ""
+        hacker_typer_revealed_chars = 0
+    elif _is_hacker_typer_line_complete():
+        hacker_typer_hold_timer = maxf(0.0, hacker_typer_hold_timer - delta)
+        if hacker_typer_hold_timer <= 0.0:
+            _commit_hacker_typer_line()
     hacker_typer_is_attacking = actively_attacking
     hacker_typer_char_timer -= delta
     if hacker_typer_char_timer <= 0.0:
-        hacker_typer_char_timer = 0.03 if hacker_typer_target_text == "I'M IN" else (0.018 if actively_attacking else 0.06)
-        if hacker_typer_visible_text != hacker_typer_target_text:
-            if not hacker_typer_target_text.begins_with(hacker_typer_visible_text):
-                hacker_typer_visible_text = ""
-            else:
-                hacker_typer_visible_text = hacker_typer_target_text.substr(0, hacker_typer_visible_text.length() + 1)
+        hacker_typer_char_timer = 0.025 if hacker_typer_current_text == "I'M IN" else 0.014
+        if not _is_hacker_typer_line_complete():
+            hacker_typer_revealed_chars += 1
         hacker_typer_cursor_on = not hacker_typer_cursor_on
+    _render_hacker_typer()
+
+func _start_hacker_typer_line(text: String) -> void:
+    hacker_typer_current_text = text
+    hacker_typer_revealed_chars = 0
+    hacker_typer_char_timer = 0.0
+    hacker_typer_hold_timer = 0.5 if text == "I'M IN" else 0.18
+
+func _commit_hacker_typer_line() -> void:
+    if hacker_typer_current_text == "" or hacker_typer_current_text == "I'M IN":
+        return
+    hacker_typer_history.append(_format_hacker_typer_block(hacker_typer_current_text, false))
+    while hacker_typer_history.size() > HACKER_TYPER_MAX_LINES:
+        hacker_typer_history.remove_at(0)
+    hacker_typer_current_text = ""
+    hacker_typer_revealed_chars = 0
+
+func _pick_hacker_typer_line(actively_attacking: bool, under_pressure: bool) -> String:
+    var source_lines := HACKER_TYPER_IDLE_LINES
+    if under_pressure:
+        source_lines = HACKER_TYPER_PRESSURE_LINES
+    elif actively_attacking or ship_vel.length() > 80.0:
+        source_lines = HACKER_TYPER_ACTIVE_LINES
+    return source_lines[rng.randi_range(0, source_lines.size() - 1)]
+
+func _render_hacker_typer() -> void:
     var cursor := "[color=#ff5f55]_[/color]" if hacker_typer_cursor_on else " "
-    hacker_typer_label.text = "[color=#7dd6ff]BREACH CONSOLE[/color]\n%s%s" % [hacker_typer_visible_text, cursor]
+    var lines := PackedStringArray()
+    for line in hacker_typer_history:
+        lines.append(line)
+    if hacker_typer_current_text != "":
+        var visible_text := hacker_typer_current_text.substr(0, mini(hacker_typer_revealed_chars, hacker_typer_current_text.length()))
+        lines.append(_format_hacker_typer_block("%s%s" % [visible_text, cursor], true))
+    if lines.is_empty():
+        hacker_typer_label.text = "[color=#7dd6ff]BREACH CONSOLE[/color]"
+    else:
+        hacker_typer_label.text = "[color=#7dd6ff]BREACH CONSOLE[/color]\n%s" % "\n".join(lines)
+
+func _format_hacker_typer_block(text: String, active: bool) -> String:
+    var prompt_color := "#f2fffb" if active else "#7dffbf"
+    return "[code][color=%s]>>>[/color] %s[/code]" % [prompt_color, text]
+
+func _is_hacker_typer_line_complete() -> bool:
+    return hacker_typer_current_text != "" and hacker_typer_revealed_chars >= hacker_typer_current_text.length()
+
+func _has_live_hacker_targets() -> bool:
+    if mega_timer > 0.0:
+        return true
+    var range_world := float(runtime_stats.get("attack_radius", 96.0))
+    return not _find_nearest_attack_targets(range_world, 1).is_empty()
+
+func _try_start_hacker_typer_attack_line() -> void:
+    if hacker_typer_current_text != "" or hacker_typer_im_in_timer > 0.0:
+        return
+    var under_pressure := int(_get_breach_chat_pressure_state().get("stage", 0)) >= 2
+    _start_hacker_typer_line(_pick_hacker_typer_line(true, under_pressure))
 
 func _update_bottom_phase(delta: float) -> void:
     if not final_core_exposed or planet_data == null:
@@ -1414,6 +1490,7 @@ func _auto_fire_laser() -> void:
     if visuals_dirty:
         _sync_planet_runtime_views(true, false)
     attack_visible_timer = 0.08
+    _try_start_hacker_typer_attack_line()
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER_CRIT if last_attack_is_crit else SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER)
     if any_destroyed:
         _on_combo_hit()
@@ -1518,11 +1595,13 @@ func _update_drones(delta: float) -> void:
 func _compute_laser_damage(pos: Vector2i) -> float:
     var block: Dictionary = blocks.get(pos, {})
     var damage := float(runtime_stats.get("attack_damage", 8.0))
+    damage *= float(runtime_stats.get("global_damage_mult", 1.0))
     damage *= BALANCE.get_damage_multiplier_for_depth(runtime_stats, int(block.get("layer_depth", 1)))
     if bool(runtime_stats.get("resonance_enabled", false)):
         var depth_ratio := float(int(block.get("layer_depth", 1))) / float(max(1, current_depth_level))
         damage += damage * depth_ratio * float(runtime_stats.get("resonance_bonus", 1.0))
     if int(block.get("type", 0)) == BlockType.CORE:
+        damage *= float(runtime_stats.get("core_damage_mult", 1.0))
         damage *= float(runtime_stats.get("core_breaker_mult", 1.0))
         if _has_core_upgrade("core_focus"):
             damage *= 1.5
@@ -1554,8 +1633,10 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         overdrive_kills += 1
         if breach_chat != null:
             breach_chat.record_node_destroyed(int(result.get("type", BlockType.NORMAL)) == BlockType.CORE)
-        hacker_typer_im_in_timer = 1.8
-        hacker_typer_visible_text = ""
+        if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
+            hacker_typer_im_in_timer = 1.8
+            hacker_typer_current_text = ""
+            hacker_typer_revealed_chars = 0
         _play_block_break_audio(int(result.get("type", BlockType.NORMAL)))
         var world := grid_to_world(pos)
         _spawn_pickup(world, block_before)
@@ -1772,6 +1853,7 @@ func _spawn_pickup(world_pos: Vector2, block: Dictionary) -> void:
     var payout := float(block.get("resource", 1.0)) + float(runtime_stats.get("resource_flat", 0.0))
     if int(block.get("type", 0)) == BlockType.GOLD:
         payout += float(runtime_stats.get("gold_bonus_flat", 0.0))
+    payout *= float(runtime_stats.get("global_resource_mult", 1.0))
     payout *= BALANCE.get_resource_multiplier_for_depth(runtime_stats, int(block.get("layer_depth", 1)))
     payout *= _get_effective_payout_multiplier()
     if bool(runtime_stats.get("combo_enabled", false)):
@@ -2005,8 +2087,8 @@ func _save_planet_snapshot() -> void:
     snapshot["depth_level"] = current_depth_level
     var dirty_sections: Dictionary = snapshot.get("sections", {})
     if not dirty_sections.is_empty():
-        PROGRESS.save_planet_state(snapshot)
-        planet_data.mark_saved_sections_clean(dirty_sections.keys())
+        if PROGRESS.save_planet_state(snapshot):
+            planet_data.mark_saved_sections_clean(dirty_sections.keys())
     PROGRESS.save_runtime_planet_data(current_depth_level, planet_data)
 
 func _update_finish_summary(delta: float) -> void:
@@ -2022,6 +2104,9 @@ func _update_finish_summary(delta: float) -> void:
     if summary_save_phase == "thread" and PROGRESS.update_async_planet_state_save():
         summary_save_pending = false
         summary_save_phase = "done"
+        if PROGRESS.was_async_planet_state_save_successful() and planet_data != null and not summary_pending_saved_section_ids.is_empty():
+            planet_data.mark_saved_sections_clean(summary_pending_saved_section_ids)
+        summary_pending_saved_section_ids.clear()
         if summary_return_button != null:
             summary_return_button.disabled = false
             summary_return_button.text = "Return To Upgrades"
@@ -2057,13 +2142,13 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
     })
     if has_sector_updates:
         PROGRESS.start_async_planet_state_save(planet_snapshot)
-        if planet_data != null:
-            planet_data.mark_saved_sections_clean(planet_snapshot.get("sections", {}).keys())
+        summary_pending_saved_section_ids = Array(planet_snapshot.get("sections", {}).keys()).duplicate(true)
         summary_save_phase = "thread"
         summary_save_pending = PROGRESS.is_async_planet_state_save_pending()
     else:
         summary_save_phase = "done"
         summary_save_pending = false
+        summary_pending_saved_section_ids.clear()
     var cached_planet_state: Dictionary = PROGRESS.peek_cached_planet_state()
     if not cached_planet_state.is_empty():
         var next_runtime_planet = PLANET_DATA_SCRIPT.new()
@@ -2181,15 +2266,15 @@ func _update_perf_debug(frame_delta: float) -> void:
     if perf_graph != null and perf_graph.has_method("push_sample"):
         perf_graph.call("push_sample", frame_ms, process_ms, physics_ms)
     var limit_hint: String = str(perf_graph.call("get_hint_text")) if perf_graph != null and perf_graph.has_method("get_hint_text") else "Unknown"
-    var season_lines: Array[String] = []
+    var zone_lines: Array[String] = []
     var damage_mults: Array = runtime_stats.get("zone_damage_mults", [1.0, 1.0, 1.0, 1.0])
-    var zone_labels: Array[String] = ["Proxy", "Cipher", "Ghost", "Root"]
+    var zone_labels: Array[String] = ["Proxy Cache", "Cipher Depths", "Ghost Sector", "Root Well"]
     for idx in range(mini(4, damage_mults.size())):
         var mult: float = float(damage_mults[idx])
         if mult <= 1.0:
             continue
         var zone_name: String = zone_labels[idx]
-        season_lines.append("%s %+d%%" % [zone_name.left(2), int(round((mult - 1.0) * 100.0))])
+        zone_lines.append("%s %+d%%" % [zone_name, int(round((mult - 1.0) * 100.0))])
     var base_text := "FPS: %d  |  Frame %.1fms  |  CPU %.1fms\nGPU est %.1fms  |  Phys %.1fms  |  %s" % [
         Engine.get_frames_per_second(),
         frame_ms,
@@ -2198,10 +2283,10 @@ func _update_perf_debug(frame_delta: float) -> void:
         physics_ms,
         str(limit_hint)
     ]
-    if season_lines.is_empty():
+    if zone_lines.is_empty():
         fps_label.text = base_text
     else:
-        fps_label.text = "%s\nDebug Dmg: %s" % [base_text, ", ".join(season_lines)]
+        fps_label.text = "%s\nDebug Dmg: %s" % [base_text, ", ".join(zone_lines)]
     if perf_probe_label != null:
         perf_probe_label.text = _build_perf_probe_text()
     perf_probe_end("update_perf_debug", perf_start_us)
@@ -2815,28 +2900,28 @@ func _update_core_attacks(delta: float) -> void:
     if planet_data == null:
         perf_probe_end("update_core_attacks", perf_start_us)
         return
-    _update_autumn_debris(delta)
-    _update_winter_cross_lasers(delta)
+    _update_ghost_debris(delta)
+    _update_root_cross_lasers(delta)
     perf_probe_end("update_core_attacks", perf_start_us)
 
 func _is_ship_in_core_influence(core: Dictionary) -> bool:
     var radius: float = float(planet_data.get_effective_influence_radius(core)) * BLOCK_SIZE
     return ship_pos.distance_squared_to(grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))) <= radius * radius
 
-func _update_summer_lasers(delta: float) -> void:
+func _update_cipher_lasers(delta: float) -> void:
     for core in planet_data.cores:
-        if not bool(core.alive) or int(core.zone) != PLANET_DATA_SCRIPT.Zone.SUMMER:
+        if not bool(core.alive) or int(core.zone) != PLANET_DATA_SCRIPT.Zone.CIPHER:
             continue
         var cid: int = int(core.id)
         var is_boss: bool = str(core.role) == "boss" or str(core.role) == "final"
         if not _is_ship_in_core_influence(core):
-            summer_laser_states.erase(cid)
+            cipher_laser_states.erase(cid)
             continue
         var hp_ratio: float = planet_data.get_core_hp_ratio(core)
         var interval := SUMMER_LASER_INTERVAL_OUTER
         if is_boss:
             interval = SUMMER_LASER_INTERVAL_BOSS_LOW if hp_ratio <= SUMMER_LASER_BOSS_HP_THRESHOLD else SUMMER_LASER_INTERVAL_BOSS
-        var state: Dictionary = summer_laser_states.get(cid, {
+        var state: Dictionary = cipher_laser_states.get(cid, {
             "state": "idle",
             "timer": interval,
             "warn_time": SUMMER_LASER_WARN_BOSS if is_boss else SUMMER_LASER_WARN_OUTER,
@@ -2870,13 +2955,13 @@ func _update_summer_lasers(delta: float) -> void:
                     state["timer"] = float(state.get("fire_duration", SUMMER_LASER_FIRE_DURATION))
                     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER, -8.0, -0.08)
             "firing":
-                _check_summer_laser_hit(state)
+                _check_cipher_laser_hit(state)
                 if float(state.get("timer", 0.0)) <= 0.0:
                     state["state"] = "idle"
                     state["timer"] = interval
-        summer_laser_states[cid] = state
+        cipher_laser_states[cid] = state
 
-func _check_summer_laser_hit(state: Dictionary) -> void:
+func _check_cipher_laser_hit(state: Dictionary) -> void:
     if float(state.get("hit_timer", 0.0)) > 0.0:
         return
     var origin: Vector2 = state.get("origin", Vector2.ZERO)
@@ -2892,17 +2977,17 @@ func _check_summer_laser_hit(state: Dictionary) -> void:
         state["hit_timer"] = WINTER_CROSS_LASER_HIT_COOLDOWN
         _apply_ship_hazard_hit(
             (ship_pos - origin).normalized(),
-            "The rig was lanced by a summer core.",
+            "The rig was lanced by a Cipher Depths core.",
             int(state.get("core_id", -1)),
-            PLANET_DATA_SCRIPT.Zone.SUMMER,
+            PLANET_DATA_SCRIPT.Zone.CIPHER,
             "boss" if bool(state.get("is_boss", false)) else "outer"
         )
 
-func _update_autumn_debris(delta: float) -> void:
+func _update_ghost_debris(delta: float) -> void:
     if planet_data == null:
         return
     for core in planet_data.cores:
-        if not bool(core.alive) or int(core.zone) != PLANET_DATA_SCRIPT.Zone.AUTUMN:
+        if not bool(core.alive) or int(core.zone) != PLANET_DATA_SCRIPT.Zone.GHOST:
             continue
         if not _is_ship_in_core_influence(core):
             continue
@@ -2910,8 +2995,8 @@ func _update_autumn_debris(delta: float) -> void:
         var is_boss: bool = str(core.role) == "boss" or str(core.role) == "final"
         var hp_ratio: float = planet_data.get_core_hp_ratio(core)
         var timer_key := "debris_%d" % cid
-        var timer: float = float(autumn_debris_timers.get(timer_key, 0.0)) - delta
-        if timer <= 0.0 and autumn_debris.size() < AUTUMN_DEBRIS_MAX_ACTIVE:
+        var timer: float = float(ghost_debris_timers.get(timer_key, 0.0)) - delta
+        if timer <= 0.0 and ghost_debris.size() < AUTUMN_DEBRIS_MAX_ACTIVE:
             timer = AUTUMN_DEBRIS_INTERVAL_OUTER
             var spawn_count := AUTUMN_DEBRIS_COUNT_OUTER
             if is_boss:
@@ -2921,10 +3006,10 @@ func _update_autumn_debris(delta: float) -> void:
                 else:
                     timer = AUTUMN_DEBRIS_INTERVAL_BOSS
                     spawn_count = AUTUMN_DEBRIS_COUNT_BOSS
-            _spawn_autumn_debris(core, spawn_count)
-        autumn_debris_timers[timer_key] = timer
-    for idx in range(autumn_debris.size() - 1, -1, -1):
-        var debris: Dictionary = autumn_debris[idx]
+            _spawn_ghost_debris(core, spawn_count)
+        ghost_debris_timers[timer_key] = timer
+    for idx in range(ghost_debris.size() - 1, -1, -1):
+        var debris: Dictionary = ghost_debris[idx]
         var pos: Vector2 = debris.get("pos", Vector2.ZERO)
         var vel: Vector2 = debris.get("vel", Vector2.ZERO)
         var desired: Vector2 = (ship_pos - pos).normalized() * AUTUMN_DEBRIS_SPEED
@@ -2932,22 +3017,22 @@ func _update_autumn_debris(delta: float) -> void:
         pos += vel * delta
         debris["pos"] = pos
         debris["vel"] = vel
-        autumn_debris[idx] = debris
+        ghost_debris[idx] = debris
         if pos.distance_to(ship_pos) <= AUTUMN_DEBRIS_HIT_RADIUS + SHIP_RADIUS:
-            autumn_debris.remove_at(idx)
+            ghost_debris.remove_at(idx)
             _apply_ship_hazard_hit(
                 (ship_pos - pos).normalized(),
-                "The rig was shredded by autumn debris.",
+                "The rig was shredded by Ghost Sector debris.",
                 int(debris.get("core_id", -1)),
-                PLANET_DATA_SCRIPT.Zone.AUTUMN,
+                PLANET_DATA_SCRIPT.Zone.GHOST,
                 "boss" if bool(debris.get("is_boss", false)) else "outer"
             )
 
-func _spawn_autumn_debris(core: Dictionary, count: int) -> void:
+func _spawn_ghost_debris(core: Dictionary, count: int) -> void:
     var origin: Vector2 = grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
     for _idx in range(count):
         var angle: float = rng.randf() * TAU
-        autumn_debris.append({
+        ghost_debris.append({
             "pos": origin,
             "vel": Vector2.from_angle(angle) * AUTUMN_DEBRIS_SPEED,
             "life": AUTUMN_DEBRIS_LIFETIME,
@@ -2955,13 +3040,13 @@ func _spawn_autumn_debris(core: Dictionary, count: int) -> void:
             "is_boss": str(core.role) == "boss" or str(core.role) == "final",
         })
 
-func _update_winter_cross_lasers(delta: float) -> void:
+func _update_root_cross_lasers(delta: float) -> void:
     for core in planet_data.cores:
-        if not bool(core.alive) or int(core.zone) != PLANET_DATA_SCRIPT.Zone.WINTER:
+        if not bool(core.alive) or int(core.zone) != PLANET_DATA_SCRIPT.Zone.ROOT:
             continue
         var cid: int = int(core.id)
         if not _is_ship_in_core_influence(core):
-            winter_cross_lasers.erase(cid)
+            root_cross_lasers.erase(cid)
             continue
         var hp_ratio: float = planet_data.get_core_hp_ratio(core)
         var is_boss: bool = str(core.role) == "boss" or str(core.role) == "final"
@@ -2971,7 +3056,7 @@ func _update_winter_cross_lasers(delta: float) -> void:
         var beam_length: float = float(planet_data.get_effective_influence_radius(core)) * BLOCK_SIZE
         var core_pixel_radius: float = float(int(core.get("size", 3))) * 0.5 * BLOCK_SIZE
         var edge_ratio: float = clampf(core_pixel_radius / maxf(beam_length, 1.0) + 0.05, 0.1, 0.4)
-        var state: Dictionary = winter_cross_lasers.get(cid, {
+        var state: Dictionary = root_cross_lasers.get(cid, {
             "angle": rng.randf() * TAU,
             "origin": grid_to_world(Vector2i(int(core.center.x), int(core.center.y))),
             "length": beam_length,
@@ -2998,10 +3083,10 @@ func _update_winter_cross_lasers(delta: float) -> void:
             if is_equal_approx(float(gap["pos"]), edge_ratio) or is_equal_approx(float(gap["pos"]), WINTER_CROSS_LASER_GAP_MAX):
                 gap["dir"] = -float(gap.get("dir", 1.0))
         state["gaps"] = gaps_state
-        _check_winter_cross_laser_hit(state)
-        winter_cross_lasers[cid] = state
+        _check_root_cross_laser_hit(state)
+        root_cross_lasers[cid] = state
 
-func _check_winter_cross_laser_hit(state: Dictionary) -> void:
+func _check_root_cross_laser_hit(state: Dictionary) -> void:
     if float(state.get("hit_timer", 0.0)) > 0.0:
         return
     var origin: Vector2 = state.get("origin", Vector2.ZERO)
@@ -3027,9 +3112,9 @@ func _check_winter_cross_laser_hit(state: Dictionary) -> void:
         state["hit_timer"] = WINTER_CROSS_LASER_HIT_COOLDOWN
         _apply_ship_hazard_hit(
             (ship_pos - origin).normalized(),
-            "The rig was caught in a winter cross-laser.",
+            "The rig was caught in a Root Well cross-laser.",
             int(state.get("core_id", -1)),
-            PLANET_DATA_SCRIPT.Zone.WINTER,
+            PLANET_DATA_SCRIPT.Zone.ROOT,
             "boss" if bool(state.get("is_boss", false)) else "outer"
         )
         return
@@ -3141,7 +3226,7 @@ func _update_current_layer_name() -> void:
     var grid := world_to_grid(ship_pos)
     var layer_depth: int = planet_data.get_depth_level_for_pos(grid, current_depth_level) if planet_data != null else 1
     current_layer_depth = layer_depth
-    current_layer_name = str(BALANCE.get_layer_for_depth(min(layer_depth, BALANCE.MAX_DEPTH_LEVEL)).get("name", "Surface Cache"))
+    current_layer_name = str(BALANCE.get_layer_for_depth(min(layer_depth, BALANCE.MAX_DEPTH_LEVEL)).get("name", "Proxy Cache"))
 
 func _render_breach_log() -> void:
     if breach_log_label == null:
@@ -3202,16 +3287,16 @@ func _get_breach_chat_pressure_state() -> Dictionary:
 
 func _breach_chat_zone_name(zone: int) -> String:
     match zone:
-        PLANET_DATA_SCRIPT.Zone.SPRING:
-            return "Proxy"
-        PLANET_DATA_SCRIPT.Zone.SUMMER:
-            return "Cipher"
-        PLANET_DATA_SCRIPT.Zone.AUTUMN:
-            return "Ghost"
-        PLANET_DATA_SCRIPT.Zone.WINTER:
-            return "Root"
+        PLANET_DATA_SCRIPT.Zone.PROXY:
+            return "Proxy Cache"
+        PLANET_DATA_SCRIPT.Zone.CIPHER:
+            return "Cipher Depths"
+        PLANET_DATA_SCRIPT.Zone.GHOST:
+            return "Ghost Sector"
+        PLANET_DATA_SCRIPT.Zone.ROOT:
+            return "Root Well"
         _:
-            return "Center"
+            return "Kernel Vault"
 
 func _on_final_core_exposed() -> void:
     final_core_exposed = true

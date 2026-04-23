@@ -2337,11 +2337,22 @@ func _on_editor_unlock_all_pressed() -> void:
     elif Util.is_open_pit_game_active():
         var open_pit_data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
         open_pit_data["upgrades"] = {}
+        open_pit_data["xp_upgrades"] = {}
+        open_pit_data["purchased_core_upgrades"] = []
         for key_variant: Variant in max_level_by_key.keys():
             var open_pit_key: String = str(key_variant)
-            open_pit_data["upgrades"][open_pit_key] = int(max_level_by_key[open_pit_key])
-        open_pit_data["deepest_level_unlocked"] = OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
-        open_pit_data["selected_depth_level"] = OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
+            var open_pit_level: int = int(max_level_by_key[open_pit_key])
+            if open_pit_key.begins_with(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.XP_PREFIX):
+                open_pit_data["xp_upgrades"][open_pit_key] = open_pit_level
+            elif open_pit_key.begins_with(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.CORE_PREFIX):
+                var purchased_core: Array = open_pit_data.get("purchased_core_upgrades", [])
+                purchased_core.append(open_pit_key.trim_prefix(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.CORE_PREFIX))
+                open_pit_data["purchased_core_upgrades"] = purchased_core
+            else:
+                open_pit_data["upgrades"][open_pit_key] = open_pit_level
+        open_pit_data["core_currency"] = 999
+        OPEN_PIT_PROGRESS_SCRIPT.BALANCE.refresh_depth_unlocks(open_pit_data)
+        open_pit_data["selected_depth_level"] = int(open_pit_data.get("deepest_level_unlocked", OPEN_PIT_PROGRESS_SCRIPT.MAX_DEPTH_LEVEL))
         OPEN_PIT_PROGRESS_SCRIPT.save_data(open_pit_data)
     elif Util.is_open_pit_orbit_game_active():
         var orbit_data: Dictionary = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.load_data()

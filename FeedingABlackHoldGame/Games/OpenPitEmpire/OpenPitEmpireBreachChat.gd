@@ -351,7 +351,7 @@ func _react_to_snapshot(snapshot: Dictionary) -> void:
         last_layer_depth = layer_depth
         if not seen_layers.has(layer_depth):
             seen_layers[layer_depth] = true
-            _queue_layer_intro(layer_depth, str(snapshot.get("layer_name", "Surface Cache")))
+            _queue_layer_intro(layer_depth, str(snapshot.get("layer_name", "Proxy Cache")))
     var pressure_stage: int = int(snapshot.get("core_pressure_stage", 0))
     var pressure_tier: int = int(snapshot.get("core_pressure_tier", 0))
     var pressure_zone: String = str(snapshot.get("core_pressure_zone", "surface"))
@@ -463,7 +463,7 @@ func _pick_thread_id() -> String:
     return available[rng.randi_range(0, available.size() - 1)]
 
 func _queue_ambient_line(snapshot: Dictionary) -> void:
-    var layer_name := str(snapshot.get("layer_name", "Surface Cache"))
+    var layer_name := str(snapshot.get("layer_name", "Proxy Cache"))
     var pilot_lines := [
         {"speaker": "mothbit", "text": "pilot is ghosting through %s clean. keep them mean and invisible." % layer_name},
         {"speaker": "undertow", "text": "watch the pilot path. they are still cutting the right arteries."},
@@ -670,12 +670,12 @@ func _format_money(amount: int) -> String:
 func _zone_name(zone: int) -> String:
     match zone:
         0:
-            return "Proxy"
+            return "Proxy Cache"
         1:
-            return "Cipher"
+            return "Cipher Depths"
         2:
-            return "Ghost"
+            return "Ghost Sector"
         3:
-            return "Root"
+            return "Root Well"
         _:
-            return "Center"
+            return "Kernel Vault"

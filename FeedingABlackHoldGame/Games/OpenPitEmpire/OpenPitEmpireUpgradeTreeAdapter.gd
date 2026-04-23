@@ -91,22 +91,22 @@ static func _mod_for_upgrade(upgrade_id: String) -> Util.MODS:
         return Util.MODS.MONEY_PER_MATTER
     if BALANCE.is_xp_upgrade(upgrade_id):
         return Util.MODS.RUN_TIMER_BASE
-    if upgrade_id.begins_with("dmg") or upgrade_id == "core_breaker":
+    if upgrade_id in ["laser_cutter", "shock_bits", "daemon_lances", "root_breaker", "mantle_drills", "mirror_saws", "null_borers"]:
         return Util.MODS.BASE_DAMAGE_PER_CLICK
-    if upgrade_id.begins_with("fire_rate"):
+    if upgrade_id in ["rapid_cycle", "fault_charges", "vault_pulsers"]:
         return Util.MODS.CLICK_RATE
-    if upgrade_id.begins_with("range") or upgrade_id == "pickup_expand" or upgrade_id == "magnet1":
+    if upgrade_id in ["void_cutters", "gravity_wells"]:
         return Util.MODS.CLICK_AOE
-    if upgrade_id.begins_with("speed") or upgrade_id.begins_with("fuel_tank") or upgrade_id == "fuel_efficiency1":
+    if upgrade_id in ["fuel_cells", "inversion_drives"]:
         return Util.MODS.RUN_TIMER_BASE
-    if upgrade_id.begins_with("cargo") or upgrade_id.begins_with("resource") or upgrade_id.begins_with("value") or upgrade_id == "gold_value":
+    if upgrade_id in ["cargo_racks", "ore_appraisal", "salvage_contract", "abyssal_rigs", "ash_crowns"]:
         return Util.MODS.MONEY_PER_MATTER
-    if upgrade_id.begins_with("barrier"):
+    if upgrade_id == "barrier_mesh":
         return Util.MODS.ASTEROID_DENSITY
-    if upgrade_id.begins_with("drone"):
+    if upgrade_id == "breach_drones":
         return Util.MODS.ELECTRIC_CRIT_CHANCE
-    if upgrade_id.contains("electric") or upgrade_id.contains("chain"):
+    if upgrade_id in ["fault_harpoons"]:
         return Util.MODS.CLICKER_CRIT_CHANCE
-    if upgrade_id.contains("shockwave") or upgrade_id.contains("overdrive") or upgrade_id.contains("mega"):
+    if upgrade_id in ["funnel_resonance", "overburn_reactors", "seismic_lattice"]:
         return Util.MODS.ASTEROIDS_TO_SPAWN
     return Util.MODS.MONEY_PER_MATTER

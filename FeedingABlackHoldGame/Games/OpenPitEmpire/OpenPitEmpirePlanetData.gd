@@ -28,57 +28,57 @@ const SAVE_X_SLICES: int = 10
 const SAVE_DEPTH_SLICES: int = 10
 const SAVE_SECTION_COUNT: int = SAVE_X_SLICES * SAVE_DEPTH_SLICES
 
-enum Zone { SPRING, SUMMER, AUTUMN, WINTER, CENTER }
+enum Zone { PROXY, CIPHER, GHOST, ROOT, CENTER }
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
 
 const CORE_CONFIGS := [
-    {"id": 0, "center": Vector2i(-120, -162), "size": 3, "influence": 16, "hp_mult": 15.0, "total_hp": 50, "inf_mult": 2.0, "res_mult": 1.0, "zone": Zone.SPRING, "role": "outer"},
-    {"id": 1, "center": Vector2i(0, -154), "size": 3, "influence": 16, "hp_mult": 20.0, "total_hp": 120, "inf_mult": 2.0, "res_mult": 1.2, "zone": Zone.SPRING, "role": "outer"},
-    {"id": 2, "center": Vector2i(118, -168), "size": 3, "influence": 16, "hp_mult": 25.0, "total_hp": 250, "inf_mult": 2.5, "res_mult": 1.5, "zone": Zone.SPRING, "role": "outer"},
-    {"id": 12, "center": Vector2i(0, -106), "size": 5, "influence": 22, "hp_mult": 80.0, "total_hp": 500, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.SPRING, "role": "boss"},
-    {"id": 3, "center": Vector2i(-88, -58), "size": 3, "influence": 18, "hp_mult": 75.0, "total_hp": 5000, "inf_mult": 3.0, "res_mult": 1.5, "zone": Zone.SUMMER, "role": "outer"},
-    {"id": 4, "center": Vector2i(20, -50), "size": 3, "influence": 18, "hp_mult": 90.0, "total_hp": 8000, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.SUMMER, "role": "outer"},
-    {"id": 5, "center": Vector2i(96, -44), "size": 3, "influence": 18, "hp_mult": 100.0, "total_hp": 15000, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.SUMMER, "role": "outer"},
-    {"id": 13, "center": Vector2i(-8, 6), "size": 5, "influence": 25, "hp_mult": 250.0, "total_hp": 20000, "inf_mult": 3.5, "res_mult": 3.0, "zone": Zone.SUMMER, "role": "boss"},
-    {"id": 6, "center": Vector2i(-54, 56), "size": 3, "influence": 20, "hp_mult": 125.0, "total_hp": 80000, "inf_mult": 3.5, "res_mult": 2.5, "zone": Zone.AUTUMN, "role": "outer"},
-    {"id": 7, "center": Vector2i(8, 70), "size": 3, "influence": 20, "hp_mult": 150.0, "total_hp": 150000, "inf_mult": 3.5, "res_mult": 3.0, "zone": Zone.AUTUMN, "role": "outer"},
-    {"id": 8, "center": Vector2i(66, 64), "size": 3, "influence": 20, "hp_mult": 175.0, "total_hp": 250000, "inf_mult": 4.0, "res_mult": 3.0, "zone": Zone.AUTUMN, "role": "outer"},
-    {"id": 14, "center": Vector2i(0, 124), "size": 7, "influence": 28, "hp_mult": 400.0, "total_hp": 350000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.AUTUMN, "role": "boss"},
-    {"id": 9, "center": Vector2i(-34, 156), "size": 5, "influence": 22, "hp_mult": 200.0, "total_hp": 5000000, "inf_mult": 4.0, "res_mult": 3.5, "zone": Zone.WINTER, "role": "outer"},
-    {"id": 10, "center": Vector2i(0, 180), "size": 5, "influence": 22, "hp_mult": 250.0, "total_hp": 10000000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.WINTER, "role": "outer"},
-    {"id": 11, "center": Vector2i(30, 158), "size": 5, "influence": 22, "hp_mult": 300.0, "total_hp": 20000000, "inf_mult": 4.5, "res_mult": 5.0, "zone": Zone.WINTER, "role": "outer"},
-    {"id": 15, "center": Vector2i(0, 214), "size": 7, "influence": 32, "hp_mult": 600.0, "total_hp": 50000000, "inf_mult": 5.0, "res_mult": 6.0, "zone": Zone.WINTER, "role": "boss"},
+    {"id": 0, "center": Vector2i(-120, -162), "size": 3, "influence": 16, "hp_mult": 15.0, "total_hp": 50, "inf_mult": 2.0, "res_mult": 1.0, "zone": Zone.PROXY, "role": "outer"},
+    {"id": 1, "center": Vector2i(0, -154), "size": 3, "influence": 16, "hp_mult": 20.0, "total_hp": 120, "inf_mult": 2.0, "res_mult": 1.2, "zone": Zone.PROXY, "role": "outer"},
+    {"id": 2, "center": Vector2i(118, -168), "size": 3, "influence": 16, "hp_mult": 25.0, "total_hp": 250, "inf_mult": 2.5, "res_mult": 1.5, "zone": Zone.PROXY, "role": "outer"},
+    {"id": 12, "center": Vector2i(0, -106), "size": 5, "influence": 22, "hp_mult": 80.0, "total_hp": 500, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.PROXY, "role": "boss"},
+    {"id": 3, "center": Vector2i(-88, -58), "size": 3, "influence": 18, "hp_mult": 75.0, "total_hp": 5000, "inf_mult": 3.0, "res_mult": 1.5, "zone": Zone.CIPHER, "role": "outer"},
+    {"id": 4, "center": Vector2i(20, -50), "size": 3, "influence": 18, "hp_mult": 90.0, "total_hp": 8000, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.CIPHER, "role": "outer"},
+    {"id": 5, "center": Vector2i(96, -44), "size": 3, "influence": 18, "hp_mult": 100.0, "total_hp": 15000, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.CIPHER, "role": "outer"},
+    {"id": 13, "center": Vector2i(-8, 6), "size": 5, "influence": 25, "hp_mult": 250.0, "total_hp": 20000, "inf_mult": 3.5, "res_mult": 3.0, "zone": Zone.CIPHER, "role": "boss"},
+    {"id": 6, "center": Vector2i(-54, 56), "size": 3, "influence": 20, "hp_mult": 125.0, "total_hp": 80000, "inf_mult": 3.5, "res_mult": 2.5, "zone": Zone.GHOST, "role": "outer"},
+    {"id": 7, "center": Vector2i(8, 70), "size": 3, "influence": 20, "hp_mult": 150.0, "total_hp": 150000, "inf_mult": 3.5, "res_mult": 3.0, "zone": Zone.GHOST, "role": "outer"},
+    {"id": 8, "center": Vector2i(66, 64), "size": 3, "influence": 20, "hp_mult": 175.0, "total_hp": 250000, "inf_mult": 4.0, "res_mult": 3.0, "zone": Zone.GHOST, "role": "outer"},
+    {"id": 14, "center": Vector2i(0, 124), "size": 7, "influence": 28, "hp_mult": 400.0, "total_hp": 350000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.GHOST, "role": "boss"},
+    {"id": 9, "center": Vector2i(-34, 156), "size": 5, "influence": 22, "hp_mult": 200.0, "total_hp": 5000000, "inf_mult": 4.0, "res_mult": 3.5, "zone": Zone.ROOT, "role": "outer"},
+    {"id": 10, "center": Vector2i(0, 180), "size": 5, "influence": 22, "hp_mult": 250.0, "total_hp": 10000000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.ROOT, "role": "outer"},
+    {"id": 11, "center": Vector2i(30, 158), "size": 5, "influence": 22, "hp_mult": 300.0, "total_hp": 20000000, "inf_mult": 4.5, "res_mult": 5.0, "zone": Zone.ROOT, "role": "outer"},
+    {"id": 15, "center": Vector2i(0, 214), "size": 7, "influence": 32, "hp_mult": 600.0, "total_hp": 50000000, "inf_mult": 5.0, "res_mult": 6.0, "zone": Zone.ROOT, "role": "boss"},
     {"id": 16, "center": Vector2i(0, 246), "size": 7, "influence": 35, "hp_mult": 500.0, "total_hp": 180000000, "inf_mult": 5.0, "res_mult": 8.0, "zone": Zone.CENTER, "role": "final"},
 ]
 
 const ZONE_BOSS_IDS := {
-    Zone.SPRING: 12,
-    Zone.SUMMER: 13,
-    Zone.AUTUMN: 14,
-    Zone.WINTER: 15,
+    Zone.PROXY: 12,
+    Zone.CIPHER: 13,
+    Zone.GHOST: 14,
+    Zone.ROOT: 15,
 }
 
 const ZONE_UNLOCK_REQUIRES := {
-    Zone.SPRING: -1,
-    Zone.SUMMER: 12,
-    Zone.AUTUMN: 13,
-    Zone.WINTER: 14,
+    Zone.PROXY: -1,
+    Zone.CIPHER: 12,
+    Zone.GHOST: 13,
+    Zone.ROOT: 14,
     Zone.CENTER: 15,
 }
 
 const ZONE_HP_RANGE := {
-    Zone.SPRING: {"min": 15.0, "max": 300.0},
-    Zone.SUMMER: {"min": 200.0, "max": 12000.0},
-    Zone.AUTUMN: {"min": 4000.0, "max": 220000.0},
-    Zone.WINTER: {"min": 120000.0, "max": 20000000.0},
+    Zone.PROXY: {"min": 15.0, "max": 300.0},
+    Zone.CIPHER: {"min": 200.0, "max": 12000.0},
+    Zone.GHOST: {"min": 4000.0, "max": 220000.0},
+    Zone.ROOT: {"min": 120000.0, "max": 20000000.0},
     Zone.CENTER: {"min": 5000000.0, "max": 120000000.0},
 }
 
 const ZONE_RES_RANGE := {
-    Zone.SPRING: {"min": 5.0, "max": 100.0},
-    Zone.SUMMER: {"min": 120.0, "max": 3500.0},
-    Zone.AUTUMN: {"min": 3500.0, "max": 95000.0},
-    Zone.WINTER: {"min": 60000.0, "max": 1500000.0},
+    Zone.PROXY: {"min": 5.0, "max": 100.0},
+    Zone.CIPHER: {"min": 120.0, "max": 3500.0},
+    Zone.GHOST: {"min": 3500.0, "max": 95000.0},
+    Zone.ROOT: {"min": 60000.0, "max": 1500000.0},
     Zone.CENTER: {"min": 750000.0, "max": 12000000.0},
 }
 
@@ -110,12 +110,12 @@ static func get_zone(pos: Vector2i) -> int:
     if depth_ratio >= 0.92:
         return Zone.CENTER
     if depth_ratio < 0.25:
-        return Zone.SPRING
+        return Zone.PROXY
     if depth_ratio < 0.5:
-        return Zone.SUMMER
+        return Zone.CIPHER
     if depth_ratio < 0.75:
-        return Zone.AUTUMN
-    return Zone.WINTER
+        return Zone.GHOST
+    return Zone.ROOT
 
 static func get_core_zone(core_id: int) -> int:
     for config in CORE_CONFIGS:
@@ -237,7 +237,7 @@ func generate_sync(_depth_level: int, _persistent_destroyed: Dictionary, balance
                     block_type = BlockType.GOLD
                 elif roll < GOLD_CHANCE + ELECTRIC_CHANCE:
                     block_type = BlockType.ELECTRIC
-                elif zone < Zone.WINTER and world_rng.randf() < NEXT_ZONE_SPIKE_CHANCE:
+                elif zone < Zone.ROOT and world_rng.randf() < NEXT_ZONE_SPIKE_CHANCE:
                     hp *= NEXT_ZONE_SPIKE_HP_MULT
                     res *= NEXT_ZONE_SPIKE_RES_MULT
             blocks[pos] = _build_block_data(pos, hp, res, zone, block_type, unbreakable)
@@ -833,13 +833,13 @@ func _get_zone_depth(pos: Vector2i) -> float:
     var zone: int = get_zone(pos)
     var depth_ratio := _get_depth_ratio(pos)
     match zone:
-        Zone.SPRING:
+        Zone.PROXY:
             return clampf(depth_ratio / 0.25, 0.0, 1.0)
-        Zone.SUMMER:
+        Zone.CIPHER:
             return clampf((depth_ratio - 0.25) / 0.25, 0.0, 1.0)
-        Zone.AUTUMN:
+        Zone.GHOST:
             return clampf((depth_ratio - 0.5) / 0.25, 0.0, 1.0)
-        Zone.WINTER:
+        Zone.ROOT:
             return clampf((depth_ratio - 0.75) / 0.17, 0.0, 1.0)
         Zone.CENTER:
             return clampf((depth_ratio - 0.92) / 0.08, 0.0, 1.0)
