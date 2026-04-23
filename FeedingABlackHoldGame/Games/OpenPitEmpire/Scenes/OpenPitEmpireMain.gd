@@ -461,6 +461,10 @@ var _combat_perf_extremes := {}
 var _combat_perf_worst_snapshot := {}
 var _run_perf_capture_time := 0.0
 var _target_offset_cache: Dictionary = {}
+var _editor_debug_damage_mult: float = 1.0
+
+func _can_use_editor_debug_keys() -> bool:
+    return OS.has_feature("editor") or OS.is_debug_build()
 
 func _ready() -> void:
     Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
@@ -515,6 +519,17 @@ func _unhandled_input(event: InputEvent) -> void:
             get_viewport().set_input_as_handled()
         elif event.keycode == KEY_8 or event.keycode == KEY_KP_8 or event.physical_keycode == KEY_8:
             adjust_detail_thresholds(DETAIL_THRESHOLD_STEP)
+            get_viewport().set_input_as_handled()
+        elif (event.keycode == KEY_P or event.physical_keycode == KEY_P) and _can_use_editor_debug_keys():
+            if _editor_debug_damage_mult < 10.0:
+                _editor_debug_damage_mult = 10.0
+            elif _editor_debug_damage_mult < 100.0:
+                _editor_debug_damage_mult = 100.0
+            elif _editor_debug_damage_mult < 1000.0:
+                _editor_debug_damage_mult = 1000.0
+            else:
+                _editor_debug_damage_mult = 1.0
+            print("Open Pit Empire editor debug damage multiplier: %.1fx" % _editor_debug_damage_mult)
             get_viewport().set_input_as_handled()
 
 func _build_runtime_nodes() -> void:
@@ -1522,6 +1537,7 @@ func _auto_fire_laser() -> void:
         var target: Dictionary = candidates[i]
         var pos: Vector2i = target.get("pos", Vector2i.ZERO)
         var world: Vector2 = target.get("world", Vector2.ZERO)
+        var target_core_id: int = int(target.get("core_id", int(blocks.get(pos, {}).get("core_id", -1))))
         if i == 0:
             last_attack_target = world
         else:
@@ -1544,6 +1560,9 @@ func _auto_fire_laser() -> void:
                 var adj: Vector2i = aoe_neighbors[adj_idx]
                 var adj_pos: Vector2i = pos + adj
                 if not is_grid_empty(adj_pos):
+                    var adj_core_id: int = int(blocks.get(adj_pos, {}).get("core_id", -1))
+                    if target_core_id >= 0 and adj_core_id == target_core_id:
+                        continue
                     _mark_hit_flash(adj_pos)
                     visuals_dirty = true
                     var aoe_result := _damage_block(adj_pos, damage * 0.3, true)
@@ -1556,7 +1575,8 @@ func _auto_fire_laser() -> void:
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER_CRIT if last_attack_is_crit else SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER)
     if any_destroyed:
         _on_combo_hit()
-    if bool(runtime_stats.get("chain_lightning_enabled", false)):
+    var first_core_id: int = int(candidates[0].get("core_id", -1))
+    if bool(runtime_stats.get("chain_lightning_enabled", false)) and first_core_id < 0:
         _trigger_chain_lightning(Vector2i(candidates[0].get("pos", Vector2i.ZERO)), Vector2(candidates[0].get("world", Vector2.ZERO)))
     perf_probe_end("auto_fire_laser", perf_start_us)
 
@@ -1564,6 +1584,7 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array
     if max_targets <= 0:
         return []
     var candidates: Array[Dictionary] = []
+    var seen_core_ids := {}
     var range_sq := range_world * range_world
     var grid_range := int(ceil(range_world / BLOCK_SIZE)) + 1
     var my_grid := world_to_grid(ship_pos)
@@ -1576,17 +1597,23 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array
         var check := my_grid + offset
         if not blocks.has(check):
             continue
+        var block: Dictionary = blocks.get(check, {})
+        var core_id: int = int(block.get("core_id", -1))
+        if core_id >= 0 and seen_core_ids.has(core_id):
+            continue
         var block_world := grid_to_world(check)
         var dist_sq := ship_pos.distance_squared_to(block_world)
         if dist_sq >= range_sq:
             continue
-        var candidate := {"pos": check, "dist_sq": dist_sq, "world": block_world}
+        var candidate := {"pos": check, "dist_sq": dist_sq, "world": block_world, "core_id": core_id}
         var insert_idx := candidates.size()
         while insert_idx > 0 and dist_sq < float(candidates[insert_idx - 1].get("dist_sq", INF)):
             insert_idx -= 1
         if insert_idx >= max_targets and candidates.size() >= max_targets:
             continue
         candidates.insert(insert_idx, candidate)
+        if core_id >= 0:
+            seen_core_ids[core_id] = true
         if candidates.size() > max_targets:
             candidates.resize(max_targets)
     return candidates
@@ -1667,6 +1694,7 @@ func _compute_laser_damage(pos: Vector2i) -> float:
         damage *= float(runtime_stats.get("core_breaker_mult", 1.0))
         if _has_core_upgrade("core_focus"):
             damage *= 1.5
+    damage *= _editor_debug_damage_mult
     return damage
 
 func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false) -> Dictionary:
@@ -1705,7 +1733,7 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         _spawn_pickup(world, block_before)
         if planet_renderer != null:
             if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
-                planet_renderer.mark_dirty(true)
+                _queue_core_fill_region(int(result.get("core_id", int(block_before.get("core_id", -1)))))
             else:
                 planet_renderer.queue_fill_update(pos)
         if int(result.get("type", BlockType.NORMAL)) == BlockType.ELECTRIC and bool(runtime_stats.get("electric_enabled", false)):
@@ -1730,7 +1758,24 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
             overdrive_kills = 0
             overdrive_timer = float(runtime_stats.get("overdrive_duration", 3.0))
     else:
-        damaged_cells[pos] = float(planet_data.blocks.get(pos, {}).get("hp", 1.0))
+        var remaining_hp := float(planet_data.blocks.get(pos, {}).get("hp", 1.0))
+        var core_id := int(result.get("core_id", int(block_before.get("core_id", -1))))
+        if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE and core_id >= 0 and planet_data != null:
+            for core_variant in planet_data.cores:
+                var core: Dictionary = core_variant
+                if int(core.get("id", -1)) != core_id:
+                    continue
+                var center: Vector2i = core.get("center", Vector2i.ZERO)
+                var core_size: int = int(core.get("size", 3))
+                var half: int = core_size / 2
+                for dx in range(-half, half + core_size % 2):
+                    for dy in range(-half, half + core_size % 2):
+                        var core_pos := Vector2i(center.x + dx, center.y + dy)
+                        if int(planet_data.blocks.get(core_pos, {}).get("core_id", -1)) == core_id:
+                            damaged_cells[core_pos] = remaining_hp
+                break
+        else:
+            damaged_cells[pos] = remaining_hp
     if not defer_visual_sync:
         _sync_planet_runtime_views(true, false)
     perf_probe_end("damage_block", perf_start_us)
@@ -1776,7 +1821,7 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
         max_results = 4
     var destroyed_any := false
     var fill_positions: Array[Vector2i] = []
-    var requires_full_fill_rebuild := false
+    var destroyed_core_ids := {}
     for result_idx in range(results.size()):
         var result: Dictionary = results[result_idx]
         var next_pos: Vector2i = result.get("pos", Vector2i.ZERO)
@@ -1798,7 +1843,7 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
             if breach_chat != null:
                 breach_chat.record_node_destroyed(int(result.get("type", BlockType.NORMAL)) == BlockType.CORE)
             if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
-                requires_full_fill_rebuild = true
+                destroyed_core_ids[int(result.get("core_id", -1))] = true
             else:
                 fill_positions.append(next_pos)
             _spawn_pickup(next_world, {
@@ -1811,10 +1856,10 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
                 _finish_run(true, "The final core ruptured.")
                 return
     if planet_renderer != null:
-        if requires_full_fill_rebuild:
-            planet_renderer.mark_dirty(true)
-        elif not fill_positions.is_empty():
+        if not fill_positions.is_empty():
             planet_renderer.queue_fill_updates(fill_positions)
+        for core_id_variant in destroyed_core_ids.keys():
+            _queue_core_fill_region(int(core_id_variant))
     if not defer_visual_sync:
         _sync_planet_runtime_views(true, false)
 
@@ -1837,6 +1882,8 @@ func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void
                     continue
                 var check := Vector2i(current_pos.x + dx, current_pos.y + dy)
                 if is_grid_empty(check) or visited.has(check):
+                    continue
+                if int(blocks.get(check, {}).get("core_id", -1)) >= 0:
                     continue
                 var weight: int = 5 - dist
                 total_weight += weight
@@ -1915,6 +1962,8 @@ func _update_mega_beam(delta: float) -> void:
             continue
         visited[cell] = true
         if is_grid_empty(cell):
+            continue
+        if int(blocks.get(cell, {}).get("core_id", -1)) >= 0:
             continue
         visuals_dirty = true
         var damage := _compute_laser_damage(cell)
@@ -2015,6 +2064,24 @@ func _sync_planet_runtime_views(mark_renderer_dirty: bool = false, rebuild_fill:
     if mark_renderer_dirty:
         planet_renderer.mark_dirty(rebuild_fill)
 
+func _queue_core_fill_region(core_id: int, padding_cells: int = 2) -> void:
+    if planet_renderer == null or planet_data == null or core_id < 0:
+        return
+    for core_variant in planet_data.cores:
+        var core: Dictionary = core_variant
+        if int(core.get("id", -1)) != core_id:
+            continue
+        var center: Vector2i = core.get("center", Vector2i.ZERO)
+        var core_size: int = int(core.get("size", 3))
+        var half: int = core_size / 2
+        var positions: Array[Vector2i] = []
+        for x in range(center.x - half - padding_cells, center.x + half + core_size % 2 + padding_cells):
+            for y in range(center.y - half - padding_cells, center.y + half + core_size % 2 + padding_cells):
+                positions.append(Vector2i(x, y))
+        if not positions.is_empty():
+            planet_renderer.queue_fill_updates(positions)
+        return
+
 func _flush_pending_exposed_edges() -> void:
     if planet_data == null or not planet_data.has_method("flush_pending_exposed_edges"):
         return
@@ -2056,11 +2123,14 @@ func _fire_drone(drone_idx: int) -> void:
     var first_world := grid_to_world(target_cells[0])
     drone_targets[drone_idx] = first_world
     for target_grid in target_cells:
+        if int(blocks.get(target_grid, {}).get("core_id", -1)) >= 0:
+            continue
         var damage := float(runtime_stats.get("drone_damage", 8.0))
         if bool(runtime_stats.get("drone_sync_unlock", false)):
             damage += float(runtime_stats.get("attack_damage", 8.0)) * float(runtime_stats.get("drone_sync_ratio", 0.15))
         if rng.randf() < float(runtime_stats.get("drone_crit_chance", 0.0)):
             damage += float(runtime_stats.get("drone_damage", 8.0)) * float(runtime_stats.get("drone_crit_bonus", 2.0))
+        damage *= _editor_debug_damage_mult
         var result := _damage_block(target_grid, damage)
         if bool(result.get("destroyed", false)):
             _on_combo_hit()
@@ -2807,10 +2877,14 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
     var grid_range := int(ceil(radius_world / BLOCK_SIZE)) + 1
     var radius_sq := radius_world * radius_world
     var candidates: Array[Dictionary] = []
+    var seen_core_ids := {}
     for dx in range(-grid_range, grid_range + 1):
         for dy in range(-grid_range, grid_range + 1):
             var check := Vector2i(center_grid.x + dx, center_grid.y + dy)
             if is_grid_empty(check):
+                continue
+            var core_id: int = int(blocks.get(check, {}).get("core_id", -1))
+            if core_id >= 0:
                 continue
             var dist_sq := world_pos.distance_squared_to(grid_to_world(check))
             if dist_sq > radius_sq:
@@ -2820,7 +2894,7 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
                 insert_idx -= 1
             if insert_idx >= limit and candidates.size() >= limit:
                 continue
-            candidates.insert(insert_idx, {"pos": check, "dist_sq": dist_sq})
+            candidates.insert(insert_idx, {"pos": check, "dist_sq": dist_sq, "core_id": core_id})
             if candidates.size() > limit:
                 candidates.resize(limit)
     for idx in range(mini(limit, candidates.size())):
@@ -2911,6 +2985,12 @@ func get_block_hp_ratio(grid: Vector2i) -> float:
     var block: Dictionary = blocks.get(grid, {})
     if block.is_empty():
         return 1.0
+    var core_id: int = int(block.get("core_id", -1))
+    if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE and core_id >= 0 and planet_data != null:
+        for core_variant in planet_data.cores:
+            var core: Dictionary = core_variant
+            if int(core.get("id", -1)) == core_id:
+                return planet_data.get_core_hp_ratio(core)
     var hp := float(damaged_cells.get(grid, block.get("hp", 1.0)))
     return clampf(hp / maxf(1.0, float(block.get("max_hp", 1.0))), 0.0, 1.0)
 

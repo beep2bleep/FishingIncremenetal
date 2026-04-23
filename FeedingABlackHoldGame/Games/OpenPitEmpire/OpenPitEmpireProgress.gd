@@ -358,14 +358,15 @@ static func clear_cache() -> void:
 static func _sanitize_main_data(data: Dictionary) -> Dictionary:
     var sanitized := data.duplicate(true)
     sanitized["planet_state"] = {}
-    sanitized["deepest_level_unlocked"] = MIN_START_DEPTH_LEVEL
-    sanitized["selected_depth_level"] = MIN_START_DEPTH_LEVEL
+    sanitized["deepest_level_unlocked"] = clampi(int(sanitized.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+    sanitized["selected_depth_level"] = clampi(int(sanitized.get("selected_depth_level", sanitized["deepest_level_unlocked"])), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
     sanitized["planet_layout_version"] = BALANCE.PLANET_LAYOUT_VERSION
     var breakdown: Variant = sanitized.get("last_run_breakdown", {})
     if breakdown is Dictionary:
         var breakdown_dict: Dictionary = Dictionary(breakdown).duplicate(true)
         breakdown_dict.erase("planet_state")
         sanitized["last_run_breakdown"] = breakdown_dict
+    BALANCE.refresh_depth_unlocks(sanitized)
     return sanitized
 
 static func _read_json(path: String) -> Variant:

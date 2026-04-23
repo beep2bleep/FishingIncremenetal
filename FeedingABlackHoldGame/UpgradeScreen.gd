@@ -387,6 +387,10 @@ func _input(event: InputEvent) -> void :
             _return_to_game_launcher()
             get_viewport().set_input_as_handled()
             return
+        if _should_dump_open_pit_upgrades(event):
+            _print_open_pit_upgrade_dump()
+            get_viewport().set_input_as_handled()
+            return
         if event is InputEventMouseButton and event.pressed and not event.is_echo():
             if not _is_any_popup_visible() and state == STATES.SHOWING_TREE and tech_tree != null and is_instance_valid(tech_tree):
                 var mouse_event := event as InputEventMouseButton
@@ -429,6 +433,77 @@ func _input(event: InputEvent) -> void :
             return
         if event.is_action_pressed("go again"):
             _on_go_again_pressed()
+
+func _should_dump_open_pit_upgrades(event: InputEvent) -> bool:
+    if not Util.is_open_pit_game_active():
+        return false
+    if not (event is InputEventKey):
+        return false
+    if _is_any_popup_visible() or _is_settings_open() or _is_reel_depth_tier_dialog_open() or _is_battle_level_choice_open():
+        return false
+    var key_event := event as InputEventKey
+    if not key_event.pressed or key_event.echo:
+        return false
+    return key_event.keycode == KEY_U or key_event.physical_keycode == KEY_U
+
+func _print_open_pit_upgrade_dump() -> void:
+    var data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
+    var visible_caps: Dictionary = _collect_open_pit_tree_caps()
+    var main_levels: Dictionary = data.get("upgrades", {}).duplicate(true)
+    var xp_levels: Dictionary = data.get("xp_upgrades", {}).duplicate(true)
+    var core_owned: Array = data.get("purchased_core_upgrades", []).duplicate()
+    core_owned.sort()
+
+    print("=== Open Pit Empire Upgrade Dump ===")
+    print("Wallets: money=%d xp=%d core=%d depth=%d/%d" % [
+        int(data.get("wallet", 0)),
+        int(data.get("xp_currency", 0)),
+        int(data.get("core_currency", 0)),
+        int(data.get("selected_depth_level", 1)),
+        int(data.get("deepest_level_unlocked", 1)),
+    ])
+    _print_open_pit_upgrade_dump_section("Main", main_levels, visible_caps)
+    _print_open_pit_upgrade_dump_section("XP", xp_levels, visible_caps)
+    _print_open_pit_core_upgrade_dump_section(core_owned, visible_caps)
+    print("=== End Open Pit Empire Upgrade Dump ===")
+
+func _collect_open_pit_tree_caps() -> Dictionary:
+    var caps: Dictionary = {}
+    for upgrade_variant: Variant in Global.game_mode_data_manager.upgrades.values():
+        if not (upgrade_variant is Upgrade):
+            continue
+        var upgrade: Upgrade = upgrade_variant
+        if upgrade.sim_key == "":
+            continue
+        var max_level: int = int(upgrade.sim_level) + int(upgrade.max_tier) - 1
+        var prev_level: int = int(caps.get(upgrade.sim_key, 0))
+        if max_level > prev_level:
+            caps[upgrade.sim_key] = max_level
+    return caps
+
+func _print_open_pit_upgrade_dump_section(section_name: String, levels: Dictionary, visible_caps: Dictionary) -> void:
+    var keys: Array = levels.keys()
+    keys.sort()
+    print("%s Upgrades (%d owned)" % [section_name, keys.size()])
+    if keys.is_empty():
+        print("  (none)")
+        return
+    for key_variant: Variant in keys:
+        var key: String = str(key_variant)
+        print("  %s = %d / tree max %d" % [
+            key,
+            int(levels.get(key, 0)),
+            int(visible_caps.get(key, 0)),
+        ])
+
+func _print_open_pit_core_upgrade_dump_section(core_owned: Array, visible_caps: Dictionary) -> void:
+    print("Core Upgrades (%d owned)" % core_owned.size())
+    if core_owned.is_empty():
+        print("  (none)")
+        return
+    for key_variant: Variant in core_owned:
+        var key: String = "core:%s" % str(key_variant)
+        print("  %s = owned / tree max %d" % [key, int(visible_caps.get(key, 0))])
 
 
 

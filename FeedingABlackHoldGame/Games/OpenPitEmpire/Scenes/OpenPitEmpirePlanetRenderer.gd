@@ -255,6 +255,7 @@ func _draw() -> void:
         _fill_dirty = true
         _pending_fill_updates.clear()
         _fill_upload_accum = REDUCED_FILL_UPLOAD_INTERVAL
+        _palette_cache.clear()
         _clear_fill_prewarm()
     var fill_padding_cells := 0 if reduce_detail or ultra_reduce_detail else FILL_CACHE_PADDING_CELLS
     var fill_align_cells := REDUCED_FILL_CACHE_ALIGN_CELLS if reduce_detail or ultra_reduce_detail else FILL_CACHE_ALIGN_CELLS
@@ -320,30 +321,7 @@ func _draw() -> void:
         _reduced_fill_cache_size = Vector2i.ZERO
         _clear_fill_prewarm()
     if reduce_detail or ultra_reduce_detail:
-        var prewarm_target_min := desired_cache_grid_min
-        var prewarm_target_size := cache_grid_size
-        var needs_fill_prewarm := false
-        var should_wait_for_fill_prewarm := false
-        if _fill_grid_origin.x < 2147483647:
-            if _fill_dirty and _pending_fill_updates.is_empty() and _fill_grid_size.x > 0 and _fill_grid_size.y > 0:
-                prewarm_target_min = _fill_grid_origin
-                prewarm_target_size = _fill_grid_size
-                needs_fill_prewarm = true
-                should_wait_for_fill_prewarm = true
-        if needs_fill_prewarm and _fill_dirty and _pending_fill_updates.is_empty():
-            _ensure_fill_prewarm(prewarm_target_min, prewarm_target_size)
-            _advance_fill_prewarm(REDUCED_FILL_PREWARM_ROWS_PER_DRAW)
-            var waiting_for_target := should_wait_for_fill_prewarm and not _can_apply_fill_prewarm(prewarm_target_min, prewarm_target_size) and _fill_grid_size.x > 0 and _fill_grid_size.y > 0
-            if waiting_for_target:
-                if not _fill_prewarm_waiting_for_swap:
-                    _fill_prewarm_defer_count += 1
-                _fill_prewarm_waiting_for_swap = true
-                cache_grid_min = _fill_grid_origin
-                cache_grid_size = _fill_grid_size
-            elif _can_apply_fill_prewarm(prewarm_target_min, prewarm_target_size):
-                _fill_prewarm_waiting_for_swap = false
-        elif not needs_fill_prewarm:
-            _clear_fill_prewarm()
+        _clear_fill_prewarm()
     var cache_grid_max := Vector2i(
         cache_grid_min.x + cache_grid_size.x - 1,
         cache_grid_min.y + cache_grid_size.y - 1
@@ -364,28 +342,21 @@ func _draw() -> void:
         _draw_background_stars()
     else:
         _draw_background_stars(true)
+    _draw_core_influence_rings(ultra_reduce_detail)
+    _draw_core_shields(ultra_reduce_detail)
     scene_ref.perf_probe_end("renderer_bg", section_start_us)
     var cache_grid_w: int = cache_grid_max.x - cache_grid_min.x + 1
     var cache_grid_h: int = cache_grid_max.y - cache_grid_min.y + 1
+    _draw_grid_min = cache_grid_min
+    _draw_grid_max = cache_grid_max
+    _last_cam_origin = canvas_transform.origin
+
     var fill_rebuild_dirty := _fill_dirty
     var fill_rebuild_origin := _fill_grid_origin != cache_grid_min
     var fill_rebuild_size := _fill_grid_size != Vector2i(cache_grid_w, cache_grid_h)
     var fill_needs_rebuild := fill_rebuild_dirty or fill_rebuild_origin or fill_rebuild_size
-    var fill_prewarm_ready_for_cache := fill_rebuild_dirty and _can_apply_fill_prewarm(cache_grid_min, Vector2i(cache_grid_w, cache_grid_h))
+    var fill_prewarm_ready_for_cache := false
     var fill_prewarm_missed := false
-    var should_defer_dirty_rebuild := (
-        fill_rebuild_dirty
-        and not fill_rebuild_origin
-        and not fill_rebuild_size
-        and (reduce_detail or ultra_reduce_detail)
-        and _fill_prewarm_image != null
-        and not fill_prewarm_ready_for_cache
-    )
-    if should_defer_dirty_rebuild:
-        fill_needs_rebuild = false
-    _draw_grid_min = cache_grid_min
-    _draw_grid_max = cache_grid_max
-    _last_cam_origin = canvas_transform.origin
 
     section_start_us = scene_ref.perf_probe_begin()
     if _fill_image == null or _fill_grid_size.x != cache_grid_w or _fill_grid_size.y != cache_grid_h:
@@ -413,16 +384,12 @@ func _draw() -> void:
             _fill_rebuild_size_count += 1
         _last_fill_rebuild_reason = "+".join(fill_reason_parts) if not fill_reason_parts.is_empty() else "unknown"
         var fill_rebuild_start_us := scene_ref.perf_probe_begin()
-        var old_fill_grid_origin := _fill_grid_origin
         if fill_prewarm_ready_for_cache:
             _fill_prewarm_apply_count += 1
             _fill_prewarm_waiting_for_swap = false
             _apply_fill_prewarm()
-        elif fill_rebuild_origin and not fill_rebuild_dirty and not fill_rebuild_size and _fill_image != null:
-            _fill_prewarm_waiting_for_swap = false
-            _shift_fill_image_with_overlap(old_fill_grid_origin, cache_grid_min, Vector2i(cache_grid_w, cache_grid_h))
         else:
-            fill_prewarm_missed = (reduce_detail or ultra_reduce_detail) and fill_rebuild_dirty and (fill_rebuild_origin or fill_rebuild_size) and _fill_grid_size.x > 0 and _fill_grid_size.y > 0
+            fill_prewarm_missed = (reduce_detail or ultra_reduce_detail) and (_fill_grid_size.x > 0 and _fill_grid_size.y > 0) and (fill_rebuild_dirty or fill_rebuild_origin or fill_rebuild_size)
             _fill_prewarm_waiting_for_swap = false
             _fill_grid_origin = cache_grid_min
             _fill_image.fill(Color.TRANSPARENT)
@@ -445,8 +412,6 @@ func _draw() -> void:
     else:
         _last_fill_rebuild_reason = "-"
         var should_upload_pending_fill := true
-        if reduce_detail or ultra_reduce_detail:
-            should_upload_pending_fill = _fill_upload_accum >= REDUCED_FILL_UPLOAD_INTERVAL or _pending_fill_updates.size() >= REDUCED_FILL_FORCE_UPLOAD_UPDATES
         if should_upload_pending_fill and _apply_pending_fill_updates(cache_grid_min, cache_grid_max):
             var fill_upload_start_us := scene_ref.perf_probe_begin()
             if _fill_texture == null:
@@ -456,18 +421,9 @@ func _draw() -> void:
             scene_ref.perf_probe_end("renderer_fill_upload", fill_upload_start_us)
             _fill_upload_accum = 0.0
         elif _fill_scrub_pending:
-            var scrub_finished := _advance_fill_scrub(cache_grid_min, cache_grid_max, FILL_SCRUB_ROWS_PER_DRAW)
-            if scrub_finished:
-                if _fill_scrub_changed:
-                    var fill_upload_start_us := scene_ref.perf_probe_begin()
-                    if _fill_texture == null:
-                        _fill_texture = ImageTexture.create_from_image(_fill_image)
-                    else:
-                        _fill_texture.update(_fill_image)
-                    scene_ref.perf_probe_end("renderer_fill_upload", fill_upload_start_us)
-                _fill_scrub_pending = false
-                _fill_scrub_next_row = 0
-                _fill_scrub_changed = false
+            _fill_scrub_pending = false
+            _fill_scrub_next_row = 0
+            _fill_scrub_changed = false
     var tex_rect := Rect2(
         float(cache_grid_min.x) * scene_ref.BLOCK_SIZE,
         float(cache_grid_min.y) * scene_ref.BLOCK_SIZE,
@@ -478,48 +434,12 @@ func _draw() -> void:
         draw_texture_rect(_fill_texture, tex_rect, false)
     scene_ref.perf_probe_end("renderer_fill", section_start_us)
 
-    if int(scene_ref.planet_outline_mode) != int(scene_ref.OutlineMode.OFF) and reduce_detail and not ultra_reduce_detail:
-        section_start_us = scene_ref.perf_probe_begin()
-        var outline_radius_cells := maxi(1, int(scene_ref.planet_outline_radius_cells))
-        var outline_center_grid := _get_outline_cache_center_grid()
-        var outline_cache_padding_cells := ULTRA_OUTLINE_CACHE_PADDING_CELLS if ultra_reduce_detail else HEAVY_OUTLINE_CACHE_PADDING_CELLS
-        var desired_edge_grid_min := Vector2i(
-            outline_center_grid.x - outline_radius_cells - outline_cache_padding_cells,
-            outline_center_grid.y - outline_radius_cells - outline_cache_padding_cells
-        )
-        var desired_edge_grid_max := Vector2i(
-            outline_center_grid.x + outline_radius_cells + outline_cache_padding_cells,
-            outline_center_grid.y + outline_radius_cells + outline_cache_padding_cells
-        )
-        var edge_grid_min := desired_edge_grid_min
-        var edge_grid_max := desired_edge_grid_max
-        if _edge_grid_origin.x < 2147483647 and _edge_grid_size.x > 0 and _edge_grid_size.y > 0:
-            var current_edge_grid_max := Vector2i(
-                _edge_grid_origin.x + _edge_grid_size.x - 1,
-                _edge_grid_origin.y + _edge_grid_size.y - 1
-            )
-            var can_keep_edge_origin := (
-                desired_edge_grid_min.x >= _edge_grid_origin.x
-                and desired_edge_grid_min.y >= _edge_grid_origin.y
-                and desired_edge_grid_max.x <= current_edge_grid_max.x
-                and desired_edge_grid_max.y <= current_edge_grid_max.y
-            )
-            if can_keep_edge_origin:
-                edge_grid_min = _edge_grid_origin
-                edge_grid_max = current_edge_grid_max
-        var edge_grid_size := Vector2i(edge_grid_max.x - edge_grid_min.x + 1, edge_grid_max.y - edge_grid_min.y + 1)
-        var edge_cache_matches := _edge_grid_origin == edge_grid_min and _edge_grid_size == edge_grid_size
-        if _edge_texture == null or not edge_cache_matches or (_edge_dirty and _edge_rebuild_accum >= OUTLINE_REBUILD_INTERVAL):
-            _rebuild_edge_texture(edge_grid_min, edge_grid_max, ultra_reduce_detail, int(scene_ref.planet_outline_mode))
-        if _edge_texture != null and _edge_grid_origin == edge_grid_min and _edge_grid_size == edge_grid_size:
-            var edge_tex_rect := Rect2(
-                float(edge_grid_min.x) * scene_ref.BLOCK_SIZE,
-                float(edge_grid_min.y) * scene_ref.BLOCK_SIZE,
-                float(edge_grid_size.x) * scene_ref.BLOCK_SIZE,
-                float(edge_grid_size.y) * scene_ref.BLOCK_SIZE
-            )
-            draw_texture_rect(_edge_texture, edge_tex_rect, false)
-        scene_ref.perf_probe_end("renderer_edge", section_start_us)
+    if reduce_detail:
+        _edge_texture = null
+        _edge_image = null
+        _edge_grid_origin = Vector2i(2147483647, 2147483647)
+        _edge_grid_size = Vector2i.ZERO
+        _edge_dirty = false
 
     var gold_pulse_t := Time.get_ticks_msec() * 0.001 * 1.8
     section_start_us = scene_ref.perf_probe_begin()
@@ -599,14 +519,12 @@ func _draw() -> void:
                 2.0
             )
 
-    _draw_core_influence_rings(ultra_reduce_detail)
     _draw_cipher_lasers(ultra_reduce_detail)
     _draw_root_cross_lasers(ultra_reduce_detail)
     _draw_ghost_debris(ultra_reduce_detail)
     if not ultra_reduce_detail:
         _draw_roaming_powerups()
         _draw_final_funnel()
-    _draw_core_shields(ultra_reduce_detail)
     scene_ref.perf_probe_end("renderer_overlays", section_start_us)
     scene_ref.perf_probe_end("renderer_draw", perf_start_us)
 
@@ -1065,14 +983,16 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
             edge = THORN_EDGE
         _:
             if core_refill:
-                fill = _mix_fill_with_edge(CORE_REFILL_FILL, CORE_REFILL_EDGE, 0.24)
+                fill = CORE_REFILL_FILL
                 edge = CORE_REFILL_EDGE
             elif regenerated:
                 fill = _mix_fill_with_edge(REGEN_FILL, REGEN_EDGE, 0.22)
                 edge = REGEN_EDGE
             else:
                 fill = _mix_fill_with_edge(fill, edge, 0.22)
-    fill = _apply_hardness_tint(fill, hardness_tier)
+    if not core_refill:
+        fill = _apply_hardness_tint(fill, hardness_tier)
+    fill = Color(fill.r, fill.g, fill.b, 1.0)
     var palette := {"fill": fill, "edge": edge}
     _palette_cache[cache_key] = palette
     return palette
@@ -1082,24 +1002,6 @@ func _mix_fill_with_edge(fill: Color, edge: Color, amount: float) -> Color:
     return fill.lerp(edge_clamped, amount)
 
 func _get_visual_hardness_tier(block: Dictionary) -> int:
-    var block_type: int = int(block.get("type", 0))
-    if block_type == scene_ref.BlockType.CORE:
-        var core_id: int = int(block.get("core_id", -1))
-        if scene_ref.planet_data != null:
-            return clampi(scene_ref.planet_data.get_core_tier(core_id), 1, 3)
-        return 1
-    if block_type != scene_ref.BlockType.NORMAL:
-        return 1
-    var zone: int = int(block.get("zone", ZONE_AUTUMN))
-    var hp_range: Dictionary = ZONE_HP_VISUAL_RANGE.get(zone, {"min": 1.0, "max": 1.0})
-    var min_hp: float = maxf(float(hp_range.get("min", 1.0)), 1.0)
-    var max_hp: float = maxf(float(hp_range.get("max", min_hp)), min_hp)
-    var block_hp: float = clampf(float(block.get("max_hp", min_hp)), min_hp, max_hp)
-    var ratio := inverse_lerp(min_hp, max_hp, block_hp)
-    if ratio >= 0.72:
-        return 3
-    if ratio >= 0.4:
-        return 2
     return 1
 
 func _apply_hardness_tint(fill: Color, hardness_tier: int) -> Color:

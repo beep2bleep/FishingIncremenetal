@@ -29,6 +29,10 @@ const SAVE_DEPTH_SLICES: int = 10
 const SAVE_SECTION_COUNT: int = SAVE_X_SLICES * SAVE_DEPTH_SLICES
 const ELECTRIC_CHAIN_MAX_TARGETS_PER_STEP: int = 8
 const ELECTRIC_CHAIN_MAX_TOTAL_RESULTS: int = 96
+const CORE_SHARED_HP_BLOCK_MULT: float = 2.0
+const CORE_TOTAL_HP_MULT: float = 4.0
+const CORE_DIRECT_DR: float = 0.2
+const CORE_MAX_HP_FRACTION_PER_HIT: float = 0.08
 
 enum Zone { PROXY, CIPHER, GHOST, ROOT, CENTER }
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
@@ -501,8 +505,8 @@ func get_regen_radius_bonus(core: Dictionary) -> int:
     return 2 if str(core.get("role", "")) == "final" else 0
 
 func get_core_hp_ratio(core: Dictionary) -> float:
-    var total_hp := 0.0
-    var total_max := 0.0
+    var shared_hp := -1.0
+    var shared_max := -1.0
     var core_size: int = int(core.get("size", 3))
     var half: int = core_size / 2
     for dx in range(-half, half + core_size % 2):
@@ -510,11 +514,58 @@ func get_core_hp_ratio(core: Dictionary) -> float:
             var pos := Vector2i(int(core.center.x) + dx, int(core.center.y) + dy)
             var block: Dictionary = blocks.get(pos, {})
             if not block.is_empty() and int(block.get("core_id", -1)) == int(core.get("id", -1)):
-                total_hp += float(block.get("hp", 0.0))
-                total_max += float(block.get("max_hp", 0.0))
-    if total_max <= 0.0:
+                shared_hp = float(block.get("hp", 0.0))
+                shared_max = float(block.get("max_hp", 0.0))
+                break
+        if shared_hp >= 0.0:
+            break
+    if shared_max <= 0.0:
         return 0.0
-    return clampf(total_hp / total_max, 0.0, 1.0)
+    return clampf(shared_hp / shared_max, 0.0, 1.0)
+
+func sync_all_core_tile_healths() -> void:
+    for core_variant in cores:
+        var core: Dictionary = core_variant
+        var core_id: int = int(core.get("id", -1))
+        if core_id < 0:
+            continue
+        _sync_core_tile_health(core_id)
+
+func _sync_core_tile_health(core_id: int) -> void:
+    var core: Variant = _get_core_by_id(core_id)
+    if core == null:
+        return
+    var center: Vector2i = core.center
+    var core_size: int = int(core.get("size", 3))
+    var half: int = core_size / 2
+    var shared_hp := -1.0
+    var shared_max_hp := -1.0
+    for dx in range(-half, half + core_size % 2):
+        for dy in range(-half, half + core_size % 2):
+            var pos := Vector2i(center.x + dx, center.y + dy)
+            var block: Dictionary = blocks.get(pos, {})
+            if block.is_empty() or int(block.get("core_id", -1)) != core_id:
+                continue
+            var hp := float(block.get("hp", 0.0))
+            var max_hp := float(block.get("max_hp", hp))
+            if shared_max_hp < 0.0 or max_hp > shared_max_hp:
+                shared_max_hp = max_hp
+            if shared_hp < 0.0:
+                shared_hp = hp
+            else:
+                shared_hp = minf(shared_hp, hp)
+    if shared_max_hp <= 0.0 or shared_hp < 0.0:
+        return
+    shared_hp = clampf(shared_hp, 0.0, shared_max_hp)
+    for dx in range(-half, half + core_size % 2):
+        for dy in range(-half, half + core_size % 2):
+            var pos := Vector2i(center.x + dx, center.y + dy)
+            var block: Dictionary = blocks.get(pos, {})
+            if block.is_empty() or int(block.get("core_id", -1)) != core_id:
+                continue
+            block["hp"] = shared_hp
+            block["max_hp"] = shared_max_hp
+            blocks[pos] = block
 
 func is_in_dead_core_zone(pos: Vector2i) -> bool:
     for core in cores:
@@ -665,9 +716,9 @@ func restore_alive_core_influence_blocks() -> Array[Vector2i]:
                     continue
                 if not _is_inside_pit_shape(pos) or _is_wall_cell(pos):
                     continue
-                if blocks.has(pos):
-                    continue
                 if x >= center.x - half and x < center.x + half + core_size % 2 and y >= center.y - half and y < center.y + half + core_size % 2:
+                    continue
+                if blocks.has(pos):
                     continue
                 var hp: float = _calc_block_hp(pos) * _get_influence_hp_mult(pos, true)
                 var zone: int = get_zone(pos)
@@ -705,6 +756,9 @@ func electric_chain(origin: Vector2i, damage: float, chain_range: int, chain_dep
                 continue
             var pos := Vector2i(origin.x + dx, origin.y + dy)
             if visited.has(pos) or not has_block(pos):
+                continue
+            var target_block: Dictionary = blocks.get(pos, {})
+            if int(target_block.get("core_id", -1)) >= 0:
                 continue
             targets.append({
                 "pos": pos,
@@ -1176,6 +1230,7 @@ func _load_common_save_data(data: Dictionary) -> void:
         initial_block_count = _count_breakable_blocks()
         for destroyed_count_variant in zone_destroyed_blocks.values():
             initial_block_count += int(destroyed_count_variant)
+    sync_all_core_tile_healths()
 
 func _apply_loaded_save_data(data: Dictionary) -> void:
     var format_version: int = int(data.get("format_version", 1))
@@ -1216,7 +1271,15 @@ func _place_cores() -> void:
         var core_size: int = int(config.size)
         var center: Vector2i = config.get("center", Vector2i.ZERO)
         var block_count: int = core_size * core_size
-        var core_hp: float = float(config.total_hp)
+        var normal_block_hp: float = _calc_block_hp(center) * _get_influence_hp_mult(center, true)
+        var core_hp: float = maxf(
+            maxf(
+                normal_block_hp * float(block_count) * CORE_SHARED_HP_BLOCK_MULT,
+                _calc_block_hp(center) * float(config.get("hp_mult", 1.0))
+            ),
+            float(config.get("total_hp", 0.0))
+        )
+        core_hp *= CORE_TOTAL_HP_MULT
         core_hp *= core_difficulty_mult
         var base_res: float = _calc_block_resource(center)
         var core_res: float = base_res * float(config.res_mult) * float(block_count)
@@ -1248,6 +1311,7 @@ func _place_cores() -> void:
     for core in cores:
         var core_zone: int = int(core.zone)
         zone_current_blocks[core_zone] = int(zone_current_blocks.get(core_zone, 0))
+    sync_all_core_tile_healths()
 
 func _damage_core(_hit_pos: Vector2i, core_id: int, damage: float, free_planet_mode: bool = false) -> Dictionary:
     var core: Variant = _get_core_by_id(core_id)
@@ -1258,15 +1322,30 @@ func _damage_core(_hit_pos: Vector2i, core_id: int, damage: float, free_planet_m
     var center: Vector2i = core.center
     var core_size: int = int(core.get("size", 3))
     var half: int = core_size / 2
-    var any_hp_left := false
+    var shared_hp := -1.0
+    var shared_max_hp := -1.0
     for dx in range(-half, half + core_size % 2):
         for dy in range(-half, half + core_size % 2):
             var pos := Vector2i(center.x + dx, center.y + dy)
             if blocks.has(pos) and int(blocks[pos].get("core_id", -1)) == core_id:
-                blocks[pos]["hp"] = float(blocks[pos].get("hp", 0.0)) - damage
-                if float(blocks[pos].get("hp", 0.0)) > 0.0:
-                    any_hp_left = true
-    if any_hp_left:
+                shared_hp = float(blocks[pos].get("hp", 0.0))
+                shared_max_hp = float(blocks[pos].get("max_hp", 0.0))
+                break
+        if shared_hp >= 0.0:
+            break
+    if shared_hp < 0.0:
+        return {"destroyed": false, "type": BlockType.CORE, "resource": 0.0, "core_id": core_id}
+    var applied_damage := damage * CORE_DIRECT_DR
+    var max_hit_damage := maxf(1.0, shared_max_hp * CORE_MAX_HP_FRACTION_PER_HIT)
+    applied_damage = minf(applied_damage, max_hit_damage)
+    var next_shared_hp := shared_hp - applied_damage
+    if next_shared_hp > 0.0:
+        for dx in range(-half, half + core_size % 2):
+            for dy in range(-half, half + core_size % 2):
+                var pos := Vector2i(center.x + dx, center.y + dy)
+                if blocks.has(pos) and int(blocks[pos].get("core_id", -1)) == core_id:
+                    blocks[pos]["hp"] = next_shared_hp
+                    blocks[pos]["max_hp"] = shared_max_hp
         _mark_core_section_dirty(center, core_size)
         return {"destroyed": false, "type": BlockType.CORE, "resource": 0.0, "core_id": core_id}
     var total_resource := 0.0
