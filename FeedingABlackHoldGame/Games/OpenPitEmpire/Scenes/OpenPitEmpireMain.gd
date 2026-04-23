@@ -57,6 +57,7 @@ const CAMERA_ZOOM_BLEND_TIME := 0.35
 const BREACH_LOG_MAX_LINES := 8
 const BREACH_LOG_IDLE_INTERVAL := 2.8
 const HACKER_TYPER_MAX_LINES := 4
+const HACKER_TYPER_SHOT_WINDOW := 0.12
 const HACKER_TYPER_IDLE_LINES := [
     "def mask_telemetry(trace):\n    trace.route = dead_mall_mirrors\n    return trace.fade_out()",
     "for watcher in audit_glass:\n    watcher.feed(decoy_noise)\n    watcher.forget(real_entry)",
@@ -241,6 +242,7 @@ var hacker_typer_revealed_chars := 0
 var hacker_typer_cursor_on := true
 var hacker_typer_char_timer := 0.0
 var hacker_typer_hold_timer := 0.0
+var hacker_typer_shot_timer := 0.0
 var hacker_typer_is_attacking := false
 var hacker_typer_im_in_timer := 0.0
 var hacker_typer_history: Array[String] = []
@@ -827,6 +829,7 @@ func _start_run() -> void:
     hacker_typer_im_in_timer = 0.0
     hacker_typer_hold_timer = 0.0
     hacker_typer_char_timer = 0.0
+    hacker_typer_shot_timer = 0.0
     hacker_typer_is_attacking = false
     hacker_typer_history.clear()
     for key in active_powerup_timers.keys():
@@ -1025,7 +1028,8 @@ func _update_breach_log(delta: float) -> void:
 func _update_hacker_typer(delta: float) -> void:
     if hacker_typer_label == null:
         return
-    var actively_attacking := _has_live_hacker_targets()
+    hacker_typer_shot_timer = maxf(0.0, hacker_typer_shot_timer - delta)
+    var actively_attacking := hacker_typer_shot_timer > 0.0
     var showing_im_in := hacker_typer_im_in_timer > 0.0
     if showing_im_in:
         hacker_typer_im_in_timer = maxf(0.0, hacker_typer_im_in_timer - delta)
@@ -1101,6 +1105,7 @@ func _has_live_hacker_targets() -> bool:
     return not _find_nearest_attack_targets(range_world, 1).is_empty()
 
 func _try_start_hacker_typer_attack_line() -> void:
+    hacker_typer_shot_timer = HACKER_TYPER_SHOT_WINDOW
     if hacker_typer_current_text != "" or hacker_typer_im_in_timer > 0.0:
         return
     var under_pressure := int(_get_breach_chat_pressure_state().get("stage", 0)) >= 2

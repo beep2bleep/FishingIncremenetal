@@ -46,7 +46,6 @@ var _fill_scrub_accum := 0.0
 var _fill_scrub_pending := false
 var _fill_scrub_next_row := 0
 var _fill_scrub_changed := false
-var _fill_validation_accum := 0.0
 
 const SPACE_BG := Color(0.025, 0.025, 0.035, 1.0)
 const PIT_GLOW := Color(0.52, 0.08, 0.08, 0.72)
@@ -80,9 +79,6 @@ const OUTLINE_CACHE_ALIGN_CELLS := 4
 const GOLD_EFFECT_REDRAW_INTERVAL := 0.05
 const FILL_SCRUB_INTERVAL := 1.0
 const FILL_SCRUB_ROWS_PER_DRAW := 8
-const FILL_VALIDATE_INTERVAL := 0.25
-const FILL_VALIDATE_SAMPLE_STRIDE := 4
-const FILL_VALIDATE_MISMATCH_LIMIT := 6
 const REDUCED_FILL_UPLOAD_INTERVAL := 0.08
 const REDUCED_FILL_FORCE_UPLOAD_UPDATES := 48
 const OUTLINE_REBUILD_INTERVAL := 0.4
@@ -170,7 +166,6 @@ func _process(_delta: float) -> void:
     _edge_rebuild_accum += _delta
     _fill_upload_accum += _delta
     _fill_scrub_accum += _delta
-    _fill_validation_accum += _delta
     if _fill_scrub_accum >= FILL_SCRUB_INTERVAL:
         _fill_scrub_accum = 0.0
         _fill_scrub_pending = true
@@ -294,7 +289,30 @@ func _draw() -> void:
         _reduced_fill_cache_size = Vector2i.ZERO
         _clear_fill_prewarm()
     if reduce_detail or ultra_reduce_detail:
-        _clear_fill_prewarm()
+        var prewarm_target_min := desired_cache_grid_min
+        var prewarm_target_size := cache_grid_size
+        var needs_fill_prewarm := false
+        var should_wait_for_fill_prewarm := false
+        if _fill_grid_origin.x < 2147483647:
+            if _fill_dirty and _pending_fill_updates.is_empty() and _fill_grid_size.x > 0 and _fill_grid_size.y > 0:
+                prewarm_target_min = _fill_grid_origin
+                prewarm_target_size = _fill_grid_size
+                needs_fill_prewarm = true
+                should_wait_for_fill_prewarm = true
+        if needs_fill_prewarm and _fill_dirty and _pending_fill_updates.is_empty():
+            _ensure_fill_prewarm(prewarm_target_min, prewarm_target_size)
+            _advance_fill_prewarm(REDUCED_FILL_PREWARM_ROWS_PER_DRAW)
+            var waiting_for_target := should_wait_for_fill_prewarm and not _can_apply_fill_prewarm(prewarm_target_min, prewarm_target_size) and _fill_grid_size.x > 0 and _fill_grid_size.y > 0
+            if waiting_for_target:
+                if not _fill_prewarm_waiting_for_swap:
+                    _fill_prewarm_defer_count += 1
+                _fill_prewarm_waiting_for_swap = true
+                cache_grid_min = _fill_grid_origin
+                cache_grid_size = _fill_grid_size
+            elif _can_apply_fill_prewarm(prewarm_target_min, prewarm_target_size):
+                _fill_prewarm_waiting_for_swap = false
+        elif not needs_fill_prewarm:
+            _clear_fill_prewarm()
     var cache_grid_max := Vector2i(
         cache_grid_min.x + cache_grid_size.x - 1,
         cache_grid_min.y + cache_grid_size.y - 1
@@ -319,15 +337,22 @@ func _draw() -> void:
     scene_ref.perf_probe_end("renderer_bg", section_start_us)
     var cache_grid_w: int = cache_grid_max.x - cache_grid_min.x + 1
     var cache_grid_h: int = cache_grid_max.y - cache_grid_min.y + 1
-    if (reduce_detail or ultra_reduce_detail) and _should_force_fill_rebuild_from_sample(visible_grid_min, visible_grid_max):
-        _fill_dirty = true
-        _pending_fill_updates.clear()
-        _clear_fill_prewarm()
     var fill_rebuild_dirty := _fill_dirty
     var fill_rebuild_origin := _fill_grid_origin != cache_grid_min
     var fill_rebuild_size := _fill_grid_size != Vector2i(cache_grid_w, cache_grid_h)
     var fill_needs_rebuild := fill_rebuild_dirty or fill_rebuild_origin or fill_rebuild_size
-    var fill_prewarm_ready_for_cache := false
+    var fill_prewarm_ready_for_cache := fill_rebuild_dirty and _can_apply_fill_prewarm(cache_grid_min, Vector2i(cache_grid_w, cache_grid_h))
+    var fill_prewarm_missed := false
+    var should_defer_dirty_rebuild := (
+        fill_rebuild_dirty
+        and not fill_rebuild_origin
+        and not fill_rebuild_size
+        and (reduce_detail or ultra_reduce_detail)
+        and _fill_prewarm_image != null
+        and not fill_prewarm_ready_for_cache
+    )
+    if should_defer_dirty_rebuild:
+        fill_needs_rebuild = false
     _draw_grid_min = cache_grid_min
     _draw_grid_max = cache_grid_max
     _last_cam_origin = canvas_transform.origin
@@ -359,14 +384,21 @@ func _draw() -> void:
         _last_fill_rebuild_reason = "+".join(fill_reason_parts) if not fill_reason_parts.is_empty() else "unknown"
         var fill_rebuild_start_us := scene_ref.perf_probe_begin()
         var old_fill_grid_origin := _fill_grid_origin
-        if fill_rebuild_origin and not fill_rebuild_dirty and not fill_rebuild_size and _fill_image != null:
+        if fill_prewarm_ready_for_cache:
+            _fill_prewarm_apply_count += 1
+            _fill_prewarm_waiting_for_swap = false
+            _apply_fill_prewarm()
+        elif fill_rebuild_origin and not fill_rebuild_dirty and not fill_rebuild_size and _fill_image != null:
             _fill_prewarm_waiting_for_swap = false
             _shift_fill_image_with_overlap(old_fill_grid_origin, cache_grid_min, Vector2i(cache_grid_w, cache_grid_h))
         else:
+            fill_prewarm_missed = (reduce_detail or ultra_reduce_detail) and fill_rebuild_dirty and (fill_rebuild_origin or fill_rebuild_size) and _fill_grid_size.x > 0 and _fill_grid_size.y > 0
             _fill_prewarm_waiting_for_swap = false
             _fill_grid_origin = cache_grid_min
             _fill_image.fill(Color.TRANSPARENT)
             _paint_fill_region(cache_grid_min, cache_grid_max)
+        if fill_prewarm_missed:
+            _fill_prewarm_miss_count += 1
         scene_ref.perf_probe_end("renderer_fill_rebuild", fill_rebuild_start_us)
         var fill_upload_start_us := scene_ref.perf_probe_begin()
         if _fill_texture == null:
@@ -652,27 +684,6 @@ func _apply_pending_fill_updates(grid_min: Vector2i, grid_max: Vector2i) -> bool
     for grid_variant in applied_positions:
         _pending_fill_updates.erase(grid_variant)
     return changed
-
-func _should_force_fill_rebuild_from_sample(visible_grid_min: Vector2i, visible_grid_max: Vector2i) -> bool:
-    if _fill_image == null or _fill_grid_size.x <= 0 or _fill_grid_size.y <= 0:
-        return false
-    if _fill_validation_accum < FILL_VALIDATE_INTERVAL:
-        return false
-    _fill_validation_accum = 0.0
-    var mismatch_count := 0
-    for x in range(visible_grid_min.x, visible_grid_max.x + 1, FILL_VALIDATE_SAMPLE_STRIDE):
-        for y in range(visible_grid_min.y, visible_grid_max.y + 1, FILL_VALIDATE_SAMPLE_STRIDE):
-            var local_x := x - _fill_grid_origin.x
-            var local_y := y - _fill_grid_origin.y
-            if local_x < 0 or local_x >= _fill_grid_size.x or local_y < 0 or local_y >= _fill_grid_size.y:
-                continue
-            var has_block := scene_ref.blocks.has(Vector2i(x, y))
-            var cached_visible := _fill_image.get_pixel(local_x, local_y).a > 0.01
-            if has_block != cached_visible:
-                mismatch_count += 1
-                if mismatch_count >= FILL_VALIDATE_MISMATCH_LIMIT:
-                    return true
-    return false
 
 func _advance_fill_scrub(grid_min: Vector2i, grid_max: Vector2i, row_count: int) -> bool:
     if _fill_image == null:
