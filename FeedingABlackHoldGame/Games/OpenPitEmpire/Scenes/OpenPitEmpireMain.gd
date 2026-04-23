@@ -163,6 +163,7 @@ var destroyed_cells_this_run: Dictionary = {}
 var planet_outline_mode := OutlineMode.GROUP_EDGES
 var planet_outline_radius_cells := PLANET_OUTLINE_RADIUS_DEFAULT
 var render_detail_mode := RenderDetailMode.AUTO
+var _frame_destroyed_blocks := 0
 
 var ship_pos := Vector2.ZERO
 var ship_vel := Vector2.ZERO
@@ -466,7 +467,6 @@ func _exit_tree() -> void:
     if VirtualCursor != null:
         VirtualCursor.use_open_pit_empire_cursor(false)
         VirtualCursor.set_scene_enabled(false)
-    _save_planet_snapshot()
 
 func _unhandled_input(event: InputEvent) -> void:
     if run_finished:
@@ -909,6 +909,8 @@ func _process(delta: float) -> void:
     var perf_start_us := perf_probe_begin()
     pickups_spawned_this_frame = 0
     _run_perf_capture_time += delta
+    _frame_destroyed_blocks = 0
+    var frame_block_count_before: int = blocks.size()
     if run_finished:
         _update_finish_summary(delta)
         perf_probe_end("process_frame", perf_start_us)
@@ -965,6 +967,7 @@ func _process(delta: float) -> void:
         ship_root.global_position = ship_pos
     if fps_label != null:
         _update_perf_debug(delta)
+    _perf_probe_last_samples["net_block_drop_in_frame"] = float(maxi(0, frame_block_count_before - blocks.size()))
     perf_probe_end("process_frame", perf_start_us)
     _capture_run_perf_snapshot()
 
@@ -1630,6 +1633,7 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
             )
             _flush_breach_chat()
     if bool(result.get("destroyed", false)):
+        _frame_destroyed_blocks += _estimate_frame_destroyed_block_count(result)
         damaged_cells.erase(pos)
         persistent_destroyed_count += 1
         destroyed_cells_this_run[pos] = true
@@ -1677,6 +1681,19 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         _sync_planet_runtime_views(true, false)
     perf_probe_end("damage_block", perf_start_us)
     return result
+
+func _estimate_frame_destroyed_block_count(result: Dictionary) -> int:
+    if int(result.get("type", BlockType.NORMAL)) != BlockType.CORE:
+        return 1
+    var core_id: int = int(result.get("core_id", -1))
+    if planet_data == null or core_id < 0:
+        return 1
+    for core_variant in planet_data.cores:
+        var core: Dictionary = core_variant
+        if int(core.get("id", -1)) == core_id:
+            var size: int = int(core.get("size", 3))
+            return max(1, size * size)
+    return 1
 
 func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_visual_sync: bool = false) -> void:
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC, -8.0, -0.05)
@@ -2390,6 +2407,8 @@ func _reset_run_perf_tracking() -> void:
         "max_c_arcs": 0,
         "max_d_beams": 0,
         "max_blocks_alive": 0,
+        "max_blocks_cleared_in_frame": 0,
+        "max_net_block_drop_in_frame": 0,
     }
     _combat_perf_extremes = {
         "min_fps": 1000000,
@@ -2405,6 +2424,8 @@ func _reset_run_perf_tracking() -> void:
         "max_c_arcs": 0,
         "max_d_beams": 0,
         "max_blocks_alive": 0,
+        "max_blocks_cleared_in_frame": 0,
+        "max_net_block_drop_in_frame": 0,
     }
     _run_perf_worst_snapshot = {}
     _combat_perf_worst_snapshot = {}
@@ -2430,6 +2451,8 @@ func _capture_run_perf_snapshot() -> void:
     _run_perf_extremes["max_c_arcs"] = maxi(int(_run_perf_extremes.get("max_c_arcs", 0)), chain_arcs.size())
     _run_perf_extremes["max_d_beams"] = maxi(int(_run_perf_extremes.get("max_d_beams", 0)), drone_beams.size())
     _run_perf_extremes["max_blocks_alive"] = maxi(int(_run_perf_extremes.get("max_blocks_alive", 0)), blocks.size())
+    _run_perf_extremes["max_blocks_cleared_in_frame"] = maxi(int(_run_perf_extremes.get("max_blocks_cleared_in_frame", 0)), int(_frame_destroyed_blocks))
+    _run_perf_extremes["max_net_block_drop_in_frame"] = maxi(int(_run_perf_extremes.get("max_net_block_drop_in_frame", 0)), int(_perf_probe_last_samples.get("net_block_drop_in_frame", 0.0)))
     if planet_renderer != null:
         _run_perf_extremes["max_visible_cells"] = maxi(int(_run_perf_extremes.get("max_visible_cells", 0)), int(planet_renderer.get("_last_visible_cell_budget")))
         _run_perf_extremes["max_effect_load"] = maxi(int(_run_perf_extremes.get("max_effect_load", 0)), int(planet_renderer.get("_last_effect_load")))
@@ -2447,6 +2470,8 @@ func _capture_run_perf_snapshot() -> void:
         _combat_perf_extremes["max_c_arcs"] = maxi(int(_combat_perf_extremes.get("max_c_arcs", 0)), chain_arcs.size())
         _combat_perf_extremes["max_d_beams"] = maxi(int(_combat_perf_extremes.get("max_d_beams", 0)), drone_beams.size())
         _combat_perf_extremes["max_blocks_alive"] = maxi(int(_combat_perf_extremes.get("max_blocks_alive", 0)), blocks.size())
+        _combat_perf_extremes["max_blocks_cleared_in_frame"] = maxi(int(_combat_perf_extremes.get("max_blocks_cleared_in_frame", 0)), int(_frame_destroyed_blocks))
+        _combat_perf_extremes["max_net_block_drop_in_frame"] = maxi(int(_combat_perf_extremes.get("max_net_block_drop_in_frame", 0)), int(_perf_probe_last_samples.get("net_block_drop_in_frame", 0.0)))
         if planet_renderer != null:
             _combat_perf_extremes["max_visible_cells"] = maxi(int(_combat_perf_extremes.get("max_visible_cells", 0)), int(planet_renderer.get("_last_visible_cell_budget")))
             _combat_perf_extremes["max_effect_load"] = maxi(int(_combat_perf_extremes.get("max_effect_load", 0)), int(planet_renderer.get("_last_effect_load")))
@@ -2491,6 +2516,10 @@ func _build_run_perf_peak_probe_text() -> String:
         int(_run_perf_extremes.get("max_d_beams", 0)),
         int(_run_perf_extremes.get("max_blocks_alive", 0)),
     ])
+    lines.append("Run Block Peaks  cleared/frame %d  net drop/frame %d" % [
+        int(_run_perf_extremes.get("max_blocks_cleared_in_frame", 0)),
+        int(_run_perf_extremes.get("max_net_block_drop_in_frame", 0)),
+    ])
     return "\n".join(lines)
 
 func _build_run_perf_worst_snapshot_text() -> String:
@@ -2531,7 +2560,7 @@ func _build_run_perf_worst_snapshot_text() -> String:
         float(_run_perf_worst_snapshot.get("perf_graph_draw_ms", 0.0)),
     ])
     lines.append(str(_run_perf_worst_snapshot.get("planet_state", "")))
-    lines.append("Worst Counts  Pickups %d  HitFX %d  GoldFX %d  EArcs %d  CArcs %d  DBeams %d  Blocks %d" % [
+    lines.append("Worst Counts  Pickups %d  HitFX %d  GoldFX %d  EArcs %d  CArcs %d  DBeams %d  Blocks %d  Cleared %d  NetDrop %d" % [
         int(_run_perf_worst_snapshot.get("pickups", 0)),
         int(_run_perf_worst_snapshot.get("hit_fx", 0)),
         int(_run_perf_worst_snapshot.get("gold_fx", 0)),
@@ -2539,6 +2568,8 @@ func _build_run_perf_worst_snapshot_text() -> String:
         int(_run_perf_worst_snapshot.get("c_arcs", 0)),
         int(_run_perf_worst_snapshot.get("d_beams", 0)),
         int(_run_perf_worst_snapshot.get("blocks_alive", 0)),
+        int(_run_perf_worst_snapshot.get("blocks_cleared_in_frame", 0)),
+        int(_run_perf_worst_snapshot.get("net_block_drop_in_frame", 0)),
     ])
     var snapshot_camera: Vector2 = _run_perf_worst_snapshot.get("camera_pos", Vector2.ZERO)
     var snapshot_ship: Vector2 = _run_perf_worst_snapshot.get("ship_pos", Vector2.ZERO)
@@ -2583,7 +2614,7 @@ func _build_combat_perf_worst_snapshot_text() -> String:
         float(_combat_perf_worst_snapshot.get("perf_graph_draw_ms", 0.0)),
     ])
     lines.append(str(_combat_perf_worst_snapshot.get("planet_state", "")))
-    lines.append("Combat Worst Counts  Pickups %d  HitFX %d  GoldFX %d  EArcs %d  CArcs %d  DBeams %d  Blocks %d" % [
+    lines.append("Combat Worst Counts  Pickups %d  HitFX %d  GoldFX %d  EArcs %d  CArcs %d  DBeams %d  Blocks %d  Cleared %d  NetDrop %d" % [
         int(_combat_perf_worst_snapshot.get("pickups", 0)),
         int(_combat_perf_worst_snapshot.get("hit_fx", 0)),
         int(_combat_perf_worst_snapshot.get("gold_fx", 0)),
@@ -2591,6 +2622,8 @@ func _build_combat_perf_worst_snapshot_text() -> String:
         int(_combat_perf_worst_snapshot.get("c_arcs", 0)),
         int(_combat_perf_worst_snapshot.get("d_beams", 0)),
         int(_combat_perf_worst_snapshot.get("blocks_alive", 0)),
+        int(_combat_perf_worst_snapshot.get("blocks_cleared_in_frame", 0)),
+        int(_combat_perf_worst_snapshot.get("net_block_drop_in_frame", 0)),
     ])
     var snapshot_camera: Vector2 = _combat_perf_worst_snapshot.get("camera_pos", Vector2.ZERO)
     var snapshot_ship: Vector2 = _combat_perf_worst_snapshot.get("ship_pos", Vector2.ZERO)
@@ -2651,6 +2684,8 @@ func _make_perf_snapshot(fps_now: int, frame_ms: float, cpu_ms: float, phys_ms: 
         "c_arcs": chain_arcs.size(),
         "d_beams": drone_beams.size(),
         "blocks_alive": blocks.size(),
+        "blocks_cleared_in_frame": _frame_destroyed_blocks,
+        "net_block_drop_in_frame": int(_perf_probe_last_samples.get("net_block_drop_in_frame", 0.0)),
         "camera_pos": camera_pos,
         "ship_pos": ship_pos,
         "planet_state": planet_renderer.call("get_perf_state_text") if planet_renderer != null and planet_renderer.has_method("get_perf_state_text") else "",

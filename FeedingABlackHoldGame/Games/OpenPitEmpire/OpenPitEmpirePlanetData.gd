@@ -27,6 +27,8 @@ const FINAL_CORE_ID: int = 16
 const SAVE_X_SLICES: int = 10
 const SAVE_DEPTH_SLICES: int = 10
 const SAVE_SECTION_COUNT: int = SAVE_X_SLICES * SAVE_DEPTH_SLICES
+const ELECTRIC_CHAIN_MAX_TARGETS_PER_STEP: int = 8
+const ELECTRIC_CHAIN_MAX_TOTAL_RESULTS: int = 96
 
 enum Zone { PROXY, CIPHER, GHOST, ROOT, CENTER }
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
@@ -644,11 +646,13 @@ func regenerate_around_cores() -> int:
         _mark_dirty_positions(changed_positions)
     return regenerated
 
-func electric_chain(origin: Vector2i, damage: float, chain_range: int, chain_depth: int, current_depth: int = 0, free_planet_mode: bool = false) -> Array:
+func electric_chain(origin: Vector2i, damage: float, chain_range: int, chain_depth: int, current_depth: int = 0, free_planet_mode: bool = false, visited: Dictionary = {}, remaining_budget: int = ELECTRIC_CHAIN_MAX_TOTAL_RESULTS) -> Array:
     var results: Array = []
-    if current_depth >= chain_depth:
+    if current_depth >= chain_depth or remaining_budget <= 0:
         return results
-    var targets: Array[Vector2i] = []
+    if visited.is_empty():
+        visited[origin] = true
+    var targets: Array[Dictionary] = []
     for dx in range(-chain_range, chain_range + 1):
         for dy in range(-chain_range, chain_range + 1):
             if dx == 0 and dy == 0:
@@ -656,19 +660,43 @@ func electric_chain(origin: Vector2i, damage: float, chain_range: int, chain_dep
             if abs(dx) + abs(dy) > chain_range:
                 continue
             var pos := Vector2i(origin.x + dx, origin.y + dy)
-            if has_block(pos):
-                targets.append(pos)
+            if visited.has(pos) or not has_block(pos):
+                continue
+            targets.append({
+                "pos": pos,
+                "dist": abs(dx) + abs(dy),
+            })
+    targets.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+        var dist_a: int = int(a.get("dist", 0))
+        var dist_b: int = int(b.get("dist", 0))
+        if dist_a == dist_b:
+            var pos_a: Vector2i = a.get("pos", Vector2i.ZERO)
+            var pos_b: Vector2i = b.get("pos", Vector2i.ZERO)
+            if pos_a.x == pos_b.x:
+                return pos_a.y < pos_b.y
+            return pos_a.x < pos_b.x
+        return dist_a < dist_b
+    )
+    if targets.size() > ELECTRIC_CHAIN_MAX_TARGETS_PER_STEP:
+        targets.resize(ELECTRIC_CHAIN_MAX_TARGETS_PER_STEP)
     var erased_positions: Array[Vector2i] = []
-    for pos in targets:
+    for target in targets:
+        if remaining_budget <= 0:
+            break
+        var pos: Vector2i = target.get("pos", Vector2i.ZERO)
+        visited[pos] = true
         if not has_block(pos):
             continue
         var result: Dictionary = damage_block(pos, damage, true, free_planet_mode)
         result["pos"] = pos
         results.append(result)
+        remaining_budget -= 1
         if bool(result.get("destroyed", false)):
             erased_positions.append(pos)
-            if int(result.get("type", BlockType.NORMAL)) == BlockType.ELECTRIC:
-                results.append_array(electric_chain(pos, damage, chain_range, chain_depth, current_depth + 1, free_planet_mode))
+            if int(result.get("type", BlockType.NORMAL)) == BlockType.ELECTRIC and remaining_budget > 0:
+                var child_results: Array = electric_chain(pos, damage, chain_range, chain_depth, current_depth + 1, free_planet_mode, visited, remaining_budget)
+                results.append_array(child_results)
+                remaining_budget -= child_results.size()
     if not erased_positions.is_empty():
         _queue_edge_updates(erased_positions)
     return results
