@@ -10,7 +10,7 @@ const MOUSE_TOOLTIP_EXTRA_OFFSET: float = 18.0
 const TOOLTIP_GROUP: StringName = &"tech_tree_tooltips"
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const OPEN_PIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitEmpire/OpenPitEmpireProgress.gd")
-const OPEN_PIT_ORBIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd")
+var OPEN_PIT_ORBIT_PROGRESS_SCRIPT = load("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd")
 const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
 const TURKEY_PROGRESS_SCRIPT = preload("res://Games/Turkey/TurkeyProgress.gd")
 var REEL_INTO_DARKNESS_PROGRESS_SCRIPT = load("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
@@ -397,7 +397,7 @@ func _purchase_upgrade() -> void:
             update()
             return
     else:
-        if _is_open_pit_core_upgrade():
+        if _is_open_pit_core_upgrade() or _is_open_pit_xp_upgrade():
             var core_purchase_level: int = max(1, int(upgrade.sim_level) + int(upgrade.current_tier))
             if Util.is_open_pit_game_active():
                 OPEN_PIT_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, core_purchase_level, _get_tree_currency_amount() - int(cost))
@@ -427,7 +427,7 @@ func _purchase_upgrade() -> void:
         if CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
             SaveHandler.save_player_last_run()
             return
-        if _is_open_pit_core_upgrade():
+        if _is_open_pit_core_upgrade() or _is_open_pit_xp_upgrade():
             SaveHandler.save_player_last_run()
             return
         var new_amount: int = _get_tree_currency_amount()
@@ -629,6 +629,10 @@ func update():
     %Cost.visible = cost != 0
     if upgrade != null and CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
         %Cost.text = CROSS_GAME_BONUSES.get_cost_text(int(cost))
+    elif _is_open_pit_xp_upgrade():
+        %Cost.text = str("XP ", Util.get_number_short_text(cost))
+    elif _is_open_pit_core_upgrade():
+        %Cost.text = str("RK ", Util.get_number_short_text(cost))
     else:
         %Cost.text = str("$", Util.get_number_short_text(cost))
     if cost == 0:
@@ -729,12 +733,17 @@ func _get_theme_dark_color() -> Color:
     return Refs.pallet.act_1_dark
 
 func _get_tree_currency_amount() -> int:
+    if _is_open_pit_xp_upgrade():
+        return OPEN_PIT_PROGRESS_SCRIPT.get_xp_wallet() if Util.is_open_pit_game_active() else OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_xp_wallet()
     if _is_open_pit_core_upgrade():
         return OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet() if Util.is_open_pit_game_active() else OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet()
     return int(Global.global_resoruce_manager.get_resource_amount_by_type(Util.RESOURCE_TYPES.MONEY))
 
 func _is_open_pit_core_upgrade() -> bool:
     return (Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active()) and upgrade != null and str(upgrade.sim_key).begins_with("core:")
+
+func _is_open_pit_xp_upgrade() -> bool:
+    return (Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active()) and upgrade != null and str(upgrade.sim_key).begins_with("xp:")
 
 func _is_texture_icon_path(icon_value: String) -> bool:
     var trimmed: String = icon_value.strip_edges()

@@ -20,6 +20,36 @@ const MAX_SOFT_ELECTRIC_ARCS_DRAWN := 8
 const MAX_HARD_ELECTRIC_ARCS_DRAWN := 4
 const MAX_SOFT_CHAIN_ARCS_DRAWN := 8
 const MAX_HARD_CHAIN_ARCS_DRAWN := 4
+var SHIP_POINTS: PackedVector2Array = PackedVector2Array([
+    Vector2(-3.0, 15.0),
+    Vector2(-3.0, 0.0),
+    Vector2(-9.0, 0.0),
+    Vector2(-9.0, -3.0),
+    Vector2(-7.5, -3.0),
+    Vector2(-7.5, -6.0),
+    Vector2(-6.0, -6.0),
+    Vector2(-6.0, -9.0),
+    Vector2(-4.5, -9.0),
+    Vector2(-4.5, -12.0),
+    Vector2(-3.0, -12.0),
+    Vector2(-3.0, -15.0),
+    Vector2(-1.5, -15.0),
+    Vector2(-1.5, -18.0),
+    Vector2(3.0, -18.0),
+    Vector2(1.5, -15.0),
+    Vector2(3.0, -15.0),
+    Vector2(3.0, -12.0),
+    Vector2(4.5, -12.0),
+    Vector2(4.5, -9.0),
+    Vector2(6.0, -9.0),
+    Vector2(6.0, -6.0),
+    Vector2(7.5, -6.0),
+    Vector2(7.5, -3.0),
+    Vector2(9.0, -3.0),
+    Vector2(9.0, 0.0),
+    Vector2(3.0, 0.0),
+    Vector2(3.0, 15.0),
+])
 
 func _process(_delta: float) -> void:
     if scene_ref == null:
@@ -34,9 +64,12 @@ func _process(_delta: float) -> void:
     var drones_active := not scene_ref.drone_positions.is_empty() or not scene_ref.drone_beams.is_empty()
     var trail_active := not scene_ref.ship_trail.is_empty()
     var arcs_active := not scene_ref.electric_arcs.is_empty() or not scene_ref.chain_arcs.is_empty()
+    var side_projectiles_active := not scene_ref.side_projectiles.is_empty()
+    var side_attackers_active := not scene_ref.side_attackers.is_empty()
     var needs_redraw := false
-    if scene_ref.visual_rotation != _last_visual_rotation:
-        _last_visual_rotation = scene_ref.visual_rotation
+    var render_rotation := scene_ref.get_ship_render_rotation()
+    if render_rotation != _last_visual_rotation:
+        _last_visual_rotation = render_rotation
         needs_redraw = true
     if int(scene_ref.barriers_left) != _last_barriers_left:
         _last_barriers_left = int(scene_ref.barriers_left)
@@ -68,7 +101,7 @@ func _process(_delta: float) -> void:
     if render_detail_mode != _last_render_detail_mode:
         _last_render_detail_mode = render_detail_mode
         needs_redraw = true
-    if attack_visible or mega_active or overdrive_active or invuln_active or drones_active or trail_active or arcs_active or extraction_progress > 0.0 or extraction_visible:
+    if attack_visible or mega_active or overdrive_active or invuln_active or drones_active or trail_active or arcs_active or side_projectiles_active or side_attackers_active or extraction_progress > 0.0 or extraction_visible:
         needs_redraw = true
     if needs_redraw:
         queue_redraw()
@@ -97,17 +130,12 @@ func _draw() -> void:
     _draw_ship_trail(ship_line)
     _draw_extraction_zone()
 
-    draw_set_transform(Vector2.ZERO, scene_ref.visual_rotation)
-    var ship_points := PackedVector2Array([
-        Vector2(0.0, -14.0),
-        Vector2(-10.0, 10.0),
-        Vector2(10.0, 10.0),
-    ])
-    draw_colored_polygon(ship_points, ship_fill)
-    for idx in range(ship_points.size()):
-        draw_line(ship_points[idx], ship_points[(idx + 1) % ship_points.size()], ship_line, 2.0)
-    draw_circle(Vector2(-5.0, 9.0), 2.5, ship_line)
-    draw_circle(Vector2(5.0, 9.0), 2.5, ship_line)
+    draw_set_transform(Vector2.ZERO, scene_ref.get_ship_render_rotation())
+    draw_colored_polygon(SHIP_POINTS, ship_fill)
+    for idx in range(SHIP_POINTS.size()):
+        draw_line(SHIP_POINTS[idx], SHIP_POINTS[(idx + 1) % SHIP_POINTS.size()], ship_line, 2.0)
+    draw_line(Vector2(0.0, -12.0), Vector2(0.0, 9.0), ship_line, 2.0)
+    draw_rect(Rect2(Vector2(-1.0, 4.0), Vector2(2.0, 7.0)), ship_line, false, 2.0)
     draw_set_transform(Vector2.ZERO, 0.0)
 
     if scene_ref.mega_timer > 0.0:
@@ -118,6 +146,8 @@ func _draw() -> void:
     _draw_electric_arcs(vp)
     _draw_chain_arcs(vp)
     _draw_drones(vp)
+    _draw_side_attackers()
+    _draw_side_projectiles()
     scene_ref.perf_probe_end("ship_draw", perf_start_us)
 
 func _draw_extraction_zone() -> void:
@@ -178,11 +208,10 @@ func _draw_ship_trail(ship_line: Color) -> void:
         if alpha <= 0.0:
             continue
         var rot := float(trail.get("rot", 0.0))
-        var ghost_points := PackedVector2Array([
-            Vector2(0.0, -14.0).rotated(rot) + local_pos,
-            Vector2(-10.0, 10.0).rotated(rot) + local_pos,
-            Vector2(10.0, 10.0).rotated(rot) + local_pos,
-        ])
+        var ghost_points := PackedVector2Array()
+        ghost_points.resize(SHIP_POINTS.size())
+        for point_idx in range(SHIP_POINTS.size()):
+            ghost_points[point_idx] = SHIP_POINTS[point_idx].rotated(rot) + local_pos
         for idx in range(ghost_points.size()):
             draw_line(
                 ghost_points[idx],
@@ -248,28 +277,43 @@ func _draw_drones(vp: float) -> void:
     for idx in range(scene_ref.drone_positions.size()):
         var drone_pos := scene_ref.drone_positions[idx]
         var local := drone_pos - scene_ref.ship_pos
-        var drone_rot := scene_ref.visual_rotation
-        var drone_points := PackedVector2Array([
-            local + Vector2(0.0, -6.0).rotated(drone_rot),
-            local + Vector2(-4.0, 4.0).rotated(drone_rot),
-            local + Vector2(4.0, 4.0).rotated(drone_rot),
-        ])
-        draw_colored_polygon(drone_points, Color(0.02, 0.04, 0.03, 0.95))
-        for j in range(drone_points.size()):
-            draw_line(drone_points[j], drone_points[(j + 1) % drone_points.size()], Color(0.3, 2.0, 0.6, 1.0), 1.5)
-        var glow_alpha := 0.06 + (sin(scene_ref.ship_glow_phase + float(idx) * 2.0) + 1.0) * 0.03
-        draw_circle(local, 9.0, Color(0.2, 1.5, 0.4, glow_alpha))
+        var glow_alpha := 0.08 + (sin(scene_ref.ship_glow_phase * 1.7 + float(idx) * 1.8) + 1.0) * 0.04
+        draw_circle(local, 7.5, Color(1.0, 0.88, 0.22, glow_alpha))
+        draw_circle(local, 3.2, Color(1.0, 0.84, 0.16, 0.98))
+        draw_circle(local + Vector2(1.0, -1.0), 1.1, Color(1.0, 0.97, 0.55, 1.0))
     for beam in scene_ref.drone_beams:
         var alpha := clampf(float(beam.get("timer", 0.0)) / scene_ref.DRONE_BEAM_DURATION, 0.0, 1.0)
         draw_line(
             Vector2(beam.get("from", Vector2.ZERO)) - scene_ref.ship_pos,
             Vector2(beam.get("to", Vector2.ZERO)) - scene_ref.ship_pos,
-            Color(0.2, 1.5, 0.4, alpha * 0.3),
+            Color(1.0, 0.85, 0.2, alpha * 0.3),
             6.0 + vp * 3.0
         )
         draw_line(
             Vector2(beam.get("from", Vector2.ZERO)) - scene_ref.ship_pos,
             Vector2(beam.get("to", Vector2.ZERO)) - scene_ref.ship_pos,
-            Color(0.3, 2.0, 0.6, alpha),
+            Color(1.0, 0.92, 0.3, alpha),
             1.4 + vp * 0.6
         )
+
+func _draw_side_projectiles() -> void:
+    for projectile_variant in scene_ref.side_projectiles:
+        var projectile: Dictionary = projectile_variant
+        var local := Vector2(projectile.get("position", Vector2.ZERO)) - scene_ref.ship_pos
+        var vel := Vector2(projectile.get("velocity", Vector2.ZERO))
+        draw_circle(local, 7.0, Color(1.0, 0.25, 0.15, 0.14))
+        if vel.length() > 0.01:
+            draw_line(local, local - vel.normalized() * 14.0, Color(1.0, 0.55, 0.2, 0.95), 2.0)
+        draw_circle(local, 3.0, Color(1.0, 0.82, 0.42, 1.0))
+
+func _draw_side_attackers() -> void:
+    for attacker_variant in scene_ref.side_attackers:
+        var attacker: Dictionary = attacker_variant
+        var local := Vector2(attacker.get("position", Vector2.ZERO)) - scene_ref.ship_pos
+        var side: float = float(attacker.get("side", -1))
+        draw_circle(local, 18.0, Color(1.0, 0.18, 0.15, 0.08))
+        draw_circle(local, 10.5, Color(0.22, 0.03, 0.03, 0.95))
+        draw_arc(local, 11.5, PI * 0.1, PI * 1.9, 24, Color(1.0, 0.28, 0.22, 0.95), 2.2)
+        draw_line(local + Vector2(-4.0, -2.0), local + Vector2(4.0, -2.0), Color(1.0, 0.86, 0.52, 0.95), 1.6)
+        draw_line(local, local + Vector2(side * 14.0, 0.0), Color(1.0, 0.42, 0.2, 0.8), 2.0)
+        draw_line(local + Vector2(0.0, 7.0), local + Vector2(side * 10.0, 12.0), Color(1.0, 0.28, 0.18, 0.8), 1.4)

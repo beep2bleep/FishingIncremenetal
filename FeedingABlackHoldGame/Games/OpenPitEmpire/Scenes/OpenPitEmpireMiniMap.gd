@@ -1,7 +1,6 @@
 extends Control
 class_name OpenPitEmpireMiniMap
 
-const PLANET_RADIUS := 280
 const BLOCK_TYPE_NORMAL := 0
 const BLOCK_TYPE_CORE := 1
 const BLOCK_TYPE_ELECTRIC := 2
@@ -17,8 +16,6 @@ var _redraw_timer := 0.0
 const MAP_SIZE := 200.0
 const MAP_MARGIN := 12.0
 const REDRAW_INTERVAL := 1.0
-const BG_COLOR := Color(0.02, 0.02, 0.05, 0.85)
-const BORDER_COLOR := Color(0.3, 1.0, 1.2, 0.4)
 const PLAYER_COLOR := Color(0.5, 1.8, 2.0)
 const CORE_ALIVE := Color(2.0, 0.3, 0.08)
 const CORE_LOCKED := Color(0.4, 0.4, 0.45)
@@ -61,8 +58,9 @@ func _process(_delta: float) -> void:
 func _on_block_erased(pos: Vector2i) -> void:
     if cached_image == null:
         return
-    var px := int(round(float(pos.x) * _map_scale() + MAP_SIZE * 0.5))
-    var py := int(round(float(pos.y) * _map_scale() + MAP_SIZE * 0.5))
+    var map_pos := _grid_to_map(pos)
+    var px := int(round(map_pos.x))
+    var py := int(round(map_pos.y))
     if px < 0 or px >= int(MAP_SIZE) or py < 0 or py >= int(MAP_SIZE):
         return
     cached_image.set_pixel(px, py, Color(0, 0, 0, 0))
@@ -71,8 +69,9 @@ func _on_block_erased(pos: Vector2i) -> void:
 func _on_block_spawned(pos: Vector2i, block_type: int) -> void:
     if cached_image == null:
         return
-    var px := int(round(float(pos.x) * _map_scale() + MAP_SIZE * 0.5))
-    var py := int(round(float(pos.y) * _map_scale() + MAP_SIZE * 0.5))
+    var map_pos := _grid_to_map(pos)
+    var px := int(round(map_pos.x))
+    var py := int(round(map_pos.y))
     if px < 0 or px >= int(MAP_SIZE) or py < 0 or py >= int(MAP_SIZE):
         return
     cached_image.set_pixel(px, py, _color_for_type(block_type))
@@ -88,7 +87,11 @@ func _rebuild_map_image() -> void:
         for py in range(img_size):
             var gx := int(round((float(px) - MAP_SIZE * 0.5) / _map_scale()))
             var gy := int(round((float(py) - MAP_SIZE * 0.5) / _map_scale()))
-            var grid := Vector2i(gx, gy)
+            var bounds: Rect2 = planet_data.get_map_bounds()
+            var grid := Vector2i(
+                int(round(float(bounds.position.x) + bounds.size.x * 0.5 + gx)),
+                int(round(float(bounds.position.y) + bounds.size.y * 0.5 + gy))
+            )
             var block: Variant = planet_data.blocks.get(grid, null)
             if block == null:
                 continue
@@ -99,8 +102,6 @@ func _draw() -> void:
     if planet_data == null or scene_ref == null:
         return
     var map_center := Vector2(MAP_SIZE * 0.5, MAP_SIZE * 0.5)
-    var map_radius := MAP_SIZE * 0.5
-    draw_circle(map_center, MAP_SIZE * 0.5 + 2.0, BG_COLOR)
     if cached_texture != null:
         draw_texture(cached_texture, Vector2.ZERO)
     for core in planet_data.cores:
@@ -130,20 +131,22 @@ func _draw() -> void:
         )
     draw_circle(spawn_pos, 2.5, Color(RETURN_ZONE_COLOR.r, RETURN_ZONE_COLOR.g, RETURN_ZONE_COLOR.b, 0.8))
     var ship_pos := _world_to_map(scene_ref.ship_pos)
-    var ship_offset := ship_pos - map_center
-    if ship_offset.length() > map_radius - 5.0:
-        ship_pos = map_center + ship_offset.normalized() * (map_radius - 5.0)
     draw_circle(ship_pos, 3.0, PLAYER_COLOR)
     draw_circle(ship_pos, 5.0, Color(PLAYER_COLOR.r, PLAYER_COLOR.g, PLAYER_COLOR.b, 0.3))
-    draw_arc(map_center, MAP_SIZE * 0.5, 0.0, TAU, 64, BORDER_COLOR, 1.5)
 
 func _map_scale() -> float:
-    return MAP_SIZE / float(PLANET_RADIUS * 2)
+    if planet_data == null:
+        return 1.0
+    var bounds: Rect2 = planet_data.get_map_bounds()
+    var max_dim := maxf(bounds.size.x, bounds.size.y)
+    return (MAP_SIZE - 4.0) / maxf(max_dim, 1.0)
 
 func _world_to_map(world_pos: Vector2) -> Vector2:
     var map_center := Vector2(MAP_SIZE * 0.5, MAP_SIZE * 0.5)
     var grid_pos := world_pos / maxf(scene_ref.BLOCK_SIZE, 0.001)
-    return Vector2(grid_pos.x * _map_scale(), grid_pos.y * _map_scale()) + map_center
+    var bounds: Rect2 = planet_data.get_map_bounds() if planet_data != null else Rect2(-100.0, -100.0, 200.0, 200.0)
+    var centered := Vector2(grid_pos.x - bounds.position.x - bounds.size.x * 0.5, grid_pos.y - bounds.position.y - bounds.size.y * 0.5)
+    return centered * _map_scale() + map_center
 
 func _color_for_type(block_type: int) -> Color:
     match block_type:
@@ -155,3 +158,9 @@ func _color_for_type(block_type: int) -> Color:
             return GOLD_COLOR if scene_ref != null and (bool(scene_ref.runtime_stats.get("gold_enabled", false)) or bool(scene_ref.runtime_stats.get("shockwave_enabled", false))) else BLOCK_COLOR
         _:
             return BLOCK_COLOR
+
+func _grid_to_map(pos: Vector2i) -> Vector2:
+    var map_center := Vector2(MAP_SIZE * 0.5, MAP_SIZE * 0.5)
+    var bounds: Rect2 = planet_data.get_map_bounds() if planet_data != null else Rect2(-100.0, -100.0, 200.0, 200.0)
+    var centered := Vector2(float(pos.x) - bounds.position.x - bounds.size.x * 0.5, float(pos.y) - bounds.position.y - bounds.size.y * 0.5)
+    return centered * _map_scale() + map_center

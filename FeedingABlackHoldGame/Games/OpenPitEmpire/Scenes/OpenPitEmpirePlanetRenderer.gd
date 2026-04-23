@@ -5,6 +5,7 @@ var scene_ref: OpenPitEmpireMain
 var _force_redraw := true
 var _last_cam_origin := Vector2.INF
 var _fill_image: Image
+var _fill_shift_image: Image
 var _fill_texture: ImageTexture
 var _fill_prewarm_image: Image
 var _edge_image: Image
@@ -47,6 +48,10 @@ var _fill_scrub_next_row := 0
 var _fill_scrub_changed := false
 
 const SPACE_BG := Color(0.025, 0.025, 0.035, 1.0)
+const PIT_GLOW := Color(0.52, 0.08, 0.08, 0.72)
+const PIT_WALL_FILL := Color(0.2, 0.04, 0.05, 0.96)
+const PIT_WALL_EDGE := Color(1.0, 0.24, 0.2, 0.96)
+const PIT_WALL_SHADOW := Color(0.14, 0.0, 0.0, 0.46)
 const HIT_GLOW := Color(2.3, 1.2, 0.4, 0.55)
 const GOLD_GLOW := Color(2.6, 2.0, 0.4, 0.45)
 const STAR_COLORS := [
@@ -66,8 +71,8 @@ const HEAVY_REDUCED_FILL_MIN_CELLS := 80
 const ULTRA_REDUCED_FILL_MIN_CELLS := 72
 const REDUCED_FILL_PREWARM_ROWS_PER_DRAW := 16
 const REDUCED_FILL_PREWARM_TRIGGER_CELLS := 20
-const REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS := 4
-const REDUCED_FILL_RECENTER_MARGIN_CELLS := 12
+const REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS := 0
+const REDUCED_FILL_RECENTER_MARGIN_CELLS := 4
 const HEAVY_OUTLINE_CACHE_PADDING_CELLS := 0
 const ULTRA_OUTLINE_CACHE_PADDING_CELLS := 0
 const OUTLINE_CACHE_ALIGN_CELLS := 4
@@ -96,24 +101,24 @@ const ZONE_AUTUMN := 2
 const ZONE_WINTER := 3
 const ZONE_CENTER := 4
 const ZONE_FILLS := {
-    ZONE_SPRING: Color(0.07, 0.15, 0.09, 0.68),
-    ZONE_SUMMER: Color(0.19, 0.15, 0.06, 0.68),
-    ZONE_AUTUMN: Color(0.18, 0.08, 0.06, 0.68),
-    ZONE_WINTER: Color(0.07, 0.09, 0.19, 0.68),
+    ZONE_SPRING: Color(0.07, 0.09, 0.19, 0.68),
+    ZONE_SUMMER: Color(0.07, 0.15, 0.09, 0.68),
+    ZONE_AUTUMN: Color(0.19, 0.15, 0.06, 0.68),
+    ZONE_WINTER: Color(0.18, 0.08, 0.06, 0.68),
     ZONE_CENTER: Color(0.13, 0.08, 0.17, 0.68),
 }
 const ZONE_EDGE_COLORS := {
-    ZONE_SPRING: Color(0.3, 1.8, 0.5),
-    ZONE_SUMMER: Color(2.0, 1.8, 0.3),
-    ZONE_AUTUMN: Color(2.0, 0.35, 0.1),
-    ZONE_WINTER: Color(0.5, 1.2, 2.2),
+    ZONE_SPRING: Color(0.5, 1.2, 2.2),
+    ZONE_SUMMER: Color(0.3, 1.8, 0.5),
+    ZONE_AUTUMN: Color(2.0, 1.8, 0.3),
+    ZONE_WINTER: Color(2.0, 0.35, 0.1),
     ZONE_CENTER: Color(1.2, 0.4, 2.0),
 }
 const ZONE_RING_COLORS := {
-    ZONE_SPRING: Color(0.3, 1.5, 0.4, 0.3),
-    ZONE_SUMMER: Color(2.0, 1.5, 0.2, 0.3),
-    ZONE_AUTUMN: Color(2.0, 0.3, 0.08, 0.3),
-    ZONE_WINTER: Color(0.3, 0.8, 2.0, 0.3),
+    ZONE_SPRING: Color(0.3, 0.8, 2.0, 0.3),
+    ZONE_SUMMER: Color(0.3, 1.5, 0.4, 0.3),
+    ZONE_AUTUMN: Color(2.0, 1.5, 0.2, 0.3),
+    ZONE_WINTER: Color(2.0, 0.3, 0.08, 0.3),
     ZONE_CENTER: Color(1.2, 0.25, 2.0, 0.3),
 }
 const THORN_FILL := Color(0.04, 0.01, 0.03, 0.7)
@@ -176,7 +181,11 @@ func _process(_delta: float) -> void:
     elif not scene_ref.gold_convert_timers.is_empty() and _gold_effect_redraw_accum >= GOLD_EFFECT_REDRAW_INTERVAL:
         needs_redraw = true
         _gold_effect_redraw_accum = 0.0
+    if not scene_ref.roaming_powerups.is_empty():
+        needs_redraw = true
     if not scene_ref.shockwave_rings.is_empty():
+        needs_redraw = true
+    if scene_ref.final_core_exposed:
         needs_redraw = true
     if _fill_prewarm_image != null and not _fill_prewarm_ready:
         needs_redraw = true
@@ -317,6 +326,7 @@ func _draw() -> void:
     )
     var section_start_us := scene_ref.perf_probe_begin()
     draw_rect(background_rect, SPACE_BG, true)
+    _draw_pit_shell(visible_grid_min, visible_grid_max)
     if ultra_reduce_detail:
         _draw_background_stars(true, true)
     elif not reduce_detail:
@@ -556,10 +566,11 @@ func _draw() -> void:
                 2.0
             )
 
-    _draw_summer_lasers(ultra_reduce_detail)
     if not ultra_reduce_detail:
         _draw_autumn_debris()
         _draw_winter_cross_lasers()
+        _draw_roaming_powerups()
+        _draw_final_funnel()
     if not reduce_detail:
         _draw_core_shields()
     scene_ref.perf_probe_end("renderer_overlays", section_start_us)
@@ -727,8 +738,7 @@ func _paint_fill_region_into(image: Image, image_origin: Vector2i, grid_min: Vec
             image.set_pixel(x - image_origin.x, y - image_origin.y, colors.get("fill", Color.WHITE))
 
 func _shift_fill_image_with_overlap(old_origin: Vector2i, new_origin: Vector2i, grid_size: Vector2i) -> void:
-    var new_image := Image.create(grid_size.x, grid_size.y, false, Image.FORMAT_RGBA8)
-    new_image.fill(Color.TRANSPARENT)
+    var new_image := _get_shift_fill_image(grid_size)
     var old_max := Vector2i(old_origin.x + grid_size.x - 1, old_origin.y + grid_size.y - 1)
     var new_max := Vector2i(new_origin.x + grid_size.x - 1, new_origin.y + grid_size.y - 1)
     var overlap_min := Vector2i(maxi(old_origin.x, new_origin.x), maxi(old_origin.y, new_origin.y))
@@ -739,7 +749,9 @@ func _shift_fill_image_with_overlap(old_origin: Vector2i, new_origin: Vector2i, 
         var overlap_size := Vector2i(overlap_max.x - overlap_min.x + 1, overlap_max.y - overlap_min.y + 1)
         var dst_pos := Vector2i(overlap_min.x - new_origin.x, overlap_min.y - new_origin.y)
         new_image.blit_rect(_fill_image, Rect2i(src_pos, overlap_size), dst_pos)
+    var old_fill_image := _fill_image
     _fill_image = new_image
+    _fill_shift_image = old_fill_image
     _fill_grid_origin = new_origin
     _fill_grid_size = grid_size
     if not has_overlap:
@@ -753,6 +765,12 @@ func _shift_fill_image_with_overlap(old_origin: Vector2i, new_origin: Vector2i, 
         _paint_fill_region(Vector2i(new_origin.x, overlap_min.y), Vector2i(overlap_min.x - 1, overlap_max.y))
     if overlap_max.x < new_max.x:
         _paint_fill_region(Vector2i(overlap_max.x + 1, overlap_min.y), Vector2i(new_max.x, overlap_max.y))
+
+func _get_shift_fill_image(grid_size: Vector2i) -> Image:
+    if _fill_shift_image == null or _fill_shift_image.get_width() != grid_size.x or _fill_shift_image.get_height() != grid_size.y:
+        _fill_shift_image = Image.create(grid_size.x, grid_size.y, false, Image.FORMAT_RGBA8)
+    _fill_shift_image.fill(Color.TRANSPARENT)
+    return _fill_shift_image
 
 func _clear_fill_prewarm() -> void:
     _fill_prewarm_image = null
@@ -954,14 +972,21 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
     var zone: int = int(block.get("zone", ZONE_AUTUMN))
     var block_type: int = int(block.get("type", 0))
     var regenerated: bool = bool(block.get("regenerated", false))
+    var unbreakable: bool = bool(block.get("unbreakable", false))
     var electric_enabled: bool = bool(scene_ref.runtime_stats.get("electric_enabled", false))
     var gold_enabled: bool = bool(scene_ref.runtime_stats.get("gold_enabled", false))
     var hardness_tier: int = _get_visual_hardness_tier(block)
-    var cache_key := "%d:%d:%d:%d:%d:%d" % [zone, block_type, int(regenerated), int(electric_enabled), int(gold_enabled), hardness_tier]
+    var cache_key := "%d:%d:%d:%d:%d:%d:%d" % [zone, block_type, int(regenerated), int(electric_enabled), int(gold_enabled), hardness_tier, int(unbreakable)]
     if _palette_cache.has(cache_key):
         return _palette_cache[cache_key]
     var fill: Color = ZONE_FILLS.get(zone, SPACE_BG)
     var edge: Color = ZONE_EDGE_COLORS.get(zone, Color.WHITE)
+    if unbreakable:
+        fill = PIT_WALL_FILL
+        edge = PIT_WALL_EDGE
+        var wall_palette := {"fill": fill, "edge": edge}
+        _palette_cache[cache_key] = wall_palette
+        return wall_palette
     match block_type:
         scene_ref.BlockType.CORE:
             fill = _mix_fill_with_edge(ZONE_FILLS.get(zone, Color(0.11, 0.07, 0.08, 1.0)), ZONE_EDGE_COLORS.get(zone, Color(1.0, 1.0, 1.0, 1.0)), 0.32)
@@ -1034,6 +1059,35 @@ func _draw_core_zones() -> void:
             draw_circle(center, world_radius, Color(0.15, 0.8, 1.0, 0.06))
             draw_arc(center, world_radius, 0.0, TAU, 24, Color(0.15, 0.8, 1.0, 0.12), 1.0)
 
+func _draw_pit_shell(visible_grid_min: Vector2i, visible_grid_max: Vector2i) -> void:
+    if scene_ref == null or scene_ref.planet_data == null:
+        return
+    var start_y := maxi(visible_grid_min.y - 4, scene_ref.planet_data.get_upper_wall_top_y())
+    var end_y := mini(visible_grid_max.y + 4, scene_ref.planet_data.PIT_BOTTOM_Y)
+    if end_y < start_y:
+        return
+    var left_points := PackedVector2Array()
+    var right_points := PackedVector2Array()
+    for y in range(start_y, end_y + 1):
+        var left_x: int = scene_ref.planet_data.get_left_wall_x(y)
+        var right_x: int = scene_ref.planet_data.get_right_wall_x(y)
+        left_points.append(scene_ref.grid_to_world(Vector2i(left_x, y)))
+        right_points.append(scene_ref.grid_to_world(Vector2i(right_x, y)))
+    if left_points.size() >= 2:
+        for idx in range(left_points.size() - 1):
+            var a := left_points[idx]
+            var b := left_points[idx + 1]
+            draw_line(a + Vector2(-64.0, 0.0), a, PIT_WALL_SHADOW, 42.0)
+            draw_line(a, b, PIT_WALL_EDGE, 12.0)
+            draw_line(a + Vector2(-28.0, 0.0), b + Vector2(-28.0, 0.0), Color(PIT_GLOW.r, PIT_GLOW.g, PIT_GLOW.b, 0.42), 24.0)
+    if right_points.size() >= 2:
+        for idx in range(right_points.size() - 1):
+            var a := right_points[idx]
+            var b := right_points[idx + 1]
+            draw_line(a + Vector2(64.0, 0.0), a, PIT_WALL_SHADOW, 42.0)
+            draw_line(a, b, PIT_WALL_EDGE, 12.0)
+            draw_line(a + Vector2(28.0, 0.0), b + Vector2(28.0, 0.0), Color(PIT_GLOW.r, PIT_GLOW.g, PIT_GLOW.b, 0.42), 24.0)
+
 func _draw_core_shields() -> void:
     if scene_ref == null or scene_ref.planet_data == null:
         return
@@ -1046,29 +1100,6 @@ func _draw_core_shields() -> void:
         var dome_radius := (float(int(core.get("size", 3))) * 0.5 + 2.0) * scene_ref.BLOCK_SIZE
         draw_circle(center, dome_radius, Color(0.2, 0.5, 1.0, 0.08))
         draw_arc(center, dome_radius, 0.0, TAU, 24, Color(0.3, 0.6, 1.0, 0.65), 1.5)
-
-func _draw_summer_lasers(compact: bool = false) -> void:
-    for state_variant in scene_ref.summer_laser_states.values():
-        var state: Dictionary = state_variant
-        var origin: Vector2 = state.get("origin", Vector2.ZERO)
-        var dir: Vector2 = Vector2(state.get("dir", Vector2.RIGHT)).normalized()
-        if dir.length() < 0.01:
-            continue
-        var end := origin + dir * scene_ref.BLOCK_SIZE * 40.0
-        var color := Color(2.2, 0.9, 0.2, 0.9)
-        if compact:
-            if str(state.get("state", "idle")) == "warning":
-                var compact_pulse := 0.45 + 0.2 * (sin(_time_elapsed * 10.0) + 1.0) * 0.5
-                draw_line(origin, end, Color(color.r, color.g, color.b, compact_pulse), 4.0)
-            elif str(state.get("state", "idle")) == "firing":
-                draw_line(origin, end, Color(1.0, 0.42, 0.12, 0.92), 7.0)
-            continue
-        if str(state.get("state", "idle")) == "warning":
-            var pulse := 0.35 + 0.25 * (sin(_time_elapsed * 10.0) + 1.0) * 0.5
-            draw_line(origin, end, Color(color.r, color.g, color.b, pulse), 3.0)
-        elif str(state.get("state", "idle")) == "firing":
-            draw_line(origin, end, Color(color.r, color.g, color.b, 0.2), 12.0)
-            draw_line(origin, end, color, 3.0)
 
 func _draw_autumn_debris() -> void:
     for debris_variant in scene_ref.autumn_debris:
@@ -1104,3 +1135,58 @@ func _draw_winter_cross_lasers() -> void:
                 var finish := origin + dir * (length * end_t)
                 draw_line(start, finish, Color(0.3, 0.8, 2.0, 0.18), 10.0)
                 draw_line(start, finish, Color(0.4, 1.0, 2.5, 0.85), 2.0)
+
+func _draw_roaming_powerups() -> void:
+    for powerup_variant in scene_ref.roaming_powerups:
+        var powerup: Dictionary = powerup_variant
+        var pos: Vector2 = powerup.get("position", Vector2.ZERO)
+        var powerup_type := str(powerup.get("type", "haste"))
+        var color := Color(0.7, 1.0, 0.82, 0.95)
+        match powerup_type:
+            "haste":
+                color = Color(1.0, 0.7, 0.24, 0.95)
+            "magnet":
+                color = Color(0.35, 1.0, 0.95, 0.95)
+            "payload":
+                color = Color(0.95, 0.48, 1.0, 0.95)
+        var pulse := 0.7 + 0.3 * (sin(_time_elapsed * 6.0 + float(powerup.get("phase", 0.0))) + 1.0) * 0.5
+        draw_circle(pos, 12.0, Color(color.r, color.g, color.b, 0.12 * pulse))
+        draw_arc(pos, 10.0, 0.0, TAU, 22, Color(color.r, color.g, color.b, 0.78), 2.0)
+        draw_circle(pos, 4.0, Color(color.r, color.g, color.b, 1.0))
+
+func _draw_final_funnel() -> void:
+    if not scene_ref.final_core_exposed or scene_ref.planet_data == null:
+        return
+    var anchor_grid := scene_ref.world_to_grid(scene_ref.bottom_cutscene_anchor)
+    var start_y: int = maxi(scene_ref.PLANET_DATA_SCRIPT.PIT_TOP_Y + 120, anchor_grid.y - 92)
+    var end_y: int = mini(scene_ref.PLANET_DATA_SCRIPT.PIT_BOTTOM_Y, anchor_grid.y + 10)
+    if end_y <= start_y:
+        return
+    var left_points := PackedVector2Array()
+    var right_points := PackedVector2Array()
+    for y in range(start_y, end_y + 1, 8):
+        left_points.append(
+            scene_ref.grid_to_world(
+                Vector2i(scene_ref.planet_data.get_left_wall_x(y) + scene_ref.PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS, y)
+            )
+        )
+        right_points.append(
+            scene_ref.grid_to_world(
+                Vector2i(scene_ref.planet_data.get_right_wall_x(y) - scene_ref.PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS, y)
+            )
+        )
+    if left_points.size() < 2 or right_points.size() < 2:
+        return
+    var fill_points := PackedVector2Array()
+    for point in left_points:
+        fill_points.append(point)
+    for idx in range(right_points.size() - 1, -1, -1):
+        fill_points.append(right_points[idx])
+    var pulse := 0.55 + 0.45 * sin(_time_elapsed * 3.2)
+    draw_colored_polygon(fill_points, Color(0.18, 0.05, 0.02, 0.14 + pulse * 0.05))
+    for idx in range(left_points.size() - 1):
+        draw_line(left_points[idx], left_points[idx + 1], Color(1.0, 0.2, 0.12, 0.78), 3.0)
+        draw_line(right_points[idx], right_points[idx + 1], Color(1.0, 0.2, 0.12, 0.78), 3.0)
+    draw_line(left_points[0], right_points[0], Color(1.0, 0.32, 0.16, 0.36), 5.0)
+    draw_circle(scene_ref.bottom_cutscene_anchor, 28.0 + pulse * 6.0, Color(1.0, 0.2, 0.14, 0.08))
+    draw_arc(scene_ref.bottom_cutscene_anchor, 20.0 + pulse * 4.0, 0.0, TAU, 28, Color(1.0, 0.5, 0.22, 0.92), 2.4)

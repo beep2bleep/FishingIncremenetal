@@ -1,10 +1,46 @@
 extends CanvasLayer
 
+class SparkCanvas extends Node2D:
+    var owner_ref: CanvasLayer
+
+    func _draw() -> void:
+        if owner_ref == null:
+            return
+        var sparks: Array = owner_ref.get("_open_pit_cursor_sparks")
+        var base_color: Color = owner_ref.get("_open_pit_cursor_color")
+        if sparks.is_empty():
+            return
+        for spark_variant in sparks:
+            var spark: Dictionary = spark_variant
+            var max_life := maxf(float(spark.get("max_life", 0.3)), 0.001)
+            var alpha := clampf(float(spark.get("life", 0.0)) / max_life, 0.0, 1.0)
+            var color := Color(spark.get("color", base_color))
+            color.a = alpha
+            var pos := Vector2(spark.get("pos", Vector2.ZERO))
+            var vel := Vector2(spark.get("vel", Vector2.ZERO))
+            if vel.length() > 0.01:
+                draw_line(pos, pos - vel.normalized() * lerpf(2.0, 9.0, alpha), color, 1.5)
+            draw_circle(pos, lerpf(0.8, 2.0, alpha), color)
+
 const CURSOR_TEXTURE: Texture2D = preload("res://Art/pointer_c.png")
 const CURSOR_SPEED := 1400.0
 const STICK_DEADZONE := 0.2
 const CURSOR_LAYER := 200
 const OPEN_PIT_ORBIT_CURSOR_SIZE := 5
+const OPEN_PIT_CURSOR_COLOR := Color(0.88, 0.97, 1.0, 1.0)
+const OPEN_PIT_CURSOR_SPARK_COUNT := 12
+const OPEN_PIT_CURSOR_SHADER_CODE := """
+shader_type canvas_item;
+
+uniform sampler2D screen_tex : hint_screen_texture, filter_nearest;
+
+void fragment() {
+    vec4 cursor_tex = texture(TEXTURE, UV);
+    vec4 under = texture(screen_tex, SCREEN_UV);
+    vec3 inverted = vec3(1.0) - under.rgb;
+    COLOR = vec4(inverted, cursor_tex.a);
+}
+"""
 
 var _scene_enabled := false
 var _virtual_cursor_active := false
@@ -19,6 +55,12 @@ var _cursor_sprite: TextureRect
 var _cursor_texture: Texture2D
 var _cursor_hotspot := Vector2.ZERO
 var _open_pit_orbit_cursor_texture: Texture2D
+var _open_pit_cursor_enabled := false
+var _open_pit_cursor_shader: Shader
+var _open_pit_cursor_material: ShaderMaterial
+var _open_pit_cursor_color := OPEN_PIT_CURSOR_COLOR
+var _open_pit_cursor_sparks: Array[Dictionary] = []
+var _spark_canvas: SparkCanvas
 
 func _ready() -> void:
     layer = CURSOR_LAYER
@@ -35,6 +77,11 @@ func _ready() -> void:
     _cursor_sprite.z_index = 1000
     _cursor_sprite.hide()
     add_child(_cursor_sprite)
+    _spark_canvas = SparkCanvas.new()
+    _spark_canvas.owner_ref = self
+    _spark_canvas.top_level = true
+    _spark_canvas.z_index = 999
+    add_child(_spark_canvas)
     set_process(true)
     set_process_input(true)
     get_viewport().size_changed.connect(_on_viewport_size_changed)
@@ -78,15 +125,45 @@ func is_injecting_mouse_event() -> bool:
     return _injecting_mouse_event
 
 func use_open_pit_orbit_cursor(enabled: bool) -> void:
+    _open_pit_cursor_enabled = enabled
     if enabled:
         if _open_pit_orbit_cursor_texture == null:
             _open_pit_orbit_cursor_texture = _build_open_pit_orbit_cursor_texture()
+        if _open_pit_cursor_material == null:
+            _ensure_open_pit_cursor_material()
         _set_cursor_texture(_open_pit_orbit_cursor_texture, Vector2(2.0, 2.0))
+        if _cursor_sprite != null:
+            _cursor_sprite.modulate = _open_pit_cursor_color
+            _cursor_sprite.material = _open_pit_cursor_material
     else:
         _set_cursor_texture(CURSOR_TEXTURE, Vector2.ZERO)
+        if _cursor_sprite != null:
+            _cursor_sprite.modulate = Color.WHITE
+            _cursor_sprite.material = null
+    _refresh_cursor_display_mode()
 
 func use_open_pit_empire_cursor(enabled: bool) -> void:
     use_open_pit_orbit_cursor(enabled)
+
+func set_open_pit_empire_cursor_combo(combo_ratio: float) -> void:
+    var t := clampf(combo_ratio, 0.0, 1.0)
+    _open_pit_cursor_color = OPEN_PIT_CURSOR_COLOR.lerp(Color(1.0, 0.18, 0.12, 1.0), t)
+    if _cursor_sprite != null and _open_pit_cursor_enabled:
+        _cursor_sprite.modulate = _open_pit_cursor_color
+
+func burst_open_pit_empire_cursor_sparks(intensity: float = 1.0) -> void:
+    var count := maxi(6, int(round(OPEN_PIT_CURSOR_SPARK_COUNT * clampf(intensity, 0.5, 2.0))))
+    for _i in range(count):
+        var max_life := randf_range(0.22, 0.42)
+        _open_pit_cursor_sparks.append({
+            "pos": _cursor_position,
+            "vel": Vector2.from_angle(randf() * TAU) * randf_range(44.0, 118.0) * clampf(intensity, 0.5, 2.0),
+            "life": max_life,
+            "max_life": max_life,
+            "color": _open_pit_cursor_color.lerp(Color(1.0, 0.9, 0.65, 1.0), randf_range(0.25, 0.85)),
+        })
+    if _spark_canvas != null:
+        _spark_canvas.queue_redraw()
 
 func _input(event: InputEvent) -> void:
     if not _scene_enabled:
@@ -139,6 +216,17 @@ func _input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
     if not _scene_enabled:
         return
+    for idx in range(_open_pit_cursor_sparks.size() - 1, -1, -1):
+        var spark := _open_pit_cursor_sparks[idx]
+        spark["life"] = float(spark.get("life", 0.0)) - delta
+        if float(spark.get("life", 0.0)) <= 0.0:
+            _open_pit_cursor_sparks.remove_at(idx)
+            continue
+        spark["pos"] = Vector2(spark.get("pos", Vector2.ZERO)) + Vector2(spark.get("vel", Vector2.ZERO)) * delta
+        spark["vel"] = Vector2(spark.get("vel", Vector2.ZERO)) * pow(0.18, delta)
+        _open_pit_cursor_sparks[idx] = spark
+    if _spark_canvas != null and not _open_pit_cursor_sparks.is_empty():
+        _spark_canvas.queue_redraw()
     var device := _get_target_device()
     if device == -1:
         return
@@ -207,8 +295,7 @@ func _set_virtual_cursor_active(value: bool) -> void:
     if _virtual_cursor_active == value:
         return
     _virtual_cursor_active = value
-    Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN if _virtual_cursor_active else Input.MOUSE_MODE_VISIBLE)
-    _cursor_sprite.visible = _virtual_cursor_active and _scene_enabled
+    _refresh_cursor_display_mode()
     _update_cursor_visual()
 
 func _sync_cursor_to_mouse() -> void:
@@ -226,6 +313,8 @@ func _update_cursor_visual() -> void:
     if _cursor_sprite == null:
         return
     _cursor_sprite.position = _cursor_position - _cursor_hotspot
+    if _spark_canvas != null:
+        _spark_canvas.position = Vector2.ZERO
 
 func _set_cursor_texture(texture: Texture2D, hotspot: Vector2) -> void:
     _cursor_texture = texture
@@ -243,6 +332,21 @@ func _build_open_pit_orbit_cursor_texture() -> Texture2D:
         for y in range(OPEN_PIT_ORBIT_CURSOR_SIZE):
             image.set_pixel(x, y, Color.WHITE)
     return ImageTexture.create_from_image(image)
+
+func _ensure_open_pit_cursor_material() -> void:
+    if _open_pit_cursor_material != null:
+        return
+    _open_pit_cursor_shader = Shader.new()
+    _open_pit_cursor_shader.code = OPEN_PIT_CURSOR_SHADER_CODE
+    _open_pit_cursor_material = ShaderMaterial.new()
+    _open_pit_cursor_material.shader = _open_pit_cursor_shader
+
+func _refresh_cursor_display_mode() -> void:
+    if _cursor_sprite == null:
+        return
+    var force_sprite_cursor: bool = _open_pit_cursor_enabled and _scene_enabled
+    Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN if force_sprite_cursor or _virtual_cursor_active else Input.MOUSE_MODE_VISIBLE)
+    _cursor_sprite.visible = _scene_enabled and (force_sprite_cursor or _virtual_cursor_active)
 
 func _clamp_to_viewport(position: Vector2) -> Vector2:
     var viewport := get_viewport()

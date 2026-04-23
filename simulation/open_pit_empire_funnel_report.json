@@ -1,0 +1,1681 @@
+{
+  "scenario": {
+    "name": "ultra_expensive_2",
+    "power_scale": 1.16,
+    "economy_scale": 0.82,
+    "hazard_scale": 0.98,
+    "mastery_scale": 1.05,
+    "xp_scale": 0.56,
+    "money_cost_scale": 2.3,
+    "xp_cost_scale": 2.4,
+    "core_cost_scale": 1.35,
+    "late_cost_scale": 3.2,
+    "end_cost_scale": 4.4
+  },
+  "mode": "full",
+  "summary": {
+    "runs": 57,
+    "progress_at_30m": 0.4453,
+    "bottom_of_first_funnel_minutes": 69.234,
+    "second_funnel_defeated_minutes": 125.646,
+    "demo_gate_reached_minutes": 0.0,
+    "avg_purchases_per_run": 2.982,
+    "no_purchase_runs": 0,
+    "demo_gate_zone": "Root Well",
+    "demo_gate_clear": 0.58
+  },
+  "runs": [
+    {
+      "run": 1,
+      "zone": "Proxy Cache",
+      "start_min": 0.0,
+      "end_min": 1.067,
+      "survived": true,
+      "barriers_taken": 1.09,
+      "barriers_available": 1,
+      "blocks_cleared": 104.7,
+      "zone_clear_before": 0.0,
+      "zone_clear_after": 3.5,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 439,
+      "xp_earned": 70,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Laser Cutter 1",
+        "Laser Cutter 2"
+      ],
+      "wallets_after": {
+        "money": 87,
+        "xp": 70,
+        "cores": 0
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 2,
+      "zone": "Proxy Cache",
+      "start_min": 1.067,
+      "end_min": 2.133,
+      "survived": true,
+      "barriers_taken": 1.07,
+      "barriers_available": 1,
+      "blocks_cleared": 153.4,
+      "zone_clear_before": 3.5,
+      "zone_clear_after": 8.6,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 526,
+      "xp_earned": 103,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Laser Cutter 3",
+        "Packet Sniffer 1",
+        "Cargo Racks 1"
+      ],
+      "wallets_after": {
+        "money": 131,
+        "xp": 66,
+        "cores": 0
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 3,
+      "zone": "Proxy Cache",
+      "start_min": 2.133,
+      "end_min": 3.2,
+      "survived": true,
+      "barriers_taken": 1.03,
+      "barriers_available": 1,
+      "blocks_cleared": 181.3,
+      "zone_clear_before": 8.6,
+      "zone_clear_after": 14.6,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 617,
+      "xp_earned": 156,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Laser Cutter 4",
+        "Packet Sniffer 2",
+        "Cargo Racks 2"
+      ],
+      "wallets_after": {
+        "money": 7,
+        "xp": 36,
+        "cores": 0
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 4,
+      "zone": "Proxy Cache",
+      "start_min": 3.2,
+      "end_min": 4.267,
+      "survived": true,
+      "barriers_taken": 0.99,
+      "barriers_available": 1,
+      "blocks_cleared": 211.3,
+      "zone_clear_before": 14.6,
+      "zone_clear_after": 21.7,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 711,
+      "xp_earned": 221,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Cargo Racks 3",
+        "Trace Scrubber 1",
+        "Fuel Cells 1"
+      ],
+      "wallets_after": {
+        "money": 235,
+        "xp": 97,
+        "cores": 0
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 5,
+      "zone": "Proxy Cache",
+      "start_min": 4.267,
+      "end_min": 5.533,
+      "survived": true,
+      "barriers_taken": 0.94,
+      "barriers_available": 1,
+      "blocks_cleared": 406.5,
+      "zone_clear_before": 21.7,
+      "zone_clear_after": 35.2,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 1103,
+      "xp_earned": 426,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Laser Cutter 5",
+        "Packet Sniffer 3",
+        "Cargo Racks 4"
+      ],
+      "wallets_after": {
+        "money": 16,
+        "xp": 197,
+        "cores": 0
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 6,
+      "zone": "Proxy Cache",
+      "start_min": 5.533,
+      "end_min": 6.8,
+      "survived": true,
+      "barriers_taken": 0.85,
+      "barriers_available": 1,
+      "blocks_cleared": 378.3,
+      "zone_clear_before": 35.2,
+      "zone_clear_after": 100.0,
+      "core_damage": 3735.3,
+      "core_destroyed": true,
+      "money_earned": 1092,
+      "xp_earned": 468,
+      "core_earned": 2,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Cargo Racks 5",
+        "Packet Sniffer 4",
+        "Signal Sniffer 1"
+      ],
+      "wallets_after": {
+        "money": 310,
+        "xp": 94,
+        "cores": 1
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 7,
+      "zone": "Cipher Depths",
+      "start_min": 6.8,
+      "end_min": 8.099,
+      "survived": true,
+      "barriers_taken": 1.14,
+      "barriers_available": 1,
+      "blocks_cleared": 128.7,
+      "zone_clear_before": 0.0,
+      "zone_clear_after": 2.5,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 1099,
+      "xp_earned": 275,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Laser Cutter 6",
+        "Trace Scrubber 2",
+        "Ghost Entry 1"
+      ],
+      "wallets_after": {
+        "money": 174,
+        "xp": 89,
+        "cores": 0
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 8,
+      "zone": "Cipher Depths",
+      "start_min": 8.099,
+      "end_min": 9.483,
+      "survived": true,
+      "barriers_taken": 1.12,
+      "barriers_available": 1,
+      "blocks_cleared": 167.0,
+      "zone_clear_before": 2.5,
+      "zone_clear_after": 5.7,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 1293,
+      "xp_earned": 357,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Cargo Racks 6",
+        "Heap Climber 1",
+        "Fuel Cells 2"
+      ],
+      "wallets_after": {
+        "money": 40,
+        "xp": 260,
+        "cores": 0
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 9,
+      "zone": "Cipher Depths",
+      "start_min": 9.483,
+      "end_min": 10.988,
+      "survived": true,
+      "barriers_taken": 1.1,
+      "barriers_available": 1,
+      "blocks_cleared": 186.0,
+      "zone_clear_before": 5.7,
+      "zone_clear_after": 9.3,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 1478,
+      "xp_earned": 397,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Fuel Cells 3",
+        "Trace Scrubber 3",
+        "Fuel Cells 4"
+      ],
+      "wallets_after": {
+        "money": 672,
+        "xp": 167,
+        "cores": 0
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 10,
+      "zone": "Cipher Depths",
+      "start_min": 10.988,
+      "end_min": 12.819,
+      "survived": true,
+      "barriers_taken": 1.07,
+      "barriers_available": 1,
+      "blocks_cleared": 235.4,
+      "zone_clear_before": 9.3,
+      "zone_clear_after": 13.8,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 1727,
+      "xp_earned": 503,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Laser Cutter 7",
+        "Heap Climber 2",
+        "Rapid Cycle 1"
+      ],
+      "wallets_after": {
+        "money": 324,
+        "xp": 334,
+        "cores": 0
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 11,
+      "zone": "Cipher Depths",
+      "start_min": 12.819,
+      "end_min": 14.649,
+      "survived": true,
+      "barriers_taken": 1.04,
+      "barriers_available": 1,
+      "blocks_cleared": 301.0,
+      "zone_clear_before": 13.8,
+      "zone_clear_after": 19.6,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 2108,
+      "xp_earned": 643,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Cargo Racks 7",
+        "Trace Scrubber 4",
+        "Rapid Cycle 2"
+      ],
+      "wallets_after": {
+        "money": 334,
+        "xp": 120,
+        "cores": 0
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 12,
+      "zone": "Cipher Depths",
+      "start_min": 14.649,
+      "end_min": 16.566,
+      "survived": true,
+      "barriers_taken": 1.0,
+      "barriers_available": 1,
+      "blocks_cleared": 365.3,
+      "zone_clear_before": 19.6,
+      "zone_clear_after": 26.6,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 2480,
+      "xp_earned": 781,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Fuel Cells 5",
+        "Heap Climber 3",
+        "Fuel Cells 6"
+      ],
+      "wallets_after": {
+        "money": 782,
+        "xp": 297,
+        "cores": 0
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 13,
+      "zone": "Cipher Depths",
+      "start_min": 16.566,
+      "end_min": 18.723,
+      "survived": true,
+      "barriers_taken": 0.95,
+      "barriers_available": 1,
+      "blocks_cleared": 635.9,
+      "zone_clear_before": 26.6,
+      "zone_clear_after": 38.8,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 3900,
+      "xp_earned": 1359,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Laser Cutter 8",
+        "Heap Climber 4",
+        "Rapid Cycle 3"
+      ],
+      "wallets_after": {
+        "money": 1314,
+        "xp": 568,
+        "cores": 0
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 14,
+      "zone": "Cipher Depths",
+      "start_min": 18.723,
+      "end_min": 20.88,
+      "survived": true,
+      "barriers_taken": 0.86,
+      "barriers_available": 1,
+      "blocks_cleared": 635.8,
+      "zone_clear_before": 38.8,
+      "zone_clear_after": 100.0,
+      "core_damage": 20109.5,
+      "core_destroyed": true,
+      "money_earned": 3953,
+      "xp_earned": 1359,
+      "core_earned": 2,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Rapid Cycle 4",
+        "Cache Warmers 1",
+        "Rapid Cycle 5"
+      ],
+      "wallets_after": {
+        "money": 3629,
+        "xp": 1776,
+        "cores": 2
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 15,
+      "zone": "Ghost Sector",
+      "start_min": 20.88,
+      "end_min": 23.138,
+      "survived": true,
+      "barriers_taken": 1.06,
+      "barriers_available": 1,
+      "blocks_cleared": 333.2,
+      "zone_clear_before": 0.0,
+      "zone_clear_after": 4.1,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 5189,
+      "xp_earned": 1108,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Rapid Cycle 6",
+        "Cache Warmers 2",
+        "Rapid Cycle 7"
+      ],
+      "wallets_after": {
+        "money": 4728,
+        "xp": 2620,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 16,
+      "zone": "Ghost Sector",
+      "start_min": 23.138,
+      "end_min": 25.441,
+      "survived": true,
+      "barriers_taken": 0.88,
+      "barriers_available": 1,
+      "blocks_cleared": 445.1,
+      "zone_clear_before": 4.1,
+      "zone_clear_after": 9.5,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 6682,
+      "xp_earned": 1480,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Ore Appraisal 1",
+        "Cache Warmers 3",
+        "Ore Appraisal 2"
+      ],
+      "wallets_after": {
+        "money": 10932,
+        "xp": 3638,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 17,
+      "zone": "Ghost Sector",
+      "start_min": 25.441,
+      "end_min": 27.787,
+      "survived": true,
+      "barriers_taken": 0.73,
+      "barriers_available": 1,
+      "blocks_cleared": 505.6,
+      "zone_clear_before": 9.5,
+      "zone_clear_after": 15.7,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 9111,
+      "xp_earned": 1681,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Ore Appraisal 3",
+        "Cache Warmers 4",
+        "Ore Appraisal 4"
+      ],
+      "wallets_after": {
+        "money": 18818,
+        "xp": 4510,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 18,
+      "zone": "Ghost Sector",
+      "start_min": 27.787,
+      "end_min": 30.178,
+      "survived": true,
+      "barriers_taken": 0.62,
+      "barriers_available": 1,
+      "blocks_cleared": 571.6,
+      "zone_clear_before": 15.7,
+      "zone_clear_after": 22.6,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 12035,
+      "xp_earned": 1900,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Ore Appraisal 5",
+        "Deep Scan 1",
+        "Ore Appraisal 6"
+      ],
+      "wallets_after": {
+        "money": 27718,
+        "xp": 6170,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 19,
+      "zone": "Ghost Sector",
+      "start_min": 30.178,
+      "end_min": 32.569,
+      "survived": true,
+      "barriers_taken": 0.59,
+      "barriers_available": 1,
+      "blocks_cleared": 983.2,
+      "zone_clear_before": 22.6,
+      "zone_clear_after": 34.6,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 23316,
+      "xp_earned": 3268,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Barrier Mesh 1",
+        "Deep Scan 2",
+        "Barrier Mesh 2"
+      ],
+      "wallets_after": {
+        "money": 50100,
+        "xp": 8994,
+        "cores": 2
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 20,
+      "zone": "Ghost Sector",
+      "start_min": 32.569,
+      "end_min": 34.959,
+      "survived": true,
+      "barriers_taken": 0.43,
+      "barriers_available": 3,
+      "blocks_cleared": 900.5,
+      "zone_clear_before": 34.6,
+      "zone_clear_after": 45.6,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 21418,
+      "xp_earned": 2993,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Barrier Mesh 3",
+        "Deep Scan 3",
+        "Shock Bits 1"
+      ],
+      "wallets_after": {
+        "money": 69919,
+        "xp": 11166,
+        "cores": 2
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 21,
+      "zone": "Ghost Sector",
+      "start_min": 34.959,
+      "end_min": 37.35,
+      "survived": true,
+      "barriers_taken": 0.31,
+      "barriers_available": 4,
+      "blocks_cleared": 1272.0,
+      "zone_clear_before": 45.6,
+      "zone_clear_after": 100.0,
+      "core_damage": 87712.8,
+      "core_destroyed": true,
+      "money_earned": 29947,
+      "xp_earned": 4228,
+      "core_earned": 3,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Kernel Breach 1",
+        "Shock Bits 2",
+        "Deep Scan 4"
+      ],
+      "wallets_after": {
+        "money": 99101,
+        "xp": 13876,
+        "cores": 1
+      },
+      "mastery_note": "2.0x layer breaker"
+    },
+    {
+      "run": 22,
+      "zone": "Kernel Vault",
+      "start_min": 37.35,
+      "end_min": 39.803,
+      "survived": true,
+      "barriers_taken": 0.56,
+      "barriers_available": 4,
+      "blocks_cleared": 629.7,
+      "zone_clear_before": 0.0,
+      "zone_clear_after": 5.2,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 31027,
+      "xp_earned": 2542,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Shock Bits 3",
+        "Sidechannel 1",
+        "Shock Bits 4"
+      ],
+      "wallets_after": {
+        "money": 126448,
+        "xp": 16107,
+        "cores": 1
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 23,
+      "zone": "Kernel Vault",
+      "start_min": 39.803,
+      "end_min": 42.255,
+      "survived": true,
+      "barriers_taken": 0.54,
+      "barriers_available": 4,
+      "blocks_cleared": 747.2,
+      "zone_clear_before": 5.2,
+      "zone_clear_after": 11.5,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 40270,
+      "xp_earned": 3016,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Breach Drones 1",
+        "Sidechannel 2",
+        "Breach Drones 2"
+      ],
+      "wallets_after": {
+        "money": 165044,
+        "xp": 18532,
+        "cores": 1
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 24,
+      "zone": "Kernel Vault",
+      "start_min": 42.255,
+      "end_min": 44.708,
+      "survived": true,
+      "barriers_taken": 0.52,
+      "barriers_available": 4,
+      "blocks_cleared": 975.5,
+      "zone_clear_before": 11.5,
+      "zone_clear_after": 19.6,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 57043,
+      "xp_earned": 3938,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Breach Drones 3",
+        "Sidechannel 3",
+        "Breach Drones 4"
+      ],
+      "wallets_after": {
+        "money": 216661,
+        "xp": 21348,
+        "cores": 1
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 25,
+      "zone": "Kernel Vault",
+      "start_min": 44.708,
+      "end_min": 47.16,
+      "survived": true,
+      "barriers_taken": 0.49,
+      "barriers_available": 4,
+      "blocks_cleared": 1219.7,
+      "zone_clear_before": 19.6,
+      "zone_clear_after": 29.8,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 77000,
+      "xp_earned": 4923,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Salvage Contract 1",
+        "Sidechannel 4",
+        "Salvage Contract 2"
+      ],
+      "wallets_after": {
+        "money": 292270,
+        "xp": 24139,
+        "cores": 1
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 26,
+      "zone": "Kernel Vault",
+      "start_min": 47.16,
+      "end_min": 49.613,
+      "survived": true,
+      "barriers_taken": 0.46,
+      "barriers_available": 4,
+      "blocks_cleared": 1862.4,
+      "zone_clear_before": 29.8,
+      "zone_clear_after": 45.3,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 126138,
+      "xp_earned": 7517,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Salvage Contract 3",
+        "Zero-Day 1",
+        "Salvage Contract 4"
+      ],
+      "wallets_after": {
+        "money": 414146,
+        "xp": 31123,
+        "cores": 1
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 27,
+      "zone": "Kernel Vault",
+      "start_min": 49.613,
+      "end_min": 52.066,
+      "survived": true,
+      "barriers_taken": 0.36,
+      "barriers_available": 4,
+      "blocks_cleared": 1478.7,
+      "zone_clear_before": 45.3,
+      "zone_clear_after": 100.0,
+      "core_damage": 209160.1,
+      "core_destroyed": true,
+      "money_earned": 100304,
+      "xp_earned": 7879,
+      "core_earned": 3,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Funnel Resonance 1",
+        "Zero-Day 2",
+        "Barrier Patch 1"
+      ],
+      "wallets_after": {
+        "money": 513484,
+        "xp": 37936,
+        "cores": 1
+      },
+      "mastery_note": "2.0x layer breaker"
+    },
+    {
+      "run": 28,
+      "zone": "Root Well",
+      "start_min": 52.066,
+      "end_min": 54.518,
+      "survived": true,
+      "barriers_taken": 0.77,
+      "barriers_available": 5,
+      "blocks_cleared": 1078.7,
+      "zone_clear_before": 0.0,
+      "zone_clear_after": 5.4,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 110863,
+      "xp_earned": 8821,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Funnel Resonance 2",
+        "Zero-Day 3",
+        "Funnel Resonance 3"
+      ],
+      "wallets_after": {
+        "money": 619025,
+        "xp": 44626,
+        "cores": 1
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 29,
+      "zone": "Root Well",
+      "start_min": 54.518,
+      "end_min": 56.971,
+      "survived": true,
+      "barriers_taken": 0.74,
+      "barriers_available": 5,
+      "blocks_cleared": 1337.1,
+      "zone_clear_before": 5.4,
+      "zone_clear_after": 12.1,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 137240,
+      "xp_earned": 13068,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Funnel Resonance 4",
+        "Crash Cartography 1",
+        "Daemon Lances 1"
+      ],
+      "wallets_after": {
+        "money": 748443,
+        "xp": 57028,
+        "cores": 1
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 30,
+      "zone": "Root Well",
+      "start_min": 56.971,
+      "end_min": 59.424,
+      "survived": true,
+      "barriers_taken": 0.71,
+      "barriers_available": 5,
+      "blocks_cleared": 1492.4,
+      "zone_clear_before": 12.1,
+      "zone_clear_after": 19.5,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 153088,
+      "xp_earned": 14585,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Daemon Lances 2",
+        "Crash Cartography 2",
+        "Daemon Lances 3"
+      ],
+      "wallets_after": {
+        "money": 895225,
+        "xp": 70281,
+        "cores": 1
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 31,
+      "zone": "Root Well",
+      "start_min": 59.424,
+      "end_min": 61.876,
+      "survived": true,
+      "barriers_taken": 0.68,
+      "barriers_available": 5,
+      "blocks_cleared": 1058.4,
+      "zone_clear_before": 19.5,
+      "zone_clear_after": 24.8,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 108785,
+      "xp_earned": 10344,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Daemon Lances 4",
+        "Crash Cartography 3",
+        "Root Breaker 1"
+      ],
+      "wallets_after": {
+        "money": 989224,
+        "xp": 77961,
+        "cores": 1
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 32,
+      "zone": "Root Well",
+      "start_min": 61.876,
+      "end_min": 64.329,
+      "survived": true,
+      "barriers_taken": 0.65,
+      "barriers_available": 5,
+      "blocks_cleared": 1972.5,
+      "zone_clear_before": 24.8,
+      "zone_clear_after": 34.7,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 202100,
+      "xp_earned": 19277,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Root Breaker 2",
+        "Kernel Rehearsal 1",
+        "Root Breaker 3"
+      ],
+      "wallets_after": {
+        "money": 1148047,
+        "xp": 94681,
+        "cores": 1
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 33,
+      "zone": "Root Well",
+      "start_min": 64.329,
+      "end_min": 66.782,
+      "survived": true,
+      "barriers_taken": 0.6,
+      "barriers_available": 5,
+      "blocks_cleared": 2683.9,
+      "zone_clear_before": 34.7,
+      "zone_clear_after": 48.1,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 274722,
+      "xp_earned": 26229,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Overburn Reactors 1",
+        "Kernel Rehearsal 2",
+        "Overburn Reactors 2"
+      ],
+      "wallets_after": {
+        "money": 1385012,
+        "xp": 115667,
+        "cores": 1
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 34,
+      "zone": "Root Well",
+      "start_min": 66.782,
+      "end_min": 69.234,
+      "survived": true,
+      "barriers_taken": 0.48,
+      "barriers_available": 5,
+      "blocks_cleared": 2901.1,
+      "zone_clear_before": 48.1,
+      "zone_clear_after": 100.0,
+      "core_damage": 3823310.2,
+      "core_destroyed": true,
+      "money_earned": 296898,
+      "xp_earned": 28352,
+      "core_earned": 4,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Overburn Reactors 3",
+        "Kernel Rehearsal 3",
+        "Backdoor Exit 1"
+      ],
+      "wallets_after": {
+        "money": 1636569,
+        "xp": 133271,
+        "cores": 2
+      },
+      "mastery_note": "2.0x layer breaker"
+    },
+    {
+      "run": 35,
+      "zone": "Mirror Shelf",
+      "start_min": 69.234,
+      "end_min": 71.687,
+      "survived": true,
+      "barriers_taken": 1.05,
+      "barriers_available": 5,
+      "blocks_cleared": 593.2,
+      "zone_clear_before": 0.0,
+      "zone_clear_after": 1.0,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 114127,
+      "xp_earned": 7454,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Overburn Reactors 4",
+        "Deep Manifest 1",
+        "Seismic Lattice 1"
+      ],
+      "wallets_after": {
+        "money": 1647679,
+        "xp": 137031,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 36,
+      "zone": "Mirror Shelf",
+      "start_min": 71.687,
+      "end_min": 74.14,
+      "survived": true,
+      "barriers_taken": 1.05,
+      "barriers_available": 5,
+      "blocks_cleared": 833.9,
+      "zone_clear_before": 1.0,
+      "zone_clear_after": 2.4,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 172891,
+      "xp_earned": 10479,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Seismic Lattice 2",
+        "Deep Manifest 2",
+        "Seismic Lattice 3"
+      ],
+      "wallets_after": {
+        "money": 1719675,
+        "xp": 140122,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 37,
+      "zone": "Mirror Shelf",
+      "start_min": 74.14,
+      "end_min": 76.592,
+      "survived": true,
+      "barriers_taken": 1.04,
+      "barriers_available": 5,
+      "blocks_cleared": 1175.7,
+      "zone_clear_before": 2.4,
+      "zone_clear_after": 4.3,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 261426,
+      "xp_earned": 14774,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Seismic Lattice 4",
+        "Deep Manifest 3",
+        "Mantle Drills 1"
+      ],
+      "wallets_after": {
+        "money": 1793699,
+        "xp": 140120,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 38,
+      "zone": "Mirror Shelf",
+      "start_min": 76.592,
+      "end_min": 79.045,
+      "survived": true,
+      "barriers_taken": 1.03,
+      "barriers_available": 5,
+      "blocks_cleared": 1585.0,
+      "zone_clear_before": 4.3,
+      "zone_clear_after": 7.0,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 376396,
+      "xp_earned": 19916,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Mantle Drills 2",
+        "Deep Manifest 4",
+        "Mantle Drills 3"
+      ],
+      "wallets_after": {
+        "money": 1798727,
+        "xp": 130483,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 39,
+      "zone": "Mirror Shelf",
+      "start_min": 79.045,
+      "end_min": 81.498,
+      "survived": true,
+      "barriers_taken": 1.01,
+      "barriers_available": 5,
+      "blocks_cleared": 2071.2,
+      "zone_clear_before": 7.0,
+      "zone_clear_after": 10.4,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 523314,
+      "xp_earned": 26026,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Mantle Drills 4",
+        "Thermal Mapping 1",
+        "Fault Charges 1"
+      ],
+      "wallets_after": {
+        "money": 1772242,
+        "xp": 149121,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 40,
+      "zone": "Mirror Shelf",
+      "start_min": 81.498,
+      "end_min": 83.95,
+      "survived": true,
+      "barriers_taken": 0.99,
+      "barriers_available": 5,
+      "blocks_cleared": 2514.8,
+      "zone_clear_before": 10.4,
+      "zone_clear_after": 14.6,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 635230,
+      "xp_earned": 31599,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Fault Charges 2",
+        "Thermal Mapping 2",
+        "Fault Charges 3"
+      ],
+      "wallets_after": {
+        "money": 1941750,
+        "xp": 165574,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 41,
+      "zone": "Mirror Shelf",
+      "start_min": 83.95,
+      "end_min": 86.403,
+      "survived": true,
+      "barriers_taken": 0.96,
+      "barriers_available": 5,
+      "blocks_cleared": 1567.9,
+      "zone_clear_before": 14.6,
+      "zone_clear_after": 17.2,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 396327,
+      "xp_earned": 19701,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Fault Charges 4",
+        "Thermal Mapping 3",
+        "Void Cutters 1"
+      ],
+      "wallets_after": {
+        "money": 1601756,
+        "xp": 154226,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 42,
+      "zone": "Mirror Shelf",
+      "start_min": 86.403,
+      "end_min": 88.856,
+      "survived": true,
+      "barriers_taken": 0.94,
+      "barriers_available": 5,
+      "blocks_cleared": 2025.8,
+      "zone_clear_before": 17.2,
+      "zone_clear_after": 20.6,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 511846,
+      "xp_earned": 25455,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Void Cutters 2",
+        "Thermal Mapping 4",
+        "Void Cutters 3"
+      ],
+      "wallets_after": {
+        "money": 1331188,
+        "xp": 116031,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 43,
+      "zone": "Mirror Shelf",
+      "start_min": 88.856,
+      "end_min": 91.308,
+      "survived": true,
+      "barriers_taken": 0.92,
+      "barriers_available": 5,
+      "blocks_cleared": 4391.0,
+      "zone_clear_before": 20.6,
+      "zone_clear_after": 27.9,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 1108591,
+      "xp_earned": 55174,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Void Cutters 4",
+        "Vault Heuristics 1",
+        "Inversion Drives 1"
+      ],
+      "wallets_after": {
+        "money": 1243434,
+        "xp": 149950,
+        "cores": 2
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 44,
+      "zone": "Mirror Shelf",
+      "start_min": 91.308,
+      "end_min": 93.761,
+      "survived": true,
+      "barriers_taken": 0.87,
+      "barriers_available": 5,
+      "blocks_cleared": 6151.8,
+      "zone_clear_before": 27.9,
+      "zone_clear_after": 38.2,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 1552859,
+      "xp_earned": 77300,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Void Cutters 5",
+        "Vault Heuristics 2",
+        "Inversion Drives 2"
+      ],
+      "wallets_after": {
+        "money": 472811,
+        "xp": 183677,
+        "cores": 2
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 45,
+      "zone": "Mirror Shelf",
+      "start_min": 93.761,
+      "end_min": 96.214,
+      "survived": true,
+      "barriers_taken": 0.8,
+      "barriers_available": 5,
+      "blocks_cleared": 5339.7,
+      "zone_clear_before": 38.2,
+      "zone_clear_after": 47.1,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 1347942,
+      "xp_earned": 67094,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Inversion Drives 3",
+        "Vault Heuristics 3",
+        "Vault Pulsers 1"
+      ],
+      "wallets_after": {
+        "money": 559785,
+        "xp": 161446,
+        "cores": 2
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 46,
+      "zone": "Mirror Shelf",
+      "start_min": 96.214,
+      "end_min": 98.666,
+      "survived": true,
+      "barriers_taken": 0.66,
+      "barriers_available": 5,
+      "blocks_cleared": 8440.9,
+      "zone_clear_before": 47.1,
+      "zone_clear_after": 100.0,
+      "core_damage": 60920933.0,
+      "core_destroyed": true,
+      "money_earned": 2130396,
+      "xp_earned": 106063,
+      "core_earned": 2,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Inversion Drives 4",
+        "Vault Heuristics 4",
+        "Panic Tunnel 1"
+      ],
+      "wallets_after": {
+        "money": 1401874,
+        "xp": 84393,
+        "cores": 1
+      },
+      "mastery_note": "2.0x layer breaker"
+    },
+    {
+      "run": 47,
+      "zone": "Reverse Fault",
+      "start_min": 98.666,
+      "end_min": 101.119,
+      "survived": true,
+      "barriers_taken": 1.15,
+      "barriers_available": 5,
+      "blocks_cleared": 13657.1,
+      "zone_clear_before": 0.0,
+      "zone_clear_after": 18.0,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 4307883,
+      "xp_earned": 193852,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Vault Pulsers 2",
+        "Graveyard Index 1",
+        "Vault Pulsers 3"
+      ],
+      "wallets_after": {
+        "money": 2356556,
+        "xp": 231359,
+        "cores": 1
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 48,
+      "zone": "Reverse Fault",
+      "start_min": 101.119,
+      "end_min": 103.572,
+      "survived": true,
+      "barriers_taken": 1.02,
+      "barriers_available": 5,
+      "blocks_cleared": 9438.4,
+      "zone_clear_before": 18.0,
+      "zone_clear_after": 30.4,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 3275067,
+      "xp_earned": 152726,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Vault Pulsers 4",
+        "Graveyard Index 2",
+        "Gravity Wells 1"
+      ],
+      "wallets_after": {
+        "money": 467419,
+        "xp": 287968,
+        "cores": 1
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 49,
+      "zone": "Reverse Fault",
+      "start_min": 103.572,
+      "end_min": 106.024,
+      "survived": true,
+      "barriers_taken": 0.93,
+      "barriers_available": 5,
+      "blocks_cleared": 10850.5,
+      "zone_clear_before": 30.4,
+      "zone_clear_after": 44.7,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 4107133,
+      "xp_earned": 197138,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Gravity Wells 2",
+        "Graveyard Index 3",
+        "Abyssal Rigs 1"
+      ],
+      "wallets_after": {
+        "money": 1614654,
+        "xp": 288066,
+        "cores": 1
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 50,
+      "zone": "Reverse Fault",
+      "start_min": 106.024,
+      "end_min": 108.477,
+      "survived": true,
+      "barriers_taken": 0.73,
+      "barriers_available": 5,
+      "blocks_cleared": 15453.8,
+      "zone_clear_before": 44.7,
+      "zone_clear_after": 100.0,
+      "core_damage": 180883721.4,
+      "core_destroyed": true,
+      "money_earned": 6336740,
+      "xp_earned": 311482,
+      "core_earned": 2,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Gravity Wells 3",
+        "Graveyard Index 4",
+        "Abyssal Rigs 2"
+      ],
+      "wallets_after": {
+        "money": 2300386,
+        "xp": 195616,
+        "cores": 3
+      },
+      "mastery_note": "2.0x layer breaker"
+    },
+    {
+      "run": 51,
+      "zone": "Null Vein",
+      "start_min": 108.477,
+      "end_min": 110.93,
+      "survived": true,
+      "barriers_taken": 1.26,
+      "barriers_available": 5,
+      "blocks_cleared": 28901.5,
+      "zone_clear_before": 0.0,
+      "zone_clear_after": 30.4,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 15777939,
+      "xp_earned": 713401,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Vault Pulsers 5",
+        "Mirror Daemons 1",
+        "Gravity Wells 4"
+      ],
+      "wallets_after": {
+        "money": 3874829,
+        "xp": 840250,
+        "cores": 3
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 52,
+      "zone": "Null Vein",
+      "start_min": 110.93,
+      "end_min": 113.382,
+      "survived": true,
+      "barriers_taken": 1.02,
+      "barriers_available": 5,
+      "blocks_cleared": 18119.6,
+      "zone_clear_before": 30.4,
+      "zone_clear_after": 49.5,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 9892252,
+      "xp_earned": 447263,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Abyssal Rigs 3",
+        "Mirror Daemons 2",
+        "Mirror Saws 1"
+      ],
+      "wallets_after": {
+        "money": 6745297,
+        "xp": 1143103,
+        "cores": 3
+      },
+      "mastery_note": "1.5x layer breaker"
+    },
+    {
+      "run": 53,
+      "zone": "Null Vein",
+      "start_min": 113.382,
+      "end_min": 115.835,
+      "survived": true,
+      "barriers_taken": 0.77,
+      "barriers_available": 5,
+      "blocks_cleared": 19466.3,
+      "zone_clear_before": 49.5,
+      "zone_clear_after": 100.0,
+      "core_damage": 560083210.6,
+      "core_destroyed": true,
+      "money_earned": 10627486,
+      "xp_earned": 480504,
+      "core_earned": 3,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Abyssal Rigs 4",
+        "Mirror Daemons 3",
+        "Daemon Focus 1"
+      ],
+      "wallets_after": {
+        "money": 7745949,
+        "xp": 1320346,
+        "cores": 2
+      },
+      "mastery_note": "2.0x layer breaker"
+    },
+    {
+      "run": 54,
+      "zone": "Grave Mantle",
+      "start_min": 115.835,
+      "end_min": 118.288,
+      "survived": true,
+      "barriers_taken": 1.37,
+      "barriers_available": 5,
+      "blocks_cleared": 59860.5,
+      "zone_clear_before": 0.0,
+      "zone_clear_after": 49.9,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 40367038,
+      "xp_earned": 1651423,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Abyssal Rigs 5",
+        "Mirror Daemons 4",
+        "Mirror Saws 2"
+      ],
+      "wallets_after": {
+        "money": 25734318,
+        "xp": 2334920,
+        "cores": 2
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 55,
+      "zone": "Grave Mantle",
+      "start_min": 118.288,
+      "end_min": 120.74,
+      "survived": true,
+      "barriers_taken": 0.84,
+      "barriers_available": 5,
+      "blocks_cleared": 25231.1,
+      "zone_clear_before": 49.9,
+      "zone_clear_after": 100.0,
+      "core_damage": 1447742454.2,
+      "core_destroyed": true,
+      "money_earned": 17015447,
+      "xp_earned": 696073,
+      "core_earned": 3,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Mirror Saws 3",
+        "Inversion Ledger 1",
+        "Pressure Vent 1"
+      ],
+      "wallets_after": {
+        "money": 35193179,
+        "xp": 2915340,
+        "cores": 1
+      },
+      "mastery_note": "2.0x layer breaker"
+    },
+    {
+      "run": 56,
+      "zone": "Crown of Ash",
+      "start_min": 120.74,
+      "end_min": 123.193,
+      "survived": true,
+      "barriers_taken": 1.15,
+      "barriers_available": 5,
+      "blocks_cleared": 96056.7,
+      "zone_clear_before": 0.0,
+      "zone_clear_after": 60.0,
+      "core_damage": 0.0,
+      "core_destroyed": false,
+      "money_earned": 81740128,
+      "xp_earned": 3438027,
+      "core_earned": 0,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Mirror Saws 4",
+        "Inversion Ledger 2",
+        "Fault Harpoons 1"
+      ],
+      "wallets_after": {
+        "money": 99294202,
+        "xp": 6110495,
+        "cores": 1
+      },
+      "mastery_note": "no layer breaker"
+    },
+    {
+      "run": 57,
+      "zone": "Crown of Ash",
+      "start_min": 123.193,
+      "end_min": 125.646,
+      "survived": true,
+      "barriers_taken": 0.65,
+      "barriers_available": 5,
+      "blocks_cleared": 57975.5,
+      "zone_clear_before": 60.0,
+      "zone_clear_after": 100.0,
+      "core_damage": 4879040534.1,
+      "core_destroyed": true,
+      "money_earned": 49335148,
+      "xp_earned": 2361250,
+      "core_earned": 4,
+      "salvage_ratio": 0.0,
+      "purchases": [
+        "Fault Harpoons 2",
+        "Inversion Ledger 3",
+        "Fault Harpoons 3"
+      ],
+      "wallets_after": {
+        "money": 131490765,
+        "xp": 7961715,
+        "cores": 5
+      },
+      "mastery_note": "2.0x layer breaker"
+    }
+  ]
+}

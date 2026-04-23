@@ -8,8 +8,8 @@ const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const MINING_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/Mining/MiningUpgradeTreeAdapter.gd")
 const OPEN_PIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitEmpire/OpenPitEmpireProgress.gd")
 const OPEN_PIT_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/OpenPitEmpire/OpenPitEmpireUpgradeTreeAdapter.gd")
-const OPEN_PIT_ORBIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd")
-const OPEN_PIT_ORBIT_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/OpenPitOrbit/OpenPitOrbitUpgradeTreeAdapter.gd")
+var OPEN_PIT_ORBIT_PROGRESS_SCRIPT = load("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd")
+var OPEN_PIT_ORBIT_UPGRADE_TREE_ADAPTER_SCRIPT = load("res://Games/OpenPitOrbit/OpenPitOrbitUpgradeTreeAdapter.gd")
 const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
 const RED_SKY_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyUpgradeTreeAdapter.gd")
 const TURKEY_PROGRESS_SCRIPT = preload("res://Games/Turkey/TurkeyProgress.gd")
@@ -980,7 +980,7 @@ func _refresh_mining_time_label() -> void:
     if not show_label:
         return
     if Util.is_open_pit_game_active():
-        mining_time_label.text = "Open Pit Empire runs use orbit-tech weapons. Mine, dock, and cash out before fuel ends. Core shards: %d." % OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet()
+        mining_time_label.text = "Data Breach runs mine the pit. Cash out before fuel ends. XP: %d  Root Keys: %d." % [OPEN_PIT_PROGRESS_SCRIPT.get_xp_wallet(), OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet()]
     elif Util.is_open_pit_orbit_game_active():
         mining_time_label.text = "Open Pit Orbit runs use orbit-tech weapons. Mine, dock, and cash out before fuel ends. Core shards: %d." % OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet()
     else:
@@ -1953,7 +1953,9 @@ func _perform_editor_sell() -> void:
 
     var refund_amount: int = int(round(node.upgrade.get_last_purchased_cost()))
     var wallet_after_sale: int
-    if Util.is_open_pit_game_active() and str(node.upgrade.sim_key).begins_with("core:"):
+    if Util.is_open_pit_game_active() and str(node.upgrade.sim_key).begins_with("xp:"):
+        wallet_after_sale = OPEN_PIT_PROGRESS_SCRIPT.get_xp_wallet() + refund_amount
+    elif Util.is_open_pit_game_active() and str(node.upgrade.sim_key).begins_with("core:"):
         wallet_after_sale = OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet() + refund_amount
     elif Util.is_open_pit_orbit_game_active() and str(node.upgrade.sim_key).begins_with("core:"):
         wallet_after_sale = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet() + refund_amount

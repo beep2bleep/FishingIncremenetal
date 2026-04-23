@@ -3,17 +3,19 @@ class_name OpenPitEmpireProgress
 
 const BALANCE := preload("res://Games/OpenPitEmpire/OpenPitEmpireBalance.gd")
 const SAVE_PATH := "user://open_pit_empire_save_v3.json"
-const PLANET_SAVE_DIR := "user://open_pit_empire_planet_state_v2"
-const PLANET_META_PATH := "user://open_pit_empire_planet_state_v2/meta.save"
+const PLANET_SAVE_DIR := "user://open_pit_empire_planet_state_v3"
+const PLANET_META_PATH := "user://open_pit_empire_planet_state_v3/meta.save"
 const LEGACY_PLANET_SAVE_PATH := "user://open_pit_empire_planet_state_v1.json"
 const MIN_START_DEPTH_LEVEL := BALANCE.MIN_START_DEPTH_LEVEL
 const MAX_DEPTH_LEVEL := BALANCE.MAX_DEPTH_LEVEL
 
 const DEFAULT_DATA := {
     "wallet": 0,
+    "xp_currency": 0,
     "deepest_level_unlocked": MIN_START_DEPTH_LEVEL,
     "selected_depth_level": MIN_START_DEPTH_LEVEL,
     "upgrades": {},
+    "xp_upgrades": {},
     "destroyed_cells": [],
     "last_run_summary": "No Open Pit Empire sortie completed yet.",
     "last_run_breakdown": {},
@@ -24,6 +26,11 @@ const DEFAULT_DATA := {
     "planet_mastery_unlocked": false,
     "free_planet_mode": false,
     "planet_state": {},
+    "planet_layout_version": BALANCE.PLANET_LAYOUT_VERSION,
+    "attempt_history": [],
+    "chat_line_counts": {},
+    "chat_thread_counts": {},
+    "bottom_phase_unlocked": false,
 }
 
 static var _cached_data: Dictionary = {}
@@ -52,14 +59,32 @@ static func load_data() -> Dictionary:
             if parsed is Dictionary:
                 data = data.merged(parsed, true)
     data["wallet"] = max(0, int(data.get("wallet", 0)))
+    data["xp_currency"] = max(0, int(data.get("xp_currency", 0)))
     if not (data.get("upgrades", {}) is Dictionary):
         data["upgrades"] = {}
+    if not (data.get("xp_upgrades", {}) is Dictionary):
+        data["xp_upgrades"] = {}
     if not (data.get("destroyed_cells", []) is Array):
         data["destroyed_cells"] = []
     if not (data.get("purchased_core_upgrades", []) is Array):
         data["purchased_core_upgrades"] = []
     if not (data.get("planet_state", {}) is Dictionary):
         data["planet_state"] = {}
+    if not (data.get("attempt_history", []) is Array):
+        data["attempt_history"] = []
+    if not (data.get("chat_line_counts", {}) is Dictionary):
+        data["chat_line_counts"] = {}
+    if not (data.get("chat_thread_counts", {}) is Dictionary):
+        data["chat_thread_counts"] = {}
+    data["bottom_phase_unlocked"] = bool(data.get("bottom_phase_unlocked", false))
+    if int(data.get("planet_layout_version", 0)) != BALANCE.PLANET_LAYOUT_VERSION:
+        data["destroyed_cells"] = []
+        data["boss_defeated"] = false
+        data["planet_state"] = {}
+        data["planet_layout_version"] = BALANCE.PLANET_LAYOUT_VERSION
+        _cached_planet_state = {}
+        _clear_planet_state_binary()
+        clear_runtime_planet_data()
     var inline_planet_state: Dictionary = data.get("planet_state", {}).duplicate(true)
     _cached_planet_state = {}
     if not inline_planet_state.is_empty():
@@ -105,11 +130,17 @@ static func get_upgrade_levels() -> Dictionary:
 static func get_core_wallet() -> int:
     return int(load_data().get("core_currency", 0))
 
+static func get_xp_wallet() -> int:
+    return int(load_data().get("xp_currency", 0))
+
 static func get_core_upgrade_levels() -> Dictionary:
     var levels := {}
     for upgrade_id_variant in load_data().get("purchased_core_upgrades", []):
         levels["core:" + str(upgrade_id_variant)] = 1
     return levels
+
+static func get_xp_upgrade_levels() -> Dictionary:
+    return load_data().get("xp_upgrades", {}).duplicate(true)
 
 static func apply_tree_purchase(upgrade_id: String, level: int, wallet_after_purchase: int) -> void:
     var data := load_data()
@@ -125,6 +156,13 @@ static func apply_tree_purchase(upgrade_id: String, level: int, wallet_after_pur
             data["free_planet_mode"] = true
         elif core_upgrade_id == "center_unlock":
             data["free_planet_mode"] = false
+        save_data(data)
+        return
+    if BALANCE.is_xp_upgrade(upgrade_id):
+        var xp_upgrades: Dictionary = data.get("xp_upgrades", {}).duplicate(true)
+        xp_upgrades[upgrade_id] = max(level, int(xp_upgrades.get(upgrade_id, 0)))
+        data["xp_upgrades"] = xp_upgrades
+        data["xp_currency"] = max(0, wallet_after_purchase)
         save_data(data)
         return
     var upgrades: Dictionary = data.get("upgrades", {}).duplicate(true)
@@ -147,6 +185,16 @@ static func apply_tree_sale(upgrade_id: String, level: int, wallet_after_sale: i
             data["free_planet_mode"] = false
         save_data(data)
         return
+    if BALANCE.is_xp_upgrade(upgrade_id):
+        var xp_upgrades: Dictionary = data.get("xp_upgrades", {}).duplicate(true)
+        if level <= 0:
+            xp_upgrades.erase(upgrade_id)
+        else:
+            xp_upgrades[upgrade_id] = level
+        data["xp_upgrades"] = xp_upgrades
+        data["xp_currency"] = max(0, wallet_after_sale)
+        save_data(data)
+        return
     var upgrades: Dictionary = data.get("upgrades", {}).duplicate(true)
     if level <= 0:
         upgrades.erase(upgrade_id)
@@ -160,12 +208,31 @@ static func apply_tree_sale(upgrade_id: String, level: int, wallet_after_sale: i
 static func apply_run_results(results: Dictionary) -> Dictionary:
     var data := load_data()
     data["wallet"] = max(0, int(data.get("wallet", 0)) + int(results.get("money", 0)))
+    data["xp_currency"] = max(0, int(data.get("xp_currency", 0)) + int(results.get("xp", 0)))
     data["last_run_summary"] = str(results.get("summary_text", "Open Pit Empire sortie complete."))
     var breakdown := results.duplicate(true)
     breakdown.erase("planet_state")
     data["last_run_breakdown"] = breakdown
+    var attempt_history: Array = data.get("attempt_history", []).duplicate(true)
+    attempt_history.push_front({
+        "summary": str(results.get("summary_text", "Open Pit Empire sortie complete.")),
+        "money": int(results.get("money", 0)),
+        "xp": int(results.get("xp", 0)),
+        "nodes_broken": int(results.get("nodes_broken", 0)),
+        "persistent_clear": float(results.get("persistent_clear", 0.0)),
+        "depth_level": int(results.get("depth_level", 1)),
+    })
+    if attempt_history.size() > 8:
+        attempt_history.resize(8)
+    data["attempt_history"] = attempt_history
     if results.get("destroyed_cells", []) is Array:
         data["destroyed_cells"] = results.get("destroyed_cells", []).duplicate(true)
+    if results.get("chat_line_counts", {}) is Dictionary:
+        data["chat_line_counts"] = results.get("chat_line_counts", {}).duplicate(true)
+    if results.get("chat_thread_counts", {}) is Dictionary:
+        data["chat_thread_counts"] = results.get("chat_thread_counts", {}).duplicate(true)
+    if bool(results.get("bottom_phase_unlocked", false)):
+        data["bottom_phase_unlocked"] = true
     if bool(results.get("boss_defeated", false)):
         data["boss_defeated"] = true
     data["core_currency"] = max(0, int(data.get("core_currency", 0)) + int(results.get("core_currency", 0)))
@@ -184,14 +251,14 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
 
 static func set_selected_depth_level(depth_level: int) -> Dictionary:
     var data := load_data()
-    data["selected_depth_level"] = MIN_START_DEPTH_LEVEL
+    data["selected_depth_level"] = clampi(depth_level, MIN_START_DEPTH_LEVEL, int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)))
     save_data(data)
     return data
 
 static func get_display_depth_tier(depth_level: int) -> int:
     return 1
 
-static func load_planet_state() -> Dictionary:
+static func load_planet_state(depth_level: int = -1) -> Dictionary:
     if _planet_save_pending:
         flush_async_planet_state_save()
     if _cached_planet_state.is_empty():
@@ -202,6 +269,10 @@ static func load_planet_state() -> Dictionary:
             var legacy: Variant = _read_json(LEGACY_PLANET_SAVE_PATH)
             if legacy is Dictionary:
                 _cached_planet_state = Dictionary(legacy).duplicate(true)
+    if depth_level >= MIN_START_DEPTH_LEVEL and not _cached_planet_state.is_empty():
+        var saved_depth_level: int = int(_cached_planet_state.get("depth_level", MIN_START_DEPTH_LEVEL))
+        if saved_depth_level != depth_level:
+            return {}
     return _cached_planet_state.duplicate(true)
 
 static func save_planet_state(state: Dictionary) -> void:
@@ -251,12 +322,12 @@ static func clear_planet_state() -> void:
 static func load_runtime_planet_data(depth_level: int):
     if _runtime_planet_data == null:
         return null
-    if _runtime_planet_depth != MIN_START_DEPTH_LEVEL:
+    if _runtime_planet_depth != depth_level:
         return null
     return _runtime_planet_data
 
 static func save_runtime_planet_data(depth_level: int, planet_data) -> void:
-    _runtime_planet_depth = MIN_START_DEPTH_LEVEL
+    _runtime_planet_depth = depth_level
     _runtime_planet_data = planet_data
 
 static func clear_runtime_planet_data() -> void:
@@ -278,6 +349,7 @@ static func _sanitize_main_data(data: Dictionary) -> Dictionary:
     sanitized["planet_state"] = {}
     sanitized["deepest_level_unlocked"] = MIN_START_DEPTH_LEVEL
     sanitized["selected_depth_level"] = MIN_START_DEPTH_LEVEL
+    sanitized["planet_layout_version"] = BALANCE.PLANET_LAYOUT_VERSION
     var breakdown: Variant = sanitized.get("last_run_breakdown", {})
     if breakdown is Dictionary:
         var breakdown_dict: Dictionary = Dictionary(breakdown).duplicate(true)
@@ -313,6 +385,8 @@ static func _read_planet_state_binary() -> Variant:
     if not (meta is Dictionary):
         return null
     var state: Dictionary = Dictionary(meta).duplicate(true)
+    if int(state.get("planet_layout_version", 0)) != BALANCE.PLANET_LAYOUT_VERSION:
+        return null
     var sections := {}
     var section_count: int = int(state.get("angle_slices", 10)) * int(state.get("depth_slices", 10))
     for section_id in range(section_count):
@@ -333,6 +407,7 @@ static func _write_planet_state_binary(state: Dictionary) -> bool:
     if DirAccess.make_dir_recursive_absolute(PLANET_SAVE_DIR) != OK and not DirAccess.dir_exists_absolute(PLANET_SAVE_DIR):
         return false
     var payload: Dictionary = state.duplicate(true)
+    payload["planet_layout_version"] = BALANCE.PLANET_LAYOUT_VERSION
     var sections: Dictionary = payload.get("sections", {})
     payload.erase("sections")
     var meta_file := FileAccess.open(PLANET_META_PATH, FileAccess.WRITE)
@@ -365,16 +440,25 @@ static func _planet_section_path(section_id: int) -> String:
 static func _merge_planet_state(update: Dictionary) -> Dictionary:
     var merged: Dictionary = {}
     if not _cached_planet_state.is_empty():
-        merged = _cached_planet_state.duplicate(true)
+        if int(_cached_planet_state.get("planet_layout_version", 0)) == BALANCE.PLANET_LAYOUT_VERSION:
+            merged = _cached_planet_state.duplicate(true)
     else:
         var existing: Variant = _read_planet_state_binary()
         if existing is Dictionary:
             merged = Dictionary(existing).duplicate(true)
+    if int(merged.get("planet_layout_version", 0)) != BALANCE.PLANET_LAYOUT_VERSION:
+        merged = {}
+    var update_depth_level: int = int(update.get("depth_level", -1))
+    if update_depth_level >= MIN_START_DEPTH_LEVEL:
+        var merged_depth_level: int = int(merged.get("depth_level", update_depth_level))
+        if merged_depth_level != update_depth_level:
+            merged = {}
     for key_variant in update.keys():
         var key: String = str(key_variant)
         if key == "sections":
             continue
         merged[key] = update[key_variant]
+    merged["planet_layout_version"] = BALANCE.PLANET_LAYOUT_VERSION
     var merged_sections: Dictionary = merged.get("sections", {}).duplicate(true)
     var update_sections: Dictionary = update.get("sections", {})
     for section_id_variant in update_sections.keys():

@@ -99,13 +99,6 @@ layout_mode = 2
 theme = ExtResource("3")
 text = "OPEN PIT EMPIRE"
 
-[node name="OpenPitOrbitButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(340, 72)
-layout_mode = 2
-theme = ExtResource("3")
-text = "OPEN PIT ORBIT"
-
 [node name="RedSkyButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(340, 72)

@@ -9,8 +9,16 @@ static func apply_simulation_upgrades() -> void:
     Global.game_mode_data_manager.unlocked_upgrades = {}
 
     var saved_upgrades: Dictionary = PROGRESS.load_data().get("upgrades", {})
+    saved_upgrades.merge(PROGRESS.get_xp_upgrade_levels(), true)
+    saved_upgrades.merge(PROGRESS.get_core_upgrade_levels(), true)
     var next_id := 0
     for entry in BALANCE.get_upgrade_catalog():
+        _append_upgrade(entry, saved_upgrades, next_id)
+        next_id += 1
+    for entry in BALANCE.get_xp_upgrade_catalog():
+        _append_upgrade(entry, saved_upgrades, next_id)
+        next_id += 1
+    for entry in BALANCE.get_core_upgrade_catalog():
         _append_upgrade(entry, saved_upgrades, next_id)
         next_id += 1
 
@@ -22,6 +30,8 @@ static func _append_upgrade(entry: Dictionary, saved_levels: Dictionary, next_id
     upgrade.id = next_id
     if BALANCE.is_core_upgrade(upgrade_id):
         upgrade.cell = BALANCE.get_core_upgrade_cell(upgrade_id)
+    elif BALANCE.is_xp_upgrade(upgrade_id):
+        upgrade.cell = BALANCE.get_xp_upgrade_cell(upgrade_id)
     else:
         upgrade.cell = BALANCE.get_upgrade_cell(upgrade_id)
     upgrade.mod = _mod_for_upgrade(upgrade_id)
@@ -37,16 +47,27 @@ static func _append_upgrade(entry: Dictionary, saved_levels: Dictionary, next_id
     upgrade.type = Util.NODE_TYPES.NORMAL
     upgrade.sim_key = upgrade_id
     upgrade.sim_name = str(entry.get("label", upgrade_id))
-    upgrade.sim_description = str(entry.get("summary", "Orbit mining upgrade."))
+    upgrade.sim_description = str(entry.get("summary", "Data Breach upgrade."))
     upgrade.sim_icon = str(entry.get("icon", "O"))
-    upgrade.sim_group = 2 if BALANCE.is_core_upgrade(upgrade_id) else 1
+    upgrade.sim_group = 3 if BALANCE.is_core_upgrade(upgrade_id) else (2 if BALANCE.is_xp_upgrade(upgrade_id) else 1)
     upgrade.sim_level = 1
     upgrade.sim_group_pos = 1
-    var dep_id: String = BALANCE.get_core_upgrade_dependency(upgrade_id) if BALANCE.is_core_upgrade(upgrade_id) else BALANCE.get_upgrade_dependency(upgrade_id)
+    var dep_id := ""
+    if BALANCE.is_core_upgrade(upgrade_id):
+        dep_id = BALANCE.get_core_upgrade_dependency(upgrade_id)
+    elif BALANCE.is_xp_upgrade(upgrade_id):
+        dep_id = BALANCE.get_xp_upgrade_dependency(upgrade_id)
+    else:
+        dep_id = BALANCE.get_upgrade_dependency(upgrade_id)
     if dep_id.is_empty() or dep_id == "start":
         upgrade.forced_cell = Vector2.ZERO
     else:
-        upgrade.forced_cell = BALANCE.get_core_upgrade_cell(dep_id) if BALANCE.is_core_upgrade(upgrade_id) else BALANCE.get_upgrade_cell(dep_id)
+        if BALANCE.is_core_upgrade(upgrade_id):
+            upgrade.forced_cell = BALANCE.get_core_upgrade_cell(dep_id)
+        elif BALANCE.is_xp_upgrade(upgrade_id):
+            upgrade.forced_cell = BALANCE.get_xp_upgrade_cell(dep_id)
+        else:
+            upgrade.forced_cell = BALANCE.get_upgrade_cell(dep_id)
     Global.game_mode_data_manager.upgrades[upgrade.cell] = upgrade
 
     var owned_level: int = int(saved_levels.get(upgrade_id, 0))
@@ -57,12 +78,19 @@ static func _append_upgrade(entry: Dictionary, saved_levels: Dictionary, next_id
 static func _build_tier_costs(upgrade_id: String, max_tier: int) -> Array:
     var costs: Array = []
     for level in range(max_tier):
-        costs.append(BALANCE.get_core_upgrade_cost(upgrade_id, level) if BALANCE.is_core_upgrade(upgrade_id) else BALANCE.get_upgrade_cost(upgrade_id, level))
+        if BALANCE.is_core_upgrade(upgrade_id):
+            costs.append(BALANCE.get_core_upgrade_cost(upgrade_id, level))
+        elif BALANCE.is_xp_upgrade(upgrade_id):
+            costs.append(BALANCE.get_xp_upgrade_cost(upgrade_id, level))
+        else:
+            costs.append(BALANCE.get_upgrade_cost(upgrade_id, level))
     return costs
 
 static func _mod_for_upgrade(upgrade_id: String) -> Util.MODS:
     if BALANCE.is_core_upgrade(upgrade_id):
         return Util.MODS.MONEY_PER_MATTER
+    if BALANCE.is_xp_upgrade(upgrade_id):
+        return Util.MODS.RUN_TIMER_BASE
     if upgrade_id.begins_with("dmg") or upgrade_id == "core_breaker":
         return Util.MODS.BASE_DAMAGE_PER_CLICK
     if upgrade_id.begins_with("fire_rate"):

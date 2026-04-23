@@ -1,0 +1,672 @@
+{
+  "source": {
+    "runs": 57,
+    "progress_at_30m": 0.4453,
+    "bottom_of_first_funnel_minutes": 69.234,
+    "second_funnel_defeated_minutes": 125.646,
+    "demo_gate_reached_minutes": 0.0,
+    "avg_purchases_per_run": 2.982,
+    "no_purchase_runs": 0,
+    "demo_gate_zone": "Root Well",
+    "demo_gate_clear": 0.58
+  },
+  "comparison": {
+    "runs": 57,
+    "mean_abs_pct_error": 30.94,
+    "mean_abs_block_error": 4332.8,
+    "closest_run": {
+      "run": 27,
+      "zone": "Kernel Vault",
+      "abstract_blocks": 1478.7,
+      "mechanics_blocks": 1475.2,
+      "delta_blocks": -3.5,
+      "delta_pct": -0.2,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 4292.7
+    },
+    "widest_run": {
+      "run": 15,
+      "zone": "Ghost Sector",
+      "abstract_blocks": 333.2,
+      "mechanics_blocks": 564.6,
+      "delta_blocks": 231.4,
+      "delta_pct": 69.5,
+      "duration_min": 2.258,
+      "movement_cap_blocks": 2289.8
+    },
+    "zones": [
+      {
+        "zone": "Proxy Cache",
+        "avg_abstract_blocks": 239.2,
+        "avg_mechanics_blocks": 181.5,
+        "avg_delta_pct": -24.1
+      },
+      {
+        "zone": "Cipher Depths",
+        "avg_abstract_blocks": 331.9,
+        "avg_mechanics_blocks": 425.3,
+        "avg_delta_pct": 28.1
+      },
+      {
+        "zone": "Ghost Sector",
+        "avg_abstract_blocks": 715.9,
+        "avg_mechanics_blocks": 812.3,
+        "avg_delta_pct": 13.5
+      },
+      {
+        "zone": "Kernel Vault",
+        "avg_abstract_blocks": 1152.2,
+        "avg_mechanics_blocks": 1254.9,
+        "avg_delta_pct": 8.9
+      },
+      {
+        "zone": "Root Well",
+        "avg_abstract_blocks": 1789.2,
+        "avg_mechanics_blocks": 1582.4,
+        "avg_delta_pct": -11.6
+      },
+      {
+        "zone": "Mirror Shelf",
+        "avg_abstract_blocks": 3057.6,
+        "avg_mechanics_blocks": 1869.6,
+        "avg_delta_pct": -38.9
+      },
+      {
+        "zone": "Reverse Fault",
+        "avg_abstract_blocks": 12350.0,
+        "avg_mechanics_blocks": 4822.6,
+        "avg_delta_pct": -61.0
+      },
+      {
+        "zone": "Null Vein",
+        "avg_abstract_blocks": 22162.5,
+        "avg_mechanics_blocks": 8642.0,
+        "avg_delta_pct": -61.0
+      },
+      {
+        "zone": "Grave Mantle",
+        "avg_abstract_blocks": 42545.8,
+        "avg_mechanics_blocks": 15314.4,
+        "avg_delta_pct": -64.0
+      },
+      {
+        "zone": "Crown of Ash",
+        "avg_abstract_blocks": 77016.1,
+        "avg_mechanics_blocks": 26307.7,
+        "avg_delta_pct": -65.8
+      }
+    ]
+  },
+  "runs": [
+    {
+      "run": 1,
+      "zone": "Proxy Cache",
+      "abstract_blocks": 104.7,
+      "mechanics_blocks": 97.0,
+      "delta_blocks": -7.7,
+      "delta_pct": -7.3,
+      "duration_min": 1.067,
+      "movement_cap_blocks": 370.9
+    },
+    {
+      "run": 2,
+      "zone": "Proxy Cache",
+      "abstract_blocks": 153.4,
+      "mechanics_blocks": 121.8,
+      "delta_blocks": -31.6,
+      "delta_pct": -20.6,
+      "duration_min": 1.066,
+      "movement_cap_blocks": 385.3
+    },
+    {
+      "run": 3,
+      "zone": "Proxy Cache",
+      "abstract_blocks": 181.3,
+      "mechanics_blocks": 145.9,
+      "delta_blocks": -35.4,
+      "delta_pct": -19.5,
+      "duration_min": 1.067,
+      "movement_cap_blocks": 400.5
+    },
+    {
+      "run": 4,
+      "zone": "Proxy Cache",
+      "abstract_blocks": 211.3,
+      "mechanics_blocks": 175.0,
+      "delta_blocks": -36.3,
+      "delta_pct": -17.2,
+      "duration_min": 1.067,
+      "movement_cap_blocks": 445.8
+    },
+    {
+      "run": 5,
+      "zone": "Proxy Cache",
+      "abstract_blocks": 406.5,
+      "mechanics_blocks": 278.9,
+      "delta_blocks": -127.6,
+      "delta_pct": -31.4,
+      "duration_min": 1.266,
+      "movement_cap_blocks": 548.5
+    },
+    {
+      "run": 6,
+      "zone": "Proxy Cache",
+      "abstract_blocks": 378.3,
+      "mechanics_blocks": 270.5,
+      "delta_blocks": -107.8,
+      "delta_pct": -28.5,
+      "duration_min": 1.267,
+      "movement_cap_blocks": 549.0
+    },
+    {
+      "run": 7,
+      "zone": "Cipher Depths",
+      "abstract_blocks": 128.7,
+      "mechanics_blocks": 142.0,
+      "delta_blocks": 13.3,
+      "delta_pct": 10.3,
+      "duration_min": 1.299,
+      "movement_cap_blocks": 570.1
+    },
+    {
+      "run": 8,
+      "zone": "Cipher Depths",
+      "abstract_blocks": 167.0,
+      "mechanics_blocks": 174.2,
+      "delta_blocks": 7.2,
+      "delta_pct": 4.3,
+      "duration_min": 1.384,
+      "movement_cap_blocks": 672.6
+    },
+    {
+      "run": 9,
+      "zone": "Cipher Depths",
+      "abstract_blocks": 186.0,
+      "mechanics_blocks": 214.0,
+      "delta_blocks": 28.0,
+      "delta_pct": 15.0,
+      "duration_min": 1.505,
+      "movement_cap_blocks": 846.6
+    },
+    {
+      "run": 10,
+      "zone": "Cipher Depths",
+      "abstract_blocks": 235.4,
+      "mechanics_blocks": 324.0,
+      "delta_blocks": 88.6,
+      "delta_pct": 37.6,
+      "duration_min": 1.831,
+      "movement_cap_blocks": 1163.2
+    },
+    {
+      "run": 11,
+      "zone": "Cipher Depths",
+      "abstract_blocks": 301.0,
+      "mechanics_blocks": 404.2,
+      "delta_blocks": 103.2,
+      "delta_pct": 34.3,
+      "duration_min": 1.83,
+      "movement_cap_blocks": 1264.1
+    },
+    {
+      "run": 12,
+      "zone": "Cipher Depths",
+      "abstract_blocks": 365.3,
+      "mechanics_blocks": 482.9,
+      "delta_blocks": 117.6,
+      "delta_pct": 32.2,
+      "duration_min": 1.917,
+      "movement_cap_blocks": 1510.9
+    },
+    {
+      "run": 13,
+      "zone": "Cipher Depths",
+      "abstract_blocks": 635.9,
+      "mechanics_blocks": 764.0,
+      "delta_blocks": 128.1,
+      "delta_pct": 20.1,
+      "duration_min": 2.157,
+      "movement_cap_blocks": 1892.9
+    },
+    {
+      "run": 14,
+      "zone": "Cipher Depths",
+      "abstract_blocks": 635.8,
+      "mechanics_blocks": 896.9,
+      "delta_blocks": 261.1,
+      "delta_pct": 41.1,
+      "duration_min": 2.157,
+      "movement_cap_blocks": 2110.2
+    },
+    {
+      "run": 15,
+      "zone": "Ghost Sector",
+      "abstract_blocks": 333.2,
+      "mechanics_blocks": 564.6,
+      "delta_blocks": 231.4,
+      "delta_pct": 69.5,
+      "duration_min": 2.258,
+      "movement_cap_blocks": 2289.8
+    },
+    {
+      "run": 16,
+      "zone": "Ghost Sector",
+      "abstract_blocks": 445.1,
+      "mechanics_blocks": 642.4,
+      "delta_blocks": 197.3,
+      "delta_pct": 44.3,
+      "duration_min": 2.303,
+      "movement_cap_blocks": 2421.9
+    },
+    {
+      "run": 17,
+      "zone": "Ghost Sector",
+      "abstract_blocks": 505.6,
+      "mechanics_blocks": 695.4,
+      "delta_blocks": 189.8,
+      "delta_pct": 37.5,
+      "duration_min": 2.346,
+      "movement_cap_blocks": 2555.2
+    },
+    {
+      "run": 18,
+      "zone": "Ghost Sector",
+      "abstract_blocks": 571.6,
+      "mechanics_blocks": 747.7,
+      "delta_blocks": 176.1,
+      "delta_pct": 30.8,
+      "duration_min": 2.391,
+      "movement_cap_blocks": 2669.8
+    },
+    {
+      "run": 19,
+      "zone": "Ghost Sector",
+      "abstract_blocks": 983.2,
+      "mechanics_blocks": 959.9,
+      "delta_blocks": -23.3,
+      "delta_pct": -2.4,
+      "duration_min": 2.391,
+      "movement_cap_blocks": 2735.3
+    },
+    {
+      "run": 20,
+      "zone": "Ghost Sector",
+      "abstract_blocks": 900.5,
+      "mechanics_blocks": 938.0,
+      "delta_blocks": 37.5,
+      "delta_pct": 4.2,
+      "duration_min": 2.39,
+      "movement_cap_blocks": 2839.8
+    },
+    {
+      "run": 21,
+      "zone": "Ghost Sector",
+      "abstract_blocks": 1272.0,
+      "mechanics_blocks": 1138.3,
+      "delta_blocks": -133.7,
+      "delta_pct": -10.5,
+      "duration_min": 2.391,
+      "movement_cap_blocks": 2948.5
+    },
+    {
+      "run": 22,
+      "zone": "Kernel Vault",
+      "abstract_blocks": 629.7,
+      "mechanics_blocks": 851.7,
+      "delta_blocks": 222.0,
+      "delta_pct": 35.3,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 3100.7
+    },
+    {
+      "run": 23,
+      "zone": "Kernel Vault",
+      "abstract_blocks": 747.2,
+      "mechanics_blocks": 994.5,
+      "delta_blocks": 247.3,
+      "delta_pct": 33.1,
+      "duration_min": 2.452,
+      "movement_cap_blocks": 3587.5
+    },
+    {
+      "run": 24,
+      "zone": "Kernel Vault",
+      "abstract_blocks": 975.5,
+      "mechanics_blocks": 1197.4,
+      "delta_blocks": 221.9,
+      "delta_pct": 22.7,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 4108.7
+    },
+    {
+      "run": 25,
+      "zone": "Kernel Vault",
+      "abstract_blocks": 1219.7,
+      "mechanics_blocks": 1348.5,
+      "delta_blocks": 128.8,
+      "delta_pct": 10.6,
+      "duration_min": 2.452,
+      "movement_cap_blocks": 4291.0
+    },
+    {
+      "run": 26,
+      "zone": "Kernel Vault",
+      "abstract_blocks": 1862.4,
+      "mechanics_blocks": 1662.3,
+      "delta_blocks": -200.1,
+      "delta_pct": -10.7,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 4292.7
+    },
+    {
+      "run": 27,
+      "zone": "Kernel Vault",
+      "abstract_blocks": 1478.7,
+      "mechanics_blocks": 1475.2,
+      "delta_blocks": -3.5,
+      "delta_pct": -0.2,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 4292.7
+    },
+    {
+      "run": 28,
+      "zone": "Root Well",
+      "abstract_blocks": 1078.7,
+      "mechanics_blocks": 1228.0,
+      "delta_blocks": 149.3,
+      "delta_pct": 13.8,
+      "duration_min": 2.452,
+      "movement_cap_blocks": 3836.6
+    },
+    {
+      "run": 29,
+      "zone": "Root Well",
+      "abstract_blocks": 1337.1,
+      "mechanics_blocks": 1354.4,
+      "delta_blocks": 17.3,
+      "delta_pct": 1.3,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 3838.2
+    },
+    {
+      "run": 30,
+      "zone": "Root Well",
+      "abstract_blocks": 1492.4,
+      "mechanics_blocks": 1430.1,
+      "delta_blocks": -62.3,
+      "delta_pct": -4.2,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 3838.2
+    },
+    {
+      "run": 31,
+      "zone": "Root Well",
+      "abstract_blocks": 1058.4,
+      "mechanics_blocks": 1218.1,
+      "delta_blocks": 159.7,
+      "delta_pct": 15.1,
+      "duration_min": 2.452,
+      "movement_cap_blocks": 3836.6
+    },
+    {
+      "run": 32,
+      "zone": "Root Well",
+      "abstract_blocks": 1972.5,
+      "mechanics_blocks": 1664.3,
+      "delta_blocks": -308.2,
+      "delta_pct": -15.6,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 3838.2
+    },
+    {
+      "run": 33,
+      "zone": "Root Well",
+      "abstract_blocks": 2683.9,
+      "mechanics_blocks": 2034.4,
+      "delta_blocks": -649.5,
+      "delta_pct": -24.2,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 3964.5
+    },
+    {
+      "run": 34,
+      "zone": "Root Well",
+      "abstract_blocks": 2901.1,
+      "mechanics_blocks": 2147.7,
+      "delta_blocks": -753.4,
+      "delta_pct": -26.0,
+      "duration_min": 2.452,
+      "movement_cap_blocks": 4026.0
+    },
+    {
+      "run": 35,
+      "zone": "Mirror Shelf",
+      "abstract_blocks": 593.2,
+      "mechanics_blocks": 874.7,
+      "delta_blocks": 281.5,
+      "delta_pct": 47.5,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 3636.0
+    },
+    {
+      "run": 36,
+      "zone": "Mirror Shelf",
+      "abstract_blocks": 833.9,
+      "mechanics_blocks": 1014.2,
+      "delta_blocks": 180.3,
+      "delta_pct": 21.6,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 3773.6
+    },
+    {
+      "run": 37,
+      "zone": "Mirror Shelf",
+      "abstract_blocks": 1175.7,
+      "mechanics_blocks": 1191.8,
+      "delta_blocks": 16.1,
+      "delta_pct": 1.4,
+      "duration_min": 2.452,
+      "movement_cap_blocks": 3840.9
+    },
+    {
+      "run": 38,
+      "zone": "Mirror Shelf",
+      "abstract_blocks": 1585.0,
+      "mechanics_blocks": 1391.7,
+      "delta_blocks": -193.3,
+      "delta_pct": -12.2,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 3842.5
+    },
+    {
+      "run": 39,
+      "zone": "Mirror Shelf",
+      "abstract_blocks": 2071.2,
+      "mechanics_blocks": 1655.4,
+      "delta_blocks": -415.8,
+      "delta_pct": -20.1,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 4007.1
+    },
+    {
+      "run": 40,
+      "zone": "Mirror Shelf",
+      "abstract_blocks": 2514.8,
+      "mechanics_blocks": 1898.0,
+      "delta_blocks": -616.8,
+      "delta_pct": -24.5,
+      "duration_min": 2.452,
+      "movement_cap_blocks": 4170.1
+    },
+    {
+      "run": 41,
+      "zone": "Mirror Shelf",
+      "abstract_blocks": 1567.9,
+      "mechanics_blocks": 1500.2,
+      "delta_blocks": -67.7,
+      "delta_pct": -4.3,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 4568.4
+    },
+    {
+      "run": 42,
+      "zone": "Mirror Shelf",
+      "abstract_blocks": 2025.8,
+      "mechanics_blocks": 1829.0,
+      "delta_blocks": -196.8,
+      "delta_pct": -9.7,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 5223.3
+    },
+    {
+      "run": 43,
+      "zone": "Mirror Shelf",
+      "abstract_blocks": 4391.0,
+      "mechanics_blocks": 2624.9,
+      "delta_blocks": -1766.1,
+      "delta_pct": -40.2,
+      "duration_min": 2.452,
+      "movement_cap_blocks": 5555.4
+    },
+    {
+      "run": 44,
+      "zone": "Mirror Shelf",
+      "abstract_blocks": 6151.8,
+      "mechanics_blocks": 2589.3,
+      "delta_blocks": -3562.5,
+      "delta_pct": -57.9,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 5900.3
+    },
+    {
+      "run": 45,
+      "zone": "Mirror Shelf",
+      "abstract_blocks": 5339.7,
+      "mechanics_blocks": 2740.5,
+      "delta_blocks": -2599.2,
+      "delta_pct": -48.7,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 5998.1
+    },
+    {
+      "run": 46,
+      "zone": "Mirror Shelf",
+      "abstract_blocks": 8440.9,
+      "mechanics_blocks": 3125.8,
+      "delta_blocks": -5315.1,
+      "delta_pct": -63.0,
+      "duration_min": 2.452,
+      "movement_cap_blocks": 5995.6
+    },
+    {
+      "run": 47,
+      "zone": "Reverse Fault",
+      "abstract_blocks": 13657.1,
+      "mechanics_blocks": 5129.7,
+      "delta_blocks": -8527.4,
+      "delta_pct": -62.4,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 4988.4
+    },
+    {
+      "run": 48,
+      "zone": "Reverse Fault",
+      "abstract_blocks": 9438.4,
+      "mechanics_blocks": 3920.0,
+      "delta_blocks": -5518.4,
+      "delta_pct": -58.5,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 5258.4
+    },
+    {
+      "run": 49,
+      "zone": "Reverse Fault",
+      "abstract_blocks": 10850.5,
+      "mechanics_blocks": 4400.4,
+      "delta_blocks": -6450.1,
+      "delta_pct": -59.4,
+      "duration_min": 2.452,
+      "movement_cap_blocks": 5532.7
+    },
+    {
+      "run": 50,
+      "zone": "Reverse Fault",
+      "abstract_blocks": 15453.8,
+      "mechanics_blocks": 5840.5,
+      "delta_blocks": -9613.3,
+      "delta_pct": -62.2,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 5818.2
+    },
+    {
+      "run": 51,
+      "zone": "Null Vein",
+      "abstract_blocks": 28901.5,
+      "mechanics_blocks": 10571.5,
+      "delta_blocks": -18330.0,
+      "delta_pct": -63.4,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 5416.2
+    },
+    {
+      "run": 52,
+      "zone": "Null Vein",
+      "abstract_blocks": 18119.6,
+      "mechanics_blocks": 7442.5,
+      "delta_blocks": -10677.1,
+      "delta_pct": -58.9,
+      "duration_min": 2.452,
+      "movement_cap_blocks": 5716.9
+    },
+    {
+      "run": 53,
+      "zone": "Null Vein",
+      "abstract_blocks": 19466.3,
+      "mechanics_blocks": 7912.1,
+      "delta_blocks": -11554.2,
+      "delta_pct": -59.4,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 5903.7
+    },
+    {
+      "run": 54,
+      "zone": "Grave Mantle",
+      "abstract_blocks": 59860.5,
+      "mechanics_blocks": 20482.4,
+      "delta_blocks": -39378.1,
+      "delta_pct": -65.8,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 5499.5
+    },
+    {
+      "run": 55,
+      "zone": "Grave Mantle",
+      "abstract_blocks": 25231.1,
+      "mechanics_blocks": 10146.4,
+      "delta_blocks": -15084.7,
+      "delta_pct": -59.8,
+      "duration_min": 2.452,
+      "movement_cap_blocks": 5614.6
+    },
+    {
+      "run": 56,
+      "zone": "Crown of Ash",
+      "abstract_blocks": 96056.7,
+      "mechanics_blocks": 32019.8,
+      "delta_blocks": -64036.9,
+      "delta_pct": -66.7,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 5012.3
+    },
+    {
+      "run": 57,
+      "zone": "Crown of Ash",
+      "abstract_blocks": 57975.5,
+      "mechanics_blocks": 20595.5,
+      "delta_blocks": -37380.0,
+      "delta_pct": -64.5,
+      "duration_min": 2.453,
+      "movement_cap_blocks": 5012.3
+    }
+  ]
+}

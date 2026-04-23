@@ -7,39 +7,48 @@ signal final_core_exposed()
 signal final_core_phase_depleted(phase: int)
 
 const BLOCK_SIZE: int = 32
-const PLANET_RADIUS: int = 280
-const CENTER_RADIUS: int = 55
+const PIT_MIN_X: int = -250
+const PIT_MAX_X: int = 250
+const PIT_TOP_Y: int = -220
+const PIT_BOTTOM_Y: int = 260
+const PIT_CAP_TOP_Y: int = -248
+const PIT_TOP_HALF_WIDTH: float = 208.0
+const PIT_BOTTOM_HALF_WIDTH: float = 26.0
+const PIT_WALL_THICKNESS: int = 8
 const ELECTRIC_CHANCE: float = 0.02
 const GOLD_CHANCE: float = 0.02
 const GOLD_RESOURCE_MULT: float = 5.0
 const CORE_INDIRECT_DR: float = 0.15
 const THORN_HP_MULT: float = 1.6
+const NEXT_ZONE_SPIKE_CHANCE: float = 0.045
+const NEXT_ZONE_SPIKE_HP_MULT: float = 1.8
+const NEXT_ZONE_SPIKE_RES_MULT: float = 1.35
 const FINAL_CORE_ID: int = 16
-const SAVE_ANGLE_SLICES: int = 10
+const SAVE_X_SLICES: int = 10
 const SAVE_DEPTH_SLICES: int = 10
-const SAVE_SECTION_COUNT: int = SAVE_ANGLE_SLICES * SAVE_DEPTH_SLICES
+const SAVE_SECTION_COUNT: int = SAVE_X_SLICES * SAVE_DEPTH_SLICES
 
 enum Zone { SPRING, SUMMER, AUTUMN, WINTER, CENTER }
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
 
 const CORE_CONFIGS := [
-    {"id": 0, "dist": 240, "angle_deg": -110, "size": 3, "influence": 16, "hp_mult": 15.0, "total_hp": 50, "inf_mult": 2.0, "res_mult": 1.0, "zone": Zone.SPRING, "role": "outer"},
-    {"id": 1, "dist": 240, "angle_deg": -90, "size": 3, "influence": 16, "hp_mult": 20.0, "total_hp": 120, "inf_mult": 2.0, "res_mult": 1.2, "zone": Zone.SPRING, "role": "outer"},
-    {"id": 2, "dist": 240, "angle_deg": -70, "size": 3, "influence": 16, "hp_mult": 25.0, "total_hp": 250, "inf_mult": 2.5, "res_mult": 1.5, "zone": Zone.SPRING, "role": "outer"},
-    {"id": 12, "dist": 180, "angle_deg": -90, "size": 5, "influence": 22, "hp_mult": 80.0, "total_hp": 500, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.SPRING, "role": "boss"},
-    {"id": 3, "dist": 220, "angle_deg": -45, "size": 3, "influence": 18, "hp_mult": 75.0, "total_hp": 5000, "inf_mult": 3.0, "res_mult": 1.5, "zone": Zone.SUMMER, "role": "outer"},
-    {"id": 4, "dist": 220, "angle_deg": -20, "size": 3, "influence": 18, "hp_mult": 90.0, "total_hp": 8000, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.SUMMER, "role": "outer"},
-    {"id": 5, "dist": 220, "angle_deg": 5, "size": 3, "influence": 18, "hp_mult": 100.0, "total_hp": 15000, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.SUMMER, "role": "outer"},
-    {"id": 13, "dist": 150, "angle_deg": -20, "size": 5, "influence": 25, "hp_mult": 250.0, "total_hp": 20000, "inf_mult": 3.5, "res_mult": 3.0, "zone": Zone.SUMMER, "role": "boss"},
-    {"id": 6, "dist": 200, "angle_deg": 40, "size": 3, "influence": 20, "hp_mult": 125.0, "total_hp": 80000, "inf_mult": 3.5, "res_mult": 2.5, "zone": Zone.AUTUMN, "role": "outer"},
-    {"id": 7, "dist": 200, "angle_deg": 70, "size": 3, "influence": 20, "hp_mult": 150.0, "total_hp": 150000, "inf_mult": 3.5, "res_mult": 3.0, "zone": Zone.AUTUMN, "role": "outer"},
-    {"id": 8, "dist": 200, "angle_deg": 100, "size": 3, "influence": 20, "hp_mult": 175.0, "total_hp": 250000, "inf_mult": 4.0, "res_mult": 3.0, "zone": Zone.AUTUMN, "role": "outer"},
-    {"id": 14, "dist": 120, "angle_deg": 70, "size": 7, "influence": 28, "hp_mult": 400.0, "total_hp": 350000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.AUTUMN, "role": "boss"},
-    {"id": 9, "dist": 180, "angle_deg": 150, "size": 5, "influence": 22, "hp_mult": 200.0, "total_hp": 5000000, "inf_mult": 4.0, "res_mult": 3.5, "zone": Zone.WINTER, "role": "outer"},
-    {"id": 10, "dist": 180, "angle_deg": 180, "size": 5, "influence": 22, "hp_mult": 250.0, "total_hp": 10000000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.WINTER, "role": "outer"},
-    {"id": 11, "dist": 180, "angle_deg": 210, "size": 5, "influence": 22, "hp_mult": 300.0, "total_hp": 20000000, "inf_mult": 4.5, "res_mult": 5.0, "zone": Zone.WINTER, "role": "outer"},
-    {"id": 15, "dist": 90, "angle_deg": 180, "size": 7, "influence": 32, "hp_mult": 600.0, "total_hp": 50000000, "inf_mult": 5.0, "res_mult": 6.0, "zone": Zone.WINTER, "role": "boss"},
-    {"id": 16, "dist": 0, "angle_deg": 0, "size": 7, "influence": 35, "hp_mult": 500.0, "total_hp": 180000000, "inf_mult": 5.0, "res_mult": 8.0, "zone": Zone.CENTER, "role": "final"},
+    {"id": 0, "center": Vector2i(-120, -162), "size": 3, "influence": 16, "hp_mult": 15.0, "total_hp": 50, "inf_mult": 2.0, "res_mult": 1.0, "zone": Zone.SPRING, "role": "outer"},
+    {"id": 1, "center": Vector2i(0, -154), "size": 3, "influence": 16, "hp_mult": 20.0, "total_hp": 120, "inf_mult": 2.0, "res_mult": 1.2, "zone": Zone.SPRING, "role": "outer"},
+    {"id": 2, "center": Vector2i(118, -168), "size": 3, "influence": 16, "hp_mult": 25.0, "total_hp": 250, "inf_mult": 2.5, "res_mult": 1.5, "zone": Zone.SPRING, "role": "outer"},
+    {"id": 12, "center": Vector2i(0, -106), "size": 5, "influence": 22, "hp_mult": 80.0, "total_hp": 500, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.SPRING, "role": "boss"},
+    {"id": 3, "center": Vector2i(-88, -58), "size": 3, "influence": 18, "hp_mult": 75.0, "total_hp": 5000, "inf_mult": 3.0, "res_mult": 1.5, "zone": Zone.SUMMER, "role": "outer"},
+    {"id": 4, "center": Vector2i(20, -50), "size": 3, "influence": 18, "hp_mult": 90.0, "total_hp": 8000, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.SUMMER, "role": "outer"},
+    {"id": 5, "center": Vector2i(96, -44), "size": 3, "influence": 18, "hp_mult": 100.0, "total_hp": 15000, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.SUMMER, "role": "outer"},
+    {"id": 13, "center": Vector2i(-8, 6), "size": 5, "influence": 25, "hp_mult": 250.0, "total_hp": 20000, "inf_mult": 3.5, "res_mult": 3.0, "zone": Zone.SUMMER, "role": "boss"},
+    {"id": 6, "center": Vector2i(-54, 56), "size": 3, "influence": 20, "hp_mult": 125.0, "total_hp": 80000, "inf_mult": 3.5, "res_mult": 2.5, "zone": Zone.AUTUMN, "role": "outer"},
+    {"id": 7, "center": Vector2i(8, 70), "size": 3, "influence": 20, "hp_mult": 150.0, "total_hp": 150000, "inf_mult": 3.5, "res_mult": 3.0, "zone": Zone.AUTUMN, "role": "outer"},
+    {"id": 8, "center": Vector2i(66, 64), "size": 3, "influence": 20, "hp_mult": 175.0, "total_hp": 250000, "inf_mult": 4.0, "res_mult": 3.0, "zone": Zone.AUTUMN, "role": "outer"},
+    {"id": 14, "center": Vector2i(0, 124), "size": 7, "influence": 28, "hp_mult": 400.0, "total_hp": 350000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.AUTUMN, "role": "boss"},
+    {"id": 9, "center": Vector2i(-34, 156), "size": 5, "influence": 22, "hp_mult": 200.0, "total_hp": 5000000, "inf_mult": 4.0, "res_mult": 3.5, "zone": Zone.WINTER, "role": "outer"},
+    {"id": 10, "center": Vector2i(0, 180), "size": 5, "influence": 22, "hp_mult": 250.0, "total_hp": 10000000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.WINTER, "role": "outer"},
+    {"id": 11, "center": Vector2i(30, 158), "size": 5, "influence": 22, "hp_mult": 300.0, "total_hp": 20000000, "inf_mult": 4.5, "res_mult": 5.0, "zone": Zone.WINTER, "role": "outer"},
+    {"id": 15, "center": Vector2i(0, 214), "size": 7, "influence": 32, "hp_mult": 600.0, "total_hp": 50000000, "inf_mult": 5.0, "res_mult": 6.0, "zone": Zone.WINTER, "role": "boss"},
+    {"id": 16, "center": Vector2i(0, 246), "size": 7, "influence": 35, "hp_mult": 500.0, "total_hp": 180000000, "inf_mult": 5.0, "res_mult": 8.0, "zone": Zone.CENTER, "role": "final"},
 ]
 
 const ZONE_BOSS_IDS := {
@@ -55,14 +64,6 @@ const ZONE_UNLOCK_REQUIRES := {
     Zone.AUTUMN: 13,
     Zone.WINTER: 14,
     Zone.CENTER: 15,
-}
-
-const ZONE_BOSS_DIST := {
-    Zone.SPRING: 180.0,
-    Zone.SUMMER: 150.0,
-    Zone.AUTUMN: 120.0,
-    Zone.WINTER: 90.0,
-    Zone.CENTER: 0.0,
 }
 
 const ZONE_HP_RANGE := {
@@ -102,15 +103,17 @@ var _section_cells: Array = []
 var _section_cells_ready: bool = false
 
 static func get_zone(pos: Vector2i) -> int:
-    var dist_sq: int = pos.x * pos.x + pos.y * pos.y
-    if dist_sq <= CENTER_RADIUS * CENTER_RADIUS:
+    var depth_ratio := clampf((float(pos.y) - float(PIT_TOP_Y)) / float(max(1, PIT_BOTTOM_Y - PIT_TOP_Y)), 0.0, 1.0)
+    depth_ratio += sin(float(pos.x) * 0.041 + 0.9) * 0.026
+    depth_ratio += sin(float(pos.x) * 0.117 + float(pos.y) * 0.01) * 0.012
+    depth_ratio = clampf(depth_ratio, 0.0, 1.0)
+    if depth_ratio >= 0.92:
         return Zone.CENTER
-    var angle: float = atan2(float(pos.y), float(pos.x))
-    if angle >= -PI * 2.0 / 3.0 and angle < -PI / 3.0:
+    if depth_ratio < 0.25:
         return Zone.SPRING
-    if angle >= -PI / 3.0 and angle < PI / 9.0:
+    if depth_ratio < 0.5:
         return Zone.SUMMER
-    if angle >= PI / 9.0 and angle < PI * 2.0 / 3.0:
+    if depth_ratio < 0.75:
         return Zone.AUTUMN
     return Zone.WINTER
 
@@ -137,33 +140,108 @@ static func get_core_tier(core_id: int) -> int:
         _:
             return 1
 
+func get_map_bounds() -> Rect2:
+    return Rect2(float(PIT_MIN_X), float(PIT_CAP_TOP_Y), float(PIT_MAX_X - PIT_MIN_X), float(PIT_BOTTOM_Y - PIT_CAP_TOP_Y))
+
+static func _get_depth_ratio(pos: Vector2i) -> float:
+    return clampf((float(pos.y) - float(PIT_TOP_Y)) / float(max(1, PIT_BOTTOM_Y - PIT_TOP_Y)), 0.0, 1.0)
+
+static func _get_half_width_for_y(y: int) -> float:
+    var depth_ratio := _get_depth_ratio(Vector2i(0, y))
+    var base_width := lerpf(PIT_TOP_HALF_WIDTH, PIT_BOTTOM_HALF_WIDTH, pow(depth_ratio, 0.74))
+    var wobble := sin(float(y) * 0.043 + 0.35) * 19.0 + sin(float(y) * 0.12 + 1.1) * 10.0 + sin(float(y) * 0.22 + 2.4) * 5.0
+    return maxf(PIT_BOTTOM_HALF_WIDTH, base_width + wobble)
+
+static func _get_left_wall(y: int) -> int:
+    return int(floor(-_get_half_width_for_y(y)))
+
+static func _get_right_wall(y: int) -> int:
+    return int(ceil(_get_half_width_for_y(y)))
+
+static func _is_inside_pit_shape(pos: Vector2i) -> bool:
+    if pos.y < PIT_TOP_Y or pos.y > PIT_BOTTOM_Y:
+        return false
+    return pos.x >= _get_left_wall(pos.y) and pos.x <= _get_right_wall(pos.y)
+
+static func _is_wall_cell(pos: Vector2i) -> bool:
+    if pos.y < PIT_CAP_TOP_Y or pos.y > PIT_BOTTOM_Y:
+        return false
+    var wall_y: int = maxi(pos.y, PIT_TOP_Y)
+    var left_wall: int = _get_left_wall(wall_y)
+    var right_wall: int = _get_right_wall(wall_y)
+    return (pos.x >= left_wall and pos.x < left_wall + PIT_WALL_THICKNESS) or (pos.x <= right_wall and pos.x > right_wall - PIT_WALL_THICKNESS)
+
+func get_depth_level_for_pos(pos: Vector2i, max_depth_level: int) -> int:
+    return clampi(1 + int(floor(_get_depth_ratio(pos) * float(max_depth_level))), 1, max_depth_level)
+
+func get_spawn_world_position(target_grid: Vector2i = Vector2i.ZERO) -> Vector2:
+    var spawn_y := PIT_TOP_Y - 8
+    var spawn_x := clampi(target_grid.x, _get_left_wall(PIT_TOP_Y) + PIT_WALL_THICKNESS + 2, _get_right_wall(PIT_TOP_Y) - PIT_WALL_THICKNESS - 2)
+    return grid_to_world(Vector2i(spawn_x, spawn_y))
+
+func get_left_wall_x(y: int) -> int:
+    return _get_left_wall(maxi(y, PIT_TOP_Y))
+
+func get_right_wall_x(y: int) -> int:
+    return _get_right_wall(maxi(y, PIT_TOP_Y))
+
+func get_upper_wall_top_y() -> int:
+    return PIT_CAP_TOP_Y
+
+func is_unbreakable_block(pos: Vector2i) -> bool:
+    if not blocks.has(pos):
+        return false
+    return bool(blocks[pos].get("unbreakable", false))
+
+func _build_block_data(pos: Vector2i, hp: float, res: float, zone: int, block_type: int, unbreakable: bool) -> Dictionary:
+    return {
+        "type": block_type,
+        "hp": hp,
+        "max_hp": hp,
+        "resource": res,
+        "core_id": -1,
+        "zone": zone,
+        "layer_depth": get_depth_level_for_pos(pos, 5),
+        "unbreakable": unbreakable,
+    }
+
+func _add_upper_wall_cap() -> void:
+    var cap_zone := get_zone(Vector2i(0, PIT_TOP_Y))
+    for y in range(PIT_CAP_TOP_Y, PIT_TOP_Y):
+        for x in range(PIT_MIN_X, PIT_MAX_X + 1):
+            var pos := Vector2i(x, y)
+            if not _is_wall_cell(pos):
+                continue
+            var sample_pos := Vector2i(x, PIT_TOP_Y)
+            var hp: float = _calc_block_hp(sample_pos)
+            var res: float = _calc_block_resource(sample_pos)
+            blocks[pos] = _build_block_data(pos, hp, res, cap_zone, BlockType.NORMAL, true)
+
 func generate_sync(_depth_level: int, _persistent_destroyed: Dictionary, balance_script_ref: Variant, rng: RandomNumberGenerator) -> void:
     balance_script = balance_script_ref
     world_rng = rng if rng != null else RandomNumberGenerator.new()
     _reset_generation_state()
-    var radius_sq: int = PLANET_RADIUS * PLANET_RADIUS
-    for x in range(-PLANET_RADIUS, PLANET_RADIUS + 1):
-        for y in range(-PLANET_RADIUS, PLANET_RADIUS + 1):
+    for x in range(PIT_MIN_X, PIT_MAX_X + 1):
+        for y in range(PIT_TOP_Y, PIT_BOTTOM_Y + 1):
             var pos := Vector2i(x, y)
-            if x * x + y * y > radius_sq:
+            if not _is_inside_pit_shape(pos):
                 continue
             var hp: float = _calc_block_hp(pos)
             var res: float = _calc_block_resource(pos)
             var zone: int = get_zone(pos)
             var block_type: int = BlockType.NORMAL
-            var roll: float = world_rng.randf()
-            if roll < GOLD_CHANCE:
-                block_type = BlockType.GOLD
-            elif roll < GOLD_CHANCE + ELECTRIC_CHANCE:
-                block_type = BlockType.ELECTRIC
-            blocks[pos] = {
-                "type": block_type,
-                "hp": hp,
-                "max_hp": hp,
-                "resource": res,
-                "core_id": -1,
-                "zone": zone,
-            }
+            var unbreakable := _is_wall_cell(pos)
+            if not unbreakable:
+                var roll: float = world_rng.randf()
+                if roll < GOLD_CHANCE:
+                    block_type = BlockType.GOLD
+                elif roll < GOLD_CHANCE + ELECTRIC_CHANCE:
+                    block_type = BlockType.ELECTRIC
+                elif zone < Zone.WINTER and world_rng.randf() < NEXT_ZONE_SPIKE_CHANCE:
+                    hp *= NEXT_ZONE_SPIKE_HP_MULT
+                    res *= NEXT_ZONE_SPIKE_RES_MULT
+            blocks[pos] = _build_block_data(pos, hp, res, zone, block_type, unbreakable)
+    _add_upper_wall_cap()
     _place_cores()
     _apply_influence_zone_boost()
     var persistent_removed_count := 0
@@ -183,7 +261,7 @@ func generate_sync(_depth_level: int, _persistent_destroyed: Dictionary, balance
             _update_edges_batch(erased_positions)
     _rebuild_proximity_cache()
     _rebuild_exposed_edges()
-    initial_block_count = blocks.size() + persistent_removed_count
+    initial_block_count = _count_breakable_blocks() + persistent_removed_count
     _mark_all_sections_dirty()
 
 func generate_async(tree: SceneTree, _depth_level: int, _persistent_destroyed: Dictionary, balance_script_ref: Variant, rng: RandomNumberGenerator, progress_callback: Callable = Callable()) -> void:
@@ -191,34 +269,29 @@ func generate_async(tree: SceneTree, _depth_level: int, _persistent_destroyed: D
     world_rng = rng if rng != null else RandomNumberGenerator.new()
     _reset_generation_state()
     _emit_generation_progress(progress_callback, 0.0)
-    var radius_sq: int = PLANET_RADIUS * PLANET_RADIUS
-    var total_columns: int = PLANET_RADIUS * 2 + 1
-    for x in range(-PLANET_RADIUS, PLANET_RADIUS + 1):
-        for y in range(-PLANET_RADIUS, PLANET_RADIUS + 1):
+    var total_columns: int = PIT_MAX_X - PIT_MIN_X + 1
+    for x in range(PIT_MIN_X, PIT_MAX_X + 1):
+        for y in range(PIT_TOP_Y, PIT_BOTTOM_Y + 1):
             var pos := Vector2i(x, y)
-            if x * x + y * y > radius_sq:
+            if not _is_inside_pit_shape(pos):
                 continue
             var hp: float = _calc_block_hp(pos)
             var res: float = _calc_block_resource(pos)
             var zone: int = get_zone(pos)
             var block_type: int = BlockType.NORMAL
-            var roll: float = world_rng.randf()
-            if roll < GOLD_CHANCE:
-                block_type = BlockType.GOLD
-            elif roll < GOLD_CHANCE + ELECTRIC_CHANCE:
-                block_type = BlockType.ELECTRIC
-            blocks[pos] = {
-                "type": block_type,
-                "hp": hp,
-                "max_hp": hp,
-                "resource": res,
-                "core_id": -1,
-                "zone": zone,
-            }
-        var column_index: int = x + PLANET_RADIUS
+            var unbreakable := _is_wall_cell(pos)
+            if not unbreakable:
+                var roll: float = world_rng.randf()
+                if roll < GOLD_CHANCE:
+                    block_type = BlockType.GOLD
+                elif roll < GOLD_CHANCE + ELECTRIC_CHANCE:
+                    block_type = BlockType.ELECTRIC
+            blocks[pos] = _build_block_data(pos, hp, res, zone, block_type, unbreakable)
+        var column_index: int = x - PIT_MIN_X
         _emit_generation_progress(progress_callback, 0.8 * float(column_index + 1) / float(total_columns))
         if tree != null and ((column_index + 1) % 12 == 0):
             await tree.process_frame
+    _add_upper_wall_cap()
     _place_cores()
     _emit_generation_progress(progress_callback, 0.86)
     if tree != null:
@@ -232,7 +305,7 @@ func generate_async(tree: SceneTree, _depth_level: int, _persistent_destroyed: D
     if tree != null:
         await tree.process_frame
     _rebuild_exposed_edges()
-    initial_block_count = blocks.size()
+    initial_block_count = _count_breakable_blocks()
     _emit_generation_progress(progress_callback, 1.0)
     _mark_all_sections_dirty()
 
@@ -249,6 +322,8 @@ func _reset_generation_state() -> void:
     _final_core_exposed_emitted = false
     initial_block_count = 0
     _dirty_sections.clear()
+    _section_cells.clear()
+    _section_cells_ready = false
 
 func _emit_generation_progress(progress_callback: Callable, value: float) -> void:
     if progress_callback.is_valid():
@@ -322,7 +397,7 @@ func get_active_core_behaviors() -> Dictionary:
         "regen_boost": alive_t2 > 0 or alive_t3 > 0,
         "defense_blocks": alive_t2 > 0,
         "shockwave": alive_t2 > 0 or alive_t3 > 0,
-        "final_rage": alive_t3 > 0 and alive_t2 == 0 and get_alive_cores_in_tier(1) == 0,
+        "final_lockdown": alive_t3 > 0 and alive_t2 == 0 and get_alive_cores_in_tier(1) == 0,
         "destroyed_t1": get_destroyed_in_tier(1),
     }
 
@@ -342,7 +417,7 @@ func spawn_defense_blocks() -> Array[Vector2i]:
                 int(round(float(core.center.x) + cos(angle) * dist)),
                 int(round(float(core.center.y) + sin(angle) * dist))
             )
-            if used.has(pos) or pos.x * pos.x + pos.y * pos.y > PLANET_RADIUS * PLANET_RADIUS:
+            if used.has(pos) or not _is_inside_pit_shape(pos) or _is_wall_cell(pos):
                 continue
             if blocks.has(pos):
                 continue
@@ -357,6 +432,7 @@ func spawn_defense_blocks() -> Array[Vector2i]:
                 "core_id": -1,
                 "zone": get_zone(pos),
                 "regenerated": true,
+                "layer_depth": get_depth_level_for_pos(pos, 5),
             }
             minimap_block_spawned.emit(pos, BlockType.THORN)
             _update_edges_around(pos)
@@ -382,7 +458,7 @@ func spawn_thorn_ring(core: Dictionary, ring_min: int, ring_max: int) -> int:
             var dist_sq: int = dx * dx + dy * dy
             if dist_sq < ring_min_sq or dist_sq >= ring_max_sq:
                 continue
-            if pos.x * pos.x + pos.y * pos.y > PLANET_RADIUS * PLANET_RADIUS:
+            if not _is_inside_pit_shape(pos) or _is_wall_cell(pos):
                 continue
             if blocks.has(pos) or is_in_dead_core_zone(pos):
                 continue
@@ -397,6 +473,7 @@ func spawn_thorn_ring(core: Dictionary, ring_min: int, ring_max: int) -> int:
                 "zone": get_zone(pos),
                 "regenerated": true,
                 "birth_time": Time.get_ticks_msec() * 0.001,
+                "layer_depth": get_depth_level_for_pos(pos, 5),
             }
             minimap_block_spawned.emit(pos, BlockType.THORN)
             regen_positions.append(pos)
@@ -452,6 +529,8 @@ func damage_block(pos: Vector2i, damage: float, indirect: bool = false, free_pla
     if not blocks.has(pos):
         return {"destroyed": false, "type": -1, "resource": 0.0}
     var block: Dictionary = blocks[pos]
+    if bool(block.get("unbreakable", false)):
+        return {"destroyed": false, "type": int(block.get("type", BlockType.NORMAL)), "resource": 0.0, "shielded": true, "layer_depth": int(block.get("layer_depth", 1))}
     if int(block.get("type", BlockType.CORE)) == BlockType.CORE and int(block.get("core_id", -1)) >= 0:
         var actual_damage: float = damage * CORE_INDIRECT_DR if indirect else damage
         return _damage_core(pos, int(block.get("core_id", -1)), actual_damage, free_planet_mode)
@@ -470,10 +549,10 @@ func damage_block(pos: Vector2i, damage: float, indirect: bool = false, free_pla
             zone_destroyed_blocks[block_zone] = int(zone_destroyed_blocks.get(block_zone, 0)) + 1
             zone_current_blocks[block_zone] = maxi(int(zone_current_blocks.get(block_zone, 0)) - 1, 0)
         _check_final_core_exposure(pos)
-        return {"destroyed": true, "type": block_type, "resource": block_resource}
+        return {"destroyed": true, "type": block_type, "resource": block_resource, "layer_depth": int(block.get("layer_depth", 1))}
     blocks[pos] = block
     _mark_section_dirty(pos)
-    return {"destroyed": false, "type": int(block.get("type", BlockType.NORMAL)), "resource": 0.0}
+    return {"destroyed": false, "type": int(block.get("type", BlockType.NORMAL)), "resource": 0.0, "layer_depth": int(block.get("layer_depth", 1))}
 
 func convert_to_gold(pos: Vector2i) -> bool:
     if not blocks.has(pos):
@@ -530,7 +609,7 @@ func regenerate_around_cores() -> int:
                 var dy: int = y - center.y
                 if dx * dx + dy * dy > radius * radius:
                     continue
-                if pos.x * pos.x + pos.y * pos.y > PLANET_RADIUS * PLANET_RADIUS:
+                if not _is_inside_pit_shape(pos) or _is_wall_cell(pos):
                     continue
                 if blocks.has(pos) or is_in_dead_core_zone(pos):
                     continue
@@ -552,6 +631,7 @@ func regenerate_around_cores() -> int:
                     "core_id": -1,
                     "zone": zone,
                     "regenerated": true,
+                    "layer_depth": get_depth_level_for_pos(pos, 5),
                 }
                 zone_current_blocks[zone] = int(zone_current_blocks.get(zone, 0)) + 1
                 minimap_block_spawned.emit(pos, regen_type)
@@ -603,7 +683,7 @@ func grid_to_world(grid_pos: Vector2i) -> Vector2:
     return Vector2(float(grid_pos.x * BLOCK_SIZE + BLOCK_SIZE / 2), float(grid_pos.y * BLOCK_SIZE + BLOCK_SIZE / 2))
 
 func get_total_blocks() -> int:
-    return blocks.size()
+    return _count_breakable_blocks()
 
 func get_alive_cores() -> int:
     var count := 0
@@ -617,12 +697,12 @@ func get_total_cores() -> int:
 
 func get_destroyed_cell_keys() -> Array[String]:
     var keys: Array[String] = []
-    var radius_sq: int = PLANET_RADIUS * PLANET_RADIUS
-    for x in range(-PLANET_RADIUS, PLANET_RADIUS + 1):
-        for y in range(-PLANET_RADIUS, PLANET_RADIUS + 1):
-            if x * x + y * y > radius_sq:
+    for x in range(PIT_MIN_X, PIT_MAX_X + 1):
+        for y in range(PIT_TOP_Y, PIT_BOTTOM_Y + 1):
+            var check := Vector2i(x, y)
+            if not _is_inside_pit_shape(check):
                 continue
-            var pos := Vector2i(x, y)
+            var pos := check
             if blocks.has(pos):
                 continue
             keys.append("%d,%d" % [x, y])
@@ -644,6 +724,8 @@ func to_save_data() -> Dictionary:
             bool(block.get("regenerated", false)),
             int(block.get("zone", get_zone(pos))),
             bool(block.get("converted_gold", false)),
+            int(block.get("layer_depth", 1)),
+            bool(block.get("unbreakable", false)),
         ]
     var core_data: Array = []
     for core in cores:
@@ -728,6 +810,8 @@ func load_save_data_async(tree: SceneTree, data: Dictionary, progress_callback: 
                 "regenerated": bool(arr[5]) if arr.size() > 5 else false,
                 "zone": int(arr[6]) if arr.size() > 6 else get_zone(pos),
                 "converted_gold": bool(arr[7]) if arr.size() > 7 else false,
+                "layer_depth": int(arr[8]) if arr.size() > 8 else get_depth_level_for_pos(pos, 5),
+                "unbreakable": bool(arr[9]) if arr.size() > 9 else false,
             }
             if tree != null and ((idx + 1) % 2000 == 0):
                 _emit_generation_progress(progress_callback, 0.78 * float(idx + 1) / float(total_blocks))
@@ -746,12 +830,21 @@ func load_save_data_async(tree: SceneTree, data: Dictionary, progress_callback: 
     _emit_generation_progress(progress_callback, 1.0)
 
 func _get_zone_depth(pos: Vector2i) -> float:
-    var dist: float = Vector2(float(pos.x), float(pos.y)).length()
     var zone: int = get_zone(pos)
-    if zone == Zone.CENTER:
-        return clampf(1.0 - dist / float(CENTER_RADIUS), 0.0, 1.0)
-    var boss_dist: float = float(ZONE_BOSS_DIST.get(zone, 0.0))
-    return clampf((float(PLANET_RADIUS) - dist) / maxf(1.0, float(PLANET_RADIUS) - boss_dist), 0.0, 1.0)
+    var depth_ratio := _get_depth_ratio(pos)
+    match zone:
+        Zone.SPRING:
+            return clampf(depth_ratio / 0.25, 0.0, 1.0)
+        Zone.SUMMER:
+            return clampf((depth_ratio - 0.25) / 0.25, 0.0, 1.0)
+        Zone.AUTUMN:
+            return clampf((depth_ratio - 0.5) / 0.25, 0.0, 1.0)
+        Zone.WINTER:
+            return clampf((depth_ratio - 0.75) / 0.17, 0.0, 1.0)
+        Zone.CENTER:
+            return clampf((depth_ratio - 0.92) / 0.08, 0.0, 1.0)
+        _:
+            return depth_ratio
 
 func _calc_block_hp(pos: Vector2i) -> float:
     var zone: int = get_zone(pos)
@@ -810,11 +903,20 @@ func _count_zone_initial_blocks() -> void:
     for pos_variant in blocks.keys():
         var pos: Vector2i = pos_variant
         var block: Dictionary = blocks[pos]
-        if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
+        if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE or bool(block.get("unbreakable", false)):
             continue
         var zone: int = int(block.get("zone", get_zone(pos)))
         zone_initial_blocks[zone] = int(zone_initial_blocks.get(zone, 0)) + 1
     zone_current_blocks = zone_initial_blocks.duplicate(true)
+
+func _count_breakable_blocks() -> int:
+    var count := 0
+    for block_variant in blocks.values():
+        var block: Dictionary = block_variant
+        if bool(block.get("unbreakable", false)):
+            continue
+        count += 1
+    return count
 
 func clear_dirty_sections() -> void:
     _dirty_sections.clear()
@@ -829,10 +931,9 @@ func _ensure_section_cells_built() -> void:
     _section_cells.resize(SAVE_SECTION_COUNT)
     for section_id in range(SAVE_SECTION_COUNT):
         _section_cells[section_id] = []
-    var radius_sq: int = PLANET_RADIUS * PLANET_RADIUS
-    for x in range(-PLANET_RADIUS, PLANET_RADIUS + 1):
-        for y in range(-PLANET_RADIUS, PLANET_RADIUS + 1):
-            if x * x + y * y > radius_sq:
+    for x in range(PIT_MIN_X, PIT_MAX_X + 1):
+        for y in range(PIT_TOP_Y, PIT_BOTTOM_Y + 1):
+            if not _is_inside_pit_shape(Vector2i(x, y)):
                 continue
             var pos := Vector2i(x, y)
             var section_id := _get_section_id(pos)
@@ -842,12 +943,11 @@ func _ensure_section_cells_built() -> void:
     _section_cells_ready = true
 
 func _get_section_id(pos: Vector2i) -> int:
-    var angle := atan2(float(pos.y), float(pos.x))
-    var angle_norm := fposmod(angle + PI, TAU) / TAU
-    var angle_idx := clampi(int(floor(angle_norm * float(SAVE_ANGLE_SLICES))), 0, SAVE_ANGLE_SLICES - 1)
-    var dist_norm := clampf(Vector2(float(pos.x), float(pos.y)).length() / float(PLANET_RADIUS), 0.0, 0.999999)
+    var x_norm := clampf((float(pos.x) - float(PIT_MIN_X)) / float(max(1, PIT_MAX_X - PIT_MIN_X + 1)), 0.0, 0.999999)
+    var angle_idx := clampi(int(floor(x_norm * float(SAVE_X_SLICES))), 0, SAVE_X_SLICES - 1)
+    var dist_norm := _get_depth_ratio(pos)
     var depth_idx := clampi(int(floor(dist_norm * float(SAVE_DEPTH_SLICES))), 0, SAVE_DEPTH_SLICES - 1)
-    return depth_idx * SAVE_ANGLE_SLICES + angle_idx
+    return depth_idx * SAVE_X_SLICES + angle_idx
 
 func _mark_section_dirty(pos: Vector2i) -> void:
     _dirty_sections[_get_section_id(pos)] = true
@@ -892,6 +992,8 @@ func _serialize_section(section_id: int) -> Array:
             bool(block.get("regenerated", false)),
             int(block.get("zone", get_zone(pos))),
             bool(block.get("converted_gold", false)),
+            int(block.get("layer_depth", 1)),
+            bool(block.get("unbreakable", false)),
         ])
     return rows
 
@@ -919,8 +1021,9 @@ func _serialize_core_data() -> Array:
 
 func _build_chunked_save_payload(sections: Dictionary) -> Dictionary:
     return {
-        "format_version": 3,
-        "angle_slices": SAVE_ANGLE_SLICES,
+        "format_version": 4,
+        "planet_layout_version": balance_script.PLANET_LAYOUT_VERSION if balance_script != null else 0,
+        "angle_slices": SAVE_X_SLICES,
         "depth_slices": SAVE_DEPTH_SLICES,
         "initial_block_count": initial_block_count,
         "cores": _serialize_core_data(),
@@ -949,6 +1052,8 @@ func _load_section_blocks(section_blocks: Array, format_version: int = 2) -> voi
                 "regenerated": bool(row[6]),
                 "zone": int(row[7]),
                 "converted_gold": bool(row[8]),
+                "layer_depth": int(row[9]) if row.size() > 9 else get_depth_level_for_pos(pos_v3, 5),
+                "unbreakable": bool(row[10]) if row.size() > 10 else false,
             }
             continue
         if row.size() < 10:
@@ -986,13 +1091,13 @@ func _load_common_save_data(data: Dictionary) -> void:
     zone_current_blocks = data.get("zone_current_blocks", {}).duplicate(true)
     final_boss_active = bool(data.get("final_boss_active", false))
     final_core_phase = int(data.get("final_core_phase", 0))
-    initial_block_count = int(data.get("initial_block_count", blocks.size()))
+    initial_block_count = int(data.get("initial_block_count", _count_breakable_blocks()))
     if zone_initial_blocks.is_empty():
         _count_zone_initial_blocks()
     if zone_current_blocks.is_empty():
         zone_current_blocks = zone_initial_blocks.duplicate(true)
     if initial_block_count <= 0:
-        initial_block_count = blocks.size()
+        initial_block_count = _count_breakable_blocks()
         for destroyed_count_variant in zone_destroyed_blocks.values():
             initial_block_count += int(destroyed_count_variant)
 
@@ -1021,6 +1126,8 @@ func _apply_loaded_save_data(data: Dictionary) -> void:
                 "regenerated": bool(arr[5]) if arr.size() > 5 else false,
                 "zone": int(arr[6]) if arr.size() > 6 else get_zone(pos),
                 "converted_gold": bool(arr[7]) if arr.size() > 7 else false,
+                "layer_depth": int(arr[8]) if arr.size() > 8 else get_depth_level_for_pos(pos, 5),
+                "unbreakable": bool(arr[9]) if arr.size() > 9 else false,
             }
     _load_common_save_data(data)
     _rebuild_proximity_cache()
@@ -1031,14 +1138,7 @@ func _place_cores() -> void:
     for config in CORE_CONFIGS:
         var core_id: int = int(config.id)
         var core_size: int = int(config.size)
-        var dist: float = float(config.dist)
-        var cx := 0
-        var cy := 0
-        if dist > 0.0:
-            var angle_rad: float = deg_to_rad(float(config.angle_deg))
-            cx = int(round(cos(angle_rad) * dist))
-            cy = int(round(sin(angle_rad) * dist))
-        var center := Vector2i(cx, cy)
+        var center: Vector2i = config.get("center", Vector2i.ZERO)
         var block_count: int = core_size * core_size
         var core_hp: float = float(config.total_hp)
         core_hp *= core_difficulty_mult
@@ -1050,7 +1150,7 @@ func _place_cores() -> void:
             "size": core_size,
             "influence_radius": int(config.influence),
             "alive": true,
-            "depth": 1.0 - dist / float(PLANET_RADIUS) if dist > 0.0 else 1.0,
+            "depth": _get_depth_ratio(center),
             "zone": int(config.zone),
             "role": str(config.role),
         })
@@ -1058,7 +1158,7 @@ func _place_cores() -> void:
         for dx in range(-half, half + core_size % 2):
             for dy in range(-half, half + core_size % 2):
                 var pos := Vector2i(center.x + dx, center.y + dy)
-                if pos.x * pos.x + pos.y * pos.y > PLANET_RADIUS * PLANET_RADIUS:
+                if not _is_inside_pit_shape(pos) or _is_wall_cell(pos):
                     continue
                 blocks[pos] = {
                     "type": BlockType.CORE,
@@ -1067,6 +1167,7 @@ func _place_cores() -> void:
                     "resource": core_res / float(block_count),
                     "core_id": core_id,
                     "zone": int(config.zone),
+                    "layer_depth": get_depth_level_for_pos(pos, 5),
                 }
     for core in cores:
         var core_zone: int = int(core.zone)
@@ -1114,6 +1215,7 @@ func _damage_core(_hit_pos: Vector2i, core_id: int, damage: float, free_planet_m
         "core_id": core_id,
         "core_role": str(core.get("role", "")),
         "final_core": core_id == FINAL_CORE_ID,
+        "layer_depth": get_depth_level_for_pos(center, 5),
     }
 
 func _on_core_destroyed(core: Dictionary) -> void:

@@ -9,6 +9,7 @@ const PERF_GRAPH_SCRIPT := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpi
 const MINIMAP_SCRIPT := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpireMiniMap.gd")
 const DROP_RENDERER_SCRIPT := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpireDropRenderer.gd")
 const SHIP_RENDERER_SCRIPT := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpireShipRenderer.gd")
+const BREACH_CHAT_SCRIPT := preload("res://Games/OpenPitEmpire/OpenPitEmpireBreachChat.gd")
 
 const BLOCK_SIZE := 32.0
 const PLANET_RADIUS_CELLS := 280
@@ -47,9 +48,39 @@ const SHIP_TRAIL_INTERVAL := 0.03
 const SHIP_TRAIL_MAX := 8
 const HUD_REFRESH_INTERVAL := 0.1
 const DRONE_RANGE := 230.0
-const DRONE_FOLLOW_SPEED := 8.0
-const DRONE_SPACING := 20.0
-const DRONE_BEHIND_DIST := 25.0
+const DRONE_FOLLOW_SPEED := 11.0
+const DRONE_SPACING := 16.0
+const DRONE_BEHIND_DIST := 18.0
+const CAMERA_ZOOM_MIN := 1.0
+const CAMERA_ZOOM_MAX := 1.0
+const CAMERA_ZOOM_LERP := 5.0
+const BREACH_LOG_MAX_LINES := 8
+const BREACH_LOG_IDLE_INTERVAL := 2.8
+const HACKER_TYPER_IDLE_TEXT := "idle :: waiting for breach window"
+const HACKER_TYPER_SAMPLE_LINES := [
+    "inject shell --quiet --reroute clinic ledgers",
+    "spoof trace :: rotate certs :: shadow jump",
+    "pull ration audits && dump black budget shards",
+    "ghost tunnel open // escrow teeth grinding",
+    "decrypt civic injunction cache // push receipts",
+]
+const POWERUP_TYPES := ["haste", "magnet", "payload"]
+const POWERUP_DURATION := 12.0
+const POWERUP_RADIUS := 18.0
+const POWERUP_BASE_SPEED := 72.0
+const BOTTOM_CUTSCENE_DURATION := 2.6
+const SIDE_SHOT_INTERVAL := 2.4
+const SIDE_SHOT_SPEED := 210.0
+const SIDE_SHOT_LIFETIME := 6.0
+const SIDE_SHOT_RADIUS := 12.0
+const SIDE_ATTACKER_COUNT_PER_SIDE := 2
+const SIDE_ATTACKER_INSET_CELLS := 5
+const SIDE_ATTACKER_TRACK_SPEED := 4.5
+const SIDE_ATTACKER_SHOT_INTERVAL := 1.9
+const SIDE_ATTACKER_VERTICAL_SPACING := 14
+const SIDE_ATTACKER_VERTICAL_SWAY := 18.0
+const FUNNEL_REENTRY_SCAN_RADIUS_Y := 10
+const FUNNEL_REENTRY_SCAN_COLUMNS := 14
 const DEFENSE_BLOCK_INTERVAL := 5.0
 const CORE_SHOCKWAVE_INTERVAL := 7.0
 const CORE_SHOCKWAVE_PUSH := 280.0
@@ -88,6 +119,7 @@ const SHIELD_HIT_INVULN_TIME := 1.0
 const SHIELD_HIT_RECOVERY_TIME := 1.0
 const SHIELD_HIT_ACCEL_START_SCALE := 0.33333334
 const SHIELD_HIT_BOUNCE_DISTANCE := SHIP_RADIUS * 6.0
+const SHIP_RENDER_ROTATION_STEP_DEGREES := 5.0
 
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
 enum OutlineMode { OFF, GROUP_EDGES, ALL_BLOCKS, ALL_BLOCKS_MASK }
@@ -120,6 +152,7 @@ var camera_pos := Vector2.ZERO
 var planet_center := Vector2.ZERO
 var planet_radius_cells := 0
 var current_depth_level := 1
+var current_layer_depth := 1
 var current_layer_name := ""
 var time_left := 30.0
 var run_finished := false
@@ -134,6 +167,7 @@ var extraction_camera_anchor := Vector2.ZERO
 var cargo_units := 0
 var cargo_money := 0
 var nodes_mined := 0
+var xp_earned_this_run := 0
 var barriers_left := 0
 var shield_invuln_timer := 0.0
 var shield_recovery_timer := 0.0
@@ -156,6 +190,7 @@ var mega_direction := Vector2.UP
 var mega_beam_end := Vector2.ZERO
 var mega_beam_hits: Array[Vector2] = []
 var visual_rotation := 0.0
+var ship_render_rotation_offset_degrees := 0.0
 var last_move_dir := Vector2.UP
 var ship_glow_phase := 0.0
 var ship_trail: Array[Dictionary] = []
@@ -182,6 +217,23 @@ var summer_laser_states: Dictionary = {}
 var autumn_debris: Array[Dictionary] = []
 var winter_cross_lasers: Dictionary = {}
 var autumn_debris_timers: Dictionary = {}
+var hacker_typer_label: RichTextLabel
+var hacker_typer_visible_text := HACKER_TYPER_IDLE_TEXT
+var hacker_typer_target_text := HACKER_TYPER_IDLE_TEXT
+var hacker_typer_cursor_on := true
+var hacker_typer_char_timer := 0.0
+var hacker_typer_hold_timer := 0.0
+var hacker_typer_is_attacking := false
+var hacker_typer_im_in_timer := 0.0
+var combo_milestones_hit: Dictionary = {}
+var roaming_powerups: Array[Dictionary] = []
+var active_powerup_timers := {"haste": 0.0, "magnet": 0.0, "payload": 0.0}
+var bottom_phase_unlocked := false
+var bottom_cutscene_timer := 0.0
+var bottom_cutscene_anchor := Vector2.ZERO
+var side_shot_timer := SIDE_SHOT_INTERVAL
+var side_projectiles: Array[Dictionary] = []
+var side_attackers: Array[Dictionary] = []
 
 var planet_renderer: Node2D
 var drop_renderer: Node2D
@@ -206,12 +258,28 @@ var summary_return_button: Button
 var summary_save_anim_time := 0.0
 var summary_save_pending := false
 var summary_save_phase := "idle"
+var breach_log_label: RichTextLabel
+var bottom_cinematic_overlay: Control
+var bottom_letterbox_top: ColorRect
+var bottom_letterbox_bottom: ColorRect
+var bottom_cutscene_label: RichTextLabel
+var breach_log_lines: Array[String] = []
+var breach_log_idle_timer := 0.0
+var breach_chat
+var final_core_exposed := false
 var pickups_spawned_this_frame := 0
 var _last_block_break_audio_ms := -100000
 var _last_core_break_audio_ms := -100000
 var _perf_probe_enabled := false
 const PERF_PROBE_KEYS := [
     "process_frame",
+    "update_timers",
+    "update_ship",
+    "update_ship_trail",
+    "update_layer_name",
+    "update_camera_zoom",
+    "update_breach_log",
+    "refresh_hud",
     "update_combat",
     "update_pickups",
     "update_core_attacks",
@@ -243,6 +311,13 @@ const RENDERER_PROBE_KEYS := [
 ]
 var _perf_probe_history := {
     "process_frame": [],
+    "update_timers": [],
+    "update_ship": [],
+    "update_ship_trail": [],
+    "update_layer_name": [],
+    "update_camera_zoom": [],
+    "update_breach_log": [],
+    "refresh_hud": [],
     "update_combat": [],
     "update_pickups": [],
     "update_core_attacks": [],
@@ -264,6 +339,13 @@ var _perf_probe_history := {
 }
 var _perf_probe_labels := {
     "process_frame": "_process frame",
+    "update_timers": "_update_timers",
+    "update_ship": "_update_ship",
+    "update_ship_trail": "_update_ship_trail",
+    "update_layer_name": "_update_current_layer_name",
+    "update_camera_zoom": "_update_camera_zoom",
+    "update_breach_log": "_update_breach_log",
+    "refresh_hud": "_refresh_hud",
     "update_combat": "_update_combat",
     "update_pickups": "_update_pickups",
     "update_core_attacks": "_update_core_attacks",
@@ -285,6 +367,13 @@ var _perf_probe_labels := {
 }
 var _perf_probe_last_samples := {
     "process_frame": 0.0,
+    "update_timers": 0.0,
+    "update_ship": 0.0,
+    "update_ship_trail": 0.0,
+    "update_layer_name": 0.0,
+    "update_camera_zoom": 0.0,
+    "update_breach_log": 0.0,
+    "refresh_hud": 0.0,
     "update_combat": 0.0,
     "update_pickups": 0.0,
     "update_core_attacks": 0.0,
@@ -306,6 +395,13 @@ var _perf_probe_last_samples := {
 }
 var _run_perf_peak_samples := {
     "process_frame": 0.0,
+    "update_timers": 0.0,
+    "update_ship": 0.0,
+    "update_ship_trail": 0.0,
+    "update_layer_name": 0.0,
+    "update_camera_zoom": 0.0,
+    "update_breach_log": 0.0,
+    "refresh_hud": 0.0,
     "update_combat": 0.0,
     "update_pickups": 0.0,
     "update_core_attacks": 0.0,
@@ -334,7 +430,9 @@ var _target_offset_cache: Dictionary = {}
 
 func _ready() -> void:
     Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-    VirtualCursor.use_open_pit_empire_cursor(true)
+    if VirtualCursor != null:
+        VirtualCursor.use_open_pit_empire_cursor(true)
+        VirtualCursor.set_scene_enabled(true)
     Global.game_state = Util.GAME_STATES.PLAYING
     rng.randomize()
     _build_runtime_nodes()
@@ -343,7 +441,9 @@ func _ready() -> void:
     set_process(true)
 
 func _exit_tree() -> void:
-    VirtualCursor.use_open_pit_empire_cursor(false)
+    if VirtualCursor != null:
+        VirtualCursor.use_open_pit_empire_cursor(false)
+        VirtualCursor.set_scene_enabled(false)
     _save_planet_snapshot()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -364,6 +464,18 @@ func _unhandled_input(event: InputEvent) -> void:
             get_viewport().set_input_as_handled()
         elif event.keycode == KEY_BRACKETRIGHT:
             adjust_planet_outline_radius(PLANET_OUTLINE_RADIUS_STEP)
+            get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_5 or event.keycode == KEY_KP_5 or event.physical_keycode == KEY_5:
+            ship_render_rotation_offset_degrees -= SHIP_RENDER_ROTATION_STEP_DEGREES
+            if ship_renderer != null:
+                ship_renderer.queue_redraw()
+            print("Open Pit Empire ship render rotation offset: %.1f degrees" % ship_render_rotation_offset_degrees)
+            get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_6 or event.keycode == KEY_KP_6 or event.physical_keycode == KEY_6:
+            ship_render_rotation_offset_degrees += SHIP_RENDER_ROTATION_STEP_DEGREES
+            if ship_renderer != null:
+                ship_renderer.queue_redraw()
+            print("Open Pit Empire ship render rotation offset: %.1f degrees" % ship_render_rotation_offset_degrees)
             get_viewport().set_input_as_handled()
 
 func _build_runtime_nodes() -> void:
@@ -386,6 +498,7 @@ func _build_runtime_nodes() -> void:
     camera = Camera2D.new()
     camera.position_smoothing_enabled = true
     camera.position_smoothing_speed = 8.0
+    camera.zoom = Vector2.ONE * CAMERA_ZOOM_MIN
     ship_root.add_child(camera)
     camera.make_current()
 
@@ -477,6 +590,98 @@ func _build_ui() -> void:
     vbox.add_child(perf_probe_label)
     _perf_probe_enabled = true
 
+    var breach_log_panel := PanelContainer.new()
+    breach_log_panel.offset_left = -520.0
+    breach_log_panel.offset_top = 16.0
+    breach_log_panel.offset_right = -16.0
+    breach_log_panel.offset_bottom = 360.0
+    breach_log_panel.anchor_left = 1.0
+    breach_log_panel.anchor_right = 1.0
+    breach_log_panel.add_theme_stylebox_override("panel", panel_style.duplicate(true))
+    hud_layer.add_child(breach_log_panel)
+
+    var breach_log_margin := MarginContainer.new()
+    breach_log_margin.add_theme_constant_override("margin_left", 12)
+    breach_log_margin.add_theme_constant_override("margin_top", 10)
+    breach_log_margin.add_theme_constant_override("margin_right", 12)
+    breach_log_margin.add_theme_constant_override("margin_bottom", 10)
+    breach_log_panel.add_child(breach_log_margin)
+
+    var breach_log_vbox := VBoxContainer.new()
+    breach_log_vbox.add_theme_constant_override("separation", 8)
+    breach_log_margin.add_child(breach_log_vbox)
+
+    breach_log_label = RichTextLabel.new()
+    breach_log_label.bbcode_enabled = true
+    breach_log_label.fit_content = true
+    breach_log_label.scroll_active = false
+    breach_log_label.custom_minimum_size = Vector2(480.0, 220.0)
+    breach_log_label.add_theme_font_size_override("normal_font_size", 15)
+    breach_log_label.add_theme_color_override("default_color", Color(0.96, 0.98, 0.86, 0.96))
+    breach_log_vbox.add_child(breach_log_label)
+
+    var hacker_typer_panel := PanelContainer.new()
+    var typer_style := panel_style.duplicate(true)
+    typer_style.bg_color = Color(0.01, 0.08, 0.04, 0.94)
+    typer_style.border_color = Color(0.4, 1.0, 0.7, 0.55)
+    hacker_typer_panel.add_theme_stylebox_override("panel", typer_style)
+    breach_log_vbox.add_child(hacker_typer_panel)
+
+    var hacker_typer_margin := MarginContainer.new()
+    hacker_typer_margin.add_theme_constant_override("margin_left", 10)
+    hacker_typer_margin.add_theme_constant_override("margin_top", 8)
+    hacker_typer_margin.add_theme_constant_override("margin_right", 10)
+    hacker_typer_margin.add_theme_constant_override("margin_bottom", 8)
+    hacker_typer_panel.add_child(hacker_typer_margin)
+
+    hacker_typer_label = RichTextLabel.new()
+    hacker_typer_label.bbcode_enabled = true
+    hacker_typer_label.fit_content = true
+    hacker_typer_label.scroll_active = false
+    hacker_typer_label.custom_minimum_size = Vector2(480.0, 92.0)
+    hacker_typer_label.add_theme_font_size_override("normal_font_size", 14)
+    hacker_typer_label.add_theme_color_override("default_color", Color(0.86, 1.0, 0.92, 0.94))
+    hacker_typer_margin.add_child(hacker_typer_label)
+
+    bottom_cinematic_overlay = Control.new()
+    bottom_cinematic_overlay.anchor_right = 1.0
+    bottom_cinematic_overlay.anchor_bottom = 1.0
+    bottom_cinematic_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    bottom_cinematic_overlay.visible = false
+    hud_layer.add_child(bottom_cinematic_overlay)
+
+    bottom_letterbox_top = ColorRect.new()
+    bottom_letterbox_top.anchor_right = 1.0
+    bottom_letterbox_top.offset_bottom = 92.0
+    bottom_letterbox_top.color = Color(0.0, 0.0, 0.0, 0.88)
+    bottom_cinematic_overlay.add_child(bottom_letterbox_top)
+
+    bottom_letterbox_bottom = ColorRect.new()
+    bottom_letterbox_bottom.anchor_top = 1.0
+    bottom_letterbox_bottom.anchor_right = 1.0
+    bottom_letterbox_bottom.anchor_bottom = 1.0
+    bottom_letterbox_bottom.offset_top = -132.0
+    bottom_letterbox_bottom.color = Color(0.0, 0.0, 0.0, 0.88)
+    bottom_cinematic_overlay.add_child(bottom_letterbox_bottom)
+
+    var cutscene_label_center := CenterContainer.new()
+    cutscene_label_center.anchor_left = 0.2
+    cutscene_label_center.anchor_top = 1.0
+    cutscene_label_center.anchor_right = 0.8
+    cutscene_label_center.anchor_bottom = 1.0
+    cutscene_label_center.offset_top = -112.0
+    cutscene_label_center.offset_bottom = -24.0
+    bottom_cinematic_overlay.add_child(cutscene_label_center)
+
+    bottom_cutscene_label = RichTextLabel.new()
+    bottom_cutscene_label.bbcode_enabled = true
+    bottom_cutscene_label.fit_content = true
+    bottom_cutscene_label.scroll_active = false
+    bottom_cutscene_label.custom_minimum_size = Vector2(560.0, 72.0)
+    bottom_cutscene_label.add_theme_font_size_override("normal_font_size", 26)
+    bottom_cutscene_label.add_theme_color_override("default_color", Color(0.98, 0.94, 0.82, 0.98))
+    cutscene_label_center.add_child(bottom_cutscene_label)
+
     summary_overlay = ColorRect.new()
     summary_overlay.anchor_right = 1.0
     summary_overlay.anchor_bottom = 1.0
@@ -490,7 +695,7 @@ func _build_ui() -> void:
     summary_overlay.add_child(summary_center)
 
     var summary_panel := PanelContainer.new()
-    summary_panel.custom_minimum_size = Vector2(620.0, 360.0)
+    summary_panel.custom_minimum_size = Vector2(980.0, 480.0)
     summary_panel.add_theme_stylebox_override("panel", panel_style.duplicate(true))
     summary_center.add_child(summary_panel)
 
@@ -516,7 +721,7 @@ func _build_ui() -> void:
     summary_label.fit_content = true
     summary_label.scroll_active = false
     summary_label.bbcode_enabled = true
-    summary_label.custom_minimum_size = Vector2(560.0, 180.0)
+    summary_label.custom_minimum_size = Vector2(900.0, 280.0)
     summary_vbox.add_child(summary_label)
 
     summary_status_label = Label.new()
@@ -533,8 +738,10 @@ func _build_ui() -> void:
 func _start_run() -> void:
     persistent_data = PROGRESS.load_data()
     upgrades = persistent_data.get("upgrades", {}).duplicate(true)
-    runtime_stats = BALANCE.build_runtime_stats(upgrades)
+    runtime_stats = BALANCE.build_runtime_stats(upgrades, PROGRESS.get_xp_upgrade_levels())
     current_depth_level = clampi(int(persistent_data.get("selected_depth_level", 1)), 1, BALANCE.MAX_DEPTH_LEVEL)
+    bottom_phase_unlocked = bool(persistent_data.get("bottom_phase_unlocked", false))
+    current_layer_depth = 1
     planet_radius_cells = PLANET_RADIUS_CELLS
     time_left = float(runtime_stats.get("run_time", 30.0))
     barriers_left = DEFAULT_STARTING_BARRIERS + int(runtime_stats.get("barriers", 0)) + (1 if _has_core_upgrade("barrier_regen") else 0)
@@ -543,13 +750,20 @@ func _start_run() -> void:
     boss_defeated = bool(persistent_data.get("boss_defeated", false))
     _build_planet()
     _setup_minimap()
-    spawn_position = Vector2(0.0, -(float(planet_radius_cells) + 7.0) * BLOCK_SIZE)
+    spawn_position = planet_data.get_spawn_world_position()
     if _has_core_upgrade("spawn_direction") and planet_data != null and not planet_data.cores.is_empty():
         spawn_position = scene_to_spawn_ring(Vector2i(int(planet_data.cores[0].center.x), int(planet_data.cores[0].center.y)))
+    if bottom_phase_unlocked and planet_data != null:
+        for core_variant in planet_data.cores:
+            var core: Dictionary = core_variant
+            if int(core.get("id", -1)) == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
+                spawn_position = scene_to_spawn_ring(Vector2i(int(core.center.x), int(core.center.y)))
+                break
     ship_pos = spawn_position
     ship_root.global_position = ship_pos
     camera_pos = ship_pos
-    current_layer_name = "Orbital Shell"
+    current_layer_name = "Surface Cache"
+    final_core_exposed = false
     return_zone_radius = RETURN_ZONE_RADIUS + (36.0 if _has_core_upgrade("return_shortcut") else 0.0)
     extracting = false
     extraction_timer = 0.0
@@ -568,13 +782,16 @@ func _start_run() -> void:
     ship_trail.clear()
     ship_trail_timer = 0.0
     pickups.clear()
+    cargo_units = 0
+    cargo_money = 0
+    nodes_mined = 0
+    xp_earned_this_run = 0
     destroyed_cells_this_run.clear()
     cores_destroyed_this_run = 0
     core_currency_earned_this_run = 0
     electric_arcs.clear()
     chain_arcs.clear()
     shockwave_rings.clear()
-    summer_laser_states.clear()
     autumn_debris.clear()
     autumn_debris_timers.clear()
     winter_cross_lasers.clear()
@@ -582,9 +799,40 @@ func _start_run() -> void:
     _reset_drone_state()
     current_combo = 0
     combo_peak = 0
+    combo_milestones_hit.clear()
+    if VirtualCursor != null:
+        VirtualCursor.set_open_pit_empire_cursor_combo(0.0)
+    hacker_typer_visible_text = HACKER_TYPER_IDLE_TEXT
+    hacker_typer_target_text = HACKER_TYPER_IDLE_TEXT
+    hacker_typer_im_in_timer = 0.0
+    hacker_typer_hold_timer = 0.0
+    hacker_typer_char_timer = 0.0
+    hacker_typer_is_attacking = false
+    for key in active_powerup_timers.keys():
+        active_powerup_timers[key] = 0.0
+    _spawn_roaming_powerups()
+    bottom_cutscene_timer = 0.0
+    bottom_cutscene_anchor = ship_pos
+    side_projectiles.clear()
+    side_attackers.clear()
+    side_shot_timer = SIDE_SHOT_INTERVAL
     core_defense_timer = DEFENSE_BLOCK_INTERVAL
     core_shockwave_timer = CORE_SHOCKWAVE_INTERVAL
     _reset_run_perf_tracking()
+    breach_log_lines.clear()
+    breach_log_idle_timer = 0.0
+    if bottom_cinematic_overlay != null:
+        bottom_cinematic_overlay.visible = false
+    if bottom_cutscene_label != null:
+        bottom_cutscene_label.text = ""
+    breach_chat = BREACH_CHAT_SCRIPT.new()
+    breach_chat.reset_for_run(
+        current_depth_level,
+        rng,
+        persistent_data.get("chat_line_counts", {}),
+        persistent_data.get("chat_thread_counts", {})
+    )
+    _flush_breach_chat(true)
     summary_overlay.visible = false
     ship_renderer.position = Vector2.ZERO
     planet_renderer.mark_dirty()
@@ -593,7 +841,7 @@ func _start_run() -> void:
 func _build_planet() -> void:
     damaged_cells.clear()
     var persistent_destroyed := {}
-    var saved_planet_state: Dictionary = PROGRESS.load_planet_state()
+    var saved_planet_state: Dictionary = PROGRESS.load_planet_state(current_depth_level)
     if saved_planet_state.is_empty():
         for saved_variant in persistent_data.get("destroyed_cells", []):
             if saved_variant is String:
@@ -616,6 +864,8 @@ func _build_planet() -> void:
         planet_data.core_difficulty_mult = pow(1.5, int(persistent_data.get("total_cores_destroyed", 0)))
         planet_data.generate_sync(current_depth_level, persistent_destroyed, BALANCE, rng)
     planet_data.on_core_destroyed_callback = Callable(self, "_on_core_destroyed")
+    if not planet_data.final_core_exposed.is_connected(_on_final_core_exposed):
+        planet_data.final_core_exposed.connect(_on_final_core_exposed)
     blocks = planet_data.blocks
     exposed_edges = planet_data.exposed_edges
     total_planet_blocks = max(int(planet_data.initial_block_count), planet_data.get_total_blocks())
@@ -640,27 +890,51 @@ func _process(delta: float) -> void:
         perf_probe_end("process_frame", perf_start_us)
         return
     ship_glow_phase += delta * 3.0
+    var section_start_us := perf_probe_begin()
     _update_timers(delta)
+    perf_probe_end("update_timers", section_start_us)
     if run_finished:
         return
+    section_start_us = perf_probe_begin()
     _update_ship(delta)
+    perf_probe_end("update_ship", section_start_us)
+    section_start_us = perf_probe_begin()
     _update_ship_trail(delta)
+    perf_probe_end("update_ship_trail", section_start_us)
     _update_zone_return(delta)
     if not extracting:
         _update_pickups(delta)
-        _update_combat(delta)
-        _update_drone_visuals(delta)
-        _update_core_behaviors(delta)
-        _update_core_attacks(delta)
+        _update_roaming_powerups(delta)
+        _update_bottom_phase(delta)
+        if bottom_cutscene_timer <= 0.0:
+            _update_combat(delta)
+            _update_drone_visuals(delta)
+            _update_core_behaviors(delta)
+            _update_core_attacks(delta)
+    section_start_us = perf_probe_begin()
     _update_current_layer_name()
+    perf_probe_end("update_layer_name", section_start_us)
+    section_start_us = perf_probe_begin()
+    _update_camera_zoom(delta)
+    perf_probe_end("update_camera_zoom", section_start_us)
+    section_start_us = perf_probe_begin()
+    _update_breach_log(delta)
+    perf_probe_end("update_breach_log", section_start_us)
+    _refresh_bottom_cinematic_overlay()
     hud_refresh_timer -= delta
     if hud_refresh_timer <= 0.0:
         hud_refresh_timer = HUD_REFRESH_INTERVAL
+        section_start_us = perf_probe_begin()
         _refresh_hud()
+        perf_probe_end("refresh_hud", section_start_us)
     if extracting:
         camera_pos = extraction_camera_anchor
         ship_root.global_position = extraction_camera_anchor
         ship_renderer.position = ship_pos - extraction_camera_anchor
+    elif bottom_cutscene_timer > 0.0:
+        camera_pos = bottom_cutscene_anchor
+        ship_root.global_position = bottom_cutscene_anchor
+        ship_renderer.position = ship_pos - bottom_cutscene_anchor
     else:
         camera_pos = ship_pos
         ship_renderer.position = Vector2.ZERO
@@ -671,6 +945,7 @@ func _process(delta: float) -> void:
     _capture_run_perf_snapshot()
 
 func _update_timers(delta: float) -> void:
+    bottom_cutscene_timer = maxf(0.0, bottom_cutscene_timer - delta)
     if not _is_ship_inside_return_zone() and not extracting:
         time_left = maxf(0.0, time_left - delta)
     if time_left <= 0.0:
@@ -679,22 +954,21 @@ func _update_timers(delta: float) -> void:
     combo_timer = maxf(0.0, combo_timer - delta)
     if combo_timer <= 0.0:
         current_combo = 0
+        combo_milestones_hit.clear()
+        if VirtualCursor != null:
+            VirtualCursor.set_open_pit_empire_cursor_combo(0.0)
     overdrive_timer = maxf(0.0, overdrive_timer - delta)
     mega_timer = maxf(0.0, mega_timer - delta)
     attack_visible_timer = maxf(0.0, attack_visible_timer - delta)
     shield_invuln_timer = maxf(0.0, shield_invuln_timer - delta)
     shield_recovery_timer = maxf(0.0, shield_recovery_timer - delta)
+    for key in active_powerup_timers.keys():
+        active_powerup_timers[key] = maxf(0.0, float(active_powerup_timers.get(key, 0.0)) - delta)
     _tick_timer_dict(hit_timers, delta)
     _tick_timer_dict(gold_convert_timers, delta)
     _tick_effect_array(electric_arcs, delta)
     _tick_effect_array(chain_arcs, delta)
     _tick_effect_array(drone_beams, delta)
-    for core_id_variant in summer_laser_states.keys():
-        var core_id: int = int(core_id_variant)
-        var state: Dictionary = summer_laser_states.get(core_id, {})
-        if float(state.get("hit_timer", 0.0)) > 0.0:
-            state["hit_timer"] = maxf(0.0, float(state.get("hit_timer", 0.0)) - delta)
-        summer_laser_states[core_id] = state
     for idx in range(autumn_debris.size() - 1, -1, -1):
         var debris: Dictionary = autumn_debris[idx]
         debris["life"] = float(debris.get("life", AUTUMN_DEBRIS_LIFETIME)) - delta
@@ -712,6 +986,203 @@ func _update_timers(delta: float) -> void:
         if float(ring.get("radius", 0.0)) >= max_radius or float(ring.get("alpha", 0.0)) <= 0.0:
             shockwave_rings.remove_at(idx)
 
+func _update_camera_zoom(delta: float) -> void:
+    if camera == null:
+        return
+    var move_speed := maxf(float(runtime_stats.get("move_speed", 580.0)) + (float(runtime_stats.get("overdrive_speed_bonus", 300.0)) if overdrive_timer > 0.0 else 0.0), 1.0)
+    var speed_ratio := clampf(ship_vel.length() / move_speed, 0.0, 1.0)
+    var target_zoom := lerpf(CAMERA_ZOOM_MIN, CAMERA_ZOOM_MAX, speed_ratio)
+    camera.zoom = camera.zoom.lerp(Vector2.ONE * target_zoom, clampf(delta * CAMERA_ZOOM_LERP, 0.0, 1.0))
+
+func _update_breach_log(delta: float) -> void:
+    if breach_chat == null:
+        return
+    breach_chat.update(delta, _build_breach_chat_snapshot())
+    _flush_breach_chat()
+    _update_hacker_typer(delta)
+
+func _update_hacker_typer(delta: float) -> void:
+    if hacker_typer_label == null:
+        return
+    var actively_attacking := attack_visible_timer > 0.0 or not multi_targets.is_empty() or mega_timer > 0.0
+    if hacker_typer_im_in_timer > 0.0:
+        hacker_typer_im_in_timer = maxf(0.0, hacker_typer_im_in_timer - delta)
+        hacker_typer_target_text = "I'M IN"
+    elif actively_attacking:
+        if not hacker_typer_is_attacking or hacker_typer_hold_timer <= 0.0:
+            hacker_typer_target_text = HACKER_TYPER_SAMPLE_LINES[rng.randi_range(0, HACKER_TYPER_SAMPLE_LINES.size() - 1)]
+            hacker_typer_hold_timer = rng.randf_range(0.9, 1.7)
+        else:
+            hacker_typer_hold_timer = maxf(0.0, hacker_typer_hold_timer - delta)
+    else:
+        hacker_typer_target_text = HACKER_TYPER_IDLE_TEXT
+        hacker_typer_hold_timer = 0.0
+    hacker_typer_is_attacking = actively_attacking
+    hacker_typer_char_timer -= delta
+    if hacker_typer_char_timer <= 0.0:
+        hacker_typer_char_timer = 0.03 if hacker_typer_target_text == "I'M IN" else (0.018 if actively_attacking else 0.06)
+        if hacker_typer_visible_text != hacker_typer_target_text:
+            if not hacker_typer_target_text.begins_with(hacker_typer_visible_text):
+                hacker_typer_visible_text = ""
+            else:
+                hacker_typer_visible_text = hacker_typer_target_text.substr(0, hacker_typer_visible_text.length() + 1)
+        hacker_typer_cursor_on = not hacker_typer_cursor_on
+    var cursor := "[color=#ff5f55]_[/color]" if hacker_typer_cursor_on else " "
+    hacker_typer_label.text = "[color=#7dd6ff]BREACH CONSOLE[/color]\n%s%s" % [hacker_typer_visible_text, cursor]
+
+func _update_bottom_phase(delta: float) -> void:
+    if not final_core_exposed or planet_data == null:
+        return
+    _update_side_attackers(delta, bottom_cutscene_timer <= 0.0)
+    if bottom_cutscene_timer > 0.0:
+        return
+    if side_attackers.is_empty():
+        side_shot_timer -= delta
+        if side_shot_timer <= 0.0:
+            side_shot_timer = SIDE_SHOT_INTERVAL
+            _spawn_side_projectiles()
+    for idx in range(side_projectiles.size() - 1, -1, -1):
+        var projectile := side_projectiles[idx]
+        projectile["life"] = float(projectile.get("life", 0.0)) - delta
+        if float(projectile.get("life", 0.0)) <= 0.0:
+            side_projectiles.remove_at(idx)
+            continue
+        projectile["position"] = Vector2(projectile.get("position", Vector2.ZERO)) + Vector2(projectile.get("velocity", Vector2.ZERO)) * delta
+        side_projectiles[idx] = projectile
+        if Vector2(projectile.get("position", Vector2.ZERO)).distance_to(ship_pos) <= SIDE_SHOT_RADIUS + SHIP_RADIUS:
+            _apply_ship_hazard_hit(
+                Vector2(projectile.get("velocity", Vector2.ZERO)).normalized(),
+                "The rig was bracketed by side-channel fire."
+            )
+            side_projectiles.remove_at(idx)
+
+func _update_side_attackers(delta: float, allow_fire: bool) -> void:
+    if side_attackers.is_empty() or planet_data == null:
+        return
+    var anchor_grid := world_to_grid(bottom_cutscene_anchor)
+    var center_y: int = clampi(anchor_grid.y - 10, PLANET_DATA_SCRIPT.PIT_TOP_Y + 24, PLANET_DATA_SCRIPT.PIT_BOTTOM_Y - 12)
+    for idx in range(side_attackers.size()):
+        var attacker: Dictionary = side_attackers[idx]
+        var side: int = int(attacker.get("side", -1))
+        var slot: int = int(attacker.get("slot", 0))
+        var y: int = clampi(
+            center_y + (slot - 1) * SIDE_ATTACKER_VERTICAL_SPACING,
+            PLANET_DATA_SCRIPT.PIT_TOP_Y + 24,
+            PLANET_DATA_SCRIPT.PIT_BOTTOM_Y - 12
+        )
+        var side_phase: float = float(attacker.get("phase", 0.0)) + delta * (1.35 + float(slot) * 0.15)
+        attacker["phase"] = side_phase
+        var left_wall: int = planet_data.get_left_wall_x(y)
+        var right_wall: int = planet_data.get_right_wall_x(y)
+        var base_x: int = left_wall - SIDE_ATTACKER_INSET_CELLS if side < 0 else right_wall + SIDE_ATTACKER_INSET_CELLS
+        var base_world := grid_to_world(Vector2i(base_x, y))
+        base_world.y += sin(side_phase + float(slot) * 0.7) * SIDE_ATTACKER_VERTICAL_SWAY
+        var current_pos := Vector2(attacker.get("position", base_world))
+        attacker["position"] = current_pos.lerp(base_world, clampf(delta * SIDE_ATTACKER_TRACK_SPEED, 0.0, 1.0))
+        var shot_timer: float = float(attacker.get("shot_timer", SIDE_ATTACKER_SHOT_INTERVAL)) - delta
+        if allow_fire and shot_timer <= 0.0:
+            _spawn_side_projectile_from_position(Vector2(attacker.get("position", base_world)))
+            shot_timer = SIDE_ATTACKER_SHOT_INTERVAL + rng.randf_range(-0.35, 0.45)
+        attacker["shot_timer"] = shot_timer
+        side_attackers[idx] = attacker
+
+func _spawn_side_attackers() -> void:
+    side_attackers.clear()
+    if planet_data == null:
+        return
+    for side in [-1, 1]:
+        for slot in range(SIDE_ATTACKER_COUNT_PER_SIDE):
+            side_attackers.append({
+                "side": side,
+                "slot": slot,
+                "position": bottom_cutscene_anchor + Vector2(float(side) * 260.0, float(slot * 28 - 14)),
+                "phase": rng.randf() * TAU,
+                "shot_timer": 0.5 + rng.randf() * SIDE_ATTACKER_SHOT_INTERVAL,
+            })
+
+func _spawn_side_projectile_from_position(spawn_world: Vector2) -> void:
+    var dir: Vector2 = (ship_pos - spawn_world).normalized()
+    if dir.length() < 0.01:
+        dir = Vector2.LEFT if spawn_world.x > ship_pos.x else Vector2.RIGHT
+    side_projectiles.append({
+        "position": spawn_world,
+        "velocity": dir * SIDE_SHOT_SPEED,
+        "life": SIDE_SHOT_LIFETIME,
+    })
+
+func _spawn_side_projectiles() -> void:
+    if planet_data == null:
+        return
+    if not side_attackers.is_empty():
+        for attacker_variant in side_attackers:
+            var attacker: Dictionary = attacker_variant
+            _spawn_side_projectile_from_position(Vector2(attacker.get("position", bottom_cutscene_anchor)))
+        return
+    var y: int = clampi(world_to_grid(ship_pos).y, PLANET_DATA_SCRIPT.PIT_TOP_Y + 20, PLANET_DATA_SCRIPT.PIT_BOTTOM_Y - 8)
+    for side in [-1, 1]:
+        var wall_x: int = planet_data.get_left_wall_x(y) if side < 0 else planet_data.get_right_wall_x(y)
+        var spawn_grid := Vector2i(wall_x - 3 if side < 0 else wall_x + 3, y + rng.randi_range(-4, 4))
+        var spawn_world: Vector2 = grid_to_world(spawn_grid)
+        _spawn_side_projectile_from_position(spawn_world)
+
+func _spawn_roaming_powerups() -> void:
+    roaming_powerups.clear()
+    if planet_data == null:
+        return
+    var clear_ratio := clampf(_get_persistent_clear_percent() / 100.0, 0.0, 1.0)
+    var powerup_count := clampi(1 + int(floor(clear_ratio * 4.0)), 1, 4)
+    for idx in range(powerup_count):
+        var y: int = int(lerpf(float(PLANET_DATA_SCRIPT.PIT_TOP_Y + 36), float(PLANET_DATA_SCRIPT.PIT_BOTTOM_Y - 26), float(idx + 1) / float(powerup_count + 1)))
+        var left_x: int = planet_data.get_left_wall_x(y) + PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS + 4
+        var right_x: int = planet_data.get_right_wall_x(y) - PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS - 4
+        var start_x: int = rng.randi_range(left_x, max(left_x, right_x))
+        roaming_powerups.append({
+            "position": grid_to_world(Vector2i(start_x, y)),
+            "y": y,
+            "dir": 1.0 if rng.randf() > 0.5 else -1.0,
+            "speed": POWERUP_BASE_SPEED + clear_ratio * 70.0 + float(idx) * 8.0,
+            "type": POWERUP_TYPES[idx % POWERUP_TYPES.size()],
+            "phase": rng.randf() * TAU,
+        })
+
+func _update_roaming_powerups(delta: float) -> void:
+    if planet_data == null or roaming_powerups.is_empty():
+        return
+    for idx in range(roaming_powerups.size() - 1, -1, -1):
+        var powerup := roaming_powerups[idx]
+        var pos := Vector2(powerup.get("position", Vector2.ZERO))
+        var y := int(powerup.get("y", world_to_grid(pos).y))
+        var left_world := grid_to_world(Vector2i(planet_data.get_left_wall_x(y) + PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS + 4, y)).x
+        var right_world := grid_to_world(Vector2i(planet_data.get_right_wall_x(y) - PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS - 4, y)).x
+        pos.x += float(powerup.get("dir", 1.0)) * float(powerup.get("speed", POWERUP_BASE_SPEED)) * delta
+        if pos.x <= left_world:
+            pos.x = left_world
+            powerup["dir"] = 1.0
+        elif pos.x >= right_world:
+            pos.x = right_world
+            powerup["dir"] = -1.0
+        powerup["phase"] = float(powerup.get("phase", 0.0)) + delta * 3.0
+        pos.y = grid_to_world(Vector2i(0, y)).y + sin(float(powerup.get("phase", 0.0))) * 9.0
+        powerup["position"] = pos
+        roaming_powerups[idx] = powerup
+        if pos.distance_to(ship_pos) <= POWERUP_RADIUS + SHIP_RADIUS:
+            _collect_roaming_powerup(str(powerup.get("type", "haste")))
+            roaming_powerups.remove_at(idx)
+    if roaming_powerups.is_empty():
+        _spawn_roaming_powerups()
+
+func _collect_roaming_powerup(powerup_type: String) -> void:
+    active_powerup_timers[powerup_type] = POWERUP_DURATION
+    match powerup_type:
+        "haste":
+            _push_breach_log("[color=#7dffbf]BOOST[/color]  breach clock accelerates.")
+        "magnet":
+            _push_breach_log("[color=#7dffbf]BOOST[/color]  packet magnet spikes.")
+        "payload":
+            _push_breach_log("[color=#7dffbf]BOOST[/color]  payload value surges.")
+        _:
+            _push_breach_log("[color=#7dffbf]BOOST[/color]  rogue utility captured.")
+
 func _update_ship(delta: float) -> void:
     if extracting:
         extraction_timer = minf(extraction_timer + delta, EXTRACTION_ASCENT_TIME)
@@ -723,6 +1194,11 @@ func _update_ship(delta: float) -> void:
         visual_rotation = lerp_angle(visual_rotation, 0.0, ROTATION_SPEED * delta)
         if ascent_progress >= 1.0:
             _finish_run(true, "Orbit transfer complete.")
+        return
+    if bottom_cutscene_timer > 0.0:
+        ship_vel = Vector2.ZERO
+        last_move_dir = Vector2.UP
+        visual_rotation = lerp_angle(visual_rotation, 0.0, ROTATION_SPEED * delta)
         return
     var viewport_size := get_viewport_rect().size
     var desired_velocity := Vector2.ZERO
@@ -766,7 +1242,7 @@ func _update_ship_trail(delta: float) -> void:
             ship_trail_timer = 0.0
             ship_trail.append({
                 "pos": ship_pos,
-                "rot": visual_rotation,
+                "rot": get_ship_render_rotation(),
                 "alpha": 0.55,
             })
             if ship_trail.size() > SHIP_TRAIL_MAX:
@@ -797,6 +1273,44 @@ func _resolve_ship_collision() -> void:
                 if not _trigger_ship_shield_hit(push_dir):
                     _finish_run(false, "The rig cracked against the shell.")
                 return
+    _enforce_funnel_containment()
+
+func _enforce_funnel_containment() -> void:
+    if not final_core_exposed or planet_data == null or bottom_cutscene_timer > 0.0:
+        return
+    var ship_grid := world_to_grid(ship_pos)
+    var clamped_y: int = clampi(ship_grid.y, PLANET_DATA_SCRIPT.PIT_TOP_Y, PLANET_DATA_SCRIPT.PIT_BOTTOM_Y)
+    var left_interior: int = planet_data.get_left_wall_x(clamped_y) + PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS + 1
+    var right_interior: int = planet_data.get_right_wall_x(clamped_y) - PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS - 1
+    if ship_grid.x >= left_interior and ship_grid.x <= right_interior:
+        return
+    var prefer_left: bool = ship_grid.x < left_interior
+    var safe_grid := _find_funnel_reentry_grid(clamped_y, prefer_left)
+    ship_pos = grid_to_world(safe_grid)
+    ship_vel = Vector2.ZERO
+    last_move_dir = Vector2.UP
+
+func _find_funnel_reentry_grid(start_y: int, prefer_left: bool) -> Vector2i:
+    var best_fallback := Vector2i(0, start_y)
+    for y_offset in range(FUNNEL_REENTRY_SCAN_RADIUS_Y + 1):
+        for dir in [-1, 1]:
+            if y_offset == 0 and dir > 0:
+                continue
+            var y := clampi(start_y + y_offset * dir, PLANET_DATA_SCRIPT.PIT_TOP_Y, PLANET_DATA_SCRIPT.PIT_BOTTOM_Y)
+            var left_interior: int = planet_data.get_left_wall_x(y) + PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS + 1
+            var right_interior: int = planet_data.get_right_wall_x(y) - PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS - 1
+            if left_interior > right_interior:
+                continue
+            var anchor_x: int = left_interior if prefer_left else right_interior
+            best_fallback = Vector2i(anchor_x, y)
+            for x_offset in range(FUNNEL_REENTRY_SCAN_COLUMNS + 1):
+                var x: int = anchor_x + x_offset if prefer_left else anchor_x - x_offset
+                if x < left_interior or x > right_interior:
+                    break
+                var candidate := Vector2i(x, y)
+                if is_grid_empty(candidate):
+                    return candidate
+    return best_fallback
 
 func _update_zone_return(delta: float) -> void:
     if extracting:
@@ -834,7 +1348,7 @@ func _update_combat(delta: float) -> void:
         _update_mega_beam(delta)
     else:
         mega_beam_hits.clear()
-    var interval := float(runtime_stats.get("attack_interval", 0.8)) / (float(runtime_stats.get("overdrive_fire_mult", 3.0)) if overdrive_timer > 0.0 else 1.0)
+    var interval := _get_effective_attack_interval() / (float(runtime_stats.get("overdrive_fire_mult", 3.0)) if overdrive_timer > 0.0 else 1.0)
     if attack_timer >= interval:
         attack_timer = 0.0
         _auto_fire_laser()
@@ -992,6 +1506,8 @@ func _update_drones(delta: float) -> void:
             target_offsets.append(behind_dir * row_dist + side_dir * lateral)
     for index in range(count):
         var target_local := target_offsets[index]
+        var swing_phase := ship_glow_phase * 2.4 + float(index) * 1.7
+        target_local = target_local.rotated(0.28 * sin(swing_phase))
         drone_positions[index] = drone_positions[index].lerp(ship_pos + target_local, DRONE_FOLLOW_SPEED * delta)
         drone_timers[index] += delta
         var effective_rate := maxf(0.2, float(runtime_stats.get("drone_fire_interval", 0.9)))
@@ -1004,7 +1520,7 @@ func _compute_laser_damage(pos: Vector2i) -> float:
     var damage := float(runtime_stats.get("attack_damage", 8.0))
     damage *= BALANCE.get_damage_multiplier_for_depth(runtime_stats, int(block.get("layer_depth", 1)))
     if bool(runtime_stats.get("resonance_enabled", false)):
-        var depth_ratio := 1.0 - clampf(Vector2(float(pos.x), float(pos.y)).length() / float(max(1, planet_radius_cells)), 0.0, 1.0)
+        var depth_ratio := float(int(block.get("layer_depth", 1))) / float(max(1, current_depth_level))
         damage += damage * depth_ratio * float(runtime_stats.get("resonance_bonus", 1.0))
     if int(block.get("type", 0)) == BlockType.CORE:
         damage *= float(runtime_stats.get("core_breaker_mult", 1.0))
@@ -1019,12 +1535,27 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         return {}
     var block_before: Dictionary = blocks.get(pos, {})
     var result: Dictionary = planet_data.damage_block(pos, damage, false, _core_unlocks_center())
+    if breach_chat != null and int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
+        var engaged_core_id := int(result.get("core_id", int(block_before.get("core_id", -1))))
+        if engaged_core_id >= 0:
+            breach_chat.notify_node_engaged(
+                engaged_core_id,
+                PLANET_DATA_SCRIPT.get_core_zone(engaged_core_id),
+                PLANET_DATA_SCRIPT.get_core_role(engaged_core_id),
+                bool(result.get("shielded", false))
+            )
+            _flush_breach_chat()
     if bool(result.get("destroyed", false)):
         damaged_cells.erase(pos)
         persistent_destroyed_count += 1
         destroyed_cells_this_run[pos] = true
         nodes_mined += 1
+        xp_earned_this_run += _get_xp_reward_for_block(block_before)
         overdrive_kills += 1
+        if breach_chat != null:
+            breach_chat.record_node_destroyed(int(result.get("type", BlockType.NORMAL)) == BlockType.CORE)
+        hacker_typer_im_in_timer = 1.8
+        hacker_typer_visible_text = ""
         _play_block_break_audio(int(result.get("type", BlockType.NORMAL)))
         var world := grid_to_world(pos)
         _spawn_pickup(world, block_before)
@@ -1102,7 +1633,13 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
             persistent_destroyed_count += 1
             destroyed_cells_this_run[next_pos] = true
             nodes_mined += 1
+            xp_earned_this_run += _get_xp_reward_for_block({
+                "type": result.get("type", BlockType.NORMAL),
+                "layer_depth": result.get("layer_depth", 1),
+            })
             overdrive_kills += 1
+            if breach_chat != null:
+                breach_chat.record_node_destroyed(int(result.get("type", BlockType.NORMAL)) == BlockType.CORE)
             if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
                 requires_full_fill_rebuild = true
             else:
@@ -1236,14 +1773,31 @@ func _spawn_pickup(world_pos: Vector2, block: Dictionary) -> void:
     if int(block.get("type", 0)) == BlockType.GOLD:
         payout += float(runtime_stats.get("gold_bonus_flat", 0.0))
     payout *= BALANCE.get_resource_multiplier_for_depth(runtime_stats, int(block.get("layer_depth", 1)))
+    payout *= _get_effective_payout_multiplier()
     if bool(runtime_stats.get("combo_enabled", false)):
         payout *= 1.0 + float(runtime_stats.get("combo_bonus_per_stack", 0.0)) * float(current_combo)
     var money := int(round(payout))
-    if bool(runtime_stats.get("instant_collect", false)) or ship_pos.distance_to(world_pos) <= float(runtime_stats.get("pickup_radius", 64.0)):
+    if bool(runtime_stats.get("instant_collect", false)) or ship_pos.distance_to(world_pos) <= _get_effective_pickup_radius():
         _collect_pickup(money, 1)
         return
     if pickups.size() >= MAX_WORLD_PICKUPS or pickups_spawned_this_frame >= PICKUP_SPAWN_SOFT_CAP_PER_FRAME:
-        _collect_pickup(money, 1)
+        if not pickups.is_empty():
+            var closest_idx := 0
+            var closest_dist := INF
+            for pickup_idx in range(pickups.size()):
+                var dist := Vector2(pickups[pickup_idx].get("position", Vector2.ZERO)).distance_squared_to(world_pos)
+                if dist < closest_dist:
+                    closest_dist = dist
+                    closest_idx = pickup_idx
+            pickups[closest_idx]["money"] = int(pickups[closest_idx].get("money", 0)) + money
+            pickups[closest_idx]["cargo"] = int(pickups[closest_idx].get("cargo", 1)) + 1
+        else:
+            pickups.append({
+                "position": world_pos,
+                "money": money,
+                "cargo": 1,
+                "drift": Vector2.ZERO,
+            })
         return
     pickups.append({
         "position": world_pos,
@@ -1259,10 +1813,10 @@ func _update_pickups(delta: float) -> void:
         var pickup := pickups[idx]
         pickup["position"] = Vector2(pickup.get("position", Vector2.ZERO)) + Vector2(pickup.get("drift", Vector2.ZERO)) * delta
         pickups[idx] = pickup
-        var collect := Vector2(pickup.get("position", Vector2.ZERO)).distance_to(ship_pos) <= float(runtime_stats.get("pickup_radius", 64.0))
+        var collect := Vector2(pickup.get("position", Vector2.ZERO)).distance_to(ship_pos) <= _get_effective_pickup_radius()
         if not collect:
             for drone_pos in drone_positions:
-                if Vector2(pickup.get("position", Vector2.ZERO)).distance_to(drone_pos) <= float(runtime_stats.get("pickup_radius", 64.0)):
+                if Vector2(pickup.get("position", Vector2.ZERO)).distance_to(drone_pos) <= _get_effective_pickup_radius():
                     collect = true
                     break
         if collect:
@@ -1275,6 +1829,23 @@ func _collect_pickup(money: int, cargo: int) -> void:
         return
     cargo_units += cargo
     cargo_money += money
+    if breach_chat != null:
+        breach_chat.record_money(money)
+
+func _get_effective_pickup_radius() -> float:
+    var radius := float(runtime_stats.get("pickup_radius", 64.0))
+    if float(active_powerup_timers.get("magnet", 0.0)) > 0.0:
+        radius += 90.0
+    return radius
+
+func _get_effective_attack_interval() -> float:
+    var interval := float(runtime_stats.get("attack_interval", 0.8))
+    if float(active_powerup_timers.get("haste", 0.0)) > 0.0:
+        interval *= 0.72
+    return interval
+
+func _get_effective_payout_multiplier() -> float:
+    return 1.6 if float(active_powerup_timers.get("payload", 0.0)) > 0.0 else 1.0
 
 func _update_drone_visuals(_delta: float) -> void:
     if mega_timer <= 0.0:
@@ -1341,9 +1912,22 @@ func _fire_drone(drone_idx: int) -> void:
 func _on_combo_hit() -> void:
     if not bool(runtime_stats.get("combo_enabled", false)):
         return
-    current_combo = mini(current_combo + 1, 50)
+    current_combo = mini(current_combo + 1, 100)
     combo_peak = max(combo_peak, current_combo)
     combo_timer = 1.5
+    if VirtualCursor != null:
+        VirtualCursor.set_open_pit_empire_cursor_combo(float(current_combo) / 100.0)
+    for milestone in [10, 25, 50, 100]:
+        if current_combo >= milestone and not bool(combo_milestones_hit.get(milestone, false)):
+            combo_milestones_hit[milestone] = true
+            if VirtualCursor != null:
+                VirtualCursor.burst_open_pit_empire_cursor_sparks(0.8 + float(milestone) / 70.0)
+
+func _push_breach_log(message: String) -> void:
+    breach_log_lines.append(message)
+    while breach_log_lines.size() > BREACH_LOG_MAX_LINES:
+        breach_log_lines.remove_at(0)
+    _render_breach_log()
 
 func _finish_run(returned: bool, reason: String) -> void:
     if run_finished:
@@ -1366,16 +1950,41 @@ func _finish_run(returned: bool, reason: String) -> void:
     summary_save_anim_time = 0.0
     summary_save_pending = true
     summary_save_phase = "prepare"
-    summary_label.text = "[center]%s\n\nOrbit Tier %d\nBlocks mined: %d\nCores destroyed: %d\nPersistent clear: %.1f%%\nCash banked: $%d\nCore shards banked: %d\nCombo peak: %d\nBarriers left: %d[/center]" % [
+    var epilogue := ""
+    if breach_chat != null:
+        _flush_breach_chat(true)
+        epilogue = breach_chat.build_summary_epilogue()
+    var attempt_lines: Array[String] = []
+    for attempt_variant in persistent_data.get("attempt_history", []):
+        var attempt: Dictionary = attempt_variant
+        attempt_lines.append(
+            "Tier %d :: chipped %.1f%% :: %d blocks :: $%d :: %d XP" % [
+                int(attempt.get("depth_level", 1)),
+                float(attempt.get("persistent_clear", 0.0)),
+                int(attempt.get("nodes_broken", 0)),
+                int(attempt.get("money", 0)),
+                int(attempt.get("xp", 0)),
+            ]
+        )
+        if attempt_lines.size() >= 5:
+            break
+    var history_text := "\n".join(attempt_lines)
+    if history_text == "":
+        history_text = "No previous breach attempts logged."
+    summary_label.text = "[center][b]%s[/b][/center]\n\n[table=2][cell]Breach Tier[/cell][cell]%d[/cell][cell]Blocks Mined This Run[/cell][cell]%d[/cell][cell]Haul Recovered[/cell][cell]$%d[/cell][cell]Loose Value Touched[/cell][cell]$%d[/cell][cell]XP Banked[/cell][cell]%d[/cell][cell]Daemons Deleted[/cell][cell]%d[/cell][cell]Persistent Clear[/cell][cell]%.1f%%[/cell][cell]Root Keys Banked[/cell][cell]%d[/cell][cell]Combo Peak[/cell][cell]%d[/cell][cell]Barriers Left[/cell][cell]%d[/cell][/table]\n\n[color=#7dd6ff]Previous Attempts[/color]\n%s%s" % [
         reason,
         current_depth_level,
         nodes_mined,
+        money_award,
+        total_money,
+        xp_earned_this_run,
         cores_destroyed_this_run,
         _get_persistent_clear_percent(),
-        money_award,
         core_currency_earned_this_run,
         combo_peak,
-        barriers_left
+        barriers_left,
+        history_text,
+        epilogue
     ]
     if summary_return_button != null:
         summary_return_button.disabled = true
@@ -1393,6 +2002,7 @@ func _save_planet_snapshot() -> void:
     persistent_data["destroyed_cells"] = []
     PROGRESS.save_data(persistent_data)
     var snapshot: Dictionary = planet_data.build_dirty_save_data()
+    snapshot["depth_level"] = current_depth_level
     var dirty_sections: Dictionary = snapshot.get("sections", {})
     if not dirty_sections.is_empty():
         PROGRESS.save_planet_state(snapshot)
@@ -1426,9 +2036,11 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
     var has_sector_updates := false
     if planet_data != null:
         planet_snapshot = await planet_data.build_save_data_async(get_tree(), Callable(self, "_on_finish_save_progress"))
+        planet_snapshot["depth_level"] = current_depth_level
         has_sector_updates = not Dictionary(planet_snapshot.get("sections", {})).is_empty()
     PROGRESS.apply_run_results({
         "money": money_award,
+        "xp": xp_earned_this_run,
         "core_currency": core_currency_earned_this_run,
         "cores_destroyed": cores_destroyed_this_run,
         "depth_level": current_depth_level,
@@ -1437,7 +2049,11 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
         "destroyed_cells": [],
         "planet_state": planet_snapshot if has_sector_updates else {},
         "defer_planet_state_save": has_sector_updates,
-        "summary_text": "%s Banked $%d." % [reason, money_award],
+        "summary_text": "%s Banked $%d and %d XP." % [reason, money_award, xp_earned_this_run],
+        "persistent_clear": _get_persistent_clear_percent(),
+        "chat_line_counts": breach_chat.get_persistent_line_counts() if breach_chat != null else persistent_data.get("chat_line_counts", {}),
+        "chat_thread_counts": breach_chat.get_persistent_thread_counts() if breach_chat != null else persistent_data.get("chat_thread_counts", {}),
+        "bottom_phase_unlocked": bottom_phase_unlocked,
     })
     if has_sector_updates:
         PROGRESS.start_async_planet_state_save(planet_snapshot)
@@ -1483,12 +2099,44 @@ func _refresh_hud() -> void:
         cargo_label.text = "Fuel: %.1fs  |  Extraction %.1fs" % [time_left, maxf(0.0, RETURN_ZONE_DELAY - return_zone_timer)]
     else:
         cargo_label.text = "Fuel: %.1fs  |  Extraction Zone Standby" % time_left
-    wallet_label.text = "Haul: $%d  |  Wallet: $%d" % [cargo_money, int(persistent_data.get("wallet", 0))]
-    layer_label.text = "Orbit Tier %d  |  %s  |  Clear %.1f%%" % [current_depth_level, current_layer_name, _get_persistent_clear_percent()]
-    status_label.text = "Barriers %d  |  Drones %d  |  Mega %d/%d  |  Alive Cores %d/%d" % [barriers_left, int(runtime_stats.get("drone_count", 0)), mega_gauge, int(runtime_stats.get("mega_gauge_need", 30)), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0]
-    system_label.text = "Combo %d  |  Overdrive %.1fs  |  Core shards %d  |  Move: Mouse / WASD" % [current_combo, overdrive_timer, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run]
+    wallet_label.text = "Haul: $%d  |  Wallet: $%d  |  XP: %d" % [cargo_money, int(persistent_data.get("wallet", 0)), int(persistent_data.get("xp_currency", 0)) + xp_earned_this_run]
+    layer_label.text = "Breach Tier %d  |  %s  |  Clear %.1f%%" % [current_depth_level, current_layer_name, _get_persistent_clear_percent()]
+    var active_boosts: Array[String] = []
+    if float(active_powerup_timers.get("haste", 0.0)) > 0.0:
+        active_boosts.append("Haste %.0fs" % ceil(active_powerup_timers["haste"]))
+    if float(active_powerup_timers.get("magnet", 0.0)) > 0.0:
+        active_boosts.append("Magnet %.0fs" % ceil(active_powerup_timers["magnet"]))
+    if float(active_powerup_timers.get("payload", 0.0)) > 0.0:
+        active_boosts.append("Payload %.0fs" % ceil(active_powerup_timers["payload"]))
+    status_label.text = "Barriers %d  |  Drones %d  |  Mega %d/%d  |  Alive Daemons %d/%d" % [barriers_left, int(runtime_stats.get("drone_count", 0)), mega_gauge, int(runtime_stats.get("mega_gauge_need", 30)), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0]
+    system_label.text = "Combo %d  |  Overdrive %.1fs  |  Root Keys %d  |  %s" % [current_combo, overdrive_timer, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run, " / ".join(active_boosts) if not active_boosts.is_empty() else "Move: Mouse / WASD"]
+    if breach_log_label != null and breach_log_label.text == "":
+        _render_breach_log()
     if fps_label != null:
         _update_perf_debug(0.0)
+
+func _refresh_bottom_cinematic_overlay() -> void:
+    if bottom_cinematic_overlay == null or bottom_cutscene_label == null:
+        return
+    var show_overlay := bottom_cutscene_timer > 0.0
+    bottom_cinematic_overlay.visible = show_overlay
+    if not show_overlay:
+        return
+    var progress := 1.0 - clampf(bottom_cutscene_timer / BOTTOM_CUTSCENE_DURATION, 0.0, 1.0)
+    var top_height := lerpf(12.0, 92.0, ease(progress, 0.8))
+    var bottom_height := lerpf(18.0, 132.0, ease(progress, 0.8))
+    if bottom_letterbox_top != null:
+        bottom_letterbox_top.offset_bottom = top_height
+    if bottom_letterbox_bottom != null:
+        bottom_letterbox_bottom.offset_top = -bottom_height
+    bottom_cutscene_label.text = _get_bottom_cutscene_caption(progress)
+
+func _get_bottom_cutscene_caption(progress: float) -> String:
+    if progress < 0.28:
+        return "[center][b]CORE VEIL COLLAPSING[/b]\nThe shaft folds inward.[/center]"
+    if progress < 0.62:
+        return "[center][b]THE FUNNEL TURNS UPSIDE DOWN[/b]\nEvery route points at the heart.[/center]"
+    return "[center][b]SIDE SENTRIES ONLINE[/b]\nHold the lane. Burn into the core.[/center]"
 
 func get_return_zone_progress() -> float:
     return clampf(return_zone_timer / RETURN_ZONE_DELAY, 0.0, 1.0)
@@ -1534,8 +2182,8 @@ func _update_perf_debug(frame_delta: float) -> void:
         perf_graph.call("push_sample", frame_ms, process_ms, physics_ms)
     var limit_hint: String = str(perf_graph.call("get_hint_text")) if perf_graph != null and perf_graph.has_method("get_hint_text") else "Unknown"
     var season_lines: Array[String] = []
-    var damage_mults: Array = runtime_stats.get("season_damage_mults", [1.0, 1.0, 1.0, 1.0])
-    var zone_labels: Array[String] = ["Spring", "Summer", "Autumn", "Winter"]
+    var damage_mults: Array = runtime_stats.get("zone_damage_mults", [1.0, 1.0, 1.0, 1.0])
+    var zone_labels: Array[String] = ["Proxy", "Cipher", "Ghost", "Root"]
     for idx in range(mini(4, damage_mults.size())):
         var mult: float = float(damage_mults[idx])
         if mult <= 1.0:
@@ -2121,27 +2769,31 @@ func _on_core_destroyed(core: Dictionary) -> void:
     cores_destroyed_this_run += 1
     core_currency_earned_this_run += 1
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.PLANET_BREAK, -2.0, -0.08)
+    if breach_chat != null:
+        breach_chat.notify_core_destroyed(core)
+        _flush_breach_chat()
     if int(core.get("id", -1)) == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
         boss_defeated = true
+        final_core_exposed = true
 
 func _update_core_behaviors(delta: float) -> void:
     if planet_data == null:
         return
     var behaviors: Dictionary = planet_data.get_active_core_behaviors()
-    if bool(behaviors.get("defense_blocks", false)) or bool(behaviors.get("final_rage", false)):
+    if bool(behaviors.get("defense_blocks", false)) or bool(behaviors.get("final_lockdown", false)):
         core_defense_timer -= delta
         if core_defense_timer <= 0.0:
-            core_defense_timer = DEFENSE_BLOCK_INTERVAL * (0.6 if bool(behaviors.get("final_rage", false)) else 1.0)
+            core_defense_timer = DEFENSE_BLOCK_INTERVAL * (0.6 if bool(behaviors.get("final_lockdown", false)) else 1.0)
             var spawned_positions: Array[Vector2i] = planet_data.spawn_defense_blocks()
             if not spawned_positions.is_empty():
                 blocks = planet_data.blocks
                 exposed_edges = planet_data.exposed_edges
                 if planet_renderer != null:
                     planet_renderer.queue_fill_updates(spawned_positions)
-    if bool(behaviors.get("shockwave", false)) or bool(behaviors.get("final_rage", false)):
+    if bool(behaviors.get("shockwave", false)) or bool(behaviors.get("final_lockdown", false)):
         core_shockwave_timer -= delta
         if core_shockwave_timer <= 0.0:
-            core_shockwave_timer = CORE_SHOCKWAVE_INTERVAL * (0.5 if bool(behaviors.get("final_rage", false)) else 1.0)
+            core_shockwave_timer = CORE_SHOCKWAVE_INTERVAL * (0.5 if bool(behaviors.get("final_lockdown", false)) else 1.0)
             _fire_core_shockwaves()
 
 func _fire_core_shockwaves() -> void:
@@ -2163,7 +2815,6 @@ func _update_core_attacks(delta: float) -> void:
     if planet_data == null:
         perf_probe_end("update_core_attacks", perf_start_us)
         return
-    _update_summer_lasers(delta)
     _update_autumn_debris(delta)
     _update_winter_cross_lasers(delta)
     perf_probe_end("update_core_attacks", perf_start_us)
@@ -2194,6 +2845,8 @@ func _update_summer_lasers(delta: float) -> void:
             "interval": interval,
             "fire_duration": SUMMER_LASER_FIRE_DURATION,
             "hit_timer": 0.0,
+            "core_id": cid,
+            "is_boss": is_boss,
         })
         state["interval"] = interval
         state["origin"] = grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
@@ -2237,7 +2890,13 @@ func _check_summer_laser_hit(state: Dictionary) -> void:
     var closest: Vector2 = origin + ab * t
     if ship_pos.distance_to(closest) <= SUMMER_LASER_WIDTH * 0.5 + SHIP_RADIUS:
         state["hit_timer"] = WINTER_CROSS_LASER_HIT_COOLDOWN
-        _apply_ship_hazard_hit((ship_pos - origin).normalized(), "The rig was lanced by a summer core.")
+        _apply_ship_hazard_hit(
+            (ship_pos - origin).normalized(),
+            "The rig was lanced by a summer core.",
+            int(state.get("core_id", -1)),
+            PLANET_DATA_SCRIPT.Zone.SUMMER,
+            "boss" if bool(state.get("is_boss", false)) else "outer"
+        )
 
 func _update_autumn_debris(delta: float) -> void:
     if planet_data == null:
@@ -2276,7 +2935,13 @@ func _update_autumn_debris(delta: float) -> void:
         autumn_debris[idx] = debris
         if pos.distance_to(ship_pos) <= AUTUMN_DEBRIS_HIT_RADIUS + SHIP_RADIUS:
             autumn_debris.remove_at(idx)
-            _apply_ship_hazard_hit((ship_pos - pos).normalized(), "The rig was shredded by autumn debris.")
+            _apply_ship_hazard_hit(
+                (ship_pos - pos).normalized(),
+                "The rig was shredded by autumn debris.",
+                int(debris.get("core_id", -1)),
+                PLANET_DATA_SCRIPT.Zone.AUTUMN,
+                "boss" if bool(debris.get("is_boss", false)) else "outer"
+            )
 
 func _spawn_autumn_debris(core: Dictionary, count: int) -> void:
     var origin: Vector2 = grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
@@ -2287,6 +2952,7 @@ func _spawn_autumn_debris(core: Dictionary, count: int) -> void:
             "vel": Vector2.from_angle(angle) * AUTUMN_DEBRIS_SPEED,
             "life": AUTUMN_DEBRIS_LIFETIME,
             "core_id": int(core.id),
+            "is_boss": str(core.role) == "boss" or str(core.role) == "final",
         })
 
 func _update_winter_cross_lasers(delta: float) -> void:
@@ -2313,6 +2979,8 @@ func _update_winter_cross_lasers(delta: float) -> void:
             "hit_timer": 0.0,
             "core_edge_ratio": edge_ratio,
             "gaps": [],
+            "core_id": cid,
+            "is_boss": is_boss,
         })
         if Array(state.get("gaps", [])).is_empty():
             var gaps: Array = []
@@ -2357,14 +3025,23 @@ func _check_winter_cross_laser_hit(state: Dictionary) -> void:
             if t >= gap_center - WINTER_CROSS_LASER_GAP_SIZE * 0.5 and t <= gap_center + WINTER_CROSS_LASER_GAP_SIZE * 0.5:
                 continue
         state["hit_timer"] = WINTER_CROSS_LASER_HIT_COOLDOWN
-        _apply_ship_hazard_hit((ship_pos - origin).normalized(), "The rig was caught in a winter cross-laser.")
+        _apply_ship_hazard_hit(
+            (ship_pos - origin).normalized(),
+            "The rig was caught in a winter cross-laser.",
+            int(state.get("core_id", -1)),
+            PLANET_DATA_SCRIPT.Zone.WINTER,
+            "boss" if bool(state.get("is_boss", false)) else "outer"
+        )
         return
 
-func _apply_ship_hazard_hit(push_dir: Vector2, reason: String) -> void:
+func _apply_ship_hazard_hit(push_dir: Vector2, reason: String, core_id: int = -1, zone: int = -1, role: String = "outer") -> void:
     if run_finished:
         return
     var applied_dir := push_dir if push_dir.length() > 0.01 else Vector2.UP
     if _trigger_ship_shield_hit(applied_dir):
+        if breach_chat != null and core_id >= 0:
+            breach_chat.notify_node_landed_hit(core_id, zone, role, barriers_left)
+            _flush_breach_chat()
         return
     _finish_run(false, reason)
 
@@ -2435,10 +3112,9 @@ func _core_unlocks_center() -> bool:
     return bool(persistent_data.get("free_planet_mode", false)) or _has_core_upgrade("center_unlock")
 
 func scene_to_spawn_ring(target_grid: Vector2i) -> Vector2:
-    var dir := grid_to_world(target_grid).normalized()
-    if dir.length() < 0.01:
-        dir = Vector2.UP
-    return dir * (float(planet_radius_cells) + 7.0) * BLOCK_SIZE
+    if planet_data != null:
+        return planet_data.get_spawn_world_position(target_grid)
+    return Vector2.ZERO
 
 func get_visual_power() -> float:
     var damage := float(runtime_stats.get("attack_damage", 8.0))
@@ -2446,8 +3122,112 @@ func get_visual_power() -> float:
         return 0.0
     return clampf(log(damage) / log(150.0), 0.0, 1.0)
 
+func get_ship_render_rotation() -> float:
+    return visual_rotation + deg_to_rad(ship_render_rotation_offset_degrees)
+
+func _get_xp_reward_for_block(block: Dictionary) -> int:
+    var base_xp := 1.0
+    match int(block.get("type", BlockType.NORMAL)):
+        BlockType.ELECTRIC, BlockType.GOLD:
+            base_xp = 2.0
+        BlockType.CORE:
+            base_xp = 4.0
+        BlockType.THORN:
+            base_xp = 1.0
+    base_xp += maxf(0.0, float(int(block.get("layer_depth", 1)) - 1) * 0.5)
+    return maxi(1, int(round(base_xp * float(runtime_stats.get("xp_gain_mult", 1.0)))))
+
 func _update_current_layer_name() -> void:
     var grid := world_to_grid(ship_pos)
-    var radial_ratio := 1.0 - clampf(Vector2(float(grid.x), float(grid.y)).length() / float(max(1, PLANET_RADIUS_CELLS)), 0.0, 1.0)
-    var layer_depth := clampi(1 + int(floor(radial_ratio * float(current_depth_level))), 1, current_depth_level)
-    current_layer_name = str(BALANCE.get_layer_for_depth(min(layer_depth, BALANCE.MAX_DEPTH_LEVEL)).get("name", "Orbital Shell"))
+    var layer_depth: int = planet_data.get_depth_level_for_pos(grid, current_depth_level) if planet_data != null else 1
+    current_layer_depth = layer_depth
+    current_layer_name = str(BALANCE.get_layer_for_depth(min(layer_depth, BALANCE.MAX_DEPTH_LEVEL)).get("name", "Surface Cache"))
+
+func _render_breach_log() -> void:
+    if breach_log_label == null:
+        return
+    var title := "[color=#7dd6ff]BREACH LOG[/color]"
+    if breach_chat != null:
+        title = breach_chat.get_title()
+    breach_log_label.text = title if breach_log_lines.is_empty() else title + "\n" + "\n".join(breach_log_lines)
+
+func _flush_breach_chat(force_all: bool = false) -> void:
+    if breach_chat == null:
+        return
+    for line in breach_chat.drain_ready_lines(force_all):
+        _push_breach_log(line)
+
+func _build_breach_chat_snapshot() -> Dictionary:
+    var pressure := _get_breach_chat_pressure_state()
+    return {
+        "depth_level": current_depth_level,
+        "layer_depth": current_layer_depth,
+        "layer_name": current_layer_name,
+        "core_pressure_stage": int(pressure.get("stage", 0)),
+        "core_pressure_tier": int(pressure.get("tier", 0)),
+        "core_pressure_zone": str(pressure.get("zone_name", "surface")),
+        "final_core_exposed": final_core_exposed,
+    }
+
+func _get_breach_chat_pressure_state() -> Dictionary:
+    if planet_data == null:
+        return {"stage": 0, "tier": 0, "zone_name": "surface"}
+    var best_ratio := INF
+    var best_core: Dictionary = {}
+    for core_variant in planet_data.cores:
+        var core: Dictionary = core_variant
+        if not bool(core.get("alive", false)):
+            continue
+        var radius := maxf(1.0, float(planet_data.get_effective_influence_radius(core)) * BLOCK_SIZE)
+        var core_center: Vector2i = core.get("center", Vector2i.ZERO)
+        var center := grid_to_world(core_center)
+        var ratio := ship_pos.distance_to(center) / radius
+        if ratio < best_ratio:
+            best_ratio = ratio
+            best_core = core
+    if best_core.is_empty():
+        return {"stage": 0, "tier": 0, "zone_name": "surface"}
+    var stage := 0
+    if best_ratio <= 0.35:
+        stage = 4 if str(best_core.get("role", "")) == "final" else 3
+    elif best_ratio <= 0.75:
+        stage = 2
+    elif best_ratio <= 1.15:
+        stage = 1
+    return {
+        "stage": stage,
+        "tier": PLANET_DATA_SCRIPT.get_core_tier(int(best_core.get("id", -1))),
+        "zone_name": _breach_chat_zone_name(int(best_core.get("zone", PLANET_DATA_SCRIPT.Zone.CENTER))),
+    }
+
+func _breach_chat_zone_name(zone: int) -> String:
+    match zone:
+        PLANET_DATA_SCRIPT.Zone.SPRING:
+            return "Proxy"
+        PLANET_DATA_SCRIPT.Zone.SUMMER:
+            return "Cipher"
+        PLANET_DATA_SCRIPT.Zone.AUTUMN:
+            return "Ghost"
+        PLANET_DATA_SCRIPT.Zone.WINTER:
+            return "Root"
+        _:
+            return "Center"
+
+func _on_final_core_exposed() -> void:
+    final_core_exposed = true
+    bottom_phase_unlocked = true
+    persistent_data["bottom_phase_unlocked"] = true
+    bottom_cutscene_timer = BOTTOM_CUTSCENE_DURATION
+    if planet_data != null:
+        for core_variant in planet_data.cores:
+            var core: Dictionary = core_variant
+            if int(core.get("id", -1)) == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
+                bottom_cutscene_anchor = grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
+                break
+    side_projectiles.clear()
+    _spawn_side_attackers()
+    side_shot_timer = 0.8
+    _push_breach_log("[color=#ff7d7d]ALERT[/color]  center shell split. side-channel guns waking up.")
+    if breach_chat != null:
+        breach_chat.notify_final_core_exposed()
+        _flush_breach_chat()

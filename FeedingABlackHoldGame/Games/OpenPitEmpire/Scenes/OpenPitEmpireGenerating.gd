@@ -23,7 +23,7 @@ func _begin_generation() -> void:
     if PROGRESS.load_runtime_planet_data(depth_level) != null:
         _go_to_battle()
         return
-    var saved_planet_state: Dictionary = PROGRESS.load_planet_state()
+    var saved_planet_state: Dictionary = PROGRESS.load_planet_state(depth_level)
     if not saved_planet_state.is_empty():
         status_label.text = "Loading Saved Planet"
         var saved_planet = PLANET_DATA_SCRIPT.new()
