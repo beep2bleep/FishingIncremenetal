@@ -19,9 +19,9 @@ const ELECTRIC_CHANCE: float = 0.02
 const GOLD_CHANCE: float = 0.02
 const GOLD_RESOURCE_MULT: float = 5.0
 const CORE_INDIRECT_DR: float = 0.15
-const THORN_HP_MULT: float = 1.6
+const THORN_HP_MULT: float = 1.3
 const NEXT_ZONE_SPIKE_CHANCE: float = 0.045
-const NEXT_ZONE_SPIKE_HP_MULT: float = 1.8
+const NEXT_ZONE_SPIKE_HP_MULT: float = 1.4
 const NEXT_ZONE_SPIKE_RES_MULT: float = 1.35
 const FINAL_CORE_ID: int = 16
 const SAVE_X_SLICES: int = 10
@@ -31,6 +31,7 @@ const ELECTRIC_CHAIN_MAX_TARGETS_PER_STEP: int = 8
 const ELECTRIC_CHAIN_MAX_TOTAL_RESULTS: int = 96
 const CORE_SHARED_HP_BLOCK_MULT: float = 2.0
 const CORE_TOTAL_HP_MULT: float = 4.0
+const NON_CORE_INFLUENCE_HP_STRENGTH: float = 0.55
 const CORE_DIRECT_DR: float = 0.2
 const CORE_MAX_HP_FRACTION_PER_HIT: float = 0.08
 
@@ -76,8 +77,8 @@ const ZONE_HP_RANGE := {
     Zone.PROXY: {"min": 15.0, "max": 300.0},
     Zone.CIPHER: {"min": 200.0, "max": 12000.0},
     Zone.GHOST: {"min": 4000.0, "max": 220000.0},
-    Zone.ROOT: {"min": 120000.0, "max": 20000000.0},
-    Zone.CENTER: {"min": 5000000.0, "max": 120000000.0},
+    Zone.ROOT: {"min": 90000.0, "max": 9000000.0},
+    Zone.CENTER: {"min": 1800000.0, "max": 28000000.0},
 }
 
 const ZONE_RES_RANGE := {
@@ -428,7 +429,7 @@ func spawn_defense_blocks() -> Array[Vector2i]:
             if blocks.has(pos):
                 continue
             var hp: float = _calc_block_hp(pos) * THORN_HP_MULT
-            var influence_mult: float = _get_influence_hp_mult(pos, true)
+            var influence_mult: float = _get_non_core_influence_hp_mult(pos, true)
             hp *= influence_mult
             blocks[pos] = {
                 "type": BlockType.THORN,
@@ -469,7 +470,7 @@ func spawn_thorn_ring(core: Dictionary, ring_min: int, ring_max: int) -> int:
             if blocks.has(pos) or is_in_dead_core_zone(pos):
                 continue
             var hp: float = _calc_block_hp(pos) * THORN_HP_MULT
-            hp *= _get_influence_hp_mult(pos, true)
+            hp *= _get_non_core_influence_hp_mult(pos, true)
             blocks[pos] = {
                 "type": BlockType.THORN,
                 "hp": hp,
@@ -674,7 +675,7 @@ func regenerate_around_cores() -> int:
                     regen_type = BlockType.GOLD
                 elif roll < GOLD_CHANCE + ELECTRIC_CHANCE:
                     regen_type = BlockType.ELECTRIC
-                hp *= _get_influence_hp_mult(pos, true)
+                hp *= _get_non_core_influence_hp_mult(pos, true)
                 var zone: int = get_zone(pos)
                 blocks[pos] = {
                     "type": regen_type,
@@ -720,7 +721,7 @@ func restore_alive_core_influence_blocks() -> Array[Vector2i]:
                     continue
                 if blocks.has(pos):
                     continue
-                var hp: float = _calc_block_hp(pos) * _get_influence_hp_mult(pos, true)
+                var hp: float = _calc_block_hp(pos) * _get_non_core_influence_hp_mult(pos, true)
                 var zone: int = get_zone(pos)
                 blocks[pos] = {
                     "type": BlockType.NORMAL,
@@ -1011,13 +1012,16 @@ func _get_influence_hp_mult(pos: Vector2i, only_alive: bool = false) -> float:
         max_mult = maxf(max_mult, 1.0 + bonus_base * proximity)
     return max_mult
 
+func _get_non_core_influence_hp_mult(pos: Vector2i, only_alive: bool = false) -> float:
+    return 1.0 + (_get_influence_hp_mult(pos, only_alive) - 1.0) * NON_CORE_INFLUENCE_HP_STRENGTH
+
 func _apply_influence_zone_boost() -> void:
     for pos_variant in blocks.keys():
         var pos: Vector2i = pos_variant
         var block: Dictionary = blocks[pos]
         if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
             continue
-        var mult: float = _get_influence_hp_mult(pos, false)
+        var mult: float = _get_non_core_influence_hp_mult(pos, false)
         if mult > 1.0:
             block["hp"] = float(block.get("hp", 0.0)) * mult
             block["max_hp"] = float(block.get("max_hp", 0.0)) * mult

@@ -344,6 +344,7 @@ func _draw() -> void:
         _draw_background_stars(true)
     _draw_core_influence_rings(ultra_reduce_detail)
     _draw_core_shields(ultra_reduce_detail)
+    _draw_core_health_bars(ultra_reduce_detail)
     scene_ref.perf_probe_end("renderer_bg", section_start_us)
     var cache_grid_w: int = cache_grid_max.x - cache_grid_min.x + 1
     var cache_grid_h: int = cache_grid_max.y - cache_grid_min.y + 1
@@ -1024,6 +1025,42 @@ func _draw_core_influence_rings(ultra_compact: bool = false) -> void:
             draw_arc(center, world_radius, 0.0, TAU, 28 if ultra_compact else 40, Color(zone_col.r, zone_col.g, zone_col.b, 0.65 if ultra_compact else 0.8), 2.0 if ultra_compact else 2.5)
         else:
             draw_arc(center, world_radius, 0.0, TAU, 24 if ultra_compact else 32, Color(0.15, 0.8, 1.0, 0.2), 1.2 if ultra_compact else 1.6)
+
+func _draw_core_health_bars(ultra_compact: bool = false) -> void:
+    if scene_ref == null or scene_ref.planet_data == null:
+        return
+    var canvas_transform := get_canvas_transform()
+    var cam_scale := canvas_transform.get_scale()
+    var viewport_size := get_viewport_rect().size
+    var viewport_rect := Rect2(-canvas_transform.origin / cam_scale, viewport_size / cam_scale)
+    for core_variant in scene_ref.planet_data.cores:
+        var core: Dictionary = core_variant
+        if not bool(core.get("alive", false)):
+            continue
+        var center := scene_ref.grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
+        var core_size := float(int(core.get("size", 3)))
+        var cull_radius := (core_size * 0.6 + 2.5) * scene_ref.BLOCK_SIZE
+        if not viewport_rect.grow(cull_radius).has_point(center):
+            continue
+        var hp_ratio := clampf(scene_ref.planet_data.get_core_hp_ratio(core), 0.0, 1.0)
+        var is_boss := str(core.get("role", "")) == "boss" or str(core.get("role", "")) == "final"
+        var bar_width := (56.0 if ultra_compact else 72.0) + core_size * (6.0 if ultra_compact else 8.0)
+        if is_boss:
+            bar_width += 20.0 if ultra_compact else 28.0
+        var bar_height := 4.0 if ultra_compact else 6.0
+        var y_offset := (core_size * 0.5 + 1.8) * scene_ref.BLOCK_SIZE
+        var bar_rect := Rect2(
+            center + Vector2(-bar_width * 0.5, -y_offset),
+            Vector2(bar_width, bar_height)
+        )
+        var fill_color := Color(0.6, 1.8, 2.4, 0.95)
+        if is_boss:
+            fill_color = Color(1.0, 0.42, 0.24, 0.98)
+        draw_rect(bar_rect.grow(1.5 if ultra_compact else 2.0), Color(0.0, 0.0, 0.0, 0.6), true)
+        draw_rect(bar_rect, Color(0.12, 0.14, 0.18, 0.92), true)
+        draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * hp_ratio, bar_rect.size.y)), fill_color, true)
+        if hp_ratio < 0.999:
+            draw_rect(bar_rect, Color(fill_color.r, fill_color.g, fill_color.b, 0.9), false, 1.0)
 
 func _draw_pit_shell(visible_grid_min: Vector2i, visible_grid_max: Vector2i) -> void:
     if scene_ref == null or scene_ref.planet_data == null:
