@@ -147,6 +147,14 @@ const PLANET_OUTLINE_RADIUS_MIN := 6
 const PLANET_OUTLINE_RADIUS_MAX := 64
 const PLANET_OUTLINE_RADIUS_STEP := 2
 const PLANET_OUTLINE_RADIUS_DEFAULT := 32
+const DETAIL_THRESHOLD_MIN := 64
+const DETAIL_THRESHOLD_MAX := 20000
+const DETAIL_THRESHOLD_STEP := 256
+const DETAIL_THRESHOLD_FULL_GAP_MIN := 96
+const DETAIL_THRESHOLD_ULTRA_GAP_MIN := 128
+const DETAIL_THRESHOLD_FULL_DEFAULT := 288
+const DETAIL_THRESHOLD_HEAVY_DEFAULT := 900
+const DETAIL_THRESHOLD_ULTRA_DEFAULT := 1400
 
 var rng := RandomNumberGenerator.new()
 var persistent_data: Dictionary = {}
@@ -163,6 +171,9 @@ var destroyed_cells_this_run: Dictionary = {}
 var planet_outline_mode := OutlineMode.GROUP_EDGES
 var planet_outline_radius_cells := PLANET_OUTLINE_RADIUS_DEFAULT
 var render_detail_mode := RenderDetailMode.AUTO
+var full_detail_visible_grid_cells := DETAIL_THRESHOLD_FULL_DEFAULT
+var heavy_detail_visible_grid_cells := DETAIL_THRESHOLD_HEAVY_DEFAULT
+var ultra_detail_visible_grid_cells := DETAIL_THRESHOLD_ULTRA_DEFAULT
 var _frame_destroyed_blocks := 0
 
 var ship_pos := Vector2.ZERO
@@ -499,6 +510,12 @@ func _unhandled_input(event: InputEvent) -> void:
                 ship_renderer.queue_redraw()
             print("Open Pit Empire ship render rotation offset: %.1f degrees" % ship_render_rotation_offset_degrees)
             get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_7 or event.keycode == KEY_KP_7 or event.physical_keycode == KEY_7:
+            adjust_detail_thresholds(-DETAIL_THRESHOLD_STEP)
+            get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_8 or event.keycode == KEY_KP_8 or event.physical_keycode == KEY_8:
+            adjust_detail_thresholds(DETAIL_THRESHOLD_STEP)
+            get_viewport().set_input_as_handled()
 
 func _build_runtime_nodes() -> void:
     planet_renderer = PLANET_RENDERER_SCRIPT.new()
@@ -544,6 +561,7 @@ func adjust_planet_outline_radius(delta: int) -> void:
 func cycle_render_detail_mode() -> void:
     render_detail_mode = wrapi(render_detail_mode + 1, 0, 4)
     print("Open Pit Empire render mode: %s" % get_render_detail_mode_name())
+    print_detail_thresholds()
     if planet_renderer != null and planet_renderer.has_method("mark_dirty"):
         planet_renderer.call("mark_dirty", false)
 
@@ -557,6 +575,39 @@ func get_render_detail_mode_name() -> String:
             return "ultra"
         _:
             return "auto"
+
+func adjust_detail_thresholds(delta: int) -> void:
+    if delta == 0:
+        return
+    var next_full := clampi(full_detail_visible_grid_cells + delta, DETAIL_THRESHOLD_MIN, DETAIL_THRESHOLD_MAX)
+    var next_heavy := clampi(
+        heavy_detail_visible_grid_cells + delta,
+        next_full + DETAIL_THRESHOLD_FULL_GAP_MIN,
+        DETAIL_THRESHOLD_MAX
+    )
+    var next_ultra := clampi(
+        ultra_detail_visible_grid_cells + delta,
+        next_heavy + DETAIL_THRESHOLD_ULTRA_GAP_MIN,
+        DETAIL_THRESHOLD_MAX
+    )
+    if next_full == full_detail_visible_grid_cells and next_heavy == heavy_detail_visible_grid_cells and next_ultra == ultra_detail_visible_grid_cells:
+        return
+    full_detail_visible_grid_cells = next_full
+    heavy_detail_visible_grid_cells = next_heavy
+    ultra_detail_visible_grid_cells = next_ultra
+    print_detail_thresholds()
+    if planet_renderer != null and planet_renderer.has_method("mark_dirty"):
+        planet_renderer.call("mark_dirty", false)
+
+func print_detail_thresholds() -> void:
+    print(
+        "Open Pit Empire detail thresholds: full=%d heavy=%d ultra=%d mode=%s (keys 7/8)" % [
+            full_detail_visible_grid_cells,
+            heavy_detail_visible_grid_cells,
+            ultra_detail_visible_grid_cells,
+            get_render_detail_mode_name(),
+        ]
+    )
 
 func _build_ui() -> void:
     hud_layer = CanvasLayer.new()
@@ -890,8 +941,11 @@ func _build_planet() -> void:
     planet_data.on_core_destroyed_callback = Callable(self, "_on_core_destroyed")
     if not planet_data.final_core_exposed.is_connected(_on_final_core_exposed):
         planet_data.final_core_exposed.connect(_on_final_core_exposed)
+    var restored_core_positions: Array = planet_data.restore_alive_core_influence_blocks()
     blocks = planet_data.blocks
     exposed_edges = planet_data.exposed_edges
+    if not restored_core_positions.is_empty() and planet_renderer != null:
+        planet_renderer.mark_dirty(true)
     total_planet_blocks = max(int(planet_data.initial_block_count), planet_data.get_total_blocks())
     persistent_destroyed_count = max(0, total_planet_blocks - planet_data.get_total_blocks())
 
@@ -2891,15 +2945,24 @@ func _get_persistent_clear_percent() -> float:
     return 100.0 * float(persistent_destroyed_count) / float(max(1, total_planet_blocks))
 
 func _on_core_destroyed(core: Dictionary) -> void:
+    var core_id: int = int(core.get("id", -1))
     cores_destroyed_this_run += 1
     core_currency_earned_this_run += 1
+    cipher_laser_states.erase(core_id)
+    ghost_debris_timers.erase("debris_%d" % core_id)
+    root_cross_lasers.erase(core_id)
+    for idx in range(ghost_debris.size() - 1, -1, -1):
+        if int(ghost_debris[idx].get("core_id", -1)) == core_id:
+            ghost_debris.remove_at(idx)
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.PLANET_BREAK, -2.0, -0.08)
     if breach_chat != null:
         breach_chat.notify_core_destroyed(core)
         _flush_breach_chat()
-    if int(core.get("id", -1)) == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
+    if core_id == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
         boss_defeated = true
         final_core_exposed = true
+    if minimap != null:
+        minimap.queue_redraw()
 
 func _update_core_behaviors(delta: float) -> void:
     if planet_data == null:

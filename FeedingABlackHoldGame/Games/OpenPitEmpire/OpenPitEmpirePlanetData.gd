@@ -646,6 +646,50 @@ func regenerate_around_cores() -> int:
         _mark_dirty_positions(changed_positions)
     return regenerated
 
+func restore_alive_core_influence_blocks() -> Array[Vector2i]:
+    var restored_positions: Array[Vector2i] = []
+    for core_variant in cores:
+        var core: Dictionary = core_variant
+        if not bool(core.get("alive", false)):
+            continue
+        var radius: int = get_effective_influence_radius(core)
+        var center: Vector2i = core.get("center", Vector2i.ZERO)
+        var core_size: int = int(core.get("size", 3))
+        var half: int = core_size / 2
+        for x in range(center.x - radius, center.x + radius + 1):
+            for y in range(center.y - radius, center.y + radius + 1):
+                var pos := Vector2i(x, y)
+                var dx: int = x - center.x
+                var dy: int = y - center.y
+                if dx * dx + dy * dy > radius * radius:
+                    continue
+                if not _is_inside_pit_shape(pos) or _is_wall_cell(pos):
+                    continue
+                if blocks.has(pos):
+                    continue
+                if x >= center.x - half and x < center.x + half + core_size % 2 and y >= center.y - half and y < center.y + half + core_size % 2:
+                    continue
+                var hp: float = _calc_block_hp(pos) * _get_influence_hp_mult(pos, true)
+                var zone: int = get_zone(pos)
+                blocks[pos] = {
+                    "type": BlockType.NORMAL,
+                    "hp": hp,
+                    "max_hp": hp,
+                    "resource": _calc_block_resource(pos),
+                    "core_id": -1,
+                    "zone": zone,
+                    "regenerated": false,
+                    "core_refill": true,
+                    "layer_depth": get_depth_level_for_pos(pos, 5),
+                }
+                zone_current_blocks[zone] = int(zone_current_blocks.get(zone, 0)) + 1
+                minimap_block_spawned.emit(pos, BlockType.NORMAL)
+                restored_positions.append(pos)
+    if not restored_positions.is_empty():
+        _queue_edge_updates(restored_positions)
+        _mark_dirty_positions(restored_positions)
+    return restored_positions
+
 func electric_chain(origin: Vector2i, damage: float, chain_range: int, chain_depth: int, current_depth: int = 0, free_planet_mode: bool = false, visited: Dictionary = {}, remaining_budget: int = ELECTRIC_CHAIN_MAX_TOTAL_RESULTS) -> Array:
     var results: Array = []
     if current_depth >= chain_depth or remaining_budget <= 0:
@@ -754,6 +798,7 @@ func to_save_data() -> Dictionary:
             bool(block.get("converted_gold", false)),
             int(block.get("layer_depth", 1)),
             bool(block.get("unbreakable", false)),
+            bool(block.get("core_refill", false)),
         ]
     var core_data: Array = []
     for core in cores:
@@ -840,6 +885,7 @@ func load_save_data_async(tree: SceneTree, data: Dictionary, progress_callback: 
                 "converted_gold": bool(arr[7]) if arr.size() > 7 else false,
                 "layer_depth": int(arr[8]) if arr.size() > 8 else get_depth_level_for_pos(pos, 5),
                 "unbreakable": bool(arr[9]) if arr.size() > 9 else false,
+                "core_refill": bool(arr[10]) if arr.size() > 10 else false,
             }
             if tree != null and ((idx + 1) % 2000 == 0):
                 _emit_generation_progress(progress_callback, 0.78 * float(idx + 1) / float(total_blocks))
@@ -1022,6 +1068,7 @@ func _serialize_section(section_id: int) -> Array:
             bool(block.get("converted_gold", false)),
             int(block.get("layer_depth", 1)),
             bool(block.get("unbreakable", false)),
+            bool(block.get("core_refill", false)),
         ])
     return rows
 
@@ -1082,6 +1129,7 @@ func _load_section_blocks(section_blocks: Array, format_version: int = 2) -> voi
                 "converted_gold": bool(row[8]),
                 "layer_depth": int(row[9]) if row.size() > 9 else get_depth_level_for_pos(pos_v3, 5),
                 "unbreakable": bool(row[10]) if row.size() > 10 else false,
+                "core_refill": bool(row[11]) if row.size() > 11 else false,
             }
             continue
         if row.size() < 10:
@@ -1247,7 +1295,15 @@ func _damage_core(_hit_pos: Vector2i, core_id: int, damage: float, free_planet_m
     }
 
 func _on_core_destroyed(core: Dictionary) -> void:
-    core["alive"] = false
+    var core_id: int = int(core.get("id", -1))
+    var core_index := _get_core_index_by_id(core_id)
+    if core_index >= 0:
+        var stored_core: Dictionary = cores[core_index]
+        stored_core["alive"] = false
+        cores[core_index] = stored_core
+        core = stored_core
+    else:
+        core["alive"] = false
     _rebuild_proximity_cache()
     if on_core_destroyed_callback.is_valid():
         on_core_destroyed_callback.call(core)
@@ -1257,6 +1313,13 @@ func _get_core_by_id(core_id: int) -> Variant:
         if int(core.id) == core_id:
             return core
     return null
+
+func _get_core_index_by_id(core_id: int) -> int:
+    for idx in range(cores.size()):
+        var core: Dictionary = cores[idx]
+        if int(core.get("id", -1)) == core_id:
+            return idx
+    return -1
 
 func _check_final_core_exposure(destroyed_pos: Vector2i) -> void:
     if _final_core_exposed_emitted or final_boss_active:

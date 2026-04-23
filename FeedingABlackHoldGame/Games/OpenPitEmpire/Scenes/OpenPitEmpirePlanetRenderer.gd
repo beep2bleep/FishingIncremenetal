@@ -66,24 +66,25 @@ const DRAW_CACHE_PADDING_CELLS := 8
 const FILL_CACHE_PADDING_CELLS := 14
 const FILL_CACHE_ALIGN_CELLS := 8
 const REDUCED_FILL_CACHE_ALIGN_CELLS := 16
-const REDUCED_FILL_CACHE_EXTRA_ALIGN_STEPS := 2
+const REDUCED_FILL_CACHE_EXTRA_ALIGN_STEPS := 4
 const HEAVY_REDUCED_FILL_MIN_CELLS := 80
 const ULTRA_REDUCED_FILL_MIN_CELLS := 72
 const REDUCED_FILL_PREWARM_ROWS_PER_DRAW := 16
 const REDUCED_FILL_PREWARM_TRIGGER_CELLS := 20
-const REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS := 0
-const REDUCED_FILL_RECENTER_MARGIN_CELLS := 4
+const REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS := 6
+const REDUCED_FILL_RECENTER_MARGIN_CELLS := 10
 const HEAVY_OUTLINE_CACHE_PADDING_CELLS := 0
 const ULTRA_OUTLINE_CACHE_PADDING_CELLS := 0
-const OUTLINE_CACHE_ALIGN_CELLS := 4
+const HEAVY_OUTLINE_CACHE_ALIGN_CELLS := 8
+const ULTRA_OUTLINE_CACHE_ALIGN_CELLS := 12
 const GOLD_EFFECT_REDRAW_INTERVAL := 0.05
 const FILL_SCRUB_INTERVAL := 1.0
 const FILL_SCRUB_ROWS_PER_DRAW := 8
 const REDUCED_FILL_UPLOAD_INTERVAL := 0.08
 const REDUCED_FILL_FORCE_UPLOAD_UPDATES := 48
-const OUTLINE_REBUILD_INTERVAL := 0.4
-const HEAVY_OUTLINE_WIDTH_PX := 2
-const ULTRA_OUTLINE_WIDTH_PX := 2
+const OUTLINE_REBUILD_INTERVAL := 0.7
+const HEAVY_OUTLINE_WIDTH_PX := 4
+const ULTRA_OUTLINE_WIDTH_PX := 4
 const HEAVY_OUTLINE_ALPHA := 0.62
 const ULTRA_OUTLINE_ALPHA := 0.5
 const MASK_OUTLINE_CELL_PX := 4
@@ -93,6 +94,7 @@ const MAX_ULTRA_ACTIVE_HIT_EFFECTS := 12
 const MAX_ULTRA_ACTIVE_GOLD_EFFECTS := 3
 const HEAVY_FOCAL_DETAIL_RADIUS_CELLS := 10
 const ULTRA_FOCAL_DETAIL_RADIUS_CELLS := 7
+const ULTRA_FOCAL_OUTLINE_RADIUS_CELLS := 8
 const HEAVY_VISIBLE_GRID_CELLS := 900
 const HEAVY_EFFECT_LOAD := 24
 const VERY_HEAVY_VISIBLE_GRID_CELLS := 1400
@@ -127,6 +129,8 @@ const THORN_FILL := Color(0.04, 0.01, 0.03, 0.7)
 const THORN_EDGE := Color(2.0, 0.4, 1.5, 1.0)
 const REGEN_FILL := Color(0.06, 0.015, 0.015, 0.7)
 const REGEN_EDGE := Color(1.2, 0.2, 0.08, 1.0)
+const CORE_REFILL_FILL := Color(0.22, 0.08, 0.32, 0.72)
+const CORE_REFILL_EDGE := Color(0.92, 0.42, 1.45, 1.0)
 const ZONE_HP_VISUAL_RANGE := {
     ZONE_SPRING: {"min": 15.0, "max": 300.0},
     ZONE_SUMMER: {"min": 200.0, "max": 12000.0},
@@ -215,8 +219,27 @@ func _draw() -> void:
     var visible_grid_h: int = base_visible_grid_max.y - base_visible_grid_min.y + 1
     var visible_cell_budget: int = visible_grid_w * visible_grid_h
     var effect_load: int = scene_ref.hit_timers.size() + scene_ref.electric_arcs.size() + scene_ref.chain_arcs.size() + scene_ref.drone_beams.size()
-    var reduce_detail := visible_cell_budget >= HEAVY_VISIBLE_GRID_CELLS or effect_load >= HEAVY_EFFECT_LOAD or scene_ref.mega_timer > 0.0
-    var ultra_reduce_detail := visible_cell_budget >= VERY_HEAVY_VISIBLE_GRID_CELLS or effect_load >= VERY_HEAVY_EFFECT_LOAD
+    var full_visible_grid_cells := int(scene_ref.get("full_detail_visible_grid_cells")) if scene_ref != null else 288
+    var heavy_visible_grid_cells := int(scene_ref.get("heavy_detail_visible_grid_cells")) if scene_ref != null else HEAVY_VISIBLE_GRID_CELLS
+    var ultra_visible_grid_cells := int(scene_ref.get("ultra_detail_visible_grid_cells")) if scene_ref != null else VERY_HEAVY_VISIBLE_GRID_CELLS
+    heavy_visible_grid_cells = maxi(heavy_visible_grid_cells, full_visible_grid_cells + 1)
+    ultra_visible_grid_cells = maxi(ultra_visible_grid_cells, heavy_visible_grid_cells + 1)
+    var auto_force_heavy := effect_load >= HEAVY_EFFECT_LOAD or scene_ref.mega_timer > 0.0
+    var reduce_detail := true
+    var ultra_reduce_detail := visible_cell_budget >= ultra_visible_grid_cells or effect_load >= VERY_HEAVY_EFFECT_LOAD
+    if int(scene_ref.render_detail_mode) == int(scene_ref.RenderDetailMode.AUTO):
+        reduce_detail = true
+        ultra_reduce_detail = not auto_force_heavy and visible_cell_budget > heavy_visible_grid_cells
+    match int(scene_ref.render_detail_mode):
+        int(scene_ref.RenderDetailMode.FULL):
+            reduce_detail = false
+            ultra_reduce_detail = false
+        int(scene_ref.RenderDetailMode.HEAVY):
+            reduce_detail = true
+            ultra_reduce_detail = false
+        int(scene_ref.RenderDetailMode.ULTRA):
+            reduce_detail = true
+            ultra_reduce_detail = true
     var reduce_detail_changed := reduce_detail != _last_reduce_detail or ultra_reduce_detail != _last_ultra_reduce_detail
     var margin := 0.0 if reduce_detail or ultra_reduce_detail else base_margin
     var visible_grid_min := scene_ref.world_to_grid(top_left - Vector2(margin, margin))
@@ -455,7 +478,7 @@ func _draw() -> void:
         draw_texture_rect(_fill_texture, tex_rect, false)
     scene_ref.perf_probe_end("renderer_fill", section_start_us)
 
-    if int(scene_ref.planet_outline_mode) != int(scene_ref.OutlineMode.OFF) and (reduce_detail or ultra_reduce_detail):
+    if int(scene_ref.planet_outline_mode) != int(scene_ref.OutlineMode.OFF) and reduce_detail and not ultra_reduce_detail:
         section_start_us = scene_ref.perf_probe_begin()
         var outline_radius_cells := maxi(1, int(scene_ref.planet_outline_radius_cells))
         var outline_center_grid := _get_outline_cache_center_grid()
@@ -501,10 +524,10 @@ func _draw() -> void:
     var gold_pulse_t := Time.get_ticks_msec() * 0.001 * 1.8
     section_start_us = scene_ref.perf_probe_begin()
     if ultra_reduce_detail:
-        _draw_focal_live_blocks(visible_grid_min, visible_grid_max, ULTRA_FOCAL_DETAIL_RADIUS_CELLS)
+        _draw_focal_live_outlines(visible_grid_min, visible_grid_max, ULTRA_FOCAL_OUTLINE_RADIUS_CELLS, 1.5)
         _draw_active_block_effects(visible_grid_min, visible_grid_max)
     elif reduce_detail:
-        _draw_focal_live_blocks(visible_grid_min, visible_grid_max, HEAVY_FOCAL_DETAIL_RADIUS_CELLS)
+        _draw_focal_live_outlines(visible_grid_min, visible_grid_max, HEAVY_FOCAL_DETAIL_RADIUS_CELLS, 1.25)
     else:
         for x in range(visible_grid_min.x, visible_grid_max.x + 1):
             for y in range(visible_grid_min.y, visible_grid_max.y + 1):
@@ -576,13 +599,14 @@ func _draw() -> void:
                 2.0
             )
 
+    _draw_core_influence_rings(ultra_reduce_detail)
+    _draw_cipher_lasers(ultra_reduce_detail)
+    _draw_root_cross_lasers(ultra_reduce_detail)
+    _draw_ghost_debris(ultra_reduce_detail)
     if not ultra_reduce_detail:
-        _draw_ghost_debris()
-        _draw_root_cross_lasers()
         _draw_roaming_powerups()
         _draw_final_funnel()
-    if not reduce_detail:
-        _draw_core_shields()
+    _draw_core_shields(ultra_reduce_detail)
     scene_ref.perf_probe_end("renderer_overlays", section_start_us)
     scene_ref.perf_probe_end("renderer_draw", perf_start_us)
 
@@ -670,7 +694,7 @@ func _draw_active_block_effects(grid_min: Vector2i, grid_max: Vector2i) -> void:
         var gold_timer: float = float(effect.get("timer", 0.0))
         draw_rect(rect.grow(-2.0), Color(GOLD_GLOW.r, GOLD_GLOW.g, GOLD_GLOW.b, gold_timer / scene_ref.GOLD_CONVERT_DURATION), false, 2.0)
 
-func _draw_focal_live_blocks(visible_grid_min: Vector2i, visible_grid_max: Vector2i, radius_cells: int) -> void:
+func _draw_focal_live_outlines(visible_grid_min: Vector2i, visible_grid_max: Vector2i, radius_cells: int, width: float) -> void:
     if radius_cells <= 0:
         return
     var center_grid := scene_ref.world_to_grid(scene_ref.camera_pos)
@@ -686,13 +710,16 @@ func _draw_focal_live_blocks(visible_grid_min: Vector2i, visible_grid_max: Vecto
             var block: Dictionary = scene_ref.blocks.get(grid, {})
             if block.is_empty():
                 continue
+            var exposed_mask := int(scene_ref.exposed_edges.get(grid, 0))
+            if exposed_mask == 0:
+                continue
             var colors: Dictionary = _get_block_palette(block)
             var world := scene_ref.grid_to_world(grid)
             var rect := Rect2(
                 world - Vector2.ONE * scene_ref.BLOCK_SIZE * 0.5 + Vector2.ONE * BLOCK_GAP,
                 Vector2.ONE * (scene_ref.BLOCK_SIZE - BLOCK_GAP * 2.0)
             )
-            draw_rect(rect, colors.get("fill", Color.WHITE), true)
+            _draw_block_edges(grid, rect, colors.get("edge", Color.WHITE), exposed_mask, width)
 
 func _apply_pending_fill_updates(grid_min: Vector2i, grid_max: Vector2i) -> bool:
     if _pending_fill_updates.is_empty() or _fill_image == null:
@@ -908,9 +935,10 @@ func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_
 
 func _get_outline_cache_center_grid() -> Vector2i:
     var center_grid := scene_ref.world_to_grid(scene_ref.camera_pos)
+    var align_cells := ULTRA_OUTLINE_CACHE_ALIGN_CELLS if _last_ultra_reduce_detail else HEAVY_OUTLINE_CACHE_ALIGN_CELLS
     return Vector2i(
-        _floor_to_step(center_grid.x, OUTLINE_CACHE_ALIGN_CELLS),
-        _floor_to_step(center_grid.y, OUTLINE_CACHE_ALIGN_CELLS)
+        _floor_to_step(center_grid.x, align_cells),
+        _floor_to_step(center_grid.y, align_cells)
     )
 
 func _floor_to_step(value: int, step: int) -> int:
@@ -1006,11 +1034,12 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
     var zone: int = int(block.get("zone", ZONE_AUTUMN))
     var block_type: int = int(block.get("type", 0))
     var regenerated: bool = bool(block.get("regenerated", false))
+    var core_refill: bool = bool(block.get("core_refill", false))
     var unbreakable: bool = bool(block.get("unbreakable", false))
     var electric_enabled: bool = bool(scene_ref.runtime_stats.get("electric_enabled", false))
     var gold_enabled: bool = bool(scene_ref.runtime_stats.get("gold_enabled", false))
     var hardness_tier: int = _get_visual_hardness_tier(block)
-    var cache_key := "%d:%d:%d:%d:%d:%d:%d" % [zone, block_type, int(regenerated), int(electric_enabled), int(gold_enabled), hardness_tier, int(unbreakable)]
+    var cache_key := "%d:%d:%d:%d:%d:%d:%d:%d" % [zone, block_type, int(regenerated), int(core_refill), int(electric_enabled), int(gold_enabled), hardness_tier, int(unbreakable)]
     if _palette_cache.has(cache_key):
         return _palette_cache[cache_key]
     var fill: Color = ZONE_FILLS.get(zone, SPACE_BG)
@@ -1035,7 +1064,10 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
             fill = _mix_fill_with_edge(THORN_FILL, THORN_EDGE, 0.24)
             edge = THORN_EDGE
         _:
-            if regenerated:
+            if core_refill:
+                fill = _mix_fill_with_edge(CORE_REFILL_FILL, CORE_REFILL_EDGE, 0.24)
+                edge = CORE_REFILL_EDGE
+            elif regenerated:
                 fill = _mix_fill_with_edge(REGEN_FILL, REGEN_EDGE, 0.22)
                 edge = REGEN_EDGE
             else:
@@ -1079,7 +1111,7 @@ func _apply_hardness_tint(fill: Color, hardness_tier: int) -> Color:
         _:
             return fill
 
-func _draw_core_zones() -> void:
+func _draw_core_influence_rings(ultra_compact: bool = false) -> void:
     if scene_ref == null or scene_ref.planet_data == null:
         return
     for core in scene_ref.planet_data.cores:
@@ -1087,11 +1119,9 @@ func _draw_core_zones() -> void:
         var world_radius := float(scene_ref.planet_data.get_effective_influence_radius(core)) * scene_ref.BLOCK_SIZE
         if bool(core.alive):
             var zone_col: Color = ZONE_RING_COLORS.get(int(core.zone), Color(1.0, 0.2, 0.1, 0.25))
-            draw_circle(center, world_radius, Color(zone_col.r, zone_col.g, zone_col.b, zone_col.a * 0.14))
-            draw_arc(center, world_radius, 0.0, TAU, 32, zone_col, 1.5)
+            draw_arc(center, world_radius, 0.0, TAU, 28 if ultra_compact else 40, Color(zone_col.r, zone_col.g, zone_col.b, 0.65 if ultra_compact else 0.8), 2.0 if ultra_compact else 2.5)
         else:
-            draw_circle(center, world_radius, Color(0.15, 0.8, 1.0, 0.06))
-            draw_arc(center, world_radius, 0.0, TAU, 24, Color(0.15, 0.8, 1.0, 0.12), 1.0)
+            draw_arc(center, world_radius, 0.0, TAU, 24 if ultra_compact else 32, Color(0.15, 0.8, 1.0, 0.2), 1.2 if ultra_compact else 1.6)
 
 func _draw_pit_shell(visible_grid_min: Vector2i, visible_grid_max: Vector2i) -> void:
     if scene_ref == null or scene_ref.planet_data == null:
@@ -1122,7 +1152,7 @@ func _draw_pit_shell(visible_grid_min: Vector2i, visible_grid_max: Vector2i) -> 
             draw_line(a, b, PIT_WALL_EDGE, 12.0)
             draw_line(a + Vector2(28.0, 0.0), b + Vector2(28.0, 0.0), Color(PIT_GLOW.r, PIT_GLOW.g, PIT_GLOW.b, 0.42), 24.0)
 
-func _draw_core_shields() -> void:
+func _draw_core_shields(ultra_compact: bool = false) -> void:
     if scene_ref == null or scene_ref.planet_data == null:
         return
     for core in scene_ref.planet_data.cores:
@@ -1132,17 +1162,33 @@ func _draw_core_shields() -> void:
             continue
         var center := scene_ref.grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
         var dome_radius := (float(int(core.get("size", 3))) * 0.5 + 2.0) * scene_ref.BLOCK_SIZE
-        draw_circle(center, dome_radius, Color(0.2, 0.5, 1.0, 0.08))
-        draw_arc(center, dome_radius, 0.0, TAU, 24, Color(0.3, 0.6, 1.0, 0.65), 1.5)
+        draw_arc(center, dome_radius, 0.0, TAU, 20 if ultra_compact else 24, Color(0.3, 0.6, 1.0, 0.65), 1.2 if ultra_compact else 1.5)
 
-func _draw_ghost_debris() -> void:
+func _draw_ghost_debris(ultra_compact: bool = false) -> void:
     for debris_variant in scene_ref.ghost_debris:
         var debris: Dictionary = debris_variant
         var pos: Vector2 = debris.get("pos", Vector2.ZERO)
-        draw_circle(pos, 8.0, Color(1.0, 0.35, 0.12, 0.12))
-        draw_circle(pos, 4.0, Color(1.0, 0.45, 0.18, 0.95))
+        var life_ratio := clampf(float(debris.get("life", 0.0)) / scene_ref.AUTUMN_DEBRIS_LIFETIME, 0.0, 1.0)
+        var pulse_seed := float(int(debris.get("core_id", 0)) * 13 + int(round(pos.x * 0.02)) + int(round(pos.y * 0.02)))
+        var pulse_t := _time_elapsed * 7.5 + pulse_seed
+        var pulse := 0.5 + 0.5 * sin(pulse_t)
+        var base_color := Color(1.0, 0.12, 0.16, 0.95)
+        var pulse_color := Color(1.0, 0.3, 0.72, 0.98)
+        var shot_color := base_color.lerp(pulse_color, pulse)
+        var glow_alpha := (0.18 if ultra_compact else 0.14) + 0.1 * pulse
+        var outer_radius := (10.0 if ultra_compact else 9.0) + 3.5 * pulse
+        var inner_radius := (5.5 if ultra_compact else 4.5) + 2.0 * pulse
+        var ring_radius := outer_radius + (4.0 if ultra_compact else 3.0) + 2.0 * pulse
+        var trail_dir := Vector2(debris.get("vel", Vector2.ZERO)).normalized()
+        if trail_dir.length_squared() <= 0.001:
+            trail_dir = Vector2.UP
+        var tail_pos := pos - trail_dir * ((12.0 if ultra_compact else 10.0) + pulse * 6.0)
+        draw_circle(pos, ring_radius, Color(shot_color.r, shot_color.g, shot_color.b, glow_alpha * maxf(0.4, life_ratio)))
+        draw_line(tail_pos, pos, Color(shot_color.r, shot_color.g, shot_color.b, 0.45 + pulse * 0.2), (4.0 if ultra_compact else 3.0) + pulse * 1.5)
+        draw_circle(pos, outer_radius, Color(shot_color.r, shot_color.g, shot_color.b, 0.24 + pulse * 0.12))
+        draw_circle(pos, inner_radius, shot_color)
 
-func _draw_root_cross_lasers() -> void:
+func _draw_root_cross_lasers(ultra_compact: bool = false) -> void:
     for state_variant in scene_ref.root_cross_lasers.values():
         var state: Dictionary = state_variant
         var origin: Vector2 = state.get("origin", Vector2.ZERO)
@@ -1167,8 +1213,27 @@ func _draw_root_cross_lasers() -> void:
                     continue
                 var start := origin + dir * (length * start_t)
                 var finish := origin + dir * (length * end_t)
-                draw_line(start, finish, Color(0.3, 0.8, 2.0, 0.18), 10.0)
-                draw_line(start, finish, Color(0.4, 1.0, 2.5, 0.85), 2.0)
+                draw_line(start, finish, Color(0.3, 0.8, 2.0, 0.18), 7.0 if ultra_compact else 10.0)
+                draw_line(start, finish, Color(0.4, 1.0, 2.5, 0.85), 1.6 if ultra_compact else 2.0)
+
+func _draw_cipher_lasers(ultra_compact: bool = false) -> void:
+    for state_variant in scene_ref.cipher_laser_states.values():
+        var state: Dictionary = state_variant
+        var laser_state := str(state.get("state", "idle"))
+        if laser_state != "warning" and laser_state != "firing":
+            continue
+        var origin: Vector2 = state.get("origin", Vector2.ZERO)
+        var dir: Vector2 = Vector2(state.get("dir", Vector2.RIGHT)).normalized()
+        if dir.length_squared() <= 0.001:
+            continue
+        var length := scene_ref.BLOCK_SIZE * 40.0
+        var end := origin + dir * length
+        if laser_state == "warning":
+            draw_line(origin, end, Color(1.0, 0.48, 0.18, 0.22), 5.0 if ultra_compact else 7.0)
+            draw_line(origin, end, Color(1.0, 0.82, 0.36, 0.85), 1.4 if ultra_compact else 2.0)
+        else:
+            draw_line(origin, end, Color(1.0, 0.32, 0.12, 0.3), 14.0 if ultra_compact else 18.0)
+            draw_line(origin, end, Color(1.0, 0.56, 0.18, 0.95), 4.0 if ultra_compact else 5.0)
 
 func _draw_roaming_powerups() -> void:
     for powerup_variant in scene_ref.roaming_powerups:
