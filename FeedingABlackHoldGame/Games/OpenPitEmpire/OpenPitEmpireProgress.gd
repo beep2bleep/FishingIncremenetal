@@ -2,6 +2,7 @@ extends RefCounted
 class_name OpenPitEmpireProgress
 
 const BALANCE := preload("res://Games/OpenPitEmpire/OpenPitEmpireBalance.gd")
+const PLANET_DATA_SCRIPT := preload("res://Games/OpenPitEmpire/OpenPitEmpirePlanetData.gd")
 const SAVE_PATH := "user://open_pit_empire_save_v3.json"
 const PLANET_SAVE_DIR := "user://open_pit_empire_planet_state_v3"
 const PLANET_META_PATH := "user://open_pit_empire_planet_state_v3/meta.save"
@@ -28,6 +29,8 @@ const DEFAULT_DATA := {
     "planet_state": {},
     "planet_layout_version": BALANCE.PLANET_LAYOUT_VERSION,
     "attempt_history": [],
+    "best_layer_clear_percents": {},
+    "remaining_layer_block_counts": {},
     "chat_line_counts": {},
     "chat_thread_counts": {},
     "bottom_phase_unlocked": false,
@@ -41,6 +44,7 @@ static var _runtime_planet_depth: int = -1
 static var _planet_save_thread: Thread = null
 static var _planet_save_pending: bool = false
 static var _planet_save_ok: bool = true
+static var _initial_layer_block_counts: Dictionary = {}
 
 static func get_default_data() -> Dictionary:
     return DEFAULT_DATA.duplicate(true)
@@ -72,6 +76,10 @@ static func load_data() -> Dictionary:
         data["planet_state"] = {}
     if not (data.get("attempt_history", []) is Array):
         data["attempt_history"] = []
+    if not (data.get("best_layer_clear_percents", {}) is Dictionary):
+        data["best_layer_clear_percents"] = {}
+    if not (data.get("remaining_layer_block_counts", {}) is Dictionary):
+        data["remaining_layer_block_counts"] = {}
     if not (data.get("chat_line_counts", {}) is Dictionary):
         data["chat_line_counts"] = {}
     if not (data.get("chat_thread_counts", {}) is Dictionary):
@@ -86,15 +94,24 @@ static func load_data() -> Dictionary:
         _clear_planet_state_binary()
         clear_runtime_planet_data()
     var inline_planet_state: Dictionary = data.get("planet_state", {}).duplicate(true)
+    var should_write_save := false
     _cached_planet_state = {}
     if not inline_planet_state.is_empty():
         _cached_planet_state = inline_planet_state
         _write_planet_state_binary(_cached_planet_state)
         data["planet_state"] = {}
+        should_write_save = true
+    if not _has_complete_remaining_layer_count_cache(data):
+        _refresh_remaining_layer_count_cache(data)
+        should_write_save = true
+    if not _has_complete_layer_clear_cache(data):
+        _refresh_best_layer_clear_cache(data)
+        should_write_save = true
     BALANCE.refresh_depth_unlocks(data)
+    _refresh_clear_reward_upgrades(data)
     _cached_data = _sanitize_main_data(data)
     _cache_loaded = true
-    if not inline_planet_state.is_empty():
+    if should_write_save:
         _write_json(SAVE_PATH, _cached_data)
     return _cached_data.duplicate(true)
 
@@ -142,9 +159,46 @@ static func get_core_upgrade_levels() -> Dictionary:
 static func get_xp_upgrade_levels() -> Dictionary:
     return load_data().get("xp_upgrades", {}).duplicate(true)
 
+static func get_best_persistent_clear_percent() -> float:
+    var data := load_data()
+    var clear_percent := 0.0
+    var breakdown: Variant = data.get("last_run_breakdown", {})
+    if breakdown is Dictionary:
+        clear_percent = max(clear_percent, float((breakdown as Dictionary).get("persistent_clear", 0.0)))
+    var attempt_history: Array = data.get("attempt_history", [])
+    for attempt_variant in attempt_history:
+        if attempt_variant is Dictionary:
+            clear_percent = max(clear_percent, float((attempt_variant as Dictionary).get("persistent_clear", 0.0)))
+    return clear_percent
+
+static func get_best_layer_clear_percent(layer_depth: int) -> float:
+    return float(get_best_layer_clear_percents().get(clampi(layer_depth, MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL), 0.0))
+
+static func get_best_layer_clear_percents() -> Dictionary:
+    return _normalize_layer_clear_percents(load_data().get("best_layer_clear_percents", {}))
+
+static func _collect_best_layer_clear_percents(data: Dictionary) -> Dictionary:
+    var best_percents := {}
+    for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+        best_percents[layer_depth] = 0.0
+    var current_percents: Dictionary = _get_current_layer_clear_percents_from_counts(_normalize_layer_block_counts(data.get("remaining_layer_block_counts", {})))
+    for layer_depth_variant in current_percents.keys():
+        var layer_depth: int = int(layer_depth_variant)
+        best_percents[layer_depth] = max(float(best_percents.get(layer_depth, 0.0)), float(current_percents.get(layer_depth_variant, 0.0)))
+    var breakdown: Variant = data.get("last_run_breakdown", {})
+    if breakdown is Dictionary:
+        _merge_layer_clear_percents(best_percents, Dictionary((breakdown as Dictionary).get("layer_clear_percents", {})))
+    var attempt_history: Array = data.get("attempt_history", [])
+    for attempt_variant in attempt_history:
+        if attempt_variant is Dictionary:
+            _merge_layer_clear_percents(best_percents, Dictionary((attempt_variant as Dictionary).get("layer_clear_percents", {})))
+    return best_percents
+
 static func apply_tree_purchase(upgrade_id: String, level: int, wallet_after_purchase: int) -> void:
     var data := load_data()
     if BALANCE.is_core_upgrade(upgrade_id):
+        if BALANCE.is_reward_core_upgrade(upgrade_id):
+            return
         var core_upgrade_id: String = upgrade_id.trim_prefix(BALANCE.CORE_PREFIX)
         var purchased: Array = data.get("purchased_core_upgrades", []).duplicate()
         if core_upgrade_id not in purchased:
@@ -175,6 +229,8 @@ static func apply_tree_purchase(upgrade_id: String, level: int, wallet_after_pur
 static func apply_tree_sale(upgrade_id: String, level: int, wallet_after_sale: int) -> void:
     var data := load_data()
     if BALANCE.is_core_upgrade(upgrade_id):
+        if BALANCE.is_reward_core_upgrade(upgrade_id):
+            return
         var core_upgrade_id: String = upgrade_id.trim_prefix(BALANCE.CORE_PREFIX)
         var purchased: Array = data.get("purchased_core_upgrades", []).duplicate()
         purchased.erase(core_upgrade_id)
@@ -244,10 +300,28 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
             var merge_result: Dictionary = _try_merge_planet_state(planet_state)
             if bool(merge_result.get("ok", false)):
                 _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(true)
+                data["remaining_layer_block_counts"] = _normalize_layer_block_counts(merge_result.get("remaining_layer_block_counts", {}))
         else:
-            save_planet_state(planet_state)
+            var merge_result: Dictionary = _try_merge_planet_state(planet_state)
+            if bool(merge_result.get("ok", false)):
+                _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(true)
+                data["remaining_layer_block_counts"] = _normalize_layer_block_counts(merge_result.get("remaining_layer_block_counts", {}))
+                _write_planet_state_binary(_cached_planet_state)
     else:
         clear_planet_state()
+        data["remaining_layer_block_counts"] = _get_initial_layer_block_counts()
+    var layer_clear_percents: Dictionary = _get_current_layer_clear_percents_from_counts(_normalize_layer_block_counts(data.get("remaining_layer_block_counts", {})))
+    breakdown["layer_clear_percents"] = layer_clear_percents.duplicate(true)
+    data["last_run_breakdown"] = breakdown
+    if not attempt_history.is_empty():
+        var latest_attempt: Dictionary = Dictionary(attempt_history[0]).duplicate(true)
+        latest_attempt["layer_clear_percents"] = layer_clear_percents.duplicate(true)
+        attempt_history[0] = latest_attempt
+        data["attempt_history"] = attempt_history
+    var best_layer_clear_percents: Dictionary = _normalize_layer_clear_percents(data.get("best_layer_clear_percents", {}))
+    _merge_layer_clear_percents(best_layer_clear_percents, layer_clear_percents)
+    data["best_layer_clear_percents"] = best_layer_clear_percents
+    _grant_clear_reward_upgrades(data, layer_clear_percents)
     save_data(data)
     return data
 
@@ -366,8 +440,194 @@ static func _sanitize_main_data(data: Dictionary) -> Dictionary:
         var breakdown_dict: Dictionary = Dictionary(breakdown).duplicate(true)
         breakdown_dict.erase("planet_state")
         sanitized["last_run_breakdown"] = breakdown_dict
+    sanitized["remaining_layer_block_counts"] = _normalize_layer_block_counts(sanitized.get("remaining_layer_block_counts", {}))
+    sanitized["best_layer_clear_percents"] = _normalize_layer_clear_percents(sanitized.get("best_layer_clear_percents", {}))
     BALANCE.refresh_depth_unlocks(sanitized)
+    _refresh_clear_reward_upgrades(sanitized)
     return sanitized
+
+static func _refresh_clear_reward_upgrades(data: Dictionary) -> void:
+    if not _has_complete_remaining_layer_count_cache(data):
+        _refresh_remaining_layer_count_cache(data)
+    if not _has_complete_layer_clear_cache(data):
+        _refresh_best_layer_clear_cache(data)
+    _grant_clear_reward_upgrades(data, _normalize_layer_clear_percents(data.get("best_layer_clear_percents", {})))
+
+static func _refresh_best_layer_clear_cache(data: Dictionary) -> void:
+    data["best_layer_clear_percents"] = _collect_best_layer_clear_percents(data)
+
+static func _refresh_remaining_layer_count_cache(data: Dictionary) -> void:
+    data["remaining_layer_block_counts"] = _scan_remaining_layer_block_counts()
+
+static func _grant_clear_reward_upgrades(data: Dictionary, layer_clear_percents: Dictionary) -> void:
+    var purchased: Array = data.get("purchased_core_upgrades", []).duplicate()
+    for reward_id in BALANCE.get_clear_reward_core_upgrades_for_layer_progress(layer_clear_percents):
+        var trimmed: String = reward_id.trim_prefix(BALANCE.CORE_PREFIX)
+        if trimmed not in purchased:
+            purchased.append(trimmed)
+    data["purchased_core_upgrades"] = purchased
+
+static func _merge_layer_clear_percents(target: Dictionary, source: Dictionary) -> void:
+    for layer_depth_variant in source.keys():
+        var layer_depth: int = int(layer_depth_variant)
+        if layer_depth < MIN_START_DEPTH_LEVEL or layer_depth > MAX_DEPTH_LEVEL:
+            continue
+        target[layer_depth] = max(float(target.get(layer_depth, 0.0)), float(source.get(layer_depth_variant, 0.0)))
+
+static func _normalize_layer_clear_percents(source: Variant) -> Dictionary:
+    var normalized := {}
+    for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+        normalized[layer_depth] = 0.0
+    if not (source is Dictionary):
+        return normalized
+    for layer_depth_variant in (source as Dictionary).keys():
+        var layer_depth: int = int(layer_depth_variant)
+        if layer_depth < MIN_START_DEPTH_LEVEL or layer_depth > MAX_DEPTH_LEVEL:
+            continue
+        normalized[layer_depth] = clampf(float((source as Dictionary).get(layer_depth_variant, 0.0)), 0.0, 100.0)
+    return normalized
+
+static func _has_complete_layer_clear_cache(data: Dictionary) -> bool:
+    var cache: Variant = data.get("best_layer_clear_percents", {})
+    if not (cache is Dictionary):
+        return false
+    for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+        if not (cache as Dictionary).has(layer_depth) and not (cache as Dictionary).has(str(layer_depth)):
+            return false
+    return true
+
+static func _get_current_layer_clear_percents() -> Dictionary:
+    return _get_current_layer_clear_percents_from_counts(_normalize_layer_block_counts(load_data().get("remaining_layer_block_counts", {})))
+
+static func _get_current_layer_clear_percents_from_counts(remaining_counts: Dictionary) -> Dictionary:
+    var initial_counts: Dictionary = _get_initial_layer_block_counts()
+    var percents := {}
+    for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+        var initial_count: int = int(initial_counts.get(layer_depth, 0))
+        var remaining_count: int = int(remaining_counts.get(layer_depth, initial_count))
+        if initial_count <= 0:
+            percents[layer_depth] = 0.0
+            continue
+        var cleared_count: int = maxi(0, initial_count - remaining_count)
+        percents[layer_depth] = clampf(100.0 * float(cleared_count) / float(initial_count), 0.0, 100.0)
+    return percents
+
+static func _get_initial_layer_block_counts() -> Dictionary:
+    if not _initial_layer_block_counts.is_empty():
+        return _initial_layer_block_counts.duplicate(true)
+    var counts := {}
+    for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+        counts[layer_depth] = 0
+    var planet_data = PLANET_DATA_SCRIPT.new()
+    var rng := RandomNumberGenerator.new()
+    rng.seed = 1
+    planet_data.generate_sync(MIN_START_DEPTH_LEVEL, {}, BALANCE, rng)
+    for block_variant in planet_data.blocks.values():
+        var block: Dictionary = block_variant
+        if int(block.get("type", PLANET_DATA_SCRIPT.BlockType.NORMAL)) == int(PLANET_DATA_SCRIPT.BlockType.CORE):
+            continue
+        if bool(block.get("unbreakable", false)):
+            continue
+        var layer_depth: int = clampi(int(block.get("layer_depth", 1)), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+        counts[layer_depth] = int(counts.get(layer_depth, 0)) + 1
+    _initial_layer_block_counts = counts.duplicate(true)
+    return counts
+
+static func _scan_remaining_layer_block_counts() -> Dictionary:
+    var counts := {}
+    for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+        counts[layer_depth] = 0
+    var state := _cached_planet_state.duplicate(true)
+    if state.is_empty():
+        state = load_planet_state()
+    if state.is_empty():
+        return _get_initial_layer_block_counts()
+    var format_version: int = int(state.get("format_version", 1))
+    if format_version >= 2 and state.get("sections", {}) is Dictionary:
+        var sections: Dictionary = state.get("sections", {})
+        var legacy_planet_data = null
+        for section_variant in sections.values():
+            for row_variant in Array(section_variant):
+                var row: Array = row_variant
+                if format_version >= 3:
+                    if row.size() < 10:
+                        continue
+                    if (row.size() > 10 and bool(row[10])) or int(row[2]) == int(PLANET_DATA_SCRIPT.BlockType.CORE):
+                        continue
+                    var layer_depth_v3: int = clampi(int(row[9]), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+                    counts[layer_depth_v3] = int(counts.get(layer_depth_v3, 0)) + 1
+                    continue
+                if row.size() < 10:
+                    continue
+                if int(row[2]) == int(PLANET_DATA_SCRIPT.BlockType.CORE):
+                    continue
+                if legacy_planet_data == null:
+                    legacy_planet_data = PLANET_DATA_SCRIPT.new()
+                var layer_depth_v2: int = clampi(legacy_planet_data.get_depth_level_for_pos(Vector2i(int(row[0]), int(row[1])), MAX_DEPTH_LEVEL), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+                counts[layer_depth_v2] = int(counts.get(layer_depth_v2, 0)) + 1
+        return counts
+    var blocks: Dictionary = state.get("blocks", {})
+    for key_variant in blocks.keys():
+        var arr: Array = blocks.get(key_variant, [])
+        if arr.size() < 9:
+            continue
+        if int(arr[0]) == int(PLANET_DATA_SCRIPT.BlockType.CORE):
+            continue
+        if arr.size() > 9 and bool(arr[9]):
+            continue
+        var layer_depth: int = clampi(int(arr[8]), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+        counts[layer_depth] = int(counts.get(layer_depth, 0)) + 1
+    return counts
+
+static func _normalize_layer_block_counts(source: Variant) -> Dictionary:
+    var normalized := {}
+    var initial_counts: Dictionary = _get_initial_layer_block_counts()
+    for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+        normalized[layer_depth] = int(initial_counts.get(layer_depth, 0))
+    if not (source is Dictionary):
+        return normalized
+    for layer_depth_variant in (source as Dictionary).keys():
+        var layer_depth: int = int(layer_depth_variant)
+        if layer_depth < MIN_START_DEPTH_LEVEL or layer_depth > MAX_DEPTH_LEVEL:
+            continue
+        normalized[layer_depth] = maxi(0, int((source as Dictionary).get(layer_depth_variant, initial_counts.get(layer_depth, 0))))
+    return normalized
+
+static func _has_complete_remaining_layer_count_cache(data: Dictionary) -> bool:
+    var cache: Variant = data.get("remaining_layer_block_counts", {})
+    if not (cache is Dictionary):
+        return false
+    for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+        if not (cache as Dictionary).has(layer_depth) and not (cache as Dictionary).has(str(layer_depth)):
+            return false
+    return true
+
+static func _count_layer_blocks_in_section(section_rows: Array, format_version: int) -> Dictionary:
+    var counts := {}
+    for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+        counts[layer_depth] = 0
+    var legacy_planet_data = null
+    for row_variant in section_rows:
+        var row: Array = row_variant
+        if format_version >= 3:
+            if row.size() < 10:
+                continue
+            if int(row[2]) == int(PLANET_DATA_SCRIPT.BlockType.CORE):
+                continue
+            if row.size() > 10 and bool(row[10]):
+                continue
+            var layer_depth_v3: int = clampi(int(row[9]), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+            counts[layer_depth_v3] = int(counts.get(layer_depth_v3, 0)) + 1
+            continue
+        if row.size() < 10:
+            continue
+        if int(row[2]) == int(PLANET_DATA_SCRIPT.BlockType.CORE):
+            continue
+        if legacy_planet_data == null:
+            legacy_planet_data = PLANET_DATA_SCRIPT.new()
+        var layer_depth_v2: int = clampi(legacy_planet_data.get_depth_level_for_pos(Vector2i(int(row[0]), int(row[1])), MAX_DEPTH_LEVEL), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+        counts[layer_depth_v2] = int(counts.get(layer_depth_v2, 0)) + 1
+    return counts
 
 static func _read_json(path: String) -> Variant:
     if not FileAccess.file_exists(path):
@@ -497,6 +757,7 @@ static func _merge_planet_state(update: Dictionary) -> Dictionary:
 static func _try_merge_planet_state(update: Dictionary) -> Dictionary:
     var merged: Dictionary = {}
     var has_full_base := false
+    var remaining_layer_block_counts := _normalize_layer_block_counts(_cached_data.get("remaining_layer_block_counts", {}) if _cache_loaded else {})
     if not _cached_planet_state.is_empty():
         if int(_cached_planet_state.get("planet_layout_version", 0)) == BALANCE.PLANET_LAYOUT_VERSION:
             merged = _cached_planet_state.duplicate(true)
@@ -529,7 +790,17 @@ static func _try_merge_planet_state(update: Dictionary) -> Dictionary:
         merged[key] = update[key_variant]
     merged["planet_layout_version"] = BALANCE.PLANET_LAYOUT_VERSION
     var merged_sections: Dictionary = merged.get("sections", {}).duplicate(true)
+    var format_version: int = int(update.get("format_version", merged.get("format_version", 1)))
     for section_id_variant in update_sections.keys():
-        merged_sections[int(section_id_variant)] = update_sections[section_id_variant]
+        var section_id: int = int(section_id_variant)
+        var old_counts: Dictionary = _count_layer_blocks_in_section(Array(merged_sections.get(section_id, [])), format_version)
+        var new_section: Array = Array(update_sections[section_id_variant])
+        var new_counts: Dictionary = _count_layer_blocks_in_section(new_section, format_version)
+        for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+            remaining_layer_block_counts[layer_depth] = maxi(
+                0,
+                int(remaining_layer_block_counts.get(layer_depth, 0)) - int(old_counts.get(layer_depth, 0)) + int(new_counts.get(layer_depth, 0))
+            )
+        merged_sections[section_id] = new_section
     merged["sections"] = merged_sections
-    return {"ok": true, "state": merged}
+    return {"ok": true, "state": merged, "remaining_layer_block_counts": remaining_layer_block_counts}

@@ -12,6 +12,7 @@ LAYER_NAMES = ["Topsoil", "Mid", "Deep", "Core"]
 # tuning pass is done.
 FRONTIER_BLOCKS = [5_000, 7_000, 32_000, 70_000]
 FINAL_BOSS_EQUIVALENT_BLOCKS = 45_000
+CLEAR_REWARD_THRESHOLDS = (0.25, 0.50, 0.75)
 
 UPGRADE_ORDER = [
     "damage",
@@ -130,7 +131,7 @@ def buy_one_upgrade(state: SimState) -> str | None:
 
 
 def get_damage(level: int) -> float:
-    return 28.0 + 10.0 * level + 2.0 * (level**1.18)
+    return 34.0 + 11.0 * level + 2.5 * (level**1.18)
 
 
 def get_rate(level: int) -> float:
@@ -142,7 +143,7 @@ def get_targets(level: int) -> int:
 
 
 def get_cargo(level: int) -> int:
-    return 40 + 12 * level + 16 * (level // 3)
+    return 52 + 14 * level + 18 * (level // 3)
 
 
 def get_value_mult(level: int) -> float:
@@ -150,7 +151,7 @@ def get_value_mult(level: int) -> float:
 
 
 def get_run_time(level: int) -> float:
-    return 30.0 + 2.5 * level
+    return 34.0 + 3.0 * level
 
 
 def get_frontier_efficiency(state: SimState) -> float:
@@ -177,6 +178,29 @@ def get_power_multiplier(state: SimState) -> float:
     return (1.0 + crit_bonus) * (1.0 + explosion_bonus + chain_bonus) * (1.0 + drone_bonus) * (1.0 + core_bonus)
 
 
+def get_global_clear_ratio(state: SimState) -> float:
+    total_progress_target = float(sum(FRONTIER_BLOCKS))
+    if total_progress_target <= 0.0:
+        return 0.0
+    cleared = 0.0
+    for index, progress in enumerate(state.frontier_progress):
+        cleared += min(progress, float(FRONTIER_BLOCKS[index]))
+    return max(0.0, min(1.0, cleared / total_progress_target))
+
+
+def get_clear_reward_count(state: SimState) -> int:
+    clear_ratio = get_global_clear_ratio(state)
+    count = 0
+    for threshold in CLEAR_REWARD_THRESHOLDS:
+        if clear_ratio >= threshold:
+            count += 1
+    return count
+
+
+def get_clear_reward_multiplier(state: SimState) -> float:
+    return 1.5 ** get_clear_reward_count(state)
+
+
 def run_once(state: SimState) -> None:
     state.runs += 1
     layer_index = state.current_layer - 1
@@ -187,7 +211,7 @@ def run_once(state: SimState) -> None:
     run_time = get_run_time(state.upgrades["time"])
     cargo = get_cargo(state.upgrades["cargo"]) + 20 * get_drone_count(state.upgrades["drones"])
 
-    raw_blocks = damage * rate * targets * get_power_multiplier(state) * run_time / LAYER_HP[layer_index]
+    raw_blocks = damage * rate * targets * get_power_multiplier(state) * get_clear_reward_multiplier(state) * run_time / LAYER_HP[layer_index]
     frontier_blocks = raw_blocks * get_frontier_efficiency(state)
     banked_blocks = min(raw_blocks * get_banked_fraction(state), cargo)
 
@@ -245,6 +269,11 @@ def build_report(state: SimState) -> str:
     lines.append("- Early game: damage, fire rate, cargo, and the first permit drive the 0-40 minute ramp.")
     lines.append("- Mid game: splitter targets, movement, pickup, and value upgrades sustain repeated Mid and Deep runs.")
     lines.append("- Late game: drones, crit/AOE, and core tuning carry the Core push without needing to excavate the full 287k+ block pit.")
+    lines.append("")
+    lines.append("## Clear Rewards")
+    lines.append("- One global set of rewards at 25%, 50%, and 75% total persistent clear.")
+    lines.append("- Each reward adds another +50% total damage, stacking multiplicatively to 1.5x, 2.25x, and 3.375x.")
+    lines.append(f"- Final clear reward tier reached: {get_clear_reward_count(state)} / 3")
     lines.append("")
     lines.append("## Result Snapshot")
     lines.append(f"- Runs: {state.runs}")

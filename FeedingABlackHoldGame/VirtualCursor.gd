@@ -27,7 +27,7 @@ const CURSOR_SPEED := 1400.0
 const STICK_DEADZONE := 0.2
 const CURSOR_LAYER := 200
 const OPEN_PIT_ORBIT_CURSOR_SIZE := 5
-const OPEN_PIT_CURSOR_COLOR := Color(0.88, 0.97, 1.0, 1.0)
+const OPEN_PIT_CURSOR_COLOR := Color(1.0, 1.0, 1.0, 1.0)
 const OPEN_PIT_CURSOR_SPARK_COUNT := 12
 const OPEN_PIT_CURSOR_SHADER_CODE := """
 shader_type canvas_item;
@@ -145,11 +145,20 @@ func use_open_pit_orbit_cursor(enabled: bool) -> void:
 func use_open_pit_empire_cursor(enabled: bool) -> void:
     use_open_pit_orbit_cursor(enabled)
 
-func set_open_pit_empire_cursor_combo(combo_ratio: float) -> void:
-    var t := clampf(combo_ratio, 0.0, 1.0)
-    _open_pit_cursor_color = OPEN_PIT_CURSOR_COLOR.lerp(Color(1.0, 0.18, 0.12, 1.0), t)
+func set_open_pit_empire_cursor_power(power_ratio: float, active_power: bool = false, ready_power: bool = false) -> void:
+    var t := clampf(power_ratio, 0.0, 1.0)
+    var power_color := Color(1.0, 0.38, 0.08, 1.0)
+    if active_power or ready_power:
+        var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.012)
+        power_color = power_color.lerp(Color(1.0, 0.68, 0.16, 1.0), pulse * 0.45)
+        _open_pit_cursor_color = OPEN_PIT_CURSOR_COLOR.lerp(power_color, 0.65 + pulse * 0.2)
+    else:
+        _open_pit_cursor_color = OPEN_PIT_CURSOR_COLOR.lerp(power_color, t * 0.25)
     if _cursor_sprite != null and _open_pit_cursor_enabled:
         _cursor_sprite.modulate = _open_pit_cursor_color
+
+func set_open_pit_empire_cursor_combo(combo_ratio: float) -> void:
+    set_open_pit_empire_cursor_power(combo_ratio, combo_ratio > 0.0, combo_ratio >= 0.95)
 
 func burst_open_pit_empire_cursor_sparks(intensity: float = 1.0) -> void:
     var count := maxi(6, int(round(OPEN_PIT_CURSOR_SPARK_COUNT * clampf(intensity, 0.5, 2.0))))

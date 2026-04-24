@@ -20,14 +20,25 @@ const RETURN_ZONE_ARM_DISTANCE_MULT := 1.15
 const EXTRACTION_ASCENT_TIME := 1.1
 const EXTRACTION_ASCENT_SCREEN_MARGIN := 180.0
 const HIT_FLASH_DURATION := 0.15
-const GOLD_CONVERT_DURATION := 0.5
+const POWER_OVERCHARGE_PULSE_DECAY := 2.4
+const POWER_BASE_GAIN := 5.0
+const POWER_SPECIAL_BLOCK_MULT := 2.0
+const POWER_DRAIN_PER_SECOND := 30.0
+const POWER_SPEED_BONUS := 220.0
+const POWER_ATTACK_DAMAGE_MULT := 2.0
+const POWER_ATTACK_SPEED_MULT := 1.25
+const POWER_GAIN_MULT := 0.5
 const ARC_DURATION := 0.15
 const CHAIN_ARC_DURATION := 0.2
 const DRONE_BEAM_DURATION := 0.08
+const DRONE_MISSILE_LIFETIME := 3.6
+const DRONE_MINE_LIFETIME := 4.2
 const MAX_ACTIVE_HIT_FLASHES := 72
 const MAX_ACTIVE_ELECTRIC_ARCS := 18
 const MAX_ACTIVE_CHAIN_ARCS := 18
 const MAX_ACTIVE_DRONE_BEAMS := 24
+const MAX_ACTIVE_DRONE_MISSILES := 6
+const MAX_ACTIVE_DRONE_MINES := 4
 const PICKUP_SPAWN_SOFT_CAP_PER_FRAME := 24
 const BLOCK_BREAK_AUDIO_COOLDOWN_MS := 45
 const CORE_BREAK_AUDIO_COOLDOWN_MS := 90
@@ -47,10 +58,31 @@ const CARDINAL_NEIGHBORS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Ve
 const SHIP_TRAIL_INTERVAL := 0.03
 const SHIP_TRAIL_MAX := 8
 const HUD_REFRESH_INTERVAL := 0.1
+const PERF_DEBUG_REFRESH_INTERVAL := 0.25
 const DRONE_RANGE := 230.0
+const DRONE_MISSILE_RANGE := 520.0
 const DRONE_FOLLOW_SPEED := 11.0
 const DRONE_SPACING := 16.0
 const DRONE_BEHIND_DIST := 18.0
+const DRONE_SUPPORT_DROP_ATTACKS := 200
+const DRONE_SUPPORT_DROP_LIFETIME := 10.0
+const DRONE_SUPPORT_DROP_SPEED := 80.0
+const DRONE_MISSILE_SPLASH_RADIUS_CELLS := 1
+const DRONE_MINE_SPLASH_RADIUS_CELLS := 1
+const DRONE_MISSILE_DAMAGE_MULT := 1.35
+const DRONE_MINE_DAMAGE_MULT := 2.4
+const DRONE_MISSILE_TURN_RATE := 4.0
+const DRONE_MINE_TURN_RATE := 2.2
+const DRONE_MISSILE_SPEED := 240.0
+const DRONE_MINE_SPEED := 120.0
+const SEISMIC_CHARGE_INTERVAL := 0.32
+const SEISMIC_POWERUP_INTERVAL := 0.45
+const SEISMIC_CHARGE_AHEAD_DISTANCE := 180.0
+const SEISMIC_CHARGE_SPLASH_RADIUS_CELLS := 1
+const SEISMIC_CHARGE_DAMAGE_MULT := 0.9
+const SEISMIC_POWERUP_DAMAGE_MULT := 0.4
+const SHOCKWAVE_DAMAGE_MULT := 0.45
+const SEISMIC_CHARGE_VISUAL_DURATION := 0.42
 const CAMERA_ZOOM_STOPPED := 1.2
 const CAMERA_ZOOM_FULL_SPEED := 0.8
 const CAMERA_ZOOM_BLEND_TIME := 0.35
@@ -83,7 +115,7 @@ const HACKER_TYPER_PRESSURE_LINES := [
     "for cert in clean_room_certs:\n    cert.burn()\n    lock.peel_back(layer=1)",
     "watchdog_queue.bleed(rate=\"slow\")\nif watchdog_queue.forgets_us():\n    take_the_core()",
 ]
-const POWERUP_TYPES := ["haste", "magnet", "payload"]
+const POWERUP_TYPES := ["haste", "magnet", "seismic_charge"]
 const POWERUP_DURATION := 12.0
 const POWERUP_RADIUS := 18.0
 const POWERUP_BASE_SPEED := 72.0
@@ -165,7 +197,6 @@ var blocks: Dictionary = {}
 var exposed_edges: Dictionary = {}
 var damaged_cells: Dictionary = {}
 var hit_timers: Dictionary = {}
-var gold_convert_timers: Dictionary = {}
 var pickups: Array[Dictionary] = []
 var destroyed_cells_this_run: Dictionary = {}
 var planet_outline_mode := OutlineMode.GROUP_EDGES
@@ -206,6 +237,10 @@ var boss_defeated := false
 var current_combo := 0
 var combo_timer := 0.0
 var combo_peak := 0
+var current_power := 0.0
+var power_peak := 0.0
+var power_active := false
+var power_ring_overcharge := 0.0
 var persistent_destroyed_count := 0
 var total_planet_blocks := 0
 var attack_timer := 0.0
@@ -227,6 +262,7 @@ var ship_glow_phase := 0.0
 var ship_trail: Array[Dictionary] = []
 var ship_trail_timer := 0.0
 var hud_refresh_timer := 0.0
+var perf_debug_refresh_timer := 0.0
 var core_defense_timer := DEFENSE_BLOCK_INTERVAL
 var core_shockwave_timer := CORE_SHOCKWAVE_INTERVAL
 var cores_destroyed_this_run := 0
@@ -242,8 +278,13 @@ var shockwave_rings: Array[Dictionary] = []
 var shockwave_firing := false
 var drone_positions: Array[Vector2] = []
 var drone_beams: Array[Dictionary] = []
+var drone_missiles: Array[Dictionary] = []
+var drone_mines: Array[Dictionary] = []
 var drone_timers: Array[float] = []
 var drone_targets: Array[Vector2] = []
+var drone_attack_counter := 0
+var seismic_charge_timer := 0.0
+var seismic_charge_bursts: Array[Dictionary] = []
 var cipher_laser_states: Dictionary = {}
 var ghost_debris: Array[Dictionary] = []
 var root_cross_lasers: Dictionary = {}
@@ -260,7 +301,7 @@ var hacker_typer_im_in_timer := 0.0
 var hacker_typer_history: Array[String] = []
 var combo_milestones_hit: Dictionary = {}
 var roaming_powerups: Array[Dictionary] = []
-var active_powerup_timers := {"haste": 0.0, "magnet": 0.0, "payload": 0.0}
+var active_powerup_timers := {"haste": 0.0, "magnet": 0.0, "seismic_charge": 0.0}
 var bottom_phase_unlocked := false
 var bottom_cutscene_timer := 0.0
 var bottom_cutscene_anchor := Vector2.ZERO
@@ -305,9 +346,12 @@ var pickups_spawned_this_frame := 0
 var _last_block_break_audio_ms := -100000
 var _last_core_break_audio_ms := -100000
 var _perf_probe_enabled := false
+var _last_perf_fps_text := ""
+var _last_perf_probe_text := ""
 const PERF_PROBE_KEYS := [
     "process_frame",
     "update_timers",
+    "update_power_state",
     "update_ship",
     "update_ship_trail",
     "update_layer_name",
@@ -329,9 +373,12 @@ const PERF_PROBE_KEYS := [
     "renderer_fill_upload",
     "renderer_edge",
     "renderer_blocks",
+    "renderer_power_blocks",
     "renderer_overlays",
     "perf_graph_draw",
     "ship_draw",
+    "ship_draw_rings",
+    "ship_draw_drones",
 ]
 const RENDERER_PROBE_KEYS := [
     "renderer_bg",
@@ -341,11 +388,13 @@ const RENDERER_PROBE_KEYS := [
     "renderer_fill_upload",
     "renderer_edge",
     "renderer_blocks",
+    "renderer_power_blocks",
     "renderer_overlays",
 ]
 var _perf_probe_history := {
     "process_frame": [],
     "update_timers": [],
+    "update_power_state": [],
     "update_ship": [],
     "update_ship_trail": [],
     "update_layer_name": [],
@@ -367,13 +416,17 @@ var _perf_probe_history := {
     "renderer_fill_upload": [],
     "renderer_edge": [],
     "renderer_blocks": [],
+    "renderer_power_blocks": [],
     "renderer_overlays": [],
     "perf_graph_draw": [],
     "ship_draw": [],
+    "ship_draw_rings": [],
+    "ship_draw_drones": [],
 }
 var _perf_probe_labels := {
     "process_frame": "_process frame",
     "update_timers": "_update_timers",
+    "update_power_state": "_update_power_state",
     "update_ship": "_update_ship",
     "update_ship_trail": "_update_ship_trail",
     "update_layer_name": "_update_current_layer_name",
@@ -395,13 +448,17 @@ var _perf_probe_labels := {
     "renderer_fill_upload": "renderer fill upload",
     "renderer_edge": "renderer edge",
     "renderer_blocks": "renderer blocks",
+    "renderer_power_blocks": "renderer power blocks",
     "renderer_overlays": "renderer overlays",
     "perf_graph_draw": "perf graph _draw",
     "ship_draw": "ship _draw",
+    "ship_draw_rings": "ship rings",
+    "ship_draw_drones": "ship drones",
 }
 var _perf_probe_last_samples := {
     "process_frame": 0.0,
     "update_timers": 0.0,
+    "update_power_state": 0.0,
     "update_ship": 0.0,
     "update_ship_trail": 0.0,
     "update_layer_name": 0.0,
@@ -423,13 +480,17 @@ var _perf_probe_last_samples := {
     "renderer_fill_upload": 0.0,
     "renderer_edge": 0.0,
     "renderer_blocks": 0.0,
+    "renderer_power_blocks": 0.0,
     "renderer_overlays": 0.0,
     "perf_graph_draw": 0.0,
     "ship_draw": 0.0,
+    "ship_draw_rings": 0.0,
+    "ship_draw_drones": 0.0,
 }
 var _run_perf_peak_samples := {
     "process_frame": 0.0,
     "update_timers": 0.0,
+    "update_power_state": 0.0,
     "update_ship": 0.0,
     "update_ship_trail": 0.0,
     "update_layer_name": 0.0,
@@ -451,9 +512,12 @@ var _run_perf_peak_samples := {
     "renderer_fill_upload": 0.0,
     "renderer_edge": 0.0,
     "renderer_blocks": 0.0,
+    "renderer_power_blocks": 0.0,
     "renderer_overlays": 0.0,
     "perf_graph_draw": 0.0,
     "ship_draw": 0.0,
+    "ship_draw_rings": 0.0,
+    "ship_draw_drones": 0.0,
 }
 var _run_perf_extremes := {}
 var _run_perf_worst_snapshot := {}
@@ -486,8 +550,15 @@ func _exit_tree() -> void:
 func _unhandled_input(event: InputEvent) -> void:
     if run_finished:
         return
+    if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        if _try_activate_power(true):
+            get_viewport().set_input_as_handled()
+            return
     if event is InputEventKey and event.pressed and not event.echo:
-        if event.keycode == KEY_M:
+        if event.keycode == KEY_SPACE:
+            if _try_activate_power(true):
+                get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_M:
             cycle_render_detail_mode()
             get_viewport().set_input_as_handled()
         elif event.keycode == KEY_K:
@@ -839,8 +910,6 @@ func _start_run() -> void:
     _build_planet()
     _setup_minimap()
     spawn_position = planet_data.get_spawn_world_position()
-    if _has_core_upgrade("spawn_direction") and planet_data != null and not planet_data.cores.is_empty():
-        spawn_position = scene_to_spawn_ring(Vector2i(int(planet_data.cores[0].center.x), int(planet_data.cores[0].center.y)))
     if bottom_phase_unlocked and planet_data != null:
         for core_variant in planet_data.cores:
             var core: Dictionary = core_variant
@@ -867,6 +936,10 @@ func _start_run() -> void:
     mega_gauge = 0
     mega_timer = 0.0
     mega_damage_timer = 0.0
+    current_power = 0.0
+    power_peak = 0.0
+    power_active = false
+    power_ring_overcharge = 0.0
     ship_trail.clear()
     ship_trail_timer = 0.0
     pickups.clear()
@@ -884,12 +957,20 @@ func _start_run() -> void:
     ghost_debris_timers.clear()
     root_cross_lasers.clear()
     drone_beams.clear()
+    drone_missiles.clear()
+    drone_mines.clear()
+    seismic_charge_bursts.clear()
+    seismic_charge_timer = 0.0
+    drone_attack_counter = 0
     _reset_drone_state()
     current_combo = 0
     combo_peak = 0
     combo_milestones_hit.clear()
     if VirtualCursor != null:
-        VirtualCursor.set_open_pit_empire_cursor_combo(0.0)
+        if VirtualCursor.has_method("set_open_pit_empire_cursor_power"):
+            VirtualCursor.set_open_pit_empire_cursor_power(0.0, false, false)
+        elif VirtualCursor.has_method("set_open_pit_empire_cursor_combo"):
+            VirtualCursor.set_open_pit_empire_cursor_combo(0.0)
     hacker_typer_current_text = ""
     hacker_typer_revealed_chars = 0
     hacker_typer_im_in_timer = 0.0
@@ -925,6 +1006,9 @@ func _start_run() -> void:
     _flush_breach_chat(true)
     summary_overlay.visible = false
     ship_renderer.position = Vector2.ZERO
+    perf_debug_refresh_timer = 0.0
+    _last_perf_fps_text = ""
+    _last_perf_probe_text = ""
     planet_renderer.mark_dirty()
     _refresh_hud()
 
@@ -1034,7 +1118,9 @@ func _process(delta: float) -> void:
         camera_pos = ship_pos
         ship_renderer.position = Vector2.ZERO
         ship_root.global_position = ship_pos
-    if fps_label != null:
+    perf_debug_refresh_timer -= delta
+    if fps_label != null and perf_debug_refresh_timer <= 0.0:
+        perf_debug_refresh_timer = PERF_DEBUG_REFRESH_INTERVAL
         _update_perf_debug(delta)
     _perf_probe_last_samples["net_block_drop_in_frame"] = float(maxi(0, frame_block_count_before - blocks.size()))
     perf_probe_end("process_frame", perf_start_us)
@@ -1047,12 +1133,9 @@ func _update_timers(delta: float) -> void:
     if time_left <= 0.0:
         _finish_run(_has_core_upgrade("emergency_return"), "Fuel burned out before extraction.")
         return
-    combo_timer = maxf(0.0, combo_timer - delta)
-    if combo_timer <= 0.0:
-        current_combo = 0
-        combo_milestones_hit.clear()
-        if VirtualCursor != null:
-            VirtualCursor.set_open_pit_empire_cursor_combo(0.0)
+    current_combo = 0
+    combo_timer = 0.0
+    combo_milestones_hit.clear()
     overdrive_timer = maxf(0.0, overdrive_timer - delta)
     mega_timer = maxf(0.0, mega_timer - delta)
     attack_visible_timer = maxf(0.0, attack_visible_timer - delta)
@@ -1061,10 +1144,15 @@ func _update_timers(delta: float) -> void:
     for key in active_powerup_timers.keys():
         active_powerup_timers[key] = maxf(0.0, float(active_powerup_timers.get(key, 0.0)) - delta)
     _tick_timer_dict(hit_timers, delta)
-    _tick_timer_dict(gold_convert_timers, delta)
     _tick_effect_array(electric_arcs, delta)
     _tick_effect_array(chain_arcs, delta)
     _tick_effect_array(drone_beams, delta)
+    _tick_effect_array(seismic_charge_bursts, delta)
+    _update_drone_missiles(delta)
+    _update_drone_mines(delta)
+    var power_perf_start_us := perf_probe_begin()
+    _update_power_state(delta)
+    perf_probe_end("update_power_state", power_perf_start_us)
     for idx in range(ghost_debris.size() - 1, -1, -1):
         var debris: Dictionary = ghost_debris[idx]
         debris["life"] = float(debris.get("life", AUTUMN_DEBRIS_LIFETIME)) - delta
@@ -1085,7 +1173,7 @@ func _update_timers(delta: float) -> void:
 func _update_camera_zoom(delta: float) -> void:
     if camera == null:
         return
-    var move_speed := maxf(float(runtime_stats.get("move_speed", 580.0)) + (float(runtime_stats.get("overdrive_speed_bonus", 300.0)) if overdrive_timer > 0.0 else 0.0), 1.0)
+    var move_speed := maxf(float(runtime_stats.get("move_speed", 580.0)) + (POWER_SPEED_BONUS if _is_power_active() else 0.0), 1.0)
     var speed_ratio := clampf(ship_vel.length() / move_speed, 0.0, 1.0)
     var target_zoom := lerpf(CAMERA_ZOOM_STOPPED, CAMERA_ZOOM_FULL_SPEED, speed_ratio)
     camera.zoom = camera.zoom.lerp(Vector2.ONE * target_zoom, clampf(delta / CAMERA_ZOOM_BLEND_TIME, 0.0, 1.0))
@@ -1296,6 +1384,7 @@ func _spawn_roaming_powerups() -> void:
             "speed": POWERUP_BASE_SPEED + clear_ratio * 70.0 + float(idx) * 8.0,
             "type": POWERUP_TYPES[idx % POWERUP_TYPES.size()],
             "phase": rng.randf() * TAU,
+            "support_drop": false,
         })
 
 func _update_roaming_powerups(delta: float) -> void:
@@ -1304,18 +1393,27 @@ func _update_roaming_powerups(delta: float) -> void:
     for idx in range(roaming_powerups.size() - 1, -1, -1):
         var powerup := roaming_powerups[idx]
         var pos := Vector2(powerup.get("position", Vector2.ZERO))
-        var y := int(powerup.get("y", world_to_grid(pos).y))
-        var left_world := grid_to_world(Vector2i(planet_data.get_left_wall_x(y) + PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS + 4, y)).x
-        var right_world := grid_to_world(Vector2i(planet_data.get_right_wall_x(y) - PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS - 4, y)).x
-        pos.x += float(powerup.get("dir", 1.0)) * float(powerup.get("speed", POWERUP_BASE_SPEED)) * delta
-        if pos.x <= left_world:
-            pos.x = left_world
-            powerup["dir"] = 1.0
-        elif pos.x >= right_world:
-            pos.x = right_world
-            powerup["dir"] = -1.0
-        powerup["phase"] = float(powerup.get("phase", 0.0)) + delta * 3.0
-        pos.y = grid_to_world(Vector2i(0, y)).y + sin(float(powerup.get("phase", 0.0))) * 9.0
+        if bool(powerup.get("support_drop", false)):
+            powerup["life"] = float(powerup.get("life", DRONE_SUPPORT_DROP_LIFETIME)) - delta
+            if float(powerup.get("life", 0.0)) <= 0.0:
+                roaming_powerups.remove_at(idx)
+                continue
+            powerup["phase"] = float(powerup.get("phase", 0.0)) + delta * 4.0
+            pos += Vector2(powerup.get("velocity", Vector2.ZERO)) * delta
+            pos.y += sin(float(powerup.get("phase", 0.0))) * 8.0 * delta
+        else:
+            var y := int(powerup.get("y", world_to_grid(pos).y))
+            var left_world := grid_to_world(Vector2i(planet_data.get_left_wall_x(y) + PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS + 4, y)).x
+            var right_world := grid_to_world(Vector2i(planet_data.get_right_wall_x(y) - PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS - 4, y)).x
+            pos.x += float(powerup.get("dir", 1.0)) * float(powerup.get("speed", POWERUP_BASE_SPEED)) * delta
+            if pos.x <= left_world:
+                pos.x = left_world
+                powerup["dir"] = 1.0
+            elif pos.x >= right_world:
+                pos.x = right_world
+                powerup["dir"] = -1.0
+            powerup["phase"] = float(powerup.get("phase", 0.0)) + delta * 3.0
+            pos.y = grid_to_world(Vector2i(0, y)).y + sin(float(powerup.get("phase", 0.0))) * 9.0
         powerup["position"] = pos
         roaming_powerups[idx] = powerup
         if pos.distance_to(ship_pos) <= POWERUP_RADIUS + SHIP_RADIUS:
@@ -1331,8 +1429,8 @@ func _collect_roaming_powerup(powerup_type: String) -> void:
             _push_breach_log("[color=#7dffbf]BOOST[/color]  breach clock accelerates.")
         "magnet":
             _push_breach_log("[color=#7dffbf]BOOST[/color]  packet magnet spikes.")
-        "payload":
-            _push_breach_log("[color=#7dffbf]BOOST[/color]  payload value surges.")
+        "seismic_charge":
+            _push_breach_log("[color=#7dffbf]BOOST[/color]  seismic charges spool up.")
         _:
             _push_breach_log("[color=#7dffbf]BOOST[/color]  rogue utility captured.")
 
@@ -1361,7 +1459,7 @@ func _update_ship(delta: float) -> void:
             int(Input.is_key_pressed(KEY_D)) - int(Input.is_key_pressed(KEY_A)),
             int(Input.is_key_pressed(KEY_S)) - int(Input.is_key_pressed(KEY_W))
         )
-    var effective_speed := float(runtime_stats.get("move_speed", 280.0)) + (float(runtime_stats.get("overdrive_speed_bonus", 300.0)) if overdrive_timer > 0.0 else 0.0)
+    var effective_speed := float(runtime_stats.get("move_speed", 280.0)) + (POWER_SPEED_BONUS if _is_power_active() else 0.0)
     var accel_scale := 1.0
     if shield_recovery_timer > 0.0:
         var recovery_progress := 1.0 - clampf(shield_recovery_timer / SHIELD_HIT_RECOVERY_TIME, 0.0, 1.0)
@@ -1397,6 +1495,7 @@ func _update_ship_trail(delta: float) -> void:
                 "pos": ship_pos,
                 "rot": get_ship_render_rotation(),
                 "alpha": 0.55,
+                "age": 0.0,
             })
             if ship_trail.size() > SHIP_TRAIL_MAX:
                 ship_trail.remove_at(0)
@@ -1405,6 +1504,7 @@ func _update_ship_trail(delta: float) -> void:
     for idx in range(ship_trail.size() - 1, -1, -1):
         var trail := ship_trail[idx]
         trail["alpha"] = maxf(0.0, float(trail.get("alpha", 0.0)) - delta * 2.8)
+        trail["age"] = float(trail.get("age", 0.0)) + delta
         ship_trail[idx] = trail
         if float(trail.get("alpha", 0.0)) <= 0.02:
             ship_trail.remove_at(idx)
@@ -1496,12 +1596,10 @@ func _begin_extraction() -> void:
 
 func _update_combat(delta: float) -> void:
     var perf_start_us := perf_probe_begin()
+    _update_seismic_charge(delta)
     attack_timer += delta
-    if mega_timer > 0.0:
-        _update_mega_beam(delta)
-    else:
-        mega_beam_hits.clear()
-    var interval := _get_effective_attack_interval() / (float(runtime_stats.get("overdrive_fire_mult", 3.0)) if overdrive_timer > 0.0 else 1.0)
+    mega_beam_hits.clear()
+    var interval := _get_effective_attack_interval()
     if attack_timer >= interval:
         attack_timer = 0.0
         _auto_fire_laser()
@@ -1509,6 +1607,44 @@ func _update_combat(delta: float) -> void:
         _update_drones(delta)
     _flush_pending_exposed_edges()
     perf_probe_end("update_combat", perf_start_us)
+
+func _auto_fire_seismic_charge() -> void:
+    var perf_start_us := perf_probe_begin()
+    var forward := _get_forward_direction()
+    var hit_count := maxi(1, _get_effective_multi_target_count())
+    var any_destroyed := false
+    var visuals_dirty := false
+    last_attack_target = Vector2.ZERO
+    multi_targets.clear()
+    last_attack_is_charged = false
+    last_attack_is_crit = false
+    for i in range(hit_count):
+        var distance_world := SEISMIC_CHARGE_AHEAD_DISTANCE + float(i) * BLOCK_SIZE * 1.2
+        var target_grid := _find_forward_lane_target(forward, distance_world, 2 + mini(i, 1), 4 + i)
+        if target_grid.x >= 999999:
+            continue
+        var burst_world := grid_to_world(target_grid)
+        seismic_charge_bursts.append({
+            "position": burst_world,
+            "timer": SEISMIC_CHARGE_VISUAL_DURATION,
+            "radius": float(SEISMIC_CHARGE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE,
+        })
+        var splash := _apply_splash_damage(
+            target_grid,
+            SEISMIC_CHARGE_SPLASH_RADIUS_CELLS,
+            _get_effective_attack_damage() * (SEISMIC_CHARGE_DAMAGE_MULT + 0.15)
+        )
+        visuals_dirty = visuals_dirty or bool(splash.get("visuals", false))
+        if bool(splash.get("destroyed", false)):
+            any_destroyed = true
+    if visuals_dirty:
+        _sync_planet_runtime_views(true, false)
+    attack_visible_timer = 0.0
+    _try_start_hacker_typer_attack_line()
+    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER_CRIT)
+    if any_destroyed:
+        _on_combo_hit()
+    perf_probe_end("auto_fire_laser", perf_start_us)
 
 func _auto_fire_laser() -> void:
     var perf_start_us := perf_probe_begin()
@@ -1546,10 +1682,10 @@ func _auto_fire_laser() -> void:
         visuals_dirty = true
         var damage := _compute_laser_damage(pos)
         if last_attack_is_charged:
-            damage += float(runtime_stats.get("attack_damage", 8.0)) * float(runtime_stats.get("charged_bonus", 2.0))
+            damage += _get_effective_attack_damage() * float(runtime_stats.get("charged_bonus", 2.0))
             last_attack_is_crit = true
         if bool(runtime_stats.get("crit_chance", 0.0) > 0.0) and rng.randf() < float(runtime_stats.get("crit_chance", 0.0)):
-            damage += float(runtime_stats.get("attack_damage", 8.0)) * float(runtime_stats.get("crit_bonus", 2.0))
+            damage += _get_effective_attack_damage() * float(runtime_stats.get("crit_bonus", 2.0))
             last_attack_is_crit = true
         var result := _damage_block(pos, damage, true)
         if bool(result.get("destroyed", false)):
@@ -1565,7 +1701,7 @@ func _auto_fire_laser() -> void:
                         continue
                     _mark_hit_flash(adj_pos)
                     visuals_dirty = true
-                    var aoe_result := _damage_block(adj_pos, damage * 0.3, true)
+                    var aoe_result := _damage_block(adj_pos, damage * 0.18, true)
                     if bool(aoe_result.get("destroyed", false)):
                         any_destroyed = true
     if visuals_dirty:
@@ -1683,7 +1819,7 @@ func _update_drones(delta: float) -> void:
 
 func _compute_laser_damage(pos: Vector2i) -> float:
     var block: Dictionary = blocks.get(pos, {})
-    var damage := float(runtime_stats.get("attack_damage", 8.0))
+    var damage := _get_effective_attack_damage()
     damage *= float(runtime_stats.get("global_damage_mult", 1.0))
     damage *= BALANCE.get_damage_multiplier_for_depth(runtime_stats, int(block.get("layer_depth", 1)))
     if bool(runtime_stats.get("resonance_enabled", false)):
@@ -1730,6 +1866,7 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
             hacker_typer_revealed_chars = 0
         _play_block_break_audio(int(result.get("type", BlockType.NORMAL)))
         var world := grid_to_world(pos)
+        _gain_power(_get_power_gain_for_block(block_before))
         _spawn_pickup(world, block_before)
         if planet_renderer != null:
             if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
@@ -1743,20 +1880,11 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
             _finish_run(true, "The final core ruptured.")
             perf_probe_end("damage_block", perf_start_us)
             return result
-        if bool(runtime_stats.get("mega_enabled", false)):
-            mega_gauge += 1
-            if mega_timer <= 0.0 and mega_gauge >= int(runtime_stats.get("mega_gauge_need", 30)):
-                mega_gauge = 0
-                mega_timer = float(runtime_stats.get("mega_duration", 5.0))
-                mega_damage_timer = 0.0
         if bool(runtime_stats.get("shockwave_enabled", false)):
             shockwave_counter += 1
             if not shockwave_firing and shockwave_counter >= int(runtime_stats.get("shockwave_trigger_kills", 15)):
                 shockwave_counter = 0
                 _trigger_shockwave()
-        if bool(runtime_stats.get("overdrive_enabled", false)) and overdrive_timer <= 0.0 and overdrive_kills >= int(runtime_stats.get("overdrive_kill_need", 50)):
-            overdrive_kills = 0
-            overdrive_timer = float(runtime_stats.get("overdrive_duration", 3.0))
     else:
         var remaining_hp := float(planet_data.blocks.get(pos, {}).get("hp", 1.0))
         var core_id := int(result.get("core_id", int(block_before.get("core_id", -1))))
@@ -1808,7 +1936,7 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
         effective_depth = mini(effective_depth, 1)
     var results: Array = planet_data.electric_chain(
         origin_pos,
-        float(runtime_stats.get("attack_damage", 8.0)),
+        _get_effective_attack_damage(),
         effective_range,
         effective_depth,
         0,
@@ -1846,6 +1974,9 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
                 destroyed_core_ids[int(result.get("core_id", -1))] = true
             else:
                 fill_positions.append(next_pos)
+            _gain_power(_get_power_gain_for_block({
+                "type": result.get("type", BlockType.NORMAL),
+            }))
             _spawn_pickup(next_world, {
                 "resource": result.get("resource", 0.0),
                 "type": result.get("type", BlockType.NORMAL),
@@ -1912,28 +2043,21 @@ func _trigger_shockwave() -> void:
     shockwave_firing = true
     var my_grid := world_to_grid(ship_pos)
     var radius_cells := int(runtime_stats.get("shockwave_radius_cells", 6))
-    var range_sq := radius_cells * radius_cells
-    var changed_any := false
-    for dx in range(-radius_cells, radius_cells + 1):
-        for dy in range(-radius_cells, radius_cells + 1):
-            if dx * dx + dy * dy > range_sq:
-                continue
-            var pos := Vector2i(my_grid.x + dx, my_grid.y + dy)
-            if is_grid_empty(pos):
-                continue
-            if rng.randf() < 0.08:
-                if planet_data.convert_to_gold(pos):
-                    gold_convert_timers[pos] = GOLD_CONVERT_DURATION
-                    if planet_renderer != null:
-                        planet_renderer.queue_fill_update(pos)
-                    changed_any = true
+    var splash := _apply_splash_damage(
+        my_grid,
+        radius_cells,
+        _get_effective_attack_damage() * SHOCKWAVE_DAMAGE_MULT,
+        0.3,
+        1.15
+    )
+    if bool(splash.get("visuals", false)):
+        _sync_planet_runtime_views(true, false)
     shockwave_firing = false
     var max_radius := float(radius_cells) * BLOCK_SIZE
     if shockwave_rings.size() >= MAX_SHOCKWAVE_RINGS:
         shockwave_rings.remove_at(0)
     shockwave_rings.append({"radius": 5.0, "max_radius": max_radius, "alpha": 0.8})
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.SUPERNOVA, -10.0, -0.1)
-    _sync_planet_runtime_views(true, false)
 
 
 func _update_mega_beam(delta: float) -> void:
@@ -1976,13 +2100,9 @@ func _update_mega_beam(delta: float) -> void:
 
 func _spawn_pickup(world_pos: Vector2, block: Dictionary) -> void:
     var payout := float(block.get("resource", 1.0)) + float(runtime_stats.get("resource_flat", 0.0))
-    if int(block.get("type", 0)) == BlockType.GOLD:
-        payout += float(runtime_stats.get("gold_bonus_flat", 0.0))
     payout *= float(runtime_stats.get("global_resource_mult", 1.0))
     payout *= BALANCE.get_resource_multiplier_for_depth(runtime_stats, int(block.get("layer_depth", 1)))
     payout *= _get_effective_payout_multiplier()
-    if bool(runtime_stats.get("combo_enabled", false)):
-        payout *= 1.0 + float(runtime_stats.get("combo_bonus_per_stack", 0.0)) * float(current_combo)
     var money := int(round(payout))
     if bool(runtime_stats.get("instant_collect", false)) or ship_pos.distance_to(world_pos) <= _get_effective_pickup_radius():
         _collect_pickup(money, 1)
@@ -2049,10 +2169,279 @@ func _get_effective_attack_interval() -> float:
     var interval := float(runtime_stats.get("attack_interval", 0.8))
     if float(active_powerup_timers.get("haste", 0.0)) > 0.0:
         interval *= 0.72
+    if _is_power_active():
+        interval /= POWER_ATTACK_SPEED_MULT
     return interval
 
+func _get_effective_attack_damage() -> float:
+    var damage := float(runtime_stats.get("attack_damage", 8.0))
+    if _is_power_active():
+        damage *= POWER_ATTACK_DAMAGE_MULT
+    return damage
+
 func _get_effective_payout_multiplier() -> float:
-    return 1.6 if float(active_powerup_timers.get("payload", 0.0)) > 0.0 else 1.0
+    return 1.0
+
+func _get_power_capacity() -> float:
+    return maxf(1.0, float(runtime_stats.get("power_capacity", 100.0)))
+
+func _get_power_ratio() -> float:
+    return clampf(current_power / _get_power_capacity(), 0.0, 1.0)
+
+func _is_power_ready() -> bool:
+    return current_power >= _get_power_capacity() - 0.001
+
+func _is_power_active() -> bool:
+    return power_active and current_power > 0.01
+
+func _get_power_gain_for_block(block: Dictionary) -> float:
+    var gain := POWER_BASE_GAIN
+    if int(block.get("type", BlockType.NORMAL)) == BlockType.GOLD:
+        gain *= POWER_SPECIAL_BLOCK_MULT
+    gain *= float(runtime_stats.get("power_gain_mult", 1.0))
+    return gain * POWER_GAIN_MULT
+
+func _gain_power(amount: float) -> void:
+    if amount <= 0.0 or _is_power_active():
+        return
+    var max_power := _get_power_capacity()
+    var next_power := current_power + amount
+    if next_power > max_power:
+        power_ring_overcharge = minf(1.0, power_ring_overcharge + (next_power - max_power) / maxf(max_power * 0.35, 1.0))
+    current_power = clampf(next_power, 0.0, max_power)
+    power_peak = maxf(power_peak, current_power)
+    if bool(runtime_stats.get("power_auto_trigger", false)) and not _is_power_active() and _is_power_ready():
+        _try_activate_power(false)
+    if VirtualCursor != null:
+        if VirtualCursor.has_method("set_open_pit_empire_cursor_power"):
+            VirtualCursor.set_open_pit_empire_cursor_power(_get_power_ratio(), _is_power_active(), _is_power_ready())
+        elif VirtualCursor.has_method("set_open_pit_empire_cursor_combo"):
+            VirtualCursor.set_open_pit_empire_cursor_combo(_get_power_ratio())
+
+func _try_activate_power(manual_trigger: bool = false) -> bool:
+    if run_finished or _is_power_active() or not _is_power_ready():
+        return false
+    power_active = true
+    power_ring_overcharge = maxf(power_ring_overcharge, 0.45)
+    seismic_charge_timer = 0.0
+    if VirtualCursor != null:
+        if VirtualCursor.has_method("set_open_pit_empire_cursor_power"):
+            VirtualCursor.set_open_pit_empire_cursor_power(_get_power_ratio(), true, true)
+        elif VirtualCursor.has_method("set_open_pit_empire_cursor_combo"):
+            VirtualCursor.set_open_pit_empire_cursor_combo(1.0)
+        if manual_trigger:
+            VirtualCursor.burst_open_pit_empire_cursor_sparks(1.2)
+    return true
+
+func _update_power_state(delta: float) -> void:
+    power_ring_overcharge = maxf(0.0, power_ring_overcharge - delta * POWER_OVERCHARGE_PULSE_DECAY)
+    if _is_power_active():
+        current_power = maxf(0.0, current_power - delta * POWER_DRAIN_PER_SECOND)
+        if current_power <= 0.01:
+            current_power = 0.0
+            power_active = false
+    else:
+        power_active = false
+    if VirtualCursor != null:
+        if VirtualCursor.has_method("set_open_pit_empire_cursor_power"):
+            VirtualCursor.set_open_pit_empire_cursor_power(_get_power_ratio(), _is_power_active(), _is_power_ready())
+        elif VirtualCursor.has_method("set_open_pit_empire_cursor_combo"):
+            VirtualCursor.set_open_pit_empire_cursor_combo(_get_power_ratio())
+
+func _get_forward_direction() -> Vector2:
+    var forward := last_move_dir
+    if forward.length_squared() <= 0.001:
+        forward = ship_vel.normalized()
+    if forward.length_squared() <= 0.001:
+        forward = Vector2.UP
+    return forward.normalized()
+
+func _spawn_drone_support_powerup() -> void:
+    var behind := -_get_forward_direction()
+    var spawn_pos := ship_pos + behind * 84.0 + Vector2(rng.randf_range(-18.0, 18.0), rng.randf_range(-10.0, 10.0))
+    roaming_powerups.append({
+        "position": spawn_pos,
+        "velocity": behind * DRONE_SUPPORT_DROP_SPEED,
+        "type": "haste",
+        "phase": rng.randf() * TAU,
+        "life": DRONE_SUPPORT_DROP_LIFETIME,
+        "support_drop": true,
+    })
+
+func _find_forward_lane_target(forward: Vector2, distance_world: float, lateral_steps: int = 2, forward_steps: int = 4) -> Vector2i:
+    if planet_data == null:
+        return Vector2i(999999, 999999)
+    var lateral := Vector2(-forward.y, forward.x)
+    var forward_step := maxf(BLOCK_SIZE * 0.85, distance_world / float(maxi(1, forward_steps)))
+    for step in range(forward_steps, 0, -1):
+        var base_world := ship_pos + forward * (float(step) * forward_step)
+        for offset_idx in range(0, lateral_steps + 1):
+            if offset_idx == 0:
+                var center_grid := world_to_grid(base_world)
+                if not is_grid_empty(center_grid) and int(blocks.get(center_grid, {}).get("core_id", -1)) < 0:
+                    return center_grid
+                continue
+            var lateral_offset := lateral * BLOCK_SIZE * float(offset_idx)
+            var left_grid := world_to_grid(base_world - lateral_offset)
+            if not is_grid_empty(left_grid) and int(blocks.get(left_grid, {}).get("core_id", -1)) < 0:
+                return left_grid
+            var right_grid := world_to_grid(base_world + lateral_offset)
+            if not is_grid_empty(right_grid) and int(blocks.get(right_grid, {}).get("core_id", -1)) < 0:
+                return right_grid
+    return Vector2i(999999, 999999)
+
+func _apply_splash_damage(center_grid: Vector2i, radius_cells: int, base_damage: float, falloff: float = 0.3, max_hp_ratio: float = -1.0) -> Dictionary:
+    if radius_cells <= 0 or planet_data == null:
+        return {"visuals": false, "destroyed": false}
+    var visuals_dirty := false
+    var destroyed_any := false
+    var radius_sq := radius_cells * radius_cells
+    var splash_limit := _get_effective_splash_target_limit(radius_cells)
+    var hits := 0
+    for ring in range(radius_cells + 1):
+        if hits >= splash_limit:
+            break
+        for dx in range(-ring, ring + 1):
+            if hits >= splash_limit:
+                break
+            for dy in range(-ring, ring + 1):
+                if hits >= splash_limit:
+                    break
+                var dist_sq := dx * dx + dy * dy
+                if dist_sq > radius_sq:
+                    continue
+                if ring > 0 and dist_sq <= (ring - 1) * (ring - 1):
+                    continue
+                var pos := center_grid + Vector2i(dx, dy)
+                if is_grid_empty(pos):
+                    continue
+                var block: Dictionary = blocks.get(pos, {})
+                if int(block.get("core_id", -1)) >= 0 or bool(block.get("unbreakable", false)):
+                    continue
+                if max_hp_ratio > 0.0 and float(block.get("max_hp", 0.0)) > base_damage * max_hp_ratio:
+                    continue
+                var distance_ratio := sqrt(float(dist_sq)) / float(maxi(1, radius_cells))
+                var damage_scale := lerpf(1.0, falloff, clampf(distance_ratio, 0.0, 1.0))
+                _mark_hit_flash(pos)
+                visuals_dirty = true
+                var result := _damage_block(pos, base_damage * damage_scale, true)
+                if bool(result.get("destroyed", false)):
+                    destroyed_any = true
+                hits += 1
+    return {"visuals": visuals_dirty, "destroyed": destroyed_any}
+
+func _update_seismic_charge(delta: float) -> void:
+    if planet_data == null:
+        seismic_charge_timer = 0.0
+        return
+    var power_active_now := _is_power_active()
+    var pickup_active := float(active_powerup_timers.get("seismic_charge", 0.0)) > 0.0
+    if not power_active_now and not pickup_active:
+        seismic_charge_timer = 0.0
+        return
+    seismic_charge_timer -= delta
+    if seismic_charge_timer > 0.0:
+        return
+    seismic_charge_timer = SEISMIC_CHARGE_INTERVAL if power_active_now else SEISMIC_POWERUP_INTERVAL
+    var forward := _get_forward_direction()
+    var target_grid := _find_forward_lane_target(forward, SEISMIC_CHARGE_AHEAD_DISTANCE)
+    if target_grid.x >= 999999:
+        return
+    var burst_world := grid_to_world(target_grid)
+    seismic_charge_bursts.append({
+        "position": burst_world,
+        "timer": SEISMIC_CHARGE_VISUAL_DURATION,
+        "radius": float(SEISMIC_CHARGE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE,
+    })
+    var splash := _apply_splash_damage(
+        target_grid,
+        SEISMIC_CHARGE_SPLASH_RADIUS_CELLS,
+        _get_effective_attack_damage() * (SEISMIC_CHARGE_DAMAGE_MULT if power_active_now else SEISMIC_POWERUP_DAMAGE_MULT),
+        0.3,
+        1.35 if power_active_now else 1.0
+    )
+    if bool(splash.get("visuals", false)):
+        _sync_planet_runtime_views(true, false)
+
+func _roll_drone_damage() -> float:
+    var damage := float(runtime_stats.get("drone_damage", 8.0))
+    if bool(runtime_stats.get("drone_sync_unlock", false)):
+        damage += _get_effective_attack_damage() * float(runtime_stats.get("drone_sync_ratio", 0.15))
+    if rng.randf() < float(runtime_stats.get("drone_crit_chance", 0.0)):
+        damage += float(runtime_stats.get("drone_damage", 8.0)) * float(runtime_stats.get("drone_crit_bonus", 2.0))
+    return damage * _editor_debug_damage_mult
+
+func _acquire_drone_target(origin: Vector2, range_world: float) -> Vector2i:
+    var targets := _find_targets_near_world(origin, range_world, 1)
+    if targets.is_empty():
+        return Vector2i(999999, 999999)
+    return Vector2i(targets[0])
+
+func _resolve_projectile_target_world(projectile: Dictionary) -> Vector2:
+    var target_grid := Vector2i(projectile.get("target_grid", Vector2i(999999, 999999)))
+    if target_grid.x < 999999 and not is_grid_empty(target_grid):
+        return grid_to_world(target_grid)
+    return Vector2(projectile.get("target_world", projectile.get("position", Vector2.ZERO)))
+
+func _update_drone_missiles(delta: float) -> void:
+    for idx in range(drone_missiles.size() - 1, -1, -1):
+        var missile: Dictionary = drone_missiles[idx]
+        missile["life"] = float(missile.get("life", DRONE_MISSILE_LIFETIME)) - delta
+        if float(missile.get("life", 0.0)) <= 0.0:
+            drone_missiles.remove_at(idx)
+            continue
+        var missile_pos := Vector2(missile.get("position", Vector2.ZERO))
+        var target_grid := Vector2i(missile.get("target_grid", Vector2i(999999, 999999)))
+        var target_world := _resolve_projectile_target_world(missile)
+        missile["target_world"] = target_world
+        var desired_vel := (target_world - missile_pos).normalized() * DRONE_MISSILE_SPEED
+        missile["velocity"] = Vector2(missile.get("velocity", Vector2.ZERO)).lerp(desired_vel, clampf(delta * DRONE_MISSILE_TURN_RATE, 0.0, 1.0))
+        if missile_pos.distance_to(target_world) <= BLOCK_SIZE * 0.55:
+            var impact_grid := target_grid if target_grid.x < 999999 and not is_grid_empty(target_grid) else world_to_grid(target_world)
+            var splash := _apply_splash_damage(impact_grid, DRONE_MISSILE_SPLASH_RADIUS_CELLS, float(missile.get("damage", 0.0)), 0.45)
+            if bool(splash.get("visuals", false)):
+                _sync_planet_runtime_views(true, false)
+            if bool(splash.get("destroyed", false)):
+                _on_combo_hit()
+            seismic_charge_bursts.append({"position": target_world, "timer": 0.28, "radius": float(DRONE_MISSILE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE})
+            drone_missiles.remove_at(idx)
+            continue
+        missile["position"] = missile_pos + Vector2(missile.get("velocity", Vector2.ZERO)) * delta
+        drone_missiles[idx] = missile
+
+func _update_drone_mines(delta: float) -> void:
+    for idx in range(drone_mines.size() - 1, -1, -1):
+        var mine: Dictionary = drone_mines[idx]
+        mine["life"] = float(mine.get("life", DRONE_MINE_LIFETIME)) - delta
+        if float(mine.get("life", 0.0)) <= 0.0:
+            var explode_grid := world_to_grid(Vector2(mine.get("position", Vector2.ZERO)))
+            var splash := _apply_splash_damage(explode_grid, DRONE_MINE_SPLASH_RADIUS_CELLS, float(mine.get("damage", 0.0)), 0.55)
+            if bool(splash.get("visuals", false)):
+                _sync_planet_runtime_views(true, false)
+            if bool(splash.get("destroyed", false)):
+                _on_combo_hit()
+            seismic_charge_bursts.append({"position": Vector2(mine.get("position", Vector2.ZERO)), "timer": 0.34, "radius": float(DRONE_MINE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE})
+            drone_mines.remove_at(idx)
+            continue
+        var mine_pos := Vector2(mine.get("position", Vector2.ZERO))
+        var target_grid := Vector2i(mine.get("target_grid", Vector2i(999999, 999999)))
+        var target_world := _resolve_projectile_target_world(mine)
+        mine["target_world"] = target_world
+        var desired_vel := (target_world - mine_pos).normalized() * DRONE_MINE_SPEED
+        mine["velocity"] = Vector2(mine.get("velocity", Vector2.ZERO)).lerp(desired_vel, clampf(delta * DRONE_MINE_TURN_RATE, 0.0, 1.0))
+        if mine_pos.distance_to(target_world) <= BLOCK_SIZE * 0.75:
+            var contact_grid := target_grid if target_grid.x < 999999 and not is_grid_empty(target_grid) else world_to_grid(target_world)
+            var contact := _apply_splash_damage(contact_grid, DRONE_MINE_SPLASH_RADIUS_CELLS, float(mine.get("damage", 0.0)), 0.55)
+            if bool(contact.get("visuals", false)):
+                _sync_planet_runtime_views(true, false)
+            if bool(contact.get("destroyed", false)):
+                _on_combo_hit()
+            seismic_charge_bursts.append({"position": target_world, "timer": 0.34, "radius": float(DRONE_MINE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE})
+            drone_mines.remove_at(idx)
+            continue
+        mine["blink"] = float(mine.get("blink", 0.0)) + delta * 10.0
+        mine["position"] = mine_pos + Vector2(mine.get("velocity", Vector2.ZERO)) * delta
+        drone_mines[idx] = mine
 
 func _update_drone_visuals(_delta: float) -> void:
     if mega_timer <= 0.0:
@@ -2114,8 +2503,52 @@ func _fire_drone(drone_idx: int) -> void:
     if drone_idx < 0 or drone_idx >= drone_positions.size():
         return
     var drone_world := drone_positions[drone_idx]
+    drone_attack_counter += 1
+    if drone_attack_counter >= DRONE_SUPPORT_DROP_ATTACKS:
+        drone_attack_counter = 0
+        _spawn_drone_support_powerup()
+    var attack_load := _get_attack_load_tier()
+    var mine_chance := 0.08
+    var missile_chance := 0.30
+    match attack_load:
+        2:
+            mine_chance = 0.0
+            missile_chance = 0.08
+        1:
+            mine_chance = 0.03
+            missile_chance = 0.18
+    var attack_roll := rng.randf()
+    if attack_roll < mine_chance and drone_mines.size() < MAX_ACTIVE_DRONE_MINES:
+        var mine_target := _acquire_drone_target(drone_world, DRONE_MISSILE_RANGE)
+        if mine_target.x < 999999:
+            var mine_world := grid_to_world(mine_target)
+            drone_targets[drone_idx] = mine_world
+            drone_mines.append({
+                "position": drone_world,
+                "velocity": (mine_world - drone_world).normalized() * DRONE_MINE_SPEED,
+                "target_grid": mine_target,
+                "target_world": mine_world,
+                "damage": _roll_drone_damage() * DRONE_MINE_DAMAGE_MULT,
+                "life": DRONE_MINE_LIFETIME,
+                "blink": rng.randf() * TAU,
+            })
+            return
+    if attack_roll < missile_chance and drone_missiles.size() < MAX_ACTIVE_DRONE_MISSILES:
+        var missile_target := _acquire_drone_target(drone_world, DRONE_MISSILE_RANGE)
+        if missile_target.x < 999999:
+            var missile_world := grid_to_world(missile_target)
+            drone_targets[drone_idx] = missile_world
+            drone_missiles.append({
+                "position": drone_world,
+                "velocity": (missile_world - drone_world).normalized() * DRONE_MISSILE_SPEED,
+                "target_grid": missile_target,
+                "target_world": missile_world,
+                "damage": _roll_drone_damage() * DRONE_MISSILE_DAMAGE_MULT,
+                "life": DRONE_MISSILE_LIFETIME,
+            })
+            return
     var drone_pierce := int(runtime_stats.get("drone_pierce", 1))
-    if _get_attack_load_tier() >= 2:
+    if attack_load >= 2:
         drone_pierce = 1
     var target_cells := _find_targets_near_world(drone_world, DRONE_RANGE, drone_pierce)
     if target_cells.is_empty():
@@ -2125,12 +2558,7 @@ func _fire_drone(drone_idx: int) -> void:
     for target_grid in target_cells:
         if int(blocks.get(target_grid, {}).get("core_id", -1)) >= 0:
             continue
-        var damage := float(runtime_stats.get("drone_damage", 8.0))
-        if bool(runtime_stats.get("drone_sync_unlock", false)):
-            damage += float(runtime_stats.get("attack_damage", 8.0)) * float(runtime_stats.get("drone_sync_ratio", 0.15))
-        if rng.randf() < float(runtime_stats.get("drone_crit_chance", 0.0)):
-            damage += float(runtime_stats.get("drone_damage", 8.0)) * float(runtime_stats.get("drone_crit_bonus", 2.0))
-        damage *= _editor_debug_damage_mult
+        var damage := _roll_drone_damage()
         var result := _damage_block(target_grid, damage)
         if bool(result.get("destroyed", false)):
             _on_combo_hit()
@@ -2138,18 +2566,7 @@ func _fire_drone(drone_idx: int) -> void:
             drone_beams.append({"from": drone_world, "to": grid_to_world(target_grid), "timer": DRONE_BEAM_DURATION})
 
 func _on_combo_hit() -> void:
-    if not bool(runtime_stats.get("combo_enabled", false)):
-        return
-    current_combo = mini(current_combo + 1, 100)
-    combo_peak = max(combo_peak, current_combo)
-    combo_timer = 1.5
-    if VirtualCursor != null:
-        VirtualCursor.set_open_pit_empire_cursor_combo(float(current_combo) / 100.0)
-    for milestone in [10, 25, 50, 100]:
-        if current_combo >= milestone and not bool(combo_milestones_hit.get(milestone, false)):
-            combo_milestones_hit[milestone] = true
-            if VirtualCursor != null:
-                VirtualCursor.burst_open_pit_empire_cursor_sparks(0.8 + float(milestone) / 70.0)
+    return
 
 func _push_breach_log(message: String) -> void:
     breach_log_lines.append(message)
@@ -2164,7 +2581,6 @@ func _finish_run(returned: bool, reason: String) -> void:
     run_finished = true
     _flush_pending_exposed_edges()
     if planet_data != null:
-        planet_data.revert_converted_gold()
         blocks = planet_data.blocks
         exposed_edges = planet_data.exposed_edges
         persistent_destroyed_count = max(0, total_planet_blocks - planet_data.get_total_blocks())
@@ -2199,7 +2615,7 @@ func _finish_run(returned: bool, reason: String) -> void:
     var history_text := "\n".join(attempt_lines)
     if history_text == "":
         history_text = "No previous breach attempts logged."
-    summary_label.text = "[center][b]%s[/b][/center]\n\n[table=2][cell]Breach Tier[/cell][cell]%d[/cell][cell]Blocks Mined This Run[/cell][cell]%d[/cell][cell]Haul Recovered[/cell][cell]$%d[/cell][cell]Loose Value Touched[/cell][cell]$%d[/cell][cell]XP Banked[/cell][cell]%d[/cell][cell]Daemons Deleted[/cell][cell]%d[/cell][cell]Persistent Clear[/cell][cell]%.1f%%[/cell][cell]Root Keys Banked[/cell][cell]%d[/cell][cell]Combo Peak[/cell][cell]%d[/cell][cell]Barriers Left[/cell][cell]%d[/cell][/table]\n\n[color=#7dd6ff]Previous Attempts[/color]\n%s%s" % [
+    summary_label.text = "[center][b]%s[/b][/center]\n\n[table=2][cell]Breach Tier[/cell][cell]%d[/cell][cell]Blocks Mined This Run[/cell][cell]%d[/cell][cell]Haul Recovered[/cell][cell]$%d[/cell][cell]Loose Value Touched[/cell][cell]$%d[/cell][cell]XP Banked[/cell][cell]%d[/cell][cell]Daemons Deleted[/cell][cell]%d[/cell][cell]Persistent Clear[/cell][cell]%.1f%%[/cell][cell]Root Keys Banked[/cell][cell]%d[/cell][cell]Power Peak[/cell][cell]%.0f[/cell][cell]Barriers Left[/cell][cell]%d[/cell][/table]\n\n[color=#7dd6ff]Previous Attempts[/color]\n%s%s" % [
         reason,
         current_depth_level,
         nodes_mined,
@@ -2209,7 +2625,7 @@ func _finish_run(returned: bool, reason: String) -> void:
         cores_destroyed_this_run,
         _get_persistent_clear_percent(),
         core_currency_earned_this_run,
-        combo_peak,
+        power_peak,
         barriers_left,
         history_text,
         epilogue
@@ -2337,14 +2753,13 @@ func _refresh_hud() -> void:
         active_boosts.append("Haste %.0fs" % ceil(active_powerup_timers["haste"]))
     if float(active_powerup_timers.get("magnet", 0.0)) > 0.0:
         active_boosts.append("Magnet %.0fs" % ceil(active_powerup_timers["magnet"]))
-    if float(active_powerup_timers.get("payload", 0.0)) > 0.0:
-        active_boosts.append("Payload %.0fs" % ceil(active_powerup_timers["payload"]))
-    status_label.text = "Barriers %d  |  Drones %d  |  Mega %d/%d  |  Alive Daemons %d/%d" % [barriers_left, int(runtime_stats.get("drone_count", 0)), mega_gauge, int(runtime_stats.get("mega_gauge_need", 30)), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0]
-    system_label.text = "Combo %d  |  Overdrive %.1fs  |  Root Keys %d  |  %s" % [current_combo, overdrive_timer, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run, " / ".join(active_boosts) if not active_boosts.is_empty() else "Move: Mouse / WASD"]
+    if float(active_powerup_timers.get("seismic_charge", 0.0)) > 0.0:
+        active_boosts.append("Seismic %.0fs" % ceil(active_powerup_timers["seismic_charge"]))
+    status_label.text = "Barriers %d  |  Drones %d  |  Power %.0f/%.0f  |  Alive Daemons %d/%d" % [barriers_left, int(runtime_stats.get("drone_count", 0)), current_power, _get_power_capacity(), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0]
+    var power_state := "Power Active" if _is_power_active() else ("Power Ready - Click / Space" if _is_power_ready() else "Power Charging")
+    system_label.text = "%s  |  Root Keys %d  |  %s" % [power_state, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run, " / ".join(active_boosts) if not active_boosts.is_empty() else "Move: Mouse / WASD"]
     if breach_log_label != null and breach_log_label.text == "":
         _render_breach_log()
-    if fps_label != null:
-        _update_perf_debug(0.0)
 
 func _refresh_bottom_cinematic_overlay() -> void:
     if bottom_cinematic_overlay == null or bottom_cutscene_label == null:
@@ -2429,12 +2844,15 @@ func _update_perf_debug(frame_delta: float) -> void:
         physics_ms,
         str(limit_hint)
     ]
-    if zone_lines.is_empty():
-        fps_label.text = base_text
-    else:
-        fps_label.text = "%s\nDebug Dmg: %s" % [base_text, ", ".join(zone_lines)]
+    var next_fps_text := base_text if zone_lines.is_empty() else "%s\nDebug Dmg: %s" % [base_text, ", ".join(zone_lines)]
+    if next_fps_text != _last_perf_fps_text:
+        _last_perf_fps_text = next_fps_text
+        fps_label.text = next_fps_text
     if perf_probe_label != null:
-        perf_probe_label.text = _build_perf_probe_text()
+        var next_probe_text := _build_perf_probe_text()
+        if next_probe_text != _last_perf_probe_text:
+            _last_perf_probe_text = next_probe_text
+            perf_probe_label.text = next_probe_text
     perf_probe_end("update_perf_debug", perf_start_us)
 
 func _estimate_gpu_frame_ms(frame_ms: float, process_ms: float, physics_ms: float) -> float:
@@ -2480,13 +2898,15 @@ func _build_perf_probe_text() -> String:
         ])
     if planet_renderer != null and planet_renderer.has_method("get_perf_state_text"):
         lines.append(str(planet_renderer.call("get_perf_state_text")))
-    lines.append("Pickups %d  HitFX %d  GoldFX %d  EArcs %d  CArcs %d  DBeams %d" % [
+    lines.append("Pickups %d  HitFX %d  PowerFX %d  EArcs %d  CArcs %d  DBeams %d  DMiss %d  DMines %d" % [
         pickups.size(),
         hit_timers.size(),
-        gold_convert_timers.size(),
+        seismic_charge_bursts.size(),
         electric_arcs.size(),
         chain_arcs.size(),
         drone_beams.size(),
+        drone_missiles.size(),
+        drone_mines.size(),
     ])
     return "\n".join(lines)
 
@@ -2496,7 +2916,7 @@ func _dump_run_perf_snapshot_to_console(returned: bool, reason: String, money_aw
     lines.append("Result: %s" % ("returned" if returned else "failed"))
     lines.append("Reason: %s" % reason)
     lines.append("Tier: %d" % current_depth_level)
-    lines.append("Blocks mined: %d  Cores destroyed: %d  Combo peak: %d" % [nodes_mined, cores_destroyed_this_run, combo_peak])
+    lines.append("Blocks mined: %d  Cores destroyed: %d  Power peak: %.0f" % [nodes_mined, cores_destroyed_this_run, power_peak])
     lines.append("Money banked: %d  Cargo units: %d  Barriers left: %d" % [money_award, cargo_units, barriers_left])
     lines.append("FPS now: %d  Frame %.2fms  CPU %.2fms  Phys %.2fms" % [
         Engine.get_frames_per_second(),
@@ -2526,10 +2946,12 @@ func _reset_run_perf_tracking() -> void:
         "max_effect_load": 0,
         "max_pickups": 0,
         "max_hit_fx": 0,
-        "max_gold_fx": 0,
+        "max_seismic_fx": 0,
         "max_e_arcs": 0,
         "max_c_arcs": 0,
         "max_d_beams": 0,
+        "max_d_missiles": 0,
+        "max_d_mines": 0,
         "max_blocks_alive": 0,
         "max_blocks_cleared_in_frame": 0,
         "max_net_block_drop_in_frame": 0,
@@ -2543,10 +2965,12 @@ func _reset_run_perf_tracking() -> void:
         "max_effect_load": 0,
         "max_pickups": 0,
         "max_hit_fx": 0,
-        "max_gold_fx": 0,
+        "max_seismic_fx": 0,
         "max_e_arcs": 0,
         "max_c_arcs": 0,
         "max_d_beams": 0,
+        "max_d_missiles": 0,
+        "max_d_mines": 0,
         "max_blocks_alive": 0,
         "max_blocks_cleared_in_frame": 0,
         "max_net_block_drop_in_frame": 0,
@@ -2570,10 +2994,12 @@ func _capture_run_perf_snapshot() -> void:
     _run_perf_extremes["max_phys_ms"] = maxf(float(_run_perf_extremes.get("max_phys_ms", 0.0)), phys_ms)
     _run_perf_extremes["max_pickups"] = maxi(int(_run_perf_extremes.get("max_pickups", 0)), pickups.size())
     _run_perf_extremes["max_hit_fx"] = maxi(int(_run_perf_extremes.get("max_hit_fx", 0)), hit_timers.size())
-    _run_perf_extremes["max_gold_fx"] = maxi(int(_run_perf_extremes.get("max_gold_fx", 0)), gold_convert_timers.size())
+    _run_perf_extremes["max_seismic_fx"] = maxi(int(_run_perf_extremes.get("max_seismic_fx", 0)), seismic_charge_bursts.size())
     _run_perf_extremes["max_e_arcs"] = maxi(int(_run_perf_extremes.get("max_e_arcs", 0)), electric_arcs.size())
     _run_perf_extremes["max_c_arcs"] = maxi(int(_run_perf_extremes.get("max_c_arcs", 0)), chain_arcs.size())
     _run_perf_extremes["max_d_beams"] = maxi(int(_run_perf_extremes.get("max_d_beams", 0)), drone_beams.size())
+    _run_perf_extremes["max_d_missiles"] = maxi(int(_run_perf_extremes.get("max_d_missiles", 0)), drone_missiles.size())
+    _run_perf_extremes["max_d_mines"] = maxi(int(_run_perf_extremes.get("max_d_mines", 0)), drone_mines.size())
     _run_perf_extremes["max_blocks_alive"] = maxi(int(_run_perf_extremes.get("max_blocks_alive", 0)), blocks.size())
     _run_perf_extremes["max_blocks_cleared_in_frame"] = maxi(int(_run_perf_extremes.get("max_blocks_cleared_in_frame", 0)), int(_frame_destroyed_blocks))
     _run_perf_extremes["max_net_block_drop_in_frame"] = maxi(int(_run_perf_extremes.get("max_net_block_drop_in_frame", 0)), int(_perf_probe_last_samples.get("net_block_drop_in_frame", 0.0)))
@@ -2589,10 +3015,12 @@ func _capture_run_perf_snapshot() -> void:
         _combat_perf_extremes["max_phys_ms"] = maxf(float(_combat_perf_extremes.get("max_phys_ms", 0.0)), phys_ms)
         _combat_perf_extremes["max_pickups"] = maxi(int(_combat_perf_extremes.get("max_pickups", 0)), pickups.size())
         _combat_perf_extremes["max_hit_fx"] = maxi(int(_combat_perf_extremes.get("max_hit_fx", 0)), hit_timers.size())
-        _combat_perf_extremes["max_gold_fx"] = maxi(int(_combat_perf_extremes.get("max_gold_fx", 0)), gold_convert_timers.size())
+        _combat_perf_extremes["max_seismic_fx"] = maxi(int(_combat_perf_extremes.get("max_seismic_fx", 0)), seismic_charge_bursts.size())
         _combat_perf_extremes["max_e_arcs"] = maxi(int(_combat_perf_extremes.get("max_e_arcs", 0)), electric_arcs.size())
         _combat_perf_extremes["max_c_arcs"] = maxi(int(_combat_perf_extremes.get("max_c_arcs", 0)), chain_arcs.size())
         _combat_perf_extremes["max_d_beams"] = maxi(int(_combat_perf_extremes.get("max_d_beams", 0)), drone_beams.size())
+        _combat_perf_extremes["max_d_missiles"] = maxi(int(_combat_perf_extremes.get("max_d_missiles", 0)), drone_missiles.size())
+        _combat_perf_extremes["max_d_mines"] = maxi(int(_combat_perf_extremes.get("max_d_mines", 0)), drone_mines.size())
         _combat_perf_extremes["max_blocks_alive"] = maxi(int(_combat_perf_extremes.get("max_blocks_alive", 0)), blocks.size())
         _combat_perf_extremes["max_blocks_cleared_in_frame"] = maxi(int(_combat_perf_extremes.get("max_blocks_cleared_in_frame", 0)), int(_frame_destroyed_blocks))
         _combat_perf_extremes["max_net_block_drop_in_frame"] = maxi(int(_combat_perf_extremes.get("max_net_block_drop_in_frame", 0)), int(_perf_probe_last_samples.get("net_block_drop_in_frame", 0.0)))
@@ -2631,13 +3059,15 @@ func _build_run_perf_peak_probe_text() -> String:
             str(_perf_probe_labels.get(key, key)),
             float(_run_perf_peak_samples.get(key, 0.0)),
         ])
-    lines.append("Run Count Peaks  Pickups %d  HitFX %d  GoldFX %d  EArcs %d  CArcs %d  DBeams %d  Blocks %d" % [
+    lines.append("Run Count Peaks  Pickups %d  HitFX %d  PowerFX %d  EArcs %d  CArcs %d  DBeams %d  DMiss %d  DMines %d  Blocks %d" % [
         int(_run_perf_extremes.get("max_pickups", 0)),
         int(_run_perf_extremes.get("max_hit_fx", 0)),
-        int(_run_perf_extremes.get("max_gold_fx", 0)),
+        int(_run_perf_extremes.get("max_seismic_fx", 0)),
         int(_run_perf_extremes.get("max_e_arcs", 0)),
         int(_run_perf_extremes.get("max_c_arcs", 0)),
         int(_run_perf_extremes.get("max_d_beams", 0)),
+        int(_run_perf_extremes.get("max_d_missiles", 0)),
+        int(_run_perf_extremes.get("max_d_mines", 0)),
         int(_run_perf_extremes.get("max_blocks_alive", 0)),
     ])
     lines.append("Run Block Peaks  cleared/frame %d  net drop/frame %d" % [
@@ -2684,13 +3114,15 @@ func _build_run_perf_worst_snapshot_text() -> String:
         float(_run_perf_worst_snapshot.get("perf_graph_draw_ms", 0.0)),
     ])
     lines.append(str(_run_perf_worst_snapshot.get("planet_state", "")))
-    lines.append("Worst Counts  Pickups %d  HitFX %d  GoldFX %d  EArcs %d  CArcs %d  DBeams %d  Blocks %d  Cleared %d  NetDrop %d" % [
+    lines.append("Worst Counts  Pickups %d  HitFX %d  PowerFX %d  EArcs %d  CArcs %d  DBeams %d  DMiss %d  DMines %d  Blocks %d  Cleared %d  NetDrop %d" % [
         int(_run_perf_worst_snapshot.get("pickups", 0)),
         int(_run_perf_worst_snapshot.get("hit_fx", 0)),
-        int(_run_perf_worst_snapshot.get("gold_fx", 0)),
+        int(_run_perf_worst_snapshot.get("seismic_fx", 0)),
         int(_run_perf_worst_snapshot.get("e_arcs", 0)),
         int(_run_perf_worst_snapshot.get("c_arcs", 0)),
         int(_run_perf_worst_snapshot.get("d_beams", 0)),
+        int(_run_perf_worst_snapshot.get("d_missiles", 0)),
+        int(_run_perf_worst_snapshot.get("d_mines", 0)),
         int(_run_perf_worst_snapshot.get("blocks_alive", 0)),
         int(_run_perf_worst_snapshot.get("blocks_cleared_in_frame", 0)),
         int(_run_perf_worst_snapshot.get("net_block_drop_in_frame", 0)),
@@ -2738,13 +3170,15 @@ func _build_combat_perf_worst_snapshot_text() -> String:
         float(_combat_perf_worst_snapshot.get("perf_graph_draw_ms", 0.0)),
     ])
     lines.append(str(_combat_perf_worst_snapshot.get("planet_state", "")))
-    lines.append("Combat Worst Counts  Pickups %d  HitFX %d  GoldFX %d  EArcs %d  CArcs %d  DBeams %d  Blocks %d  Cleared %d  NetDrop %d" % [
+    lines.append("Combat Worst Counts  Pickups %d  HitFX %d  PowerFX %d  EArcs %d  CArcs %d  DBeams %d  DMiss %d  DMines %d  Blocks %d  Cleared %d  NetDrop %d" % [
         int(_combat_perf_worst_snapshot.get("pickups", 0)),
         int(_combat_perf_worst_snapshot.get("hit_fx", 0)),
-        int(_combat_perf_worst_snapshot.get("gold_fx", 0)),
+        int(_combat_perf_worst_snapshot.get("seismic_fx", 0)),
         int(_combat_perf_worst_snapshot.get("e_arcs", 0)),
         int(_combat_perf_worst_snapshot.get("c_arcs", 0)),
         int(_combat_perf_worst_snapshot.get("d_beams", 0)),
+        int(_combat_perf_worst_snapshot.get("d_missiles", 0)),
+        int(_combat_perf_worst_snapshot.get("d_mines", 0)),
         int(_combat_perf_worst_snapshot.get("blocks_alive", 0)),
         int(_combat_perf_worst_snapshot.get("blocks_cleared_in_frame", 0)),
         int(_combat_perf_worst_snapshot.get("net_block_drop_in_frame", 0)),
@@ -2757,11 +3191,11 @@ func _build_combat_perf_worst_snapshot_text() -> String:
 func _is_combat_perf_focus_window() -> bool:
     if not has_left_spawn and ship_pos.distance_to(spawn_position) <= _get_return_zone_arm_distance():
         return false
-    if attack_visible_timer > 0.0 or mega_timer > 0.0:
+    if attack_visible_timer > 0.0 or _is_power_active():
         return true
-    if not hit_timers.is_empty() or not gold_convert_timers.is_empty():
+    if not hit_timers.is_empty() or not seismic_charge_bursts.is_empty():
         return true
-    if not electric_arcs.is_empty() or not chain_arcs.is_empty() or not drone_beams.is_empty():
+    if not electric_arcs.is_empty() or not chain_arcs.is_empty() or not drone_beams.is_empty() or not drone_missiles.is_empty() or not drone_mines.is_empty():
         return true
     var inward_progress := spawn_position.length() - ship_pos.length()
     return inward_progress >= BLOCK_SIZE * 24.0
@@ -2798,15 +3232,20 @@ func _make_perf_snapshot(fps_now: int, frame_ms: float, cpu_ms: float, phys_ms: 
         "renderer_fill_upload_ms": float(_perf_probe_last_samples.get("renderer_fill_upload", 0.0)),
         "renderer_edge_ms": float(_perf_probe_last_samples.get("renderer_edge", 0.0)),
         "renderer_blocks_ms": float(_perf_probe_last_samples.get("renderer_blocks", 0.0)),
+        "renderer_power_blocks_ms": float(_perf_probe_last_samples.get("renderer_power_blocks", 0.0)),
         "renderer_overlays_ms": float(_perf_probe_last_samples.get("renderer_overlays", 0.0)),
         "perf_graph_draw_ms": float(_perf_probe_last_samples.get("perf_graph_draw", 0.0)),
         "ship_draw_ms": float(_perf_probe_last_samples.get("ship_draw", 0.0)),
+        "ship_draw_rings_ms": float(_perf_probe_last_samples.get("ship_draw_rings", 0.0)),
+        "ship_draw_drones_ms": float(_perf_probe_last_samples.get("ship_draw_drones", 0.0)),
         "pickups": pickups.size(),
         "hit_fx": hit_timers.size(),
-        "gold_fx": gold_convert_timers.size(),
+        "seismic_fx": seismic_charge_bursts.size(),
         "e_arcs": electric_arcs.size(),
         "c_arcs": chain_arcs.size(),
         "d_beams": drone_beams.size(),
+        "d_missiles": drone_missiles.size(),
+        "d_mines": drone_mines.size(),
         "blocks_alive": blocks.size(),
         "blocks_cleared_in_frame": _frame_destroyed_blocks,
         "net_block_drop_in_frame": int(_perf_probe_last_samples.get("net_block_drop_in_frame", 0.0)),
@@ -2902,7 +3341,7 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
     return found
 
 func _get_attack_load_tier() -> int:
-    var load := hit_timers.size() + gold_convert_timers.size() + electric_arcs.size() + chain_arcs.size() + drone_beams.size()
+    var load := hit_timers.size() + seismic_charge_bursts.size() + electric_arcs.size() + chain_arcs.size() + drone_beams.size() + drone_missiles.size() + drone_mines.size()
     if load >= ATTACK_LOAD_HARD_LIMIT:
         return 2
     if load >= ATTACK_LOAD_SOFT_LIMIT:
@@ -2932,11 +3371,22 @@ func _get_effective_chain_lightning_jumps() -> int:
 func _get_effective_aoe_neighbors() -> Array:
     match _get_attack_load_tier():
         2:
-            return [Vector2i(1, 0), Vector2i(-1, 0)]
+            return [Vector2i(1, 0)]
         1:
-            return [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1)]
+            return [Vector2i(1, 0), Vector2i(-1, 0)]
         _:
-            return CARDINAL_NEIGHBORS
+            return [Vector2i(1, 0), Vector2i(-1, 0)]
+
+func _get_effective_splash_target_limit(radius_cells: int) -> int:
+    if radius_cells <= 1:
+        return 2
+    match _get_attack_load_tier():
+        2:
+            return 2
+        1:
+            return 3
+        _:
+            return 4
 
 func _find_nearest_block(origin: Vector2i, range_cells: int, visited: Dictionary) -> Vector2i:
     var best := Vector2i(999999, 999999)

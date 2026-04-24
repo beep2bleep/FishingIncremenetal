@@ -20,7 +20,7 @@ const PLAYER_COLOR := Color(0.5, 1.8, 2.0)
 const CORE_ALIVE := Color(2.0, 0.3, 0.08)
 const CORE_LOCKED := Color(0.4, 0.4, 0.45)
 const CORE_DEAD := Color(0.15, 0.8, 1.0, 0.5)
-const GOLD_COLOR := Color(1.0, 0.85, 0.2)
+const GOLD_COLOR := Color(1.0, 0.55, 0.18)
 const ELECTRIC_COLOR := Color(0.3, 0.8, 1.0)
 const BLOCK_COLOR := Color(0.15, 0.2, 0.25)
 const RETURN_ZONE_COLOR := Color(0.3, 1.5, 0.5)
@@ -155,7 +155,7 @@ func _color_for_type(block_type: int) -> Color:
         BLOCK_TYPE_ELECTRIC:
             return ELECTRIC_COLOR if scene_ref != null and bool(scene_ref.runtime_stats.get("electric_enabled", false)) else BLOCK_COLOR
         BLOCK_TYPE_GOLD:
-            return GOLD_COLOR if scene_ref != null and (bool(scene_ref.runtime_stats.get("gold_enabled", false)) or bool(scene_ref.runtime_stats.get("shockwave_enabled", false))) else BLOCK_COLOR
+            return GOLD_COLOR
         _:
             return BLOCK_COLOR
 

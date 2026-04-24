@@ -240,7 +240,7 @@ func generate_sync(_depth_level: int, _persistent_destroyed: Dictionary, balance
             var unbreakable := _is_wall_cell(pos)
             if not unbreakable:
                 var roll: float = world_rng.randf()
-                if roll < GOLD_CHANCE:
+                if zone != Zone.CENTER and roll < GOLD_CHANCE:
                     block_type = BlockType.GOLD
                 elif roll < GOLD_CHANCE + ELECTRIC_CHANCE:
                     block_type = BlockType.ELECTRIC
@@ -289,7 +289,7 @@ func generate_async(tree: SceneTree, _depth_level: int, _persistent_destroyed: D
             var unbreakable := _is_wall_cell(pos)
             if not unbreakable:
                 var roll: float = world_rng.randf()
-                if roll < GOLD_CHANCE:
+                if zone != Zone.CENTER and roll < GOLD_CHANCE:
                     block_type = BlockType.GOLD
                 elif roll < GOLD_CHANCE + ELECTRIC_CHANCE:
                     block_type = BlockType.ELECTRIC
@@ -608,36 +608,6 @@ func damage_block(pos: Vector2i, damage: float, indirect: bool = false, free_pla
     _mark_section_dirty(pos)
     return {"destroyed": false, "type": int(block.get("type", BlockType.NORMAL)), "resource": 0.0, "layer_depth": int(block.get("layer_depth", 1))}
 
-func convert_to_gold(pos: Vector2i) -> bool:
-    if not blocks.has(pos):
-        return false
-    var block: Dictionary = blocks[pos]
-    if int(block.get("type", BlockType.NORMAL)) != BlockType.NORMAL:
-        return false
-    if bool(block.get("regenerated", false)):
-        return false
-    block["type"] = BlockType.GOLD
-    block["converted_gold"] = true
-    block["hp"] = float(block.get("max_hp", 1.0))
-    blocks[pos] = block
-    minimap_block_spawned.emit(pos, BlockType.GOLD)
-    _mark_section_dirty(pos)
-    return true
-
-func revert_converted_gold() -> void:
-    var changed_positions: Array[Vector2i] = []
-    for pos_variant in blocks.keys():
-        var pos: Vector2i = pos_variant
-        var block: Dictionary = blocks[pos]
-        if bool(block.get("converted_gold", false)):
-            block["type"] = BlockType.NORMAL
-            block.erase("converted_gold")
-            blocks[pos] = block
-            minimap_block_spawned.emit(pos, BlockType.NORMAL)
-            changed_positions.append(pos)
-    if not changed_positions.is_empty():
-        _mark_dirty_positions(changed_positions)
-
 func regenerate_around_cores() -> int:
     var changed_positions: Array[Vector2i] = []
     for pos_variant in blocks.keys():
@@ -670,13 +640,13 @@ func regenerate_around_cores() -> int:
                 var hp: float = _calc_block_hp(pos)
                 var res: float = _calc_block_resource(pos)
                 var regen_type: int = BlockType.NORMAL
+                var zone: int = get_zone(pos)
                 var roll: float = world_rng.randf()
-                if roll < GOLD_CHANCE:
+                if zone != Zone.CENTER and roll < GOLD_CHANCE:
                     regen_type = BlockType.GOLD
                 elif roll < GOLD_CHANCE + ELECTRIC_CHANCE:
                     regen_type = BlockType.ELECTRIC
                 hp *= _get_non_core_influence_hp_mult(pos, true)
-                var zone: int = get_zone(pos)
                 blocks[pos] = {
                     "type": regen_type,
                     "hp": hp,
@@ -929,6 +899,7 @@ func load_save_data_async(tree: SceneTree, data: Dictionary, progress_callback: 
             var pos := Vector2i(int(parts[0]), int(parts[1]))
             var arr: Array = block_data[key]
             var max_hp: float = float(arr[2])
+            var converted_gold := bool(arr[7]) if arr.size() > 7 else false
             blocks[pos] = {
                 "type": int(arr[0]),
                 "hp": max_hp,
@@ -937,11 +908,13 @@ func load_save_data_async(tree: SceneTree, data: Dictionary, progress_callback: 
                 "core_id": int(arr[4]),
                 "regenerated": bool(arr[5]) if arr.size() > 5 else false,
                 "zone": int(arr[6]) if arr.size() > 6 else get_zone(pos),
-                "converted_gold": bool(arr[7]) if arr.size() > 7 else false,
+                "converted_gold": false,
                 "layer_depth": int(arr[8]) if arr.size() > 8 else get_depth_level_for_pos(pos, 5),
                 "unbreakable": bool(arr[9]) if arr.size() > 9 else false,
                 "core_refill": bool(arr[10]) if arr.size() > 10 else false,
             }
+            if converted_gold and int(blocks[pos].get("type", BlockType.NORMAL)) == BlockType.GOLD:
+                blocks[pos]["type"] = BlockType.NORMAL
             if tree != null and ((idx + 1) % 2000 == 0):
                 _emit_generation_progress(progress_callback, 0.78 * float(idx + 1) / float(total_blocks))
                 await tree.process_frame
@@ -1176,6 +1149,7 @@ func _load_section_blocks(section_blocks: Array, format_version: int = 2) -> voi
                 continue
             var pos_v3 := Vector2i(int(row[0]), int(row[1]))
             var max_hp_v3: float = float(row[3])
+            var converted_gold_v3 := bool(row[8])
             blocks[pos_v3] = {
                 "type": int(row[2]),
                 "hp": max_hp_v3,
@@ -1184,16 +1158,19 @@ func _load_section_blocks(section_blocks: Array, format_version: int = 2) -> voi
                 "core_id": int(row[5]),
                 "regenerated": bool(row[6]),
                 "zone": int(row[7]),
-                "converted_gold": bool(row[8]),
+                "converted_gold": false,
                 "layer_depth": int(row[9]) if row.size() > 9 else get_depth_level_for_pos(pos_v3, 5),
                 "unbreakable": bool(row[10]) if row.size() > 10 else false,
                 "core_refill": bool(row[11]) if row.size() > 11 else false,
             }
+            if converted_gold_v3 and int(blocks[pos_v3].get("type", BlockType.NORMAL)) == BlockType.GOLD:
+                blocks[pos_v3]["type"] = BlockType.NORMAL
             continue
         if row.size() < 10:
             continue
         var pos := Vector2i(int(row[0]), int(row[1]))
         var max_hp: float = float(row[4])
+        var converted_gold := bool(row[9])
         blocks[pos] = {
             "type": int(row[2]),
             "hp": max_hp,
@@ -1202,8 +1179,10 @@ func _load_section_blocks(section_blocks: Array, format_version: int = 2) -> voi
             "core_id": int(row[6]),
             "regenerated": bool(row[7]),
             "zone": int(row[8]),
-            "converted_gold": bool(row[9]),
+            "converted_gold": false,
         }
+        if converted_gold and int(blocks[pos].get("type", BlockType.NORMAL)) == BlockType.GOLD:
+            blocks[pos]["type"] = BlockType.NORMAL
 
 func _load_common_save_data(data: Dictionary) -> void:
     var core_data: Array = data.get("cores", [])
@@ -1252,6 +1231,7 @@ func _apply_loaded_save_data(data: Dictionary) -> void:
             var pos := Vector2i(int(parts[0]), int(parts[1]))
             var arr: Array = block_data[key]
             var max_hp: float = float(arr[2])
+            var converted_gold := bool(arr[7]) if arr.size() > 7 else false
             blocks[pos] = {
                 "type": int(arr[0]),
                 "hp": max_hp,
@@ -1260,10 +1240,12 @@ func _apply_loaded_save_data(data: Dictionary) -> void:
                 "core_id": int(arr[4]),
                 "regenerated": bool(arr[5]) if arr.size() > 5 else false,
                 "zone": int(arr[6]) if arr.size() > 6 else get_zone(pos),
-                "converted_gold": bool(arr[7]) if arr.size() > 7 else false,
+                "converted_gold": false,
                 "layer_depth": int(arr[8]) if arr.size() > 8 else get_depth_level_for_pos(pos, 5),
                 "unbreakable": bool(arr[9]) if arr.size() > 9 else false,
             }
+            if converted_gold and int(blocks[pos].get("type", BlockType.NORMAL)) == BlockType.GOLD:
+                blocks[pos]["type"] = BlockType.NORMAL
     _load_common_save_data(data)
     _rebuild_proximity_cache()
     _rebuild_exposed_edges()

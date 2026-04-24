@@ -12,6 +12,7 @@ JSON_PATH = ROOT / "open_pit_empire_funnel_report.json"
 DEMO_REPORT_PATH = ROOT / "open_pit_empire_demo_report.md"
 DEMO_JSON_PATH = ROOT / "open_pit_empire_demo_report.json"
 FIRST_FUNNEL_ZONES = 5
+CLEAR_REWARD_THRESHOLDS = (0.25, 0.50, 0.75)
 
 
 @dataclass(frozen=True)
@@ -385,39 +386,48 @@ def progress_at_minutes(state: State, minute_mark: float, first_only: bool) -> f
     return completed / len(ZONES)
 
 
-def mastery_tier(clear_ratio: float) -> tuple[float, str]:
-    if clear_ratio >= 0.88:
-        return 3.0, "3.0x layer breaker"
-    if clear_ratio >= 0.65:
-        return 2.5, "2.5x layer breaker"
-    if clear_ratio >= 0.40:
-        return 2.0, "2.0x layer breaker"
-    if clear_ratio >= 0.20:
-        return 1.5, "1.5x layer breaker"
-    return 1.0, "no layer breaker"
+def global_clear_ratio(state: State) -> float:
+    total_blocks = sum(zone.total_blocks for zone in ZONES[:FIRST_FUNNEL_ZONES])
+    if total_blocks <= 0.0:
+        return 0.0
+    cleared_blocks = 0.0
+    for zone_index, zone in enumerate(ZONES[:FIRST_FUNNEL_ZONES]):
+        cleared_blocks += zone.total_blocks * max(0.0, min(1.0, state.current_power[zone_index]))
+    return max(0.0, min(1.0, cleared_blocks / total_blocks))
 
 
-def global_layer_breaker_count(state: State, include_partial: bool = True) -> float:
-    total = 0.0
-    for zone_index in range(len(state.current_power)):
-        clear_ratio = state.current_power[zone_index]
-        if clear_ratio >= 0.88:
-            total += 4.0
-        elif clear_ratio >= 0.65:
-            total += 3.0
-        elif clear_ratio >= 0.40:
-            total += 2.0
-        elif clear_ratio >= 0.20:
-            total += 1.0
-        elif include_partial and clear_ratio > 0.0:
-            total += clear_ratio / 0.20
-    return total
+def global_clear_reward_count_from_ratio(clear_ratio: float) -> int:
+    count = 0
+    for threshold in CLEAR_REWARD_THRESHOLDS:
+        if clear_ratio >= threshold:
+            count += 1
+    return count
+
+
+def global_clear_reward_count(state: State) -> int:
+    return global_clear_reward_count_from_ratio(global_clear_ratio(state))
+
+
+def global_clear_reward_multiplier(clear_ratio: float) -> float:
+    return 1.5 ** global_clear_reward_count_from_ratio(clear_ratio)
+
+
+def mastery_tier(state: State) -> tuple[float, str]:
+    clear_ratio = global_clear_ratio(state)
+    reward_count = global_clear_reward_count_from_ratio(clear_ratio)
+    reward_labels = {
+        0: "no clear breach reward",
+        1: "Clear Breach I active",
+        2: "Clear Breach II active",
+        3: "Clear Breach III active",
+    }
+    return global_clear_reward_multiplier(clear_ratio), reward_labels.get(reward_count, "Clear Breach III active")
 
 
 def base_run_time(state: State) -> float:
-    seconds = 52.0
-    seconds += 7.0 * current_level(state, "fuel_cells")
-    seconds += 5.0 * current_level(state, "trace_scrubber")
+    seconds = 56.0
+    seconds += 8.0 * current_level(state, "fuel_cells")
+    seconds += 6.0 * current_level(state, "trace_scrubber")
     seconds += 2.5 * current_level(state, "cache_warmers")
     return seconds
 
@@ -448,9 +458,9 @@ def bank_fraction(state: State) -> float:
 
 
 def cargo_cap(state: State) -> float:
-    cap = 320.0
-    cap *= 1.0 + 0.16 * current_level(state, "cargo_racks")
-    cap *= 1.0 + 0.10 * current_level(state, "heap_climber")
+    cap = 380.0
+    cap *= 1.0 + 0.18 * current_level(state, "cargo_racks")
+    cap *= 1.0 + 0.12 * current_level(state, "heap_climber")
     return cap
 
 
@@ -486,7 +496,7 @@ def efficiency_mult(state: State) -> float:
 
 
 def global_power_mult(state: State, zone_index: int) -> float:
-    breaker_count = global_layer_breaker_count(state)
+    breaker_count = float(global_clear_reward_count(state))
     mult = 1.0 + breaker_count * 0.10
     if zone_index >= 2:
         mult *= 1.0 + breaker_count * 0.025
@@ -504,23 +514,23 @@ def mining_power(state: State, zone_index: int, scenario: dict[str, float]) -> f
     else:
         mult *= 0.72
     mult *= global_power_mult(state, zone_index)
-    mult *= 1.0 + 0.22 * current_level(state, "laser_cutter")
-    mult *= 1.0 + 0.15 * current_level(state, "rapid_cycle")
-    mult *= 1.0 + 0.10 * current_level(state, "shock_bits")
+    mult *= 1.0 + 0.26 * current_level(state, "laser_cutter")
+    mult *= 1.0 + 0.17 * current_level(state, "rapid_cycle")
+    mult *= 1.0 + 0.12 * current_level(state, "shock_bits")
     mult *= 1.0 + 0.14 * current_level(state, "breach_drones")
     if zone_index >= 2:
         mult *= 1.0 + 0.12 * current_level(state, "funnel_resonance")
         mult *= 1.0 + 0.14 * current_level(state, "overburn_reactors")
         mult *= 1.0 + 0.18 * current_level(state, "seismic_lattice")
-        mult *= 1.0 + 0.12 * current_level(state, "mantle_drills")
+        mult *= 1.0 + 0.14 * current_level(state, "mantle_drills")
     if zone_index >= 4:
         mult *= 1.0 + 0.22 * current_level(state, "root_breaker")
         mult *= 1.0 + 0.18 * current_level(state, "void_cutters")
         mult *= 1.0 + 0.12 * current_level(state, "inversion_drives")
-        mult *= 1.0 + 0.12 * current_level(state, "vault_heuristics")
+        mult *= 1.0 + 0.14 * current_level(state, "vault_heuristics")
         mult *= 1.0 + 0.12 * current_level(state, "vault_pulsers")
         mult *= 1.0 + 0.10 * current_level(state, "gravity_wells")
-        mult *= 1.0 + 0.12 * current_level(state, "abyssal_rigs")
+        mult *= 1.0 + 0.14 * current_level(state, "abyssal_rigs")
         mult *= 1.0 + 0.12 * current_level(state, "mirror_daemons")
     if zone_index >= 5:
         mult *= 1.0 + 0.16 * current_level(state, "mirror_saws")
@@ -534,12 +544,12 @@ def mining_power(state: State, zone_index: int, scenario: dict[str, float]) -> f
     if zone_index >= 8:
         mult *= 1.0 + 0.22 * current_level(state, "ash_crowns")
         mult *= 1.0 + 0.16 * current_level(state, "ash_scriptures")
-    return 24.0 * mult
+    return 28.0 * mult
 
 
 def core_power(state: State, zone_index: int, scenario: dict[str, float]) -> float:
     mult = mining_power(state, zone_index, scenario)
-    mult *= 1.0 + 0.24 * current_level(state, "daemon_lances")
+    mult *= 1.0 + 0.28 * current_level(state, "daemon_lances")
     mult *= 1.0 + 0.24 * current_level(state, "kernel_rehearsal")
     mult *= 1.0 + 0.14 * current_level(state, "fault_charges")
     if current_level(state, "signal_sniffer") > 0:
@@ -573,7 +583,7 @@ def cargo_cap(state: State) -> float:
 
 def zone_block_hp_multiplier(state: State, zone_index: int, clear_before: float) -> float:
     mult = 1.0
-    progression_pressure = max(0.0, ZONES[zone_index].global_gate - global_layer_breaker_count(state) * 0.10)
+    progression_pressure = max(0.0, ZONES[zone_index].global_gate - float(global_clear_reward_count(state)) * 0.10)
     if progression_pressure > 0.0:
         mult *= 1.0 + progression_pressure
     if zone_index == 2:
@@ -682,7 +692,7 @@ def mine_run(state: State, scenario: dict[str, float]) -> None:
     zone_index = state.current_zone
     zone = ZONES[zone_index]
     clear_before = state.current_power[zone_index]
-    mastery_mult, mastery_note = mastery_tier(clear_before)
+    mastery_mult, mastery_note = mastery_tier(state)
     mastery_mult = 1.0 + (mastery_mult - 1.0) * scenario["mastery_scale"]
 
     run_seconds = base_run_time(state)
@@ -979,11 +989,10 @@ def build_report(scenario: dict[str, float], state: State, demo_mode: bool = Fal
     lines.append(f"- Runs without a purchase: {no_purchase_runs}")
     lines.append("")
     lines.append("## Proposed Layer-Clear Powerups")
-    lines.append("- 20% layer clear: `Layer Breaker I` = 1.5x global mining damage")
-    lines.append("- 40% layer clear: `Layer Breaker II` = 2.0x global mining damage")
-    lines.append("- 65% layer clear: `Layer Breaker III` = 2.5x global mining damage")
-    lines.append("- 88% layer clear: `Layer Breaker IV` = 3.0x global mining damage")
-    lines.append("- These persist forever, so every deeper layer has to be tuned around the player arriving with several prior layer-breaker stacks online.")
+    lines.append("- 25% global persistent clear: `Clear Breach I` = +50% total global mining damage")
+    lines.append("- 50% global persistent clear: `Clear Breach II` = another +50% total global mining damage")
+    lines.append("- 75% global persistent clear: `Clear Breach III` = another +50% total global mining damage")
+    lines.append("- This is one global set of three rewards, not a repeating set per layer. In the sim they stack multiplicatively to 1.5x, 2.25x, then 3.375x total damage.")
     lines.append("")
     lines.append("## Upgrade Additions Used By The Sim")
     lines.append("- Money early-mid: `Shock Bits`, `Breach Drones`, `Salvage Contract`, `Funnel Resonance`, `Daemon Lances`, `Root Breaker`")

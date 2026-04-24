@@ -592,6 +592,17 @@ func update():
             demo_lock_label.text = tr("Locked in Demo")
             demo_lock_label.show()
 
+    elif upgrade.demo_locked == 2:
+        %"Upgrade Amount".hide()
+        if using_sim_display:
+            %Description.text = "%s\n%s" % [upgrade.sim_name, sim_effect_text]
+        else:
+            %Description.text = Global.mods.get_from_to(upgrade.mod, upgrade.get_current_teir_value())
+        %"Mod Icon".texture = locked_texture
+        if demo_lock_label != null:
+            demo_lock_label.text = tr("Progress Reward")
+            demo_lock_label.show()
+
     elif upgrade.is_at_max() == true:
         if upgrade.has_tiers():
             %"Is Max".show()
@@ -720,7 +731,7 @@ func update_can_pay_cost():
     elif cost > _get_tree_currency_amount():
         check = false
 
-    if upgrade and upgrade.demo_locked == 1:
+    if upgrade and upgrade.demo_locked >= 1:
         check = false
 
     %Cost.add_theme_color_override("font_color", Refs.pallet.green if check else _get_theme_dark_color())
