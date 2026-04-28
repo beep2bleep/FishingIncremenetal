@@ -63,6 +63,8 @@ const SHIP_TRAIL_MAX := 8
 const HUD_REFRESH_INTERVAL := 0.1
 const PERF_DEBUG_REFRESH_INTERVAL := 0.25
 const PERF_PROBE_TEXT_REFRESH_INTERVAL := 1.0
+const SAVE_PREWARM_INTERVAL := 0.2
+const SAVE_PREWARM_SECTIONS_PER_PASS := 1
 const DRONE_RANGE := 230.0
 const DRONE_MISSILE_RANGE := 520.0
 const DRONE_FOLLOW_SPEED := 11.0
@@ -181,12 +183,14 @@ const AUTOPILOT_RETARGET_INTERVAL := 0.25
 const AUTOPILOT_MINING_SCAN_CELLS := 18
 const AUTOPILOT_STAGING_CLEARANCE_CELLS := 2
 const AUTOPILOT_TARGET_REACHED_DISTANCE := 26.0
-const AUTOPILOT_FUEL_RETURN_RATIO := 0.25
+const AUTOPILOT_FUEL_RETURN_RATIO := 0.15
 const AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME := 12
 const AUTOPILOT_NO_RENDER_STEPS_PER_FRAME := 240
 const AUTOPILOT_EDGE_AVOID_SCAN_CELLS := 4
 const AUTOPILOT_EDGE_AVOID_RADIUS := BLOCK_SIZE * 4.0
 const AUTOPILOT_EDGE_AVOID_WEIGHT := 1.8
+const AUTOPILOT_PICKUP_SCAN_RADIUS := BLOCK_SIZE * 10.0
+const AUTOPILOT_PICKUP_OVERFLOW_COUNT := 8
 
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
 enum OutlineMode { OFF, GROUP_EDGES, ALL_BLOCKS, ALL_BLOCKS_MASK }
@@ -280,6 +284,7 @@ var ship_trail_timer := 0.0
 var hud_refresh_timer := 0.0
 var perf_debug_refresh_timer := 0.0
 var perf_probe_text_refresh_timer := 0.0
+var save_prewarm_timer := 0.0
 var core_defense_timer := DEFENSE_BLOCK_INTERVAL
 var core_shockwave_timer := CORE_SHOCKWAVE_INTERVAL
 var cores_destroyed_this_run := 0
@@ -331,8 +336,11 @@ var autopilot_target := Vector2.ZERO
 var autopilot_aim_dir := Vector2.ZERO
 var autopilot_retarget_timer := 0.0
 var autopilot_status := ""
+var autopilot_return_reason := ""
 var autopilot_fast_forward_enabled := false
 var autopilot_no_render_enabled := false
+var validation_rng_seed: int = -1
+var validation_autopilot_mode: String = ""
 
 var planet_renderer: Node2D
 var drop_renderer: Node2D
@@ -561,11 +569,100 @@ func _ready() -> void:
         VirtualCursor.use_open_pit_empire_cursor(true)
         VirtualCursor.set_scene_enabled(true)
     Global.game_state = Util.GAME_STATES.PLAYING
-    rng.randomize()
+    if validation_rng_seed >= 0:
+        rng.seed = validation_rng_seed
+    else:
+        rng.randomize()
     _build_runtime_nodes()
     _build_ui()
     _start_run()
+    if validation_autopilot_mode != "":
+        apply_validation_autopilot_mode(validation_autopilot_mode)
     set_process(true)
+
+func apply_validation_autopilot_mode(mode: String) -> void:
+    validation_autopilot_mode = mode.strip_edges().to_lower()
+    barriers_left = maxi(barriers_left, 999)
+    autopilot_enabled = true
+    autopilot_returning = false
+    autopilot_retarget_timer = 0.0
+    autopilot_target = ship_pos
+    autopilot_aim_dir = Vector2.ZERO
+    autopilot_return_reason = ""
+    autopilot_status = "validation"
+    match validation_autopilot_mode:
+        "fast_render", "fast", "max_render":
+            _set_autopilot_no_render_enabled(false)
+            autopilot_fast_forward_enabled = true
+        "no_render", "norender", "sprint":
+            autopilot_fast_forward_enabled = false
+            _set_autopilot_no_render_enabled(true)
+        _:
+            autopilot_fast_forward_enabled = false
+            _set_autopilot_no_render_enabled(false)
+
+func get_validation_run_summary() -> Dictionary:
+    return {
+        "depth_level": current_depth_level,
+        "nodes_mined": nodes_mined,
+        "xp_earned": xp_earned_this_run,
+        "cores_destroyed": cores_destroyed_this_run,
+        "core_currency_earned": core_currency_earned_this_run,
+        "boss_defeated": boss_defeated,
+        "persistent_clear": _get_persistent_clear_percent(),
+        "money_touched": cargo_money,
+        "cargo_units": cargo_units,
+        "cargo_capacity": int(runtime_stats.get("cargo_capacity", 15)),
+        "run_time": float(runtime_stats.get("run_time", 30.0)),
+        "mining_time": maxf(0.0, float(runtime_stats.get("run_time", 30.0)) - time_left),
+        "time_left": time_left,
+        "power_peak": power_peak,
+        "barriers_left": barriers_left,
+        "blocks_alive": blocks.size(),
+        "total_planet_blocks": total_planet_blocks,
+        "run_finished": run_finished,
+        "summary_save_pending": summary_save_pending,
+        "autopilot_mode": validation_autopilot_mode,
+        "autopilot_return_reason": autopilot_return_reason,
+    }
+
+func get_validation_perf_summary() -> Dictionary:
+    return {
+        "current_fps": Engine.get_frames_per_second(),
+        "current_frame_ms": 1000.0 / maxf(float(maxi(1, Engine.get_frames_per_second())), 1.0),
+        "current_cpu_ms": float(Performance.get_monitor(Performance.TIME_PROCESS)) * 1000.0,
+        "current_physics_ms": float(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)) * 1000.0,
+        "run_extremes": _run_perf_extremes.duplicate(true),
+        "combat_extremes": _combat_perf_extremes.duplicate(true),
+        "run_worst_frame": _copy_perf_snapshot_for_validation(_run_perf_worst_snapshot),
+        "combat_worst_frame": _copy_perf_snapshot_for_validation(_combat_perf_worst_snapshot),
+        "probe_peaks": _run_perf_peak_samples.duplicate(true),
+        "probe_stats": _build_validation_perf_probe_stats(),
+    }
+
+func _build_validation_perf_probe_stats() -> Dictionary:
+    var result := {}
+    for key in PERF_PROBE_KEYS:
+        var samples: Array = _perf_probe_history.get(key, [])
+        result[key] = {
+            "label": str(_perf_probe_labels.get(key, key)),
+            "count": samples.size(),
+            "avg_ms": _sample_average_ms(samples),
+            "worst_1pct_ms": _sample_worst_one_percent_ms(samples),
+            "last_ms": float(_perf_probe_last_samples.get(key, 0.0)),
+            "peak_ms": float(_run_perf_peak_samples.get(key, 0.0)),
+        }
+    return result
+
+func _copy_perf_snapshot_for_validation(source: Dictionary) -> Dictionary:
+    var copy := source.duplicate(true)
+    if copy.has("camera_pos"):
+        var camera: Vector2 = copy.get("camera_pos", Vector2.ZERO)
+        copy["camera_pos"] = {"x": camera.x, "y": camera.y}
+    if copy.has("ship_pos"):
+        var ship: Vector2 = copy.get("ship_pos", Vector2.ZERO)
+        copy["ship_pos"] = {"x": ship.x, "y": ship.y}
+    return copy
 
 func _exit_tree() -> void:
     autopilot_fast_forward_enabled = false
@@ -600,6 +697,7 @@ func _unhandled_input(event: InputEvent) -> void:
             autopilot_retarget_timer = 0.0
             autopilot_target = ship_pos
             autopilot_aim_dir = Vector2.ZERO
+            autopilot_return_reason = ""
             if not autopilot_enabled:
                 autopilot_fast_forward_enabled = false
                 _set_autopilot_no_render_enabled(false)
@@ -1023,6 +1121,7 @@ func _start_run() -> void:
     autopilot_aim_dir = Vector2.ZERO
     autopilot_retarget_timer = 0.0
     autopilot_status = ""
+    autopilot_return_reason = ""
     autopilot_fast_forward_enabled = false
     _set_autopilot_no_render_enabled(false)
     if VirtualCursor != null:
@@ -1191,6 +1290,11 @@ func _process_gameplay_step(delta: float) -> void:
     if fps_label != null and perf_debug_refresh_timer <= 0.0:
         perf_debug_refresh_timer = PERF_DEBUG_REFRESH_INTERVAL
         _update_perf_debug(delta)
+    save_prewarm_timer -= delta
+    if save_prewarm_timer <= 0.0:
+        save_prewarm_timer = SAVE_PREWARM_INTERVAL
+        if planet_data != null:
+            planet_data.prewarm_dirty_save_sections(SAVE_PREWARM_SECTIONS_PER_PASS)
 
 func _get_gameplay_simulation_steps() -> int:
     if autopilot_enabled and autopilot_no_render_enabled and not run_finished:
@@ -1245,6 +1349,7 @@ func _update_timers(delta: float) -> void:
     _update_drone_mines(delta)
     var power_perf_start_us := perf_probe_begin()
     _update_power_state(delta)
+    _update_autopilot_power_use()
     perf_probe_end("update_power_state", power_perf_start_us)
     for idx in range(ghost_debris.size() - 1, -1, -1):
         var debris: Dictionary = ghost_debris[idx]
@@ -1589,13 +1694,15 @@ func _get_autopilot_direction(delta: float) -> Vector2:
     if planet_data == null:
         autopilot_status = "no planet"
         return Vector2.ZERO
-    if _should_autopilot_return():
+    var return_reason := _get_autopilot_return_reason()
+    if return_reason != "":
         autopilot_returning = true
+        autopilot_return_reason = return_reason
     autopilot_retarget_timer -= delta
     if autopilot_returning:
         autopilot_target = spawn_position
         autopilot_aim_dir = Vector2.ZERO
-        autopilot_status = "returning"
+        autopilot_status = "returning: %s" % (autopilot_return_reason if autopilot_return_reason != "" else "manual")
     elif autopilot_retarget_timer <= 0.0 or ship_pos.distance_to(autopilot_target) <= AUTOPILOT_TARGET_REACHED_DISTANCE:
         autopilot_retarget_timer = AUTOPILOT_RETARGET_INTERVAL
         autopilot_target = _find_autopilot_mining_target()
@@ -1621,16 +1728,26 @@ func _get_autopilot_direction(delta: float) -> Vector2:
                 autopilot_status = "%s, avoiding edge" % autopilot_status
     return direction
 
-func _should_autopilot_return() -> bool:
+func _get_autopilot_return_reason() -> String:
     if autopilot_returning:
-        return true
+        return autopilot_return_reason if autopilot_return_reason != "" else "already returning"
+    if barriers_left <= 0:
+        return "no barriers"
     var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
     if cargo_capacity > 0 and cargo_units >= cargo_capacity:
-        return true
+        return "cargo full"
     var run_time := maxf(1.0, float(runtime_stats.get("run_time", 30.0)))
-    return time_left <= run_time * AUTOPILOT_FUEL_RETURN_RATIO
+    if time_left <= run_time * AUTOPILOT_FUEL_RETURN_RATIO:
+        return "fuel reserve %.0fs" % ceil(run_time * AUTOPILOT_FUEL_RETURN_RATIO)
+    return ""
 
 func _find_autopilot_mining_target() -> Vector2:
+    var pickup_target := _find_autopilot_pickup_target()
+    if not pickup_target.is_empty():
+        autopilot_aim_dir = Vector2.ZERO
+        autopilot_status = "collecting"
+        return Vector2(pickup_target.get("position", ship_pos))
+
     var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
     var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1)
     if not nearby_targets.is_empty():
@@ -1676,6 +1793,40 @@ func _find_autopilot_mining_target() -> Vector2:
     autopilot_aim_dir = best_aim_dir
     autopilot_status = "seeking"
     return best_world
+
+func _find_autopilot_pickup_target() -> Dictionary:
+    if bool(runtime_stats.get("instant_collect", false)) or pickups.is_empty():
+        return {}
+    var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
+    var remaining_capacity := cargo_capacity - cargo_units
+    if remaining_capacity <= 0:
+        return {}
+    var pickup_radius := _get_effective_pickup_radius()
+    var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
+    var scan_radius := maxf(AUTOPILOT_PICKUP_SCAN_RADIUS, maxf(pickup_radius * 4.0, attack_radius * 2.5))
+    var scan_radius_sq := scan_radius * scan_radius
+    var allow_overflow_chase := pickups.size() >= AUTOPILOT_PICKUP_OVERFLOW_COUNT
+    var best_position := Vector2.ZERO
+    var best_score := INF
+    var found := false
+    for pickup in pickups:
+        var pickup_cargo := int(pickup.get("cargo", 1))
+        if pickup_cargo > remaining_capacity:
+            continue
+        var pickup_pos := Vector2(pickup.get("position", Vector2.ZERO))
+        var dist_sq := ship_pos.distance_squared_to(pickup_pos)
+        if dist_sq > scan_radius_sq and not allow_overflow_chase:
+            continue
+        var score := dist_sq
+        score -= float(pickup_cargo) * BLOCK_SIZE * BLOCK_SIZE * 0.75
+        score -= float(int(pickup.get("money", 0))) * BLOCK_SIZE * 0.1
+        if score < best_score:
+            best_score = score
+            best_position = pickup_pos
+            found = true
+    if not found:
+        return {}
+    return {"position": best_position}
 
 func _update_autopilot_aim_direction() -> void:
     var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
@@ -2479,8 +2630,8 @@ func _gain_power(amount: float) -> void:
         power_ring_overcharge = minf(1.0, power_ring_overcharge + (next_power - max_power) / maxf(max_power * 0.35, 1.0))
     current_power = clampf(next_power, 0.0, max_power)
     power_peak = maxf(power_peak, current_power)
-    if bool(runtime_stats.get("power_auto_trigger", false)) and not _is_power_active() and _is_power_ready():
-        _try_activate_power(false)
+    if (autopilot_enabled or bool(runtime_stats.get("power_auto_trigger", false))) and not _is_power_active() and _is_power_ready():
+        _try_activate_power(autopilot_enabled)
     if VirtualCursor != null:
         if VirtualCursor.has_method("set_open_pit_empire_cursor_power"):
             VirtualCursor.set_open_pit_empire_cursor_power(_get_power_ratio(), _is_power_active(), _is_power_ready())
@@ -2501,6 +2652,10 @@ func _try_activate_power(manual_trigger: bool = false) -> bool:
         if manual_trigger:
             VirtualCursor.burst_open_pit_empire_cursor_sparks(1.2)
     return true
+
+func _update_autopilot_power_use() -> void:
+    if autopilot_enabled and not run_finished and not _is_power_active() and _is_power_ready():
+        _try_activate_power(true)
 
 func _update_power_state(delta: float) -> void:
     power_ring_overcharge = maxf(0.0, power_ring_overcharge - delta * POWER_OVERCHARGE_PULSE_DECAY)
@@ -2887,10 +3042,16 @@ func _finish_run(returned: bool, reason: String) -> void:
     var history_text := "\n".join(attempt_lines)
     if history_text == "":
         history_text = "No previous breach attempts logged."
-    summary_label.text = "[center][b]%s[/b][/center]\n\n[table=2][cell]Breach Tier[/cell][cell]%d[/cell][cell]Blocks Mined This Run[/cell][cell]%d[/cell][cell]Haul Recovered[/cell][cell]$%d[/cell][cell]Loose Value Touched[/cell][cell]$%d[/cell][cell]XP Banked[/cell][cell]%d[/cell][cell]Daemons Deleted[/cell][cell]%d[/cell][cell]Persistent Clear[/cell][cell]%.1f%%[/cell][cell]Root Keys Banked[/cell][cell]%d[/cell][cell]Power Peak[/cell][cell]%.0f[/cell][cell]Barriers Left[/cell][cell]%d[/cell][/table]\n\n[color=#7dd6ff]Previous Attempts[/color]\n%s%s" % [
+    var run_time := maxf(0.0, float(runtime_stats.get("run_time", 30.0)))
+    var mining_time := maxf(0.0, run_time - time_left)
+    var auto_return_summary := autopilot_return_reason if autopilot_return_reason != "" else ("not returning" if autopilot_enabled else "off")
+    summary_label.text = "[center][b]%s[/b][/center]\n\n[table=2][cell]Breach Tier[/cell][cell]%d[/cell][cell]Blocks Mined This Run[/cell][cell]%d[/cell][cell]Mining Time[/cell][cell]%s[/cell][cell]Fuel Remaining[/cell][cell]%s[/cell][cell]Auto Pilot Return[/cell][cell]%s[/cell][cell]Haul Recovered[/cell][cell]$%d[/cell][cell]Loose Value Touched[/cell][cell]$%d[/cell][cell]XP Banked[/cell][cell]%d[/cell][cell]Daemons Deleted[/cell][cell]%d[/cell][cell]Persistent Clear[/cell][cell]%.1f%%[/cell][cell]Root Keys Banked[/cell][cell]%d[/cell][cell]Power Peak[/cell][cell]%.0f[/cell][cell]Barriers Left[/cell][cell]%d[/cell][/table]\n\n[color=#7dd6ff]Previous Attempts[/color]\n%s%s" % [
         reason,
         current_depth_level,
         nodes_mined,
+        _format_run_seconds(mining_time),
+        _format_run_seconds(time_left),
+        auto_return_summary,
         money_award,
         total_money,
         xp_earned_this_run,
@@ -2983,11 +3144,8 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
         summary_save_phase = "done"
         summary_save_pending = false
         summary_pending_saved_section_ids.clear()
-    var cached_planet_state: Dictionary = PROGRESS.peek_cached_planet_state()
-    if not cached_planet_state.is_empty():
-        var next_runtime_planet = PLANET_DATA_SCRIPT.new()
-        next_runtime_planet.load_save_data(cached_planet_state)
-        PROGRESS.save_runtime_planet_data(current_depth_level, next_runtime_planet)
+    if planet_data != null:
+        PROGRESS.save_runtime_planet_data(current_depth_level, planet_data)
     else:
         PROGRESS.clear_runtime_planet_data()
     persistent_data = PROGRESS.load_data()
@@ -2997,6 +3155,9 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
             summary_return_button.text = "Return To Upgrades"
         if summary_status_label != null:
             summary_status_label.text = "Save complete."
+
+func _format_run_seconds(seconds: float) -> String:
+    return "%.1fs" % maxf(0.0, seconds)
 
 func _on_finish_save_progress(progress: float) -> void:
     if not summary_save_pending:
@@ -3016,6 +3177,8 @@ func _refresh_hud() -> void:
         cargo_label.text = "Fuel: %.1fs  |  Extracting..." % time_left
     elif _is_return_zone_charging():
         cargo_label.text = "Fuel: %.1fs  |  Extraction %.1fs" % [time_left, maxf(0.0, RETURN_ZONE_DELAY - return_zone_timer)]
+    elif autopilot_enabled and autopilot_returning:
+        cargo_label.text = "Fuel: %.1fs  |  Auto Return: %s" % [time_left, autopilot_return_reason if autopilot_return_reason != "" else "returning"]
     else:
         cargo_label.text = "Fuel: %.1fs  |  Extraction Zone Standby" % time_left
     wallet_label.text = "Haul: $%d  |  Wallet: $%d  |  XP: %d" % [cargo_money, int(persistent_data.get("wallet", 0)), int(persistent_data.get("xp_currency", 0)) + xp_earned_this_run]

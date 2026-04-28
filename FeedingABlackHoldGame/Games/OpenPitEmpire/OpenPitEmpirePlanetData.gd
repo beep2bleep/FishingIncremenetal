@@ -27,6 +27,7 @@ const FINAL_CORE_ID: int = 16
 const SAVE_X_SLICES: int = 10
 const SAVE_DEPTH_SLICES: int = 10
 const SAVE_SECTION_COUNT: int = SAVE_X_SLICES * SAVE_DEPTH_SLICES
+const SAVE_SECTION_PREWARM_SETTLE_MSEC: int = 5000
 const ELECTRIC_CHAIN_MAX_TARGETS_PER_STEP: int = 8
 const ELECTRIC_CHAIN_MAX_TOTAL_RESULTS: int = 96
 const CORE_SHARED_HP_BLOCK_MULT: float = 2.0
@@ -106,6 +107,10 @@ var balance_script: Variant = null
 var world_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var core_difficulty_mult: float = 1.0
 var _dirty_sections: Dictionary = {}
+var _section_dirty_revision: Dictionary = {}
+var _section_dirty_msec: Dictionary = {}
+var _serialized_section_cache: Dictionary = {}
+var _serialized_section_cache_revision: Dictionary = {}
 var _section_cells: Array = []
 var _section_cells_ready: bool = false
 
@@ -857,7 +862,7 @@ func build_save_data_async(tree: SceneTree, progress_callback: Callable = Callab
     _emit_generation_progress(progress_callback, 0.0)
     for idx in range(dirty_section_ids.size()):
         var section_id: int = int(dirty_section_ids[idx])
-        sections[section_id] = _serialize_section(section_id)
+        sections[section_id] = _serialize_section_cached(section_id)
         if tree != null and ((idx + 1) % 2 == 0):
             _emit_generation_progress(progress_callback, 0.82 * float(idx + 1) / float(total_sections))
             await tree.process_frame
@@ -1055,7 +1060,10 @@ func _get_section_id(pos: Vector2i) -> int:
     return depth_idx * SAVE_X_SLICES + angle_idx
 
 func _mark_section_dirty(pos: Vector2i) -> void:
-    _dirty_sections[_get_section_id(pos)] = true
+    var section_id := _get_section_id(pos)
+    _dirty_sections[section_id] = true
+    _section_dirty_revision[section_id] = int(_section_dirty_revision.get(section_id, 0)) + 1
+    _section_dirty_msec[section_id] = Time.get_ticks_msec()
 
 func _mark_dirty_positions(positions: Array) -> void:
     for pos_variant in positions:
@@ -1070,6 +1078,8 @@ func _mark_core_section_dirty(center: Vector2i, core_size: int) -> void:
 func _mark_all_sections_dirty() -> void:
     for section_id in range(SAVE_SECTION_COUNT):
         _dirty_sections[section_id] = true
+        _section_dirty_revision[section_id] = int(_section_dirty_revision.get(section_id, 0)) + 1
+        _section_dirty_msec[section_id] = Time.get_ticks_msec()
 
 func _get_dirty_section_ids() -> Array:
     if _dirty_sections.is_empty():
@@ -1103,11 +1113,38 @@ func _serialize_section(section_id: int) -> Array:
         ])
     return rows
 
+func _serialize_section_cached(section_id: int) -> Array:
+    var revision := int(_section_dirty_revision.get(section_id, 0))
+    if _serialized_section_cache.has(section_id) and int(_serialized_section_cache_revision.get(section_id, -1)) == revision:
+        return _serialized_section_cache[section_id]
+    var rows := _serialize_section(section_id)
+    _serialized_section_cache[section_id] = rows
+    _serialized_section_cache_revision[section_id] = revision
+    return rows
+
+func prewarm_dirty_save_sections(max_sections: int = 1) -> int:
+    if max_sections <= 0 or _dirty_sections.is_empty():
+        return 0
+    var warmed := 0
+    var now_msec := Time.get_ticks_msec()
+    for section_id_variant in _get_dirty_section_ids():
+        var section_id: int = int(section_id_variant)
+        var revision := int(_section_dirty_revision.get(section_id, 0))
+        if _serialized_section_cache.has(section_id) and int(_serialized_section_cache_revision.get(section_id, -1)) == revision:
+            continue
+        if now_msec - int(_section_dirty_msec.get(section_id, now_msec)) < SAVE_SECTION_PREWARM_SETTLE_MSEC:
+            continue
+        _serialize_section_cached(section_id)
+        warmed += 1
+        if warmed >= max_sections:
+            break
+    return warmed
+
 func _serialize_dirty_sections() -> Dictionary:
     var sections := {}
     for section_id_variant in _get_dirty_section_ids():
         var section_id: int = int(section_id_variant)
-        sections[section_id] = _serialize_section(section_id)
+        sections[section_id] = _serialize_section_cached(section_id)
     return sections
 
 func _serialize_core_data() -> Array:

@@ -313,16 +313,16 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
     data["total_cores_destroyed"] = max(0, int(data.get("total_cores_destroyed", 0)) + int(results.get("cores_destroyed", 0)))
     BALANCE.refresh_depth_unlocks(data)
     if results.get("planet_state", {}) is Dictionary:
-        var planet_state: Dictionary = results.get("planet_state", {}).duplicate(true)
+        var planet_state: Dictionary = Dictionary(results.get("planet_state", {})).duplicate(false)
         if bool(results.get("defer_planet_state_save", false)):
             var merge_result: Dictionary = _try_merge_planet_state(planet_state)
             if bool(merge_result.get("ok", false)):
-                _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(true)
+                _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(false)
                 data["remaining_layer_block_counts"] = _normalize_layer_block_counts(merge_result.get("remaining_layer_block_counts", {}))
         else:
             var merge_result: Dictionary = _try_merge_planet_state(planet_state)
             if bool(merge_result.get("ok", false)):
-                _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(true)
+                _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(false)
                 data["remaining_layer_block_counts"] = _normalize_layer_block_counts(merge_result.get("remaining_layer_block_counts", {}))
                 _write_planet_state_binary(_cached_planet_state)
     else:
@@ -373,7 +373,7 @@ static func save_planet_state(state: Dictionary) -> bool:
     var merge_result: Dictionary = _try_merge_planet_state(state)
     if not bool(merge_result.get("ok", false)):
         return false
-    _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(true)
+    _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(false)
     return _write_planet_state_binary(_cached_planet_state)
 
 static func start_async_planet_state_save(state: Dictionary) -> void:
@@ -384,11 +384,11 @@ static func start_async_planet_state_save(state: Dictionary) -> void:
         _planet_save_pending = false
         _planet_save_thread = null
         return
-    _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(true)
+    _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(false)
     _planet_save_ok = true
     _planet_save_pending = true
     _planet_save_thread = Thread.new()
-    var err := _planet_save_thread.start(Callable(OpenPitEmpireProgress, "_thread_write_planet_state").bind(_cached_planet_state.duplicate(true)))
+    var err := _planet_save_thread.start(Callable(OpenPitEmpireProgress, "_thread_write_planet_state").bind(_cached_planet_state.duplicate(false)))
     if err != OK:
         _planet_save_pending = false
         _planet_save_thread = null
@@ -755,18 +755,23 @@ static func _print_startup_profile(label: String, elapsed_msec: int = -1) -> voi
 static func _write_planet_state_binary(state: Dictionary) -> bool:
     if DirAccess.make_dir_recursive_absolute(PLANET_SAVE_DIR) != OK and not DirAccess.dir_exists_absolute(PLANET_SAVE_DIR):
         return false
-    var payload: Dictionary = state.duplicate(true)
+    var payload: Dictionary = state.duplicate(false)
     payload["planet_layout_version"] = BALANCE.PLANET_LAYOUT_VERSION
     var sections: Dictionary = payload.get("sections", {})
     var section_ids: Array = []
     for section_id_variant in sections.keys():
         section_ids.append(int(section_id_variant))
     section_ids.sort()
+    var dirty_section_ids: Array = payload.get("_dirty_section_ids", section_ids).duplicate()
     payload["section_ids"] = section_ids
     payload.erase("sections")
-    for section_id_variant in sections.keys():
+    payload.erase("_dirty_section_ids")
+    for section_id_variant in dirty_section_ids:
         var section_id: int = int(section_id_variant)
-        if not _write_var_file_atomically(_planet_section_path(section_id), sections[section_id_variant]):
+        if not sections.has(section_id) and not sections.has(str(section_id)):
+            continue
+        var section_payload: Variant = sections.get(section_id, sections.get(str(section_id), []))
+        if not _write_var_file_atomically(_planet_section_path(section_id), section_payload):
             return false
     return _write_var_file_atomically(PLANET_META_PATH, payload)
 
@@ -836,12 +841,12 @@ static func _try_merge_planet_state(update: Dictionary) -> Dictionary:
     var remaining_layer_block_counts := _normalize_layer_block_counts(_cached_data.get("remaining_layer_block_counts", {}) if _cache_loaded else {})
     if not _cached_planet_state.is_empty():
         if int(_cached_planet_state.get("planet_layout_version", 0)) == BALANCE.PLANET_LAYOUT_VERSION:
-            merged = _cached_planet_state.duplicate(true)
+            merged = _cached_planet_state.duplicate(false)
             has_full_base = true
     else:
         var existing: Variant = _read_planet_state_binary()
         if existing is Dictionary:
-            merged = Dictionary(existing).duplicate(true)
+            merged = Dictionary(existing).duplicate(false)
             has_full_base = true
     if int(merged.get("planet_layout_version", 0)) != BALANCE.PLANET_LAYOUT_VERSION:
         merged = {}
@@ -865,10 +870,12 @@ static func _try_merge_planet_state(update: Dictionary) -> Dictionary:
             continue
         merged[key] = update[key_variant]
     merged["planet_layout_version"] = BALANCE.PLANET_LAYOUT_VERSION
-    var merged_sections: Dictionary = merged.get("sections", {}).duplicate(true)
+    var merged_sections: Dictionary = Dictionary(merged.get("sections", {})).duplicate(false)
     var format_version: int = int(update.get("format_version", merged.get("format_version", 1)))
+    var dirty_section_ids: Array = []
     for section_id_variant in update_sections.keys():
         var section_id: int = int(section_id_variant)
+        dirty_section_ids.append(section_id)
         var old_counts: Dictionary = _count_layer_blocks_in_section(Array(merged_sections.get(section_id, [])), format_version)
         var new_section: Array = Array(update_sections[section_id_variant])
         var new_counts: Dictionary = _count_layer_blocks_in_section(new_section, format_version)
@@ -879,4 +886,5 @@ static func _try_merge_planet_state(update: Dictionary) -> Dictionary:
             )
         merged_sections[section_id] = new_section
     merged["sections"] = merged_sections
+    merged["_dirty_section_ids"] = dirty_section_ids
     return {"ok": true, "state": merged, "remaining_layer_block_counts": remaining_layer_block_counts}
