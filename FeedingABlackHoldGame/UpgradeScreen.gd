@@ -255,6 +255,7 @@ var state: int:
 
 func _ready() -> void :
     _open_pit_startup_ready_started_msec = Time.get_ticks_msec()
+    var ready_step_started_msec := _open_pit_startup_ready_started_msec
     _print_open_pit_startup("ready_begin")
     SignalBus.pallet_updated.connect(_on_pallet_updated)
     SignalBus.global_resource_changed.connect(_on_global_resource_changed)
@@ -263,6 +264,7 @@ func _ready() -> void :
     ControllerIcons.input_type_changed.connect(_on_input_type_changed)
     _bind_tech_tree(tech_tree)
     get_viewport().size_changed.connect(_on_viewport_size_changed)
+    ready_step_started_msec = _print_open_pit_ready_step("ready_signals", ready_step_started_msec)
 
 
 
@@ -272,31 +274,51 @@ func _ready() -> void :
 
     set_process_input(false)
     set_process(false)
+    ready_step_started_msec = _print_open_pit_ready_step("ready_initial_visibility", ready_step_started_msec)
 
     update_colors()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_update_colors", ready_step_started_msec)
     _setup_editor_cash_controls()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_editor_cash_controls", ready_step_started_msec)
     _setup_editor_center_offset_controls()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_editor_center_offset_controls", ready_step_started_msec)
     _setup_editor_sell_popup_menu()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_editor_sell_popup_menu", ready_step_started_msec)
     _setup_battle_level_choice_dialog()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_battle_level_choice_dialog", ready_step_started_msec)
     _setup_reel_depth_tier_dialog()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_reel_depth_tier_dialog", ready_step_started_msec)
     _setup_reset_progress_controls()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_reset_progress_controls", ready_step_started_msec)
     _setup_version_label()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_version_label", ready_step_started_msec)
     _setup_settings_controls()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_settings_controls", ready_step_started_msec)
     _setup_return_to_main_menu_button()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_return_to_main_menu_button", ready_step_started_msec)
     _setup_fullscreen_button()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_fullscreen_button", ready_step_started_msec)
     _setup_touch_input_button()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_touch_input_button", ready_step_started_msec)
     go_again_button = get_node_or_null("%Go Again")
     demo_mode_label = get_node_or_null("%Demo Mode Label")
     game_mode_label = get_node_or_null("%Game Mode Label")
     _setup_mining_time_label()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_mining_time_label", ready_step_started_msec)
     wishlist_button = get_node_or_null("%Wishlist")
     popup_layer = get_node_or_null("%Popup Layer")
     _bind_popup_layer_visibility_updates()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_popup_layer_bindings", ready_step_started_msec)
     _setup_wishlist_button()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_wishlist_button", ready_step_started_msec)
     _setup_leaderboard_panel()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_leaderboard_panel", ready_step_started_msec)
     _setup_continue_locked_dialog()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_continue_locked_dialog", ready_step_started_msec)
     _update_go_again_button_state()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_go_again_state", ready_step_started_msec)
     _refresh_mining_crt_overlay()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_mining_crt_overlay", ready_step_started_msec)
     hide()
     if _is_standalone_mode_upgrade_scene() and get_tree().current_scene == self:
         setup()
@@ -984,6 +1006,15 @@ func _print_open_pit_startup(label: String, elapsed_msec: int = -1) -> void:
     else:
         print("[OpenPitUpgradeStartup] %s since_request=%.3fms" % [label, float(since_scene_request_msec)])
 
+func _print_open_pit_ready_step(label: String, step_started_msec: int) -> int:
+    if not _should_profile_open_pit_upgrade_startup():
+        return Time.get_ticks_msec()
+    var now_msec := Time.get_ticks_msec()
+    var elapsed_msec := now_msec - step_started_msec
+    if elapsed_msec >= 8:
+        _print_open_pit_startup(label, elapsed_msec)
+    return now_msec
+
 func _sync_simulation_currency_from_save() -> void:
     if not (_is_simulation_upgrade_tree_requested() or _is_simulation_upgrade_tree()):
         return
@@ -1132,8 +1163,14 @@ func _setup_wishlist_button() -> void:
     var button: Button = _get_active_wishlist_button()
     if button == null:
         return
-    button.visible = _is_demo_mode_enabled()
-    button.disabled = false if OS.has_feature("web") and _can_open_demo_wishlist_url() else not _can_open_demo_wishlist_url()
+    var should_show_wishlist := _is_demo_mode_enabled()
+    button.visible = should_show_wishlist
+    if not should_show_wishlist:
+        button.disabled = true
+        return
+    var wishlist_url := _get_demo_wishlist_url()
+    var can_open_wishlist := wishlist_url.begins_with("http://") or wishlist_url.begins_with("https://")
+    button.disabled = false if OS.has_feature("web") and can_open_wishlist else not can_open_wishlist
     button.mouse_filter = Control.MOUSE_FILTER_STOP
     button.focus_mode = Control.FOCUS_ALL
     button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
@@ -1141,7 +1178,7 @@ func _setup_wishlist_button() -> void:
     button.z_index = 200
     button.modulate = Color(1.0, 1.0, 1.0, 1.0)
     button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-    button.tooltip_text = _get_demo_wishlist_url()
+    button.tooltip_text = wishlist_url
     if not button.pressed.is_connected(_on_wishlist_button_pressed):
         button.pressed.connect(_on_wishlist_button_pressed)
     _refresh_wishlist_button_text()

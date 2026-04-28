@@ -169,6 +169,7 @@ const WINTER_CROSS_LASER_HIT_COOLDOWN := 0.5
 const WINTER_CROSS_LASER_GAP_SIZE := 0.18
 const WINTER_CROSS_LASER_GAP_SLIDE_SPEED := 0.15
 const WINTER_CROSS_LASER_GAP_MAX := 0.85
+const WINTER_CROSS_LASER_EXIT_PERSIST := 10.0
 const CORE_HAZARD_KNOCKBACK := 500.0
 const DEFAULT_STARTING_BARRIERS := 1
 const SHIELD_HIT_INVULN_TIME := 1.0
@@ -3809,8 +3810,8 @@ func _update_root_cross_lasers(delta: float) -> void:
         if not bool(core.alive) or int(core.zone) != PLANET_DATA_SCRIPT.Zone.ROOT:
             continue
         var cid: int = int(core.id)
-        if not _is_ship_in_core_influence(core):
-            root_cross_lasers.erase(cid)
+        var ship_in_influence := _is_ship_in_core_influence(core)
+        if not ship_in_influence and not root_cross_lasers.has(cid):
             continue
         var hp_ratio: float = planet_data.get_core_hp_ratio(core)
         var is_boss: bool = str(core.role) == "boss" or str(core.role) == "final"
@@ -3830,7 +3831,15 @@ func _update_root_cross_lasers(delta: float) -> void:
             "gaps": [],
             "core_id": cid,
             "is_boss": is_boss,
+            "exit_timer": WINTER_CROSS_LASER_EXIT_PERSIST,
         })
+        if ship_in_influence:
+            state["exit_timer"] = WINTER_CROSS_LASER_EXIT_PERSIST
+        else:
+            state["exit_timer"] = float(state.get("exit_timer", WINTER_CROSS_LASER_EXIT_PERSIST)) - delta
+            if float(state.get("exit_timer", 0.0)) <= 0.0:
+                root_cross_lasers.erase(cid)
+                continue
         if Array(state.get("gaps", [])).is_empty():
             var gaps: Array = []
             for _arm_i in range(4):
@@ -3841,6 +3850,7 @@ func _update_root_cross_lasers(delta: float) -> void:
         state["speed"] = speed
         state["core_edge_ratio"] = edge_ratio
         state["angle"] = float(state.get("angle", 0.0)) + speed * delta
+        state["hit_timer"] = maxf(0.0, float(state.get("hit_timer", 0.0)) - delta)
         var gaps_state: Array = state.get("gaps", [])
         for gap in gaps_state:
             gap["pos"] = clampf(float(gap.get("pos", edge_ratio)) + float(gap.get("dir", 1.0)) * WINTER_CROSS_LASER_GAP_SLIDE_SPEED * delta, edge_ratio, WINTER_CROSS_LASER_GAP_MAX)
