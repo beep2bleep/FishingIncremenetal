@@ -194,6 +194,9 @@ const AUTOPILOT_PICKUP_OVERFLOW_COUNT := 8
 const AUTOPILOT_CORE_AVOID_MARGIN_CELLS := 4
 const AUTOPILOT_CORE_AVOID_WEIGHT := 3.4
 const AUTOPILOT_LANE_SCORE_WEIGHT := BLOCK_SIZE * BLOCK_SIZE * 0.35
+const AUTOPILOT_ANCHOR_SCAN_CELLS := 72
+const AUTOPILOT_ANCHOR_SCAN_HALF_WIDTH := 16
+const AUTOPILOT_CORE_BREACH_CLEAR_PERCENT := 55.0
 const AUTOPILOT_MODE_CENTER := "center"
 const AUTOPILOT_MODE_LEFT_SWEEP := "left sweep"
 const AUTOPILOT_MODE_RIGHT_SWEEP := "right sweep"
@@ -610,6 +613,9 @@ func apply_validation_autopilot_mode(mode: String) -> void:
             _set_autopilot_no_render_enabled(false)
 
 func get_validation_run_summary() -> Dictionary:
+    var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
+    var run_time := float(runtime_stats.get("run_time", 30.0))
+    var mining_time := maxf(0.0, run_time - time_left)
     return {
         "depth_level": current_depth_level,
         "nodes_mined": nodes_mined,
@@ -620,10 +626,22 @@ func get_validation_run_summary() -> Dictionary:
         "persistent_clear": _get_persistent_clear_percent(),
         "money_touched": cargo_money,
         "cargo_units": cargo_units,
-        "cargo_capacity": int(runtime_stats.get("cargo_capacity", 15)),
-        "run_time": float(runtime_stats.get("run_time", 30.0)),
-        "mining_time": maxf(0.0, float(runtime_stats.get("run_time", 30.0)) - time_left),
+        "cargo_capacity": cargo_capacity,
+        "cargo_fill_ratio": 0.0 if cargo_capacity <= 0 else float(cargo_units) / float(cargo_capacity),
+        "end_cargo_units": cargo_units,
+        "end_cargo_capacity": cargo_capacity,
+        "end_cargo_fill_ratio": 0.0 if cargo_capacity <= 0 else float(cargo_units) / float(cargo_capacity),
+        "run_time": run_time,
+        "mining_time": mining_time,
         "time_left": time_left,
+        "fuel_left_s": time_left,
+        "fuel_capacity_s": run_time,
+        "fuel_used_s": mining_time,
+        "fuel_left_ratio": 0.0 if run_time <= 0.0 else time_left / run_time,
+        "end_fuel_left_s": time_left,
+        "end_fuel_capacity_s": run_time,
+        "end_fuel_used_s": mining_time,
+        "end_fuel_left_ratio": 0.0 if run_time <= 0.0 else time_left / run_time,
         "power_peak": power_peak,
         "barriers_left": barriers_left,
         "blocks_alive": blocks.size(),
@@ -631,6 +649,8 @@ func get_validation_run_summary() -> Dictionary:
         "run_finished": run_finished,
         "summary_save_pending": summary_save_pending,
         "autopilot_mode": validation_autopilot_mode,
+        "autopilot_sortie_mode": autopilot_sortie_mode,
+        "autopilot_status": autopilot_status,
         "autopilot_return_reason": autopilot_return_reason,
     }
 
@@ -1748,6 +1768,9 @@ func _get_autopilot_direction(delta: float) -> Vector2:
     return direction
 
 func _choose_autopilot_sortie_mode() -> void:
+    if _should_autopilot_prioritize_core_breach():
+        autopilot_sortie_mode = AUTOPILOT_MODE_CENTER
+        return
     var roll := rng.randf()
     if roll < 0.25:
         autopilot_sortie_mode = AUTOPILOT_MODE_TOP_SWEEP
@@ -1764,7 +1787,7 @@ func _get_autopilot_return_reason() -> String:
     if barriers_left <= 0:
         return "no barriers"
     var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
-    if cargo_capacity > 0 and cargo_units >= cargo_capacity:
+    if cargo_capacity > 0 and cargo_units >= cargo_capacity and not _should_autopilot_prioritize_core_breach():
         return "cargo full"
     var run_time := maxf(1.0, float(runtime_stats.get("run_time", 30.0)))
     if time_left <= run_time * AUTOPILOT_FUEL_RETURN_RATIO:
@@ -1772,11 +1795,19 @@ func _get_autopilot_return_reason() -> String:
     return ""
 
 func _find_autopilot_mining_target() -> Vector2:
-    var pickup_target := _find_autopilot_pickup_target()
-    if not pickup_target.is_empty():
-        autopilot_aim_dir = Vector2.ZERO
-        autopilot_status = "collecting"
-        return Vector2(pickup_target.get("position", ship_pos))
+    var core_breach_target := _find_autopilot_core_breach_target()
+    if not core_breach_target.is_empty():
+        var core_world := Vector2(core_breach_target.get("target_world", ship_pos))
+        autopilot_aim_dir = (core_world - ship_pos).normalized()
+        autopilot_status = "breaching core"
+        return Vector2(core_breach_target.get("world", ship_pos))
+
+    if not _should_autopilot_prioritize_core_breach():
+        var pickup_target := _find_autopilot_pickup_target()
+        if not pickup_target.is_empty():
+            autopilot_aim_dir = Vector2.ZERO
+            autopilot_status = "collecting"
+            return Vector2(pickup_target.get("position", ship_pos))
 
     var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
     var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1)
@@ -1839,6 +1870,73 @@ func _find_autopilot_mining_target() -> Vector2:
     autopilot_status = "seeking %s" % autopilot_sortie_mode
     return best_world
 
+func _should_autopilot_prioritize_core_breach() -> bool:
+    if planet_data == null:
+        return false
+    if int(persistent_data.get("deepest_level_unlocked", current_depth_level)) >= BALANCE.MAX_DEPTH_LEVEL:
+        return true
+    if float(persistent_data.get("last_run_breakdown", {}).get("persistent_clear", 0.0)) >= AUTOPILOT_CORE_BREACH_CLEAR_PERCENT:
+        return true
+    var best_layer_clears: Dictionary = persistent_data.get("best_layer_clear_percents", {})
+    var deepest_layer_clear := maxf(
+        float(best_layer_clears.get(BALANCE.MAX_DEPTH_LEVEL, 0.0)),
+        float(best_layer_clears.get(str(BALANCE.MAX_DEPTH_LEVEL), 0.0))
+    )
+    if deepest_layer_clear >= AUTOPILOT_CORE_BREACH_CLEAR_PERCENT:
+        return true
+    return false
+
+func _find_autopilot_core_breach_target() -> Dictionary:
+    if not _should_autopilot_prioritize_core_breach():
+        return {}
+    var best_core: Dictionary = {}
+    var best_score := -INF
+    for core_variant in planet_data.cores:
+        var core: Dictionary = core_variant
+        if not bool(core.get("alive", false)):
+            continue
+        var core_id := int(core.get("id", -1))
+        if planet_data.is_core_locked(core_id, _core_unlocks_center()):
+            continue
+        var role := str(core.get("role", ""))
+        var center := Vector2i(int(core.center.x), int(core.center.y))
+        var depth_score := float(center.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)
+        var score := depth_score - ship_pos.distance_to(grid_to_world(center)) / BLOCK_SIZE
+        if role == "final":
+            score += 10000.0
+        elif role == "boss":
+            score += 1000.0
+        if score > best_score:
+            best_score = score
+            best_core = core
+    if best_core.is_empty():
+        return {}
+    var core_center := Vector2i(int(best_core.center.x), int(best_core.center.y))
+    return {
+        "grid": core_center,
+        "target_world": grid_to_world(core_center),
+        "world": _get_autopilot_staging_world_for_core(best_core),
+    }
+
+func _get_autopilot_staging_world_for_core(core: Dictionary) -> Vector2:
+    var core_center := Vector2i(int(core.center.x), int(core.center.y))
+    var core_size := int(core.get("size", 3))
+    var staging_cells := maxi(AUTOPILOT_STAGING_CLEARANCE_CELLS, core_size / 2 + 2)
+    var best_world := grid_to_world(core_center)
+    var best_score := INF
+    for neighbor in CARDINAL_NEIGHBORS:
+        var staging_grid: Vector2i = core_center + neighbor * staging_cells
+        if not is_grid_empty(staging_grid):
+            continue
+        if _is_in_locked_core_avoidance_zone(staging_grid, true):
+            continue
+        var staging_world := grid_to_world(staging_grid)
+        var score := ship_pos.distance_squared_to(staging_world)
+        if score < best_score:
+            best_score = score
+            best_world = staging_world
+    return best_world
+
 func _get_autopilot_desired_lane_x(y: int) -> int:
     if planet_data == null:
         return 0
@@ -1859,9 +1957,48 @@ func _get_autopilot_desired_lane_x(y: int) -> int:
 func _find_autopilot_lane_anchor_target() -> Dictionary:
     if planet_data == null:
         return {}
+    var my_grid := world_to_grid(ship_pos)
+    var min_y: int = clampi(my_grid.y - 8, PLANET_DATA_SCRIPT.PIT_TOP_Y, PLANET_DATA_SCRIPT.PIT_BOTTOM_Y)
+    var max_y: int = clampi(my_grid.y + AUTOPILOT_ANCHOR_SCAN_CELLS, PLANET_DATA_SCRIPT.PIT_TOP_Y, PLANET_DATA_SCRIPT.PIT_BOTTOM_Y)
     var best_grid := Vector2i(999999, 999999)
     var best_score := INF
+    for y in range(min_y, max_y + 1):
+        var lane_x := _get_autopilot_desired_lane_x(y)
+        var min_x: int = lane_x - AUTOPILOT_ANCHOR_SCAN_HALF_WIDTH
+        var max_x: int = lane_x + AUTOPILOT_ANCHOR_SCAN_HALF_WIDTH
+        for x in range(min_x, max_x + 1):
+            var pos := Vector2i(x, y)
+            if not blocks.has(pos):
+                continue
+            var block: Dictionary = blocks.get(pos, {})
+            if not _is_autopilot_attackable_block(block, pos):
+                continue
+            var lane_dist := absf(float(pos.x - lane_x))
+            var depth_score := float(pos.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)
+            var dist_score := ship_pos.distance_squared_to(grid_to_world(pos)) / (BLOCK_SIZE * BLOCK_SIZE)
+            var score := lane_dist * 10.0 + dist_score * 0.08
+            if autopilot_sortie_mode == AUTOPILOT_MODE_TOP_SWEEP:
+                score += depth_score * 4.0
+            else:
+                score -= depth_score * 0.25
+            if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
+                score -= 40.0
+            if score < best_score:
+                best_score = score
+                best_grid = pos
+    if best_grid.x < 999999:
+        return {"grid": best_grid, "world": _get_autopilot_staging_world_for_anchor(best_grid)}
+    return _find_autopilot_any_anchor_target()
+
+func _find_autopilot_any_anchor_target() -> Dictionary:
+    var best_grid := Vector2i(999999, 999999)
+    var best_score := INF
+    var checked := 0
+    var stride := maxi(1, blocks.size() / 5000)
     for pos_variant in blocks.keys():
+        checked += 1
+        if checked % stride != 0:
+            continue
         var pos: Vector2i = pos_variant
         var block: Dictionary = blocks.get(pos, {})
         if not _is_autopilot_attackable_block(block, pos):

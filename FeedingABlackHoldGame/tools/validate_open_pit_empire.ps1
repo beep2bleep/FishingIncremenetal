@@ -1,7 +1,8 @@
 param(
     [string]$Modes = "normal,fast_render,no_render",
     [int]$MaxSorties = 160,
-    [double]$TimeoutSeconds = 1800
+    [double]$TimeoutSeconds = 1800,
+    [string]$ResumeCheckpoint = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -20,18 +21,27 @@ Write-Host "Open Pit Empire validation"
 Write-Host "Project: $ProjectRoot"
 Write-Host "Modes: $Modes"
 Write-Host "Report directory: $ReportDir"
+if ($ResumeCheckpoint -ne "") {
+    Write-Host "Resume checkpoint: $ResumeCheckpoint"
+}
 Write-Host "Your current Open Pit Empire save is backed up and restored by the validation runner."
 
-& $GodotExe `
-    --headless `
-    --path $ProjectRoot `
-    --log-file $LogFile `
-    "res://Games/OpenPitEmpire/Tools/OpenPitEmpireValidationRunner.tscn" `
-    -- `
-    "--modes=$Modes" `
-    "--max-sorties=$MaxSorties" `
-    "--timeout-seconds=$TimeoutSeconds" `
+$GodotArgs = @(
+    "--headless",
+    "--path", $ProjectRoot,
+    "--log-file", $LogFile,
+    "res://Games/OpenPitEmpire/Tools/OpenPitEmpireValidationRunner.tscn",
+    "--",
+    "--modes=$Modes",
+    "--max-sorties=$MaxSorties",
+    "--timeout-seconds=$TimeoutSeconds",
     "--report-dir=$ReportDir"
+)
+if ($ResumeCheckpoint -ne "") {
+    $GodotArgs += "--resume-checkpoint=$ResumeCheckpoint"
+}
+
+& $GodotExe @GodotArgs
 
 $ExitCode = $LASTEXITCODE
 $ReportPath = Join-Path $ReportDir "summary.md"

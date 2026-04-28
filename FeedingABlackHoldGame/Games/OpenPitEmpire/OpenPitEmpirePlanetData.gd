@@ -1302,6 +1302,8 @@ func _place_cores() -> void:
             ),
             float(config.get("total_hp", 0.0))
         )
+        if str(config.get("role", "")) == "final" and float(config.get("total_hp", 0.0)) > 0.0:
+            core_hp = float(config.get("total_hp", 0.0))
         core_hp *= CORE_TOTAL_HP_MULT
         core_hp *= core_difficulty_mult
         var base_res: float = _calc_block_resource(center)
