@@ -21,7 +21,7 @@ const CORE_ALIVE := Color(2.0, 0.3, 0.08)
 const CORE_LOCKED := Color(0.4, 0.4, 0.45)
 const CORE_DEAD := Color(0.15, 0.8, 1.0, 0.5)
 const GOLD_COLOR := Color(1.0, 0.55, 0.18)
-const ELECTRIC_COLOR := Color(0.3, 0.8, 1.0)
+const ELECTRIC_COLOR := Color(0.25, 1.0, 0.45)
 const BLOCK_COLOR := Color(0.15, 0.2, 0.25)
 const RETURN_ZONE_COLOR := Color(0.3, 1.5, 0.5)
 

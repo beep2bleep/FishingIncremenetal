@@ -14,6 +14,9 @@ var tier_stats: TierStats
 var run_stats: RunStats
 var cached_upgrade_tech_tree: Node = null
 var cached_upgrade_tree_locale: String = ""
+var open_pit_upgrade_startup_started_msec: int = 0
+var open_pit_upgrade_scene_resource_load_msec: int = 0
+var open_pit_upgrade_scene_swap_msec: int = 0
 var multi_game_run: Dictionary = {}
 var multi_game_pending_summary: Dictionary = {}
 var multi_game_step_config: Dictionary = {}

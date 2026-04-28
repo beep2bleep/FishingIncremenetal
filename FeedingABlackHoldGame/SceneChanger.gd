@@ -42,6 +42,11 @@ func change_to_new_scene(path, _to_state = null, duration_override: float = -1.0
     new_scene_path = path
     _sealed_transition_path = path
     to_state = _to_state
+    if _should_profile_open_pit_upgrade_scene(path):
+        Global.open_pit_upgrade_startup_started_msec = Time.get_ticks_msec()
+        Global.open_pit_upgrade_scene_resource_load_msec = 0
+        Global.open_pit_upgrade_scene_swap_msec = 0
+        print("[OpenPitUpgradeStartup] scene_change_requested path=%s" % path)
     set_process(false)
     var estimated_total_duration: float = duration_override
     if estimated_total_duration <= 0.0:
@@ -112,6 +117,9 @@ func do_scene_change() -> void :
     var load_started_msec: int = Time.get_ticks_msec()
     var packed: PackedScene = ResourceLoader.load(path_to_load, "", ResourceLoader.CACHE_MODE_REUSE) as PackedScene
     var load_elapsed_s: float = float(Time.get_ticks_msec() - load_started_msec) / 1000.0
+    if _should_profile_open_pit_upgrade_scene(path_to_load):
+        Global.open_pit_upgrade_scene_resource_load_msec = Time.get_ticks_msec() - load_started_msec
+        print("[OpenPitUpgradeStartup] scene_resource_load %.3fms" % float(Global.open_pit_upgrade_scene_resource_load_msec))
     if load_elapsed_s > 0.0:
         estimated_scene_load_seconds = lerp(estimated_scene_load_seconds, load_elapsed_s, LOAD_TIME_SMOOTHING)
 
@@ -148,6 +156,12 @@ func _capture_scene_load_time(previous_scene: Node) -> void :
         return
 
     estimated_scene_load_seconds = lerp(estimated_scene_load_seconds, elapsed_seconds, LOAD_TIME_SMOOTHING)
+    if _should_profile_open_pit_upgrade_scene(_sealed_transition_path if not _sealed_transition_path.is_empty() else new_scene_path):
+        Global.open_pit_upgrade_scene_swap_msec = Time.get_ticks_msec() - scene_change_started_msec
+        print("[OpenPitUpgradeStartup] scene_swap %.3fms frames=%d" % [float(Global.open_pit_upgrade_scene_swap_msec), safety_frames + 1])
+
+func _should_profile_open_pit_upgrade_scene(path: String) -> bool:
+    return Util.is_open_pit_game_active() and path == Util.get_upgrade_scene_path()
 
 func _apply_transition_speed(duration_seconds: float) -> void :
     var speed: float = BASE_TRANSITION_ANIM_DURATION / max(duration_seconds, 0.01)

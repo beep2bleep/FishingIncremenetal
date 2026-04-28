@@ -57,6 +57,9 @@ const PIT_WALL_FILL := Color(0.2, 0.04, 0.05, 0.96)
 const PIT_WALL_EDGE := Color(1.0, 0.24, 0.2, 0.96)
 const PIT_WALL_SHADOW := Color(0.14, 0.0, 0.0, 0.46)
 const HIT_GLOW := Color(2.3, 1.2, 0.4, 0.55)
+const HACKER_BLOCK_FILL := Color(0.015, 0.08, 0.055, 1.0)
+const HACKER_BLOCK_EDGE := Color(0.25, 2.2, 0.65, 1.0)
+const HACKER_BLOCK_DIM := Color(0.06, 0.16, 0.12, 1.0)
 const STAR_COLORS := [
     Color(1.0, 0.96, 0.9, 1.0),
     Color(0.95, 0.98, 1.0, 1.0),
@@ -167,7 +170,6 @@ func queue_fill_update(grid: Vector2i) -> void:
     _pending_fill_updates[grid] = true
     _force_redraw = true
     _edge_dirty = true
-    _clear_fill_prewarm()
 
 func queue_fill_updates(positions: Array) -> void:
     for pos_variant in positions:
@@ -175,7 +177,6 @@ func queue_fill_updates(positions: Array) -> void:
     if not positions.is_empty():
         _force_redraw = true
         _edge_dirty = true
-        _clear_fill_prewarm()
 
 func _process(_delta: float) -> void:
     _time_elapsed += _delta
@@ -272,14 +273,11 @@ func _draw() -> void:
     _last_effect_load = effect_load
     _last_reduce_detail = reduce_detail
     _last_ultra_reduce_detail = ultra_reduce_detail
-    if reduce_detail_changed:
-        _mark_fill_dirty("detail_mode_changed")
-        _pending_fill_updates.clear()
-        _fill_upload_accum = REDUCED_FILL_UPLOAD_INTERVAL
-        _palette_cache.clear()
-        _clear_fill_prewarm()
     var fill_padding_cells := 0 if reduce_detail or ultra_reduce_detail else FILL_CACHE_PADDING_CELLS
     var fill_cell_span := _get_fill_cell_span(reduce_detail, ultra_reduce_detail)
+    if reduce_detail_changed:
+        _fill_upload_accum = REDUCED_FILL_UPLOAD_INTERVAL
+        _palette_cache.clear()
     var fill_align_cells := REDUCED_FILL_CACHE_ALIGN_CELLS if reduce_detail or ultra_reduce_detail else FILL_CACHE_ALIGN_CELLS
     var padded_grid_min := visible_grid_min - Vector2i(fill_padding_cells, fill_padding_cells)
     var padded_grid_max := visible_grid_max + Vector2i(fill_padding_cells, fill_padding_cells)
@@ -511,6 +509,8 @@ func _draw() -> void:
                 var hit_timer: float = float(scene_ref.hit_timers.get(grid, 0.0))
                 if hit_timer > 0.0:
                     draw_rect(rect.grow(-2.0), Color(HIT_GLOW.r, HIT_GLOW.g, HIT_GLOW.b, hit_timer / scene_ref.HIT_FLASH_DURATION), false, 2.0)
+                if not reduce_detail and int(block.get("type", 0)) == scene_ref.BlockType.ELECTRIC:
+                    _draw_hacker_block_glyph(grid, rect, bool(scene_ref.runtime_stats.get("electric_enabled", false)))
                 if not reduce_detail and int(block.get("type", 0)) == scene_ref.BlockType.GOLD:
                     var gp := (sin(gold_pulse_t + grid.x * 1.3 + grid.y * 0.7) + 1.0) * 0.5
                     var ga := 0.1 + gp * 0.12
@@ -1047,7 +1047,7 @@ func _needs_camera_redraw() -> bool:
     )
 
 func get_perf_state_text() -> String:
-    return "Planet vis %d  load %d  detail %s/%s  fillQ %d  fillR %s  fillD %s(%d)  fillCnt d:%d o:%d s:%d  fillMiss %d  fillSwap a:%d d:%d" % [
+    return "Firewall vis %d  load %d  detail %s/%s  fillQ %d  fillR %s  fillD %s(%d)  fillCnt d:%d o:%d s:%d  fillMiss %d  fillSwap a:%d d:%d" % [
         _last_visible_cell_budget,
         _last_effect_load,
         "heavy" if _last_reduce_detail else "full",
@@ -1091,6 +1091,26 @@ func _draw_block_edges(_grid: Vector2i, rect: Rect2, color: Color, mask: int, wi
     if (mask & 8) != 0:
         draw_line(rect.position + Vector2(rect.size.x, 0.0), rect.position + rect.size, color, width)
 
+func _draw_hacker_block_glyph(grid: Vector2i, rect: Rect2, active: bool) -> void:
+    var pulse := (sin(_time_elapsed * 5.2 + float(grid.x) * 0.73 + float(grid.y) * 0.41) + 1.0) * 0.5
+    var alpha := (0.18 + pulse * 0.22) if active else 0.1
+    var glow := HACKER_BLOCK_EDGE if active else HACKER_BLOCK_DIM
+    var inset := 5.0
+    var left := rect.position.x + inset
+    var right := rect.position.x + rect.size.x - inset
+    var top := rect.position.y + inset
+    var bottom := rect.position.y + rect.size.y - inset
+    draw_line(Vector2(left, top), Vector2(right, top), Color(glow.r, glow.g, glow.b, alpha), 1.2)
+    draw_line(Vector2(left, bottom), Vector2(right, bottom), Color(glow.r, glow.g, glow.b, alpha * 0.85), 1.2)
+    draw_line(Vector2(left, top), Vector2(left, bottom), Color(glow.r, glow.g, glow.b, alpha * 0.75), 1.0)
+    draw_line(Vector2(right, top), Vector2(right, bottom), Color(glow.r, glow.g, glow.b, alpha * 0.75), 1.0)
+    var scan_y := lerpf(top + 2.0, bottom - 2.0, pulse)
+    draw_line(Vector2(left + 2.0, scan_y), Vector2(right - 2.0, scan_y), Color(glow.r, glow.g, glow.b, alpha * 1.35), 1.0)
+    var tick_alpha := alpha * 0.95
+    draw_line(Vector2(left + 4.0, top + 5.0), Vector2(left + 9.0, top + 9.0), Color(glow.r, glow.g, glow.b, tick_alpha), 1.0)
+    draw_line(Vector2(left + 9.0, top + 9.0), Vector2(left + 4.0, top + 13.0), Color(glow.r, glow.g, glow.b, tick_alpha), 1.0)
+    draw_line(Vector2(right - 11.0, bottom - 6.0), Vector2(right - 4.0, bottom - 6.0), Color(glow.r, glow.g, glow.b, tick_alpha), 1.0)
+
 func _get_block_palette(block: Dictionary) -> Dictionary:
     var zone: int = int(block.get("zone", ZONE_AUTUMN))
     var block_type: int = int(block.get("type", 0))
@@ -1116,8 +1136,8 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
             fill = _mix_fill_with_edge(ZONE_FILLS.get(zone, Color(0.11, 0.07, 0.08, 1.0)), ZONE_EDGE_COLORS.get(zone, Color(1.0, 1.0, 1.0, 1.0)), 0.32)
             edge = ZONE_EDGE_COLORS.get(zone, Color(2.5, 0.3, 0.08, 1.0))
         scene_ref.BlockType.ELECTRIC:
-            fill = Color(0.08, 0.17, 0.23, 0.72) if electric_enabled else _mix_fill_with_edge(fill, edge, 0.18).darkened(0.15)
-            edge = Color(0.5, 1.8, 2.5, 1.0)
+            fill = HACKER_BLOCK_FILL if electric_enabled else _mix_fill_with_edge(HACKER_BLOCK_DIM, edge, 0.12).darkened(0.08)
+            edge = HACKER_BLOCK_EDGE if electric_enabled else HACKER_BLOCK_DIM
         scene_ref.BlockType.GOLD:
             var base_fill := _mix_fill_with_edge(fill, edge, 0.16)
             fill = base_fill.lightened(0.08) if gold_enabled else base_fill

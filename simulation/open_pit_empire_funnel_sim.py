@@ -53,6 +53,12 @@ class RunLog:
     barriers_taken: float
     barriers_available: int
     blocks_cleared: float
+    run_seconds: float
+    cargo_capacity: float
+    cargo_collected: float
+    cargo_fill_seconds: float | None
+    cargo_fill_fuel_ratio: float | None
+    cargo_collection_efficiency: float
     zone_clear_before: float
     zone_clear_after: float
     core_damage: float
@@ -64,6 +70,15 @@ class RunLog:
     purchases: list[str]
     wallets_after: dict[str, int]
     mastery_note: str
+
+
+@dataclass(frozen=True)
+class CargoEstimate:
+    capacity: float
+    collected: float
+    fill_seconds: float | None
+    fill_fuel_ratio: float | None
+    collection_efficiency: float
 
 
 @dataclass
@@ -581,6 +596,165 @@ def cargo_cap(state: State) -> float:
     return cap
 
 
+def cargo_unit_cap(state: State) -> float:
+    cap = 12.0
+    cap += 4.0 * current_level(state, "cargo_racks")
+    cap += 6.0 * current_level(state, "heap_climber")
+    cap += 18.0 * current_level(state, "daemon_lances")
+    cap += 20.0 * current_level(state, "root_breaker")
+    cap += 22.0 * current_level(state, "overburn_reactors")
+    cap += 26.0 * current_level(state, "seismic_lattice")
+    cap += 28.0 * current_level(state, "mantle_drills")
+    cap += 30.0 * current_level(state, "fault_charges")
+    cap += 34.0 * current_level(state, "void_cutters")
+    cap += 32.0 * current_level(state, "inversion_drives")
+    cap += 45.0 * current_level(state, "vault_pulsers")
+    cap += 55.0 * current_level(state, "gravity_wells")
+    cap += 75.0 * current_level(state, "abyssal_rigs")
+    cap += 90.0 * current_level(state, "mirror_saws")
+    return cap
+
+
+def live_attack_damage(state: State) -> float:
+    damage = 11.0
+    damage += 4.0 * current_level(state, "laser_cutter")
+    damage += 5.0 * current_level(state, "shock_bits")
+    damage += 10.0 * current_level(state, "daemon_lances")
+    damage += 11.0 * current_level(state, "mantle_drills")
+    damage += 9.0 * current_level(state, "fault_charges")
+    damage += 9.0 * current_level(state, "void_cutters")
+    damage += 7.0 * current_level(state, "vault_heuristics")
+    damage += 15.0 * current_level(state, "mirror_saws")
+    damage += 18.0 * current_level(state, "null_borers")
+    if current_level(state, "mirror_keys") > 0:
+        damage += 14.0
+    damage *= 1.0 + 0.12 * current_level(state, "crash_cartography")
+    damage *= 1.0 + 0.05 * current_level(state, "deep_manifest")
+    if current_level(state, "mantle_permits") > 0:
+        damage *= 1.12
+    return damage
+
+
+def live_attack_interval(state: State) -> float:
+    return max(0.06, 0.8 - 0.05 * current_level(state, "rapid_cycle"))
+
+
+def live_attack_radius(state: State) -> float:
+    radius = 96.0
+    radius += 14.0 * current_level(state, "deep_scan")
+    radius += 10.0 * current_level(state, "mantle_drills")
+    radius += 16.0 * current_level(state, "void_cutters")
+    radius += 10.0 * current_level(state, "vault_heuristics")
+    radius += 16.0 * current_level(state, "thermal_mapping")
+    return radius
+
+
+def live_pickup_radius(state: State) -> float:
+    return 64.0 + 14.0 * current_level(state, "deep_scan")
+
+
+def live_move_speed(state: State) -> float:
+    speed = 580.0
+    speed += 20.0 * current_level(state, "fuel_cells")
+    speed += 30.0 * current_level(state, "cache_warmers")
+    speed += 20.0 * current_level(state, "thermal_mapping")
+    speed += 40.0 * current_level(state, "inversion_drives")
+    if current_level(state, "pressure_vent") > 0:
+        speed += 35.0
+    if current_level(state, "voidfire_brakes") > 0:
+        speed += 45.0
+    return speed
+
+
+def live_multi_target_count(state: State) -> int:
+    targets = 1
+    targets += current_level(state, "null_borers")
+    if current_level(state, "null_anchor") > 0:
+        targets += 1
+    return max(1, targets)
+
+
+def live_drone_count(state: State) -> int:
+    level = current_level(state, "breach_drones")
+    return 1 + level if level > 0 else 0
+
+
+def live_assist_multiplier(state: State, zone_index: int) -> float:
+    mult = 1.0
+    if current_level(state, "shock_bits") > 0:
+        mult += 0.04 * current_level(state, "shock_bits")
+    if current_level(state, "seismic_lattice") > 0:
+        mult += 0.08 * current_level(state, "seismic_lattice")
+    if current_level(state, "overburn_reactors") > 0:
+        mult += 0.05 * current_level(state, "overburn_reactors")
+    if current_level(state, "fault_harpoons") > 0:
+        mult += 0.07 * current_level(state, "fault_harpoons")
+    if current_level(state, "null_archive") > 0:
+        mult += 0.06 * current_level(state, "null_archive")
+    if zone_index >= FIRST_FUNNEL_ZONES:
+        mult *= 0.82
+    return mult
+
+
+def estimate_live_cargo_collection(
+    state: State,
+    zone_index: int,
+    run_seconds: float,
+    mining_time: float,
+    blocks_destroyed: float,
+    effective_block_hp: float,
+) -> CargoEstimate:
+    capacity = cargo_unit_cap(state)
+    if blocks_destroyed <= 0.0 or mining_time <= 0.0:
+        return CargoEstimate(capacity, 0.0, None, None, 0.0)
+
+    move_speed = live_move_speed(state)
+    attack_radius = live_attack_radius(state)
+    pickup_radius = live_pickup_radius(state)
+    attack_interval = live_attack_interval(state)
+    damage = live_attack_damage(state)
+    targets = live_multi_target_count(state)
+    drones = live_drone_count(state)
+
+    depth_drag = 1.0 + 0.09 * min(zone_index, 4) + (0.08 * max(0, zone_index - 4))
+    travel_seconds = min(
+        run_seconds * 0.42,
+        8.0 + 2.6 * zone_index + (96.0 / max(attack_radius, 32.0)) * 4.0 + depth_drag * 2.0,
+    )
+    active_seconds = max(0.0, mining_time - travel_seconds)
+
+    hits_to_break = max(1.0, math.ceil(effective_block_hp / max(1.0, damage)))
+    range_uptime = max(0.35, min(0.92, 0.42 + attack_radius / 520.0 + move_speed / 5200.0))
+    manual_pathing_uptime = max(0.32, min(0.88, range_uptime / depth_drag))
+    attack_cycles = active_seconds * manual_pathing_uptime / max(0.06, attack_interval)
+    primary_blocks = attack_cycles * float(targets) / hits_to_break
+
+    drone_damage = 8.0 + 4.0 * current_level(state, "breach_drones")
+    drone_hits_to_break = max(1.0, math.ceil(effective_block_hp / max(1.0, drone_damage)))
+    drone_blocks = active_seconds * float(drones) / max(0.18, 0.9) / drone_hits_to_break
+
+    live_destroyed_capacity = (primary_blocks + drone_blocks) * live_assist_multiplier(state, zone_index)
+    live_destroyed_capacity *= 1.55
+    destroyed_near_ship = min(blocks_destroyed, live_destroyed_capacity)
+
+    pickup_vs_range = min(1.0, pickup_radius / max(attack_radius, 1.0))
+    collection_efficiency = 0.28 + 0.46 * pickup_vs_range + 0.08 * min(1.0, move_speed / 900.0)
+    collection_efficiency += 0.03 * min(4, drones)
+    if current_level(state, "auto_salvage") > 0:
+        collection_efficiency = 1.0
+    collection_efficiency = max(0.30, min(1.0, collection_efficiency))
+
+    collected = min(capacity, destroyed_near_ship * collection_efficiency)
+    collection_rate = collected / max(0.001, active_seconds)
+    if collection_rate <= 0.0 or capacity > collected:
+        return CargoEstimate(capacity, collected, None, None, collection_efficiency)
+
+    fill_seconds = travel_seconds + capacity / collection_rate
+    if fill_seconds > run_seconds:
+        return CargoEstimate(capacity, collected, None, None, collection_efficiency)
+    return CargoEstimate(capacity, collected, fill_seconds, fill_seconds / run_seconds, collection_efficiency)
+
+
 def zone_block_hp_multiplier(state: State, zone_index: int, clear_before: float) -> float:
     mult = 1.0
     progression_pressure = max(0.0, ZONES[zone_index].global_gate - float(global_clear_reward_count(state)) * 0.10)
@@ -711,6 +885,14 @@ def mine_run(state: State, scenario: dict[str, float]) -> None:
     blocks_mined = throughput * mining_time / effective_block_hp
     blocks_remaining = zone.total_blocks * (1.0 - state.current_power[zone_index])
     blocks_mined = min(blocks_remaining, blocks_mined)
+    cargo_estimate = estimate_live_cargo_collection(
+        state,
+        zone_index,
+        run_seconds,
+        mining_time,
+        blocks_mined,
+        effective_block_hp,
+    )
 
     clear_after = min(1.0, clear_before + blocks_mined / zone.total_blocks)
     state.current_power[zone_index] = clear_after
@@ -787,6 +969,12 @@ def mine_run(state: State, scenario: dict[str, float]) -> None:
             barriers_taken=round(hits, 2),
             barriers_available=barriers,
             blocks_cleared=round(blocks_mined, 1),
+            run_seconds=round(run_seconds, 2),
+            cargo_capacity=round(cargo_estimate.capacity, 1),
+            cargo_collected=round(cargo_estimate.collected, 1),
+            cargo_fill_seconds=round(cargo_estimate.fill_seconds, 2) if cargo_estimate.fill_seconds is not None else None,
+            cargo_fill_fuel_ratio=round(cargo_estimate.fill_fuel_ratio, 4) if cargo_estimate.fill_fuel_ratio is not None else None,
+            cargo_collection_efficiency=round(cargo_estimate.collection_efficiency, 4),
             zone_clear_before=round(clear_before * 100.0, 1),
             zone_clear_after=100.0 if core_destroyed else round(clear_after * 100.0, 1),
             core_damage=round(core_damage, 1),
@@ -958,6 +1146,51 @@ def summarize_block_counts(state: State) -> list[str]:
     return lines
 
 
+def summarize_cargo_timing(state: State) -> list[str]:
+    if not state.logs:
+        return ["- No runs recorded."]
+
+    avg_capacity = sum(log.cargo_capacity for log in state.logs) / len(state.logs)
+    avg_collected = sum(log.cargo_collected for log in state.logs) / len(state.logs)
+    max_log = max(state.logs, key=lambda log: log.cargo_collected)
+    filled_logs = [log for log in state.logs if log.cargo_fill_fuel_ratio is not None]
+    if not filled_logs:
+        return [
+            "- Cargo never fills before fuel expires in this scenario.",
+            f"- Average estimated cargo collected: `{avg_collected:.0f}` units against `{avg_capacity:.0f}` average capacity.",
+            f"- Highest estimated cargo run: run `{max_log.run}` in `{max_log.zone}` with `{max_log.cargo_collected:.0f}` collected of `{max_log.cargo_capacity:.0f}` capacity.",
+            "- Cargo collection now uses a live-action estimate: travel/setup time, local attack range, attack interval, block HP versus damage, assist damage, and pickup radius.",
+        ]
+
+    efficient_logs = [log for log in filled_logs if log.cargo_collected >= log.cargo_capacity]
+    target_logs = efficient_logs if efficient_logs else filled_logs
+    avg_ratio = sum(float(log.cargo_fill_fuel_ratio) for log in target_logs) / len(target_logs)
+    closest = min(target_logs, key=lambda log: abs(float(log.cargo_fill_fuel_ratio) - 0.70))
+    earliest = min(target_logs, key=lambda log: float(log.cargo_fill_fuel_ratio))
+    latest = max(target_logs, key=lambda log: float(log.cargo_fill_fuel_ratio))
+
+    lines = [
+        f"- Average estimated cargo collected: `{avg_collected:.0f}` units against `{avg_capacity:.0f}` average capacity.",
+        f"- Highest estimated cargo run: run `{max_log.run}` in `{max_log.zone}` with `{max_log.cargo_collected:.0f}` collected of `{max_log.cargo_capacity:.0f}` capacity.",
+        f"- Efficient cargo-limited runs average `{avg_ratio * 100.0:.1f}%` fuel elapsed before cargo fills; target is `70.0%`.",
+        f"- Closest target run: run `{closest.run}` in `{closest.zone}` fills cargo at `{float(closest.cargo_fill_fuel_ratio) * 100.0:.1f}%` fuel elapsed (`{float(closest.cargo_fill_seconds):.1f}s` of `{closest.run_seconds:.1f}s`).",
+        f"- Fastest fill: run `{earliest.run}` at `{float(earliest.cargo_fill_fuel_ratio) * 100.0:.1f}%`; slowest fill before fuel ends: run `{latest.run}` at `{float(latest.cargo_fill_fuel_ratio) * 100.0:.1f}%`.",
+        "- Cargo collection now uses a live-action estimate: travel/setup time, local attack range, attack interval, block HP versus damage, assist damage, and pickup radius.",
+    ]
+
+    by_zone: dict[str, list[RunLog]] = {}
+    for log in target_logs:
+        by_zone.setdefault(log.zone, []).append(log)
+    for zone in ZONES:
+        logs = by_zone.get(zone.label, [])
+        if not logs:
+            continue
+        zone_avg = sum(float(log.cargo_fill_fuel_ratio) for log in logs) / len(logs)
+        lines.append(f"- `{zone.label}` cargo-limited runs average `{zone_avg * 100.0:.1f}%` fuel elapsed before full.")
+
+    return lines
+
+
 def build_report(scenario: dict[str, float], state: State, demo_mode: bool = False) -> str:
     purchases_per_run = sum(len(log.purchases) for log in state.logs) / max(1, len(state.logs))
     no_purchase_runs = sum(1 for log in state.logs if not log.purchases)
@@ -1016,12 +1249,20 @@ def build_report(scenario: dict[str, float], state: State, demo_mode: bool = Fal
     lines.append("## Actual Blocks Per Run")
     lines.extend(summarize_block_counts(state))
     lines.append("")
+    lines.append("## Cargo Limit Timing")
+    lines.extend(summarize_cargo_timing(state))
+    lines.append("")
     lines.append("## Run Report")
-    lines.append("| Run | Window | Zone | Result | Barriers | Clear | Core | Rewards | Purchases | Wallets |")
-    lines.append("|---:|---|---|---|---|---|---|---|---|---|")
+    lines.append("| Run | Window | Zone | Result | Barriers | Cargo | Cargo Full | Clear | Core | Rewards | Purchases | Wallets |")
+    lines.append("|---:|---|---|---|---|---|---|---|---|---|---|---|")
     for log in state.logs:
         result = "Return" if log.survived else f"Death ({int(round(log.salvage_ratio * 100.0))}% salvage)"
         clear_text = f"{log.zone_clear_before:.1f}% -> {log.zone_clear_after:.1f}% ({log.blocks_cleared:.0f} blocks, {log.mastery_note})"
+        if log.cargo_fill_fuel_ratio is None:
+            cargo_text = f"not full ({log.cargo_capacity:.0f} cap)"
+        else:
+            cargo_text = f"{float(log.cargo_fill_fuel_ratio) * 100.0:.1f}% fuel ({float(log.cargo_fill_seconds):.1f}s, {log.cargo_capacity:.0f} cap)"
+        cargo_collected_text = f"{log.cargo_collected:.0f}/{log.cargo_capacity:.0f} ({log.cargo_collection_efficiency * 100.0:.0f}% pickup)"
         core_text = f"{log.core_damage:.0f}"
         if log.core_destroyed:
             core_text += " and core cleared"
@@ -1030,7 +1271,7 @@ def build_report(scenario: dict[str, float], state: State, demo_mode: bool = Fal
         wallets = f"${log.wallets_after['money']} / {log.wallets_after['xp']} xp / {log.wallets_after['cores']} cores"
         lines.append(
             f"| {log.run} | {fmt_time(log.start_min)}-{fmt_time(log.end_min)} | {log.zone} | {result} | "
-            f"{log.barriers_taken:.2f}/{log.barriers_available} | {clear_text} | {core_text} | {rewards} | {purchases} | {wallets} |"
+            f"{log.barriers_taken:.2f}/{log.barriers_available} | {cargo_collected_text} | {cargo_text} | {clear_text} | {core_text} | {rewards} | {purchases} | {wallets} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -1045,6 +1286,9 @@ def build_json_payload(scenario: dict[str, float], state: State, demo_mode: bool
             "bottom_of_first_funnel_minutes": round(float(state.milestones.get("bottom_of_first_funnel", 0.0)) / 60.0, 3),
             "second_funnel_defeated_minutes": round(float(state.milestones.get("second_funnel_defeated", 0.0)) / 60.0, 3),
             "demo_gate_reached_minutes": round(float(state.milestones.get("demo_gate_reached", 0.0)) / 60.0, 3),
+            "avg_cargo_capacity": round(sum(log.cargo_capacity for log in state.logs) / max(1, len(state.logs)), 3),
+            "avg_cargo_collected": round(sum(log.cargo_collected for log in state.logs) / max(1, len(state.logs)), 3),
+            "max_cargo_collected": round(max((log.cargo_collected for log in state.logs), default=0.0), 3),
             "avg_purchases_per_run": round(sum(len(log.purchases) for log in state.logs) / max(1, len(state.logs)), 3),
             "no_purchase_runs": sum(1 for log in state.logs if not log.purchases),
             "demo_gate_zone": ZONES[state.demo_gate_zone].label,
@@ -1060,6 +1304,12 @@ def build_json_payload(scenario: dict[str, float], state: State, demo_mode: bool
                 "barriers_taken": log.barriers_taken,
                 "barriers_available": log.barriers_available,
                 "blocks_cleared": log.blocks_cleared,
+                "run_seconds": log.run_seconds,
+                "cargo_capacity": log.cargo_capacity,
+                "cargo_collected": log.cargo_collected,
+                "cargo_fill_seconds": log.cargo_fill_seconds,
+                "cargo_fill_fuel_ratio": log.cargo_fill_fuel_ratio,
+                "cargo_collection_efficiency": log.cargo_collection_efficiency,
                 "zone_clear_before": log.zone_clear_before,
                 "zone_clear_after": log.zone_clear_after,
                 "core_damage": log.core_damage,

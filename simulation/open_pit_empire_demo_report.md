@@ -44,31 +44,41 @@ This pass models the demo slice with the hidden `Kernel Breach` core upgrade rem
 - `Cipher Depths`: `115` to `476` actual blocks per run, averaging `277`.
 - `Ghost Sector`: `220` to `738` actual blocks per run, averaging `446`.
 
+## Cargo Limit Timing
+- Average estimated cargo collected: `32` units against `47` average capacity.
+- Highest estimated cargo run: run `23` in `Ghost Sector` with `64` collected of `64` capacity.
+- Efficient cargo-limited runs average `78.2%` fuel elapsed before cargo fills; target is `70.0%`.
+- Closest target run: run `6` in `Proxy Cache` fills cargo at `70.0%` fuel elapsed (`49.0s` of `70.0s`).
+- Fastest fill: run `25` at `62.0%`; slowest fill before fuel ends: run `1` at `84.0%`.
+- Cargo collection now uses a live-action estimate: travel/setup time, local attack range, attack interval, block HP versus damage, assist damage, and pickup radius.
+- `Proxy Cache` cargo-limited runs average `81.7%` fuel elapsed before full.
+- `Ghost Sector` cargo-limited runs average `71.3%` fuel elapsed before full.
+
 ## Run Report
-| Run | Window | Zone | Result | Barriers | Clear | Core | Rewards | Purchases | Wallets |
-|---:|---|---|---|---|---|---|---|---|---|
-| 1 | 0.0m-1.1m | Proxy Cache | Return | 1.09/1 | 0.0% -> 4.4% (132 blocks, no clear breach reward) | 0 | $487, 88 xp, 0 cores | Laser Cutter 1, Laser Cutter 2 | $135 / 88 xp / 0 cores |
-| 2 | 1.1m-2.3m | Proxy Cache | Return | 1.06/1 | 4.4% -> 11.1% (200 blocks, no clear breach reward) | 0 | $610, 134 xp, 0 cores | Laser Cutter 3, Packet Sniffer 1, Cargo Racks 1 | $263 / 115 xp / 0 cores |
-| 3 | 2.3m-3.4m | Proxy Cache | Return | 1.02/1 | 11.1% -> 18.9% (234 blocks, no clear breach reward) | 0 | $712, 201 xp, 0 cores | Laser Cutter 4, Packet Sniffer 2, Cargo Racks 2 | $234 / 130 xp / 0 cores |
-| 4 | 3.4m-4.5m | Proxy Cache | Return | 0.96/1 | 18.9% -> 27.8% (268 blocks, no clear breach reward) | 0 | $814, 281 xp, 0 cores | Laser Cutter 5, Packet Sniffer 3, Fuel Cells 1 | $113 / 85 xp / 0 cores |
-| 5 | 4.5m-5.8m | Proxy Cache | Return | 0.90/1 | 27.8% -> 39.3% (346 blocks, no clear breach reward) | 0 | $953, 428 xp, 0 cores | Cargo Racks 3, Trace Scrubber 1, Cargo Racks 4 | $196 / 353 xp / 0 cores |
-| 6 | 5.8m-7.2m | Proxy Cache | Return | 0.82/1 | 39.3% -> 100.0% (315 blocks, no clear breach reward) | 3210 and core cleared | $978, 390 xp, 2 cores | Cargo Racks 5, Packet Sniffer 4, Signal Sniffer 1 | $376 / 172 xp / 1 cores |
-| 7 | 7.2m-8.6m | Cipher Depths | Return | 1.14/1 | 0.0% -> 2.2% (115 blocks, no clear breach reward) | 0 | $1029, 245 xp, 0 cores | Laser Cutter 6, Trace Scrubber 2, Ghost Entry 1 | $170 / 137 xp / 0 cores |
-| 8 | 8.6m-10.1m | Cipher Depths | Return | 1.12/1 | 2.2% -> 5.1% (150 blocks, no clear breach reward) | 0 | $1205, 320 xp, 0 cores | Cargo Racks 6, Heap Climber 1, Rapid Cycle 1 | $1 / 271 xp / 0 cores |
-| 9 | 10.1m-11.6m | Cipher Depths | Return | 1.10/1 | 5.1% -> 8.5% (175 blocks, no clear breach reward) | 0 | $1423, 374 xp, 0 cores | Fuel Cells 2, Trace Scrubber 3, Fuel Cells 3 | $878 / 155 xp / 0 cores |
-| 10 | 11.6m-13.5m | Cipher Depths | Return | 1.08/1 | 8.5% -> 12.8% (226 blocks, no clear breach reward) | 0 | $1679, 483 xp, 0 cores | Laser Cutter 7, Heap Climber 2, Fuel Cells 4 | $129 / 302 xp / 0 cores |
-| 11 | 13.5m-15.5m | Cipher Depths | Return | 1.05/1 | 12.8% -> 18.0% (269 blocks, no clear breach reward) | 0 | $1946, 575 xp, 0 cores | Cargo Racks 7, Trace Scrubber 4, Ore Appraisal 1 | $47 / 20 xp / 0 cores |
-| 12 | 15.5m-17.6m | Cipher Depths | Return | 1.01/1 | 18.0% -> 23.4% (284 blocks, no clear breach reward) | 0 | $2243, 607 xp, 0 cores | Fuel Cells 5, Heap Climber 3, Fuel Cells 6 | $258 / 23 xp / 0 cores |
-| 13 | 17.6m-20.0m | Cipher Depths | Return | 0.97/1 | 23.4% -> 29.7% (325 blocks, no clear breach reward) | 0 | $2526, 694 xp, 0 cores | Rapid Cycle 2, Cache Warmers 1, Rapid Cycle 3 | $2128 / 566 xp / 0 cores |
-| 14 | 20.0m-22.4m | Cipher Depths | Return | 0.76/1 | 29.7% -> 38.8% (474 blocks, no clear breach reward) | 0 | $3372, 1014 xp, 0 cores | Laser Cutter 8, Heap Climber 4, Rapid Cycle 4 | $1899 / 492 xp / 0 cores |
-| 15 | 22.4m-24.9m | Cipher Depths | Return | 0.71/1 | 38.8% -> 100.0% (476 blocks, no clear breach reward) | 14433 and core cleared | $3432, 1017 xp, 2 cores | Rapid Cycle 5, Cache Warmers 2, Rapid Cycle 6 | $2743 / 1245 xp / 2 cores |
-| 16 | 24.9m-27.4m | Ghost Sector | Return | 0.90/1 | 0.0% -> 2.7% (220 blocks, no clear breach reward) | 0 | $4036, 733 xp, 0 cores | Rapid Cycle 7, Cache Warmers 3, Ore Appraisal 2 | $3980 / 1516 xp / 2 cores |
-| 17 | 27.4m-30.0m | Ghost Sector | Return | 0.77/1 | 2.7% -> 5.9% (265 blocks, no clear breach reward) | 0 | $5134, 882 xp, 0 cores | Ore Appraisal 3, Cache Warmers 4, Ore Appraisal 4 | $7889 / 1589 xp / 2 cores |
-| 18 | 30.0m-32.7m | Ghost Sector | Return | 0.66/1 | 5.9% -> 9.5% (293 blocks, no clear breach reward) | 0 | $6522, 973 xp, 0 cores | Ore Appraisal 5, Deep Scan 1, Ore Appraisal 6 | $11276 / 2322 xp / 2 cores |
-| 19 | 32.7m-35.3m | Ghost Sector | Return | 0.65/1 | 9.5% -> 13.5% (325 blocks, no clear breach reward) | 0 | $8199, 1080 xp, 0 cores | Barrier Mesh 1, Deep Scan 2, Barrier Mesh 2 | $18541 / 2958 xp / 2 cores |
-| 20 | 35.3m-37.9m | Ghost Sector | Return | 0.50/3 | 13.5% -> 17.8% (357 blocks, no clear breach reward) | 0 | $8938, 1187 xp, 0 cores | Barrier Mesh 3, Deep Scan 3, Shock Bits 1 | $25880 / 3324 xp / 2 cores |
-| 21 | 37.9m-40.6m | Ghost Sector | Return | 0.44/4 | 17.8% -> 23.1% (436 blocks, no clear breach reward) | 0 | $10749, 1449 xp, 0 cores | Shock Bits 2, Deep Scan 4, Shock Bits 3 | $34526 / 3255 xp / 2 cores |
-| 22 | 40.6m-43.2m | Ghost Sector | Return | 0.42/4 | 23.1% -> 30.1% (573 blocks, no clear breach reward) | 0 | $13899, 1905 xp, 0 cores | Shock Bits 4, Sidechannel 1, Breach Drones 1 | $45485 / 4849 xp / 2 cores |
-| 23 | 43.2m-45.9m | Ghost Sector | Return | 0.40/4 | 30.1% -> 37.3% (592 blocks, no clear breach reward) | 0 | $15705, 1969 xp, 0 cores | Breach Drones 2, Sidechannel 2, Breach Drones 3 | $58176 / 6227 xp / 2 cores |
-| 24 | 45.9m-48.5m | Ghost Sector | Return | 0.38/4 | 37.3% -> 46.3% (738 blocks, no clear breach reward) | 0 | $21075, 2453 xp, 0 cores | Breach Drones 4, Sidechannel 3, Salvage Contract 1 | $75257 / 7558 xp / 2 cores |
-| 25 | 48.5m-51.1m | Ghost Sector | Return | 0.31/4 | 46.3% -> 100.0% (661 blocks, no clear breach reward) | 49960 and core cleared | $20483, 2199 xp, 3 cores | Salvage Contract 2, Sidechannel 4, Barrier Patch 1 | $94855 / 7625 xp / 2 cores |
+| Run | Window | Zone | Result | Barriers | Cargo | Cargo Full | Clear | Core | Rewards | Purchases | Wallets |
+|---:|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 0.0m-1.1m | Proxy Cache | Return | 1.09/1 | 12/12 (64% pickup) | 84.0% fuel (47.0s, 12 cap) | 0.0% -> 4.4% (132 blocks, no clear breach reward) | 0 | $487, 88 xp, 0 cores | Laser Cutter 1, Laser Cutter 2 | $135 / 88 xp / 0 cores |
+| 2 | 1.1m-2.3m | Proxy Cache | Return | 1.06/1 | 12/12 (64% pickup) | 84.0% fuel (47.0s, 12 cap) | 4.4% -> 11.1% (200 blocks, no clear breach reward) | 0 | $610, 134 xp, 0 cores | Laser Cutter 3, Packet Sniffer 1, Cargo Racks 1 | $263 / 115 xp / 0 cores |
+| 3 | 2.3m-3.4m | Proxy Cache | Return | 1.02/1 | 16/16 (64% pickup) | 84.0% fuel (47.0s, 16 cap) | 11.1% -> 18.9% (234 blocks, no clear breach reward) | 0 | $712, 201 xp, 0 cores | Laser Cutter 4, Packet Sniffer 2, Cargo Racks 2 | $234 / 130 xp / 0 cores |
+| 4 | 3.4m-4.5m | Proxy Cache | Return | 0.96/1 | 20/20 (64% pickup) | 84.0% fuel (47.0s, 20 cap) | 18.9% -> 27.8% (268 blocks, no clear breach reward) | 0 | $814, 281 xp, 0 cores | Laser Cutter 5, Packet Sniffer 3, Fuel Cells 1 | $113 / 85 xp / 0 cores |
+| 5 | 4.5m-5.8m | Proxy Cache | Return | 0.90/1 | 20/20 (64% pickup) | 84.0% fuel (53.8s, 20 cap) | 27.8% -> 39.3% (346 blocks, no clear breach reward) | 0 | $953, 428 xp, 0 cores | Cargo Racks 3, Trace Scrubber 1, Cargo Racks 4 | $196 / 353 xp / 0 cores |
+| 6 | 5.8m-7.2m | Proxy Cache | Return | 0.82/1 | 28/28 (64% pickup) | 70.0% fuel (49.0s, 28 cap) | 39.3% -> 100.0% (315 blocks, no clear breach reward) | 3210 and core cleared | $978, 390 xp, 2 cores | Cargo Racks 5, Packet Sniffer 4, Signal Sniffer 1 | $376 / 172 xp / 1 cores |
+| 7 | 7.2m-8.6m | Cipher Depths | Return | 1.14/1 | 17/32 (64% pickup) | not full (32 cap) | 0.0% -> 2.2% (115 blocks, no clear breach reward) | 0 | $1029, 245 xp, 0 cores | Laser Cutter 6, Trace Scrubber 2, Ghost Entry 1 | $170 / 137 xp / 0 cores |
+| 8 | 8.6m-10.1m | Cipher Depths | Return | 1.12/1 | 19/32 (64% pickup) | not full (32 cap) | 2.2% -> 5.1% (150 blocks, no clear breach reward) | 0 | $1205, 320 xp, 0 cores | Cargo Racks 6, Heap Climber 1, Rapid Cycle 1 | $1 / 271 xp / 0 cores |
+| 9 | 10.1m-11.6m | Cipher Depths | Return | 1.10/1 | 20/42 (64% pickup) | not full (42 cap) | 5.1% -> 8.5% (175 blocks, no clear breach reward) | 0 | $1423, 374 xp, 0 cores | Fuel Cells 2, Trace Scrubber 3, Fuel Cells 3 | $878 / 155 xp / 0 cores |
+| 10 | 11.6m-13.5m | Cipher Depths | Return | 1.08/1 | 28/42 (64% pickup) | not full (42 cap) | 8.5% -> 12.8% (226 blocks, no clear breach reward) | 0 | $1679, 483 xp, 0 cores | Laser Cutter 7, Heap Climber 2, Fuel Cells 4 | $129 / 302 xp / 0 cores |
+| 11 | 13.5m-15.5m | Cipher Depths | Return | 1.05/1 | 32/48 (65% pickup) | not full (48 cap) | 12.8% -> 18.0% (269 blocks, no clear breach reward) | 0 | $1946, 575 xp, 0 cores | Cargo Racks 7, Trace Scrubber 4, Ore Appraisal 1 | $47 / 20 xp / 0 cores |
+| 12 | 15.5m-17.6m | Cipher Depths | Return | 1.01/1 | 34/52 (65% pickup) | not full (52 cap) | 18.0% -> 23.4% (284 blocks, no clear breach reward) | 0 | $2243, 607 xp, 0 cores | Fuel Cells 5, Heap Climber 3, Fuel Cells 6 | $258 / 23 xp / 0 cores |
+| 13 | 17.6m-20.0m | Cipher Depths | Return | 0.97/1 | 40/58 (65% pickup) | not full (58 cap) | 23.4% -> 29.7% (325 blocks, no clear breach reward) | 0 | $2526, 694 xp, 0 cores | Rapid Cycle 2, Cache Warmers 1, Rapid Cycle 3 | $2128 / 566 xp / 0 cores |
+| 14 | 20.0m-22.4m | Cipher Depths | Return | 0.76/1 | 48/58 (65% pickup) | not full (58 cap) | 29.7% -> 38.8% (474 blocks, no clear breach reward) | 0 | $3372, 1014 xp, 0 cores | Laser Cutter 8, Heap Climber 4, Rapid Cycle 4 | $1899 / 492 xp / 0 cores |
+| 15 | 22.4m-24.9m | Cipher Depths | Return | 0.71/1 | 41/64 (65% pickup) | not full (64 cap) | 38.8% -> 100.0% (476 blocks, no clear breach reward) | 14433 and core cleared | $3432, 1017 xp, 2 cores | Rapid Cycle 5, Cache Warmers 2, Rapid Cycle 6 | $2743 / 1245 xp / 2 cores |
+| 16 | 24.9m-27.4m | Ghost Sector | Return | 0.90/1 | 23/64 (65% pickup) | not full (64 cap) | 0.0% -> 2.7% (220 blocks, no clear breach reward) | 0 | $4036, 733 xp, 0 cores | Rapid Cycle 7, Cache Warmers 3, Ore Appraisal 2 | $3980 / 1516 xp / 2 cores |
+| 17 | 27.4m-30.0m | Ghost Sector | Return | 0.77/1 | 26/64 (66% pickup) | not full (64 cap) | 2.7% -> 5.9% (265 blocks, no clear breach reward) | 0 | $5134, 882 xp, 0 cores | Ore Appraisal 3, Cache Warmers 4, Ore Appraisal 4 | $7889 / 1589 xp / 2 cores |
+| 18 | 30.0m-32.7m | Ghost Sector | Return | 0.66/1 | 27/64 (66% pickup) | not full (64 cap) | 5.9% -> 9.5% (293 blocks, no clear breach reward) | 0 | $6522, 973 xp, 0 cores | Ore Appraisal 5, Deep Scan 1, Ore Appraisal 6 | $11276 / 2322 xp / 2 cores |
+| 19 | 32.7m-35.3m | Ghost Sector | Return | 0.65/1 | 29/64 (68% pickup) | not full (64 cap) | 9.5% -> 13.5% (325 blocks, no clear breach reward) | 0 | $8199, 1080 xp, 0 cores | Barrier Mesh 1, Deep Scan 2, Barrier Mesh 2 | $18541 / 2958 xp / 2 cores |
+| 20 | 35.3m-37.9m | Ghost Sector | Return | 0.50/3 | 31/64 (69% pickup) | not full (64 cap) | 13.5% -> 17.8% (357 blocks, no clear breach reward) | 0 | $8938, 1187 xp, 0 cores | Barrier Mesh 3, Deep Scan 3, Shock Bits 1 | $25880 / 3324 xp / 2 cores |
+| 21 | 37.9m-40.6m | Ghost Sector | Return | 0.44/4 | 34/64 (71% pickup) | not full (64 cap) | 17.8% -> 23.1% (436 blocks, no clear breach reward) | 0 | $10749, 1449 xp, 0 cores | Shock Bits 2, Deep Scan 4, Shock Bits 3 | $34526 / 3255 xp / 2 cores |
+| 22 | 40.6m-43.2m | Ghost Sector | Return | 0.42/4 | 47/64 (72% pickup) | not full (64 cap) | 23.1% -> 30.1% (573 blocks, no clear breach reward) | 0 | $13899, 1905 xp, 0 cores | Shock Bits 4, Sidechannel 1, Breach Drones 1 | $45485 / 4849 xp / 2 cores |
+| 23 | 43.2m-45.9m | Ghost Sector | Return | 0.40/4 | 64/64 (78% pickup) | 76.0% fuel (111.2s, 64 cap) | 30.1% -> 37.3% (592 blocks, no clear breach reward) | 0 | $15705, 1969 xp, 0 cores | Breach Drones 2, Sidechannel 2, Breach Drones 3 | $58176 / 6227 xp / 2 cores |
+| 24 | 45.9m-48.5m | Ghost Sector | Return | 0.38/4 | 64/64 (84% pickup) | 76.0% fuel (111.2s, 64 cap) | 37.3% -> 46.3% (738 blocks, no clear breach reward) | 0 | $21075, 2453 xp, 0 cores | Breach Drones 4, Sidechannel 3, Salvage Contract 1 | $75257 / 7558 xp / 2 cores |
+| 25 | 48.5m-51.1m | Ghost Sector | Return | 0.31/4 | 64/64 (84% pickup) | 62.0% fuel (90.7s, 64 cap) | 46.3% -> 100.0% (661 blocks, no clear breach reward) | 49960 and core cleared | $20483, 2199 xp, 3 cores | Salvage Contract 2, Sidechannel 4, Barrier Patch 1 | $94855 / 7625 xp / 2 cores |

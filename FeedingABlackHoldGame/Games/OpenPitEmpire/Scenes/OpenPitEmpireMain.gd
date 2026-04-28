@@ -30,6 +30,9 @@ const POWER_ATTACK_SPEED_MULT := 1.25
 const POWER_GAIN_MULT := 0.5
 const ARC_DURATION := 0.15
 const CHAIN_ARC_DURATION := 0.2
+const ELECTRIC_SPLASH_RADIUS_CELLS := 1
+const ELECTRIC_SPLASH_DAMAGE_MULT := 0.42
+const ELECTRIC_SPLASH_FALLOFF := 0.35
 const DRONE_BEAM_DURATION := 0.08
 const DRONE_MISSILE_LIFETIME := 3.6
 const DRONE_MINE_LIFETIME := 4.2
@@ -59,6 +62,7 @@ const SHIP_TRAIL_INTERVAL := 0.03
 const SHIP_TRAIL_MAX := 8
 const HUD_REFRESH_INTERVAL := 0.1
 const PERF_DEBUG_REFRESH_INTERVAL := 0.25
+const PERF_PROBE_TEXT_REFRESH_INTERVAL := 1.0
 const DRONE_RANGE := 230.0
 const DRONE_MISSILE_RANGE := 520.0
 const DRONE_FOLLOW_SPEED := 11.0
@@ -83,6 +87,7 @@ const SEISMIC_CHARGE_DAMAGE_MULT := 0.9
 const SEISMIC_POWERUP_DAMAGE_MULT := 0.4
 const SHOCKWAVE_DAMAGE_MULT := 0.45
 const SEISMIC_CHARGE_VISUAL_DURATION := 0.42
+const SEISMIC_CHARGE_TRACER_DURATION := 0.16
 const CAMERA_ZOOM_STOPPED := 1.2
 const CAMERA_ZOOM_FULL_SPEED := 0.8
 const CAMERA_ZOOM_BLEND_TIME := 0.35
@@ -171,6 +176,11 @@ const SHIELD_HIT_RECOVERY_TIME := 1.0
 const SHIELD_HIT_ACCEL_START_SCALE := 0.33333334
 const SHIELD_HIT_BOUNCE_DISTANCE := SHIP_RADIUS * 6.0
 const SHIP_RENDER_ROTATION_STEP_DEGREES := 5.0
+const AUTOPILOT_RETARGET_INTERVAL := 0.25
+const AUTOPILOT_MINING_SCAN_CELLS := 18
+const AUTOPILOT_STAGING_CLEARANCE_CELLS := 2
+const AUTOPILOT_TARGET_REACHED_DISTANCE := 26.0
+const AUTOPILOT_FUEL_RETURN_RATIO := 0.25
 
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
 enum OutlineMode { OFF, GROUP_EDGES, ALL_BLOCKS, ALL_BLOCKS_MASK }
@@ -263,6 +273,7 @@ var ship_trail: Array[Dictionary] = []
 var ship_trail_timer := 0.0
 var hud_refresh_timer := 0.0
 var perf_debug_refresh_timer := 0.0
+var perf_probe_text_refresh_timer := 0.0
 var core_defense_timer := DEFENSE_BLOCK_INTERVAL
 var core_shockwave_timer := CORE_SHOCKWAVE_INTERVAL
 var cores_destroyed_this_run := 0
@@ -308,6 +319,11 @@ var bottom_cutscene_anchor := Vector2.ZERO
 var side_shot_timer := SIDE_SHOT_INTERVAL
 var side_projectiles: Array[Dictionary] = []
 var side_attackers: Array[Dictionary] = []
+var autopilot_enabled := false
+var autopilot_returning := false
+var autopilot_target := Vector2.ZERO
+var autopilot_retarget_timer := 0.0
+var autopilot_status := ""
 
 var planet_renderer: Node2D
 var drop_renderer: Node2D
@@ -566,6 +582,14 @@ func _unhandled_input(event: InputEvent) -> void:
             get_viewport().set_input_as_handled()
         elif event.keycode == KEY_O:
             cycle_planet_outline_mode()
+            get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_F:
+            autopilot_enabled = not autopilot_enabled
+            autopilot_returning = false
+            autopilot_retarget_timer = 0.0
+            autopilot_target = ship_pos
+            autopilot_status = "starting" if autopilot_enabled else ""
+            _push_breach_log("[color=#7dffbf]AUTO PILOT[/color]  %s." % ("engaged" if autopilot_enabled else "released"))
             get_viewport().set_input_as_handled()
         elif event.keycode == KEY_BRACKETLEFT:
             adjust_planet_outline_radius(-PLANET_OUTLINE_RADIUS_STEP)
@@ -966,6 +990,11 @@ func _start_run() -> void:
     current_combo = 0
     combo_peak = 0
     combo_milestones_hit.clear()
+    autopilot_enabled = false
+    autopilot_returning = false
+    autopilot_target = ship_pos
+    autopilot_retarget_timer = 0.0
+    autopilot_status = ""
     if VirtualCursor != null:
         if VirtualCursor.has_method("set_open_pit_empire_cursor_power"):
             VirtualCursor.set_open_pit_empire_cursor_power(0.0, false, false)
@@ -1464,6 +1493,8 @@ func _update_ship(delta: float) -> void:
     if shield_recovery_timer > 0.0:
         var recovery_progress := 1.0 - clampf(shield_recovery_timer / SHIELD_HIT_RECOVERY_TIME, 0.0, 1.0)
         accel_scale = lerpf(SHIELD_HIT_ACCEL_START_SCALE, 1.0, recovery_progress)
+    if autopilot_enabled and keyboard_dir == Vector2.ZERO:
+        keyboard_dir = _get_autopilot_direction(delta)
     if keyboard_dir != Vector2.ZERO:
         desired_velocity = keyboard_dir.normalized() * effective_speed
     else:
@@ -1485,6 +1516,76 @@ func _update_ship(delta: float) -> void:
     elif last_move_dir.length() > 0.01:
         visual_rotation = lerp_angle(visual_rotation, last_move_dir.angle() + PI * 0.5, ROTATION_SPEED * delta * 0.4)
     _resolve_ship_collision()
+
+func _get_autopilot_direction(delta: float) -> Vector2:
+    if planet_data == null:
+        autopilot_status = "no planet"
+        return Vector2.ZERO
+    if _should_autopilot_return():
+        autopilot_returning = true
+    autopilot_retarget_timer -= delta
+    if autopilot_returning:
+        autopilot_target = spawn_position
+        autopilot_status = "returning"
+    elif autopilot_retarget_timer <= 0.0 or ship_pos.distance_to(autopilot_target) <= AUTOPILOT_TARGET_REACHED_DISTANCE:
+        autopilot_retarget_timer = AUTOPILOT_RETARGET_INTERVAL
+        autopilot_target = _find_autopilot_mining_target()
+    var offset := autopilot_target - ship_pos
+    if offset.length() <= AUTOPILOT_TARGET_REACHED_DISTANCE:
+        if autopilot_returning:
+            autopilot_status = "holding for extraction"
+        else:
+            autopilot_status = "mining"
+        return Vector2.ZERO
+    return offset.normalized()
+
+func _should_autopilot_return() -> bool:
+    if autopilot_returning:
+        return true
+    var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
+    if cargo_capacity > 0 and cargo_units >= cargo_capacity:
+        return true
+    var run_time := maxf(1.0, float(runtime_stats.get("run_time", 30.0)))
+    return time_left <= run_time * AUTOPILOT_FUEL_RETURN_RATIO
+
+func _find_autopilot_mining_target() -> Vector2:
+    var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
+    var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1)
+    if not nearby_targets.is_empty():
+        autopilot_status = "mining"
+        return ship_pos
+
+    var my_grid := world_to_grid(ship_pos)
+    var inward := (-spawn_position).normalized()
+    if inward.length() < 0.01:
+        inward = Vector2.DOWN
+    var best_world := ship_pos + inward * BLOCK_SIZE * 2.0
+    var best_score := INF
+    for x in range(my_grid.x - AUTOPILOT_MINING_SCAN_CELLS, my_grid.x + AUTOPILOT_MINING_SCAN_CELLS + 1):
+        for y in range(my_grid.y - AUTOPILOT_MINING_SCAN_CELLS, my_grid.y + AUTOPILOT_MINING_SCAN_CELLS + 1):
+            var block_grid := Vector2i(x, y)
+            if not blocks.has(block_grid):
+                continue
+            var block_world := grid_to_world(block_grid)
+            var block_offset := block_world - ship_pos
+            var dist_sq := block_offset.length_squared()
+            var inward_alignment := block_offset.normalized().dot(inward) if block_offset.length() > 0.01 else 0.0
+            for neighbor in CARDINAL_NEIGHBORS:
+                var staging_grid: Vector2i = block_grid + neighbor * AUTOPILOT_STAGING_CLEARANCE_CELLS
+                if not is_grid_empty(staging_grid):
+                    continue
+                var staging_world := grid_to_world(staging_grid)
+                var target_dist := staging_world.distance_to(block_world)
+                if target_dist > attack_radius * 0.9:
+                    continue
+                var score := dist_sq - inward_alignment * BLOCK_SIZE * BLOCK_SIZE * 8.0
+                if int(blocks.get(block_grid, {}).get("type", BlockType.NORMAL)) == BlockType.CORE:
+                    score -= BLOCK_SIZE * BLOCK_SIZE * 6.0
+                if score < best_score:
+                    best_score = score
+                    best_world = staging_world
+    autopilot_status = "seeking"
+    return best_world
 
 func _update_ship_trail(delta: float) -> void:
     if ship_vel.length() > 45.0:
@@ -1627,12 +1728,15 @@ func _auto_fire_seismic_charge() -> void:
         seismic_charge_bursts.append({
             "position": burst_world,
             "timer": SEISMIC_CHARGE_VISUAL_DURATION,
-            "radius": float(SEISMIC_CHARGE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE,
+            "radius": float(SEISMIC_CHARGE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE * 1.65,
+            "rage_tracer": true,
         })
         var splash := _apply_splash_damage(
             target_grid,
             SEISMIC_CHARGE_SPLASH_RADIUS_CELLS,
-            _get_effective_attack_damage() * (SEISMIC_CHARGE_DAMAGE_MULT + 0.15)
+            _get_effective_attack_damage() * (SEISMIC_CHARGE_DAMAGE_MULT + 0.45),
+            0.35,
+            1.75
         )
         visuals_dirty = visuals_dirty or bool(splash.get("visuals", false))
         if bool(splash.get("destroyed", false)):
@@ -1925,6 +2029,19 @@ func _estimate_frame_destroyed_block_count(result: Dictionary) -> int:
 func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_visual_sync: bool = false) -> void:
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC, -8.0, -0.05)
     _on_combo_hit()
+    seismic_charge_bursts.append({
+        "position": origin_world,
+        "timer": ARC_DURATION,
+        "radius": float(ELECTRIC_SPLASH_RADIUS_CELLS + 1) * BLOCK_SIZE,
+        "packet_burst": true,
+    })
+    _apply_splash_damage(
+        origin_pos,
+        ELECTRIC_SPLASH_RADIUS_CELLS,
+        _get_effective_attack_damage() * ELECTRIC_SPLASH_DAMAGE_MULT,
+        ELECTRIC_SPLASH_FALLOFF,
+        1.2
+    )
     var load_tier := _get_attack_load_tier()
     var effective_range := int(runtime_stats.get("electric_range", 2))
     var effective_depth := int(runtime_stats.get("electric_chain_depth", 1))
@@ -2351,14 +2468,15 @@ func _update_seismic_charge(delta: float) -> void:
     seismic_charge_bursts.append({
         "position": burst_world,
         "timer": SEISMIC_CHARGE_VISUAL_DURATION,
-        "radius": float(SEISMIC_CHARGE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE,
+        "radius": float(SEISMIC_CHARGE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE * (1.65 if power_active_now else 1.0),
+        "rage_tracer": power_active_now,
     })
     var splash := _apply_splash_damage(
         target_grid,
         SEISMIC_CHARGE_SPLASH_RADIUS_CELLS,
-        _get_effective_attack_damage() * (SEISMIC_CHARGE_DAMAGE_MULT if power_active_now else SEISMIC_POWERUP_DAMAGE_MULT),
+        _get_effective_attack_damage() * ((SEISMIC_CHARGE_DAMAGE_MULT + 0.45) if power_active_now else SEISMIC_POWERUP_DAMAGE_MULT),
         0.3,
-        1.35 if power_active_now else 1.0
+        1.75 if power_active_now else 1.0
     )
     if bool(splash.get("visuals", false)):
         _sync_planet_runtime_views(true, false)
@@ -2662,7 +2780,7 @@ func _update_finish_summary(delta: float) -> void:
         if summary_save_phase == "prepare":
             summary_status_label.text = "Preparing save%s" % dots
         else:
-            summary_status_label.text = "Saving planet state%s" % dots
+            summary_status_label.text = "Saving firewall state%s" % dots
     if summary_save_phase == "thread" and PROGRESS.update_async_planet_state_save():
         summary_save_pending = false
         summary_save_phase = "done"
@@ -2757,7 +2875,8 @@ func _refresh_hud() -> void:
         active_boosts.append("Seismic %.0fs" % ceil(active_powerup_timers["seismic_charge"]))
     status_label.text = "Barriers %d  |  Drones %d  |  Power %.0f/%.0f  |  Alive Daemons %d/%d" % [barriers_left, int(runtime_stats.get("drone_count", 0)), current_power, _get_power_capacity(), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0]
     var power_state := "Power Active" if _is_power_active() else ("Power Ready - Click / Space" if _is_power_ready() else "Power Charging")
-    system_label.text = "%s  |  Root Keys %d  |  %s" % [power_state, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run, " / ".join(active_boosts) if not active_boosts.is_empty() else "Move: Mouse / WASD"]
+    var control_state := "Auto Pilot: %s" % autopilot_status if autopilot_enabled else "Move: Mouse / WASD / F Auto"
+    system_label.text = "%s  |  Root Keys %d  |  %s" % [power_state, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run, " / ".join(active_boosts) if not active_boosts.is_empty() else control_state]
     if breach_log_label != null and breach_log_label.text == "":
         _render_breach_log()
 
@@ -2849,10 +2968,13 @@ func _update_perf_debug(frame_delta: float) -> void:
         _last_perf_fps_text = next_fps_text
         fps_label.text = next_fps_text
     if perf_probe_label != null:
-        var next_probe_text := _build_perf_probe_text()
-        if next_probe_text != _last_perf_probe_text:
-            _last_perf_probe_text = next_probe_text
-            perf_probe_label.text = next_probe_text
+        perf_probe_text_refresh_timer -= PERF_DEBUG_REFRESH_INTERVAL
+        if perf_probe_text_refresh_timer <= 0.0:
+            perf_probe_text_refresh_timer = PERF_PROBE_TEXT_REFRESH_INTERVAL
+            var next_probe_text := _build_perf_probe_text()
+            if next_probe_text != _last_perf_probe_text:
+                _last_perf_probe_text = next_probe_text
+                perf_probe_label.text = next_probe_text
     perf_probe_end("update_perf_debug", perf_start_us)
 
 func _estimate_gpu_frame_ms(frame_ms: float, process_ms: float, physics_ms: float) -> float:
@@ -2931,7 +3053,7 @@ func _dump_run_perf_snapshot_to_console(returned: bool, reason: String, money_aw
     lines.append(_build_combat_perf_extremes_text())
     lines.append(_build_combat_perf_worst_snapshot_text())
     lines.append("Camera pos: (%.1f, %.1f)  Ship pos: (%.1f, %.1f)" % [camera_pos.x, camera_pos.y, ship_pos.x, ship_pos.y])
-    lines.append("Visible blocks: %d  Total blocks: %d  Persistent clear: %.2f%%" % [blocks.size(), total_planet_blocks, _get_persistent_clear_percent()])
+    lines.append("Visible blocks: %d  Total blocks: %d  Persistent breach: %.2f%%" % [blocks.size(), total_planet_blocks, _get_persistent_clear_percent()])
     lines.append("========================================")
     print("\n".join(lines))
 
@@ -3031,7 +3153,7 @@ func _capture_run_perf_snapshot() -> void:
             _combat_perf_worst_snapshot = _make_perf_snapshot(fps_now, frame_ms, cpu_ms, phys_ms)
 
 func _build_run_perf_extremes_text() -> String:
-    return "Run Peaks  min FPS %d  max Frame %.2fms  max CPU %.2fms  max Phys %.2fms  max PlanetVis %d  max Load %d" % [
+    return "Run Peaks  min FPS %d  max Frame %.2fms  max CPU %.2fms  max Phys %.2fms  max FirewallVis %d  max Load %d" % [
         int(_run_perf_extremes.get("min_fps", 0)),
         float(_run_perf_extremes.get("max_frame_ms", 0.0)),
         float(_run_perf_extremes.get("max_cpu_ms", 0.0)),
@@ -3043,7 +3165,7 @@ func _build_run_perf_extremes_text() -> String:
 func _build_combat_perf_extremes_text() -> String:
     if int(_combat_perf_extremes.get("min_fps", 1000000)) == 1000000:
         return "Combat Peaks unavailable"
-    return "Combat Peaks  min FPS %d  max Frame %.2fms  max CPU %.2fms  max Phys %.2fms  max PlanetVis %d  max Load %d" % [
+    return "Combat Peaks  min FPS %d  max Frame %.2fms  max CPU %.2fms  max Phys %.2fms  max FirewallVis %d  max Load %d" % [
         int(_combat_perf_extremes.get("min_fps", 0)),
         float(_combat_perf_extremes.get("max_frame_ms", 0.0)),
         float(_combat_perf_extremes.get("max_cpu_ms", 0.0)),
@@ -3265,10 +3387,19 @@ func _sample_average_ms(samples: Array) -> float:
 func _sample_worst_one_percent_ms(samples: Array) -> float:
     if samples.is_empty():
         return 0.0
-    var sorted_samples: Array = samples.duplicate()
-    sorted_samples.sort()
-    var idx := clampi(int(ceil(float(sorted_samples.size()) * 0.99)) - 1, 0, sorted_samples.size() - 1)
-    return float(sorted_samples[idx])
+    var top_count := maxi(1, int(ceili(float(samples.size()) * 0.01)))
+    var top_samples: Array[float] = []
+    for sample_variant in samples:
+        var sample := float(sample_variant)
+        var insert_idx := top_samples.size()
+        while insert_idx > 0 and sample > top_samples[insert_idx - 1]:
+            insert_idx -= 1
+        if insert_idx >= top_count:
+            continue
+        top_samples.insert(insert_idx, sample)
+        if top_samples.size() > top_count:
+            top_samples.resize(top_count)
+    return top_samples[top_samples.size() - 1]
 
 func _return_to_upgrades() -> void:
     _save_planet_snapshot()

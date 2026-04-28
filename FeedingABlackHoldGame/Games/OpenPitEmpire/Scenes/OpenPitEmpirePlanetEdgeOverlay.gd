@@ -112,7 +112,7 @@ func _get_lightened_edge_color(block: Dictionary, alpha_scale: float) -> Color:
         scene_ref.BlockType.CORE:
             edge_color = scene_ref.planet_renderer.ZONE_EDGE_COLORS.get(zone, Color.WHITE)
         scene_ref.BlockType.ELECTRIC:
-            edge_color = Color(0.5, 1.8, 2.5, 1.0)
+            edge_color = Color(0.25, 2.2, 0.65, 1.0)
         scene_ref.BlockType.GOLD:
             edge_color = Color(2.0, 1.6, 0.3, 1.0)
         scene_ref.BlockType.THORN:

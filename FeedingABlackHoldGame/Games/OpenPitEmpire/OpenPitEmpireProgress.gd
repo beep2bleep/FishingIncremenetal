@@ -130,7 +130,7 @@ static func regenerate_planet_state() -> Dictionary:
     var data := load_data()
     data["destroyed_cells"] = []
     data["boss_defeated"] = false
-    data["last_run_summary"] = "Open Pit Empire planet regenerated in editor."
+    data["last_run_summary"] = "Open Pit Empire firewall regenerated in editor."
     data["last_run_breakdown"] = {}
     data["planet_state"] = {}
     save_data(data)

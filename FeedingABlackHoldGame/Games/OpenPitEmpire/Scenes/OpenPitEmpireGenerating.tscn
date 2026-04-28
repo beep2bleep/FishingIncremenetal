@@ -46,7 +46,7 @@ theme_override_constants/separation = 20
 [node name="StatusLabel" type="Label" parent="Center/Panel/Margin/VBox" unique_name_in_owner="true"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 34
-text = "Generating Blocks"
+text = "Generating Firewall"
 horizontal_alignment = 1
 
 [node name="ProgressBar" type="ProgressBar" parent="Center/Panel/Margin/VBox" unique_name_in_owner="true"]

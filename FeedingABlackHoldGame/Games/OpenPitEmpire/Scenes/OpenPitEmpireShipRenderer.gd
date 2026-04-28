@@ -339,8 +339,8 @@ func _draw_electric_arcs(vp: float) -> void:
             var next_pt := local_from.lerp(local_to, t_seg)
             if seg < segments - 1:
                 next_pt += perp * sin(scene_ref.ship_glow_phase * 20.0 + seg * 3.7) * (5.0 + vp * 8.0)
-            draw_line(prev, next_pt, Color(0.6, 2.0, 3.0, alpha * 0.25), 6.0 + vp * 4.0)
-            draw_line(prev, next_pt, Color(0.6, 2.0, 3.0, alpha), 1.5 + vp)
+            draw_line(prev, next_pt, Color(0.1, 2.2, 0.7, alpha * 0.25), 6.0 + vp * 4.0)
+            draw_line(prev, next_pt, Color(0.3, 2.8, 1.0, alpha), 1.5 + vp)
             prev = next_pt
 
 func _draw_chain_arcs(vp: float) -> void:
@@ -414,9 +414,21 @@ func _draw_drones(vp: float) -> void:
 func _draw_seismic_charge_bursts() -> void:
     for burst_variant in scene_ref.seismic_charge_bursts:
         var burst: Dictionary = burst_variant
-        var life_ratio := clampf(float(burst.get("timer", 0.0)) / scene_ref.SEISMIC_CHARGE_VISUAL_DURATION, 0.0, 1.0)
+        var duration := scene_ref.ARC_DURATION if bool(burst.get("packet_burst", false)) else scene_ref.SEISMIC_CHARGE_VISUAL_DURATION
+        var life_ratio := clampf(float(burst.get("timer", 0.0)) / duration, 0.0, 1.0)
         var local := Vector2(burst.get("position", Vector2.ZERO)) - scene_ref.ship_pos
         var radius := float(burst.get("radius", 32.0)) * (1.0 + (1.0 - life_ratio) * 0.45)
+        if bool(burst.get("packet_burst", false)):
+            draw_circle(local, radius, Color(0.1, 1.8, 0.55, 0.04 + (1.0 - life_ratio) * 0.05))
+            draw_arc(local, radius * 0.68, 0.0, TAU, 18, Color(0.25, 2.4, 0.8, 0.72 * life_ratio), 2.0)
+            draw_arc(local, radius * 0.34, 0.0, TAU, 12, Color(0.75, 1.0, 0.82, 0.86 * life_ratio), 1.6)
+            continue
+        if bool(burst.get("rage_tracer", false)):
+            var elapsed := scene_ref.SEISMIC_CHARGE_VISUAL_DURATION - float(burst.get("timer", 0.0))
+            if elapsed <= scene_ref.SEISMIC_CHARGE_TRACER_DURATION:
+                var tracer_alpha := 0.85 * (1.0 - clampf(elapsed / maxf(scene_ref.SEISMIC_CHARGE_TRACER_DURATION, 0.001), 0.0, 1.0))
+                draw_line(Vector2.ZERO, local, Color(0.95, 0.97, 1.0, tracer_alpha * 0.28), 3.0)
+                draw_line(Vector2.ZERO, local, Color(0.9, 0.93, 0.96, tracer_alpha), 1.65)
         draw_circle(local, radius, Color(1.0, 0.5, 0.12, 0.05 + (1.0 - life_ratio) * 0.05))
         draw_arc(local, radius * 0.75, 0.0, TAU, 24, Color(1.0, 0.76, 0.28, 0.75 * life_ratio), 2.0)
         draw_arc(local, radius * 0.42, 0.0, TAU, 18, Color(1.0, 0.92, 0.56, 0.9 * life_ratio), 2.4)

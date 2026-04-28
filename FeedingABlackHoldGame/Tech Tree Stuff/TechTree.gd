@@ -53,6 +53,15 @@ var _batched_upgrade_queue: Array[Upgrade] = []
 var _batched_line_cells: Array[Vector2] = []
 var _batched_forced_nodes: Array[TechTreeNode] = []
 var _build_stage: String = ""
+var _open_pit_profile_build_started_msec: int = 0
+var _open_pit_profile_stage_started_msec: int = 0
+var _open_pit_profile_nodes_msec: int = 0
+var _open_pit_profile_lines_msec: int = 0
+var _open_pit_profile_forced_lines_msec: int = 0
+var _open_pit_profile_frames: int = 0
+var _open_pit_profile_node_frames: int = 0
+var _open_pit_profile_line_frames: int = 0
+var _open_pit_profile_forced_line_frames: int = 0
 
 func select_node_in_direction(dir_vec: Vector2):
     if selected_node == null:
@@ -392,6 +401,16 @@ func _begin_batched_setup_nodes() -> void:
     _batched_upgrade_queue = []
     _batched_line_cells = []
     _batched_forced_nodes = []
+    if _should_profile_open_pit_upgrade_build():
+        _open_pit_profile_build_started_msec = Time.get_ticks_msec()
+        _open_pit_profile_stage_started_msec = _open_pit_profile_build_started_msec
+        _open_pit_profile_nodes_msec = 0
+        _open_pit_profile_lines_msec = 0
+        _open_pit_profile_forced_lines_msec = 0
+        _open_pit_profile_frames = 0
+        _open_pit_profile_node_frames = 0
+        _open_pit_profile_line_frames = 0
+        _open_pit_profile_forced_line_frames = 0
 
     for upgrade_variant: Variant in Global.game_mode_data_manager.upgrades.values():
         if upgrade_variant is Upgrade:
@@ -401,10 +420,16 @@ func _begin_batched_setup_nodes() -> void:
     build_in_progress = true
     _build_stage = "nodes"
     set_process(true)
+    if _should_profile_open_pit_upgrade_build():
+        print("[OpenPitUpgradeStartup] tech_tree_batched_build_begin upgrades=%d batch_size=%d" % [_batched_upgrade_queue.size(), BUILD_BATCH_SIZE])
 
 func _process_batched_build() -> void:
+    if _should_profile_open_pit_upgrade_build():
+        _open_pit_profile_frames += 1
     match _build_stage:
         "nodes":
+            if _should_profile_open_pit_upgrade_build():
+                _open_pit_profile_node_frames += 1
             var node_count: int = min(BUILD_BATCH_SIZE, _batched_upgrade_queue.size())
             for i in range(node_count):
                 var upgrade: Upgrade = _batched_upgrade_queue.pop_back()
@@ -418,28 +443,64 @@ func _process_batched_build() -> void:
                 if upgrade.forced_cell != null:
                     _batched_forced_nodes.append(node)
             if _batched_upgrade_queue.is_empty():
+                _capture_open_pit_profile_stage("nodes")
                 _build_stage = "lines"
+                _open_pit_profile_stage_started_msec = Time.get_ticks_msec()
         "lines":
+            if _should_profile_open_pit_upgrade_build():
+                _open_pit_profile_line_frames += 1
             var line_count: int = min(BUILD_BATCH_SIZE, _batched_line_cells.size())
             for i in range(line_count):
                 var cell: Vector2 = _batched_line_cells.pop_back()
                 _create_grid_lines_for_cell(cell)
             if _batched_line_cells.is_empty():
+                _capture_open_pit_profile_stage("lines")
                 _build_stage = "forced_lines"
+                _open_pit_profile_stage_started_msec = Time.get_ticks_msec()
         "forced_lines":
+            if _should_profile_open_pit_upgrade_build():
+                _open_pit_profile_forced_line_frames += 1
             var forced_count: int = min(BUILD_BATCH_SIZE, _batched_forced_nodes.size())
             for i in range(forced_count):
                 var node: TechTreeNode = _batched_forced_nodes.pop_back()
                 if node.upgrade != null and node_dict.has(node.upgrade.forced_cell):
                     _add_line_between(node, node_dict[node.upgrade.forced_cell])
             if _batched_forced_nodes.is_empty():
+                _capture_open_pit_profile_stage("forced_lines")
                 _finish_batched_build()
 
 func _finish_batched_build() -> void:
     build_in_progress = false
     _build_stage = ""
     set_process(false)
+    if _should_profile_open_pit_upgrade_build():
+        print("[OpenPitUpgradeStartup] tech_tree_batched_build_end total=%.3fms nodes=%.3fms(%d frames) lines=%.3fms(%d frames) forced=%.3fms(%d frames) frames=%d node_count=%d" % [
+            float(Time.get_ticks_msec() - _open_pit_profile_build_started_msec),
+            float(_open_pit_profile_nodes_msec),
+            _open_pit_profile_node_frames,
+            float(_open_pit_profile_lines_msec),
+            _open_pit_profile_line_frames,
+            float(_open_pit_profile_forced_lines_msec),
+            _open_pit_profile_forced_line_frames,
+            _open_pit_profile_frames,
+            node_dict.size()
+        ])
     _complete_full_build()
+
+func _should_profile_open_pit_upgrade_build() -> bool:
+    return Util.is_open_pit_game_active() and _is_simulation_upgrade_tree()
+
+func _capture_open_pit_profile_stage(stage_name: String) -> void:
+    if not _should_profile_open_pit_upgrade_build():
+        return
+    var elapsed_msec: int = Time.get_ticks_msec() - _open_pit_profile_stage_started_msec
+    match stage_name:
+        "nodes":
+            _open_pit_profile_nodes_msec = elapsed_msec
+        "lines":
+            _open_pit_profile_lines_msec = elapsed_msec
+        "forced_lines":
+            _open_pit_profile_forced_lines_msec = elapsed_msec
 
 func _create_grid_lines_for_cell(from_cell: Vector2) -> void:
     if not use_grid_adjacency or not node_dict.has(from_cell):

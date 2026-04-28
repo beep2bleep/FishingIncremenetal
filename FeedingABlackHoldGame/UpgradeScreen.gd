@@ -230,6 +230,8 @@ var zoom
 @onready var tech_tree: TechTree = %"Tech Tree"
 var tree_initialized: bool = false
 var prefers_simulation_tree: bool = false
+var _open_pit_startup_ready_started_msec: int = 0
+var _open_pit_startup_tree_started_msec: int = 0
 
 
 enum STATES{SHOWING_TREE, ROGULIKE}
@@ -252,6 +254,8 @@ var state: int:
 
 
 func _ready() -> void :
+    _open_pit_startup_ready_started_msec = Time.get_ticks_msec()
+    _print_open_pit_startup("ready_begin")
     SignalBus.pallet_updated.connect(_on_pallet_updated)
     SignalBus.global_resource_changed.connect(_on_global_resource_changed)
     SignalBus.settings_updated.connect(_on_settings_updated)
@@ -297,8 +301,24 @@ func _ready() -> void :
     if _is_standalone_mode_upgrade_scene() and get_tree().current_scene == self:
         setup()
         show_screen()
+    _print_open_pit_startup("ready_end", Time.get_ticks_msec() - _open_pit_startup_ready_started_msec)
 
 func _on_tech_tree_build_completed() -> void:
+    if _should_profile_open_pit_upgrade_startup():
+        var tree_elapsed_msec: int = Time.get_ticks_msec() - _open_pit_startup_tree_started_msec if _open_pit_startup_tree_started_msec > 0 else 0
+        var total_elapsed_msec: int = Time.get_ticks_msec() - Global.open_pit_upgrade_startup_started_msec if Global.open_pit_upgrade_startup_started_msec > 0 else 0
+        var node_count: int = tech_tree.node_dict.size() if tech_tree != null else 0
+        var line_count: int = 0
+        if tech_tree != null and is_instance_valid(tech_tree):
+            var lines_container: Node = tech_tree.get_node_or_null("Pivot/Tech Lines")
+            if lines_container != null:
+                line_count = lines_container.get_child_count()
+        print("[OpenPitUpgradeStartup] tree_build_completed %.3fms total_open_to_tree_ready %.3fms nodes=%d lines=%d" % [
+            float(tree_elapsed_msec),
+            float(total_elapsed_msec),
+            node_count,
+            line_count
+        ])
     if _should_recenter_upgrade_tree_on_core():
         _recenter_tech_tree_on_core()
     elif OS.has_feature("editor"):
@@ -516,13 +536,21 @@ func _print_open_pit_core_upgrade_dump_section(core_owned: Array, visible_caps: 
 
 
 func setup():
+    var setup_started_msec := Time.get_ticks_msec()
+    _print_open_pit_startup("setup_begin")
     prefers_simulation_tree = Global.start_in_upgrade_scene
     if Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active():
+        var cache_clear_started_msec := Time.get_ticks_msec()
         Global.clear_upgrade_tree_cache()
+        _print_open_pit_startup("clear_tree_cache", Time.get_ticks_msec() - cache_clear_started_msec)
+    var restore_started_msec := Time.get_ticks_msec()
     _restore_cached_tech_tree_if_available()
+    _print_open_pit_startup("restore_cached_tree", Time.get_ticks_msec() - restore_started_msec)
     if prefers_simulation_tree:
+        _print_open_pit_startup("setup_end_deferred_tree", Time.get_ticks_msec() - setup_started_msec)
         return
     _ensure_tree_initialized()
+    _print_open_pit_startup("setup_end", Time.get_ticks_msec() - setup_started_msec)
 
 
 func _on_global_resource_changed(event_data: GlobalResourceChangedEventData):
@@ -724,6 +752,8 @@ func update_input(input_type):
 
 
 func show_screen():
+    var show_started_msec := Time.get_ticks_msec()
+    _print_open_pit_startup("show_screen_begin")
     _ensure_tree_initialized()
     if _should_recenter_upgrade_tree_on_core():
         _recenter_tech_tree_on_core()
@@ -758,6 +788,7 @@ func show_screen():
     set_process(true)
     show()
     _show_legacy_reset_dialog_if_needed()
+    _print_open_pit_startup("show_screen_end", Time.get_ticks_msec() - show_started_msec)
 
 
 func check_upgrade_tree_achivements():
@@ -900,14 +931,20 @@ func _ensure_tree_initialized(force_rebuild: bool = false) -> void:
     if tech_tree == null:
         return
 
+    var ensure_started_msec := Time.get_ticks_msec()
+    _print_open_pit_startup("ensure_tree_begin force=%s initialized=%s" % [str(force_rebuild), str(tree_initialized)])
     if force_rebuild and tree_initialized:
+        var clear_started_msec := Time.get_ticks_msec()
         _clear_tech_tree_runtime()
         tree_initialized = false
+        _print_open_pit_startup("clear_tree_runtime", Time.get_ticks_msec() - clear_started_msec)
 
     if tree_initialized:
+        _print_open_pit_startup("ensure_tree_end_already_initialized", Time.get_ticks_msec() - ensure_started_msec)
         return
 
     if _is_simulation_upgrade_tree_requested() or _is_simulation_upgrade_tree():
+        var adapter_started_msec := Time.get_ticks_msec()
         if Util.is_mining_game_active():
             MINING_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
         elif Util.is_open_pit_game_active():
@@ -922,11 +959,30 @@ func _ensure_tree_initialized(force_rebuild: bool = false) -> void:
             REEL_INTO_DARKNESS_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
         else:
             FishingUpgradeTreeAdapter.apply_simulation_upgrades()
+        _print_open_pit_startup("apply_simulation_upgrades", Time.get_ticks_msec() - adapter_started_msec)
+        var currency_started_msec := Time.get_ticks_msec()
         _sync_simulation_currency_from_save()
+        _print_open_pit_startup("sync_currency", Time.get_ticks_msec() - currency_started_msec)
 
+    _open_pit_startup_tree_started_msec = Time.get_ticks_msec()
+    var setup_started_msec := Time.get_ticks_msec()
     tech_tree.setup()
+    _print_open_pit_startup("tech_tree_setup_returned build_in_progress=%s" % str(tech_tree.build_in_progress), Time.get_ticks_msec() - setup_started_msec)
     tree_initialized = true
     _loaded_tree_locale = TranslationServer.get_locale()
+    _print_open_pit_startup("ensure_tree_end", Time.get_ticks_msec() - ensure_started_msec)
+
+func _should_profile_open_pit_upgrade_startup() -> bool:
+    return Util.is_open_pit_game_active()
+
+func _print_open_pit_startup(label: String, elapsed_msec: int = -1) -> void:
+    if not _should_profile_open_pit_upgrade_startup():
+        return
+    var since_scene_request_msec: int = Time.get_ticks_msec() - Global.open_pit_upgrade_startup_started_msec if Global.open_pit_upgrade_startup_started_msec > 0 else 0
+    if elapsed_msec >= 0:
+        print("[OpenPitUpgradeStartup] %s %.3fms since_request=%.3fms" % [label, float(elapsed_msec), float(since_scene_request_msec)])
+    else:
+        print("[OpenPitUpgradeStartup] %s since_request=%.3fms" % [label, float(since_scene_request_msec)])
 
 func _sync_simulation_currency_from_save() -> void:
     if not (_is_simulation_upgrade_tree_requested() or _is_simulation_upgrade_tree()):
