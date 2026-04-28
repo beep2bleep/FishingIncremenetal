@@ -1493,7 +1493,7 @@ func _has_live_hacker_targets() -> bool:
     if mega_timer > 0.0:
         return true
     var range_world := float(runtime_stats.get("attack_radius", 96.0))
-    return not _find_nearest_attack_targets(range_world, 1, _should_autopilot_allow_core_targets()).is_empty()
+    return not _find_nearest_attack_targets(range_world, 1).is_empty()
 
 func _try_start_hacker_typer_attack_line() -> void:
     hacker_typer_shot_timer = HACKER_TYPER_SHOT_WINDOW
@@ -2054,7 +2054,7 @@ func _find_autopilot_lane_anchor_target() -> Dictionary:
             else:
                 score -= depth_score * 0.25
             if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
-                score += 160.0 if not _should_autopilot_allow_core_targets() else -40.0
+                score += 160.0 if not _is_autopilot_core_attack_mode() else -40.0
             if score < best_score:
                 best_score = score
                 best_grid = pos
@@ -2087,7 +2087,7 @@ func _find_autopilot_any_anchor_target() -> Dictionary:
         else:
             score -= depth_score * 0.25
         if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
-            score += 160.0 if not _should_autopilot_allow_core_targets() else -40.0
+            score += 160.0 if not _is_autopilot_core_attack_mode() else -40.0
         if score < best_score:
             best_score = score
             best_grid = pos
@@ -2428,7 +2428,7 @@ func _auto_fire_laser() -> void:
     var perf_start_us := perf_probe_begin()
     var range_world := float(runtime_stats.get("attack_radius", 96.0))
     var max_targets := _get_effective_multi_target_count()
-    var candidates := _find_nearest_attack_targets(range_world, max_targets, _should_autopilot_allow_core_targets())
+    var candidates := _find_nearest_attack_targets(range_world, max_targets)
     if candidates.is_empty():
         last_attack_target = Vector2.ZERO
         multi_targets.clear()
@@ -2475,7 +2475,7 @@ func _auto_fire_laser() -> void:
                 var adj_pos: Vector2i = pos + adj
                 if not is_grid_empty(adj_pos):
                     var adj_block: Dictionary = blocks.get(adj_pos, {})
-                    if not _should_autopilot_allow_core_targets() and _should_autopilot_skip_core_area_block(adj_pos, adj_block):
+                    if _should_autopilot_skip_core_area_block(adj_pos, adj_block):
                         continue
                     var adj_core_id: int = int(blocks.get(adj_pos, {}).get("core_id", -1))
                     if target_core_id >= 0 and adj_core_id == target_core_id:
@@ -2497,7 +2497,7 @@ func _auto_fire_laser() -> void:
         _trigger_chain_lightning(Vector2i(candidates[0].get("pos", Vector2i.ZERO)), Vector2(candidates[0].get("world", Vector2.ZERO)))
     perf_probe_end("auto_fire_laser", perf_start_us)
 
-func _find_nearest_attack_targets(range_world: float, max_targets: int, allow_core_targets: bool = true) -> Array[Dictionary]:
+func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array[Dictionary]:
     if max_targets <= 0:
         return []
     var candidates: Array[Dictionary] = []
@@ -2518,7 +2518,7 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int, allow_co
         if not _is_autopilot_attackable_block(block, check):
             continue
         var core_id: int = int(block.get("core_id", -1))
-        if not allow_core_targets and _should_autopilot_skip_core_area_block(check, block):
+        if _should_autopilot_skip_core_area_block(check, block):
             continue
         if core_id >= 0 and seen_core_ids.has(core_id):
             continue
@@ -2527,7 +2527,7 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int, allow_co
         if dist_sq >= range_sq:
             continue
         var target_score := dist_sq
-        if core_id >= 0 and not allow_core_targets:
+        if core_id >= 0 and not _is_autopilot_core_attack_mode():
             target_score += range_sq * 0.35
         var candidate := {"pos": check, "dist_sq": target_score, "world": block_world, "core_id": core_id}
         var insert_idx := candidates.size()
