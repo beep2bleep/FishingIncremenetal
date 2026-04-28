@@ -197,6 +197,10 @@ const AUTOPILOT_LANE_SCORE_WEIGHT := BLOCK_SIZE * BLOCK_SIZE * 0.35
 const AUTOPILOT_ANCHOR_SCAN_CELLS := 72
 const AUTOPILOT_ANCHOR_SCAN_HALF_WIDTH := 16
 const AUTOPILOT_CORE_BREACH_CLEAR_PERCENT := 55.0
+const AUTOPILOT_CORE_BREACH_CORRIDOR_HALF_WIDTH := 2
+const AUTOPILOT_CORE_BREACH_SCAN_STEPS := 96
+const AUTOPILOT_CORE_COMMIT_CLEARANCE_CELLS := 7
+const AUTOPILOT_NORMAL_CORE_MAX_HP := 25000000.0
 const AUTOPILOT_MODE_CENTER := "center"
 const AUTOPILOT_MODE_LEFT_SWEEP := "left sweep"
 const AUTOPILOT_MODE_RIGHT_SWEEP := "right sweep"
@@ -1490,7 +1494,7 @@ func _has_live_hacker_targets() -> bool:
     if mega_timer > 0.0:
         return true
     var range_world := float(runtime_stats.get("attack_radius", 96.0))
-    return not _find_nearest_attack_targets(range_world, 1).is_empty()
+    return not _find_nearest_attack_targets(range_world, 1, _should_autopilot_allow_core_targets()).is_empty()
 
 func _try_start_hacker_typer_attack_line() -> void:
     hacker_typer_shot_timer = HACKER_TYPER_SHOT_WINDOW
@@ -1768,7 +1772,7 @@ func _get_autopilot_direction(delta: float) -> Vector2:
     return direction
 
 func _choose_autopilot_sortie_mode() -> void:
-    if _should_autopilot_prioritize_core_breach():
+    if _should_autopilot_commit_core_kill():
         autopilot_sortie_mode = AUTOPILOT_MODE_CENTER
         return
     var roll := rng.randf()
@@ -1787,22 +1791,23 @@ func _get_autopilot_return_reason() -> String:
     if barriers_left <= 0:
         return "no barriers"
     var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
-    if cargo_capacity > 0 and cargo_units >= cargo_capacity and not _should_autopilot_prioritize_core_breach():
+    var committed_core_kill := _should_autopilot_commit_core_kill()
+    if cargo_capacity > 0 and cargo_units >= cargo_capacity and not committed_core_kill:
         return "cargo full"
     var run_time := maxf(1.0, float(runtime_stats.get("run_time", 30.0)))
-    if time_left <= run_time * AUTOPILOT_FUEL_RETURN_RATIO:
+    if time_left <= run_time * AUTOPILOT_FUEL_RETURN_RATIO and not committed_core_kill:
         return "fuel reserve %.0fs" % ceil(run_time * AUTOPILOT_FUEL_RETURN_RATIO)
     return ""
 
 func _find_autopilot_mining_target() -> Vector2:
     var core_breach_target := _find_autopilot_core_breach_target()
     if not core_breach_target.is_empty():
-        var core_world := Vector2(core_breach_target.get("target_world", ship_pos))
-        autopilot_aim_dir = (core_world - ship_pos).normalized()
-        autopilot_status = "breaching core"
+        var aim_world := Vector2(core_breach_target.get("target_world", ship_pos))
+        autopilot_aim_dir = (aim_world - ship_pos).normalized()
+        autopilot_status = str(core_breach_target.get("status", "breaching core"))
         return Vector2(core_breach_target.get("world", ship_pos))
 
-    if not _should_autopilot_prioritize_core_breach():
+    if not _should_autopilot_commit_core_kill():
         var pickup_target := _find_autopilot_pickup_target()
         if not pickup_target.is_empty():
             autopilot_aim_dir = Vector2.ZERO
@@ -1810,7 +1815,7 @@ func _find_autopilot_mining_target() -> Vector2:
             return Vector2(pickup_target.get("position", ship_pos))
 
     var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
-    var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1)
+    var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1, _should_autopilot_allow_core_targets())
     if not nearby_targets.is_empty():
         var nearby_world := Vector2(nearby_targets[0].get("world", ship_pos))
         autopilot_aim_dir = (nearby_world - ship_pos).normalized()
@@ -1835,6 +1840,9 @@ func _find_autopilot_mining_target() -> Vector2:
                 continue
             if not _is_autopilot_mineable_block(block_grid):
                 continue
+            var block: Dictionary = blocks.get(block_grid, {})
+            if _should_autopilot_skip_core_area_block(block_grid, block):
+                continue
             var block_world := grid_to_world(block_grid)
             var block_offset := block_world - ship_pos
             var dist_sq := block_offset.length_squared()
@@ -1854,8 +1862,11 @@ func _find_autopilot_mining_target() -> Vector2:
                 var score := dist_sq - inward_alignment * BLOCK_SIZE * BLOCK_SIZE * 8.0
                 score += lane_penalty + depth_penalty
                 score += _get_autopilot_edge_proximity_penalty(staging_world)
-                if int(blocks.get(block_grid, {}).get("type", BlockType.NORMAL)) == BlockType.CORE:
-                    score -= BLOCK_SIZE * BLOCK_SIZE * 6.0
+                if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
+                    if _should_autopilot_allow_core_targets():
+                        score -= BLOCK_SIZE * BLOCK_SIZE * 6.0
+                    else:
+                        score += BLOCK_SIZE * BLOCK_SIZE * 10.0
                 if score < best_score:
                     best_score = score
                     best_world = staging_world
@@ -1886,8 +1897,62 @@ func _should_autopilot_prioritize_core_breach() -> bool:
         return true
     return false
 
-func _find_autopilot_core_breach_target() -> Dictionary:
+func _should_autopilot_commit_core_kill() -> bool:
+    return not _get_autopilot_committable_core().is_empty()
+
+func _should_autopilot_allow_core_targets() -> bool:
+    return not autopilot_enabled or _should_autopilot_commit_core_kill()
+
+func _should_autopilot_skip_core_area_block(grid: Vector2i, block: Dictionary) -> bool:
+    if not autopilot_enabled:
+        return false
+    if _is_autopilot_core_block(block):
+        return not _should_autopilot_allow_core_target(grid, block)
+    return _is_temporary_core_influence_block(grid, block)
+
+func _is_autopilot_core_block(block: Dictionary) -> bool:
+    return int(block.get("core_id", -1)) >= 0
+
+func _should_autopilot_allow_core_target(_grid: Vector2i, block: Dictionary) -> bool:
+    if not autopilot_enabled:
+        return true
+    if _should_autopilot_commit_core_kill():
+        return true
+    var core_id := int(block.get("core_id", -1))
+    if core_id < 0 or planet_data == null:
+        return false
+    if planet_data.is_core_locked(core_id, _core_unlocks_center()):
+        return false
+    var role := PLANET_DATA_SCRIPT.get_core_role(core_id)
+    if role == "boss" or role == "final":
+        return false
+    return float(block.get("max_hp", block.get("hp", 0.0))) <= AUTOPILOT_NORMAL_CORE_MAX_HP
+
+func _is_temporary_core_influence_block(grid: Vector2i, block: Dictionary) -> bool:
+    if block.is_empty():
+        return false
+    if int(block.get("core_id", -1)) >= 0:
+        return false
+    if bool(block.get("core_refill", false)):
+        return true
+    if planet_data == null:
+        return false
+    for core_variant in planet_data.cores:
+        var core: Dictionary = core_variant
+        if not bool(core.get("alive", false)):
+            continue
+        var center := Vector2i(int(core.center.x), int(core.center.y))
+        var radius := int(planet_data.get_effective_influence_radius(core))
+        var dx := grid.x - center.x
+        var dy := grid.y - center.y
+        if dx * dx + dy * dy <= radius * radius:
+            return true
+    return false
+
+func _get_autopilot_committable_core() -> Dictionary:
     if not _should_autopilot_prioritize_core_breach():
+        return {}
+    if planet_data == null:
         return {}
     var best_core: Dictionary = {}
     var best_score := -INF
@@ -1898,10 +1963,12 @@ func _find_autopilot_core_breach_target() -> Dictionary:
         var core_id := int(core.get("id", -1))
         if planet_data.is_core_locked(core_id, _core_unlocks_center()):
             continue
+        if not _is_autopilot_core_clear_for_commit(core):
+            continue
         var role := str(core.get("role", ""))
         var center := Vector2i(int(core.center.x), int(core.center.y))
-        var depth_score := float(center.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)
-        var score := depth_score - ship_pos.distance_to(grid_to_world(center)) / BLOCK_SIZE
+        var score := float(center.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)
+        score -= ship_pos.distance_to(grid_to_world(center)) / BLOCK_SIZE
         if role == "final":
             score += 10000.0
         elif role == "boss":
@@ -1909,14 +1976,92 @@ func _find_autopilot_core_breach_target() -> Dictionary:
         if score > best_score:
             best_score = score
             best_core = core
+    return best_core
+
+func _is_autopilot_core_clear_for_commit(core: Dictionary) -> bool:
+    var center := Vector2i(int(core.center.x), int(core.center.y))
+    var core_size := int(core.get("size", 3))
+    var half: int = core_size / 2
+    var clearance: int = maxi(AUTOPILOT_CORE_COMMIT_CLEARANCE_CELLS, half + AUTOPILOT_STAGING_CLEARANCE_CELLS)
+    var top_y := center.y - half - clearance
+    var bottom_y := center.y + half + 1
+    for y in range(top_y, bottom_y + 1):
+        var row_half_width: int = half + clearance
+        if y < center.y - half:
+            var rows_above := center.y - half - y
+            row_half_width = maxi(half + 1, half + clearance - rows_above)
+        for x in range(center.x - row_half_width, center.x + row_half_width + 1):
+            var pos := Vector2i(x, y)
+            if not blocks.has(pos):
+                continue
+            var block: Dictionary = blocks.get(pos, {})
+            if int(block.get("core_id", -1)) >= 0:
+                continue
+            if _is_temporary_core_influence_block(pos, block):
+                continue
+            if _is_autopilot_attackable_block(block, pos):
+                return false
+    return _has_autopilot_core_attack_staging(core)
+
+func _has_autopilot_core_attack_staging(core: Dictionary) -> bool:
+    var center := Vector2i(int(core.center.x), int(core.center.y))
+    var core_size := int(core.get("size", 3))
+    var staging_cells := maxi(AUTOPILOT_STAGING_CLEARANCE_CELLS, core_size / 2 + 2)
+    for neighbor in CARDINAL_NEIGHBORS:
+        var staging_grid: Vector2i = center + neighbor * staging_cells
+        if is_grid_empty(staging_grid) and not _is_in_locked_core_avoidance_zone(staging_grid, true):
+            return true
+    return false
+
+func _find_autopilot_core_breach_target() -> Dictionary:
+    var best_core := _get_autopilot_committable_core()
     if best_core.is_empty():
         return {}
     var core_center := Vector2i(int(best_core.center.x), int(best_core.center.y))
+    var tunnel_target := _find_autopilot_core_breach_corridor_target(core_center)
+    if not tunnel_target.is_empty():
+        var target_grid := Vector2i(tunnel_target.get("grid", core_center))
+        return {
+            "grid": target_grid,
+            "target_world": grid_to_world(target_grid),
+            "world": _get_autopilot_staging_world_for_anchor(target_grid),
+            "status": "clearing core approach",
+        }
     return {
         "grid": core_center,
         "target_world": grid_to_world(core_center),
         "world": _get_autopilot_staging_world_for_core(best_core),
+        "status": "committed core kill",
     }
+
+func _find_autopilot_core_breach_corridor_target(core_center: Vector2i) -> Dictionary:
+    var start := world_to_grid(ship_pos)
+    var to_core := Vector2(float(core_center.x - start.x), float(core_center.y - start.y))
+    var distance := to_core.length()
+    if distance <= 0.01:
+        return {}
+    var forward := to_core / distance
+    var side := Vector2(-forward.y, forward.x)
+    var steps: int = mini(AUTOPILOT_CORE_BREACH_SCAN_STEPS, int(ceil(distance)))
+    var best_grid := Vector2i(999999, 999999)
+    var best_score := INF
+    for step in range(1, steps + 1):
+        var center_f := Vector2(float(start.x), float(start.y)) + forward * float(step)
+        for side_offset in range(-AUTOPILOT_CORE_BREACH_CORRIDOR_HALF_WIDTH, AUTOPILOT_CORE_BREACH_CORRIDOR_HALF_WIDTH + 1):
+            var sample_f := center_f + side * float(side_offset)
+            var grid := Vector2i(int(round(sample_f.x)), int(round(sample_f.y)))
+            if not _is_autopilot_mineable_block(grid):
+                continue
+            var progress_score := float(step) * 100.0
+            var side_score := absf(float(side_offset)) * 18.0
+            var dist_score := ship_pos.distance_squared_to(grid_to_world(grid)) / (BLOCK_SIZE * BLOCK_SIZE)
+            var score := progress_score + side_score + dist_score * 0.05
+            if score < best_score:
+                best_score = score
+                best_grid = grid
+    if best_grid.x >= 999999:
+        return {}
+    return {"grid": best_grid}
 
 func _get_autopilot_staging_world_for_core(core: Dictionary) -> Vector2:
     var core_center := Vector2i(int(core.center.x), int(core.center.y))
@@ -1973,6 +2118,8 @@ func _find_autopilot_lane_anchor_target() -> Dictionary:
             var block: Dictionary = blocks.get(pos, {})
             if not _is_autopilot_attackable_block(block, pos):
                 continue
+            if _should_autopilot_skip_core_area_block(pos, block):
+                continue
             var lane_dist := absf(float(pos.x - lane_x))
             var depth_score := float(pos.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)
             var dist_score := ship_pos.distance_squared_to(grid_to_world(pos)) / (BLOCK_SIZE * BLOCK_SIZE)
@@ -1982,7 +2129,7 @@ func _find_autopilot_lane_anchor_target() -> Dictionary:
             else:
                 score -= depth_score * 0.25
             if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
-                score -= 40.0
+                score += 160.0 if not _should_autopilot_allow_core_targets() else -40.0
             if score < best_score:
                 best_score = score
                 best_grid = pos
@@ -2003,6 +2150,8 @@ func _find_autopilot_any_anchor_target() -> Dictionary:
         var block: Dictionary = blocks.get(pos, {})
         if not _is_autopilot_attackable_block(block, pos):
             continue
+        if _should_autopilot_skip_core_area_block(pos, block):
+            continue
         var lane_x := _get_autopilot_desired_lane_x(pos.y)
         var lane_dist := absf(float(pos.x - lane_x))
         var depth_score := float(pos.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)
@@ -2013,7 +2162,7 @@ func _find_autopilot_any_anchor_target() -> Dictionary:
         else:
             score -= depth_score * 0.25
         if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
-            score -= 40.0
+            score += 160.0 if not _should_autopilot_allow_core_targets() else -40.0
         if score < best_score:
             best_score = score
             best_grid = pos
@@ -2074,7 +2223,7 @@ func _find_autopilot_pickup_target() -> Dictionary:
 
 func _update_autopilot_aim_direction() -> void:
     var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
-    var nearby_targets := _find_nearest_attack_targets(attack_radius * 1.1, 1)
+    var nearby_targets := _find_nearest_attack_targets(attack_radius * 1.1, 1, _should_autopilot_allow_core_targets())
     if not nearby_targets.is_empty():
         var target_world := Vector2(nearby_targets[0].get("world", ship_pos))
         autopilot_aim_dir = (target_world - ship_pos).normalized()
@@ -2354,7 +2503,7 @@ func _auto_fire_laser() -> void:
     var perf_start_us := perf_probe_begin()
     var range_world := float(runtime_stats.get("attack_radius", 96.0))
     var max_targets := _get_effective_multi_target_count()
-    var candidates := _find_nearest_attack_targets(range_world, max_targets)
+    var candidates := _find_nearest_attack_targets(range_world, max_targets, _should_autopilot_allow_core_targets())
     if candidates.is_empty():
         last_attack_target = Vector2.ZERO
         multi_targets.clear()
@@ -2400,6 +2549,9 @@ func _auto_fire_laser() -> void:
                 var adj: Vector2i = aoe_neighbors[adj_idx]
                 var adj_pos: Vector2i = pos + adj
                 if not is_grid_empty(adj_pos):
+                    var adj_block: Dictionary = blocks.get(adj_pos, {})
+                    if not _should_autopilot_allow_core_targets() and _should_autopilot_skip_core_area_block(adj_pos, adj_block):
+                        continue
                     var adj_core_id: int = int(blocks.get(adj_pos, {}).get("core_id", -1))
                     if target_core_id >= 0 and adj_core_id == target_core_id:
                         continue
@@ -2420,7 +2572,7 @@ func _auto_fire_laser() -> void:
         _trigger_chain_lightning(Vector2i(candidates[0].get("pos", Vector2i.ZERO)), Vector2(candidates[0].get("world", Vector2.ZERO)))
     perf_probe_end("auto_fire_laser", perf_start_us)
 
-func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array[Dictionary]:
+func _find_nearest_attack_targets(range_world: float, max_targets: int, allow_core_targets: bool = true) -> Array[Dictionary]:
     if max_targets <= 0:
         return []
     var candidates: Array[Dictionary] = []
@@ -2441,15 +2593,20 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array
         if not _is_autopilot_attackable_block(block, check):
             continue
         var core_id: int = int(block.get("core_id", -1))
+        if not allow_core_targets and _should_autopilot_skip_core_area_block(check, block):
+            continue
         if core_id >= 0 and seen_core_ids.has(core_id):
             continue
         var block_world := grid_to_world(check)
         var dist_sq := ship_pos.distance_squared_to(block_world)
         if dist_sq >= range_sq:
             continue
-        var candidate := {"pos": check, "dist_sq": dist_sq, "world": block_world, "core_id": core_id}
+        var target_score := dist_sq
+        if core_id >= 0 and not allow_core_targets:
+            target_score += range_sq * 0.35
+        var candidate := {"pos": check, "dist_sq": target_score, "world": block_world, "core_id": core_id}
         var insert_idx := candidates.size()
-        while insert_idx > 0 and dist_sq < float(candidates[insert_idx - 1].get("dist_sq", INF)):
+        while insert_idx > 0 and target_score < float(candidates[insert_idx - 1].get("dist_sq", INF)):
             insert_idx -= 1
         if insert_idx >= max_targets and candidates.size() >= max_targets:
             continue

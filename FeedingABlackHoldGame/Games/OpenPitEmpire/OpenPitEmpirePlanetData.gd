@@ -34,7 +34,10 @@ const CORE_SHARED_HP_BLOCK_MULT: float = 2.0
 const CORE_TOTAL_HP_MULT: float = 4.0
 const NON_CORE_INFLUENCE_HP_STRENGTH: float = 0.55
 const CORE_DIRECT_DR: float = 0.2
+const CORE_BOSS_DIRECT_DR: float = 0.75
+const CORE_FINAL_DIRECT_DR: float = 1.0
 const CORE_MAX_HP_FRACTION_PER_HIT: float = 0.08
+const CORE_AUTHORED_HP_CAP_MIN: float = 1000000.0
 
 enum Zone { PROXY, CIPHER, GHOST, ROOT, CENTER }
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
@@ -51,12 +54,12 @@ const CORE_CONFIGS := [
     {"id": 6, "center": Vector2i(-54, 56), "size": 3, "influence": 20, "hp_mult": 125.0, "total_hp": 80000, "inf_mult": 3.5, "res_mult": 2.5, "zone": Zone.GHOST, "role": "outer"},
     {"id": 7, "center": Vector2i(8, 70), "size": 3, "influence": 20, "hp_mult": 150.0, "total_hp": 150000, "inf_mult": 3.5, "res_mult": 3.0, "zone": Zone.GHOST, "role": "outer"},
     {"id": 8, "center": Vector2i(66, 64), "size": 3, "influence": 20, "hp_mult": 175.0, "total_hp": 250000, "inf_mult": 4.0, "res_mult": 3.0, "zone": Zone.GHOST, "role": "outer"},
-    {"id": 14, "center": Vector2i(0, 124), "size": 7, "influence": 28, "hp_mult": 400.0, "total_hp": 350000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.GHOST, "role": "boss"},
+    {"id": 14, "center": Vector2i(0, 124), "size": 7, "influence": 28, "hp_mult": 400.0, "total_hp": 18000000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.GHOST, "role": "boss"},
     {"id": 9, "center": Vector2i(-34, 156), "size": 5, "influence": 22, "hp_mult": 200.0, "total_hp": 5000000, "inf_mult": 4.0, "res_mult": 3.5, "zone": Zone.ROOT, "role": "outer"},
     {"id": 10, "center": Vector2i(0, 180), "size": 5, "influence": 22, "hp_mult": 250.0, "total_hp": 10000000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.ROOT, "role": "outer"},
     {"id": 11, "center": Vector2i(30, 158), "size": 5, "influence": 22, "hp_mult": 300.0, "total_hp": 20000000, "inf_mult": 4.5, "res_mult": 5.0, "zone": Zone.ROOT, "role": "outer"},
-    {"id": 15, "center": Vector2i(0, 214), "size": 7, "influence": 32, "hp_mult": 600.0, "total_hp": 50000000, "inf_mult": 5.0, "res_mult": 6.0, "zone": Zone.ROOT, "role": "boss"},
-    {"id": 16, "center": Vector2i(0, 246), "size": 7, "influence": 35, "hp_mult": 500.0, "total_hp": 180000000, "inf_mult": 5.0, "res_mult": 8.0, "zone": Zone.CENTER, "role": "final"},
+    {"id": 15, "center": Vector2i(0, 214), "size": 7, "influence": 32, "hp_mult": 600.0, "total_hp": 35000000, "inf_mult": 5.0, "res_mult": 6.0, "zone": Zone.ROOT, "role": "boss"},
+    {"id": 16, "center": Vector2i(0, 246), "size": 7, "influence": 35, "hp_mult": 500.0, "total_hp": 120000000, "inf_mult": 5.0, "res_mult": 8.0, "zone": Zone.CENTER, "role": "final"},
 ]
 
 const ZONE_BOSS_IDS := {
@@ -151,6 +154,24 @@ static func get_core_tier(core_id: int) -> int:
             return 3
         _:
             return 1
+
+static func get_core_config(core_id: int) -> Dictionary:
+    for config in CORE_CONFIGS:
+        if int(config.id) == core_id:
+            return config
+    return {}
+
+static func get_authored_core_hp_cap(core_id: int) -> float:
+    var config := get_core_config(core_id)
+    if config.is_empty():
+        return 0.0
+    var role := str(config.get("role", ""))
+    var total_hp := float(config.get("total_hp", 0.0))
+    if role == "final" and total_hp > 0.0:
+        return total_hp
+    if role == "boss" and total_hp >= CORE_AUTHORED_HP_CAP_MIN:
+        return total_hp
+    return 0.0
 
 func get_map_bounds() -> Rect2:
     return Rect2(float(PIT_MIN_X), float(PIT_CAP_TOP_Y), float(PIT_MAX_X - PIT_MIN_X), float(PIT_BOTTOM_Y - PIT_CAP_TOP_Y))
@@ -562,6 +583,11 @@ func _sync_core_tile_health(core_id: int) -> void:
                 shared_hp = minf(shared_hp, hp)
     if shared_max_hp <= 0.0 or shared_hp < 0.0:
         return
+    var authored_hp_cap := get_authored_core_hp_cap(core_id)
+    if authored_hp_cap > 0.0 and shared_max_hp > authored_hp_cap:
+        var hp_ratio := clampf(shared_hp / shared_max_hp, 0.0, 1.0)
+        shared_max_hp = authored_hp_cap
+        shared_hp = authored_hp_cap * hp_ratio
     shared_hp = clampf(shared_hp, 0.0, shared_max_hp)
     for dx in range(-half, half + core_size % 2):
         for dy in range(-half, half + core_size % 2):
@@ -1302,10 +1328,11 @@ func _place_cores() -> void:
             ),
             float(config.get("total_hp", 0.0))
         )
-        if str(config.get("role", "")) == "final" and float(config.get("total_hp", 0.0)) > 0.0:
-            core_hp = float(config.get("total_hp", 0.0))
         core_hp *= CORE_TOTAL_HP_MULT
         core_hp *= core_difficulty_mult
+        var authored_hp_cap := get_authored_core_hp_cap(core_id)
+        if authored_hp_cap > 0.0:
+            core_hp = minf(core_hp, authored_hp_cap)
         var base_res: float = _calc_block_resource(center)
         var core_res: float = base_res * float(config.res_mult) * float(block_count)
         cores.append({
@@ -1360,7 +1387,18 @@ func _damage_core(_hit_pos: Vector2i, core_id: int, damage: float, free_planet_m
             break
     if shared_hp < 0.0:
         return {"destroyed": false, "type": BlockType.CORE, "resource": 0.0, "core_id": core_id}
-    var applied_damage := damage * CORE_DIRECT_DR
+    var authored_hp_cap := get_authored_core_hp_cap(core_id)
+    if authored_hp_cap > 0.0 and shared_max_hp > authored_hp_cap:
+        var hp_ratio := clampf(shared_hp / shared_max_hp, 0.0, 1.0)
+        shared_max_hp = authored_hp_cap
+        shared_hp = authored_hp_cap * hp_ratio
+    var direct_dr := CORE_DIRECT_DR
+    var role := str(core.get("role", ""))
+    if role == "final":
+        direct_dr = CORE_FINAL_DIRECT_DR
+    elif role == "boss":
+        direct_dr = CORE_BOSS_DIRECT_DR
+    var applied_damage := damage * direct_dr
     var max_hit_damage := maxf(1.0, shared_max_hp * CORE_MAX_HP_FRACTION_PER_HIT)
     applied_damage = minf(applied_damage, max_hit_damage)
     var next_shared_hp := shared_hp - applied_damage
