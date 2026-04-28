@@ -3475,6 +3475,7 @@ func _save_planet_snapshot() -> void:
     PROGRESS.save_data(persistent_data)
     var snapshot: Dictionary = planet_data.build_dirty_save_data()
     snapshot["depth_level"] = current_depth_level
+    snapshot["remaining_layer_block_counts"] = _get_live_remaining_layer_block_counts()
     var dirty_sections: Dictionary = snapshot.get("sections", {})
     if not dirty_sections.is_empty():
         if PROGRESS.save_planet_state(snapshot):
@@ -3512,6 +3513,7 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
     if planet_data != null:
         planet_snapshot = await planet_data.build_save_data_async(get_tree(), Callable(self, "_on_finish_save_progress"))
         planet_snapshot["depth_level"] = current_depth_level
+        planet_snapshot["remaining_layer_block_counts"] = _get_live_remaining_layer_block_counts()
         has_sector_updates = not Dictionary(planet_snapshot.get("sections", {})).is_empty()
     PROGRESS.apply_run_results({
         "money": money_award,
@@ -3523,6 +3525,7 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
         "boss_defeated": boss_defeated,
         "destroyed_cells": [],
         "planet_state": planet_snapshot if has_sector_updates else {},
+        "remaining_layer_block_counts": _get_live_remaining_layer_block_counts(),
         "defer_planet_state_save": has_sector_updates,
         "summary_text": "%s Banked $%d and %d XP." % [reason, money_award, xp_earned_this_run],
         "persistent_clear": _get_persistent_clear_percent(),
