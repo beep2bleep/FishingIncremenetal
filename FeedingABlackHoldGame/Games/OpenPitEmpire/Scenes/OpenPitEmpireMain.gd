@@ -182,6 +182,11 @@ const AUTOPILOT_MINING_SCAN_CELLS := 18
 const AUTOPILOT_STAGING_CLEARANCE_CELLS := 2
 const AUTOPILOT_TARGET_REACHED_DISTANCE := 26.0
 const AUTOPILOT_FUEL_RETURN_RATIO := 0.25
+const AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME := 12
+const AUTOPILOT_NO_RENDER_STEPS_PER_FRAME := 240
+const AUTOPILOT_EDGE_AVOID_SCAN_CELLS := 4
+const AUTOPILOT_EDGE_AVOID_RADIUS := BLOCK_SIZE * 4.0
+const AUTOPILOT_EDGE_AVOID_WEIGHT := 1.8
 
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
 enum OutlineMode { OFF, GROUP_EDGES, ALL_BLOCKS, ALL_BLOCKS_MASK }
@@ -323,8 +328,11 @@ var side_attackers: Array[Dictionary] = []
 var autopilot_enabled := false
 var autopilot_returning := false
 var autopilot_target := Vector2.ZERO
+var autopilot_aim_dir := Vector2.ZERO
 var autopilot_retarget_timer := 0.0
 var autopilot_status := ""
+var autopilot_fast_forward_enabled := false
+var autopilot_no_render_enabled := false
 
 var planet_renderer: Node2D
 var drop_renderer: Node2D
@@ -560,6 +568,8 @@ func _ready() -> void:
     set_process(true)
 
 func _exit_tree() -> void:
+    autopilot_fast_forward_enabled = false
+    _set_autopilot_no_render_enabled(false)
     if VirtualCursor != null:
         VirtualCursor.use_open_pit_empire_cursor(false)
         VirtualCursor.set_scene_enabled(false)
@@ -589,9 +599,25 @@ func _unhandled_input(event: InputEvent) -> void:
             autopilot_returning = false
             autopilot_retarget_timer = 0.0
             autopilot_target = ship_pos
+            autopilot_aim_dir = Vector2.ZERO
+            if not autopilot_enabled:
+                autopilot_fast_forward_enabled = false
+                _set_autopilot_no_render_enabled(false)
             autopilot_status = "starting" if autopilot_enabled else ""
             _push_breach_log("[color=#7dffbf]AUTO PILOT[/color]  %s." % ("engaged" if autopilot_enabled else "released"))
             get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_G:
+            if autopilot_enabled:
+                _set_autopilot_no_render_enabled(false)
+                autopilot_fast_forward_enabled = not autopilot_fast_forward_enabled
+                _push_breach_log("[color=#7dffbf]FAST FORWARD[/color]  %s." % ("max simulation engaged" if autopilot_fast_forward_enabled else "normal speed restored"))
+                get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_H:
+            if autopilot_enabled:
+                autopilot_fast_forward_enabled = false
+                _set_autopilot_no_render_enabled(not autopilot_no_render_enabled)
+                _push_breach_log("[color=#7dffbf]NO-RENDER SPRINT[/color]  %s." % ("running flat out" if autopilot_no_render_enabled else "rendering restored"))
+                get_viewport().set_input_as_handled()
         elif event.keycode == KEY_BRACKETLEFT:
             adjust_planet_outline_radius(-PLANET_OUTLINE_RADIUS_STEP)
             get_viewport().set_input_as_handled()
@@ -994,8 +1020,11 @@ func _start_run() -> void:
     autopilot_enabled = false
     autopilot_returning = false
     autopilot_target = ship_pos
+    autopilot_aim_dir = Vector2.ZERO
     autopilot_retarget_timer = 0.0
     autopilot_status = ""
+    autopilot_fast_forward_enabled = false
+    _set_autopilot_no_render_enabled(false)
     if VirtualCursor != null:
         if VirtualCursor.has_method("set_open_pit_empire_cursor_power"):
             VirtualCursor.set_open_pit_empire_cursor_power(0.0, false, false)
@@ -1090,14 +1119,24 @@ func _setup_minimap() -> void:
 
 func _process(delta: float) -> void:
     var perf_start_us := perf_probe_begin()
-    pickups_spawned_this_frame = 0
-    _run_perf_capture_time += delta
-    _frame_destroyed_blocks = 0
     var frame_block_count_before: int = blocks.size()
     if run_finished:
         _update_finish_summary(delta)
         perf_probe_end("process_frame", perf_start_us)
         return
+    var simulation_steps := _get_gameplay_simulation_steps()
+    for _step in range(simulation_steps):
+        _process_gameplay_step(delta)
+        if run_finished:
+            break
+    _perf_probe_last_samples["net_block_drop_in_frame"] = float(maxi(0, frame_block_count_before - blocks.size()))
+    perf_probe_end("process_frame", perf_start_us)
+    _capture_run_perf_snapshot()
+
+func _process_gameplay_step(delta: float) -> void:
+    pickups_spawned_this_frame = 0
+    _run_perf_capture_time += delta
+    _frame_destroyed_blocks = 0
     ship_glow_phase += delta * 3.0
     var section_start_us := perf_probe_begin()
     _update_timers(delta)
@@ -1152,9 +1191,33 @@ func _process(delta: float) -> void:
     if fps_label != null and perf_debug_refresh_timer <= 0.0:
         perf_debug_refresh_timer = PERF_DEBUG_REFRESH_INTERVAL
         _update_perf_debug(delta)
-    _perf_probe_last_samples["net_block_drop_in_frame"] = float(maxi(0, frame_block_count_before - blocks.size()))
-    perf_probe_end("process_frame", perf_start_us)
-    _capture_run_perf_snapshot()
+
+func _get_gameplay_simulation_steps() -> int:
+    if autopilot_enabled and autopilot_no_render_enabled and not run_finished:
+        return AUTOPILOT_NO_RENDER_STEPS_PER_FRAME
+    if autopilot_enabled and autopilot_fast_forward_enabled and not run_finished:
+        return AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME
+    return 1
+
+func _set_autopilot_no_render_enabled(enabled: bool) -> void:
+    var was_enabled := autopilot_no_render_enabled
+    autopilot_no_render_enabled = enabled
+    if planet_renderer != null:
+        planet_renderer.visible = not enabled
+        planet_renderer.set_process(not enabled)
+    if drop_renderer != null:
+        drop_renderer.visible = not enabled
+        drop_renderer.set_process(not enabled)
+    if ship_root != null:
+        ship_root.visible = not enabled
+    if ship_renderer != null:
+        ship_renderer.set_process(not enabled)
+    if hud_layer != null:
+        hud_layer.visible = not enabled
+    if was_enabled and not enabled and planet_renderer != null:
+        planet_renderer.mark_dirty(true, "no_render_restore")
+    if was_enabled and not enabled and minimap != null:
+        minimap.queue_redraw()
 
 func _update_timers(delta: float) -> void:
     bottom_cutscene_timer = maxf(0.0, bottom_cutscene_timer - delta)
@@ -1494,11 +1557,11 @@ func _update_ship(delta: float) -> void:
     if shield_recovery_timer > 0.0:
         var recovery_progress := 1.0 - clampf(shield_recovery_timer / SHIELD_HIT_RECOVERY_TIME, 0.0, 1.0)
         accel_scale = lerpf(SHIELD_HIT_ACCEL_START_SCALE, 1.0, recovery_progress)
-    if autopilot_enabled and keyboard_dir == Vector2.ZERO:
+    if autopilot_enabled:
         keyboard_dir = _get_autopilot_direction(delta)
     if keyboard_dir != Vector2.ZERO:
         desired_velocity = keyboard_dir.normalized() * effective_speed
-    else:
+    elif not autopilot_enabled:
         var screen_center := viewport_size * 0.5
         var mouse_screen := get_viewport().get_mouse_position()
         var offset := mouse_screen - screen_center
@@ -1512,8 +1575,12 @@ func _update_ship(delta: float) -> void:
     ship_pos += ship_vel * delta
     if ship_pos.length() > 10.0:
         last_move_dir = ship_vel.normalized() if ship_vel.length() > 5.0 else ship_pos.normalized()
-    if desired_velocity.length() > 5.0:
-        visual_rotation = lerp_angle(visual_rotation, desired_velocity.angle() + PI * 0.5, ROTATION_SPEED * delta)
+    var aim_dir := desired_velocity.normalized() if desired_velocity.length() > 5.0 else Vector2.ZERO
+    if autopilot_enabled and not autopilot_returning and autopilot_aim_dir.length_squared() > 0.001:
+        aim_dir = autopilot_aim_dir.normalized()
+        last_move_dir = aim_dir
+    if aim_dir.length() > 0.01:
+        visual_rotation = lerp_angle(visual_rotation, aim_dir.angle() + PI * 0.5, ROTATION_SPEED * delta)
     elif last_move_dir.length() > 0.01:
         visual_rotation = lerp_angle(visual_rotation, last_move_dir.angle() + PI * 0.5, ROTATION_SPEED * delta * 0.4)
     _resolve_ship_collision()
@@ -1527,18 +1594,32 @@ func _get_autopilot_direction(delta: float) -> Vector2:
     autopilot_retarget_timer -= delta
     if autopilot_returning:
         autopilot_target = spawn_position
+        autopilot_aim_dir = Vector2.ZERO
         autopilot_status = "returning"
     elif autopilot_retarget_timer <= 0.0 or ship_pos.distance_to(autopilot_target) <= AUTOPILOT_TARGET_REACHED_DISTANCE:
         autopilot_retarget_timer = AUTOPILOT_RETARGET_INTERVAL
         autopilot_target = _find_autopilot_mining_target()
+    elif not autopilot_returning:
+        _update_autopilot_aim_direction()
     var offset := autopilot_target - ship_pos
     if offset.length() <= AUTOPILOT_TARGET_REACHED_DISTANCE:
         if autopilot_returning:
             autopilot_status = "holding for extraction"
         else:
             autopilot_status = "mining"
+            var hold_edge_avoidance := _get_autopilot_edge_avoidance()
+            if hold_edge_avoidance.length_squared() > 0.001:
+                autopilot_status = "mining, avoiding edge"
+                return hold_edge_avoidance
         return Vector2.ZERO
-    return offset.normalized()
+    var direction := offset.normalized()
+    if not autopilot_returning:
+        var edge_avoidance := _get_autopilot_edge_avoidance()
+        if edge_avoidance.length_squared() > 0.001:
+            direction = (direction + edge_avoidance * AUTOPILOT_EDGE_AVOID_WEIGHT).normalized()
+            if autopilot_status == "mining" or autopilot_status == "seeking":
+                autopilot_status = "%s, avoiding edge" % autopilot_status
+    return direction
 
 func _should_autopilot_return() -> bool:
     if autopilot_returning:
@@ -1553,6 +1634,8 @@ func _find_autopilot_mining_target() -> Vector2:
     var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
     var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1)
     if not nearby_targets.is_empty():
+        var nearby_world := Vector2(nearby_targets[0].get("world", ship_pos))
+        autopilot_aim_dir = (nearby_world - ship_pos).normalized()
         autopilot_status = "mining"
         return ship_pos
 
@@ -1561,11 +1644,14 @@ func _find_autopilot_mining_target() -> Vector2:
     if inward.length() < 0.01:
         inward = Vector2.DOWN
     var best_world := ship_pos + inward * BLOCK_SIZE * 2.0
+    var best_aim_dir := inward
     var best_score := INF
     for x in range(my_grid.x - AUTOPILOT_MINING_SCAN_CELLS, my_grid.x + AUTOPILOT_MINING_SCAN_CELLS + 1):
         for y in range(my_grid.y - AUTOPILOT_MINING_SCAN_CELLS, my_grid.y + AUTOPILOT_MINING_SCAN_CELLS + 1):
             var block_grid := Vector2i(x, y)
             if not blocks.has(block_grid):
+                continue
+            if not _is_autopilot_mineable_block(block_grid):
                 continue
             var block_world := grid_to_world(block_grid)
             var block_offset := block_world - ship_pos
@@ -1580,13 +1666,73 @@ func _find_autopilot_mining_target() -> Vector2:
                 if target_dist > attack_radius * 0.9:
                     continue
                 var score := dist_sq - inward_alignment * BLOCK_SIZE * BLOCK_SIZE * 8.0
+                score += _get_autopilot_edge_proximity_penalty(staging_world)
                 if int(blocks.get(block_grid, {}).get("type", BlockType.NORMAL)) == BlockType.CORE:
                     score -= BLOCK_SIZE * BLOCK_SIZE * 6.0
                 if score < best_score:
                     best_score = score
                     best_world = staging_world
+                    best_aim_dir = (block_world - ship_pos).normalized()
+    autopilot_aim_dir = best_aim_dir
     autopilot_status = "seeking"
     return best_world
+
+func _update_autopilot_aim_direction() -> void:
+    var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
+    var nearby_targets := _find_nearest_attack_targets(attack_radius * 1.1, 1)
+    if not nearby_targets.is_empty():
+        var target_world := Vector2(nearby_targets[0].get("world", ship_pos))
+        autopilot_aim_dir = (target_world - ship_pos).normalized()
+        return
+    var target_offset := autopilot_target - ship_pos
+    autopilot_aim_dir = target_offset.normalized() if target_offset.length() > 0.01 else Vector2.ZERO
+
+func _is_autopilot_mineable_block(grid: Vector2i) -> bool:
+    var block: Dictionary = blocks.get(grid, {})
+    if block.is_empty():
+        return false
+    return not bool(block.get("unbreakable", false))
+
+func _is_mineable_non_core_block(grid: Vector2i) -> bool:
+    var block: Dictionary = blocks.get(grid, {})
+    if block.is_empty():
+        return false
+    return int(block.get("core_id", -1)) < 0 and not bool(block.get("unbreakable", false))
+
+func _get_autopilot_edge_avoidance() -> Vector2:
+    var my_grid := world_to_grid(ship_pos)
+    var push := Vector2.ZERO
+    var radius_sq := AUTOPILOT_EDGE_AVOID_RADIUS * AUTOPILOT_EDGE_AVOID_RADIUS
+    for x in range(my_grid.x - AUTOPILOT_EDGE_AVOID_SCAN_CELLS, my_grid.x + AUTOPILOT_EDGE_AVOID_SCAN_CELLS + 1):
+        for y in range(my_grid.y - AUTOPILOT_EDGE_AVOID_SCAN_CELLS, my_grid.y + AUTOPILOT_EDGE_AVOID_SCAN_CELLS + 1):
+            var check := Vector2i(x, y)
+            if not bool(blocks.get(check, {}).get("unbreakable", false)):
+                continue
+            var block_world := grid_to_world(check)
+            var away := ship_pos - block_world
+            var dist_sq := away.length_squared()
+            if dist_sq <= 0.001 or dist_sq > radius_sq:
+                continue
+            var strength := 1.0 - clampf(sqrt(dist_sq) / AUTOPILOT_EDGE_AVOID_RADIUS, 0.0, 1.0)
+            push += away.normalized() * strength
+    return push.normalized() if push.length_squared() > 0.001 else Vector2.ZERO
+
+func _get_autopilot_edge_proximity_penalty(world_pos: Vector2) -> float:
+    var center_grid := world_to_grid(world_pos)
+    var penalty := 0.0
+    var scan_cells := maxi(1, AUTOPILOT_EDGE_AVOID_SCAN_CELLS - 1)
+    var radius_sq := AUTOPILOT_EDGE_AVOID_RADIUS * AUTOPILOT_EDGE_AVOID_RADIUS
+    for x in range(center_grid.x - scan_cells, center_grid.x + scan_cells + 1):
+        for y in range(center_grid.y - scan_cells, center_grid.y + scan_cells + 1):
+            var check := Vector2i(x, y)
+            if not bool(blocks.get(check, {}).get("unbreakable", false)):
+                continue
+            var dist_sq := world_pos.distance_squared_to(grid_to_world(check))
+            if dist_sq > radius_sq:
+                continue
+            var closeness := 1.0 - clampf(sqrt(dist_sq) / AUTOPILOT_EDGE_AVOID_RADIUS, 0.0, 1.0)
+            penalty += closeness * BLOCK_SIZE * BLOCK_SIZE * 10.0
+    return penalty
 
 func _update_ship_trail(delta: float) -> void:
     if ship_vel.length() > 45.0:
@@ -1612,6 +1758,9 @@ func _update_ship_trail(delta: float) -> void:
             ship_trail.remove_at(idx)
 
 func _resolve_ship_collision() -> void:
+    if _is_autopilot_returning_to_base():
+        _enforce_funnel_containment()
+        return
     var my_grid := world_to_grid(ship_pos)
     for dx in range(-1, 2):
         for dy in range(-1, 2):
@@ -1839,6 +1988,8 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array
         if not blocks.has(check):
             continue
         var block: Dictionary = blocks.get(check, {})
+        if bool(block.get("unbreakable", false)):
+            continue
         var core_id: int = int(block.get("core_id", -1))
         if core_id >= 0 and seen_core_ids.has(core_id):
             continue
@@ -1973,7 +2124,7 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         var world := grid_to_world(pos)
         _gain_power(_get_power_gain_for_block(block_before))
         _spawn_pickup(world, block_before)
-        if planet_renderer != null:
+        if planet_renderer != null and not autopilot_no_render_enabled:
             if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
                 _queue_core_fill_region(int(result.get("core_id", int(block_before.get("core_id", -1)))))
             else:
@@ -2104,7 +2255,7 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
                 boss_defeated = true
                 _finish_run(true, "The final core ruptured.")
                 return
-    if planet_renderer != null:
+    if planet_renderer != null and not autopilot_no_render_enabled:
         if not fill_positions.is_empty():
             planet_renderer.queue_fill_updates(fill_positions)
         for core_id_variant in destroyed_core_ids.keys():
@@ -2396,15 +2547,15 @@ func _find_forward_lane_target(forward: Vector2, distance_world: float, lateral_
         for offset_idx in range(0, lateral_steps + 1):
             if offset_idx == 0:
                 var center_grid := world_to_grid(base_world)
-                if not is_grid_empty(center_grid) and int(blocks.get(center_grid, {}).get("core_id", -1)) < 0:
+                if _is_mineable_non_core_block(center_grid):
                     return center_grid
                 continue
             var lateral_offset := lateral * BLOCK_SIZE * float(offset_idx)
             var left_grid := world_to_grid(base_world - lateral_offset)
-            if not is_grid_empty(left_grid) and int(blocks.get(left_grid, {}).get("core_id", -1)) < 0:
+            if _is_mineable_non_core_block(left_grid):
                 return left_grid
             var right_grid := world_to_grid(base_world + lateral_offset)
-            if not is_grid_empty(right_grid) and int(blocks.get(right_grid, {}).get("core_id", -1)) < 0:
+            if _is_mineable_non_core_block(right_grid):
                 return right_grid
     return Vector2i(999999, 999999)
 
@@ -2569,11 +2720,11 @@ func _update_drone_visuals(_delta: float) -> void:
 func _sync_planet_runtime_views(mark_renderer_dirty: bool = false, rebuild_fill: bool = false, reason: String = "runtime_sync") -> void:
     blocks = planet_data.blocks
     exposed_edges = planet_data.exposed_edges
-    if mark_renderer_dirty:
+    if mark_renderer_dirty and not autopilot_no_render_enabled:
         planet_renderer.mark_dirty(rebuild_fill, reason)
 
 func _queue_core_fill_region(core_id: int, padding_cells: int = 2) -> void:
-    if planet_renderer == null or planet_data == null or core_id < 0:
+    if autopilot_no_render_enabled or planet_renderer == null or planet_data == null or core_id < 0:
         return
     for core_variant in planet_data.cores:
         var core: Dictionary = core_variant
@@ -2697,6 +2848,8 @@ func _finish_run(returned: bool, reason: String) -> void:
     if run_finished:
         return
     extracting = false
+    autopilot_fast_forward_enabled = false
+    _set_autopilot_no_render_enabled(false)
     run_finished = true
     _flush_pending_exposed_edges()
     if planet_data != null:
@@ -2876,7 +3029,8 @@ func _refresh_hud() -> void:
         active_boosts.append("Seismic %.0fs" % ceil(active_powerup_timers["seismic_charge"]))
     status_label.text = "Barriers %d  |  Drones %d  |  Power %.0f/%.0f  |  Alive Daemons %d/%d" % [barriers_left, int(runtime_stats.get("drone_count", 0)), current_power, _get_power_capacity(), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0]
     var power_state := "Power Active" if _is_power_active() else ("Power Ready - Click / Space" if _is_power_ready() else "Power Charging")
-    var control_state := "Auto Pilot: %s" % autopilot_status if autopilot_enabled else "Move: Mouse / WASD / F Auto"
+    var fast_suffix := "  |  No Render x%d" % AUTOPILOT_NO_RENDER_STEPS_PER_FRAME if autopilot_no_render_enabled else ("  |  Fast x%d" % AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME if autopilot_fast_forward_enabled else "  |  G Fast / H Sprint")
+    var control_state := "Auto Pilot: %s%s" % [autopilot_status, fast_suffix] if autopilot_enabled else "Move: Mouse / WASD / F Auto"
     system_label.text = "%s  |  Root Keys %d  |  %s" % [power_state, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run, " / ".join(active_boosts) if not active_boosts.is_empty() else control_state]
     if breach_log_label != null and breach_log_label.text == "":
         _render_breach_log()
@@ -3403,6 +3557,8 @@ func _sample_worst_one_percent_ms(samples: Array) -> float:
     return top_samples[top_samples.size() - 1]
 
 func _return_to_upgrades() -> void:
+    autopilot_fast_forward_enabled = false
+    _set_autopilot_no_render_enabled(false)
     _save_planet_snapshot()
     SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
 
@@ -3623,7 +3779,7 @@ func _on_core_destroyed(core: Dictionary) -> void:
     if core_id == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
         boss_defeated = true
         final_core_exposed = true
-    if minimap != null:
+    if minimap != null and not autopilot_no_render_enabled:
         minimap.queue_redraw()
 
 func _update_core_behaviors(delta: float) -> void:
@@ -3638,7 +3794,7 @@ func _update_core_behaviors(delta: float) -> void:
             if not spawned_positions.is_empty():
                 blocks = planet_data.blocks
                 exposed_edges = planet_data.exposed_edges
-                if planet_renderer != null:
+                if planet_renderer != null and not autopilot_no_render_enabled:
                     planet_renderer.queue_fill_updates(spawned_positions)
     if bool(behaviors.get("shockwave", false)) or bool(behaviors.get("final_lockdown", false)):
         core_shockwave_timer -= delta
@@ -3905,6 +4061,8 @@ func _apply_ship_hazard_hit(push_dir: Vector2, reason: String, core_id: int = -1
     _finish_run(false, reason)
 
 func _trigger_ship_shield_hit(hit_dir: Vector2) -> bool:
+    if _is_autopilot_returning_to_base():
+        return true
     if shield_invuln_timer > 0.0:
         return true
     if barriers_left <= 0:
@@ -3929,6 +4087,9 @@ func _trigger_ship_shield_hit(hit_dir: Vector2) -> bool:
         ship_pos = ship_pos.limit_length(max_radius)
     AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK, -10.0, -0.08)
     return true
+
+func _is_autopilot_returning_to_base() -> bool:
+    return autopilot_enabled and autopilot_returning
 
 func _resolve_shield_bounce_destination(target_world: Vector2) -> Vector2:
     var target_grid := world_to_grid(target_world)

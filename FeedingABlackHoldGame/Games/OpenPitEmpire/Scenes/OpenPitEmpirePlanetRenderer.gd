@@ -57,7 +57,7 @@ const PIT_WALL_FILL := Color(0.2, 0.04, 0.05, 0.96)
 const PIT_WALL_EDGE := Color(1.0, 0.24, 0.2, 0.96)
 const PIT_WALL_SHADOW := Color(0.14, 0.0, 0.0, 0.46)
 const HIT_GLOW := Color(2.3, 1.2, 0.4, 0.55)
-const HACKER_BLOCK_FILL := Color(0.015, 0.08, 0.055, 1.0)
+const HACKER_BLOCK_FILL := Color(0.08, 0.34, 0.16, 1.0)
 const HACKER_BLOCK_EDGE := Color(0.25, 2.2, 0.65, 1.0)
 const HACKER_BLOCK_DIM := Color(0.06, 0.16, 0.12, 1.0)
 const STAR_COLORS := [
@@ -1136,8 +1136,9 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
             fill = _mix_fill_with_edge(ZONE_FILLS.get(zone, Color(0.11, 0.07, 0.08, 1.0)), ZONE_EDGE_COLORS.get(zone, Color(1.0, 1.0, 1.0, 1.0)), 0.32)
             edge = ZONE_EDGE_COLORS.get(zone, Color(2.5, 0.3, 0.08, 1.0))
         scene_ref.BlockType.ELECTRIC:
-            fill = HACKER_BLOCK_FILL if electric_enabled else _mix_fill_with_edge(HACKER_BLOCK_DIM, edge, 0.12).darkened(0.08)
-            edge = HACKER_BLOCK_EDGE if electric_enabled else HACKER_BLOCK_DIM
+            var expected_fill := _mix_fill_with_edge(fill, edge, 0.22)
+            fill = expected_fill.lerp(HACKER_BLOCK_FILL, 0.28) if electric_enabled else expected_fill.lerp(HACKER_BLOCK_DIM, 0.12)
+            edge = edge.lerp(HACKER_BLOCK_EDGE, 0.42) if electric_enabled else edge.lerp(HACKER_BLOCK_DIM, 0.22)
         scene_ref.BlockType.GOLD:
             var base_fill := _mix_fill_with_edge(fill, edge, 0.16)
             fill = base_fill.lightened(0.08) if gold_enabled else base_fill

@@ -53,15 +53,20 @@ static func get_upgrade_catalog() -> Array[Dictionary]:
     return BALANCE.get_upgrade_catalog()
 
 static func load_data() -> Dictionary:
+    var profile_started_msec := Time.get_ticks_msec()
     if _cache_loaded:
+        _print_startup_profile("progress_load_cached", Time.get_ticks_msec() - profile_started_msec)
         return _cached_data.duplicate(true)
+    _print_startup_profile("progress_load_begin")
     var data: Dictionary = get_default_data()
     if FileAccess.file_exists(SAVE_PATH):
+        var read_started_msec := Time.get_ticks_msec()
         var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
         if file != null:
             var parsed: Variant = JSON.parse_string(file.get_as_text())
             if parsed is Dictionary:
                 data = data.merged(parsed, true)
+        _print_startup_profile("progress_read_main_save", Time.get_ticks_msec() - read_started_msec)
     data["wallet"] = max(0, int(data.get("wallet", 0)))
     data["xp_currency"] = max(0, int(data.get("xp_currency", 0)))
     if not (data.get("upgrades", {}) is Dictionary):
@@ -97,22 +102,35 @@ static func load_data() -> Dictionary:
     var should_write_save := false
     _cached_planet_state = {}
     if not inline_planet_state.is_empty():
+        var migrate_started_msec := Time.get_ticks_msec()
         _cached_planet_state = inline_planet_state
         _write_planet_state_binary(_cached_planet_state)
         data["planet_state"] = {}
         should_write_save = true
+        _print_startup_profile("progress_migrate_inline_planet_state", Time.get_ticks_msec() - migrate_started_msec)
     if not _has_complete_remaining_layer_count_cache(data):
+        var remaining_started_msec := Time.get_ticks_msec()
         _refresh_remaining_layer_count_cache(data)
         should_write_save = true
+        _print_startup_profile("progress_refresh_remaining_layer_count_cache", Time.get_ticks_msec() - remaining_started_msec)
     if not _has_complete_layer_clear_cache(data):
+        var clear_started_msec := Time.get_ticks_msec()
         _refresh_best_layer_clear_cache(data)
         should_write_save = true
+        _print_startup_profile("progress_refresh_best_layer_clear_cache", Time.get_ticks_msec() - clear_started_msec)
+    var depth_started_msec := Time.get_ticks_msec()
     BALANCE.refresh_depth_unlocks(data)
     _refresh_clear_reward_upgrades(data)
+    _print_startup_profile("progress_refresh_unlocks", Time.get_ticks_msec() - depth_started_msec)
+    var sanitize_started_msec := Time.get_ticks_msec()
     _cached_data = _sanitize_main_data(data)
     _cache_loaded = true
+    _print_startup_profile("progress_sanitize", Time.get_ticks_msec() - sanitize_started_msec)
     if should_write_save:
+        var write_started_msec := Time.get_ticks_msec()
         _write_json(SAVE_PATH, _cached_data)
+        _print_startup_profile("progress_write_main_save", Time.get_ticks_msec() - write_started_msec)
+    _print_startup_profile("progress_load_end", Time.get_ticks_msec() - profile_started_msec)
     return _cached_data.duplicate(true)
 
 static func save_data(data: Dictionary) -> void:
@@ -266,7 +284,7 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
     data["wallet"] = max(0, int(data.get("wallet", 0)) + int(results.get("money", 0)))
     data["xp_currency"] = max(0, int(data.get("xp_currency", 0)) + int(results.get("xp", 0)))
     data["last_run_summary"] = str(results.get("summary_text", "Open Pit Empire sortie complete."))
-    var breakdown := results.duplicate(true)
+    var breakdown := results.duplicate(false)
     breakdown.erase("planet_state")
     data["last_run_breakdown"] = breakdown
     var attempt_history: Array = data.get("attempt_history", []).duplicate(true)
@@ -430,16 +448,33 @@ static func clear_cache() -> void:
     clear_runtime_planet_data()
 
 static func _sanitize_main_data(data: Dictionary) -> Dictionary:
-    var sanitized := data.duplicate(true)
+    var sanitized := data.duplicate(false)
     sanitized["planet_state"] = {}
     sanitized["deepest_level_unlocked"] = clampi(int(sanitized.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
     sanitized["selected_depth_level"] = clampi(int(sanitized.get("selected_depth_level", sanitized["deepest_level_unlocked"])), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
     sanitized["planet_layout_version"] = BALANCE.PLANET_LAYOUT_VERSION
     var breakdown: Variant = sanitized.get("last_run_breakdown", {})
     if breakdown is Dictionary:
-        var breakdown_dict: Dictionary = Dictionary(breakdown).duplicate(true)
+        var breakdown_dict: Dictionary = Dictionary(breakdown).duplicate(false)
         breakdown_dict.erase("planet_state")
         sanitized["last_run_breakdown"] = breakdown_dict
+    var attempt_history: Variant = sanitized.get("attempt_history", [])
+    if attempt_history is Array:
+        var sanitized_attempts: Array = []
+        for attempt_variant: Variant in attempt_history:
+            if attempt_variant is Dictionary:
+                var attempt_dict: Dictionary = Dictionary(attempt_variant).duplicate(false)
+                attempt_dict.erase("planet_state")
+                sanitized_attempts.append(attempt_dict)
+            else:
+                sanitized_attempts.append(attempt_variant)
+        sanitized["attempt_history"] = sanitized_attempts
+    if sanitized.get("upgrades", {}) is Dictionary:
+        sanitized["upgrades"] = Dictionary(sanitized.get("upgrades", {})).duplicate(true)
+    if sanitized.get("xp_upgrades", {}) is Dictionary:
+        sanitized["xp_upgrades"] = Dictionary(sanitized.get("xp_upgrades", {})).duplicate(true)
+    if sanitized.get("purchased_core_upgrades", []) is Array:
+        sanitized["purchased_core_upgrades"] = Array(sanitized.get("purchased_core_upgrades", [])).duplicate(true)
     sanitized["remaining_layer_block_counts"] = _normalize_layer_block_counts(sanitized.get("remaining_layer_block_counts", {}))
     sanitized["best_layer_clear_percents"] = _normalize_layer_clear_percents(sanitized.get("best_layer_clear_percents", {}))
     BALANCE.refresh_depth_unlocks(sanitized)
@@ -534,17 +569,25 @@ static func _get_initial_layer_block_counts() -> Dictionary:
     return counts
 
 static func _scan_remaining_layer_block_counts() -> Dictionary:
+    var profile_started_msec := Time.get_ticks_msec()
     var counts := {}
     for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
         counts[layer_depth] = 0
     var state := _cached_planet_state.duplicate(true)
     if state.is_empty():
+        var load_state_started_msec := Time.get_ticks_msec()
         state = load_planet_state()
+        _print_startup_profile("progress_scan_load_planet_state", Time.get_ticks_msec() - load_state_started_msec)
     if state.is_empty():
-        return _get_initial_layer_block_counts()
+        var initial_started_msec := Time.get_ticks_msec()
+        var initial_counts := _get_initial_layer_block_counts()
+        _print_startup_profile("progress_scan_initial_counts", Time.get_ticks_msec() - initial_started_msec)
+        _print_startup_profile("progress_scan_remaining_layer_block_counts", Time.get_ticks_msec() - profile_started_msec)
+        return initial_counts
     var format_version: int = int(state.get("format_version", 1))
     if format_version >= 2 and state.get("sections", {}) is Dictionary:
         var sections: Dictionary = state.get("sections", {})
+        var section_scan_started_msec := Time.get_ticks_msec()
         var legacy_planet_data = null
         for section_variant in sections.values():
             for row_variant in Array(section_variant):
@@ -565,6 +608,8 @@ static func _scan_remaining_layer_block_counts() -> Dictionary:
                     legacy_planet_data = PLANET_DATA_SCRIPT.new()
                 var layer_depth_v2: int = clampi(legacy_planet_data.get_depth_level_for_pos(Vector2i(int(row[0]), int(row[1])), MAX_DEPTH_LEVEL), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
                 counts[layer_depth_v2] = int(counts.get(layer_depth_v2, 0)) + 1
+        _print_startup_profile("progress_scan_sections count=%d" % sections.size(), Time.get_ticks_msec() - section_scan_started_msec)
+        _print_startup_profile("progress_scan_remaining_layer_block_counts", Time.get_ticks_msec() - profile_started_msec)
         return counts
     var blocks: Dictionary = state.get("blocks", {})
     for key_variant in blocks.keys():
@@ -577,10 +622,19 @@ static func _scan_remaining_layer_block_counts() -> Dictionary:
             continue
         var layer_depth: int = clampi(int(arr[8]), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
         counts[layer_depth] = int(counts.get(layer_depth, 0)) + 1
+    _print_startup_profile("progress_scan_legacy_blocks count=%d" % blocks.size(), Time.get_ticks_msec() - profile_started_msec)
     return counts
 
 static func _normalize_layer_block_counts(source: Variant) -> Dictionary:
     var normalized := {}
+    if source is Dictionary and _has_complete_layer_depth_dictionary(source):
+        var source_dict: Dictionary = source
+        for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+            if source_dict.has(layer_depth):
+                normalized[layer_depth] = maxi(0, int(source_dict.get(layer_depth, 0)))
+            else:
+                normalized[layer_depth] = maxi(0, int(source_dict.get(str(layer_depth), 0)))
+        return normalized
     var initial_counts: Dictionary = _get_initial_layer_block_counts()
     for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
         normalized[layer_depth] = int(initial_counts.get(layer_depth, 0))
@@ -592,6 +646,15 @@ static func _normalize_layer_block_counts(source: Variant) -> Dictionary:
             continue
         normalized[layer_depth] = maxi(0, int((source as Dictionary).get(layer_depth_variant, initial_counts.get(layer_depth, 0))))
     return normalized
+
+static func _has_complete_layer_depth_dictionary(source: Variant) -> bool:
+    if not (source is Dictionary):
+        return false
+    var source_dict: Dictionary = source
+    for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+        if not source_dict.has(layer_depth) and not source_dict.has(str(layer_depth)):
+            return false
+    return true
 
 static func _has_complete_remaining_layer_count_cache(data: Dictionary) -> bool:
     var cache: Variant = data.get("remaining_layer_block_counts", {})
@@ -647,6 +710,7 @@ static func _thread_write_planet_state(state: Dictionary) -> bool:
     return _write_planet_state_binary(state)
 
 static func _read_planet_state_binary() -> Variant:
+    var profile_started_msec := Time.get_ticks_msec()
     if not FileAccess.file_exists(PLANET_META_PATH):
         return null
     var meta_file := FileAccess.open(PLANET_META_PATH, FileAccess.READ)
@@ -674,7 +738,19 @@ static func _read_planet_state_binary() -> Variant:
             return null
         sections[section_id] = Array(section_data).duplicate(true)
     state["sections"] = sections
+    _print_startup_profile("progress_read_planet_state_binary sections=%d" % sections.size(), Time.get_ticks_msec() - profile_started_msec)
     return state
+
+static func _print_startup_profile(label: String, elapsed_msec: int = -1) -> void:
+    if not Util.is_open_pit_game_active():
+        return
+    if elapsed_msec >= 0 and elapsed_msec < 8:
+        return
+    var since_scene_request_msec: int = Time.get_ticks_msec() - Global.open_pit_upgrade_startup_started_msec if Global.open_pit_upgrade_startup_started_msec > 0 else 0
+    if elapsed_msec >= 0:
+        print("[OpenPitUpgradeStartup] %s %.3fms since_request=%.3fms" % [label, float(elapsed_msec), float(since_scene_request_msec)])
+    else:
+        print("[OpenPitUpgradeStartup] %s since_request=%.3fms" % [label, float(since_scene_request_msec)])
 
 static func _write_planet_state_binary(state: Dictionary) -> bool:
     if DirAccess.make_dir_recursive_absolute(PLANET_SAVE_DIR) != OK and not DirAccess.dir_exists_absolute(PLANET_SAVE_DIR):

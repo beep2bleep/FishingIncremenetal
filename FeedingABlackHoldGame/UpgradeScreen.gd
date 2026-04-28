@@ -232,6 +232,7 @@ var tree_initialized: bool = false
 var prefers_simulation_tree: bool = false
 var _open_pit_startup_ready_started_msec: int = 0
 var _open_pit_startup_tree_started_msec: int = 0
+var _wishlist_button_setup_queued: bool = false
 
 
 enum STATES{SHOWING_TREE, ROGULIKE}
@@ -309,7 +310,7 @@ func _ready() -> void :
     popup_layer = get_node_or_null("%Popup Layer")
     _bind_popup_layer_visibility_updates()
     ready_step_started_msec = _print_open_pit_ready_step("ready_popup_layer_bindings", ready_step_started_msec)
-    _setup_wishlist_button()
+    _queue_wishlist_button_setup()
     ready_step_started_msec = _print_open_pit_ready_step("ready_wishlist_button", ready_step_started_msec)
     _setup_leaderboard_panel()
     ready_step_started_msec = _print_open_pit_ready_step("ready_leaderboard_panel", ready_step_started_msec)
@@ -794,7 +795,7 @@ func show_screen():
 
 
     update_input(ControllerIcons.get_last_input_type())
-    _setup_wishlist_button()
+    _queue_wishlist_button_setup()
     _refresh_leaderboard_panel()
     _refresh_fullscreen_button_icon()
     _refresh_touch_input_button()
@@ -1183,6 +1184,16 @@ func _setup_wishlist_button() -> void:
         button.pressed.connect(_on_wishlist_button_pressed)
     _refresh_wishlist_button_text()
     _style_wishlist_button(button)
+
+func _queue_wishlist_button_setup() -> void:
+    if _wishlist_button_setup_queued:
+        return
+    _wishlist_button_setup_queued = true
+    call_deferred("_run_queued_wishlist_button_setup")
+
+func _run_queued_wishlist_button_setup() -> void:
+    _wishlist_button_setup_queued = false
+    _setup_wishlist_button()
 
 func _setup_leaderboard_panel() -> void:
     if not _should_show_leaderboards():
