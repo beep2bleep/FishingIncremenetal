@@ -106,25 +106,25 @@ const CORE_LAYOUT := {
     "core:clear_kernel_25": Vector2(1, -4),
     "core:clear_kernel_50": Vector2(1, -8),
     "core:clear_kernel_75": Vector2(1, -12),
-    "core:core_detect": Vector2(2, 2),
-    "core:spawn_direction": Vector2(4, 2),
-    "core:brake": Vector2(6, 2),
-    "core:barrier_regen": Vector2(2, 6),
-    "core:return_shortcut": Vector2(4, 6),
-    "core:emergency_return": Vector2(6, 6),
-    "core:core_focus": Vector2(2, 10),
-    "core:kernel_breach": Vector2(4, 10),
-    "core:center_unlock": Vector2(6, 10),
-    "core:core_siphon": Vector2(2, 14),
-    "core:salvage_limiter": Vector2(4, 14),
-    "core:mantle_permits": Vector2(6, 14),
-    "core:inversion_tether": Vector2(2, 18),
-    "core:voidfire_brakes": Vector2(4, 18),
-    "core:mirror_keys": Vector2(6, 18),
-    "core:fault_insulation": Vector2(2, 22),
-    "core:null_anchor": Vector2(4, 22),
-    "core:ash_ward": Vector2(6, 22),
-    "core:planet_mastery": Vector2(4, 26),
+    "core:core_detect": Vector2(22, 2),
+    "core:spawn_direction": Vector2(24, 2),
+    "core:brake": Vector2(26, 2),
+    "core:barrier_regen": Vector2(22, 6),
+    "core:return_shortcut": Vector2(24, 6),
+    "core:emergency_return": Vector2(26, 6),
+    "core:core_focus": Vector2(22, 10),
+    "core:kernel_breach": Vector2(24, 10),
+    "core:center_unlock": Vector2(26, 10),
+    "core:core_siphon": Vector2(22, 14),
+    "core:salvage_limiter": Vector2(24, 14),
+    "core:mantle_permits": Vector2(26, 14),
+    "core:inversion_tether": Vector2(22, 18),
+    "core:voidfire_brakes": Vector2(24, 18),
+    "core:mirror_keys": Vector2(26, 18),
+    "core:fault_insulation": Vector2(22, 22),
+    "core:null_anchor": Vector2(24, 22),
+    "core:ash_ward": Vector2(26, 22),
+    "core:planet_mastery": Vector2(24, 26),
 }
 const CORE_CONNECTIONS := {
     "core:clear_proxy_25": [],
@@ -199,6 +199,16 @@ const PHASE_BRIDGES := {
     4: {"gate": "fault_charges", "entry": "void_cutters"},
     5: {"gate": "abyssal_rigs", "entry": "mirror_saws"},
 }
+
+const CASH_ORDER := [
+    "laser_cutter", "cargo_racks", "fuel_cells", "minimap", "rapid_cycle", "ore_appraisal",
+    "barrier_mesh", "shock_bits", "breach_drones", "salvage_contract", "funnel_resonance", "daemon_lances",
+    "root_breaker", "overburn_reactors", "seismic_lattice", "auto_salvage", "mantle_drills", "fault_charges",
+    "void_cutters", "inversion_drives", "vault_pulsers", "gravity_wells", "abyssal_rigs",
+    "mirror_saws", "fault_harpoons", "null_borers", "ash_crowns",
+]
+const CASH_COLS := 3
+const CASH_OFFSET := Vector2(10, 2)
 
 const PHASE_NODE_ORDER := {
     1: ["start", "laser_cutter", "cargo_racks", "fuel_cells", "minimap", "rapid_cycle", "ore_appraisal"],
@@ -405,6 +415,9 @@ static func get_reward_core_upgrade_target_layer_name(upgrade_id: String) -> Str
     return str(get_layer_for_depth(layer_depth).get("name", "Proxy Cache"))
 
 static func get_upgrade_cell(upgrade_id: String) -> Vector2:
+    var cash_idx: int = CASH_ORDER.find(upgrade_id)
+    if cash_idx >= 0:
+        return CASH_OFFSET + Vector2((cash_idx % CASH_COLS) * 2, (cash_idx / CASH_COLS) * 2)
     if UPGRADE_CELL_OVERRIDES.has(upgrade_id):
         return Vector2(UPGRADE_CELL_OVERRIDES.get(upgrade_id, Vector2.ZERO))
     for phase in PHASE_NODE_ORDER.keys():
@@ -416,6 +429,11 @@ static func get_upgrade_cell(upgrade_id: String) -> Vector2:
     return Vector2.ZERO
 
 static func get_upgrade_dependency(upgrade_id: String) -> String:
+    var cash_idx: int = CASH_ORDER.find(upgrade_id)
+    if cash_idx >= 0:
+        if cash_idx == 0:
+            return ""
+        return str(CASH_ORDER[cash_idx - 1])
     if UPGRADE_DEPENDENCY_OVERRIDES.has(upgrade_id):
         return str(UPGRADE_DEPENDENCY_OVERRIDES.get(upgrade_id, ""))
     for phase in PHASE_NODE_ORDER.keys():

@@ -34,7 +34,10 @@ var _last_visible_cell_budget := 0
 var _last_effect_load := 0
 var _last_reduce_detail := false
 var _last_ultra_reduce_detail := false
+var _auto_ultra_lock_timer := 0.0
 var _last_fill_rebuild_reason := "-"
+var _last_fill_dirty_source := "-"
+var _fill_dirty_source_counts: Dictionary = {}
 var _fill_rebuild_dirty_count := 0
 var _fill_rebuild_origin_count := 0
 var _fill_rebuild_size_count := 0
@@ -99,6 +102,9 @@ const HEAVY_VISIBLE_GRID_CELLS := 900
 const HEAVY_EFFECT_LOAD := 24
 const VERY_HEAVY_VISIBLE_GRID_CELLS := 1400
 const VERY_HEAVY_EFFECT_LOAD := 40
+const AUTO_ULTRA_EXIT_VISIBLE_GRID_CELLS := 1100
+const AUTO_ULTRA_EXIT_EFFECT_LOAD := 20
+const AUTO_ULTRA_LOCK_SECONDS := 0.85
 const ZONE_SPRING := 0
 const ZONE_SUMMER := 1
 const ZONE_AUTUMN := 2
@@ -143,14 +149,19 @@ func _ready() -> void:
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     _rebuild_screen_stars()
 
-func mark_dirty(rebuild_fill: bool = true) -> void:
+func mark_dirty(rebuild_fill: bool = true, reason: String = "external") -> void:
     _force_redraw = true
     _edge_dirty = true
     if rebuild_fill:
-        _fill_dirty = true
+        _mark_fill_dirty(reason)
         _pending_fill_updates.clear()
         _palette_cache.clear()
         _clear_fill_prewarm()
+
+func _mark_fill_dirty(reason: String) -> void:
+    _fill_dirty = true
+    _last_fill_dirty_source = reason
+    _fill_dirty_source_counts[reason] = int(_fill_dirty_source_counts.get(reason, 0)) + 1
 
 func queue_fill_update(grid: Vector2i) -> void:
     _pending_fill_updates[grid] = true
@@ -168,6 +179,7 @@ func queue_fill_updates(positions: Array) -> void:
 
 func _process(_delta: float) -> void:
     _time_elapsed += _delta
+    _auto_ultra_lock_timer = maxf(0.0, _auto_ultra_lock_timer - _delta)
     _edge_rebuild_accum += _delta
     _fill_upload_accum += _delta
     _fill_scrub_accum += _delta
@@ -225,7 +237,20 @@ func _draw() -> void:
     var ultra_reduce_detail := visible_cell_budget >= ultra_visible_grid_cells or effect_load >= VERY_HEAVY_EFFECT_LOAD
     if int(scene_ref.render_detail_mode) == int(scene_ref.RenderDetailMode.AUTO):
         reduce_detail = true
-        ultra_reduce_detail = not auto_force_heavy and visible_cell_budget > heavy_visible_grid_cells
+        var should_enter_ultra := not auto_force_heavy and (
+            visible_cell_budget >= ultra_visible_grid_cells
+            or effect_load >= VERY_HEAVY_EFFECT_LOAD
+        )
+        if should_enter_ultra:
+            _auto_ultra_lock_timer = AUTO_ULTRA_LOCK_SECONDS
+        if _last_ultra_reduce_detail:
+            ultra_reduce_detail = not auto_force_heavy and (
+                _auto_ultra_lock_timer > 0.0
+                or visible_cell_budget >= AUTO_ULTRA_EXIT_VISIBLE_GRID_CELLS
+                or effect_load >= AUTO_ULTRA_EXIT_EFFECT_LOAD
+            )
+        else:
+            ultra_reduce_detail = should_enter_ultra
     match int(scene_ref.render_detail_mode):
         int(scene_ref.RenderDetailMode.FULL):
             reduce_detail = false
@@ -248,7 +273,7 @@ func _draw() -> void:
     _last_reduce_detail = reduce_detail
     _last_ultra_reduce_detail = ultra_reduce_detail
     if reduce_detail_changed:
-        _fill_dirty = true
+        _mark_fill_dirty("detail_mode_changed")
         _pending_fill_updates.clear()
         _fill_upload_accum = REDUCED_FILL_UPLOAD_INTERVAL
         _palette_cache.clear()
@@ -1022,13 +1047,15 @@ func _needs_camera_redraw() -> bool:
     )
 
 func get_perf_state_text() -> String:
-    return "Planet vis %d  load %d  detail %s/%s  fillQ %d  fillR %s  fillCnt d:%d o:%d s:%d  fillMiss %d  fillSwap a:%d d:%d" % [
+    return "Planet vis %d  load %d  detail %s/%s  fillQ %d  fillR %s  fillD %s(%d)  fillCnt d:%d o:%d s:%d  fillMiss %d  fillSwap a:%d d:%d" % [
         _last_visible_cell_budget,
         _last_effect_load,
         "heavy" if _last_reduce_detail else "full",
         "ultra" if _last_ultra_reduce_detail else "normal",
         _pending_fill_updates.size(),
         _last_fill_rebuild_reason,
+        _last_fill_dirty_source,
+        int(_fill_dirty_source_counts.get(_last_fill_dirty_source, 0)),
         _fill_rebuild_dirty_count,
         _fill_rebuild_origin_count,
         _fill_rebuild_size_count,

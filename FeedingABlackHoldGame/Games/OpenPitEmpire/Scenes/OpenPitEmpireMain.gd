@@ -1009,7 +1009,7 @@ func _start_run() -> void:
     perf_debug_refresh_timer = 0.0
     _last_perf_fps_text = ""
     _last_perf_probe_text = ""
-    planet_renderer.mark_dirty()
+    planet_renderer.mark_dirty(true, "run_start")
     _refresh_hud()
 
 func _build_planet() -> void:
@@ -1044,7 +1044,7 @@ func _build_planet() -> void:
     blocks = planet_data.blocks
     exposed_edges = planet_data.exposed_edges
     if not restored_core_positions.is_empty() and planet_renderer != null:
-        planet_renderer.mark_dirty(true)
+        planet_renderer.mark_dirty(true, "planet_generated")
     total_planet_blocks = max(int(planet_data.initial_block_count), planet_data.get_total_blocks())
     persistent_destroyed_count = max(0, total_planet_blocks - planet_data.get_total_blocks())
 
@@ -2447,11 +2447,11 @@ func _update_drone_visuals(_delta: float) -> void:
     if mega_timer <= 0.0:
         mega_beam_hits.clear()
 
-func _sync_planet_runtime_views(mark_renderer_dirty: bool = false, rebuild_fill: bool = false) -> void:
+func _sync_planet_runtime_views(mark_renderer_dirty: bool = false, rebuild_fill: bool = false, reason: String = "runtime_sync") -> void:
     blocks = planet_data.blocks
     exposed_edges = planet_data.exposed_edges
     if mark_renderer_dirty:
-        planet_renderer.mark_dirty(rebuild_fill)
+        planet_renderer.mark_dirty(rebuild_fill, reason)
 
 func _queue_core_fill_region(core_id: int, padding_cells: int = 2) -> void:
     if planet_renderer == null or planet_data == null or core_id < 0:
@@ -2584,7 +2584,7 @@ func _finish_run(returned: bool, reason: String) -> void:
         blocks = planet_data.blocks
         exposed_edges = planet_data.exposed_edges
         persistent_destroyed_count = max(0, total_planet_blocks - planet_data.get_total_blocks())
-        planet_renderer.mark_dirty()
+        planet_renderer.mark_dirty(true, "load_state_refresh")
     var keep_percent := 1.0 if returned else float(runtime_stats.get("salvage_keep", 0.0))
     var total_money := cargo_money
     for pickup in pickups:
