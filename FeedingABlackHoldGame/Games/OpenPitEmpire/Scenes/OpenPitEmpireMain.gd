@@ -191,6 +191,13 @@ const AUTOPILOT_EDGE_AVOID_RADIUS := BLOCK_SIZE * 4.0
 const AUTOPILOT_EDGE_AVOID_WEIGHT := 1.8
 const AUTOPILOT_PICKUP_SCAN_RADIUS := BLOCK_SIZE * 10.0
 const AUTOPILOT_PICKUP_OVERFLOW_COUNT := 8
+const AUTOPILOT_CORE_AVOID_MARGIN_CELLS := 4
+const AUTOPILOT_CORE_AVOID_WEIGHT := 3.4
+const AUTOPILOT_LANE_SCORE_WEIGHT := BLOCK_SIZE * BLOCK_SIZE * 0.35
+const AUTOPILOT_MODE_CENTER := "center"
+const AUTOPILOT_MODE_LEFT_SWEEP := "left sweep"
+const AUTOPILOT_MODE_RIGHT_SWEEP := "right sweep"
+const AUTOPILOT_MODE_TOP_SWEEP := "top sweep"
 
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
 enum OutlineMode { OFF, GROUP_EDGES, ALL_BLOCKS, ALL_BLOCKS_MASK }
@@ -339,6 +346,7 @@ var autopilot_status := ""
 var autopilot_return_reason := ""
 var autopilot_fast_forward_enabled := false
 var autopilot_no_render_enabled := false
+var autopilot_sortie_mode := AUTOPILOT_MODE_CENTER
 var validation_rng_seed: int = -1
 var validation_autopilot_mode: String = ""
 
@@ -667,6 +675,7 @@ func _copy_perf_snapshot_for_validation(source: Dictionary) -> Dictionary:
 func _exit_tree() -> void:
     autopilot_fast_forward_enabled = false
     _set_autopilot_no_render_enabled(false)
+    PROGRESS.flush_async_planet_state_save()
     if VirtualCursor != null:
         VirtualCursor.use_open_pit_empire_cursor(false)
         VirtualCursor.set_scene_enabled(false)
@@ -1123,6 +1132,7 @@ func _start_run() -> void:
     autopilot_status = ""
     autopilot_return_reason = ""
     autopilot_fast_forward_enabled = false
+    _choose_autopilot_sortie_mode()
     _set_autopilot_no_render_enabled(false)
     if VirtualCursor != null:
         if VirtualCursor.has_method("set_open_pit_empire_cursor_power"):
@@ -1714,6 +1724,11 @@ func _get_autopilot_direction(delta: float) -> Vector2:
             autopilot_status = "holding for extraction"
         else:
             autopilot_status = "mining"
+            var hold_core_avoidance := _get_autopilot_core_avoidance()
+            if hold_core_avoidance.length_squared() > 0.001:
+                autopilot_status = "avoiding locked core"
+                autopilot_retarget_timer = 0.0
+                return hold_core_avoidance
             var hold_edge_avoidance := _get_autopilot_edge_avoidance()
             if hold_edge_avoidance.length_squared() > 0.001:
                 autopilot_status = "mining, avoiding edge"
@@ -1721,12 +1736,27 @@ func _get_autopilot_direction(delta: float) -> Vector2:
         return Vector2.ZERO
     var direction := offset.normalized()
     if not autopilot_returning:
+        var core_avoidance := _get_autopilot_core_avoidance()
+        if core_avoidance.length_squared() > 0.001:
+            direction = (direction + core_avoidance * AUTOPILOT_CORE_AVOID_WEIGHT).normalized()
+            autopilot_status = "avoiding locked core"
         var edge_avoidance := _get_autopilot_edge_avoidance()
         if edge_avoidance.length_squared() > 0.001:
             direction = (direction + edge_avoidance * AUTOPILOT_EDGE_AVOID_WEIGHT).normalized()
             if autopilot_status == "mining" or autopilot_status == "seeking":
                 autopilot_status = "%s, avoiding edge" % autopilot_status
     return direction
+
+func _choose_autopilot_sortie_mode() -> void:
+    var roll := rng.randf()
+    if roll < 0.25:
+        autopilot_sortie_mode = AUTOPILOT_MODE_TOP_SWEEP
+    elif roll < 0.5:
+        autopilot_sortie_mode = AUTOPILOT_MODE_LEFT_SWEEP
+    elif roll < 0.75:
+        autopilot_sortie_mode = AUTOPILOT_MODE_RIGHT_SWEEP
+    else:
+        autopilot_sortie_mode = AUTOPILOT_MODE_CENTER
 
 func _get_autopilot_return_reason() -> String:
     if autopilot_returning:
@@ -1757,12 +1787,16 @@ func _find_autopilot_mining_target() -> Vector2:
         return ship_pos
 
     var my_grid := world_to_grid(ship_pos)
-    var inward := (-spawn_position).normalized()
+    var desired_lane_x := _get_autopilot_desired_lane_x(my_grid.y)
+    var desired_depth_step := 3 if autopilot_sortie_mode == AUTOPILOT_MODE_TOP_SWEEP else 8
+    var desired_route_world := grid_to_world(Vector2i(desired_lane_x, clampi(my_grid.y + desired_depth_step, PLANET_DATA_SCRIPT.PIT_TOP_Y, PLANET_DATA_SCRIPT.PIT_BOTTOM_Y)))
+    var inward := (desired_route_world - ship_pos).normalized()
     if inward.length() < 0.01:
         inward = Vector2.DOWN
     var best_world := ship_pos + inward * BLOCK_SIZE * 2.0
     var best_aim_dir := inward
     var best_score := INF
+    var found_local_target := false
     for x in range(my_grid.x - AUTOPILOT_MINING_SCAN_CELLS, my_grid.x + AUTOPILOT_MINING_SCAN_CELLS + 1):
         for y in range(my_grid.y - AUTOPILOT_MINING_SCAN_CELLS, my_grid.y + AUTOPILOT_MINING_SCAN_CELLS + 1):
             var block_grid := Vector2i(x, y)
@@ -1774,15 +1808,20 @@ func _find_autopilot_mining_target() -> Vector2:
             var block_offset := block_world - ship_pos
             var dist_sq := block_offset.length_squared()
             var inward_alignment := block_offset.normalized().dot(inward) if block_offset.length() > 0.01 else 0.0
+            var lane_penalty := absf(float(block_grid.x - _get_autopilot_desired_lane_x(block_grid.y))) * AUTOPILOT_LANE_SCORE_WEIGHT
+            var depth_penalty := absf(float(block_grid.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)) * BLOCK_SIZE * 0.25 if autopilot_sortie_mode == AUTOPILOT_MODE_TOP_SWEEP else 0.0
             for neighbor in CARDINAL_NEIGHBORS:
                 var staging_grid: Vector2i = block_grid + neighbor * AUTOPILOT_STAGING_CLEARANCE_CELLS
                 if not is_grid_empty(staging_grid):
+                    continue
+                if _is_in_locked_core_avoidance_zone(staging_grid, true):
                     continue
                 var staging_world := grid_to_world(staging_grid)
                 var target_dist := staging_world.distance_to(block_world)
                 if target_dist > attack_radius * 0.9:
                     continue
                 var score := dist_sq - inward_alignment * BLOCK_SIZE * BLOCK_SIZE * 8.0
+                score += lane_penalty + depth_penalty
                 score += _get_autopilot_edge_proximity_penalty(staging_world)
                 if int(blocks.get(block_grid, {}).get("type", BlockType.NORMAL)) == BlockType.CORE:
                     score -= BLOCK_SIZE * BLOCK_SIZE * 6.0
@@ -1790,8 +1829,76 @@ func _find_autopilot_mining_target() -> Vector2:
                     best_score = score
                     best_world = staging_world
                     best_aim_dir = (block_world - ship_pos).normalized()
+                    found_local_target = true
+    if not found_local_target:
+        var anchor_target := _find_autopilot_lane_anchor_target()
+        if not anchor_target.is_empty():
+            best_world = Vector2(anchor_target.get("world", best_world))
+            best_aim_dir = (best_world - ship_pos).normalized()
     autopilot_aim_dir = best_aim_dir
-    autopilot_status = "seeking"
+    autopilot_status = "seeking %s" % autopilot_sortie_mode
+    return best_world
+
+func _get_autopilot_desired_lane_x(y: int) -> int:
+    if planet_data == null:
+        return 0
+    var clamped_y: int = clampi(y, PLANET_DATA_SCRIPT.PIT_TOP_Y, PLANET_DATA_SCRIPT.PIT_BOTTOM_Y)
+    var left_x: int = int(planet_data.get_left_wall_x(clamped_y)) + PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS + 3
+    var right_x: int = int(planet_data.get_right_wall_x(clamped_y)) - PLANET_DATA_SCRIPT.PIT_WALL_THICKNESS - 3
+    var center_x: int = int(round(float(left_x + right_x) * 0.5))
+    match autopilot_sortie_mode:
+        AUTOPILOT_MODE_LEFT_SWEEP:
+            return int(round(lerpf(float(left_x), float(center_x), 0.28)))
+        AUTOPILOT_MODE_RIGHT_SWEEP:
+            return int(round(lerpf(float(right_x), float(center_x), 0.28)))
+        AUTOPILOT_MODE_TOP_SWEEP:
+            return left_x if (int(Time.get_ticks_msec() / 4500) % 2 == 0) else right_x
+        _:
+            return center_x
+
+func _find_autopilot_lane_anchor_target() -> Dictionary:
+    if planet_data == null:
+        return {}
+    var best_grid := Vector2i(999999, 999999)
+    var best_score := INF
+    for pos_variant in blocks.keys():
+        var pos: Vector2i = pos_variant
+        var block: Dictionary = blocks.get(pos, {})
+        if not _is_autopilot_attackable_block(block, pos):
+            continue
+        var lane_x := _get_autopilot_desired_lane_x(pos.y)
+        var lane_dist := absf(float(pos.x - lane_x))
+        var depth_score := float(pos.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)
+        var dist_score := ship_pos.distance_squared_to(grid_to_world(pos)) / (BLOCK_SIZE * BLOCK_SIZE)
+        var score := lane_dist * 10.0 + dist_score * 0.08
+        if autopilot_sortie_mode == AUTOPILOT_MODE_TOP_SWEEP:
+            score += depth_score * 4.0
+        else:
+            score -= depth_score * 0.25
+        if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
+            score -= 40.0
+        if score < best_score:
+            best_score = score
+            best_grid = pos
+    if best_grid.x >= 999999:
+        return {}
+    return {"grid": best_grid, "world": _get_autopilot_staging_world_for_anchor(best_grid)}
+
+func _get_autopilot_staging_world_for_anchor(anchor_grid: Vector2i) -> Vector2:
+    var anchor_world := grid_to_world(anchor_grid)
+    var best_world := anchor_world
+    var best_score := INF
+    for neighbor in CARDINAL_NEIGHBORS:
+        var staging_grid: Vector2i = anchor_grid + neighbor * AUTOPILOT_STAGING_CLEARANCE_CELLS
+        if not is_grid_empty(staging_grid):
+            continue
+        if _is_in_locked_core_avoidance_zone(staging_grid, true):
+            continue
+        var staging_world := grid_to_world(staging_grid)
+        var score := ship_pos.distance_squared_to(staging_world)
+        if score < best_score:
+            best_score = score
+            best_world = staging_world
     return best_world
 
 func _find_autopilot_pickup_target() -> Dictionary:
@@ -1842,13 +1949,28 @@ func _is_autopilot_mineable_block(grid: Vector2i) -> bool:
     var block: Dictionary = blocks.get(grid, {})
     if block.is_empty():
         return false
-    return not bool(block.get("unbreakable", false))
+    return _is_autopilot_attackable_block(block, grid)
 
 func _is_mineable_non_core_block(grid: Vector2i) -> bool:
     var block: Dictionary = blocks.get(grid, {})
     if block.is_empty():
         return false
-    return int(block.get("core_id", -1)) < 0 and not bool(block.get("unbreakable", false))
+    return int(block.get("core_id", -1)) < 0 and _is_autopilot_attackable_block(block, grid)
+
+func _is_autopilot_attackable_block(block: Dictionary, grid: Vector2i = Vector2i(999999, 999999)) -> bool:
+    if bool(block.get("unbreakable", false)):
+        return false
+    var core_id := int(block.get("core_id", -1))
+    if core_id >= 0 and planet_data != null and planet_data.is_core_locked(core_id, _core_unlocks_center()):
+        return false
+    if core_id < 0 and grid.x < 999999 and _is_in_locked_core_avoidance_zone(grid, false):
+        return false
+    return true
+
+func _is_autopilot_avoidance_block(block: Dictionary, grid: Vector2i = Vector2i(999999, 999999)) -> bool:
+    if block.is_empty():
+        return false
+    return not _is_autopilot_attackable_block(block, grid)
 
 func _get_autopilot_edge_avoidance() -> Vector2:
     var my_grid := world_to_grid(ship_pos)
@@ -1857,7 +1979,7 @@ func _get_autopilot_edge_avoidance() -> Vector2:
     for x in range(my_grid.x - AUTOPILOT_EDGE_AVOID_SCAN_CELLS, my_grid.x + AUTOPILOT_EDGE_AVOID_SCAN_CELLS + 1):
         for y in range(my_grid.y - AUTOPILOT_EDGE_AVOID_SCAN_CELLS, my_grid.y + AUTOPILOT_EDGE_AVOID_SCAN_CELLS + 1):
             var check := Vector2i(x, y)
-            if not bool(blocks.get(check, {}).get("unbreakable", false)):
+            if not _is_autopilot_avoidance_block(blocks.get(check, {}), check):
                 continue
             var block_world := grid_to_world(check)
             var away := ship_pos - block_world
@@ -1868,6 +1990,46 @@ func _get_autopilot_edge_avoidance() -> Vector2:
             push += away.normalized() * strength
     return push.normalized() if push.length_squared() > 0.001 else Vector2.ZERO
 
+func _get_autopilot_core_avoidance() -> Vector2:
+    if planet_data == null:
+        return Vector2.ZERO
+    var push := Vector2.ZERO
+    for core_variant in planet_data.cores:
+        var core: Dictionary = core_variant
+        if not bool(core.get("alive", false)):
+            continue
+        var core_id := int(core.get("id", -1))
+        if not planet_data.is_core_locked(core_id, _core_unlocks_center()):
+            continue
+        var radius := float(planet_data.get_effective_influence_radius(core) + AUTOPILOT_CORE_AVOID_MARGIN_CELLS) * BLOCK_SIZE
+        var center := grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
+        var away := ship_pos - center
+        var dist := away.length()
+        if dist <= 0.001 or dist > radius:
+            continue
+        var strength := 1.0 - clampf(dist / radius, 0.0, 1.0)
+        push += away.normalized() * strength
+    return push.normalized() if push.length_squared() > 0.001 else Vector2.ZERO
+
+func _is_in_locked_core_avoidance_zone(grid: Vector2i, include_margin: bool) -> bool:
+    if planet_data == null:
+        return false
+    for core_variant in planet_data.cores:
+        var core: Dictionary = core_variant
+        if not bool(core.get("alive", false)):
+            continue
+        var core_id := int(core.get("id", -1))
+        if not planet_data.is_core_locked(core_id, _core_unlocks_center()):
+            continue
+        var radius := int(planet_data.get_effective_influence_radius(core))
+        if include_margin:
+            radius += AUTOPILOT_CORE_AVOID_MARGIN_CELLS
+        var dx := grid.x - int(core.center.x)
+        var dy := grid.y - int(core.center.y)
+        if dx * dx + dy * dy <= radius * radius:
+            return true
+    return false
+
 func _get_autopilot_edge_proximity_penalty(world_pos: Vector2) -> float:
     var center_grid := world_to_grid(world_pos)
     var penalty := 0.0
@@ -1876,7 +2038,7 @@ func _get_autopilot_edge_proximity_penalty(world_pos: Vector2) -> float:
     for x in range(center_grid.x - scan_cells, center_grid.x + scan_cells + 1):
         for y in range(center_grid.y - scan_cells, center_grid.y + scan_cells + 1):
             var check := Vector2i(x, y)
-            if not bool(blocks.get(check, {}).get("unbreakable", false)):
+            if not _is_autopilot_avoidance_block(blocks.get(check, {}), check):
                 continue
             var dist_sq := world_pos.distance_squared_to(grid_to_world(check))
             if dist_sq > radius_sq:
@@ -2139,7 +2301,7 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array
         if not blocks.has(check):
             continue
         var block: Dictionary = blocks.get(check, {})
-        if bool(block.get("unbreakable", false)):
+        if not _is_autopilot_attackable_block(block, check):
             continue
         var core_id: int = int(block.get("core_id", -1))
         if core_id >= 0 and seen_core_ids.has(core_id):
@@ -3773,7 +3935,10 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
             var check := Vector2i(center_grid.x + dx, center_grid.y + dy)
             if is_grid_empty(check):
                 continue
-            var core_id: int = int(blocks.get(check, {}).get("core_id", -1))
+            var block: Dictionary = blocks.get(check, {})
+            if not _is_autopilot_attackable_block(block, check):
+                continue
+            var core_id: int = int(block.get("core_id", -1))
             if core_id >= 0:
                 continue
             var dist_sq := world_pos.distance_squared_to(grid_to_world(check))
