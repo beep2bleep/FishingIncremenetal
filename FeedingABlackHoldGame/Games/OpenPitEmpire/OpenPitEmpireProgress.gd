@@ -118,9 +118,17 @@ static func load_data() -> Dictionary:
         _refresh_best_layer_clear_cache(data)
         should_write_save = true
         _print_startup_profile("progress_refresh_best_layer_clear_cache", Time.get_ticks_msec() - clear_started_msec)
+    var best_clear_before: Dictionary = {}
+    if data.get("best_layer_clear_percents", {}) is Dictionary:
+        best_clear_before = Dictionary(data.get("best_layer_clear_percents", {})).duplicate(true)
+    var purchased_core_upgrades_before: Array = []
+    if data.get("purchased_core_upgrades", []) is Array:
+        purchased_core_upgrades_before = data.get("purchased_core_upgrades", []).duplicate()
     var depth_started_msec := Time.get_ticks_msec()
     BALANCE.refresh_depth_unlocks(data)
     _refresh_clear_reward_upgrades(data)
+    if best_clear_before != data.get("best_layer_clear_percents", {}) or purchased_core_upgrades_before != data.get("purchased_core_upgrades", []):
+        should_write_save = true
     _print_startup_profile("progress_refresh_unlocks", Time.get_ticks_msec() - depth_started_msec)
     var sanitize_started_msec := Time.get_ticks_msec()
     _cached_data = _sanitize_main_data(data)
@@ -374,6 +382,7 @@ static func save_planet_state(state: Dictionary) -> bool:
     if not bool(merge_result.get("ok", false)):
         return false
     _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(false)
+    _save_remaining_layer_counts_from_merge(merge_result)
     return _write_planet_state_binary(_cached_planet_state)
 
 static func start_async_planet_state_save(state: Dictionary) -> void:
@@ -385,6 +394,7 @@ static func start_async_planet_state_save(state: Dictionary) -> void:
         _planet_save_thread = null
         return
     _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(false)
+    _save_remaining_layer_counts_from_merge(merge_result)
     _planet_save_ok = true
     _planet_save_pending = true
     _planet_save_thread = Thread.new()
@@ -484,8 +494,7 @@ static func _sanitize_main_data(data: Dictionary) -> Dictionary:
 static func _refresh_clear_reward_upgrades(data: Dictionary) -> void:
     if not _has_complete_remaining_layer_count_cache(data):
         _refresh_remaining_layer_count_cache(data)
-    if not _has_complete_layer_clear_cache(data):
-        _refresh_best_layer_clear_cache(data)
+    _refresh_best_layer_clear_cache(data)
     _grant_clear_reward_upgrades(data, _normalize_layer_clear_percents(data.get("best_layer_clear_percents", {})))
 
 static func _refresh_best_layer_clear_cache(data: Dictionary) -> void:
@@ -692,6 +701,30 @@ static func _count_layer_blocks_in_section(section_rows: Array, format_version: 
         counts[layer_depth_v2] = int(counts.get(layer_depth_v2, 0)) + 1
     return counts
 
+static func _count_layer_blocks_in_sections(sections: Dictionary, format_version: int) -> Dictionary:
+    var counts := {}
+    for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+        counts[layer_depth] = 0
+    for section_variant in sections.values():
+        var section_counts: Dictionary = _count_layer_blocks_in_section(Array(section_variant), format_version)
+        for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+            counts[layer_depth] = int(counts.get(layer_depth, 0)) + int(section_counts.get(layer_depth, 0))
+    return counts
+
+static func _save_remaining_layer_counts_from_merge(merge_result: Dictionary) -> void:
+    if not bool(merge_result.get("ok", false)):
+        return
+    var data := _cached_data.duplicate(true) if _cache_loaded else load_data()
+    data["remaining_layer_block_counts"] = _normalize_layer_block_counts(merge_result.get("remaining_layer_block_counts", {}))
+    var layer_clear_percents: Dictionary = _get_current_layer_clear_percents_from_counts(data["remaining_layer_block_counts"])
+    var best_layer_clear_percents: Dictionary = _normalize_layer_clear_percents(data.get("best_layer_clear_percents", {}))
+    _merge_layer_clear_percents(best_layer_clear_percents, layer_clear_percents)
+    data["best_layer_clear_percents"] = best_layer_clear_percents
+    _grant_clear_reward_upgrades(data, layer_clear_percents)
+    _cached_data = _sanitize_main_data(data)
+    _cache_loaded = true
+    _write_json(SAVE_PATH, _cached_data)
+
 static func _read_json(path: String) -> Variant:
     if not FileAccess.file_exists(path):
         return null
@@ -887,4 +920,6 @@ static func _try_merge_planet_state(update: Dictionary) -> Dictionary:
         merged_sections[section_id] = new_section
     merged["sections"] = merged_sections
     merged["_dirty_section_ids"] = dirty_section_ids
+    if not is_partial_update:
+        remaining_layer_block_counts = _count_layer_blocks_in_sections(merged_sections, format_version)
     return {"ok": true, "state": merged, "remaining_layer_block_counts": remaining_layer_block_counts}

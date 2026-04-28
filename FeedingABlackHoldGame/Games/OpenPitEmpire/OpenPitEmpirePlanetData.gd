@@ -813,6 +813,20 @@ func grid_to_world(grid_pos: Vector2i) -> Vector2:
 func get_total_blocks() -> int:
     return _count_breakable_blocks()
 
+func get_remaining_layer_block_counts() -> Dictionary:
+    var counts := {}
+    for layer_depth in range(1, 6):
+        counts[layer_depth] = 0
+    for block_variant in blocks.values():
+        var block: Dictionary = block_variant
+        if bool(block.get("unbreakable", false)):
+            continue
+        if int(block.get("type", BlockType.NORMAL)) == int(BlockType.CORE):
+            continue
+        var layer_depth := clampi(int(block.get("layer_depth", 1)), 1, 5)
+        counts[layer_depth] = int(counts.get(layer_depth, 0)) + 1
+    return counts
+
 func get_alive_cores() -> int:
     var count := 0
     for core in cores:

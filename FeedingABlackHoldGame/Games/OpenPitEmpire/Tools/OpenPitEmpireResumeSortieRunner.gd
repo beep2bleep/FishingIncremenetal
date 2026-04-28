@@ -97,7 +97,8 @@ func _run_one_sortie() -> Dictionary:
     var summary: Dictionary = scene.get_validation_run_summary()
     summary["wall_elapsed_seconds"] = float(Time.get_ticks_msec() - wall_started_msec) / 1000.0
     summary["rendered_frames"] = frames
-    summary["perf"] = scene.get_validation_perf_summary()
+    if scene.has_method("should_save_validation_perf_data") and bool(scene.call("should_save_validation_perf_data")):
+        summary["perf"] = scene.get_validation_perf_summary()
     summary["mode"] = _mode
     summary["seed"] = _seed
     summary["source_json"] = _source_json

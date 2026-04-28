@@ -184,7 +184,7 @@ const AUTOPILOT_MINING_SCAN_CELLS := 18
 const AUTOPILOT_STAGING_CLEARANCE_CELLS := 2
 const AUTOPILOT_TARGET_REACHED_DISTANCE := 26.0
 const AUTOPILOT_FUEL_RETURN_RATIO := 0.15
-const AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME := 12
+const AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME := 50
 const AUTOPILOT_NO_RENDER_STEPS_PER_FRAME := 240
 const AUTOPILOT_EDGE_AVOID_SCAN_CELLS := 4
 const AUTOPILOT_EDGE_AVOID_RADIUS := BLOCK_SIZE * 4.0
@@ -649,6 +649,7 @@ func get_validation_run_summary() -> Dictionary:
         "barriers_left": barriers_left,
         "blocks_alive": blocks.size(),
         "total_planet_blocks": total_planet_blocks,
+        "remaining_layer_block_counts": _get_live_remaining_layer_block_counts(),
         "run_finished": run_finished,
         "summary_save_pending": summary_save_pending,
         "autopilot_mode": validation_autopilot_mode,
@@ -658,6 +659,8 @@ func get_validation_run_summary() -> Dictionary:
     }
 
 func get_validation_perf_summary() -> Dictionary:
+    if _should_suppress_autopilot_perf_output():
+        return {}
     return {
         "current_fps": Engine.get_frames_per_second(),
         "current_frame_ms": 1000.0 / maxf(float(maxi(1, Engine.get_frames_per_second())), 1.0),
@@ -670,6 +673,17 @@ func get_validation_perf_summary() -> Dictionary:
         "probe_peaks": _run_perf_peak_samples.duplicate(true),
         "probe_stats": _build_validation_perf_probe_stats(),
     }
+
+func should_save_validation_perf_data() -> bool:
+    return not _should_suppress_autopilot_perf_output()
+
+func _should_suppress_autopilot_perf_output() -> bool:
+    if not autopilot_enabled:
+        return false
+    if autopilot_fast_forward_enabled or autopilot_no_render_enabled:
+        return true
+    var mode := validation_autopilot_mode.strip_edges().to_lower()
+    return mode in ["fast_render", "fast", "max_render", "no_render", "norender", "sprint"]
 
 func _build_validation_perf_probe_stats() -> Dictionary:
     var result := {}
@@ -3540,6 +3554,26 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
 func _format_run_seconds(seconds: float) -> String:
     return "%.1fs" % maxf(0.0, seconds)
 
+func _get_live_remaining_layer_block_counts() -> Dictionary:
+    if planet_data != null and planet_data.has_method("get_remaining_layer_block_counts"):
+        return Dictionary(planet_data.call("get_remaining_layer_block_counts")).duplicate(true)
+    var counts := {}
+    for layer_depth in range(1, 6):
+        counts[layer_depth] = 0
+    for block_variant in blocks.values():
+        var block: Dictionary = block_variant
+        if bool(block.get("unbreakable", false)):
+            continue
+        var layer_depth := clampi(int(block.get("layer_depth", 1)), 1, 5)
+        counts[layer_depth] = int(counts.get(layer_depth, 0)) + 1
+    return counts
+
+func _format_layer_block_counts(counts: Dictionary) -> String:
+    var parts: Array[String] = []
+    for layer_depth in range(1, 6):
+        parts.append("L%d=%d" % [layer_depth, int(counts.get(layer_depth, 0))])
+    return " ".join(parts)
+
 func _on_finish_save_progress(progress: float) -> void:
     if not summary_save_pending:
         return
@@ -3732,6 +3766,8 @@ func _build_perf_probe_text() -> String:
     return "\n".join(lines)
 
 func _dump_run_perf_snapshot_to_console(returned: bool, reason: String, money_award: int) -> void:
+    if _should_suppress_autopilot_perf_output():
+        return
     var lines: Array[String] = []
     lines.append("=== OPEN PIT EMPIRE RUN PERF SNAPSHOT ===")
     lines.append("Result: %s" % ("returned" if returned else "failed"))
@@ -3753,6 +3789,7 @@ func _dump_run_perf_snapshot_to_console(returned: bool, reason: String, money_aw
     lines.append(_build_combat_perf_worst_snapshot_text())
     lines.append("Camera pos: (%.1f, %.1f)  Ship pos: (%.1f, %.1f)" % [camera_pos.x, camera_pos.y, ship_pos.x, ship_pos.y])
     lines.append("Visible blocks: %d  Total blocks: %d  Persistent breach: %.2f%%" % [blocks.size(), total_planet_blocks, _get_persistent_clear_percent()])
+    lines.append("Remaining layer blocks: %s" % _format_layer_block_counts(_get_live_remaining_layer_block_counts()))
     lines.append("========================================")
     print("\n".join(lines))
 

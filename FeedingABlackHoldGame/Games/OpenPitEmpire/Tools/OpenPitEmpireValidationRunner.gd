@@ -171,9 +171,10 @@ func _run_mode(mode: String) -> Dictionary:
             run_summary
         )
         sorties.append(run_record)
-        _append_json_line(_perf_jsonl_path, _build_perf_record(run_record))
+        if _should_save_perf_data_for_mode(mode):
+            _append_json_line(_perf_jsonl_path, _build_perf_record(run_record))
         _append_json_line(_run_summary_jsonl_path, _build_balance_record(run_record))
-        print("[OpenPitValidation] mode=%s sortie=%d auto=%s return=%s cargo=%d/%d fuel=%.1f/%.1fs money=%d xp=%d cores=%d clear=%.3f boss=%s bought=%d" % [
+        print("[OpenPitValidation] mode=%s sortie=%d auto=%s return=%s cargo=%d/%d fuel=%.1f/%.1fs money=%d xp=%d cores=%d clear=%.3f remaining=%s live_remaining=%s boss=%s bought=%d" % [
             mode,
             sortie_index + 1,
             str(run_record.get("autopilot_sortie_mode", "")),
@@ -186,6 +187,8 @@ func _run_mode(mode: String) -> Dictionary:
             int(data_after.get("xp_currency", 0)),
             int(data_after.get("core_currency", 0)),
             float(run_record.get("persistent_clear", 0.0)),
+            _format_layer_block_counts(run_record.get("remaining_layer_block_counts", {})),
+            _format_layer_block_counts(run_record.get("live_remaining_layer_block_counts", {})),
             str(bool(data_after.get("boss_defeated", false))),
             int(purchase_result.get("count", 0)),
         ])
@@ -265,9 +268,10 @@ func _run_mode_sequence(sequence: Array[Dictionary]) -> Dictionary:
             run_record["sequence_segment_index"] = segment_index
             run_record["sequence_segment_run_number"] = segment_sortie_index + 1
             sorties.append(run_record)
-            _append_json_line(_perf_jsonl_path, _build_perf_record(run_record))
+            if _should_save_perf_data_for_mode(mode):
+                _append_json_line(_perf_jsonl_path, _build_perf_record(run_record))
             _append_json_line(_run_summary_jsonl_path, _build_balance_record(run_record))
-            print("[OpenPitValidation] sequence sortie=%d/%d mode=%s segment_run=%d/%d auto=%s return=%s cargo=%d/%d fuel=%.1f/%.1fs money=%d xp=%d cores=%d clear=%.3f boss=%s bought=%d" % [
+            print("[OpenPitValidation] sequence sortie=%d/%d mode=%s segment_run=%d/%d auto=%s return=%s cargo=%d/%d fuel=%.1f/%.1fs money=%d xp=%d cores=%d clear=%.3f remaining=%s live_remaining=%s boss=%s bought=%d auto_buy=\"%s\"" % [
                 global_sortie_index + 1,
                 planned_total,
                 mode,
@@ -283,8 +287,11 @@ func _run_mode_sequence(sequence: Array[Dictionary]) -> Dictionary:
                 int(data_after.get("xp_currency", 0)),
                 int(data_after.get("core_currency", 0)),
                 float(run_record.get("persistent_clear", 0.0)),
+                _format_layer_block_counts(run_record.get("remaining_layer_block_counts", {})),
+                _format_layer_block_counts(run_record.get("live_remaining_layer_block_counts", {})),
                 str(bool(data_after.get("boss_defeated", false))),
                 int(purchase_result.get("count", 0)),
+                _format_purchase_summary(purchase_result),
             ])
             if (global_sortie_index + 1) % CHECKPOINT_INTERVAL_SORTIES == 0:
                 _write_validation_checkpoint("sequence_%s" % mode, global_sortie_index + 1, run_record)
@@ -332,7 +339,8 @@ func _run_one_sortie(mode: String, sortie_index: int) -> Dictionary:
     var summary: Dictionary = scene.get_validation_run_summary()
     summary["wall_elapsed_seconds"] = float(Time.get_ticks_msec() - wall_started_msec) / 1000.0
     summary["rendered_frames"] = frames
-    summary["perf"] = scene.get_validation_perf_summary()
+    if scene.has_method("should_save_validation_perf_data") and bool(scene.call("should_save_validation_perf_data")):
+        summary["perf"] = scene.get_validation_perf_summary()
     summary["sortie_index"] = sortie_index
     scene.queue_free()
     await get_tree().process_frame
@@ -376,6 +384,8 @@ func _build_run_record(mode: String, sortie_index: int, data_before_purchase: Di
         "core_currency_gained": core_gained,
         "cores_destroyed": int(scene_summary.get("cores_destroyed", 0)),
         "persistent_clear": float(scene_summary.get("persistent_clear", 0.0)),
+        "remaining_layer_block_counts": _normalized_layer_block_counts(data_after_run.get("remaining_layer_block_counts", scene_summary.get("remaining_layer_block_counts", {}))),
+        "live_remaining_layer_block_counts": _normalized_layer_block_counts(scene_summary.get("remaining_layer_block_counts", {})),
         "boss_defeated": bool(data_after_run.get("boss_defeated", false)),
         "deepest_level_unlocked": int(data_after_run.get("deepest_level_unlocked", 1)),
         "wallet_before_purchase": int(data_before_purchase.get("wallet", 0)),
@@ -414,10 +424,70 @@ func _build_perf_record(run_record: Dictionary) -> Dictionary:
         "perf": run_record.get("perf", {}),
     })
 
+func _should_save_perf_data_for_mode(mode: String) -> bool:
+    return not (mode.strip_edges().to_lower() in ["fast_render", "fast", "max_render", "no_render", "norender", "sprint"])
+
 func _build_balance_record(run_record: Dictionary) -> Dictionary:
     var balance_record := run_record.duplicate(true)
     balance_record.erase("perf")
     return _sanitize_for_json(balance_record)
+
+func _format_purchase_summary(purchase_result: Dictionary, max_items: int = 8) -> String:
+    var purchases: Array = purchase_result.get("purchases", [])
+    if purchases.is_empty():
+        return "none"
+    var parts: Array[String] = []
+    var limit := mini(max_items, purchases.size())
+    for index in range(limit):
+        var purchase: Dictionary = purchases[index]
+        parts.append("%s L%d %s%d" % [
+            _get_upgrade_label(str(purchase.get("id", ""))),
+            int(purchase.get("level", 0)),
+            _currency_symbol(str(purchase.get("currency", ""))),
+            int(purchase.get("cost", 0)),
+        ])
+    if purchases.size() > limit:
+        parts.append("+%d more" % (purchases.size() - limit))
+    return "; ".join(parts)
+
+func _normalized_layer_block_counts(source: Variant) -> Dictionary:
+    var counts := {}
+    for layer_depth in range(1, 6):
+        counts[layer_depth] = 0
+    if source is Dictionary:
+        var source_dict: Dictionary = source
+        for key_variant in source_dict.keys():
+            var layer_depth := int(key_variant)
+            if layer_depth < 1 or layer_depth > 5:
+                continue
+            counts[layer_depth] = maxi(0, int(source_dict[key_variant]))
+    return counts
+
+func _format_layer_block_counts(source: Variant) -> String:
+    var counts := _normalized_layer_block_counts(source)
+    var parts: Array[String] = []
+    for layer_depth in range(1, 6):
+        parts.append("L%d=%d" % [layer_depth, int(counts.get(layer_depth, 0))])
+    return " ".join(parts)
+
+func _get_upgrade_label(upgrade_id: String) -> String:
+    if BALANCE.is_core_upgrade(upgrade_id):
+        var core_id := upgrade_id.trim_prefix(BALANCE.CORE_PREFIX)
+        return str(BALANCE.CORE_UPGRADES.get(core_id, {}).get("label", core_id))
+    if BALANCE.is_xp_upgrade(upgrade_id):
+        var xp_id := upgrade_id.trim_prefix(BALANCE.XP_PREFIX)
+        return str(BALANCE.XP_UPGRADES.get(xp_id, {}).get("label", xp_id))
+    return str(BALANCE.RAW_NODE_DATA.get(upgrade_id, {}).get("label", upgrade_id))
+
+func _currency_symbol(currency_kind: String) -> String:
+    match currency_kind:
+        "cash":
+            return "$"
+        "xp":
+            return "XP "
+        "core":
+            return "core "
+    return "%s " % currency_kind
 
 func _buy_all_affordable_upgrades() -> Dictionary:
     var bought: Array[Dictionary] = []
@@ -583,6 +653,7 @@ func _build_progress_signature(data: Dictionary) -> Dictionary:
         "xp_upgrades": _sorted_dictionary(data.get("xp_upgrades", {})),
         "purchased_core_upgrades": _sorted_array(data.get("purchased_core_upgrades", [])),
         "best_layer_clear_percents": _rounded_layer_percents(data.get("best_layer_clear_percents", {})),
+        "remaining_layer_block_counts": _normalized_layer_block_counts(data.get("remaining_layer_block_counts", {})),
     }
 
 func _compare_mode_results(results: Array[Dictionary]) -> Dictionary:
