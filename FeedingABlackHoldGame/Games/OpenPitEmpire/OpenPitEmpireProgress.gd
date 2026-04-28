@@ -9,6 +9,15 @@ const PLANET_META_PATH := "user://open_pit_empire_planet_state_v3/meta.save"
 const LEGACY_PLANET_SAVE_PATH := "user://open_pit_empire_planet_state_v1.json"
 const MIN_START_DEPTH_LEVEL := BALANCE.MIN_START_DEPTH_LEVEL
 const MAX_DEPTH_LEVEL := BALANCE.MAX_DEPTH_LEVEL
+const INITIAL_LAYER_BLOCK_COUNTS_BY_LAYOUT_VERSION := {
+    5: {
+        1: 36513,
+        2: 33578,
+        3: 33785,
+        4: 35270,
+        5: 28502,
+    },
+}
 
 const DEFAULT_DATA := {
     "wallet": 0,
@@ -568,6 +577,10 @@ static func _get_current_layer_clear_percents_from_counts(remaining_counts: Dict
 static func _get_initial_layer_block_counts() -> Dictionary:
     if not _initial_layer_block_counts.is_empty():
         return _initial_layer_block_counts.duplicate(true)
+    var cached_counts: Dictionary = INITIAL_LAYER_BLOCK_COUNTS_BY_LAYOUT_VERSION.get(BALANCE.PLANET_LAYOUT_VERSION, {})
+    if _has_complete_layer_depth_dictionary(cached_counts):
+        _initial_layer_block_counts = _normalize_layer_count_constant(cached_counts)
+        return _initial_layer_block_counts.duplicate(true)
     var counts := {}
     for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
         counts[layer_depth] = 0
@@ -585,6 +598,12 @@ static func _get_initial_layer_block_counts() -> Dictionary:
         counts[layer_depth] = int(counts.get(layer_depth, 0)) + 1
     _initial_layer_block_counts = counts.duplicate(true)
     return counts
+
+static func _normalize_layer_count_constant(source: Dictionary) -> Dictionary:
+    var normalized := {}
+    for layer_depth in range(MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL + 1):
+        normalized[layer_depth] = maxi(0, int(source.get(layer_depth, source.get(str(layer_depth), 0))))
+    return normalized
 
 static func _scan_remaining_layer_block_counts() -> Dictionary:
     var profile_started_msec := Time.get_ticks_msec()

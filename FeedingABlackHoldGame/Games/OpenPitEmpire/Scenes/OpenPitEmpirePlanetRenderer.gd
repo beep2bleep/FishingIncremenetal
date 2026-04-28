@@ -50,6 +50,14 @@ var _fill_scrub_accum := 0.0
 var _fill_scrub_pending := false
 var _fill_scrub_next_row := 0
 var _fill_scrub_changed := false
+var _fill_prewarm_thread: Thread
+var _fill_prewarm_thread_active := false
+var _fill_prewarm_job_id := 0
+var _fill_prewarm_active_job_id := 0
+var _fill_prewarm_active_origin := Vector2i(2147483647, 2147483647)
+var _fill_prewarm_active_size := Vector2i.ZERO
+var _fill_prewarm_active_cell_span := 1
+var _fill_prewarm_completed_job_id := 0
 
 const SPACE_BG := Color(0.025, 0.025, 0.035, 1.0)
 const PIT_GLOW := Color(0.52, 0.08, 0.08, 0.72)
@@ -152,6 +160,9 @@ func _ready() -> void:
     texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     _rebuild_screen_stars()
 
+func _exit_tree() -> void:
+    _finish_fill_prewarm_thread()
+
 func mark_dirty(rebuild_fill: bool = true, reason: String = "external") -> void:
     _force_redraw = true
     _edge_dirty = true
@@ -179,6 +190,7 @@ func queue_fill_updates(positions: Array) -> void:
         _edge_dirty = true
 
 func _process(_delta: float) -> void:
+    _poll_fill_prewarm_thread()
     _time_elapsed += _delta
     _auto_ultra_lock_timer = maxf(0.0, _auto_ultra_lock_timer - _delta)
     _edge_rebuild_accum += _delta
@@ -373,7 +385,10 @@ func _draw() -> void:
     if reduce_detail or ultra_reduce_detail:
         _ensure_fill_prewarm(cache_grid_min, target_cache_grid_size, fill_cell_span)
         _apply_pending_fill_updates_to_prewarm()
-        _advance_fill_prewarm(REDUCED_FILL_PREWARM_ROWS_PER_DRAW)
+        if _fill_prewarm_thread_active:
+            _force_redraw = true
+        else:
+            _advance_fill_prewarm(REDUCED_FILL_PREWARM_ROWS_PER_DRAW)
     var fill_rebuild_dirty := _fill_dirty
     var fill_rebuild_origin := _fill_grid_origin != cache_grid_min
     var fill_rebuild_size := _fill_grid_size != target_cache_grid_size
@@ -383,6 +398,7 @@ func _draw() -> void:
         fill_needs_rebuild = true
     var fill_prewarm_ready_for_cache := _can_apply_fill_prewarm(cache_grid_min, target_cache_grid_size, fill_cell_span)
     var fill_prewarm_missed := false
+    var fill_rebuild_deferred := false
 
     section_start_us = scene_ref.perf_probe_begin()
     var target_fill_texture_size := _grid_size_to_fill_texture_size(target_cache_grid_size, fill_cell_span)
@@ -399,6 +415,11 @@ func _draw() -> void:
         _fill_scrub_next_row = 0
         _fill_scrub_changed = false
         scene_ref.perf_probe_end("renderer_fill_resize", fill_resize_start_us)
+    if fill_needs_rebuild and (reduce_detail or ultra_reduce_detail) and not fill_prewarm_ready_for_cache and _fill_texture != null:
+        fill_rebuild_deferred = true
+        _fill_prewarm_waiting_for_swap = true
+        _fill_prewarm_defer_count += 1
+        fill_needs_rebuild = false
     if fill_needs_rebuild:
         var fill_reason_parts: Array[String] = []
         if fill_rebuild_dirty:
@@ -444,7 +465,7 @@ func _draw() -> void:
         _fill_scrub_next_row = 0
         _fill_scrub_changed = false
     else:
-        _last_fill_rebuild_reason = "-"
+        _last_fill_rebuild_reason = "deferred" if fill_rebuild_deferred else "-"
         var should_upload_pending_fill := true
         if should_upload_pending_fill and _apply_pending_fill_updates(cache_grid_min, cache_grid_max):
             var fill_upload_start_us := scene_ref.perf_probe_begin()
@@ -458,11 +479,13 @@ func _draw() -> void:
             _fill_scrub_pending = false
             _fill_scrub_next_row = 0
             _fill_scrub_changed = false
+    var texture_origin := cache_grid_min if not fill_rebuild_deferred else _fill_grid_origin
+    var texture_size := Vector2i(cache_grid_w, cache_grid_h) if not fill_rebuild_deferred else _fill_grid_size
     var tex_rect := Rect2(
-        float(cache_grid_min.x) * scene_ref.BLOCK_SIZE,
-        float(cache_grid_min.y) * scene_ref.BLOCK_SIZE,
-        float(cache_grid_w) * scene_ref.BLOCK_SIZE,
-        float(cache_grid_h) * scene_ref.BLOCK_SIZE
+        float(texture_origin.x) * scene_ref.BLOCK_SIZE,
+        float(texture_origin.y) * scene_ref.BLOCK_SIZE,
+        float(texture_size.x) * scene_ref.BLOCK_SIZE,
+        float(texture_size.y) * scene_ref.BLOCK_SIZE
     )
     if _fill_texture != null:
         draw_texture_rect(_fill_texture, tex_rect, false)
@@ -789,19 +812,180 @@ func _clear_fill_prewarm() -> void:
     _fill_prewarm_next_row = 0
     _fill_prewarm_ready = false
     _fill_prewarm_waiting_for_swap = false
+    _fill_prewarm_completed_job_id = 0
+    if _fill_prewarm_thread_active:
+        _fill_prewarm_active_job_id = -1
 
 func _ensure_fill_prewarm(target_origin: Vector2i, target_size: Vector2i, cell_span: int) -> void:
     if _fill_prewarm_image != null and _fill_prewarm_grid_origin == target_origin and _fill_prewarm_grid_size == target_size and _fill_prewarm_cell_span == cell_span:
         return
-    var texture_size := _grid_size_to_fill_texture_size(target_size, cell_span)
-    _fill_prewarm_image = Image.create(texture_size.x, texture_size.y, false, Image.FORMAT_RGBA8)
-    _fill_prewarm_image.fill(Color.TRANSPARENT)
+    if _fill_prewarm_thread_active:
+        if _fill_prewarm_active_origin == target_origin and _fill_prewarm_active_size == target_size and _fill_prewarm_active_cell_span == cell_span:
+            return
+        return
+    _start_fill_prewarm_thread(target_origin, target_size, cell_span)
+
+func _start_fill_prewarm_thread(target_origin: Vector2i, target_size: Vector2i, cell_span: int) -> void:
+    if scene_ref == null or target_size.x <= 0 or target_size.y <= 0:
+        return
+    var snapshot := {}
+    var target_max := Vector2i(target_origin.x + target_size.x - 1, target_origin.y + target_size.y - 1)
+    for x in range(target_origin.x, target_max.x + 1):
+        for y in range(target_origin.y, target_max.y + 1):
+            var grid := Vector2i(x, y)
+            var block: Dictionary = scene_ref.blocks.get(grid, {})
+            if not block.is_empty():
+                snapshot[grid] = block.duplicate(true)
+    _fill_prewarm_job_id += 1
+    _fill_prewarm_active_job_id = _fill_prewarm_job_id
+    _fill_prewarm_active_origin = target_origin
+    _fill_prewarm_active_size = target_size
+    _fill_prewarm_active_cell_span = cell_span
+    _fill_prewarm_image = null
     _fill_prewarm_grid_origin = target_origin
     _fill_prewarm_grid_size = target_size
     _fill_prewarm_cell_span = cell_span
     _fill_prewarm_next_row = 0
     _fill_prewarm_ready = false
-    _fill_prewarm_waiting_for_swap = false
+    var request := {
+        "job_id": _fill_prewarm_active_job_id,
+        "origin": target_origin,
+        "size": target_size,
+        "cell_span": cell_span,
+        "blocks": snapshot,
+        "electric_enabled": bool(scene_ref.runtime_stats.get("electric_enabled", false)),
+    }
+    _fill_prewarm_thread = Thread.new()
+    var err := _fill_prewarm_thread.start(Callable(self, "_build_fill_prewarm_image_thread").bind(request))
+    if err == OK:
+        _fill_prewarm_thread_active = true
+    else:
+        _fill_prewarm_thread = null
+        _fill_prewarm_thread_active = false
+
+func _poll_fill_prewarm_thread() -> void:
+    if not _fill_prewarm_thread_active or _fill_prewarm_thread == null or _fill_prewarm_thread.is_alive():
+        return
+    var result: Variant = _fill_prewarm_thread.wait_to_finish()
+    _fill_prewarm_thread = null
+    _fill_prewarm_thread_active = false
+    if not (result is Dictionary):
+        return
+    var job_id := int(result.get("job_id", -1))
+    if job_id != _fill_prewarm_active_job_id or job_id <= _fill_prewarm_completed_job_id:
+        return
+    _fill_prewarm_completed_job_id = job_id
+    _fill_prewarm_image = result.get("image", null)
+    _fill_prewarm_grid_origin = Vector2i(result.get("origin", _fill_prewarm_active_origin))
+    _fill_prewarm_grid_size = Vector2i(result.get("size", _fill_prewarm_active_size))
+    _fill_prewarm_cell_span = int(result.get("cell_span", _fill_prewarm_active_cell_span))
+    _fill_prewarm_next_row = _fill_prewarm_grid_size.y
+    _fill_prewarm_ready = _fill_prewarm_image != null
+    if _fill_prewarm_ready:
+        _force_redraw = true
+
+func _finish_fill_prewarm_thread() -> void:
+    if _fill_prewarm_thread_active and _fill_prewarm_thread != null:
+        _fill_prewarm_thread.wait_to_finish()
+    _fill_prewarm_thread = null
+    _fill_prewarm_thread_active = false
+
+func _build_fill_prewarm_image_thread(request: Dictionary) -> Dictionary:
+    var origin := Vector2i(request.get("origin", Vector2i.ZERO))
+    var grid_size := Vector2i(request.get("size", Vector2i.ZERO))
+    var cell_span := maxi(1, int(request.get("cell_span", 1)))
+    var texture_size := _grid_size_to_fill_texture_size(grid_size, cell_span)
+    var image := Image.create(texture_size.x, texture_size.y, false, Image.FORMAT_RGBA8)
+    image.fill(Color.TRANSPARENT)
+    var blocks_snapshot: Dictionary = request.get("blocks", {})
+    var palette_cache := {}
+    if cell_span <= 1:
+        for grid_variant in blocks_snapshot.keys():
+            var grid: Vector2i = grid_variant
+            var local_x := grid.x - origin.x
+            var local_y := grid.y - origin.y
+            if local_x < 0 or local_x >= grid_size.x or local_y < 0 or local_y >= grid_size.y:
+                continue
+            var block: Dictionary = blocks_snapshot.get(grid, {})
+            image.set_pixel(local_x, local_y, _get_worker_block_fill(block, bool(request.get("electric_enabled", false)), palette_cache))
+    else:
+        var texture_w := _get_fill_texture_width(grid_size, cell_span)
+        var texture_h := _get_fill_texture_height(grid_size, cell_span)
+        for bucket_x in range(texture_w):
+            for bucket_y in range(texture_h):
+                image.set_pixel(bucket_x, bucket_y, _resolve_worker_fill_bucket_color(blocks_snapshot, origin, grid_size, cell_span, bucket_x, bucket_y, bool(request.get("electric_enabled", false)), palette_cache))
+    return {
+        "job_id": int(request.get("job_id", -1)),
+        "origin": origin,
+        "size": grid_size,
+        "cell_span": cell_span,
+        "image": image,
+    }
+
+func _resolve_worker_fill_bucket_color(blocks_snapshot: Dictionary, image_origin: Vector2i, image_grid_size: Vector2i, cell_span: int, bucket_x: int, bucket_y: int, electric_enabled: bool, palette_cache: Dictionary) -> Color:
+    var span := maxi(1, cell_span)
+    var start_x := image_origin.x + bucket_x * span
+    var start_y := image_origin.y + bucket_y * span
+    var end_x := mini(start_x + span - 1, image_origin.x + image_grid_size.x - 1)
+    var end_y := mini(start_y + span - 1, image_origin.y + image_grid_size.y - 1)
+    var fallback_fill := Color.TRANSPARENT
+    var fallback_score := -1
+    for x in range(start_x, end_x + 1):
+        for y in range(start_y, end_y + 1):
+            var block: Dictionary = blocks_snapshot.get(Vector2i(x, y), {})
+            if block.is_empty():
+                continue
+            var score := 1
+            if bool(block.get("core_refill", false)):
+                score += 3
+            if bool(block.get("regenerated", false)):
+                score += 1
+            score += int(block.get("type", 0))
+            if score > fallback_score:
+                fallback_fill = _get_worker_block_fill(block, electric_enabled, palette_cache)
+                fallback_score = score
+    return fallback_fill
+
+func _get_worker_block_fill(block: Dictionary, electric_enabled: bool, palette_cache: Dictionary) -> Color:
+    if block.is_empty():
+        return Color.TRANSPARENT
+    var zone: int = int(block.get("zone", ZONE_AUTUMN))
+    var block_type: int = int(block.get("type", 0))
+    var regenerated: bool = bool(block.get("regenerated", false))
+    var core_refill: bool = bool(block.get("core_refill", false))
+    var unbreakable: bool = bool(block.get("unbreakable", false))
+    var hardness_tier := 1
+    var cache_key := "%d:%d:%d:%d:%d:%d:%d" % [zone, block_type, int(regenerated), int(core_refill), int(electric_enabled), hardness_tier, int(unbreakable)]
+    if palette_cache.has(cache_key):
+        return Color(palette_cache[cache_key])
+    var fill: Color = ZONE_FILLS.get(zone, SPACE_BG)
+    var edge: Color = ZONE_EDGE_COLORS.get(zone, Color.WHITE)
+    if unbreakable:
+        palette_cache[cache_key] = PIT_WALL_FILL
+        return PIT_WALL_FILL
+    match block_type:
+        1:
+            fill = _mix_fill_with_edge(ZONE_FILLS.get(zone, Color(0.11, 0.07, 0.08, 1.0)), ZONE_EDGE_COLORS.get(zone, Color(1.0, 1.0, 1.0, 1.0)), 0.32)
+        2:
+            var expected_fill := _mix_fill_with_edge(fill, edge, 0.22)
+            fill = expected_fill.lerp(HACKER_BLOCK_FILL, 0.28) if electric_enabled else expected_fill.lerp(HACKER_BLOCK_DIM, 0.12)
+        3:
+            var base_fill := _mix_fill_with_edge(fill, edge, 0.16)
+            fill = base_fill.lightened(0.08)
+        4:
+            fill = _mix_fill_with_edge(THORN_FILL, THORN_EDGE, 0.24)
+        _:
+            if core_refill:
+                fill = CORE_REFILL_FILL
+            elif regenerated:
+                fill = _mix_fill_with_edge(REGEN_FILL, REGEN_EDGE, 0.22)
+            else:
+                fill = _mix_fill_with_edge(fill, edge, 0.22)
+    if not core_refill:
+        fill = _apply_hardness_tint(fill, hardness_tier)
+    fill = Color(fill.r, fill.g, fill.b, 1.0)
+    palette_cache[cache_key] = fill
+    return fill
 
 func _advance_fill_prewarm(row_count: int) -> void:
     if _fill_prewarm_image == null or _fill_prewarm_ready or row_count <= 0:
@@ -1047,7 +1231,7 @@ func _needs_camera_redraw() -> bool:
     )
 
 func get_perf_state_text() -> String:
-    return "Firewall vis %d  load %d  detail %s/%s  fillQ %d  fillR %s  fillD %s(%d)  fillCnt d:%d o:%d s:%d  fillMiss %d  fillSwap a:%d d:%d" % [
+    return "Firewall vis %d  load %d  detail %s/%s  fillQ %d  fillR %s  fillD %s(%d)  fillCnt d:%d o:%d s:%d  fillMiss %d  fillSwap a:%d d:%d  fillWorker %s" % [
         _last_visible_cell_budget,
         _last_effect_load,
         "heavy" if _last_reduce_detail else "full",
@@ -1062,6 +1246,7 @@ func get_perf_state_text() -> String:
         _fill_prewarm_miss_count,
         _fill_prewarm_apply_count,
         _fill_prewarm_defer_count,
+        "busy" if _fill_prewarm_thread_active else ("ready" if _fill_prewarm_ready else "-"),
     ]
 
 func _rebuild_screen_stars() -> void:

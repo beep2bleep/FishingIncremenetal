@@ -198,6 +198,7 @@ var multi_mode_intro_overlay: ColorRect
 var multi_mode_intro_countdown_label: Label
 var multi_mode_intro_note_label: Label
 var multi_mode_step_reported := false
+var open_pit_defense_step: Dictionary = {}
 
 var current_wave := 1
 var waves_cleared := 0
@@ -408,6 +409,9 @@ var _summary_pointer_recovery_frames_remaining := 0
 func _ready() -> void:
     rng.randomize()
     multi_mode_step = MULTI_GAME_MODE.get_active_step_for_game(Util.ACTIVE_GAME_RED_SKY)
+    open_pit_defense_step = _get_open_pit_defense_step()
+    if multi_mode_step.is_empty() and not open_pit_defense_step.is_empty():
+        multi_mode_step = open_pit_defense_step.duplicate(true)
     multi_mode_step_reported = false
     if ControllerIcons != null and not ControllerIcons.input_type_changed.is_connected(_on_controller_icons_input_type_changed):
         ControllerIcons.input_type_changed.connect(_on_controller_icons_input_type_changed)
@@ -463,12 +467,35 @@ func _setup_multi_mode_overlay() -> void:
     multi_mode_intro_note_label.custom_minimum_size = Vector2(760.0, 0.0)
     multi_mode_intro_note_label.add_theme_font_size_override("font_size", 24)
     multi_mode_intro_note_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.92, 1.0))
-    multi_mode_intro_note_label.text = MULTI_GAME_MODE.get_active_intro_text()
+    multi_mode_intro_note_label.text = str(multi_mode_step.get("intro_text", MULTI_GAME_MODE.get_active_intro_text()))
     vbox.add_child(multi_mode_intro_note_label)
     _update_multi_mode_overlay()
 
 func _is_multi_mode_challenge_active() -> bool:
     return not multi_mode_step.is_empty()
+
+func _is_open_pit_defense_challenge_active() -> bool:
+    return not open_pit_defense_step.is_empty()
+
+func _get_open_pit_defense_step() -> Dictionary:
+    var challenge: Dictionary = Global.open_pit_defense_challenge
+    if str(challenge.get("source", "")) != "open_pit_empire":
+        return {}
+    if str(challenge.get("game_id", "")) != Util.ACTIVE_GAME_RED_SKY:
+        return {}
+    return challenge.duplicate(true)
+
+func _complete_open_pit_defense_challenge(success: bool, payload: Dictionary) -> void:
+    var result := open_pit_defense_step.duplicate(true)
+    result["success"] = success
+    result["payload"] = payload.duplicate(true)
+    Global.open_pit_defense_result = result
+    Global.open_pit_defense_challenge = {}
+    Util.set_active_game_id(Util.ACTIVE_GAME_OPEN_PIT)
+    Util.set_high_level_mode_id(Util.HIGH_LEVEL_MODE_ALL)
+    Global.start_in_upgrade_scene = false
+    Global.load_saved_run = true
+    SceneChanger.change_to_new_scene(Util.PATH_OPEN_PIT_MAIN, null, 0.2)
 
 func _update_multi_mode_overlay() -> void:
     if multi_mode_intro_countdown_label == null:
@@ -2945,6 +2972,9 @@ func _check_wave_clear() -> void:
         _spawn_floating_text(_trf("SECTOR %d SECURED", [waves_cleared]), get_viewport_rect().size * Vector2(0.5, 0.2), Color(0.72, 0.94, 1.0, 1.0), 30)
     if _is_multi_mode_challenge_active() and not multi_mode_step_reported and waves_cleared >= int(multi_mode_step.get("target_wave", 999999)):
         multi_mode_step_reported = true
+        if _is_open_pit_defense_challenge_active():
+            _complete_open_pit_defense_challenge(true, {"waves_cleared": waves_cleared, "target_wave": int(multi_mode_step.get("target_wave", 0))})
+            return
         MULTI_GAME_MODE.complete_current_step(true, {"waves_cleared": waves_cleared, "target_wave": int(multi_mode_step.get("target_wave", 0))})
         return
     _show_upgrade_panel()
@@ -3238,6 +3268,10 @@ func _finish_run(reason: String, from_pause_end_run: bool = false) -> void:
         return
     if _is_multi_mode_challenge_active() and not multi_mode_step_reported:
         multi_mode_step_reported = true
+        if _is_open_pit_defense_challenge_active():
+            run_state = RUN_STATES.SUMMARY
+            _complete_open_pit_defense_challenge(false, {"reason": reason, "waves_cleared": waves_cleared})
+            return
         run_state = RUN_STATES.SUMMARY
         MULTI_GAME_MODE.complete_current_step(false, {"reason": reason, "waves_cleared": waves_cleared})
         return

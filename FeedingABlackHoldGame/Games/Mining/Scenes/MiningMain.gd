@@ -10,6 +10,7 @@ const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const RUN_REASON_TIMER_EXPIRED := "MINING_REASON_TIMER_EXPIRED"
 const RUN_REASON_DRILL_DEPLETED := "MINING_REASON_DRILL_DEPLETED"
 const RUN_REASON_SIMULATION_STEP_CAP := "MINING_REASON_SIMULATION_STEP_CAP"
+const RUN_REASON_HUNTER_CAUGHT := "MINING_REASON_HUNTER_CAUGHT"
 
 const WORLD_SIZE := Vector2(1650.0, 1950.0)
 const DEPTH_DOODAD_COUNT := 18
@@ -75,6 +76,7 @@ const STRAIGHT_DRIVE_HARD_TURN_ANGLE := 55.0
 const STRAIGHT_DRIVE_SPEED_BONUS_MAX := 0.62
 const PLAYER_ACCELERATION := 2.2
 const PLAYER_DECELERATION := 4.5
+const DEFENSE_HUNTER_RADIUS := 22.0
 const TUNNEL_SPEED_BONUS_MIN := 0.14
 const TUNNEL_SPEED_BONUS_MAX := 0.46
 const TUNNEL_BOOST_COVERAGE_THRESHOLD := 0.5
@@ -309,6 +311,11 @@ var multi_mode_intro_overlay: ColorRect
 var multi_mode_intro_countdown_label: Label
 var multi_mode_intro_note_label: Label
 var multi_mode_step_reported := false
+var open_pit_defense_step: Dictionary = {}
+var defense_hunter_active := false
+var defense_hunter_spawned := false
+var defense_hunter_pos := Vector2.ZERO
+var defense_hunter_wake_distance := 260.0
 
 func _notification(what: int) -> void:
     if what == NOTIFICATION_TRANSLATION_CHANGED:
@@ -326,6 +333,9 @@ func _trf(key: String, args: Array = []) -> String:
 func _ready() -> void:
     Global.game_state = Util.GAME_STATES.PLAYING
     multi_mode_step = MULTI_GAME_MODE.get_active_step_for_game(Util.ACTIVE_GAME_MINING)
+    open_pit_defense_step = _get_open_pit_defense_step()
+    if multi_mode_step.is_empty() and not open_pit_defense_step.is_empty():
+        multi_mode_step = open_pit_defense_step.duplicate(true)
     multi_mode_step_reported = false
     if simulation_seed_override >= 0:
         rng.seed = simulation_seed_override
@@ -376,12 +386,35 @@ func _setup_multi_mode_overlay() -> void:
     multi_mode_intro_note_label.custom_minimum_size = Vector2(760.0, 0.0)
     multi_mode_intro_note_label.add_theme_font_size_override("font_size", 24)
     multi_mode_intro_note_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.92, 1.0))
-    multi_mode_intro_note_label.text = MULTI_GAME_MODE.get_active_intro_text()
+    multi_mode_intro_note_label.text = str(multi_mode_step.get("intro_text", MULTI_GAME_MODE.get_active_intro_text()))
     vbox.add_child(multi_mode_intro_note_label)
     _update_multi_mode_overlay()
 
 func _is_multi_mode_challenge_active() -> bool:
     return not multi_mode_step.is_empty()
+
+func _is_open_pit_defense_challenge_active() -> bool:
+    return not open_pit_defense_step.is_empty()
+
+func _get_open_pit_defense_step() -> Dictionary:
+    var challenge: Dictionary = Global.open_pit_defense_challenge
+    if str(challenge.get("source", "")) != "open_pit_empire":
+        return {}
+    if str(challenge.get("game_id", "")) != Util.ACTIVE_GAME_MINING:
+        return {}
+    return challenge.duplicate(true)
+
+func _complete_open_pit_defense_challenge(success: bool, payload: Dictionary) -> void:
+    var result := open_pit_defense_step.duplicate(true)
+    result["success"] = success
+    result["payload"] = payload.duplicate(true)
+    Global.open_pit_defense_result = result
+    Global.open_pit_defense_challenge = {}
+    Util.set_active_game_id(Util.ACTIVE_GAME_OPEN_PIT)
+    Util.set_high_level_mode_id(Util.HIGH_LEVEL_MODE_ALL)
+    Global.start_in_upgrade_scene = false
+    Global.load_saved_run = true
+    SceneChanger.change_to_new_scene(Util.PATH_OPEN_PIT_MAIN, null, 0.2)
 
 func _update_multi_mode_overlay() -> void:
     if multi_mode_intro_countdown_label == null:
@@ -465,6 +498,7 @@ func _draw() -> void:
     _draw_pickups(origin)
     if not web_fast_path or _is_web_effect_enabled(WEB_EFFECT_FULL_TRAIL_BUDDIES):
         _draw_tail()
+    _draw_defense_hunter(origin)
     _draw_player(origin)
     if not web_fast_path or _is_web_effect_enabled(WEB_EFFECT_TARGET_AND_EDGE_FX):
         _draw_target_line(origin)
@@ -497,6 +531,10 @@ func _begin_run() -> void:
     camera_pos = player_pos
     time_left = _get_run_time_limit()
     drill_health = _get_drill_health_max()
+    defense_hunter_active = bool(multi_mode_step.get("deepcore_hunter", false))
+    defense_hunter_spawned = false
+    defense_hunter_pos = _get_base_position()
+    defense_hunter_wake_distance = float(multi_mode_step.get("hunter_trigger_distance", 260.0))
     cargo_used = 0
     carry_counts.clear()
     banked_counts.clear()
@@ -612,6 +650,7 @@ func _process_running(delta: float) -> void:
     simulation_elapsed += delta
     time_left = max(0.0, time_left - delta * _get_time_drain_rate())
     _process_player_movement(delta)
+    _process_defense_hunter(delta)
     _process_drilling(delta)
     _process_pickup_drones(delta)
     _collect_pickups(delta)
@@ -742,6 +781,21 @@ func _process_player_movement(delta: float) -> void:
     player_pos.y = clampf(player_pos.y, -world_size.y * 0.5 + PLAYER_RADIUS, world_size.y * 0.5 - PLAYER_RADIUS)
     _carve_dirt_segment(previous_pos, player_pos, 28.0)
     _update_drill_train(previous_pos, delta)
+
+func _process_defense_hunter(delta: float) -> void:
+    if not defense_hunter_active or run_state != RUN_STATES.RUNNING:
+        return
+    var base_pos := _get_base_position()
+    if not defense_hunter_spawned:
+        defense_hunter_pos = base_pos
+        if player_pos.distance_to(base_pos) < defense_hunter_wake_distance:
+            return
+        defense_hunter_spawned = true
+    var speed_mult: float = float(multi_mode_step.get("hunter_speed_mult", 0.5))
+    var hunter_speed: float = _get_move_speed() * speed_mult
+    defense_hunter_pos = defense_hunter_pos.move_toward(player_pos, hunter_speed * delta)
+    if defense_hunter_pos.distance_to(player_pos) <= DEFENSE_HUNTER_RADIUS + PLAYER_RADIUS:
+        _trigger_run_end(RUN_REASON_HUNTER_CAUGHT)
 
 func _process_drilling(delta: float) -> void:
     target_node_id = _get_contact_drill_node_index()
@@ -1203,6 +1257,15 @@ func _break_node(node_index: int) -> void:
     nodes_broken += 1
     if _is_multi_mode_challenge_active() and not multi_mode_step_reported and nodes_broken >= int(multi_mode_step.get("nodes_goal", 999999)):
         multi_mode_step_reported = true
+        if _is_open_pit_defense_challenge_active():
+            _complete_open_pit_defense_challenge(true, {
+                "nodes_broken": nodes_broken,
+                "depth_level": active_depth_level,
+                "elapsed": maxf(0.0, _get_run_time_limit() - time_left),
+                "time_remaining": maxf(0.0, time_left),
+                "time_limit": _get_run_time_limit()
+            })
+            return
         MULTI_GAME_MODE.complete_current_step(true, {
             "nodes_broken": nodes_broken,
             "depth_level": active_depth_level,
@@ -1440,6 +1503,16 @@ func _finish_run(reason_key: String) -> void:
         return
     if _is_multi_mode_challenge_active() and not multi_mode_step_reported:
         multi_mode_step_reported = true
+        if _is_open_pit_defense_challenge_active():
+            _complete_open_pit_defense_challenge(false, {
+                "reason": reason_key,
+                "nodes_broken": nodes_broken,
+                "depth_level": active_depth_level,
+                "elapsed": maxf(0.0, _get_run_time_limit() - time_left),
+                "time_remaining": maxf(0.0, time_left),
+                "time_limit": _get_run_time_limit()
+            })
+            return
         run_state = RUN_STATES.SUMMARY
         MULTI_GAME_MODE.complete_current_step(false, {
             "reason": reason_key,
@@ -3428,6 +3501,17 @@ func _draw_pickup_drones() -> void:
         var carry_color: Color = _apply_material_color_variation(drone.get("carry_color", Color(0.94, 0.82, 0.38, 1.0)), float(index) * 8.0 + 7.3, 0.55) if String(drone.get("state", "idle")) == "to_player" else Color(0.0, 0.0, 0.0, 0.0)
         var variation_seed := float(active_depth_level) * 19.0 + float(index) * 7.0 + float(drone.get("orbit_seed", 0.0)) * 11.0
         _draw_drone_body(_world_to_screen(drone.get("pos", Vector2.ZERO)), _apply_visual_palette_variant(Color(0.92, 0.76, 0.38, 1.0), variation_seed + 2.2, 0.6), carry_color, variation_seed)
+
+func _draw_defense_hunter(_origin: Vector2) -> void:
+    if not defense_hunter_active or not defense_hunter_spawned:
+        return
+    var screen_pos := _world_to_screen(defense_hunter_pos)
+    var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.012)
+    draw_circle(screen_pos, DEFENSE_HUNTER_RADIUS + 10.0 + pulse * 4.0, Color(1.0, 0.12, 0.08, 0.14))
+    draw_circle(screen_pos, DEFENSE_HUNTER_RADIUS, Color(0.16, 0.02, 0.025, 0.96))
+    draw_arc(screen_pos, DEFENSE_HUNTER_RADIUS + 4.0, 0.0, TAU, 32, Color(1.0, 0.22, 0.16, 0.82), 3.0)
+    draw_line(screen_pos + Vector2(-9.0, -3.0), screen_pos + Vector2(-2.0, 3.0), Color(1.0, 0.72, 0.35, 0.95), 2.0)
+    draw_line(screen_pos + Vector2(9.0, -3.0), screen_pos + Vector2(2.0, 3.0), Color(1.0, 0.72, 0.35, 0.95), 2.0)
 
 func _draw_drone_body(screen_pos: Vector2, body_color: Color, carry_color: Color, variation_seed: float) -> void:
     if OS.has_feature("web") and not _is_web_effect_enabled(WEB_EFFECT_FULL_DRONE_DETAIL):

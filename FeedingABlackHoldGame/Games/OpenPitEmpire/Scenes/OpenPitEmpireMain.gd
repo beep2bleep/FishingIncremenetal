@@ -84,10 +84,12 @@ const DRONE_MINE_SPEED := 120.0
 const SEISMIC_CHARGE_INTERVAL := 0.32
 const SEISMIC_POWERUP_INTERVAL := 0.45
 const SEISMIC_CHARGE_AHEAD_DISTANCE := 180.0
+const FORWARD_SHOT_RANGE_BONUS := BLOCK_SIZE * 1.25
 const SEISMIC_CHARGE_SPLASH_RADIUS_CELLS := 1
 const SEISMIC_CHARGE_DAMAGE_MULT := 0.9
 const SEISMIC_POWERUP_DAMAGE_MULT := 0.4
-const SHOCKWAVE_DAMAGE_MULT := 0.45
+const SHOCKWAVE_DAMAGE_MULT := 1.35
+const SHOCKWAVE_EXTRA_RADIUS_CELLS := 2
 const SEISMIC_CHARGE_VISUAL_DURATION := 0.42
 const SEISMIC_CHARGE_TRACER_DURATION := 0.16
 const CAMERA_ZOOM_STOPPED := 1.2
@@ -131,6 +133,7 @@ const SIDE_SHOT_INTERVAL := 2.4
 const SIDE_SHOT_SPEED := 210.0
 const SIDE_SHOT_LIFETIME := 6.0
 const SIDE_SHOT_RADIUS := 12.0
+const SIDE_SHOT_HOMING_STRENGTH := 2.2
 const SIDE_ATTACKER_COUNT_PER_SIDE := 2
 const SIDE_ATTACKER_INSET_CELLS := 5
 const SIDE_ATTACKER_TRACK_SPEED := 4.5
@@ -142,6 +145,7 @@ const FUNNEL_REENTRY_SCAN_COLUMNS := 14
 const DEFENSE_BLOCK_INTERVAL := 5.0
 const CORE_SHOCKWAVE_INTERVAL := 7.0
 const CORE_SHOCKWAVE_PUSH := 280.0
+const CORE_FUEL_STASIS_GRACE := 0.35
 const SUMMER_LASER_INTERVAL_OUTER := 5.5
 const SUMMER_LASER_INTERVAL_BOSS := 4.5
 const SUMMER_LASER_INTERVAL_BOSS_LOW := 2.0
@@ -184,8 +188,10 @@ const AUTOPILOT_MINING_SCAN_CELLS := 18
 const AUTOPILOT_STAGING_CLEARANCE_CELLS := 2
 const AUTOPILOT_TARGET_REACHED_DISTANCE := 26.0
 const AUTOPILOT_FUEL_RETURN_RATIO := 0.15
-const AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME := 50
+const AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME := 12
+const AUTOPILOT_FAST_FORWARD_SPEED_CYCLE := [12, 25, 50, 0]
 const AUTOPILOT_NO_RENDER_STEPS_PER_FRAME := 240
+const DEFENSE_RETRY_HP_RATIO := 0.5
 const AUTOPILOT_EDGE_AVOID_SCAN_CELLS := 4
 const AUTOPILOT_EDGE_AVOID_RADIUS := BLOCK_SIZE * 4.0
 const AUTOPILOT_EDGE_AVOID_WEIGHT := 1.8
@@ -266,6 +272,7 @@ var xp_earned_this_run := 0
 var barriers_left := 0
 var shield_invuln_timer := 0.0
 var shield_recovery_timer := 0.0
+var core_fuel_stasis_timer := 0.0
 var boss_defeated := false
 var current_combo := 0
 var combo_timer := 0.0
@@ -340,6 +347,7 @@ var active_powerup_timers := {"haste": 0.0, "magnet": 0.0, "seismic_charge": 0.0
 var bottom_phase_unlocked := false
 var bottom_cutscene_timer := 0.0
 var bottom_cutscene_anchor := Vector2.ZERO
+var final_core_phase_handled := -1
 var side_shot_timer := SIDE_SHOT_INTERVAL
 var side_projectiles: Array[Dictionary] = []
 var side_attackers: Array[Dictionary] = []
@@ -351,10 +359,12 @@ var autopilot_retarget_timer := 0.0
 var autopilot_status := ""
 var autopilot_return_reason := ""
 var autopilot_fast_forward_enabled := false
+var autopilot_fast_forward_steps_per_frame := 1
 var autopilot_no_render_enabled := false
 var autopilot_sortie_mode := AUTOPILOT_MODE_CENTER
 var validation_rng_seed: int = -1
 var validation_autopilot_mode: String = ""
+var defense_transition_pending := false
 
 var planet_renderer: Node2D
 var drop_renderer: Node2D
@@ -372,6 +382,8 @@ var fps_label: Label
 var perf_graph: Control
 var perf_probe_label: RichTextLabel
 var minimap: Control
+var editor_debug_panel: PanelContainer
+var editor_debug_buttons: Dictionary = {}
 var summary_overlay: ColorRect
 var summary_label: RichTextLabel
 var summary_status_label: Label
@@ -409,6 +421,7 @@ const PERF_PROBE_KEYS := [
     "update_pickups",
     "update_core_attacks",
     "update_perf_debug",
+    "update_seismic_charge",
     "auto_fire_laser",
     "update_mega_beam",
     "damage_block",
@@ -452,6 +465,7 @@ var _perf_probe_history := {
     "update_pickups": [],
     "update_core_attacks": [],
     "update_perf_debug": [],
+    "update_seismic_charge": [],
     "auto_fire_laser": [],
     "update_mega_beam": [],
     "damage_block": [],
@@ -484,6 +498,7 @@ var _perf_probe_labels := {
     "update_pickups": "_update_pickups",
     "update_core_attacks": "_update_core_attacks",
     "update_perf_debug": "_update_perf_debug",
+    "update_seismic_charge": "_update_seismic_charge",
     "auto_fire_laser": "_auto_fire_laser",
     "update_mega_beam": "_update_mega_beam",
     "damage_block": "_damage_block",
@@ -516,6 +531,7 @@ var _perf_probe_last_samples := {
     "update_pickups": 0.0,
     "update_core_attacks": 0.0,
     "update_perf_debug": 0.0,
+    "update_seismic_charge": 0.0,
     "auto_fire_laser": 0.0,
     "update_mega_beam": 0.0,
     "damage_block": 0.0,
@@ -548,6 +564,7 @@ var _run_perf_peak_samples := {
     "update_pickups": 0.0,
     "update_core_attacks": 0.0,
     "update_perf_debug": 0.0,
+    "update_seismic_charge": 0.0,
     "auto_fire_laser": 0.0,
     "update_mega_beam": 0.0,
     "damage_block": 0.0,
@@ -573,6 +590,10 @@ var _combat_perf_worst_snapshot := {}
 var _run_perf_capture_time := 0.0
 var _target_offset_cache: Dictionary = {}
 var _editor_debug_damage_mult: float = 1.0
+var editor_debug_unlimited_barrier := false
+var editor_debug_unlimited_fuel := false
+var editor_debug_attack_speed_boost := false
+var editor_debug_damage_boost := false
 
 func _can_use_editor_debug_keys() -> bool:
     return OS.has_feature("editor") or OS.is_debug_build()
@@ -607,12 +628,12 @@ func apply_validation_autopilot_mode(mode: String) -> void:
     match validation_autopilot_mode:
         "fast_render", "fast", "max_render":
             _set_autopilot_no_render_enabled(false)
-            autopilot_fast_forward_enabled = true
+            _set_autopilot_fast_forward_steps(AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME)
         "no_render", "norender", "sprint":
-            autopilot_fast_forward_enabled = false
+            _set_autopilot_fast_forward_steps(1)
             _set_autopilot_no_render_enabled(true)
         _:
-            autopilot_fast_forward_enabled = false
+            _set_autopilot_fast_forward_steps(1)
             _set_autopilot_no_render_enabled(false)
 
 func get_validation_run_summary() -> Dictionary:
@@ -685,6 +706,33 @@ func _should_suppress_autopilot_perf_output() -> bool:
     var mode := validation_autopilot_mode.strip_edges().to_lower()
     return mode in ["fast_render", "fast", "max_render", "no_render", "norender", "sprint"]
 
+func _set_autopilot_fast_forward_steps(steps: int) -> void:
+    autopilot_fast_forward_steps_per_frame = maxi(0, steps)
+    autopilot_fast_forward_enabled = autopilot_fast_forward_steps_per_frame != 1
+
+func _should_play_sound_effects() -> bool:
+    return not autopilot_enabled or (not autopilot_fast_forward_enabled and not autopilot_no_render_enabled)
+
+func _play_sound_effect(type: SoundEffectSettings.SOUND_EFFECT_TYPE, volume_db_offset: float = 0.0, pitch_scale_offset: float = 0.0) -> void:
+    if not _should_play_sound_effects():
+        return
+    AudioManager.create_audio(type, volume_db_offset, pitch_scale_offset)
+
+func _cycle_autopilot_fast_forward_speed() -> int:
+    _set_autopilot_no_render_enabled(false)
+    var current_index := AUTOPILOT_FAST_FORWARD_SPEED_CYCLE.find(autopilot_fast_forward_steps_per_frame)
+    if current_index < 0:
+        current_index = AUTOPILOT_FAST_FORWARD_SPEED_CYCLE.find(AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME) - 1
+    var next_index := (current_index + 1) % AUTOPILOT_FAST_FORWARD_SPEED_CYCLE.size()
+    var next_speed := int(AUTOPILOT_FAST_FORWARD_SPEED_CYCLE[next_index])
+    _set_autopilot_fast_forward_steps(next_speed)
+    return next_speed
+
+func _refresh_hud_now() -> void:
+    hud_refresh_timer = HUD_REFRESH_INTERVAL
+    if system_label != null:
+        _refresh_hud()
+
 func _build_validation_perf_probe_stats() -> Dictionary:
     var result := {}
     for key in PERF_PROBE_KEYS:
@@ -710,7 +758,7 @@ func _copy_perf_snapshot_for_validation(source: Dictionary) -> Dictionary:
     return copy
 
 func _exit_tree() -> void:
-    autopilot_fast_forward_enabled = false
+    _set_autopilot_fast_forward_steps(1)
     _set_autopilot_no_render_enabled(false)
     PROGRESS.flush_async_planet_state_save()
     if VirtualCursor != null:
@@ -737,6 +785,9 @@ func _unhandled_input(event: InputEvent) -> void:
         elif event.keycode == KEY_O:
             cycle_planet_outline_mode()
             get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_F2 and _can_use_editor_debug_keys():
+            _toggle_editor_debug_panel()
+            get_viewport().set_input_as_handled()
         elif event.keycode == KEY_F:
             autopilot_enabled = not autopilot_enabled
             autopilot_returning = false
@@ -745,22 +796,24 @@ func _unhandled_input(event: InputEvent) -> void:
             autopilot_aim_dir = Vector2.ZERO
             autopilot_return_reason = ""
             if not autopilot_enabled:
-                autopilot_fast_forward_enabled = false
+                _set_autopilot_fast_forward_steps(1)
                 _set_autopilot_no_render_enabled(false)
             autopilot_status = "starting" if autopilot_enabled else ""
             _push_breach_log("[color=#7dffbf]AUTO PILOT[/color]  %s." % ("engaged" if autopilot_enabled else "released"))
+            _refresh_hud_now()
             get_viewport().set_input_as_handled()
         elif event.keycode == KEY_G:
             if autopilot_enabled:
-                _set_autopilot_no_render_enabled(false)
-                autopilot_fast_forward_enabled = not autopilot_fast_forward_enabled
-                _push_breach_log("[color=#7dffbf]FAST FORWARD[/color]  %s." % ("max simulation engaged" if autopilot_fast_forward_enabled else "normal speed restored"))
+                var speed := _cycle_autopilot_fast_forward_speed()
+                _push_breach_log("[color=#7dffbf]FAST FORWARD[/color]  %dx simulation." % speed)
+                _refresh_hud_now()
                 get_viewport().set_input_as_handled()
         elif event.keycode == KEY_H:
             if autopilot_enabled:
-                autopilot_fast_forward_enabled = false
+                _set_autopilot_fast_forward_steps(1)
                 _set_autopilot_no_render_enabled(not autopilot_no_render_enabled)
                 _push_breach_log("[color=#7dffbf]NO-RENDER SPRINT[/color]  %s." % ("running flat out" if autopilot_no_render_enabled else "rendering restored"))
+                _refresh_hud_now()
                 get_viewport().set_input_as_handled()
         elif event.keycode == KEY_BRACKETLEFT:
             adjust_planet_outline_radius(-PLANET_OUTLINE_RADIUS_STEP)
@@ -1089,6 +1142,131 @@ func _build_ui() -> void:
     summary_return_button.pressed.connect(_return_to_upgrades)
     summary_vbox.add_child(summary_return_button)
 
+    _build_editor_debug_panel(panel_style)
+
+func _build_editor_debug_panel(panel_style: StyleBoxFlat) -> void:
+    if not _can_use_editor_debug_keys():
+        return
+    editor_debug_panel = PanelContainer.new()
+    editor_debug_panel.name = "OpenPitEmpireEditorDebugPanel"
+    editor_debug_panel.anchor_left = 0.5
+    editor_debug_panel.anchor_top = 0.0
+    editor_debug_panel.anchor_right = 0.5
+    editor_debug_panel.anchor_bottom = 0.0
+    editor_debug_panel.offset_left = -170.0
+    editor_debug_panel.offset_top = 18.0
+    editor_debug_panel.offset_right = 170.0
+    editor_debug_panel.offset_bottom = 232.0
+    editor_debug_panel.visible = false
+    editor_debug_panel.process_mode = Node.PROCESS_MODE_ALWAYS
+    var debug_style := panel_style.duplicate(true)
+    debug_style.bg_color = Color(0.03, 0.05, 0.07, 0.94)
+    debug_style.border_color = Color(1.0, 0.82, 0.32, 0.78)
+    editor_debug_panel.add_theme_stylebox_override("panel", debug_style)
+    hud_layer.add_child(editor_debug_panel)
+
+    var margin := MarginContainer.new()
+    margin.add_theme_constant_override("margin_left", 12)
+    margin.add_theme_constant_override("margin_top", 10)
+    margin.add_theme_constant_override("margin_right", 12)
+    margin.add_theme_constant_override("margin_bottom", 10)
+    editor_debug_panel.add_child(margin)
+
+    var vbox := VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 7)
+    margin.add_child(vbox)
+
+    var title := Label.new()
+    title.text = "Editor Assist"
+    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    title.add_theme_font_size_override("font_size", 18)
+    title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.58, 1.0))
+    vbox.add_child(title)
+
+    _add_editor_debug_button(vbox, "barrier")
+    _add_editor_debug_button(vbox, "fuel")
+    _add_editor_debug_button(vbox, "speed")
+    _add_editor_debug_button(vbox, "damage")
+    _refresh_editor_debug_panel()
+
+func _add_editor_debug_button(parent: VBoxContainer, key: String) -> void:
+    var button := Button.new()
+    button.toggle_mode = true
+    button.custom_minimum_size = Vector2(292.0, 34.0)
+    button.pressed.connect(_on_editor_debug_button_pressed.bind(key))
+    parent.add_child(button)
+    editor_debug_buttons[key] = button
+
+func _toggle_editor_debug_panel() -> void:
+    if editor_debug_panel == null:
+        return
+    editor_debug_panel.visible = not editor_debug_panel.visible
+    _refresh_editor_debug_panel()
+
+func _on_editor_debug_button_pressed(key: String) -> void:
+    match key:
+        "barrier":
+            editor_debug_unlimited_barrier = not editor_debug_unlimited_barrier
+            if editor_debug_unlimited_barrier:
+                barriers_left = maxi(barriers_left, 999)
+                autopilot_returning = false
+                autopilot_return_reason = ""
+        "fuel":
+            editor_debug_unlimited_fuel = not editor_debug_unlimited_fuel
+            if editor_debug_unlimited_fuel:
+                time_left = maxf(time_left, float(runtime_stats.get("run_time", 30.0)))
+                autopilot_returning = false
+                autopilot_return_reason = ""
+        "speed":
+            editor_debug_attack_speed_boost = not editor_debug_attack_speed_boost
+            attack_timer = maxf(attack_timer, _get_effective_attack_interval())
+        "damage":
+            editor_debug_damage_boost = not editor_debug_damage_boost
+    _refresh_editor_debug_panel()
+    _refresh_hud_now()
+    _push_breach_log("[color=#ffd66b]EDITOR ASSIST[/color]  %s." % _get_editor_debug_summary())
+
+func _refresh_editor_debug_panel() -> void:
+    for key_variant in editor_debug_buttons.keys():
+        var key := str(key_variant)
+        var button: Button = editor_debug_buttons.get(key, null)
+        if button == null:
+            continue
+        var enabled := _is_editor_debug_toggle_enabled(key)
+        button.set_pressed_no_signal(enabled)
+        button.text = "%s: %s" % [_get_editor_debug_button_label(key), "ON" if enabled else "OFF"]
+
+func _is_editor_debug_toggle_enabled(key: String) -> bool:
+    match key:
+        "barrier":
+            return editor_debug_unlimited_barrier
+        "fuel":
+            return editor_debug_unlimited_fuel
+        "speed":
+            return editor_debug_attack_speed_boost
+        "damage":
+            return editor_debug_damage_boost
+    return false
+
+func _get_editor_debug_button_label(key: String) -> String:
+    match key:
+        "barrier":
+            return "Unlimited Barrier"
+        "fuel":
+            return "Unlimited Fuel"
+        "speed":
+            return "Attack Speed x10"
+        "damage":
+            return "Damage x100"
+    return key.capitalize()
+
+func _get_editor_debug_summary() -> String:
+    var parts: Array[String] = []
+    for key in ["barrier", "fuel", "speed", "damage"]:
+        if _is_editor_debug_toggle_enabled(key):
+            parts.append(_get_editor_debug_button_label(key))
+    return "no assists active" if parts.is_empty() else ", ".join(parts)
+
 func _start_run() -> void:
     persistent_data = PROGRESS.load_data()
     upgrades = persistent_data.get("upgrades", {}).duplicate(true)
@@ -1096,11 +1274,13 @@ func _start_run() -> void:
     current_depth_level = clampi(int(persistent_data.get("selected_depth_level", 1)), 1, BALANCE.MAX_DEPTH_LEVEL)
     bottom_phase_unlocked = bool(persistent_data.get("bottom_phase_unlocked", false))
     current_layer_depth = 1
+    defense_transition_pending = false
     planet_radius_cells = PLANET_RADIUS_CELLS
     time_left = float(runtime_stats.get("run_time", 30.0))
     barriers_left = DEFAULT_STARTING_BARRIERS + int(runtime_stats.get("barriers", 0)) + (1 if _has_core_upgrade("barrier_regen") else 0)
     shield_invuln_timer = 0.0
     shield_recovery_timer = 0.0
+    core_fuel_stasis_timer = 0.0
     boss_defeated = bool(persistent_data.get("boss_defeated", false))
     _build_planet()
     _setup_minimap()
@@ -1168,7 +1348,7 @@ func _start_run() -> void:
     autopilot_retarget_timer = 0.0
     autopilot_status = ""
     autopilot_return_reason = ""
-    autopilot_fast_forward_enabled = false
+    _set_autopilot_fast_forward_steps(1)
     _choose_autopilot_sortie_mode()
     _set_autopilot_no_render_enabled(false)
     if VirtualCursor != null:
@@ -1189,6 +1369,7 @@ func _start_run() -> void:
     _spawn_roaming_powerups()
     bottom_cutscene_timer = 0.0
     bottom_cutscene_anchor = ship_pos
+    final_core_phase_handled = -1
     side_projectiles.clear()
     side_attackers.clear()
     side_shot_timer = SIDE_SHOT_INTERVAL
@@ -1209,6 +1390,7 @@ func _start_run() -> void:
         persistent_data.get("chat_thread_counts", {})
     )
     _flush_breach_chat(true)
+    _consume_open_pit_defense_result()
     summary_overlay.visible = false
     ship_renderer.position = Vector2.ZERO
     perf_debug_refresh_timer = 0.0
@@ -1243,8 +1425,11 @@ func _build_planet() -> void:
         planet_data.core_difficulty_mult = pow(1.5, int(persistent_data.get("total_cores_destroyed", 0)))
         planet_data.generate_sync(current_depth_level, persistent_destroyed, BALANCE, rng)
     planet_data.on_core_destroyed_callback = Callable(self, "_on_core_destroyed")
+    planet_data.core_defense_gate_callback = Callable(self, "_try_start_core_defense")
     if not planet_data.final_core_exposed.is_connected(_on_final_core_exposed):
         planet_data.final_core_exposed.connect(_on_final_core_exposed)
+    if not planet_data.final_core_phase_depleted.is_connected(_on_final_core_phase_depleted):
+        planet_data.final_core_phase_depleted.connect(_on_final_core_phase_depleted)
     var restored_core_positions: Array = planet_data.restore_alive_core_influence_blocks()
     blocks = planet_data.blocks
     exposed_edges = planet_data.exposed_edges
@@ -1263,9 +1448,126 @@ func _setup_minimap() -> void:
     hud_layer.add_child(minimap)
     minimap.setup(planet_data, self)
 
+func _try_start_core_defense(core: Dictionary, _shared_max_hp: float) -> Dictionary:
+    var core_id: int = int(core.get("id", -1))
+    if core_id < 0 or str(core.get("role", "")) != "boss":
+        return {"handled": false}
+    var failed_once: Dictionary = persistent_data.get("core_defense_failed_once", {})
+    if bool(failed_once.get(str(core_id), false)):
+        return {"handled": false}
+    var completed: Dictionary = persistent_data.get("core_defense_completed", {})
+    if bool(completed.get(str(core_id), false)):
+        return {"handled": false}
+    if defense_transition_pending:
+        return {"handled": true, "hp_ratio": 0.01}
+    var spec := _build_core_defense_spec(core)
+    var warned: Dictionary = persistent_data.get("core_defense_warned", {})
+    if not bool(warned.get(str(core_id), false)):
+        warned[str(core_id)] = true
+        persistent_data["core_defense_warned"] = warned
+        if breach_chat != null:
+            breach_chat.notify_defense_challenge_started(core, str(spec.get("defense_name", "Defense")))
+            _flush_breach_chat()
+    persistent_data["open_pit_defense_pending"] = spec.duplicate(true)
+    PROGRESS.save_data(persistent_data)
+    defense_transition_pending = true
+    call_deferred("_launch_core_defense_challenge", spec)
+    return {"handled": true, "hp_ratio": 0.01}
+
+func _build_core_defense_spec(core: Dictionary) -> Dictionary:
+    var zone: int = int(core.get("zone", PLANET_DATA_SCRIPT.Zone.PROXY))
+    var difficulty: int = clampi(zone + 1, 1, 4)
+    var is_red_sky := difficulty % 2 == 1
+    var game_id := Util.ACTIVE_GAME_RED_SKY if is_red_sky else Util.ACTIVE_GAME_MINING
+    var defense_name := "Red Sky Defense" if is_red_sky else "Deepcore Defense"
+    var spec := {
+        "source": "open_pit_empire",
+        "game_id": game_id,
+        "core_id": int(core.get("id", -1)),
+        "zone": zone,
+        "difficulty": difficulty,
+        "defense_name": defense_name,
+        "return_scene": Util.PATH_OPEN_PIT_MAIN,
+        "intro_text": "%s: clear the countermeasure or the command node restores to 50%%." % defense_name,
+    }
+    if is_red_sky:
+        spec["target_wave"] = 5 + difficulty * 2
+        spec["disable_wave_upgrades"] = true
+    else:
+        spec["depth_level"] = 2 + difficulty
+        spec["nodes_goal"] = 8 + difficulty * 3
+        spec["time_limit"] = maxf(14.0, 24.0 - float(difficulty) * 2.0)
+        spec["deepcore_hunter"] = true
+        spec["hunter_speed_mult"] = 0.5
+        spec["hunter_trigger_distance"] = 260.0
+    return spec
+
+func _launch_core_defense_challenge(spec: Dictionary) -> void:
+    Global.open_pit_defense_challenge = spec.duplicate(true)
+    Global.open_pit_defense_result = {}
+    Global.multi_game_run = {}
+    Global.multi_game_step_config = {}
+    _save_planet_snapshot()
+    Util.set_active_game_id(str(spec.get("game_id", Util.ACTIVE_GAME_RED_SKY)))
+    Util.set_high_level_mode_id(Util.HIGH_LEVEL_MODE_ALL)
+    Global.ensure_default_game_mode_data()
+    Global.start_in_upgrade_scene = false
+    Global.load_saved_run = false
+    SceneChanger.change_to_new_scene(Util.PATH_RED_SKY_MAIN if str(spec.get("game_id", "")) == Util.ACTIVE_GAME_RED_SKY else Util.PATH_MINING_MAIN, null, 0.2)
+
+func _consume_open_pit_defense_result() -> void:
+    var result: Dictionary = Global.open_pit_defense_result.duplicate(true)
+    if result.is_empty():
+        return
+    Global.open_pit_defense_result = {}
+    Global.open_pit_defense_challenge = {}
+    var core_id: int = int(result.get("core_id", -1))
+    if core_id < 0 or planet_data == null:
+        return
+    var defense_name: String = str(result.get("defense_name", "Defense"))
+    if bool(result.get("success", false)):
+        var destroy_result: Dictionary = planet_data.force_destroy_core(core_id)
+        if bool(destroy_result.get("destroyed", false)):
+            _handle_core_destroyed_result(destroy_result)
+            var completed: Dictionary = persistent_data.get("core_defense_completed", {})
+            completed[str(core_id)] = true
+            persistent_data["core_defense_completed"] = completed
+            if breach_chat != null:
+                breach_chat.notify_defense_challenge_succeeded(core_id, defense_name)
+                _flush_breach_chat()
+    else:
+        planet_data.set_core_hp_ratio(core_id, DEFENSE_RETRY_HP_RATIO)
+        var failed_once: Dictionary = persistent_data.get("core_defense_failed_once", {})
+        failed_once[str(core_id)] = true
+        persistent_data["core_defense_failed_once"] = failed_once
+        if breach_chat != null:
+            breach_chat.notify_defense_challenge_failed(core_id, defense_name)
+            _flush_breach_chat()
+    persistent_data.erase("open_pit_defense_pending")
+    blocks = planet_data.blocks
+    exposed_edges = planet_data.exposed_edges
+    damaged_cells.clear()
+    if planet_renderer != null:
+        planet_renderer.mark_dirty(true, "defense_result")
+    _save_planet_snapshot()
+    _refresh_hud()
+
+func _handle_core_destroyed_result(result: Dictionary) -> void:
+    _frame_destroyed_blocks += _estimate_frame_destroyed_block_count(result)
+    persistent_destroyed_count = max(0, total_planet_blocks - planet_data.get_total_blocks())
+    nodes_mined += 1
+    hacker_typer_im_in_timer = 1.8
+    hacker_typer_current_text = ""
+    hacker_typer_revealed_chars = 0
+    if breach_chat != null:
+        breach_chat.record_node_destroyed(true)
+
 func _process(delta: float) -> void:
     var perf_start_us := perf_probe_begin()
     var frame_block_count_before: int = blocks.size()
+    if defense_transition_pending:
+        perf_probe_end("process_frame", perf_start_us)
+        return
     if run_finished:
         _update_finish_summary(delta)
         perf_probe_end("process_frame", perf_start_us)
@@ -1346,8 +1648,8 @@ func _process_gameplay_step(delta: float) -> void:
 func _get_gameplay_simulation_steps() -> int:
     if autopilot_enabled and autopilot_no_render_enabled and not run_finished:
         return AUTOPILOT_NO_RENDER_STEPS_PER_FRAME
-    if autopilot_enabled and autopilot_fast_forward_enabled and not run_finished:
-        return AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME
+    if autopilot_enabled and autopilot_fast_forward_steps_per_frame != 1 and not run_finished:
+        return autopilot_fast_forward_steps_per_frame
     return 1
 
 func _set_autopilot_no_render_enabled(enabled: bool) -> void:
@@ -1372,7 +1674,11 @@ func _set_autopilot_no_render_enabled(enabled: bool) -> void:
 
 func _update_timers(delta: float) -> void:
     bottom_cutscene_timer = maxf(0.0, bottom_cutscene_timer - delta)
-    if not _is_ship_inside_return_zone() and not extracting:
+    var fuel_stasis_active := _is_core_fuel_stasis_active()
+    core_fuel_stasis_timer = maxf(0.0, core_fuel_stasis_timer - delta)
+    if editor_debug_unlimited_fuel:
+        time_left = maxf(time_left, float(runtime_stats.get("run_time", 30.0)))
+    elif not fuel_stasis_active and not _is_ship_inside_return_zone() and not extracting:
         time_left = maxf(0.0, time_left - delta)
     if time_left <= 0.0:
         _finish_run(_has_core_upgrade("emergency_return"), "Fuel burned out before extraction.")
@@ -1519,13 +1825,14 @@ func _try_start_hacker_typer_attack_line() -> void:
 func _update_bottom_phase(delta: float) -> void:
     if not final_core_exposed or planet_data == null:
         return
+    var boss_phase := _get_final_core_phase()
     _update_side_attackers(delta, bottom_cutscene_timer <= 0.0)
     if bottom_cutscene_timer > 0.0:
         return
     if side_attackers.is_empty():
         side_shot_timer -= delta
         if side_shot_timer <= 0.0:
-            side_shot_timer = SIDE_SHOT_INTERVAL
+            side_shot_timer = maxf(0.9, SIDE_SHOT_INTERVAL - float(boss_phase) * 0.35)
             _spawn_side_projectiles()
     for idx in range(side_projectiles.size() - 1, -1, -1):
         var projectile := side_projectiles[idx]
@@ -1533,6 +1840,11 @@ func _update_bottom_phase(delta: float) -> void:
         if float(projectile.get("life", 0.0)) <= 0.0:
             side_projectiles.remove_at(idx)
             continue
+        if bool(projectile.get("homing", false)):
+            var pos: Vector2 = projectile.get("position", Vector2.ZERO)
+            var speed: float = float(projectile.get("speed", SIDE_SHOT_SPEED))
+            var desired: Vector2 = (ship_pos - pos).normalized() * speed
+            projectile["velocity"] = Vector2(projectile.get("velocity", Vector2.ZERO)).lerp(desired, clampf(delta * SIDE_SHOT_HOMING_STRENGTH, 0.0, 1.0))
         projectile["position"] = Vector2(projectile.get("position", Vector2.ZERO)) + Vector2(projectile.get("velocity", Vector2.ZERO)) * delta
         side_projectiles[idx] = projectile
         if Vector2(projectile.get("position", Vector2.ZERO)).distance_to(ship_pos) <= SIDE_SHOT_RADIUS + SHIP_RADIUS:
@@ -1567,8 +1879,8 @@ func _update_side_attackers(delta: float, allow_fire: bool) -> void:
         attacker["position"] = current_pos.lerp(base_world, clampf(delta * SIDE_ATTACKER_TRACK_SPEED, 0.0, 1.0))
         var shot_timer: float = float(attacker.get("shot_timer", SIDE_ATTACKER_SHOT_INTERVAL)) - delta
         if allow_fire and shot_timer <= 0.0:
-            _spawn_side_projectile_from_position(Vector2(attacker.get("position", base_world)))
-            shot_timer = SIDE_ATTACKER_SHOT_INTERVAL + rng.randf_range(-0.35, 0.45)
+            _spawn_side_projectile_from_position(Vector2(attacker.get("position", base_world)), _get_final_core_phase() >= 2)
+            shot_timer = maxf(0.75, SIDE_ATTACKER_SHOT_INTERVAL - float(_get_final_core_phase()) * 0.25) + rng.randf_range(-0.25, 0.35)
         attacker["shot_timer"] = shot_timer
         side_attackers[idx] = attacker
 
@@ -1576,8 +1888,9 @@ func _spawn_side_attackers() -> void:
     side_attackers.clear()
     if planet_data == null:
         return
+    var count_per_side := SIDE_ATTACKER_COUNT_PER_SIDE + mini(_get_final_core_phase(), 2)
     for side in [-1, 1]:
-        for slot in range(SIDE_ATTACKER_COUNT_PER_SIDE):
+        for slot in range(count_per_side):
             side_attackers.append({
                 "side": side,
                 "slot": slot,
@@ -1586,13 +1899,16 @@ func _spawn_side_attackers() -> void:
                 "shot_timer": 0.5 + rng.randf() * SIDE_ATTACKER_SHOT_INTERVAL,
             })
 
-func _spawn_side_projectile_from_position(spawn_world: Vector2) -> void:
+func _spawn_side_projectile_from_position(spawn_world: Vector2, homing: bool = false) -> void:
     var dir: Vector2 = (ship_pos - spawn_world).normalized()
     if dir.length() < 0.01:
         dir = Vector2.LEFT if spawn_world.x > ship_pos.x else Vector2.RIGHT
+    var speed := SIDE_SHOT_SPEED + float(_get_final_core_phase()) * 18.0
     side_projectiles.append({
         "position": spawn_world,
-        "velocity": dir * SIDE_SHOT_SPEED,
+        "velocity": dir * speed,
+        "speed": speed,
+        "homing": homing,
         "life": SIDE_SHOT_LIFETIME,
     })
 
@@ -1602,14 +1918,19 @@ func _spawn_side_projectiles() -> void:
     if not side_attackers.is_empty():
         for attacker_variant in side_attackers:
             var attacker: Dictionary = attacker_variant
-            _spawn_side_projectile_from_position(Vector2(attacker.get("position", bottom_cutscene_anchor)))
+            _spawn_side_projectile_from_position(Vector2(attacker.get("position", bottom_cutscene_anchor)), _get_final_core_phase() >= 2)
         return
     var y: int = clampi(world_to_grid(ship_pos).y, PLANET_DATA_SCRIPT.PIT_TOP_Y + 20, PLANET_DATA_SCRIPT.PIT_BOTTOM_Y - 8)
     for side in [-1, 1]:
         var wall_x: int = planet_data.get_left_wall_x(y) if side < 0 else planet_data.get_right_wall_x(y)
         var spawn_grid := Vector2i(wall_x - 3 if side < 0 else wall_x + 3, y + rng.randi_range(-4, 4))
         var spawn_world: Vector2 = grid_to_world(spawn_grid)
-        _spawn_side_projectile_from_position(spawn_world)
+        _spawn_side_projectile_from_position(spawn_world, _get_final_core_phase() >= 2)
+
+func _get_final_core_phase() -> int:
+    if planet_data == null:
+        return 0
+    return clampi(int(planet_data.final_core_phase), 0, int(PLANET_DATA_SCRIPT.FINAL_CORE_PHASE_COUNT) - 1)
 
 func _spawn_roaming_powerups() -> void:
     roaming_powerups.clear()
@@ -1800,14 +2121,14 @@ func _choose_autopilot_sortie_mode() -> void:
 func _get_autopilot_return_reason() -> String:
     if autopilot_returning:
         return autopilot_return_reason if autopilot_return_reason != "" else "already returning"
-    if barriers_left <= 0:
+    if barriers_left <= 0 and not editor_debug_unlimited_barrier:
         return "no barriers"
     var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
     var core_attack := _is_autopilot_core_attack_mode()
     if cargo_capacity > 0 and cargo_units >= cargo_capacity and not core_attack:
         return "cargo full"
     var run_time := maxf(1.0, float(runtime_stats.get("run_time", 30.0)))
-    if time_left <= run_time * AUTOPILOT_FUEL_RETURN_RATIO and not core_attack:
+    if time_left <= run_time * AUTOPILOT_FUEL_RETURN_RATIO and not core_attack and not editor_debug_unlimited_fuel:
         return "fuel reserve %.0fs" % ceil(run_time * AUTOPILOT_FUEL_RETURN_RATIO)
     return ""
 
@@ -2408,7 +2729,7 @@ func _auto_fire_seismic_charge() -> void:
     last_attack_is_charged = false
     last_attack_is_crit = false
     for i in range(hit_count):
-        var distance_world := SEISMIC_CHARGE_AHEAD_DISTANCE + float(i) * BLOCK_SIZE * 1.2
+        var distance_world := get_forward_shot_range() + float(i) * BLOCK_SIZE * 1.2
         var target_grid := _find_forward_lane_target(forward, distance_world, 2 + mini(i, 1), 4 + i)
         if target_grid.x >= 999999:
             continue
@@ -2433,7 +2754,7 @@ func _auto_fire_seismic_charge() -> void:
         _sync_planet_runtime_views(true, false)
     attack_visible_timer = 0.0
     _try_start_hacker_typer_attack_line()
-    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER_CRIT)
+    _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER_CRIT)
     if any_destroyed:
         _on_combo_hit()
     perf_probe_end("auto_fire_laser", perf_start_us)
@@ -2503,7 +2824,7 @@ func _auto_fire_laser() -> void:
         _sync_planet_runtime_views(true, false)
     attack_visible_timer = 0.08
     _try_start_hacker_typer_attack_line()
-    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER_CRIT if last_attack_is_crit else SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER)
+    _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER_CRIT if last_attack_is_crit else SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER)
     if any_destroyed:
         _on_combo_hit()
     var first_core_id: int = int(candidates[0].get("core_id", -1))
@@ -2517,13 +2838,14 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array
     var candidates: Array[Dictionary] = []
     var seen_core_ids := {}
     var range_sq := range_world * range_world
+    var offset_scan_sq := (range_world + BLOCK_SIZE * 0.8) * (range_world + BLOCK_SIZE * 0.8)
     var grid_range := int(ceil(range_world / BLOCK_SIZE)) + 1
     var my_grid := world_to_grid(ship_pos)
     var offsets: Array = _get_sorted_target_offsets(grid_range)
     for offset_variant in offsets:
         var offset: Vector2i = offset_variant
         var cell_origin_dist_sq := float(offset.x * offset.x + offset.y * offset.y) * BLOCK_SIZE * BLOCK_SIZE
-        if cell_origin_dist_sq > range_sq and not candidates.is_empty():
+        if cell_origin_dist_sq > offset_scan_sq:
             break
         var check := my_grid + offset
         if not blocks.has(check):
@@ -2642,6 +2964,8 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         return {}
     var block_before: Dictionary = blocks.get(pos, {})
     var result: Dictionary = planet_data.damage_block(pos, damage, false, _core_unlocks_center())
+    if int(result.get("type", int(block_before.get("type", BlockType.NORMAL)))) == BlockType.CORE:
+        _engage_core_fuel_stasis(result)
     if breach_chat != null and int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
         var engaged_core_id := int(result.get("core_id", int(block_before.get("core_id", -1))))
         if engaged_core_id >= 0:
@@ -2652,6 +2976,12 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
                 bool(result.get("shielded", false))
             )
             _flush_breach_chat()
+    if bool(result.get("phase_depleted", false)):
+        _handle_final_core_phase_transition(int(result.get("phase", _get_final_core_phase())))
+        if not defer_visual_sync:
+            _sync_planet_runtime_views(true, false)
+        perf_probe_end("damage_block", perf_start_us)
+        return result
     if bool(result.get("destroyed", false)):
         _frame_destroyed_blocks += _estimate_frame_destroyed_block_count(result)
         damaged_cells.erase(pos)
@@ -2725,7 +3055,7 @@ func _estimate_frame_destroyed_block_count(result: Dictionary) -> int:
     return 1
 
 func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_visual_sync: bool = false) -> void:
-    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC, -8.0, -0.05)
+    _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC, -8.0, -0.05)
     _on_combo_hit()
     seismic_charge_bursts.append({
         "position": origin_world,
@@ -2773,6 +3103,13 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
             electric_arcs.append({"from": origin_world, "to": next_world, "timer": ARC_DURATION})
         if result_idx < max_results:
             _mark_hit_flash(next_pos)
+        if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
+            _engage_core_fuel_stasis(result)
+        if bool(result.get("phase_depleted", false)):
+            _handle_final_core_phase_transition(int(result.get("phase", _get_final_core_phase())))
+            if not defer_visual_sync:
+                _sync_planet_runtime_views(true, false)
+            return
         if bool(result.get("destroyed", false)):
             destroyed_any = true
             persistent_destroyed_count += 1
@@ -2810,7 +3147,7 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
         _sync_planet_runtime_views(true, false)
 
 func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void:
-    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC_CRIT, -10.0, -0.04)
+    _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC_CRIT, -10.0, -0.04)
     var current_pos := start_pos
     var current_world := start_world
     var visited := {start_pos: true}
@@ -2856,23 +3193,70 @@ func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void
 
 func _trigger_shockwave() -> void:
     shockwave_firing = true
-    var my_grid := world_to_grid(ship_pos)
-    var radius_cells := int(runtime_stats.get("shockwave_radius_cells", 6))
-    var splash := _apply_splash_damage(
-        my_grid,
-        radius_cells,
-        _get_effective_attack_damage() * SHOCKWAVE_DAMAGE_MULT,
-        0.3,
-        1.15
-    )
-    if bool(splash.get("visuals", false)):
+    var radius_cells := int(runtime_stats.get("shockwave_radius_cells", 6)) + SHOCKWAVE_EXTRA_RADIUS_CELLS
+    var target_grid := _find_shockwave_line_target(float(radius_cells) * BLOCK_SIZE)
+    var visuals_dirty := false
+    if target_grid.x < 999999:
+        _mark_hit_flash(target_grid)
+        visuals_dirty = true
+        _damage_block(target_grid, _compute_laser_damage(target_grid) * SHOCKWAVE_DAMAGE_MULT, true)
+    if visuals_dirty:
         _sync_planet_runtime_views(true, false)
     shockwave_firing = false
     var max_radius := float(radius_cells) * BLOCK_SIZE
     if shockwave_rings.size() >= MAX_SHOCKWAVE_RINGS:
         shockwave_rings.remove_at(0)
     shockwave_rings.append({"radius": 5.0, "max_radius": max_radius, "alpha": 0.8})
-    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.SUPERNOVA, -10.0, -0.1)
+    _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.SUPERNOVA, -10.0, -0.1)
+
+func _find_shockwave_line_target(range_world: float) -> Vector2i:
+    var forward := _get_forward_direction()
+    var candidate_dirs: Array[Vector2] = [forward]
+    for angle_degrees in [18.0, -18.0, 36.0, -36.0, 60.0, -60.0, 90.0, -90.0, 135.0, -135.0, 180.0]:
+        candidate_dirs.append(forward.rotated(deg_to_rad(angle_degrees)))
+    for dir in candidate_dirs:
+        var target := _find_first_target_in_shockwave_line(Vector2(dir).normalized(), range_world)
+        if target.x >= 999999:
+            continue
+        return target
+    return Vector2i(999999, 999999)
+
+func _find_first_target_in_shockwave_line(direction: Vector2, range_world: float) -> Vector2i:
+    if planet_data == null or direction.length_squared() <= 0.001:
+        return Vector2i(999999, 999999)
+    direction = direction.normalized()
+    var grid := world_to_grid(ship_pos)
+    var step_x := 0
+    var step_y := 0
+    var t_max_x := INF
+    var t_max_y := INF
+    var t_delta_x := INF
+    var t_delta_y := INF
+    if absf(direction.x) > 0.0001:
+        step_x = 1 if direction.x > 0.0 else -1
+        var next_x_boundary := float(grid.x + 1) * BLOCK_SIZE if step_x > 0 else float(grid.x) * BLOCK_SIZE
+        t_max_x = maxf(0.0, (next_x_boundary - ship_pos.x) / direction.x)
+        t_delta_x = BLOCK_SIZE / absf(direction.x)
+    if absf(direction.y) > 0.0001:
+        step_y = 1 if direction.y > 0.0 else -1
+        var next_y_boundary := float(grid.y + 1) * BLOCK_SIZE if step_y > 0 else float(grid.y) * BLOCK_SIZE
+        t_max_y = maxf(0.0, (next_y_boundary - ship_pos.y) / direction.y)
+        t_delta_y = BLOCK_SIZE / absf(direction.y)
+    var traveled := 0.0
+    while traveled <= range_world:
+        if t_max_x < t_max_y:
+            grid.x += step_x
+            traveled = t_max_x
+            t_max_x += t_delta_x
+        else:
+            grid.y += step_y
+            traveled = t_max_y
+            t_max_y += t_delta_y
+        if traveled > range_world:
+            break
+        if _is_mineable_non_core_block(grid):
+            return grid
+    return Vector2i(999999, 999999)
 
 
 func _update_mega_beam(delta: float) -> void:
@@ -2986,12 +3370,16 @@ func _get_effective_attack_interval() -> float:
         interval *= 0.72
     if _is_power_active():
         interval /= POWER_ATTACK_SPEED_MULT
+    if editor_debug_attack_speed_boost:
+        interval /= 10.0
     return interval
 
 func _get_effective_attack_damage() -> float:
     var damage := float(runtime_stats.get("attack_damage", 8.0))
     if _is_power_active():
         damage *= POWER_ATTACK_DAMAGE_MULT
+    if editor_debug_damage_boost:
+        damage *= 100.0
     return damage
 
 func _get_effective_payout_multiplier() -> float:
@@ -3002,6 +3390,15 @@ func _get_power_capacity() -> float:
 
 func _get_power_ratio() -> float:
     return clampf(current_power / _get_power_capacity(), 0.0, 1.0)
+
+func is_forward_shot_active() -> bool:
+    return _is_power_active() or float(active_powerup_timers.get("seismic_charge", 0.0)) > 0.0
+
+func get_forward_shot_range() -> float:
+    return maxf(
+        SEISMIC_CHARGE_AHEAD_DISTANCE,
+        float(runtime_stats.get("attack_radius", 96.0)) + FORWARD_SHOT_RANGE_BONUS
+    )
 
 func _is_power_ready() -> bool:
     return current_power >= _get_power_capacity() - 0.001
@@ -3150,21 +3547,26 @@ func _apply_splash_damage(center_grid: Vector2i, radius_cells: int, base_damage:
     return {"visuals": visuals_dirty, "destroyed": destroyed_any}
 
 func _update_seismic_charge(delta: float) -> void:
+    var perf_start_us := perf_probe_begin()
     if planet_data == null:
         seismic_charge_timer = 0.0
+        perf_probe_end("update_seismic_charge", perf_start_us)
         return
     var power_active_now := _is_power_active()
     var pickup_active := float(active_powerup_timers.get("seismic_charge", 0.0)) > 0.0
     if not power_active_now and not pickup_active:
         seismic_charge_timer = 0.0
+        perf_probe_end("update_seismic_charge", perf_start_us)
         return
     seismic_charge_timer -= delta
     if seismic_charge_timer > 0.0:
+        perf_probe_end("update_seismic_charge", perf_start_us)
         return
     seismic_charge_timer = SEISMIC_CHARGE_INTERVAL if power_active_now else SEISMIC_POWERUP_INTERVAL
     var forward := _get_forward_direction()
-    var target_grid := _find_forward_lane_target(forward, SEISMIC_CHARGE_AHEAD_DISTANCE)
+    var target_grid := _find_forward_lane_target(forward, get_forward_shot_range())
     if target_grid.x >= 999999:
+        perf_probe_end("update_seismic_charge", perf_start_us)
         return
     var burst_world := grid_to_world(target_grid)
     seismic_charge_bursts.append({
@@ -3182,6 +3584,7 @@ func _update_seismic_charge(delta: float) -> void:
     )
     if bool(splash.get("visuals", false)):
         _sync_planet_runtime_views(true, false)
+    perf_probe_end("update_seismic_charge", perf_start_us)
 
 func _roll_drone_damage() -> float:
     var damage := float(runtime_stats.get("drone_damage", 8.0))
@@ -3398,7 +3801,7 @@ func _finish_run(returned: bool, reason: String) -> void:
     if run_finished:
         return
     extracting = false
-    autopilot_fast_forward_enabled = false
+    _set_autopilot_fast_forward_steps(1)
     _set_autopilot_no_render_enabled(false)
     run_finished = true
     _flush_pending_exposed_edges()
@@ -3591,14 +3994,15 @@ func _persist_destroyed_cells() -> void:
 
 func _refresh_hud() -> void:
     timer_label.text = "Cargo: %d / %d" % [cargo_units, int(runtime_stats.get("cargo_capacity", 15))]
+    var fuel_text := "INF" if editor_debug_unlimited_fuel else "%.1fs" % time_left
     if extracting:
-        cargo_label.text = "Fuel: %.1fs  |  Extracting..." % time_left
+        cargo_label.text = "Fuel: %s  |  Extracting..." % fuel_text
     elif _is_return_zone_charging():
-        cargo_label.text = "Fuel: %.1fs  |  Extraction %.1fs" % [time_left, maxf(0.0, RETURN_ZONE_DELAY - return_zone_timer)]
+        cargo_label.text = "Fuel: %s  |  Extraction %.1fs" % [fuel_text, maxf(0.0, RETURN_ZONE_DELAY - return_zone_timer)]
     elif autopilot_enabled and autopilot_returning:
-        cargo_label.text = "Fuel: %.1fs  |  Auto Return: %s" % [time_left, autopilot_return_reason if autopilot_return_reason != "" else "returning"]
+        cargo_label.text = "Fuel: %s  |  Auto Return: %s" % [fuel_text, autopilot_return_reason if autopilot_return_reason != "" else "returning"]
     else:
-        cargo_label.text = "Fuel: %.1fs  |  Extraction Zone Standby" % time_left
+        cargo_label.text = "Fuel: %s  |  Extraction Zone Standby" % fuel_text
     wallet_label.text = "Haul: $%d  |  Wallet: $%d  |  XP: %d" % [cargo_money, int(persistent_data.get("wallet", 0)), int(persistent_data.get("xp_currency", 0)) + xp_earned_this_run]
     layer_label.text = "Breach Tier %d  |  %s  |  Clear %.1f%%" % [current_depth_level, current_layer_name, _get_persistent_clear_percent()]
     var active_boosts: Array[String] = []
@@ -3608,11 +4012,21 @@ func _refresh_hud() -> void:
         active_boosts.append("Magnet %.0fs" % ceil(active_powerup_timers["magnet"]))
     if float(active_powerup_timers.get("seismic_charge", 0.0)) > 0.0:
         active_boosts.append("Seismic %.0fs" % ceil(active_powerup_timers["seismic_charge"]))
-    status_label.text = "Barriers %d  |  Drones %d  |  Power %.0f/%.0f  |  Alive Daemons %d/%d" % [barriers_left, int(runtime_stats.get("drone_count", 0)), current_power, _get_power_capacity(), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0]
+    if _is_core_fuel_stasis_active():
+        active_boosts.append("Core Stasis")
+    if editor_debug_attack_speed_boost:
+        active_boosts.append("Attack Speed x10")
+    if editor_debug_damage_boost:
+        active_boosts.append("Damage x100")
+    var barrier_text := "INF" if editor_debug_unlimited_barrier else str(barriers_left)
+    status_label.text = "Barriers %s  |  Drones %d  |  Power %.0f/%.0f  |  Alive Daemons %d/%d" % [barrier_text, int(runtime_stats.get("drone_count", 0)), current_power, _get_power_capacity(), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0]
     var power_state := "Power Active" if _is_power_active() else ("Power Ready - Click / Space" if _is_power_ready() else "Power Charging")
-    var fast_suffix := "  |  No Render x%d" % AUTOPILOT_NO_RENDER_STEPS_PER_FRAME if autopilot_no_render_enabled else ("  |  Fast x%d" % AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME if autopilot_fast_forward_enabled else "  |  G Fast / H Sprint")
+    var fast_suffix := "  |  No Render x%d" % AUTOPILOT_NO_RENDER_STEPS_PER_FRAME if autopilot_no_render_enabled else ("  |  Speed x%d" % autopilot_fast_forward_steps_per_frame if autopilot_fast_forward_enabled else "  |  G Speed / H Sprint")
     var control_state := "Auto Pilot: %s%s" % [autopilot_status, fast_suffix] if autopilot_enabled else "Move: Mouse / WASD / F Auto"
-    system_label.text = "%s  |  Root Keys %d  |  %s" % [power_state, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run, " / ".join(active_boosts) if not active_boosts.is_empty() else control_state]
+    var system_tail := control_state
+    if not active_boosts.is_empty():
+        system_tail = "%s  |  %s" % [" / ".join(active_boosts), control_state]
+    system_label.text = "%s  |  Root Keys %d  |  %s" % [power_state, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run, system_tail]
     if breach_log_label != null and breach_log_label.text == "":
         _render_breach_log()
 
@@ -4141,7 +4555,7 @@ func _sample_worst_one_percent_ms(samples: Array) -> float:
     return top_samples[top_samples.size() - 1]
 
 func _return_to_upgrades() -> void:
-    autopilot_fast_forward_enabled = false
+    _set_autopilot_fast_forward_steps(1)
     _set_autopilot_no_render_enabled(false)
     _save_planet_snapshot()
     SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
@@ -4165,12 +4579,12 @@ func _play_block_break_audio(block_type: int) -> void:
         if now_ms - _last_core_break_audio_ms < CORE_BREAK_AUDIO_COOLDOWN_MS:
             return
         _last_core_break_audio_ms = now_ms
-        AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.PLANET_BREAK, -6.0)
+        _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.PLANET_BREAK, -6.0)
         return
     if now_ms - _last_block_break_audio_ms < BLOCK_BREAK_AUDIO_COOLDOWN_MS:
         return
     _last_block_break_audio_ms = now_ms
-    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_ASTEROID_DESTORY, -10.0)
+    _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_ASTEROID_DESTORY, -10.0)
 
 func _tick_effect_array(items: Array[Dictionary], delta: float) -> void:
     for idx in range(items.size() - 1, -1, -1):
@@ -4359,7 +4773,7 @@ func _on_core_destroyed(core: Dictionary) -> void:
     for idx in range(ghost_debris.size() - 1, -1, -1):
         if int(ghost_debris[idx].get("core_id", -1)) == core_id:
             ghost_debris.remove_at(idx)
-    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.PLANET_BREAK, -2.0, -0.08)
+    _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.PLANET_BREAK, -2.0, -0.08)
     if breach_chat != null:
         breach_chat.notify_core_destroyed(core)
         _flush_breach_chat()
@@ -4410,6 +4824,7 @@ func _update_core_attacks(delta: float) -> void:
         return
     _update_ghost_debris(delta)
     _update_root_cross_lasers(delta)
+    _update_final_core_phase_attacks(delta)
     perf_probe_end("update_core_attacks", perf_start_us)
 
 func _is_ship_in_core_influence(core: Dictionary) -> bool:
@@ -4461,7 +4876,7 @@ func _update_cipher_lasers(delta: float) -> void:
                 if float(state.get("timer", 0.0)) <= 0.0:
                     state["state"] = "firing"
                     state["timer"] = float(state.get("fire_duration", SUMMER_LASER_FIRE_DURATION))
-                    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER, -8.0, -0.08)
+                    _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER, -8.0, -0.08)
             "firing":
                 _check_cipher_laser_hit(state)
                 if float(state.get("timer", 0.0)) <= 0.0:
@@ -4603,6 +5018,66 @@ func _update_root_cross_lasers(delta: float) -> void:
         _check_root_cross_laser_hit(state)
         root_cross_lasers[cid] = state
 
+func _update_final_core_phase_attacks(delta: float) -> void:
+    if not final_core_exposed or planet_data == null or bottom_cutscene_timer > 0.0:
+        root_cross_lasers.erase(int(PLANET_DATA_SCRIPT.FINAL_CORE_ID))
+        return
+    var phase := _get_final_core_phase()
+    var final_core: Dictionary = {}
+    for core_variant in planet_data.cores:
+        var core: Dictionary = core_variant
+        if int(core.get("id", -1)) == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
+            final_core = core
+            break
+    if final_core.is_empty() or not bool(final_core.get("alive", false)):
+        root_cross_lasers.erase(int(PLANET_DATA_SCRIPT.FINAL_CORE_ID))
+        return
+    if phase >= 1 and ghost_debris.size() < AUTUMN_DEBRIS_MAX_ACTIVE:
+        var key := "final_core"
+        var timer: float = float(ghost_debris_timers.get(key, 1.5)) - delta
+        if timer <= 0.0:
+            _spawn_ghost_debris(final_core, 1 + mini(phase, 2))
+            timer = maxf(0.9, AUTUMN_DEBRIS_INTERVAL_BOSS - float(phase) * 0.35)
+        ghost_debris_timers[key] = timer
+    if phase < 3:
+        root_cross_lasers.erase(int(PLANET_DATA_SCRIPT.FINAL_CORE_ID))
+        return
+    var cid := int(PLANET_DATA_SCRIPT.FINAL_CORE_ID)
+    var beam_length: float = float(planet_data.get_effective_influence_radius(final_core)) * BLOCK_SIZE
+    var core_pixel_radius: float = float(int(final_core.get("size", 3))) * 0.5 * BLOCK_SIZE
+    var edge_ratio: float = clampf(core_pixel_radius / maxf(beam_length, 1.0) + 0.05, 0.1, 0.4)
+    var state: Dictionary = root_cross_lasers.get(cid, {
+        "angle": rng.randf() * TAU,
+        "origin": grid_to_world(Vector2i(int(final_core.center.x), int(final_core.center.y))),
+        "length": beam_length,
+        "speed": WINTER_CROSS_LASER_SPEED_BOSS_LOW,
+        "hit_timer": 0.0,
+        "core_edge_ratio": edge_ratio,
+        "gaps": [],
+        "core_id": cid,
+        "is_boss": true,
+        "exit_timer": WINTER_CROSS_LASER_EXIT_PERSIST,
+    })
+    if Array(state.get("gaps", [])).is_empty():
+        var gaps: Array = []
+        for _arm_i in range(4):
+            gaps.append({"pos": rng.randf_range(edge_ratio, WINTER_CROSS_LASER_GAP_MAX), "dir": 1.0 if rng.randf() > 0.5 else -1.0})
+        state["gaps"] = gaps
+    state["origin"] = grid_to_world(Vector2i(int(final_core.center.x), int(final_core.center.y)))
+    state["length"] = beam_length
+    state["speed"] = WINTER_CROSS_LASER_SPEED_BOSS_LOW + 0.2
+    state["core_edge_ratio"] = edge_ratio
+    state["angle"] = float(state.get("angle", 0.0)) + float(state.get("speed", WINTER_CROSS_LASER_SPEED_BOSS_LOW)) * delta
+    state["hit_timer"] = maxf(0.0, float(state.get("hit_timer", 0.0)) - delta)
+    var gaps_state: Array = state.get("gaps", [])
+    for gap in gaps_state:
+        gap["pos"] = clampf(float(gap.get("pos", edge_ratio)) + float(gap.get("dir", 1.0)) * WINTER_CROSS_LASER_GAP_SLIDE_SPEED * delta, edge_ratio, WINTER_CROSS_LASER_GAP_MAX)
+        if is_equal_approx(float(gap["pos"]), edge_ratio) or is_equal_approx(float(gap["pos"]), WINTER_CROSS_LASER_GAP_MAX):
+            gap["dir"] = -float(gap.get("dir", 1.0))
+    state["gaps"] = gaps_state
+    _check_root_cross_laser_hit(state)
+    root_cross_lasers[cid] = state
+
 func _check_root_cross_laser_hit(state: Dictionary) -> void:
     if float(state.get("hit_timer", 0.0)) > 0.0:
         return
@@ -4652,6 +5127,12 @@ func _trigger_ship_shield_hit(hit_dir: Vector2) -> bool:
         return true
     if shield_invuln_timer > 0.0:
         return true
+    if editor_debug_unlimited_barrier:
+        barriers_left = maxi(barriers_left, 999)
+        shield_invuln_timer = SHIELD_HIT_INVULN_TIME
+        shield_recovery_timer = SHIELD_HIT_RECOVERY_TIME
+        _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK, -10.0, -0.08)
+        return true
     if barriers_left <= 0:
         return false
     barriers_left -= 1
@@ -4672,7 +5153,7 @@ func _trigger_ship_shield_hit(hit_dir: Vector2) -> bool:
     if ship_pos.length() > 0.0:
         var max_radius := (float(planet_radius_cells) + 10.0) * BLOCK_SIZE
         ship_pos = ship_pos.limit_length(max_radius)
-    AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK, -10.0, -0.08)
+    _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK, -10.0, -0.08)
     return true
 
 func _is_autopilot_returning_to_base() -> bool:
@@ -4714,6 +5195,16 @@ func _find_closest_empty_world_on_screen(preferred_world: Vector2) -> Vector2:
 func _has_core_upgrade(upgrade_id: String) -> bool:
     var purchased: Array = persistent_data.get("purchased_core_upgrades", [])
     return upgrade_id in purchased
+
+func _engage_core_fuel_stasis(block_or_result: Dictionary) -> void:
+    if not _has_core_upgrade("core_stasis"):
+        return
+    if int(block_or_result.get("type", BlockType.NORMAL)) != BlockType.CORE:
+        return
+    core_fuel_stasis_timer = maxf(core_fuel_stasis_timer, CORE_FUEL_STASIS_GRACE)
+
+func _is_core_fuel_stasis_active() -> bool:
+    return _has_core_upgrade("core_stasis") and core_fuel_stasis_timer > 0.0
 
 func _core_unlocks_center() -> bool:
     return bool(persistent_data.get("free_planet_mode", false)) or _has_core_upgrade("center_unlock")
@@ -4819,6 +5310,59 @@ func _breach_chat_zone_name(zone: int) -> String:
             return "Root Well"
         _:
             return "Kernel Vault"
+
+func _on_final_core_phase_depleted(phase: int) -> void:
+    _handle_final_core_phase_transition(phase)
+
+func _handle_final_core_phase_transition(phase: int) -> void:
+    if planet_data == null:
+        return
+    if phase <= final_core_phase_handled:
+        return
+    final_core_phase_handled = phase
+    final_core_exposed = true
+    bottom_phase_unlocked = true
+    persistent_data["bottom_phase_unlocked"] = true
+    var final_core: Dictionary = {}
+    for core_variant in planet_data.cores:
+        var core: Dictionary = core_variant
+        if int(core.get("id", -1)) == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
+            final_core = core
+            break
+    if final_core.is_empty():
+        return
+    bottom_cutscene_anchor = grid_to_world(Vector2i(int(final_core.center.x), int(final_core.center.y)))
+    _push_ship_outside_final_core_arena(final_core)
+    var restored_positions: Array[Vector2i] = planet_data.regenerate_final_core_arena()
+    blocks = planet_data.blocks
+    exposed_edges = planet_data.exposed_edges
+    damaged_cells.clear()
+    root_cross_lasers.erase(int(PLANET_DATA_SCRIPT.FINAL_CORE_ID))
+    _spawn_side_attackers()
+    side_shot_timer = maxf(0.7, SIDE_SHOT_INTERVAL - float(phase) * 0.35)
+    if planet_renderer != null and not autopilot_no_render_enabled:
+        if restored_positions.is_empty():
+            planet_renderer.mark_dirty(true, "final_core_phase")
+        else:
+            planet_renderer.queue_fill_updates(restored_positions)
+    if minimap != null and not autopilot_no_render_enabled:
+        minimap.queue_redraw()
+    _push_breach_log("[color=#ff7d7d]ALERT[/color]  kernel tier %d sealed. arena regenerated." % [phase + 1])
+
+func _push_ship_outside_final_core_arena(final_core: Dictionary) -> void:
+    var center_grid := Vector2i(int(final_core.center.x), int(final_core.center.y))
+    var center_world := grid_to_world(center_grid)
+    var dir := (ship_pos - center_world).normalized()
+    if dir.length() < 0.01:
+        dir = Vector2.UP
+    var radius_cells := int(planet_data.get_effective_influence_radius(final_core)) + 6
+    var preferred := grid_to_world(center_grid + Vector2i(roundi(dir.x * float(radius_cells)), roundi(dir.y * float(radius_cells))))
+    var fallback := _find_closest_empty_world_on_screen(preferred)
+    ship_pos = fallback if fallback != Vector2.INF else preferred
+    ship_vel = Vector2.ZERO
+    if ship_root != null:
+        ship_root.global_position = ship_pos
+    camera_pos = ship_pos
 
 func _on_final_core_exposed() -> void:
     final_core_exposed = true

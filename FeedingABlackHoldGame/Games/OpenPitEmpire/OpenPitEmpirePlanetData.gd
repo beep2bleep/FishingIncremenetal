@@ -13,7 +13,10 @@ const PIT_TOP_Y: int = -220
 const PIT_BOTTOM_Y: int = 260
 const PIT_CAP_TOP_Y: int = -248
 const PIT_TOP_HALF_WIDTH: float = 208.0
-const PIT_BOTTOM_HALF_WIDTH: float = 26.0
+const PIT_MIDDLE_HALF_WIDTH: float = 170.0
+const PIT_LOWER_HALF_WIDTH: float = 205.0
+const PIT_ROOT_HALF_WIDTH: float = 162.0
+const PIT_CORE_NECK_HALF_WIDTH: float = 76.0
 const PIT_WALL_THICKNESS: int = 8
 const ELECTRIC_CHANCE: float = 0.02
 const GOLD_CHANCE: float = 0.02
@@ -24,6 +27,8 @@ const NEXT_ZONE_SPIKE_CHANCE: float = 0.045
 const NEXT_ZONE_SPIKE_HP_MULT: float = 1.4
 const NEXT_ZONE_SPIKE_RES_MULT: float = 1.35
 const FINAL_CORE_ID: int = 16
+const FINAL_CORE_PHASE_COUNT: int = 5
+const FINAL_CORE_PHASE_HP_GROWTH: float = 0.45
 const SAVE_X_SLICES: int = 10
 const SAVE_DEPTH_SLICES: int = 10
 const SAVE_SECTION_COUNT: int = SAVE_X_SLICES * SAVE_DEPTH_SLICES
@@ -47,17 +52,17 @@ const CORE_CONFIGS := [
     {"id": 1, "center": Vector2i(0, -154), "size": 3, "influence": 16, "hp_mult": 20.0, "total_hp": 120, "inf_mult": 2.0, "res_mult": 1.2, "zone": Zone.PROXY, "role": "outer"},
     {"id": 2, "center": Vector2i(118, -168), "size": 3, "influence": 16, "hp_mult": 25.0, "total_hp": 250, "inf_mult": 2.5, "res_mult": 1.5, "zone": Zone.PROXY, "role": "outer"},
     {"id": 12, "center": Vector2i(0, -106), "size": 5, "influence": 22, "hp_mult": 80.0, "total_hp": 500, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.PROXY, "role": "boss"},
-    {"id": 3, "center": Vector2i(-88, -58), "size": 3, "influence": 18, "hp_mult": 75.0, "total_hp": 5000, "inf_mult": 3.0, "res_mult": 1.5, "zone": Zone.CIPHER, "role": "outer"},
-    {"id": 4, "center": Vector2i(20, -50), "size": 3, "influence": 18, "hp_mult": 90.0, "total_hp": 8000, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.CIPHER, "role": "outer"},
-    {"id": 5, "center": Vector2i(96, -44), "size": 3, "influence": 18, "hp_mult": 100.0, "total_hp": 15000, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.CIPHER, "role": "outer"},
+    {"id": 3, "center": Vector2i(-108, -58), "size": 3, "influence": 18, "hp_mult": 75.0, "total_hp": 5000, "inf_mult": 3.0, "res_mult": 1.5, "zone": Zone.CIPHER, "role": "outer"},
+    {"id": 4, "center": Vector2i(0, -50), "size": 3, "influence": 18, "hp_mult": 90.0, "total_hp": 8000, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.CIPHER, "role": "outer"},
+    {"id": 5, "center": Vector2i(108, -44), "size": 3, "influence": 18, "hp_mult": 100.0, "total_hp": 15000, "inf_mult": 3.0, "res_mult": 2.0, "zone": Zone.CIPHER, "role": "outer"},
     {"id": 13, "center": Vector2i(-8, 6), "size": 5, "influence": 25, "hp_mult": 250.0, "total_hp": 20000, "inf_mult": 3.5, "res_mult": 3.0, "zone": Zone.CIPHER, "role": "boss"},
-    {"id": 6, "center": Vector2i(-54, 56), "size": 3, "influence": 20, "hp_mult": 125.0, "total_hp": 80000, "inf_mult": 3.5, "res_mult": 2.5, "zone": Zone.GHOST, "role": "outer"},
-    {"id": 7, "center": Vector2i(8, 70), "size": 3, "influence": 20, "hp_mult": 150.0, "total_hp": 150000, "inf_mult": 3.5, "res_mult": 3.0, "zone": Zone.GHOST, "role": "outer"},
-    {"id": 8, "center": Vector2i(66, 64), "size": 3, "influence": 20, "hp_mult": 175.0, "total_hp": 250000, "inf_mult": 4.0, "res_mult": 3.0, "zone": Zone.GHOST, "role": "outer"},
+    {"id": 6, "center": Vector2i(-92, 56), "size": 3, "influence": 20, "hp_mult": 125.0, "total_hp": 80000, "inf_mult": 3.5, "res_mult": 2.5, "zone": Zone.GHOST, "role": "outer"},
+    {"id": 7, "center": Vector2i(0, 72), "size": 3, "influence": 20, "hp_mult": 150.0, "total_hp": 150000, "inf_mult": 3.5, "res_mult": 3.0, "zone": Zone.GHOST, "role": "outer"},
+    {"id": 8, "center": Vector2i(92, 60), "size": 3, "influence": 20, "hp_mult": 175.0, "total_hp": 250000, "inf_mult": 4.0, "res_mult": 3.0, "zone": Zone.GHOST, "role": "outer"},
     {"id": 14, "center": Vector2i(0, 124), "size": 7, "influence": 28, "hp_mult": 400.0, "total_hp": 18000000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.GHOST, "role": "boss"},
-    {"id": 9, "center": Vector2i(-34, 156), "size": 5, "influence": 22, "hp_mult": 200.0, "total_hp": 5000000, "inf_mult": 4.0, "res_mult": 3.5, "zone": Zone.ROOT, "role": "outer"},
-    {"id": 10, "center": Vector2i(0, 180), "size": 5, "influence": 22, "hp_mult": 250.0, "total_hp": 10000000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.ROOT, "role": "outer"},
-    {"id": 11, "center": Vector2i(30, 158), "size": 5, "influence": 22, "hp_mult": 300.0, "total_hp": 20000000, "inf_mult": 4.5, "res_mult": 5.0, "zone": Zone.ROOT, "role": "outer"},
+    {"id": 9, "center": Vector2i(-104, 156), "size": 5, "influence": 22, "hp_mult": 200.0, "total_hp": 5000000, "inf_mult": 4.0, "res_mult": 3.5, "zone": Zone.ROOT, "role": "outer"},
+    {"id": 10, "center": Vector2i(0, 184), "size": 5, "influence": 22, "hp_mult": 250.0, "total_hp": 10000000, "inf_mult": 4.0, "res_mult": 4.0, "zone": Zone.ROOT, "role": "outer"},
+    {"id": 11, "center": Vector2i(104, 158), "size": 5, "influence": 22, "hp_mult": 300.0, "total_hp": 20000000, "inf_mult": 4.5, "res_mult": 5.0, "zone": Zone.ROOT, "role": "outer"},
     {"id": 15, "center": Vector2i(0, 214), "size": 7, "influence": 32, "hp_mult": 600.0, "total_hp": 35000000, "inf_mult": 5.0, "res_mult": 6.0, "zone": Zone.ROOT, "role": "boss"},
     {"id": 16, "center": Vector2i(0, 246), "size": 7, "influence": 35, "hp_mult": 500.0, "total_hp": 120000000, "inf_mult": 5.0, "res_mult": 8.0, "zone": Zone.CENTER, "role": "final"},
 ]
@@ -103,6 +108,7 @@ var exposed_edges: Dictionary = {}
 var _pending_edge_positions: Dictionary = {}
 var initial_block_count: int = 0
 var on_core_destroyed_callback: Callable = Callable()
+var core_defense_gate_callback: Callable = Callable()
 var final_boss_active: bool = false
 var final_core_phase: int = 0
 var _final_core_exposed_emitted: bool = false
@@ -181,9 +187,31 @@ static func _get_depth_ratio(pos: Vector2i) -> float:
 
 static func _get_half_width_for_y(y: int) -> float:
     var depth_ratio := _get_depth_ratio(Vector2i(0, y))
-    var base_width := lerpf(PIT_TOP_HALF_WIDTH, PIT_BOTTOM_HALF_WIDTH, pow(depth_ratio, 0.74))
-    var wobble := sin(float(y) * 0.043 + 0.35) * 19.0 + sin(float(y) * 0.12 + 1.1) * 10.0 + sin(float(y) * 0.22 + 2.4) * 5.0
-    return maxf(PIT_BOTTOM_HALF_WIDTH, base_width + wobble)
+    var base_width := PIT_TOP_HALF_WIDTH
+    var t := 0.0
+    if depth_ratio < 0.48:
+        t = _smoothstep(depth_ratio / 0.48)
+        base_width = lerpf(PIT_TOP_HALF_WIDTH, PIT_MIDDLE_HALF_WIDTH, t)
+    elif depth_ratio < 0.68:
+        t = _smoothstep((depth_ratio - 0.48) / 0.2)
+        base_width = lerpf(PIT_MIDDLE_HALF_WIDTH, PIT_LOWER_HALF_WIDTH, t)
+    elif depth_ratio < 0.93:
+        t = _smoothstep((depth_ratio - 0.68) / 0.25)
+        base_width = lerpf(PIT_LOWER_HALF_WIDTH, PIT_ROOT_HALF_WIDTH, t)
+    else:
+        t = _smoothstep((depth_ratio - 0.93) / 0.07)
+        base_width = lerpf(PIT_ROOT_HALF_WIDTH, PIT_CORE_NECK_HALF_WIDTH, t)
+    var wobble_strength := lerpf(1.0, 0.42, _smoothstep((depth_ratio - 0.9) / 0.1))
+    var wobble := (
+        sin(float(y) * 0.043 + 0.35) * 19.0
+        + sin(float(y) * 0.12 + 1.1) * 10.0
+        + sin(float(y) * 0.22 + 2.4) * 5.0
+    ) * wobble_strength
+    return maxf(PIT_CORE_NECK_HALF_WIDTH, base_width + wobble)
+
+static func _smoothstep(value: float) -> float:
+    var t := clampf(value, 0.0, 1.0)
+    return t * t * (3.0 - 2.0 * t)
 
 static func _get_left_wall(y: int) -> int:
     return int(floor(-_get_half_width_for_y(y)))
@@ -738,6 +766,57 @@ func restore_alive_core_influence_blocks() -> Array[Vector2i]:
                 zone_current_blocks[zone] = int(zone_current_blocks.get(zone, 0)) + 1
                 minimap_block_spawned.emit(pos, BlockType.NORMAL)
                 restored_positions.append(pos)
+    if not restored_positions.is_empty():
+        _queue_edge_updates(restored_positions)
+        _mark_dirty_positions(restored_positions)
+    return restored_positions
+
+func regenerate_final_core_arena() -> Array[Vector2i]:
+    var final_core: Variant = _get_core_by_id(FINAL_CORE_ID)
+    if final_core == null:
+        return []
+    var restored_positions: Array[Vector2i] = []
+    var center: Vector2i = final_core.get("center", Vector2i.ZERO)
+    var radius: int = get_effective_influence_radius(final_core)
+    var core_size: int = int(final_core.get("size", 3))
+    var half: int = core_size / 2
+    for x in range(center.x - radius, center.x + radius + 1):
+        for y in range(center.y - radius, center.y + radius + 1):
+            var pos := Vector2i(x, y)
+            var dx: int = x - center.x
+            var dy: int = y - center.y
+            if dx * dx + dy * dy > radius * radius:
+                continue
+            if not _is_inside_pit_shape(pos) or _is_wall_cell(pos):
+                continue
+            if x >= center.x - half and x < center.x + half + core_size % 2 and y >= center.y - half and y < center.y + half + core_size % 2:
+                continue
+            var previous: Dictionary = blocks.get(pos, {})
+            if int(previous.get("type", BlockType.NORMAL)) == BlockType.CORE:
+                continue
+            var hp: float = _calc_block_hp(pos) * _get_non_core_influence_hp_mult(pos, true)
+            var zone: int = get_zone(pos)
+            var block_type := BlockType.NORMAL
+            var roll: float = world_rng.randf()
+            if zone != Zone.CENTER and roll < GOLD_CHANCE:
+                block_type = BlockType.GOLD
+            elif roll < GOLD_CHANCE + ELECTRIC_CHANCE:
+                block_type = BlockType.ELECTRIC
+            if previous.is_empty():
+                zone_current_blocks[zone] = int(zone_current_blocks.get(zone, 0)) + 1
+                minimap_block_spawned.emit(pos, block_type)
+            blocks[pos] = {
+                "type": block_type,
+                "hp": hp,
+                "max_hp": hp,
+                "resource": _calc_block_resource(pos),
+                "core_id": -1,
+                "zone": zone,
+                "regenerated": true,
+                "core_refill": true,
+                "layer_depth": get_depth_level_for_pos(pos, 5),
+            }
+            restored_positions.append(pos)
     if not restored_positions.is_empty():
         _queue_edge_updates(restored_positions)
         _mark_dirty_positions(restored_positions)
@@ -1402,6 +1481,8 @@ func _damage_core(_hit_pos: Vector2i, core_id: int, damage: float, free_planet_m
     if shared_hp < 0.0:
         return {"destroyed": false, "type": BlockType.CORE, "resource": 0.0, "core_id": core_id}
     var authored_hp_cap := get_authored_core_hp_cap(core_id)
+    if core_id == FINAL_CORE_ID:
+        authored_hp_cap *= pow(1.0 + FINAL_CORE_PHASE_HP_GROWTH, final_core_phase)
     if authored_hp_cap > 0.0 and shared_max_hp > authored_hp_cap:
         var hp_ratio := clampf(shared_hp / shared_max_hp, 0.0, 1.0)
         shared_max_hp = authored_hp_cap
@@ -1425,6 +1506,48 @@ func _damage_core(_hit_pos: Vector2i, core_id: int, damage: float, free_planet_m
                     blocks[pos]["max_hp"] = shared_max_hp
         _mark_core_section_dirty(center, core_size)
         return {"destroyed": false, "type": BlockType.CORE, "resource": 0.0, "core_id": core_id}
+    if role == "boss" and core_defense_gate_callback.is_valid():
+        var defense_response: Variant = core_defense_gate_callback.call(core.duplicate(true), shared_max_hp)
+        if defense_response is Dictionary and bool(defense_response.get("handled", false)):
+            var held_hp: float = clampf(float(defense_response.get("hp_ratio", 0.01)), 0.001, 1.0) * shared_max_hp
+            for dx in range(-half, half + core_size % 2):
+                for dy in range(-half, half + core_size % 2):
+                    var pos := Vector2i(center.x + dx, center.y + dy)
+                    if blocks.has(pos) and int(blocks[pos].get("core_id", -1)) == core_id:
+                        blocks[pos]["hp"] = held_hp
+                        blocks[pos]["max_hp"] = shared_max_hp
+            _mark_core_section_dirty(center, core_size)
+            return {
+                "destroyed": false,
+                "type": BlockType.CORE,
+                "resource": 0.0,
+                "core_id": core_id,
+                "core_role": role,
+                "defense_triggered": true,
+                "layer_depth": get_depth_level_for_pos(center, 5),
+            }
+    if core_id == FINAL_CORE_ID and final_core_phase < FINAL_CORE_PHASE_COUNT - 1:
+        final_core_phase += 1
+        var next_max_hp := shared_max_hp * (1.0 + FINAL_CORE_PHASE_HP_GROWTH)
+        for dx in range(-half, half + core_size % 2):
+            for dy in range(-half, half + core_size % 2):
+                var pos := Vector2i(center.x + dx, center.y + dy)
+                if blocks.has(pos) and int(blocks[pos].get("core_id", -1)) == core_id:
+                    blocks[pos]["hp"] = next_max_hp
+                    blocks[pos]["max_hp"] = next_max_hp
+        _mark_core_section_dirty(center, core_size)
+        final_core_phase_depleted.emit(final_core_phase)
+        return {
+            "destroyed": false,
+            "type": BlockType.CORE,
+            "resource": 0.0,
+            "core_id": core_id,
+            "core_role": str(core.get("role", "")),
+            "final_core": true,
+            "phase_depleted": true,
+            "phase": final_core_phase,
+            "layer_depth": get_depth_level_for_pos(center, 5),
+        }
     var total_resource := 0.0
     var erased_positions: Array[Vector2i] = []
     var core_zone: int = int(core.get("zone", Zone.CENTER))
@@ -1437,6 +1560,65 @@ func _damage_core(_hit_pos: Vector2i, core_id: int, damage: float, free_planet_m
                 minimap_block_erased.emit(pos)
                 erased_positions.append(pos)
                 zone_destroyed_blocks[core_zone] = int(zone_destroyed_blocks.get(core_zone, 0)) + 1
+    _queue_edge_updates(erased_positions)
+    _mark_dirty_positions(erased_positions)
+    _on_core_destroyed(core)
+    return {
+        "destroyed": true,
+        "type": BlockType.CORE,
+        "resource": total_resource,
+        "core_id": core_id,
+        "core_role": str(core.get("role", "")),
+        "final_core": core_id == FINAL_CORE_ID,
+        "layer_depth": get_depth_level_for_pos(center, 5),
+    }
+
+func set_core_hp_ratio(core_id: int, hp_ratio: float) -> bool:
+    var core: Variant = _get_core_by_id(core_id)
+    if core == null or not bool(core.alive):
+        return false
+    var center: Vector2i = core.center
+    var core_size: int = int(core.get("size", 3))
+    var half: int = core_size / 2
+    var shared_max_hp := -1.0
+    for dx in range(-half, half + core_size % 2):
+        for dy in range(-half, half + core_size % 2):
+            var pos := Vector2i(center.x + dx, center.y + dy)
+            if blocks.has(pos) and int(blocks[pos].get("core_id", -1)) == core_id:
+                shared_max_hp = maxf(shared_max_hp, float(blocks[pos].get("max_hp", 0.0)))
+    if shared_max_hp <= 0.0:
+        return false
+    var next_hp: float = clampf(hp_ratio, 0.0, 1.0) * shared_max_hp
+    for dx in range(-half, half + core_size % 2):
+        for dy in range(-half, half + core_size % 2):
+            var pos := Vector2i(center.x + dx, center.y + dy)
+            if blocks.has(pos) and int(blocks[pos].get("core_id", -1)) == core_id:
+                blocks[pos]["hp"] = next_hp
+                blocks[pos]["max_hp"] = shared_max_hp
+    _mark_core_section_dirty(center, core_size)
+    return true
+
+func force_destroy_core(core_id: int) -> Dictionary:
+    var core: Variant = _get_core_by_id(core_id)
+    if core == null or not bool(core.alive):
+        return {"destroyed": false, "type": BlockType.CORE, "resource": 0.0, "core_id": core_id}
+    var center: Vector2i = core.center
+    var core_size: int = int(core.get("size", 3))
+    var half: int = core_size / 2
+    var total_resource := 0.0
+    var erased_positions: Array[Vector2i] = []
+    var core_zone: int = int(core.get("zone", Zone.CENTER))
+    for dx in range(-half, half + core_size % 2):
+        for dy in range(-half, half + core_size % 2):
+            var pos := Vector2i(center.x + dx, center.y + dy)
+            if blocks.has(pos) and int(blocks[pos].get("core_id", -1)) == core_id:
+                total_resource += float(blocks[pos].get("resource", 0.0))
+                blocks.erase(pos)
+                minimap_block_erased.emit(pos)
+                erased_positions.append(pos)
+                zone_destroyed_blocks[core_zone] = int(zone_destroyed_blocks.get(core_zone, 0)) + 1
+    if erased_positions.is_empty():
+        return {"destroyed": false, "type": BlockType.CORE, "resource": 0.0, "core_id": core_id}
     _queue_edge_updates(erased_positions)
     _mark_dirty_positions(erased_positions)
     _on_core_destroyed(core)

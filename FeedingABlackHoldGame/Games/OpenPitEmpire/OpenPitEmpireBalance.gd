@@ -3,7 +3,7 @@ class_name OpenPitEmpireBalance
 
 const MAX_DEPTH_LEVEL := 5
 const MIN_START_DEPTH_LEVEL := 1
-const PLANET_LAYOUT_VERSION := 3
+const PLANET_LAYOUT_VERSION := 5
 const XP_PREFIX := "xp:"
 const CORE_PREFIX := "core:"
 const XP_ORDER := [
@@ -87,7 +87,7 @@ const CORE_ORDER := [
     "clear_kernel_25", "clear_kernel_50", "clear_kernel_75",
     "core_detect", "spawn_direction", "brake",
     "barrier_regen", "return_shortcut", "emergency_return",
-    "core_focus", "kernel_breach", "center_unlock",
+    "core_focus", "kernel_breach", "core_stasis", "center_unlock",
     "core_siphon", "salvage_limiter", "mantle_permits",
     "inversion_tether", "voidfire_brakes", "mirror_keys",
     "fault_insulation", "null_anchor", "ash_ward",
@@ -114,16 +114,17 @@ const CORE_LAYOUT := {
     "core:emergency_return": Vector2(26, 6),
     "core:core_focus": Vector2(22, 10),
     "core:kernel_breach": Vector2(24, 10),
-    "core:center_unlock": Vector2(26, 10),
-    "core:core_siphon": Vector2(22, 14),
-    "core:salvage_limiter": Vector2(24, 14),
-    "core:mantle_permits": Vector2(26, 14),
-    "core:inversion_tether": Vector2(22, 18),
-    "core:voidfire_brakes": Vector2(24, 18),
-    "core:mirror_keys": Vector2(26, 18),
-    "core:fault_insulation": Vector2(22, 22),
-    "core:null_anchor": Vector2(24, 22),
-    "core:ash_ward": Vector2(26, 22),
+    "core:core_stasis": Vector2(26, 10),
+    "core:center_unlock": Vector2(22, 14),
+    "core:core_siphon": Vector2(24, 14),
+    "core:salvage_limiter": Vector2(26, 14),
+    "core:mantle_permits": Vector2(22, 18),
+    "core:inversion_tether": Vector2(24, 18),
+    "core:voidfire_brakes": Vector2(26, 18),
+    "core:mirror_keys": Vector2(22, 22),
+    "core:fault_insulation": Vector2(24, 22),
+    "core:null_anchor": Vector2(26, 22),
+    "core:ash_ward": Vector2(22, 26),
     "core:planet_mastery": Vector2(24, 26),
 }
 const CORE_CONNECTIONS := {
@@ -147,7 +148,8 @@ const CORE_CONNECTIONS := {
     "core:emergency_return": ["core:return_shortcut"],
     "core:core_focus": ["core:emergency_return"],
     "core:kernel_breach": ["core:core_focus"],
-    "core:center_unlock": ["core:kernel_breach"],
+    "core:core_stasis": ["core:kernel_breach"],
+    "core:center_unlock": ["core:core_stasis"],
     "core:core_siphon": ["core:center_unlock"],
     "core:salvage_limiter": ["core:core_siphon"],
     "core:mantle_permits": ["core:salvage_limiter"],
@@ -180,6 +182,7 @@ const CORE_UPGRADES := {
     "emergency_return": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Panic Tunnel", "summary": "Fuel failure triggers an emergency extraction instead of losing the run.", "icon": "P", "effects": {}},
     "core_focus": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Daemon Focus", "summary": "Improves lock-on against daemon cores and adds +25% core damage.", "icon": "D", "effects": {"core_damage_mult": 0.25}},
     "kernel_breach": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Kernel Breach", "summary": "Breach the kernel tier and add +12% core damage.", "icon": "K", "effects": {"core_damage_mult": 0.12}},
+    "core_stasis": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Core Stasis", "summary": "Fuel stops draining while your cutter is actively attacking a core.", "icon": "S", "effects": {"core_fuel_stasis": true}},
     "center_unlock": {"base_cost": 4, "cost_mult": 1.0, "max_level": 1, "label": "Root Access", "summary": "Unlock attacks against the deepest root kernel at the center.", "icon": "R", "effects": {}},
     "core_siphon": {"base_cost": 4, "cost_mult": 1.0, "max_level": 1, "label": "Core Siphon", "summary": "Add +10 payout per block after each daemon breach.", "icon": "S", "effects": {"resource_flat": 10.0}},
     "salvage_limiter": {"base_cost": 5, "cost_mult": 1.0, "max_level": 1, "label": "Salvage Limiter", "summary": "Keep 50% of your haul even on a failed run.", "icon": "L", "effects": {"fuel_loss_reduce": 0.5}},

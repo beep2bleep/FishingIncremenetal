@@ -18,6 +18,8 @@ var _last_cargo_ratio := -1.0
 var _last_power_ratio := -1.0
 var _last_power_pulse := -1.0
 var _last_power_active := false
+var _last_forward_guide_active := false
+var _last_forward_guide_range := -1.0
 
 const SOFT_ARC_LOAD_LIMIT := 12
 const HARD_ARC_LOAD_LIMIT := 20
@@ -77,6 +79,8 @@ func _process(_delta: float) -> void:
     var power_ratio := scene_ref._get_power_ratio()
     var power_pulse := clampf(scene_ref.power_ring_overcharge, 0.0, 1.0)
     var power_active := scene_ref._is_power_active()
+    var forward_guide_active := scene_ref.is_forward_shot_active()
+    var forward_guide_range := scene_ref.get_forward_shot_range()
     var needs_redraw := false
     var render_rotation := scene_ref.get_ship_render_rotation()
     if render_rotation != _last_visual_rotation:
@@ -127,7 +131,13 @@ func _process(_delta: float) -> void:
     if power_active != _last_power_active:
         _last_power_active = power_active
         needs_redraw = true
-    if attack_visible or mega_active or overdrive_active or invuln_active or drones_active or trail_active or arcs_active or seismic_active or side_projectiles_active or side_attackers_active or extraction_progress > 0.0 or extraction_visible:
+    if forward_guide_active != _last_forward_guide_active:
+        _last_forward_guide_active = forward_guide_active
+        needs_redraw = true
+    if absf(forward_guide_range - _last_forward_guide_range) > 0.5:
+        _last_forward_guide_range = forward_guide_range
+        needs_redraw = true
+    if attack_visible or mega_active or overdrive_active or invuln_active or drones_active or trail_active or arcs_active or seismic_active or side_projectiles_active or side_attackers_active or forward_guide_active or extraction_progress > 0.0 or extraction_visible:
         needs_redraw = true
     if needs_redraw:
         queue_redraw()
@@ -163,6 +173,7 @@ func _draw() -> void:
         var alert_pulse := 0.5 + 0.5 * sin(scene_ref.ship_glow_phase * alert_speed)
         draw_circle(Vector2.ZERO, 28.0, Color(1.2, 0.08, 0.06, 0.1 + fuel_alert_t * (0.08 + alert_pulse * 0.18)))
 
+    _draw_forward_shot_guide()
     _draw_ship_trail(ship_line)
     _draw_extraction_zone()
     var rings_start_us := scene_ref.perf_probe_begin()
@@ -215,6 +226,35 @@ func _draw_extraction_zone() -> void:
 
 func _is_extraction_zone_visible() -> bool:
     return scene_ref.should_render_extraction_zone()
+
+func _draw_forward_shot_guide() -> void:
+    if not scene_ref.is_forward_shot_active():
+        return
+    var forward := scene_ref._get_forward_direction()
+    if forward.length_squared() <= 0.001:
+        return
+    var range_world := scene_ref.get_forward_shot_range()
+    var start_dist := scene_ref.SHIP_RADIUS + 10.0
+    var end_dist := maxf(start_dist + 12.0, range_world)
+    var start := forward * start_dist
+    var end := forward * end_dist
+    var side := forward.orthogonal()
+    var start_half_width := 5.0
+    var end_half_width := 28.0
+    var pulse := 0.5 + 0.5 * sin(scene_ref.ship_glow_phase * 3.0)
+    var fill_alpha := 0.035 + pulse * 0.018
+    var line_alpha := 0.18 + pulse * 0.08
+    var guide_fill := Color(0.82, 0.85, 0.88, fill_alpha)
+    var guide_line := Color(0.86, 0.88, 0.9, line_alpha)
+    draw_colored_polygon(PackedVector2Array([
+        start - side * start_half_width,
+        end - side * end_half_width,
+        end + side * end_half_width,
+        start + side * start_half_width,
+    ]), guide_fill)
+    draw_line(start, end, Color(0.9, 0.92, 0.94, 0.16 + pulse * 0.05), 1.2)
+    draw_line(start - side * start_half_width, end - side * end_half_width, guide_line, 1.4)
+    draw_line(start + side * start_half_width, end + side * end_half_width, guide_line, 1.4)
 
 func _draw_normal_laser(vp: float) -> void:
     var local_target := scene_ref.last_attack_target - scene_ref.ship_pos

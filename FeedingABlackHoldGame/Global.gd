@@ -20,6 +20,8 @@ var open_pit_upgrade_scene_swap_msec: int = 0
 var multi_game_run: Dictionary = {}
 var multi_game_pending_summary: Dictionary = {}
 var multi_game_step_config: Dictionary = {}
+var open_pit_defense_challenge: Dictionary = {}
+var open_pit_defense_result: Dictionary = {}
 
 
 const G = 100000.0

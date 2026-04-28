@@ -55,8 +55,12 @@ const EDITOR_SELL_MENU_ID := 1
 
 var is_active = false
 var editor_add_cash_amount: int = 1000
+var editor_add_xp_amount: int = 100
+var editor_add_core_amount: int = 1
 var editor_cash_controls: HBoxContainer
 var editor_add_cash_button: Button
+var editor_add_xp_button: Button
+var editor_add_core_button: Button
 var editor_reset_add_button: Button
 var editor_unlock_all_button: Button
 var editor_regenerate_planet_button: Button
@@ -583,7 +587,13 @@ func _on_global_resource_changed(event_data: GlobalResourceChangedEventData):
 func update():
     if tech_tree == null or not is_instance_valid(tech_tree):
         return
+    _refresh_bottom_wallet_display()
     tech_tree.update_active()
+
+func _refresh_bottom_wallet_display() -> void:
+    var money_ui := get_node_or_null("%Moeny UI")
+    if money_ui != null and money_ui.has_method("refresh_amounts"):
+        money_ui.call("refresh_amounts")
 
 
 func _on_pallet_updated():
@@ -725,6 +735,7 @@ var nodes_unlocked_this_session = 0
 
 
 func on_node_unlocked(node: TechTreeNode):
+    _refresh_bottom_wallet_display()
     if Global.game_state == Util.GAME_STATES.UPGRADES:
 
         match nodes_unlocked_this_session:
@@ -783,6 +794,7 @@ func show_screen():
     elif OS.has_feature("editor"):
         _apply_editor_center_offset()
     _sync_simulation_currency_from_save()
+    _refresh_bottom_wallet_display()
     is_active = true
     Global.game_state = Util.GAME_STATES.UPGRADES
 
@@ -2013,7 +2025,7 @@ func _setup_editor_cash_controls() -> void:
     editor_cash_controls.anchor_top = 0.0
     editor_cash_controls.anchor_right = 1.0
     editor_cash_controls.anchor_bottom = 0.0
-    editor_cash_controls.offset_left = -640.0
+    editor_cash_controls.offset_left = -900.0
     editor_cash_controls.offset_top = 12.0
     editor_cash_controls.offset_right = -12.0
     editor_cash_controls.offset_bottom = 56.0
@@ -2025,6 +2037,16 @@ func _setup_editor_cash_controls() -> void:
     editor_add_cash_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
     editor_add_cash_button.pressed.connect(_on_editor_add_cash_pressed)
     editor_cash_controls.add_child(editor_add_cash_button)
+
+    editor_add_xp_button = Button.new()
+    editor_add_xp_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    editor_add_xp_button.pressed.connect(_on_editor_add_xp_pressed)
+    editor_cash_controls.add_child(editor_add_xp_button)
+
+    editor_add_core_button = Button.new()
+    editor_add_core_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    editor_add_core_button.pressed.connect(_on_editor_add_core_pressed)
+    editor_cash_controls.add_child(editor_add_core_button)
 
     editor_reset_add_button = Button.new()
     editor_reset_add_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
@@ -2349,6 +2371,12 @@ func _refresh_editor_cash_button_text() -> void:
     if editor_add_cash_button == null:
         return
     editor_add_cash_button.text = _trf("UPGRADE_EDITOR_ADD_CASH", [editor_add_cash_amount])
+    if editor_add_xp_button != null:
+        editor_add_xp_button.visible = Util.is_open_pit_game_active()
+        editor_add_xp_button.text = "Add %d XP (Editor)" % editor_add_xp_amount
+    if editor_add_core_button != null:
+        editor_add_core_button.visible = Util.is_open_pit_game_active()
+        editor_add_core_button.text = "Add %d Root Keys (Editor)" % editor_add_core_amount
 
 func _on_editor_add_cash_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -2358,10 +2386,34 @@ func _on_editor_add_cash_pressed() -> void:
     _refresh_editor_cash_button_text()
     update()
 
+func _on_editor_add_xp_pressed() -> void:
+    if not OS.has_feature("editor") or not Util.is_open_pit_game_active():
+        return
+    var data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
+    data["xp_currency"] = max(0, int(data.get("xp_currency", 0)) + editor_add_xp_amount)
+    OPEN_PIT_PROGRESS_SCRIPT.save_data(data)
+    editor_add_xp_amount *= 2
+    _refresh_editor_cash_button_text()
+    _reload_simulation_upgrade_tree_from_save()
+    update()
+
+func _on_editor_add_core_pressed() -> void:
+    if not OS.has_feature("editor") or not Util.is_open_pit_game_active():
+        return
+    var data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
+    data["core_currency"] = max(0, int(data.get("core_currency", 0)) + editor_add_core_amount)
+    OPEN_PIT_PROGRESS_SCRIPT.save_data(data)
+    editor_add_core_amount *= 2
+    _refresh_editor_cash_button_text()
+    _reload_simulation_upgrade_tree_from_save()
+    update()
+
 func _on_editor_reset_add_pressed() -> void:
     if not OS.has_feature("editor"):
         return
     editor_add_cash_amount = 1000
+    editor_add_xp_amount = 100
+    editor_add_core_amount = 1
     _refresh_editor_cash_button_text()
 
 func _setup_reset_progress_controls() -> void:
@@ -2477,6 +2529,8 @@ func _perform_progress_reset() -> void:
         SaveHandler.reset_fishing_progress()
         SaveHandler.save_fishing_progress()
     editor_add_cash_amount = 1000
+    editor_add_xp_amount = 100
+    editor_add_core_amount = 1
     _refresh_editor_cash_button_text()
 
     if Global.global_resoruce_manager != null:

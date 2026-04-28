@@ -317,6 +317,44 @@ func notify_core_destroyed(core: Dictionary) -> void:
             "boss_enemy_%d" % core_id
         )
 
+func notify_defense_challenge_started(core: Dictionary, defense_name: String) -> void:
+    var core_id: int = int(core.get("id", -1))
+    var zone_name := _zone_name(int(core.get("zone", 0)))
+    _queue_enemy_line(
+        mini(4, maxi(2, _zone_enemy_tier(int(core.get("zone", 0))) + 1)),
+        "[b]Command node %d is pushing back.[/b] %s protocols are live." % [core_id, defense_name],
+        0.0,
+        "defense_start_%d" % core_id
+    )
+    _queue_unique_variant_message("undertow", [
+        "%s command node hit zero and threw a defense screen. clear it and the node dies for real.",
+        "that node is refusing death with a %s defense. rude, expensive, and beatable.",
+        "%s defense just lit up. take the side fight; we will hold the breach open."
+    ], [defense_name], "defense_reply_%d" % core_id, 0.9)
+    _queue_unique_event("defense_zone_%d" % core_id, "taxhound", "%s oversight bought a panic room. let's repossess it." % zone_name, 1.7)
+
+func notify_defense_challenge_failed(core_id: int, defense_name: String) -> void:
+    _queue_enemy_line(
+        mini(4, maxi(2, _zone_enemy_tier(OpenPitEmpirePlanetData.get_core_zone(core_id)) + 1)),
+        "[b]%s held.[/b] The node has restored itself to emergency health. Try not to make this inspirational." % defense_name,
+        0.0,
+        "defense_fail_%d" % core_id
+    )
+    _queue_unique_variant_message("chapelNull", [
+        "bad news: the node got half its spine back. good news: it only gets that trick once.",
+        "they spent a whole countermeasure just to go back to fifty percent. deeply embarrassing budget behavior.",
+        "reset to half health. fine. hit it again and make the accounting louder."
+    ], [], "defense_fail_reply_%d" % core_id, 1.0)
+
+func notify_defense_challenge_succeeded(core_id: int, defense_name: String) -> void:
+    _queue_unique_event("defense_success_%d" % core_id, "mothbit", "%s cracked. command node has no second argument with physics." % defense_name, 0.0)
+    _queue_enemy_line(
+        mini(4, maxi(2, _zone_enemy_tier(OpenPitEmpirePlanetData.get_core_zone(core_id)) + 1)),
+        "[b]Defense screen lost.[/b] This node is not authorized to die.",
+        1.0,
+        "defense_success_enemy_%d" % core_id
+    )
+
 func notify_final_core_exposed() -> void:
     if final_core_exposed:
         return
