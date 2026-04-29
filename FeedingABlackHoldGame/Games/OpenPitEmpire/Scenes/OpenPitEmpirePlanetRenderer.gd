@@ -76,17 +76,17 @@ const STAR_COLORS := [
 const SCREEN_STAR_COUNT := 90
 const BLOCK_GAP := 1.5
 const LOCAL_SHOCKWAVE_VISUAL_RADIUS := 96.0
-const DRAW_CACHE_PADDING_CELLS := 8
+const DRAW_CACHE_PADDING_CELLS := 14
 const FILL_CACHE_PADDING_CELLS := 14
 const FILL_CACHE_ALIGN_CELLS := 8
 const REDUCED_FILL_CACHE_ALIGN_CELLS := 16
 const HEAVY_REDUCED_FILL_MIN_CELLS := 80
 const ULTRA_REDUCED_FILL_MIN_CELLS := 72
-const REDUCED_FILL_PREWARM_ROWS_PER_DRAW := 16
+const REDUCED_FILL_PREWARM_ROWS_PER_DRAW := 4
 const REDUCED_FILL_PREWARM_TRIGGER_CELLS := 20
-const REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS := 6
-const REDUCED_FILL_RECENTER_MARGIN_CELLS := 18
-const REDUCED_FILL_EXTRA_ALIGN_STEPS := 6
+const REDUCED_FILL_KEEP_EDGE_TOLERANCE_CELLS := 18
+const REDUCED_FILL_RECENTER_MARGIN_CELLS := 12
+const REDUCED_FILL_EXTRA_ALIGN_STEPS := 12
 const HEAVY_FILL_CELL_SPAN := 1
 const ULTRA_FILL_CELL_SPAN := 1
 const HEAVY_OUTLINE_CACHE_PADDING_CELLS := 0
@@ -97,6 +97,7 @@ const FILL_SCRUB_INTERVAL := 1.0
 const FILL_SCRUB_ROWS_PER_DRAW := 8
 const REDUCED_FILL_UPLOAD_INTERVAL := 0.08
 const REDUCED_FILL_FORCE_UPLOAD_UPDATES := 48
+const USE_THREADED_FILL_PREWARM := false
 const OUTLINE_REBUILD_INTERVAL := 0.7
 const HEAVY_OUTLINE_WIDTH_PX := 4
 const ULTRA_OUTLINE_WIDTH_PX := 4
@@ -402,7 +403,12 @@ func _draw() -> void:
 
     section_start_us = scene_ref.perf_probe_begin()
     var target_fill_texture_size := _grid_size_to_fill_texture_size(target_cache_grid_size, fill_cell_span)
-    if _fill_image == null or _fill_grid_size.x != cache_grid_w or _fill_grid_size.y != cache_grid_h or _fill_cell_span != fill_cell_span or _fill_image.get_width() != target_fill_texture_size.x or _fill_image.get_height() != target_fill_texture_size.y:
+    if fill_needs_rebuild and (reduce_detail or ultra_reduce_detail) and not fill_prewarm_ready_for_cache and _fill_texture != null:
+        fill_rebuild_deferred = true
+        _fill_prewarm_waiting_for_swap = true
+        _fill_prewarm_defer_count += 1
+        fill_needs_rebuild = false
+    if not fill_rebuild_deferred and (_fill_image == null or _fill_grid_size.x != cache_grid_w or _fill_grid_size.y != cache_grid_h or _fill_cell_span != fill_cell_span or _fill_image.get_width() != target_fill_texture_size.x or _fill_image.get_height() != target_fill_texture_size.y):
         var fill_resize_start_us := scene_ref.perf_probe_begin()
         _fill_image = Image.create(target_fill_texture_size.x, target_fill_texture_size.y, false, Image.FORMAT_RGBA8)
         _fill_grid_size = Vector2i(cache_grid_w, cache_grid_h)
@@ -467,7 +473,7 @@ func _draw() -> void:
     else:
         _last_fill_rebuild_reason = "deferred" if fill_rebuild_deferred else "-"
         var should_upload_pending_fill := true
-        if should_upload_pending_fill and _apply_pending_fill_updates(cache_grid_min, cache_grid_max):
+        if not fill_rebuild_deferred and should_upload_pending_fill and _apply_pending_fill_updates(cache_grid_min, cache_grid_max):
             var fill_upload_start_us := scene_ref.perf_probe_begin()
             if _fill_texture == null:
                 _fill_texture = ImageTexture.create_from_image(_fill_image)
@@ -648,6 +654,7 @@ func _draw_active_block_effects(grid_min: Vector2i, grid_max: Vector2i) -> void:
             draw_rect(Rect2(rect.position + Vector2(3.0, 3.0), Vector2(rect.size.x - 6.0, 2.0)), Color(0.0, 0.0, 0.0, 0.5), true)
             draw_rect(Rect2(rect.position + Vector2(3.0, 3.0), Vector2((rect.size.x - 6.0) * health_ratio, 2.0)), Color(0.6, 1.8, 2.4, 0.88), true)
         draw_rect(rect.grow(-2.0), Color(HIT_GLOW.r, HIT_GLOW.g, HIT_GLOW.b, hit_timer / scene_ref.HIT_FLASH_DURATION), false, 2.0)
+
 func _draw_focal_live_outlines(visible_grid_min: Vector2i, visible_grid_max: Vector2i, radius_cells: int, width: float) -> void:
     if radius_cells <= 0:
         return
@@ -819,11 +826,36 @@ func _clear_fill_prewarm() -> void:
 func _ensure_fill_prewarm(target_origin: Vector2i, target_size: Vector2i, cell_span: int) -> void:
     if _fill_prewarm_image != null and _fill_prewarm_grid_origin == target_origin and _fill_prewarm_grid_size == target_size and _fill_prewarm_cell_span == cell_span:
         return
+    if _fill_texture == null and _fill_prewarm_image != null:
+        return
     if _fill_prewarm_thread_active:
         if _fill_prewarm_active_origin == target_origin and _fill_prewarm_active_size == target_size and _fill_prewarm_active_cell_span == cell_span:
             return
         return
-    _start_fill_prewarm_thread(target_origin, target_size, cell_span)
+    if USE_THREADED_FILL_PREWARM:
+        _start_fill_prewarm_thread(target_origin, target_size, cell_span)
+    else:
+        _start_fill_prewarm_incremental(target_origin, target_size, cell_span)
+
+func _start_fill_prewarm_incremental(target_origin: Vector2i, target_size: Vector2i, cell_span: int) -> void:
+    if scene_ref == null or target_size.x <= 0 or target_size.y <= 0:
+        return
+    var texture_size := _grid_size_to_fill_texture_size(target_size, cell_span)
+    _fill_prewarm_job_id += 1
+    _fill_prewarm_active_job_id = _fill_prewarm_job_id
+    _fill_prewarm_active_origin = target_origin
+    _fill_prewarm_active_size = target_size
+    _fill_prewarm_active_cell_span = cell_span
+    _fill_prewarm_image = Image.create(texture_size.x, texture_size.y, false, Image.FORMAT_RGBA8)
+    _fill_prewarm_image.fill(Color.TRANSPARENT)
+    _fill_prewarm_grid_origin = target_origin
+    _fill_prewarm_grid_size = target_size
+    _fill_prewarm_cell_span = cell_span
+    _fill_prewarm_next_row = 0
+    _fill_prewarm_ready = false
+    _fill_prewarm_waiting_for_swap = false
+    _fill_prewarm_completed_job_id = _fill_prewarm_active_job_id
+    _force_redraw = true
 
 func _start_fill_prewarm_thread(target_origin: Vector2i, target_size: Vector2i, cell_span: int) -> void:
     if scene_ref == null or target_size.x <= 0 or target_size.y <= 0:
@@ -835,7 +867,7 @@ func _start_fill_prewarm_thread(target_origin: Vector2i, target_size: Vector2i, 
             var grid := Vector2i(x, y)
             var block: Dictionary = scene_ref.blocks.get(grid, {})
             if not block.is_empty():
-                snapshot[grid] = block.duplicate(true)
+                snapshot[grid] = block.duplicate(false)
     _fill_prewarm_job_id += 1
     _fill_prewarm_active_job_id = _fill_prewarm_job_id
     _fill_prewarm_active_origin = target_origin

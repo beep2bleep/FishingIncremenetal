@@ -1724,16 +1724,20 @@ func _queue_edge_updates(positions: Array) -> void:
     for pos_variant in positions:
         _queue_edge_update(Vector2i(pos_variant))
 
-func flush_pending_exposed_edges() -> void:
+func flush_pending_exposed_edges(max_positions: int = -1) -> void:
     if _pending_edge_positions.is_empty():
         return
+    var processed := 0
     for pos_variant in _pending_edge_positions.keys():
         var pos: Vector2i = pos_variant
         if blocks.has(pos):
             exposed_edges[pos] = _calc_edges(pos)
         else:
             exposed_edges.erase(pos)
-    _pending_edge_positions.clear()
+        _pending_edge_positions.erase(pos)
+        processed += 1
+        if max_positions > 0 and processed >= max_positions:
+            break
 
 func _update_edges_batch(positions: Array) -> void:
     _queue_edge_updates(positions)

@@ -64,7 +64,8 @@ const HUD_REFRESH_INTERVAL := 0.1
 const PERF_DEBUG_REFRESH_INTERVAL := 0.25
 const PERF_PROBE_TEXT_REFRESH_INTERVAL := 1.0
 const SAVE_PREWARM_INTERVAL := 0.2
-const SAVE_PREWARM_SECTIONS_PER_PASS := 1
+const SAVE_PREWARM_SECTIONS_PER_PASS := 0
+const COMBAT_EDGE_FLUSH_BUDGET := 128
 const DRONE_RANGE := 230.0
 const DRONE_MISSILE_RANGE := 520.0
 const DRONE_FOLLOW_SPEED := 11.0
@@ -205,6 +206,8 @@ const AUTOPILOT_ANCHOR_SCAN_CELLS := 72
 const AUTOPILOT_ANCHOR_SCAN_HALF_WIDTH := 16
 const AUTOPILOT_CORE_BREACH_CORRIDOR_HALF_WIDTH := 2
 const AUTOPILOT_CORE_BREACH_SCAN_STEPS := 96
+const AUTOPILOT_TARGET_SEARCH_BUDGET_USEC := 1800
+const NEARBY_TARGET_CACHE_BUDGET_USEC := 1400
 const AUTOPILOT_NORMAL_CORE_MAX_HP := 25000000.0
 const AUTOPILOT_MODE_CENTER := "center"
 const AUTOPILOT_MODE_CORE_ATTACK := "core attack"
@@ -412,12 +415,17 @@ const PERF_PROBE_KEYS := [
     "update_timers",
     "update_power_state",
     "update_ship",
+    "update_ship_autopilot",
+    "update_ship_collision",
+    "autopilot_find_target",
     "update_ship_trail",
     "update_layer_name",
     "update_camera_zoom",
     "update_breach_log",
     "refresh_hud",
     "update_combat",
+    "update_drones",
+    "flush_edges",
     "update_pickups",
     "update_core_attacks",
     "update_perf_debug",
@@ -456,12 +464,17 @@ var _perf_probe_history := {
     "update_timers": [],
     "update_power_state": [],
     "update_ship": [],
+    "update_ship_autopilot": [],
+    "update_ship_collision": [],
+    "autopilot_find_target": [],
     "update_ship_trail": [],
     "update_layer_name": [],
     "update_camera_zoom": [],
     "update_breach_log": [],
     "refresh_hud": [],
     "update_combat": [],
+    "update_drones": [],
+    "flush_edges": [],
     "update_pickups": [],
     "update_core_attacks": [],
     "update_perf_debug": [],
@@ -489,12 +502,17 @@ var _perf_probe_labels := {
     "update_timers": "_update_timers",
     "update_power_state": "_update_power_state",
     "update_ship": "_update_ship",
+    "update_ship_autopilot": "_update_ship autopilot",
+    "update_ship_collision": "_update_ship collision",
+    "autopilot_find_target": "autopilot target",
     "update_ship_trail": "_update_ship_trail",
     "update_layer_name": "_update_current_layer_name",
     "update_camera_zoom": "_update_camera_zoom",
     "update_breach_log": "_update_breach_log",
     "refresh_hud": "_refresh_hud",
     "update_combat": "_update_combat",
+    "update_drones": "_update_drones",
+    "flush_edges": "flush edges",
     "update_pickups": "_update_pickups",
     "update_core_attacks": "_update_core_attacks",
     "update_perf_debug": "_update_perf_debug",
@@ -522,12 +540,17 @@ var _perf_probe_last_samples := {
     "update_timers": 0.0,
     "update_power_state": 0.0,
     "update_ship": 0.0,
+    "update_ship_autopilot": 0.0,
+    "update_ship_collision": 0.0,
+    "autopilot_find_target": 0.0,
     "update_ship_trail": 0.0,
     "update_layer_name": 0.0,
     "update_camera_zoom": 0.0,
     "update_breach_log": 0.0,
     "refresh_hud": 0.0,
     "update_combat": 0.0,
+    "update_drones": 0.0,
+    "flush_edges": 0.0,
     "update_pickups": 0.0,
     "update_core_attacks": 0.0,
     "update_perf_debug": 0.0,
@@ -555,12 +578,17 @@ var _run_perf_peak_samples := {
     "update_timers": 0.0,
     "update_power_state": 0.0,
     "update_ship": 0.0,
+    "update_ship_autopilot": 0.0,
+    "update_ship_collision": 0.0,
+    "autopilot_find_target": 0.0,
     "update_ship_trail": 0.0,
     "update_layer_name": 0.0,
     "update_camera_zoom": 0.0,
     "update_breach_log": 0.0,
     "refresh_hud": 0.0,
     "update_combat": 0.0,
+    "update_drones": 0.0,
+    "flush_edges": 0.0,
     "update_pickups": 0.0,
     "update_core_attacks": 0.0,
     "update_perf_debug": 0.0,
@@ -588,7 +616,12 @@ var _run_perf_worst_snapshot := {}
 var _combat_perf_extremes := {}
 var _combat_perf_worst_snapshot := {}
 var _run_perf_capture_time := 0.0
+var _last_process_frame_ticks_usec := 0
 var _target_offset_cache: Dictionary = {}
+var _nearby_target_cache_frame := -1
+var _nearby_target_cache_origin := Vector2i(2147483647, 2147483647)
+var _nearby_target_cache_radius := 0.0
+var _nearby_target_cache: Array[Dictionary] = []
 var _editor_debug_damage_mult: float = 1.0
 var editor_debug_unlimited_barrier := false
 var editor_debug_unlimited_fuel := false
@@ -1573,6 +1606,12 @@ func _handle_core_destroyed_result(result: Dictionary) -> void:
         breach_chat.record_node_destroyed(true)
 
 func _process(delta: float) -> void:
+    var now_usec := Time.get_ticks_usec()
+    var actual_frame_ms := 0.0
+    if _last_process_frame_ticks_usec > 0:
+        actual_frame_ms = float(now_usec - _last_process_frame_ticks_usec) / 1000.0
+    _last_process_frame_ticks_usec = now_usec
+    var previous_frame_samples := _perf_probe_last_samples.duplicate(true)
     var perf_start_us := perf_probe_begin()
     var frame_block_count_before: int = blocks.size()
     if defense_transition_pending:
@@ -1589,7 +1628,7 @@ func _process(delta: float) -> void:
             break
     _perf_probe_last_samples["net_block_drop_in_frame"] = float(maxi(0, frame_block_count_before - blocks.size()))
     perf_probe_end("process_frame", perf_start_us)
-    _capture_run_perf_snapshot()
+    _capture_run_perf_snapshot(actual_frame_ms, previous_frame_samples)
 
 func _process_gameplay_step(delta: float) -> void:
     pickups_spawned_this_frame = 0
@@ -2052,7 +2091,9 @@ func _update_ship(delta: float) -> void:
         var recovery_progress := 1.0 - clampf(shield_recovery_timer / SHIELD_HIT_RECOVERY_TIME, 0.0, 1.0)
         accel_scale = lerpf(SHIELD_HIT_ACCEL_START_SCALE, 1.0, recovery_progress)
     if autopilot_enabled:
+        var autopilot_start_us := perf_probe_begin()
         keyboard_dir = _get_autopilot_direction(delta)
+        perf_probe_end("update_ship_autopilot", autopilot_start_us)
     if keyboard_dir != Vector2.ZERO:
         desired_velocity = keyboard_dir.normalized() * effective_speed
     elif not autopilot_enabled:
@@ -2077,7 +2118,9 @@ func _update_ship(delta: float) -> void:
         visual_rotation = lerp_angle(visual_rotation, aim_dir.angle() + PI * 0.5, ROTATION_SPEED * delta)
     elif last_move_dir.length() > 0.01:
         visual_rotation = lerp_angle(visual_rotation, last_move_dir.angle() + PI * 0.5, ROTATION_SPEED * delta * 0.4)
+    var collision_start_us := perf_probe_begin()
     _resolve_ship_collision()
+    perf_probe_end("update_ship_collision", collision_start_us)
 
 func _get_autopilot_direction(delta: float) -> Vector2:
     if planet_data == null:
@@ -2094,7 +2137,9 @@ func _get_autopilot_direction(delta: float) -> Vector2:
         autopilot_status = "returning: %s" % (autopilot_return_reason if autopilot_return_reason != "" else "manual")
     elif autopilot_retarget_timer <= 0.0 or ship_pos.distance_to(autopilot_target) <= AUTOPILOT_TARGET_REACHED_DISTANCE:
         autopilot_retarget_timer = AUTOPILOT_RETARGET_INTERVAL
+        var target_start_us := perf_probe_begin()
         autopilot_target = _find_autopilot_mining_target()
+        perf_probe_end("autopilot_find_target", target_start_us)
     elif not autopilot_returning:
         _update_autopilot_aim_direction()
     var offset := autopilot_target - ship_pos
@@ -2154,6 +2199,7 @@ func _get_autopilot_return_reason() -> String:
     return ""
 
 func _find_autopilot_mining_target() -> Vector2:
+    var search_deadline_usec := Time.get_ticks_usec() + AUTOPILOT_TARGET_SEARCH_BUDGET_USEC
     if _is_autopilot_core_attack_mode():
         var core_attack_target := _find_autopilot_core_attack_target()
         if not core_attack_target.is_empty():
@@ -2188,47 +2234,48 @@ func _find_autopilot_mining_target() -> Vector2:
     var best_aim_dir := inward
     var best_score := INF
     var found_local_target := false
-    for x in range(my_grid.x - AUTOPILOT_MINING_SCAN_CELLS, my_grid.x + AUTOPILOT_MINING_SCAN_CELLS + 1):
-        for y in range(my_grid.y - AUTOPILOT_MINING_SCAN_CELLS, my_grid.y + AUTOPILOT_MINING_SCAN_CELLS + 1):
-            var block_grid := Vector2i(x, y)
-            if not blocks.has(block_grid):
+    var local_scan_radius := float(AUTOPILOT_MINING_SCAN_CELLS) * BLOCK_SIZE
+    for target_variant in _get_nearby_target_cache(local_scan_radius, search_deadline_usec):
+        if Time.get_ticks_usec() >= search_deadline_usec:
+            break
+        var target: Dictionary = target_variant
+        var block_grid: Vector2i = target.get("pos", Vector2i.ZERO)
+        if absi(block_grid.x - my_grid.x) > AUTOPILOT_MINING_SCAN_CELLS or absi(block_grid.y - my_grid.y) > AUTOPILOT_MINING_SCAN_CELLS:
+            continue
+        var block: Dictionary = target.get("block", {})
+        if _should_autopilot_skip_core_area_block(block_grid, block):
+            continue
+        var block_world: Vector2 = target.get("world", grid_to_world(block_grid))
+        var block_offset := block_world - ship_pos
+        var dist_sq := float(target.get("ship_dist_sq", block_offset.length_squared()))
+        var inward_alignment := block_offset.normalized().dot(inward) if block_offset.length() > 0.01 else 0.0
+        var lane_penalty := absf(float(block_grid.x - _get_autopilot_desired_lane_x(block_grid.y))) * AUTOPILOT_LANE_SCORE_WEIGHT
+        var depth_penalty := absf(float(block_grid.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)) * BLOCK_SIZE * 0.25 if autopilot_sortie_mode == AUTOPILOT_MODE_TOP_SWEEP else 0.0
+        for neighbor in CARDINAL_NEIGHBORS:
+            var staging_grid: Vector2i = block_grid + neighbor * AUTOPILOT_STAGING_CLEARANCE_CELLS
+            if not is_grid_empty(staging_grid):
                 continue
-            if not _is_autopilot_mineable_block(block_grid):
+            if _is_in_locked_core_avoidance_zone(staging_grid, true):
                 continue
-            var block: Dictionary = blocks.get(block_grid, {})
-            if _should_autopilot_skip_core_area_block(block_grid, block):
+            var staging_world := grid_to_world(staging_grid)
+            var target_dist := staging_world.distance_to(block_world)
+            if target_dist > attack_radius * 0.9:
                 continue
-            var block_world := grid_to_world(block_grid)
-            var block_offset := block_world - ship_pos
-            var dist_sq := block_offset.length_squared()
-            var inward_alignment := block_offset.normalized().dot(inward) if block_offset.length() > 0.01 else 0.0
-            var lane_penalty := absf(float(block_grid.x - _get_autopilot_desired_lane_x(block_grid.y))) * AUTOPILOT_LANE_SCORE_WEIGHT
-            var depth_penalty := absf(float(block_grid.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)) * BLOCK_SIZE * 0.25 if autopilot_sortie_mode == AUTOPILOT_MODE_TOP_SWEEP else 0.0
-            for neighbor in CARDINAL_NEIGHBORS:
-                var staging_grid: Vector2i = block_grid + neighbor * AUTOPILOT_STAGING_CLEARANCE_CELLS
-                if not is_grid_empty(staging_grid):
-                    continue
-                if _is_in_locked_core_avoidance_zone(staging_grid, true):
-                    continue
-                var staging_world := grid_to_world(staging_grid)
-                var target_dist := staging_world.distance_to(block_world)
-                if target_dist > attack_radius * 0.9:
-                    continue
-                var score := dist_sq - inward_alignment * BLOCK_SIZE * BLOCK_SIZE * 8.0
-                score += lane_penalty + depth_penalty
-                score += _get_autopilot_edge_proximity_penalty(staging_world)
-                if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
-                    if _is_autopilot_core_attack_mode():
-                        score -= BLOCK_SIZE * BLOCK_SIZE * 6.0
-                    else:
-                        score += BLOCK_SIZE * BLOCK_SIZE * 10.0
-                if score < best_score:
-                    best_score = score
-                    best_world = staging_world
-                    best_aim_dir = (block_world - ship_pos).normalized()
-                    found_local_target = true
-    if not found_local_target:
-        var anchor_target := _find_autopilot_lane_anchor_target()
+            var score := dist_sq - inward_alignment * BLOCK_SIZE * BLOCK_SIZE * 8.0
+            score += lane_penalty + depth_penalty
+            score += _get_autopilot_edge_proximity_penalty(staging_world)
+            if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
+                if _is_autopilot_core_attack_mode():
+                    score -= BLOCK_SIZE * BLOCK_SIZE * 6.0
+                else:
+                    score += BLOCK_SIZE * BLOCK_SIZE * 10.0
+            if score < best_score:
+                best_score = score
+                best_world = staging_world
+                best_aim_dir = (block_world - ship_pos).normalized()
+                found_local_target = true
+    if not found_local_target and Time.get_ticks_usec() < search_deadline_usec:
+        var anchor_target := _find_autopilot_lane_anchor_target(search_deadline_usec)
         if not anchor_target.is_empty():
             best_world = Vector2(anchor_target.get("world", best_world))
             best_aim_dir = (best_world - ship_pos).normalized()
@@ -2380,7 +2427,7 @@ func _get_autopilot_desired_lane_x(y: int) -> int:
         _:
             return center_x
 
-func _find_autopilot_lane_anchor_target() -> Dictionary:
+func _find_autopilot_lane_anchor_target(search_deadline_usec: int = 0) -> Dictionary:
     if planet_data == null:
         return {}
     var my_grid := world_to_grid(ship_pos)
@@ -2389,6 +2436,8 @@ func _find_autopilot_lane_anchor_target() -> Dictionary:
     var best_grid := Vector2i(999999, 999999)
     var best_score := INF
     for y in range(min_y, max_y + 1):
+        if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+            break
         var lane_x := _get_autopilot_desired_lane_x(y)
         var min_x: int = lane_x - AUTOPILOT_ANCHOR_SCAN_HALF_WIDTH
         var max_x: int = lane_x + AUTOPILOT_ANCHOR_SCAN_HALF_WIDTH
@@ -2416,15 +2465,19 @@ func _find_autopilot_lane_anchor_target() -> Dictionary:
                 best_grid = pos
     if best_grid.x < 999999:
         return {"grid": best_grid, "world": _get_autopilot_staging_world_for_anchor(best_grid)}
-    return _find_autopilot_any_anchor_target()
+    if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+        return {}
+    return _find_autopilot_any_anchor_target(search_deadline_usec)
 
-func _find_autopilot_any_anchor_target() -> Dictionary:
+func _find_autopilot_any_anchor_target(search_deadline_usec: int = 0) -> Dictionary:
     var best_grid := Vector2i(999999, 999999)
     var best_score := INF
     var checked := 0
     var stride := maxi(1, blocks.size() / 5000)
     for pos_variant in blocks.keys():
         checked += 1
+        if checked % 128 == 0 and search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+            break
         if checked % stride != 0:
             continue
         var pos: Vector2i = pos_variant
@@ -2735,8 +2788,12 @@ func _update_combat(delta: float) -> void:
         attack_timer = 0.0
         _auto_fire_laser()
     if bool(runtime_stats.get("drone_enabled", false)):
+        var drones_start_us := perf_probe_begin()
         _update_drones(delta)
-    _flush_pending_exposed_edges()
+        perf_probe_end("update_drones", drones_start_us)
+    var flush_start_us := perf_probe_begin()
+    _flush_pending_exposed_edges(COMBAT_EDGE_FLUSH_BUDGET)
+    perf_probe_end("flush_edges", flush_start_us)
     perf_probe_end("update_combat", perf_start_us)
 
 func _auto_fire_seismic_charge() -> void:
@@ -2859,28 +2916,17 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array
     var candidates: Array[Dictionary] = []
     var seen_core_ids := {}
     var range_sq := range_world * range_world
-    var offset_scan_sq := (range_world + BLOCK_SIZE * 0.8) * (range_world + BLOCK_SIZE * 0.8)
-    var grid_range := int(ceil(range_world / BLOCK_SIZE)) + 1
-    var my_grid := world_to_grid(ship_pos)
-    var offsets: Array = _get_sorted_target_offsets(grid_range)
-    for offset_variant in offsets:
-        var offset: Vector2i = offset_variant
-        var cell_origin_dist_sq := float(offset.x * offset.x + offset.y * offset.y) * BLOCK_SIZE * BLOCK_SIZE
-        if cell_origin_dist_sq > offset_scan_sq:
-            break
-        var check := my_grid + offset
-        if not blocks.has(check):
-            continue
-        var block: Dictionary = blocks.get(check, {})
-        if not _is_autopilot_attackable_block(block, check):
-            continue
+    for target_variant in _get_nearby_target_cache(range_world):
+        var target: Dictionary = target_variant
+        var check: Vector2i = target.get("pos", Vector2i.ZERO)
+        var block: Dictionary = target.get("block", {})
         var core_id: int = int(block.get("core_id", -1))
         if _should_autopilot_skip_core_area_block(check, block):
             continue
         if core_id >= 0 and seen_core_ids.has(core_id):
             continue
-        var block_world := grid_to_world(check)
-        var dist_sq := ship_pos.distance_squared_to(block_world)
+        var block_world: Vector2 = target.get("world", grid_to_world(check))
+        var dist_sq := float(target.get("ship_dist_sq", ship_pos.distance_squared_to(block_world)))
         if dist_sq >= range_sq:
             continue
         var target_score := dist_sq
@@ -2898,6 +2944,54 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array
         if candidates.size() > max_targets:
             candidates.resize(max_targets)
     return candidates
+
+func _get_nearby_target_cache(radius_world: float, search_deadline_usec: int = 0) -> Array[Dictionary]:
+    var frame_id := Engine.get_process_frames()
+    var origin_grid := world_to_grid(ship_pos)
+    if (
+        _nearby_target_cache_frame == frame_id
+        and _nearby_target_cache_origin == origin_grid
+        and _nearby_target_cache_radius >= radius_world
+    ):
+        return _nearby_target_cache
+    _nearby_target_cache_frame = frame_id
+    _nearby_target_cache_origin = origin_grid
+    _nearby_target_cache_radius = radius_world
+    _nearby_target_cache.clear()
+    var build_deadline_usec := Time.get_ticks_usec() + NEARBY_TARGET_CACHE_BUDGET_USEC
+    if search_deadline_usec > 0:
+        build_deadline_usec = mini(build_deadline_usec, search_deadline_usec)
+    var radius_sq := radius_world * radius_world
+    var offset_scan_sq := (radius_world + BLOCK_SIZE * 0.8) * (radius_world + BLOCK_SIZE * 0.8)
+    var grid_range := int(ceil(radius_world / BLOCK_SIZE)) + 1
+    var offsets: Array = _get_sorted_target_offsets(grid_range)
+    var checked := 0
+    for offset_variant in offsets:
+        checked += 1
+        if checked % 64 == 0 and Time.get_ticks_usec() >= build_deadline_usec:
+            break
+        var offset: Vector2i = offset_variant
+        var cell_origin_dist_sq := float(offset.x * offset.x + offset.y * offset.y) * BLOCK_SIZE * BLOCK_SIZE
+        if cell_origin_dist_sq > offset_scan_sq:
+            break
+        var check := origin_grid + offset
+        var block: Dictionary = blocks.get(check, {})
+        if block.is_empty():
+            continue
+        if not _is_autopilot_attackable_block(block, check):
+            continue
+        var block_world := grid_to_world(check)
+        var ship_dist_sq := ship_pos.distance_squared_to(block_world)
+        if ship_dist_sq > radius_sq:
+            continue
+        _nearby_target_cache.append({
+            "pos": check,
+            "block": block,
+            "world": block_world,
+            "ship_dist_sq": ship_dist_sq,
+            "core_id": int(block.get("core_id", -1)),
+        })
+    return _nearby_target_cache
 
 func _get_sorted_target_offsets(grid_range: int) -> Array:
     if _target_offset_cache.has(grid_range):
@@ -3525,6 +3619,29 @@ func _find_forward_lane_target(forward: Vector2, distance_world: float, lateral_
         return Vector2i(999999, 999999)
     forward = forward.normalized()
     var lateral := Vector2(-forward.y, forward.x)
+    var lane_radius := distance_world + float(lateral_steps + 1) * BLOCK_SIZE
+    var best_grid := Vector2i(999999, 999999)
+    var best_score := INF
+    for target_variant in _get_nearby_target_cache(lane_radius):
+        var target: Dictionary = target_variant
+        var grid: Vector2i = target.get("pos", Vector2i.ZERO)
+        var block: Dictionary = target.get("block", {})
+        if int(block.get("core_id", -1)) >= 0:
+            continue
+        var world: Vector2 = target.get("world", grid_to_world(grid))
+        var offset := world - ship_pos
+        var forward_dist := offset.dot(forward)
+        if forward_dist <= 0.0 or forward_dist > distance_world:
+            continue
+        var lateral_dist := absf(offset.dot(lateral))
+        if lateral_dist > float(lateral_steps) * BLOCK_SIZE + BLOCK_SIZE * 0.65:
+            continue
+        var score := forward_dist + lateral_dist * 0.45
+        if score < best_score:
+            best_score = score
+            best_grid = grid
+    if best_grid.x < 999999:
+        return best_grid
     var step_size := BLOCK_SIZE * 0.35
     var steps := maxi(forward_steps, int(ceil(distance_world / step_size)))
     for step in range(1, steps + 1):
@@ -3760,10 +3877,10 @@ func _queue_core_fill_region(core_id: int, padding_cells: int = 2) -> void:
             planet_renderer.queue_fill_updates(positions)
         return
 
-func _flush_pending_exposed_edges() -> void:
+func _flush_pending_exposed_edges(max_positions: int = -1) -> void:
     if planet_data == null or not planet_data.has_method("flush_pending_exposed_edges"):
         return
-    planet_data.call("flush_pending_exposed_edges")
+    planet_data.call("flush_pending_exposed_edges", max_positions)
     exposed_edges = planet_data.exposed_edges
 
 func _reset_drone_state() -> void:
@@ -3870,11 +3987,9 @@ func _finish_run(returned: bool, reason: String) -> void:
     _set_autopilot_fast_forward_steps(1)
     _set_autopilot_no_render_enabled(false)
     run_finished = true
-    _flush_pending_exposed_edges()
     if planet_data != null:
         blocks = planet_data.blocks
         exposed_edges = planet_data.exposed_edges
-        persistent_destroyed_count = max(0, total_planet_blocks - planet_data.get_total_blocks())
         planet_renderer.mark_dirty(true, "load_state_refresh")
     var keep_percent := 1.0 if returned else float(runtime_stats.get("salvage_keep", 0.0))
     var total_money := cargo_money
@@ -3885,48 +4000,53 @@ func _finish_run(returned: bool, reason: String) -> void:
     summary_save_anim_time = 0.0
     summary_save_pending = true
     summary_save_phase = "prepare"
+    var is_validation_run := validation_autopilot_mode != ""
     var epilogue := ""
-    if breach_chat != null:
+    if breach_chat != null and not is_validation_run:
         _flush_breach_chat(true)
         epilogue = breach_chat.build_summary_epilogue()
     var attempt_lines: Array[String] = []
-    for attempt_variant in persistent_data.get("attempt_history", []):
-        var attempt: Dictionary = attempt_variant
-        attempt_lines.append(
-            "Tier %d :: chipped %.1f%% :: %d blocks :: $%d :: %d XP" % [
-                int(attempt.get("depth_level", 1)),
-                float(attempt.get("persistent_clear", 0.0)),
-                int(attempt.get("nodes_broken", 0)),
-                int(attempt.get("money", 0)),
-                int(attempt.get("xp", 0)),
-            ]
-        )
-        if attempt_lines.size() >= 5:
-            break
+    if not is_validation_run:
+        for attempt_variant in persistent_data.get("attempt_history", []):
+            var attempt: Dictionary = attempt_variant
+            attempt_lines.append(
+                "Tier %d :: chipped %.1f%% :: %d blocks :: $%d :: %d XP" % [
+                    int(attempt.get("depth_level", 1)),
+                    float(attempt.get("persistent_clear", 0.0)),
+                    int(attempt.get("nodes_broken", 0)),
+                    int(attempt.get("money", 0)),
+                    int(attempt.get("xp", 0)),
+                ]
+            )
+            if attempt_lines.size() >= 5:
+                break
     var history_text := "\n".join(attempt_lines)
     if history_text == "":
-        history_text = "No previous breach attempts logged."
+        history_text = "Validation run." if is_validation_run else "No previous breach attempts logged."
     var run_time := maxf(0.0, float(runtime_stats.get("run_time", 30.0)))
     var mining_time := maxf(0.0, run_time - time_left)
     var auto_return_summary := autopilot_return_reason if autopilot_return_reason != "" else ("not returning" if autopilot_enabled else "off")
-    summary_label.text = "[center][b]%s[/b][/center]\n\n[table=2][cell]Breach Tier[/cell][cell]%d[/cell][cell]Blocks Mined This Run[/cell][cell]%d[/cell][cell]Mining Time[/cell][cell]%s[/cell][cell]Fuel Remaining[/cell][cell]%s[/cell][cell]Auto Pilot Return[/cell][cell]%s[/cell][cell]Haul Recovered[/cell][cell]$%d[/cell][cell]Loose Value Touched[/cell][cell]$%d[/cell][cell]XP Banked[/cell][cell]%d[/cell][cell]Daemons Deleted[/cell][cell]%d[/cell][cell]Persistent Clear[/cell][cell]%.1f%%[/cell][cell]Root Keys Banked[/cell][cell]%d[/cell][cell]Power Peak[/cell][cell]%.0f[/cell][cell]Barriers Left[/cell][cell]%d[/cell][/table]\n\n[color=#7dd6ff]Previous Attempts[/color]\n%s%s" % [
-        reason,
-        current_depth_level,
-        nodes_mined,
-        _format_run_seconds(mining_time),
-        _format_run_seconds(time_left),
-        auto_return_summary,
-        money_award,
-        total_money,
-        xp_earned_this_run,
-        cores_destroyed_this_run,
-        _get_persistent_clear_percent(),
-        core_currency_earned_this_run,
-        power_peak,
-        barriers_left,
-        history_text,
-        epilogue
-    ]
+    if is_validation_run:
+        summary_label.text = "Validation run complete."
+    else:
+        summary_label.text = "[center][b]%s[/b][/center]\n\n[table=2][cell]Breach Tier[/cell][cell]%d[/cell][cell]Blocks Mined This Run[/cell][cell]%d[/cell][cell]Mining Time[/cell][cell]%s[/cell][cell]Fuel Remaining[/cell][cell]%s[/cell][cell]Auto Pilot Return[/cell][cell]%s[/cell][cell]Haul Recovered[/cell][cell]$%d[/cell][cell]Loose Value Touched[/cell][cell]$%d[/cell][cell]XP Banked[/cell][cell]%d[/cell][cell]Daemons Deleted[/cell][cell]%d[/cell][cell]Persistent Clear[/cell][cell]%.1f%%[/cell][cell]Root Keys Banked[/cell][cell]%d[/cell][cell]Power Peak[/cell][cell]%.0f[/cell][cell]Barriers Left[/cell][cell]%d[/cell][/table]\n\n[color=#7dd6ff]Previous Attempts[/color]\n%s%s" % [
+            reason,
+            current_depth_level,
+            nodes_mined,
+            _format_run_seconds(mining_time),
+            _format_run_seconds(time_left),
+            auto_return_summary,
+            money_award,
+            total_money,
+            xp_earned_this_run,
+            cores_destroyed_this_run,
+            _get_persistent_clear_percent(),
+            core_currency_earned_this_run,
+            power_peak,
+            barriers_left,
+            history_text,
+            epilogue
+        ]
     if summary_return_button != null:
         summary_return_button.disabled = true
         summary_return_button.text = "Saving..."
@@ -4252,6 +4372,8 @@ func _build_perf_probe_text() -> String:
     return "\n".join(lines)
 
 func _dump_run_perf_snapshot_to_console(returned: bool, reason: String, money_award: int) -> void:
+    if validation_autopilot_mode != "":
+        return
     if _should_suppress_autopilot_perf_output():
         return
     var lines: Array[String] = []
@@ -4281,9 +4403,14 @@ func _dump_run_perf_snapshot_to_console(returned: bool, reason: String, money_aw
 
 func _reset_run_perf_tracking() -> void:
     _run_perf_capture_time = 0.0
+    _last_process_frame_ticks_usec = 0
     _run_perf_extremes = {
         "min_fps": 1000000,
         "max_frame_ms": 0.0,
+        "max_actual_frame_ms": 0.0,
+        "frames_over_16_66ms": 0,
+        "frames_over_20ms": 0,
+        "frames_over_33ms": 0,
         "max_cpu_ms": 0.0,
         "max_phys_ms": 0.0,
         "max_visible_cells": 0,
@@ -4303,6 +4430,10 @@ func _reset_run_perf_tracking() -> void:
     _combat_perf_extremes = {
         "min_fps": 1000000,
         "max_frame_ms": 0.0,
+        "max_actual_frame_ms": 0.0,
+        "frames_over_16_66ms": 0,
+        "frames_over_20ms": 0,
+        "frames_over_33ms": 0,
         "max_cpu_ms": 0.0,
         "max_phys_ms": 0.0,
         "max_visible_cells": 0,
@@ -4325,15 +4456,23 @@ func _reset_run_perf_tracking() -> void:
         _perf_probe_last_samples[key] = 0.0
         _run_perf_peak_samples[key] = 0.0
 
-func _capture_run_perf_snapshot() -> void:
+func _capture_run_perf_snapshot(actual_frame_ms: float, frame_samples: Dictionary) -> void:
     if _run_perf_capture_time < PERF_CAPTURE_WARMUP_SECONDS:
         return
     var fps_now: int = maxi(1, Engine.get_frames_per_second())
-    var frame_ms := 1000.0 / float(fps_now)
+    var fps_frame_ms := 1000.0 / float(fps_now)
+    var frame_ms := actual_frame_ms if actual_frame_ms > 0.0 else fps_frame_ms
     var cpu_ms := float(Performance.get_monitor(Performance.TIME_PROCESS)) * 1000.0
     var phys_ms := float(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)) * 1000.0
     _run_perf_extremes["min_fps"] = mini(int(_run_perf_extremes.get("min_fps", fps_now)), fps_now)
     _run_perf_extremes["max_frame_ms"] = maxf(float(_run_perf_extremes.get("max_frame_ms", 0.0)), frame_ms)
+    _run_perf_extremes["max_actual_frame_ms"] = maxf(float(_run_perf_extremes.get("max_actual_frame_ms", 0.0)), actual_frame_ms)
+    if actual_frame_ms > 16.6667:
+        _run_perf_extremes["frames_over_16_66ms"] = int(_run_perf_extremes.get("frames_over_16_66ms", 0)) + 1
+    if actual_frame_ms > 20.0:
+        _run_perf_extremes["frames_over_20ms"] = int(_run_perf_extremes.get("frames_over_20ms", 0)) + 1
+    if actual_frame_ms > 33.3334:
+        _run_perf_extremes["frames_over_33ms"] = int(_run_perf_extremes.get("frames_over_33ms", 0)) + 1
     _run_perf_extremes["max_cpu_ms"] = maxf(float(_run_perf_extremes.get("max_cpu_ms", 0.0)), cpu_ms)
     _run_perf_extremes["max_phys_ms"] = maxf(float(_run_perf_extremes.get("max_phys_ms", 0.0)), phys_ms)
     _run_perf_extremes["max_pickups"] = maxi(int(_run_perf_extremes.get("max_pickups", 0)), pickups.size())
@@ -4350,11 +4489,18 @@ func _capture_run_perf_snapshot() -> void:
     if planet_renderer != null:
         _run_perf_extremes["max_visible_cells"] = maxi(int(_run_perf_extremes.get("max_visible_cells", 0)), int(planet_renderer.get("_last_visible_cell_budget")))
         _run_perf_extremes["max_effect_load"] = maxi(int(_run_perf_extremes.get("max_effect_load", 0)), int(planet_renderer.get("_last_effect_load")))
-    if _should_replace_perf_snapshot(_run_perf_worst_snapshot, fps_now, cpu_ms):
-        _run_perf_worst_snapshot = _make_perf_snapshot(fps_now, frame_ms, cpu_ms, phys_ms)
+    if _should_replace_perf_snapshot(_run_perf_worst_snapshot, fps_now, frame_ms, cpu_ms):
+        _run_perf_worst_snapshot = _make_perf_snapshot(fps_now, frame_ms, fps_frame_ms, actual_frame_ms, cpu_ms, phys_ms, frame_samples)
     if _is_combat_perf_focus_window():
         _combat_perf_extremes["min_fps"] = mini(int(_combat_perf_extremes.get("min_fps", fps_now)), fps_now)
         _combat_perf_extremes["max_frame_ms"] = maxf(float(_combat_perf_extremes.get("max_frame_ms", 0.0)), frame_ms)
+        _combat_perf_extremes["max_actual_frame_ms"] = maxf(float(_combat_perf_extremes.get("max_actual_frame_ms", 0.0)), actual_frame_ms)
+        if actual_frame_ms > 16.6667:
+            _combat_perf_extremes["frames_over_16_66ms"] = int(_combat_perf_extremes.get("frames_over_16_66ms", 0)) + 1
+        if actual_frame_ms > 20.0:
+            _combat_perf_extremes["frames_over_20ms"] = int(_combat_perf_extremes.get("frames_over_20ms", 0)) + 1
+        if actual_frame_ms > 33.3334:
+            _combat_perf_extremes["frames_over_33ms"] = int(_combat_perf_extremes.get("frames_over_33ms", 0)) + 1
         _combat_perf_extremes["max_cpu_ms"] = maxf(float(_combat_perf_extremes.get("max_cpu_ms", 0.0)), cpu_ms)
         _combat_perf_extremes["max_phys_ms"] = maxf(float(_combat_perf_extremes.get("max_phys_ms", 0.0)), phys_ms)
         _combat_perf_extremes["max_pickups"] = maxi(int(_combat_perf_extremes.get("max_pickups", 0)), pickups.size())
@@ -4371,13 +4517,17 @@ func _capture_run_perf_snapshot() -> void:
         if planet_renderer != null:
             _combat_perf_extremes["max_visible_cells"] = maxi(int(_combat_perf_extremes.get("max_visible_cells", 0)), int(planet_renderer.get("_last_visible_cell_budget")))
             _combat_perf_extremes["max_effect_load"] = maxi(int(_combat_perf_extremes.get("max_effect_load", 0)), int(planet_renderer.get("_last_effect_load")))
-        if _should_replace_perf_snapshot(_combat_perf_worst_snapshot, fps_now, cpu_ms):
-            _combat_perf_worst_snapshot = _make_perf_snapshot(fps_now, frame_ms, cpu_ms, phys_ms)
+        if _should_replace_perf_snapshot(_combat_perf_worst_snapshot, fps_now, frame_ms, cpu_ms):
+            _combat_perf_worst_snapshot = _make_perf_snapshot(fps_now, frame_ms, fps_frame_ms, actual_frame_ms, cpu_ms, phys_ms, frame_samples)
 
 func _build_run_perf_extremes_text() -> String:
-    return "Run Peaks  min FPS %d  max Frame %.2fms  max CPU %.2fms  max Phys %.2fms  max FirewallVis %d  max Load %d" % [
+    return "Run Peaks  min FPS %d  max Frame %.2fms  actual %.2fms  >16.66 %d  >20 %d  >33 %d  max CPU %.2fms  max Phys %.2fms  max FirewallVis %d  max Load %d" % [
         int(_run_perf_extremes.get("min_fps", 0)),
         float(_run_perf_extremes.get("max_frame_ms", 0.0)),
+        float(_run_perf_extremes.get("max_actual_frame_ms", 0.0)),
+        int(_run_perf_extremes.get("frames_over_16_66ms", 0)),
+        int(_run_perf_extremes.get("frames_over_20ms", 0)),
+        int(_run_perf_extremes.get("frames_over_33ms", 0)),
         float(_run_perf_extremes.get("max_cpu_ms", 0.0)),
         float(_run_perf_extremes.get("max_phys_ms", 0.0)),
         int(_run_perf_extremes.get("max_visible_cells", 0)),
@@ -4387,9 +4537,13 @@ func _build_run_perf_extremes_text() -> String:
 func _build_combat_perf_extremes_text() -> String:
     if int(_combat_perf_extremes.get("min_fps", 1000000)) == 1000000:
         return "Combat Peaks unavailable"
-    return "Combat Peaks  min FPS %d  max Frame %.2fms  max CPU %.2fms  max Phys %.2fms  max FirewallVis %d  max Load %d" % [
+    return "Combat Peaks  min FPS %d  max Frame %.2fms  actual %.2fms  >16.66 %d  >20 %d  >33 %d  max CPU %.2fms  max Phys %.2fms  max FirewallVis %d  max Load %d" % [
         int(_combat_perf_extremes.get("min_fps", 0)),
         float(_combat_perf_extremes.get("max_frame_ms", 0.0)),
+        float(_combat_perf_extremes.get("max_actual_frame_ms", 0.0)),
+        int(_combat_perf_extremes.get("frames_over_16_66ms", 0)),
+        int(_combat_perf_extremes.get("frames_over_20ms", 0)),
+        int(_combat_perf_extremes.get("frames_over_33ms", 0)),
         float(_combat_perf_extremes.get("max_cpu_ms", 0.0)),
         float(_combat_perf_extremes.get("max_phys_ms", 0.0)),
         int(_combat_perf_extremes.get("max_visible_cells", 0)),
@@ -4430,6 +4584,11 @@ func _build_run_perf_worst_snapshot_text() -> String:
         float(_run_perf_worst_snapshot.get("cpu_ms", 0.0)),
         float(_run_perf_worst_snapshot.get("phys_ms", 0.0)),
     ])
+    lines.append("Worst Frame Attribution  actual %.3fms  fps-derived %.3fms  unattributed %.3fms" % [
+        float(_run_perf_worst_snapshot.get("actual_frame_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("fps_frame_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("unattributed_frame_ms", 0.0)),
+    ])
     lines.append("Worst Hot Paths  process %.3fms  combat %.3fms  pickups %.3fms  core %.3fms  laser %.3fms  mega %.3fms  damage %.3fms  render %.3fms  ship %.3fms" % [
         float(_run_perf_worst_snapshot.get("process_frame_ms", 0.0)),
         float(_run_perf_worst_snapshot.get("update_combat_ms", 0.0)),
@@ -4440,6 +4599,17 @@ func _build_run_perf_worst_snapshot_text() -> String:
         float(_run_perf_worst_snapshot.get("damage_block_ms", 0.0)),
         float(_run_perf_worst_snapshot.get("renderer_draw_ms", 0.0)),
         float(_run_perf_worst_snapshot.get("ship_draw_ms", 0.0)),
+    ])
+    lines.append("Worst Ship Paths  ship %.3fms  autopilot %.3fms  target %.3fms  collision %.3fms" % [
+        float(_run_perf_worst_snapshot.get("update_ship_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("update_ship_autopilot_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("autopilot_find_target_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("update_ship_collision_ms", 0.0)),
+    ])
+    lines.append("Worst Combat Paths  combat %.3fms  drones %.3fms  flush %.3fms" % [
+        float(_run_perf_worst_snapshot.get("update_combat_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("update_drones_ms", 0.0)),
+        float(_run_perf_worst_snapshot.get("flush_edges_ms", 0.0)),
     ])
     lines.append("Worst Renderer Paths  bg %.3fms  fill %.3fms  edge %.3fms  blocks %.3fms  overlays %.3fms" % [
         float(_run_perf_worst_snapshot.get("renderer_bg_ms", 0.0)),
@@ -4486,6 +4656,11 @@ func _build_combat_perf_worst_snapshot_text() -> String:
         float(_combat_perf_worst_snapshot.get("cpu_ms", 0.0)),
         float(_combat_perf_worst_snapshot.get("phys_ms", 0.0)),
     ])
+    lines.append("Combat Frame Attribution  actual %.3fms  fps-derived %.3fms  unattributed %.3fms" % [
+        float(_combat_perf_worst_snapshot.get("actual_frame_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("fps_frame_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("unattributed_frame_ms", 0.0)),
+    ])
     lines.append("Combat Worst Hot Paths  process %.3fms  combat %.3fms  pickups %.3fms  core %.3fms  laser %.3fms  mega %.3fms  damage %.3fms  render %.3fms  ship %.3fms" % [
         float(_combat_perf_worst_snapshot.get("process_frame_ms", 0.0)),
         float(_combat_perf_worst_snapshot.get("update_combat_ms", 0.0)),
@@ -4496,6 +4671,17 @@ func _build_combat_perf_worst_snapshot_text() -> String:
         float(_combat_perf_worst_snapshot.get("damage_block_ms", 0.0)),
         float(_combat_perf_worst_snapshot.get("renderer_draw_ms", 0.0)),
         float(_combat_perf_worst_snapshot.get("ship_draw_ms", 0.0)),
+    ])
+    lines.append("Combat Worst Ship  ship %.3fms  autopilot %.3fms  target %.3fms  collision %.3fms" % [
+        float(_combat_perf_worst_snapshot.get("update_ship_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("update_ship_autopilot_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("autopilot_find_target_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("update_ship_collision_ms", 0.0)),
+    ])
+    lines.append("Combat Worst Split  combat %.3fms  drones %.3fms  flush %.3fms" % [
+        float(_combat_perf_worst_snapshot.get("update_combat_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("update_drones_ms", 0.0)),
+        float(_combat_perf_worst_snapshot.get("flush_edges_ms", 0.0)),
     ])
     lines.append("Combat Worst Renderer  bg %.3fms  fill %.3fms  edge %.3fms  blocks %.3fms  overlays %.3fms" % [
         float(_combat_perf_worst_snapshot.get("renderer_bg_ms", 0.0)),
@@ -4544,44 +4730,64 @@ func _is_combat_perf_focus_window() -> bool:
     var inward_progress := spawn_position.length() - ship_pos.length()
     return inward_progress >= BLOCK_SIZE * 24.0
 
-func _should_replace_perf_snapshot(current_snapshot: Dictionary, fps_now: int, cpu_ms: float) -> bool:
+func _should_replace_perf_snapshot(current_snapshot: Dictionary, fps_now: int, frame_ms: float, cpu_ms: float) -> bool:
     var should_replace := current_snapshot.is_empty()
     if not should_replace:
-        should_replace = fps_now < int(current_snapshot.get("fps", fps_now))
-        if not should_replace and fps_now <= int(current_snapshot.get("fps", fps_now)):
+        var current_frame_ms := float(current_snapshot.get("frame_ms", 0.0))
+        var same_frame_time := is_equal_approx(frame_ms, current_frame_ms)
+        should_replace = frame_ms > current_frame_ms
+        if not should_replace and same_frame_time:
+            should_replace = fps_now < int(current_snapshot.get("fps", fps_now))
+        if not should_replace and same_frame_time and fps_now <= int(current_snapshot.get("fps", fps_now)):
             should_replace = cpu_ms > float(current_snapshot.get("cpu_ms", 0.0))
-        if not should_replace and cpu_ms >= float(current_snapshot.get("cpu_ms", 0.0)):
+        if not should_replace and same_frame_time and cpu_ms >= float(current_snapshot.get("cpu_ms", 0.0)):
             should_replace = float(_perf_probe_last_samples.get("renderer_draw", 0.0)) > float(current_snapshot.get("renderer_draw_ms", 0.0))
     return should_replace
 
-func _make_perf_snapshot(fps_now: int, frame_ms: float, cpu_ms: float, phys_ms: float) -> Dictionary:
+func _make_perf_snapshot(fps_now: int, frame_ms: float, fps_frame_ms: float, actual_frame_ms: float, cpu_ms: float, phys_ms: float, frame_samples: Dictionary) -> Dictionary:
     return {
         "fps": fps_now,
         "frame_ms": frame_ms,
+        "actual_frame_ms": actual_frame_ms,
+        "fps_frame_ms": fps_frame_ms,
         "cpu_ms": cpu_ms,
         "phys_ms": phys_ms,
-        "process_frame_ms": float(_perf_probe_last_samples.get("process_frame", 0.0)),
-        "update_combat_ms": float(_perf_probe_last_samples.get("update_combat", 0.0)),
-        "update_pickups_ms": float(_perf_probe_last_samples.get("update_pickups", 0.0)),
-        "update_core_attacks_ms": float(_perf_probe_last_samples.get("update_core_attacks", 0.0)),
-        "update_perf_debug_ms": float(_perf_probe_last_samples.get("update_perf_debug", 0.0)),
-        "auto_fire_laser_ms": float(_perf_probe_last_samples.get("auto_fire_laser", 0.0)),
-        "update_mega_beam_ms": float(_perf_probe_last_samples.get("update_mega_beam", 0.0)),
-        "damage_block_ms": float(_perf_probe_last_samples.get("damage_block", 0.0)),
-        "renderer_draw_ms": float(_perf_probe_last_samples.get("renderer_draw", 0.0)),
-        "renderer_bg_ms": float(_perf_probe_last_samples.get("renderer_bg", 0.0)),
-        "renderer_fill_ms": float(_perf_probe_last_samples.get("renderer_fill", 0.0)),
-        "renderer_fill_resize_ms": float(_perf_probe_last_samples.get("renderer_fill_resize", 0.0)),
-        "renderer_fill_rebuild_ms": float(_perf_probe_last_samples.get("renderer_fill_rebuild", 0.0)),
-        "renderer_fill_upload_ms": float(_perf_probe_last_samples.get("renderer_fill_upload", 0.0)),
-        "renderer_edge_ms": float(_perf_probe_last_samples.get("renderer_edge", 0.0)),
-        "renderer_blocks_ms": float(_perf_probe_last_samples.get("renderer_blocks", 0.0)),
-        "renderer_power_blocks_ms": float(_perf_probe_last_samples.get("renderer_power_blocks", 0.0)),
-        "renderer_overlays_ms": float(_perf_probe_last_samples.get("renderer_overlays", 0.0)),
-        "perf_graph_draw_ms": float(_perf_probe_last_samples.get("perf_graph_draw", 0.0)),
-        "ship_draw_ms": float(_perf_probe_last_samples.get("ship_draw", 0.0)),
-        "ship_draw_rings_ms": float(_perf_probe_last_samples.get("ship_draw_rings", 0.0)),
-        "ship_draw_drones_ms": float(_perf_probe_last_samples.get("ship_draw_drones", 0.0)),
+        "unattributed_frame_ms": maxf(
+            0.0,
+            frame_ms
+            - float(frame_samples.get("process_frame", 0.0))
+            - float(frame_samples.get("renderer_draw", 0.0))
+            - float(frame_samples.get("ship_draw", 0.0))
+            - float(frame_samples.get("perf_graph_draw", 0.0))
+        ),
+        "process_frame_ms": float(frame_samples.get("process_frame", 0.0)),
+        "update_ship_ms": float(frame_samples.get("update_ship", 0.0)),
+        "update_ship_autopilot_ms": float(frame_samples.get("update_ship_autopilot", 0.0)),
+        "update_ship_collision_ms": float(frame_samples.get("update_ship_collision", 0.0)),
+        "autopilot_find_target_ms": float(frame_samples.get("autopilot_find_target", 0.0)),
+        "update_combat_ms": float(frame_samples.get("update_combat", 0.0)),
+        "update_drones_ms": float(frame_samples.get("update_drones", 0.0)),
+        "flush_edges_ms": float(frame_samples.get("flush_edges", 0.0)),
+        "update_pickups_ms": float(frame_samples.get("update_pickups", 0.0)),
+        "update_core_attacks_ms": float(frame_samples.get("update_core_attacks", 0.0)),
+        "update_perf_debug_ms": float(frame_samples.get("update_perf_debug", 0.0)),
+        "auto_fire_laser_ms": float(frame_samples.get("auto_fire_laser", 0.0)),
+        "update_mega_beam_ms": float(frame_samples.get("update_mega_beam", 0.0)),
+        "damage_block_ms": float(frame_samples.get("damage_block", 0.0)),
+        "renderer_draw_ms": float(frame_samples.get("renderer_draw", 0.0)),
+        "renderer_bg_ms": float(frame_samples.get("renderer_bg", 0.0)),
+        "renderer_fill_ms": float(frame_samples.get("renderer_fill", 0.0)),
+        "renderer_fill_resize_ms": float(frame_samples.get("renderer_fill_resize", 0.0)),
+        "renderer_fill_rebuild_ms": float(frame_samples.get("renderer_fill_rebuild", 0.0)),
+        "renderer_fill_upload_ms": float(frame_samples.get("renderer_fill_upload", 0.0)),
+        "renderer_edge_ms": float(frame_samples.get("renderer_edge", 0.0)),
+        "renderer_blocks_ms": float(frame_samples.get("renderer_blocks", 0.0)),
+        "renderer_power_blocks_ms": float(frame_samples.get("renderer_power_blocks", 0.0)),
+        "renderer_overlays_ms": float(frame_samples.get("renderer_overlays", 0.0)),
+        "perf_graph_draw_ms": float(frame_samples.get("perf_graph_draw", 0.0)),
+        "ship_draw_ms": float(frame_samples.get("ship_draw", 0.0)),
+        "ship_draw_rings_ms": float(frame_samples.get("ship_draw_rings", 0.0)),
+        "ship_draw_drones_ms": float(frame_samples.get("ship_draw_drones", 0.0)),
         "pickups": pickups.size(),
         "hit_fx": hit_timers.size(),
         "seismic_fx": seismic_charge_bursts.size(),
@@ -4667,33 +4873,30 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
     var found: Array[Vector2i] = []
     if limit <= 0:
         return found
-    var center_grid := world_to_grid(world_pos)
-    var grid_range := int(ceil(radius_world / BLOCK_SIZE)) + 1
     var radius_sq := radius_world * radius_world
     var candidates: Array[Dictionary] = []
-    var seen_core_ids := {}
-    for dx in range(-grid_range, grid_range + 1):
-        for dy in range(-grid_range, grid_range + 1):
-            var check := Vector2i(center_grid.x + dx, center_grid.y + dy)
-            if is_grid_empty(check):
-                continue
-            var block: Dictionary = blocks.get(check, {})
-            if not _is_autopilot_attackable_block(block, check):
-                continue
-            var core_id: int = int(block.get("core_id", -1))
-            if core_id >= 0:
-                continue
-            var dist_sq := world_pos.distance_squared_to(grid_to_world(check))
-            if dist_sq > radius_sq:
-                continue
-            var insert_idx := candidates.size()
-            while insert_idx > 0 and dist_sq < float(candidates[insert_idx - 1].get("dist_sq", INF)):
-                insert_idx -= 1
-            if insert_idx >= limit and candidates.size() >= limit:
-                continue
-            candidates.insert(insert_idx, {"pos": check, "dist_sq": dist_sq, "core_id": core_id})
-            if candidates.size() > limit:
-                candidates.resize(limit)
+    var cache_radius := radius_world + world_pos.distance_to(ship_pos) + BLOCK_SIZE
+    for target_variant in _get_nearby_target_cache(cache_radius):
+        var target: Dictionary = target_variant
+        var check: Vector2i = target.get("pos", Vector2i.ZERO)
+        var block: Dictionary = target.get("block", {})
+        var core_id: int = int(block.get("core_id", -1))
+        if core_id >= 0:
+            continue
+        var target_world: Vector2 = target.get("world", grid_to_world(check))
+        var dist_sq := world_pos.distance_squared_to(target_world)
+        if dist_sq > radius_sq:
+            continue
+        if candidates.size() >= limit and dist_sq >= float(candidates[candidates.size() - 1].get("dist_sq", INF)):
+            continue
+        var insert_idx := candidates.size()
+        while insert_idx > 0 and dist_sq < float(candidates[insert_idx - 1].get("dist_sq", INF)):
+            insert_idx -= 1
+        if insert_idx >= limit and candidates.size() >= limit:
+            continue
+        candidates.insert(insert_idx, {"pos": check, "dist_sq": dist_sq, "core_id": core_id})
+        if candidates.size() > limit:
+            candidates.resize(limit)
     for idx in range(mini(limit, candidates.size())):
         found.append(candidates[idx].get("pos", Vector2i.ZERO))
     return found
