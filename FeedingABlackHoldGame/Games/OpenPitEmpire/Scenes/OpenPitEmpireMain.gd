@@ -207,7 +207,6 @@ const AUTOPILOT_ANCHOR_SCAN_HALF_WIDTH := 16
 const AUTOPILOT_CORE_BREACH_CORRIDOR_HALF_WIDTH := 2
 const AUTOPILOT_CORE_BREACH_SCAN_STEPS := 96
 const AUTOPILOT_TARGET_SEARCH_BUDGET_USEC := 1800
-const NEARBY_TARGET_CACHE_BUDGET_USEC := 1400
 const AUTOPILOT_NORMAL_CORE_MAX_HP := 25000000.0
 const AUTOPILOT_MODE_CENTER := "center"
 const AUTOPILOT_MODE_CORE_ATTACK := "core attack"
@@ -618,10 +617,6 @@ var _combat_perf_worst_snapshot := {}
 var _run_perf_capture_time := 0.0
 var _last_process_frame_ticks_usec := 0
 var _target_offset_cache: Dictionary = {}
-var _nearby_target_cache_frame := -1
-var _nearby_target_cache_origin := Vector2i(2147483647, 2147483647)
-var _nearby_target_cache_radius := 0.0
-var _nearby_target_cache: Array[Dictionary] = []
 var _editor_debug_damage_mult: float = 1.0
 var editor_debug_unlimited_barrier := false
 var editor_debug_unlimited_fuel := false
@@ -2234,46 +2229,47 @@ func _find_autopilot_mining_target() -> Vector2:
     var best_aim_dir := inward
     var best_score := INF
     var found_local_target := false
-    var local_scan_radius := float(AUTOPILOT_MINING_SCAN_CELLS) * BLOCK_SIZE
-    for target_variant in _get_nearby_target_cache(local_scan_radius, search_deadline_usec):
+    for x in range(my_grid.x - AUTOPILOT_MINING_SCAN_CELLS, my_grid.x + AUTOPILOT_MINING_SCAN_CELLS + 1):
         if Time.get_ticks_usec() >= search_deadline_usec:
             break
-        var target: Dictionary = target_variant
-        var block_grid: Vector2i = target.get("pos", Vector2i.ZERO)
-        if absi(block_grid.x - my_grid.x) > AUTOPILOT_MINING_SCAN_CELLS or absi(block_grid.y - my_grid.y) > AUTOPILOT_MINING_SCAN_CELLS:
-            continue
-        var block: Dictionary = target.get("block", {})
-        if _should_autopilot_skip_core_area_block(block_grid, block):
-            continue
-        var block_world: Vector2 = target.get("world", grid_to_world(block_grid))
-        var block_offset := block_world - ship_pos
-        var dist_sq := float(target.get("ship_dist_sq", block_offset.length_squared()))
-        var inward_alignment := block_offset.normalized().dot(inward) if block_offset.length() > 0.01 else 0.0
-        var lane_penalty := absf(float(block_grid.x - _get_autopilot_desired_lane_x(block_grid.y))) * AUTOPILOT_LANE_SCORE_WEIGHT
-        var depth_penalty := absf(float(block_grid.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)) * BLOCK_SIZE * 0.25 if autopilot_sortie_mode == AUTOPILOT_MODE_TOP_SWEEP else 0.0
-        for neighbor in CARDINAL_NEIGHBORS:
-            var staging_grid: Vector2i = block_grid + neighbor * AUTOPILOT_STAGING_CLEARANCE_CELLS
-            if not is_grid_empty(staging_grid):
+        for y in range(my_grid.y - AUTOPILOT_MINING_SCAN_CELLS, my_grid.y + AUTOPILOT_MINING_SCAN_CELLS + 1):
+            var block_grid := Vector2i(x, y)
+            if not blocks.has(block_grid):
                 continue
-            if _is_in_locked_core_avoidance_zone(staging_grid, true):
+            if not _is_autopilot_mineable_block(block_grid):
                 continue
-            var staging_world := grid_to_world(staging_grid)
-            var target_dist := staging_world.distance_to(block_world)
-            if target_dist > attack_radius * 0.9:
+            var block: Dictionary = blocks.get(block_grid, {})
+            if _should_autopilot_skip_core_area_block(block_grid, block):
                 continue
-            var score := dist_sq - inward_alignment * BLOCK_SIZE * BLOCK_SIZE * 8.0
-            score += lane_penalty + depth_penalty
-            score += _get_autopilot_edge_proximity_penalty(staging_world)
-            if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
-                if _is_autopilot_core_attack_mode():
-                    score -= BLOCK_SIZE * BLOCK_SIZE * 6.0
-                else:
-                    score += BLOCK_SIZE * BLOCK_SIZE * 10.0
-            if score < best_score:
-                best_score = score
-                best_world = staging_world
-                best_aim_dir = (block_world - ship_pos).normalized()
-                found_local_target = true
+            var block_world := grid_to_world(block_grid)
+            var block_offset := block_world - ship_pos
+            var dist_sq := block_offset.length_squared()
+            var inward_alignment := block_offset.normalized().dot(inward) if block_offset.length() > 0.01 else 0.0
+            var lane_penalty := absf(float(block_grid.x - _get_autopilot_desired_lane_x(block_grid.y))) * AUTOPILOT_LANE_SCORE_WEIGHT
+            var depth_penalty := absf(float(block_grid.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)) * BLOCK_SIZE * 0.25 if autopilot_sortie_mode == AUTOPILOT_MODE_TOP_SWEEP else 0.0
+            for neighbor in CARDINAL_NEIGHBORS:
+                var staging_grid: Vector2i = block_grid + neighbor * AUTOPILOT_STAGING_CLEARANCE_CELLS
+                if not is_grid_empty(staging_grid):
+                    continue
+                if _is_in_locked_core_avoidance_zone(staging_grid, true):
+                    continue
+                var staging_world := grid_to_world(staging_grid)
+                var target_dist := staging_world.distance_to(block_world)
+                if target_dist > attack_radius * 0.9:
+                    continue
+                var score := dist_sq - inward_alignment * BLOCK_SIZE * BLOCK_SIZE * 8.0
+                score += lane_penalty + depth_penalty
+                score += _get_autopilot_edge_proximity_penalty(staging_world)
+                if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
+                    if _is_autopilot_core_attack_mode():
+                        score -= BLOCK_SIZE * BLOCK_SIZE * 6.0
+                    else:
+                        score += BLOCK_SIZE * BLOCK_SIZE * 10.0
+                if score < best_score:
+                    best_score = score
+                    best_world = staging_world
+                    best_aim_dir = (block_world - ship_pos).normalized()
+                    found_local_target = true
     if not found_local_target and Time.get_ticks_usec() < search_deadline_usec:
         var anchor_target := _find_autopilot_lane_anchor_target(search_deadline_usec)
         if not anchor_target.is_empty():
@@ -2916,17 +2912,28 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array
     var candidates: Array[Dictionary] = []
     var seen_core_ids := {}
     var range_sq := range_world * range_world
-    for target_variant in _get_nearby_target_cache(range_world):
-        var target: Dictionary = target_variant
-        var check: Vector2i = target.get("pos", Vector2i.ZERO)
-        var block: Dictionary = target.get("block", {})
+    var offset_scan_sq := (range_world + BLOCK_SIZE * 0.8) * (range_world + BLOCK_SIZE * 0.8)
+    var grid_range := int(ceil(range_world / BLOCK_SIZE)) + 1
+    var my_grid := world_to_grid(ship_pos)
+    var offsets: Array = _get_sorted_target_offsets(grid_range)
+    for offset_variant in offsets:
+        var offset: Vector2i = offset_variant
+        var cell_origin_dist_sq := float(offset.x * offset.x + offset.y * offset.y) * BLOCK_SIZE * BLOCK_SIZE
+        if cell_origin_dist_sq > offset_scan_sq:
+            break
+        var check := my_grid + offset
+        if not blocks.has(check):
+            continue
+        var block: Dictionary = blocks.get(check, {})
+        if not _is_autopilot_attackable_block(block, check):
+            continue
         var core_id: int = int(block.get("core_id", -1))
         if _should_autopilot_skip_core_area_block(check, block):
             continue
         if core_id >= 0 and seen_core_ids.has(core_id):
             continue
-        var block_world: Vector2 = target.get("world", grid_to_world(check))
-        var dist_sq := float(target.get("ship_dist_sq", ship_pos.distance_squared_to(block_world)))
+        var block_world := grid_to_world(check)
+        var dist_sq := ship_pos.distance_squared_to(block_world)
         if dist_sq >= range_sq:
             continue
         var target_score := dist_sq
@@ -2944,54 +2951,6 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array
         if candidates.size() > max_targets:
             candidates.resize(max_targets)
     return candidates
-
-func _get_nearby_target_cache(radius_world: float, search_deadline_usec: int = 0) -> Array[Dictionary]:
-    var frame_id := Engine.get_process_frames()
-    var origin_grid := world_to_grid(ship_pos)
-    if (
-        _nearby_target_cache_frame == frame_id
-        and _nearby_target_cache_origin == origin_grid
-        and _nearby_target_cache_radius >= radius_world
-    ):
-        return _nearby_target_cache
-    _nearby_target_cache_frame = frame_id
-    _nearby_target_cache_origin = origin_grid
-    _nearby_target_cache_radius = radius_world
-    _nearby_target_cache.clear()
-    var build_deadline_usec := Time.get_ticks_usec() + NEARBY_TARGET_CACHE_BUDGET_USEC
-    if search_deadline_usec > 0:
-        build_deadline_usec = mini(build_deadline_usec, search_deadline_usec)
-    var radius_sq := radius_world * radius_world
-    var offset_scan_sq := (radius_world + BLOCK_SIZE * 0.8) * (radius_world + BLOCK_SIZE * 0.8)
-    var grid_range := int(ceil(radius_world / BLOCK_SIZE)) + 1
-    var offsets: Array = _get_sorted_target_offsets(grid_range)
-    var checked := 0
-    for offset_variant in offsets:
-        checked += 1
-        if checked % 64 == 0 and Time.get_ticks_usec() >= build_deadline_usec:
-            break
-        var offset: Vector2i = offset_variant
-        var cell_origin_dist_sq := float(offset.x * offset.x + offset.y * offset.y) * BLOCK_SIZE * BLOCK_SIZE
-        if cell_origin_dist_sq > offset_scan_sq:
-            break
-        var check := origin_grid + offset
-        var block: Dictionary = blocks.get(check, {})
-        if block.is_empty():
-            continue
-        if not _is_autopilot_attackable_block(block, check):
-            continue
-        var block_world := grid_to_world(check)
-        var ship_dist_sq := ship_pos.distance_squared_to(block_world)
-        if ship_dist_sq > radius_sq:
-            continue
-        _nearby_target_cache.append({
-            "pos": check,
-            "block": block,
-            "world": block_world,
-            "ship_dist_sq": ship_dist_sq,
-            "core_id": int(block.get("core_id", -1)),
-        })
-    return _nearby_target_cache
 
 func _get_sorted_target_offsets(grid_range: int) -> Array:
     if _target_offset_cache.has(grid_range):
@@ -3619,29 +3578,6 @@ func _find_forward_lane_target(forward: Vector2, distance_world: float, lateral_
         return Vector2i(999999, 999999)
     forward = forward.normalized()
     var lateral := Vector2(-forward.y, forward.x)
-    var lane_radius := distance_world + float(lateral_steps + 1) * BLOCK_SIZE
-    var best_grid := Vector2i(999999, 999999)
-    var best_score := INF
-    for target_variant in _get_nearby_target_cache(lane_radius):
-        var target: Dictionary = target_variant
-        var grid: Vector2i = target.get("pos", Vector2i.ZERO)
-        var block: Dictionary = target.get("block", {})
-        if int(block.get("core_id", -1)) >= 0:
-            continue
-        var world: Vector2 = target.get("world", grid_to_world(grid))
-        var offset := world - ship_pos
-        var forward_dist := offset.dot(forward)
-        if forward_dist <= 0.0 or forward_dist > distance_world:
-            continue
-        var lateral_dist := absf(offset.dot(lateral))
-        if lateral_dist > float(lateral_steps) * BLOCK_SIZE + BLOCK_SIZE * 0.65:
-            continue
-        var score := forward_dist + lateral_dist * 0.45
-        if score < best_score:
-            best_score = score
-            best_grid = grid
-    if best_grid.x < 999999:
-        return best_grid
     var step_size := BLOCK_SIZE * 0.35
     var steps := maxi(forward_steps, int(ceil(distance_world / step_size)))
     for step in range(1, steps + 1):
@@ -4873,21 +4809,30 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
     var found: Array[Vector2i] = []
     if limit <= 0:
         return found
+    var center_grid := world_to_grid(world_pos)
+    var grid_range := int(ceil(radius_world / BLOCK_SIZE)) + 1
     var radius_sq := radius_world * radius_world
+    var offset_scan_sq := (radius_world + BLOCK_SIZE * 0.8) * (radius_world + BLOCK_SIZE * 0.8)
     var candidates: Array[Dictionary] = []
-    var cache_radius := radius_world + world_pos.distance_to(ship_pos) + BLOCK_SIZE
-    for target_variant in _get_nearby_target_cache(cache_radius):
-        var target: Dictionary = target_variant
-        var check: Vector2i = target.get("pos", Vector2i.ZERO)
-        var block: Dictionary = target.get("block", {})
+    var offsets: Array = _get_sorted_target_offsets(grid_range)
+    for offset_variant in offsets:
+        var offset: Vector2i = offset_variant
+        var cell_origin_dist_sq := float(offset.x * offset.x + offset.y * offset.y) * BLOCK_SIZE * BLOCK_SIZE
+        if cell_origin_dist_sq > offset_scan_sq:
+            break
+        if candidates.size() >= limit and cell_origin_dist_sq >= float(candidates[candidates.size() - 1].get("dist_sq", INF)):
+            break
+        var check := center_grid + offset
+        if is_grid_empty(check):
+            continue
+        var block: Dictionary = blocks.get(check, {})
+        if not _is_autopilot_attackable_block(block, check):
+            continue
         var core_id: int = int(block.get("core_id", -1))
         if core_id >= 0:
             continue
-        var target_world: Vector2 = target.get("world", grid_to_world(check))
-        var dist_sq := world_pos.distance_squared_to(target_world)
+        var dist_sq := world_pos.distance_squared_to(grid_to_world(check))
         if dist_sq > radius_sq:
-            continue
-        if candidates.size() >= limit and dist_sq >= float(candidates[candidates.size() - 1].get("dist_sq", INF)):
             continue
         var insert_idx := candidates.size()
         while insert_idx > 0 and dist_sq < float(candidates[insert_idx - 1].get("dist_sq", INF)):
