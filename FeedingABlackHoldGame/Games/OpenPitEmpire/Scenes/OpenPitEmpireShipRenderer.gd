@@ -233,11 +233,11 @@ func _draw_forward_shot_guide() -> void:
     var forward := scene_ref._get_forward_direction()
     if forward.length_squared() <= 0.001:
         return
-    var range_world := scene_ref.get_forward_shot_range()
     var start_dist := scene_ref.SHIP_RADIUS + 10.0
-    var end_dist := maxf(start_dist + 12.0, range_world)
     var start := forward * start_dist
-    var end := forward * end_dist
+    var end := scene_ref.get_forward_shot_guide_end_world() - scene_ref.ship_pos
+    if end.length() < start_dist + 12.0:
+        end = forward * (start_dist + 12.0)
     var side := forward.orthogonal()
     var start_half_width := 5.0
     var end_half_width := 28.0

@@ -182,7 +182,7 @@ const CORE_UPGRADES := {
     "emergency_return": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Panic Tunnel", "summary": "Fuel failure triggers an emergency extraction instead of losing the run.", "icon": "P", "effects": {}},
     "core_focus": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Daemon Focus", "summary": "Improves lock-on against daemon cores and adds +25% core damage.", "icon": "D", "effects": {"core_damage_mult": 0.25}},
     "kernel_breach": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Kernel Breach", "summary": "Breach the kernel tier and add +12% core damage.", "icon": "K", "effects": {"core_damage_mult": 0.12}},
-    "core_stasis": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Core Stasis", "summary": "Fuel stops draining while your cutter is actively attacking a core.", "icon": "S", "effects": {"core_fuel_stasis": true}},
+    "core_stasis": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Core Stasis", "summary": "Fuel stops draining while your rig is inside a live core circle.", "icon": "S", "effects": {"core_fuel_stasis": true}},
     "center_unlock": {"base_cost": 4, "cost_mult": 1.0, "max_level": 1, "label": "Root Access", "summary": "Unlock attacks against the deepest root kernel at the center.", "icon": "R", "effects": {}},
     "core_siphon": {"base_cost": 4, "cost_mult": 1.0, "max_level": 1, "label": "Core Siphon", "summary": "Add +10 payout per block after each daemon breach.", "icon": "S", "effects": {"resource_flat": 10.0}},
     "salvage_limiter": {"base_cost": 5, "cost_mult": 1.0, "max_level": 1, "label": "Salvage Limiter", "summary": "Keep 50% of your haul even on a failed run.", "icon": "L", "effects": {"fuel_loss_reduce": 0.5}},

@@ -85,10 +85,12 @@ const SEISMIC_CHARGE_INTERVAL := 0.32
 const SEISMIC_POWERUP_INTERVAL := 0.45
 const SEISMIC_CHARGE_AHEAD_DISTANCE := 180.0
 const FORWARD_SHOT_RANGE_BONUS := BLOCK_SIZE * 1.25
-const SEISMIC_CHARGE_SPLASH_RADIUS_CELLS := 1
-const SEISMIC_CHARGE_DAMAGE_MULT := 0.9
-const SEISMIC_POWERUP_DAMAGE_MULT := 0.4
-const SHOCKWAVE_DAMAGE_MULT := 1.35
+const SEISMIC_CHARGE_SPLASH_RADIUS_CELLS := 2
+const SEISMIC_CHARGE_DAMAGE_MULT := 1.8
+const SEISMIC_POWERUP_DAMAGE_MULT := 0.8
+const SHOCKWAVE_DAMAGE_MULT := 2.7
+const SHOCKWAVE_SPLASH_RADIUS_CELLS := 2
+const SHOCKWAVE_SPLASH_DAMAGE_MULT := 0.55
 const SHOCKWAVE_EXTRA_RADIUS_CELLS := 2
 const SEISMIC_CHARGE_VISUAL_DURATION := 0.42
 const SEISMIC_CHARGE_TRACER_DURATION := 0.16
@@ -145,7 +147,6 @@ const FUNNEL_REENTRY_SCAN_COLUMNS := 14
 const DEFENSE_BLOCK_INTERVAL := 5.0
 const CORE_SHOCKWAVE_INTERVAL := 7.0
 const CORE_SHOCKWAVE_PUSH := 280.0
-const CORE_FUEL_STASIS_GRACE := 0.35
 const SUMMER_LASER_INTERVAL_OUTER := 5.5
 const SUMMER_LASER_INTERVAL_BOSS := 4.5
 const SUMMER_LASER_INTERVAL_BOSS_LOW := 2.0
@@ -272,7 +273,6 @@ var xp_earned_this_run := 0
 var barriers_left := 0
 var shield_invuln_timer := 0.0
 var shield_recovery_timer := 0.0
-var core_fuel_stasis_timer := 0.0
 var boss_defeated := false
 var current_combo := 0
 var combo_timer := 0.0
@@ -592,6 +592,7 @@ var _target_offset_cache: Dictionary = {}
 var _editor_debug_damage_mult: float = 1.0
 var editor_debug_unlimited_barrier := false
 var editor_debug_unlimited_fuel := false
+var editor_debug_unlimited_cargo := false
 var editor_debug_attack_speed_boost := false
 var editor_debug_damage_boost := false
 
@@ -1156,7 +1157,7 @@ func _build_editor_debug_panel(panel_style: StyleBoxFlat) -> void:
     editor_debug_panel.offset_left = -170.0
     editor_debug_panel.offset_top = 18.0
     editor_debug_panel.offset_right = 170.0
-    editor_debug_panel.offset_bottom = 232.0
+    editor_debug_panel.offset_bottom = 274.0
     editor_debug_panel.visible = false
     editor_debug_panel.process_mode = Node.PROCESS_MODE_ALWAYS
     var debug_style := panel_style.duplicate(true)
@@ -1185,6 +1186,7 @@ func _build_editor_debug_panel(panel_style: StyleBoxFlat) -> void:
 
     _add_editor_debug_button(vbox, "barrier")
     _add_editor_debug_button(vbox, "fuel")
+    _add_editor_debug_button(vbox, "cargo")
     _add_editor_debug_button(vbox, "speed")
     _add_editor_debug_button(vbox, "damage")
     _refresh_editor_debug_panel()
@@ -1217,6 +1219,11 @@ func _on_editor_debug_button_pressed(key: String) -> void:
                 time_left = maxf(time_left, float(runtime_stats.get("run_time", 30.0)))
                 autopilot_returning = false
                 autopilot_return_reason = ""
+        "cargo":
+            editor_debug_unlimited_cargo = not editor_debug_unlimited_cargo
+            if editor_debug_unlimited_cargo:
+                autopilot_returning = false
+                autopilot_return_reason = ""
         "speed":
             editor_debug_attack_speed_boost = not editor_debug_attack_speed_boost
             attack_timer = maxf(attack_timer, _get_effective_attack_interval())
@@ -1242,6 +1249,8 @@ func _is_editor_debug_toggle_enabled(key: String) -> bool:
             return editor_debug_unlimited_barrier
         "fuel":
             return editor_debug_unlimited_fuel
+        "cargo":
+            return editor_debug_unlimited_cargo
         "speed":
             return editor_debug_attack_speed_boost
         "damage":
@@ -1254,6 +1263,8 @@ func _get_editor_debug_button_label(key: String) -> String:
             return "Unlimited Barrier"
         "fuel":
             return "Unlimited Fuel"
+        "cargo":
+            return "Unlimited Cargo"
         "speed":
             return "Attack Speed x10"
         "damage":
@@ -1262,7 +1273,7 @@ func _get_editor_debug_button_label(key: String) -> String:
 
 func _get_editor_debug_summary() -> String:
     var parts: Array[String] = []
-    for key in ["barrier", "fuel", "speed", "damage"]:
+    for key in ["barrier", "fuel", "cargo", "speed", "damage"]:
         if _is_editor_debug_toggle_enabled(key):
             parts.append(_get_editor_debug_button_label(key))
     return "no assists active" if parts.is_empty() else ", ".join(parts)
@@ -1280,7 +1291,6 @@ func _start_run() -> void:
     barriers_left = DEFAULT_STARTING_BARRIERS + int(runtime_stats.get("barriers", 0)) + (1 if _has_core_upgrade("barrier_regen") else 0)
     shield_invuln_timer = 0.0
     shield_recovery_timer = 0.0
-    core_fuel_stasis_timer = 0.0
     boss_defeated = bool(persistent_data.get("boss_defeated", false))
     _build_planet()
     _setup_minimap()
@@ -1675,7 +1685,6 @@ func _set_autopilot_no_render_enabled(enabled: bool) -> void:
 func _update_timers(delta: float) -> void:
     bottom_cutscene_timer = maxf(0.0, bottom_cutscene_timer - delta)
     var fuel_stasis_active := _is_core_fuel_stasis_active()
-    core_fuel_stasis_timer = maxf(0.0, core_fuel_stasis_timer - delta)
     if editor_debug_unlimited_fuel:
         time_left = maxf(time_left, float(runtime_stats.get("run_time", 30.0)))
     elif not fuel_stasis_active and not _is_ship_inside_return_zone() and not extracting:
@@ -1889,6 +1898,8 @@ func _spawn_side_attackers() -> void:
     if planet_data == null:
         return
     var count_per_side := SIDE_ATTACKER_COUNT_PER_SIDE + mini(_get_final_core_phase(), 2)
+    if _is_final_core_last_phase():
+        count_per_side = maxi(1, int(ceil(float(count_per_side) * 0.5)))
     for side in [-1, 1]:
         for slot in range(count_per_side):
             side_attackers.append({
@@ -1916,12 +1927,19 @@ func _spawn_side_projectiles() -> void:
     if planet_data == null:
         return
     if not side_attackers.is_empty():
-        for attacker_variant in side_attackers:
+        var attacker_count := side_attackers.size()
+        if _is_final_core_last_phase():
+            attacker_count = maxi(1, int(ceil(float(attacker_count) * 0.5)))
+        for attacker_idx in range(attacker_count):
+            var attacker_variant = side_attackers[attacker_idx]
             var attacker: Dictionary = attacker_variant
             _spawn_side_projectile_from_position(Vector2(attacker.get("position", bottom_cutscene_anchor)), _get_final_core_phase() >= 2)
         return
     var y: int = clampi(world_to_grid(ship_pos).y, PLANET_DATA_SCRIPT.PIT_TOP_Y + 20, PLANET_DATA_SCRIPT.PIT_BOTTOM_Y - 8)
-    for side in [-1, 1]:
+    var sides := [-1, 1]
+    if _is_final_core_last_phase():
+        sides = [-1] if ship_pos.x >= bottom_cutscene_anchor.x else [1]
+    for side in sides:
         var wall_x: int = planet_data.get_left_wall_x(y) if side < 0 else planet_data.get_right_wall_x(y)
         var spawn_grid := Vector2i(wall_x - 3 if side < 0 else wall_x + 3, y + rng.randi_range(-4, 4))
         var spawn_world: Vector2 = grid_to_world(spawn_grid)
@@ -1931,6 +1949,9 @@ func _get_final_core_phase() -> int:
     if planet_data == null:
         return 0
     return clampi(int(planet_data.final_core_phase), 0, int(PLANET_DATA_SCRIPT.FINAL_CORE_PHASE_COUNT) - 1)
+
+func _is_final_core_last_phase() -> bool:
+    return _get_final_core_phase() >= int(PLANET_DATA_SCRIPT.FINAL_CORE_PHASE_COUNT) - 1
 
 func _spawn_roaming_powerups() -> void:
     roaming_powerups.clear()
@@ -2125,7 +2146,7 @@ func _get_autopilot_return_reason() -> String:
         return "no barriers"
     var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
     var core_attack := _is_autopilot_core_attack_mode()
-    if cargo_capacity > 0 and cargo_units >= cargo_capacity and not core_attack:
+    if cargo_capacity > 0 and cargo_units >= cargo_capacity and not core_attack and not editor_debug_unlimited_cargo:
         return "cargo full"
     var run_time := maxf(1.0, float(runtime_stats.get("run_time", 30.0)))
     if time_left <= run_time * AUTOPILOT_FUEL_RETURN_RATIO and not core_attack and not editor_debug_unlimited_fuel:
@@ -2964,8 +2985,6 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         return {}
     var block_before: Dictionary = blocks.get(pos, {})
     var result: Dictionary = planet_data.damage_block(pos, damage, false, _core_unlocks_center())
-    if int(result.get("type", int(block_before.get("type", BlockType.NORMAL)))) == BlockType.CORE:
-        _engage_core_fuel_stasis(result)
     if breach_chat != null and int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
         var engaged_core_id := int(result.get("core_id", int(block_before.get("core_id", -1))))
         if engaged_core_id >= 0:
@@ -3103,8 +3122,6 @@ func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_
             electric_arcs.append({"from": origin_world, "to": next_world, "timer": ARC_DURATION})
         if result_idx < max_results:
             _mark_hit_flash(next_pos)
-        if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
-            _engage_core_fuel_stasis(result)
         if bool(result.get("phase_depleted", false)):
             _handle_final_core_phase_transition(int(result.get("phase", _get_final_core_phase())))
             if not defer_visual_sync:
@@ -3199,7 +3216,16 @@ func _trigger_shockwave() -> void:
     if target_grid.x < 999999:
         _mark_hit_flash(target_grid)
         visuals_dirty = true
-        _damage_block(target_grid, _compute_laser_damage(target_grid) * SHOCKWAVE_DAMAGE_MULT, true)
+        var target_damage := _compute_laser_damage(target_grid)
+        _damage_block(target_grid, target_damage * SHOCKWAVE_DAMAGE_MULT, true)
+        var splash := _apply_splash_damage(
+            target_grid,
+            SHOCKWAVE_SPLASH_RADIUS_CELLS,
+            target_damage * SHOCKWAVE_SPLASH_DAMAGE_MULT,
+            0.45,
+            2.0
+        )
+        visuals_dirty = visuals_dirty or bool(splash.get("visuals", false))
     if visuals_dirty:
         _sync_planet_runtime_views(true, false)
     shockwave_firing = false
@@ -3351,7 +3377,7 @@ func _update_pickups(delta: float) -> void:
     perf_probe_end("update_pickups", perf_start_us)
 
 func _collect_pickup(money: int, cargo: int) -> void:
-    if cargo_units + cargo > int(runtime_stats.get("cargo_capacity", 15)):
+    if not editor_debug_unlimited_cargo and cargo_units + cargo > int(runtime_stats.get("cargo_capacity", 15)):
         return
     cargo_units += cargo
     cargo_money += money
@@ -3399,6 +3425,14 @@ func get_forward_shot_range() -> float:
         SEISMIC_CHARGE_AHEAD_DISTANCE,
         float(runtime_stats.get("attack_radius", 96.0)) + FORWARD_SHOT_RANGE_BONUS
     )
+
+func get_forward_shot_guide_end_world() -> Vector2:
+    var forward := _get_forward_direction()
+    var range_world := get_forward_shot_range()
+    var blocker := _find_forward_lane_blocker(forward, range_world, 2)
+    if blocker.x < 999999:
+        return grid_to_world(blocker)
+    return ship_pos + forward * range_world
 
 func _is_power_ready() -> bool:
     return current_power >= _get_power_capacity() - 0.001
@@ -3487,10 +3521,15 @@ func _spawn_drone_support_powerup() -> void:
 func _find_forward_lane_target(forward: Vector2, distance_world: float, lateral_steps: int = 2, forward_steps: int = 4) -> Vector2i:
     if planet_data == null:
         return Vector2i(999999, 999999)
+    if forward.length_squared() <= 0.001:
+        return Vector2i(999999, 999999)
+    forward = forward.normalized()
     var lateral := Vector2(-forward.y, forward.x)
-    var forward_step := maxf(BLOCK_SIZE * 0.85, distance_world / float(maxi(1, forward_steps)))
-    for step in range(forward_steps, 0, -1):
-        var base_world := ship_pos + forward * (float(step) * forward_step)
+    var step_size := BLOCK_SIZE * 0.35
+    var steps := maxi(forward_steps, int(ceil(distance_world / step_size)))
+    for step in range(1, steps + 1):
+        var distance := minf(distance_world, float(step) * step_size)
+        var base_world := ship_pos + forward * distance
         for offset_idx in range(0, lateral_steps + 1):
             if offset_idx == 0:
                 var center_grid := world_to_grid(base_world)
@@ -3504,6 +3543,33 @@ func _find_forward_lane_target(forward: Vector2, distance_world: float, lateral_
             var right_grid := world_to_grid(base_world + lateral_offset)
             if _is_mineable_non_core_block(right_grid):
                 return right_grid
+    return Vector2i(999999, 999999)
+
+func _find_forward_lane_blocker(forward: Vector2, distance_world: float, lateral_steps: int = 2) -> Vector2i:
+    if planet_data == null or forward.length_squared() <= 0.001:
+        return Vector2i(999999, 999999)
+    forward = forward.normalized()
+    var lateral := Vector2(-forward.y, forward.x)
+    var step_size := BLOCK_SIZE * 0.35
+    var steps := int(ceil(distance_world / step_size))
+    var seen := {}
+    for step in range(1, steps + 1):
+        var distance := minf(distance_world, float(step) * step_size)
+        var base_world := ship_pos + forward * distance
+        for offset_idx in range(0, lateral_steps + 1):
+            var offsets: Array[float] = []
+            if offset_idx == 0:
+                offsets.append(0.0)
+            else:
+                offsets.append(-float(offset_idx))
+                offsets.append(float(offset_idx))
+            for offset_mult in offsets:
+                var grid := world_to_grid(base_world + lateral * BLOCK_SIZE * offset_mult)
+                if seen.has(grid):
+                    continue
+                seen[grid] = true
+                if not blocks.get(grid, {}).is_empty():
+                    return grid
     return Vector2i(999999, 999999)
 
 func _apply_splash_damage(center_grid: Vector2i, radius_cells: int, base_damage: float, falloff: float = 0.3, max_hp_ratio: float = -1.0) -> Dictionary:
@@ -3993,7 +4059,8 @@ func _persist_destroyed_cells() -> void:
     PROGRESS.save_data(persistent_data)
 
 func _refresh_hud() -> void:
-    timer_label.text = "Cargo: %d / %d" % [cargo_units, int(runtime_stats.get("cargo_capacity", 15))]
+    var cargo_capacity_text := "INF" if editor_debug_unlimited_cargo else str(int(runtime_stats.get("cargo_capacity", 15)))
+    timer_label.text = "Cargo: %d / %s" % [cargo_units, cargo_capacity_text]
     var fuel_text := "INF" if editor_debug_unlimited_fuel else "%.1fs" % time_left
     if extracting:
         cargo_label.text = "Fuel: %s  |  Extracting..." % fuel_text
@@ -4014,6 +4081,8 @@ func _refresh_hud() -> void:
         active_boosts.append("Seismic %.0fs" % ceil(active_powerup_timers["seismic_charge"]))
     if _is_core_fuel_stasis_active():
         active_boosts.append("Core Stasis")
+    if editor_debug_unlimited_cargo:
+        active_boosts.append("Unlimited Cargo")
     if editor_debug_attack_speed_boost:
         active_boosts.append("Attack Speed x10")
     if editor_debug_damage_boost:
@@ -4780,6 +4849,7 @@ func _on_core_destroyed(core: Dictionary) -> void:
     if core_id == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
         boss_defeated = true
         final_core_exposed = true
+        _push_ship_above_final_core_arena(core)
     if minimap != null and not autopilot_no_render_enabled:
         minimap.queue_redraw()
 
@@ -5036,7 +5106,10 @@ func _update_final_core_phase_attacks(delta: float) -> void:
         var key := "final_core"
         var timer: float = float(ghost_debris_timers.get(key, 1.5)) - delta
         if timer <= 0.0:
-            _spawn_ghost_debris(final_core, 1 + mini(phase, 2))
+            var debris_count := 1 + mini(phase, 2)
+            if _is_final_core_last_phase():
+                debris_count = maxi(1, int(ceil(float(debris_count) * 0.5)))
+            _spawn_ghost_debris(final_core, debris_count)
             timer = maxf(0.9, AUTUMN_DEBRIS_INTERVAL_BOSS - float(phase) * 0.35)
         ghost_debris_timers[key] = timer
     if phase < 3:
@@ -5065,7 +5138,10 @@ func _update_final_core_phase_attacks(delta: float) -> void:
         state["gaps"] = gaps
     state["origin"] = grid_to_world(Vector2i(int(final_core.center.x), int(final_core.center.y)))
     state["length"] = beam_length
-    state["speed"] = WINTER_CROSS_LASER_SPEED_BOSS_LOW + 0.2
+    var sweep_speed := WINTER_CROSS_LASER_SPEED_BOSS_LOW + 0.2
+    if _is_final_core_last_phase():
+        sweep_speed *= 0.5
+    state["speed"] = sweep_speed
     state["core_edge_ratio"] = edge_ratio
     state["angle"] = float(state.get("angle", 0.0)) + float(state.get("speed", WINTER_CROSS_LASER_SPEED_BOSS_LOW)) * delta
     state["hit_timer"] = maxf(0.0, float(state.get("hit_timer", 0.0)) - delta)
@@ -5196,15 +5272,19 @@ func _has_core_upgrade(upgrade_id: String) -> bool:
     var purchased: Array = persistent_data.get("purchased_core_upgrades", [])
     return upgrade_id in purchased
 
-func _engage_core_fuel_stasis(block_or_result: Dictionary) -> void:
-    if not _has_core_upgrade("core_stasis"):
-        return
-    if int(block_or_result.get("type", BlockType.NORMAL)) != BlockType.CORE:
-        return
-    core_fuel_stasis_timer = maxf(core_fuel_stasis_timer, CORE_FUEL_STASIS_GRACE)
-
 func _is_core_fuel_stasis_active() -> bool:
-    return _has_core_upgrade("core_stasis") and core_fuel_stasis_timer > 0.0
+    return _has_core_upgrade("core_stasis") and _is_ship_inside_live_core_circle()
+
+func _is_ship_inside_live_core_circle() -> bool:
+    if planet_data == null:
+        return false
+    for core_variant in planet_data.cores:
+        var core: Dictionary = core_variant
+        if not bool(core.get("alive", false)):
+            continue
+        if _is_ship_in_core_influence(core):
+            return true
+    return false
 
 func _core_unlocks_center() -> bool:
     return bool(persistent_data.get("free_planet_mode", false)) or _has_core_upgrade("center_unlock")
@@ -5363,6 +5443,29 @@ func _push_ship_outside_final_core_arena(final_core: Dictionary) -> void:
     if ship_root != null:
         ship_root.global_position = ship_pos
     camera_pos = ship_pos
+
+func _push_ship_above_final_core_arena(final_core: Dictionary) -> void:
+    if planet_data == null:
+        return
+    var center_grid := Vector2i(int(final_core.center.x), int(final_core.center.y))
+    var radius_cells := int(planet_data.get_effective_influence_radius(final_core)) + 4
+    var preferred_grid := center_grid + Vector2i(0, -radius_cells)
+    var destination := _find_empty_world_near_final_core_top(preferred_grid)
+    ship_pos = destination if destination != Vector2.INF else grid_to_world(preferred_grid)
+    ship_vel = Vector2.ZERO
+    if ship_root != null:
+        ship_root.global_position = ship_pos
+    camera_pos = ship_pos
+
+func _find_empty_world_near_final_core_top(preferred_grid: Vector2i) -> Vector2:
+    for y_offset in range(0, 8):
+        for x_offset in range(0, 7):
+            var offsets := [0] if x_offset == 0 else [-x_offset, x_offset]
+            for x_variant in offsets:
+                var check_grid := preferred_grid + Vector2i(int(x_variant), -y_offset)
+                if is_grid_empty(check_grid):
+                    return grid_to_world(check_grid)
+    return Vector2.INF
 
 func _on_final_core_exposed() -> void:
     final_core_exposed = true
