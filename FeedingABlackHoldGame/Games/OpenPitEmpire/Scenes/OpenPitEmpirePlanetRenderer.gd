@@ -34,6 +34,9 @@ var _last_visible_cell_budget := 0
 var _last_effect_load := 0
 var _last_reduce_detail := false
 var _last_ultra_reduce_detail := false
+var _sortie_detail_locked := false
+var _sortie_reduce_detail := false
+var _sortie_ultra_reduce_detail := false
 var _auto_ultra_lock_timer := 0.0
 var _last_fill_rebuild_reason := "-"
 var _last_fill_dirty_source := "-"
@@ -60,6 +63,7 @@ var _fill_prewarm_active_cell_span := 1
 var _fill_prewarm_completed_job_id := 0
 
 const SPACE_BG := Color(0.025, 0.025, 0.035, 1.0)
+const DEFAULT_EDGE := Color(1.2, 0.4, 2.0, 1.0)
 const PIT_GLOW := Color(0.52, 0.08, 0.08, 0.72)
 const PIT_WALL_FILL := Color(0.2, 0.04, 0.05, 0.96)
 const PIT_WALL_EDGE := Color(1.0, 0.24, 0.2, 0.96)
@@ -275,6 +279,15 @@ func _draw() -> void:
         int(scene_ref.RenderDetailMode.ULTRA):
             reduce_detail = true
             ultra_reduce_detail = true
+    if int(scene_ref.render_detail_mode) == int(scene_ref.RenderDetailMode.AUTO) and not scene_ref.run_finished:
+        if not _sortie_detail_locked:
+            _sortie_reduce_detail = reduce_detail
+            _sortie_ultra_reduce_detail = ultra_reduce_detail
+            _sortie_detail_locked = true
+        reduce_detail = _sortie_reduce_detail
+        ultra_reduce_detail = _sortie_ultra_reduce_detail
+    else:
+        _sortie_detail_locked = false
     var reduce_detail_changed := reduce_detail != _last_reduce_detail or ultra_reduce_detail != _last_ultra_reduce_detail
     var margin := 0.0 if reduce_detail or ultra_reduce_detail else base_margin
     var visible_grid_min := scene_ref.world_to_grid(top_left - Vector2(margin, margin))
@@ -364,7 +377,13 @@ func _draw() -> void:
             float(cache_grid_max.y - cache_grid_min.y + 1) * scene_ref.BLOCK_SIZE
         )
     )
+    var viewport_background_margin := scene_ref.BLOCK_SIZE * 4.0
+    var viewport_background_rect := Rect2(
+        top_left - Vector2.ONE * viewport_background_margin,
+        (bottom_right - top_left) + Vector2.ONE * viewport_background_margin * 2.0
+    )
     var section_start_us := scene_ref.perf_probe_begin()
+    draw_rect(viewport_background_rect, SPACE_BG, true)
     draw_rect(background_rect, SPACE_BG, true)
     _draw_pit_shell(visible_grid_min, visible_grid_max)
     if ultra_reduce_detail:
@@ -383,32 +402,43 @@ func _draw() -> void:
     _last_cam_origin = canvas_transform.origin
 
     var target_cache_grid_size := Vector2i(cache_grid_w, cache_grid_h)
-    if reduce_detail or ultra_reduce_detail:
+    var use_live_reduced_fill := reduce_detail or ultra_reduce_detail
+    if use_live_reduced_fill:
+        _clear_fill_prewarm()
+        _fill_image = null
+        _fill_texture = null
+        _fill_grid_origin = Vector2i(2147483647, 2147483647)
+        _fill_grid_size = Vector2i.ZERO
+        _fill_dirty = false
+        _pending_fill_updates.clear()
+    elif reduce_detail or ultra_reduce_detail:
         _ensure_fill_prewarm(cache_grid_min, target_cache_grid_size, fill_cell_span)
         _apply_pending_fill_updates_to_prewarm()
         if _fill_prewarm_thread_active:
             _force_redraw = true
         else:
             _advance_fill_prewarm(REDUCED_FILL_PREWARM_ROWS_PER_DRAW)
-    var fill_rebuild_dirty := _fill_dirty
-    var fill_rebuild_origin := _fill_grid_origin != cache_grid_min
-    var fill_rebuild_size := _fill_grid_size != target_cache_grid_size
-    var fill_rebuild_span := _fill_cell_span != fill_cell_span
+    var fill_rebuild_dirty := false if use_live_reduced_fill else _fill_dirty
+    var fill_rebuild_origin := false if use_live_reduced_fill else _fill_grid_origin != cache_grid_min
+    var fill_rebuild_size := false if use_live_reduced_fill else _fill_grid_size != target_cache_grid_size
+    var fill_rebuild_span := false if use_live_reduced_fill else _fill_cell_span != fill_cell_span
     var fill_needs_rebuild := fill_rebuild_dirty or fill_rebuild_origin or fill_rebuild_size
     if fill_rebuild_span:
         fill_needs_rebuild = true
     var fill_prewarm_ready_for_cache := _can_apply_fill_prewarm(cache_grid_min, target_cache_grid_size, fill_cell_span)
     var fill_prewarm_missed := false
     var fill_rebuild_deferred := false
+    var draw_direct_visible_fill := use_live_reduced_fill
 
     section_start_us = scene_ref.perf_probe_begin()
     var target_fill_texture_size := _grid_size_to_fill_texture_size(target_cache_grid_size, fill_cell_span)
-    if fill_needs_rebuild and (reduce_detail or ultra_reduce_detail) and not fill_prewarm_ready_for_cache and _fill_texture != null:
+    if not use_live_reduced_fill and fill_needs_rebuild and (reduce_detail or ultra_reduce_detail) and not fill_prewarm_ready_for_cache and _fill_texture != null:
         fill_rebuild_deferred = true
+        draw_direct_visible_fill = true
         _fill_prewarm_waiting_for_swap = true
         _fill_prewarm_defer_count += 1
         fill_needs_rebuild = false
-    if not fill_rebuild_deferred and (_fill_image == null or _fill_grid_size.x != cache_grid_w or _fill_grid_size.y != cache_grid_h or _fill_cell_span != fill_cell_span or _fill_image.get_width() != target_fill_texture_size.x or _fill_image.get_height() != target_fill_texture_size.y):
+    if not use_live_reduced_fill and not fill_rebuild_deferred and (_fill_image == null or _fill_grid_size.x != cache_grid_w or _fill_grid_size.y != cache_grid_h or _fill_cell_span != fill_cell_span or _fill_image.get_width() != target_fill_texture_size.x or _fill_image.get_height() != target_fill_texture_size.y):
         var fill_resize_start_us := scene_ref.perf_probe_begin()
         _fill_image = Image.create(target_fill_texture_size.x, target_fill_texture_size.y, false, Image.FORMAT_RGBA8)
         _fill_grid_size = Vector2i(cache_grid_w, cache_grid_h)
@@ -421,12 +451,15 @@ func _draw() -> void:
         _fill_scrub_next_row = 0
         _fill_scrub_changed = false
         scene_ref.perf_probe_end("renderer_fill_resize", fill_resize_start_us)
-    if fill_needs_rebuild and (reduce_detail or ultra_reduce_detail) and not fill_prewarm_ready_for_cache and _fill_texture != null:
+    if not use_live_reduced_fill and fill_needs_rebuild and (reduce_detail or ultra_reduce_detail) and not fill_prewarm_ready_for_cache and _fill_texture != null:
         fill_rebuild_deferred = true
+        draw_direct_visible_fill = true
         _fill_prewarm_waiting_for_swap = true
         _fill_prewarm_defer_count += 1
         fill_needs_rebuild = false
-    if fill_needs_rebuild:
+    if use_live_reduced_fill:
+        _last_fill_rebuild_reason = "live"
+    elif fill_needs_rebuild:
         var fill_reason_parts: Array[String] = []
         if fill_rebuild_dirty:
             fill_reason_parts.append("dirty")
@@ -473,7 +506,12 @@ func _draw() -> void:
     else:
         _last_fill_rebuild_reason = "deferred" if fill_rebuild_deferred else "-"
         var should_upload_pending_fill := true
-        if not fill_rebuild_deferred and should_upload_pending_fill and _apply_pending_fill_updates(cache_grid_min, cache_grid_max):
+        var pending_bounds_min := _fill_grid_origin if fill_rebuild_deferred else cache_grid_min
+        var pending_bounds_max := Vector2i(
+            _fill_grid_origin.x + _fill_grid_size.x - 1,
+            _fill_grid_origin.y + _fill_grid_size.y - 1
+        ) if fill_rebuild_deferred else cache_grid_max
+        if should_upload_pending_fill and _apply_pending_fill_updates(pending_bounds_min, pending_bounds_max):
             var fill_upload_start_us := scene_ref.perf_probe_begin()
             if _fill_texture == null:
                 _fill_texture = ImageTexture.create_from_image(_fill_image)
@@ -493,8 +531,10 @@ func _draw() -> void:
         float(texture_size.x) * scene_ref.BLOCK_SIZE,
         float(texture_size.y) * scene_ref.BLOCK_SIZE
     )
-    if _fill_texture != null:
+    if _fill_texture != null and not draw_direct_visible_fill:
         draw_texture_rect(_fill_texture, tex_rect, false)
+    if draw_direct_visible_fill:
+        _draw_direct_reduced_fill(visible_grid_min, visible_grid_max)
     scene_ref.perf_probe_end("renderer_fill", section_start_us)
 
     if reduce_detail:
@@ -526,7 +566,7 @@ func _draw() -> void:
                     Vector2.ONE * (scene_ref.BLOCK_SIZE - BLOCK_GAP * 2.0)
                 )
                 if not reduce_detail and scene_ref.exposed_edges.has(grid):
-                    _draw_block_edges(grid, rect, colors.get("edge", Color.WHITE), int(scene_ref.exposed_edges.get(grid, 0)), 2.0)
+                    _draw_block_edges(grid, rect, colors.get("edge", _get_block_edge_fallback(block)), int(scene_ref.exposed_edges.get(grid, 0)), 2.0)
 
                 var health_ratio := 1.0
                 if not reduce_detail or scene_ref.hit_timers.has(grid):
@@ -655,6 +695,24 @@ func _draw_active_block_effects(grid_min: Vector2i, grid_max: Vector2i) -> void:
             draw_rect(Rect2(rect.position + Vector2(3.0, 3.0), Vector2((rect.size.x - 6.0) * health_ratio, 2.0)), Color(0.6, 1.8, 2.4, 0.88), true)
         draw_rect(rect.grow(-2.0), Color(HIT_GLOW.r, HIT_GLOW.g, HIT_GLOW.b, hit_timer / scene_ref.HIT_FLASH_DURATION), false, 2.0)
 
+func _draw_direct_reduced_fill(grid_min: Vector2i, grid_max: Vector2i) -> void:
+    for x in range(grid_min.x, grid_max.x + 1):
+        for y in range(grid_min.y, grid_max.y + 1):
+            var grid := Vector2i(x, y)
+            var block: Dictionary = scene_ref.blocks.get(grid, {})
+            if block.is_empty():
+                continue
+            var colors: Dictionary = _get_block_palette(block)
+            var world := scene_ref.grid_to_world(grid)
+            draw_rect(
+                Rect2(
+                    world - Vector2.ONE * scene_ref.BLOCK_SIZE * 0.5,
+                    Vector2.ONE * scene_ref.BLOCK_SIZE
+                ),
+                colors.get("fill", SPACE_BG),
+                true
+            )
+
 func _draw_focal_live_outlines(visible_grid_min: Vector2i, visible_grid_max: Vector2i, radius_cells: int, width: float) -> void:
     if radius_cells <= 0:
         return
@@ -680,7 +738,7 @@ func _draw_focal_live_outlines(visible_grid_min: Vector2i, visible_grid_max: Vec
                 world - Vector2.ONE * scene_ref.BLOCK_SIZE * 0.5 + Vector2.ONE * BLOCK_GAP,
                 Vector2.ONE * (scene_ref.BLOCK_SIZE - BLOCK_GAP * 2.0)
             )
-            _draw_block_edges(grid, rect, colors.get("edge", Color.WHITE), exposed_mask, width)
+            _draw_block_edges(grid, rect, colors.get("edge", _get_block_edge_fallback(block)), exposed_mask, width)
 
 func _apply_pending_fill_updates(grid_min: Vector2i, grid_max: Vector2i) -> bool:
     if _pending_fill_updates.is_empty() or _fill_image == null:
@@ -737,7 +795,7 @@ func _advance_fill_scrub(grid_min: Vector2i, grid_max: Vector2i, row_count: int)
             var block: Dictionary = scene_ref.blocks.get(grid, {})
             if not block.is_empty():
                 var colors: Dictionary = _get_block_palette(block)
-                expected = colors.get("fill", Color.WHITE)
+                expected = colors.get("fill", SPACE_BG)
             var current: Color = _fill_image.get_pixel(local_x, local_y)
             if current != expected:
                 _fill_image.set_pixel(local_x, local_y, expected)
@@ -978,6 +1036,21 @@ func _resolve_worker_fill_bucket_color(blocks_snapshot: Dictionary, image_origin
                 fallback_score = score
     return fallback_fill
 
+func _get_zone_edge_color(zone: int) -> Color:
+    return ZONE_EDGE_COLORS.get(zone, DEFAULT_EDGE)
+
+func _get_block_edge_fallback(block: Dictionary) -> Color:
+    return _get_zone_edge_color(int(block.get("zone", ZONE_AUTUMN)))
+
+func _get_draw_edge_color(edge_color: Color, alpha := 1.0) -> Color:
+    var max_channel := maxf(maxf(edge_color.r, edge_color.g), maxf(edge_color.b, 1.0))
+    return Color(
+        edge_color.r / max_channel,
+        edge_color.g / max_channel,
+        edge_color.b / max_channel,
+        alpha
+    )
+
 func _get_worker_block_fill(block: Dictionary, electric_enabled: bool, palette_cache: Dictionary) -> Color:
     if block.is_empty():
         return Color.TRANSPARENT
@@ -991,13 +1064,13 @@ func _get_worker_block_fill(block: Dictionary, electric_enabled: bool, palette_c
     if palette_cache.has(cache_key):
         return Color(palette_cache[cache_key])
     var fill: Color = ZONE_FILLS.get(zone, SPACE_BG)
-    var edge: Color = ZONE_EDGE_COLORS.get(zone, Color.WHITE)
+    var edge: Color = _get_zone_edge_color(zone)
     if unbreakable:
         palette_cache[cache_key] = PIT_WALL_FILL
         return PIT_WALL_FILL
     match block_type:
         1:
-            fill = _mix_fill_with_edge(ZONE_FILLS.get(zone, Color(0.11, 0.07, 0.08, 1.0)), ZONE_EDGE_COLORS.get(zone, Color(1.0, 1.0, 1.0, 1.0)), 0.32)
+            fill = _mix_fill_with_edge(ZONE_FILLS.get(zone, Color(0.11, 0.07, 0.08, 1.0)), _get_zone_edge_color(zone), 0.32)
         2:
             var expected_fill := _mix_fill_with_edge(fill, edge, 0.22)
             fill = expected_fill.lerp(HACKER_BLOCK_FILL, 0.28) if electric_enabled else expected_fill.lerp(HACKER_BLOCK_DIM, 0.12)
@@ -1105,7 +1178,7 @@ func _set_fill_pixel_for_grid(image: Image, image_origin: Vector2i, image_grid_s
         var block: Dictionary = scene_ref.blocks.get(grid, {})
         if not block.is_empty():
             var colors: Dictionary = _get_block_palette(block)
-            expected = colors.get("fill", Color.WHITE)
+            expected = colors.get("fill", SPACE_BG)
     if image.get_pixel(local_x, local_y) == expected:
         return false
     image.set_pixel(local_x, local_y, expected)
@@ -1147,7 +1220,7 @@ func _resolve_fill_bucket_color(image_origin: Vector2i, image_grid_size: Vector2
             score += int(block.get("type", 0))
             if score > fallback_score:
                 var colors: Dictionary = _get_block_palette(block)
-                fallback_fill = colors.get("fill", Color.WHITE)
+                fallback_fill = colors.get("fill", SPACE_BG)
                 fallback_score = score
     return fallback_fill
 
@@ -1189,8 +1262,8 @@ func _rebuild_edge_texture(grid_min: Vector2i, grid_max: Vector2i, ultra_reduce_
             if block.is_empty():
                 continue
             var colors: Dictionary = _get_block_palette(block)
-            var edge_color: Color = colors.get("edge", Color.WHITE)
-            var draw_color := Color(edge_color.r, edge_color.g, edge_color.b, outline_alpha)
+            var edge_color: Color = colors.get("edge", _get_block_edge_fallback(block))
+            var draw_color := _get_draw_edge_color(edge_color, outline_alpha)
             var px := (grid.x - grid_min.x) * cell_px
             var py := (grid.y - grid_min.y) * cell_px
             if (mask & 1) != 0:
@@ -1299,6 +1372,7 @@ func _star_hash_float(seed: float) -> float:
     return n - floor(n)
 
 func _draw_block_edges(_grid: Vector2i, rect: Rect2, color: Color, mask: int, width: float) -> void:
+    color = _get_draw_edge_color(color, color.a)
     if (mask & 1) != 0:
         draw_line(rect.position, rect.position + Vector2(rect.size.x, 0.0), color, width)
     if (mask & 2) != 0:
@@ -1341,7 +1415,7 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
     if _palette_cache.has(cache_key):
         return _palette_cache[cache_key]
     var fill: Color = ZONE_FILLS.get(zone, SPACE_BG)
-    var edge: Color = ZONE_EDGE_COLORS.get(zone, Color.WHITE)
+    var edge: Color = _get_zone_edge_color(zone)
     if unbreakable:
         fill = PIT_WALL_FILL
         edge = PIT_WALL_EDGE
@@ -1350,8 +1424,8 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
         return wall_palette
     match block_type:
         scene_ref.BlockType.CORE:
-            fill = _mix_fill_with_edge(ZONE_FILLS.get(zone, Color(0.11, 0.07, 0.08, 1.0)), ZONE_EDGE_COLORS.get(zone, Color(1.0, 1.0, 1.0, 1.0)), 0.32)
-            edge = ZONE_EDGE_COLORS.get(zone, Color(2.5, 0.3, 0.08, 1.0))
+            fill = _mix_fill_with_edge(ZONE_FILLS.get(zone, Color(0.11, 0.07, 0.08, 1.0)), _get_zone_edge_color(zone), 0.32)
+            edge = _get_zone_edge_color(zone)
         scene_ref.BlockType.ELECTRIC:
             var expected_fill := _mix_fill_with_edge(fill, edge, 0.22)
             fill = expected_fill.lerp(HACKER_BLOCK_FILL, 0.28) if electric_enabled else expected_fill.lerp(HACKER_BLOCK_DIM, 0.12)

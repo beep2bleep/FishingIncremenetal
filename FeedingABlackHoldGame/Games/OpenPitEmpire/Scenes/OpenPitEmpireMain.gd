@@ -447,6 +447,8 @@ const PERF_PROBE_KEYS := [
     "ship_draw_rings",
     "ship_draw_drones",
 ]
+const PERF_HITCH_FRAME_MS := 16.6667
+const PERF_HITCH_SAMPLE_LIMIT := 12
 const RENDERER_PROBE_KEYS := [
     "renderer_bg",
     "renderer_fill",
@@ -612,8 +614,10 @@ var _run_perf_peak_samples := {
 }
 var _run_perf_extremes := {}
 var _run_perf_worst_snapshot := {}
+var _run_perf_hitch_snapshots: Array[Dictionary] = []
 var _combat_perf_extremes := {}
 var _combat_perf_worst_snapshot := {}
+var _combat_perf_hitch_snapshots: Array[Dictionary] = []
 var _run_perf_capture_time := 0.0
 var _last_process_frame_ticks_usec := 0
 var _target_offset_cache: Dictionary = {}
@@ -720,6 +724,8 @@ func get_validation_perf_summary() -> Dictionary:
         "combat_extremes": _combat_perf_extremes.duplicate(true),
         "run_worst_frame": _copy_perf_snapshot_for_validation(_run_perf_worst_snapshot),
         "combat_worst_frame": _copy_perf_snapshot_for_validation(_combat_perf_worst_snapshot),
+        "run_hitches": _copy_perf_snapshots_for_validation(_run_perf_hitch_snapshots),
+        "combat_hitches": _copy_perf_snapshots_for_validation(_combat_perf_hitch_snapshots),
         "probe_peaks": _run_perf_peak_samples.duplicate(true),
         "probe_stats": _build_validation_perf_probe_stats(),
     }
@@ -784,7 +790,16 @@ func _copy_perf_snapshot_for_validation(source: Dictionary) -> Dictionary:
     if copy.has("ship_pos"):
         var ship: Vector2 = copy.get("ship_pos", Vector2.ZERO)
         copy["ship_pos"] = {"x": ship.x, "y": ship.y}
+    if copy.has("viewport_size"):
+        var viewport_size: Vector2 = copy.get("viewport_size", Vector2.ZERO)
+        copy["viewport_size"] = {"x": viewport_size.x, "y": viewport_size.y}
     return copy
+
+func _copy_perf_snapshots_for_validation(source: Array[Dictionary]) -> Array[Dictionary]:
+    var result: Array[Dictionary] = []
+    for snapshot in source:
+        result.append(_copy_perf_snapshot_for_validation(snapshot))
+    return result
 
 func _exit_tree() -> void:
     _set_autopilot_fast_forward_steps(1)
@@ -2211,7 +2226,7 @@ func _find_autopilot_mining_target() -> Vector2:
             return Vector2(pickup_target.get("position", ship_pos))
 
     var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
-    var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1)
+    var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1, search_deadline_usec)
     if not nearby_targets.is_empty():
         var nearby_world := Vector2(nearby_targets[0].get("world", ship_pos))
         autopilot_aim_dir = (nearby_world - ship_pos).normalized()
@@ -2233,6 +2248,8 @@ func _find_autopilot_mining_target() -> Vector2:
         if Time.get_ticks_usec() >= search_deadline_usec:
             break
         for y in range(my_grid.y - AUTOPILOT_MINING_SCAN_CELLS, my_grid.y + AUTOPILOT_MINING_SCAN_CELLS + 1):
+            if Time.get_ticks_usec() >= search_deadline_usec:
+                break
             var block_grid := Vector2i(x, y)
             if not blocks.has(block_grid):
                 continue
@@ -2248,6 +2265,8 @@ func _find_autopilot_mining_target() -> Vector2:
             var lane_penalty := absf(float(block_grid.x - _get_autopilot_desired_lane_x(block_grid.y))) * AUTOPILOT_LANE_SCORE_WEIGHT
             var depth_penalty := absf(float(block_grid.y - PLANET_DATA_SCRIPT.PIT_TOP_Y)) * BLOCK_SIZE * 0.25 if autopilot_sortie_mode == AUTOPILOT_MODE_TOP_SWEEP else 0.0
             for neighbor in CARDINAL_NEIGHBORS:
+                if Time.get_ticks_usec() >= search_deadline_usec:
+                    break
                 var staging_grid: Vector2i = block_grid + neighbor * AUTOPILOT_STAGING_CLEARANCE_CELLS
                 if not is_grid_empty(staging_grid):
                     continue
@@ -2906,7 +2925,7 @@ func _auto_fire_laser() -> void:
         _trigger_chain_lightning(Vector2i(candidates[0].get("pos", Vector2i.ZERO)), Vector2(candidates[0].get("world", Vector2.ZERO)))
     perf_probe_end("auto_fire_laser", perf_start_us)
 
-func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array[Dictionary]:
+func _find_nearest_attack_targets(range_world: float, max_targets: int, search_deadline_usec: int = 0) -> Array[Dictionary]:
     if max_targets <= 0:
         return []
     var candidates: Array[Dictionary] = []
@@ -2917,6 +2936,8 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int) -> Array
     var my_grid := world_to_grid(ship_pos)
     var offsets: Array = _get_sorted_target_offsets(grid_range)
     for offset_variant in offsets:
+        if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+            break
         var offset: Vector2i = offset_variant
         var cell_origin_dist_sq := float(offset.x * offset.x + offset.y * offset.y) * BLOCK_SIZE * BLOCK_SIZE
         if cell_origin_dist_sq > offset_scan_sq:
@@ -4329,8 +4350,10 @@ func _dump_run_perf_snapshot_to_console(returned: bool, reason: String, money_aw
     lines.append(_build_perf_probe_text())
     lines.append(_build_run_perf_peak_probe_text())
     lines.append(_build_run_perf_worst_snapshot_text())
+    lines.append(_build_perf_hitch_samples_text(_run_perf_hitch_snapshots, "Run"))
     lines.append(_build_combat_perf_extremes_text())
     lines.append(_build_combat_perf_worst_snapshot_text())
+    lines.append(_build_perf_hitch_samples_text(_combat_perf_hitch_snapshots, "Combat"))
     lines.append("Camera pos: (%.1f, %.1f)  Ship pos: (%.1f, %.1f)" % [camera_pos.x, camera_pos.y, ship_pos.x, ship_pos.y])
     lines.append("Visible blocks: %d  Total blocks: %d  Persistent breach: %.2f%%" % [blocks.size(), total_planet_blocks, _get_persistent_clear_percent()])
     lines.append("Remaining layer blocks: %s" % _format_layer_block_counts(_get_live_remaining_layer_block_counts()))
@@ -4388,6 +4411,8 @@ func _reset_run_perf_tracking() -> void:
     }
     _run_perf_worst_snapshot = {}
     _combat_perf_worst_snapshot = {}
+    _run_perf_hitch_snapshots.clear()
+    _combat_perf_hitch_snapshots.clear()
     for key in _perf_probe_last_samples.keys():
         _perf_probe_last_samples[key] = 0.0
         _run_perf_peak_samples[key] = 0.0
@@ -4425,6 +4450,8 @@ func _capture_run_perf_snapshot(actual_frame_ms: float, frame_samples: Dictionar
     if planet_renderer != null:
         _run_perf_extremes["max_visible_cells"] = maxi(int(_run_perf_extremes.get("max_visible_cells", 0)), int(planet_renderer.get("_last_visible_cell_budget")))
         _run_perf_extremes["max_effect_load"] = maxi(int(_run_perf_extremes.get("max_effect_load", 0)), int(planet_renderer.get("_last_effect_load")))
+    if frame_ms > PERF_HITCH_FRAME_MS:
+        _record_perf_hitch_snapshot(_run_perf_hitch_snapshots, _make_perf_snapshot(fps_now, frame_ms, fps_frame_ms, actual_frame_ms, cpu_ms, phys_ms, frame_samples))
     if _should_replace_perf_snapshot(_run_perf_worst_snapshot, fps_now, frame_ms, cpu_ms):
         _run_perf_worst_snapshot = _make_perf_snapshot(fps_now, frame_ms, fps_frame_ms, actual_frame_ms, cpu_ms, phys_ms, frame_samples)
     if _is_combat_perf_focus_window():
@@ -4453,6 +4480,8 @@ func _capture_run_perf_snapshot(actual_frame_ms: float, frame_samples: Dictionar
         if planet_renderer != null:
             _combat_perf_extremes["max_visible_cells"] = maxi(int(_combat_perf_extremes.get("max_visible_cells", 0)), int(planet_renderer.get("_last_visible_cell_budget")))
             _combat_perf_extremes["max_effect_load"] = maxi(int(_combat_perf_extremes.get("max_effect_load", 0)), int(planet_renderer.get("_last_effect_load")))
+        if frame_ms > PERF_HITCH_FRAME_MS:
+            _record_perf_hitch_snapshot(_combat_perf_hitch_snapshots, _make_perf_snapshot(fps_now, frame_ms, fps_frame_ms, actual_frame_ms, cpu_ms, phys_ms, frame_samples))
         if _should_replace_perf_snapshot(_combat_perf_worst_snapshot, fps_now, frame_ms, cpu_ms):
             _combat_perf_worst_snapshot = _make_perf_snapshot(fps_now, frame_ms, fps_frame_ms, actual_frame_ms, cpu_ms, phys_ms, frame_samples)
 
@@ -4508,6 +4537,28 @@ func _build_run_perf_peak_probe_text() -> String:
         int(_run_perf_extremes.get("max_blocks_cleared_in_frame", 0)),
         int(_run_perf_extremes.get("max_net_block_drop_in_frame", 0)),
     ])
+    return "\n".join(lines)
+
+func _build_perf_hitch_samples_text(samples: Array[Dictionary], label: String) -> String:
+    if samples.is_empty():
+        return "%s Hitch Samples unavailable" % label
+    var lines: Array[String] = ["%s Top Hitches" % label]
+    var limit := mini(5, samples.size())
+    for idx in range(limit):
+        var sample := samples[idx]
+        lines.append("#%d frame %.2fms unattributed %.2fms process %.2fms render %.2fms return=%s arm=%s dist %.1f cargo %.0f%% status %s fill %s" % [
+            idx + 1,
+            float(sample.get("frame_ms", 0.0)),
+            float(sample.get("unattributed_frame_ms", 0.0)),
+            float(sample.get("process_frame_ms", 0.0)),
+            float(sample.get("renderer_draw_ms", 0.0)),
+            str(sample.get("autopilot_returning", false)),
+            str(sample.get("inside_return_arm", false)),
+            float(sample.get("dist_to_spawn", 0.0)),
+            float(sample.get("cargo_fill_ratio", 0.0)) * 100.0,
+            str(sample.get("autopilot_status", "")),
+            str(sample.get("planet_state", "")),
+        ])
     return "\n".join(lines)
 
 func _build_run_perf_worst_snapshot_text() -> String:
@@ -4680,7 +4731,22 @@ func _should_replace_perf_snapshot(current_snapshot: Dictionary, fps_now: int, f
             should_replace = float(_perf_probe_last_samples.get("renderer_draw", 0.0)) > float(current_snapshot.get("renderer_draw_ms", 0.0))
     return should_replace
 
+func _record_perf_hitch_snapshot(target: Array[Dictionary], snapshot: Dictionary) -> void:
+    var insert_idx := target.size()
+    var frame_ms := float(snapshot.get("frame_ms", 0.0))
+    while insert_idx > 0 and frame_ms > float(target[insert_idx - 1].get("frame_ms", 0.0)):
+        insert_idx -= 1
+    if insert_idx >= PERF_HITCH_SAMPLE_LIMIT and target.size() >= PERF_HITCH_SAMPLE_LIMIT:
+        return
+    target.insert(insert_idx, snapshot)
+    if target.size() > PERF_HITCH_SAMPLE_LIMIT:
+        target.resize(PERF_HITCH_SAMPLE_LIMIT)
+
 func _make_perf_snapshot(fps_now: int, frame_ms: float, fps_frame_ms: float, actual_frame_ms: float, cpu_ms: float, phys_ms: float, frame_samples: Dictionary) -> Dictionary:
+    var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
+    var dist_to_spawn := ship_pos.distance_to(spawn_position)
+    var return_arm_distance := _get_return_zone_arm_distance()
+    var viewport_size := get_viewport_rect().size
     return {
         "fps": fps_now,
         "frame_ms": frame_ms,
@@ -4688,6 +4754,26 @@ func _make_perf_snapshot(fps_now: int, frame_ms: float, fps_frame_ms: float, act
         "fps_frame_ms": fps_frame_ms,
         "cpu_ms": cpu_ms,
         "phys_ms": phys_ms,
+        "run_time_left_s": time_left,
+        "cargo_units": cargo_units,
+        "cargo_capacity": cargo_capacity,
+        "cargo_fill_ratio": 0.0 if cargo_capacity <= 0 else float(cargo_units) / float(cargo_capacity),
+        "barriers_left": barriers_left,
+        "has_left_spawn": has_left_spawn,
+        "autopilot_returning": autopilot_returning,
+        "autopilot_return_reason": autopilot_return_reason,
+        "autopilot_status": autopilot_status,
+        "autopilot_sortie_mode": autopilot_sortie_mode,
+        "extracting": extracting,
+        "return_zone_timer": return_zone_timer,
+        "dist_to_spawn": dist_to_spawn,
+        "return_zone_radius": return_zone_radius,
+        "return_arm_distance": return_arm_distance,
+        "inside_return_zone": has_left_spawn and dist_to_spawn < return_zone_radius,
+        "inside_return_arm": has_left_spawn and dist_to_spawn <= return_arm_distance,
+        "ship_speed": ship_vel.length(),
+        "camera_zoom": camera.zoom.x if camera != null else 1.0,
+        "viewport_size": viewport_size,
         "unattributed_frame_ms": maxf(
             0.0,
             frame_ms
