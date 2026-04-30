@@ -4,7 +4,7 @@ const BALANCE := preload("res://Games/OpenPitEmpire/OpenPitEmpireBalance.gd")
 const PROGRESS := preload("res://Games/OpenPitEmpire/OpenPitEmpireProgress.gd")
 const MAIN_SCENE := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpireMain.tscn")
 
-const DEFAULT_MODES: Array[String] = ["normal", "fast_render", "no_render"]
+const DEFAULT_MODES: Array[String] = ["fast_render", "no_render", "full_render"]
 const DEFAULT_MAX_SORTIES := 160
 const DEFAULT_TIMEOUT_SECONDS := 1800.0
 const CHECKPOINT_INTERVAL_SORTIES := 10
@@ -198,7 +198,7 @@ func _run_mode(mode: String) -> Dictionary:
             _buy_all_affordable_upgrades()
             end_reached = true
             break
-        if float(Time.get_ticks_msec() - started_msec) / 1000.0 > _timeout_seconds:
+        if _is_timeout_enabled_for_mode(mode) and float(Time.get_ticks_msec() - started_msec) / 1000.0 > _timeout_seconds:
             fail_reason = "Timed out after %.1f seconds." % _timeout_seconds
             break
 
@@ -300,7 +300,7 @@ func _run_mode_sequence(sequence: Array[Dictionary]) -> Dictionary:
                 _buy_all_affordable_upgrades()
                 end_reached = true
                 break
-            if float(Time.get_ticks_msec() - started_msec) / 1000.0 > _timeout_seconds:
+            if _is_timeout_enabled_for_mode(mode) and float(Time.get_ticks_msec() - started_msec) / 1000.0 > _timeout_seconds:
                 fail_reason = "Timed out after %.1f seconds." % _timeout_seconds
                 break
         if end_reached or fail_reason != "":
@@ -426,6 +426,10 @@ func _build_perf_record(run_record: Dictionary) -> Dictionary:
 
 func _should_save_perf_data_for_mode(mode: String) -> bool:
     return not (mode.strip_edges().to_lower() in ["fast_render", "fast", "max_render", "no_render", "norender", "sprint"])
+
+func _is_timeout_enabled_for_mode(mode: String) -> bool:
+    var normalized_mode := mode.strip_edges().to_lower()
+    return not (normalized_mode in ["full_render", "full", "normal", "render"])
 
 func _build_balance_record(run_record: Dictionary) -> Dictionary:
     var balance_record := run_record.duplicate(true)
@@ -687,6 +691,7 @@ func _build_aggregate_summary(results: Array[Dictionary]) -> Dictionary:
         var total_xp := 0
         var total_cores := 0
         var total_nodes := 0
+        var zero_node_runs := 0
         var total_mining_time := 0.0
         var total_wall_time := 0.0
         var worst_min_fps := 1000000
@@ -703,6 +708,8 @@ func _build_aggregate_summary(results: Array[Dictionary]) -> Dictionary:
             total_xp += int(run.get("xp_gained", 0))
             total_cores += int(run.get("core_currency_gained", 0))
             total_nodes += int(run.get("nodes_mined", 0))
+            if int(run.get("nodes_mined", 0)) <= 0:
+                zero_node_runs += 1
             total_mining_time += float(run.get("mining_time_s", 0.0))
             total_wall_time += float(run.get("wall_elapsed_s", 0.0))
             var cargo_ratio := float(run.get("end_cargo_fill_ratio", 0.0))
@@ -763,6 +770,7 @@ func _build_aggregate_summary(results: Array[Dictionary]) -> Dictionary:
             "mode": str(mode_result.get("mode", "")),
             "ok": bool(mode_result.get("ok", false)),
             "sorties": runs.size(),
+            "zero_node_runs": zero_node_runs,
             "total_money": total_money,
             "total_xp": total_xp,
             "total_core_currency": total_cores,
@@ -1016,14 +1024,15 @@ func _render_markdown_report(report: Dictionary) -> String:
     lines.append("")
     lines.append("## Balance Summary")
     lines.append("")
-    lines.append("| Mode | Sorties | Nodes | Money | XP | Cores | Mining Time | Nodes/s | Money/s | Avg End Cargo | Avg End Fuel | Worst FPS | Worst Frame |")
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+    lines.append("| Mode | Sorties | Zero-Block Runs | Nodes | Money | XP | Cores | Mining Time | Nodes/s | Money/s | Avg End Cargo | Avg End Fuel | Worst FPS | Worst Frame |")
+    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
     var aggregate: Dictionary = report.get("aggregate", {})
     for row_variant in Array(aggregate.get("by_mode", [])):
         var row: Dictionary = row_variant
-        lines.append("| %s | %d | %d | %d | %d | %d | %.1f | %.3f | %.3f | %.1f%% | %.1f%% | %d | %.2fms |" % [
+        lines.append("| %s | %d | %d | %d | %d | %d | %d | %.1f | %.3f | %.3f | %.1f%% | %.1f%% | %d | %.2fms |" % [
             str(row.get("mode", "")),
             int(row.get("sorties", 0)),
+            int(row.get("zero_node_runs", 0)),
             int(row.get("total_nodes", 0)),
             int(row.get("total_money", 0)),
             int(row.get("total_xp", 0)),

@@ -404,6 +404,17 @@ func _get_open_pit_defense_step() -> Dictionary:
         return {}
     return challenge.duplicate(true)
 
+func _apply_open_pit_fixed_upgrades() -> void:
+    if not _is_open_pit_defense_challenge_active():
+        return
+    var fixed_upgrades: Dictionary = {}
+    var fixed_overrides: Dictionary = open_pit_defense_step.get("fixed_upgrades", {})
+    fixed_upgrades.merge(fixed_overrides, true)
+    for upgrade_id_variant in fixed_upgrades.keys():
+        var upgrade_id := str(upgrade_id_variant)
+        fixed_upgrades[upgrade_id] = maxi(0, int(fixed_upgrades.get(upgrade_id, 0)))
+    persistent_data["upgrades"] = fixed_upgrades
+
 func _complete_open_pit_defense_challenge(success: bool, payload: Dictionary) -> void:
     var result := open_pit_defense_step.duplicate(true)
     result["success"] = success
@@ -509,9 +520,12 @@ func _draw() -> void:
 func _begin_run() -> void:
     persistent_data = simulation_data_override.duplicate(true) if not simulation_data_override.is_empty() else MINING_PROGRESS_SCRIPT.load_data()
     if _is_multi_mode_challenge_active():
+        if _is_open_pit_defense_challenge_active():
+            persistent_data = MINING_PROGRESS_SCRIPT.get_default_data()
         var forced_depth: int = int(multi_mode_step.get("depth_level", MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL))
         persistent_data["deepest_level_unlocked"] = max(int(persistent_data.get("deepest_level_unlocked", forced_depth)), forced_depth)
         persistent_data["selected_depth_level"] = forced_depth
+        _apply_open_pit_fixed_upgrades()
     var min_depth: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
     var selected_depth: int = int(persistent_data.get("selected_depth_level", min_depth))
     if simulation_depth_override > 0:

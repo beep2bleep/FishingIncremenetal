@@ -365,6 +365,43 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
     save_data(data)
     return data
 
+static func bank_partial_run_rewards(results: Dictionary) -> Dictionary:
+    var data := load_data()
+    var money := int(results.get("money", 0))
+    var xp := int(results.get("xp", 0))
+    var core_currency := int(results.get("core_currency", 0))
+    var cores_destroyed := int(results.get("cores_destroyed", 0))
+    if money <= 0 and xp <= 0 and core_currency <= 0 and cores_destroyed <= 0:
+        return data
+    data["wallet"] = max(0, int(data.get("wallet", 0)) + money)
+    data["xp_currency"] = max(0, int(data.get("xp_currency", 0)) + xp)
+    data["core_currency"] = max(0, int(data.get("core_currency", 0)) + core_currency)
+    data["total_cores_destroyed"] = max(0, int(data.get("total_cores_destroyed", 0)) + cores_destroyed)
+    if results.get("chat_line_counts", {}) is Dictionary:
+        data["chat_line_counts"] = results.get("chat_line_counts", {}).duplicate(true)
+    if results.get("chat_thread_counts", {}) is Dictionary:
+        data["chat_thread_counts"] = results.get("chat_thread_counts", {}).duplicate(true)
+    if bool(results.get("bottom_phase_unlocked", false)):
+        data["bottom_phase_unlocked"] = true
+    if bool(results.get("boss_defeated", false)):
+        data["boss_defeated"] = true
+    var attempt_history: Array = data.get("attempt_history", []).duplicate(true)
+    attempt_history.push_front({
+        "summary": str(results.get("summary_text", "Open Pit Empire rewards banked before defense.")),
+        "money": money,
+        "xp": xp,
+        "nodes_broken": int(results.get("nodes_broken", 0)),
+        "persistent_clear": float(results.get("persistent_clear", 0.0)),
+        "depth_level": int(results.get("depth_level", 1)),
+    })
+    if attempt_history.size() > 8:
+        attempt_history.resize(8)
+    data["attempt_history"] = attempt_history
+    data["last_run_summary"] = str(results.get("summary_text", "Open Pit Empire rewards banked before defense."))
+    BALANCE.refresh_depth_unlocks(data)
+    save_data(data)
+    return data
+
 static func set_selected_depth_level(depth_level: int) -> Dictionary:
     var data := load_data()
     data["selected_depth_level"] = clampi(depth_level, MIN_START_DEPTH_LEVEL, int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)))

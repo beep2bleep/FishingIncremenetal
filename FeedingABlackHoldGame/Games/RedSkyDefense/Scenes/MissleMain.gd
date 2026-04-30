@@ -485,6 +485,17 @@ func _get_open_pit_defense_step() -> Dictionary:
         return {}
     return challenge.duplicate(true)
 
+func _apply_open_pit_fixed_meta_bonuses() -> void:
+    if not _is_open_pit_defense_challenge_active():
+        return
+    var fixed_config: Dictionary = RED_SKY_DATA.get_base_run_config()
+    var fixed_overrides: Dictionary = open_pit_defense_step.get("fixed_meta_bonuses", {})
+    fixed_config.merge(fixed_overrides, true)
+    meta_bonuses = fixed_config
+    for key_variant in fixed_config.keys():
+        var key := str(key_variant)
+        meta_bonuses[key] = fixed_config.get(key)
+
 func _complete_open_pit_defense_challenge(success: bool, payload: Dictionary) -> void:
     var result := open_pit_defense_step.duplicate(true)
     result["success"] = success
@@ -1206,6 +1217,7 @@ func _begin_run() -> void:
     _summary_pointer_recovery_frames_remaining = 0
     persistent_data = RED_SKY_PROGRESS.load_data()
     meta_bonuses = RED_SKY_DATA.build_meta_bonuses(persistent_data.get("meta_upgrades", {}))
+    _apply_open_pit_fixed_meta_bonuses()
     last_run_results.clear()
     selected_start_wave = RED_SKY_PROGRESS.get_selected_start_wave(persistent_data)
     if _is_multi_mode_challenge_active():

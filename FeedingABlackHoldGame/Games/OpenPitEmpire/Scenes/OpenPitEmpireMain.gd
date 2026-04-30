@@ -143,6 +143,10 @@ const SIDE_ATTACKER_TRACK_SPEED := 4.5
 const SIDE_ATTACKER_SHOT_INTERVAL := 1.9
 const SIDE_ATTACKER_VERTICAL_SPACING := 14
 const SIDE_ATTACKER_VERTICAL_SWAY := 18.0
+const FINAL_CORE_ARENA_EJECT_EXTRA_CELLS := 12
+const FINAL_CORE_DEBRIS_INTERVAL_MULT := 1.35
+const FINAL_CORE_DEBRIS_COUNT_CAP := 2
+const FINAL_CORE_CROSS_LASER_SPEED_MULT := 0.72
 const FUNNEL_REENTRY_SCAN_RADIUS_Y := 10
 const FUNNEL_REENTRY_SCAN_COLUMNS := 14
 const DEFENSE_BLOCK_INTERVAL := 5.0
@@ -208,6 +212,7 @@ const AUTOPILOT_CORE_BREACH_CORRIDOR_HALF_WIDTH := 2
 const AUTOPILOT_CORE_BREACH_SCAN_STEPS := 96
 const AUTOPILOT_TARGET_SEARCH_BUDGET_USEC := 1800
 const AUTOPILOT_NORMAL_CORE_MAX_HP := 25000000.0
+const CORE_CLEAR_PATH_TARGET_BONUS := 0.7
 const AUTOPILOT_MODE_CENTER := "center"
 const AUTOPILOT_MODE_CORE_ATTACK := "core attack"
 const AUTOPILOT_MODE_LEFT_SWEEP := "left sweep"
@@ -1505,6 +1510,9 @@ func _try_start_core_defense(core: Dictionary, _shared_max_hp: float) -> Diction
     var core_id: int = int(core.get("id", -1))
     if core_id < 0 or str(core.get("role", "")) != "boss":
         return {"handled": false}
+    if validation_autopilot_mode != "":
+        _complete_core_defense_for_validation(core)
+        return {"handled": true, "hp_ratio": 0.001}
     var failed_once: Dictionary = persistent_data.get("core_defense_failed_once", {})
     if bool(failed_once.get(str(core_id), false)):
         return {"handled": false}
@@ -1544,18 +1552,40 @@ func _build_core_defense_spec(core: Dictionary) -> Dictionary:
         "intro_text": "%s: clear the countermeasure or the command node restores to 50%%." % defense_name,
     }
     if is_red_sky:
-        spec["target_wave"] = 5 + difficulty * 2
+        spec["target_wave"] = 4 + difficulty
         spec["disable_wave_upgrades"] = true
+        spec["fixed_meta_bonuses"] = {
+            "base_health": 260.0 + float(difficulty) * 35.0,
+            "base_shield": 90.0 + float(difficulty) * 22.0,
+            "shield_regen": 5.0,
+            "gun_damage": 21.0 + float(difficulty) * 2.5,
+            "fire_interval": 0.13,
+            "tower_count": 1,
+            "drone_count": 1,
+            "helper_drone_count": 1 if difficulty >= 3 else 0,
+            "repair_between_waves": 24.0,
+        }
     else:
         spec["depth_level"] = 2 + difficulty
-        spec["nodes_goal"] = 8 + difficulty * 3
-        spec["time_limit"] = maxf(14.0, 24.0 - float(difficulty) * 2.0)
+        spec["nodes_goal"] = 7 + difficulty * 2
+        spec["time_limit"] = maxf(22.0, 30.0 - float(difficulty))
+        spec["fixed_upgrades"] = {
+            "timer_reserve": 8 + difficulty * 2,
+            "engine_tuning": 8 + difficulty * 2,
+            "drill_torque": 10 + difficulty * 2,
+            "drill_plating": 8 + difficulty * 2,
+            "cargo_pods": 7 + difficulty,
+            "pickup_radius": 6 + difficulty,
+            "magnet_drone": 4 + difficulty,
+            "delivery_drone": 3 + difficulty,
+        }
         spec["deepcore_hunter"] = true
-        spec["hunter_speed_mult"] = 0.5
-        spec["hunter_trigger_distance"] = 260.0
+        spec["hunter_speed_mult"] = 0.35
+        spec["hunter_trigger_distance"] = 320.0
     return spec
 
 func _launch_core_defense_challenge(spec: Dictionary) -> void:
+    _bank_rewards_before_core_defense()
     Global.open_pit_defense_challenge = spec.duplicate(true)
     Global.open_pit_defense_result = {}
     Global.multi_game_run = {}
@@ -1567,6 +1597,53 @@ func _launch_core_defense_challenge(spec: Dictionary) -> void:
     Global.start_in_upgrade_scene = false
     Global.load_saved_run = false
     SceneChanger.change_to_new_scene(Util.PATH_RED_SKY_MAIN if str(spec.get("game_id", "")) == Util.ACTIVE_GAME_RED_SKY else Util.PATH_MINING_MAIN, null, 0.2)
+
+func _complete_core_defense_for_validation(core: Dictionary) -> void:
+    if planet_data == null:
+        return
+    var core_id := int(core.get("id", -1))
+    if core_id < 0:
+        return
+    var destroy_result: Dictionary = planet_data.force_destroy_core(core_id)
+    if not bool(destroy_result.get("destroyed", false)):
+        return
+    _handle_core_destroyed_result(destroy_result)
+    var completed: Dictionary = persistent_data.get("core_defense_completed", {})
+    completed[str(core_id)] = true
+    persistent_data["core_defense_completed"] = completed
+    persistent_data.erase("open_pit_defense_pending")
+    blocks = planet_data.blocks
+    exposed_edges = planet_data.exposed_edges
+    damaged_cells.clear()
+    if planet_renderer != null and not autopilot_no_render_enabled:
+        planet_renderer.mark_dirty(true, "validation_defense_skip")
+
+func _bank_rewards_before_core_defense() -> void:
+    var total_money := cargo_money
+    for pickup in pickups:
+        total_money += int(pickup.get("money", 0))
+    if total_money <= 0 and xp_earned_this_run <= 0 and core_currency_earned_this_run <= 0 and cores_destroyed_this_run <= 0:
+        return
+    persistent_data = PROGRESS.bank_partial_run_rewards({
+        "money": total_money,
+        "xp": xp_earned_this_run,
+        "core_currency": core_currency_earned_this_run,
+        "cores_destroyed": cores_destroyed_this_run,
+        "depth_level": current_depth_level,
+        "nodes_broken": nodes_mined,
+        "boss_defeated": boss_defeated,
+        "summary_text": "Banked before daemon defense: $%d, %d XP, %d root keys." % [total_money, xp_earned_this_run, core_currency_earned_this_run],
+        "persistent_clear": _get_persistent_clear_percent(),
+        "chat_line_counts": breach_chat.get_persistent_line_counts() if breach_chat != null else persistent_data.get("chat_line_counts", {}),
+        "chat_thread_counts": breach_chat.get_persistent_thread_counts() if breach_chat != null else persistent_data.get("chat_thread_counts", {}),
+        "bottom_phase_unlocked": bottom_phase_unlocked,
+    })
+    cargo_money = 0
+    cargo_units = 0
+    pickups.clear()
+    xp_earned_this_run = 0
+    core_currency_earned_this_run = 0
+    cores_destroyed_this_run = 0
 
 func _consume_open_pit_defense_result() -> void:
     var result: Dictionary = Global.open_pit_defense_result.duplicate(true)
@@ -2958,8 +3035,11 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int, search_d
         if dist_sq >= range_sq:
             continue
         var target_score := dist_sq
-        if core_id >= 0 and not _is_autopilot_core_attack_mode():
-            target_score += range_sq * 0.35
+        if core_id >= 0:
+            if _has_clear_attack_path_to_core(check):
+                target_score -= range_sq * CORE_CLEAR_PATH_TARGET_BONUS
+            elif not _is_autopilot_core_attack_mode():
+                target_score += range_sq * 0.35
         var candidate := {"pos": check, "dist_sq": target_score, "world": block_world, "core_id": core_id}
         var insert_idx := candidates.size()
         while insert_idx > 0 and target_score < float(candidates[insert_idx - 1].get("dist_sq", INF)):
@@ -2972,6 +3052,30 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int, search_d
         if candidates.size() > max_targets:
             candidates.resize(max_targets)
     return candidates
+
+func _has_clear_attack_path_to_core(target: Vector2i) -> bool:
+    var target_block: Dictionary = blocks.get(target, {})
+    if int(target_block.get("type", BlockType.NORMAL)) != BlockType.CORE:
+        return false
+    var from := ship_pos
+    var to := grid_to_world(target)
+    var distance := from.distance_to(to)
+    if distance <= BLOCK_SIZE * 0.75:
+        return true
+    var steps := clampi(int(ceil(distance / (BLOCK_SIZE * 0.45))), 1, 96)
+    var target_core_id := int(target_block.get("core_id", -1))
+    for step in range(1, steps):
+        var sample := from.lerp(to, float(step) / float(steps))
+        var cell := world_to_grid(sample)
+        if cell == target:
+            continue
+        if not blocks.has(cell):
+            continue
+        var block: Dictionary = blocks.get(cell, {})
+        if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE and int(block.get("core_id", -1)) == target_core_id:
+            continue
+        return false
+    return true
 
 func _get_sorted_target_offsets(grid_range: int) -> Array:
     if _target_offset_cache.has(grid_range):
@@ -5340,11 +5444,11 @@ func _update_final_core_phase_attacks(delta: float) -> void:
         var key := "final_core"
         var timer: float = float(ghost_debris_timers.get(key, 1.5)) - delta
         if timer <= 0.0:
-            var debris_count := 1 + mini(phase, 2)
+            var debris_count := mini(FINAL_CORE_DEBRIS_COUNT_CAP, 1 + mini(phase, 2))
             if _is_final_core_last_phase():
                 debris_count = maxi(1, int(ceil(float(debris_count) * 0.5)))
             _spawn_ghost_debris(final_core, debris_count)
-            timer = maxf(0.9, AUTUMN_DEBRIS_INTERVAL_BOSS - float(phase) * 0.35)
+            timer = maxf(1.35, (AUTUMN_DEBRIS_INTERVAL_BOSS - float(phase) * 0.22) * FINAL_CORE_DEBRIS_INTERVAL_MULT)
         ghost_debris_timers[key] = timer
     if phase < 3:
         root_cross_lasers.erase(int(PLANET_DATA_SCRIPT.FINAL_CORE_ID))
@@ -5372,9 +5476,9 @@ func _update_final_core_phase_attacks(delta: float) -> void:
         state["gaps"] = gaps
     state["origin"] = grid_to_world(Vector2i(int(final_core.center.x), int(final_core.center.y)))
     state["length"] = beam_length
-    var sweep_speed := WINTER_CROSS_LASER_SPEED_BOSS_LOW + 0.2
+    var sweep_speed := (WINTER_CROSS_LASER_SPEED_BOSS_LOW + 0.2) * FINAL_CORE_CROSS_LASER_SPEED_MULT
     if _is_final_core_last_phase():
-        sweep_speed *= 0.5
+        sweep_speed *= 0.55
     state["speed"] = sweep_speed
     state["core_edge_ratio"] = edge_ratio
     state["angle"] = float(state.get("angle", 0.0)) + float(state.get("speed", WINTER_CROSS_LASER_SPEED_BOSS_LOW)) * delta
@@ -5669,7 +5773,7 @@ func _push_ship_outside_final_core_arena(final_core: Dictionary) -> void:
     var dir := (ship_pos - center_world).normalized()
     if dir.length() < 0.01:
         dir = Vector2.UP
-    var radius_cells := int(planet_data.get_effective_influence_radius(final_core)) + 6
+    var radius_cells := int(planet_data.get_effective_influence_radius(final_core)) + FINAL_CORE_ARENA_EJECT_EXTRA_CELLS
     var preferred := grid_to_world(center_grid + Vector2i(roundi(dir.x * float(radius_cells)), roundi(dir.y * float(radius_cells))))
     var fallback := _find_closest_empty_world_on_screen(preferred)
     ship_pos = fallback if fallback != Vector2.INF else preferred
