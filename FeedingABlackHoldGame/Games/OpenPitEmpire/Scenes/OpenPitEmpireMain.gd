@@ -2545,6 +2545,13 @@ func _update_autopilot_stuck_mode() -> void:
     if autopilot_stuck_timer < AUTOPILOT_STUCK_MODE_SECONDS:
         return
     var old_mode := autopilot_sortie_mode
+    if autopilot_sortie_mode == AUTOPILOT_MODE_DIG_DEEP:
+        autopilot_dig_deep_anchor_grid = Vector2i(999999, 999999)
+        autopilot_dig_deep_sweep_left = not autopilot_dig_deep_sweep_left
+        autopilot_stuck_timer = 0.0
+        autopilot_retarget_timer = 0.0
+        autopilot_status = "re-anchoring %s" % old_mode
+        return
     match autopilot_sortie_mode:
         AUTOPILOT_MODE_TOP_SWEEP:
             autopilot_sortie_mode = AUTOPILOT_MODE_CENTER
@@ -2553,8 +2560,6 @@ func _update_autopilot_stuck_mode() -> void:
         AUTOPILOT_MODE_RIGHT_SWEEP:
             autopilot_sortie_mode = AUTOPILOT_MODE_LEFT_SWEEP
         AUTOPILOT_MODE_CENTER:
-            autopilot_sortie_mode = AUTOPILOT_MODE_TOP_SWEEP
-        AUTOPILOT_MODE_DIG_DEEP:
             autopilot_sortie_mode = AUTOPILOT_MODE_TOP_SWEEP
         _:
             autopilot_sortie_mode = AUTOPILOT_MODE_TOP_SWEEP
