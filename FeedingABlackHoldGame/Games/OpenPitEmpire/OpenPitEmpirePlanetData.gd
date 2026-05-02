@@ -794,7 +794,7 @@ func regenerate_final_core_arena() -> Array[Vector2i]:
             var previous: Dictionary = blocks.get(pos, {})
             if int(previous.get("type", BlockType.NORMAL)) == BlockType.CORE:
                 continue
-            var hp: float = _calc_block_hp(pos) * _get_non_core_influence_hp_mult(pos, true)
+            var hp: float = _calc_block_hp(pos) * _get_non_core_influence_hp_mult(pos, true) * 0.25
             var zone: int = get_zone(pos)
             var block_type := BlockType.NORMAL
             var roll: float = world_rng.randf()

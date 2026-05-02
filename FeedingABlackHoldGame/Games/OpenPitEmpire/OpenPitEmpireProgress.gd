@@ -43,6 +43,7 @@ const DEFAULT_DATA := {
     "chat_line_counts": {},
     "chat_thread_counts": {},
     "bottom_phase_unlocked": false,
+    "editor_assists_used": false,
 }
 
 static var _cached_data: Dictionary = {}
@@ -99,6 +100,7 @@ static func load_data() -> Dictionary:
     if not (data.get("chat_thread_counts", {}) is Dictionary):
         data["chat_thread_counts"] = {}
     data["bottom_phase_unlocked"] = bool(data.get("bottom_phase_unlocked", false))
+    data["editor_assists_used"] = bool(data.get("editor_assists_used", false))
     if int(data.get("planet_layout_version", 0)) != BALANCE.PLANET_LAYOUT_VERSION:
         data["destroyed_cells"] = []
         data["boss_defeated"] = false
@@ -193,6 +195,19 @@ static func get_core_upgrade_levels() -> Dictionary:
 
 static func get_xp_upgrade_levels() -> Dictionary:
     return load_data().get("xp_upgrades", {}).duplicate(true)
+
+static func has_editor_assists_used() -> bool:
+    return bool(load_data().get("editor_assists_used", false))
+
+static func can_write_leaderboards() -> bool:
+    return not has_editor_assists_used()
+
+static func mark_editor_assists_used() -> void:
+    var data := load_data()
+    if bool(data.get("editor_assists_used", false)):
+        return
+    data["editor_assists_used"] = true
+    save_data(data)
 
 static func get_best_persistent_clear_percent() -> float:
     var data := load_data()
@@ -540,6 +555,7 @@ static func _sanitize_main_data(data: Dictionary) -> Dictionary:
         sanitized["xp_upgrades"] = Dictionary(sanitized.get("xp_upgrades", {})).duplicate(true)
     if sanitized.get("purchased_core_upgrades", []) is Array:
         sanitized["purchased_core_upgrades"] = Array(sanitized.get("purchased_core_upgrades", [])).duplicate(true)
+    sanitized["editor_assists_used"] = bool(sanitized.get("editor_assists_used", false))
     sanitized["remaining_layer_block_counts"] = _normalize_layer_block_counts(sanitized.get("remaining_layer_block_counts", {}))
     sanitized["best_layer_clear_percents"] = _normalize_layer_clear_percents(sanitized.get("best_layer_clear_percents", {}))
     BALANCE.refresh_depth_unlocks(sanitized)

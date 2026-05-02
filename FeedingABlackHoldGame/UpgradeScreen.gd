@@ -216,6 +216,8 @@ func _should_show_editor_only_touch_toggle() -> bool:
     return OS.has_feature("editor")
 
 func _should_show_leaderboards() -> bool:
+    if Util.is_open_pit_game_active():
+        return false
     return not OS.has_feature("web")
 
 func _should_show_deepcore_demo_leaderboard() -> bool:
@@ -1155,7 +1157,12 @@ func _refresh_mining_time_label() -> void:
     if not show_label:
         return
     if Util.is_open_pit_game_active():
-        mining_time_label.text = "Data Breach runs mine the pit. Cash out before fuel ends. XP: %d  Root Keys: %d." % [OPEN_PIT_PROGRESS_SCRIPT.get_xp_wallet(), OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet()]
+        var open_pit_data := OPEN_PIT_PROGRESS_SCRIPT.load_data()
+        var next_flight := int(open_pit_data.get("attempt_history", []).size()) + 1
+        var assist_note := ""
+        if bool(open_pit_data.get("editor_assists_used", false)):
+            assist_note = " Editor assists used: leaderboard writes disabled until progress reset."
+        mining_time_label.text = "Flight #%d. Cash out before fuel ends. XP: %d  Root Keys: %d.%s" % [next_flight, OPEN_PIT_PROGRESS_SCRIPT.get_xp_wallet(), OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet(), assist_note]
     elif Util.is_open_pit_orbit_game_active():
         mining_time_label.text = "Open Pit Orbit runs use orbit-tech weapons. Mine, dock, and cash out before fuel ends. Core shards: %d." % OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet()
     else:
@@ -2539,6 +2546,8 @@ func _perform_progress_reset() -> void:
     _reload_simulation_upgrade_tree_from_save()
     update()
     _update_go_again_button_state()
+    _refresh_mining_time_label()
+    _refresh_leaderboard_panel()
 
 func _on_editor_unlock_all_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -2983,7 +2992,8 @@ func _update_go_again_button_state() -> void:
         return
     if Util.is_open_pit_game_active():
         go_again_button.disabled = false
-        go_again_button.text = "START SORTIE"
+        var open_pit_data := OPEN_PIT_PROGRESS_SCRIPT.load_data()
+        go_again_button.text = "START FLIGHT #%d" % (int(open_pit_data.get("attempt_history", []).size()) + 1)
         go_again_button.tooltip_text = ""
         go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return

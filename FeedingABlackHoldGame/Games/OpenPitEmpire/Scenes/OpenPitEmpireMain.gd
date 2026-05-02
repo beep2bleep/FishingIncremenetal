@@ -10,6 +10,8 @@ const MINIMAP_SCRIPT := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpireM
 const DROP_RENDERER_SCRIPT := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpireDropRenderer.gd")
 const SHIP_RENDERER_SCRIPT := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpireShipRenderer.gd")
 const BREACH_CHAT_SCRIPT := preload("res://Games/OpenPitEmpire/OpenPitEmpireBreachChat.gd")
+const SUMMARY_VISUAL_SCRIPT := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpireSummaryVisual.gd")
+const IN_GAME_PAUSE_MENU_SCRIPT := preload("res://Core/InGamePauseMenu.gd")
 
 const BLOCK_SIZE := 32.0
 const PLANET_RADIUS_CELLS := 280
@@ -194,7 +196,7 @@ const AUTOPILOT_MINING_SCAN_CELLS := 18
 const AUTOPILOT_STAGING_CLEARANCE_CELLS := 2
 const AUTOPILOT_TARGET_REACHED_DISTANCE := 26.0
 const AUTOPILOT_FUEL_RETURN_RATIO := 0.15
-const AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME := 12
+const AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME := 50
 const AUTOPILOT_FAST_FORWARD_SPEED_CYCLE := [12, 25, 50, 0]
 const AUTOPILOT_NO_RENDER_STEPS_PER_FRAME := 240
 const DEFENSE_RETRY_HP_RATIO := 0.5
@@ -212,6 +214,10 @@ const AUTOPILOT_CORE_BREACH_CORRIDOR_HALF_WIDTH := 2
 const AUTOPILOT_CORE_BREACH_SCAN_STEPS := 96
 const AUTOPILOT_TARGET_SEARCH_BUDGET_USEC := 1800
 const AUTOPILOT_NORMAL_CORE_MAX_HP := 25000000.0
+const AUTOPILOT_STUCK_MODE_SECONDS := 4.0
+const AUTOPILOT_HAZARD_AVOID_RADIUS := BLOCK_SIZE * 7.0
+const AUTOPILOT_HAZARD_AVOID_WEIGHT := 5.5
+const AUTOPILOT_PICKUP_PATH_STEP := BLOCK_SIZE * 0.5
 const CORE_CLEAR_PATH_TARGET_BONUS := 0.7
 const AUTOPILOT_MODE_CENTER := "center"
 const AUTOPILOT_MODE_CORE_ATTACK := "core attack"
@@ -290,6 +296,7 @@ var power_active := false
 var power_ring_overcharge := 0.0
 var persistent_destroyed_count := 0
 var total_planet_blocks := 0
+var run_start_destroyed_count := 0
 var attack_timer := 0.0
 var attack_visible_timer := 0.0
 var charged_shot_counter := 0
@@ -369,6 +376,9 @@ var autopilot_fast_forward_enabled := false
 var autopilot_fast_forward_steps_per_frame := 1
 var autopilot_no_render_enabled := false
 var autopilot_sortie_mode := AUTOPILOT_MODE_CENTER
+var autopilot_stuck_timer := 0.0
+var autopilot_last_mined_count := 0
+var autopilot_last_target := Vector2.ZERO
 var validation_rng_seed: int = -1
 var validation_autopilot_mode: String = ""
 var defense_transition_pending := false
@@ -632,12 +642,18 @@ var editor_debug_unlimited_fuel := false
 var editor_debug_unlimited_cargo := false
 var editor_debug_attack_speed_boost := false
 var editor_debug_damage_boost := false
+var editor_debug_unlock_chord_enabled := false
+var current_flight_number := 1
+var pause_menu
+var summary_graph
+var summary_mined_picture
 
 func _can_use_editor_debug_keys() -> bool:
-    return OS.has_feature("editor") or OS.is_debug_build()
+    return editor_debug_unlock_chord_enabled
 
 func _ready() -> void:
     Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+    editor_debug_unlock_chord_enabled = PROGRESS.has_editor_assists_used()
     if VirtualCursor != null:
         VirtualCursor.use_open_pit_empire_cursor(true)
         VirtualCursor.set_scene_enabled(true)
@@ -648,6 +664,7 @@ func _ready() -> void:
         rng.randomize()
     _build_runtime_nodes()
     _build_ui()
+    _setup_pause_menu()
     _start_run()
     if validation_autopilot_mode != "":
         apply_validation_autopilot_mode(validation_autopilot_mode)
@@ -814,7 +831,60 @@ func _exit_tree() -> void:
         VirtualCursor.use_open_pit_empire_cursor(false)
         VirtualCursor.set_scene_enabled(false)
 
+func _setup_pause_menu() -> void:
+    pause_menu = IN_GAME_PAUSE_MENU_SCRIPT.new()
+    pause_menu.name = "InGamePauseMenu"
+    pause_menu.resume_requested.connect(_on_pause_resume_requested)
+    pause_menu.end_run_requested.connect(_on_pause_end_run_requested)
+    add_child(pause_menu)
+
+func _handle_pause_menu_input(event: InputEvent) -> bool:
+    if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+        if _is_pause_menu_open():
+            _close_pause_menu()
+        elif _can_open_pause_menu():
+            _open_pause_menu()
+        get_viewport().set_input_as_handled()
+        return true
+    if _is_pause_menu_open():
+        return true
+    return false
+
+func _can_open_pause_menu() -> bool:
+    return not run_finished
+
+func _is_pause_menu_open() -> bool:
+    return pause_menu != null and pause_menu.is_open()
+
+func _open_pause_menu() -> void:
+    if pause_menu == null:
+        return
+    ship_vel = Vector2.ZERO
+    autopilot_retarget_timer = maxf(autopilot_retarget_timer, AUTOPILOT_RETARGET_INTERVAL)
+    pause_menu.open_menu()
+    _refresh_hud_now()
+
+func _close_pause_menu() -> void:
+    if pause_menu == null:
+        return
+    pause_menu.close_menu()
+
+func _on_pause_resume_requested() -> void:
+    _close_pause_menu()
+
+func _on_pause_end_run_requested() -> void:
+    _close_pause_menu()
+    if not run_finished:
+        _finish_run(true, "Manual extraction.")
+
+func _is_editor_debug_unlock_chord_pressed() -> bool:
+    if _can_use_editor_debug_keys():
+        return false
+    return Input.is_key_pressed(KEY_Z) and Input.is_key_pressed(KEY_P) and Input.is_key_pressed(KEY_SLASH)
+
 func _unhandled_input(event: InputEvent) -> void:
+    if _handle_pause_menu_input(event):
+        return
     if run_finished:
         return
     if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -833,6 +903,12 @@ func _unhandled_input(event: InputEvent) -> void:
             get_viewport().set_input_as_handled()
         elif event.keycode == KEY_O:
             cycle_planet_outline_mode()
+            get_viewport().set_input_as_handled()
+        elif _is_editor_debug_unlock_chord_pressed():
+            editor_debug_unlock_chord_enabled = true
+            PROGRESS.mark_editor_assists_used()
+            _toggle_editor_debug_panel()
+            _push_breach_log("[color=#ffd66b]EDITOR ASSIST[/color]  unlocked. Leaderboard writes disabled until progress reset.")
             get_viewport().set_input_as_handled()
         elif event.keycode == KEY_F2 and _can_use_editor_debug_keys():
             _toggle_editor_debug_panel()
@@ -1151,7 +1227,7 @@ func _build_ui() -> void:
     summary_overlay.add_child(summary_center)
 
     var summary_panel := PanelContainer.new()
-    summary_panel.custom_minimum_size = Vector2(980.0, 480.0)
+    summary_panel.custom_minimum_size = Vector2(1040.0, 640.0)
     summary_panel.add_theme_stylebox_override("panel", panel_style.duplicate(true))
     summary_center.add_child(summary_panel)
 
@@ -1177,8 +1253,24 @@ func _build_ui() -> void:
     summary_label.fit_content = true
     summary_label.scroll_active = false
     summary_label.bbcode_enabled = true
-    summary_label.custom_minimum_size = Vector2(900.0, 280.0)
+    summary_label.custom_minimum_size = Vector2(960.0, 250.0)
     summary_vbox.add_child(summary_label)
+
+    var summary_visual_row := HBoxContainer.new()
+    summary_visual_row.add_theme_constant_override("separation", 12)
+    summary_vbox.add_child(summary_visual_row)
+
+    summary_graph = SUMMARY_VISUAL_SCRIPT.new()
+    summary_graph.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.GRAPH
+    summary_graph.custom_minimum_size = Vector2(470.0, 150.0)
+    summary_graph.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    summary_visual_row.add_child(summary_graph)
+
+    summary_mined_picture = SUMMARY_VISUAL_SCRIPT.new()
+    summary_mined_picture.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.MINED_MAP
+    summary_mined_picture.custom_minimum_size = Vector2(470.0, 150.0)
+    summary_mined_picture.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    summary_visual_row.add_child(summary_mined_picture)
 
     summary_status_label = Label.new()
     summary_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1194,8 +1286,6 @@ func _build_ui() -> void:
     _build_editor_debug_panel(panel_style)
 
 func _build_editor_debug_panel(panel_style: StyleBoxFlat) -> void:
-    if not _can_use_editor_debug_keys():
-        return
     editor_debug_panel = PanelContainer.new()
     editor_debug_panel.name = "OpenPitEmpireEditorDebugPanel"
     editor_debug_panel.anchor_left = 0.5
@@ -1328,6 +1418,7 @@ func _get_editor_debug_summary() -> String:
 
 func _start_run() -> void:
     persistent_data = PROGRESS.load_data()
+    current_flight_number = int(persistent_data.get("attempt_history", []).size()) + 1
     upgrades = persistent_data.get("upgrades", {}).duplicate(true)
     runtime_stats = BALANCE.build_runtime_stats(upgrades, PROGRESS.get_xp_upgrade_levels(), PROGRESS.get_core_upgrade_levels())
     current_depth_level = clampi(int(persistent_data.get("selected_depth_level", 1)), 1, BALANCE.MAX_DEPTH_LEVEL)
@@ -1341,6 +1432,7 @@ func _start_run() -> void:
     shield_recovery_timer = 0.0
     boss_defeated = bool(persistent_data.get("boss_defeated", false))
     _build_planet()
+    run_start_destroyed_count = persistent_destroyed_count
     _setup_minimap()
     spawn_position = planet_data.get_spawn_world_position()
     if bottom_phase_unlocked and planet_data != null:
@@ -1406,6 +1498,9 @@ func _start_run() -> void:
     autopilot_retarget_timer = 0.0
     autopilot_status = ""
     autopilot_return_reason = ""
+    autopilot_stuck_timer = 0.0
+    autopilot_last_mined_count = nodes_mined
+    autopilot_last_target = ship_pos
     _set_autopilot_fast_forward_steps(1)
     _choose_autopilot_sortie_mode()
     _set_autopilot_no_render_enabled(false)
@@ -1509,6 +1604,8 @@ func _setup_minimap() -> void:
 func _try_start_core_defense(core: Dictionary, _shared_max_hp: float) -> Dictionary:
     var core_id: int = int(core.get("id", -1))
     if core_id < 0 or str(core.get("role", "")) != "boss":
+        return {"handled": false}
+    if not _has_core_upgrade("countermeasure_bridge"):
         return {"handled": false}
     if validation_autopilot_mode != "":
         _complete_core_defense_for_validation(core)
@@ -1708,6 +1805,15 @@ func _process(delta: float) -> void:
         _update_finish_summary(delta)
         perf_probe_end("process_frame", perf_start_us)
         return
+    if _is_pause_menu_open():
+        ship_vel = Vector2.ZERO
+        if ship_renderer != null:
+            ship_renderer.queue_redraw()
+        if hud_refresh_timer <= 0.0:
+            hud_refresh_timer = HUD_REFRESH_INTERVAL
+            _refresh_hud()
+        perf_probe_end("process_frame", perf_start_us)
+        return
     var simulation_steps := _get_gameplay_simulation_steps()
     for _step in range(simulation_steps):
         _process_gameplay_step(delta)
@@ -1782,6 +1888,8 @@ func _process_gameplay_step(delta: float) -> void:
             planet_data.prewarm_dirty_save_sections(SAVE_PREWARM_SECTIONS_PER_PASS)
 
 func _get_gameplay_simulation_steps() -> int:
+    if _is_pause_menu_open():
+        return 1
     if autopilot_enabled and autopilot_no_render_enabled and not run_finished:
         return AUTOPILOT_NO_RENDER_STEPS_PER_FRAME
     if autopilot_enabled and autopilot_fast_forward_steps_per_frame != 1 and not run_finished:
@@ -2244,9 +2352,19 @@ func _get_autopilot_direction(delta: float) -> Vector2:
             if hold_edge_avoidance.length_squared() > 0.001:
                 autopilot_status = "mining, avoiding edge"
                 return hold_edge_avoidance
+            var hold_hazard_avoidance := _get_autopilot_hazard_avoidance()
+            if hold_hazard_avoidance.length_squared() > 0.001:
+                autopilot_status = "mining, dodging"
+                autopilot_retarget_timer = 0.0
+                return hold_hazard_avoidance
         return Vector2.ZERO
     var direction := offset.normalized()
     if not autopilot_returning:
+        var hazard_avoidance := _get_autopilot_hazard_avoidance()
+        if hazard_avoidance.length_squared() > 0.001:
+            direction = (direction + hazard_avoidance * AUTOPILOT_HAZARD_AVOID_WEIGHT).normalized()
+            autopilot_status = "dodging"
+            autopilot_retarget_timer = minf(autopilot_retarget_timer, AUTOPILOT_RETARGET_INTERVAL * 0.5)
         var core_avoidance := _get_autopilot_core_avoidance()
         if core_avoidance.length_squared() > 0.001:
             direction = (direction + core_avoidance * AUTOPILOT_CORE_AVOID_WEIGHT).normalized()
@@ -2287,6 +2405,7 @@ func _get_autopilot_return_reason() -> String:
 
 func _find_autopilot_mining_target() -> Vector2:
     var search_deadline_usec := Time.get_ticks_usec() + AUTOPILOT_TARGET_SEARCH_BUDGET_USEC
+    _update_autopilot_stuck_mode()
     if _is_autopilot_core_attack_mode():
         var core_attack_target := _find_autopilot_core_attack_target()
         if not core_attack_target.is_empty():
@@ -2373,7 +2492,32 @@ func _find_autopilot_mining_target() -> Vector2:
             best_aim_dir = (best_world - ship_pos).normalized()
     autopilot_aim_dir = best_aim_dir
     autopilot_status = "seeking %s" % autopilot_sortie_mode
+    autopilot_last_target = best_world
     return best_world
+
+func _update_autopilot_stuck_mode() -> void:
+    if nodes_mined > autopilot_last_mined_count:
+        autopilot_last_mined_count = nodes_mined
+        autopilot_stuck_timer = 0.0
+        return
+    autopilot_stuck_timer += AUTOPILOT_RETARGET_INTERVAL
+    if autopilot_stuck_timer < AUTOPILOT_STUCK_MODE_SECONDS:
+        return
+    var old_mode := autopilot_sortie_mode
+    match autopilot_sortie_mode:
+        AUTOPILOT_MODE_TOP_SWEEP:
+            autopilot_sortie_mode = AUTOPILOT_MODE_CENTER
+        AUTOPILOT_MODE_LEFT_SWEEP:
+            autopilot_sortie_mode = AUTOPILOT_MODE_RIGHT_SWEEP
+        AUTOPILOT_MODE_RIGHT_SWEEP:
+            autopilot_sortie_mode = AUTOPILOT_MODE_LEFT_SWEEP
+        AUTOPILOT_MODE_CENTER:
+            autopilot_sortie_mode = AUTOPILOT_MODE_CORE_ATTACK
+        _:
+            autopilot_sortie_mode = AUTOPILOT_MODE_TOP_SWEEP
+    autopilot_stuck_timer = 0.0
+    autopilot_retarget_timer = 0.0
+    autopilot_status = "rerouting from %s" % old_mode
 
 func _is_autopilot_core_attack_mode() -> bool:
     return autopilot_enabled and autopilot_sortie_mode == AUTOPILOT_MODE_CORE_ATTACK
@@ -2636,6 +2780,8 @@ func _find_autopilot_pickup_target() -> Dictionary:
         var dist_sq := ship_pos.distance_squared_to(pickup_pos)
         if dist_sq > scan_radius_sq and not allow_overflow_chase:
             continue
+        if not _is_autopilot_pickup_path_safe(pickup_pos):
+            continue
         var score := dist_sq
         score -= float(pickup_cargo) * BLOCK_SIZE * BLOCK_SIZE * 0.75
         score -= float(int(pickup.get("money", 0))) * BLOCK_SIZE * 0.1
@@ -2646,6 +2792,24 @@ func _find_autopilot_pickup_target() -> Dictionary:
     if not found:
         return {}
     return {"position": best_position}
+
+func _is_autopilot_pickup_path_safe(pickup_pos: Vector2) -> bool:
+    if ship_pos.distance_to(pickup_pos) <= _get_effective_pickup_radius() * 0.9:
+        return true
+    var offset := pickup_pos - ship_pos
+    var distance := offset.length()
+    if distance <= 0.01:
+        return true
+    var dir := offset / distance
+    var steps := maxi(1, int(ceil(distance / AUTOPILOT_PICKUP_PATH_STEP)))
+    for step in range(1, steps + 1):
+        var sample := ship_pos + dir * minf(distance, float(step) * AUTOPILOT_PICKUP_PATH_STEP)
+        var grid := world_to_grid(sample)
+        if not is_grid_empty(grid):
+            return false
+        if _is_in_locked_core_avoidance_zone(grid, true):
+            return false
+    return true
 
 func _update_autopilot_aim_direction() -> void:
     var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
@@ -2722,6 +2886,103 @@ func _get_autopilot_core_avoidance() -> Vector2:
         var strength := 1.0 - clampf(dist / radius, 0.0, 1.0)
         push += away.normalized() * strength
     return push.normalized() if push.length_squared() > 0.001 else Vector2.ZERO
+
+func _get_autopilot_hazard_avoidance() -> Vector2:
+    var push := Vector2.ZERO
+    push += _get_autopilot_projectile_avoidance()
+    push += _get_autopilot_cipher_laser_avoidance()
+    push += _get_autopilot_cross_laser_avoidance()
+    return push.normalized() if push.length_squared() > 0.001 else Vector2.ZERO
+
+func _get_autopilot_projectile_avoidance() -> Vector2:
+    var push := Vector2.ZERO
+    var radius_sq := AUTOPILOT_HAZARD_AVOID_RADIUS * AUTOPILOT_HAZARD_AVOID_RADIUS
+    for projectile_variant in side_projectiles:
+        var projectile: Dictionary = projectile_variant
+        var pos := Vector2(projectile.get("position", Vector2.ZERO))
+        var vel := Vector2(projectile.get("velocity", Vector2.ZERO))
+        var predicted := pos + vel * 0.55
+        var danger := _nearest_point_on_segment(pos, predicted, ship_pos)
+        var away := ship_pos - danger
+        var dist_sq := away.length_squared()
+        if dist_sq <= 0.001 or dist_sq > radius_sq:
+            continue
+        var strength := 1.0 - clampf(sqrt(dist_sq) / AUTOPILOT_HAZARD_AVOID_RADIUS, 0.0, 1.0)
+        push += away.normalized() * strength * 1.25
+    for debris_variant in ghost_debris:
+        var debris: Dictionary = debris_variant
+        var pos := Vector2(debris.get("pos", Vector2.ZERO))
+        var vel := Vector2(debris.get("vel", Vector2.ZERO))
+        var predicted := pos + vel * 0.7
+        var danger := _nearest_point_on_segment(pos, predicted, ship_pos)
+        var away := ship_pos - danger
+        var dist_sq := away.length_squared()
+        if dist_sq <= 0.001 or dist_sq > radius_sq:
+            continue
+        var strength := 1.0 - clampf(sqrt(dist_sq) / AUTOPILOT_HAZARD_AVOID_RADIUS, 0.0, 1.0)
+        push += away.normalized() * strength
+    return push
+
+func _get_autopilot_cipher_laser_avoidance() -> Vector2:
+    var push := Vector2.ZERO
+    for state_variant in cipher_laser_states.values():
+        var state: Dictionary = state_variant
+        var state_name := str(state.get("state", "idle"))
+        if state_name != "warning" and state_name != "firing":
+            continue
+        var origin := Vector2(state.get("origin", Vector2.ZERO))
+        var dir := Vector2(state.get("dir", Vector2.RIGHT)).normalized()
+        if dir.length() < 0.01:
+            continue
+        var end := origin + dir * BLOCK_SIZE * 40.0
+        var danger := _nearest_point_on_segment(origin, end, ship_pos)
+        var away := ship_pos - danger
+        var danger_radius := AUTOPILOT_HAZARD_AVOID_RADIUS * (1.2 if state_name == "firing" else 0.9)
+        var dist := away.length()
+        if dist <= 0.001 or dist > danger_radius:
+            continue
+        var strength := 1.0 - clampf(dist / danger_radius, 0.0, 1.0)
+        push += away.normalized() * strength * (1.5 if state_name == "firing" else 1.0)
+    return push
+
+func _get_autopilot_cross_laser_avoidance() -> Vector2:
+    var push := Vector2.ZERO
+    for state_variant in root_cross_lasers.values():
+        var state: Dictionary = state_variant
+        var origin := Vector2(state.get("origin", Vector2.ZERO))
+        var length := float(state.get("length", 0.0))
+        if length <= 0.0:
+            continue
+        var edge_ratio := float(state.get("core_edge_ratio", 0.1))
+        var gaps: Array = state.get("gaps", [])
+        for arm_i in range(4):
+            var arm_angle := float(state.get("angle", 0.0)) + float(arm_i) * PI * 0.5
+            var arm_dir := Vector2.from_angle(arm_angle)
+            var end := origin + arm_dir * length
+            var ab := end - origin
+            var t := clampf((ship_pos - origin).dot(ab) / maxf(ab.dot(ab), 1.0), 0.0, 1.0)
+            if t < edge_ratio:
+                continue
+            if arm_i < gaps.size():
+                var gap: Dictionary = gaps[arm_i]
+                var gap_center := float(gap.get("pos", edge_ratio))
+                if t >= gap_center - WINTER_CROSS_LASER_GAP_SIZE * 0.5 and t <= gap_center + WINTER_CROSS_LASER_GAP_SIZE * 0.5:
+                    continue
+            var danger := origin + ab * t
+            var away := ship_pos - danger
+            var danger_radius := AUTOPILOT_HAZARD_AVOID_RADIUS * 1.1
+            var dist := away.length()
+            if dist <= 0.001 or dist > danger_radius:
+                continue
+            var strength := 1.0 - clampf(dist / danger_radius, 0.0, 1.0)
+            push += away.normalized() * strength * 1.4
+    return push
+
+func _nearest_point_on_segment(a: Vector2, b: Vector2, p: Vector2) -> Vector2:
+    var ab := b - a
+    var denom := maxf(ab.dot(ab), 0.001)
+    var t := clampf((p - a).dot(ab) / denom, 0.0, 1.0)
+    return a + ab * t
 
 func _is_in_locked_core_avoidance_zone(grid: Vector2i, include_margin: bool) -> bool:
     if planet_data == null:
@@ -3607,7 +3868,7 @@ func get_forward_shot_range() -> float:
 func get_forward_shot_guide_end_world() -> Vector2:
     var forward := _get_forward_direction()
     var range_world := get_forward_shot_range()
-    var blocker := _find_forward_lane_blocker(forward, range_world, 2)
+    var blocker := _find_forward_lane_blocker(forward, range_world, 0)
     if blocker.x < 999999:
         return grid_to_world(blocker)
     return ship_pos + forward * range_world
@@ -3696,7 +3957,7 @@ func _spawn_drone_support_powerup() -> void:
         "support_drop": true,
     })
 
-func _find_forward_lane_target(forward: Vector2, distance_world: float, lateral_steps: int = 2, forward_steps: int = 4) -> Vector2i:
+func _find_forward_lane_target(forward: Vector2, distance_world: float, lateral_steps: int = 0, forward_steps: int = 4) -> Vector2i:
     if planet_data == null:
         return Vector2i(999999, 999999)
     if forward.length_squared() <= 0.001:
@@ -3723,7 +3984,7 @@ func _find_forward_lane_target(forward: Vector2, distance_world: float, lateral_
                 return right_grid
     return Vector2i(999999, 999999)
 
-func _find_forward_lane_blocker(forward: Vector2, distance_world: float, lateral_steps: int = 2) -> Vector2i:
+func _find_forward_lane_blocker(forward: Vector2, distance_world: float, lateral_steps: int = 0) -> Vector2i:
     if planet_data == null or forward.length_squared() <= 0.001:
         return Vector2i(999999, 999999)
     forward = forward.normalized()
@@ -4087,15 +4348,33 @@ func _finish_run(returned: bool, reason: String) -> void:
     var run_time := maxf(0.0, float(runtime_stats.get("run_time", 30.0)))
     var mining_time := maxf(0.0, run_time - time_left)
     var auto_return_summary := autopilot_return_reason if autopilot_return_reason != "" else ("not returning" if autopilot_enabled else "off")
+    var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
+    var visual_data := {
+        "run_time": run_time,
+        "mining_time": mining_time,
+        "fuel_ratio": 0.0 if run_time <= 0.0 else time_left / run_time,
+        "cargo_ratio": 0.0 if cargo_capacity <= 0 else float(cargo_units) / float(cargo_capacity),
+        "clear_start_ratio": float(run_start_destroyed_count) / float(maxi(1, total_planet_blocks)),
+        "clear_ratio": float(persistent_destroyed_count) / float(maxi(1, total_planet_blocks)),
+        "mined_ratio": float(maxi(0, persistent_destroyed_count - run_start_destroyed_count)) / float(maxi(1, total_planet_blocks)),
+        "mined_points": _get_summary_mined_points(),
+    }
+    if summary_graph != null and is_instance_valid(summary_graph):
+        summary_graph.set_summary_data(visual_data)
+    if summary_mined_picture != null and is_instance_valid(summary_mined_picture):
+        summary_mined_picture.set_summary_data(visual_data)
     if is_validation_run:
         summary_label.text = "Validation run complete."
     else:
-        summary_label.text = "[center][b]%s[/b][/center]\n\n[table=2][cell]Breach Tier[/cell][cell]%d[/cell][cell]Blocks Mined This Run[/cell][cell]%d[/cell][cell]Mining Time[/cell][cell]%s[/cell][cell]Fuel Remaining[/cell][cell]%s[/cell][cell]Auto Pilot Return[/cell][cell]%s[/cell][cell]Haul Recovered[/cell][cell]$%d[/cell][cell]Loose Value Touched[/cell][cell]$%d[/cell][cell]XP Banked[/cell][cell]%d[/cell][cell]Daemons Deleted[/cell][cell]%d[/cell][cell]Persistent Clear[/cell][cell]%.1f%%[/cell][cell]Root Keys Banked[/cell][cell]%d[/cell][cell]Power Peak[/cell][cell]%.0f[/cell][cell]Barriers Left[/cell][cell]%d[/cell][/table]\n\n[color=#7dd6ff]Previous Attempts[/color]\n%s%s" % [
+        summary_label.text = "[center][b]Flight #%d - %s[/b][/center]\n\n[table=2][cell]Breach Tier[/cell][cell]%d[/cell][cell]Blocks Mined This Run[/cell][cell]%d[/cell][cell]Mining Time[/cell][cell]%s[/cell][cell]Fuel Remaining[/cell][cell]%s[/cell][cell]Cargo Used[/cell][cell]%d/%d[/cell][cell]Auto Pilot Return[/cell][cell]%s[/cell][cell]Haul Recovered[/cell][cell]$%d[/cell][cell]Loose Value Touched[/cell][cell]$%d[/cell][cell]XP Banked[/cell][cell]%d[/cell][cell]Daemons Deleted[/cell][cell]%d[/cell][cell]Persistent Clear[/cell][cell]%.1f%%[/cell][cell]Root Keys Banked[/cell][cell]%d[/cell][cell]Power Peak[/cell][cell]%.0f[/cell][cell]Barriers Left[/cell][cell]%d[/cell][/table]\n\n[color=#7dd6ff]Previous Attempts[/color]\n%s%s" % [
+            current_flight_number,
             reason,
             current_depth_level,
             nodes_mined,
             _format_run_seconds(mining_time),
             _format_run_seconds(time_left),
+            cargo_units,
+            cargo_capacity,
             auto_return_summary,
             money_award,
             total_money,
@@ -4206,6 +4485,16 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
 
 func _format_run_seconds(seconds: float) -> String:
     return "%.1fs" % maxf(0.0, seconds)
+
+func _get_summary_mined_points() -> Array[Vector2i]:
+    var points: Array[Vector2i] = []
+    var skip := maxi(1, int(ceili(float(destroyed_cells_this_run.size()) / 900.0)))
+    var idx := 0
+    for key_variant in destroyed_cells_this_run.keys():
+        if idx % skip == 0:
+            points.append(key_variant)
+        idx += 1
+    return points
 
 func _get_live_remaining_layer_block_counts() -> Dictionary:
     if planet_data != null and planet_data.has_method("get_remaining_layer_block_counts"):

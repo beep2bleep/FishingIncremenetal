@@ -239,22 +239,13 @@ func _draw_forward_shot_guide() -> void:
     if end.length() < start_dist + 12.0:
         end = forward * (start_dist + 12.0)
     var side := forward.orthogonal()
-    var start_half_width := 5.0
-    var end_half_width := 28.0
     var pulse := 0.5 + 0.5 * sin(scene_ref.ship_glow_phase * 3.0)
-    var fill_alpha := 0.035 + pulse * 0.018
-    var line_alpha := 0.18 + pulse * 0.08
-    var guide_fill := Color(0.82, 0.85, 0.88, fill_alpha)
-    var guide_line := Color(0.86, 0.88, 0.9, line_alpha)
-    draw_colored_polygon(PackedVector2Array([
-        start - side * start_half_width,
-        end - side * end_half_width,
-        end + side * end_half_width,
-        start + side * start_half_width,
-    ]), guide_fill)
-    draw_line(start, end, Color(0.9, 0.92, 0.94, 0.16 + pulse * 0.05), 1.2)
-    draw_line(start - side * start_half_width, end - side * end_half_width, guide_line, 1.4)
-    draw_line(start + side * start_half_width, end + side * end_half_width, guide_line, 1.4)
+    var guide_line := Color(0.86, 0.88, 0.9, 0.26 + pulse * 0.1)
+    var guide_core := Color(0.96, 0.98, 1.0, 0.56 + pulse * 0.18)
+    draw_line(start, end, Color(0.9, 0.92, 0.94, 0.09 + pulse * 0.04), 8.0)
+    draw_line(start, end, guide_line, 3.0)
+    draw_line(start, end, guide_core, 1.2)
+    draw_line(end - side * 7.0, end + side * 7.0, Color(0.96, 0.98, 1.0, 0.38 + pulse * 0.18), 1.4)
 
 func _draw_normal_laser(vp: float) -> void:
     var local_target := scene_ref.last_attack_target - scene_ref.ship_pos

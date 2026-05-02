@@ -13,6 +13,7 @@ const LEADERBOARD_LEVEL20_FULL := "full_level20_clear_time"
 const LEADERBOARD_DEEPCORE_TIME_TO_TIER8 := "DeepcoreTimeToTier8"
 const LEADERBOARD_FETCH_COUNT := 5
 const LEADERBOARD_AROUND_USER_RADIUS := 2
+const OPEN_PIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitEmpire/OpenPitEmpireProgress.gd")
 
 
 enum ACHIVEMENTS{
@@ -488,6 +489,11 @@ func _submit_fishing_boss_clear_time_to_board(board_id: String, clear_time_secon
 
 func _submit_pending_leaderboard_score(board_id: String) -> void:
     if not steam_enabled or not leaderboard_pending_submissions.has(board_id):
+        return
+    if Util.is_open_pit_game_active() and not OPEN_PIT_PROGRESS_SCRIPT.can_write_leaderboards():
+        leaderboard_pending_submissions.erase(board_id)
+        leaderboard_statuses[board_id] = "Editor assists used"
+        leaderboard_data_updated.emit()
         return
     if not leaderboard_handles.has(board_id):
         request_leaderboard(board_id)

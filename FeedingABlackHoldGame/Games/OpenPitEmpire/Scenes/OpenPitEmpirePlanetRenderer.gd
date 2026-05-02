@@ -548,10 +548,10 @@ func _draw() -> void:
     var power_blocks_start_us := scene_ref.perf_probe_begin()
     section_start_us = scene_ref.perf_probe_begin()
     if ultra_reduce_detail:
-        _draw_focal_live_outlines(visible_grid_min, visible_grid_max, ULTRA_FOCAL_OUTLINE_RADIUS_CELLS, 1.5)
+        _draw_focal_live_outlines(visible_grid_min, visible_grid_max, _get_viewport_edge_outline_radius_cells(visible_grid_min, visible_grid_max), 1.5)
         _draw_active_block_effects(visible_grid_min, visible_grid_max)
     elif reduce_detail:
-        _draw_focal_live_outlines(visible_grid_min, visible_grid_max, HEAVY_FOCAL_DETAIL_RADIUS_CELLS, 1.25)
+        _draw_focal_live_outlines(visible_grid_min, visible_grid_max, _get_viewport_edge_outline_radius_cells(visible_grid_min, visible_grid_max), 1.25)
     else:
         for x in range(visible_grid_min.x, visible_grid_max.x + 1):
             for y in range(visible_grid_min.y, visible_grid_max.y + 1):
@@ -739,6 +739,13 @@ func _draw_focal_live_outlines(visible_grid_min: Vector2i, visible_grid_max: Vec
                 Vector2.ONE * (scene_ref.BLOCK_SIZE - BLOCK_GAP * 2.0)
             )
             _draw_block_edges(grid, rect, colors.get("edge", _get_block_edge_fallback(block)), exposed_mask, width)
+
+func _get_viewport_edge_outline_radius_cells(visible_grid_min: Vector2i, visible_grid_max: Vector2i) -> int:
+    var center_grid := scene_ref.world_to_grid(scene_ref.camera_pos)
+    return maxi(
+        maxi(absi(visible_grid_min.x - center_grid.x), absi(visible_grid_max.x - center_grid.x)),
+        maxi(absi(visible_grid_min.y - center_grid.y), absi(visible_grid_max.y - center_grid.y))
+    )
 
 func _apply_pending_fill_updates(grid_min: Vector2i, grid_max: Vector2i) -> bool:
     if _pending_fill_updates.is_empty() or _fill_image == null:
