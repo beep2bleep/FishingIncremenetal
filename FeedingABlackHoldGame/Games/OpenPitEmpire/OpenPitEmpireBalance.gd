@@ -270,7 +270,7 @@ const RAW_NODE_DATA := {
     "abyssal_rigs": {"base_cost": 42000, "cost_mult": 2.18, "max_level": 18, "phase": 4, "label": "Abyssal Rigs", "summary": "+24 cargo capacity and +8 payout per level.", "icon": "A", "effects": {"cargo_expand": 24.0, "resource_flat": 8.0}},
     "mirror_saws": {"base_cost": 62000, "cost_mult": 2.18, "max_level": 18, "phase": 5, "label": "Mirror Saws", "summary": "Unlock crits, add +15 damage, and +28 cargo capacity per level. Buying any phase-5 node unlocks Empire Layer 5 runs after clearing the fourth layer.", "icon": "M", "effects": {"critical_unlock": true, "damage_flat": 15.0, "cargo_expand": 28.0}},
     "fault_harpoons": {"base_cost": 92000, "cost_mult": 2.20, "max_level": 18, "phase": 5, "label": "Fault Harpoons", "summary": "Unlock chain lightning and add +1 chain depth per level.", "icon": "H", "effects": {"chain_lightning_unlock": true, "electric_chain": 1}},
-    "null_borers": {"base_cost": 138000, "cost_mult": 2.22, "max_level": 20, "phase": 5, "label": "Null Borers", "summary": "+18 damage, +1 multi-target, and deeper electric chains per level.", "icon": "N", "effects": {"damage_flat": 18.0, "multi_laser": 1, "electric_chain": 1}},
+    "null_borers": {"base_cost": 138000, "cost_mult": 2.22, "max_level": 4, "phase": 5, "label": "Null Borers", "summary": "+18 damage, +1 multi-target, and deeper electric chains per level. Multi-target lasers cap at 5.", "icon": "N", "effects": {"damage_flat": 18.0, "multi_laser": 1, "electric_chain": 1}},
     "ash_crowns": {"base_cost": 220000, "cost_mult": 2.24, "max_level": 20, "phase": 5, "label": "Ash Crowns", "summary": "Late inversion crown: boosts payout and power gain.", "icon": "A", "effects": {"resource_flat": 12.0, "power_gain_mult": 0.18}},
 }
 
@@ -674,7 +674,7 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
         "salvage_keep": salvage_keep,
         "resource_flat": resource_flat,
         "gold_bonus_flat": gold_bonus_flat,
-        "multi_target": 1 + multi_laser_bonus,
+        "multi_target": mini(5, 1 + multi_laser_bonus),
         "barriers": barrier_bonus,
         "combo_bonus_per_stack": combo_bonus,
         "crit_chance": 0.2 if flags["critical_unlock"] else 0.0,

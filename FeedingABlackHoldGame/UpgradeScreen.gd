@@ -127,6 +127,9 @@ var leaderboard_submit_30m_button: Button
 var leaderboard_submit_1h_button: Button
 var leaderboard_submit_2h_level20_button: Button
 var leaderboard_submit_3h_level20_button: Button
+var open_pit_chat_button: Button
+var open_pit_chat_panel: PanelContainer
+var open_pit_chat_label: RichTextLabel
 var popup_layer: CanvasLayer
 var continue_locked_panel: PanelContainer
 var continue_locked_label: Label
@@ -179,7 +182,10 @@ func _refresh_localized_text() -> void:
             legacy_ok_button.text = tr("UI_CONTINUE")
     if leaderboard_title_label != null and is_instance_valid(leaderboard_title_label):
         leaderboard_title_label.text = _get_leaderboard_panel_title()
+    if open_pit_chat_button != null and is_instance_valid(open_pit_chat_button):
+        open_pit_chat_button.text = tr("CHAT")
     _refresh_leaderboard_panel()
+    _refresh_open_pit_chat_panel()
     _refresh_demo_mode_label_visibility()
     _refresh_mining_time_label()
     _refresh_editor_demo_toggle_button_text()
@@ -312,6 +318,8 @@ func _ready() -> void :
     game_mode_label = get_node_or_null("%Game Mode Label")
     _setup_mining_time_label()
     ready_step_started_msec = _print_open_pit_ready_step("ready_mining_time_label", ready_step_started_msec)
+    _setup_open_pit_chat_controls()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_open_pit_chat_controls", ready_step_started_msec)
     wishlist_button = get_node_or_null("%Wishlist")
     popup_layer = get_node_or_null("%Popup Layer")
     _bind_popup_layer_visibility_updates()
@@ -1096,6 +1104,8 @@ func _is_any_popup_visible() -> bool:
         return true
     if continue_locked_panel != null and is_instance_valid(continue_locked_panel) and continue_locked_panel.visible:
         return true
+    if open_pit_chat_panel != null and is_instance_valid(open_pit_chat_panel) and open_pit_chat_panel.visible:
+        return true
     if popup_layer != null and is_instance_valid(popup_layer):
         for child in popup_layer.get_children():
             if child is CanvasItem and (child as CanvasItem).visible:
@@ -1167,6 +1177,121 @@ func _refresh_mining_time_label() -> void:
         mining_time_label.text = "Open Pit Orbit runs use orbit-tech weapons. Mine, dock, and cash out before fuel ends. Core shards: %d." % OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet()
     else:
         mining_time_label.text = _trf("BATTLE_CLOCK_LABEL", [Util.format_time(SaveHandler.fishing_run_clock_seconds)])
+
+func _setup_open_pit_chat_controls() -> void:
+    var parent_layer: CanvasLayer = %CanvasLayer2
+    if parent_layer == null:
+        return
+    if open_pit_chat_button == null or not is_instance_valid(open_pit_chat_button):
+        open_pit_chat_button = Button.new()
+        open_pit_chat_button.name = "OpenPitChatButton"
+        open_pit_chat_button.anchor_left = 0.0
+        open_pit_chat_button.anchor_top = 0.0
+        open_pit_chat_button.anchor_right = 0.0
+        open_pit_chat_button.anchor_bottom = 0.0
+        open_pit_chat_button.offset_left = 16.0
+        open_pit_chat_button.offset_top = 120.0
+        open_pit_chat_button.offset_right = 148.0
+        open_pit_chat_button.offset_bottom = 180.0
+        open_pit_chat_button.z_index = 210
+        open_pit_chat_button.focus_mode = Control.FOCUS_NONE
+        open_pit_chat_button.custom_minimum_size = Vector2(132.0, 60.0)
+        open_pit_chat_button.add_theme_font_size_override("font_size", 22)
+        open_pit_chat_button.text = tr("CHAT")
+        open_pit_chat_button.pressed.connect(_on_open_pit_chat_button_pressed)
+        _style_utility_button(open_pit_chat_button)
+        parent_layer.add_child(open_pit_chat_button)
+    if open_pit_chat_panel == null or not is_instance_valid(open_pit_chat_panel):
+        open_pit_chat_panel = PanelContainer.new()
+        open_pit_chat_panel.name = "OpenPitChatPanel"
+        open_pit_chat_panel.anchor_left = 0.0
+        open_pit_chat_panel.anchor_top = 0.0
+        open_pit_chat_panel.anchor_right = 0.0
+        open_pit_chat_panel.anchor_bottom = 0.0
+        open_pit_chat_panel.offset_left = 16.0
+        open_pit_chat_panel.offset_top = 188.0
+        open_pit_chat_panel.offset_right = 620.0
+        open_pit_chat_panel.offset_bottom = 620.0
+        open_pit_chat_panel.z_index = 225
+        open_pit_chat_panel.visible = false
+        open_pit_chat_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+        _style_utility_button_panel(open_pit_chat_panel)
+        _bind_demo_label_visibility_to_popup(open_pit_chat_panel)
+        parent_layer.add_child(open_pit_chat_panel)
+
+        var margin := MarginContainer.new()
+        margin.add_theme_constant_override("margin_left", 14)
+        margin.add_theme_constant_override("margin_top", 12)
+        margin.add_theme_constant_override("margin_right", 14)
+        margin.add_theme_constant_override("margin_bottom", 12)
+        open_pit_chat_panel.add_child(margin)
+
+        var vbox := VBoxContainer.new()
+        vbox.add_theme_constant_override("separation", 10)
+        margin.add_child(vbox)
+
+        var close_button := Button.new()
+        close_button.text = tr("UI_BACK")
+        close_button.focus_mode = Control.FOCUS_NONE
+        close_button.custom_minimum_size = Vector2(0.0, 44.0)
+        close_button.pressed.connect(_on_open_pit_chat_close_pressed)
+        _style_utility_button(close_button)
+        vbox.add_child(close_button)
+
+        open_pit_chat_label = RichTextLabel.new()
+        open_pit_chat_label.bbcode_enabled = true
+        open_pit_chat_label.scroll_active = true
+        open_pit_chat_label.fit_content = false
+        open_pit_chat_label.custom_minimum_size = Vector2(570.0, 340.0)
+        open_pit_chat_label.add_theme_font_size_override("normal_font_size", 18)
+        open_pit_chat_label.add_theme_color_override("default_color", Color(0.92, 0.96, 0.9, 1.0))
+        vbox.add_child(open_pit_chat_label)
+    _refresh_open_pit_chat_panel()
+
+func _on_open_pit_chat_button_pressed() -> void:
+    if open_pit_chat_panel == null or not is_instance_valid(open_pit_chat_panel):
+        return
+    _hide_settings_panel()
+    _hide_continue_locked_panel()
+    open_pit_chat_panel.visible = not open_pit_chat_panel.visible
+    _refresh_open_pit_chat_panel()
+    _refresh_demo_mode_label_visibility()
+    _refresh_mining_time_label()
+
+func _on_open_pit_chat_close_pressed() -> void:
+    if open_pit_chat_panel != null and is_instance_valid(open_pit_chat_panel):
+        open_pit_chat_panel.hide()
+    _refresh_demo_mode_label_visibility()
+    _refresh_mining_time_label()
+
+func _refresh_open_pit_chat_panel() -> void:
+    var show_controls := Util.is_open_pit_game_active()
+    if open_pit_chat_button != null and is_instance_valid(open_pit_chat_button):
+        open_pit_chat_button.visible = show_controls and not _is_any_popup_visible()
+    if not show_controls:
+        if open_pit_chat_panel != null and is_instance_valid(open_pit_chat_panel):
+            open_pit_chat_panel.hide()
+        return
+    if open_pit_chat_label == null or not is_instance_valid(open_pit_chat_label):
+        return
+    var data := OPEN_PIT_PROGRESS_SCRIPT.load_data()
+    var saved_lines: Array = data.get("chat_log", [])
+    var lines: Array[String] = []
+    var start_index := maxi(0, saved_lines.size() - 60)
+    for idx in range(start_index, saved_lines.size()):
+        var line := str(saved_lines[idx])
+        if line.strip_edges() != "":
+            lines.append(line)
+    if lines.is_empty():
+        open_pit_chat_label.text = "[color=#7dd6ff]BLACK CHANNEL // SUMP-9[/color]\n" + tr("No channel traffic yet.")
+    else:
+        open_pit_chat_label.text = "[color=#7dd6ff]BLACK CHANNEL // SUMP-9[/color]\n" + "\n".join(lines)
+    call_deferred("_scroll_open_pit_chat_to_bottom")
+
+func _scroll_open_pit_chat_to_bottom() -> void:
+    if open_pit_chat_label == null or not is_instance_valid(open_pit_chat_label):
+        return
+    open_pit_chat_label.scroll_to_line(open_pit_chat_label.get_line_count())
 
 func _get_demo_wishlist_url() -> String:
     var configured_url: String = str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()

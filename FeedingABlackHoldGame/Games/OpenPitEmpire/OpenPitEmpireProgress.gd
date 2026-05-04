@@ -42,6 +42,8 @@ const DEFAULT_DATA := {
     "remaining_layer_block_counts": {},
     "chat_line_counts": {},
     "chat_thread_counts": {},
+    "chat_event_signatures": {},
+    "chat_log": [],
     "bottom_phase_unlocked": false,
     "editor_assists_used": false,
 }
@@ -99,6 +101,10 @@ static func load_data() -> Dictionary:
         data["chat_line_counts"] = {}
     if not (data.get("chat_thread_counts", {}) is Dictionary):
         data["chat_thread_counts"] = {}
+    if not (data.get("chat_event_signatures", {}) is Dictionary):
+        data["chat_event_signatures"] = {}
+    if not (data.get("chat_log", []) is Array):
+        data["chat_log"] = []
     data["bottom_phase_unlocked"] = bool(data.get("bottom_phase_unlocked", false))
     data["editor_assists_used"] = bool(data.get("editor_assists_used", false))
     if int(data.get("planet_layout_version", 0)) != BALANCE.PLANET_LAYOUT_VERSION:
@@ -318,6 +324,10 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
     data["last_run_summary"] = str(results.get("summary_text", "Open Pit Empire sortie complete."))
     var breakdown := results.duplicate(false)
     breakdown.erase("planet_state")
+    breakdown.erase("chat_line_counts")
+    breakdown.erase("chat_thread_counts")
+    breakdown.erase("chat_event_signatures")
+    breakdown.erase("chat_log")
     data["last_run_breakdown"] = breakdown
     var attempt_history: Array = data.get("attempt_history", []).duplicate(true)
     attempt_history.push_front({
@@ -337,6 +347,10 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
         data["chat_line_counts"] = results.get("chat_line_counts", {}).duplicate(true)
     if results.get("chat_thread_counts", {}) is Dictionary:
         data["chat_thread_counts"] = results.get("chat_thread_counts", {}).duplicate(true)
+    if results.get("chat_event_signatures", {}) is Dictionary:
+        data["chat_event_signatures"] = results.get("chat_event_signatures", {}).duplicate(true)
+    if results.get("chat_log", []) is Array:
+        data["chat_log"] = results.get("chat_log", []).duplicate(true)
     if bool(results.get("bottom_phase_unlocked", false)):
         data["bottom_phase_unlocked"] = true
     if bool(results.get("boss_defeated", false)):
@@ -386,7 +400,8 @@ static func bank_partial_run_rewards(results: Dictionary) -> Dictionary:
     var xp := int(results.get("xp", 0))
     var core_currency := int(results.get("core_currency", 0))
     var cores_destroyed := int(results.get("cores_destroyed", 0))
-    if money <= 0 and xp <= 0 and core_currency <= 0 and cores_destroyed <= 0:
+    var has_chat_update := results.get("chat_line_counts", {}) is Dictionary or results.get("chat_thread_counts", {}) is Dictionary or results.get("chat_event_signatures", {}) is Dictionary or results.get("chat_log", []) is Array
+    if money <= 0 and xp <= 0 and core_currency <= 0 and cores_destroyed <= 0 and not has_chat_update:
         return data
     data["wallet"] = max(0, int(data.get("wallet", 0)) + money)
     data["xp_currency"] = max(0, int(data.get("xp_currency", 0)) + xp)
@@ -396,24 +411,29 @@ static func bank_partial_run_rewards(results: Dictionary) -> Dictionary:
         data["chat_line_counts"] = results.get("chat_line_counts", {}).duplicate(true)
     if results.get("chat_thread_counts", {}) is Dictionary:
         data["chat_thread_counts"] = results.get("chat_thread_counts", {}).duplicate(true)
+    if results.get("chat_event_signatures", {}) is Dictionary:
+        data["chat_event_signatures"] = results.get("chat_event_signatures", {}).duplicate(true)
+    if results.get("chat_log", []) is Array:
+        data["chat_log"] = results.get("chat_log", []).duplicate(true)
     if bool(results.get("bottom_phase_unlocked", false)):
         data["bottom_phase_unlocked"] = true
     if bool(results.get("boss_defeated", false)):
         data["boss_defeated"] = true
-    var attempt_history: Array = data.get("attempt_history", []).duplicate(true)
-    attempt_history.push_front({
-        "summary": str(results.get("summary_text", "Open Pit Empire rewards banked before defense.")),
-        "money": money,
-        "xp": xp,
-        "nodes_broken": int(results.get("nodes_broken", 0)),
-        "persistent_clear": float(results.get("persistent_clear", 0.0)),
-        "depth_level": int(results.get("depth_level", 1)),
-    })
-    if attempt_history.size() > 8:
-        attempt_history.resize(8)
-    data["attempt_history"] = attempt_history
-    data["last_run_summary"] = str(results.get("summary_text", "Open Pit Empire rewards banked before defense."))
-    BALANCE.refresh_depth_unlocks(data)
+    if money > 0 or xp > 0 or core_currency > 0 or cores_destroyed > 0:
+        var attempt_history: Array = data.get("attempt_history", []).duplicate(true)
+        attempt_history.push_front({
+            "summary": str(results.get("summary_text", "Open Pit Empire rewards banked before defense.")),
+            "money": money,
+            "xp": xp,
+            "nodes_broken": int(results.get("nodes_broken", 0)),
+            "persistent_clear": float(results.get("persistent_clear", 0.0)),
+            "depth_level": int(results.get("depth_level", 1)),
+        })
+        if attempt_history.size() > 8:
+            attempt_history.resize(8)
+        data["attempt_history"] = attempt_history
+        data["last_run_summary"] = str(results.get("summary_text", "Open Pit Empire rewards banked before defense."))
+        BALANCE.refresh_depth_unlocks(data)
     save_data(data)
     return data
 
@@ -555,6 +575,25 @@ static func _sanitize_main_data(data: Dictionary) -> Dictionary:
         sanitized["xp_upgrades"] = Dictionary(sanitized.get("xp_upgrades", {})).duplicate(true)
     if sanitized.get("purchased_core_upgrades", []) is Array:
         sanitized["purchased_core_upgrades"] = Array(sanitized.get("purchased_core_upgrades", [])).duplicate(true)
+    if sanitized.get("chat_line_counts", {}) is Dictionary:
+        sanitized["chat_line_counts"] = Dictionary(sanitized.get("chat_line_counts", {})).duplicate(true)
+    else:
+        sanitized["chat_line_counts"] = {}
+    if sanitized.get("chat_thread_counts", {}) is Dictionary:
+        sanitized["chat_thread_counts"] = Dictionary(sanitized.get("chat_thread_counts", {})).duplicate(true)
+    else:
+        sanitized["chat_thread_counts"] = {}
+    if sanitized.get("chat_event_signatures", {}) is Dictionary:
+        sanitized["chat_event_signatures"] = Dictionary(sanitized.get("chat_event_signatures", {})).duplicate(true)
+    else:
+        sanitized["chat_event_signatures"] = {}
+    if sanitized.get("chat_log", []) is Array:
+        var chat_log: Array = Array(sanitized.get("chat_log", [])).duplicate(true)
+        while chat_log.size() > 120:
+            chat_log.remove_at(0)
+        sanitized["chat_log"] = chat_log
+    else:
+        sanitized["chat_log"] = []
     sanitized["editor_assists_used"] = bool(sanitized.get("editor_assists_used", false))
     sanitized["remaining_layer_block_counts"] = _normalize_layer_block_counts(sanitized.get("remaining_layer_block_counts", {}))
     sanitized["best_layer_clear_percents"] = _normalize_layer_clear_percents(sanitized.get("best_layer_clear_percents", {}))

@@ -3,8 +3,8 @@ extends Node
 
 var PATH_JSON_DATA = "res://Data/Black Hole Data.json"
 
-var PATH_MAIN = "res://Singletons/Main.tscn"
-var PATH_MAIN_MENU = "res://Main Menu.tscn"
+var PATH_MAIN = "res://Games/Vanguard/Scenes/VanguardMain.tscn"
+var PATH_MAIN_MENU = "res://Games/Vanguard/Menus/VanguardMainMenu.tscn"
 var PATH_FISHING_UPGRADES = "res://UpgradeScreen.tscn"
 var PATH_FISHING_BATTLE = "res://Fishing/BattleScene.tscn"
 

@@ -89,6 +89,9 @@ const SEISMIC_CHARGE_INTERVAL := 0.32
 const SEISMIC_POWERUP_INTERVAL := 0.45
 const SEISMIC_CHARGE_AHEAD_DISTANCE := 180.0
 const FORWARD_SHOT_RANGE_BONUS := BLOCK_SIZE * 1.25
+const MAX_EFFECTIVE_MULTI_TARGETS := 5
+const SLOW_ATTACK_RANGE_SCREEN_FRACTION := 0.75
+const ATTACK_RANGE_UNCAPPED_SPEED_RATIO := 0.65
 const SEISMIC_CHARGE_SPLASH_RADIUS_CELLS := 2
 const SEISMIC_CHARGE_DAMAGE_MULT := 1.8
 const SEISMIC_POWERUP_DAMAGE_MULT := 0.8
@@ -102,6 +105,7 @@ const CAMERA_ZOOM_STOPPED := 1.2
 const CAMERA_ZOOM_FULL_SPEED := 0.8
 const CAMERA_ZOOM_BLEND_TIME := 0.35
 const BREACH_LOG_MAX_LINES := 8
+const BREACH_LOG_PERSIST_MAX_LINES := 120
 const BREACH_LOG_IDLE_INTERVAL := 2.8
 const HACKER_TYPER_MAX_LINES := 4
 const HACKER_TYPER_SHOT_WINDOW := 0.12
@@ -1561,7 +1565,7 @@ func _start_run() -> void:
     core_defense_timer = DEFENSE_BLOCK_INTERVAL
     core_shockwave_timer = CORE_SHOCKWAVE_INTERVAL
     _reset_run_perf_tracking()
-    breach_log_lines.clear()
+    breach_log_lines = _get_saved_breach_log_lines()
     breach_log_idle_timer = 0.0
     if bottom_cinematic_overlay != null:
         bottom_cinematic_overlay.visible = false
@@ -1572,7 +1576,8 @@ func _start_run() -> void:
         current_depth_level,
         rng,
         persistent_data.get("chat_line_counts", {}),
-        persistent_data.get("chat_thread_counts", {})
+        persistent_data.get("chat_thread_counts", {}),
+        persistent_data.get("chat_event_signatures", {})
     )
     _flush_breach_chat(true)
     _consume_open_pit_defense_result()
@@ -1751,7 +1756,14 @@ func _bank_rewards_before_core_defense() -> void:
     var total_money := cargo_money
     for pickup in pickups:
         total_money += int(pickup.get("money", 0))
+    _sync_breach_chat_persistent_state()
     if total_money <= 0 and xp_earned_this_run <= 0 and core_currency_earned_this_run <= 0 and cores_destroyed_this_run <= 0:
+        persistent_data = PROGRESS.bank_partial_run_rewards({
+            "chat_line_counts": breach_chat.get_persistent_line_counts() if breach_chat != null else persistent_data.get("chat_line_counts", {}),
+            "chat_thread_counts": breach_chat.get_persistent_thread_counts() if breach_chat != null else persistent_data.get("chat_thread_counts", {}),
+            "chat_event_signatures": breach_chat.get_persistent_event_signatures() if breach_chat != null else persistent_data.get("chat_event_signatures", {}),
+            "chat_log": persistent_data.get("chat_log", []),
+        })
         return
     persistent_data = PROGRESS.bank_partial_run_rewards({
         "money": total_money,
@@ -1765,6 +1777,8 @@ func _bank_rewards_before_core_defense() -> void:
         "persistent_clear": _get_persistent_clear_percent(),
         "chat_line_counts": breach_chat.get_persistent_line_counts() if breach_chat != null else persistent_data.get("chat_line_counts", {}),
         "chat_thread_counts": breach_chat.get_persistent_thread_counts() if breach_chat != null else persistent_data.get("chat_thread_counts", {}),
+        "chat_event_signatures": breach_chat.get_persistent_event_signatures() if breach_chat != null else persistent_data.get("chat_event_signatures", {}),
+        "chat_log": persistent_data.get("chat_log", []),
         "bottom_phase_unlocked": bottom_phase_unlocked,
     })
     cargo_money = 0
@@ -2087,7 +2101,7 @@ func _is_hacker_typer_line_complete() -> bool:
 func _has_live_hacker_targets() -> bool:
     if mega_timer > 0.0:
         return true
-    var range_world := float(runtime_stats.get("attack_radius", 96.0))
+    var range_world := _get_effective_attack_radius()
     return not _find_nearest_attack_targets(range_world, 1).is_empty()
 
 func _try_start_hacker_typer_attack_line() -> void:
@@ -2450,7 +2464,7 @@ func _find_autopilot_mining_target() -> Vector2:
             autopilot_status = str(core_attack_target.get("status", "core attack"))
             return Vector2(core_attack_target.get("world", ship_pos))
 
-    var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
+    var attack_radius := _get_effective_attack_radius()
     var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1, search_deadline_usec)
     if not nearby_targets.is_empty():
         var nearby_world := Vector2(nearby_targets[0].get("world", ship_pos))
@@ -2838,7 +2852,7 @@ func _find_or_get_top_sweep_start_target(search_deadline_usec: int = 0) -> Dicti
     if autopilot_top_sweep_anchor_grid.x >= 999999:
         return {}
     var anchor_world := grid_to_world(autopilot_top_sweep_anchor_grid)
-    if ship_pos.distance_to(anchor_world) <= float(runtime_stats.get("attack_radius", 96.0)) * 0.95 or world_to_grid(ship_pos).y >= autopilot_top_sweep_anchor_grid.y:
+    if ship_pos.distance_to(anchor_world) <= _get_effective_attack_radius() * 0.95 or world_to_grid(ship_pos).y >= autopilot_top_sweep_anchor_grid.y:
         return {}
     return {
         "grid": autopilot_top_sweep_anchor_grid,
@@ -2984,7 +2998,7 @@ func _find_autopilot_pickup_target(search_deadline_usec: int = 0) -> Dictionary:
     if remaining_capacity <= 0:
         return {}
     var pickup_radius := _get_effective_pickup_radius()
-    var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
+    var attack_radius := _get_effective_attack_radius()
     var scan_radius := maxf(AUTOPILOT_PICKUP_SCAN_RADIUS, maxf(pickup_radius * 4.0, attack_radius * 2.5))
     var scan_radius_sq := scan_radius * scan_radius
     var allow_overflow_chase := pickups.size() >= AUTOPILOT_PICKUP_OVERFLOW_COUNT
@@ -3043,7 +3057,7 @@ func _is_autopilot_pickup_path_safe(pickup_pos: Vector2, search_deadline_usec: i
     return true
 
 func _update_autopilot_aim_direction() -> void:
-    var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
+    var attack_radius := _get_effective_attack_radius()
     var nearby_targets := _find_nearest_attack_targets(attack_radius * 1.1, 1)
     if not nearby_targets.is_empty():
         var target_world := Vector2(nearby_targets[0].get("world", ship_pos))
@@ -3423,7 +3437,7 @@ func _auto_fire_seismic_charge() -> void:
 
 func _auto_fire_laser() -> void:
     var perf_start_us := perf_probe_begin()
-    var range_world := float(runtime_stats.get("attack_radius", 96.0))
+    var range_world := _get_effective_attack_radius()
     var max_targets := _get_effective_multi_target_count()
     var candidates := _find_nearest_attack_targets(range_world, max_targets, Time.get_ticks_usec() + ATTACK_TARGET_SEARCH_BUDGET_USEC)
     if candidates.is_empty():
@@ -3986,7 +4000,7 @@ func _update_mega_beam(delta: float) -> void:
     if mega_direction.length() < 0.01:
         mega_direction = Vector2.UP
     mega_beam_hits.clear()
-    var max_dist := float(runtime_stats.get("attack_radius", 96.0)) * 1.5
+    var max_dist := _get_effective_attack_radius() * 1.5
     mega_beam_end = ship_pos + mega_direction * max_dist
     mega_damage_timer += delta
     if mega_damage_timer < MEGA_DAMAGE_INTERVAL:
@@ -4114,10 +4128,31 @@ func _get_power_ratio() -> float:
 func is_forward_shot_active() -> bool:
     return _is_power_active() or float(active_powerup_timers.get("seismic_charge", 0.0)) > 0.0
 
+func _get_effective_attack_radius() -> float:
+    var base_range := float(runtime_stats.get("attack_radius", 96.0))
+    var viewport_size := get_viewport_rect().size
+    if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+        return base_range
+    var zoom := Vector2.ONE * CAMERA_ZOOM_STOPPED
+    if camera != null:
+        zoom = camera.zoom
+    var viewport_world_size := Vector2(
+        viewport_size.x / maxf(zoom.x, 0.001),
+        viewport_size.y / maxf(zoom.y, 0.001)
+    )
+    var slow_cap := minf(viewport_world_size.x, viewport_world_size.y) * SLOW_ATTACK_RANGE_SCREEN_FRACTION
+    if base_range <= slow_cap:
+        return base_range
+    var move_speed := maxf(float(runtime_stats.get("move_speed", 580.0)) + (POWER_SPEED_BONUS if _is_power_active() else 0.0), 1.0)
+    var speed_ratio := clampf(ship_vel.length() / move_speed, 0.0, 1.0)
+    if speed_ratio >= ATTACK_RANGE_UNCAPPED_SPEED_RATIO:
+        return base_range
+    return lerpf(slow_cap, base_range, speed_ratio / ATTACK_RANGE_UNCAPPED_SPEED_RATIO)
+
 func get_forward_shot_range() -> float:
     return maxf(
         SEISMIC_CHARGE_AHEAD_DISTANCE,
-        float(runtime_stats.get("attack_radius", 96.0)) + FORWARD_SHOT_RANGE_BONUS
+        _get_effective_attack_radius() + FORWARD_SHOT_RANGE_BONUS
     )
 
 func get_forward_shot_guide_end_world() -> Vector2:
@@ -4364,7 +4399,22 @@ func _resolve_projectile_target_world(projectile: Dictionary) -> Vector2:
     var target_grid := Vector2i(projectile.get("target_grid", Vector2i(999999, 999999)))
     if target_grid.x < 999999 and not is_grid_empty(target_grid):
         return grid_to_world(target_grid)
-    return Vector2(projectile.get("target_world", projectile.get("position", Vector2.ZERO)))
+    var projectile_pos := Vector2(projectile.get("position", Vector2.ZERO))
+    var velocity := Vector2(projectile.get("velocity", Vector2.ZERO))
+    if velocity.length_squared() > 0.001:
+        return projectile_pos + velocity.normalized() * BLOCK_SIZE * 2.0
+    return Vector2(projectile.get("target_world", projectile_pos))
+
+func _get_projectile_live_hit_grid(projectile_pos: Vector2) -> Vector2i:
+    var grid := world_to_grid(projectile_pos)
+    if is_grid_empty(grid):
+        return Vector2i(999999, 999999)
+    var block: Dictionary = blocks.get(grid, {})
+    if not _is_autopilot_attackable_block(block, grid):
+        return Vector2i(999999, 999999)
+    if int(block.get("core_id", -1)) >= 0:
+        return Vector2i(999999, 999999)
+    return grid
 
 func _update_drone_missiles(delta: float) -> void:
     for idx in range(drone_missiles.size() - 1, -1, -1):
@@ -4375,12 +4425,15 @@ func _update_drone_missiles(delta: float) -> void:
             continue
         var missile_pos := Vector2(missile.get("position", Vector2.ZERO))
         var target_grid := Vector2i(missile.get("target_grid", Vector2i(999999, 999999)))
+        var target_live := target_grid.x < 999999 and not is_grid_empty(target_grid)
         var target_world := _resolve_projectile_target_world(missile)
         missile["target_world"] = target_world
         var desired_vel := (target_world - missile_pos).normalized() * DRONE_MISSILE_SPEED
         missile["velocity"] = Vector2(missile.get("velocity", Vector2.ZERO)).lerp(desired_vel, clampf(delta * DRONE_MISSILE_TURN_RATE, 0.0, 1.0))
-        if missile_pos.distance_to(target_world) <= BLOCK_SIZE * 0.55:
-            var impact_grid := target_grid if target_grid.x < 999999 and not is_grid_empty(target_grid) else world_to_grid(target_world)
+        var next_missile_pos := missile_pos + Vector2(missile.get("velocity", Vector2.ZERO)) * delta
+        var pass_through_grid := _get_projectile_live_hit_grid(next_missile_pos)
+        if target_live and missile_pos.distance_to(target_world) <= BLOCK_SIZE * 0.55:
+            var impact_grid := target_grid
             var splash := _apply_splash_damage(impact_grid, DRONE_MISSILE_SPLASH_RADIUS_CELLS, float(missile.get("damage", 0.0)), 0.45)
             if bool(splash.get("visuals", false)):
                 _sync_planet_runtime_views(true, false)
@@ -4389,7 +4442,16 @@ func _update_drone_missiles(delta: float) -> void:
             seismic_charge_bursts.append({"position": target_world, "timer": 0.28, "radius": float(DRONE_MISSILE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE})
             drone_missiles.remove_at(idx)
             continue
-        missile["position"] = missile_pos + Vector2(missile.get("velocity", Vector2.ZERO)) * delta
+        if not target_live and pass_through_grid.x < 999999:
+            var pass_splash := _apply_splash_damage(pass_through_grid, DRONE_MISSILE_SPLASH_RADIUS_CELLS, float(missile.get("damage", 0.0)), 0.45)
+            if bool(pass_splash.get("visuals", false)):
+                _sync_planet_runtime_views(true, false)
+            if bool(pass_splash.get("destroyed", false)):
+                _on_combo_hit()
+            seismic_charge_bursts.append({"position": grid_to_world(pass_through_grid), "timer": 0.28, "radius": float(DRONE_MISSILE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE})
+            drone_missiles.remove_at(idx)
+            continue
+        missile["position"] = next_missile_pos
         drone_missiles[idx] = missile
 
 func _update_drone_mines(delta: float) -> void:
@@ -4408,12 +4470,15 @@ func _update_drone_mines(delta: float) -> void:
             continue
         var mine_pos := Vector2(mine.get("position", Vector2.ZERO))
         var target_grid := Vector2i(mine.get("target_grid", Vector2i(999999, 999999)))
+        var target_live := target_grid.x < 999999 and not is_grid_empty(target_grid)
         var target_world := _resolve_projectile_target_world(mine)
         mine["target_world"] = target_world
         var desired_vel := (target_world - mine_pos).normalized() * DRONE_MINE_SPEED
         mine["velocity"] = Vector2(mine.get("velocity", Vector2.ZERO)).lerp(desired_vel, clampf(delta * DRONE_MINE_TURN_RATE, 0.0, 1.0))
-        if mine_pos.distance_to(target_world) <= BLOCK_SIZE * 0.75:
-            var contact_grid := target_grid if target_grid.x < 999999 and not is_grid_empty(target_grid) else world_to_grid(target_world)
+        var next_mine_pos := mine_pos + Vector2(mine.get("velocity", Vector2.ZERO)) * delta
+        var pass_through_grid := _get_projectile_live_hit_grid(next_mine_pos)
+        if target_live and mine_pos.distance_to(target_world) <= BLOCK_SIZE * 0.75:
+            var contact_grid := target_grid
             var contact := _apply_splash_damage(contact_grid, DRONE_MINE_SPLASH_RADIUS_CELLS, float(mine.get("damage", 0.0)), 0.55)
             if bool(contact.get("visuals", false)):
                 _sync_planet_runtime_views(true, false)
@@ -4422,8 +4487,17 @@ func _update_drone_mines(delta: float) -> void:
             seismic_charge_bursts.append({"position": target_world, "timer": 0.34, "radius": float(DRONE_MINE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE})
             drone_mines.remove_at(idx)
             continue
+        if not target_live and pass_through_grid.x < 999999:
+            var pass_contact := _apply_splash_damage(pass_through_grid, DRONE_MINE_SPLASH_RADIUS_CELLS, float(mine.get("damage", 0.0)), 0.55)
+            if bool(pass_contact.get("visuals", false)):
+                _sync_planet_runtime_views(true, false)
+            if bool(pass_contact.get("destroyed", false)):
+                _on_combo_hit()
+            seismic_charge_bursts.append({"position": grid_to_world(pass_through_grid), "timer": 0.34, "radius": float(DRONE_MINE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE})
+            drone_mines.remove_at(idx)
+            continue
         mine["blink"] = float(mine.get("blink", 0.0)) + delta * 10.0
-        mine["position"] = mine_pos + Vector2(mine.get("velocity", Vector2.ZERO)) * delta
+        mine["position"] = next_mine_pos
         drone_mines[idx] = mine
 
 func _update_drone_visuals(_delta: float) -> void:
@@ -4553,9 +4627,32 @@ func _on_combo_hit() -> void:
 
 func _push_breach_log(message: String) -> void:
     breach_log_lines.append(message)
-    while breach_log_lines.size() > BREACH_LOG_MAX_LINES:
+    while breach_log_lines.size() > BREACH_LOG_PERSIST_MAX_LINES:
         breach_log_lines.remove_at(0)
+    persistent_data["chat_log"] = breach_log_lines.duplicate(true)
     _render_breach_log()
+
+func _get_saved_breach_log_lines() -> Array[String]:
+    var lines: Array[String] = []
+    var saved_lines: Variant = persistent_data.get("chat_log", [])
+    if not (saved_lines is Array):
+        return lines
+    for line_variant in saved_lines:
+        var line := str(line_variant)
+        if line.strip_edges() == "":
+            continue
+        lines.append(line)
+    while lines.size() > BREACH_LOG_PERSIST_MAX_LINES:
+        lines.remove_at(0)
+    return lines
+
+func _sync_breach_chat_persistent_state() -> void:
+    persistent_data["chat_log"] = breach_log_lines.duplicate(true)
+    if breach_chat == null:
+        return
+    persistent_data["chat_line_counts"] = breach_chat.get_persistent_line_counts()
+    persistent_data["chat_thread_counts"] = breach_chat.get_persistent_thread_counts()
+    persistent_data["chat_event_signatures"] = breach_chat.get_persistent_event_signatures()
 
 func _finish_run(returned: bool, reason: String) -> void:
     if run_finished:
@@ -4655,6 +4752,7 @@ func _save_planet_snapshot() -> void:
     if run_finished or planet_data == null:
         return
     _flush_pending_exposed_edges()
+    _sync_breach_chat_persistent_state()
     persistent_data["boss_defeated"] = boss_defeated
     persistent_data["destroyed_cells"] = []
     PROGRESS.save_data(persistent_data)
@@ -4695,6 +4793,7 @@ func _begin_finish_save(money_award: int, reason: String) -> void:
 func _finish_run_save_async(money_award: int, reason: String) -> void:
     var planet_snapshot: Dictionary = {}
     var has_sector_updates := false
+    _sync_breach_chat_persistent_state()
     if planet_data != null:
         planet_snapshot = await planet_data.build_save_data_async(get_tree(), Callable(self, "_on_finish_save_progress"))
         planet_snapshot["depth_level"] = current_depth_level
@@ -4716,6 +4815,8 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
         "persistent_clear": _get_persistent_clear_percent(),
         "chat_line_counts": breach_chat.get_persistent_line_counts() if breach_chat != null else persistent_data.get("chat_line_counts", {}),
         "chat_thread_counts": breach_chat.get_persistent_thread_counts() if breach_chat != null else persistent_data.get("chat_thread_counts", {}),
+        "chat_event_signatures": breach_chat.get_persistent_event_signatures() if breach_chat != null else persistent_data.get("chat_event_signatures", {}),
+        "chat_log": persistent_data.get("chat_log", []),
         "bottom_phase_unlocked": bottom_phase_unlocked,
     })
     if has_sector_updates:
@@ -5611,7 +5712,7 @@ func _get_attack_load_tier() -> int:
     return 0
 
 func _get_effective_multi_target_count() -> int:
-    var max_targets := maxi(1, int(runtime_stats.get("multi_target", 1)))
+    var max_targets := clampi(int(runtime_stats.get("multi_target", 1)), 1, MAX_EFFECTIVE_MULTI_TARGETS)
     match _get_attack_load_tier():
         2:
             return 1
@@ -6231,7 +6332,11 @@ func _render_breach_log() -> void:
     var title := "[color=#7dd6ff]BREACH LOG[/color]"
     if breach_chat != null:
         title = breach_chat.get_title()
-    breach_log_label.text = title if breach_log_lines.is_empty() else title + "\n" + "\n".join(breach_log_lines)
+    var visible_lines: Array[String] = []
+    var start_index := maxi(0, breach_log_lines.size() - BREACH_LOG_MAX_LINES)
+    for idx in range(start_index, breach_log_lines.size()):
+        visible_lines.append(breach_log_lines[idx])
+    breach_log_label.text = title if visible_lines.is_empty() else title + "\n" + "\n".join(visible_lines)
 
 func _flush_breach_chat(force_all: bool = false) -> void:
     if breach_chat == null:

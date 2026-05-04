@@ -102,16 +102,16 @@ var hint_stage := 0
 var persistent_line_counts: Dictionary = {}
 var persistent_thread_counts: Dictionary = {}
 
-func reset_for_run(depth_level: int, source_rng: RandomNumberGenerator = null, line_counts: Dictionary = {}, thread_counts: Dictionary = {}) -> void:
+func reset_for_run(depth_level: int, source_rng: RandomNumberGenerator = null, line_counts: Dictionary = {}, thread_counts: Dictionary = {}, event_signatures: Dictionary = {}) -> void:
     rng = RandomNumberGenerator.new()
     rng.seed = source_rng.randi() if source_rng != null else Time.get_unix_time_from_system()
     queued_lines.clear()
     recent_attacks.clear()
     recent_money.clear()
     time_alive = 0.0
-    next_generation_time = 6.0
-    next_summary_time = 11.0
-    next_thread_time = 24.0
+    next_generation_time = 8.0
+    next_summary_time = 18.0
+    next_thread_time = 36.0
     best_window_money = 0
     best_window_nodes = 0
     last_announced_money = 0
@@ -126,13 +126,16 @@ func reset_for_run(depth_level: int, source_rng: RandomNumberGenerator = null, l
     final_core_destroyed = false
     final_epilogue_lines.clear()
     emitted_exact_lines.clear()
-    emitted_event_signatures.clear()
+    emitted_event_signatures = event_signatures.duplicate(true)
     ambient_cooldown_until = 0.0
     node_hit_counts.clear()
     suspicion_level = 0
     hint_stage = 0
     persistent_line_counts = line_counts.duplicate(true)
     persistent_thread_counts = thread_counts.duplicate(true)
+    for line_variant in persistent_line_counts.keys():
+        if int(persistent_line_counts.get(line_variant, 0)) > 0:
+            emitted_exact_lines[str(line_variant)] = true
     _queue_room_intro(depth_level)
 
 func get_persistent_line_counts() -> Dictionary:
@@ -141,8 +144,11 @@ func get_persistent_line_counts() -> Dictionary:
 func get_persistent_thread_counts() -> Dictionary:
     return persistent_thread_counts.duplicate(true)
 
+func get_persistent_event_signatures() -> Dictionary:
+    return emitted_event_signatures.duplicate(true)
+
 func get_title() -> String:
-    return CHAT_TITLE
+    return _translate(CHAT_TITLE)
 
 func drain_ready_lines(force_all: bool = false) -> Array[String]:
     var ready: Array[String] = []
@@ -160,18 +166,18 @@ func update(delta: float, snapshot: Dictionary) -> void:
     if time_alive < next_generation_time:
         return
     if _try_generate_summary(snapshot):
-        next_generation_time = time_alive + rng.randf_range(9.0, 16.0)
+        next_generation_time = time_alive + rng.randf_range(16.0, 28.0)
         return
     if time_alive >= next_thread_time and _should_emit_thread(snapshot) and _advance_thread():
-        next_generation_time = time_alive + rng.randf_range(12.0, 22.0)
-        next_thread_time = time_alive + rng.randf_range(24.0, 40.0)
+        next_generation_time = time_alive + rng.randf_range(20.0, 34.0)
+        next_thread_time = time_alive + rng.randf_range(45.0, 75.0)
         return
-    if time_alive >= ambient_cooldown_until and rng.randf() < 0.1:
+    if time_alive >= ambient_cooldown_until and rng.randf() < 0.06:
         _queue_ambient_line(snapshot)
-        ambient_cooldown_until = time_alive + rng.randf_range(24.0, 38.0)
-        next_generation_time = time_alive + rng.randf_range(14.0, 24.0)
+        ambient_cooldown_until = time_alive + rng.randf_range(40.0, 65.0)
+        next_generation_time = time_alive + rng.randf_range(22.0, 36.0)
         return
-    next_generation_time = time_alive + rng.randf_range(6.0, 10.0)
+    next_generation_time = time_alive + rng.randf_range(10.0, 18.0)
 
 func record_node_destroyed(is_core: bool = false) -> void:
     recent_attacks.append(time_alive)
@@ -381,7 +387,7 @@ func notify_final_core_destroyed() -> void:
 func build_summary_epilogue() -> String:
     if final_epilogue_lines.is_empty():
         return ""
-    return "\n\n" + "[color=#7dd6ff]Room Aftermath[/color]\n" + "\n".join(final_epilogue_lines)
+    return "\n\n" + _translate("[color=#7dd6ff]Room Aftermath[/color]") + "\n" + "\n".join(final_epilogue_lines)
 
 func _react_to_snapshot(snapshot: Dictionary) -> void:
     var layer_depth: int = int(snapshot.get("layer_depth", 1))
@@ -426,7 +432,7 @@ func _try_generate_summary(snapshot: Dictionary) -> bool:
         return false
     var nodes: int = recent_attacks.size()
     var money := _recent_money_total()
-    next_summary_time = time_alive + rng.randf_range(12.0, 22.0)
+    next_summary_time = time_alive + rng.randf_range(24.0, 40.0)
     if nodes <= 0 and money <= 0:
         return false
     var dramatic_money := money >= 600 and (money >= last_announced_money + 350 or money >= int(float(maxi(1, last_announced_money)) * 1.6))
@@ -581,7 +587,7 @@ func _queue_enemy_line(enemy_tier: int, text: String, delay: float, event_key: S
     _queue_unique_event(event_key, speaker, text, delay, str(enemy.get("color", "#ff7c7c")))
 
 func _queue_message(speaker: String, text: String, delay: float = 0.0, color_override: String = "") -> void:
-    var line := _format_chat_line(speaker, text, color_override)
+    var line := _format_chat_line(speaker, _translate(text), color_override)
     if emitted_exact_lines.has(line):
         return
     emitted_exact_lines[line] = true
@@ -604,6 +610,7 @@ func _queue_unique_variant_message(speaker: String, templates: Array, args: Arra
     var best_count := 2147483647
     for template_variant in templates:
         var template := str(template_variant)
+        template = _translate(template)
         var text := template % args if not args.is_empty() else template
         var line := _format_chat_line(speaker, text, color_override)
         if not emitted_exact_lines.has(line):
@@ -648,7 +655,7 @@ func _zone_enemy_tier(zone: int) -> int:
             return 4
 
 func _format_summary_line(speaker: String, text: String) -> String:
-    return "[color=%s]%s[/color]  %s" % [_speaker_color(speaker), _speaker_display_name(speaker), _format_chat_body_text(speaker, text)]
+    return "[color=%s]%s[/color]  %s" % [_speaker_color(speaker), _speaker_display_name(speaker), _format_chat_body_text(speaker, _translate(text))]
 
 func _format_chat_body_text(speaker: String, text: String) -> String:
     if _is_enemy_speaker(speaker):
@@ -708,12 +715,15 @@ func _format_money(amount: int) -> String:
 func _zone_name(zone: int) -> String:
     match zone:
         0:
-            return "Proxy Cache"
+            return _translate("Proxy Cache")
         1:
-            return "Cipher Depths"
+            return _translate("Cipher Depths")
         2:
-            return "Ghost Sector"
+            return _translate("Ghost Sector")
         3:
-            return "Root Well"
+            return _translate("Root Well")
         _:
-            return "Kernel Vault"
+            return _translate("Kernel Vault")
+
+func _translate(key: String) -> String:
+    return TranslationServer.translate(key)

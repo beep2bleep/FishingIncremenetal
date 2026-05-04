@@ -211,7 +211,7 @@ func _on_start_new_game_pressed() -> void :
 
 func _on_contiunue_old_game_pressed() -> void :
     Global.load_saved_run = true
-    SceneChanger.change_to_new_scene(Util.PATH_MAIN)
+    SceneChanger.change_to_new_scene(Util.get_main_scene_path())
 
 
 func _on_quit_pressed() -> void :
@@ -268,7 +268,7 @@ func _on_play_pressed() -> void :
     Global.ensure_default_game_mode_data()
     Global.start_in_upgrade_scene = true
     Global.load_saved_run = false
-    SceneChanger.change_to_new_scene(Util.PATH_MAIN, null, 0.2)
+    SceneChanger.change_to_new_scene(Util.get_main_scene_path(), null, 0.2)
 
 
 func _on_game_mode_screen_back() -> void :
@@ -282,7 +282,7 @@ func _on_game_mode_screen_play_new_game_mode(game_mode_data: GameModeData) -> vo
 
     Global.load_saved_run = false
     Global.start_in_upgrade_scene = true
-    SceneChanger.change_to_new_scene(Util.PATH_MAIN, null, 0.2)
+    SceneChanger.change_to_new_scene(Util.get_main_scene_path(), null, 0.2)
 
 
 func _on_game_mode_screen_continue_game_mode(game_mode_data: GameModeData) -> void :
@@ -291,4 +291,4 @@ func _on_game_mode_screen_continue_game_mode(game_mode_data: GameModeData) -> vo
 
     Global.load_saved_run = true
     Global.start_in_upgrade_scene = true
-    SceneChanger.change_to_new_scene(Util.PATH_MAIN, null, 0.2)
+    SceneChanger.change_to_new_scene(Util.get_main_scene_path(), null, 0.2)
