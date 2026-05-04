@@ -88,8 +88,8 @@ func _refresh_open_pit_wallet_labels() -> void:
     core_label.visible = should_show_open_pit_wallets
     if not should_show_open_pit_wallets:
         return
-    xp_label.text = "XP %s" % Util.get_number_short_text(OPEN_PIT_PROGRESS_SCRIPT.get_xp_wallet())
-    core_label.text = Util.get_number_short_text(OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet())
+    xp_label.text = tr("OPEN_PIT_XP_WALLET") % Util.get_number_short_text(OPEN_PIT_PROGRESS_SCRIPT.get_xp_wallet())
+    core_label.text = tr("OPEN_PIT_ROOT_KEYS_WALLET") % Util.get_number_short_text(OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet())
 
 func get_text_location():
     if money_label == null:

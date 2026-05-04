@@ -1110,7 +1110,7 @@ func _refresh_demo_mode_label_visibility() -> void:
         if Util.is_mining_game_active():
             game_mode_label.text = ""
         elif Util.is_open_pit_game_active():
-            game_mode_label.text = "OPEN PIT EMPIRE"
+            game_mode_label.text = tr("OPEN PIT EMPIRE")
             game_mode_label.add_theme_color_override("font_color", Color(0.95, 0.76, 0.38, 1.0))
         elif Util.is_open_pit_orbit_game_active():
             game_mode_label.text = "OPEN PIT ORBIT"
@@ -1161,8 +1161,8 @@ func _refresh_mining_time_label() -> void:
         var next_flight := int(open_pit_data.get("attempt_history", []).size()) + 1
         var assist_note := ""
         if bool(open_pit_data.get("editor_assists_used", false)):
-            assist_note = " Editor assists used: leaderboard writes disabled until progress reset."
-        mining_time_label.text = "Flight #%d. Cash out before fuel ends. XP: %d  Root Keys: %d.%s" % [next_flight, OPEN_PIT_PROGRESS_SCRIPT.get_xp_wallet(), OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet(), assist_note]
+            assist_note = tr("OPEN_PIT_EDITOR_ASSISTS_DISABLED_NOTE")
+        mining_time_label.text = _trf("OPEN_PIT_UPGRADE_STATUS", [next_flight, OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet(), assist_note])
     elif Util.is_open_pit_orbit_game_active():
         mining_time_label.text = "Open Pit Orbit runs use orbit-tech weapons. Mine, dock, and cash out before fuel ends. Core shards: %d." % OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet()
     else:
@@ -2993,7 +2993,7 @@ func _update_go_again_button_state() -> void:
     if Util.is_open_pit_game_active():
         go_again_button.disabled = false
         var open_pit_data := OPEN_PIT_PROGRESS_SCRIPT.load_data()
-        go_again_button.text = "START FLIGHT #%d" % (int(open_pit_data.get("attempt_history", []).size()) + 1)
+        go_again_button.text = _trf("OPEN_PIT_START_FLIGHT", [int(open_pit_data.get("attempt_history", []).size()) + 1])
         go_again_button.tooltip_text = ""
         go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return

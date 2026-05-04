@@ -325,8 +325,8 @@ static func get_upgrade_catalog() -> Array[Dictionary]:
                 continue
             result.append({
                 "id": upgrade_id,
-                "label": str(raw.get("label", _get_label(upgrade_id))),
-                "summary": str(raw.get("summary", _get_summary(upgrade_id, raw.get("effects", {})))),
+                "label": _translate(str(raw.get("label", _get_label(upgrade_id)))),
+                "summary": _translate(str(raw.get("summary", _get_summary(upgrade_id, raw.get("effects", {}))))),
                 "base_cost": _get_consolidated_base_cost(raw),
                 "cost_mult": _get_consolidated_cost_mult(raw),
                 "max_level": _get_consolidated_max_level(raw),
@@ -352,8 +352,8 @@ static func get_core_upgrade_catalog() -> Array[Dictionary]:
             continue
         result.append({
             "id": CORE_PREFIX + upgrade_id,
-            "label": str(raw.get("label", upgrade_id)),
-            "summary": str(raw.get("summary", "Core upgrade.")),
+            "label": _translate(str(raw.get("label", upgrade_id))),
+            "summary": _translate(str(raw.get("summary", "Core upgrade."))),
             "base_cost": int(raw.get("base_cost", 0)),
             "cost_mult": float(raw.get("cost_mult", 1.0)),
             "max_level": int(raw.get("max_level", 1)),
@@ -370,8 +370,8 @@ static func get_xp_upgrade_catalog() -> Array[Dictionary]:
             continue
         result.append({
             "id": XP_PREFIX + upgrade_id,
-            "label": str(raw.get("label", upgrade_id)),
-            "summary": str(raw.get("summary", "XP upgrade.")),
+            "label": _translate(str(raw.get("label", upgrade_id))),
+            "summary": _translate(str(raw.get("summary", "XP upgrade."))),
             "base_cost": _get_consolidated_base_cost(raw),
             "cost_mult": _get_consolidated_cost_mult(raw),
             "max_level": _get_consolidated_max_level(raw),
@@ -459,7 +459,7 @@ static func get_reward_core_upgrade_target_layer_depth(upgrade_id: String) -> in
 
 static func get_reward_core_upgrade_target_layer_name(upgrade_id: String) -> String:
     var layer_depth: int = get_reward_core_upgrade_target_layer_depth(upgrade_id)
-    return str(get_layer_for_depth(layer_depth).get("name", "Proxy Cache"))
+    return _translate(str(get_layer_for_depth(layer_depth).get("name", "Proxy Cache")))
 
 static func get_upgrade_cell(upgrade_id: String) -> Vector2:
     var cash_idx: int = CASH_ORDER.find(upgrade_id)
@@ -838,15 +838,18 @@ static func _format_effect_number(value: float) -> String:
 static func _get_zone_label(zone_idx: int) -> String:
     match zone_idx:
         0:
-            return "Proxy Cache"
+            return _translate("Proxy Cache")
         1:
-            return "Cipher Depths"
+            return _translate("Cipher Depths")
         2:
-            return "Ghost Sector"
+            return _translate("Ghost Sector")
         3:
-            return "Root Well"
+            return _translate("Root Well")
         _:
-            return "Kernel Vault"
+            return _translate("Kernel Vault")
+
+static func _translate(key: String) -> String:
+    return TranslationServer.translate(key)
 
 static func _get_icon(upgrade_id: String) -> String:
     if upgrade_id.contains("drone"):

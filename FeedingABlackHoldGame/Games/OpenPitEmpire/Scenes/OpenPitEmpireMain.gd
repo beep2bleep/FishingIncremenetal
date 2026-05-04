@@ -51,6 +51,7 @@ const PERF_PROBE_HISTORY_SIZE := 600
 const PERF_CAPTURE_WARMUP_SECONDS := 0.5
 const ATTACK_LOAD_SOFT_LIMIT := 64
 const ATTACK_LOAD_HARD_LIMIT := 96
+const ATTACK_TARGET_SEARCH_BUDGET_USEC := 4500
 const SHOCKWAVE_RING_SPEED := 520.0
 const MAX_SHOCKWAVE_RINGS := 3
 const MEGA_DAMAGE_INTERVAL := 0.08
@@ -654,6 +655,12 @@ var current_flight_number := 1
 var pause_menu
 var summary_graph
 var summary_mined_picture
+
+func _trf(key: String, args: Array = []) -> String:
+    var translated: String = tr(key)
+    for index in range(args.size()):
+        translated = translated.replace("{%d}" % index, str(args[index]))
+    return translated
 
 func _can_use_editor_debug_keys() -> bool:
     return editor_debug_unlock_chord_enabled
@@ -1265,7 +1272,7 @@ func _build_ui() -> void:
     summary_margin.add_child(summary_vbox)
 
     var title := Label.new()
-    title.text = "Open Pit Empire"
+    title.text = tr("OPEN_PIT_EMPIRE")
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     title.add_theme_font_size_override("font_size", 32)
     title.add_theme_color_override("font_color", Color(0.7, 0.9, 1.0, 1.0))
@@ -1300,7 +1307,7 @@ func _build_ui() -> void:
     summary_vbox.add_child(summary_status_label)
 
     summary_return_button = Button.new()
-    summary_return_button.text = "Return To Upgrades"
+    summary_return_button.text = tr("OPEN_PIT_RETURN_TO_UPGRADES")
     summary_return_button.custom_minimum_size = Vector2(260.0, 74.0)
     summary_return_button.pressed.connect(_return_to_upgrades)
     summary_vbox.add_child(summary_return_button)
@@ -2436,12 +2443,20 @@ func _find_autopilot_mining_target() -> Vector2:
     var search_deadline_usec := Time.get_ticks_usec() + AUTOPILOT_TARGET_SEARCH_BUDGET_USEC
     _update_autopilot_stuck_mode()
     if _is_autopilot_core_attack_mode():
-        var core_attack_target := _find_autopilot_core_attack_target()
+        var core_attack_target := _find_autopilot_core_attack_target(search_deadline_usec)
         if not core_attack_target.is_empty():
             var aim_world := Vector2(core_attack_target.get("target_world", ship_pos))
             autopilot_aim_dir = (aim_world - ship_pos).normalized()
             autopilot_status = str(core_attack_target.get("status", "core attack"))
             return Vector2(core_attack_target.get("world", ship_pos))
+
+    var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
+    var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1, search_deadline_usec)
+    if not nearby_targets.is_empty():
+        var nearby_world := Vector2(nearby_targets[0].get("world", ship_pos))
+        autopilot_aim_dir = (nearby_world - ship_pos).normalized()
+        autopilot_status = "mining"
+        return ship_pos
 
     if autopilot_sortie_mode == AUTOPILOT_MODE_TOP_SWEEP:
         var top_start_target := _find_or_get_top_sweep_start_target(search_deadline_usec)
@@ -2460,19 +2475,11 @@ func _find_autopilot_mining_target() -> Vector2:
             return dig_world
 
     if not _is_autopilot_core_attack_mode():
-        var pickup_target := _find_autopilot_pickup_target()
+        var pickup_target := _find_autopilot_pickup_target(search_deadline_usec)
         if not pickup_target.is_empty():
             autopilot_aim_dir = Vector2.ZERO
             autopilot_status = "collecting"
             return Vector2(pickup_target.get("position", ship_pos))
-
-    var attack_radius := float(runtime_stats.get("attack_radius", 96.0))
-    var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1, search_deadline_usec)
-    if not nearby_targets.is_empty():
-        var nearby_world := Vector2(nearby_targets[0].get("world", ship_pos))
-        autopilot_aim_dir = (nearby_world - ship_pos).normalized()
-        autopilot_status = "mining"
-        return ship_pos
 
     var my_grid := world_to_grid(ship_pos)
     var desired_lane_x := _get_autopilot_desired_lane_x(my_grid.y)
@@ -2650,12 +2657,12 @@ func _get_autopilot_closest_available_core() -> Dictionary:
             best_core = core
     return best_core
 
-func _find_autopilot_core_attack_target() -> Dictionary:
+func _find_autopilot_core_attack_target(search_deadline_usec: int = 0) -> Dictionary:
     var best_core := _get_autopilot_closest_available_core()
     if best_core.is_empty():
         return {}
     var core_center := Vector2i(int(best_core.center.x), int(best_core.center.y))
-    var tunnel_target := _find_autopilot_core_breach_corridor_target(core_center)
+    var tunnel_target := _find_autopilot_core_breach_corridor_target(core_center, search_deadline_usec)
     if not tunnel_target.is_empty():
         var target_grid := Vector2i(tunnel_target.get("grid", core_center))
         var target_world := grid_to_world(target_grid)
@@ -2666,14 +2673,17 @@ func _find_autopilot_core_attack_target() -> Dictionary:
             "status": "core attack approach",
         }
     var core_world := grid_to_world(core_center)
+    var can_rush_core := false
+    if _is_validation_core_attack_rush() and (search_deadline_usec <= 0 or Time.get_ticks_usec() < search_deadline_usec):
+        can_rush_core = _has_clear_attack_path_to_core(core_center)
     return {
         "grid": core_center,
         "target_world": core_world,
-        "world": core_world if _is_validation_core_attack_rush() and _has_clear_attack_path_to_core(core_center) else _get_autopilot_staging_world_for_core(best_core),
+        "world": core_world if can_rush_core else _get_autopilot_staging_world_for_core(best_core),
         "status": "core attack",
     }
 
-func _find_autopilot_core_breach_corridor_target(core_center: Vector2i) -> Dictionary:
+func _find_autopilot_core_breach_corridor_target(core_center: Vector2i, search_deadline_usec: int = 0) -> Dictionary:
     var start := world_to_grid(ship_pos)
     var to_core := Vector2(float(core_center.x - start.x), float(core_center.y - start.y))
     var distance := to_core.length()
@@ -2685,8 +2695,12 @@ func _find_autopilot_core_breach_corridor_target(core_center: Vector2i) -> Dicti
     var best_grid := Vector2i(999999, 999999)
     var best_score := INF
     for step in range(1, steps + 1):
+        if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+            break
         var center_f := Vector2(float(start.x), float(start.y)) + forward * float(step)
         for side_offset in range(-AUTOPILOT_CORE_BREACH_CORRIDOR_HALF_WIDTH, AUTOPILOT_CORE_BREACH_CORRIDOR_HALF_WIDTH + 1):
+            if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+                break
             var sample_f := center_f + side * float(side_offset)
             var grid := Vector2i(int(round(sample_f.x)), int(round(sample_f.y)))
             if not _is_autopilot_mineable_block(grid):
@@ -2962,7 +2976,7 @@ func _get_autopilot_staging_world_for_anchor(anchor_grid: Vector2i) -> Vector2:
             best_world = staging_world
     return best_world
 
-func _find_autopilot_pickup_target() -> Dictionary:
+func _find_autopilot_pickup_target(search_deadline_usec: int = 0) -> Dictionary:
     if bool(runtime_stats.get("instant_collect", false)) or pickups.is_empty():
         return {}
     var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
@@ -2978,6 +2992,8 @@ func _find_autopilot_pickup_target() -> Dictionary:
     var best_score := INF
     var found := false
     for pickup in pickups:
+        if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+            break
         var pickup_cargo := int(pickup.get("cargo", 1))
         if pickup_cargo > remaining_capacity:
             continue
@@ -2985,7 +3001,7 @@ func _find_autopilot_pickup_target() -> Dictionary:
         var dist_sq := ship_pos.distance_squared_to(pickup_pos)
         if dist_sq > scan_radius_sq and not allow_overflow_chase:
             continue
-        if not _is_autopilot_pickup_path_safe(pickup_pos):
+        if not _is_autopilot_pickup_path_safe(pickup_pos, search_deadline_usec):
             continue
         var score := dist_sq
         if _is_autopilot_side_sweep_mode():
@@ -3006,7 +3022,7 @@ func _find_autopilot_pickup_target() -> Dictionary:
         return {}
     return {"position": best_position}
 
-func _is_autopilot_pickup_path_safe(pickup_pos: Vector2) -> bool:
+func _is_autopilot_pickup_path_safe(pickup_pos: Vector2, search_deadline_usec: int = 0) -> bool:
     if ship_pos.distance_to(pickup_pos) <= _get_effective_pickup_radius() * 0.9:
         return true
     var offset := pickup_pos - ship_pos
@@ -3016,6 +3032,8 @@ func _is_autopilot_pickup_path_safe(pickup_pos: Vector2) -> bool:
     var dir := offset / distance
     var steps := maxi(1, int(ceil(distance / AUTOPILOT_PICKUP_PATH_STEP)))
     for step in range(1, steps + 1):
+        if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+            return false
         var sample := ship_pos + dir * minf(distance, float(step) * AUTOPILOT_PICKUP_PATH_STEP)
         var grid := world_to_grid(sample)
         if not is_grid_empty(grid):
@@ -3407,7 +3425,7 @@ func _auto_fire_laser() -> void:
     var perf_start_us := perf_probe_begin()
     var range_world := float(runtime_stats.get("attack_radius", 96.0))
     var max_targets := _get_effective_multi_target_count()
-    var candidates := _find_nearest_attack_targets(range_world, max_targets)
+    var candidates := _find_nearest_attack_targets(range_world, max_targets, Time.get_ticks_usec() + ATTACK_TARGET_SEARCH_BUDGET_USEC)
     if candidates.is_empty():
         last_attack_target = Vector2.ZERO
         multi_targets.clear()
@@ -3482,50 +3500,74 @@ func _find_nearest_attack_targets(range_world: float, max_targets: int, search_d
     var candidates: Array[Dictionary] = []
     var seen_core_ids := {}
     var range_sq := range_world * range_world
-    var offset_scan_sq := (range_world + BLOCK_SIZE * 0.8) * (range_world + BLOCK_SIZE * 0.8)
     var grid_range := int(ceil(range_world / BLOCK_SIZE)) + 1
     var my_grid := world_to_grid(ship_pos)
-    var offsets: Array = _get_sorted_target_offsets(grid_range)
-    for offset_variant in offsets:
+    var early_stop_score := INF
+    for ring in range(grid_range + 1):
         if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
             break
-        var offset: Vector2i = offset_variant
-        var cell_origin_dist_sq := float(offset.x * offset.x + offset.y * offset.y) * BLOCK_SIZE * BLOCK_SIZE
-        if cell_origin_dist_sq > offset_scan_sq:
+        if candidates.size() >= max_targets:
+            var nearest_possible_dist := maxf(0.0, float(ring - 1) * BLOCK_SIZE)
+            var nearest_possible_score := nearest_possible_dist * nearest_possible_dist - range_sq * CORE_CLEAR_PATH_TARGET_BONUS
+            if nearest_possible_score >= early_stop_score:
+                break
+        for dx in range(-ring, ring + 1):
+            if ring > 0:
+                _consider_attack_target_offset(my_grid, Vector2i(dx, -ring), range_sq, max_targets, candidates, seen_core_ids, search_deadline_usec)
+                if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+                    break
+                _consider_attack_target_offset(my_grid, Vector2i(dx, ring), range_sq, max_targets, candidates, seen_core_ids, search_deadline_usec)
+                if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+                    break
+            else:
+                _consider_attack_target_offset(my_grid, Vector2i.ZERO, range_sq, max_targets, candidates, seen_core_ids, search_deadline_usec)
+        if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
             break
-        var check := my_grid + offset
-        if not blocks.has(check):
-            continue
-        var block: Dictionary = blocks.get(check, {})
-        if not _is_autopilot_attackable_block(block, check):
-            continue
-        var core_id: int = int(block.get("core_id", -1))
-        if _should_autopilot_skip_core_area_block(check, block):
-            continue
-        if core_id >= 0 and seen_core_ids.has(core_id):
-            continue
-        var block_world := grid_to_world(check)
-        var dist_sq := ship_pos.distance_squared_to(block_world)
-        if dist_sq >= range_sq:
-            continue
-        var target_score := dist_sq
-        if core_id >= 0:
-            if _has_clear_attack_path_to_core(check):
-                target_score -= range_sq * CORE_CLEAR_PATH_TARGET_BONUS
-            elif not _is_autopilot_core_attack_mode():
-                target_score += range_sq * 0.35
-        var candidate := {"pos": check, "dist_sq": target_score, "world": block_world, "core_id": core_id}
-        var insert_idx := candidates.size()
-        while insert_idx > 0 and target_score < float(candidates[insert_idx - 1].get("dist_sq", INF)):
-            insert_idx -= 1
-        if insert_idx >= max_targets and candidates.size() >= max_targets:
-            continue
-        candidates.insert(insert_idx, candidate)
-        if core_id >= 0:
-            seen_core_ids[core_id] = true
-        if candidates.size() > max_targets:
-            candidates.resize(max_targets)
+        for dy in range(-ring + 1, ring):
+            _consider_attack_target_offset(my_grid, Vector2i(-ring, dy), range_sq, max_targets, candidates, seen_core_ids, search_deadline_usec)
+            if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+                break
+            _consider_attack_target_offset(my_grid, Vector2i(ring, dy), range_sq, max_targets, candidates, seen_core_ids, search_deadline_usec)
+            if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+                break
+        if candidates.size() >= max_targets:
+            early_stop_score = float(candidates[candidates.size() - 1].get("dist_sq", INF))
     return candidates
+
+func _consider_attack_target_offset(my_grid: Vector2i, offset: Vector2i, range_sq: float, max_targets: int, candidates: Array[Dictionary], seen_core_ids: Dictionary, search_deadline_usec: int = 0) -> void:
+    if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+        return
+    var check := my_grid + offset
+    if not blocks.has(check):
+        return
+    var block: Dictionary = blocks.get(check, {})
+    if not _is_autopilot_attackable_block(block, check):
+        return
+    var core_id: int = int(block.get("core_id", -1))
+    if _should_autopilot_skip_core_area_block(check, block):
+        return
+    if core_id >= 0 and seen_core_ids.has(core_id):
+        return
+    var block_world := grid_to_world(check)
+    var dist_sq := ship_pos.distance_squared_to(block_world)
+    if dist_sq >= range_sq:
+        return
+    var target_score := dist_sq
+    if core_id >= 0:
+        if (search_deadline_usec <= 0 or Time.get_ticks_usec() < search_deadline_usec) and _has_clear_attack_path_to_core(check):
+            target_score -= range_sq * CORE_CLEAR_PATH_TARGET_BONUS
+        elif not _is_autopilot_core_attack_mode():
+            target_score += range_sq * 0.35
+    var insert_idx := candidates.size()
+    while insert_idx > 0 and target_score < float(candidates[insert_idx - 1].get("dist_sq", INF)):
+        insert_idx -= 1
+    if insert_idx >= max_targets and candidates.size() >= max_targets:
+        return
+    candidates.insert(insert_idx, {"pos": check, "dist_sq": target_score, "world": block_world, "core_id": core_id})
+    if core_id >= 0:
+        seen_core_ids[core_id] = true
+    if candidates.size() > max_targets:
+        candidates.resize(max_targets)
 
 func _has_clear_attack_path_to_core(target: Vector2i) -> bool:
     var target_block: Dictionary = blocks.get(target, {})
@@ -4558,10 +4600,10 @@ func _finish_run(returned: bool, reason: String) -> void:
                 break
     var history_text := "\n".join(attempt_lines)
     if history_text == "":
-        history_text = "Validation run." if is_validation_run else "No previous breach attempts logged."
+        history_text = tr("OPEN_PIT_VALIDATION_RUN") if is_validation_run else tr("OPEN_PIT_NO_PREVIOUS_ATTEMPTS")
     var run_time := maxf(0.0, float(runtime_stats.get("run_time", 30.0)))
     var mining_time := maxf(0.0, run_time - time_left)
-    var auto_return_summary := autopilot_return_reason if autopilot_return_reason != "" else ("not returning" if autopilot_enabled else "off")
+    var auto_return_summary := tr(autopilot_return_reason) if autopilot_return_reason != "" else (tr("OPEN_PIT_NOT_RETURNING") if autopilot_enabled else tr("OPEN_PIT_OFF"))
     var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
     var visual_data := {
         "run_time": run_time,
@@ -4578,9 +4620,9 @@ func _finish_run(returned: bool, reason: String) -> void:
     if summary_mined_picture != null and is_instance_valid(summary_mined_picture):
         summary_mined_picture.set_summary_data(visual_data)
     if is_validation_run:
-        summary_label.text = "Validation run complete."
+        summary_label.text = tr("OPEN_PIT_VALIDATION_RUN_COMPLETE")
     else:
-        summary_label.text = "[center][b]Flight #%d - %s[/b][/center]\n\n[table=2][cell]Breach Tier[/cell][cell]%d[/cell][cell]Blocks Mined This Run[/cell][cell]%d[/cell][cell]Mining Time[/cell][cell]%s[/cell][cell]Fuel Remaining[/cell][cell]%s[/cell][cell]Cargo Used[/cell][cell]%d/%d[/cell][cell]Auto Pilot Return[/cell][cell]%s[/cell][cell]Haul Recovered[/cell][cell]$%d[/cell][cell]Loose Value Touched[/cell][cell]$%d[/cell][cell]XP Banked[/cell][cell]%d[/cell][cell]Daemons Deleted[/cell][cell]%d[/cell][cell]Persistent Clear[/cell][cell]%.1f%%[/cell][cell]Root Keys Banked[/cell][cell]%d[/cell][cell]Power Peak[/cell][cell]%.0f[/cell][cell]Barriers Left[/cell][cell]%d[/cell][/table]\n\n[color=#7dd6ff]Previous Attempts[/color]\n%s%s" % [
+        summary_label.text = _trf("OPEN_PIT_SUMMARY_TABLE", [
             current_flight_number,
             reason,
             current_depth_level,
@@ -4600,12 +4642,12 @@ func _finish_run(returned: bool, reason: String) -> void:
             barriers_left,
             history_text,
             epilogue
-        ]
+        ])
     if summary_return_button != null:
         summary_return_button.disabled = true
-        summary_return_button.text = "Saving..."
+        summary_return_button.text = tr("OPEN_PIT_SAVING")
     if summary_status_label != null:
-        summary_status_label.text = "Preparing save..."
+        summary_status_label.text = tr("OPEN_PIT_PREPARING_SAVE_DOTS")
     _dump_run_perf_snapshot_to_console(returned, reason, money_award)
     call_deferred("_begin_finish_save", money_award, reason)
 
@@ -4632,9 +4674,9 @@ func _update_finish_summary(delta: float) -> void:
     var dots := ".".repeat(int(floor(summary_save_anim_time * 3.0)) % 4)
     if summary_status_label != null:
         if summary_save_phase == "prepare":
-            summary_status_label.text = "Preparing save%s" % dots
+            summary_status_label.text = _trf("OPEN_PIT_PREPARING_SAVE", [dots])
         else:
-            summary_status_label.text = "Saving firewall state%s" % dots
+            summary_status_label.text = _trf("OPEN_PIT_SAVING_FIREWALL_STATE", [dots])
     if summary_save_phase == "thread" and PROGRESS.update_async_planet_state_save():
         summary_save_pending = false
         summary_save_phase = "done"
@@ -4643,9 +4685,9 @@ func _update_finish_summary(delta: float) -> void:
         summary_pending_saved_section_ids.clear()
         if summary_return_button != null:
             summary_return_button.disabled = false
-            summary_return_button.text = "Return To Upgrades"
+            summary_return_button.text = tr("OPEN_PIT_RETURN_TO_UPGRADES")
         if summary_status_label != null:
-            summary_status_label.text = "Save complete." if PROGRESS.was_async_planet_state_save_successful() else "Save failed. Returning may lose progress."
+            summary_status_label.text = tr("OPEN_PIT_SAVE_COMPLETE") if PROGRESS.was_async_planet_state_save_successful() else tr("OPEN_PIT_SAVE_FAILED")
 
 func _begin_finish_save(money_award: int, reason: String) -> void:
     await _finish_run_save_async(money_award, reason)
@@ -4670,7 +4712,7 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
         "planet_state": planet_snapshot if has_sector_updates else {},
         "remaining_layer_block_counts": _get_live_remaining_layer_block_counts(),
         "defer_planet_state_save": has_sector_updates,
-        "summary_text": "%s Banked $%d and %d XP." % [reason, money_award, xp_earned_this_run],
+        "summary_text": _trf("OPEN_PIT_SUMMARY_BANKED", [reason, money_award, xp_earned_this_run]),
         "persistent_clear": _get_persistent_clear_percent(),
         "chat_line_counts": breach_chat.get_persistent_line_counts() if breach_chat != null else persistent_data.get("chat_line_counts", {}),
         "chat_thread_counts": breach_chat.get_persistent_thread_counts() if breach_chat != null else persistent_data.get("chat_thread_counts", {}),
@@ -4693,9 +4735,9 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
     if not summary_save_pending:
         if summary_return_button != null:
             summary_return_button.disabled = false
-            summary_return_button.text = "Return To Upgrades"
+            summary_return_button.text = tr("OPEN_PIT_RETURN_TO_UPGRADES")
         if summary_status_label != null:
-            summary_status_label.text = "Save complete."
+            summary_status_label.text = tr("OPEN_PIT_SAVE_COMPLETE")
 
 func _format_run_seconds(seconds: float) -> String:
     return "%.1fs" % maxf(0.0, seconds)
@@ -4752,7 +4794,7 @@ func _on_finish_save_progress(progress: float) -> void:
         return
     summary_save_phase = "prepare"
     if summary_status_label != null:
-        summary_status_label.text = "Preparing save %d%%" % int(round(progress * 100.0))
+        summary_status_label.text = _trf("OPEN_PIT_PREPARING_SAVE_PERCENT", [int(round(progress * 100.0))])
 
 func _persist_destroyed_cells() -> void:
     persistent_data["destroyed_cells"] = []
@@ -4760,47 +4802,47 @@ func _persist_destroyed_cells() -> void:
     PROGRESS.save_data(persistent_data)
 
 func _refresh_hud() -> void:
-    var cargo_capacity_text := "INF" if editor_debug_unlimited_cargo else str(int(runtime_stats.get("cargo_capacity", 15)))
-    timer_label.text = "Cargo: %d / %s" % [cargo_units, cargo_capacity_text]
-    var fuel_text := "INF" if editor_debug_unlimited_fuel else "%.1fs" % time_left
+    var cargo_capacity_text := tr("OPEN_PIT_INF") if editor_debug_unlimited_cargo else str(int(runtime_stats.get("cargo_capacity", 15)))
+    timer_label.text = _trf("OPEN_PIT_HUD_CARGO", [cargo_units, cargo_capacity_text])
+    var fuel_text := tr("OPEN_PIT_INF") if editor_debug_unlimited_fuel else _trf("OPEN_PIT_SECONDS_SHORT", [snappedf(time_left, 0.1)])
     if extracting:
-        cargo_label.text = "Fuel: %s  |  Extracting..." % fuel_text
+        cargo_label.text = _trf("OPEN_PIT_HUD_FUEL_EXTRACTING", [fuel_text])
     elif _is_return_zone_charging():
-        cargo_label.text = "Fuel: %s  |  Extraction %.1fs" % [fuel_text, maxf(0.0, RETURN_ZONE_DELAY - return_zone_timer)]
+        cargo_label.text = _trf("OPEN_PIT_HUD_FUEL_EXTRACTION", [fuel_text, snappedf(maxf(0.0, RETURN_ZONE_DELAY - return_zone_timer), 0.1)])
     elif autopilot_enabled and autopilot_returning:
-        cargo_label.text = "Fuel: %s  |  Auto Return: %s" % [fuel_text, autopilot_return_reason if autopilot_return_reason != "" else "returning"]
+        cargo_label.text = _trf("OPEN_PIT_HUD_FUEL_AUTO_RETURN", [fuel_text, autopilot_return_reason if autopilot_return_reason != "" else tr("OPEN_PIT_RETURNING")])
     else:
-        cargo_label.text = "Fuel: %s  |  Extraction Zone Standby" % fuel_text
-    wallet_label.text = "Haul: $%d  |  Wallet: $%d  |  XP: %d" % [cargo_money, int(persistent_data.get("wallet", 0)), int(persistent_data.get("xp_currency", 0)) + xp_earned_this_run]
+        cargo_label.text = _trf("OPEN_PIT_HUD_FUEL_STANDBY", [fuel_text])
+    wallet_label.text = _trf("OPEN_PIT_HUD_WALLET", [cargo_money, int(persistent_data.get("wallet", 0)), int(persistent_data.get("xp_currency", 0)) + xp_earned_this_run])
     if validation_haul_label != null:
         validation_haul_label.visible = validation_autopilot_mode != "" and not run_finished
         if validation_haul_label.visible:
-            validation_haul_label.text = "ROUND $%s" % _format_large_number(cargo_money)
-    layer_label.text = "Breach Tier %d  |  %s  |  Clear %.1f%%" % [current_depth_level, current_layer_name, _get_persistent_clear_percent()]
+            validation_haul_label.text = _trf("OPEN_PIT_VALIDATION_ROUND_HAUL", [_format_large_number(cargo_money)])
+    layer_label.text = _trf("OPEN_PIT_HUD_LAYER", [current_depth_level, current_layer_name, snappedf(_get_persistent_clear_percent(), 0.1)])
     var active_boosts: Array[String] = []
     if float(active_powerup_timers.get("haste", 0.0)) > 0.0:
-        active_boosts.append("Haste %.0fs" % ceil(active_powerup_timers["haste"]))
+        active_boosts.append(_trf("OPEN_PIT_BOOST_HASTE", [int(ceil(active_powerup_timers["haste"]))]))
     if float(active_powerup_timers.get("magnet", 0.0)) > 0.0:
-        active_boosts.append("Magnet %.0fs" % ceil(active_powerup_timers["magnet"]))
+        active_boosts.append(_trf("OPEN_PIT_BOOST_MAGNET", [int(ceil(active_powerup_timers["magnet"]))]))
     if float(active_powerup_timers.get("seismic_charge", 0.0)) > 0.0:
-        active_boosts.append("Seismic %.0fs" % ceil(active_powerup_timers["seismic_charge"]))
+        active_boosts.append(_trf("OPEN_PIT_BOOST_SEISMIC", [int(ceil(active_powerup_timers["seismic_charge"]))]))
     if _is_core_fuel_stasis_active():
-        active_boosts.append("Core Stasis")
+        active_boosts.append(tr("OPEN_PIT_CORE_STASIS"))
     if editor_debug_unlimited_cargo:
-        active_boosts.append("Unlimited Cargo")
+        active_boosts.append(tr("OPEN_PIT_UNLIMITED_CARGO"))
     if editor_debug_attack_speed_boost:
-        active_boosts.append("Attack Speed x10")
+        active_boosts.append(tr("OPEN_PIT_ATTACK_SPEED_X10"))
     if editor_debug_damage_boost:
-        active_boosts.append("Damage x100")
-    var barrier_text := "INF" if editor_debug_unlimited_barrier else str(barriers_left)
-    status_label.text = "Barriers %s  |  Drones %d  |  Power %.0f/%.0f  |  Alive Daemons %d/%d" % [barrier_text, int(runtime_stats.get("drone_count", 0)), current_power, _get_power_capacity(), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0]
-    var power_state := "Power Active" if _is_power_active() else ("Power Ready - Click / Space" if _is_power_ready() else "Power Charging")
-    var fast_suffix := "  |  No Render x%d" % AUTOPILOT_NO_RENDER_STEPS_PER_FRAME if autopilot_no_render_enabled else ("  |  Speed x%d" % autopilot_fast_forward_steps_per_frame if autopilot_fast_forward_enabled else "  |  G Speed / H Sprint")
-    var control_state := "Auto Pilot: %s%s" % [autopilot_status, fast_suffix] if autopilot_enabled else "Move: Mouse / WASD / F Auto"
+        active_boosts.append(tr("OPEN_PIT_DAMAGE_X100"))
+    var barrier_text := tr("OPEN_PIT_INF") if editor_debug_unlimited_barrier else str(barriers_left)
+    status_label.text = _trf("OPEN_PIT_HUD_STATUS", [barrier_text, int(runtime_stats.get("drone_count", 0)), int(round(current_power)), int(round(_get_power_capacity())), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0])
+    var power_state := tr("OPEN_PIT_POWER_ACTIVE") if _is_power_active() else (tr("OPEN_PIT_POWER_READY") if _is_power_ready() else tr("OPEN_PIT_POWER_CHARGING"))
+    var fast_suffix := _trf("OPEN_PIT_NO_RENDER_SPEED", [AUTOPILOT_NO_RENDER_STEPS_PER_FRAME]) if autopilot_no_render_enabled else (_trf("OPEN_PIT_FAST_FORWARD_SPEED", [autopilot_fast_forward_steps_per_frame]) if autopilot_fast_forward_enabled else tr("OPEN_PIT_SPEED_CONTROLS"))
+    var control_state := _trf("OPEN_PIT_AUTO_PILOT_STATUS", [autopilot_status, fast_suffix]) if autopilot_enabled else tr("OPEN_PIT_MOVE_CONTROLS")
     var system_tail := control_state
     if not active_boosts.is_empty():
         system_tail = "%s  |  %s" % [" / ".join(active_boosts), control_state]
-    system_label.text = "%s  |  Root Keys %d  |  %s" % [power_state, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run, system_tail]
+    system_label.text = _trf("OPEN_PIT_HUD_SYSTEM", [power_state, int(persistent_data.get("core_currency", 0)) + core_currency_earned_this_run, system_tail])
     if breach_log_label != null and breach_log_label.text == "":
         _render_breach_log()
 
@@ -6181,7 +6223,7 @@ func _update_current_layer_name() -> void:
     var grid := world_to_grid(ship_pos)
     var layer_depth: int = planet_data.get_depth_level_for_pos(grid, current_depth_level) if planet_data != null else 1
     current_layer_depth = layer_depth
-    current_layer_name = str(BALANCE.get_layer_for_depth(min(layer_depth, BALANCE.MAX_DEPTH_LEVEL)).get("name", "Proxy Cache"))
+    current_layer_name = tr(str(BALANCE.get_layer_for_depth(min(layer_depth, BALANCE.MAX_DEPTH_LEVEL)).get("name", "Proxy Cache")))
 
 func _render_breach_log() -> void:
     if breach_log_label == null:
@@ -6243,15 +6285,15 @@ func _get_breach_chat_pressure_state() -> Dictionary:
 func _breach_chat_zone_name(zone: int) -> String:
     match zone:
         PLANET_DATA_SCRIPT.Zone.PROXY:
-            return "Proxy Cache"
+            return tr("Proxy Cache")
         PLANET_DATA_SCRIPT.Zone.CIPHER:
-            return "Cipher Depths"
+            return tr("Cipher Depths")
         PLANET_DATA_SCRIPT.Zone.GHOST:
-            return "Ghost Sector"
+            return tr("Ghost Sector")
         PLANET_DATA_SCRIPT.Zone.ROOT:
-            return "Root Well"
+            return tr("Root Well")
         _:
-            return "Kernel Vault"
+            return tr("Kernel Vault")
 
 func _on_final_core_phase_depleted(phase: int) -> void:
     _handle_final_core_phase_transition(phase)
