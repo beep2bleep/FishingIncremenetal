@@ -402,6 +402,7 @@ var layer_label: Label
 var status_label: Label
 var system_label: Label
 var fps_label: Label
+var validation_haul_label: Label
 var perf_graph: Control
 var perf_probe_label: RichTextLabel
 var minimap: Control
@@ -1115,6 +1116,21 @@ func _build_ui() -> void:
     fps_label = Label.new()
     fps_label.add_theme_color_override("font_color", Color(0.68, 0.96, 0.8, 1.0))
     vbox.add_child(fps_label)
+    validation_haul_label = Label.new()
+    validation_haul_label.anchor_left = 0.26
+    validation_haul_label.anchor_right = 0.74
+    validation_haul_label.anchor_top = 0.0
+    validation_haul_label.anchor_bottom = 0.0
+    validation_haul_label.offset_top = 18.0
+    validation_haul_label.offset_bottom = 78.0
+    validation_haul_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    validation_haul_label.add_theme_font_size_override("font_size", 42)
+    validation_haul_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.36, 1.0))
+    validation_haul_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+    validation_haul_label.add_theme_constant_override("shadow_offset_x", 3)
+    validation_haul_label.add_theme_constant_override("shadow_offset_y", 3)
+    validation_haul_label.visible = false
+    hud_layer.add_child(validation_haul_label)
     perf_graph = PERF_GRAPH_SCRIPT.new()
     perf_graph.scene_ref = self
     vbox.add_child(perf_graph)
@@ -4684,6 +4700,23 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
 func _format_run_seconds(seconds: float) -> String:
     return "%.1fs" % maxf(0.0, seconds)
 
+func _format_large_number(value: int) -> String:
+    var amount := float(absi(value))
+    var suffix := ""
+    if amount >= 1000000000.0:
+        amount /= 1000000000.0
+        suffix = "B"
+    elif amount >= 1000000.0:
+        amount /= 1000000.0
+        suffix = "M"
+    elif amount >= 1000.0:
+        amount /= 1000.0
+        suffix = "K"
+    else:
+        return str(value)
+    var sign := "-" if value < 0 else ""
+    return "%s%.1f%s" % [sign, amount, suffix]
+
 func _get_summary_mined_points() -> Array[Vector2i]:
     var points: Array[Vector2i] = []
     var skip := maxi(1, int(ceili(float(destroyed_cells_this_run.size()) / 900.0)))
@@ -4739,6 +4772,10 @@ func _refresh_hud() -> void:
     else:
         cargo_label.text = "Fuel: %s  |  Extraction Zone Standby" % fuel_text
     wallet_label.text = "Haul: $%d  |  Wallet: $%d  |  XP: %d" % [cargo_money, int(persistent_data.get("wallet", 0)), int(persistent_data.get("xp_currency", 0)) + xp_earned_this_run]
+    if validation_haul_label != null:
+        validation_haul_label.visible = validation_autopilot_mode != "" and not run_finished
+        if validation_haul_label.visible:
+            validation_haul_label.text = "ROUND $%s" % _format_large_number(cargo_money)
     layer_label.text = "Breach Tier %d  |  %s  |  Clear %.1f%%" % [current_depth_level, current_layer_name, _get_persistent_clear_percent()]
     var active_boosts: Array[String] = []
     if float(active_powerup_timers.get("haste", 0.0)) > 0.0:

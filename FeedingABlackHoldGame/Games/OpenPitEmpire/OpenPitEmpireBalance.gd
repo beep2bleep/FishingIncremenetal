@@ -281,6 +281,38 @@ const LAYER_DATA := [
     {"name": "Kernel Vault", "value": 110, "health": 360.0, "color": Color(0.2, 0.14, 0.28, 1.0), "accent": Color(0.84, 0.5, 1.0, 1.0)},
     {"name": "Root Well", "value": 320, "health": 920.0, "color": Color(0.32, 0.06, 0.08, 1.0), "accent": Color(1.0, 0.36, 0.28, 1.0)},
 ]
+const UPGRADE_CONSOLIDATION_LEVELS := 3
+
+static func _should_consolidate_upgrade(raw: Dictionary) -> bool:
+    return int(raw.get("max_level", 1)) > 1
+
+static func _get_consolidated_base_cost(raw: Dictionary) -> int:
+    var base_cost := float(raw.get("base_cost", 0))
+    if not _should_consolidate_upgrade(raw):
+        return int(round(base_cost))
+    var cost_mult := float(raw.get("cost_mult", 1.0))
+    var combined_cost := 0.0
+    for step in range(UPGRADE_CONSOLIDATION_LEVELS):
+        combined_cost += base_cost * pow(cost_mult, step)
+    return int(round(combined_cost))
+
+static func _get_consolidated_cost_mult(raw: Dictionary) -> float:
+    var cost_mult := float(raw.get("cost_mult", 1.0))
+    return pow(cost_mult, UPGRADE_CONSOLIDATION_LEVELS) if _should_consolidate_upgrade(raw) else cost_mult
+
+static func _get_consolidated_max_level(raw: Dictionary) -> int:
+    var max_level := int(raw.get("max_level", 1))
+    if not _should_consolidate_upgrade(raw):
+        return max_level
+    return int(ceil(float(max_level) / float(UPGRADE_CONSOLIDATION_LEVELS)))
+
+static func _get_consolidated_effective_level(raw: Dictionary, level: int) -> int:
+    if not _should_consolidate_upgrade(raw):
+        return level
+    return mini(int(raw.get("max_level", level)), level * UPGRADE_CONSOLIDATION_LEVELS)
+
+static func _get_consolidated_cost(raw: Dictionary, current_level: int) -> int:
+    return int(round(float(_get_consolidated_base_cost(raw)) * pow(_get_consolidated_cost_mult(raw), current_level)))
 
 static func get_upgrade_catalog() -> Array[Dictionary]:
     var result: Array[Dictionary] = []
@@ -295,9 +327,9 @@ static func get_upgrade_catalog() -> Array[Dictionary]:
                 "id": upgrade_id,
                 "label": str(raw.get("label", _get_label(upgrade_id))),
                 "summary": str(raw.get("summary", _get_summary(upgrade_id, raw.get("effects", {})))),
-                "base_cost": int(raw.get("base_cost", 0)),
-                "cost_mult": float(raw.get("cost_mult", 1.0)),
-                "max_level": int(raw.get("max_level", 1)),
+                "base_cost": _get_consolidated_base_cost(raw),
+                "cost_mult": _get_consolidated_cost_mult(raw),
+                "max_level": _get_consolidated_max_level(raw),
                 "phase": int(raw.get("phase", phase)),
                 "icon": str(raw.get("icon", _get_icon(upgrade_id))),
             })
@@ -307,7 +339,10 @@ static func get_upgrade_cost(upgrade_id: String, current_level: int) -> int:
     var raw: Dictionary = RAW_NODE_DATA.get(upgrade_id, {})
     if raw.is_empty():
         return 0
-    return int(round(float(raw.get("base_cost", 0)) * pow(float(raw.get("cost_mult", 1.0)), current_level)))
+    return _get_consolidated_cost(raw, current_level)
+
+static func get_upgrade_max_level(upgrade_id: String) -> int:
+    return _get_consolidated_max_level(RAW_NODE_DATA.get(upgrade_id, {}))
 
 static func get_core_upgrade_catalog() -> Array[Dictionary]:
     var result: Array[Dictionary] = []
@@ -337,9 +372,9 @@ static func get_xp_upgrade_catalog() -> Array[Dictionary]:
             "id": XP_PREFIX + upgrade_id,
             "label": str(raw.get("label", upgrade_id)),
             "summary": str(raw.get("summary", "XP upgrade.")),
-            "base_cost": int(raw.get("base_cost", 0)),
-            "cost_mult": float(raw.get("cost_mult", 1.0)),
-            "max_level": int(raw.get("max_level", 1)),
+            "base_cost": _get_consolidated_base_cost(raw),
+            "cost_mult": _get_consolidated_cost_mult(raw),
+            "max_level": _get_consolidated_max_level(raw),
             "phase": 1,
             "icon": str(raw.get("icon", "X")),
         })
@@ -350,7 +385,10 @@ static func get_xp_upgrade_cost(prefixed_upgrade_id: String, current_level: int)
     var raw: Dictionary = XP_UPGRADES.get(upgrade_id, {})
     if raw.is_empty():
         return 0
-    return int(round(float(raw.get("base_cost", 0)) * pow(float(raw.get("cost_mult", 1.0)), current_level)))
+    return _get_consolidated_cost(raw, current_level)
+
+static func get_xp_upgrade_max_level(prefixed_upgrade_id: String) -> int:
+    return _get_consolidated_max_level(XP_UPGRADES.get(prefixed_upgrade_id.trim_prefix(XP_PREFIX), {}))
 
 static func get_xp_upgrade_cell(prefixed_upgrade_id: String) -> Vector2:
     return Vector2(XP_LAYOUT.get(prefixed_upgrade_id, Vector2(-16, 2)))
@@ -518,7 +556,9 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
         var level: int = int(upgrades.get(upgrade_id, 0))
         if level <= 0:
             continue
-        var effects: Dictionary = RAW_NODE_DATA.get(str(upgrade_id), {}).get("effects", {})
+        var raw_upgrade: Dictionary = RAW_NODE_DATA.get(str(upgrade_id), {})
+        level = _get_consolidated_effective_level(raw_upgrade, level)
+        var effects: Dictionary = raw_upgrade.get("effects", {})
         for effect_key in effects.keys():
             var effect_id: String = str(effect_key)
             var effect_value: Variant = effects[effect_key]
@@ -566,7 +606,9 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
         var xp_level: int = int(xp_upgrades.get(upgrade_id, 0))
         if xp_level <= 0:
             continue
-        var xp_effects: Dictionary = XP_UPGRADES.get(str(upgrade_id).trim_prefix(XP_PREFIX), {}).get("effects", {})
+        var raw_xp_upgrade: Dictionary = XP_UPGRADES.get(str(upgrade_id).trim_prefix(XP_PREFIX), {})
+        xp_level = _get_consolidated_effective_level(raw_xp_upgrade, xp_level)
+        var xp_effects: Dictionary = raw_xp_upgrade.get("effects", {})
         for xp_effect_key in xp_effects.keys():
             var xp_effect_id: String = str(xp_effect_key)
             var xp_effect_value: Variant = xp_effects[xp_effect_key]

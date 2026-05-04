@@ -599,8 +599,8 @@ func _max_level(upgrade_id: String) -> int:
     if BALANCE.is_core_upgrade(upgrade_id):
         return int(BALANCE.CORE_UPGRADES.get(upgrade_id.trim_prefix(BALANCE.CORE_PREFIX), {}).get("max_level", 1))
     if BALANCE.is_xp_upgrade(upgrade_id):
-        return int(BALANCE.XP_UPGRADES.get(upgrade_id.trim_prefix(BALANCE.XP_PREFIX), {}).get("max_level", 1))
-    return int(BALANCE.RAW_NODE_DATA.get(upgrade_id, {}).get("max_level", 1))
+        return BALANCE.get_xp_upgrade_max_level(upgrade_id)
+    return BALANCE.get_upgrade_max_level(upgrade_id)
 
 func _cost_for(upgrade_id: String, current_level: int) -> int:
     if BALANCE.is_core_upgrade(upgrade_id):
