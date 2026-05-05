@@ -258,17 +258,17 @@ const RAW_NODE_DATA := {
     "salvage_contract": {"base_cost": 220, "cost_mult": 1.92, "max_level": 8, "phase": 2, "label": "Salvage Contract", "summary": "Keep 8% of your haul on failed runs per level.", "icon": "S", "effects": {"fuel_loss_reduce": 0.08}},
     "funnel_resonance": {"base_cost": 420, "cost_mult": 2.00, "max_level": 8, "phase": 2, "label": "Funnel Resonance", "summary": "Unlock resonance and add +0.25 resonance power per level.", "icon": "N", "effects": {"resonance_unlock": true, "resonance_enhance": 0.25}},
     "daemon_lances": {"base_cost": 520, "cost_mult": 2.02, "max_level": 9, "phase": 2, "label": "Daemon Lances", "summary": "+10 damage to daemon cores and +18 cargo capacity per level.", "icon": "K", "effects": {"damage_flat": 10.0, "core_damage_mult": 0.06, "cargo_expand": 18.0}},
-    "root_breaker": {"base_cost": 980, "cost_mult": 2.05, "max_level": 9, "phase": 3, "label": "Root Breaker", "summary": "Unlock 3x daemon core damage and add +14 cargo capacity per level. Buying any phase-3 node unlocks Empire Layer 3 runs after clearing the second layer.", "icon": "X", "effects": {"core_breaker_unlock": true, "cargo_expand": 14.0}},
-    "overburn_reactors": {"base_cost": 1800, "cost_mult": 2.05, "max_level": 10, "phase": 3, "label": "Overburn Reactors", "summary": "Unlock seismic bursts and add +14 cargo capacity per level.", "icon": "O", "effects": {"shockwave_unlock": true, "shockwave_enhance": true, "cargo_expand": 14.0}},
-    "seismic_lattice": {"base_cost": 2600, "cost_mult": 2.08, "max_level": 10, "phase": 3, "label": "Seismic Lattice", "summary": "Unlock splash mining, improve seismic bursts, and add +16 cargo capacity per level.", "icon": "S", "effects": {"aoe_mining_unlock": true, "shockwave_enhance": true, "cargo_expand": 16.0}},
-    "mantle_drills": {"base_cost": 9000, "cost_mult": 2.10, "max_level": 12, "phase": 3, "label": "Mantle Drills", "summary": "+11 damage, +10 range, and +18 cargo capacity per level.", "icon": "M", "effects": {"damage_flat": 11.0, "range": 10.0, "cargo_expand": 18.0}},
-    "fault_charges": {"base_cost": 11000, "cost_mult": 2.12, "max_level": 12, "phase": 3, "label": "Fault Charges", "summary": "Unlock charged shots, add +9 damage, and +18 cargo capacity per level.", "icon": "F", "effects": {"charged_shot_unlock": true, "damage_flat": 9.0, "cargo_expand": 18.0}},
-    "void_cutters": {"base_cost": 4200, "cost_mult": 2.12, "max_level": 14, "phase": 4, "label": "Void Cutters", "summary": "+16 range, +9 damage, and +18 cargo capacity per level. Buying any phase-4 node unlocks Empire Layer 4 runs after clearing the third layer.", "icon": "V", "effects": {"range": 16.0, "damage_flat": 9.0, "cargo_expand": 18.0}},
-    "inversion_drives": {"base_cost": 5800, "cost_mult": 2.12, "max_level": 14, "phase": 4, "label": "Inversion Drives", "summary": "+40 move speed, +10 max power, and +18 cargo capacity per level.", "icon": "I", "effects": {"speed": 40.0, "power_capacity": 10.0, "cargo_expand": 18.0}},
-    "vault_pulsers": {"base_cost": 18000, "cost_mult": 2.15, "max_level": 16, "phase": 4, "label": "Power Reservoirs", "summary": "+20 max power and +20 cargo capacity per level.", "icon": "P", "effects": {"power_capacity": 20.0, "cargo_expand": 20.0}},
-    "gravity_wells": {"base_cost": 26000, "cost_mult": 2.15, "max_level": 16, "phase": 4, "label": "Power Wells", "summary": "+20% power gain, +0.2 resonance power, and +22 cargo capacity per level.", "icon": "G", "effects": {"power_gain_mult": 0.2, "resonance_enhance": 0.2, "cargo_expand": 22.0}},
-    "abyssal_rigs": {"base_cost": 42000, "cost_mult": 2.18, "max_level": 18, "phase": 4, "label": "Abyssal Rigs", "summary": "+24 cargo capacity and +8 payout per level.", "icon": "A", "effects": {"cargo_expand": 24.0, "resource_flat": 8.0}},
-    "mirror_saws": {"base_cost": 62000, "cost_mult": 2.18, "max_level": 18, "phase": 5, "label": "Mirror Saws", "summary": "Unlock crits, add +15 damage, and +28 cargo capacity per level. Buying any phase-5 node unlocks Empire Layer 5 runs after clearing the fourth layer.", "icon": "M", "effects": {"critical_unlock": true, "damage_flat": 15.0, "cargo_expand": 28.0}},
+    "root_breaker": {"base_cost": 980, "cost_mult": 2.05, "max_level": 9, "phase": 3, "label": "Root Breaker", "summary": "Unlock 3x daemon core damage and add +18 cargo capacity per level. Buying any phase-3 node unlocks Empire Layer 3 runs after clearing the second layer.", "icon": "X", "effects": {"core_breaker_unlock": true, "cargo_expand": 18.0}},
+    "overburn_reactors": {"base_cost": 1800, "cost_mult": 2.05, "max_level": 10, "phase": 3, "label": "Overburn Reactors", "summary": "Unlock seismic bursts and add +18 cargo capacity per level.", "icon": "O", "effects": {"shockwave_unlock": true, "shockwave_enhance": true, "cargo_expand": 18.0}},
+    "seismic_lattice": {"base_cost": 2600, "cost_mult": 2.08, "max_level": 10, "phase": 3, "label": "Seismic Lattice", "summary": "Unlock splash mining, improve seismic bursts, and add +20 cargo capacity per level.", "icon": "S", "effects": {"aoe_mining_unlock": true, "shockwave_enhance": true, "cargo_expand": 20.0}},
+    "mantle_drills": {"base_cost": 9000, "cost_mult": 2.10, "max_level": 12, "phase": 3, "label": "Mantle Drills", "summary": "+11 damage, +10 range, and +23 cargo capacity per level.", "icon": "M", "effects": {"damage_flat": 11.0, "range": 10.0, "cargo_expand": 23.0}},
+    "fault_charges": {"base_cost": 11000, "cost_mult": 2.12, "max_level": 12, "phase": 3, "label": "Fault Charges", "summary": "Unlock charged shots, add +9 damage, and +23 cargo capacity per level.", "icon": "F", "effects": {"charged_shot_unlock": true, "damage_flat": 9.0, "cargo_expand": 23.0}},
+    "void_cutters": {"base_cost": 4200, "cost_mult": 2.12, "max_level": 14, "phase": 4, "label": "Void Cutters", "summary": "+16 range, +9 damage, and +31 cargo capacity per level. Buying any phase-4 node unlocks Empire Layer 4 runs after clearing the third layer.", "icon": "V", "effects": {"range": 16.0, "damage_flat": 9.0, "cargo_expand": 31.0}},
+    "inversion_drives": {"base_cost": 5800, "cost_mult": 2.12, "max_level": 14, "phase": 4, "label": "Inversion Drives", "summary": "+40 move speed, +10 max power, and +31 cargo capacity per level.", "icon": "I", "effects": {"speed": 40.0, "power_capacity": 10.0, "cargo_expand": 31.0}},
+    "vault_pulsers": {"base_cost": 18000, "cost_mult": 2.15, "max_level": 16, "phase": 4, "label": "Power Reservoirs", "summary": "+20 max power and +36 cargo capacity per level.", "icon": "P", "effects": {"power_capacity": 20.0, "cargo_expand": 36.0}},
+    "gravity_wells": {"base_cost": 26000, "cost_mult": 2.15, "max_level": 16, "phase": 4, "label": "Power Wells", "summary": "+20% power gain, +0.2 resonance power, and +39 cargo capacity per level.", "icon": "G", "effects": {"power_gain_mult": 0.2, "resonance_enhance": 0.2, "cargo_expand": 39.0}},
+    "abyssal_rigs": {"base_cost": 42000, "cost_mult": 2.18, "max_level": 18, "phase": 4, "label": "Abyssal Rigs", "summary": "+46 cargo capacity and +8 payout per level.", "icon": "A", "effects": {"cargo_expand": 46.0, "resource_flat": 8.0}},
+    "mirror_saws": {"base_cost": 62000, "cost_mult": 2.18, "max_level": 18, "phase": 5, "label": "Mirror Saws", "summary": "Unlock crits, add +15 damage, and +50 cargo capacity per level. Buying any phase-5 node unlocks Empire Layer 5 runs after clearing the fourth layer.", "icon": "M", "effects": {"critical_unlock": true, "damage_flat": 15.0, "cargo_expand": 50.0}},
     "fault_harpoons": {"base_cost": 92000, "cost_mult": 2.20, "max_level": 18, "phase": 5, "label": "Fault Harpoons", "summary": "Unlock chain lightning and add +1 chain depth per level.", "icon": "H", "effects": {"chain_lightning_unlock": true, "electric_chain": 1}},
     "null_borers": {"base_cost": 138000, "cost_mult": 2.22, "max_level": 4, "phase": 5, "label": "Null Borers", "summary": "+18 damage, +1 multi-target, and deeper electric chains per level. Multi-target lasers cap at 5.", "icon": "N", "effects": {"damage_flat": 18.0, "multi_laser": 1, "electric_chain": 1}},
     "ash_crowns": {"base_cost": 220000, "cost_mult": 2.24, "max_level": 20, "phase": 5, "label": "Ash Crowns", "summary": "Late inversion crown: boosts payout and power gain.", "icon": "A", "effects": {"resource_flat": 12.0, "power_gain_mult": 0.18}},
@@ -325,8 +325,8 @@ static func get_upgrade_catalog() -> Array[Dictionary]:
                 continue
             result.append({
                 "id": upgrade_id,
-                "label": _translate(str(raw.get("label", _get_label(upgrade_id)))),
-                "summary": _translate(str(raw.get("summary", _get_summary(upgrade_id, raw.get("effects", {}))))),
+                "label": str(raw.get("label", _get_label(upgrade_id))),
+                "summary": str(raw.get("summary", _get_summary(upgrade_id, raw.get("effects", {})))),
                 "base_cost": _get_consolidated_base_cost(raw),
                 "cost_mult": _get_consolidated_cost_mult(raw),
                 "max_level": _get_consolidated_max_level(raw),
@@ -352,8 +352,8 @@ static func get_core_upgrade_catalog() -> Array[Dictionary]:
             continue
         result.append({
             "id": CORE_PREFIX + upgrade_id,
-            "label": _translate(str(raw.get("label", upgrade_id))),
-            "summary": _translate(str(raw.get("summary", "Core upgrade."))),
+            "label": str(raw.get("label", upgrade_id)),
+            "summary": str(raw.get("summary", "Core upgrade.")),
             "base_cost": int(raw.get("base_cost", 0)),
             "cost_mult": float(raw.get("cost_mult", 1.0)),
             "max_level": int(raw.get("max_level", 1)),
@@ -370,8 +370,8 @@ static func get_xp_upgrade_catalog() -> Array[Dictionary]:
             continue
         result.append({
             "id": XP_PREFIX + upgrade_id,
-            "label": _translate(str(raw.get("label", upgrade_id))),
-            "summary": _translate(str(raw.get("summary", "XP upgrade."))),
+            "label": str(raw.get("label", upgrade_id)),
+            "summary": str(raw.get("summary", "XP upgrade.")),
             "base_cost": _get_consolidated_base_cost(raw),
             "cost_mult": _get_consolidated_cost_mult(raw),
             "max_level": _get_consolidated_max_level(raw),
@@ -459,7 +459,7 @@ static func get_reward_core_upgrade_target_layer_depth(upgrade_id: String) -> in
 
 static func get_reward_core_upgrade_target_layer_name(upgrade_id: String) -> String:
     var layer_depth: int = get_reward_core_upgrade_target_layer_depth(upgrade_id)
-    return _translate(str(get_layer_for_depth(layer_depth).get("name", "Proxy Cache")))
+    return str(get_layer_for_depth(layer_depth).get("name", "Proxy Cache"))
 
 static func get_upgrade_cell(upgrade_id: String) -> Vector2:
     var cash_idx: int = CASH_ORDER.find(upgrade_id)
@@ -838,18 +838,15 @@ static func _format_effect_number(value: float) -> String:
 static func _get_zone_label(zone_idx: int) -> String:
     match zone_idx:
         0:
-            return _translate("Proxy Cache")
+            return "Proxy Cache"
         1:
-            return _translate("Cipher Depths")
+            return "Cipher Depths"
         2:
-            return _translate("Ghost Sector")
+            return "Ghost Sector"
         3:
-            return _translate("Root Well")
+            return "Root Well"
         _:
-            return _translate("Kernel Vault")
-
-static func _translate(key: String) -> String:
-    return TranslationServer.translate(key)
+            return "Kernel Vault"
 
 static func _get_icon(upgrade_id: String) -> String:
     if upgrade_id.contains("drone"):

@@ -1,0 +1,28 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+Vulkan 1.4.315 - Forward+ - Using Device #0: AMD - AMD Radeon RX 6800 XT
+
+Could not find Base Mods Data in res://Data/Black Hole Data.json
+   At: res://GameModeDataManager.gd:23:load_game_mode_data()
+Could not find Black Hole Tier Data in res://Data/Black Hole Data.json
+   At: res://GameModeDataManager.gd:30:load_game_mode_data()
+Could not find Game Mode Config in res://Data/Black Hole Data.json
+   At: res://GameModeDataManager.gd:37:load_game_mode_data()
+Save Handler _ready()
+Did Steam initialize: { "status": 0, "verbal": "" }
+   At: res://SteamHandler.gd:175:initialize_steam()
+Finished Steam initialization process
+   At: res://SteamHandler.gd:186:initialize_steam()
+STEAM LEADERBOARD SIGNALS: ["leaderboard_find_result", "leaderboard_score_uploaded", "leaderboard_scores_downloaded", "leaderboard_ugc_set"]
+STEAM LEADERBOARD METHODS: ["attachLeaderboardUGC", "downloadLeaderboardEntries", "downloadLeaderboardEntriesForUsers", "findLeaderboard", "findOrCreateLeaderboard", "getLeaderboardDisplayType", "getLeaderboardEntryCount", "getLeaderboardName", "getLeaderboardSortMethod", "get_leaderboard_details_max", "get_leaderboard_entries", "get_leaderboard_handle", "get_leaderboard_ugc_handle", "set_leaderboard_details_max", "set_leaderboard_entries", "set_leaderboard_handle", "set_leaderboard_ugc_handle", "uploadLeaderboardScore"]
+GameAnalyticsManager: initialized platform=windows build=v1.3.1
+[OpenPitValidation] mode=fast_render reset_progress
+LEADERBOARD DOWNLOAD CALLBACK handle=19691528 results=[{ "score": 762256, "steam_id": 76561198089201448, "global_rank": 1, "ugc_handle": -1, "details": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, { "score": 1607872, "steam_id": 76561198091552956, "global_rank": 2, "ugc_handle": -1, "details": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, { "score": 1623634, "steam_id": 76561198013841555, "global_rank": 3, "ugc_handle": -1, "details": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, { "score": 1832051, "steam_id": 76561198005187882, "global_rank": 4, "ugc_handle": -1, "details": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, { "score": 1933758, "steam_id": 76561198097377868, "global_rank": 5, "ugc_handle": -1, "details": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }]
+LEADERBOARD DOWNLOAD CALLBACK handle=19691528 results=[]
+[OpenPitValidation] mode=fast_render sortie=1 auto=center return=fuel reserve 6s cargo=6/24 fuel=0.0/34.0s money=0 xp=13 cores=0 clear=0.008 remaining=L1=36500 L2=33578 L3=33785 L4=35270 L5=28502 live_remaining=L1=36500 L2=33578 L3=33785 L4=35270 L5=28502 boss=false bought=0
+[OpenPitValidation] mode=fast_render sortie=2 auto=core attack return= cargo=13/24 fuel=0.0/34.0s money=0 xp=32 cores=0 clear=0.019 remaining=L1=36481 L2=33578 L3=33785 L4=35270 L5=28502 live_remaining=L1=36481 L2=33578 L3=33785 L4=35270 L5=28502 boss=false bought=0
+[OpenPitValidation] mode=fast_render sortie=3 auto=center return=fuel reserve 6s cargo=4/24 fuel=0.0/34.0s money=0 xp=45 cores=0 clear=0.027 remaining=L1=36468 L2=33578 L3=33785 L4=35270 L5=28502 live_remaining=L1=36468 L2=33578 L3=33785 L4=35270 L5=28502 boss=false bought=0
+[OpenPitValidation] mode=fast_render sortie=4 auto=right sweep return=fuel reserve 6s cargo=5/24 fuel=4.3/34.0s money=80 xp=61 cores=0 clear=0.036 remaining=L1=36452 L2=33578 L3=33785 L4=35270 L5=28502 live_remaining=L1=36452 L2=33578 L3=33785 L4=35270 L5=28502 boss=false bought=0
+[OpenPitValidation] mode=fast_render sortie=5 auto=center return=fuel reserve 6s cargo=2/24 fuel=0.0/34.0s money=80 xp=74 cores=0 clear=0.043 remaining=L1=36440 L2=33578 L3=33785 L4=35270 L5=28502 live_remaining=L1=36440 L2=33578 L3=33785 L4=35270 L5=28502 boss=false bought=0
+[OpenPitValidation] mode=fast_render sortie=6 auto=center return=fuel reserve 6s cargo=11/24 fuel=4.0/34.0s money=160 xp=91 cores=0 clear=0.053 remaining=L1=36424 L2=33578 L3=33785 L4=35270 L5=28502 live_remaining=L1=36424 L2=33578 L3=33785 L4=35270 L5=28502 boss=false bought=0
+[OpenPitValidation] mode=fast_render sortie=7 auto=dig deep return=fuel reserve 6s cargo=10/24 fuel=1.7/34.0s money=237 xp=107 cores=0 clear=0.062 remaining=L1=36409 L2=33578 L3=33785 L4=35270 L5=28502 live_remaining=L1=36409 L2=33578 L3=33785 L4=35270 L5=28502 boss=false bought=0
+[OpenPitValidation] mode=fast_render sortie=8 auto=core attack return= cargo=13/24 fuel=0.0/34.0s money=237 xp=128 cores=0 clear=0.074 remaining=L1=36388 L2=33578 L3=33785 L4=35270 L5=28502 live_remaining=L1=36388 L2=33578 L3=33785 L4=35270 L5=28502 boss=false bought=0

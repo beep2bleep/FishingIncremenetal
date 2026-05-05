@@ -182,8 +182,6 @@ func _refresh_localized_text() -> void:
             legacy_ok_button.text = tr("UI_CONTINUE")
     if leaderboard_title_label != null and is_instance_valid(leaderboard_title_label):
         leaderboard_title_label.text = _get_leaderboard_panel_title()
-    if open_pit_chat_button != null and is_instance_valid(open_pit_chat_button):
-        open_pit_chat_button.text = tr("CHAT")
     _refresh_leaderboard_panel()
     _refresh_open_pit_chat_panel()
     _refresh_demo_mode_label_visibility()
@@ -1185,17 +1183,17 @@ func _setup_open_pit_chat_controls() -> void:
     if open_pit_chat_button == null or not is_instance_valid(open_pit_chat_button):
         open_pit_chat_button = Button.new()
         open_pit_chat_button.name = "OpenPitChatButton"
-        open_pit_chat_button.anchor_left = 0.0
+        open_pit_chat_button.anchor_left = 1.0
         open_pit_chat_button.anchor_top = 0.0
-        open_pit_chat_button.anchor_right = 0.0
+        open_pit_chat_button.anchor_right = 1.0
         open_pit_chat_button.anchor_bottom = 0.0
-        open_pit_chat_button.offset_left = 16.0
-        open_pit_chat_button.offset_top = 120.0
-        open_pit_chat_button.offset_right = 148.0
-        open_pit_chat_button.offset_bottom = 180.0
+        open_pit_chat_button.offset_left = -184.0
+        open_pit_chat_button.offset_top = 112.0
+        open_pit_chat_button.offset_right = -16.0
+        open_pit_chat_button.offset_bottom = 172.0
         open_pit_chat_button.z_index = 210
         open_pit_chat_button.focus_mode = Control.FOCUS_NONE
-        open_pit_chat_button.custom_minimum_size = Vector2(132.0, 60.0)
+        open_pit_chat_button.custom_minimum_size = Vector2(168.0, 60.0)
         open_pit_chat_button.add_theme_font_size_override("font_size", 22)
         open_pit_chat_button.text = tr("CHAT")
         open_pit_chat_button.pressed.connect(_on_open_pit_chat_button_pressed)
@@ -1204,14 +1202,14 @@ func _setup_open_pit_chat_controls() -> void:
     if open_pit_chat_panel == null or not is_instance_valid(open_pit_chat_panel):
         open_pit_chat_panel = PanelContainer.new()
         open_pit_chat_panel.name = "OpenPitChatPanel"
-        open_pit_chat_panel.anchor_left = 0.0
+        open_pit_chat_panel.anchor_left = 1.0
         open_pit_chat_panel.anchor_top = 0.0
-        open_pit_chat_panel.anchor_right = 0.0
+        open_pit_chat_panel.anchor_right = 1.0
         open_pit_chat_panel.anchor_bottom = 0.0
-        open_pit_chat_panel.offset_left = 16.0
-        open_pit_chat_panel.offset_top = 188.0
-        open_pit_chat_panel.offset_right = 620.0
-        open_pit_chat_panel.offset_bottom = 620.0
+        open_pit_chat_panel.offset_left = -620.0
+        open_pit_chat_panel.offset_top = 180.0
+        open_pit_chat_panel.offset_right = -16.0
+        open_pit_chat_panel.offset_bottom = 612.0
         open_pit_chat_panel.z_index = 225
         open_pit_chat_panel.visible = false
         open_pit_chat_panel.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -1230,14 +1228,6 @@ func _setup_open_pit_chat_controls() -> void:
         vbox.add_theme_constant_override("separation", 10)
         margin.add_child(vbox)
 
-        var close_button := Button.new()
-        close_button.text = tr("UI_BACK")
-        close_button.focus_mode = Control.FOCUS_NONE
-        close_button.custom_minimum_size = Vector2(0.0, 44.0)
-        close_button.pressed.connect(_on_open_pit_chat_close_pressed)
-        _style_utility_button(close_button)
-        vbox.add_child(close_button)
-
         open_pit_chat_label = RichTextLabel.new()
         open_pit_chat_label.bbcode_enabled = true
         open_pit_chat_label.scroll_active = true
@@ -1246,6 +1236,7 @@ func _setup_open_pit_chat_controls() -> void:
         open_pit_chat_label.add_theme_font_size_override("normal_font_size", 18)
         open_pit_chat_label.add_theme_color_override("default_color", Color(0.92, 0.96, 0.9, 1.0))
         vbox.add_child(open_pit_chat_label)
+    _update_upgrade_top_button_positions()
     _refresh_open_pit_chat_panel()
 
 func _on_open_pit_chat_button_pressed() -> void:
@@ -1266,8 +1257,10 @@ func _on_open_pit_chat_close_pressed() -> void:
 
 func _refresh_open_pit_chat_panel() -> void:
     var show_controls := Util.is_open_pit_game_active()
+    var chat_open := open_pit_chat_panel != null and is_instance_valid(open_pit_chat_panel) and open_pit_chat_panel.visible
     if open_pit_chat_button != null and is_instance_valid(open_pit_chat_button):
-        open_pit_chat_button.visible = show_controls and not _is_any_popup_visible()
+        open_pit_chat_button.visible = show_controls and (chat_open or not _is_any_popup_visible())
+        open_pit_chat_button.text = tr("HIDE CHAT") if chat_open else tr("CHAT")
     if not show_controls:
         if open_pit_chat_panel != null and is_instance_valid(open_pit_chat_panel):
             open_pit_chat_panel.hide()
@@ -3009,6 +3002,12 @@ func _update_upgrade_top_button_positions() -> void:
     if settings_button != null and is_instance_valid(settings_button):
         settings_button.offset_top = 16.0 + vertical_shift
         settings_button.offset_bottom = 104.0 + vertical_shift
+    if open_pit_chat_button != null and is_instance_valid(open_pit_chat_button):
+        open_pit_chat_button.offset_top = 112.0 + vertical_shift
+        open_pit_chat_button.offset_bottom = 172.0 + vertical_shift
+    if open_pit_chat_panel != null and is_instance_valid(open_pit_chat_panel):
+        open_pit_chat_panel.offset_top = 180.0 + vertical_shift
+        open_pit_chat_panel.offset_bottom = 612.0 + vertical_shift
     if touch_input_button != null and is_instance_valid(touch_input_button):
         touch_input_button.offset_top = 112.0 + vertical_shift
         touch_input_button.offset_bottom = 200.0 + vertical_shift

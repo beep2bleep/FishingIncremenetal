@@ -1,0 +1,38 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+Vulkan 1.4.315 - Forward+ - Using Device #0: AMD - AMD Radeon RX 6800 XT
+
+Could not find Base Mods Data in res://Data/Black Hole Data.json
+   At: res://GameModeDataManager.gd:23:load_game_mode_data()
+Could not find Black Hole Tier Data in res://Data/Black Hole Data.json
+   At: res://GameModeDataManager.gd:30:load_game_mode_data()
+Could not find Game Mode Config in res://Data/Black Hole Data.json
+   At: res://GameModeDataManager.gd:37:load_game_mode_data()
+Save Handler _ready()
+Did Steam initialize: { "status": 0, "verbal": "" }
+   At: res://SteamHandler.gd:175:initialize_steam()
+Finished Steam initialization process
+   At: res://SteamHandler.gd:186:initialize_steam()
+STEAM LEADERBOARD SIGNALS: ["leaderboard_find_result", "leaderboard_score_uploaded", "leaderboard_scores_downloaded", "leaderboard_ugc_set"]
+STEAM LEADERBOARD METHODS: ["attachLeaderboardUGC", "downloadLeaderboardEntries", "downloadLeaderboardEntriesForUsers", "findLeaderboard", "findOrCreateLeaderboard", "getLeaderboardDisplayType", "getLeaderboardEntryCount", "getLeaderboardName", "getLeaderboardSortMethod", "get_leaderboard_details_max", "get_leaderboard_entries", "get_leaderboard_handle", "get_leaderboard_ugc_handle", "set_leaderboard_details_max", "set_leaderboard_entries", "set_leaderboard_handle", "set_leaderboard_ugc_handle", "uploadLeaderboardScore"]
+GameAnalyticsManager: initialized platform=windows build=v1.3.1
+[OpenPitValidation] mode=fast_render resume_checkpoint=C:/Users/stick/AppData/Roaming/Beep2Bleep Incremental/validation_fast_render_full/checkpoints/20260504_080637/fast_render/sortie_0070 start_sortie_index=70
+[OpenPitUpgradeStartup] progress_load_begin since_request=0.000ms
+[OpenPitUpgradeStartup] progress_read_planet_state_binary sections=100 128.000ms since_request=0.000ms
+LEADERBOARD DOWNLOAD CALLBACK handle=19691528 results=[{ "score": 762256, "steam_id": 76561198089201448, "global_rank": 1, "ugc_handle": -1, "details": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, { "score": 1607872, "steam_id": 76561198091552956, "global_rank": 2, "ugc_handle": -1, "details": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, { "score": 1623634, "steam_id": 76561198013841555, "global_rank": 3, "ugc_handle": -1, "details": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, { "score": 1832051, "steam_id": 76561198005187882, "global_rank": 4, "ugc_handle": -1, "details": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }, { "score": 1933758, "steam_id": 76561198097377868, "global_rank": 5, "ugc_handle": -1, "details": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }]
+LEADERBOARD DOWNLOAD CALLBACK handle=19691528 results=[]
+[OpenPitValidation] mode=fast_render sortie=71 auto=core attack return= cargo=3069/3069 fuel=0.0/116.0s money=5859384 xp=135901 cores=7 clear=44.269 remaining=L1=3425 L2=5917 L3=22328 L4=33181 L5=28502 live_remaining=L1=3425 L2=5917 L3=22328 L4=33181 L5=28502 boss=false bought=1
+[OpenPitValidation] mode=fast_render sortie=72 auto=core attack return= cargo=2878/3219 fuel=0.0/116.0s money=243984117 xp=181443 cores=1 clear=46.043 remaining=L1=3425 L2=5917 L3=21266 L4=31978 L5=27890 live_remaining=L1=3425 L2=5917 L3=21266 L4=31978 L5=27890 boss=false bought=4
+[OpenPitValidation] mode=fast_render sortie=73 auto=right sweep return=fuel reserve 18s cargo=2800/3926 fuel=12.6/116.0s money=18678686 xp=50804 cores=1 clear=47.589 remaining=L1=3425 L2=5835 L3=18548 L4=31978 L5=28117 live_remaining=L1=3425 L2=5835 L3=18548 L4=31978 L5=28117 boss=false bought=11
+[OpenPitValidation] mode=fast_render sortie=74 auto=dig deep return=fuel reserve 18s cargo=2535/3926 fuel=11.9/116.0s money=43896626 xp=86910 cores=1 clear=49.098 remaining=L1=3425 L2=5835 L3=16844 L4=31147 L5=28117 live_remaining=L1=3425 L2=5835 L3=16844 L4=31147 L5=28117 boss=false bought=0
+[OpenPitValidation] mode=fast_render sortie=75 auto=center return=fuel reserve 18s cargo=2802/3926 fuel=12.0/116.0s money=36552208 xp=123783 cores=1 clear=50.766 remaining=L1=3425 L2=5774 L3=14103 L4=31147 L5=28117 live_remaining=L1=3425 L2=5774 L3=14103 L4=31147 L5=28117 boss=false bought=1
+[OpenPitValidation] mode=fast_render sortie=76 auto=core attack return= cargo=3026/3926 fuel=0.0/116.0s money=557767227 xp=175226 cores=3 clear=52.567 remaining=L1=3425 L2=5774 L3=13899 L4=29289 L5=27161 live_remaining=L1=3425 L2=5774 L3=13899 L4=29289 L5=27161 boss=false bought=0
+[OpenPitValidation] mode=fast_render sortie=77 auto=core attack return= cargo=1633/4315 fuel=0.0/116.0s money=817486727 xp=54671 cores=2 clear=53.351 remaining=L1=3425 L2=5774 L3=13708 L4=28817 L5=26605 live_remaining=L1=3425 L2=5774 L3=13708 L4=28817 L5=26605 boss=false bought=6
+[OpenPitValidation] mode=fast_render sortie=78 auto=left sweep return=fuel reserve 18s cargo=3376/4494 fuel=12.1/116.0s money=207061422 xp=104952 cores=2 clear=55.098 remaining=L1=3425 L2=5656 L3=11347 L4=27920 L5=27038 live_remaining=L1=3425 L2=5656 L3=11347 L4=27920 L5=27038 boss=false bought=3
+[OpenPitValidation] mode=fast_render sortie=79 auto=right sweep return=fuel reserve 18s cargo=3921/4494 fuel=12.7/116.0s money=210715535 xp=148204 cores=2 clear=57.432 remaining=L1=3406 L2=2497 L3=10604 L4=27920 L5=27038 live_remaining=L1=3406 L2=2497 L3=10604 L4=27920 L5=27038 boss=false bought=0
+[OpenPitValidation] mode=fast_render sortie=80 auto=right sweep return=fuel reserve 18s cargo=3573/4494 fuel=11.6/116.0s money=264243474 xp=204641 cores=2 clear=59.559 remaining=L1=3406 L2=2417 L3=8985 L4=26046 L5=27038 live_remaining=L1=3406 L2=2417 L3=8985 L4=26046 L5=27038 boss=false bought=0
+[OpenPitValidation] checkpoint=C:/Users/stick/AppData/Roaming/Beep2Bleep Incremental/validation_late_cargo_midpoint/checkpoints/20260505_234527_from_fast_render_sortie_0070/fast_render/sortie_0080 completed_sorties=80
+[OpenPitUpgradeStartup] progress_load_begin since_request=0.000ms
+[OpenPitUpgradeStartup] progress_read_planet_state_binary sections=100 85.000ms since_request=0.000ms
+[OpenPitValidation] mode=fast_render sortie=81 auto=dig deep return=fuel reserve 18s cargo=3126/4494 fuel=11.5/116.0s money=74047112 xp=252052 cores=2 clear=61.420 remaining=L1=3406 L2=2086 L3=7532 L4=24704 L5=27038 live_remaining=L1=3406 L2=2086 L3=7532 L4=24704 L5=27038 boss=false bought=1
+[OpenPitValidation] mode=fast_render sortie=82 auto=dig deep return=fuel reserve 18s cargo=3175/4494 fuel=11.0/116.0s money=145289800 xp=68804 cores=2 clear=63.310 remaining=L1=3406 L2=2013 L3=6733 L4=22401 L5=27038 live_remaining=L1=3406 L2=2013 L3=6733 L4=22401 L5=27038 boss=false bought=1
+[OpenPitValidation] report=C:/Users/stick/AppData/Roaming/Beep2Bleep Incremental/validation_late_cargo_midpoint/summary.md

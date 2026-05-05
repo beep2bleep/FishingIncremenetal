@@ -42,6 +42,9 @@ const DEFAULT_DATA := {
     "remaining_layer_block_counts": {},
     "chat_line_counts": {},
     "chat_thread_counts": {},
+    "chat_active_thread_id": "",
+    "chat_active_thread_ids": [],
+    "chat_active_thread_target_count": 2,
     "chat_event_signatures": {},
     "chat_log": [],
     "bottom_phase_unlocked": false,
@@ -101,6 +104,10 @@ static func load_data() -> Dictionary:
         data["chat_line_counts"] = {}
     if not (data.get("chat_thread_counts", {}) is Dictionary):
         data["chat_thread_counts"] = {}
+    data["chat_active_thread_id"] = str(data.get("chat_active_thread_id", ""))
+    if not (data.get("chat_active_thread_ids", []) is Array):
+        data["chat_active_thread_ids"] = []
+    data["chat_active_thread_target_count"] = clampi(int(data.get("chat_active_thread_target_count", 2)), 2, 3)
     if not (data.get("chat_event_signatures", {}) is Dictionary):
         data["chat_event_signatures"] = {}
     if not (data.get("chat_log", []) is Array):
@@ -326,6 +333,9 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
     breakdown.erase("planet_state")
     breakdown.erase("chat_line_counts")
     breakdown.erase("chat_thread_counts")
+    breakdown.erase("chat_active_thread_id")
+    breakdown.erase("chat_active_thread_ids")
+    breakdown.erase("chat_active_thread_target_count")
     breakdown.erase("chat_event_signatures")
     breakdown.erase("chat_log")
     data["last_run_breakdown"] = breakdown
@@ -347,6 +357,12 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
         data["chat_line_counts"] = results.get("chat_line_counts", {}).duplicate(true)
     if results.get("chat_thread_counts", {}) is Dictionary:
         data["chat_thread_counts"] = results.get("chat_thread_counts", {}).duplicate(true)
+    if results.has("chat_active_thread_id"):
+        data["chat_active_thread_id"] = str(results.get("chat_active_thread_id", ""))
+    if results.get("chat_active_thread_ids", []) is Array:
+        data["chat_active_thread_ids"] = results.get("chat_active_thread_ids", []).duplicate(true)
+    if results.has("chat_active_thread_target_count"):
+        data["chat_active_thread_target_count"] = clampi(int(results.get("chat_active_thread_target_count", 2)), 2, 3)
     if results.get("chat_event_signatures", {}) is Dictionary:
         data["chat_event_signatures"] = results.get("chat_event_signatures", {}).duplicate(true)
     if results.get("chat_log", []) is Array:
@@ -400,7 +416,7 @@ static func bank_partial_run_rewards(results: Dictionary) -> Dictionary:
     var xp := int(results.get("xp", 0))
     var core_currency := int(results.get("core_currency", 0))
     var cores_destroyed := int(results.get("cores_destroyed", 0))
-    var has_chat_update := results.get("chat_line_counts", {}) is Dictionary or results.get("chat_thread_counts", {}) is Dictionary or results.get("chat_event_signatures", {}) is Dictionary or results.get("chat_log", []) is Array
+    var has_chat_update := results.get("chat_line_counts", {}) is Dictionary or results.get("chat_thread_counts", {}) is Dictionary or results.has("chat_active_thread_id") or results.get("chat_active_thread_ids", []) is Array or results.has("chat_active_thread_target_count") or results.get("chat_event_signatures", {}) is Dictionary or results.get("chat_log", []) is Array
     if money <= 0 and xp <= 0 and core_currency <= 0 and cores_destroyed <= 0 and not has_chat_update:
         return data
     data["wallet"] = max(0, int(data.get("wallet", 0)) + money)
@@ -411,6 +427,12 @@ static func bank_partial_run_rewards(results: Dictionary) -> Dictionary:
         data["chat_line_counts"] = results.get("chat_line_counts", {}).duplicate(true)
     if results.get("chat_thread_counts", {}) is Dictionary:
         data["chat_thread_counts"] = results.get("chat_thread_counts", {}).duplicate(true)
+    if results.has("chat_active_thread_id"):
+        data["chat_active_thread_id"] = str(results.get("chat_active_thread_id", ""))
+    if results.get("chat_active_thread_ids", []) is Array:
+        data["chat_active_thread_ids"] = results.get("chat_active_thread_ids", []).duplicate(true)
+    if results.has("chat_active_thread_target_count"):
+        data["chat_active_thread_target_count"] = clampi(int(results.get("chat_active_thread_target_count", 2)), 2, 3)
     if results.get("chat_event_signatures", {}) is Dictionary:
         data["chat_event_signatures"] = results.get("chat_event_signatures", {}).duplicate(true)
     if results.get("chat_log", []) is Array:
@@ -583,6 +605,12 @@ static func _sanitize_main_data(data: Dictionary) -> Dictionary:
         sanitized["chat_thread_counts"] = Dictionary(sanitized.get("chat_thread_counts", {})).duplicate(true)
     else:
         sanitized["chat_thread_counts"] = {}
+    sanitized["chat_active_thread_id"] = str(sanitized.get("chat_active_thread_id", ""))
+    if sanitized.get("chat_active_thread_ids", []) is Array:
+        sanitized["chat_active_thread_ids"] = Array(sanitized.get("chat_active_thread_ids", [])).duplicate(true)
+    else:
+        sanitized["chat_active_thread_ids"] = []
+    sanitized["chat_active_thread_target_count"] = clampi(int(sanitized.get("chat_active_thread_target_count", 2)), 2, 3)
     if sanitized.get("chat_event_signatures", {}) is Dictionary:
         sanitized["chat_event_signatures"] = Dictionary(sanitized.get("chat_event_signatures", {})).duplicate(true)
     else:

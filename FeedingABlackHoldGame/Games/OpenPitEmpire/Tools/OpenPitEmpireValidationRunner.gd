@@ -403,6 +403,7 @@ func _build_run_record(mode: String, sortie_index: int, data_before_purchase: Di
         "autopilot_sortie_mode": str(scene_summary.get("autopilot_sortie_mode", "")),
         "autopilot_status": str(scene_summary.get("autopilot_status", "")),
         "autopilot_return_reason": str(scene_summary.get("autopilot_return_reason", "")),
+        "autopilot_stuck_timer": float(scene_summary.get("autopilot_stuck_timer", 0.0)),
         "perf": scene_summary.get("perf", {}),
     }
     return record

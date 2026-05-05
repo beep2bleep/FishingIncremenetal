@@ -91,6 +91,7 @@ const SEISMIC_CHARGE_AHEAD_DISTANCE := 180.0
 const FORWARD_SHOT_RANGE_BONUS := BLOCK_SIZE * 1.25
 const MAX_EFFECTIVE_MULTI_TARGETS := 5
 const SLOW_ATTACK_RANGE_SCREEN_FRACTION := 0.75
+const MAX_ATTACK_RANGE_SCREEN_FRACTION := 1.0
 const ATTACK_RANGE_UNCAPPED_SPEED_RATIO := 0.65
 const SEISMIC_CHARGE_SPLASH_RADIUS_CELLS := 2
 const SEISMIC_CHARGE_DAMAGE_MULT := 1.8
@@ -750,6 +751,7 @@ func get_validation_run_summary() -> Dictionary:
         "autopilot_sortie_mode": autopilot_sortie_mode,
         "autopilot_status": autopilot_status,
         "autopilot_return_reason": autopilot_return_reason,
+        "autopilot_stuck_timer": autopilot_stuck_timer,
     }
 
 func get_validation_perf_summary() -> Dictionary:
@@ -1577,7 +1579,10 @@ func _start_run() -> void:
         rng,
         persistent_data.get("chat_line_counts", {}),
         persistent_data.get("chat_thread_counts", {}),
-        persistent_data.get("chat_event_signatures", {})
+        persistent_data.get("chat_event_signatures", {}),
+        str(persistent_data.get("chat_active_thread_id", "")),
+        persistent_data.get("chat_active_thread_ids", []),
+        int(persistent_data.get("chat_active_thread_target_count", 2))
     )
     _flush_breach_chat(true)
     _consume_open_pit_defense_result()
@@ -1761,6 +1766,9 @@ func _bank_rewards_before_core_defense() -> void:
         persistent_data = PROGRESS.bank_partial_run_rewards({
             "chat_line_counts": breach_chat.get_persistent_line_counts() if breach_chat != null else persistent_data.get("chat_line_counts", {}),
             "chat_thread_counts": breach_chat.get_persistent_thread_counts() if breach_chat != null else persistent_data.get("chat_thread_counts", {}),
+            "chat_active_thread_id": breach_chat.get_persistent_active_thread_id() if breach_chat != null else str(persistent_data.get("chat_active_thread_id", "")),
+            "chat_active_thread_ids": breach_chat.get_persistent_active_thread_ids() if breach_chat != null else persistent_data.get("chat_active_thread_ids", []),
+            "chat_active_thread_target_count": breach_chat.get_persistent_active_thread_target_count() if breach_chat != null else int(persistent_data.get("chat_active_thread_target_count", 2)),
             "chat_event_signatures": breach_chat.get_persistent_event_signatures() if breach_chat != null else persistent_data.get("chat_event_signatures", {}),
             "chat_log": persistent_data.get("chat_log", []),
         })
@@ -1777,6 +1785,9 @@ func _bank_rewards_before_core_defense() -> void:
         "persistent_clear": _get_persistent_clear_percent(),
         "chat_line_counts": breach_chat.get_persistent_line_counts() if breach_chat != null else persistent_data.get("chat_line_counts", {}),
         "chat_thread_counts": breach_chat.get_persistent_thread_counts() if breach_chat != null else persistent_data.get("chat_thread_counts", {}),
+        "chat_active_thread_id": breach_chat.get_persistent_active_thread_id() if breach_chat != null else str(persistent_data.get("chat_active_thread_id", "")),
+        "chat_active_thread_ids": breach_chat.get_persistent_active_thread_ids() if breach_chat != null else persistent_data.get("chat_active_thread_ids", []),
+        "chat_active_thread_target_count": breach_chat.get_persistent_active_thread_target_count() if breach_chat != null else int(persistent_data.get("chat_active_thread_target_count", 2)),
         "chat_event_signatures": breach_chat.get_persistent_event_signatures() if breach_chat != null else persistent_data.get("chat_event_signatures", {}),
         "chat_log": persistent_data.get("chat_log", []),
         "bottom_phase_unlocked": bottom_phase_unlocked,
@@ -2453,7 +2464,7 @@ func _get_autopilot_return_reason() -> String:
         return "fuel reserve %.0fs" % ceil(run_time * AUTOPILOT_FUEL_RETURN_RATIO)
     return ""
 
-func _find_autopilot_mining_target() -> Vector2:
+func _find_autopilot_mining_target(allow_timeout_retry: bool = true) -> Vector2:
     var search_deadline_usec := Time.get_ticks_usec() + AUTOPILOT_TARGET_SEARCH_BUDGET_USEC
     _update_autopilot_stuck_mode()
     if _is_autopilot_core_attack_mode():
@@ -2463,6 +2474,13 @@ func _find_autopilot_mining_target() -> Vector2:
             autopilot_aim_dir = (aim_world - ship_pos).normalized()
             autopilot_status = str(core_attack_target.get("status", "core attack"))
             return Vector2(core_attack_target.get("world", ship_pos))
+
+    if not _is_autopilot_core_attack_mode():
+        var pickup_target := _find_autopilot_pickup_target(search_deadline_usec)
+        if not pickup_target.is_empty():
+            autopilot_aim_dir = Vector2.ZERO
+            autopilot_status = "collecting"
+            return Vector2(pickup_target.get("position", ship_pos))
 
     var attack_radius := _get_effective_attack_radius()
     var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1, search_deadline_usec)
@@ -2488,13 +2506,6 @@ func _find_autopilot_mining_target() -> Vector2:
             autopilot_status = "digging deep"
             return dig_world
 
-    if not _is_autopilot_core_attack_mode():
-        var pickup_target := _find_autopilot_pickup_target(search_deadline_usec)
-        if not pickup_target.is_empty():
-            autopilot_aim_dir = Vector2.ZERO
-            autopilot_status = "collecting"
-            return Vector2(pickup_target.get("position", ship_pos))
-
     var my_grid := world_to_grid(ship_pos)
     var desired_lane_x := _get_autopilot_desired_lane_x(my_grid.y)
     var desired_depth_step := 12 if autopilot_sortie_mode == AUTOPILOT_MODE_DIG_DEEP else (3 if autopilot_sortie_mode == AUTOPILOT_MODE_TOP_SWEEP else 8)
@@ -2507,10 +2518,10 @@ func _find_autopilot_mining_target() -> Vector2:
     var best_score := INF
     var found_local_target := false
     for x in range(my_grid.x - AUTOPILOT_MINING_SCAN_CELLS, my_grid.x + AUTOPILOT_MINING_SCAN_CELLS + 1):
-        if Time.get_ticks_usec() >= search_deadline_usec:
+        if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
             break
         for y in range(my_grid.y - AUTOPILOT_MINING_SCAN_CELLS, my_grid.y + AUTOPILOT_MINING_SCAN_CELLS + 1):
-            if Time.get_ticks_usec() >= search_deadline_usec:
+            if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
                 break
             var block_grid := Vector2i(x, y)
             if not blocks.has(block_grid):
@@ -2561,7 +2572,11 @@ func _find_autopilot_mining_target() -> Vector2:
                     best_world = staging_world
                     best_aim_dir = (block_world - ship_pos).normalized()
                     found_local_target = true
-    if not found_local_target and Time.get_ticks_usec() < search_deadline_usec:
+    if not found_local_target and search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+        _rotate_autopilot_mode_after_search_timeout()
+        if allow_timeout_retry:
+            return _find_autopilot_mining_target(false)
+    if not found_local_target and (search_deadline_usec <= 0 or Time.get_ticks_usec() < search_deadline_usec):
         var anchor_target := _find_autopilot_lane_anchor_target(search_deadline_usec)
         if not anchor_target.is_empty():
             best_world = Vector2(anchor_target.get("world", best_world))
@@ -2581,28 +2596,35 @@ func _update_autopilot_stuck_mode() -> void:
     autopilot_stuck_timer += AUTOPILOT_RETARGET_INTERVAL
     if autopilot_stuck_timer < AUTOPILOT_STUCK_MODE_SECONDS:
         return
-    var old_mode := autopilot_sortie_mode
     if autopilot_sortie_mode == AUTOPILOT_MODE_DIG_DEEP:
         autopilot_dig_deep_anchor_grid = Vector2i(999999, 999999)
         autopilot_dig_deep_sweep_left = not autopilot_dig_deep_sweep_left
         autopilot_stuck_timer = 0.0
         autopilot_retarget_timer = 0.0
-        autopilot_status = "re-anchoring %s" % old_mode
+        autopilot_status = "re-anchoring dig deep"
         return
+    _rotate_autopilot_mode_after_search_timeout()
+
+func _rotate_autopilot_mode_after_search_timeout() -> void:
+    var old_mode := autopilot_sortie_mode
     match autopilot_sortie_mode:
+        AUTOPILOT_MODE_CENTER:
+            autopilot_sortie_mode = AUTOPILOT_MODE_DIG_DEEP
+            autopilot_dig_deep_anchor_grid = Vector2i(999999, 999999)
+        AUTOPILOT_MODE_DIG_DEEP:
+            autopilot_sortie_mode = AUTOPILOT_MODE_TOP_SWEEP
+            autopilot_top_sweep_anchor_grid = Vector2i(999999, 999999)
         AUTOPILOT_MODE_TOP_SWEEP:
-            autopilot_sortie_mode = AUTOPILOT_MODE_CENTER
+            autopilot_sortie_mode = AUTOPILOT_MODE_LEFT_SWEEP
         AUTOPILOT_MODE_LEFT_SWEEP:
             autopilot_sortie_mode = AUTOPILOT_MODE_RIGHT_SWEEP
         AUTOPILOT_MODE_RIGHT_SWEEP:
-            autopilot_sortie_mode = AUTOPILOT_MODE_LEFT_SWEEP
-        AUTOPILOT_MODE_CENTER:
-            autopilot_sortie_mode = AUTOPILOT_MODE_TOP_SWEEP
+            autopilot_sortie_mode = AUTOPILOT_MODE_CENTER
         _:
-            autopilot_sortie_mode = AUTOPILOT_MODE_TOP_SWEEP
+            autopilot_sortie_mode = AUTOPILOT_MODE_CENTER
     autopilot_stuck_timer = 0.0
     autopilot_retarget_timer = 0.0
-    autopilot_status = "rerouting from %s" % old_mode
+    autopilot_status = "search timeout: %s -> %s" % [old_mode, autopilot_sortie_mode]
 
 func _is_autopilot_core_attack_mode() -> bool:
     return autopilot_enabled and autopilot_sortie_mode == AUTOPILOT_MODE_CORE_ATTACK
@@ -4130,17 +4152,12 @@ func is_forward_shot_active() -> bool:
 
 func _get_effective_attack_radius() -> float:
     var base_range := float(runtime_stats.get("attack_radius", 96.0))
-    var viewport_size := get_viewport_rect().size
-    if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+    var screen_radius := _get_smallest_viewport_world_radius()
+    if screen_radius <= 0.0:
         return base_range
-    var zoom := Vector2.ONE * CAMERA_ZOOM_STOPPED
-    if camera != null:
-        zoom = camera.zoom
-    var viewport_world_size := Vector2(
-        viewport_size.x / maxf(zoom.x, 0.001),
-        viewport_size.y / maxf(zoom.y, 0.001)
-    )
-    var slow_cap := minf(viewport_world_size.x, viewport_world_size.y) * SLOW_ATTACK_RANGE_SCREEN_FRACTION
+    var slow_cap := screen_radius * SLOW_ATTACK_RANGE_SCREEN_FRACTION
+    var hard_cap := screen_radius * MAX_ATTACK_RANGE_SCREEN_FRACTION
+    base_range = minf(base_range, hard_cap)
     if base_range <= slow_cap:
         return base_range
     var move_speed := maxf(float(runtime_stats.get("move_speed", 580.0)) + (POWER_SPEED_BONUS if _is_power_active() else 0.0), 1.0)
@@ -4149,11 +4166,27 @@ func _get_effective_attack_radius() -> float:
         return base_range
     return lerpf(slow_cap, base_range, speed_ratio / ATTACK_RANGE_UNCAPPED_SPEED_RATIO)
 
+func _get_smallest_viewport_world_radius() -> float:
+    var viewport_size := get_viewport_rect().size
+    if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+        return 0.0
+    var zoom := Vector2.ONE * CAMERA_ZOOM_STOPPED
+    if camera != null:
+        zoom = camera.zoom
+    return minf(
+        viewport_size.x / maxf(zoom.x, 0.001),
+        viewport_size.y / maxf(zoom.y, 0.001)
+    ) * 0.5
+
 func get_forward_shot_range() -> float:
-    return maxf(
+    var forward_range := maxf(
         SEISMIC_CHARGE_AHEAD_DISTANCE,
         _get_effective_attack_radius() + FORWARD_SHOT_RANGE_BONUS
     )
+    var screen_radius := _get_smallest_viewport_world_radius()
+    if screen_radius <= 0.0:
+        return forward_range
+    return minf(forward_range, screen_radius * MAX_ATTACK_RANGE_SCREEN_FRACTION)
 
 func get_forward_shot_guide_end_world() -> Vector2:
     var forward := _get_forward_direction()
@@ -4652,6 +4685,9 @@ func _sync_breach_chat_persistent_state() -> void:
         return
     persistent_data["chat_line_counts"] = breach_chat.get_persistent_line_counts()
     persistent_data["chat_thread_counts"] = breach_chat.get_persistent_thread_counts()
+    persistent_data["chat_active_thread_id"] = breach_chat.get_persistent_active_thread_id()
+    persistent_data["chat_active_thread_ids"] = breach_chat.get_persistent_active_thread_ids()
+    persistent_data["chat_active_thread_target_count"] = breach_chat.get_persistent_active_thread_target_count()
     persistent_data["chat_event_signatures"] = breach_chat.get_persistent_event_signatures()
 
 func _finish_run(returned: bool, reason: String) -> void:
@@ -4815,6 +4851,9 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
         "persistent_clear": _get_persistent_clear_percent(),
         "chat_line_counts": breach_chat.get_persistent_line_counts() if breach_chat != null else persistent_data.get("chat_line_counts", {}),
         "chat_thread_counts": breach_chat.get_persistent_thread_counts() if breach_chat != null else persistent_data.get("chat_thread_counts", {}),
+        "chat_active_thread_id": breach_chat.get_persistent_active_thread_id() if breach_chat != null else str(persistent_data.get("chat_active_thread_id", "")),
+        "chat_active_thread_ids": breach_chat.get_persistent_active_thread_ids() if breach_chat != null else persistent_data.get("chat_active_thread_ids", []),
+        "chat_active_thread_target_count": breach_chat.get_persistent_active_thread_target_count() if breach_chat != null else int(persistent_data.get("chat_active_thread_target_count", 2)),
         "chat_event_signatures": breach_chat.get_persistent_event_signatures() if breach_chat != null else persistent_data.get("chat_event_signatures", {}),
         "chat_log": persistent_data.get("chat_log", []),
         "bottom_phase_unlocked": bottom_phase_unlocked,

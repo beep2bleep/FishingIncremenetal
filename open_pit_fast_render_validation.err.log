@@ -1,0 +1,34 @@
+WARNING: res://Sound Effect Settings/TECH_TREE_NODE_HOVER.tres:4 - ext_resource, invalid UID: uid://dptr621al8d8c - using text path instead: res://Audio/zapsplat_office_pen_biro_nib_tap_on_wood_001_33612.mp3
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://Sound Effect Settings/TECH_TREE_NODE_CLICK.tres:4 - ext_resource, invalid UID: uid://dwwge3qf4kyxg - using text path instead: res://Audio/zapsplat_multimedia_game_sound_classic_arcade_coin_collect_simple_fast_113878.mp3
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://AudioManager.tscn:33 - ext_resource, invalid UID: uid://miningding0001 - using text path instead: res://Sound Effect Settings/MINING_SUMMARY_DING.tres
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://AudioManager.tscn:34 - ext_resource, invalid UID: uid://mininglevelup001 - using text path instead: res://Sound Effect Settings/MINING_LEVEL_UP.tres
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://AudioManager.tscn:35 - ext_resource, invalid UID: uid://c8k2rdsygun01 - using text path instead: res://Sound Effect Settings/RedSkyGunFire.tres
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://AudioManager.tscn:36 - ext_resource, invalid UID: uid://c8k2rdsynkln1 - using text path instead: res://Sound Effect Settings/RedSkyNukeLaunch.tres
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://AudioManager.tscn:37 - ext_resource, invalid UID: uid://c8k2rdsynkbm1 - using text path instead: res://Sound Effect Settings/RedSkyNukeExplosion.tres
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://AudioManager.tscn:38 - ext_resource, invalid UID: uid://c8k2rdsykill1 - using text path instead: res://Sound Effect Settings/RedSkyEnemyKill.tres
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://AudioManager.tscn:39 - ext_resource, invalid UID: uid://turkeyballrelease1 - using text path instead: res://Sound Effect Settings/TurkeyBallRelease.tres
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://AudioManager.tscn:40 - ext_resource, invalid UID: uid://turkeyballroll0001 - using text path instead: res://Sound Effect Settings/TurkeyBallRoll.tres
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: res://AudioManager.tscn:41 - ext_resource, invalid UID: uid://turkeypinhit00001 - using text path instead: res://Sound Effect Settings/TurkeyPinHit.tres
+   at: load (scene/resources/resource_format_text.cpp:500)
+WARNING: Custom Warning: load_json_data_from_path file does not exist: user://player_progression_cloud_file.save
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] load_json_data_from_path (res://Util.gd:512)
+       [1] load_progression_data (res://SaveHandler.gd:184)
+       [2] _ready (res://SaveHandler.gd:53)
+Setting breakpad minidump AppID = 4642530
+SteamInternal_SetMinidumpSteamID:  Caching Steam ID:  76561198341602768 [API loaded no]
+ERROR: Error calling from signal 'leaderboard_scores_downloaded' to callable: 'Node(SteamHandler.gd)::_on_leaderboard_scores_downloaded': Method expected 2 argument(s), but called with 3.
+   at: emit_signalp (core/object/object.cpp:1406)
+ERROR: Error calling from signal 'leaderboard_scores_downloaded' to callable: 'Node(SteamHandler.gd)::_on_leaderboard_scores_downloaded': Method expected 2 argument(s), but called with 3.
+   at: emit_signalp (core/object/object.cpp:1406)
