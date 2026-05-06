@@ -85,6 +85,13 @@ const DRONE_MISSILE_TURN_RATE := 4.0
 const DRONE_MINE_TURN_RATE := 2.2
 const DRONE_MISSILE_SPEED := 240.0
 const DRONE_MINE_SPEED := 120.0
+const MINING_DRONE_ATTACK_INTERVAL := 0.39
+const MINING_DRONE_RETURN_WAIT_SECONDS := 0.0
+const MINING_DRONE_TARGET_SCAN_RADIUS := BLOCK_SIZE * 32.0
+const MINING_DRONE_FALLBACK_SCAN_CELLS := 140
+const MINING_DRONE_STAGING_DISTANCE := BLOCK_SIZE * 1.45
+const MINING_DRONE_TARGET_REACHED_DISTANCE := 18.0
+const MINING_DRONE_SPAWN_SPACING := 18.0
 const SEISMIC_CHARGE_INTERVAL := 0.32
 const SEISMIC_POWERUP_INTERVAL := 0.45
 const SEISMIC_CHARGE_AHEAD_DISTANCE := 180.0
@@ -348,6 +355,12 @@ var drone_mines: Array[Dictionary] = []
 var drone_timers: Array[float] = []
 var drone_targets: Array[Vector2] = []
 var drone_attack_counter := 0
+var mining_drone_states: Array[Dictionary] = []
+var mining_drone_beams: Array[Dictionary] = []
+var mining_drone_money := 0
+var mining_drone_xp := 0
+var mining_drone_cargo_units_banked := 0
+var mining_drone_cargo_units_pending := 0
 var seismic_charge_timer := 0.0
 var seismic_charge_bursts: Array[Dictionary] = []
 var cipher_laser_states: Dictionary = {}
@@ -452,6 +465,7 @@ const PERF_PROBE_KEYS := [
     "refresh_hud",
     "update_combat",
     "update_drones",
+    "update_mining_drones",
     "flush_edges",
     "update_pickups",
     "update_core_attacks",
@@ -503,6 +517,7 @@ var _perf_probe_history := {
     "refresh_hud": [],
     "update_combat": [],
     "update_drones": [],
+    "update_mining_drones": [],
     "flush_edges": [],
     "update_pickups": [],
     "update_core_attacks": [],
@@ -541,6 +556,7 @@ var _perf_probe_labels := {
     "refresh_hud": "_refresh_hud",
     "update_combat": "_update_combat",
     "update_drones": "_update_drones",
+    "update_mining_drones": "_update_mining_drones",
     "flush_edges": "flush edges",
     "update_pickups": "_update_pickups",
     "update_core_attacks": "_update_core_attacks",
@@ -579,6 +595,7 @@ var _perf_probe_last_samples := {
     "refresh_hud": 0.0,
     "update_combat": 0.0,
     "update_drones": 0.0,
+    "update_mining_drones": 0.0,
     "flush_edges": 0.0,
     "update_pickups": 0.0,
     "update_core_attacks": 0.0,
@@ -617,6 +634,7 @@ var _run_perf_peak_samples := {
     "refresh_hud": 0.0,
     "update_combat": 0.0,
     "update_drones": 0.0,
+    "update_mining_drones": 0.0,
     "flush_edges": 0.0,
     "update_pickups": 0.0,
     "update_core_attacks": 0.0,
@@ -714,21 +732,33 @@ func get_validation_run_summary() -> Dictionary:
     var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
     var run_time := float(runtime_stats.get("run_time", 30.0))
     var mining_time := maxf(0.0, run_time - time_left)
+    var pending_drone_rewards := _get_mining_drone_pending_reward_totals()
+    var total_drone_cargo := mining_drone_cargo_units_banked + int(pending_drone_rewards.get("cargo_units", 0))
+    var total_cargo_units := cargo_units + total_drone_cargo
+    var total_money_touched := cargo_money + mining_drone_money + int(pending_drone_rewards.get("money", 0))
+    var total_xp_earned := xp_earned_this_run + mining_drone_xp + int(pending_drone_rewards.get("xp", 0))
     return {
         "depth_level": current_depth_level,
         "nodes_mined": nodes_mined,
-        "xp_earned": xp_earned_this_run,
+        "xp_earned": total_xp_earned,
         "cores_destroyed": cores_destroyed_this_run,
         "core_currency_earned": core_currency_earned_this_run,
         "boss_defeated": boss_defeated,
         "persistent_clear": _get_persistent_clear_percent(),
-        "money_touched": cargo_money,
-        "cargo_units": cargo_units,
+        "money_touched": total_money_touched,
+        "cargo_units": total_cargo_units,
         "cargo_capacity": cargo_capacity,
-        "cargo_fill_ratio": 0.0 if cargo_capacity <= 0 else float(cargo_units) / float(cargo_capacity),
-        "end_cargo_units": cargo_units,
+        "cargo_fill_ratio": 0.0 if cargo_capacity <= 0 else float(total_cargo_units) / float(cargo_capacity),
+        "end_cargo_units": total_cargo_units,
         "end_cargo_capacity": cargo_capacity,
-        "end_cargo_fill_ratio": 0.0 if cargo_capacity <= 0 else float(cargo_units) / float(cargo_capacity),
+        "end_cargo_fill_ratio": 0.0 if cargo_capacity <= 0 else float(total_cargo_units) / float(cargo_capacity),
+        "mining_drone_count": mining_drone_states.size(),
+        "mining_drone_tier": int(runtime_stats.get("mining_drone_tier", 0)),
+        "mining_drone_cargo_capacity": _get_mining_drone_cargo_capacity() if int(runtime_stats.get("mining_drone_count", 0)) > 0 else 0,
+        "mining_drone_money_banked": mining_drone_money,
+        "mining_drone_xp_banked": mining_drone_xp,
+        "mining_drone_cargo_banked": mining_drone_cargo_units_banked,
+        "mining_drone_cargo_pending": int(pending_drone_rewards.get("cargo_units", 0)),
         "run_time": run_time,
         "mining_time": mining_time,
         "time_left": time_left,
@@ -1519,10 +1549,16 @@ func _start_run() -> void:
     drone_beams.clear()
     drone_missiles.clear()
     drone_mines.clear()
+    mining_drone_beams.clear()
+    mining_drone_money = 0
+    mining_drone_xp = 0
+    mining_drone_cargo_units_banked = 0
+    mining_drone_cargo_units_pending = 0
     seismic_charge_bursts.clear()
     seismic_charge_timer = 0.0
     drone_attack_counter = 0
     _reset_drone_state()
+    _reset_mining_drone_state()
     current_combo = 0
     combo_peak = 0
     combo_milestones_hit.clear()
@@ -1903,6 +1939,9 @@ func _process_gameplay_step(delta: float) -> void:
         _update_bottom_phase(delta)
         if bottom_cutscene_timer <= 0.0:
             _update_combat(delta)
+            section_start_us = perf_probe_begin()
+            _update_mining_drones(delta)
+            perf_probe_end("update_mining_drones", section_start_us)
             _update_drone_visuals(delta)
             _update_core_behaviors(delta)
             _update_core_attacks(delta)
@@ -2437,15 +2476,15 @@ func _get_autopilot_direction(delta: float) -> Vector2:
 
 func _choose_autopilot_sortie_mode() -> void:
     var roll := rng.randf()
-    if roll < 0.40:
+    if roll < 0.34:
         autopilot_sortie_mode = AUTOPILOT_MODE_DIG_DEEP
-    elif roll < 0.55:
+    elif roll < 0.48:
         autopilot_sortie_mode = AUTOPILOT_MODE_TOP_SWEEP
-    elif roll < 0.70:
+    elif roll < 0.61:
         autopilot_sortie_mode = AUTOPILOT_MODE_LEFT_SWEEP
-    elif roll < 0.85:
+    elif roll < 0.74:
         autopilot_sortie_mode = AUTOPILOT_MODE_RIGHT_SWEEP
-    elif roll < 0.95:
+    elif roll < 0.80:
         autopilot_sortie_mode = AUTOPILOT_MODE_CENTER
     else:
         autopilot_sortie_mode = AUTOPILOT_MODE_CORE_ATTACK
@@ -3692,6 +3731,237 @@ func _update_drones(delta: float) -> void:
             drone_timers[index] = 0.0
             _fire_drone(index)
 
+func _reset_mining_drone_state() -> void:
+    mining_drone_states.clear()
+    var count := int(runtime_stats.get("mining_drone_count", 0))
+    if count <= 0:
+        return
+    for index in range(count):
+        var offset := Vector2(
+            (float(index) - float(count - 1) * 0.5) * MINING_DRONE_SPAWN_SPACING,
+            float(index % 2) * 10.0
+        )
+        mining_drone_states.append({
+            "position": spawn_position + offset,
+            "velocity": Vector2.ZERO,
+            "target": spawn_position + offset,
+            "target_grid": Vector2i(999999, 999999),
+            "state": "seeking",
+            "cargo_units": 0,
+            "cargo_money": 0,
+            "cargo_xp": 0,
+            "minimap_erases": [],
+            "wait_timer": 0.0,
+            "attack_timer": rng.randf() * MINING_DRONE_ATTACK_INTERVAL,
+        })
+
+func _ensure_mining_drone_state() -> void:
+    var count := int(runtime_stats.get("mining_drone_count", 0))
+    if mining_drone_states.size() == count:
+        return
+    _reset_mining_drone_state()
+
+func _update_mining_drones(delta: float) -> void:
+    _ensure_mining_drone_state()
+    _tick_effect_array(mining_drone_beams, delta)
+    if mining_drone_states.is_empty() or planet_data == null:
+        return
+    for idx in range(mining_drone_states.size()):
+        var drone: Dictionary = mining_drone_states[idx]
+        _update_single_mining_drone(drone, delta)
+        mining_drone_states[idx] = drone
+    if ship_renderer != null:
+        ship_renderer.queue_redraw()
+
+func _update_single_mining_drone(drone: Dictionary, delta: float) -> void:
+    var state := str(drone.get("state", "seeking"))
+    if state == "waiting":
+        drone["wait_timer"] = maxf(0.0, float(drone.get("wait_timer", 0.0)) - delta)
+        drone["position"] = Vector2(drone.get("position", spawn_position)).lerp(spawn_position, clampf(delta * 3.0, 0.0, 1.0))
+        drone["velocity"] = Vector2.ZERO
+        if float(drone.get("wait_timer", 0.0)) <= 0.0:
+            drone["state"] = "seeking"
+            drone["target_grid"] = Vector2i(999999, 999999)
+        return
+    if state == "returning":
+        _move_mining_drone_toward(drone, spawn_position, delta)
+        if Vector2(drone.get("position", spawn_position)).distance_to(spawn_position) <= MINING_DRONE_TARGET_REACHED_DISTANCE:
+            _bank_mining_drone_cargo(drone)
+            drone["state"] = "seeking"
+            drone["wait_timer"] = 0.0
+            drone["target"] = spawn_position
+            drone["target_grid"] = Vector2i(999999, 999999)
+        return
+    if _is_mining_drone_full(drone):
+        drone["state"] = "returning"
+        drone["target"] = spawn_position
+        return
+    var target_grid := Vector2i(drone.get("target_grid", Vector2i(999999, 999999)))
+    if target_grid.x >= 999999 or not _is_mineable_non_core_block(target_grid):
+        target_grid = _find_mining_drone_target(Vector2(drone.get("position", spawn_position)))
+        if target_grid.x >= 999999:
+            target_grid = _find_mining_drone_target(ship_pos)
+        if target_grid.x >= 999999:
+            target_grid = _find_mining_drone_target(spawn_position)
+        drone["target_grid"] = target_grid
+        if target_grid.x >= 999999:
+            _move_mining_drone_toward(drone, spawn_position, delta)
+            return
+        drone["target"] = _get_mining_drone_staging_world(Vector2(drone.get("position", spawn_position)), target_grid)
+    var target_world := Vector2(drone.get("target", grid_to_world(target_grid)))
+    _move_mining_drone_toward(drone, target_world, delta)
+    var attack_range := BLOCK_SIZE * 1.75
+    var drone_pos := Vector2(drone.get("position", spawn_position))
+    if drone_pos.distance_to(grid_to_world(target_grid)) <= attack_range:
+        drone["attack_timer"] = float(drone.get("attack_timer", 0.0)) + delta
+        if float(drone.get("attack_timer", 0.0)) >= MINING_DRONE_ATTACK_INTERVAL:
+            drone["attack_timer"] = 0.0
+            _fire_mining_drone(drone, target_grid)
+
+func _move_mining_drone_toward(drone: Dictionary, target: Vector2, delta: float) -> void:
+    var pos := Vector2(drone.get("position", spawn_position))
+    var offset := target - pos
+    var speed := _get_mining_drone_speed()
+    var desired := offset.normalized() * speed if offset.length() > 0.01 else Vector2.ZERO
+    var velocity := Vector2(drone.get("velocity", Vector2.ZERO)).move_toward(desired, speed * delta * 7.0)
+    if offset.length() <= velocity.length() * delta:
+        pos = target
+        velocity = Vector2.ZERO
+    else:
+        pos += velocity * delta
+    drone["position"] = pos
+    drone["velocity"] = velocity
+
+func _fire_mining_drone(drone: Dictionary, target_grid: Vector2i) -> void:
+    if not _is_mineable_non_core_block(target_grid):
+        drone["target_grid"] = Vector2i(999999, 999999)
+        return
+    var block_before: Dictionary = blocks.get(target_grid, {})
+    var drone_pos := Vector2(drone.get("position", spawn_position))
+    var result := _damage_block(target_grid, _get_mining_drone_damage_for(target_grid), true, "mining_drone")
+    mining_drone_beams.append({"from": drone_pos, "to": grid_to_world(target_grid), "timer": DRONE_BEAM_DURATION})
+    if bool(result.get("destroyed", false)):
+        _queue_mining_drone_minimap_erase(drone, target_grid)
+        _collect_mining_drone_reward(drone, block_before)
+        drone["target_grid"] = Vector2i(999999, 999999)
+        if _is_mining_drone_full(drone):
+            drone["state"] = "returning"
+            drone["target"] = spawn_position
+    _sync_planet_runtime_views(true, false)
+
+func _collect_mining_drone_reward(drone: Dictionary, block: Dictionary) -> void:
+    var cargo_capacity := _get_mining_drone_cargo_capacity()
+    if int(drone.get("cargo_units", 0)) >= cargo_capacity:
+        return
+    # Mining drones auto-mine their own rewards, independent of player pickup/auto-salvage upgrades.
+    var payout := float(block.get("resource", 1.0)) + float(runtime_stats.get("resource_flat", 0.0))
+    payout *= float(runtime_stats.get("global_resource_mult", 1.0))
+    payout *= BALANCE.get_resource_multiplier_for_depth(runtime_stats, int(block.get("layer_depth", 1)))
+    payout *= _get_effective_payout_multiplier()
+    drone["cargo_units"] = int(drone.get("cargo_units", 0)) + 1
+    drone["cargo_money"] = int(drone.get("cargo_money", 0)) + int(round(payout))
+    drone["cargo_xp"] = int(drone.get("cargo_xp", 0)) + _get_xp_reward_for_block(block)
+    _refresh_mining_drone_pending_totals()
+
+func _bank_mining_drone_cargo(drone: Dictionary) -> void:
+    _flush_mining_drone_minimap_erases(drone)
+    mining_drone_money += int(drone.get("cargo_money", 0))
+    mining_drone_xp += int(drone.get("cargo_xp", 0))
+    mining_drone_cargo_units_banked += int(drone.get("cargo_units", 0))
+    drone["cargo_units"] = 0
+    drone["cargo_money"] = 0
+    drone["cargo_xp"] = 0
+    drone["minimap_erases"] = []
+    _refresh_mining_drone_pending_totals()
+
+func _queue_mining_drone_minimap_erase(drone: Dictionary, pos: Vector2i) -> void:
+    var erases: Array = Array(drone.get("minimap_erases", []))
+    erases.append(pos)
+    drone["minimap_erases"] = erases
+
+func _flush_mining_drone_minimap_erases(drone: Dictionary) -> void:
+    if planet_data == null or not planet_data.has_method("notify_minimap_block_erased"):
+        return
+    for pos_variant in Array(drone.get("minimap_erases", [])):
+        planet_data.call("notify_minimap_block_erased", Vector2i(pos_variant))
+    if minimap != null and not autopilot_no_render_enabled:
+        minimap.queue_redraw()
+
+func _refresh_mining_drone_pending_totals() -> void:
+    var pending := 0
+    for drone_variant in mining_drone_states:
+        var drone: Dictionary = drone_variant
+        pending += int(drone.get("cargo_units", 0))
+    mining_drone_cargo_units_pending = pending
+
+func _get_mining_drone_pending_reward_totals() -> Dictionary:
+    var totals := {"cargo_units": 0, "money": 0, "xp": 0}
+    for drone_variant in mining_drone_states:
+        var drone: Dictionary = drone_variant
+        totals["cargo_units"] = int(totals.get("cargo_units", 0)) + int(drone.get("cargo_units", 0))
+        totals["money"] = int(totals.get("money", 0)) + int(drone.get("cargo_money", 0))
+        totals["xp"] = int(totals.get("xp", 0)) + int(drone.get("cargo_xp", 0))
+    return totals
+
+func _bank_pending_mining_drone_cargo_at_run_end() -> void:
+    for idx in range(mining_drone_states.size()):
+        var drone: Dictionary = mining_drone_states[idx]
+        if int(drone.get("cargo_units", 0)) > 0:
+            _bank_mining_drone_cargo(drone)
+            mining_drone_states[idx] = drone
+
+func _is_mining_drone_full(drone: Dictionary) -> bool:
+    return int(drone.get("cargo_units", 0)) >= _get_mining_drone_cargo_capacity()
+
+func _get_mining_drone_speed() -> float:
+    return float(runtime_stats.get("move_speed", 580.0)) * float(runtime_stats.get("mining_drone_speed_ratio", 0.0))
+
+func _get_mining_drone_cargo_capacity() -> int:
+    return maxi(1, int(floor(float(runtime_stats.get("cargo_capacity", 24)) * float(runtime_stats.get("mining_drone_cargo_ratio", 0.0)))))
+
+func _get_mining_drone_damage_for(pos: Vector2i) -> float:
+    return _compute_laser_damage(pos) * float(runtime_stats.get("mining_drone_damage_ratio", 0.0))
+
+func _find_mining_drone_target(origin: Vector2) -> Vector2i:
+    var targets := _find_targets_near_world(origin, MINING_DRONE_TARGET_SCAN_RADIUS, 1)
+    if not targets.is_empty():
+        return Vector2i(targets[0])
+    var origin_grid := world_to_grid(origin)
+    var best := Vector2i(999999, 999999)
+    var best_score := INF
+    var scan_cells := MINING_DRONE_FALLBACK_SCAN_CELLS
+    for ring in range(1, scan_cells + 1):
+        for x in range(origin_grid.x - ring, origin_grid.x + ring + 1):
+            for y in [origin_grid.y - ring, origin_grid.y + ring]:
+                var candidate := Vector2i(x, y)
+                if not _is_mineable_non_core_block(candidate):
+                    continue
+                var score := origin.distance_squared_to(grid_to_world(candidate))
+                if score < best_score:
+                    best_score = score
+                    best = candidate
+        for y in range(origin_grid.y - ring + 1, origin_grid.y + ring):
+            for x in [origin_grid.x - ring, origin_grid.x + ring]:
+                var candidate := Vector2i(x, y)
+                if not _is_mineable_non_core_block(candidate):
+                    continue
+                var score := origin.distance_squared_to(grid_to_world(candidate))
+                if score < best_score:
+                    best_score = score
+                    best = candidate
+        if best.x < 999999:
+            return best
+    return best
+
+func _get_mining_drone_staging_world(origin: Vector2, target_grid: Vector2i) -> Vector2:
+    var target_world := grid_to_world(target_grid)
+    var away := (origin - target_world).normalized()
+    if away.length() < 0.01:
+        away = (spawn_position - target_world).normalized()
+    if away.length() < 0.01:
+        away = Vector2.UP
+    return target_world + away * MINING_DRONE_STAGING_DISTANCE
+
 func _compute_laser_damage(pos: Vector2i) -> float:
     var block: Dictionary = blocks.get(pos, {})
     var damage := _get_effective_attack_damage()
@@ -3708,13 +3978,13 @@ func _compute_laser_damage(pos: Vector2i) -> float:
     damage *= _editor_debug_damage_mult
     return damage
 
-func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false) -> Dictionary:
+func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false, source: String = "") -> Dictionary:
     var perf_start_us := perf_probe_begin()
     if is_grid_empty(pos):
         perf_probe_end("damage_block", perf_start_us)
         return {}
     var block_before: Dictionary = blocks.get(pos, {})
-    var result: Dictionary = planet_data.damage_block(pos, damage, false, _core_unlocks_center())
+    var result: Dictionary = planet_data.damage_block(pos, damage, false, _core_unlocks_center(), source == "mining_drone")
     if breach_chat != null and int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
         var engaged_core_id := int(result.get("core_id", int(block_before.get("core_id", -1))))
         if engaged_core_id >= 0:
@@ -3737,8 +4007,10 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         persistent_destroyed_count += 1
         destroyed_cells_this_run[pos] = true
         nodes_mined += 1
-        xp_earned_this_run += _get_xp_reward_for_block(block_before)
-        overdrive_kills += 1
+        if source != "mining_drone":
+            xp_earned_this_run += _get_xp_reward_for_block(block_before)
+        if source != "mining_drone":
+            overdrive_kills += 1
         if breach_chat != null:
             breach_chat.record_node_destroyed(int(result.get("type", BlockType.NORMAL)) == BlockType.CORE)
         if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
@@ -3747,21 +4019,22 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
             hacker_typer_revealed_chars = 0
         _play_block_break_audio(int(result.get("type", BlockType.NORMAL)))
         var world := grid_to_world(pos)
-        _gain_power(_get_power_gain_for_block(block_before))
-        _spawn_pickup(world, block_before)
+        if source != "mining_drone":
+            _gain_power(_get_power_gain_for_block(block_before))
+            _spawn_pickup(world, block_before)
         if planet_renderer != null and not autopilot_no_render_enabled:
             if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
                 _queue_core_fill_region(int(result.get("core_id", int(block_before.get("core_id", -1)))))
             else:
                 planet_renderer.queue_fill_update(pos)
-        if int(result.get("type", BlockType.NORMAL)) == BlockType.ELECTRIC and bool(runtime_stats.get("electric_enabled", false)):
+        if source != "mining_drone" and int(result.get("type", BlockType.NORMAL)) == BlockType.ELECTRIC and bool(runtime_stats.get("electric_enabled", false)):
             _trigger_electric_chain(pos, world, defer_visual_sync)
         if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE and bool(result.get("final_core", false)):
             boss_defeated = true
             _finish_run(true, "The final core ruptured.")
             perf_probe_end("damage_block", perf_start_us)
             return result
-        if bool(runtime_stats.get("shockwave_enabled", false)):
+        if source != "mining_drone" and bool(runtime_stats.get("shockwave_enabled", false)):
             shockwave_counter += 1
             if not shockwave_firing and shockwave_counter >= int(runtime_stats.get("shockwave_trigger_kills", 15)):
                 shockwave_counter = 0
@@ -4697,16 +4970,18 @@ func _finish_run(returned: bool, reason: String) -> void:
     _set_autopilot_fast_forward_steps(1)
     _set_autopilot_no_render_enabled(false)
     run_finished = true
+    _bank_pending_mining_drone_cargo_at_run_end()
     if planet_data != null:
         blocks = planet_data.blocks
         exposed_edges = planet_data.exposed_edges
         planet_renderer.mark_dirty(true, "load_state_refresh")
-    var total_money := cargo_money
+    var total_money := cargo_money + mining_drone_money
     if returned:
         for pickup in pickups:
             total_money += int(pickup.get("money", 0))
     var keep_percent := 1.0 if returned else float(runtime_stats.get("salvage_keep", 0.0))
     var money_award := int(round(float(total_money) * keep_percent))
+    var xp_award := xp_earned_this_run + mining_drone_xp
     summary_overlay.visible = true
     summary_save_anim_time = 0.0
     summary_save_pending = true
@@ -4742,7 +5017,7 @@ func _finish_run(returned: bool, reason: String) -> void:
         "run_time": run_time,
         "mining_time": mining_time,
         "fuel_ratio": 0.0 if run_time <= 0.0 else time_left / run_time,
-        "cargo_ratio": 0.0 if cargo_capacity <= 0 else float(cargo_units) / float(cargo_capacity),
+        "cargo_ratio": 0.0 if cargo_capacity <= 0 else float(cargo_units + mining_drone_cargo_units_banked) / float(cargo_capacity),
         "clear_start_ratio": float(run_start_destroyed_count) / float(maxi(1, total_planet_blocks)),
         "clear_ratio": float(persistent_destroyed_count) / float(maxi(1, total_planet_blocks)),
         "mined_ratio": float(maxi(0, persistent_destroyed_count - run_start_destroyed_count)) / float(maxi(1, total_planet_blocks)),
@@ -4767,7 +5042,7 @@ func _finish_run(returned: bool, reason: String) -> void:
             auto_return_summary,
             money_award,
             total_money,
-            xp_earned_this_run,
+            xp_award,
             cores_destroyed_this_run,
             _get_persistent_clear_percent(),
             core_currency_earned_this_run,
@@ -4782,7 +5057,7 @@ func _finish_run(returned: bool, reason: String) -> void:
     if summary_status_label != null:
         summary_status_label.text = tr("OPEN_PIT_PREPARING_SAVE_DOTS")
     _dump_run_perf_snapshot_to_console(returned, reason, money_award)
-    call_deferred("_begin_finish_save", money_award, reason)
+    call_deferred("_begin_finish_save", money_award, xp_award, reason)
 
 func _save_planet_snapshot() -> void:
     if run_finished or planet_data == null:
@@ -4823,10 +5098,10 @@ func _update_finish_summary(delta: float) -> void:
         if summary_status_label != null:
             summary_status_label.text = tr("OPEN_PIT_SAVE_COMPLETE") if PROGRESS.was_async_planet_state_save_successful() else tr("OPEN_PIT_SAVE_FAILED")
 
-func _begin_finish_save(money_award: int, reason: String) -> void:
-    await _finish_run_save_async(money_award, reason)
+func _begin_finish_save(money_award: int, xp_award: int, reason: String) -> void:
+    await _finish_run_save_async(money_award, xp_award, reason)
 
-func _finish_run_save_async(money_award: int, reason: String) -> void:
+func _finish_run_save_async(money_award: int, xp_award: int, reason: String) -> void:
     var planet_snapshot: Dictionary = {}
     var has_sector_updates := false
     _sync_breach_chat_persistent_state()
@@ -4837,7 +5112,7 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
         has_sector_updates = not Dictionary(planet_snapshot.get("sections", {})).is_empty()
     PROGRESS.apply_run_results({
         "money": money_award,
-        "xp": xp_earned_this_run,
+        "xp": xp_award,
         "core_currency": core_currency_earned_this_run,
         "cores_destroyed": cores_destroyed_this_run,
         "depth_level": current_depth_level,
@@ -4847,7 +5122,7 @@ func _finish_run_save_async(money_award: int, reason: String) -> void:
         "planet_state": planet_snapshot if has_sector_updates else {},
         "remaining_layer_block_counts": _get_live_remaining_layer_block_counts(),
         "defer_planet_state_save": has_sector_updates,
-        "summary_text": _trf("OPEN_PIT_SUMMARY_BANKED", [reason, money_award, xp_earned_this_run]),
+        "summary_text": _trf("OPEN_PIT_SUMMARY_BANKED", [reason, money_award, xp_award]),
         "persistent_clear": _get_persistent_clear_percent(),
         "chat_line_counts": breach_chat.get_persistent_line_counts() if breach_chat != null else persistent_data.get("chat_line_counts", {}),
         "chat_thread_counts": breach_chat.get_persistent_thread_counts() if breach_chat != null else persistent_data.get("chat_thread_counts", {}),
@@ -4953,11 +5228,14 @@ func _refresh_hud() -> void:
         cargo_label.text = _trf("OPEN_PIT_HUD_FUEL_AUTO_RETURN", [fuel_text, autopilot_return_reason if autopilot_return_reason != "" else tr("OPEN_PIT_RETURNING")])
     else:
         cargo_label.text = _trf("OPEN_PIT_HUD_FUEL_STANDBY", [fuel_text])
-    wallet_label.text = _trf("OPEN_PIT_HUD_WALLET", [cargo_money, int(persistent_data.get("wallet", 0)), int(persistent_data.get("xp_currency", 0)) + xp_earned_this_run])
+    var pending_drone_rewards := _get_mining_drone_pending_reward_totals()
+    var visible_run_money := cargo_money + mining_drone_money + int(pending_drone_rewards.get("money", 0))
+    var visible_run_xp := xp_earned_this_run + mining_drone_xp + int(pending_drone_rewards.get("xp", 0))
+    wallet_label.text = _trf("OPEN_PIT_HUD_WALLET", [visible_run_money, int(persistent_data.get("wallet", 0)), int(persistent_data.get("xp_currency", 0)) + visible_run_xp])
     if validation_haul_label != null:
         validation_haul_label.visible = validation_autopilot_mode != "" and not run_finished
         if validation_haul_label.visible:
-            validation_haul_label.text = _trf("OPEN_PIT_VALIDATION_ROUND_HAUL", [_format_large_number(cargo_money)])
+            validation_haul_label.text = _trf("OPEN_PIT_VALIDATION_ROUND_HAUL", [_format_large_number(visible_run_money)])
     layer_label.text = _trf("OPEN_PIT_HUD_LAYER", [current_depth_level, current_layer_name, snappedf(_get_persistent_clear_percent(), 0.1)])
     var active_boosts: Array[String] = []
     if float(active_powerup_timers.get("haste", 0.0)) > 0.0:
@@ -5599,6 +5877,7 @@ func _make_perf_snapshot(fps_now: int, frame_ms: float, fps_frame_ms: float, act
         "autopilot_find_target_ms": float(frame_samples.get("autopilot_find_target", 0.0)),
         "update_combat_ms": float(frame_samples.get("update_combat", 0.0)),
         "update_drones_ms": float(frame_samples.get("update_drones", 0.0)),
+        "update_mining_drones_ms": float(frame_samples.get("update_mining_drones", 0.0)),
         "flush_edges_ms": float(frame_samples.get("flush_edges", 0.0)),
         "update_pickups_ms": float(frame_samples.get("update_pickups", 0.0)),
         "update_core_attacks_ms": float(frame_samples.get("update_core_attacks", 0.0)),
@@ -5628,6 +5907,9 @@ func _make_perf_snapshot(fps_now: int, frame_ms: float, fps_frame_ms: float, act
         "d_beams": drone_beams.size(),
         "d_missiles": drone_missiles.size(),
         "d_mines": drone_mines.size(),
+        "mining_drones": mining_drone_states.size(),
+        "mining_drone_beams": mining_drone_beams.size(),
+        "mining_drone_cargo_pending": mining_drone_cargo_units_pending,
         "blocks_alive": blocks.size(),
         "blocks_cleared_in_frame": _frame_destroyed_blocks,
         "net_block_drop_in_frame": int(_perf_probe_last_samples.get("net_block_drop_in_frame", 0.0)),
@@ -5743,7 +6025,7 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
     return found
 
 func _get_attack_load_tier() -> int:
-    var load := hit_timers.size() + seismic_charge_bursts.size() + electric_arcs.size() + chain_arcs.size() + drone_beams.size() + drone_missiles.size() + drone_mines.size()
+    var load := hit_timers.size() + seismic_charge_bursts.size() + electric_arcs.size() + chain_arcs.size() + drone_beams.size() + drone_missiles.size() + drone_mines.size() + mining_drone_beams.size()
     if load >= ATTACK_LOAD_HARD_LIMIT:
         return 2
     if load >= ATTACK_LOAD_SOFT_LIMIT:

@@ -1096,3 +1096,87 @@ OPEN_PIT_UPGRADE_STATUS,Flight {0} ready. Root kernels: {1}.{2},Flight {0} ready
 OPEN_PIT_VALIDATION_ROUND_HAUL,Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0},Validation haul: ${0}
 OPEN_PIT_VALIDATION_RUN,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run,Validation run
 OPEN_PIT_VALIDATION_RUN_COMPLETE,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.,Validation run complete.
+UNCAPPED,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped,Uncapped
+TOUCH_INPUT,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input
+TOUCH INPUT,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input,Touch Input
+UI_CONFIRM_UPGRADE_PURCHASE_TOUCH,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch
+Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch
+UI_CREDITS,Credits,Credits,Credits,Credits,Credits,Credits,Credits,Credits,Credits,Credits,Credits,Credits,Credits,Credits,Credits,Credits,Credits,Credits,Credits
+CREDITS_BODY,"Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing.","Created by Stick.
+
+Built with Godot.
+
+Thank you for playing."
+MINING_END_RUN,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run

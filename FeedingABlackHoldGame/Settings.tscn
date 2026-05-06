@@ -130,7 +130,7 @@ layout_mode = 2
 
 [node name="Confirm Upgrade Purchase Text" type="Label" parent="GridContainer"]
 layout_mode = 2
-text = "Confirm Upgrade Purchase - Best for Touch"
+text = "UI_CONFIRM_UPGRADE_PURCHASE_TOUCH"
 
 [node name="CenterContainer12" type="CenterContainer" parent="GridContainer"]
 layout_mode = 2
@@ -149,7 +149,7 @@ layout_mode = 2
 
 [node name="Touch Input" type="Label" parent="GridContainer"]
 layout_mode = 2
-text = "TOUCH INPUT"
+text = "TOUCH_INPUT"
 
 [node name="CenterContainer11" type="CenterContainer" parent="GridContainer"]
 layout_mode = 2

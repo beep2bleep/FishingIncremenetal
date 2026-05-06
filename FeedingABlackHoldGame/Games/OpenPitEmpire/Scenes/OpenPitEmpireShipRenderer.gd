@@ -5,6 +5,7 @@ var scene_ref: OpenPitEmpireMain
 var _last_visual_rotation := INF
 var _last_barriers_left := -1
 var _last_drone_count := -1
+var _last_mining_drone_count := -1
 var _last_trail_count := -1
 var _last_attack_visible := false
 var _last_mega_active := false
@@ -68,7 +69,7 @@ func _process(_delta: float) -> void:
     var extraction_progress := scene_ref.get_return_zone_progress()
     var extraction_visible := _is_extraction_zone_visible()
     var render_detail_mode := int(scene_ref.render_detail_mode)
-    var drones_active := not scene_ref.drone_positions.is_empty() or not scene_ref.drone_beams.is_empty() or not scene_ref.drone_missiles.is_empty() or not scene_ref.drone_mines.is_empty()
+    var drones_active := not scene_ref.drone_positions.is_empty() or not scene_ref.drone_beams.is_empty() or not scene_ref.drone_missiles.is_empty() or not scene_ref.drone_mines.is_empty() or not scene_ref.mining_drone_states.is_empty() or not scene_ref.mining_drone_beams.is_empty()
     var trail_active := not scene_ref.ship_trail.is_empty()
     var arcs_active := not scene_ref.electric_arcs.is_empty() or not scene_ref.chain_arcs.is_empty()
     var seismic_active := not scene_ref.seismic_charge_bursts.is_empty()
@@ -91,6 +92,9 @@ func _process(_delta: float) -> void:
         needs_redraw = true
     if scene_ref.drone_positions.size() != _last_drone_count:
         _last_drone_count = scene_ref.drone_positions.size()
+        needs_redraw = true
+    if scene_ref.mining_drone_states.size() != _last_mining_drone_count:
+        _last_mining_drone_count = scene_ref.mining_drone_states.size()
         needs_redraw = true
     if scene_ref.ship_trail.size() != _last_trail_count:
         _last_trail_count = scene_ref.ship_trail.size()
@@ -401,6 +405,7 @@ func _draw_chain_arcs(vp: float) -> void:
             prev = next_pt
 
 func _draw_drones(vp: float) -> void:
+    _draw_mining_drones(vp)
     for idx in range(scene_ref.drone_positions.size()):
         var drone_pos := scene_ref.drone_positions[idx]
         var local := drone_pos - scene_ref.ship_pos
@@ -441,6 +446,53 @@ func _draw_drones(vp: float) -> void:
         draw_circle(local_mine, 7.0, Color(0.18, 0.03, 0.03, 0.96))
         draw_arc(local_mine, 8.0, 0.0, TAU, 18, Color(1.0, 0.42 + blink * 0.3, 0.24, 0.95), 2.0)
         draw_circle(local_mine, 2.0, Color(1.0, 0.92, 0.7, 0.8 + blink * 0.2))
+
+func _draw_mining_drones(vp: float) -> void:
+    for beam in scene_ref.mining_drone_beams:
+        var alpha := clampf(float(beam.get("timer", 0.0)) / scene_ref.DRONE_BEAM_DURATION, 0.0, 1.0)
+        draw_line(
+            Vector2(beam.get("from", Vector2.ZERO)) - scene_ref.ship_pos,
+            Vector2(beam.get("to", Vector2.ZERO)) - scene_ref.ship_pos,
+            Color(0.35, 1.35, 1.0, alpha * 0.26),
+            5.0 + vp * 2.0
+        )
+        draw_line(
+            Vector2(beam.get("from", Vector2.ZERO)) - scene_ref.ship_pos,
+            Vector2(beam.get("to", Vector2.ZERO)) - scene_ref.ship_pos,
+            Color(0.65, 2.0, 1.25, alpha),
+            1.2 + vp * 0.45
+        )
+    var cargo_capacity := maxf(float(scene_ref._get_mining_drone_cargo_capacity()), 1.0)
+    var visible_half_extents := scene_ref.get_viewport_rect().size * 0.5 / maxf(scene_ref.camera.zoom.x if scene_ref.camera != null else 1.0, 0.001)
+    for idx in range(scene_ref.mining_drone_states.size()):
+        var drone: Dictionary = scene_ref.mining_drone_states[idx]
+        var local := Vector2(drone.get("position", scene_ref.spawn_position)) - scene_ref.ship_pos
+        var velocity := Vector2(drone.get("velocity", Vector2.ZERO))
+        var rotation := velocity.angle() + PI * 0.5 if velocity.length() > 1.0 else scene_ref.get_ship_render_rotation()
+        var cargo_ratio := clampf(float(drone.get("cargo_units", 0)) / cargo_capacity, 0.0, 1.0)
+        var pulse := 0.5 + 0.5 * sin(scene_ref.ship_glow_phase * 2.2 + float(idx) * 1.6)
+        var inside_view := absf(local.x) <= visible_half_extents.x - 18.0 and absf(local.y) <= visible_half_extents.y - 18.0
+        if not inside_view and local.length_squared() > 1.0:
+            var edge := local
+            var scale := minf(
+                (visible_half_extents.x - 22.0) / maxf(absf(edge.x), 1.0),
+                (visible_half_extents.y - 22.0) / maxf(absf(edge.y), 1.0)
+            )
+            edge *= clampf(scale, 0.0, 1.0)
+            draw_arc(edge, 11.0 + pulse * 2.0, 0.0, TAU, 18, Color(0.5, 2.0, 1.2, 0.75), 2.2)
+            draw_line(edge, edge + local.normalized() * 9.0, Color(0.75, 2.2, 1.35, 0.9), 2.0)
+        draw_circle(local, 24.0, Color(0.25, 1.35, 1.0, 0.10 + pulse * 0.08))
+        draw_arc(local, 21.0 + pulse * 2.0, 0.0, TAU, 24, Color(0.45, 1.8, 1.1, 0.45), 2.0)
+        draw_set_transform(local, rotation, Vector2(0.5, 0.5))
+        draw_colored_polygon(SHIP_POINTS, Color(0.018, 0.05, 0.052, 0.98))
+        var line_color := Color(0.55, 1.8, 1.15, 0.95)
+        for point_idx in range(SHIP_POINTS.size()):
+            draw_line(SHIP_POINTS[point_idx], SHIP_POINTS[(point_idx + 1) % SHIP_POINTS.size()], line_color, 2.6)
+        draw_line(Vector2(0.0, -12.0), Vector2(0.0, 9.0), line_color, 2.2)
+        draw_rect(Rect2(Vector2(-1.0, 4.0), Vector2(2.0, 7.0)), line_color, false, 2.2)
+        if cargo_ratio > 0.0:
+            draw_arc(Vector2.ZERO, 26.0, -PI * 0.5, -PI * 0.5 + TAU * cargo_ratio, 24, Color(0.8, 2.2, 1.25, 0.85), 4.0)
+        draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _draw_seismic_charge_bursts() -> void:
     for burst_variant in scene_ref.seismic_charge_bursts:

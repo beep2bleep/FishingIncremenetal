@@ -4,8 +4,6 @@ class_name Settings
 var screen_modes = {
     SaveHandler.SCREEN_MODES.FULL_SCREEN: "FULLSCREEN", 
     SaveHandler.SCREEN_MODES.WINDOWED: "WINDOWED", 
-
-
 }
 
 
@@ -34,6 +32,7 @@ func _ready():
     populate_language_list()
     populate_window_mode_list()
     populate_fps_list()
+    refresh_static_text()
     _refresh_hidden_control_visibility()
     refresh_from_save()
 
@@ -102,18 +101,21 @@ func _refresh_language_selection() -> void:
 
 
 func populate_window_mode_list():
+    %"Screen Mode Dropdown".clear()
     var index = 0
     for r in screen_modes.keys():
-        %"Screen Mode Dropdown".add_item(screen_modes[r], index)
+        %"Screen Mode Dropdown".add_item(tr(screen_modes[r]), index)
         if r == SaveHandler.screen_mode:
             %"Screen Mode Dropdown".select(index)
         index += 1
 
 
 func populate_fps_list():
+    %"FPS Dropdown".clear()
     var index = 0
     for r in fps_limits.keys():
-        %"FPS Dropdown".add_item(fps_limits[r], index)
+        var label_key: String = str(fps_limits[r])
+        %"FPS Dropdown".add_item(tr(label_key) if label_key == "UNCAPPED" else label_key, index)
         if r == SaveHandler.fps_limit:
             %"FPS Dropdown".select(index)
         index += 1
@@ -150,6 +152,10 @@ func _on_language_dropdown_item_selected(index: int) -> void:
         return
     SaveHandler.update_locale(locale_codes[index])
     SaveHandler.update_has_shown_pick_locale_first_time(true)
+    populate_window_mode_list()
+    populate_fps_list()
+    refresh_static_text()
+    refresh_from_save()
     if visible and not _is_refreshing:
         AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK)
 
@@ -238,3 +244,39 @@ func _on_sens_down_pressed() -> void :
 
 func _on_sens_up_pressed() -> void :
     ctrl_sense += 0.1
+
+func refresh_static_text() -> void:
+    _set_label_text("Label2", "SETTINGS")
+    _set_label_text("GridContainer/Sound Effects", "MAIN VOLUME")
+    _set_label_text("GridContainer/Effects", "EFFECT_VOLUME")
+    _set_label_text("GridContainer/Music", "MUSIC VOLUME")
+    _set_label_text("GridContainer/Shuffle Music Text", "SHUFFLE_MUSIC")
+    _set_label_text("GridContainer/Floating Currency Text", "MONEY_TEXT")
+    _set_label_text("GridContainer/Floating Damage Text", "DAMAGE_TEXT")
+    _set_label_text("GridContainer/Confirm Upgrade Purchase Text", "UI_CONFIRM_UPGRADE_PURCHASE_TOUCH")
+    _set_label_text("GridContainer/Language", "LANGUAGE")
+    _set_label_text("GridContainer/Touch Input", "TOUCH_INPUT")
+    _set_label_text("GridContainer/Screen Mode", "SCREEN MODE")
+    _set_label_text("GridContainer/FPS", "FPS LIMIT")
+    _set_label_text("GridContainer/V Sync", "V SYNC")
+    _set_label_text("GridContainer/HBoxContainer/Text Size", "TEXT_SIZE")
+    _set_label_text("GridContainer/Ctrl Sens", "CONTROLLER_SENSETIVITY")
+    _set_button_text("Credits Button", "UI_CREDITS")
+    _set_label_text("Credits Panel/Credits Margin/Credits VBox/Credits Title", "UI_CREDITS")
+    _set_rich_text("Credits Panel/Credits Margin/Credits VBox/Credits Text", "CREDITS_BODY")
+    _set_button_text("Credits Panel/Credits Margin/Credits VBox/Hide Credits", "UI_BACK")
+
+func _set_label_text(path: String, key: String) -> void:
+    var label := get_node_or_null(path) as Label
+    if label != null:
+        label.text = tr(key)
+
+func _set_button_text(path: String, key: String) -> void:
+    var button := get_node_or_null(path) as Button
+    if button != null:
+        button.text = tr(key)
+
+func _set_rich_text(path: String, key: String) -> void:
+    var label := get_node_or_null(path) as RichTextLabel
+    if label != null:
+        label.text = tr(key)

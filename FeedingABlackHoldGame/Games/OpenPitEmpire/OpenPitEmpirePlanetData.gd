@@ -638,7 +638,7 @@ func is_in_dead_core_zone(pos: Vector2i) -> bool:
             return true
     return false
 
-func damage_block(pos: Vector2i, damage: float, indirect: bool = false, free_planet_mode: bool = false) -> Dictionary:
+func damage_block(pos: Vector2i, damage: float, indirect: bool = false, free_planet_mode: bool = false, suppress_minimap_erase: bool = false) -> Dictionary:
     if not blocks.has(pos):
         return {"destroyed": false, "type": -1, "resource": 0.0}
     var block: Dictionary = blocks[pos]
@@ -655,7 +655,8 @@ func damage_block(pos: Vector2i, damage: float, indirect: bool = false, free_pla
             block_resource *= GOLD_RESOURCE_MULT
         var block_zone: int = int(block.get("zone", get_zone(pos)))
         blocks.erase(pos)
-        minimap_block_erased.emit(pos)
+        if not suppress_minimap_erase:
+            minimap_block_erased.emit(pos)
         _queue_edge_update(pos)
         _mark_section_dirty(pos)
         if block_type != BlockType.THORN:
@@ -666,6 +667,9 @@ func damage_block(pos: Vector2i, damage: float, indirect: bool = false, free_pla
     blocks[pos] = block
     _mark_section_dirty(pos)
     return {"destroyed": false, "type": int(block.get("type", BlockType.NORMAL)), "resource": 0.0, "layer_depth": int(block.get("layer_depth", 1))}
+
+func notify_minimap_block_erased(pos: Vector2i) -> void:
+    minimap_block_erased.emit(pos)
 
 func regenerate_around_cores() -> int:
     var changed_positions: Array[Vector2i] = []
