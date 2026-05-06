@@ -72,6 +72,7 @@ const HIT_GLOW := Color(2.3, 1.2, 0.4, 0.55)
 const HACKER_BLOCK_FILL := Color(0.08, 0.34, 0.16, 1.0)
 const HACKER_BLOCK_EDGE := Color(0.25, 2.2, 0.65, 1.0)
 const HACKER_BLOCK_DIM := Color(0.06, 0.16, 0.12, 1.0)
+const TETROMINO_EDGE := Color(0.94, 0.98, 1.0, 0.95)
 const STAR_COLORS := [
     Color(1.0, 0.96, 0.9, 1.0),
     Color(0.95, 0.98, 1.0, 1.0),
@@ -213,6 +214,8 @@ func _process(_delta: float) -> void:
         needs_redraw = true
     if not scene_ref.hit_timers.is_empty():
         needs_redraw = true
+    if not scene_ref.tetromino_bursts.is_empty():
+        needs_redraw = true
     if not scene_ref.roaming_powerups.is_empty():
         needs_redraw = true
     if not scene_ref.shockwave_rings.is_empty():
@@ -244,7 +247,7 @@ func _draw() -> void:
     var visible_grid_w: int = base_visible_grid_max.x - base_visible_grid_min.x + 1
     var visible_grid_h: int = base_visible_grid_max.y - base_visible_grid_min.y + 1
     var visible_cell_budget: int = visible_grid_w * visible_grid_h
-    var effect_load: int = scene_ref.hit_timers.size() + scene_ref.electric_arcs.size() + scene_ref.chain_arcs.size() + scene_ref.drone_beams.size() + scene_ref.drone_missiles.size() + scene_ref.drone_mines.size()
+    var effect_load: int = scene_ref.hit_timers.size() + scene_ref.tetromino_bursts.size() + scene_ref.electric_arcs.size() + scene_ref.chain_arcs.size() + scene_ref.drone_beams.size() + scene_ref.drone_missiles.size() + scene_ref.drone_mines.size()
     var full_visible_grid_cells := int(scene_ref.get("full_detail_visible_grid_cells")) if scene_ref != null else 288
     var heavy_visible_grid_cells := int(scene_ref.get("heavy_detail_visible_grid_cells")) if scene_ref != null else HEAVY_VISIBLE_GRID_CELLS
     var ultra_visible_grid_cells := int(scene_ref.get("ultra_detail_visible_grid_cells")) if scene_ref != null else VERY_HEAVY_VISIBLE_GRID_CELLS
@@ -559,7 +562,7 @@ func _draw() -> void:
                 var block: Dictionary = scene_ref.blocks.get(grid, {})
                 if block.is_empty():
                     continue
-                var colors: Dictionary = _get_block_palette(block)
+                var colors: Dictionary = _get_block_palette(block, grid)
                 var world := scene_ref.grid_to_world(grid)
                 var rect := Rect2(
                     world - Vector2.ONE * scene_ref.BLOCK_SIZE * 0.5 + Vector2.ONE * BLOCK_GAP,
@@ -579,7 +582,7 @@ func _draw() -> void:
                 if hit_timer > 0.0:
                     draw_rect(rect.grow(-2.0), Color(HIT_GLOW.r, HIT_GLOW.g, HIT_GLOW.b, hit_timer / scene_ref.HIT_FLASH_DURATION), false, 2.0)
                 if not reduce_detail and int(block.get("type", 0)) == scene_ref.BlockType.ELECTRIC:
-                    _draw_hacker_block_glyph(grid, rect, bool(scene_ref.runtime_stats.get("electric_enabled", false)))
+                    _draw_tetromino_block_glyph(grid, rect, bool(scene_ref.runtime_stats.get("electric_enabled", false)))
                 if not reduce_detail and int(block.get("type", 0)) == scene_ref.BlockType.GOLD:
                     var gp := (sin(gold_pulse_t + grid.x * 1.3 + grid.y * 0.7) + 1.0) * 0.5
                     var ga := 0.1 + gp * 0.12
@@ -598,6 +601,7 @@ func _draw() -> void:
                     draw_line(Vector2(rx + rw, ry + rh), Vector2(rx + rw - m, ry + rh), gc, 1.0)
                     draw_line(Vector2(rx + rw, ry + rh), Vector2(rx + rw, ry + rh - m), gc, 1.0)
     scene_ref.perf_probe_end("renderer_power_blocks", power_blocks_start_us)
+    _draw_tetromino_bursts()
     scene_ref.perf_probe_end("renderer_blocks", section_start_us)
 
     section_start_us = scene_ref.perf_probe_begin()
@@ -1389,27 +1393,53 @@ func _draw_block_edges(_grid: Vector2i, rect: Rect2, color: Color, mask: int, wi
     if (mask & 8) != 0:
         draw_line(rect.position + Vector2(rect.size.x, 0.0), rect.position + rect.size, color, width)
 
-func _draw_hacker_block_glyph(grid: Vector2i, rect: Rect2, active: bool) -> void:
+func _draw_tetromino_block_glyph(grid: Vector2i, rect: Rect2, active: bool) -> void:
     var pulse := (sin(_time_elapsed * 5.2 + float(grid.x) * 0.73 + float(grid.y) * 0.41) + 1.0) * 0.5
-    var alpha := (0.18 + pulse * 0.22) if active else 0.1
-    var glow := HACKER_BLOCK_EDGE if active else HACKER_BLOCK_DIM
-    var inset := 5.0
-    var left := rect.position.x + inset
-    var right := rect.position.x + rect.size.x - inset
-    var top := rect.position.y + inset
-    var bottom := rect.position.y + rect.size.y - inset
-    draw_line(Vector2(left, top), Vector2(right, top), Color(glow.r, glow.g, glow.b, alpha), 1.2)
-    draw_line(Vector2(left, bottom), Vector2(right, bottom), Color(glow.r, glow.g, glow.b, alpha * 0.85), 1.2)
-    draw_line(Vector2(left, top), Vector2(left, bottom), Color(glow.r, glow.g, glow.b, alpha * 0.75), 1.0)
-    draw_line(Vector2(right, top), Vector2(right, bottom), Color(glow.r, glow.g, glow.b, alpha * 0.75), 1.0)
-    var scan_y := lerpf(top + 2.0, bottom - 2.0, pulse)
-    draw_line(Vector2(left + 2.0, scan_y), Vector2(right - 2.0, scan_y), Color(glow.r, glow.g, glow.b, alpha * 1.35), 1.0)
-    var tick_alpha := alpha * 0.95
-    draw_line(Vector2(left + 4.0, top + 5.0), Vector2(left + 9.0, top + 9.0), Color(glow.r, glow.g, glow.b, tick_alpha), 1.0)
-    draw_line(Vector2(left + 9.0, top + 9.0), Vector2(left + 4.0, top + 13.0), Color(glow.r, glow.g, glow.b, tick_alpha), 1.0)
-    draw_line(Vector2(right - 11.0, bottom - 6.0), Vector2(right - 4.0, bottom - 6.0), Color(glow.r, glow.g, glow.b, tick_alpha), 1.0)
+    var definition := scene_ref.get_tetromino_definition(grid)
+    var color: Color = definition.get("color", Color(0.0, 1.0, 1.0, 1.0))
+    var offsets: Array = definition.get("offsets", [Vector2i.ZERO])
+    var alpha := (0.72 + pulse * 0.2) if active else 0.34
+    var min_x := 999
+    var max_x := -999
+    var min_y := 999
+    var max_y := -999
+    for offset_variant in offsets:
+        var offset := Vector2i(offset_variant)
+        min_x = mini(min_x, offset.x)
+        max_x = maxi(max_x, offset.x)
+        min_y = mini(min_y, offset.y)
+        max_y = maxi(max_y, offset.y)
+    var cols := maxi(1, max_x - min_x + 1)
+    var rows := maxi(1, max_y - min_y + 1)
+    var square_size := minf((rect.size.x - 8.0) / float(cols), (rect.size.y - 8.0) / float(rows))
+    var shape_size := Vector2(float(cols) * square_size, float(rows) * square_size)
+    var origin := rect.position + (rect.size - shape_size) * 0.5
+    for offset_variant in offsets:
+        var offset := Vector2i(offset_variant)
+        var cell_pos := origin + Vector2(float(offset.x - min_x), float(offset.y - min_y)) * square_size
+        var cell_rect := Rect2(cell_pos + Vector2.ONE, Vector2.ONE * maxf(2.0, square_size - 2.0))
+        draw_rect(cell_rect, Color(color.r, color.g, color.b, alpha), true)
+        draw_rect(cell_rect, Color(TETROMINO_EDGE.r, TETROMINO_EDGE.g, TETROMINO_EDGE.b, alpha * 0.72), false, 1.0)
 
-func _get_block_palette(block: Dictionary) -> Dictionary:
+func _draw_tetromino_bursts() -> void:
+    for burst_variant in scene_ref.tetromino_bursts:
+        var burst: Dictionary = burst_variant
+        var duration := maxf(float(burst.get("duration", scene_ref.TETROMINO_EFFECT_DURATION)), 0.001)
+        var life_ratio := clampf(float(burst.get("timer", 0.0)) / duration, 0.0, 1.0)
+        var scale := 0.82 + life_ratio * 0.18
+        var color: Color = burst.get("color", Color(0.0, 1.0, 1.0, 1.0))
+        var fill := Color(color.r, color.g, color.b, 0.28 * life_ratio)
+        var edge := Color(TETROMINO_EDGE.r, TETROMINO_EDGE.g, TETROMINO_EDGE.b, 0.9 * life_ratio)
+        for cell_variant in burst.get("cells", []):
+            var cell := Vector2i(cell_variant)
+            var center := scene_ref.grid_to_world(cell)
+            var size := scene_ref.BLOCK_SIZE * scale
+            var rect := Rect2(center - Vector2.ONE * size * 0.5, Vector2.ONE * size)
+            draw_rect(rect, fill, true)
+            draw_rect(rect, Color(color.r, color.g, color.b, 0.82 * life_ratio), false, 2.0)
+            draw_rect(rect.grow(-3.0 * scale), edge, false, 1.0)
+
+func _get_block_palette(block: Dictionary, grid: Vector2i = Vector2i(2147483647, 2147483647)) -> Dictionary:
     var zone: int = int(block.get("zone", ZONE_AUTUMN))
     var block_type: int = int(block.get("type", 0))
     var regenerated: bool = bool(block.get("regenerated", false))
@@ -1418,7 +1448,8 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
     var electric_enabled: bool = bool(scene_ref.runtime_stats.get("electric_enabled", false))
     var gold_enabled: bool = true
     var hardness_tier: int = _get_visual_hardness_tier(block)
-    var cache_key := "%d:%d:%d:%d:%d:%d:%d:%d" % [zone, block_type, int(regenerated), int(core_refill), int(electric_enabled), int(gold_enabled), hardness_tier, int(unbreakable)]
+    var grid_cache_key := "%d:%d" % [grid.x, grid.y] if block_type == scene_ref.BlockType.ELECTRIC and grid.x < 2147483647 else "-"
+    var cache_key := "%d:%d:%d:%d:%d:%d:%d:%d:%s" % [zone, block_type, int(regenerated), int(core_refill), int(electric_enabled), int(gold_enabled), hardness_tier, int(unbreakable), grid_cache_key]
     if _palette_cache.has(cache_key):
         return _palette_cache[cache_key]
     var fill: Color = ZONE_FILLS.get(zone, SPACE_BG)
@@ -1435,8 +1466,13 @@ func _get_block_palette(block: Dictionary) -> Dictionary:
             edge = _get_zone_edge_color(zone)
         scene_ref.BlockType.ELECTRIC:
             var expected_fill := _mix_fill_with_edge(fill, edge, 0.22)
-            fill = expected_fill.lerp(HACKER_BLOCK_FILL, 0.28) if electric_enabled else expected_fill.lerp(HACKER_BLOCK_DIM, 0.12)
-            edge = edge.lerp(HACKER_BLOCK_EDGE, 0.42) if electric_enabled else edge.lerp(HACKER_BLOCK_DIM, 0.22)
+            if grid.x < 2147483647:
+                var tetromino_color: Color = scene_ref.get_tetromino_definition(grid).get("color", Color(0.0, 1.0, 1.0, 1.0))
+                fill = expected_fill.lerp(Color(tetromino_color.r, tetromino_color.g, tetromino_color.b, 1.0), 0.46 if electric_enabled else 0.22)
+                edge = edge.lerp(Color(tetromino_color.r, tetromino_color.g, tetromino_color.b, 1.0), 0.62 if electric_enabled else 0.3)
+            else:
+                fill = expected_fill.lerp(HACKER_BLOCK_FILL, 0.28) if electric_enabled else expected_fill.lerp(HACKER_BLOCK_DIM, 0.12)
+                edge = edge.lerp(HACKER_BLOCK_EDGE, 0.42) if electric_enabled else edge.lerp(HACKER_BLOCK_DIM, 0.22)
         scene_ref.BlockType.GOLD:
             var base_fill := _mix_fill_with_edge(fill, edge, 0.16)
             fill = base_fill.lightened(0.08) if gold_enabled else base_fill

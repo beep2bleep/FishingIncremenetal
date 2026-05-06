@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Games/OpenPitEmpire/Tools/OpenPitEmpirePerfABRunner.gd" id="1_perf"]
+
+[node name="OpenPitEmpirePerfABRunner" type="Node"]
+script = ExtResource("1_perf")

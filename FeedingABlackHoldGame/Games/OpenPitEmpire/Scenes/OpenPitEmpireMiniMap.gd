@@ -136,8 +136,9 @@ func _draw() -> void:
         var drone_pos := _world_to_map(Vector2(drone.get("position", scene_ref.spawn_position)))
         var cargo_capacity := maxf(float(scene_ref._get_mining_drone_cargo_capacity()), 1.0)
         var cargo_ratio := clampf(float(drone.get("cargo_units", 0)) / cargo_capacity, 0.0, 1.0)
-        draw_circle(drone_pos, 2.4, MINING_DRONE_COLOR)
-        draw_arc(drone_pos, 4.2, -PI * 0.5, -PI * 0.5 + TAU * cargo_ratio, 12, Color(MINING_DRONE_COLOR.r, MINING_DRONE_COLOR.g, MINING_DRONE_COLOR.b, 0.9), 1.4)
+        var drone_color := scene_ref.get_mining_drone_visual_color(drone) if scene_ref.has_method("get_mining_drone_visual_color") else MINING_DRONE_COLOR
+        draw_circle(drone_pos, 2.4, drone_color)
+        draw_arc(drone_pos, 4.2, -PI * 0.5, -PI * 0.5 + TAU * cargo_ratio, 12, Color(drone_color.r, drone_color.g, drone_color.b, 0.9), 1.4)
     var ship_pos := _world_to_map(scene_ref.ship_pos)
     draw_circle(ship_pos, 3.0, PLAYER_COLOR)
     draw_circle(ship_pos, 5.0, Color(PLAYER_COLOR.r, PLAYER_COLOR.g, PLAYER_COLOR.b, 0.3))

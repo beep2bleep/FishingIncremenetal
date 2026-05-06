@@ -21,6 +21,9 @@ var _last_power_pulse := -1.0
 var _last_power_active := false
 var _last_forward_guide_active := false
 var _last_forward_guide_range := -1.0
+var _last_attack_range := -1.0
+var _last_pickup_range := -1.0
+var _last_auto_pickup := false
 
 const SOFT_ARC_LOAD_LIMIT := 12
 const HARD_ARC_LOAD_LIMIT := 20
@@ -82,6 +85,9 @@ func _process(_delta: float) -> void:
     var power_active := scene_ref._is_power_active()
     var forward_guide_active := scene_ref.is_forward_shot_active()
     var forward_guide_range := scene_ref.get_forward_shot_range()
+    var attack_range := scene_ref._get_effective_attack_radius()
+    var pickup_range := scene_ref._get_effective_pickup_radius()
+    var auto_pickup := bool(scene_ref.runtime_stats.get("instant_collect", false))
     var needs_redraw := false
     var render_rotation := scene_ref.get_ship_render_rotation()
     if render_rotation != _last_visual_rotation:
@@ -141,6 +147,15 @@ func _process(_delta: float) -> void:
     if absf(forward_guide_range - _last_forward_guide_range) > 0.5:
         _last_forward_guide_range = forward_guide_range
         needs_redraw = true
+    if absf(attack_range - _last_attack_range) > 0.5:
+        _last_attack_range = attack_range
+        needs_redraw = true
+    if absf(pickup_range - _last_pickup_range) > 0.5:
+        _last_pickup_range = pickup_range
+        needs_redraw = true
+    if auto_pickup != _last_auto_pickup:
+        _last_auto_pickup = auto_pickup
+        needs_redraw = true
     if attack_visible or mega_active or overdrive_active or invuln_active or drones_active or trail_active or arcs_active or seismic_active or side_projectiles_active or side_attackers_active or forward_guide_active or extraction_progress > 0.0 or extraction_visible:
         needs_redraw = true
     if needs_redraw:
@@ -177,6 +192,7 @@ func _draw() -> void:
         var alert_pulse := 0.5 + 0.5 * sin(scene_ref.ship_glow_phase * alert_speed)
         draw_circle(Vector2.ZERO, 28.0, Color(1.2, 0.08, 0.06, 0.1 + fuel_alert_t * (0.08 + alert_pulse * 0.18)))
 
+    _draw_range_indicators()
     _draw_forward_shot_guide()
     _draw_ship_trail(ship_line)
     _draw_extraction_zone()
@@ -230,6 +246,16 @@ func _draw_extraction_zone() -> void:
 
 func _is_extraction_zone_visible() -> bool:
     return scene_ref.should_render_extraction_zone()
+
+func _draw_range_indicators() -> void:
+    var attack_range := scene_ref._get_effective_attack_radius()
+    if attack_range > 0.0:
+        draw_arc(Vector2.ZERO, attack_range, 0.0, TAU, 96, Color(0.08, 0.08, 0.09, 0.55), 2.0)
+    if bool(scene_ref.runtime_stats.get("instant_collect", false)):
+        return
+    var pickup_range := scene_ref._get_effective_pickup_radius()
+    if pickup_range > 0.0:
+        draw_arc(Vector2.ZERO, pickup_range, 0.0, TAU, 96, Color(0.18, 0.19, 0.2, 0.45), 1.5)
 
 func _draw_forward_shot_guide() -> void:
     if not scene_ref.is_forward_shot_active():
@@ -450,16 +476,26 @@ func _draw_drones(vp: float) -> void:
 func _draw_mining_drones(vp: float) -> void:
     for beam in scene_ref.mining_drone_beams:
         var alpha := clampf(float(beam.get("timer", 0.0)) / scene_ref.DRONE_BEAM_DURATION, 0.0, 1.0)
+        var beam_level := clampi(int(beam.get("frenzy_level", 0)), 0, 4)
+        var beam_color := Color(0.65, 2.0, 1.25, 1.0)
+        if beam_level == 1:
+            beam_color = Color(1.0, 1.9, 0.45, 1.0)
+        elif beam_level == 2:
+            beam_color = Color(1.0, 0.92, 0.22, 1.0)
+        elif beam_level == 3:
+            beam_color = Color(1.0, 0.45, 0.18, 1.0)
+        elif beam_level >= 4:
+            beam_color = Color(0.86, 0.28, 1.0, 1.0)
         draw_line(
             Vector2(beam.get("from", Vector2.ZERO)) - scene_ref.ship_pos,
             Vector2(beam.get("to", Vector2.ZERO)) - scene_ref.ship_pos,
-            Color(0.35, 1.35, 1.0, alpha * 0.26),
+            Color(beam_color.r, beam_color.g, beam_color.b, alpha * 0.26),
             5.0 + vp * 2.0
         )
         draw_line(
             Vector2(beam.get("from", Vector2.ZERO)) - scene_ref.ship_pos,
             Vector2(beam.get("to", Vector2.ZERO)) - scene_ref.ship_pos,
-            Color(0.65, 2.0, 1.25, alpha),
+            Color(beam_color.r, beam_color.g, beam_color.b, alpha),
             1.2 + vp * 0.45
         )
     var cargo_capacity := maxf(float(scene_ref._get_mining_drone_cargo_capacity()), 1.0)
@@ -471,6 +507,9 @@ func _draw_mining_drones(vp: float) -> void:
         var rotation := velocity.angle() + PI * 0.5 if velocity.length() > 1.0 else scene_ref.get_ship_render_rotation()
         var cargo_ratio := clampf(float(drone.get("cargo_units", 0)) / cargo_capacity, 0.0, 1.0)
         var pulse := 0.5 + 0.5 * sin(scene_ref.ship_glow_phase * 2.2 + float(idx) * 1.6)
+        var glow_color := scene_ref.get_mining_drone_visual_color(drone)
+        var line_color := glow_color.lightened(0.12)
+        line_color.a = 0.95
         var inside_view := absf(local.x) <= visible_half_extents.x - 18.0 and absf(local.y) <= visible_half_extents.y - 18.0
         if not inside_view and local.length_squared() > 1.0:
             var edge := local
@@ -479,13 +518,12 @@ func _draw_mining_drones(vp: float) -> void:
                 (visible_half_extents.y - 22.0) / maxf(absf(edge.y), 1.0)
             )
             edge *= clampf(scale, 0.0, 1.0)
-            draw_arc(edge, 11.0 + pulse * 2.0, 0.0, TAU, 18, Color(0.5, 2.0, 1.2, 0.75), 2.2)
-            draw_line(edge, edge + local.normalized() * 9.0, Color(0.75, 2.2, 1.35, 0.9), 2.0)
-        draw_circle(local, 24.0, Color(0.25, 1.35, 1.0, 0.10 + pulse * 0.08))
-        draw_arc(local, 21.0 + pulse * 2.0, 0.0, TAU, 24, Color(0.45, 1.8, 1.1, 0.45), 2.0)
+            draw_arc(edge, 11.0 + pulse * 2.0, 0.0, TAU, 18, Color(glow_color.r, glow_color.g, glow_color.b, 0.75), 2.2)
+            draw_line(edge, edge + local.normalized() * 9.0, Color(glow_color.r, glow_color.g, glow_color.b, 0.9), 2.0)
+        draw_circle(local, 24.0, Color(glow_color.r, glow_color.g, glow_color.b, 0.10 + pulse * 0.08))
+        draw_arc(local, 21.0 + pulse * 2.0, 0.0, TAU, 24, Color(glow_color.r, glow_color.g, glow_color.b, 0.45), 2.0)
         draw_set_transform(local, rotation, Vector2(0.5, 0.5))
         draw_colored_polygon(SHIP_POINTS, Color(0.018, 0.05, 0.052, 0.98))
-        var line_color := Color(0.55, 1.8, 1.15, 0.95)
         for point_idx in range(SHIP_POINTS.size()):
             draw_line(SHIP_POINTS[point_idx], SHIP_POINTS[(point_idx + 1) % SHIP_POINTS.size()], line_color, 2.6)
         draw_line(Vector2(0.0, -12.0), Vector2(0.0, 9.0), line_color, 2.2)

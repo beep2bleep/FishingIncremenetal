@@ -145,7 +145,7 @@ static func _append_upgrade(entry: Dictionary, saved_levels: Dictionary, next_id
     upgrade.epilogue = 0
     upgrade.type = Util.NODE_TYPES.NORMAL
     upgrade.sim_key = upgrade_id
-    upgrade.sim_name = str(entry.get("label", upgrade_id))
+    upgrade.sim_name = _translate_if_key(str(entry.get("label", upgrade_id)))
     upgrade.sim_description = _build_sim_description(entry, upgrade_id, best_layer_clear_percents)
     upgrade.sim_icon = str(entry.get("icon", "O"))
     upgrade.sim_group = int(branch_theme.get("group", 3 if BALANCE.is_core_upgrade(upgrade_id) else (2 if BALANCE.is_xp_upgrade(upgrade_id) else 1)))
@@ -178,7 +178,7 @@ static func _get_branch_theme(upgrade_id: String) -> Dictionary:
     return Dictionary(BRANCH_THEME_BY_ID.get(upgrade_id, {}))
 
 static func _build_sim_description(entry: Dictionary, upgrade_id: String, best_layer_clear_percents: Dictionary) -> String:
-    var summary: String = str(entry.get("summary", "Data Breach upgrade."))
+    var summary: String = _translate_if_key(str(entry.get("summary", "Data Breach upgrade.")))
     if not BALANCE.is_reward_core_upgrade(upgrade_id):
         return summary
     var target_layer_depth: int = BALANCE.get_reward_core_upgrade_target_layer_depth(upgrade_id)
@@ -188,6 +188,12 @@ static func _build_sim_description(entry: Dictionary, upgrade_id: String, best_l
     if current_percent >= target_percent:
         return "%s\nUnlocked at %.1f%% clear of %s." % [summary, target_percent, layer_name]
     return "%s\nProgress: %.1f%% / %.1f%% clear of %s." % [summary, current_percent, target_percent, layer_name]
+
+static func _translate_if_key(text: String) -> String:
+    if not text.begins_with("OPEN_PIT_"):
+        return text
+    var translated := TranslationServer.translate(text)
+    return str(translated) if str(translated) != "" and str(translated) != text else text.trim_prefix("OPEN_PIT_").replace("_", " ").capitalize()
 
 static func _build_tier_costs(upgrade_id: String, max_tier: int) -> Array:
     var costs: Array = []
@@ -207,13 +213,13 @@ static func _mod_for_upgrade(upgrade_id: String) -> Util.MODS:
         return Util.MODS.RUN_TIMER_BASE
     if upgrade_id in ["laser_cutter", "shock_bits", "daemon_lances", "root_breaker", "mantle_drills", "mirror_saws", "null_borers"]:
         return Util.MODS.BASE_DAMAGE_PER_CLICK
-    if upgrade_id in ["rapid_cycle", "fault_charges", "vault_pulsers"]:
+    if upgrade_id in ["rapid_cycle", "fault_charges", "vault_pulsers", "mining_speed_servos", "mining_speed_coolant", "mining_speed_overdrive"]:
         return Util.MODS.CLICK_RATE
     if upgrade_id in ["void_cutters", "gravity_wells"]:
         return Util.MODS.CLICK_AOE
     if upgrade_id in ["fuel_cells", "inversion_drives"]:
         return Util.MODS.RUN_TIMER_BASE
-    if upgrade_id in ["cargo_racks", "ore_appraisal", "salvage_contract", "abyssal_rigs", "ash_crowns"]:
+    if upgrade_id in ["cargo_racks", "ore_appraisal", "salvage_contract", "abyssal_rigs", "ash_crowns", "drone_split_lasers"]:
         return Util.MODS.MONEY_PER_MATTER
     if upgrade_id == "barrier_mesh":
         return Util.MODS.ASTEROID_DENSITY

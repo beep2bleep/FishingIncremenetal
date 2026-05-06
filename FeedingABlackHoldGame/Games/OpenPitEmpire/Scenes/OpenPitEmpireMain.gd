@@ -35,6 +35,9 @@ const CHAIN_ARC_DURATION := 0.2
 const ELECTRIC_SPLASH_RADIUS_CELLS := 1
 const ELECTRIC_SPLASH_DAMAGE_MULT := 0.42
 const ELECTRIC_SPLASH_FALLOFF := 0.35
+const TETROMINO_EFFECT_DURATION := 0.3
+const TETROMINO_DAMAGE_MULT := ELECTRIC_SPLASH_DAMAGE_MULT * 4.0
+const TETROMINO_FIT_MAX_CANDIDATES := 28
 const DRONE_BEAM_DURATION := 0.08
 const DRONE_MISSILE_LIFETIME := 3.6
 const DRONE_MINE_LIFETIME := 4.2
@@ -92,6 +95,8 @@ const MINING_DRONE_FALLBACK_SCAN_CELLS := 140
 const MINING_DRONE_STAGING_DISTANCE := BLOCK_SIZE * 1.45
 const MINING_DRONE_TARGET_REACHED_DISTANCE := 18.0
 const MINING_DRONE_SPAWN_SPACING := 18.0
+const MINING_DRONE_FRENZY_CONTACT_RADIUS := SHIP_RADIUS + 28.0
+const MINING_DRONE_FRENZY_LASER_RADIUS := 72.0
 const SEISMIC_CHARGE_INTERVAL := 0.32
 const SEISMIC_POWERUP_INTERVAL := 0.45
 const SEISMIC_CHARGE_AHEAD_DISTANCE := 180.0
@@ -346,6 +351,8 @@ var last_attack_is_charged := false
 var multi_targets: Array[Vector2] = []
 var electric_arcs: Array[Dictionary] = []
 var chain_arcs: Array[Dictionary] = []
+var tetromino_bursts: Array[Dictionary] = []
+var tetromino_fit_cursor := 0
 var shockwave_rings: Array[Dictionary] = []
 var shockwave_firing := false
 var drone_positions: Array[Vector2] = []
@@ -1542,6 +1549,8 @@ func _start_run() -> void:
     core_currency_earned_this_run = 0
     electric_arcs.clear()
     chain_arcs.clear()
+    tetromino_bursts.clear()
+    tetromino_fit_cursor = 0
     shockwave_rings.clear()
     ghost_debris.clear()
     ghost_debris_timers.clear()
@@ -2035,6 +2044,7 @@ func _update_timers(delta: float) -> void:
     _tick_timer_dict(hit_timers, delta)
     _tick_effect_array(electric_arcs, delta)
     _tick_effect_array(chain_arcs, delta)
+    _tick_effect_array(tetromino_bursts, delta)
     _tick_effect_array(drone_beams, delta)
     _tick_effect_array(seismic_charge_bursts, delta)
     _update_drone_missiles(delta)
@@ -3524,6 +3534,7 @@ func _auto_fire_laser() -> void:
         var pos: Vector2i = target.get("pos", Vector2i.ZERO)
         var world: Vector2 = target.get("world", Vector2.ZERO)
         var target_core_id: int = int(target.get("core_id", int(blocks.get(pos, {}).get("core_id", -1))))
+        _trigger_mining_drone_frenzy_from_laser(ship_pos, world)
         if i == 0:
             last_attack_target = world
         else:
@@ -3751,6 +3762,7 @@ func _reset_mining_drone_state() -> void:
             "cargo_money": 0,
             "cargo_xp": 0,
             "minimap_erases": [],
+            "frenzy_timer": 0.0,
             "wait_timer": 0.0,
             "attack_timer": rng.randf() * MINING_DRONE_ATTACK_INTERVAL,
         })
@@ -3774,6 +3786,7 @@ func _update_mining_drones(delta: float) -> void:
         ship_renderer.queue_redraw()
 
 func _update_single_mining_drone(drone: Dictionary, delta: float) -> void:
+    _update_mining_drone_frenzy_contact(drone, delta)
     var state := str(drone.get("state", "seeking"))
     if state == "waiting":
         drone["wait_timer"] = maxf(0.0, float(drone.get("wait_timer", 0.0)) - delta)
@@ -3814,14 +3827,14 @@ func _update_single_mining_drone(drone: Dictionary, delta: float) -> void:
     var drone_pos := Vector2(drone.get("position", spawn_position))
     if drone_pos.distance_to(grid_to_world(target_grid)) <= attack_range:
         drone["attack_timer"] = float(drone.get("attack_timer", 0.0)) + delta
-        if float(drone.get("attack_timer", 0.0)) >= MINING_DRONE_ATTACK_INTERVAL:
+        if float(drone.get("attack_timer", 0.0)) >= _get_mining_drone_attack_interval():
             drone["attack_timer"] = 0.0
             _fire_mining_drone(drone, target_grid)
 
 func _move_mining_drone_toward(drone: Dictionary, target: Vector2, delta: float) -> void:
     var pos := Vector2(drone.get("position", spawn_position))
     var offset := target - pos
-    var speed := _get_mining_drone_speed()
+    var speed := _get_mining_drone_speed(drone)
     var desired := offset.normalized() * speed if offset.length() > 0.01 else Vector2.ZERO
     var velocity := Vector2(drone.get("velocity", Vector2.ZERO)).move_toward(desired, speed * delta * 7.0)
     if offset.length() <= velocity.length() * delta:
@@ -3836,18 +3849,53 @@ func _fire_mining_drone(drone: Dictionary, target_grid: Vector2i) -> void:
     if not _is_mineable_non_core_block(target_grid):
         drone["target_grid"] = Vector2i(999999, 999999)
         return
-    var block_before: Dictionary = blocks.get(target_grid, {})
     var drone_pos := Vector2(drone.get("position", spawn_position))
-    var result := _damage_block(target_grid, _get_mining_drone_damage_for(target_grid), true, "mining_drone")
-    mining_drone_beams.append({"from": drone_pos, "to": grid_to_world(target_grid), "timer": DRONE_BEAM_DURATION})
-    if bool(result.get("destroyed", false)):
-        _queue_mining_drone_minimap_erase(drone, target_grid)
-        _collect_mining_drone_reward(drone, block_before)
+    var targets: Array[Vector2i] = [target_grid]
+    var laser_count := _get_mining_drone_laser_count()
+    if laser_count > 1:
+        var secondary := _find_mining_drone_secondary_target(target_grid, drone_pos, targets)
+        if secondary.x < 999999:
+            targets.append(secondary)
+    var destroyed_current_target := false
+    for target in targets:
+        var fire_grid := Vector2i(target)
+        if not _is_mineable_non_core_block(fire_grid):
+            continue
+        var block_before: Dictionary = blocks.get(fire_grid, {})
+        var result := _damage_block(fire_grid, _get_mining_drone_damage_for(fire_grid, drone), true, "mining_drone")
+        mining_drone_beams.append({"from": drone_pos, "to": grid_to_world(fire_grid), "timer": DRONE_BEAM_DURATION, "frenzy_level": _get_mining_drone_frenzy_level(drone)})
+        if bool(result.get("destroyed", false)):
+            if fire_grid == target_grid:
+                destroyed_current_target = true
+            _queue_mining_drone_minimap_erase(drone, fire_grid)
+            _collect_mining_drone_reward(drone, block_before)
+            if _is_mining_drone_full(drone):
+                break
+    if destroyed_current_target:
         drone["target_grid"] = Vector2i(999999, 999999)
-        if _is_mining_drone_full(drone):
-            drone["state"] = "returning"
-            drone["target"] = spawn_position
+    if _is_mining_drone_full(drone):
+        drone["state"] = "returning"
+        drone["target"] = spawn_position
     _sync_planet_runtime_views(true, false)
+
+func _get_mining_drone_laser_count() -> int:
+    return clampi(int(runtime_stats.get("mining_drone_lasers", 1)), 1, 2)
+
+func _find_mining_drone_secondary_target(primary_grid: Vector2i, drone_pos: Vector2, existing_targets: Array[Vector2i]) -> Vector2i:
+    var best := Vector2i(999999, 999999)
+    var best_score := INF
+    for dy in range(-2, 3):
+        for dx in range(-2, 3):
+            var check := primary_grid + Vector2i(dx, dy)
+            if check == primary_grid or existing_targets.has(check):
+                continue
+            if not _is_mineable_non_core_block(check):
+                continue
+            var score := drone_pos.distance_squared_to(grid_to_world(check)) + float(abs(dx) + abs(dy)) * BLOCK_SIZE * BLOCK_SIZE
+            if score < best_score:
+                best_score = score
+                best = check
+    return best
 
 func _collect_mining_drone_reward(drone: Dictionary, block: Dictionary) -> void:
     var cargo_capacity := _get_mining_drone_cargo_capacity()
@@ -3913,14 +3961,80 @@ func _bank_pending_mining_drone_cargo_at_run_end() -> void:
 func _is_mining_drone_full(drone: Dictionary) -> bool:
     return int(drone.get("cargo_units", 0)) >= _get_mining_drone_cargo_capacity()
 
-func _get_mining_drone_speed() -> float:
-    return float(runtime_stats.get("move_speed", 580.0)) * float(runtime_stats.get("mining_drone_speed_ratio", 0.0))
+func _update_mining_drone_frenzy_contact(drone: Dictionary, delta: float) -> void:
+    if not bool(runtime_stats.get("mining_drone_frenzy_enabled", false)):
+        drone["frenzy_timer"] = 0.0
+        return
+    drone["frenzy_timer"] = maxf(0.0, float(drone.get("frenzy_timer", 0.0)) - delta)
+    var drone_pos := Vector2(drone.get("position", spawn_position))
+    if drone_pos.distance_to(ship_pos) <= MINING_DRONE_FRENZY_CONTACT_RADIUS:
+        _trigger_mining_drone_frenzy(drone)
+
+func _trigger_mining_drone_frenzy(drone: Dictionary) -> void:
+    if not bool(runtime_stats.get("mining_drone_frenzy_enabled", false)):
+        return
+    drone["frenzy_timer"] = maxf(float(drone.get("frenzy_timer", 0.0)), float(runtime_stats.get("mining_drone_frenzy_duration", 5.0)))
+    drone["frenzy_level"] = _get_current_mining_drone_frenzy_upgrade_level()
+
+func _trigger_mining_drone_frenzy_from_laser(from_world: Vector2, to_world: Vector2) -> void:
+    if not bool(runtime_stats.get("mining_drone_frenzy_enabled", false)) or mining_drone_states.is_empty():
+        return
+    var segment := to_world - from_world
+    var segment_len_sq := segment.length_squared()
+    var radius_sq := MINING_DRONE_FRENZY_LASER_RADIUS * MINING_DRONE_FRENZY_LASER_RADIUS
+    for idx in range(mining_drone_states.size()):
+        var drone: Dictionary = mining_drone_states[idx]
+        var drone_pos := Vector2(drone.get("position", spawn_position))
+        var t := 0.0 if segment_len_sq <= 0.001 else clampf((drone_pos - from_world).dot(segment) / segment_len_sq, 0.0, 1.0)
+        var closest := from_world.lerp(to_world, t)
+        if drone_pos.distance_squared_to(closest) <= radius_sq:
+            _trigger_mining_drone_frenzy(drone)
+            mining_drone_states[idx] = drone
+
+func _is_mining_drone_frenzied(drone: Dictionary) -> bool:
+    return float(drone.get("frenzy_timer", 0.0)) > 0.0
+
+func _get_current_mining_drone_frenzy_upgrade_level() -> int:
+    return clampi(int(runtime_stats.get("mining_drone_frenzy_level", 0)), 0, 4)
+
+func _get_mining_drone_frenzy_level(drone: Dictionary) -> int:
+    if not _is_mining_drone_frenzied(drone):
+        return 0
+    return clampi(int(drone.get("frenzy_level", _get_current_mining_drone_frenzy_upgrade_level())), 1, 4)
+
+func get_mining_drone_visual_color(drone: Dictionary) -> Color:
+    var base := Color(0.25, 1.35, 1.0, 1.0)
+    var level := _get_mining_drone_frenzy_level(drone)
+    if level <= 0:
+        return base
+    var palette := [
+        Color(1.0, 1.85, 0.35, 1.0),
+        Color(1.0, 0.82, 0.18, 1.0),
+        Color(1.0, 0.34, 0.16, 1.0),
+        Color(0.82, 0.24, 1.0, 1.0),
+    ]
+    var duration := maxf(float(runtime_stats.get("mining_drone_frenzy_duration", 5.0)), 0.001)
+    var ratio := clampf(float(drone.get("frenzy_timer", 0.0)) / duration, 0.0, 1.0)
+    return base.lerp(palette[level - 1], ratio)
+
+func _get_mining_drone_speed(drone: Dictionary = {}) -> float:
+    var speed := float(runtime_stats.get("move_speed", 580.0)) * float(runtime_stats.get("mining_drone_speed_ratio", 0.0))
+    speed *= maxf(0.1, float(runtime_stats.get("mining_speed_mult", 1.0)))
+    if _is_mining_drone_frenzied(drone):
+        speed *= float(runtime_stats.get("mining_drone_frenzy_speed_mult", 1.0))
+    return speed
+
+func _get_mining_drone_attack_interval() -> float:
+    return MINING_DRONE_ATTACK_INTERVAL / maxf(0.1, float(runtime_stats.get("mining_speed_mult", 1.0)))
 
 func _get_mining_drone_cargo_capacity() -> int:
     return maxi(1, int(floor(float(runtime_stats.get("cargo_capacity", 24)) * float(runtime_stats.get("mining_drone_cargo_ratio", 0.0)))))
 
-func _get_mining_drone_damage_for(pos: Vector2i) -> float:
-    return _compute_laser_damage(pos) * float(runtime_stats.get("mining_drone_damage_ratio", 0.0))
+func _get_mining_drone_damage_for(pos: Vector2i, drone: Dictionary = {}) -> float:
+    var damage := _compute_laser_damage(pos) * float(runtime_stats.get("mining_drone_damage_ratio", 0.0))
+    if _is_mining_drone_frenzied(drone):
+        damage *= float(runtime_stats.get("mining_drone_frenzy_efficiency_mult", 1.0))
+    return damage
 
 func _find_mining_drone_target(origin: Vector2) -> Vector2i:
     var targets := _find_targets_near_world(origin, MINING_DRONE_TARGET_SCAN_RADIUS, 1)
@@ -4079,92 +4193,173 @@ func _estimate_frame_destroyed_block_count(result: Dictionary) -> int:
 func _trigger_electric_chain(origin_pos: Vector2i, origin_world: Vector2, defer_visual_sync: bool = false) -> void:
     _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC, -8.0, -0.05)
     _on_combo_hit()
-    seismic_charge_bursts.append({
-        "position": origin_world,
-        "timer": ARC_DURATION,
-        "radius": float(ELECTRIC_SPLASH_RADIUS_CELLS + 1) * BLOCK_SIZE,
-        "packet_burst": true,
+    _trigger_tetromino_burst(origin_pos, origin_world, defer_visual_sync)
+
+func _trigger_tetromino_burst(origin_pos: Vector2i, origin_world: Vector2, defer_visual_sync: bool = false) -> void:
+    var tetromino := _find_best_tetromino_fit(origin_pos, true)
+    var cells: Array = tetromino.get("cells", [origin_pos])
+    var color: Color = tetromino.get("color", Color(0.0, 1.0, 1.0, 1.0))
+    var visuals_dirty := false
+    var damage := _get_effective_attack_damage() * TETROMINO_DAMAGE_MULT
+    for cell in cells:
+        var pos := Vector2i(cell)
+        if pos == origin_pos:
+            continue
+        if is_grid_empty(pos):
+            continue
+        var block: Dictionary = blocks.get(pos, {})
+        if int(block.get("core_id", -1)) >= 0 or bool(block.get("unbreakable", false)):
+            continue
+        _mark_hit_flash(pos)
+        visuals_dirty = true
+        _damage_block(pos, damage, true)
+    if cells.is_empty():
+        cells.append(origin_pos)
+    tetromino_bursts.append({
+        "cells": cells,
+        "timer": TETROMINO_EFFECT_DURATION,
+        "duration": TETROMINO_EFFECT_DURATION,
+        "color": color,
     })
-    _apply_splash_damage(
-        origin_pos,
-        ELECTRIC_SPLASH_RADIUS_CELLS,
-        _get_effective_attack_damage() * ELECTRIC_SPLASH_DAMAGE_MULT,
-        ELECTRIC_SPLASH_FALLOFF,
-        1.2
-    )
-    var load_tier := _get_attack_load_tier()
-    var effective_range := int(runtime_stats.get("electric_range", 2))
-    var effective_depth := int(runtime_stats.get("electric_chain_depth", 1))
-    if load_tier >= 2:
-        effective_range = mini(effective_range, 1)
-        effective_depth = mini(effective_depth, 1)
-    elif load_tier >= 1:
-        effective_range = mini(effective_range, 2)
-        effective_depth = mini(effective_depth, 1)
-    var results: Array = planet_data.electric_chain(
-        origin_pos,
-        _get_effective_attack_damage(),
-        effective_range,
-        effective_depth,
-        0,
-        _core_unlocks_center()
-    )
-    var max_results := 6
-    if load_tier >= 2:
-        max_results = 2
-    elif load_tier >= 1:
-        max_results = 4
-    var destroyed_any := false
-    var fill_positions: Array[Vector2i] = []
-    var destroyed_core_ids := {}
-    for result_idx in range(results.size()):
-        var result: Dictionary = results[result_idx]
-        var next_pos: Vector2i = result.get("pos", Vector2i.ZERO)
-        var next_world := grid_to_world(next_pos)
-        if result_idx < max_results and electric_arcs.size() < MAX_ACTIVE_ELECTRIC_ARCS:
-            electric_arcs.append({"from": origin_world, "to": next_world, "timer": ARC_DURATION})
-        if result_idx < max_results:
-            _mark_hit_flash(next_pos)
-        if bool(result.get("phase_depleted", false)):
-            _handle_final_core_phase_transition(int(result.get("phase", _get_final_core_phase())))
-            if not defer_visual_sync:
-                _sync_planet_runtime_views(true, false)
-            return
-        if bool(result.get("destroyed", false)):
-            destroyed_any = true
-            persistent_destroyed_count += 1
-            destroyed_cells_this_run[next_pos] = true
-            nodes_mined += 1
-            xp_earned_this_run += _get_xp_reward_for_block({
-                "type": result.get("type", BlockType.NORMAL),
-                "layer_depth": result.get("layer_depth", 1),
-            })
-            overdrive_kills += 1
-            if breach_chat != null:
-                breach_chat.record_node_destroyed(int(result.get("type", BlockType.NORMAL)) == BlockType.CORE)
-            if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
-                destroyed_core_ids[int(result.get("core_id", -1))] = true
-            else:
-                fill_positions.append(next_pos)
-            _gain_power(_get_power_gain_for_block({
-                "type": result.get("type", BlockType.NORMAL),
-            }))
-            _spawn_pickup(next_world, {
-                "resource": result.get("resource", 0.0),
-                "type": result.get("type", BlockType.NORMAL),
-                "layer_depth": 1
-            })
-            if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE and bool(result.get("final_core", false)):
-                boss_defeated = true
-                _finish_run(true, "The final core ruptured.")
-                return
-    if planet_renderer != null and not autopilot_no_render_enabled:
-        if not fill_positions.is_empty():
-            planet_renderer.queue_fill_updates(fill_positions)
-        for core_id_variant in destroyed_core_ids.keys():
-            _queue_core_fill_region(int(core_id_variant))
-    if not defer_visual_sync:
+    visuals_dirty = true
+    if visuals_dirty and not defer_visual_sync:
         _sync_planet_runtime_views(true, false)
+
+func get_tetromino_definition(grid: Vector2i) -> Dictionary:
+    var piece_idx := int(abs(hash("%d:%d:tetromino_piece" % [grid.x, grid.y]))) % 7
+    var rotation_steps := int(abs(hash("%d:%d:tetromino_rotation" % [grid.x, grid.y]))) % 4
+    var offsets := _get_tetromino_offsets(piece_idx)
+    for _idx in range(rotation_steps):
+        offsets = _rotate_tetromino_offsets(offsets)
+    return {
+        "name": _get_tetromino_name(piece_idx),
+        "color": _get_tetromino_color(piece_idx),
+        "offsets": offsets,
+        "rotation": rotation_steps,
+    }
+
+func _get_tetromino_offsets(piece_idx: int) -> Array[Vector2i]:
+    match piece_idx:
+        0:
+            return [Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)]
+        1:
+            return [Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(-1, 1)]
+        2:
+            return [Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1)]
+        3:
+            return [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]
+        4:
+            return [Vector2i(0, 0), Vector2i(1, 0), Vector2i(-1, 1), Vector2i(0, 1)]
+        5:
+            return [Vector2i(-1, 0), Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)]
+        _:
+            return [Vector2i(-1, 0), Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)]
+
+func _rotate_tetromino_offsets(offsets: Array[Vector2i]) -> Array[Vector2i]:
+    var rotated: Array[Vector2i] = []
+    for offset in offsets:
+        rotated.append(Vector2i(-offset.y, offset.x))
+    return rotated
+
+func _get_tetromino_name(piece_idx: int) -> String:
+    match piece_idx:
+        0:
+            return "I"
+        1:
+            return "J"
+        2:
+            return "L"
+        3:
+            return "O"
+        4:
+            return "S"
+        5:
+            return "T"
+        _:
+            return "Z"
+
+func _get_tetromino_color(piece_idx: int) -> Color:
+    match piece_idx:
+        0:
+            return Color(0.0, 0.95, 1.0, 1.0)
+        1:
+            return Color(0.1, 0.25, 1.0, 1.0)
+        2:
+            return Color(1.0, 0.52, 0.05, 1.0)
+        3:
+            return Color(1.0, 0.9, 0.08, 1.0)
+        4:
+            return Color(0.1, 0.9, 0.2, 1.0)
+        5:
+            return Color(0.68, 0.2, 1.0, 1.0)
+        _:
+            return Color(1.0, 0.08, 0.08, 1.0)
+
+func _find_best_tetromino_fit(origin_pos: Vector2i, require_origin: bool = false, max_cells: int = 4) -> Dictionary:
+    var start_piece_idx := tetromino_fit_cursor % 7
+    tetromino_fit_cursor = (tetromino_fit_cursor + 1) % 7
+    var start_rotation_idx := rng.randi_range(0, 3)
+    var fallback_offsets := _get_tetromino_offsets(start_piece_idx)
+    for _rotation_step in range(start_rotation_idx):
+        fallback_offsets = _rotate_tetromino_offsets(fallback_offsets)
+    var best := {
+        "name": _get_tetromino_name(start_piece_idx),
+        "color": _get_tetromino_color(start_piece_idx),
+        "offsets": fallback_offsets,
+        "rotation": start_rotation_idx,
+    }
+    var best_cells: Array[Vector2i] = [origin_pos]
+    var best_score := -999999
+    var checked := 0
+    for piece_offset in range(7):
+        var piece_idx := (start_piece_idx + piece_offset) % 7
+        for rotation_offset in range(4):
+            var rotation_idx := (start_rotation_idx + rotation_offset) % 4
+            var offsets := _get_tetromino_offsets(piece_idx)
+            for _rotation_step in range(rotation_idx):
+                offsets = _rotate_tetromino_offsets(offsets)
+            for anchor_offset in offsets:
+                if checked >= TETROMINO_FIT_MAX_CANDIDATES:
+                    break
+                checked += 1
+                var anchor := origin_pos - Vector2i(anchor_offset)
+                var cells: Array[Vector2i] = []
+                var score := 0
+                var has_origin := false
+                for offset in offsets:
+                    var cell := anchor + Vector2i(offset)
+                    if cell == origin_pos:
+                        has_origin = true
+                        cells.append(cell)
+                        score += 4
+                        continue
+                    if cells.size() >= max_cells:
+                        continue
+                    if is_grid_empty(cell):
+                        continue
+                    var block: Dictionary = blocks.get(cell, {})
+                    if int(block.get("core_id", -1)) >= 0 or bool(block.get("unbreakable", false)):
+                        continue
+                    cells.append(cell)
+                    score += 10
+                if require_origin and not has_origin:
+                    continue
+                if cells.size() > best_cells.size() or (cells.size() == best_cells.size() and score > best_score):
+                    best_score = score
+                    best_cells = cells
+                    best = {
+                        "name": _get_tetromino_name(piece_idx),
+                        "color": _get_tetromino_color(piece_idx),
+                        "offsets": offsets.duplicate(),
+                        "rotation": rotation_idx,
+                    }
+                    if best_cells.size() >= max_cells:
+                        best["cells"] = best_cells
+                        return best
+            if checked >= TETROMINO_FIT_MAX_CANDIDATES:
+                break
+    best["cells"] = best_cells
+    return best
 
 func _trigger_chain_lightning(start_pos: Vector2i, start_world: Vector2) -> void:
     _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.ELECTRIC_CRIT, -10.0, -0.04)
@@ -4395,6 +4590,7 @@ func _get_effective_pickup_radius() -> float:
 
 func _get_effective_attack_interval() -> float:
     var interval := float(runtime_stats.get("attack_interval", 0.8))
+    interval /= maxf(0.1, float(runtime_stats.get("mining_speed_mult", 1.0)))
     if float(active_powerup_timers.get("haste", 0.0)) > 0.0:
         interval *= 0.72
     if _is_power_active():
@@ -4612,39 +4808,33 @@ func _apply_splash_damage(center_grid: Vector2i, radius_cells: int, base_damage:
         return {"visuals": false, "destroyed": false}
     var visuals_dirty := false
     var destroyed_any := false
-    var radius_sq := radius_cells * radius_cells
-    var splash_limit := _get_effective_splash_target_limit(radius_cells)
-    var hits := 0
-    for ring in range(radius_cells + 1):
-        if hits >= splash_limit:
-            break
-        for dx in range(-ring, ring + 1):
-            if hits >= splash_limit:
-                break
-            for dy in range(-ring, ring + 1):
-                if hits >= splash_limit:
-                    break
-                var dist_sq := dx * dx + dy * dy
-                if dist_sq > radius_sq:
-                    continue
-                if ring > 0 and dist_sq <= (ring - 1) * (ring - 1):
-                    continue
-                var pos := center_grid + Vector2i(dx, dy)
-                if is_grid_empty(pos):
-                    continue
-                var block: Dictionary = blocks.get(pos, {})
-                if int(block.get("core_id", -1)) >= 0 or bool(block.get("unbreakable", false)):
-                    continue
-                if max_hp_ratio > 0.0 and float(block.get("max_hp", 0.0)) > base_damage * max_hp_ratio:
-                    continue
-                var distance_ratio := sqrt(float(dist_sq)) / float(maxi(1, radius_cells))
-                var damage_scale := lerpf(1.0, falloff, clampf(distance_ratio, 0.0, 1.0))
-                _mark_hit_flash(pos)
-                visuals_dirty = true
-                var result := _damage_block(pos, base_damage * damage_scale, true)
-                if bool(result.get("destroyed", false)):
-                    destroyed_any = true
-                hits += 1
+    var tetromino := _find_best_tetromino_fit(center_grid, false, mini(4, _get_effective_splash_target_limit(radius_cells)))
+    var cells: Array = tetromino.get("cells", [])
+    var damaged_cells: Array[Vector2i] = []
+    for cell in cells:
+        var pos := Vector2i(cell)
+        if is_grid_empty(pos):
+            continue
+        var block: Dictionary = blocks.get(pos, {})
+        if int(block.get("core_id", -1)) >= 0 or bool(block.get("unbreakable", false)):
+            continue
+        if max_hp_ratio > 0.0 and float(block.get("max_hp", 0.0)) > base_damage * max_hp_ratio:
+            continue
+        var distance_ratio := center_grid.distance_to(pos) / float(maxi(1, radius_cells))
+        var damage_scale := lerpf(1.0, falloff, clampf(distance_ratio, 0.0, 1.0))
+        _mark_hit_flash(pos)
+        visuals_dirty = true
+        damaged_cells.append(pos)
+        var result := _damage_block(pos, base_damage * damage_scale, true)
+        if bool(result.get("destroyed", false)):
+            destroyed_any = true
+    if not damaged_cells.is_empty():
+        tetromino_bursts.append({
+            "cells": damaged_cells,
+            "timer": TETROMINO_EFFECT_DURATION,
+            "duration": TETROMINO_EFFECT_DURATION,
+            "color": tetromino.get("color", Color(1.0, 0.76, 0.28, 1.0)),
+        })
     return {"visuals": visuals_dirty, "destroyed": destroyed_any}
 
 func _update_seismic_charge(delta: float) -> void:
@@ -4674,7 +4864,7 @@ func _update_seismic_charge(delta: float) -> void:
         "position": burst_world,
         "timer": SEISMIC_CHARGE_VISUAL_DURATION,
         "radius": float(SEISMIC_CHARGE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE * (1.65 if power_active_now else 1.0),
-        "rage_tracer": power_active_now,
+        "rage_tracer": true,
     })
     var splash := _apply_splash_damage(
         target_grid,
@@ -5798,7 +5988,7 @@ func _is_combat_perf_focus_window() -> bool:
         return false
     if attack_visible_timer > 0.0 or _is_power_active():
         return true
-    if not hit_timers.is_empty() or not seismic_charge_bursts.is_empty():
+    if not hit_timers.is_empty() or not seismic_charge_bursts.is_empty() or not tetromino_bursts.is_empty():
         return true
     if not electric_arcs.is_empty() or not chain_arcs.is_empty() or not drone_beams.is_empty() or not drone_missiles.is_empty() or not drone_mines.is_empty():
         return true
@@ -6025,7 +6215,7 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
     return found
 
 func _get_attack_load_tier() -> int:
-    var load := hit_timers.size() + seismic_charge_bursts.size() + electric_arcs.size() + chain_arcs.size() + drone_beams.size() + drone_missiles.size() + drone_mines.size() + mining_drone_beams.size()
+    var load := hit_timers.size() + seismic_charge_bursts.size() + tetromino_bursts.size() + electric_arcs.size() + chain_arcs.size() + drone_beams.size() + drone_missiles.size() + drone_mines.size() + mining_drone_beams.size()
     if load >= ATTACK_LOAD_HARD_LIMIT:
         return 2
     if load >= ATTACK_LOAD_SOFT_LIMIT:

@@ -212,20 +212,20 @@ const PHASE_BRIDGES := {
 const CASH_ORDER := [
     "laser_cutter", "cargo_racks", "fuel_cells", "minimap", "rapid_cycle", "ore_appraisal",
     "survey_drone", "barrier_mesh", "shock_bits", "breach_drones", "salvage_contract", "funnel_resonance", "daemon_lances",
-    "tunnel_drone", "root_breaker", "overburn_reactors", "seismic_lattice", "auto_salvage", "mantle_drills", "fault_charges",
-    "strata_drone", "void_cutters", "inversion_drives", "vault_pulsers", "gravity_wells", "abyssal_rigs",
-    "core_mining_drone",
-    "mirror_saws", "fault_harpoons", "null_borers", "ash_crowns",
+    "tunnel_drone", "drone_frenzy_link", "root_breaker", "overburn_reactors", "seismic_lattice", "auto_salvage", "mantle_drills", "fault_charges",
+    "strata_drone", "drone_frenzy_thrusters", "void_cutters", "inversion_drives", "vault_pulsers", "gravity_wells", "abyssal_rigs",
+    "core_mining_drone", "drone_frenzy_harvesters", "drone_split_lasers",
+    "mirror_saws", "fault_harpoons", "null_borers", "ash_crowns", "drone_frenzy_matrix", "mining_speed_servos", "mining_speed_coolant", "mining_speed_overdrive",
 ]
 const CASH_COLS := 3
 const CASH_OFFSET := Vector2(10, 2)
 
 const PHASE_NODE_ORDER := {
     1: ["start", "laser_cutter", "cargo_racks", "fuel_cells", "minimap", "rapid_cycle", "ore_appraisal", "survey_drone"],
-    2: ["barrier_mesh", "shock_bits", "breach_drones", "salvage_contract", "funnel_resonance", "daemon_lances", "tunnel_drone"],
-    3: ["root_breaker", "overburn_reactors", "seismic_lattice", "auto_salvage", "mantle_drills", "fault_charges", "strata_drone"],
-    4: ["void_cutters", "inversion_drives", "vault_pulsers", "gravity_wells", "abyssal_rigs", "core_mining_drone"],
-    5: ["mirror_saws", "fault_harpoons", "null_borers", "ash_crowns"],
+    2: ["barrier_mesh", "shock_bits", "breach_drones", "salvage_contract", "funnel_resonance", "daemon_lances", "tunnel_drone", "drone_frenzy_link"],
+    3: ["root_breaker", "overburn_reactors", "seismic_lattice", "auto_salvage", "mantle_drills", "fault_charges", "strata_drone", "drone_frenzy_thrusters"],
+    4: ["void_cutters", "inversion_drives", "vault_pulsers", "gravity_wells", "abyssal_rigs", "core_mining_drone", "drone_frenzy_harvesters", "drone_split_lasers"],
+    5: ["mirror_saws", "fault_harpoons", "null_borers", "ash_crowns", "drone_frenzy_matrix", "mining_speed_servos", "mining_speed_coolant", "mining_speed_overdrive"],
 }
 
 const PHASE_COLS := 3
@@ -243,6 +243,14 @@ const UPGRADE_CELL_OVERRIDES := {
     "tunnel_drone": Vector2(18, 6),
     "strata_drone": Vector2(18, 16),
     "core_mining_drone": Vector2(8, 16),
+    "drone_frenzy_link": Vector2(18, 8),
+    "drone_frenzy_thrusters": Vector2(18, 18),
+    "drone_frenzy_harvesters": Vector2(8, 18),
+    "drone_frenzy_matrix": Vector2(8, 26),
+    "drone_split_lasers": Vector2(20, 18),
+    "mining_speed_servos": Vector2(20, 20),
+    "mining_speed_coolant": Vector2(22, 20),
+    "mining_speed_overdrive": Vector2(24, 20),
 }
 
 const UPGRADE_DEPENDENCY_OVERRIDES := {
@@ -251,6 +259,14 @@ const UPGRADE_DEPENDENCY_OVERRIDES := {
     "tunnel_drone": "breach_drones",
     "strata_drone": "seismic_lattice",
     "core_mining_drone": "abyssal_rigs",
+    "drone_frenzy_link": "tunnel_drone",
+    "drone_frenzy_thrusters": "strata_drone",
+    "drone_frenzy_harvesters": "core_mining_drone",
+    "drone_frenzy_matrix": "fault_harpoons",
+    "drone_split_lasers": "drone_frenzy_harvesters",
+    "mining_speed_servos": "seismic_lattice",
+    "mining_speed_coolant": "mining_speed_servos",
+    "mining_speed_overdrive": "mining_speed_coolant",
 }
 
 const RAW_NODE_DATA := {
@@ -266,6 +282,7 @@ const RAW_NODE_DATA := {
     "shock_bits": {"base_cost": 190, "cost_mult": 1.92, "max_level": 8, "phase": 2, "label": "Exploit Bits", "summary": "+5 damage per level, unlock packet bursts, and extend exploit reach.", "icon": "X", "effects": {"damage_flat": 5.0, "electric_unlock": true, "electric_range": 1}},
     "breach_drones": {"base_cost": 260, "cost_mult": 1.96, "max_level": 8, "phase": 2, "label": "Breach Drones", "summary": "Unlock drones; each level adds a drone and improves drone damage.", "icon": "D", "effects": {"drone_unlock": true, "drone_add": 1, "drone_damage_up": 4.0}},
     "tunnel_drone": {"base_cost": 4200, "cost_mult": 1.0, "max_level": 1, "phase": 2, "label": "Tunnel Drone", "summary": "Adds another autonomous mining drone and improves the fleet toward 33% rig speed, 16.7% rig cargo, and 16.7% rig damage.", "icon": "D", "effects": {"mining_drone_add": 1, "mining_drone_tier": 1}},
+    "drone_frenzy_link": {"base_cost": 8500, "cost_mult": 1.0, "max_level": 1, "phase": 2, "label": "Drone Frenzy Link", "summary": "Touching mining drones with the ship or player laser triggers a 5s frenzy: 2x drone speed and 2x mining efficiency.", "icon": "F", "effects": {"mining_drone_frenzy_unlock": true, "mining_drone_frenzy_speed_bonus": 1.0, "mining_drone_frenzy_efficiency_bonus": 1.0}},
     "salvage_contract": {"base_cost": 220, "cost_mult": 1.92, "max_level": 8, "phase": 2, "label": "Salvage Contract", "summary": "Keep 8% of your haul on failed runs per level.", "icon": "S", "effects": {"fuel_loss_reduce": 0.08}},
     "funnel_resonance": {"base_cost": 420, "cost_mult": 2.00, "max_level": 8, "phase": 2, "label": "Funnel Resonance", "summary": "Unlock resonance and add +0.25 resonance power per level.", "icon": "N", "effects": {"resonance_unlock": true, "resonance_enhance": 0.25}},
     "daemon_lances": {"base_cost": 520, "cost_mult": 2.02, "max_level": 9, "phase": 2, "label": "Daemon Lances", "summary": "+10 damage to daemon cores and +18 cargo capacity per level.", "icon": "K", "effects": {"damage_flat": 10.0, "core_damage_mult": 0.06, "cargo_expand": 18.0}},
@@ -273,6 +290,7 @@ const RAW_NODE_DATA := {
     "overburn_reactors": {"base_cost": 1800, "cost_mult": 2.05, "max_level": 10, "phase": 3, "label": "Overburn Reactors", "summary": "Unlock seismic bursts and add +18 cargo capacity per level.", "icon": "O", "effects": {"shockwave_unlock": true, "shockwave_enhance": true, "cargo_expand": 18.0}},
     "seismic_lattice": {"base_cost": 2600, "cost_mult": 2.08, "max_level": 10, "phase": 3, "label": "Seismic Lattice", "summary": "Unlock splash mining, improve seismic bursts, and add +20 cargo capacity per level.", "icon": "S", "effects": {"aoe_mining_unlock": true, "shockwave_enhance": true, "cargo_expand": 20.0}},
     "strata_drone": {"base_cost": 36000, "cost_mult": 1.0, "max_level": 1, "phase": 3, "label": "Strata Drone", "summary": "Adds another autonomous mining drone and improves the fleet toward 42% rig speed, 20.8% rig cargo, and 20.8% rig damage.", "icon": "D", "effects": {"mining_drone_add": 1, "mining_drone_tier": 1}},
+    "drone_frenzy_thrusters": {"base_cost": 120000, "cost_mult": 1.0, "max_level": 1, "phase": 3, "label": "Frenzy Thrusters", "summary": "Improves ship- or laser-triggered frenzy to 3x drone speed, 2.5x mining efficiency, and 6.5s duration.", "icon": "F", "effects": {"mining_drone_frenzy_speed_bonus": 1.0, "mining_drone_frenzy_efficiency_bonus": 0.5, "mining_drone_frenzy_duration_bonus": 1.5}},
     "mantle_drills": {"base_cost": 9000, "cost_mult": 2.10, "max_level": 12, "phase": 3, "label": "Mantle Drills", "summary": "+11 damage, +10 range, and +23 cargo capacity per level.", "icon": "M", "effects": {"damage_flat": 11.0, "range": 10.0, "cargo_expand": 23.0}},
     "fault_charges": {"base_cost": 11000, "cost_mult": 2.12, "max_level": 12, "phase": 3, "label": "Fault Charges", "summary": "Unlock charged shots, add +9 damage, and +23 cargo capacity per level.", "icon": "F", "effects": {"charged_shot_unlock": true, "damage_flat": 9.0, "cargo_expand": 23.0}},
     "void_cutters": {"base_cost": 4200, "cost_mult": 2.12, "max_level": 14, "phase": 4, "label": "Void Cutters", "summary": "+16 range, +9 damage, and +31 cargo capacity per level. Buying any phase-4 node unlocks Empire Layer 4 runs after clearing the third layer.", "icon": "V", "effects": {"range": 16.0, "damage_flat": 9.0, "cargo_expand": 31.0}},
@@ -281,10 +299,16 @@ const RAW_NODE_DATA := {
     "gravity_wells": {"base_cost": 26000, "cost_mult": 2.15, "max_level": 16, "phase": 4, "label": "Power Wells", "summary": "+20% power gain, +0.2 resonance power, and +39 cargo capacity per level.", "icon": "G", "effects": {"power_gain_mult": 0.2, "resonance_enhance": 0.2, "cargo_expand": 39.0}},
     "abyssal_rigs": {"base_cost": 42000, "cost_mult": 2.18, "max_level": 18, "phase": 4, "label": "Abyssal Rigs", "summary": "+46 cargo capacity and +8 payout per level.", "icon": "A", "effects": {"cargo_expand": 46.0, "resource_flat": 8.0}},
     "core_mining_drone": {"base_cost": 980000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "label": "Core Mining Drone", "summary": "Adds the fourth autonomous mining drone. Fleet caps at 50% rig speed, 25% rig cargo, and 25% rig damage.", "icon": "D", "effects": {"mining_drone_add": 1, "mining_drone_tier": 1}},
+    "drone_frenzy_harvesters": {"base_cost": 1800000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "label": "Frenzy Harvesters", "summary": "Improves ship- or laser-triggered frenzy to 4x drone speed, 3x mining efficiency, and 8s duration.", "icon": "F", "effects": {"mining_drone_frenzy_speed_bonus": 1.0, "mining_drone_frenzy_efficiency_bonus": 0.5, "mining_drone_frenzy_duration_bonus": 1.5}},
+    "drone_split_lasers": {"base_cost": 2400000, "cost_mult": 1.0, "max_level": 1, "phase": 4, "label": "Split Mining Optics", "summary": "Mining drones fire two mining lasers per attack when a second nearby target is available.", "icon": "L", "effects": {"mining_drone_lasers": 1}},
     "mirror_saws": {"base_cost": 62000, "cost_mult": 2.18, "max_level": 18, "phase": 5, "label": "Mirror Saws", "summary": "Unlock crits, add +15 damage, and +50 cargo capacity per level. Buying any phase-5 node unlocks Empire Layer 5 runs after clearing the fourth layer.", "icon": "M", "effects": {"critical_unlock": true, "damage_flat": 15.0, "cargo_expand": 50.0}},
     "fault_harpoons": {"base_cost": 92000, "cost_mult": 2.20, "max_level": 18, "phase": 5, "label": "Fault Harpoons", "summary": "Unlock chain lightning and add +1 chain depth per level.", "icon": "H", "effects": {"chain_lightning_unlock": true, "electric_chain": 1}},
     "null_borers": {"base_cost": 138000, "cost_mult": 2.22, "max_level": 4, "phase": 5, "label": "Null Borers", "summary": "+18 damage, +1 multi-target, and deeper electric chains per level. Multi-target lasers cap at 5.", "icon": "N", "effects": {"damage_flat": 18.0, "multi_laser": 1, "electric_chain": 1}},
     "ash_crowns": {"base_cost": 220000, "cost_mult": 2.24, "max_level": 20, "phase": 5, "label": "Ash Crowns", "summary": "Late inversion crown: boosts payout and power gain.", "icon": "A", "effects": {"resource_flat": 12.0, "power_gain_mult": 0.18}},
+    "drone_frenzy_matrix": {"base_cost": 6200000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "label": "Frenzy Matrix", "summary": "Caps ship- or laser-triggered frenzy at 5x drone speed, 4x mining efficiency, and 10s duration.", "icon": "F", "effects": {"mining_drone_frenzy_speed_bonus": 1.0, "mining_drone_frenzy_efficiency_bonus": 1.0, "mining_drone_frenzy_duration_bonus": 2.0}},
+    "mining_speed_servos": {"base_cost": 480000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "label": "Mining Servo Tune", "summary": "+10% mining speed.", "icon": "S", "effects": {"mining_speed_mult": 0.10}},
+    "mining_speed_coolant": {"base_cost": 1400000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "label": "Mining Coolant Loop", "summary": "+10% mining speed.", "icon": "C", "effects": {"mining_speed_mult": 0.10}},
+    "mining_speed_overdrive": {"base_cost": 4200000, "cost_mult": 1.0, "max_level": 1, "phase": 5, "label": "Mining Overdrive Bus", "summary": "+10% mining speed.", "icon": "O", "effects": {"mining_speed_mult": 0.10}},
 }
 
 const LAYER_DATA := [
@@ -552,6 +576,11 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
     var drone_pierce_bonus := 0
     var mining_drone_count := 0
     var mining_drone_tier := 0
+    var mining_drone_frenzy_speed_bonus := 0.0
+    var mining_drone_frenzy_duration_bonus := 0.0
+    var mining_drone_frenzy_efficiency_bonus := 0.0
+    var mining_drone_laser_bonus := 0
+    var mining_speed_bonus := 0.0
     var resonance_bonus := 0.0
     var mega_enhance_count := 0
     var shockwave_enhance_count := 0
@@ -602,6 +631,11 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
                 "drone_pierce_up": drone_pierce_bonus += int(effect_value) * level
                 "mining_drone_add": mining_drone_count += int(effect_value) * level
                 "mining_drone_tier": mining_drone_tier += int(effect_value) * level
+                "mining_drone_frenzy_speed_bonus": mining_drone_frenzy_speed_bonus += float(effect_value) * level
+                "mining_drone_frenzy_duration_bonus": mining_drone_frenzy_duration_bonus += float(effect_value) * level
+                "mining_drone_frenzy_efficiency_bonus": mining_drone_frenzy_efficiency_bonus += float(effect_value) * level
+                "mining_drone_lasers": mining_drone_laser_bonus += int(effect_value) * level
+                "mining_speed_mult": mining_speed_bonus += float(effect_value) * level
                 "resonance_enhance": resonance_bonus += float(effect_value) * level
                 "mega_enhance": mega_enhance_count += level
                 "shockwave_enhance": shockwave_enhance_count += level
@@ -672,6 +706,11 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
                 "power_gain_mult": power_gain_bonus += float(core_effect_value) * core_level
                 "mining_drone_add": mining_drone_count += int(core_effect_value) * core_level
                 "mining_drone_tier": mining_drone_tier += int(core_effect_value) * core_level
+                "mining_drone_frenzy_speed_bonus": mining_drone_frenzy_speed_bonus += float(core_effect_value) * core_level
+                "mining_drone_frenzy_duration_bonus": mining_drone_frenzy_duration_bonus += float(core_effect_value) * core_level
+                "mining_drone_frenzy_efficiency_bonus": mining_drone_frenzy_efficiency_bonus += float(core_effect_value) * core_level
+                "mining_drone_lasers": mining_drone_laser_bonus += int(core_effect_value) * core_level
+                "mining_speed_mult": mining_speed_bonus += float(core_effect_value) * core_level
                 "resonance_enhance": resonance_bonus += float(core_effect_value) * core_level
                 "global_damage_mult": global_damage_mult *= pow(1.0 + float(core_effect_value), core_level)
                 "global_resource_mult": global_resource_mult *= pow(1.0 + float(core_effect_value), core_level)
@@ -719,6 +758,13 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
         "mining_drone_speed_ratio": 0.0 if mining_drone_tier <= 0 else lerpf(0.25, 0.5, float(clampi(mining_drone_tier, 1, 4) - 1) / 3.0),
         "mining_drone_cargo_ratio": 0.0 if mining_drone_tier <= 0 else lerpf(0.125, 0.25, float(clampi(mining_drone_tier, 1, 4) - 1) / 3.0),
         "mining_drone_damage_ratio": 0.0 if mining_drone_tier <= 0 else lerpf(0.125, 0.25, float(clampi(mining_drone_tier, 1, 4) - 1) / 3.0),
+        "mining_drone_frenzy_enabled": flags.get("mining_drone_frenzy_unlock", false),
+        "mining_drone_frenzy_speed_mult": 1.0 if not flags.get("mining_drone_frenzy_unlock", false) else clampf(1.0 + mining_drone_frenzy_speed_bonus, 2.0, 5.0),
+        "mining_drone_frenzy_duration": 0.0 if not flags.get("mining_drone_frenzy_unlock", false) else clampf(5.0 + mining_drone_frenzy_duration_bonus, 5.0, 10.0),
+        "mining_drone_frenzy_efficiency_mult": 1.0 if not flags.get("mining_drone_frenzy_unlock", false) else clampf(1.0 + mining_drone_frenzy_efficiency_bonus, 2.0, 4.0),
+        "mining_drone_frenzy_level": clampi(1 + int(round(mining_drone_frenzy_speed_bonus - 1.0)), 0, 4) if flags.get("mining_drone_frenzy_unlock", false) else 0,
+        "mining_drone_lasers": 1 + mining_drone_laser_bonus,
+        "mining_speed_mult": 1.0 + mining_speed_bonus,
         "chain_lightning_enabled": flags["chain_lightning_unlock"],
         "chain_lightning_jumps": 3 + int(upgrades.get("chain_jump", 0)) * 2,
         "resonance_enabled": flags["resonance_unlock"],
@@ -848,6 +894,8 @@ static func _get_summary(upgrade_id: String, effects: Dictionary) -> String:
         return "+%d drone pierce." % int(effects.get("drone_pierce_up", 0))
     if effects.has("mining_drone_add"):
         return "+%d autonomous mining drone; fleet speed, cargo, and damage scale toward their caps." % int(effects.get("mining_drone_add", 0))
+    if effects.has("mining_drone_frenzy_unlock") or effects.has("mining_drone_frenzy_speed_bonus") or effects.has("mining_drone_frenzy_efficiency_bonus"):
+        return "Improves ship- or laser-triggered mining drone frenzy speed, duration, and mining efficiency."
     if effects.has("resonance_enhance"):
         return "+%s resonance multiplier per level." % _format_effect_number(float(effects.get("resonance_enhance", 0.0)))
     if effects.has("mega_enhance"):
