@@ -57,6 +57,7 @@ const ATTACK_LOAD_HARD_LIMIT := 96
 const ATTACK_TARGET_SEARCH_BUDGET_USEC := 4500
 const SHOCKWAVE_RING_SPEED := 520.0
 const MAX_SHOCKWAVE_RINGS := 3
+const FORWARD_ATTACK_LINE_DURATION := 0.1
 const MEGA_DAMAGE_INTERVAL := 0.08
 const MAX_WORLD_PICKUPS := 220
 const DEAD_ZONE := 30.0
@@ -90,8 +91,9 @@ const DRONE_MISSILE_SPEED := 240.0
 const DRONE_MINE_SPEED := 120.0
 const MINING_DRONE_ATTACK_INTERVAL := 0.39
 const MINING_DRONE_RETURN_WAIT_SECONDS := 0.0
+const MINING_DRONE_TARGET_SEARCH_BUDGET_USEC := 900
 const MINING_DRONE_TARGET_SCAN_RADIUS := BLOCK_SIZE * 32.0
-const MINING_DRONE_FALLBACK_SCAN_CELLS := 140
+const MINING_DRONE_FALLBACK_SCAN_CELLS := 56
 const MINING_DRONE_STAGING_DISTANCE := BLOCK_SIZE * 1.45
 const MINING_DRONE_TARGET_REACHED_DISTANCE := 18.0
 const MINING_DRONE_SPAWN_SPACING := 18.0
@@ -108,6 +110,7 @@ const ATTACK_RANGE_UNCAPPED_SPEED_RATIO := 0.65
 const SEISMIC_CHARGE_SPLASH_RADIUS_CELLS := 2
 const SEISMIC_CHARGE_DAMAGE_MULT := 1.8
 const SEISMIC_POWERUP_DAMAGE_MULT := 0.8
+const SEISMIC_CHARGE_TRAVEL_DURATION := 0.08
 const SHOCKWAVE_DAMAGE_MULT := 2.7
 const SHOCKWAVE_SPLASH_RADIUS_CELLS := 2
 const SHOCKWAVE_SPLASH_DAMAGE_MULT := 0.55
@@ -354,6 +357,7 @@ var chain_arcs: Array[Dictionary] = []
 var tetromino_bursts: Array[Dictionary] = []
 var tetromino_fit_cursor := 0
 var shockwave_rings: Array[Dictionary] = []
+var forward_attack_lines: Array[Dictionary] = []
 var shockwave_firing := false
 var drone_positions: Array[Vector2] = []
 var drone_beams: Array[Dictionary] = []
@@ -370,6 +374,7 @@ var mining_drone_cargo_units_banked := 0
 var mining_drone_cargo_units_pending := 0
 var seismic_charge_timer := 0.0
 var seismic_charge_bursts: Array[Dictionary] = []
+var seismic_charge_tracers: Array[Dictionary] = []
 var cipher_laser_states: Dictionary = {}
 var ghost_debris: Array[Dictionary] = []
 var root_cross_lasers: Dictionary = {}
@@ -431,6 +436,7 @@ var fps_label: Label
 var validation_haul_label: Label
 var perf_graph: Control
 var perf_probe_label: RichTextLabel
+var hud_panel: PanelContainer
 var minimap: Control
 var editor_debug_panel: PanelContainer
 var editor_debug_buttons: Dictionary = {}
@@ -674,17 +680,28 @@ var _combat_perf_hitch_snapshots: Array[Dictionary] = []
 var _run_perf_capture_time := 0.0
 var _last_process_frame_ticks_usec := 0
 var _target_offset_cache: Dictionary = {}
+var _mining_drone_target_cache: Dictionary = {}
+var _mining_drone_target_cache_frame := -1
+var _shared_autopilot_mine_target := Vector2i(999999, 999999)
+var _shared_autopilot_mine_target_keys: Array = []
+var _shared_autopilot_mine_target_cursor := 0
 var _editor_debug_damage_mult: float = 1.0
 var editor_debug_unlimited_barrier := false
 var editor_debug_unlimited_fuel := false
 var editor_debug_unlimited_cargo := false
 var editor_debug_attack_speed_boost := false
 var editor_debug_damage_boost := false
+var editor_debug_preview_release_hud := false
 var editor_debug_unlock_chord_enabled := false
 var current_flight_number := 1
 var pause_menu
 var summary_graph
 var summary_mined_picture
+var summary_money_history_chart
+var summary_xp_history_chart
+var summary_node_capture_chart
+var summary_before_map
+var summary_after_map
 
 func _trf(key: String, args: Array = []) -> String:
     var translated: String = tr(key)
@@ -693,7 +710,10 @@ func _trf(key: String, args: Array = []) -> String:
     return translated
 
 func _can_use_editor_debug_keys() -> bool:
-    return editor_debug_unlock_chord_enabled
+    return OS.has_feature("editor") or editor_debug_unlock_chord_enabled
+
+func _can_show_editor_release_hud_preview() -> bool:
+    return OS.has_feature("editor")
 
 func _ready() -> void:
     Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
@@ -847,6 +867,25 @@ func _refresh_hud_now() -> void:
     if system_label != null:
         _refresh_hud()
 
+func _should_show_release_hud() -> bool:
+    return not OS.has_feature("editor") or editor_debug_preview_release_hud
+
+func _apply_release_hud_visibility(enabled: bool) -> void:
+    if hud_panel != null:
+        hud_panel.offset_bottom = 108.0 if enabled else 224.0
+    if layer_label != null:
+        layer_label.visible = not enabled
+    if status_label != null:
+        status_label.visible = not enabled
+    if system_label != null:
+        system_label.visible = not enabled
+    if fps_label != null:
+        fps_label.visible = not enabled
+    if perf_graph != null:
+        perf_graph.visible = not enabled
+    if perf_probe_label != null:
+        perf_probe_label.visible = not enabled
+
 func _build_validation_perf_probe_stats() -> Dictionary:
     var result := {}
     for key in PERF_PROBE_KEYS:
@@ -969,6 +1008,9 @@ func _unhandled_input(event: InputEvent) -> void:
             get_viewport().set_input_as_handled()
         elif event.keycode == KEY_F2 and _can_use_editor_debug_keys():
             _toggle_editor_debug_panel()
+            get_viewport().set_input_as_handled()
+        elif event.keycode == KEY_F3 and _can_show_editor_release_hud_preview():
+            _toggle_editor_release_hud_preview()
             get_viewport().set_input_as_handled()
         elif event.keycode == KEY_F:
             autopilot_enabled = not autopilot_enabled
@@ -1129,26 +1171,26 @@ func _build_ui() -> void:
     hud_layer = CanvasLayer.new()
     add_child(hud_layer)
 
-    var panel := PanelContainer.new()
-    panel.offset_left = 16.0
-    panel.offset_top = 16.0
-    panel.offset_right = 360.0
-    panel.offset_bottom = 224.0
-    hud_layer.add_child(panel)
+    hud_panel = PanelContainer.new()
+    hud_panel.offset_left = 16.0
+    hud_panel.offset_top = 16.0
+    hud_panel.offset_right = 360.0
+    hud_panel.offset_bottom = 224.0
+    hud_layer.add_child(hud_panel)
 
     var panel_style := StyleBoxFlat.new()
     panel_style.bg_color = Color(0.02, 0.04, 0.08, 0.9)
     panel_style.border_color = Color(0.32, 0.7, 1.0, 0.65)
     panel_style.set_border_width_all(2)
     panel_style.set_corner_radius_all(8)
-    panel.add_theme_stylebox_override("panel", panel_style)
+    hud_panel.add_theme_stylebox_override("panel", panel_style)
 
     var margin := MarginContainer.new()
     margin.add_theme_constant_override("margin_left", 10)
     margin.add_theme_constant_override("margin_top", 10)
     margin.add_theme_constant_override("margin_right", 10)
     margin.add_theme_constant_override("margin_bottom", 10)
-    panel.add_child(margin)
+    hud_panel.add_child(margin)
 
     var vbox := VBoxContainer.new()
     vbox.add_theme_constant_override("separation", 4)
@@ -1299,7 +1341,7 @@ func _build_ui() -> void:
     summary_overlay.add_child(summary_center)
 
     var summary_panel := PanelContainer.new()
-    summary_panel.custom_minimum_size = Vector2(1040.0, 640.0)
+    summary_panel.custom_minimum_size = Vector2(1380.0, 930.0)
     summary_panel.add_theme_stylebox_override("panel", panel_style.duplicate(true))
     summary_center.add_child(summary_panel)
 
@@ -1325,24 +1367,58 @@ func _build_ui() -> void:
     summary_label.fit_content = true
     summary_label.scroll_active = false
     summary_label.bbcode_enabled = true
-    summary_label.custom_minimum_size = Vector2(960.0, 250.0)
+    summary_label.custom_minimum_size = Vector2(1280.0, 92.0)
     summary_vbox.add_child(summary_label)
 
-    var summary_visual_row := HBoxContainer.new()
-    summary_visual_row.add_theme_constant_override("separation", 12)
-    summary_vbox.add_child(summary_visual_row)
+    var summary_top_visual_row := HBoxContainer.new()
+    summary_top_visual_row.add_theme_constant_override("separation", 12)
+    summary_vbox.add_child(summary_top_visual_row)
 
     summary_graph = SUMMARY_VISUAL_SCRIPT.new()
     summary_graph.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.GRAPH
-    summary_graph.custom_minimum_size = Vector2(470.0, 150.0)
+    summary_graph.custom_minimum_size = Vector2(435.0, 176.0)
     summary_graph.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    summary_visual_row.add_child(summary_graph)
+    summary_top_visual_row.add_child(summary_graph)
+
+    summary_money_history_chart = SUMMARY_VISUAL_SCRIPT.new()
+    summary_money_history_chart.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.HISTORY_MONEY
+    summary_money_history_chart.custom_minimum_size = Vector2(435.0, 176.0)
+    summary_money_history_chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    summary_top_visual_row.add_child(summary_money_history_chart)
+
+    summary_xp_history_chart = SUMMARY_VISUAL_SCRIPT.new()
+    summary_xp_history_chart.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.HISTORY_XP
+    summary_xp_history_chart.custom_minimum_size = Vector2(435.0, 176.0)
+    summary_xp_history_chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    summary_top_visual_row.add_child(summary_xp_history_chart)
+
+    var summary_bottom_visual_row := HBoxContainer.new()
+    summary_bottom_visual_row.add_theme_constant_override("separation", 12)
+    summary_vbox.add_child(summary_bottom_visual_row)
+
+    summary_node_capture_chart = SUMMARY_VISUAL_SCRIPT.new()
+    summary_node_capture_chart.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.NODE_CAPTURE
+    summary_node_capture_chart.custom_minimum_size = Vector2(435.0, 230.0)
+    summary_node_capture_chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    summary_bottom_visual_row.add_child(summary_node_capture_chart)
+
+    summary_before_map = SUMMARY_VISUAL_SCRIPT.new()
+    summary_before_map.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.MAP_BEFORE
+    summary_before_map.custom_minimum_size = Vector2(435.0, 230.0)
+    summary_before_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    summary_bottom_visual_row.add_child(summary_before_map)
+
+    summary_after_map = SUMMARY_VISUAL_SCRIPT.new()
+    summary_after_map.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.MAP_AFTER
+    summary_after_map.custom_minimum_size = Vector2(435.0, 230.0)
+    summary_after_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    summary_bottom_visual_row.add_child(summary_after_map)
 
     summary_mined_picture = SUMMARY_VISUAL_SCRIPT.new()
     summary_mined_picture.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.MINED_MAP
-    summary_mined_picture.custom_minimum_size = Vector2(470.0, 150.0)
+    summary_mined_picture.custom_minimum_size = Vector2(0.0, 150.0)
     summary_mined_picture.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    summary_visual_row.add_child(summary_mined_picture)
+    summary_vbox.add_child(summary_mined_picture)
 
     summary_status_label = Label.new()
     summary_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1367,7 +1443,7 @@ func _build_editor_debug_panel(panel_style: StyleBoxFlat) -> void:
     editor_debug_panel.offset_left = -170.0
     editor_debug_panel.offset_top = 18.0
     editor_debug_panel.offset_right = 170.0
-    editor_debug_panel.offset_bottom = 274.0
+    editor_debug_panel.offset_bottom = 318.0
     editor_debug_panel.visible = false
     editor_debug_panel.process_mode = Node.PROCESS_MODE_ALWAYS
     var debug_style := panel_style.duplicate(true)
@@ -1399,6 +1475,8 @@ func _build_editor_debug_panel(panel_style: StyleBoxFlat) -> void:
     _add_editor_debug_button(vbox, "cargo")
     _add_editor_debug_button(vbox, "speed")
     _add_editor_debug_button(vbox, "damage")
+    if _can_show_editor_release_hud_preview():
+        _add_editor_debug_button(vbox, "release_hud")
     _refresh_editor_debug_panel()
 
 func _add_editor_debug_button(parent: VBoxContainer, key: String) -> void:
@@ -1439,9 +1517,22 @@ func _on_editor_debug_button_pressed(key: String) -> void:
             attack_timer = maxf(attack_timer, _get_effective_attack_interval())
         "damage":
             editor_debug_damage_boost = not editor_debug_damage_boost
+        "release_hud":
+            _set_editor_release_hud_preview(not editor_debug_preview_release_hud)
     _refresh_editor_debug_panel()
     _refresh_hud_now()
     _push_breach_log("[color=#ffd66b]EDITOR ASSIST[/color]  %s." % _get_editor_debug_summary())
+
+func _toggle_editor_release_hud_preview() -> void:
+    if not _can_show_editor_release_hud_preview():
+        return
+    _set_editor_release_hud_preview(not editor_debug_preview_release_hud)
+    _refresh_editor_debug_panel()
+    _refresh_hud_now()
+    _push_breach_log("[color=#ffd66b]EDITOR ASSIST[/color]  non-editor HUD preview %s." % ("enabled" if editor_debug_preview_release_hud else "disabled"))
+
+func _set_editor_release_hud_preview(enabled: bool) -> void:
+    editor_debug_preview_release_hud = enabled and _can_show_editor_release_hud_preview()
 
 func _refresh_editor_debug_panel() -> void:
     for key_variant in editor_debug_buttons.keys():
@@ -1465,6 +1556,8 @@ func _is_editor_debug_toggle_enabled(key: String) -> bool:
             return editor_debug_attack_speed_boost
         "damage":
             return editor_debug_damage_boost
+        "release_hud":
+            return editor_debug_preview_release_hud
     return false
 
 func _get_editor_debug_button_label(key: String) -> String:
@@ -1479,11 +1572,13 @@ func _get_editor_debug_button_label(key: String) -> String:
             return "Attack Speed x10"
         "damage":
             return "Damage x100"
+        "release_hud":
+            return "Preview Non-Editor HUD"
     return key.capitalize()
 
 func _get_editor_debug_summary() -> String:
     var parts: Array[String] = []
-    for key in ["barrier", "fuel", "cargo", "speed", "damage"]:
+    for key in ["barrier", "fuel", "cargo", "speed", "damage", "release_hud"]:
         if _is_editor_debug_toggle_enabled(key):
             parts.append(_get_editor_debug_button_label(key))
     return "no assists active" if parts.is_empty() else ", ".join(parts)
@@ -1504,6 +1599,7 @@ func _start_run() -> void:
     shield_recovery_timer = 0.0
     boss_defeated = bool(persistent_data.get("boss_defeated", false))
     _build_planet()
+    _reset_shared_autopilot_mine_target()
     run_start_destroyed_count = persistent_destroyed_count
     _setup_minimap()
     spawn_position = planet_data.get_spawn_world_position()
@@ -1552,6 +1648,7 @@ func _start_run() -> void:
     tetromino_bursts.clear()
     tetromino_fit_cursor = 0
     shockwave_rings.clear()
+    forward_attack_lines.clear()
     ghost_debris.clear()
     ghost_debris_timers.clear()
     root_cross_lasers.clear()
@@ -1564,6 +1661,7 @@ func _start_run() -> void:
     mining_drone_cargo_units_banked = 0
     mining_drone_cargo_units_pending = 0
     seismic_charge_bursts.clear()
+    seismic_charge_tracers.clear()
     seismic_charge_timer = 0.0
     drone_attack_counter = 0
     _reset_drone_state()
@@ -1642,7 +1740,10 @@ func _start_run() -> void:
 func _build_planet() -> void:
     damaged_cells.clear()
     var persistent_destroyed := {}
-    var saved_planet_state: Dictionary = PROGRESS.load_planet_state(current_depth_level)
+    var cached_runtime_planet = PROGRESS.load_runtime_planet_data(current_depth_level)
+    var saved_planet_state: Dictionary = {}
+    if cached_runtime_planet == null:
+        saved_planet_state = PROGRESS.load_planet_state(current_depth_level)
     if saved_planet_state.is_empty():
         for saved_variant in persistent_data.get("destroyed_cells", []):
             if saved_variant is String:
@@ -1654,7 +1755,6 @@ func _build_planet() -> void:
         persistent_destroyed_count = persistent_destroyed.size()
     else:
         persistent_destroyed_count = 0
-    var cached_runtime_planet = PROGRESS.load_runtime_planet_data(current_depth_level)
     if cached_runtime_planet != null:
         planet_data = cached_runtime_planet
     elif not saved_planet_state.is_empty():
@@ -2045,8 +2145,10 @@ func _update_timers(delta: float) -> void:
     _tick_effect_array(electric_arcs, delta)
     _tick_effect_array(chain_arcs, delta)
     _tick_effect_array(tetromino_bursts, delta)
+    _tick_effect_array(forward_attack_lines, delta)
     _tick_effect_array(drone_beams, delta)
     _tick_effect_array(seismic_charge_bursts, delta)
+    _update_seismic_charge_tracers(delta)
     _update_drone_missiles(delta)
     _update_drone_mines(delta)
     var power_perf_start_us := perf_probe_begin()
@@ -2513,7 +2615,7 @@ func _get_autopilot_return_reason() -> String:
         return "fuel reserve %.0fs" % ceil(run_time * AUTOPILOT_FUEL_RETURN_RATIO)
     return ""
 
-func _find_autopilot_mining_target(allow_timeout_retry: bool = true) -> Vector2:
+func _find_autopilot_mining_target() -> Vector2:
     var search_deadline_usec := Time.get_ticks_usec() + AUTOPILOT_TARGET_SEARCH_BUDGET_USEC
     _update_autopilot_stuck_mode()
     if _is_autopilot_core_attack_mode():
@@ -2566,6 +2668,7 @@ func _find_autopilot_mining_target(allow_timeout_retry: bool = true) -> Vector2:
     var best_aim_dir := inward
     var best_score := INF
     var found_local_target := false
+    var status_text := "seeking %s" % autopilot_sortie_mode
     for x in range(my_grid.x - AUTOPILOT_MINING_SCAN_CELLS, my_grid.x + AUTOPILOT_MINING_SCAN_CELLS + 1):
         if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
             break
@@ -2623,15 +2726,25 @@ func _find_autopilot_mining_target(allow_timeout_retry: bool = true) -> Vector2:
                     found_local_target = true
     if not found_local_target and search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
         _rotate_autopilot_mode_after_search_timeout()
-        if allow_timeout_retry:
-            return _find_autopilot_mining_target(false)
+        var shared_timeout_target := _get_shared_autopilot_target_record()
+        if not shared_timeout_target.is_empty():
+            best_world = Vector2(shared_timeout_target.get("world", best_world))
+            best_aim_dir = (Vector2(shared_timeout_target.get("target_world", best_world)) - ship_pos).normalized()
+            status_text = "seeking shared"
     if not found_local_target and (search_deadline_usec <= 0 or Time.get_ticks_usec() < search_deadline_usec):
         var anchor_target := _find_autopilot_lane_anchor_target(search_deadline_usec)
         if not anchor_target.is_empty():
             best_world = Vector2(anchor_target.get("world", best_world))
-            best_aim_dir = (best_world - ship_pos).normalized()
+            best_aim_dir = (Vector2(anchor_target.get("target_world", best_world)) - ship_pos).normalized()
+            status_text = "seeking %s" % autopilot_sortie_mode
+    if not found_local_target and status_text != "seeking shared":
+        var shared_target := _get_shared_autopilot_target_record()
+        if not shared_target.is_empty():
+            best_world = Vector2(shared_target.get("world", best_world))
+            best_aim_dir = (Vector2(shared_target.get("target_world", best_world)) - ship_pos).normalized()
+            status_text = "seeking shared"
     autopilot_aim_dir = best_aim_dir
-    autopilot_status = "seeking %s" % autopilot_sortie_mode
+    autopilot_status = status_text
     autopilot_last_target = best_world
     return best_world
 
@@ -2998,10 +3111,8 @@ func _find_autopilot_lane_anchor_target(search_deadline_usec: int = 0) -> Dictio
                 best_score = score
                 best_grid = pos
     if best_grid.x < 999999:
-        return {"grid": best_grid, "world": _get_autopilot_staging_world_for_anchor(best_grid)}
-    if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
-        return {}
-    return _find_autopilot_any_anchor_target(search_deadline_usec)
+        return {"grid": best_grid, "world": _get_autopilot_staging_world_for_anchor(best_grid), "target_world": grid_to_world(best_grid)}
+    return _get_shared_autopilot_target_record()
 
 func _find_autopilot_any_anchor_target(search_deadline_usec: int = 0) -> Dictionary:
     var best_grid := Vector2i(999999, 999999)
@@ -3041,8 +3152,8 @@ func _find_autopilot_any_anchor_target(search_deadline_usec: int = 0) -> Diction
             best_score = score
             best_grid = pos
     if best_grid.x >= 999999:
-        return {}
-    return {"grid": best_grid, "world": _get_autopilot_staging_world_for_anchor(best_grid)}
+        return _get_shared_autopilot_target_record()
+    return {"grid": best_grid, "world": _get_autopilot_staging_world_for_anchor(best_grid), "target_world": grid_to_world(best_grid)}
 
 func _get_autopilot_staging_world_for_anchor(anchor_grid: Vector2i) -> Vector2:
     var anchor_world := grid_to_world(anchor_grid)
@@ -3148,6 +3259,56 @@ func _is_mineable_non_core_block(grid: Vector2i) -> bool:
     if block.is_empty():
         return false
     return int(block.get("core_id", -1)) < 0 and _is_autopilot_attackable_block(block, grid)
+
+func _reset_shared_autopilot_mine_target() -> void:
+    _shared_autopilot_mine_target_keys = blocks.keys()
+    _shared_autopilot_mine_target_cursor = 0
+    _shared_autopilot_mine_target = Vector2i(999999, 999999)
+    _advance_shared_autopilot_mine_target()
+
+func _advance_shared_autopilot_mine_target() -> Vector2i:
+    _shared_autopilot_mine_target = Vector2i(999999, 999999)
+    if _shared_autopilot_mine_target_keys.is_empty():
+        _shared_autopilot_mine_target_keys = blocks.keys()
+        _shared_autopilot_mine_target_cursor = 0
+    var target := _scan_shared_autopilot_mine_target_keys()
+    if target.x < 999999:
+        return target
+    if _shared_autopilot_mine_target_keys.size() != blocks.size():
+        _shared_autopilot_mine_target_keys = blocks.keys()
+        _shared_autopilot_mine_target_cursor = 0
+        target = _scan_shared_autopilot_mine_target_keys()
+    return target
+
+func _scan_shared_autopilot_mine_target_keys() -> Vector2i:
+    var key_count := _shared_autopilot_mine_target_keys.size()
+    if key_count <= 0:
+        return Vector2i(999999, 999999)
+    _shared_autopilot_mine_target_cursor = clampi(_shared_autopilot_mine_target_cursor, 0, key_count - 1)
+    for offset in range(key_count):
+        var idx := (_shared_autopilot_mine_target_cursor + offset) % key_count
+        var candidate: Vector2i = _shared_autopilot_mine_target_keys[idx]
+        if _is_mineable_non_core_block(candidate):
+            _shared_autopilot_mine_target = candidate
+            _shared_autopilot_mine_target_cursor = (idx + 1) % key_count
+            return candidate
+    return Vector2i(999999, 999999)
+
+func _get_shared_autopilot_mine_target() -> Vector2i:
+    if _is_mineable_non_core_block(_shared_autopilot_mine_target):
+        return _shared_autopilot_mine_target
+    return _advance_shared_autopilot_mine_target()
+
+func _get_shared_autopilot_target_record() -> Dictionary:
+    var target_grid := _get_shared_autopilot_mine_target()
+    if target_grid.x >= 999999:
+        return {}
+    var target_world := grid_to_world(target_grid)
+    return {
+        "grid": target_grid,
+        "world": _get_autopilot_staging_world_for_anchor(target_grid),
+        "target_world": target_world,
+    }
 
 func _is_autopilot_attackable_block(block: Dictionary, grid: Vector2i = Vector2i(999999, 999999)) -> bool:
     if bool(block.get("unbreakable", false)):
@@ -4037,34 +4198,24 @@ func _get_mining_drone_damage_for(pos: Vector2i, drone: Dictionary = {}) -> floa
     return damage
 
 func _find_mining_drone_target(origin: Vector2) -> Vector2i:
-    var targets := _find_targets_near_world(origin, MINING_DRONE_TARGET_SCAN_RADIUS, 1)
-    if not targets.is_empty():
-        return Vector2i(targets[0])
+    var search_deadline_usec := Time.get_ticks_usec() + MINING_DRONE_TARGET_SEARCH_BUDGET_USEC
+    var cache_frame := Engine.get_process_frames()
+    if _mining_drone_target_cache_frame != cache_frame:
+        _mining_drone_target_cache.clear()
+        _mining_drone_target_cache_frame = cache_frame
     var origin_grid := world_to_grid(origin)
-    var best := Vector2i(999999, 999999)
-    var best_score := INF
-    var scan_cells := MINING_DRONE_FALLBACK_SCAN_CELLS
-    for ring in range(1, scan_cells + 1):
-        for x in range(origin_grid.x - ring, origin_grid.x + ring + 1):
-            for y in [origin_grid.y - ring, origin_grid.y + ring]:
-                var candidate := Vector2i(x, y)
-                if not _is_mineable_non_core_block(candidate):
-                    continue
-                var score := origin.distance_squared_to(grid_to_world(candidate))
-                if score < best_score:
-                    best_score = score
-                    best = candidate
-        for y in range(origin_grid.y - ring + 1, origin_grid.y + ring):
-            for x in [origin_grid.x - ring, origin_grid.x + ring]:
-                var candidate := Vector2i(x, y)
-                if not _is_mineable_non_core_block(candidate):
-                    continue
-                var score := origin.distance_squared_to(grid_to_world(candidate))
-                if score < best_score:
-                    best_score = score
-                    best = candidate
-        if best.x < 999999:
-            return best
+    var cache_key := "%d,%d" % [origin_grid.x, origin_grid.y]
+    if _mining_drone_target_cache.has(cache_key):
+        return Vector2i(_mining_drone_target_cache.get(cache_key, Vector2i(999999, 999999)))
+    var targets := _find_targets_near_world(origin, MINING_DRONE_TARGET_SCAN_RADIUS, 1, search_deadline_usec)
+    if not targets.is_empty():
+        var near_target := Vector2i(targets[0])
+        _mining_drone_target_cache[cache_key] = near_target
+        return near_target
+    var fallback_radius := float(MINING_DRONE_FALLBACK_SCAN_CELLS) * BLOCK_SIZE
+    targets = _find_targets_near_world(origin, fallback_radius, 1, search_deadline_usec)
+    var best := _get_shared_autopilot_mine_target() if targets.is_empty() else Vector2i(targets[0])
+    _mining_drone_target_cache[cache_key] = best
     return best
 
 func _get_mining_drone_staging_world(origin: Vector2, target_grid: Vector2i) -> Vector2:
@@ -4119,7 +4270,7 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         _frame_destroyed_blocks += _estimate_frame_destroyed_block_count(result)
         damaged_cells.erase(pos)
         persistent_destroyed_count += 1
-        destroyed_cells_this_run[pos] = true
+        destroyed_cells_this_run[pos] = "drone" if source == "mining_drone" else "player"
         nodes_mined += 1
         if source != "mining_drone":
             xp_earned_this_run += _get_xp_reward_for_block(block_before)
@@ -4153,6 +4304,8 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
             if not shockwave_firing and shockwave_counter >= int(runtime_stats.get("shockwave_trigger_kills", 15)):
                 shockwave_counter = 0
                 _trigger_shockwave()
+        if pos == _shared_autopilot_mine_target:
+            _advance_shared_autopilot_mine_target()
     else:
         var remaining_hp := float(planet_data.blocks.get(pos, {}).get("hp", 1.0))
         var core_id := int(result.get("core_id", int(block_before.get("core_id", -1))))
@@ -4412,6 +4565,7 @@ func _trigger_shockwave() -> void:
     var target_grid := _find_shockwave_line_target(float(radius_cells) * BLOCK_SIZE)
     var visuals_dirty := false
     if target_grid.x < 999999:
+        _queue_forward_attack_line(grid_to_world(target_grid), true)
         _mark_hit_flash(target_grid)
         visuals_dirty = true
         var target_damage := _compute_laser_damage(target_grid)
@@ -4432,6 +4586,15 @@ func _trigger_shockwave() -> void:
         shockwave_rings.remove_at(0)
     shockwave_rings.append({"radius": 5.0, "max_radius": max_radius, "alpha": 0.8})
     _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.SUPERNOVA, -10.0, -0.1)
+
+func _queue_forward_attack_line(target_world: Vector2, heavy: bool = false) -> void:
+    forward_attack_lines.append({
+        "from": ship_pos,
+        "to": target_world,
+        "timer": FORWARD_ATTACK_LINE_DURATION,
+        "duration": FORWARD_ATTACK_LINE_DURATION,
+        "heavy": heavy,
+    })
 
 func _find_shockwave_line_target(range_world: float) -> Vector2i:
     var forward := _get_forward_direction()
@@ -4837,6 +5000,55 @@ func _apply_splash_damage(center_grid: Vector2i, radius_cells: int, base_damage:
         })
     return {"visuals": visuals_dirty, "destroyed": destroyed_any}
 
+func _queue_seismic_charge_tracer(target_grid: Vector2i, power_active_now: bool) -> void:
+    var target_world := grid_to_world(target_grid)
+    var damage := _get_effective_attack_damage() * ((SEISMIC_CHARGE_DAMAGE_MULT + 0.45) if power_active_now else SEISMIC_POWERUP_DAMAGE_MULT)
+    seismic_charge_tracers.append({
+        "from": ship_pos,
+        "to": target_world,
+        "target_grid": target_grid,
+        "timer": SEISMIC_CHARGE_TRAVEL_DURATION,
+        "duration": SEISMIC_CHARGE_TRAVEL_DURATION,
+        "power_active": power_active_now,
+        "damage": damage,
+    })
+    _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER_CRIT if power_active_now else SoundEffectSettings.SOUND_EFFECT_TYPE.ON_LASER)
+
+func _update_seismic_charge_tracers(delta: float) -> void:
+    for idx in range(seismic_charge_tracers.size() - 1, -1, -1):
+        var tracer: Dictionary = seismic_charge_tracers[idx]
+        tracer["timer"] = float(tracer.get("timer", SEISMIC_CHARGE_TRAVEL_DURATION)) - delta
+        if float(tracer.get("timer", 0.0)) > 0.0:
+            seismic_charge_tracers[idx] = tracer
+            continue
+        seismic_charge_tracers.remove_at(idx)
+        _detonate_seismic_charge_tracer(tracer)
+
+func _detonate_seismic_charge_tracer(tracer: Dictionary) -> void:
+    if planet_data == null:
+        return
+    var target_grid: Vector2i = tracer.get("target_grid", Vector2i(999999, 999999))
+    if target_grid.x >= 999999:
+        return
+    var power_active_now := bool(tracer.get("power_active", false))
+    var target_world := Vector2(tracer.get("to", grid_to_world(target_grid)))
+    seismic_charge_bursts.append({
+        "position": target_world,
+        "timer": SEISMIC_CHARGE_VISUAL_DURATION,
+        "radius": float(SEISMIC_CHARGE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE * (1.65 if power_active_now else 1.0),
+    })
+    var splash := _apply_splash_damage(
+        target_grid,
+        SEISMIC_CHARGE_SPLASH_RADIUS_CELLS,
+        float(tracer.get("damage", _get_effective_attack_damage() * ((SEISMIC_CHARGE_DAMAGE_MULT + 0.45) if power_active_now else SEISMIC_POWERUP_DAMAGE_MULT))),
+        0.3,
+        1.75 if power_active_now else 1.0
+    )
+    if bool(splash.get("visuals", false)):
+        _sync_planet_runtime_views(true, false)
+    if bool(splash.get("destroyed", false)):
+        _on_combo_hit()
+
 func _update_seismic_charge(delta: float) -> void:
     var perf_start_us := perf_probe_begin()
     if planet_data == null:
@@ -4859,22 +5071,7 @@ func _update_seismic_charge(delta: float) -> void:
     if target_grid.x >= 999999:
         perf_probe_end("update_seismic_charge", perf_start_us)
         return
-    var burst_world := grid_to_world(target_grid)
-    seismic_charge_bursts.append({
-        "position": burst_world,
-        "timer": SEISMIC_CHARGE_VISUAL_DURATION,
-        "radius": float(SEISMIC_CHARGE_SPLASH_RADIUS_CELLS) * BLOCK_SIZE * (1.65 if power_active_now else 1.0),
-        "rage_tracer": true,
-    })
-    var splash := _apply_splash_damage(
-        target_grid,
-        SEISMIC_CHARGE_SPLASH_RADIUS_CELLS,
-        _get_effective_attack_damage() * ((SEISMIC_CHARGE_DAMAGE_MULT + 0.45) if power_active_now else SEISMIC_POWERUP_DAMAGE_MULT),
-        0.3,
-        1.75 if power_active_now else 1.0
-    )
-    if bool(splash.get("visuals", false)):
-        _sync_planet_runtime_views(true, false)
+    _queue_seismic_charge_tracer(target_grid, power_active_now)
     perf_probe_end("update_seismic_charge", perf_start_us)
 
 func _roll_drone_damage() -> float:
@@ -5181,66 +5378,55 @@ func _finish_run(returned: bool, reason: String) -> void:
     if breach_chat != null and not is_validation_run:
         _flush_breach_chat(true)
         epilogue = breach_chat.build_summary_epilogue()
-    var attempt_lines: Array[String] = []
-    if not is_validation_run:
-        for attempt_variant in persistent_data.get("attempt_history", []):
-            var attempt: Dictionary = attempt_variant
-            attempt_lines.append(
-                "Tier %d :: chipped %.1f%% :: %d blocks :: $%d :: %d XP" % [
-                    int(attempt.get("depth_level", 1)),
-                    float(attempt.get("persistent_clear", 0.0)),
-                    int(attempt.get("nodes_broken", 0)),
-                    int(attempt.get("money", 0)),
-                    int(attempt.get("xp", 0)),
-                ]
-            )
-            if attempt_lines.size() >= 5:
-                break
-    var history_text := "\n".join(attempt_lines)
-    if history_text == "":
-        history_text = tr("OPEN_PIT_VALIDATION_RUN") if is_validation_run else tr("OPEN_PIT_NO_PREVIOUS_ATTEMPTS")
     var run_time := maxf(0.0, float(runtime_stats.get("run_time", 30.0)))
     var mining_time := maxf(0.0, run_time - time_left)
-    var auto_return_summary := tr(autopilot_return_reason) if autopilot_return_reason != "" else (tr("OPEN_PIT_NOT_RETURNING") if autopilot_enabled else tr("OPEN_PIT_OFF"))
     var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
+    var captured_units := cargo_units + mining_drone_cargo_units_banked
+    var current_attempt_summary := {
+        "flight": current_flight_number,
+        "money": money_award,
+        "xp": xp_award,
+        "nodes_broken": nodes_mined,
+        "persistent_clear": _get_persistent_clear_percent(),
+        "depth_level": current_depth_level,
+    }
     var visual_data := {
         "run_time": run_time,
         "mining_time": mining_time,
         "fuel_ratio": 0.0 if run_time <= 0.0 else time_left / run_time,
-        "cargo_ratio": 0.0 if cargo_capacity <= 0 else float(cargo_units + mining_drone_cargo_units_banked) / float(cargo_capacity),
+        "cargo_ratio": 0.0 if cargo_capacity <= 0 else float(captured_units) / float(cargo_capacity),
+        "cargo_used": captured_units,
+        "cargo_capacity": cargo_capacity,
         "clear_start_ratio": float(run_start_destroyed_count) / float(maxi(1, total_planet_blocks)),
         "clear_ratio": float(persistent_destroyed_count) / float(maxi(1, total_planet_blocks)),
         "mined_ratio": float(maxi(0, persistent_destroyed_count - run_start_destroyed_count)) / float(maxi(1, total_planet_blocks)),
         "mined_points": _get_summary_mined_points(),
+        "money_history": _build_summary_history_rows("money", current_attempt_summary),
+        "xp_history": _build_summary_history_rows("xp", current_attempt_summary),
+        "nodes_mined": nodes_mined,
+        "captured_units": captured_units,
+        "drone_captured_units": mining_drone_cargo_units_banked,
+        "node_note": _get_summary_node_note(),
+        "map_points": _get_summary_map_points(),
+        "map_bounds": _get_summary_map_bounds(),
     }
-    if summary_graph != null and is_instance_valid(summary_graph):
-        summary_graph.set_summary_data(visual_data)
-    if summary_mined_picture != null and is_instance_valid(summary_mined_picture):
-        summary_mined_picture.set_summary_data(visual_data)
+    for visual in [summary_graph, summary_money_history_chart, summary_xp_history_chart, summary_node_capture_chart, summary_before_map, summary_after_map, summary_mined_picture]:
+        if visual != null and is_instance_valid(visual):
+            visual.set_summary_data(visual_data)
     if is_validation_run:
         summary_label.text = tr("OPEN_PIT_VALIDATION_RUN_COMPLETE")
     else:
-        summary_label.text = _trf("OPEN_PIT_SUMMARY_TABLE", [
+        summary_label.text = _build_summary_header_text(
             current_flight_number,
             reason,
             current_depth_level,
-            nodes_mined,
-            _format_run_seconds(mining_time),
-            _format_run_seconds(time_left),
-            cargo_units,
-            cargo_capacity,
-            auto_return_summary,
             money_award,
             total_money,
             xp_award,
             cores_destroyed_this_run,
-            _get_persistent_clear_percent(),
             core_currency_earned_this_run,
-            power_peak,
-            barriers_left,
-            history_text,
             epilogue
-        ])
+        )
     if summary_return_button != null:
         summary_return_button.disabled = true
         summary_return_button.text = tr("OPEN_PIT_SAVING")
@@ -5344,6 +5530,49 @@ func _finish_run_save_async(money_award: int, xp_award: int, reason: String) -> 
         if summary_status_label != null:
             summary_status_label.text = tr("OPEN_PIT_SAVE_COMPLETE")
 
+func _build_summary_header_text(flight_number: int, reason: String, depth_level: int, money_award: int, total_money: int, xp_award: int, cores_destroyed: int, core_currency: int, epilogue: String) -> String:
+    var lines: Array[String] = []
+    lines.append("[b]Flight %d complete[/b]  Return: %s" % [flight_number, reason])
+    lines.append("Depth %d  Cash $%s / total $%s  XP %s  Root kernels %d" % [
+        depth_level,
+        _format_large_number(money_award),
+        _format_large_number(total_money),
+        _format_large_number(xp_award),
+        core_currency,
+    ])
+    if cores_destroyed > 0:
+        lines.append("Daemon node defeated: %d" % cores_destroyed)
+    var epilogue_text := epilogue.strip_edges()
+    if epilogue_text != "":
+        lines.append(epilogue_text)
+    return "\n".join(lines)
+
+func _build_summary_history_rows(value_key: String, current_attempt: Dictionary) -> Array[Dictionary]:
+    var rows: Array[Dictionary] = []
+    rows.append({
+        "flight": int(current_attempt.get("flight", current_flight_number)),
+        "value": int(current_attempt.get(value_key, 0)),
+    })
+    for attempt_variant in persistent_data.get("attempt_history", []):
+        if rows.size() >= 5:
+            break
+        if not (attempt_variant is Dictionary):
+            continue
+        var attempt: Dictionary = attempt_variant
+        rows.append({
+            "flight": int(attempt.get("flight", max(1, current_flight_number - rows.size()))),
+            "value": int(attempt.get(value_key, 0)),
+        })
+    rows.reverse()
+    return rows
+
+func _get_summary_node_note() -> String:
+    if cores_destroyed_this_run > 0:
+        return "Daemon node defeated: +%d root kernel%s." % [cores_destroyed_this_run, "" if cores_destroyed_this_run == 1 else "s"]
+    if nodes_mined <= 0:
+        return "No node defeated this flight."
+    return "No daemon node defeated this flight."
+
 func _format_run_seconds(seconds: float) -> String:
     return "%.1fs" % maxf(0.0, seconds)
 
@@ -5364,13 +5593,60 @@ func _format_large_number(value: int) -> String:
     var sign := "-" if value < 0 else ""
     return "%s%.1f%s" % [sign, amount, suffix]
 
-func _get_summary_mined_points() -> Array[Vector2i]:
-    var points: Array[Vector2i] = []
+func _get_summary_mined_points() -> Array[Dictionary]:
+    var points: Array[Dictionary] = []
     var skip := maxi(1, int(ceili(float(destroyed_cells_this_run.size()) / 900.0)))
     var idx := 0
     for key_variant in destroyed_cells_this_run.keys():
         if idx % skip == 0:
-            points.append(key_variant)
+            var p := Vector2i(key_variant)
+            points.append({
+                "x": p.x,
+                "y": p.y,
+                "source": str(destroyed_cells_this_run.get(key_variant, "player")),
+            })
+        idx += 1
+    return points
+
+func _get_summary_map_bounds() -> Dictionary:
+    if planet_data == null:
+        return {"min_x": -100.0, "min_y": -100.0, "span_x": 200.0, "span_y": 200.0}
+    var bounds: Rect2 = planet_data.get_map_bounds()
+    return {
+        "min_x": bounds.position.x,
+        "min_y": bounds.position.y,
+        "span_x": maxf(1.0, bounds.size.x),
+        "span_y": maxf(1.0, bounds.size.y),
+    }
+
+func _get_summary_map_points() -> Array[Dictionary]:
+    var points: Array[Dictionary] = []
+    if planet_data == null:
+        return points
+    var skip_blocks := maxi(1, int(ceili(float(blocks.size()) / 12000.0)))
+    var idx := 0
+    for key_variant in blocks.keys():
+        if idx % skip_blocks == 0:
+            var p := Vector2i(key_variant)
+            var block: Dictionary = blocks.get(key_variant, {})
+            points.append({
+                "x": p.x,
+                "y": p.y,
+                "source": "block",
+                "type": int(block.get("type", BlockType.NORMAL)),
+            })
+        idx += 1
+    var skip_mined := maxi(1, int(ceili(float(destroyed_cells_this_run.size()) / 1000.0)))
+    idx = 0
+    for mined_variant in destroyed_cells_this_run.keys():
+        if idx % skip_mined == 0:
+            var mined_pos := Vector2i(mined_variant)
+            points.append({
+                "x": mined_pos.x,
+                "y": mined_pos.y,
+                "source": str(destroyed_cells_this_run.get(mined_variant, "player")),
+                "type": BlockType.NORMAL,
+            })
         idx += 1
     return points
 
@@ -5407,8 +5683,24 @@ func _persist_destroyed_cells() -> void:
     PROGRESS.save_data(persistent_data)
 
 func _refresh_hud() -> void:
+    var show_release_hud := _should_show_release_hud()
+    _apply_release_hud_visibility(show_release_hud)
     var cargo_capacity_text := tr("OPEN_PIT_INF") if editor_debug_unlimited_cargo else str(int(runtime_stats.get("cargo_capacity", 15)))
     timer_label.text = _trf("OPEN_PIT_HUD_CARGO", [cargo_units, cargo_capacity_text])
+    var pending_drone_rewards := _get_mining_drone_pending_reward_totals()
+    var visible_run_money := cargo_money + mining_drone_money + int(pending_drone_rewards.get("money", 0))
+    var visible_run_xp := xp_earned_this_run + mining_drone_xp + int(pending_drone_rewards.get("xp", 0))
+    var barrier_text := tr("OPEN_PIT_INF") if editor_debug_unlimited_barrier else str(barriers_left)
+    if show_release_hud:
+        cargo_label.text = "Value $%s" % _format_large_number(visible_run_money)
+        wallet_label.text = "Barriers left %s" % barrier_text
+        if validation_haul_label != null:
+            validation_haul_label.visible = validation_autopilot_mode != "" and not run_finished
+            if validation_haul_label.visible:
+                validation_haul_label.text = _trf("OPEN_PIT_VALIDATION_ROUND_HAUL", [_format_large_number(visible_run_money)])
+        if breach_log_label != null and breach_log_label.text == "":
+            _render_breach_log()
+        return
     var fuel_text := tr("OPEN_PIT_INF") if editor_debug_unlimited_fuel else _trf("OPEN_PIT_SECONDS_SHORT", [snappedf(time_left, 0.1)])
     if extracting:
         cargo_label.text = _trf("OPEN_PIT_HUD_FUEL_EXTRACTING", [fuel_text])
@@ -5418,9 +5710,6 @@ func _refresh_hud() -> void:
         cargo_label.text = _trf("OPEN_PIT_HUD_FUEL_AUTO_RETURN", [fuel_text, autopilot_return_reason if autopilot_return_reason != "" else tr("OPEN_PIT_RETURNING")])
     else:
         cargo_label.text = _trf("OPEN_PIT_HUD_FUEL_STANDBY", [fuel_text])
-    var pending_drone_rewards := _get_mining_drone_pending_reward_totals()
-    var visible_run_money := cargo_money + mining_drone_money + int(pending_drone_rewards.get("money", 0))
-    var visible_run_xp := xp_earned_this_run + mining_drone_xp + int(pending_drone_rewards.get("xp", 0))
     wallet_label.text = _trf("OPEN_PIT_HUD_WALLET", [visible_run_money, int(persistent_data.get("wallet", 0)), int(persistent_data.get("xp_currency", 0)) + visible_run_xp])
     if validation_haul_label != null:
         validation_haul_label.visible = validation_autopilot_mode != "" and not run_finished
@@ -5442,7 +5731,6 @@ func _refresh_hud() -> void:
         active_boosts.append(tr("OPEN_PIT_ATTACK_SPEED_X10"))
     if editor_debug_damage_boost:
         active_boosts.append(tr("OPEN_PIT_DAMAGE_X100"))
-    var barrier_text := tr("OPEN_PIT_INF") if editor_debug_unlimited_barrier else str(barriers_left)
     status_label.text = _trf("OPEN_PIT_HUD_STATUS", [barrier_text, int(runtime_stats.get("drone_count", 0)), int(round(current_power)), int(round(_get_power_capacity())), planet_data.get_alive_cores() if planet_data != null else 0, planet_data.get_total_cores() if planet_data != null else 0])
     var power_state := tr("OPEN_PIT_POWER_ACTIVE") if _is_power_active() else (tr("OPEN_PIT_POWER_READY") if _is_power_ready() else tr("OPEN_PIT_POWER_CHARGING"))
     var fast_suffix := _trf("OPEN_PIT_NO_RENDER_SPEED", [AUTOPILOT_NO_RENDER_STEPS_PER_FRAME]) if autopilot_no_render_enabled else (_trf("OPEN_PIT_FAST_FORWARD_SPEED", [autopilot_fast_forward_steps_per_frame]) if autopilot_fast_forward_enabled else tr("OPEN_PIT_SPEED_CONTROLS"))
@@ -5988,7 +6276,7 @@ func _is_combat_perf_focus_window() -> bool:
         return false
     if attack_visible_timer > 0.0 or _is_power_active():
         return true
-    if not hit_timers.is_empty() or not seismic_charge_bursts.is_empty() or not tetromino_bursts.is_empty():
+    if not hit_timers.is_empty() or not seismic_charge_bursts.is_empty() or not seismic_charge_tracers.is_empty() or not forward_attack_lines.is_empty() or not tetromino_bursts.is_empty():
         return true
     if not electric_arcs.is_empty() or not chain_arcs.is_empty() or not drone_beams.is_empty() or not drone_missiles.is_empty() or not drone_mines.is_empty():
         return true
@@ -6173,7 +6461,7 @@ func _tick_effect_array(items: Array[Dictionary], delta: float) -> void:
         if float(item.get("timer", 0.0)) <= 0.0:
             items.remove_at(idx)
 
-func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: int) -> Array[Vector2i]:
+func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: int, search_deadline_usec: int = 0) -> Array[Vector2i]:
     var found: Array[Vector2i] = []
     if limit <= 0:
         return found
@@ -6184,6 +6472,8 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
     var candidates: Array[Dictionary] = []
     var offsets: Array = _get_sorted_target_offsets(grid_range)
     for offset_variant in offsets:
+        if search_deadline_usec > 0 and Time.get_ticks_usec() >= search_deadline_usec:
+            break
         var offset: Vector2i = offset_variant
         var cell_origin_dist_sq := float(offset.x * offset.x + offset.y * offset.y) * BLOCK_SIZE * BLOCK_SIZE
         if cell_origin_dist_sq > offset_scan_sq:
@@ -6215,7 +6505,7 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
     return found
 
 func _get_attack_load_tier() -> int:
-    var load := hit_timers.size() + seismic_charge_bursts.size() + tetromino_bursts.size() + electric_arcs.size() + chain_arcs.size() + drone_beams.size() + drone_missiles.size() + drone_mines.size() + mining_drone_beams.size()
+    var load := hit_timers.size() + seismic_charge_bursts.size() + seismic_charge_tracers.size() + forward_attack_lines.size() + tetromino_bursts.size() + electric_arcs.size() + chain_arcs.size() + drone_beams.size() + drone_missiles.size() + drone_mines.size() + mining_drone_beams.size()
     if load >= ATTACK_LOAD_HARD_LIMIT:
         return 2
     if load >= ATTACK_LOAD_SOFT_LIMIT:

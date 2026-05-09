@@ -2498,10 +2498,10 @@ func _refresh_editor_cash_button_text() -> void:
     editor_add_cash_button.text = _trf("UPGRADE_EDITOR_ADD_CASH", [editor_add_cash_amount])
     if editor_add_xp_button != null:
         editor_add_xp_button.visible = Util.is_open_pit_game_active()
-        editor_add_xp_button.text = "Add %d XP (Editor)" % editor_add_xp_amount
+        editor_add_xp_button.text = _trf("UPGRADE_EDITOR_ADD_XP", [editor_add_xp_amount])
     if editor_add_core_button != null:
         editor_add_core_button.visible = Util.is_open_pit_game_active()
-        editor_add_core_button.text = "Add %d Root Keys (Editor)" % editor_add_core_amount
+        editor_add_core_button.text = _trf("UPGRADE_EDITOR_ADD_ROOT_KEYS", [editor_add_core_amount])
 
 func _on_editor_add_cash_pressed() -> void:
     if not OS.has_feature("editor"):

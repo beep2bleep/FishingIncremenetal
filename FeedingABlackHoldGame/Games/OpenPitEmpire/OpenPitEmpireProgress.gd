@@ -6,6 +6,7 @@ const PLANET_DATA_SCRIPT := preload("res://Games/OpenPitEmpire/OpenPitEmpirePlan
 const SAVE_PATH := "user://open_pit_empire_save_v3.json"
 const PLANET_SAVE_DIR := "user://open_pit_empire_planet_state_v3"
 const PLANET_META_PATH := "user://open_pit_empire_planet_state_v3/meta.save"
+const PLANET_FULL_PATH := "user://open_pit_empire_planet_state_v3/full.save"
 const LEGACY_PLANET_SAVE_PATH := "user://open_pit_empire_planet_state_v1.json"
 const MIN_START_DEPTH_LEVEL := BALANCE.MIN_START_DEPTH_LEVEL
 const MAX_DEPTH_LEVEL := BALANCE.MAX_DEPTH_LEVEL
@@ -172,8 +173,12 @@ static func save_data(data: Dictionary) -> void:
 
 static func reset_progress() -> Dictionary:
     var data := get_default_data()
-    save_data(data)
     clear_planet_state()
+    clear_runtime_planet_data()
+    data["planet_state"] = {}
+    data["remaining_layer_block_counts"] = _get_initial_layer_block_counts()
+    data["best_layer_clear_percents"] = _normalize_layer_clear_percents({})
+    save_data(data)
     return data
 
 static func regenerate_planet_state() -> Dictionary:
@@ -182,7 +187,11 @@ static func regenerate_planet_state() -> Dictionary:
     data["boss_defeated"] = false
     data["last_run_summary"] = "Open Pit Empire firewall regenerated in editor."
     data["last_run_breakdown"] = {}
+    data["attempt_history"] = []
     data["planet_state"] = {}
+    data["remaining_layer_block_counts"] = _get_initial_layer_block_counts()
+    data["best_layer_clear_percents"] = _normalize_layer_clear_percents({})
+    data["purchased_core_upgrades"] = _remove_clear_reward_core_upgrades(data.get("purchased_core_upgrades", []))
     save_data(data)
     clear_planet_state()
     clear_runtime_planet_data()
@@ -340,7 +349,11 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
     breakdown.erase("chat_log")
     data["last_run_breakdown"] = breakdown
     var attempt_history: Array = data.get("attempt_history", []).duplicate(true)
+    var next_flight_number := attempt_history.size() + 1
+    if not attempt_history.is_empty() and attempt_history[0] is Dictionary:
+        next_flight_number = max(next_flight_number, int(Dictionary(attempt_history[0]).get("flight", attempt_history.size())) + 1)
     attempt_history.push_front({
+        "flight": next_flight_number,
         "summary": str(results.get("summary_text", "Open Pit Empire sortie complete.")),
         "money": int(results.get("money", 0)),
         "xp": int(results.get("xp", 0)),
@@ -443,7 +456,11 @@ static func bank_partial_run_rewards(results: Dictionary) -> Dictionary:
         data["boss_defeated"] = true
     if money > 0 or xp > 0 or core_currency > 0 or cores_destroyed > 0:
         var attempt_history: Array = data.get("attempt_history", []).duplicate(true)
+        var next_flight_number := attempt_history.size() + 1
+        if not attempt_history.is_empty() and attempt_history[0] is Dictionary:
+            next_flight_number = max(next_flight_number, int(Dictionary(attempt_history[0]).get("flight", attempt_history.size())) + 1)
         attempt_history.push_front({
+            "flight": next_flight_number,
             "summary": str(results.get("summary_text", "Open Pit Empire rewards banked before defense.")),
             "money": money,
             "xp": xp,
@@ -648,6 +665,16 @@ static func _grant_clear_reward_upgrades(data: Dictionary, layer_clear_percents:
         if trimmed not in purchased:
             purchased.append(trimmed)
     data["purchased_core_upgrades"] = purchased
+
+static func _remove_clear_reward_core_upgrades(source: Variant) -> Array:
+    var purchased: Array = source.duplicate() if source is Array else []
+    var filtered: Array = []
+    for upgrade_id_variant in purchased:
+        var upgrade_id := str(upgrade_id_variant)
+        if upgrade_id in BALANCE.REWARD_CORE_UPGRADES:
+            continue
+        filtered.append(upgrade_id_variant)
+    return filtered
 
 static func _merge_layer_clear_percents(target: Dictionary, source: Dictionary) -> void:
     for layer_depth_variant in source.keys():
@@ -895,6 +922,10 @@ static func _thread_write_planet_state(state: Dictionary) -> bool:
 
 static func _read_planet_state_binary() -> Variant:
     var profile_started_msec := Time.get_ticks_msec()
+    var full_state: Variant = _read_planet_full_file()
+    if full_state is Dictionary:
+        _print_startup_profile("progress_read_planet_state_full", Time.get_ticks_msec() - profile_started_msec)
+        return full_state
     if not FileAccess.file_exists(PLANET_META_PATH):
         return null
     var meta_file := FileAccess.open(PLANET_META_PATH, FileAccess.READ)
@@ -925,6 +956,20 @@ static func _read_planet_state_binary() -> Variant:
     _print_startup_profile("progress_read_planet_state_binary sections=%d" % sections.size(), Time.get_ticks_msec() - profile_started_msec)
     return state
 
+static func _read_planet_full_file() -> Variant:
+    if not FileAccess.file_exists(PLANET_FULL_PATH):
+        return null
+    var file := FileAccess.open(PLANET_FULL_PATH, FileAccess.READ)
+    if file == null:
+        return null
+    var state: Variant = file.get_var()
+    file.close()
+    if not (state is Dictionary):
+        return null
+    if int(Dictionary(state).get("planet_layout_version", 0)) != BALANCE.PLANET_LAYOUT_VERSION:
+        return null
+    return state
+
 static func _print_startup_profile(label: String, elapsed_msec: int = -1) -> void:
     if not Util.is_open_pit_game_active():
         return
@@ -948,6 +993,7 @@ static func _write_planet_state_binary(state: Dictionary) -> bool:
     section_ids.sort()
     var dirty_section_ids: Array = payload.get("_dirty_section_ids", section_ids).duplicate()
     payload["section_ids"] = section_ids
+    var full_payload := payload.duplicate(true)
     payload.erase("sections")
     payload.erase("_dirty_section_ids")
     for section_id_variant in dirty_section_ids:
@@ -957,6 +1003,8 @@ static func _write_planet_state_binary(state: Dictionary) -> bool:
         var section_payload: Variant = sections.get(section_id, sections.get(str(section_id), []))
         if not _write_var_file_atomically(_planet_section_path(section_id), section_payload):
             return false
+    if not _write_var_file_atomically(PLANET_FULL_PATH, full_payload):
+        return false
     return _write_var_file_atomically(PLANET_META_PATH, payload)
 
 static func _clear_planet_state_binary() -> void:
@@ -966,6 +1014,8 @@ static func _clear_planet_state_binary() -> void:
             DirAccess.remove_absolute(section_path)
     if FileAccess.file_exists(PLANET_META_PATH):
         DirAccess.remove_absolute(PLANET_META_PATH)
+    if FileAccess.file_exists(PLANET_FULL_PATH):
+        DirAccess.remove_absolute(PLANET_FULL_PATH)
     if FileAccess.file_exists(LEGACY_PLANET_SAVE_PATH):
         DirAccess.remove_absolute(LEGACY_PLANET_SAVE_PATH)
 

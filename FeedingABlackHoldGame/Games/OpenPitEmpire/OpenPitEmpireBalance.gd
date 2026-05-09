@@ -54,14 +54,14 @@ const XP_CONNECTIONS := {
     "xp:ash_scriptures": ["xp:null_archive"],
 }
 const XP_UPGRADES := {
-    "packet_sniffer": {"base_cost": 24, "cost_mult": 1.82, "max_level": 6, "label": "Packet Sniffer", "summary": "+28% XP from mined blocks per level.", "icon": "X", "effects": {"xp_gain_mult": 0.28}},
-    "trace_scrubber": {"base_cost": 36, "cost_mult": 1.82, "max_level": 6, "label": "Trace Scrubber", "summary": "+7 seconds of run time per level.", "icon": "T", "effects": {"fuel_expand": 7.0}},
-    "heap_climber": {"base_cost": 42, "cost_mult": 1.86, "max_level": 6, "label": "Heap Climber", "summary": "+34 cargo capacity per level.", "icon": "H", "effects": {"cargo_expand": 34.0}},
-    "cache_warmers": {"base_cost": 34, "cost_mult": 1.82, "max_level": 6, "label": "Cache Warmers", "summary": "+30 move speed per level.", "icon": "C", "effects": {"speed": 30.0}},
+    "packet_sniffer": {"base_cost": 5, "cost_mult": 2.20, "max_level": 6, "label": "Packet Sniffer", "summary": "+28% XP and +4% global damage from mined blocks per level.", "icon": "X", "effects": {"xp_gain_mult": 0.28, "global_damage_mult": 0.04}},
+    "trace_scrubber": {"base_cost": 7, "cost_mult": 2.20, "max_level": 6, "label": "Trace Scrubber", "summary": "+7 seconds of run time per level.", "icon": "T", "effects": {"fuel_expand": 7.0}},
+    "heap_climber": {"base_cost": 10, "cost_mult": 2.20, "max_level": 6, "label": "Heap Climber", "summary": "+34 cargo capacity per level.", "icon": "H", "effects": {"cargo_expand": 34.0}},
+    "cache_warmers": {"base_cost": 12, "cost_mult": 2.20, "max_level": 6, "label": "Cache Warmers", "summary": "+30 move speed per level.", "icon": "C", "effects": {"speed": 30.0}},
     "deep_scan": {"base_cost": 54, "cost_mult": 1.94, "max_level": 7, "label": "Deep Scan", "summary": "+14 range and pickup radius per level.", "icon": "D", "effects": {"range": 14.0, "magnet": 14.0}},
-    "sidechannel": {"base_cost": 70, "cost_mult": 1.98, "max_level": 7, "label": "Sidechannel", "summary": "+4 payout per block per level.", "icon": "S", "effects": {"resource_flat": 4.0}},
-    "zero_day": {"base_cost": 120, "cost_mult": 2.08, "max_level": 6, "label": "Zero-Day", "summary": "+32% XP from mined blocks per level.", "icon": "Z", "effects": {"xp_gain_mult": 0.32}},
-    "crash_cartography": {"base_cost": 150, "cost_mult": 2.08, "max_level": 6, "label": "Crash Cartography", "summary": "+12% global damage per level.", "icon": "M", "effects": {"global_damage_mult": 0.12}},
+    "sidechannel": {"base_cost": 130, "cost_mult": 1.98, "max_level": 7, "label": "Sidechannel", "summary": "+4 payout per block per level.", "icon": "S", "effects": {"resource_flat": 4.0}},
+    "zero_day": {"base_cost": 240, "cost_mult": 2.08, "max_level": 6, "label": "Zero-Day", "summary": "+32% XP from mined blocks per level.", "icon": "Z", "effects": {"xp_gain_mult": 0.32}},
+    "crash_cartography": {"base_cost": 220, "cost_mult": 2.08, "max_level": 6, "label": "Crash Cartography", "summary": "+12% global damage per level.", "icon": "M", "effects": {"global_damage_mult": 0.12}},
     "kernel_rehearsal": {"base_cost": 180, "cost_mult": 2.12, "max_level": 6, "label": "Kernel Rehearsal", "summary": "+12% damage to daemon cores per level.", "icon": "K", "effects": {"core_damage_mult": 0.12}},
     "deep_manifest": {"base_cost": 260, "cost_mult": 2.10, "max_level": 8, "label": "Deep Manifest", "summary": "+6 payout and +5% global damage per level.", "icon": "M", "effects": {"resource_flat": 6.0, "global_damage_mult": 0.05}},
     "thermal_mapping": {"base_cost": 520, "cost_mult": 2.12, "max_level": 8, "label": "Thermal Mapping", "summary": "+16 range and +20 move speed per level.", "icon": "T", "effects": {"range": 16.0, "speed": 20.0}},
@@ -270,14 +270,14 @@ const UPGRADE_DEPENDENCY_OVERRIDES := {
 }
 
 const RAW_NODE_DATA := {
-    "laser_cutter": {"base_cost": 60, "cost_mult": 1.62, "max_level": 10, "phase": 1, "label": "Laser Cutter", "summary": "+4 laser damage per level.", "icon": "L", "effects": {"damage_flat": 4.0}},
-    "cargo_racks": {"base_cost": 65, "cost_mult": 1.60, "max_level": 9, "phase": 1, "label": "Cargo Racks", "summary": "+42 cargo capacity per level.", "icon": "C", "effects": {"cargo_expand": 42.0}},
-    "fuel_cells": {"base_cost": 60, "cost_mult": 1.62, "max_level": 8, "phase": 1, "label": "Fuel Cells", "summary": "+5 seconds of run time and +20 move speed per level.", "icon": "F", "effects": {"fuel_expand": 5.0, "speed": 20.0}},
-    "survey_drone": {"base_cost": 650, "cost_mult": 1.0, "max_level": 1, "phase": 1, "label": "Survey Drone", "summary": "Launch one autonomous mining drone. Drone fleet starts at 25% rig speed, 12.5% rig cargo, and 12.5% rig damage.", "icon": "D", "effects": {"mining_drone_add": 1, "mining_drone_tier": 1}},
+    "laser_cutter": {"base_cost": 8, "cost_mult": 2.40, "max_level": 10, "phase": 1, "label": "Laser Cutter", "summary": "+4 laser damage per level.", "icon": "L", "effects": {"damage_flat": 4.0}},
+    "cargo_racks": {"base_cost": 14, "cost_mult": 2.20, "max_level": 9, "phase": 1, "label": "Cargo Racks", "summary": "+42 cargo capacity per level.", "icon": "C", "effects": {"cargo_expand": 42.0}},
+    "fuel_cells": {"base_cost": 14, "cost_mult": 2.25, "max_level": 8, "phase": 1, "label": "Fuel Cells", "summary": "+5 seconds of run time and +20 move speed per level.", "icon": "F", "effects": {"fuel_expand": 5.0, "speed": 20.0}},
+    "survey_drone": {"base_cost": 1400, "cost_mult": 1.0, "max_level": 1, "phase": 1, "label": "Survey Drone", "summary": "Launch one autonomous mining drone. Drone fleet starts at 25% rig speed, 12.5% rig cargo, and 12.5% rig damage.", "icon": "D", "effects": {"mining_drone_add": 1, "mining_drone_tier": 1}},
     "auto_salvage": {"base_cost": 95, "cost_mult": 1.0, "max_level": 1, "phase": 3, "label": "Auto Salvage", "summary": "Automatically collects mined cash instantly with no world pickups.", "icon": "A", "effects": {"instant_collect": true}},
-    "minimap": {"base_cost": 85, "cost_mult": 1.0, "max_level": 1, "phase": 1, "label": "Minimap", "summary": "Unlock the pit minimap during runs.", "icon": "M", "effects": {"minimap_unlock": true}},
-    "rapid_cycle": {"base_cost": 70, "cost_mult": 1.64, "max_level": 9, "phase": 1, "label": "Rapid Cycle", "summary": "-0.05 attack interval per level.", "icon": "R", "effects": {"fire_rate": -0.05}},
-    "ore_appraisal": {"base_cost": 80, "cost_mult": 1.66, "max_level": 9, "phase": 1, "label": "Ore Appraisal", "summary": "+3 payout per mined block per level.", "icon": "$", "effects": {"resource_flat": 3.0}},
+    "minimap": {"base_cost": 260, "cost_mult": 1.0, "max_level": 1, "phase": 1, "label": "Minimap", "summary": "Unlock the pit minimap during runs and add +8 range and pickup radius.", "icon": "M", "effects": {"minimap_unlock": true, "range": 8.0, "magnet": 8.0}},
+    "rapid_cycle": {"base_cost": 28, "cost_mult": 2.30, "max_level": 9, "phase": 1, "label": "Rapid Cycle", "summary": "-0.05 attack interval per level.", "icon": "R", "effects": {"fire_rate": -0.05}},
+    "ore_appraisal": {"base_cost": 38, "cost_mult": 2.30, "max_level": 9, "phase": 1, "label": "Ore Appraisal", "summary": "+3 payout per mined block per level.", "icon": "$", "effects": {"resource_flat": 3.0}},
     "barrier_mesh": {"base_cost": 140, "cost_mult": 2.00, "max_level": 6, "phase": 2, "label": "Barrier Mesh", "summary": "+1 barrier per level. Buying any phase-2 node unlocks Empire Layer 2 runs after clearing the first layer.", "icon": "B", "effects": {"barrier": 1}},
     "shock_bits": {"base_cost": 190, "cost_mult": 1.92, "max_level": 8, "phase": 2, "label": "Exploit Bits", "summary": "+5 damage per level, unlock packet bursts, and extend exploit reach.", "icon": "X", "effects": {"damage_flat": 5.0, "electric_unlock": true, "electric_range": 1}},
     "breach_drones": {"base_cost": 260, "cost_mult": 1.96, "max_level": 8, "phase": 2, "label": "Breach Drones", "summary": "Unlock drones; each level adds a drone and improves drone damage.", "icon": "D", "effects": {"drone_unlock": true, "drone_add": 1, "drone_damage_up": 4.0}},
@@ -318,6 +318,12 @@ const LAYER_DATA := [
     {"name": "Kernel Vault", "value": 110, "health": 360.0, "color": Color(0.2, 0.14, 0.28, 1.0), "accent": Color(0.84, 0.5, 1.0, 1.0)},
     {"name": "Root Well", "value": 320, "health": 920.0, "color": Color(0.32, 0.06, 0.08, 1.0), "accent": Color(1.0, 0.36, 0.28, 1.0)},
 ]
+const PHASE_COST_MULTS := {
+    2: 1.75,
+    3: 1.90,
+    4: 2.10,
+    5: 2.25,
+}
 const UPGRADE_CONSOLIDATION_LEVELS := 3
 
 static func _should_consolidate_upgrade(raw: Dictionary) -> bool:
@@ -325,12 +331,15 @@ static func _should_consolidate_upgrade(raw: Dictionary) -> bool:
 
 static func _get_consolidated_base_cost(raw: Dictionary) -> int:
     var base_cost := float(raw.get("base_cost", 0))
+    var phase := int(raw.get("phase", 1))
+    var phase_cost_mult := float(PHASE_COST_MULTS.get(phase, 1.0))
     if not _should_consolidate_upgrade(raw):
-        return int(round(base_cost))
+        return int(round(base_cost * phase_cost_mult))
     var cost_mult := float(raw.get("cost_mult", 1.0))
     var combined_cost := 0.0
     for step in range(UPGRADE_CONSOLIDATION_LEVELS):
         combined_cost += base_cost * pow(cost_mult, step)
+    combined_cost *= phase_cost_mult
     return int(round(combined_cost))
 
 static func _get_consolidated_cost_mult(raw: Dictionary) -> float:

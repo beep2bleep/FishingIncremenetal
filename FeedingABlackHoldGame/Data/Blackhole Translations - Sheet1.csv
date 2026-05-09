@@ -1180,3 +1180,7 @@ Built with Godot.
 
 Thank you for playing."
 MINING_END_RUN,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run,End Run
+OPEN_PIT_XP_WALLET,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s
+OPEN_PIT_ROOT_KEYS_WALLET,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s
+UPGRADE_EDITOR_ADD_XP,Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor),Add %d XP (Editor)
+UPGRADE_EDITOR_ADD_ROOT_KEYS,Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor),Add %d Root Keys (Editor)

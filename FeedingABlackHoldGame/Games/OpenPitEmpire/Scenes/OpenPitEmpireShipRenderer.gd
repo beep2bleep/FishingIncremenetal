@@ -75,7 +75,8 @@ func _process(_delta: float) -> void:
     var drones_active := not scene_ref.drone_positions.is_empty() or not scene_ref.drone_beams.is_empty() or not scene_ref.drone_missiles.is_empty() or not scene_ref.drone_mines.is_empty() or not scene_ref.mining_drone_states.is_empty() or not scene_ref.mining_drone_beams.is_empty()
     var trail_active := not scene_ref.ship_trail.is_empty()
     var arcs_active := not scene_ref.electric_arcs.is_empty() or not scene_ref.chain_arcs.is_empty()
-    var seismic_active := not scene_ref.seismic_charge_bursts.is_empty()
+    var seismic_active := not scene_ref.seismic_charge_bursts.is_empty() or not scene_ref.seismic_charge_tracers.is_empty()
+    var forward_attack_active := not scene_ref.forward_attack_lines.is_empty()
     var side_projectiles_active := not scene_ref.side_projectiles.is_empty()
     var side_attackers_active := not scene_ref.side_attackers.is_empty()
     var fuel_ratio := clampf(scene_ref.time_left / maxf(float(scene_ref.runtime_stats.get("run_time", 30.0)), 0.001), 0.0, 1.0)
@@ -156,7 +157,7 @@ func _process(_delta: float) -> void:
     if auto_pickup != _last_auto_pickup:
         _last_auto_pickup = auto_pickup
         needs_redraw = true
-    if attack_visible or mega_active or overdrive_active or invuln_active or drones_active or trail_active or arcs_active or seismic_active or side_projectiles_active or side_attackers_active or forward_guide_active or extraction_progress > 0.0 or extraction_visible:
+    if attack_visible or mega_active or overdrive_active or invuln_active or drones_active or trail_active or arcs_active or seismic_active or forward_attack_active or side_projectiles_active or side_attackers_active or forward_guide_active or extraction_progress > 0.0 or extraction_visible:
         needs_redraw = true
     if needs_redraw:
         queue_redraw()
@@ -212,9 +213,11 @@ func _draw() -> void:
         _draw_mega_laser()
     if scene_ref.attack_visible_timer > 0.0 and scene_ref.last_attack_target != Vector2.ZERO:
         _draw_normal_laser(vp)
+    _draw_forward_attack_lines(vp)
 
     _draw_electric_arcs(vp)
     _draw_chain_arcs(vp)
+    _draw_seismic_charge_tracers()
     _draw_seismic_charge_bursts()
     var drones_start_us := scene_ref.perf_probe_begin()
     _draw_drones(vp)
@@ -303,6 +306,20 @@ func _draw_mega_laser() -> void:
     draw_line(Vector2.ZERO, beam_end, Color(2.0, 0.8, 0.2, 0.35), 20.0)
     draw_line(Vector2.ZERO, beam_end, Color(2.5, 1.2, 0.3, 1.0), 5.0)
     draw_line(Vector2.ZERO, beam_end, Color(3.0, 2.0, 1.0, 0.8), 2.0)
+
+func _draw_forward_attack_lines(vp: float) -> void:
+    for line_variant in scene_ref.forward_attack_lines:
+        var line: Dictionary = line_variant
+        var duration := maxf(float(line.get("duration", scene_ref.FORWARD_ATTACK_LINE_DURATION)), 0.001)
+        var alpha := clampf(float(line.get("timer", 0.0)) / duration, 0.0, 1.0)
+        var local_from := Vector2(line.get("from", scene_ref.ship_pos)) - scene_ref.ship_pos
+        var local_to := Vector2(line.get("to", scene_ref.ship_pos)) - scene_ref.ship_pos
+        var heavy := bool(line.get("heavy", false))
+        var glow_width := 12.0 + vp * 5.0 if heavy else 8.0 + vp * 3.0
+        var core_width := 3.2 + vp * 1.0 if heavy else 2.0 + vp * 0.7
+        draw_line(local_from, local_to, Color(2.0, 0.75, 0.18, alpha * 0.28), glow_width)
+        draw_line(local_from, local_to, Color(2.5, 1.15, 0.28, alpha), core_width)
+        draw_line(local_from, local_to, Color(3.0, 2.0, 0.9, alpha * 0.85), maxf(1.0, core_width * 0.45))
 
 func _draw_ship_trail(ship_line: Color) -> void:
     for trail in scene_ref.ship_trail:
@@ -531,6 +548,25 @@ func _draw_mining_drones(vp: float) -> void:
         if cargo_ratio > 0.0:
             draw_arc(Vector2.ZERO, 26.0, -PI * 0.5, -PI * 0.5 + TAU * cargo_ratio, 24, Color(0.8, 2.2, 1.25, 0.85), 4.0)
         draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _draw_seismic_charge_tracers() -> void:
+    for tracer_variant in scene_ref.seismic_charge_tracers:
+        var tracer: Dictionary = tracer_variant
+        var duration := maxf(float(tracer.get("duration", scene_ref.SEISMIC_CHARGE_TRAVEL_DURATION)), 0.001)
+        var timer := clampf(float(tracer.get("timer", 0.0)), 0.0, duration)
+        var progress := 1.0 - timer / duration
+        var from_local := Vector2(tracer.get("from", scene_ref.ship_pos)) - scene_ref.ship_pos
+        var to_local := Vector2(tracer.get("to", scene_ref.ship_pos)) - scene_ref.ship_pos
+        var head := from_local.lerp(to_local, progress)
+        var tail := from_local.lerp(to_local, maxf(0.0, progress - 0.34))
+        var alpha := sin(progress * PI)
+        var powered := bool(tracer.get("power_active", false))
+        var glow_color := Color(1.0, 0.58, 0.14, alpha * 0.34) if powered else Color(0.88, 0.94, 1.0, alpha * 0.26)
+        var core_color := Color(1.0, 0.9, 0.42, alpha) if powered else Color(0.92, 0.98, 1.0, alpha)
+        draw_line(from_local, head, Color(glow_color.r, glow_color.g, glow_color.b, glow_color.a * 0.35), 8.0 if powered else 5.0)
+        draw_line(tail, head, glow_color, 4.0 if powered else 3.0)
+        draw_line(tail, head, core_color, 1.8 if powered else 1.2)
+        draw_circle(head, 4.0 if powered else 2.8, core_color)
 
 func _draw_seismic_charge_bursts() -> void:
     for burst_variant in scene_ref.seismic_charge_bursts:
