@@ -143,17 +143,8 @@ static func load_data() -> Dictionary:
         _refresh_best_layer_clear_cache(data)
         should_write_save = true
         _print_startup_profile("progress_refresh_best_layer_clear_cache", Time.get_ticks_msec() - clear_started_msec)
-    var best_clear_before: Dictionary = {}
-    if data.get("best_layer_clear_percents", {}) is Dictionary:
-        best_clear_before = Dictionary(data.get("best_layer_clear_percents", {})).duplicate(true)
-    var purchased_core_upgrades_before: Array = []
-    if data.get("purchased_core_upgrades", []) is Array:
-        purchased_core_upgrades_before = data.get("purchased_core_upgrades", []).duplicate()
     var depth_started_msec := Time.get_ticks_msec()
     BALANCE.refresh_depth_unlocks(data)
-    _refresh_clear_reward_upgrades(data)
-    if best_clear_before != data.get("best_layer_clear_percents", {}) or purchased_core_upgrades_before != data.get("purchased_core_upgrades", []):
-        should_write_save = true
     _print_startup_profile("progress_refresh_unlocks", Time.get_ticks_msec() - depth_started_msec)
     var sanitize_started_msec := Time.get_ticks_msec()
     _cached_data = _sanitize_main_data(data)
@@ -643,14 +634,7 @@ static func _sanitize_main_data(data: Dictionary) -> Dictionary:
     sanitized["remaining_layer_block_counts"] = _normalize_layer_block_counts(sanitized.get("remaining_layer_block_counts", {}))
     sanitized["best_layer_clear_percents"] = _normalize_layer_clear_percents(sanitized.get("best_layer_clear_percents", {}))
     BALANCE.refresh_depth_unlocks(sanitized)
-    _refresh_clear_reward_upgrades(sanitized)
     return sanitized
-
-static func _refresh_clear_reward_upgrades(data: Dictionary) -> void:
-    if not _has_complete_remaining_layer_count_cache(data):
-        _refresh_remaining_layer_count_cache(data)
-    _refresh_best_layer_clear_cache(data)
-    _grant_clear_reward_upgrades(data, _normalize_layer_clear_percents(data.get("best_layer_clear_percents", {})))
 
 static func _refresh_best_layer_clear_cache(data: Dictionary) -> void:
     data["best_layer_clear_percents"] = _collect_best_layer_clear_percents(data)
@@ -898,7 +882,6 @@ static func _save_remaining_layer_counts(layer_counts: Dictionary) -> void:
     var best_layer_clear_percents: Dictionary = _normalize_layer_clear_percents(data.get("best_layer_clear_percents", {}))
     _merge_layer_clear_percents(best_layer_clear_percents, layer_clear_percents)
     data["best_layer_clear_percents"] = best_layer_clear_percents
-    _grant_clear_reward_upgrades(data, layer_clear_percents)
     _cached_data = _sanitize_main_data(data)
     _cache_loaded = true
     _write_json(SAVE_PATH, _cached_data)

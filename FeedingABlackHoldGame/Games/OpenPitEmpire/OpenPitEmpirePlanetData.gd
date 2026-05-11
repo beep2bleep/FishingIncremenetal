@@ -18,6 +18,7 @@ const PIT_LOWER_HALF_WIDTH: float = 205.0
 const PIT_ROOT_HALF_WIDTH: float = 162.0
 const PIT_CORE_NECK_HALF_WIDTH: float = 76.0
 const PIT_WALL_THICKNESS: int = 8
+const SPAWN_OFFSET_ABOVE_PIT_CELLS: int = 11
 const ELECTRIC_CHANCE: float = 0.02
 const GOLD_CHANCE: float = 0.02
 const GOLD_RESOURCE_MULT: float = 5.0
@@ -236,7 +237,7 @@ func get_depth_level_for_pos(pos: Vector2i, max_depth_level: int) -> int:
     return clampi(1 + int(floor(_get_depth_ratio(pos) * float(max_depth_level))), 1, max_depth_level)
 
 func get_spawn_world_position(target_grid: Vector2i = Vector2i.ZERO) -> Vector2:
-    var spawn_y := PIT_TOP_Y - 8
+    var spawn_y := PIT_TOP_Y - SPAWN_OFFSET_ABOVE_PIT_CELLS
     var spawn_x := clampi(target_grid.x, _get_left_wall(PIT_TOP_Y) + PIT_WALL_THICKNESS + 2, _get_right_wall(PIT_TOP_Y) - PIT_WALL_THICKNESS - 2)
     return grid_to_world(Vector2i(spawn_x, spawn_y))
 
@@ -638,7 +639,7 @@ func is_in_dead_core_zone(pos: Vector2i) -> bool:
             return true
     return false
 
-func damage_block(pos: Vector2i, damage: float, indirect: bool = false, free_planet_mode: bool = false, suppress_minimap_erase: bool = false) -> Dictionary:
+func damage_block(pos: Vector2i, damage: float, indirect: bool = false, free_planet_mode: bool = false, suppress_minimap_erase: bool = false, allow_final_core_exposure: bool = true) -> Dictionary:
     if not blocks.has(pos):
         return {"destroyed": false, "type": -1, "resource": 0.0}
     var block: Dictionary = blocks[pos]
@@ -662,7 +663,8 @@ func damage_block(pos: Vector2i, damage: float, indirect: bool = false, free_pla
         if block_type != BlockType.THORN:
             zone_destroyed_blocks[block_zone] = int(zone_destroyed_blocks.get(block_zone, 0)) + 1
             zone_current_blocks[block_zone] = maxi(int(zone_current_blocks.get(block_zone, 0)) - 1, 0)
-        _check_final_core_exposure(pos)
+        if allow_final_core_exposure:
+            _check_final_core_exposure(pos)
         return {"destroyed": true, "type": block_type, "resource": block_resource, "layer_depth": int(block.get("layer_depth", 1))}
     blocks[pos] = block
     _mark_section_dirty(pos)
@@ -825,6 +827,43 @@ func regenerate_final_core_arena() -> Array[Vector2i]:
         _queue_edge_updates(restored_positions)
         _mark_dirty_positions(restored_positions)
     return restored_positions
+
+func reset_final_core_attempt() -> Array[Vector2i]:
+    var final_core: Variant = _get_core_by_id(FINAL_CORE_ID)
+    if final_core == null or not bool(final_core.get("alive", false)):
+        return []
+    var current_hp_ratio := get_core_hp_ratio(final_core)
+    if final_core_phase <= 0 and current_hp_ratio >= 0.999:
+        return []
+    final_core_phase = 0
+    final_boss_active = false
+    _final_core_exposed_emitted = false
+    _set_core_shared_hp_to_authored_cap(final_core)
+    var changed_positions := regenerate_final_core_arena()
+    var center: Vector2i = final_core.get("center", Vector2i.ZERO)
+    var core_size: int = int(final_core.get("size", 3))
+    _mark_core_section_dirty(center, core_size)
+    return changed_positions
+
+func _set_core_shared_hp_to_authored_cap(core: Dictionary) -> void:
+    var core_id: int = int(core.get("id", -1))
+    var max_hp := get_authored_core_hp_cap(core_id)
+    var center: Vector2i = core.get("center", Vector2i.ZERO)
+    var core_size: int = int(core.get("size", 3))
+    var half: int = core_size / 2
+    if max_hp <= 0.0:
+        for dx in range(-half, half + core_size % 2):
+            for dy in range(-half, half + core_size % 2):
+                var pos := Vector2i(center.x + dx, center.y + dy)
+                if blocks.has(pos) and int(blocks[pos].get("core_id", -1)) == core_id:
+                    max_hp = maxf(max_hp, float(blocks[pos].get("max_hp", 0.0)))
+    max_hp = maxf(max_hp, 1.0)
+    for dx in range(-half, half + core_size % 2):
+        for dy in range(-half, half + core_size % 2):
+            var pos := Vector2i(center.x + dx, center.y + dy)
+            if blocks.has(pos) and int(blocks[pos].get("core_id", -1)) == core_id:
+                blocks[pos]["hp"] = max_hp
+                blocks[pos]["max_hp"] = max_hp
 
 func electric_chain(origin: Vector2i, damage: float, chain_range: int, chain_depth: int, current_depth: int = 0, free_planet_mode: bool = false, visited: Dictionary = {}, remaining_budget: int = ELECTRIC_CHAIN_MAX_TOTAL_RESULTS) -> Array:
     var results: Array = []

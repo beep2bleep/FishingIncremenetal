@@ -166,7 +166,7 @@ const SIDE_ATTACKER_TRACK_SPEED := 4.5
 const SIDE_ATTACKER_SHOT_INTERVAL := 1.9
 const SIDE_ATTACKER_VERTICAL_SPACING := 14
 const SIDE_ATTACKER_VERTICAL_SWAY := 18.0
-const FINAL_CORE_ARENA_EJECT_EXTRA_CELLS := 12
+const FINAL_CORE_ARENA_EJECT_EXTRA_CELLS := 24
 const FINAL_CORE_DEBRIS_INTERVAL_MULT := 1.35
 const FINAL_CORE_DEBRIS_COUNT_CAP := 2
 const FINAL_CORE_CROSS_LASER_SPEED_MULT := 0.72
@@ -209,6 +209,7 @@ const CORE_HAZARD_KNOCKBACK := 500.0
 const DEFAULT_STARTING_BARRIERS := 1
 const SHIELD_HIT_INVULN_TIME := 1.0
 const SHIELD_HIT_RECOVERY_TIME := 1.0
+const BARRIER_HIT_NUMBER_PULSE_TIME := 0.3
 const SHIELD_HIT_ACCEL_START_SCALE := 0.33333334
 const SHIELD_HIT_BOUNCE_DISTANCE := SHIP_RADIUS * 6.0
 const SHIP_RENDER_ROTATION_STEP_DEGREES := 5.0
@@ -216,6 +217,7 @@ const AUTOPILOT_RETARGET_INTERVAL := 0.25
 const AUTOPILOT_MINING_SCAN_CELLS := 18
 const AUTOPILOT_STAGING_CLEARANCE_CELLS := 2
 const AUTOPILOT_TARGET_REACHED_DISTANCE := 26.0
+const AUTOPILOT_CLOSE_IN_AFTER_MISS_DISTANCE := BLOCK_SIZE * 0.55
 const AUTOPILOT_FUEL_RETURN_RATIO := 0.15
 const AUTOPILOT_FAST_FORWARD_STEPS_PER_FRAME := 12
 const AUTOPILOT_FAST_FORWARD_SPEED_CYCLE := [12, 50, 1, 5]
@@ -224,6 +226,10 @@ const DEFENSE_RETRY_HP_RATIO := 0.5
 const AUTOPILOT_EDGE_AVOID_SCAN_CELLS := 4
 const AUTOPILOT_EDGE_AVOID_RADIUS := BLOCK_SIZE * 4.0
 const AUTOPILOT_EDGE_AVOID_WEIGHT := 1.8
+const AUTOPILOT_BLOCK_AVOID_SCAN_CELLS := 3
+const AUTOPILOT_BLOCK_AVOID_RADIUS := BLOCK_SIZE * 2.35
+const AUTOPILOT_BLOCK_AVOID_WEIGHT := 4.4
+const AUTOPILOT_BLOCK_AVOID_PATH_WEIGHT := 2.4
 const AUTOPILOT_PICKUP_SCAN_RADIUS := BLOCK_SIZE * 10.0
 const AUTOPILOT_PICKUP_OVERFLOW_COUNT := 8
 const AUTOPILOT_CORE_AVOID_MARGIN_CELLS := 4
@@ -310,6 +316,7 @@ var xp_earned_this_run := 0
 var barriers_left := 0
 var shield_invuln_timer := 0.0
 var shield_recovery_timer := 0.0
+var barrier_hit_number_pulse_timer := 0.0
 var boss_defeated := false
 var current_combo := 0
 var combo_timer := 0.0
@@ -372,6 +379,7 @@ var mining_drone_money := 0
 var mining_drone_xp := 0
 var mining_drone_cargo_units_banked := 0
 var mining_drone_cargo_units_pending := 0
+var player_engaged_cores_this_run: Dictionary = {}
 var seismic_charge_timer := 0.0
 var seismic_charge_bursts: Array[Dictionary] = []
 var seismic_charge_tracers: Array[Dictionary] = []
@@ -406,12 +414,15 @@ var autopilot_aim_dir := Vector2.ZERO
 var autopilot_retarget_timer := 0.0
 var autopilot_status := ""
 var autopilot_return_reason := ""
+var autopilot_no_valid_targets := false
+var mining_drone_no_valid_targets := false
 var autopilot_fast_forward_enabled := false
 var autopilot_fast_forward_steps_per_frame := 1
 var autopilot_no_render_enabled := false
 var autopilot_sortie_mode := AUTOPILOT_MODE_CENTER
 var autopilot_stuck_timer := 0.0
 var autopilot_last_mined_count := 0
+var autopilot_last_attack_had_target := true
 var autopilot_last_target := Vector2.ZERO
 var autopilot_top_sweep_anchor_grid := Vector2i(999999, 999999)
 var autopilot_dig_deep_anchor_grid := Vector2i(999999, 999999)
@@ -696,7 +707,6 @@ var editor_debug_unlock_chord_enabled := false
 var current_flight_number := 1
 var pause_menu
 var summary_graph
-var summary_mined_picture
 var summary_money_history_chart
 var summary_xp_history_chart
 var summary_node_capture_chart
@@ -773,12 +783,13 @@ func get_validation_run_summary() -> Dictionary:
         "boss_defeated": boss_defeated,
         "persistent_clear": _get_persistent_clear_percent(),
         "money_touched": total_money_touched,
-        "cargo_units": total_cargo_units,
+        "cargo_units": cargo_units,
         "cargo_capacity": cargo_capacity,
-        "cargo_fill_ratio": 0.0 if cargo_capacity <= 0 else float(total_cargo_units) / float(cargo_capacity),
-        "end_cargo_units": total_cargo_units,
+        "cargo_fill_ratio": 0.0 if cargo_capacity <= 0 else float(cargo_units) / float(cargo_capacity),
+        "end_cargo_units": cargo_units,
         "end_cargo_capacity": cargo_capacity,
-        "end_cargo_fill_ratio": 0.0 if cargo_capacity <= 0 else float(total_cargo_units) / float(cargo_capacity),
+        "end_cargo_fill_ratio": 0.0 if cargo_capacity <= 0 else float(cargo_units) / float(cargo_capacity),
+        "captured_units": total_cargo_units,
         "mining_drone_count": mining_drone_states.size(),
         "mining_drone_tier": int(runtime_stats.get("mining_drone_tier", 0)),
         "mining_drone_cargo_capacity": _get_mining_drone_cargo_capacity() if int(runtime_stats.get("mining_drone_count", 0)) > 0 else 0,
@@ -1341,7 +1352,7 @@ func _build_ui() -> void:
     summary_overlay.add_child(summary_center)
 
     var summary_panel := PanelContainer.new()
-    summary_panel.custom_minimum_size = Vector2(1380.0, 930.0)
+    summary_panel.custom_minimum_size = Vector2(1380.0, 1010.0)
     summary_panel.add_theme_stylebox_override("panel", panel_style.duplicate(true))
     summary_center.add_child(summary_panel)
 
@@ -1396,29 +1407,23 @@ func _build_ui() -> void:
     summary_bottom_visual_row.add_theme_constant_override("separation", 12)
     summary_vbox.add_child(summary_bottom_visual_row)
 
-    summary_node_capture_chart = SUMMARY_VISUAL_SCRIPT.new()
-    summary_node_capture_chart.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.NODE_CAPTURE
-    summary_node_capture_chart.custom_minimum_size = Vector2(435.0, 230.0)
-    summary_node_capture_chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    summary_bottom_visual_row.add_child(summary_node_capture_chart)
-
     summary_before_map = SUMMARY_VISUAL_SCRIPT.new()
     summary_before_map.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.MAP_BEFORE
-    summary_before_map.custom_minimum_size = Vector2(435.0, 230.0)
+    summary_before_map.custom_minimum_size = Vector2(435.0, 460.0)
     summary_before_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     summary_bottom_visual_row.add_child(summary_before_map)
 
     summary_after_map = SUMMARY_VISUAL_SCRIPT.new()
     summary_after_map.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.MAP_AFTER
-    summary_after_map.custom_minimum_size = Vector2(435.0, 230.0)
+    summary_after_map.custom_minimum_size = Vector2(435.0, 460.0)
     summary_after_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     summary_bottom_visual_row.add_child(summary_after_map)
 
-    summary_mined_picture = SUMMARY_VISUAL_SCRIPT.new()
-    summary_mined_picture.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.MINED_MAP
-    summary_mined_picture.custom_minimum_size = Vector2(0.0, 150.0)
-    summary_mined_picture.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    summary_vbox.add_child(summary_mined_picture)
+    summary_node_capture_chart = SUMMARY_VISUAL_SCRIPT.new()
+    summary_node_capture_chart.mode = SUMMARY_VISUAL_SCRIPT.VisualMode.NODE_CAPTURE
+    summary_node_capture_chart.custom_minimum_size = Vector2(435.0, 460.0)
+    summary_node_capture_chart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    summary_bottom_visual_row.add_child(summary_node_capture_chart)
 
     summary_status_label = Label.new()
     summary_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1597,6 +1602,7 @@ func _start_run() -> void:
     barriers_left = DEFAULT_STARTING_BARRIERS + int(runtime_stats.get("barriers", 0)) + (1 if _has_core_upgrade("barrier_regen") else 0)
     shield_invuln_timer = 0.0
     shield_recovery_timer = 0.0
+    barrier_hit_number_pulse_timer = 0.0
     boss_defeated = bool(persistent_data.get("boss_defeated", false))
     _build_planet()
     _reset_shared_autopilot_mine_target()
@@ -1660,6 +1666,7 @@ func _start_run() -> void:
     mining_drone_xp = 0
     mining_drone_cargo_units_banked = 0
     mining_drone_cargo_units_pending = 0
+    player_engaged_cores_this_run.clear()
     seismic_charge_bursts.clear()
     seismic_charge_tracers.clear()
     seismic_charge_timer = 0.0
@@ -1671,6 +1678,7 @@ func _start_run() -> void:
     combo_milestones_hit.clear()
     autopilot_enabled = false
     autopilot_returning = false
+    _invalidate_autopilot_target_exhaustion()
     autopilot_target = ship_pos
     autopilot_aim_dir = Vector2.ZERO
     autopilot_retarget_timer = 0.0
@@ -1678,6 +1686,7 @@ func _start_run() -> void:
     autopilot_return_reason = ""
     autopilot_stuck_timer = 0.0
     autopilot_last_mined_count = nodes_mined
+    autopilot_last_attack_had_target = true
     autopilot_last_target = ship_pos
     autopilot_top_sweep_anchor_grid = Vector2i(999999, 999999)
     autopilot_dig_deep_anchor_grid = Vector2i(999999, 999999)
@@ -1773,6 +1782,7 @@ func _build_planet() -> void:
     var restored_core_positions: Array = planet_data.restore_alive_core_influence_blocks()
     blocks = planet_data.blocks
     exposed_edges = planet_data.exposed_edges
+    _invalidate_autopilot_target_exhaustion()
     if not restored_core_positions.is_empty() and planet_renderer != null:
         planet_renderer.mark_dirty(true, "planet_generated")
     total_planet_blocks = max(int(planet_data.initial_block_count), planet_data.get_total_blocks())
@@ -1836,7 +1846,7 @@ func _build_core_defense_spec(core: Dictionary) -> Dictionary:
         "intro_text": "%s: clear the countermeasure or the command node restores to 50%%." % defense_name,
     }
     if is_red_sky:
-        spec["target_wave"] = 4 + difficulty
+        spec["target_wave"] = 4 if difficulty <= 1 else 7
         spec["disable_wave_upgrades"] = true
         spec["fixed_meta_bonuses"] = {
             "base_health": 260.0 + float(difficulty) * 35.0,
@@ -1898,6 +1908,7 @@ func _complete_core_defense_for_validation(core: Dictionary) -> void:
     persistent_data.erase("open_pit_defense_pending")
     blocks = planet_data.blocks
     exposed_edges = planet_data.exposed_edges
+    _invalidate_autopilot_target_exhaustion()
     damaged_cells.clear()
     if planet_renderer != null and not autopilot_no_render_enabled:
         planet_renderer.mark_dirty(true, "validation_defense_skip")
@@ -1975,6 +1986,7 @@ func _consume_open_pit_defense_result() -> void:
     persistent_data.erase("open_pit_defense_pending")
     blocks = planet_data.blocks
     exposed_edges = planet_data.exposed_edges
+    _invalidate_autopilot_target_exhaustion()
     damaged_cells.clear()
     if planet_renderer != null:
         planet_renderer.mark_dirty(true, "defense_result")
@@ -1982,6 +1994,7 @@ func _consume_open_pit_defense_result() -> void:
     _refresh_hud()
 
 func _handle_core_destroyed_result(result: Dictionary) -> void:
+    _invalidate_autopilot_target_exhaustion()
     _frame_destroyed_blocks += _estimate_frame_destroyed_block_count(result)
     persistent_destroyed_count = max(0, total_planet_blocks - planet_data.get_total_blocks())
     nodes_mined += 1
@@ -2139,6 +2152,7 @@ func _update_timers(delta: float) -> void:
     attack_visible_timer = maxf(0.0, attack_visible_timer - delta)
     shield_invuln_timer = maxf(0.0, shield_invuln_timer - delta)
     shield_recovery_timer = maxf(0.0, shield_recovery_timer - delta)
+    barrier_hit_number_pulse_timer = maxf(0.0, barrier_hit_number_pulse_timer - delta)
     for key in active_powerup_timers.keys():
         active_powerup_timers[key] = maxf(0.0, float(active_powerup_timers.get(key, 0.0)) - delta)
     _tick_timer_dict(hit_timers, delta)
@@ -2553,6 +2567,10 @@ func _get_autopilot_direction(delta: float) -> Vector2:
             autopilot_status = "mining"
             if _is_validation_core_attack_rush():
                 return Vector2.ZERO
+            var hold_block_avoidance := _get_autopilot_block_avoidance()
+            if hold_block_avoidance.length_squared() > 0.001:
+                autopilot_status = "mining, clearing hull"
+                return hold_block_avoidance
             var hold_core_avoidance := _get_autopilot_core_avoidance()
             if hold_core_avoidance.length_squared() > 0.001:
                 autopilot_status = "avoiding locked core"
@@ -2567,6 +2585,11 @@ func _get_autopilot_direction(delta: float) -> Vector2:
                 autopilot_status = "mining, dodging"
                 autopilot_retarget_timer = 0.0
                 return hold_hazard_avoidance
+            if not autopilot_last_attack_had_target and autopilot_aim_dir.length_squared() > 0.001:
+                var close_in_dir := autopilot_aim_dir.normalized()
+                autopilot_target = ship_pos + close_in_dir * AUTOPILOT_CLOSE_IN_AFTER_MISS_DISTANCE
+                autopilot_status = "mining, closing"
+                return close_in_dir
         return Vector2.ZERO
     var direction := offset.normalized()
     if not autopilot_returning and not _is_validation_core_attack_rush():
@@ -2575,6 +2598,11 @@ func _get_autopilot_direction(delta: float) -> Vector2:
             direction = (direction + hazard_avoidance * AUTOPILOT_HAZARD_AVOID_WEIGHT).normalized()
             autopilot_status = "dodging"
             autopilot_retarget_timer = minf(autopilot_retarget_timer, AUTOPILOT_RETARGET_INTERVAL * 0.5)
+        var block_avoidance := _get_autopilot_block_avoidance(direction)
+        if block_avoidance.length_squared() > 0.001:
+            direction = (direction + block_avoidance * AUTOPILOT_BLOCK_AVOID_WEIGHT).normalized()
+            if autopilot_status == "mining" or autopilot_status.begins_with("seeking"):
+                autopilot_status = "%s, avoiding blocks" % autopilot_status
         var core_avoidance := _get_autopilot_core_avoidance()
         if core_avoidance.length_squared() > 0.001:
             direction = (direction + core_avoidance * AUTOPILOT_CORE_AVOID_WEIGHT).normalized()
@@ -2604,6 +2632,8 @@ func _choose_autopilot_sortie_mode() -> void:
 func _get_autopilot_return_reason() -> String:
     if autopilot_returning:
         return autopilot_return_reason if autopilot_return_reason != "" else "already returning"
+    if autopilot_no_valid_targets:
+        return "no valid targets"
     if barriers_left <= 0 and not editor_debug_unlimited_barrier:
         return "no barriers"
     var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
@@ -2616,6 +2646,10 @@ func _get_autopilot_return_reason() -> String:
     return ""
 
 func _find_autopilot_mining_target() -> Vector2:
+    if autopilot_no_valid_targets:
+        autopilot_aim_dir = Vector2.ZERO
+        autopilot_status = "returning: no valid targets"
+        return spawn_position
     var search_deadline_usec := Time.get_ticks_usec() + AUTOPILOT_TARGET_SEARCH_BUDGET_USEC
     _update_autopilot_stuck_mode()
     if _is_autopilot_core_attack_mode():
@@ -2634,6 +2668,14 @@ func _find_autopilot_mining_target() -> Vector2:
             return Vector2(pickup_target.get("position", ship_pos))
 
     var attack_radius := _get_effective_attack_radius()
+    var autopilot_attack_radius := maxf(attack_radius, get_forward_shot_range()) if is_forward_shot_active() else attack_radius
+    if is_forward_shot_active():
+        var powered_targets := _find_nearest_attack_targets(autopilot_attack_radius * 0.95, 1, search_deadline_usec)
+        if not powered_targets.is_empty():
+            var powered_world := Vector2(powered_targets[0].get("world", ship_pos))
+            autopilot_aim_dir = (powered_world - ship_pos).normalized()
+            autopilot_status = "mining, powered"
+            return ship_pos
     var nearby_targets := _find_nearest_attack_targets(attack_radius * 0.9, 1, search_deadline_usec)
     if not nearby_targets.is_empty():
         var nearby_world := Vector2(nearby_targets[0].get("world", ship_pos))
@@ -2695,13 +2737,11 @@ func _find_autopilot_mining_target() -> Vector2:
                 if Time.get_ticks_usec() >= search_deadline_usec:
                     break
                 var staging_grid: Vector2i = block_grid + neighbor * AUTOPILOT_STAGING_CLEARANCE_CELLS
-                if not is_grid_empty(staging_grid):
-                    continue
-                if _is_in_locked_core_avoidance_zone(staging_grid, true):
+                if not _is_autopilot_staging_grid_safe(staging_grid):
                     continue
                 var staging_world := grid_to_world(staging_grid)
                 var target_dist := staging_world.distance_to(block_world)
-                if target_dist > attack_radius * 0.9:
+                if target_dist > autopilot_attack_radius * 0.9:
                     continue
                 var score := dist_sq - inward_alignment * BLOCK_SIZE * BLOCK_SIZE * 8.0
                 score += lane_penalty + depth_penalty
@@ -2743,6 +2783,9 @@ func _find_autopilot_mining_target() -> Vector2:
             best_world = Vector2(shared_target.get("world", best_world))
             best_aim_dir = (Vector2(shared_target.get("target_world", best_world)) - ship_pos).normalized()
             status_text = "seeking shared"
+    if not found_local_target and status_text != "seeking shared" and not _has_any_valid_autopilot_target(true):
+        _set_autopilot_no_valid_targets("no valid targets")
+        return spawn_position
     autopilot_aim_dir = best_aim_dir
     autopilot_status = status_text
     autopilot_last_target = best_world
@@ -2921,38 +2964,50 @@ func _get_autopilot_staging_world_for_core(core: Dictionary) -> Vector2:
     var core_center := Vector2i(int(core.center.x), int(core.center.y))
     var core_size := int(core.get("size", 3))
     var staging_cells := maxi(AUTOPILOT_STAGING_CLEARANCE_CELLS, core_size / 2 + 2)
-    var best_world := grid_to_world(core_center)
+    var best_world := Vector2.INF
+    var fallback_world := Vector2.INF
     var best_score := INF
+    var fallback_score := INF
     for neighbor in CARDINAL_NEIGHBORS:
         var staging_grid: Vector2i = core_center + neighbor * staging_cells
-        if not is_grid_empty(staging_grid):
-            continue
-        if _is_in_locked_core_avoidance_zone(staging_grid, true):
+        if not _is_autopilot_staging_grid_empty_enough(staging_grid):
             continue
         var staging_world := grid_to_world(staging_grid)
         var score := ship_pos.distance_squared_to(staging_world)
+        if score < fallback_score:
+            fallback_score = score
+            fallback_world = staging_world
+        if not _is_autopilot_staging_grid_safe(staging_grid):
+            continue
         if score < best_score:
             best_score = score
             best_world = staging_world
-    return best_world
+    return best_world if best_world != Vector2.INF else (fallback_world if fallback_world != Vector2.INF else ship_pos)
 
 func _get_autopilot_staging_world_for_core_corridor(anchor_grid: Vector2i, core_center: Vector2i) -> Vector2:
     var anchor_world := grid_to_world(anchor_grid)
-    var best_world := anchor_world
+    var best_world := Vector2.INF
+    var fallback_world := Vector2.INF
     var best_score := INF
+    var fallback_score := INF
     var core_direction := Vector2(float(core_center.x - anchor_grid.x), float(core_center.y - anchor_grid.y)).normalized()
     for neighbor in CARDINAL_NEIGHBORS:
         var staging_grid: Vector2i = anchor_grid + neighbor * AUTOPILOT_STAGING_CLEARANCE_CELLS
-        if not is_grid_empty(staging_grid):
+        if not _is_autopilot_staging_grid_empty_enough(staging_grid):
             continue
         var staging_world := grid_to_world(staging_grid)
         var approach_direction := (anchor_world - staging_world).normalized()
         var score := ship_pos.distance_squared_to(staging_world)
         score -= approach_direction.dot(core_direction) * BLOCK_SIZE * BLOCK_SIZE * 4.0
+        if score < fallback_score:
+            fallback_score = score
+            fallback_world = staging_world
+        if not _is_autopilot_staging_grid_safe(staging_grid):
+            continue
         if score < best_score:
             best_score = score
             best_world = staging_world
-    return best_world
+    return best_world if best_world != Vector2.INF else (fallback_world if fallback_world != Vector2.INF else ship_pos)
 
 func _get_autopilot_desired_lane_x(y: int) -> int:
     if planet_data == null:
@@ -3156,21 +3211,25 @@ func _find_autopilot_any_anchor_target(search_deadline_usec: int = 0) -> Diction
     return {"grid": best_grid, "world": _get_autopilot_staging_world_for_anchor(best_grid), "target_world": grid_to_world(best_grid)}
 
 func _get_autopilot_staging_world_for_anchor(anchor_grid: Vector2i) -> Vector2:
-    var anchor_world := grid_to_world(anchor_grid)
-    var best_world := anchor_world
+    var best_world := Vector2.INF
+    var fallback_world := Vector2.INF
     var best_score := INF
+    var fallback_score := INF
     for neighbor in CARDINAL_NEIGHBORS:
         var staging_grid: Vector2i = anchor_grid + neighbor * AUTOPILOT_STAGING_CLEARANCE_CELLS
-        if not is_grid_empty(staging_grid):
-            continue
-        if _is_in_locked_core_avoidance_zone(staging_grid, true):
+        if not _is_autopilot_staging_grid_empty_enough(staging_grid):
             continue
         var staging_world := grid_to_world(staging_grid)
         var score := ship_pos.distance_squared_to(staging_world)
+        if score < fallback_score:
+            fallback_score = score
+            fallback_world = staging_world
+        if not _is_autopilot_staging_grid_safe(staging_grid):
+            continue
         if score < best_score:
             best_score = score
             best_world = staging_world
-    return best_world
+    return best_world if best_world != Vector2.INF else (fallback_world if fallback_world != Vector2.INF else ship_pos)
 
 func _find_autopilot_pickup_target(search_deadline_usec: int = 0) -> Dictionary:
     if bool(runtime_stats.get("instant_collect", false)) or pickups.is_empty():
@@ -3260,27 +3319,60 @@ func _is_mineable_non_core_block(grid: Vector2i) -> bool:
         return false
     return int(block.get("core_id", -1)) < 0 and _is_autopilot_attackable_block(block, grid)
 
+func _is_drone_damage_source(source: String) -> bool:
+    return source == "mining_drone" or source == "support_drone"
+
+func _is_core_player_engaged_this_run(core_id: int) -> bool:
+    return bool(player_engaged_cores_this_run.get(str(core_id), false))
+
+func _mark_core_player_engaged(core_id: int) -> void:
+    if core_id >= 0:
+        player_engaged_cores_this_run[str(core_id)] = true
+
+func _is_drone_mineable_block(grid: Vector2i) -> bool:
+    var block: Dictionary = blocks.get(grid, {})
+    if block.is_empty():
+        return false
+    if not _is_autopilot_attackable_block(block, grid):
+        return false
+    var core_id := int(block.get("core_id", -1))
+    if core_id < 0:
+        return true
+    return _is_core_player_engaged_this_run(core_id)
+
 func _reset_shared_autopilot_mine_target() -> void:
-    _shared_autopilot_mine_target_keys = blocks.keys()
+    _shared_autopilot_mine_target_keys = _get_shuffled_shared_autopilot_mine_target_keys()
     _shared_autopilot_mine_target_cursor = 0
     _shared_autopilot_mine_target = Vector2i(999999, 999999)
     _advance_shared_autopilot_mine_target()
 
-func _advance_shared_autopilot_mine_target() -> Vector2i:
+func _get_shuffled_shared_autopilot_mine_target_keys() -> Array:
+    var keys := blocks.keys()
+    if keys.size() <= 1:
+        return keys
+    for idx in range(keys.size() - 1, 0, -1):
+        var swap_idx := rng.randi_range(0, idx)
+        var temp = keys[idx]
+        keys[idx] = keys[swap_idx]
+        keys[swap_idx] = temp
+    return keys
+
+func _advance_shared_autopilot_mine_target(excluded: Vector2i = Vector2i(999999, 999999)) -> Vector2i:
     _shared_autopilot_mine_target = Vector2i(999999, 999999)
     if _shared_autopilot_mine_target_keys.is_empty():
-        _shared_autopilot_mine_target_keys = blocks.keys()
+        _shared_autopilot_mine_target_keys = _get_shuffled_shared_autopilot_mine_target_keys()
         _shared_autopilot_mine_target_cursor = 0
-    var target := _scan_shared_autopilot_mine_target_keys()
+    var target := _scan_shared_autopilot_mine_target_keys(excluded)
     if target.x < 999999:
         return target
-    if _shared_autopilot_mine_target_keys.size() != blocks.size():
-        _shared_autopilot_mine_target_keys = blocks.keys()
-        _shared_autopilot_mine_target_cursor = 0
-        target = _scan_shared_autopilot_mine_target_keys()
+    _shared_autopilot_mine_target_keys = _get_shuffled_shared_autopilot_mine_target_keys()
+    _shared_autopilot_mine_target_cursor = 0
+    target = _scan_shared_autopilot_mine_target_keys(excluded)
+    if target.x < 999999:
+        return target
     return target
 
-func _scan_shared_autopilot_mine_target_keys() -> Vector2i:
+func _scan_shared_autopilot_mine_target_keys(excluded: Vector2i = Vector2i(999999, 999999)) -> Vector2i:
     var key_count := _shared_autopilot_mine_target_keys.size()
     if key_count <= 0:
         return Vector2i(999999, 999999)
@@ -3288,6 +3380,8 @@ func _scan_shared_autopilot_mine_target_keys() -> Vector2i:
     for offset in range(key_count):
         var idx := (_shared_autopilot_mine_target_cursor + offset) % key_count
         var candidate: Vector2i = _shared_autopilot_mine_target_keys[idx]
+        if candidate == excluded:
+            continue
         if _is_mineable_non_core_block(candidate):
             _shared_autopilot_mine_target = candidate
             _shared_autopilot_mine_target_cursor = (idx + 1) % key_count
@@ -3295,9 +3389,10 @@ func _scan_shared_autopilot_mine_target_keys() -> Vector2i:
     return Vector2i(999999, 999999)
 
 func _get_shared_autopilot_mine_target() -> Vector2i:
-    if _is_mineable_non_core_block(_shared_autopilot_mine_target):
-        return _shared_autopilot_mine_target
-    return _advance_shared_autopilot_mine_target()
+    var assigned := _shared_autopilot_mine_target
+    if not _is_mineable_non_core_block(assigned):
+        assigned = _advance_shared_autopilot_mine_target()
+    return assigned
 
 func _get_shared_autopilot_target_record() -> Dictionary:
     var target_grid := _get_shared_autopilot_mine_target()
@@ -3309,6 +3404,56 @@ func _get_shared_autopilot_target_record() -> Dictionary:
         "world": _get_autopilot_staging_world_for_anchor(target_grid),
         "target_world": target_world,
     }
+
+func _invalidate_autopilot_target_exhaustion() -> void:
+    autopilot_no_valid_targets = false
+    mining_drone_no_valid_targets = false
+    _mining_drone_target_cache.clear()
+    _shared_autopilot_mine_target = Vector2i(999999, 999999)
+
+func _set_autopilot_no_valid_targets(reason: String) -> void:
+    if autopilot_no_valid_targets and mining_drone_no_valid_targets:
+        return
+    autopilot_no_valid_targets = true
+    mining_drone_no_valid_targets = true
+    autopilot_returning = true
+    autopilot_return_reason = reason
+    autopilot_target = spawn_position
+    autopilot_aim_dir = Vector2.ZERO
+    autopilot_status = "returning: %s" % reason
+    _send_mining_drones_home()
+
+func _set_mining_drone_no_valid_targets() -> void:
+    if mining_drone_no_valid_targets:
+        return
+    mining_drone_no_valid_targets = true
+    _send_mining_drones_home()
+
+func _send_mining_drones_home() -> void:
+    for idx in range(mining_drone_states.size()):
+        var drone: Dictionary = mining_drone_states[idx]
+        drone["state"] = "returning"
+        drone["target"] = spawn_position
+        drone["target_grid"] = Vector2i(999999, 999999)
+        mining_drone_states[idx] = drone
+
+func _has_any_valid_autopilot_target(include_cores: bool) -> bool:
+    for key_variant in blocks.keys():
+        var grid := Vector2i(key_variant)
+        var block: Dictionary = blocks.get(grid, {})
+        if block.is_empty():
+            continue
+        if not include_cores and int(block.get("core_id", -1)) >= 0:
+            continue
+        if _is_autopilot_attackable_block(block, grid):
+            return true
+    return false
+
+func _has_any_valid_drone_target() -> bool:
+    for key_variant in blocks.keys():
+        if _is_drone_mineable_block(Vector2i(key_variant)):
+            return true
+    return false
 
 func _is_autopilot_attackable_block(block: Dictionary, grid: Vector2i = Vector2i(999999, 999999)) -> bool:
     if bool(block.get("unbreakable", false)):
@@ -3324,6 +3469,54 @@ func _is_autopilot_avoidance_block(block: Dictionary, grid: Vector2i = Vector2i(
     if block.is_empty():
         return false
     return not _is_autopilot_attackable_block(block, grid)
+
+func _is_autopilot_staging_grid_empty_enough(grid: Vector2i) -> bool:
+    if not is_grid_empty(grid):
+        return false
+    if _is_in_locked_core_avoidance_zone(grid, true):
+        return false
+    return true
+
+func _is_autopilot_staging_grid_safe(grid: Vector2i) -> bool:
+    if not _is_autopilot_staging_grid_empty_enough(grid):
+        return false
+    for dx in range(-1, 2):
+        for dy in range(-1, 2):
+            if dx == 0 and dy == 0:
+                continue
+            var check := Vector2i(grid.x + dx, grid.y + dy)
+            if not is_grid_empty(check):
+                return false
+    return true
+
+func _get_autopilot_block_avoidance(move_direction: Vector2 = Vector2.ZERO) -> Vector2:
+    var my_grid := world_to_grid(ship_pos)
+    var push := Vector2.ZERO
+    var radius_sq := AUTOPILOT_BLOCK_AVOID_RADIUS * AUTOPILOT_BLOCK_AVOID_RADIUS
+    var path_end := ship_pos
+    if move_direction.length_squared() > 0.001:
+        path_end += move_direction.normalized() * AUTOPILOT_BLOCK_AVOID_RADIUS
+    for x in range(my_grid.x - AUTOPILOT_BLOCK_AVOID_SCAN_CELLS, my_grid.x + AUTOPILOT_BLOCK_AVOID_SCAN_CELLS + 1):
+        for y in range(my_grid.y - AUTOPILOT_BLOCK_AVOID_SCAN_CELLS, my_grid.y + AUTOPILOT_BLOCK_AVOID_SCAN_CELLS + 1):
+            var check := Vector2i(x, y)
+            if is_grid_empty(check):
+                continue
+            var block_world := grid_to_world(check)
+            var away := ship_pos - block_world
+            var dist_sq := away.length_squared()
+            if dist_sq > radius_sq:
+                continue
+            if dist_sq > 0.001:
+                var strength := 1.0 - clampf(sqrt(dist_sq) / AUTOPILOT_BLOCK_AVOID_RADIUS, 0.0, 1.0)
+                push += away.normalized() * strength
+            if move_direction.length_squared() > 0.001:
+                var path_point := _nearest_point_on_segment(ship_pos, path_end, block_world)
+                var path_away := path_point - block_world
+                var path_dist_sq := path_away.length_squared()
+                if path_dist_sq > 0.001 and path_dist_sq <= radius_sq:
+                    var path_strength := 1.0 - clampf(sqrt(path_dist_sq) / AUTOPILOT_BLOCK_AVOID_RADIUS, 0.0, 1.0)
+                    push += path_away.normalized() * path_strength * AUTOPILOT_BLOCK_AVOID_PATH_WEIGHT
+    return push.normalized() if push.length_squared() > 0.001 else Vector2.ZERO
 
 func _get_autopilot_edge_avoidance() -> Vector2:
     var my_grid := world_to_grid(ship_pos)
@@ -3673,10 +3866,14 @@ func _auto_fire_laser() -> void:
     var max_targets := _get_effective_multi_target_count()
     var candidates := _find_nearest_attack_targets(range_world, max_targets, Time.get_ticks_usec() + ATTACK_TARGET_SEARCH_BUDGET_USEC)
     if candidates.is_empty():
+        if autopilot_enabled and not autopilot_returning:
+            autopilot_last_attack_had_target = false
         last_attack_target = Vector2.ZERO
         multi_targets.clear()
         perf_probe_end("auto_fire_laser", perf_start_us)
         return
+    if autopilot_enabled and not autopilot_returning:
+        autopilot_last_attack_had_target = true
 
     last_attack_is_charged = false
     last_attack_is_crit = false
@@ -3949,6 +4146,11 @@ func _update_mining_drones(delta: float) -> void:
 func _update_single_mining_drone(drone: Dictionary, delta: float) -> void:
     _update_mining_drone_frenzy_contact(drone, delta)
     var state := str(drone.get("state", "seeking"))
+    if mining_drone_no_valid_targets and state != "returning":
+        drone["state"] = "returning"
+        drone["target"] = spawn_position
+        drone["target_grid"] = Vector2i(999999, 999999)
+        state = "returning"
     if state == "waiting":
         drone["wait_timer"] = maxf(0.0, float(drone.get("wait_timer", 0.0)) - delta)
         drone["position"] = Vector2(drone.get("position", spawn_position)).lerp(spawn_position, clampf(delta * 3.0, 0.0, 1.0))
@@ -3971,7 +4173,7 @@ func _update_single_mining_drone(drone: Dictionary, delta: float) -> void:
         drone["target"] = spawn_position
         return
     var target_grid := Vector2i(drone.get("target_grid", Vector2i(999999, 999999)))
-    if target_grid.x >= 999999 or not _is_mineable_non_core_block(target_grid):
+    if target_grid.x >= 999999 or not _is_drone_mineable_block(target_grid):
         target_grid = _find_mining_drone_target(Vector2(drone.get("position", spawn_position)))
         if target_grid.x >= 999999:
             target_grid = _find_mining_drone_target(ship_pos)
@@ -3979,18 +4181,27 @@ func _update_single_mining_drone(drone: Dictionary, delta: float) -> void:
             target_grid = _find_mining_drone_target(spawn_position)
         drone["target_grid"] = target_grid
         if target_grid.x >= 999999:
+            drone["state"] = "returning"
+            drone["target"] = spawn_position
             _move_mining_drone_toward(drone, spawn_position, delta)
             return
         drone["target"] = _get_mining_drone_staging_world(Vector2(drone.get("position", spawn_position)), target_grid)
     var target_world := Vector2(drone.get("target", grid_to_world(target_grid)))
+    var drone_pos := Vector2(drone.get("position", spawn_position))
+    var immediate_target_grid := _find_mining_drone_path_blocker(drone_pos, target_world, target_grid)
+    if immediate_target_grid.x < 999999:
+        target_world = _get_mining_drone_staging_world(drone_pos, immediate_target_grid)
     _move_mining_drone_toward(drone, target_world, delta)
     var attack_range := BLOCK_SIZE * 1.75
-    var drone_pos := Vector2(drone.get("position", spawn_position))
-    if drone_pos.distance_to(grid_to_world(target_grid)) <= attack_range:
+    drone_pos = Vector2(drone.get("position", spawn_position))
+    if immediate_target_grid.x >= 999999:
+        immediate_target_grid = _find_mining_drone_path_blocker(drone_pos, Vector2(drone.get("target", grid_to_world(target_grid))), target_grid)
+    var fire_target_grid := immediate_target_grid if immediate_target_grid.x < 999999 else target_grid
+    if drone_pos.distance_to(grid_to_world(fire_target_grid)) <= attack_range:
         drone["attack_timer"] = float(drone.get("attack_timer", 0.0)) + delta
         if float(drone.get("attack_timer", 0.0)) >= _get_mining_drone_attack_interval():
             drone["attack_timer"] = 0.0
-            _fire_mining_drone(drone, target_grid)
+            _fire_mining_drone(drone, fire_target_grid, immediate_target_grid.x >= 999999)
 
 func _move_mining_drone_toward(drone: Dictionary, target: Vector2, delta: float) -> void:
     var pos := Vector2(drone.get("position", spawn_position))
@@ -4006,9 +4217,43 @@ func _move_mining_drone_toward(drone: Dictionary, target: Vector2, delta: float)
     drone["position"] = pos
     drone["velocity"] = velocity
 
-func _fire_mining_drone(drone: Dictionary, target_grid: Vector2i) -> void:
-    if not _is_mineable_non_core_block(target_grid):
-        drone["target_grid"] = Vector2i(999999, 999999)
+func _find_mining_drone_path_blocker(from_world: Vector2, to_world: Vector2, final_target_grid: Vector2i) -> Vector2i:
+    var distance := from_world.distance_to(to_world)
+    var origin_grid := world_to_grid(from_world)
+    if _is_drone_mineable_block(origin_grid):
+        return origin_grid
+    if distance <= BLOCK_SIZE * 0.5:
+        return Vector2i(999999, 999999)
+    var steps := clampi(int(ceil(distance / (BLOCK_SIZE * 0.4))), 1, 80)
+    var forward := (to_world - from_world).normalized()
+    var lateral := forward.orthogonal()
+    var sample_offsets := [
+        Vector2.ZERO,
+        lateral * BLOCK_SIZE * 0.42,
+        -lateral * BLOCK_SIZE * 0.42,
+        lateral * BLOCK_SIZE * 0.75,
+        -lateral * BLOCK_SIZE * 0.75,
+    ]
+    var seen := {}
+    for step in range(1, steps + 1):
+        var center_sample := from_world.lerp(to_world, float(step) / float(steps))
+        for offset in sample_offsets:
+            var check := world_to_grid(center_sample + Vector2(offset))
+            if check == origin_grid:
+                continue
+            if seen.has(check):
+                continue
+            seen[check] = true
+            if check == final_target_grid:
+                return check if _is_drone_mineable_block(check) else Vector2i(999999, 999999)
+            if _is_drone_mineable_block(check):
+                return check
+    return Vector2i(999999, 999999)
+
+func _fire_mining_drone(drone: Dictionary, target_grid: Vector2i, clear_current_target_on_destroy: bool = true) -> void:
+    if not _is_drone_mineable_block(target_grid):
+        if clear_current_target_on_destroy:
+            drone["target_grid"] = Vector2i(999999, 999999)
         return
     var drone_pos := Vector2(drone.get("position", spawn_position))
     var targets: Array[Vector2i] = [target_grid]
@@ -4020,7 +4265,7 @@ func _fire_mining_drone(drone: Dictionary, target_grid: Vector2i) -> void:
     var destroyed_current_target := false
     for target in targets:
         var fire_grid := Vector2i(target)
-        if not _is_mineable_non_core_block(fire_grid):
+        if not _is_drone_mineable_block(fire_grid):
             continue
         var block_before: Dictionary = blocks.get(fire_grid, {})
         var result := _damage_block(fire_grid, _get_mining_drone_damage_for(fire_grid, drone), true, "mining_drone")
@@ -4032,7 +4277,7 @@ func _fire_mining_drone(drone: Dictionary, target_grid: Vector2i) -> void:
             _collect_mining_drone_reward(drone, block_before)
             if _is_mining_drone_full(drone):
                 break
-    if destroyed_current_target:
+    if destroyed_current_target and clear_current_target_on_destroy:
         drone["target_grid"] = Vector2i(999999, 999999)
     if _is_mining_drone_full(drone):
         drone["state"] = "returning"
@@ -4050,7 +4295,7 @@ func _find_mining_drone_secondary_target(primary_grid: Vector2i, drone_pos: Vect
             var check := primary_grid + Vector2i(dx, dy)
             if check == primary_grid or existing_targets.has(check):
                 continue
-            if not _is_mineable_non_core_block(check):
+            if not _is_drone_mineable_block(check):
                 continue
             var score := drone_pos.distance_squared_to(grid_to_world(check)) + float(abs(dx) + abs(dy)) * BLOCK_SIZE * BLOCK_SIZE
             if score < best_score:
@@ -4198,6 +4443,8 @@ func _get_mining_drone_damage_for(pos: Vector2i, drone: Dictionary = {}) -> floa
     return damage
 
 func _find_mining_drone_target(origin: Vector2) -> Vector2i:
+    if mining_drone_no_valid_targets:
+        return Vector2i(999999, 999999)
     var search_deadline_usec := Time.get_ticks_usec() + MINING_DRONE_TARGET_SEARCH_BUDGET_USEC
     var cache_frame := Engine.get_process_frames()
     if _mining_drone_target_cache_frame != cache_frame:
@@ -4207,16 +4454,24 @@ func _find_mining_drone_target(origin: Vector2) -> Vector2i:
     var cache_key := "%d,%d" % [origin_grid.x, origin_grid.y]
     if _mining_drone_target_cache.has(cache_key):
         return Vector2i(_mining_drone_target_cache.get(cache_key, Vector2i(999999, 999999)))
-    var targets := _find_targets_near_world(origin, MINING_DRONE_TARGET_SCAN_RADIUS, 1, search_deadline_usec)
+    var targets := _find_targets_near_world(origin, MINING_DRONE_TARGET_SCAN_RADIUS, 1, search_deadline_usec, true)
     if not targets.is_empty():
         var near_target := Vector2i(targets[0])
         _mining_drone_target_cache[cache_key] = near_target
         return near_target
     var fallback_radius := float(MINING_DRONE_FALLBACK_SCAN_CELLS) * BLOCK_SIZE
-    targets = _find_targets_near_world(origin, fallback_radius, 1, search_deadline_usec)
-    var best := _get_shared_autopilot_mine_target() if targets.is_empty() else Vector2i(targets[0])
-    _mining_drone_target_cache[cache_key] = best
-    return best
+    targets = _find_targets_near_world(origin, fallback_radius, 1, search_deadline_usec, true)
+    if not targets.is_empty():
+        var fallback_target := Vector2i(targets[0])
+        _mining_drone_target_cache[cache_key] = fallback_target
+        return fallback_target
+    var shared_target := _get_shared_autopilot_mine_target()
+    if shared_target.x >= 999999:
+        if not _has_any_valid_autopilot_target(true):
+            _set_autopilot_no_valid_targets("no valid targets")
+        elif not _has_any_valid_drone_target():
+            _set_mining_drone_no_valid_targets()
+    return shared_target
 
 func _get_mining_drone_staging_world(origin: Vector2, target_grid: Vector2i) -> Vector2:
     var target_world := grid_to_world(target_grid)
@@ -4249,7 +4504,22 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         perf_probe_end("damage_block", perf_start_us)
         return {}
     var block_before: Dictionary = blocks.get(pos, {})
-    var result: Dictionary = planet_data.damage_block(pos, damage, false, _core_unlocks_center(), source == "mining_drone")
+    var source_is_drone := _is_drone_damage_source(source)
+    var target_core_id := int(block_before.get("core_id", -1))
+    var target_is_core := int(block_before.get("type", BlockType.NORMAL)) == BlockType.CORE and target_core_id >= 0
+    if target_is_core:
+        if source_is_drone and not _is_core_player_engaged_this_run(target_core_id):
+            perf_probe_end("damage_block", perf_start_us)
+            return {
+                "destroyed": false,
+                "type": BlockType.CORE,
+                "resource": 0.0,
+                "core_id": target_core_id,
+                "drone_waiting_for_player": true,
+            }
+        if not source_is_drone:
+            _mark_core_player_engaged(target_core_id)
+    var result: Dictionary = planet_data.damage_block(pos, damage, false, _core_unlocks_center(), source_is_drone, not source_is_drone)
     if breach_chat != null and int(result.get("type", BlockType.NORMAL)) == BlockType.CORE:
         var engaged_core_id := int(result.get("core_id", int(block_before.get("core_id", -1))))
         if engaged_core_id >= 0:
@@ -4782,6 +5052,20 @@ func _get_power_ratio() -> float:
 func is_forward_shot_active() -> bool:
     return _is_power_active() or float(active_powerup_timers.get("seismic_charge", 0.0)) > 0.0
 
+func should_draw_forward_shot_guide() -> bool:
+    return is_forward_shot_active()
+
+func get_forward_shot_guide_alpha_mult() -> float:
+    if not is_forward_shot_active():
+        return 0.0
+    return 0.2 if _has_forward_shot_target() else 1.0
+
+func _has_forward_shot_target() -> bool:
+    if not is_forward_shot_active():
+        return false
+    var target_grid := _find_forward_lane_target(_get_forward_direction(), get_forward_shot_range())
+    return target_grid.x < 999999
+
 func _get_effective_attack_radius() -> float:
     var base_range := float(runtime_stats.get("attack_radius", 96.0))
     var screen_radius := _get_smallest_viewport_world_radius()
@@ -4966,7 +5250,7 @@ func _find_forward_lane_blocker(forward: Vector2, distance_world: float, lateral
                     return grid
     return Vector2i(999999, 999999)
 
-func _apply_splash_damage(center_grid: Vector2i, radius_cells: int, base_damage: float, falloff: float = 0.3, max_hp_ratio: float = -1.0) -> Dictionary:
+func _apply_splash_damage(center_grid: Vector2i, radius_cells: int, base_damage: float, falloff: float = 0.3, max_hp_ratio: float = -1.0, source: String = "") -> Dictionary:
     if radius_cells <= 0 or planet_data == null:
         return {"visuals": false, "destroyed": false}
     var visuals_dirty := false
@@ -4988,7 +5272,7 @@ func _apply_splash_damage(center_grid: Vector2i, radius_cells: int, base_damage:
         _mark_hit_flash(pos)
         visuals_dirty = true
         damaged_cells.append(pos)
-        var result := _damage_block(pos, base_damage * damage_scale, true)
+        var result := _damage_block(pos, base_damage * damage_scale, true, source)
         if bool(result.get("destroyed", false)):
             destroyed_any = true
     if not damaged_cells.is_empty():
@@ -5074,12 +5358,25 @@ func _update_seismic_charge(delta: float) -> void:
     _queue_seismic_charge_tracer(target_grid, power_active_now)
     perf_probe_end("update_seismic_charge", perf_start_us)
 
-func _roll_drone_damage() -> float:
+func _roll_drone_damage(target_grid: Vector2i = Vector2i(999999, 999999)) -> float:
     var damage := float(runtime_stats.get("drone_damage", 8.0))
+    if target_grid.x < 999999 and not is_grid_empty(target_grid):
+        var block: Dictionary = blocks.get(target_grid, {})
+        var layer_depth := int(block.get("layer_depth", 1))
+        damage *= float(runtime_stats.get("global_damage_mult", 1.0))
+        damage *= BALANCE.get_damage_multiplier_for_depth(runtime_stats, layer_depth)
+        if bool(runtime_stats.get("resonance_enabled", false)):
+            var depth_ratio := float(layer_depth) / float(max(1, current_depth_level))
+            damage += damage * depth_ratio * float(runtime_stats.get("resonance_bonus", 1.0))
+        if int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
+            damage *= float(runtime_stats.get("core_damage_mult", 1.0))
+            damage *= float(runtime_stats.get("core_breaker_mult", 1.0))
+            if _has_core_upgrade("core_focus"):
+                damage *= 1.5
     if bool(runtime_stats.get("drone_sync_unlock", false)):
         damage += _get_effective_attack_damage() * float(runtime_stats.get("drone_sync_ratio", 0.15))
     if rng.randf() < float(runtime_stats.get("drone_crit_chance", 0.0)):
-        damage += float(runtime_stats.get("drone_damage", 8.0)) * float(runtime_stats.get("drone_crit_bonus", 2.0))
+        damage += damage * float(runtime_stats.get("drone_crit_bonus", 2.0))
     return damage * _editor_debug_damage_mult
 
 func _acquire_drone_target(origin: Vector2, range_world: float) -> Vector2i:
@@ -5127,7 +5424,7 @@ func _update_drone_missiles(delta: float) -> void:
         var pass_through_grid := _get_projectile_live_hit_grid(next_missile_pos)
         if target_live and missile_pos.distance_to(target_world) <= BLOCK_SIZE * 0.55:
             var impact_grid := target_grid
-            var splash := _apply_splash_damage(impact_grid, DRONE_MISSILE_SPLASH_RADIUS_CELLS, float(missile.get("damage", 0.0)), 0.45)
+            var splash := _apply_splash_damage(impact_grid, DRONE_MISSILE_SPLASH_RADIUS_CELLS, float(missile.get("damage", 0.0)), 0.45, -1.0, "support_drone")
             if bool(splash.get("visuals", false)):
                 _sync_planet_runtime_views(true, false)
             if bool(splash.get("destroyed", false)):
@@ -5136,7 +5433,7 @@ func _update_drone_missiles(delta: float) -> void:
             drone_missiles.remove_at(idx)
             continue
         if not target_live and pass_through_grid.x < 999999:
-            var pass_splash := _apply_splash_damage(pass_through_grid, DRONE_MISSILE_SPLASH_RADIUS_CELLS, float(missile.get("damage", 0.0)), 0.45)
+            var pass_splash := _apply_splash_damage(pass_through_grid, DRONE_MISSILE_SPLASH_RADIUS_CELLS, float(missile.get("damage", 0.0)), 0.45, -1.0, "support_drone")
             if bool(pass_splash.get("visuals", false)):
                 _sync_planet_runtime_views(true, false)
             if bool(pass_splash.get("destroyed", false)):
@@ -5153,7 +5450,7 @@ func _update_drone_mines(delta: float) -> void:
         mine["life"] = float(mine.get("life", DRONE_MINE_LIFETIME)) - delta
         if float(mine.get("life", 0.0)) <= 0.0:
             var explode_grid := world_to_grid(Vector2(mine.get("position", Vector2.ZERO)))
-            var splash := _apply_splash_damage(explode_grid, DRONE_MINE_SPLASH_RADIUS_CELLS, float(mine.get("damage", 0.0)), 0.55)
+            var splash := _apply_splash_damage(explode_grid, DRONE_MINE_SPLASH_RADIUS_CELLS, float(mine.get("damage", 0.0)), 0.55, -1.0, "support_drone")
             if bool(splash.get("visuals", false)):
                 _sync_planet_runtime_views(true, false)
             if bool(splash.get("destroyed", false)):
@@ -5172,7 +5469,7 @@ func _update_drone_mines(delta: float) -> void:
         var pass_through_grid := _get_projectile_live_hit_grid(next_mine_pos)
         if target_live and mine_pos.distance_to(target_world) <= BLOCK_SIZE * 0.75:
             var contact_grid := target_grid
-            var contact := _apply_splash_damage(contact_grid, DRONE_MINE_SPLASH_RADIUS_CELLS, float(mine.get("damage", 0.0)), 0.55)
+            var contact := _apply_splash_damage(contact_grid, DRONE_MINE_SPLASH_RADIUS_CELLS, float(mine.get("damage", 0.0)), 0.55, -1.0, "support_drone")
             if bool(contact.get("visuals", false)):
                 _sync_planet_runtime_views(true, false)
             if bool(contact.get("destroyed", false)):
@@ -5181,7 +5478,7 @@ func _update_drone_mines(delta: float) -> void:
             drone_mines.remove_at(idx)
             continue
         if not target_live and pass_through_grid.x < 999999:
-            var pass_contact := _apply_splash_damage(pass_through_grid, DRONE_MINE_SPLASH_RADIUS_CELLS, float(mine.get("damage", 0.0)), 0.55)
+            var pass_contact := _apply_splash_damage(pass_through_grid, DRONE_MINE_SPLASH_RADIUS_CELLS, float(mine.get("damage", 0.0)), 0.55, -1.0, "support_drone")
             if bool(pass_contact.get("visuals", false)):
                 _sync_planet_runtime_views(true, false)
             if bool(pass_contact.get("destroyed", false)):
@@ -5278,7 +5575,7 @@ func _fire_drone(drone_idx: int) -> void:
                 "velocity": (mine_world - drone_world).normalized() * DRONE_MINE_SPEED,
                 "target_grid": mine_target,
                 "target_world": mine_world,
-                "damage": _roll_drone_damage() * DRONE_MINE_DAMAGE_MULT,
+                "damage": _roll_drone_damage(mine_target) * DRONE_MINE_DAMAGE_MULT,
                 "life": DRONE_MINE_LIFETIME,
                 "blink": rng.randf() * TAU,
             })
@@ -5293,23 +5590,23 @@ func _fire_drone(drone_idx: int) -> void:
                 "velocity": (missile_world - drone_world).normalized() * DRONE_MISSILE_SPEED,
                 "target_grid": missile_target,
                 "target_world": missile_world,
-                "damage": _roll_drone_damage() * DRONE_MISSILE_DAMAGE_MULT,
+                "damage": _roll_drone_damage(missile_target) * DRONE_MISSILE_DAMAGE_MULT,
                 "life": DRONE_MISSILE_LIFETIME,
             })
             return
     var drone_pierce := int(runtime_stats.get("drone_pierce", 1))
     if attack_load >= 2:
         drone_pierce = 1
-    var target_cells := _find_targets_near_world(drone_world, DRONE_RANGE, drone_pierce)
+    var target_cells := _find_targets_near_world(drone_world, DRONE_RANGE, drone_pierce, 0, true)
     if target_cells.is_empty():
         return
     var first_world := grid_to_world(target_cells[0])
     drone_targets[drone_idx] = first_world
     for target_grid in target_cells:
-        if int(blocks.get(target_grid, {}).get("core_id", -1)) >= 0:
+        if not _is_drone_mineable_block(target_grid):
             continue
-        var damage := _roll_drone_damage()
-        var result := _damage_block(target_grid, damage)
+        var damage := _roll_drone_damage(target_grid)
+        var result := _damage_block(target_grid, damage, false, "support_drone")
         if bool(result.get("destroyed", false)):
             _on_combo_hit()
         if drone_beams.size() < MAX_ACTIVE_DRONE_BEAMS:
@@ -5350,6 +5647,34 @@ func _sync_breach_chat_persistent_state() -> void:
     persistent_data["chat_active_thread_target_count"] = breach_chat.get_persistent_active_thread_target_count()
     persistent_data["chat_event_signatures"] = breach_chat.get_persistent_event_signatures()
 
+func _reset_unfinished_final_core_attempt_for_save() -> void:
+    if planet_data == null or boss_defeated:
+        return
+    var final_core: Dictionary = _get_final_core_data()
+    if final_core.is_empty() or not bool(final_core.get("alive", false)):
+        return
+    var final_phase: int = int(planet_data.final_core_phase)
+    var final_hp_ratio: float = float(planet_data.get_core_hp_ratio(final_core))
+    if final_phase <= 0 and final_hp_ratio >= 0.999:
+        return
+    var restored_positions: Array[Vector2i] = planet_data.reset_final_core_attempt()
+    final_core_phase_handled = -1
+    root_cross_lasers.erase(int(PLANET_DATA_SCRIPT.FINAL_CORE_ID))
+    ghost_debris_timers.erase("final_core")
+    side_projectiles.clear()
+    side_attackers.clear()
+    blocks = planet_data.blocks
+    exposed_edges = planet_data.exposed_edges
+    damaged_cells.clear()
+    if planet_renderer != null and not autopilot_no_render_enabled:
+        if restored_positions.is_empty():
+            planet_renderer.mark_dirty(true, "final_core_attempt_reset")
+        else:
+            planet_renderer.queue_fill_updates(restored_positions)
+    if minimap != null and not autopilot_no_render_enabled:
+        minimap.queue_redraw()
+    _push_breach_log("[color=#ff7d7d]ALERT[/color]  final core attempt reset. breach must complete in one sortie.")
+
 func _finish_run(returned: bool, reason: String) -> void:
     if run_finished:
         return
@@ -5358,6 +5683,7 @@ func _finish_run(returned: bool, reason: String) -> void:
     _set_autopilot_no_render_enabled(false)
     run_finished = true
     _bank_pending_mining_drone_cargo_at_run_end()
+    _reset_unfinished_final_core_attempt_for_save()
     if planet_data != null:
         blocks = planet_data.blocks
         exposed_edges = planet_data.exposed_edges
@@ -5394,13 +5720,12 @@ func _finish_run(returned: bool, reason: String) -> void:
         "run_time": run_time,
         "mining_time": mining_time,
         "fuel_ratio": 0.0 if run_time <= 0.0 else time_left / run_time,
-        "cargo_ratio": 0.0 if cargo_capacity <= 0 else float(captured_units) / float(cargo_capacity),
-        "cargo_used": captured_units,
+        "cargo_ratio": 0.0 if cargo_capacity <= 0 else float(cargo_units) / float(cargo_capacity),
+        "cargo_used": cargo_units,
         "cargo_capacity": cargo_capacity,
         "clear_start_ratio": float(run_start_destroyed_count) / float(maxi(1, total_planet_blocks)),
         "clear_ratio": float(persistent_destroyed_count) / float(maxi(1, total_planet_blocks)),
         "mined_ratio": float(maxi(0, persistent_destroyed_count - run_start_destroyed_count)) / float(maxi(1, total_planet_blocks)),
-        "mined_points": _get_summary_mined_points(),
         "money_history": _build_summary_history_rows("money", current_attempt_summary),
         "xp_history": _build_summary_history_rows("xp", current_attempt_summary),
         "nodes_mined": nodes_mined,
@@ -5410,7 +5735,7 @@ func _finish_run(returned: bool, reason: String) -> void:
         "map_points": _get_summary_map_points(),
         "map_bounds": _get_summary_map_bounds(),
     }
-    for visual in [summary_graph, summary_money_history_chart, summary_xp_history_chart, summary_node_capture_chart, summary_before_map, summary_after_map, summary_mined_picture]:
+    for visual in [summary_graph, summary_money_history_chart, summary_xp_history_chart, summary_before_map, summary_after_map, summary_node_capture_chart]:
         if visual != null and is_instance_valid(visual):
             visual.set_summary_data(visual_data)
     if is_validation_run:
@@ -5593,21 +5918,6 @@ func _format_large_number(value: int) -> String:
     var sign := "-" if value < 0 else ""
     return "%s%.1f%s" % [sign, amount, suffix]
 
-func _get_summary_mined_points() -> Array[Dictionary]:
-    var points: Array[Dictionary] = []
-    var skip := maxi(1, int(ceili(float(destroyed_cells_this_run.size()) / 900.0)))
-    var idx := 0
-    for key_variant in destroyed_cells_this_run.keys():
-        if idx % skip == 0:
-            var p := Vector2i(key_variant)
-            points.append({
-                "x": p.x,
-                "y": p.y,
-                "source": str(destroyed_cells_this_run.get(key_variant, "player")),
-            })
-        idx += 1
-    return points
-
 func _get_summary_map_bounds() -> Dictionary:
     if planet_data == null:
         return {"min_x": -100.0, "min_y": -100.0, "span_x": 200.0, "span_y": 200.0}
@@ -5623,7 +5933,7 @@ func _get_summary_map_points() -> Array[Dictionary]:
     var points: Array[Dictionary] = []
     if planet_data == null:
         return points
-    var skip_blocks := maxi(1, int(ceili(float(blocks.size()) / 12000.0)))
+    var skip_blocks := maxi(1, int(ceili(float(blocks.size()) / 48000.0)))
     var idx := 0
     for key_variant in blocks.keys():
         if idx % skip_blocks == 0:
@@ -5636,7 +5946,7 @@ func _get_summary_map_points() -> Array[Dictionary]:
                 "type": int(block.get("type", BlockType.NORMAL)),
             })
         idx += 1
-    var skip_mined := maxi(1, int(ceili(float(destroyed_cells_this_run.size()) / 1000.0)))
+    var skip_mined := maxi(1, int(ceili(float(destroyed_cells_this_run.size()) / 6000.0)))
     idx = 0
     for mined_variant in destroyed_cells_this_run.keys():
         if idx % skip_mined == 0:
@@ -6461,7 +6771,7 @@ func _tick_effect_array(items: Array[Dictionary], delta: float) -> void:
         if float(item.get("timer", 0.0)) <= 0.0:
             items.remove_at(idx)
 
-func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: int, search_deadline_usec: int = 0) -> Array[Vector2i]:
+func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: int, search_deadline_usec: int = 0, include_drone_engaged_cores: bool = false) -> Array[Vector2i]:
     var found: Array[Vector2i] = []
     if limit <= 0:
         return found
@@ -6487,7 +6797,7 @@ func _find_targets_near_world(world_pos: Vector2, radius_world: float, limit: in
         if not _is_autopilot_attackable_block(block, check):
             continue
         var core_id: int = int(block.get("core_id", -1))
-        if core_id >= 0:
+        if core_id >= 0 and (not include_drone_engaged_cores or not _is_core_player_engaged_this_run(core_id)):
             continue
         var dist_sq := world_pos.distance_squared_to(grid_to_world(check))
         if dist_sq > radius_sq:
@@ -6671,6 +6981,7 @@ func _update_core_behaviors(delta: float) -> void:
             if not spawned_positions.is_empty():
                 blocks = planet_data.blocks
                 exposed_edges = planet_data.exposed_edges
+                _invalidate_autopilot_target_exhaustion()
                 if planet_renderer != null and not autopilot_no_render_enabled:
                     planet_renderer.queue_fill_updates(spawned_positions)
     if bool(behaviors.get("shockwave", false)) or bool(behaviors.get("final_lockdown", false)):
@@ -7013,6 +7324,7 @@ func _trigger_ship_shield_hit(hit_dir: Vector2) -> bool:
         barriers_left = maxi(barriers_left, 999)
         shield_invuln_timer = SHIELD_HIT_INVULN_TIME
         shield_recovery_timer = SHIELD_HIT_RECOVERY_TIME
+        barrier_hit_number_pulse_timer = BARRIER_HIT_NUMBER_PULSE_TIME
         _play_sound_effect(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK, -10.0, -0.08)
         return true
     if barriers_left <= 0:
@@ -7020,6 +7332,7 @@ func _trigger_ship_shield_hit(hit_dir: Vector2) -> bool:
     barriers_left -= 1
     shield_invuln_timer = SHIELD_HIT_INVULN_TIME
     shield_recovery_timer = SHIELD_HIT_RECOVERY_TIME
+    barrier_hit_number_pulse_timer = BARRIER_HIT_NUMBER_PULSE_TIME
     var move_dir := ship_vel.normalized()
     if move_dir.length() < 0.01:
         move_dir = last_move_dir.normalized()
@@ -7226,6 +7539,7 @@ func _handle_final_core_phase_transition(phase: int) -> void:
     var restored_positions: Array[Vector2i] = planet_data.regenerate_final_core_arena()
     blocks = planet_data.blocks
     exposed_edges = planet_data.exposed_edges
+    _invalidate_autopilot_target_exhaustion()
     damaged_cells.clear()
     root_cross_lasers.erase(int(PLANET_DATA_SCRIPT.FINAL_CORE_ID))
     _spawn_side_attackers()
@@ -7239,6 +7553,15 @@ func _handle_final_core_phase_transition(phase: int) -> void:
         minimap.queue_redraw()
     _push_breach_log("[color=#ff7d7d]ALERT[/color]  kernel tier %d sealed. arena regenerated." % [phase + 1])
 
+func _get_final_core_data() -> Dictionary:
+    if planet_data == null:
+        return {}
+    for core_variant in planet_data.cores:
+        var core: Dictionary = core_variant
+        if int(core.get("id", -1)) == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
+            return core
+    return {}
+
 func _push_ship_outside_final_core_arena(final_core: Dictionary) -> void:
     var center_grid := Vector2i(int(final_core.center.x), int(final_core.center.y))
     var center_world := grid_to_world(center_grid)
@@ -7247,12 +7570,29 @@ func _push_ship_outside_final_core_arena(final_core: Dictionary) -> void:
         dir = Vector2.UP
     var radius_cells := int(planet_data.get_effective_influence_radius(final_core)) + FINAL_CORE_ARENA_EJECT_EXTRA_CELLS
     var preferred := grid_to_world(center_grid + Vector2i(roundi(dir.x * float(radius_cells)), roundi(dir.y * float(radius_cells))))
-    var fallback := _find_closest_empty_world_on_screen(preferred)
+    var fallback := _find_closest_empty_world_outside_core_circle(preferred, final_core, radius_cells)
     ship_pos = fallback if fallback != Vector2.INF else preferred
     ship_vel = Vector2.ZERO
     if ship_root != null:
         ship_root.global_position = ship_pos
     camera_pos = ship_pos
+
+func _find_closest_empty_world_outside_core_circle(preferred_world: Vector2, core: Dictionary, min_radius_cells: int) -> Vector2:
+    var center_world := grid_to_world(Vector2i(int(core.center.x), int(core.center.y)))
+    var min_radius_world := float(min_radius_cells) * BLOCK_SIZE
+    var preferred_grid := world_to_grid(preferred_world)
+    for radius in range(0, FINAL_CORE_ARENA_EJECT_EXTRA_CELLS + 10):
+        for x in range(preferred_grid.x - radius, preferred_grid.x + radius + 1):
+            for y in range(preferred_grid.y - radius, preferred_grid.y + radius + 1):
+                if radius > 0 and x > preferred_grid.x - radius and x < preferred_grid.x + radius and y > preferred_grid.y - radius and y < preferred_grid.y + radius:
+                    continue
+                var grid := Vector2i(x, y)
+                if not is_grid_empty(grid):
+                    continue
+                var world := grid_to_world(grid)
+                if world.distance_to(center_world) >= min_radius_world:
+                    return world
+    return Vector2.INF
 
 func _push_ship_above_final_core_arena(final_core: Dictionary) -> void:
     if planet_data == null:

@@ -4,6 +4,7 @@ class_name OpenPitEmpireShipRenderer
 var scene_ref: OpenPitEmpireMain
 var _last_visual_rotation := INF
 var _last_barriers_left := -1
+var _last_barrier_hit_number_pulse := -1.0
 var _last_drone_count := -1
 var _last_mining_drone_count := -1
 var _last_trail_count := -1
@@ -21,6 +22,7 @@ var _last_power_pulse := -1.0
 var _last_power_active := false
 var _last_forward_guide_active := false
 var _last_forward_guide_range := -1.0
+var _last_forward_guide_alpha_mult := -1.0
 var _last_attack_range := -1.0
 var _last_pickup_range := -1.0
 var _last_auto_pickup := false
@@ -84,8 +86,9 @@ func _process(_delta: float) -> void:
     var power_ratio := scene_ref._get_power_ratio()
     var power_pulse := clampf(scene_ref.power_ring_overcharge, 0.0, 1.0)
     var power_active := scene_ref._is_power_active()
-    var forward_guide_active := scene_ref.is_forward_shot_active()
+    var forward_guide_active := scene_ref.should_draw_forward_shot_guide()
     var forward_guide_range := scene_ref.get_forward_shot_range()
+    var forward_guide_alpha_mult := scene_ref.get_forward_shot_guide_alpha_mult()
     var attack_range := scene_ref._get_effective_attack_radius()
     var pickup_range := scene_ref._get_effective_pickup_radius()
     var auto_pickup := bool(scene_ref.runtime_stats.get("instant_collect", false))
@@ -96,6 +99,10 @@ func _process(_delta: float) -> void:
         needs_redraw = true
     if int(scene_ref.barriers_left) != _last_barriers_left:
         _last_barriers_left = int(scene_ref.barriers_left)
+        needs_redraw = true
+    var barrier_hit_number_pulse := clampf(scene_ref.barrier_hit_number_pulse_timer / maxf(scene_ref.BARRIER_HIT_NUMBER_PULSE_TIME, 0.001), 0.0, 1.0)
+    if absf(barrier_hit_number_pulse - _last_barrier_hit_number_pulse) > 0.02:
+        _last_barrier_hit_number_pulse = barrier_hit_number_pulse
         needs_redraw = true
     if scene_ref.drone_positions.size() != _last_drone_count:
         _last_drone_count = scene_ref.drone_positions.size()
@@ -148,6 +155,9 @@ func _process(_delta: float) -> void:
     if absf(forward_guide_range - _last_forward_guide_range) > 0.5:
         _last_forward_guide_range = forward_guide_range
         needs_redraw = true
+    if absf(forward_guide_alpha_mult - _last_forward_guide_alpha_mult) > 0.01:
+        _last_forward_guide_alpha_mult = forward_guide_alpha_mult
+        needs_redraw = true
     if absf(attack_range - _last_attack_range) > 0.5:
         _last_attack_range = attack_range
         needs_redraw = true
@@ -157,7 +167,7 @@ func _process(_delta: float) -> void:
     if auto_pickup != _last_auto_pickup:
         _last_auto_pickup = auto_pickup
         needs_redraw = true
-    if attack_visible or mega_active or overdrive_active or invuln_active or drones_active or trail_active or arcs_active or seismic_active or forward_attack_active or side_projectiles_active or side_attackers_active or forward_guide_active or extraction_progress > 0.0 or extraction_visible:
+    if attack_visible or mega_active or overdrive_active or invuln_active or drones_active or trail_active or arcs_active or seismic_active or forward_attack_active or side_projectiles_active or side_attackers_active or forward_guide_active or barrier_hit_number_pulse > 0.0 or extraction_progress > 0.0 or extraction_visible:
         needs_redraw = true
     if needs_redraw:
         queue_redraw()
@@ -208,6 +218,7 @@ func _draw() -> void:
     draw_line(Vector2(0.0, -12.0), Vector2(0.0, 9.0), ship_line, 2.0)
     draw_rect(Rect2(Vector2(-1.0, 4.0), Vector2(2.0, 7.0)), ship_line, false, 2.0)
     draw_set_transform(Vector2.ZERO, 0.0)
+    _draw_barrier_count_number()
 
     if scene_ref.mega_timer > 0.0:
         _draw_mega_laser()
@@ -225,6 +236,23 @@ func _draw() -> void:
     _draw_side_attackers()
     _draw_side_projectiles()
     scene_ref.perf_probe_end("ship_draw", perf_start_us)
+
+func _draw_barrier_count_number() -> void:
+    var barrier_text := str(scene_ref.barriers_left)
+    if scene_ref.editor_debug_unlimited_barrier:
+        barrier_text = "INF"
+    var pulse_ratio := clampf(scene_ref.barrier_hit_number_pulse_timer / maxf(scene_ref.BARRIER_HIT_NUMBER_PULSE_TIME, 0.001), 0.0, 1.0)
+    var pulse := sin((1.0 - pulse_ratio) * PI)
+    var font_size := int(round(12.0 + 8.0 * pulse))
+    var base_color := Color(0.72, 1.0, 1.0, 0.96)
+    var hit_color := Color(1.0, 0.12, 0.08, 1.0)
+    var color := base_color.lerp(hit_color, pulse)
+    var outline_color := Color(0.02, 0.04, 0.06, 0.82)
+    var font: Font = ThemeDB.fallback_font
+    var text_size := font.get_string_size(barrier_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size)
+    var pos := Vector2(-text_size.x * 0.5, -scene_ref.SHIP_RADIUS - 8.0)
+    draw_string(font, pos + Vector2(1.0, 1.0), barrier_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, outline_color)
+    draw_string(font, pos, barrier_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, color)
 
 func _draw_extraction_zone() -> void:
     if not _is_extraction_zone_visible():
@@ -261,7 +289,7 @@ func _draw_range_indicators() -> void:
         draw_arc(Vector2.ZERO, pickup_range, 0.0, TAU, 96, Color(0.18, 0.19, 0.2, 0.45), 1.5)
 
 func _draw_forward_shot_guide() -> void:
-    if not scene_ref.is_forward_shot_active():
+    if not scene_ref.should_draw_forward_shot_guide():
         return
     var forward := scene_ref._get_forward_direction()
     if forward.length_squared() <= 0.001:
@@ -273,12 +301,13 @@ func _draw_forward_shot_guide() -> void:
         end = forward * (start_dist + 12.0)
     var side := forward.orthogonal()
     var pulse := 0.5 + 0.5 * sin(scene_ref.ship_glow_phase * 3.0)
-    var guide_line := Color(0.86, 0.88, 0.9, 0.26 + pulse * 0.1)
-    var guide_core := Color(0.96, 0.98, 1.0, 0.56 + pulse * 0.18)
-    draw_line(start, end, Color(0.9, 0.92, 0.94, 0.09 + pulse * 0.04), 8.0)
+    var alpha_mult := scene_ref.get_forward_shot_guide_alpha_mult()
+    var guide_line := Color(0.86, 0.88, 0.9, (0.26 + pulse * 0.1) * alpha_mult)
+    var guide_core := Color(0.96, 0.98, 1.0, (0.56 + pulse * 0.18) * alpha_mult)
+    draw_line(start, end, Color(0.9, 0.92, 0.94, (0.09 + pulse * 0.04) * alpha_mult), 8.0)
     draw_line(start, end, guide_line, 3.0)
     draw_line(start, end, guide_core, 1.2)
-    draw_line(end - side * 7.0, end + side * 7.0, Color(0.96, 0.98, 1.0, 0.38 + pulse * 0.18), 1.4)
+    draw_line(end - side * 7.0, end + side * 7.0, Color(0.96, 0.98, 1.0, (0.38 + pulse * 0.18) * alpha_mult), 1.4)
 
 func _draw_normal_laser(vp: float) -> void:
     var local_target := scene_ref.last_attack_target - scene_ref.ship_pos

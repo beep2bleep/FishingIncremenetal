@@ -1,7 +1,7 @@
 extends Control
 class_name OpenPitEmpireSummaryVisual
 
-enum VisualMode { GRAPH, MINED_MAP, HISTORY_MONEY, HISTORY_XP, NODE_CAPTURE, MAP_BEFORE, MAP_AFTER }
+enum VisualMode { GRAPH, HISTORY_MONEY, HISTORY_XP, NODE_CAPTURE, MAP_BEFORE, MAP_AFTER }
 
 var mode: int = VisualMode.GRAPH
 var summary_data: Dictionary = {}
@@ -22,8 +22,6 @@ func _draw() -> void:
 	draw_rect(rect, Color(0.025, 0.04, 0.07, 0.92), true)
 	draw_rect(rect, Color(0.25, 0.72, 0.95, 0.55), false, 2.0)
 	match mode:
-		VisualMode.MINED_MAP:
-			_draw_mined_map(rect.grow(-10.0))
 		VisualMode.HISTORY_MONEY:
 			_draw_history_chart(rect.grow(-10.0), "money_history", "MONEY, LAST 5 RUNS", "$")
 		VisualMode.HISTORY_XP:
@@ -68,39 +66,11 @@ func _draw_run_graph(rect: Rect2) -> void:
 			if mined_width > 0.0:
 				draw_rect(Rect2(track.position + Vector2(track.size.x * start_ratio, 0.0), Vector2(mined_width, track.size.y)), Color(item.get("color", Color.WHITE)), true)
 		else:
-			draw_rect(Rect2(track.position, Vector2(track.size.x * float(item.get("value", 0.0)), track.size.y)), Color(item.get("color", Color.WHITE)), true)
+			var value_ratio := clampf(float(item.get("value", 0.0)), 0.0, 1.0)
+			draw_rect(Rect2(track.position, Vector2(track.size.x * value_ratio, track.size.y)), Color(item.get("color", Color.WHITE)), true)
 		draw_rect(track, Color(0.38, 0.62, 0.78, 0.5), false, 1.0)
 		draw_string(get_theme_default_font(), Vector2(track.end.x + 6.0, y + bar_h * 0.72), str(item.get("text", "")), HORIZONTAL_ALIGNMENT_LEFT, value_w, 12, Color(0.94, 0.98, 1.0, 0.94))
 	draw_string(get_theme_default_font(), rect.position + Vector2(0.0, 14.0), "RUN SHAPE: fuel, cargo, time, breach progress", HORIZONTAL_ALIGNMENT_LEFT, rect.size.x, 13, Color(0.88, 0.96, 1.0, 0.95))
-
-func _draw_mined_map(rect: Rect2) -> void:
-	var points: Array = summary_data.get("mined_points", [])
-	draw_string(get_theme_default_font(), rect.position + Vector2(0.0, 14.0), "MINED TRACE", HORIZONTAL_ALIGNMENT_LEFT, rect.size.x, 14, Color(0.88, 0.96, 1.0, 0.95))
-	var map_rect := Rect2(rect.position + Vector2(0.0, 22.0), rect.size - Vector2(0.0, 22.0))
-	draw_rect(map_rect, Color(0.03, 0.06, 0.09, 0.96), true)
-	var map_points: Array = summary_data.get("map_points", [])
-	if points.is_empty():
-		draw_string(get_theme_default_font(), map_rect.position + Vector2(8.0, map_rect.size.y * 0.5), "No mined cells", HORIZONTAL_ALIGNMENT_LEFT, map_rect.size.x, 14, Color(0.72, 0.82, 0.92, 0.8))
-		return
-	var bounds: Dictionary = summary_data.get("map_bounds", {})
-	var min_x := float(bounds.get("min_x", 0.0))
-	var min_y := float(bounds.get("min_y", 0.0))
-	var span_x := maxf(1.0, float(bounds.get("span_x", 1.0)))
-	var span_y := maxf(1.0, float(bounds.get("span_y", 1.0)))
-	var scale := minf(1.0, minf(map_rect.size.x / span_x, map_rect.size.y / span_y))
-	var draw_size := Vector2(span_x * scale, span_y * scale)
-	var draw_origin := map_rect.position + (map_rect.size - draw_size) * 0.5
-	for point_variant in map_points:
-		var point: Dictionary = point_variant
-		if str(point.get("source", "block")) != "block":
-			continue
-		var block_pos := Vector2(float(point.get("x", 0)) - min_x, float(point.get("y", 0)) - min_y) * scale + draw_origin
-		draw_rect(Rect2(block_pos, Vector2(maxf(1.0, scale), maxf(1.0, scale))), Color(0.11, 0.16, 0.22, 0.42), true)
-	for point_variant in points:
-		var p: Vector2i = _point_from_variant(point_variant)
-		var pos := Vector2(float(p.x) - min_x, float(p.y) - min_y) * scale + draw_origin
-		draw_rect(Rect2(pos, Vector2(1.0, 1.0)), _trace_color_from_variant(point_variant), true)
-	_draw_legend(map_rect)
 
 func _draw_history_chart(rect: Rect2, key: String, title: String, prefix: String) -> void:
 	var rows: Array = summary_data.get(key, [])
@@ -179,17 +149,6 @@ func _draw_summary_map(rect: Rect2, title: String, include_run: bool) -> void:
 		var color := _map_point_color(point) if include_run or source == "block" else BLOCK_COLOR
 		draw_rect(Rect2(Vector2(x, y), cell_size), color, true)
 	_draw_legend(map_rect)
-
-func _point_from_variant(point_variant: Variant) -> Vector2i:
-	if point_variant is Dictionary:
-		var point: Dictionary = point_variant
-		return Vector2i(int(point.get("x", 0)), int(point.get("y", 0)))
-	return Vector2i(point_variant)
-
-func _trace_color_from_variant(point_variant: Variant) -> Color:
-	if point_variant is Dictionary and str((point_variant as Dictionary).get("source", "player")) == "drone":
-		return DRONE_TRACE_COLOR
-	return PLAYER_TRACE_COLOR
 
 func _map_point_color(point: Dictionary) -> Color:
 	var source := str(point.get("source", "block"))

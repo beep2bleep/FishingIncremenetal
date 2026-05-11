@@ -2705,6 +2705,8 @@ func _on_editor_unlock_all_pressed() -> void:
             if open_pit_key.begins_with(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.XP_PREFIX):
                 open_pit_data["xp_upgrades"][open_pit_key] = open_pit_level
             elif open_pit_key.begins_with(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.CORE_PREFIX):
+                if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_reward_core_upgrade(open_pit_key):
+                    continue
                 var purchased_core: Array = open_pit_data.get("purchased_core_upgrades", [])
                 purchased_core.append(open_pit_key.trim_prefix(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.CORE_PREFIX))
                 open_pit_data["purchased_core_upgrades"] = purchased_core
