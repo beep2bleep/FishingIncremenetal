@@ -180,9 +180,4 @@ func _on_transition_animation_finished(animation_name: StringName) -> void:
         _set_web_transition_music_paused(false)
 
 func _set_web_transition_music_paused(should_pause: bool) -> void:
-    if not OS.has_feature("web"):
-        return
-    var music_player: AudioStreamPlayer = get_node_or_null("/root/MusicPlayer") as AudioStreamPlayer
-    if music_player == null:
-        return
-    music_player.stream_paused = should_pause
+    pass

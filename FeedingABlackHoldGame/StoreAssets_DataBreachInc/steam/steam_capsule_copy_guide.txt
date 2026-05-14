@@ -1,0 +1,24 @@
+Steam capsule copy guide
+
+Use very little text on capsules. The title mark should carry most of the load.
+
+Primary capsule line:
+DATA BREACH INC.
+
+Optional tiny support line, only if readable:
+MINE. CRACK. EXTRACT.
+
+Avoid:
+- Long feature lists
+- Small UI screenshots as the only focal point
+- Text that competes with the logo
+- Promises like "massive", "endless", or "multiplayer" unless the shipped build supports them
+
+Screenshot caption ideas:
+- First sortie into the firewall
+- Daemon core pressure rising
+- Upgrade the rig between breaches
+- Red Sky Defense unlocked
+- Deepcore route online
+- Results, payouts, and persistent progress
+

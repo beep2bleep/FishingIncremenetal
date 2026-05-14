@@ -1,0 +1,10 @@
+Steam short description options
+
+1. Pilot a breach rig through hostile corporate infrastructure. Mine the firewall, crack daemon cores, bank your haul, and upgrade deeper every sortie.
+
+2. An arcade incremental about mining a living firewall, surviving countermeasures, defeating daemon cores, and turning each run into permanent upgrades.
+
+3. Breach corporate infrastructure one sortie at a time. Mine blocks, dodge defenses, break daemon cores, and build an upgrade economy that pushes deeper.
+
+4. Data Breach Inc. is an arcade incremental: carve through a hostile firewall, extract resources, unlock side operations, and chase faster daemon-core clears.
+

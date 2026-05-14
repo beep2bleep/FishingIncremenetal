@@ -1,0 +1,22 @@
+Asset manifest: copy only, no image files included
+
+Ready-to-paste copy in this pack:
+- steam/steam_short_description.txt
+- steam/steam_short_description_options.txt
+- steam/steam_about_this_game_plain.txt
+- steam/steam_about_this_game_bbcode.txt
+- steam/steam_capsule_copy_guide.txt
+- itchio/itch_short_description.txt
+- itchio/itch_short_description_options.txt
+- itchio/itch_long_description.md
+- itchio/itch_page_layout_plan.md
+- common/headlines.txt
+- common/short_summaries.txt
+- common/long_description_master.md
+- common/tag_strategy.txt
+
+Suggested art use:
+- Lead with the rig, the breach field, daemon cores, and one visible upgrade or results screen.
+- Steam capsules should read clearly without tiny UI text.
+- itch.io page art can be more expressive, but the first screenshot should show real gameplay.
+

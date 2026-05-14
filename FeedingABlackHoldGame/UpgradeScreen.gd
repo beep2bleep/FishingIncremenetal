@@ -34,6 +34,7 @@ const REEL_DEPTH_TIER_DIALOG_SIZE := Vector2(640.0, 520.0)
 const REEL_DEPTH_TIER_BUTTON_FONT := 26
 const REEL_DEPTH_TIER_BUTTON_MIN_H := 72.0
 const UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO := 0.05
+const OPEN_PIT_STATUS_LABEL_VERTICAL_SHIFT_RATIO := 0.035
 const LEADERBOARD_PANEL_TOP_DEFAULT := 120.0
 const LEADERBOARD_PANEL_TOP_MARGIN_FROM_MENU := 16.0
 const SETTINGS_EXIT_MAIN_MENU_MIN_H_DEFAULT := 120.0
@@ -1178,9 +1179,19 @@ func _setup_mining_time_label() -> void:
     mining_time_label.visible = false
     parent_layer.add_child(mining_time_label)
 
+func _position_mining_time_label() -> void:
+    if mining_time_label == null or not is_instance_valid(mining_time_label):
+        return
+    var vertical_shift := 0.0
+    if Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active():
+        vertical_shift = get_viewport().get_visible_rect().size.y * OPEN_PIT_STATUS_LABEL_VERTICAL_SHIFT_RATIO
+    mining_time_label.offset_top = 114.0 + vertical_shift
+    mining_time_label.offset_bottom = 155.0 + vertical_shift
+
 func _refresh_mining_time_label() -> void:
     if mining_time_label == null or not is_instance_valid(mining_time_label):
         return
+    _position_mining_time_label()
     var show_label: bool = (Util.is_mining_game_active() or Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active()) and not _is_any_popup_visible()
     mining_time_label.visible = show_label
     if not show_label:

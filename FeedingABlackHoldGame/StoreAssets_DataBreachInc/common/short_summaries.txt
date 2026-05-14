@@ -1,0 +1,10 @@
+Short summary options
+
+Data Breach Inc. is an arcade incremental where you pilot a breach rig through hostile corporate infrastructure, mine blocks, crack daemon cores, bank upgrades, and push deeper every sortie.
+
+Pilot a hacking rig through a living firewall. Mine blocks, dodge countermeasures, defeat daemon cores, and turn each run into permanent upgrades.
+
+An arcade breach incremental with mining, boss cores, persistent progression, side operations, and leaderboard-ready routes.
+
+Cut into corporate infrastructure one sortie at a time. Gather resources, survive the firewall, unlock new systems, and crack the daemon cores protecting the center.
+

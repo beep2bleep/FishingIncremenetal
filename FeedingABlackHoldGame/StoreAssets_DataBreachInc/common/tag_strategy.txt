@@ -1,0 +1,22 @@
+Primary tags
+- Incremental
+- Arcade
+- Action
+- Mining
+- Roguelite
+
+Secondary tags
+- Cyberpunk
+- Shoot 'Em Up
+- Upgrade-Based
+- Singleplayer
+- Score Attack
+- Difficult
+- Sci-fi
+
+Steam tag angle
+Lead with what the player does: Incremental, Arcade, Action, Mining, Roguelite. Add Cyberpunk/Sci-fi after the core loop is clear.
+
+itch.io tag angle
+Use a mix of discoverability and feel: incremental, arcade, cyberpunk, mining, action, upgrades, singleplayer, score-attack.
+

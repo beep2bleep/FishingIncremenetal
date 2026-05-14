@@ -556,6 +556,11 @@ static func start_async_planet_state_save(state: Dictionary) -> void:
     _cached_planet_state = Dictionary(merge_result.get("state", {})).duplicate(false)
     _save_remaining_layer_counts_from_merge(merge_result)
     _planet_save_ok = true
+    if OS.has_feature("web"):
+        _planet_save_ok = _write_planet_state_binary(_cached_planet_state)
+        _planet_save_pending = false
+        _planet_save_thread = null
+        return
     _planet_save_pending = true
     _planet_save_thread = Thread.new()
     var err := _planet_save_thread.start(Callable(OpenPitEmpireProgress, "_thread_write_planet_state").bind(_cached_planet_state.duplicate(false)))

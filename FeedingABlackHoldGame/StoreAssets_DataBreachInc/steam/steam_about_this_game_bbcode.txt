@@ -1,0 +1,26 @@
+[h2]Mine the firewall. Break the cores. Bank the breach.[/h2]
+
+Data Breach Inc. is an arcade incremental about piloting a breach rig through hostile corporate infrastructure, mining the firewall for resources, and cracking the daemon cores that protect the center.
+
+Every sortie is a quick tactical run. Mine blocks, collect payouts, fight through defensive pressure, and decide when to extract before the system turns the run against you. Bank the haul, buy permanent upgrades, and return with better damage, cargo, fuel, drones, range, payout scaling, and core-cracking tools.
+
+[h2]The firewall fights back[/h2]
+
+The breach gets meaner as you push deeper. Daemon cores strike back, countermeasures interrupt the route, and new layers ask for better builds instead of louder buttons. Learn the firewall, tune the rig, and turn messy runs into cleaner clears.
+
+[h2]Build the whole operation[/h2]
+
+Data Breach Inc. also connects side operations into the campaign structure, including Red Sky Defense and Deepcore. Unlock new routes, feed resources back into the breach, and chase faster clears on leaderboard-ready challenges.
+
+[h2]Features[/h2]
+
+[list]
+[*]Arcade breach runs built around mining, movement, survival, and extraction
+[*]Permanent upgrades for damage, speed, cargo, fuel, drones, range, payouts, and core damage
+[*]Daemon core encounters with escalating defensive pressure
+[*]Persistent firewall progress and sortie history
+[*]Connected side operations including Red Sky Defense and Deepcore
+[*]Demo goals, speed targets, and leaderboard-ready challenge routes
+[*]Fast runs with long-term incremental progression
+[/list]
+
