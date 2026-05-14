@@ -119,6 +119,7 @@ const BRANCH_THEME_BY_ID := {
     "core:ash_ward": {"group": BRANCH_CORE_PATH, "pos": 20, "act": ACT_SURVIVAL},
     "core:autopilot_drone": {"group": BRANCH_CORE_PATH, "pos": 21, "act": ACT_SURVIVAL},
     "core:planet_mastery": {"group": BRANCH_CORE_PATH, "pos": 22, "act": ACT_SURVIVAL},
+    "core:countermeasure_suite": {"group": BRANCH_CORE_PATH, "pos": 23, "act": ACT_SURVIVAL},
 }
 
 static func apply_simulation_upgrades() -> void:
@@ -158,7 +159,12 @@ static func _append_upgrade(entry: Dictionary, saved_levels: Dictionary, next_id
     upgrade.base_cost = int(entry.get("base_cost", 0))
     upgrade.cost_scale = 0.0
     upgrade.tier_costs = _build_tier_costs(upgrade_id, upgrade.max_tier)
-    upgrade.demo_locked = 2 if BALANCE.is_reward_core_upgrade(upgrade_id) else 0
+    if BALANCE.is_reward_core_upgrade(upgrade_id):
+        upgrade.demo_locked = 2
+    elif BALANCE.is_demo_upgrade_hidden(upgrade_id):
+        upgrade.demo_locked = 1
+    else:
+        upgrade.demo_locked = 0
     upgrade.section = 0
     var branch_theme: Dictionary = _get_branch_theme(upgrade_id)
     upgrade.act = int(branch_theme.get("act", entry.get("phase", 1)))

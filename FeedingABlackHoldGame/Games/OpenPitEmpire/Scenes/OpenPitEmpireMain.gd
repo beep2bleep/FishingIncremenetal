@@ -13,6 +13,9 @@ const BREACH_CHAT_SCRIPT := preload("res://Games/OpenPitEmpire/OpenPitEmpireBrea
 const SUMMARY_VISUAL_SCRIPT := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpireSummaryVisual.gd")
 const IN_GAME_PAUSE_MENU_SCRIPT := preload("res://Core/InGamePauseMenu.gd")
 
+const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
+const DEMO_CORE8_END_SCREEN_CORE_COUNT := 8
+const DEMO_CORE8_VIDEO_DURATION := 7.5
 const BLOCK_SIZE := 32.0
 const PLANET_RADIUS_CELLS := 280
 const SHIP_RADIUS := 10.0
@@ -22,6 +25,7 @@ const RETURN_ZONE_ARM_DISTANCE_MULT := 1.15
 const EXTRACTION_ASCENT_TIME := 1.1
 const EXTRACTION_ASCENT_SCREEN_MARGIN := 180.0
 const HIT_FLASH_DURATION := 0.15
+const LOCK_FLASH_DURATION := 0.45
 const POWER_OVERCHARGE_PULSE_DECAY := 2.4
 const POWER_BASE_GAIN := 5.0
 const POWER_SPECIAL_BLOCK_MULT := 2.0
@@ -42,6 +46,7 @@ const DRONE_BEAM_DURATION := 0.08
 const DRONE_MISSILE_LIFETIME := 3.6
 const DRONE_MINE_LIFETIME := 4.2
 const MAX_ACTIVE_HIT_FLASHES := 72
+const MAX_ACTIVE_LOCK_FLASHES := 24
 const MAX_ACTIVE_ELECTRIC_ARCS := 18
 const MAX_ACTIVE_CHAIN_ARCS := 18
 const MAX_ACTIVE_DRONE_BEAMS := 24
@@ -280,6 +285,7 @@ var blocks: Dictionary = {}
 var exposed_edges: Dictionary = {}
 var damaged_cells: Dictionary = {}
 var hit_timers: Dictionary = {}
+var lock_flash_timers: Dictionary = {}
 var pickups: Array[Dictionary] = []
 var destroyed_cells_this_run: Dictionary = {}
 var planet_outline_mode := OutlineMode.GROUP_EDGES
@@ -459,6 +465,15 @@ var summary_save_anim_time := 0.0
 var summary_save_pending := false
 var summary_save_phase := "idle"
 var summary_pending_saved_section_ids: Array = []
+var demo_core8_end_dialog: ConfirmationDialog
+var demo_core8_video_panel: PanelContainer
+var demo_core8_video_title_label: Label
+var demo_core8_video_body_label: Label
+var demo_core8_video_progress: ProgressBar
+var demo_core8_wishlist_button: Button
+var demo_core8_continue_button: Button
+var demo_core8_dialog_time := 0.0
+var demo_core8_dialog_active := false
 var breach_log_label: RichTextLabel
 var bottom_cinematic_overlay: Control
 var bottom_letterbox_top: ColorRect
@@ -1023,7 +1038,7 @@ func _unhandled_input(event: InputEvent) -> void:
         elif event.keycode == KEY_F3 and _can_show_editor_release_hud_preview():
             _toggle_editor_release_hud_preview()
             get_viewport().set_input_as_handled()
-        elif event.keycode == KEY_F:
+        elif event.keycode == KEY_F and _can_use_editor_debug_keys():
             autopilot_enabled = not autopilot_enabled
             autopilot_returning = false
             autopilot_retarget_timer = 0.0
@@ -1037,13 +1052,13 @@ func _unhandled_input(event: InputEvent) -> void:
             _push_breach_log("[color=#7dffbf]AUTO PILOT[/color]  %s." % ("engaged" if autopilot_enabled else "released"))
             _refresh_hud_now()
             get_viewport().set_input_as_handled()
-        elif event.keycode == KEY_G:
+        elif event.keycode == KEY_G and _can_use_editor_debug_keys():
             if autopilot_enabled:
                 var speed := _cycle_autopilot_fast_forward_speed()
                 _push_breach_log("[color=#7dffbf]FAST FORWARD[/color]  %dx simulation." % speed)
                 _refresh_hud_now()
                 get_viewport().set_input_as_handled()
-        elif event.keycode == KEY_H:
+        elif event.keycode == KEY_H and _can_use_editor_debug_keys():
             if autopilot_enabled:
                 _set_autopilot_fast_forward_steps(1)
                 _set_autopilot_no_render_enabled(not autopilot_no_render_enabled)
@@ -1605,6 +1620,7 @@ func _start_run() -> void:
     barrier_hit_number_pulse_timer = 0.0
     boss_defeated = bool(persistent_data.get("boss_defeated", false))
     _build_planet()
+    _apply_attackable_zone_cap()
     _reset_shared_autopilot_mine_target()
     run_start_destroyed_count = persistent_destroyed_count
     _setup_minimap()
@@ -1649,6 +1665,8 @@ func _start_run() -> void:
     destroyed_cells_this_run.clear()
     cores_destroyed_this_run = 0
     core_currency_earned_this_run = 0
+    hit_timers.clear()
+    lock_flash_timers.clear()
     electric_arcs.clear()
     chain_arcs.clear()
     tetromino_bursts.clear()
@@ -2016,6 +2034,7 @@ func _process(delta: float) -> void:
     if defense_transition_pending:
         perf_probe_end("process_frame", perf_start_us)
         return
+    _update_demo_core8_end_dialog(delta)
     if run_finished:
         _update_finish_summary(delta)
         perf_probe_end("process_frame", perf_start_us)
@@ -2156,6 +2175,7 @@ func _update_timers(delta: float) -> void:
     for key in active_powerup_timers.keys():
         active_powerup_timers[key] = maxf(0.0, float(active_powerup_timers.get(key, 0.0)) - delta)
     _tick_timer_dict(hit_timers, delta)
+    _tick_timer_dict(lock_flash_timers, delta)
     _tick_effect_array(electric_arcs, delta)
     _tick_effect_array(chain_arcs, delta)
     _tick_effect_array(tetromino_bursts, delta)
@@ -2649,6 +2669,9 @@ func _find_autopilot_mining_target() -> Vector2:
     if autopilot_no_valid_targets:
         autopilot_aim_dir = Vector2.ZERO
         autopilot_status = "returning: no valid targets"
+        return spawn_position
+    if _is_demo_mineable_layer_cap_exhausted():
+        _set_autopilot_no_valid_targets("demo layer cap reached")
         return spawn_position
     var search_deadline_usec := Time.get_ticks_usec() + AUTOPILOT_TARGET_SEARCH_BUDGET_USEC
     _update_autopilot_stuck_mode()
@@ -3450,6 +3473,8 @@ func _has_any_valid_autopilot_target(include_cores: bool) -> bool:
     return false
 
 func _has_any_valid_drone_target() -> bool:
+    if _is_demo_mineable_layer_cap_exhausted():
+        return false
     for key_variant in blocks.keys():
         if _is_drone_mineable_block(Vector2i(key_variant)):
             return true
@@ -3457,6 +3482,8 @@ func _has_any_valid_drone_target() -> bool:
 
 func _is_autopilot_attackable_block(block: Dictionary, grid: Vector2i = Vector2i(999999, 999999)) -> bool:
     if bool(block.get("unbreakable", false)):
+        return false
+    if _is_demo_layer_locked_block(block):
         return false
     var core_id := int(block.get("core_id", -1))
     if core_id >= 0 and planet_data != null and planet_data.is_core_locked(core_id, _core_unlocks_center()):
@@ -3985,7 +4012,7 @@ func _consider_attack_target_offset(my_grid: Vector2i, offset: Vector2i, range_s
     if not blocks.has(check):
         return
     var block: Dictionary = blocks.get(check, {})
-    if not _is_autopilot_attackable_block(block, check):
+    if autopilot_enabled and not _is_autopilot_attackable_block(block, check):
         return
     var core_id: int = int(block.get("core_id", -1))
     if _should_autopilot_skip_core_area_block(check, block):
@@ -3997,6 +4024,8 @@ func _consider_attack_target_offset(my_grid: Vector2i, offset: Vector2i, range_s
     if dist_sq >= range_sq:
         return
     var target_score := dist_sq
+    if _is_invincible_attack_block(block, check):
+        target_score += range_sq * 0.8
     if core_id >= 0:
         if (search_deadline_usec <= 0 or Time.get_ticks_usec() < search_deadline_usec) and _has_clear_attack_path_to_core(check):
             target_score -= range_sq * CORE_CLEAR_PATH_TARGET_BONUS
@@ -4505,6 +4534,18 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         return {}
     var block_before: Dictionary = blocks.get(pos, {})
     var source_is_drone := _is_drone_damage_source(source)
+    if _is_demo_layer_locked_block(block_before):
+        if not source_is_drone:
+            _mark_lock_flash(pos)
+        perf_probe_end("damage_block", perf_start_us)
+        return {
+            "destroyed": false,
+            "type": int(block_before.get("type", BlockType.NORMAL)),
+            "resource": 0.0,
+            "shielded": true,
+            "layer_depth": int(block_before.get("layer_depth", 1)),
+            "demo_layer_locked": true,
+        }
     var target_core_id := int(block_before.get("core_id", -1))
     var target_is_core := int(block_before.get("type", BlockType.NORMAL)) == BlockType.CORE and target_core_id >= 0
     if target_is_core:
@@ -4530,6 +4571,8 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
                 bool(result.get("shielded", false))
             )
             _flush_breach_chat()
+    if bool(result.get("shielded", false)) and not source_is_drone:
+        _mark_lock_flash(pos)
     if bool(result.get("phase_depleted", false)):
         _handle_final_core_phase_transition(int(result.get("phase", _get_final_core_phase())))
         if not defer_visual_sync:
@@ -5805,6 +5848,9 @@ func _begin_finish_save(money_award: int, xp_award: int, reason: String) -> void
 func _finish_run_save_async(money_award: int, xp_award: int, reason: String) -> void:
     var planet_snapshot: Dictionary = {}
     var has_sector_updates := false
+    var run_time := maxf(0.0, float(runtime_stats.get("run_time", 30.0)))
+    var sortie_time_seconds := maxf(0.0, run_time - time_left)
+    var previous_total_cores_destroyed := int(persistent_data.get("total_cores_destroyed", 0))
     _sync_breach_chat_persistent_state()
     if planet_data != null:
         planet_snapshot = await planet_data.build_save_data_async(get_tree(), Callable(self, "_on_finish_save_progress"))
@@ -5816,6 +5862,8 @@ func _finish_run_save_async(money_award: int, xp_award: int, reason: String) -> 
         "xp": xp_award,
         "core_currency": core_currency_earned_this_run,
         "cores_destroyed": cores_destroyed_this_run,
+        "sortie_time_seconds": sortie_time_seconds,
+        "count_leaderboard_time": validation_autopilot_mode == "",
         "depth_level": current_depth_level,
         "nodes_broken": nodes_mined,
         "boss_defeated": boss_defeated,
@@ -5848,12 +5896,248 @@ func _finish_run_save_async(money_award: int, xp_award: int, reason: String) -> 
     else:
         PROGRESS.clear_runtime_planet_data()
     persistent_data = PROGRESS.load_data()
+    _submit_clear_time_leaderboards_if_needed(previous_total_cores_destroyed, sortie_time_seconds)
+    _show_demo_core8_end_screen_if_needed(previous_total_cores_destroyed)
     if not summary_save_pending:
         if summary_return_button != null:
             summary_return_button.disabled = false
             summary_return_button.text = tr("OPEN_PIT_RETURN_TO_UPGRADES")
         if summary_status_label != null:
             summary_status_label.text = tr("OPEN_PIT_SAVE_COMPLETE")
+
+func _show_demo_core8_end_screen_if_needed(previous_total_cores_destroyed: int) -> void:
+    if validation_autopilot_mode != "":
+        return
+    if not bool(ProjectSettings.get_setting("global/Demo", false)):
+        return
+    if previous_total_cores_destroyed >= DEMO_CORE8_END_SCREEN_CORE_COUNT:
+        return
+    if int(persistent_data.get("total_cores_destroyed", 0)) < DEMO_CORE8_END_SCREEN_CORE_COUNT:
+        return
+    if bool(persistent_data.get("demo_core8_end_screen_shown", false)):
+        return
+    persistent_data["demo_core8_end_screen_shown"] = true
+    PROGRESS.save_data(persistent_data)
+    _show_demo_core8_end_dialog()
+
+func _submit_clear_time_leaderboards_if_needed(previous_total_cores_destroyed: int, sortie_time_seconds: float) -> void:
+    if validation_autopilot_mode != "":
+        return
+    if not PROGRESS.can_write_leaderboards():
+        return
+    var run_clock_seconds := maxf(0.0, float(persistent_data.get("run_clock_seconds", 0.0)))
+    if run_clock_seconds <= 0.0 and sortie_time_seconds <= 0.0:
+        return
+    var total_cores_destroyed := int(persistent_data.get("total_cores_destroyed", 0))
+    if previous_total_cores_destroyed < 8 and total_cores_destroyed >= 8:
+        var registered_demo_time := PROGRESS.register_demo_core8_time(run_clock_seconds)
+        if registered_demo_time and bool(ProjectSettings.get_setting("global/Demo", false)) and SteamHandler != null and SteamHandler.has_method("submit_open_pit_demo_core8_time"):
+            SteamHandler.submit_open_pit_demo_core8_time(run_clock_seconds)
+    if boss_defeated or bool(persistent_data.get("boss_defeated", false)):
+        var registered_full_time := PROGRESS.register_full_clear_time(run_clock_seconds)
+        if registered_full_time and not bool(ProjectSettings.get_setting("global/Demo", false)) and SteamHandler != null and SteamHandler.has_method("submit_open_pit_full_clear_time"):
+            SteamHandler.submit_open_pit_full_clear_time(run_clock_seconds)
+
+func _show_demo_core8_end_dialog() -> void:
+    _ensure_demo_core8_end_dialog()
+    if demo_core8_end_dialog == null:
+        return
+    demo_core8_dialog_time = 0.0
+    demo_core8_dialog_active = true
+    _update_demo_core8_end_dialog(0.0)
+    demo_core8_end_dialog.popup_centered(Vector2i(760, 620))
+    _focus_demo_core8_end_dialog()
+
+func _ensure_demo_core8_end_dialog() -> void:
+    if demo_core8_end_dialog != null and is_instance_valid(demo_core8_end_dialog):
+        return
+    demo_core8_end_dialog = ConfirmationDialog.new()
+    demo_core8_end_dialog.title = "Data Breach Inc. Demo Complete"
+    demo_core8_end_dialog.process_mode = Node.PROCESS_MODE_ALWAYS
+    demo_core8_end_dialog.exclusive = true
+    demo_core8_end_dialog.min_size = Vector2i(760, 620)
+    demo_core8_end_dialog.dialog_text = ""
+    demo_core8_end_dialog.get_ok_button().hide()
+    demo_core8_end_dialog.get_cancel_button().hide()
+    demo_core8_end_dialog.close_requested.connect(_on_demo_core8_end_dialog_closed)
+    hud_layer.add_child(demo_core8_end_dialog)
+
+    var margin := MarginContainer.new()
+    margin.name = "DemoCore8Content"
+    margin.add_theme_constant_override("margin_left", 18)
+    margin.add_theme_constant_override("margin_top", 14)
+    margin.add_theme_constant_override("margin_right", 18)
+    margin.add_theme_constant_override("margin_bottom", 14)
+    demo_core8_end_dialog.add_child(margin)
+
+    var vbox := VBoxContainer.new()
+    vbox.add_theme_constant_override("separation", 12)
+    margin.add_child(vbox)
+
+    demo_core8_video_panel = PanelContainer.new()
+    demo_core8_video_panel.custom_minimum_size = Vector2(700.0, 330.0)
+    var video_style := StyleBoxFlat.new()
+    video_style.bg_color = Color(0.02, 0.07, 0.08, 1.0)
+    video_style.border_color = Color(0.2, 0.92, 0.76, 0.86)
+    video_style.set_border_width_all(2)
+    video_style.corner_radius_top_left = 8
+    video_style.corner_radius_top_right = 8
+    video_style.corner_radius_bottom_left = 8
+    video_style.corner_radius_bottom_right = 8
+    demo_core8_video_panel.add_theme_stylebox_override("panel", video_style)
+    vbox.add_child(demo_core8_video_panel)
+
+    var video_margin := MarginContainer.new()
+    video_margin.add_theme_constant_override("margin_left", 22)
+    video_margin.add_theme_constant_override("margin_top", 18)
+    video_margin.add_theme_constant_override("margin_right", 22)
+    video_margin.add_theme_constant_override("margin_bottom", 18)
+    demo_core8_video_panel.add_child(video_margin)
+
+    var video_vbox := VBoxContainer.new()
+    video_vbox.add_theme_constant_override("separation", 12)
+    video_margin.add_child(video_vbox)
+
+    demo_core8_video_title_label = Label.new()
+    demo_core8_video_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    demo_core8_video_title_label.add_theme_font_size_override("font_size", 28)
+    demo_core8_video_title_label.add_theme_color_override("font_color", Color(0.76, 1.0, 0.9, 1.0))
+    video_vbox.add_child(demo_core8_video_title_label)
+
+    demo_core8_video_body_label = Label.new()
+    demo_core8_video_body_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    demo_core8_video_body_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    demo_core8_video_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    demo_core8_video_body_label.custom_minimum_size = Vector2(0.0, 178.0)
+    demo_core8_video_body_label.add_theme_font_size_override("font_size", 23)
+    demo_core8_video_body_label.add_theme_color_override("font_color", Color(0.9, 0.96, 1.0, 1.0))
+    video_vbox.add_child(demo_core8_video_body_label)
+
+    demo_core8_video_progress = ProgressBar.new()
+    demo_core8_video_progress.min_value = 0.0
+    demo_core8_video_progress.max_value = 1.0
+    demo_core8_video_progress.show_percentage = false
+    demo_core8_video_progress.custom_minimum_size = Vector2(0.0, 16.0)
+    video_vbox.add_child(demo_core8_video_progress)
+
+    var body := Label.new()
+    body.text = "You defeated the 8th daemon core and reached the end of the demo. Wishlist the full game to keep the breach going when Data Breach Inc. launches."
+    body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    body.add_theme_font_size_override("font_size", 22)
+    body.add_theme_color_override("font_color", Color(0.88, 0.93, 1.0, 1.0))
+    vbox.add_child(body)
+
+    var button_row := HBoxContainer.new()
+    button_row.alignment = BoxContainer.ALIGNMENT_CENTER
+    button_row.add_theme_constant_override("separation", 16)
+    vbox.add_child(button_row)
+
+    demo_core8_wishlist_button = Button.new()
+    demo_core8_wishlist_button.text = "Wishlist"
+    demo_core8_wishlist_button.custom_minimum_size = Vector2(220.0, 54.0)
+    demo_core8_wishlist_button.focus_mode = Control.FOCUS_ALL
+    demo_core8_wishlist_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+    demo_core8_wishlist_button.pressed.connect(_on_demo_core8_wishlist_pressed)
+    button_row.add_child(demo_core8_wishlist_button)
+
+    demo_core8_continue_button = Button.new()
+    demo_core8_continue_button.text = "Continue"
+    demo_core8_continue_button.custom_minimum_size = Vector2(220.0, 54.0)
+    demo_core8_continue_button.focus_mode = Control.FOCUS_ALL
+    demo_core8_continue_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+    demo_core8_continue_button.pressed.connect(_on_demo_core8_end_dialog_closed)
+    button_row.add_child(demo_core8_continue_button)
+
+    _refresh_demo_core8_wishlist_button()
+
+func _update_demo_core8_end_dialog(delta: float) -> void:
+    if not demo_core8_dialog_active:
+        return
+    if demo_core8_end_dialog == null or not is_instance_valid(demo_core8_end_dialog) or not demo_core8_end_dialog.visible:
+        return
+    demo_core8_dialog_time = fmod(demo_core8_dialog_time + delta, DEMO_CORE8_VIDEO_DURATION)
+    var ratio := demo_core8_dialog_time / DEMO_CORE8_VIDEO_DURATION
+    var frame := int(floor(ratio * 4.0))
+    var titles := ["BREACH COMPLETE", "THE FIREWALL GOES DEEPER", "FULL GAME: MORE SYSTEMS", "WISHLIST TO CONTINUE"]
+    var bodies := [
+        "You cracked eight daemon cores and proved the route is viable.",
+        "The demo stops here, but deeper layers, late-game upgrades, and full countermeasures are waiting.",
+        "The full version adds the rest of Data Breach Inc., direct Red Sky and Deepcore access, and leaderboards.",
+        "Wishlist now so Steam reminds you when the full breach is ready."
+    ]
+    frame = clampi(frame, 0, titles.size() - 1)
+    if demo_core8_video_title_label != null:
+        demo_core8_video_title_label.text = titles[frame]
+    if demo_core8_video_body_label != null:
+        demo_core8_video_body_label.text = bodies[frame]
+    if demo_core8_video_progress != null:
+        demo_core8_video_progress.value = ratio
+    if demo_core8_video_panel != null:
+        var pulse := 0.08 + 0.08 * sin(demo_core8_dialog_time * TAU * 0.7)
+        demo_core8_video_panel.modulate = Color(1.0 - pulse * 0.25, 1.0, 1.0 - pulse * 0.12, 1.0)
+
+func _on_demo_core8_end_dialog_closed() -> void:
+    demo_core8_dialog_active = false
+    if demo_core8_end_dialog != null and is_instance_valid(demo_core8_end_dialog):
+        demo_core8_end_dialog.hide()
+
+func _on_demo_core8_wishlist_pressed() -> void:
+    _open_demo_wishlist_url()
+    _on_demo_core8_end_dialog_closed()
+
+func _get_demo_wishlist_url() -> String:
+    if SteamHandler != null and SteamHandler.has_method("get_demo_wishlist_url"):
+        return SteamHandler.get_demo_wishlist_url()
+    return str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()
+
+func _can_open_demo_wishlist_url() -> bool:
+    var url := _get_demo_wishlist_url()
+    return url.begins_with("http://") or url.begins_with("https://")
+
+func _open_demo_wishlist_url() -> void:
+    var url := _get_demo_wishlist_url()
+    if not _can_open_demo_wishlist_url():
+        return
+    if OS.has_feature("web"):
+        var window := JavaScriptBridge.get_interface("window")
+        if window != null:
+            var opened = window.call("open", url, "_blank")
+            if opened != null:
+                return
+            var location = window.get("location")
+            if location != null:
+                location.call("assign", url)
+                return
+        return
+    OS.shell_open(url)
+
+func _refresh_demo_core8_wishlist_button() -> void:
+    if demo_core8_wishlist_button == null or not is_instance_valid(demo_core8_wishlist_button):
+        return
+    var wishlist_url := _get_demo_wishlist_url()
+    var can_open := _can_open_demo_wishlist_url()
+    demo_core8_wishlist_button.disabled = not can_open
+    demo_core8_wishlist_button.tooltip_text = wishlist_url
+
+func _focus_demo_core8_end_dialog() -> void:
+    _refresh_demo_core8_wishlist_button()
+    var target: Control = demo_core8_wishlist_button
+    if target == null or not is_instance_valid(target) or (target is BaseButton and (target as BaseButton).disabled):
+        target = demo_core8_continue_button
+    if target != null and is_instance_valid(target):
+        target.grab_focus()
+    if VirtualCursor != null:
+        VirtualCursor.use_open_pit_empire_cursor(true)
+        VirtualCursor.set_scene_enabled(true)
+        VirtualCursor.activate_for_controller()
+        if target != null and is_instance_valid(target):
+            call_deferred("_move_virtual_cursor_to_demo_core8_button", target)
+
+func _move_virtual_cursor_to_demo_core8_button(target: Control) -> void:
+    if VirtualCursor == null or target == null or not is_instance_valid(target):
+        return
+    VirtualCursor.move_to_control(target)
 
 func _build_summary_header_text(flight_number: int, reason: String, depth_level: int, money_award: int, total_money: int, xp_award: int, cores_destroyed: int, core_currency: int, epilogue: String) -> String:
     var lines: Array[String] = []
@@ -6750,6 +7034,40 @@ func _mark_hit_flash(pos: Vector2i) -> void:
     if hit_timers.has(pos) or hit_timers.size() < MAX_ACTIVE_HIT_FLASHES:
         hit_timers[pos] = HIT_FLASH_DURATION
 
+func _mark_lock_flash(pos: Vector2i) -> void:
+    if lock_flash_timers.has(pos) or lock_flash_timers.size() < MAX_ACTIVE_LOCK_FLASHES:
+        lock_flash_timers[pos] = LOCK_FLASH_DURATION
+        if planet_renderer != null and not autopilot_no_render_enabled:
+            planet_renderer.queue_redraw()
+
+func _is_invincible_attack_block(block: Dictionary, grid: Vector2i = Vector2i(999999, 999999)) -> bool:
+    if bool(block.get("unbreakable", false)):
+        return true
+    if _is_demo_layer_locked_block(block):
+        return true
+    var core_id := int(block.get("core_id", -1))
+    return core_id >= 0 and planet_data != null and planet_data.is_core_locked(core_id, _core_unlocks_center())
+
+func _is_demo_layer_locked_block(block: Dictionary) -> bool:
+    if not BALANCE.is_demo_mode_enabled():
+        return false
+    if int(block.get("core_id", -1)) >= 0 or int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
+        return false
+    return int(block.get("layer_depth", 1)) > BALANCE.DEMO_MINEABLE_MAX_LAYER
+
+func _is_demo_mineable_layer_cap_exhausted() -> bool:
+    if not BALANCE.is_demo_mode_enabled():
+        return false
+    for key_variant in blocks.keys():
+        var block: Dictionary = blocks.get(Vector2i(key_variant), {})
+        if block.is_empty():
+            continue
+        if int(block.get("core_id", -1)) >= 0:
+            continue
+        if _is_autopilot_attackable_block(block, Vector2i(key_variant)):
+            return false
+    return true
+
 func _play_block_break_audio(block_type: int) -> void:
     var now_ms := Time.get_ticks_msec()
     if block_type == BlockType.CORE:
@@ -7407,6 +7725,34 @@ func _is_ship_inside_live_core_circle() -> bool:
 
 func _core_unlocks_center() -> bool:
     return bool(persistent_data.get("free_planet_mode", false)) or _has_core_upgrade("center_unlock")
+
+func _apply_attackable_zone_cap() -> void:
+    if planet_data == null:
+        return
+    planet_data.max_attackable_zone = _get_max_attackable_zone()
+
+func _get_max_attackable_zone() -> int:
+    if bool(persistent_data.get("free_planet_mode", false)):
+        return PLANET_DATA_SCRIPT.Zone.CENTER
+    var max_phase := 1
+    for upgrade_id_variant in upgrades.keys():
+        var upgrade_id := str(upgrade_id_variant)
+        if int(upgrades.get(upgrade_id_variant, 0)) <= 0:
+            continue
+        if BALANCE.is_demo_upgrade_hidden(upgrade_id):
+            continue
+        max_phase = max(max_phase, int(BALANCE.RAW_NODE_DATA.get(upgrade_id, {}).get("phase", 1)))
+    match max_phase:
+        1:
+            return PLANET_DATA_SCRIPT.Zone.PROXY
+        2:
+            return PLANET_DATA_SCRIPT.Zone.CIPHER
+        3:
+            return PLANET_DATA_SCRIPT.Zone.GHOST
+        4, 5:
+            return PLANET_DATA_SCRIPT.Zone.ROOT
+        _:
+            return PLANET_DATA_SCRIPT.Zone.PROXY
 
 func scene_to_spawn_ring(target_grid: Vector2i) -> Vector2:
     if planet_data != null:

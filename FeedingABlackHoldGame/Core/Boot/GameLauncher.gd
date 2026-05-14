@@ -5,11 +5,13 @@ const STAR_TEXTURE: Texture2D = preload("res://Art/star_tiny.png")
 const BACKGROUND_PARTICLE_MATERIAL: Material = preload("res://Upgrade Tree Particles.tres")
 const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
 const MULTI_GAME_MODE := preload("res://MultiGameMode.gd")
+const OPEN_PIT_PROGRESS_SCRIPT := preload("res://Games/OpenPitEmpire/OpenPitEmpireProgress.gd")
+const OPEN_PIT_PLANET_DATA_SCRIPT := preload("res://Games/OpenPitEmpire/OpenPitEmpirePlanetData.gd")
 
 const TITLE_TEXT_KEY := "MAIN MENU"
 const VANGUARD_BUTTON_TEXT := "VANGUARD"
 const MINING_BUTTON_TEXT := "DEEPCORE"
-const OPEN_PIT_BUTTON_TEXT := "OPEN PIT EMPIRE"
+const OPEN_PIT_BUTTON_TEXT := "DATA BREACH INC."
 const RED_SKY_BUTTON_TEXT := "RED SKY DEFENSE"
 const TURKEY_BUTTON_TEXT := "TURKEY"
 const REEL_BUTTON_TEXT := "REEL INTO DARKNESS"
@@ -50,7 +52,10 @@ const GAME_CARD_HOVER_VOLUME_DB_OFFSET := -12.0
 const GAME_CARD_HOVER_SCALE := 1.04
 const GAME_CARD_HOVER_DURATION := 0.16
 const GAME_CARD_RESET_DURATION := 0.3
+const DATA_BREACH_PREVIEW_FOCUS_Y := 0.5
+const DATA_BREACH_PREVIEW_ZOOM := 1.2
 const SHOW_ALL_MODES_IN_BUILD_SETTING := "global/ShowAllModesInBuild"
+const DATA_BREACH_INC_MODE_SETTING := "global/DataBreachIncMode"
 
 @onready var background_rect: ColorRect = get_node_or_null("Background") as ColorRect
 @onready var center_container: CenterContainer = get_node_or_null("CenterContainer") as CenterContainer
@@ -108,6 +113,7 @@ func _ready() -> void:
     _setup_multi_tier_dialog()
     _setup_multi_summary_overlay()
     _refresh_text()
+    _apply_data_breach_inc_launcher_mode()
     _apply_background_palette(_get_background_palette_for_game(""), false)
     _refresh_launcher_panel_layout()
     if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
@@ -128,7 +134,10 @@ func _ready() -> void:
     if combined_button != null and not combined_button.pressed.is_connected(_on_combined_button_pressed):
         combined_button.pressed.connect(_on_combined_button_pressed)
 
-    if vanguard_button != null:
+    if _is_data_breach_inc_mode():
+        if open_pit_button != null:
+            open_pit_button.grab_focus()
+    elif vanguard_button != null:
         vanguard_button.grab_focus()
 
     call_deferred("_show_pending_multi_mode_summary")
@@ -213,9 +222,9 @@ func _start_game(game_id: String) -> void:
 
 func _refresh_text() -> void:
     if title_label != null and is_instance_valid(title_label):
-        title_label.text = tr(TITLE_TEXT_KEY)
+        title_label.text = OPEN_PIT_BUTTON_TEXT if _is_data_breach_inc_mode() else tr(TITLE_TEXT_KEY)
     if subtitle_label != null and is_instance_valid(subtitle_label):
-        subtitle_label.text = tr("PLAY_NEW_MODES")
+        subtitle_label.text = "Select a breach route." if _is_data_breach_inc_mode() else tr("PLAY_NEW_MODES")
     _refresh_game_card_text(vanguard_button, Util.ACTIVE_GAME_VANGUARD)
     _refresh_game_card_text(mining_button, Util.ACTIVE_GAME_MINING)
     _refresh_game_card_text(open_pit_button, Util.ACTIVE_GAME_OPEN_PIT)
@@ -223,6 +232,7 @@ func _refresh_text() -> void:
     _refresh_game_card_text(turkey_button, Util.ACTIVE_GAME_TURKEY)
     _refresh_game_card_text(reel_button, Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
     _refresh_game_card_text(combined_button, Util.HIGH_LEVEL_MODE_ALL)
+    _refresh_countermeasure_card_locks()
     _refresh_currency_strip()
     _refresh_multi_tier_dialog_text()
 
@@ -390,6 +400,7 @@ func _setup_game_cards() -> void:
     _decorate_game_button(reel_button, Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
     _decorate_game_button(combined_button, Util.HIGH_LEVEL_MODE_ALL)
     _apply_open_pit_launcher_availability()
+    _apply_data_breach_inc_launcher_mode()
     _refresh_game_card_layout()
 
 func _setup_currency_strip(root_vbox: VBoxContainer) -> void:
@@ -837,7 +848,8 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
     preview_panel.clip_contents = true
     preview_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     preview_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-    preview_panel.add_theme_stylebox_override("panel", _make_preview_style(Color(card_def.get("accent", Color(0.78, 0.84, 0.96, 1.0)))))
+    var preview_bg_color := _get_game_card_preview_bg_color(game_id, card_def)
+    preview_panel.add_theme_stylebox_override("panel", _make_preview_style(Color(card_def.get("accent", Color(0.78, 0.84, 0.96, 1.0))), preview_bg_color))
     if not preview_panel.resized.is_connected(_on_game_card_control_resized):
         preview_panel.resized.connect(_on_game_card_control_resized)
     vbox.add_child(preview_panel)
@@ -877,53 +889,89 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
     button.set_meta("card_preview_texture", texture_rect)
     button.set_meta("card_title_label", title)
     button.set_meta("card_detail_label", detail)
+    _ensure_game_card_lock_overlay(button)
 
     if _should_show_demo_lock_overlay(game_id):
-        var lock_band := PanelContainer.new()
-        lock_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        lock_band.anchor_left = 0.08
-        lock_band.anchor_top = 0.37
-        lock_band.anchor_right = 0.92
-        lock_band.anchor_bottom = 0.63
-        lock_band.offset_left = 0.0
-        lock_band.offset_top = 0.0
-        lock_band.offset_right = 0.0
-        lock_band.offset_bottom = 0.0
-        lock_band.rotation_degrees = -11.0
-        lock_band.add_theme_stylebox_override("panel", _make_demo_lock_band_style())
-        button.add_child(lock_band)
-
-        var lock_margin := MarginContainer.new()
-        lock_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        lock_margin.anchor_right = 1.0
-        lock_margin.anchor_bottom = 1.0
-        lock_margin.add_theme_constant_override("margin_left", 18)
-        lock_margin.add_theme_constant_override("margin_top", 10)
-        lock_margin.add_theme_constant_override("margin_right", 18)
-        lock_margin.add_theme_constant_override("margin_bottom", 10)
-        lock_band.add_child(lock_margin)
-
-        var lock_label := Label.new()
-        lock_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        lock_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        lock_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        lock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        lock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-        lock_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        lock_label.add_theme_font_size_override("font_size", 28)
-        lock_label.add_theme_constant_override("outline_size", 3)
-        lock_label.add_theme_color_override("font_outline_color", Color(0.12, 0.02, 0.03, 0.95))
-        lock_label.add_theme_color_override("font_color", Color(1.0, 0.94, 0.9, 1.0))
-        lock_margin.add_child(lock_label)
-
-        button.set_meta("card_demo_lock_label", lock_label)
+        _set_game_card_lock(button, true, tr("LOCKED"))
 
     _queue_fit_game_cards()
+
+func _ensure_game_card_lock_overlay(button: Button) -> void:
+    if button == null or not is_instance_valid(button):
+        return
+    if button.has_meta("card_lock_band"):
+        var existing_lock_band := button.get_meta("card_lock_band", null) as PanelContainer
+        if existing_lock_band != null and is_instance_valid(existing_lock_band):
+            button.move_child(existing_lock_band, button.get_child_count() - 1)
+        return
+    var lock_band := PanelContainer.new()
+    lock_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    lock_band.anchor_left = 0.08
+    lock_band.anchor_top = 0.36
+    lock_band.anchor_right = 0.92
+    lock_band.anchor_bottom = 0.64
+    lock_band.offset_left = 0.0
+    lock_band.offset_top = 0.0
+    lock_band.offset_right = 0.0
+    lock_band.offset_bottom = 0.0
+    lock_band.rotation_degrees = -10.0
+    lock_band.visible = false
+    lock_band.add_theme_stylebox_override("panel", _make_demo_lock_band_style())
+    button.add_child(lock_band)
+
+    var lock_margin := MarginContainer.new()
+    lock_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    lock_margin.anchor_right = 1.0
+    lock_margin.anchor_bottom = 1.0
+    lock_margin.add_theme_constant_override("margin_left", 18)
+    lock_margin.add_theme_constant_override("margin_top", 10)
+    lock_margin.add_theme_constant_override("margin_right", 18)
+    lock_margin.add_theme_constant_override("margin_bottom", 10)
+    lock_band.add_child(lock_margin)
+
+    var lock_label := Label.new()
+    lock_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    lock_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    lock_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    lock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    lock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    lock_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    lock_label.add_theme_font_size_override("font_size", 26)
+    lock_label.add_theme_constant_override("outline_size", 3)
+    lock_label.add_theme_color_override("font_outline_color", Color(0.12, 0.02, 0.03, 0.95))
+    lock_label.add_theme_color_override("font_color", Color(1.0, 0.94, 0.9, 1.0))
+    lock_margin.add_child(lock_label)
+
+    button.set_meta("card_lock_band", lock_band)
+    button.set_meta("card_lock_label", lock_label)
+
+func _set_game_card_lock(button: Button, locked: bool, text: String = "") -> void:
+    if button == null or not is_instance_valid(button):
+        return
+    _ensure_game_card_lock_overlay(button)
+    var lock_band := button.get_meta("card_lock_band", null) as PanelContainer
+    var lock_label := button.get_meta("card_lock_label", null) as Label
+    if lock_band != null and is_instance_valid(lock_band):
+        lock_band.visible = locked
+    if lock_label != null and is_instance_valid(lock_label):
+        lock_label.text = text
 
 func _refresh_game_card_layout() -> void:
     if game_cards_grid == null or not is_instance_valid(game_cards_grid):
         return
     var viewport_width: float = get_viewport_rect().size.x
+    if _is_data_breach_inc_mode():
+        game_cards_grid.columns = 1
+        var normal_card_min_width: float = 360.0
+        var full_width := normal_card_min_width * 3.0 + 18.0 * 2.0
+        if open_pit_button != null and is_instance_valid(open_pit_button):
+            open_pit_button.custom_minimum_size = Vector2(full_width, 278.0)
+        for button in [mining_button, red_sky_button]:
+            if button == null or not is_instance_valid(button):
+                continue
+            button.custom_minimum_size = Vector2(full_width, 312.0)
+        _queue_fit_game_cards()
+        return
     game_cards_grid.columns = 3 if viewport_width >= 1340.0 else 2
     var card_min_width: float = 360.0 if game_cards_grid.columns >= 3 else 460.0
     var card_height: float = 368.0 if game_cards_grid.columns >= 3 else 408.0
@@ -978,16 +1026,85 @@ func _fit_game_cards() -> void:
         _fit_game_card_content(button)
 
 func _is_open_pit_launcher_available() -> bool:
-    return OS.has_feature("editor") or _should_show_all_modes_in_build()
+    return _is_data_breach_inc_mode() or OS.has_feature("editor") or _should_show_all_modes_in_build()
 
 func _should_show_all_modes_in_build() -> bool:
     return bool(ProjectSettings.get_setting(SHOW_ALL_MODES_IN_BUILD_SETTING, false))
+
+func _is_data_breach_inc_mode() -> bool:
+    return bool(ProjectSettings.get_setting(DATA_BREACH_INC_MODE_SETTING, true))
+
+func _apply_data_breach_inc_launcher_mode() -> void:
+    if not _is_data_breach_inc_mode():
+        return
+    for button in [vanguard_button, turkey_button, reel_button, combined_button]:
+        if button == null or not is_instance_valid(button):
+            continue
+        button.visible = false
+        button.disabled = true
+    if open_pit_button != null and is_instance_valid(open_pit_button):
+        open_pit_button.visible = true
+        open_pit_button.disabled = false
+        _set_game_card_lock(open_pit_button, false)
+    _apply_countermeasure_launcher_card_state(mining_button, Util.ACTIVE_GAME_MINING)
+    _apply_countermeasure_launcher_card_state(red_sky_button, Util.ACTIVE_GAME_RED_SKY)
+    if currency_strip != null and is_instance_valid(currency_strip):
+        currency_strip.visible = false
+
+func _apply_countermeasure_launcher_card_state(button: Button, game_id: String) -> void:
+    if button == null or not is_instance_valid(button):
+        return
+    if not _is_data_breach_inc_mode():
+        return
+    var visible_on_launcher := _should_show_countermeasure_launcher_card(game_id)
+    var locked := visible_on_launcher and not _has_countermeasure_full_game_unlock()
+    button.visible = visible_on_launcher
+    button.disabled = locked or not visible_on_launcher
+    _set_game_card_lock(button, locked, "LOCKED\nRoot key upgrade needed")
+
+func _refresh_countermeasure_card_locks() -> void:
+    if not _is_data_breach_inc_mode():
+        return
+    _apply_countermeasure_launcher_card_state(mining_button, Util.ACTIVE_GAME_MINING)
+    _apply_countermeasure_launcher_card_state(red_sky_button, Util.ACTIVE_GAME_RED_SKY)
+
+func _should_show_countermeasure_launcher_card(game_id: String) -> bool:
+    return _has_countermeasure_full_game_unlock() or _has_countermeasure_been_encountered(game_id)
+
+func _has_countermeasure_full_game_unlock() -> bool:
+    var data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
+    var purchased: Array = data.get("purchased_core_upgrades", [])
+    return purchased.has("countermeasure_suite")
+
+func _has_countermeasure_been_encountered(game_id: String) -> bool:
+    if game_id != Util.ACTIVE_GAME_MINING and game_id != Util.ACTIVE_GAME_RED_SKY:
+        return false
+    var data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
+    for field_name in ["core_defense_completed", "core_defense_warned"]:
+        var core_states: Dictionary = data.get(field_name, {})
+        for core_id_variant in core_states.keys():
+            if not bool(core_states.get(core_id_variant, false)):
+                continue
+            if _get_countermeasure_game_for_core_id(int(str(core_id_variant))) == game_id:
+                return true
+    var pending: Dictionary = data.get("open_pit_defense_pending", {})
+    if str(pending.get("game_id", "")) == game_id:
+        return true
+    return false
+
+func _get_countermeasure_game_for_core_id(core_id: int) -> String:
+    if core_id < 0:
+        return ""
+    var zone: int = OPEN_PIT_PLANET_DATA_SCRIPT.get_core_zone(core_id)
+    var difficulty: int = clampi(zone + 1, 1, 4)
+    return Util.ACTIVE_GAME_RED_SKY if difficulty % 2 == 1 else Util.ACTIVE_GAME_MINING
 
 func _apply_open_pit_launcher_availability() -> void:
     if open_pit_button != null and is_instance_valid(open_pit_button):
         var is_open_pit_available: bool = _is_open_pit_launcher_available()
         open_pit_button.visible = is_open_pit_available
         open_pit_button.disabled = not is_open_pit_available
+    _apply_data_breach_inc_launcher_mode()
 func _fit_game_card_content(button: Button) -> void:
     if button == null or not is_instance_valid(button):
         return
@@ -1059,10 +1176,12 @@ func _layout_game_card_preview_texture(button: Button, preview_height: float) ->
     if texture_size.x <= 0.0 or texture_size.y <= 0.0:
         return
 
+    var game_id := str(button.get_meta("game_id", ""))
     var cover_scale := maxf(panel_width / texture_size.x, preview_height / texture_size.y)
+    cover_scale *= _get_game_card_preview_zoom(game_id)
     var fitted_size := texture_size * cover_scale
     var overflow_y := maxf(fitted_size.y - preview_height, 0.0)
-    var focus_y := clampf(_get_game_card_preview_focus_y(str(button.get_meta("game_id", ""))), 0.0, 1.0)
+    var focus_y := clampf(_get_game_card_preview_focus_y(game_id), 0.0, 1.0)
 
     preview_texture.size = fitted_size
     preview_texture.position = Vector2(
@@ -1074,10 +1193,26 @@ func _get_game_card_preview_focus_y(game_id: String) -> float:
     match game_id:
         Util.ACTIVE_GAME_TURKEY, Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
             return 0.2
+        Util.ACTIVE_GAME_RED_SKY:
+            return 0.15 if _is_data_breach_inc_mode() else 0.5
         Util.ACTIVE_GAME_OPEN_PIT:
-            return 0.68
+            return DATA_BREACH_PREVIEW_FOCUS_Y
         _:
             return 0.5
+
+func _get_game_card_preview_zoom(game_id: String) -> float:
+    match game_id:
+        Util.ACTIVE_GAME_OPEN_PIT:
+            return DATA_BREACH_PREVIEW_ZOOM
+        Util.ACTIVE_GAME_RED_SKY:
+            return 0.77 if _is_data_breach_inc_mode() else 1.0
+        _:
+            return 1.0
+
+func _get_game_card_preview_bg_color(game_id: String, card_def: Dictionary) -> Color:
+    if game_id == Util.ACTIVE_GAME_RED_SKY and _is_data_breach_inc_mode():
+        return Color(card_def.get("bg_top", Color(0.22, 0.05, 0.06, 1.0)))
+    return Color(0.04, 0.05, 0.08, 1.0)
 
 func _get_game_card_definition(game_id: String) -> Dictionary:
     match game_id:
@@ -1102,11 +1237,11 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
         Util.ACTIVE_GAME_OPEN_PIT:
             return {
                 "title": OPEN_PIT_BUTTON_TEXT,
-                "detail": "Dash into a giant pit, mine fast, and extract before the timer ends.",
+                "detail": "Breach the firewall, mine data blocks, and extract before the trace catches you.",
                 "asset_rel_path": "OpenPitEmpire/launcher_preview.png",
-                "accent": Color(0.97, 0.78, 0.32, 1.0),
-                "bg_top": Color(0.22, 0.15, 0.06, 1.0),
-                "bg_bottom": Color(0.08, 0.05, 0.02, 1.0)
+                "accent": Color(0.32, 0.92, 0.78, 1.0),
+                "bg_top": Color(0.03, 0.11, 0.13, 1.0),
+                "bg_bottom": Color(0.01, 0.04, 0.06, 1.0)
             }
         Util.ACTIVE_GAME_RED_SKY:
             return {
@@ -1204,9 +1339,16 @@ func _build_fallback_game_card_texture(game_id: String) -> Texture2D:
             _fill_image_rect(image, Rect2i(110, 84, 84, 40), Color(0.94, 0.74, 0.28, 1.0))
             _fill_image_rect(image, Rect2i(228, 206, 120, 12), Color(0.98, 0.88, 0.48, 0.92))
         Util.ACTIVE_GAME_OPEN_PIT:
-            _fill_image_rect(image, Rect2i(42, 80, image.get_width() - 84, 120), Color(0.48, 0.32, 0.16, 0.95))
-            _fill_image_rect(image, Rect2i(84, 160, image.get_width() - 168, 156), Color(0.28, 0.2, 0.1, 1.0))
-            _draw_image_circle(image, Vector2i(236, 116), 48, Color(0.18, 0.58, 0.82, 0.95))
+            for grid_x in range(72, image.get_width() - 40, 72):
+                _fill_image_rect(image, Rect2i(grid_x, 42, 2, image.get_height() - 116), Color(0.16, 0.78, 0.68, 0.18))
+            for grid_y in range(56, image.get_height() - 72, 48):
+                _fill_image_rect(image, Rect2i(36, grid_y, image.get_width() - 72, 2), Color(0.16, 0.78, 0.68, 0.16))
+            _fill_image_rect(image, Rect2i(62, 86, image.get_width() - 124, 188), Color(0.02, 0.16, 0.18, 0.76))
+            _fill_image_rect(image, Rect2i(92, 116, image.get_width() - 184, 128), Color(0.0, 0.05, 0.07, 0.88))
+            _draw_image_circle(image, Vector2i(360, 180), 82, Color(0.06, 0.84, 0.66, 0.28))
+            _draw_image_circle(image, Vector2i(360, 180), 44, Color(0.9, 0.18, 0.2, 0.9))
+            _fill_image_rect(image, Rect2i(188, 176, 344, 8), Color(0.38, 1.0, 0.82, 0.76))
+            _fill_image_rect(image, Rect2i(356, 66, 8, 244), Color(0.38, 1.0, 0.82, 0.58))
         Util.ACTIVE_GAME_OPEN_PIT_ORBIT:
             _draw_image_circle(image, Vector2i(530, 122), 88, Color(0.24, 0.78, 0.96, 0.82))
             _draw_image_circle(image, Vector2i(520, 122), 52, Color(0.03, 0.08, 0.16, 0.92))
@@ -1251,9 +1393,9 @@ func _make_game_card_style(border_color: Color, tint_amount: float) -> StyleBoxF
     style.content_margin_bottom = 0.0
     return style
 
-func _make_preview_style(border_color: Color) -> StyleBoxFlat:
+func _make_preview_style(border_color: Color, bg_color: Color = Color(0.04, 0.05, 0.08, 1.0)) -> StyleBoxFlat:
     var style := StyleBoxFlat.new()
-    style.bg_color = Color(0.04, 0.05, 0.08, 1.0)
+    style.bg_color = bg_color
     style.border_color = border_color.lightened(0.08)
     style.set_border_width_all(1)
     style.corner_radius_top_left = 6

@@ -39,6 +39,10 @@ const DEFAULT_DATA := {
     "planet_state": {},
     "planet_layout_version": BALANCE.PLANET_LAYOUT_VERSION,
     "attempt_history": [],
+    "run_clock_seconds": 0.0,
+    "demo_core8_clock_seconds": -1.0,
+    "full_clear_clock_seconds": -1.0,
+    "demo_core8_end_screen_shown": false,
     "best_layer_clear_percents": {},
     "remaining_layer_block_counts": {},
     "chat_line_counts": {},
@@ -97,6 +101,10 @@ static func load_data() -> Dictionary:
         data["planet_state"] = {}
     if not (data.get("attempt_history", []) is Array):
         data["attempt_history"] = []
+    data["run_clock_seconds"] = max(0.0, float(data.get("run_clock_seconds", 0.0)))
+    data["demo_core8_clock_seconds"] = float(data.get("demo_core8_clock_seconds", -1.0))
+    data["full_clear_clock_seconds"] = float(data.get("full_clear_clock_seconds", -1.0))
+    data["demo_core8_end_screen_shown"] = bool(data.get("demo_core8_end_screen_shown", false))
     if not (data.get("best_layer_clear_percents", {}) is Dictionary):
         data["best_layer_clear_percents"] = {}
     if not (data.get("remaining_layer_block_counts", {}) is Dictionary):
@@ -215,6 +223,34 @@ static func has_editor_assists_used() -> bool:
 static func can_write_leaderboards() -> bool:
     return not has_editor_assists_used()
 
+static func register_demo_core8_time(clear_time_seconds: float) -> bool:
+    if clear_time_seconds < 0.0:
+        return false
+    var data := load_data()
+    var existing_time := float(data.get("demo_core8_clock_seconds", -1.0))
+    if existing_time >= 0.0 and clear_time_seconds >= existing_time:
+        return false
+    data["demo_core8_clock_seconds"] = clear_time_seconds
+    save_data(data)
+    return true
+
+static func get_demo_core8_time() -> float:
+    return max(-1.0, float(load_data().get("demo_core8_clock_seconds", -1.0)))
+
+static func register_full_clear_time(clear_time_seconds: float) -> bool:
+    if clear_time_seconds < 0.0:
+        return false
+    var data := load_data()
+    var existing_time := float(data.get("full_clear_clock_seconds", -1.0))
+    if existing_time >= 0.0 and clear_time_seconds >= existing_time:
+        return false
+    data["full_clear_clock_seconds"] = clear_time_seconds
+    save_data(data)
+    return true
+
+static func get_full_clear_time() -> float:
+    return max(-1.0, float(load_data().get("full_clear_clock_seconds", -1.0)))
+
 static func mark_editor_assists_used() -> void:
     var data := load_data()
     if bool(data.get("editor_assists_used", false)):
@@ -258,6 +294,8 @@ static func _collect_best_layer_clear_percents(data: Dictionary) -> Dictionary:
     return best_percents
 
 static func apply_tree_purchase(upgrade_id: String, level: int, wallet_after_purchase: int) -> void:
+    if BALANCE.is_demo_upgrade_hidden(upgrade_id):
+        return
     var data := load_data()
     if BALANCE.is_core_upgrade(upgrade_id):
         if BALANCE.is_reward_core_upgrade(upgrade_id):
@@ -326,6 +364,8 @@ static func apply_tree_sale(upgrade_id: String, level: int, wallet_after_sale: i
 
 static func apply_run_results(results: Dictionary) -> Dictionary:
     var data := load_data()
+    if bool(results.get("count_leaderboard_time", true)):
+        data["run_clock_seconds"] = max(0.0, float(data.get("run_clock_seconds", 0.0)) + max(0.0, float(results.get("sortie_time_seconds", 0.0))))
     data["wallet"] = max(0, int(data.get("wallet", 0)) + int(results.get("money", 0)))
     data["xp_currency"] = max(0, int(data.get("xp_currency", 0)) + int(results.get("xp", 0)))
     data["last_run_summary"] = str(results.get("summary_text", "Open Pit Empire sortie complete."))
@@ -605,6 +645,10 @@ static func _sanitize_main_data(data: Dictionary) -> Dictionary:
         sanitized["xp_upgrades"] = Dictionary(sanitized.get("xp_upgrades", {})).duplicate(true)
     if sanitized.get("purchased_core_upgrades", []) is Array:
         sanitized["purchased_core_upgrades"] = Array(sanitized.get("purchased_core_upgrades", [])).duplicate(true)
+    sanitized["run_clock_seconds"] = max(0.0, float(sanitized.get("run_clock_seconds", 0.0)))
+    sanitized["demo_core8_clock_seconds"] = float(sanitized.get("demo_core8_clock_seconds", -1.0))
+    sanitized["full_clear_clock_seconds"] = float(sanitized.get("full_clear_clock_seconds", -1.0))
+    sanitized["demo_core8_end_screen_shown"] = bool(sanitized.get("demo_core8_end_screen_shown", false))
     if sanitized.get("chat_line_counts", {}) is Dictionary:
         sanitized["chat_line_counts"] = Dictionary(sanitized.get("chat_line_counts", {})).duplicate(true)
     else:

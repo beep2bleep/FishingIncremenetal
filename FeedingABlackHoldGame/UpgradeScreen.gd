@@ -61,11 +61,17 @@ var editor_cash_controls: HBoxContainer
 var editor_add_cash_button: Button
 var editor_add_xp_button: Button
 var editor_add_core_button: Button
+var editor_auto_buy_button: Button
 var editor_reset_add_button: Button
 var editor_unlock_all_button: Button
 var editor_regenerate_planet_button: Button
 var editor_crt_toggle_button: Button
 var editor_demo_toggle_button: Button
+var editor_exit_demo_button: Button
+var editor_mode_jump_controls: HBoxContainer
+var editor_data_breach_jump_button: Button
+var editor_deepcore_jump_button: Button
+var editor_red_sky_jump_button: Button
 var editor_sell_popup_menu: PopupMenu
 var editor_sell_target_node: TechTreeNode
 var editor_center_offset_controls: VBoxContainer
@@ -106,7 +112,6 @@ var legacy_reset_dialog: ConfirmationDialog
 var settings_button: Button
 var return_to_main_menu_button: Button
 var fullscreen_button: Button
-var touch_input_button: Button
 var settings_panel: PanelContainer
 var settings_content: Settings
 var settings_title_label: Label
@@ -180,6 +185,7 @@ func _refresh_localized_text() -> void:
         var legacy_ok_button: Button = legacy_reset_dialog.get_ok_button()
         if legacy_ok_button != null:
             legacy_ok_button.text = tr("UI_CONTINUE")
+    _refresh_editor_mode_jump_buttons()
     if leaderboard_title_label != null and is_instance_valid(leaderboard_title_label):
         leaderboard_title_label.text = _get_leaderboard_panel_title()
     _refresh_leaderboard_panel()
@@ -216,18 +222,18 @@ func _refresh_upgrade_tree_for_locale_change() -> void:
         _update_go_again_button_state()
     _loaded_tree_locale = active_locale
 
-func _should_show_editor_only_touch_toggle() -> bool:
-    return OS.has_feature("editor")
-
 func _should_show_leaderboards() -> bool:
     if Util.is_open_pit_game_active():
-        return false
+        var data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
+        return not OS.has_feature("web") and not Array(data.get("attempt_history", [])).is_empty()
     return not OS.has_feature("web")
 
 func _should_show_deepcore_demo_leaderboard() -> bool:
     return Util.is_mining_game_active() and bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
 
 func _get_leaderboard_panel_title() -> String:
+    if Util.is_open_pit_game_active():
+        return "Data Breach Leaderboards"
     if _should_show_deepcore_demo_leaderboard():
         return tr("DEEPCORE_DEMO_LEADERBOARD_TITLE")
     return tr("MINING_LEADERBOARDS_TITLE")
@@ -291,6 +297,8 @@ func _ready() -> void :
     ready_step_started_msec = _print_open_pit_ready_step("ready_update_colors", ready_step_started_msec)
     _setup_editor_cash_controls()
     ready_step_started_msec = _print_open_pit_ready_step("ready_editor_cash_controls", ready_step_started_msec)
+    _setup_editor_mode_jump_controls()
+    ready_step_started_msec = _print_open_pit_ready_step("ready_editor_mode_jump_controls", ready_step_started_msec)
     _setup_editor_center_offset_controls()
     ready_step_started_msec = _print_open_pit_ready_step("ready_editor_center_offset_controls", ready_step_started_msec)
     _setup_editor_sell_popup_menu()
@@ -309,11 +317,10 @@ func _ready() -> void :
     ready_step_started_msec = _print_open_pit_ready_step("ready_return_to_main_menu_button", ready_step_started_msec)
     _setup_fullscreen_button()
     ready_step_started_msec = _print_open_pit_ready_step("ready_fullscreen_button", ready_step_started_msec)
-    _setup_touch_input_button()
-    ready_step_started_msec = _print_open_pit_ready_step("ready_touch_input_button", ready_step_started_msec)
     go_again_button = get_node_or_null("%Go Again")
     demo_mode_label = get_node_or_null("%Demo Mode Label")
     game_mode_label = get_node_or_null("%Game Mode Label")
+    _setup_editor_exit_demo_button()
     _setup_mining_time_label()
     ready_step_started_msec = _print_open_pit_ready_step("ready_mining_time_label", ready_step_started_msec)
     _setup_open_pit_chat_controls()
@@ -596,6 +603,7 @@ func update():
     if tech_tree == null or not is_instance_valid(tech_tree):
         return
     _refresh_bottom_wallet_display()
+    _refresh_editor_mode_jump_buttons()
     tech_tree.update_active()
 
 func _refresh_bottom_wallet_display() -> void:
@@ -608,7 +616,6 @@ func _on_pallet_updated():
     update_colors()
 
 func _on_settings_updated() -> void:
-    _refresh_touch_input_button()
     _refresh_fullscreen_button_icon()
     if settings_content != null:
         settings_content.refresh_from_save()
@@ -818,7 +825,6 @@ func show_screen():
     _queue_wishlist_button_setup()
     _refresh_leaderboard_panel()
     _refresh_fullscreen_button_icon()
-    _refresh_touch_input_button()
     _update_return_to_main_menu_button_visibility()
     _update_go_again_button_state()
     _refresh_mining_crt_overlay()
@@ -1134,6 +1140,7 @@ func _refresh_demo_mode_label_visibility() -> void:
             game_mode_label.add_theme_color_override("font_color", Color(0.56, 0.84, 0.94, 1.0))
         else:
             game_mode_label.text = ""
+    _refresh_editor_exit_demo_button()
     _refresh_mining_time_label()
 
 func _setup_mining_time_label() -> void:
@@ -1287,10 +1294,9 @@ func _scroll_open_pit_chat_to_bottom() -> void:
     open_pit_chat_label.scroll_to_line(open_pit_chat_label.get_line_count())
 
 func _get_demo_wishlist_url() -> String:
-    var configured_url: String = str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()
-    if configured_url != "":
-        return configured_url
-    return SteamHandler.get_store_url().strip_edges()
+    if SteamHandler != null and SteamHandler.has_method("get_demo_wishlist_url"):
+        return SteamHandler.get_demo_wishlist_url()
+    return str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()
 
 func _can_open_demo_wishlist_url() -> bool:
     var url: String = _get_demo_wishlist_url()
@@ -1475,7 +1481,9 @@ func _refresh_leaderboard_panel() -> void:
         lines.append(title)
         if description_key != "":
             lines.append(tr(description_key))
-        var local_best: float = SaveHandler.get_deepcore_tier8_time() if board_id == "DeepcoreTimeToTier8" else SaveHandler.get_fishing_best_boss_clear_time(level)
+        elif str(config.get("description", "")).strip_edges() != "":
+            lines.append(str(config.get("description", "")).strip_edges())
+        var local_best: float = _get_local_leaderboard_best_time(board_id, level)
         lines.append("Your best: %s" % (_format_leaderboard_time(local_best) if local_best >= 0.0 else "--"))
         var status: String = SteamHandler.get_cached_leaderboard_status(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_status") else "Unavailable"
         var submitted_score_ms: int = SteamHandler.get_cached_leaderboard_last_submitted_score(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_last_submitted_score") else -1
@@ -1517,6 +1525,17 @@ func _format_leaderboard_time(seconds: float) -> String:
     if seconds < 0.0:
         return "--"
     return Util.format_time(seconds)
+
+func _get_local_leaderboard_best_time(board_id: String, level: int) -> float:
+    match board_id:
+        "DeepcoreTimeToTier8":
+            return SaveHandler.get_deepcore_tier8_time()
+        "DataBreachIncDemoCore8Time":
+            return OPEN_PIT_PROGRESS_SCRIPT.get_demo_core8_time()
+        "DataBreachIncFullClearTime":
+            return OPEN_PIT_PROGRESS_SCRIPT.get_full_clear_time()
+        _:
+            return SaveHandler.get_fishing_best_boss_clear_time(level)
 
 func _submit_editor_leaderboard_time(level: int, time_seconds: float) -> void:
     if not OS.has_feature("editor"):
@@ -2150,7 +2169,7 @@ func _setup_editor_cash_controls() -> void:
     editor_cash_controls.anchor_top = 0.0
     editor_cash_controls.anchor_right = 1.0
     editor_cash_controls.anchor_bottom = 0.0
-    editor_cash_controls.offset_left = -900.0
+    editor_cash_controls.offset_left = -1020.0
     editor_cash_controls.offset_top = 12.0
     editor_cash_controls.offset_right = -12.0
     editor_cash_controls.offset_bottom = 56.0
@@ -2172,6 +2191,11 @@ func _setup_editor_cash_controls() -> void:
     editor_add_core_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
     editor_add_core_button.pressed.connect(_on_editor_add_core_pressed)
     editor_cash_controls.add_child(editor_add_core_button)
+
+    editor_auto_buy_button = Button.new()
+    editor_auto_buy_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    editor_auto_buy_button.pressed.connect(_on_editor_auto_buy_pressed)
+    editor_cash_controls.add_child(editor_auto_buy_button)
 
     editor_reset_add_button = Button.new()
     editor_reset_add_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
@@ -2205,6 +2229,89 @@ func _setup_editor_cash_controls() -> void:
     _refresh_editor_crt_button_text()
     _refresh_editor_demo_toggle_button_text()
     _refresh_editor_regenerate_planet_button()
+
+func _setup_editor_mode_jump_controls() -> void:
+    if editor_mode_jump_controls != null and is_instance_valid(editor_mode_jump_controls):
+        _refresh_editor_mode_jump_buttons()
+        return
+
+    editor_mode_jump_controls = HBoxContainer.new()
+    editor_mode_jump_controls.name = "EditorModeJumpControls"
+    editor_mode_jump_controls.anchor_left = 1.0
+    editor_mode_jump_controls.anchor_top = 0.0
+    editor_mode_jump_controls.anchor_right = 1.0
+    editor_mode_jump_controls.anchor_bottom = 0.0
+    editor_mode_jump_controls.offset_left = -520.0
+    editor_mode_jump_controls.offset_top = 62.0
+    editor_mode_jump_controls.offset_right = -12.0
+    editor_mode_jump_controls.offset_bottom = 106.0
+    editor_mode_jump_controls.alignment = BoxContainer.ALIGNMENT_END
+    editor_mode_jump_controls.z_index = 205
+    editor_mode_jump_controls.mouse_filter = Control.MOUSE_FILTER_STOP
+
+    editor_data_breach_jump_button = _build_editor_mode_jump_button("DATA BREACH", Util.ACTIVE_GAME_OPEN_PIT)
+    editor_mode_jump_controls.add_child(editor_data_breach_jump_button)
+
+    editor_deepcore_jump_button = _build_editor_mode_jump_button("DEEPCORE", Util.ACTIVE_GAME_MINING)
+    editor_mode_jump_controls.add_child(editor_deepcore_jump_button)
+
+    editor_red_sky_jump_button = _build_editor_mode_jump_button("RED SKY", Util.ACTIVE_GAME_RED_SKY)
+    editor_mode_jump_controls.add_child(editor_red_sky_jump_button)
+
+    %CanvasLayer2.add_child(editor_mode_jump_controls)
+    _refresh_editor_mode_jump_buttons()
+
+func _build_editor_mode_jump_button(label: String, game_id: String) -> Button:
+    var button := Button.new()
+    button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+    button.text = label
+    button.pressed.connect(_on_editor_mode_jump_pressed.bind(game_id))
+    return button
+
+func _refresh_editor_mode_jump_buttons() -> void:
+    if editor_mode_jump_controls != null and is_instance_valid(editor_mode_jump_controls):
+        editor_mode_jump_controls.visible = _should_show_countermeasure_mode_jump_controls()
+    if not _should_show_countermeasure_mode_jump_controls():
+        return
+    var active_game_id := Util.get_active_game_id()
+    if editor_data_breach_jump_button != null and is_instance_valid(editor_data_breach_jump_button):
+        editor_data_breach_jump_button.text = "DATA BREACH"
+        editor_data_breach_jump_button.disabled = active_game_id == Util.ACTIVE_GAME_OPEN_PIT
+    if editor_deepcore_jump_button != null and is_instance_valid(editor_deepcore_jump_button):
+        editor_deepcore_jump_button.text = "DEEPCORE"
+        editor_deepcore_jump_button.disabled = active_game_id == Util.ACTIVE_GAME_MINING
+    if editor_red_sky_jump_button != null and is_instance_valid(editor_red_sky_jump_button):
+        editor_red_sky_jump_button.text = "RED SKY"
+        editor_red_sky_jump_button.disabled = active_game_id == Util.ACTIVE_GAME_RED_SKY
+
+func _on_editor_mode_jump_pressed(game_id: String) -> void:
+    if not _should_show_countermeasure_mode_jump_controls():
+        return
+    var target_game_id := str(game_id).strip_edges().to_lower()
+    if target_game_id == "":
+        return
+    Global.open_pit_defense_challenge = {}
+    Global.open_pit_defense_result = {}
+    Global.multi_game_run = {}
+    Global.multi_game_step_config = {}
+    Util.set_active_game_id(target_game_id)
+    Util.set_high_level_mode_id(Util.HIGH_LEVEL_MODE_ALL)
+    SaveHandler.load_fishing_progress()
+    Global.current_game_mode_data = null
+    Global.ensure_default_game_mode_data()
+    Global.new_game()
+    Global.start_in_upgrade_scene = true
+    Global.load_saved_run = false
+    _refresh_editor_mode_jump_buttons()
+    SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
+
+func _should_show_countermeasure_mode_jump_controls() -> bool:
+    return OS.has_feature("editor") or _has_countermeasure_direct_access_unlocked()
+
+func _has_countermeasure_direct_access_unlocked() -> bool:
+    var data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
+    var purchased: Array = data.get("purchased_core_upgrades", [])
+    return "countermeasure_suite" in purchased
 
 func _setup_editor_sell_popup_menu() -> void:
     if not OS.has_feature("editor"):
@@ -2322,6 +2429,35 @@ func _refresh_editor_demo_toggle_button_text() -> void:
         return
     var demo_on: bool = bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
     editor_demo_toggle_button.text = "%s: %s" % [tr("UPGRADE_DEMO_MODE"), tr("On") if demo_on else tr("Off")]
+    _refresh_editor_exit_demo_button()
+
+func _setup_editor_exit_demo_button() -> void:
+    if not OS.has_feature("editor"):
+        return
+    if editor_exit_demo_button != null and is_instance_valid(editor_exit_demo_button):
+        _refresh_editor_exit_demo_button()
+        return
+    editor_exit_demo_button = Button.new()
+    editor_exit_demo_button.name = "EditorExitDemoButton"
+    editor_exit_demo_button.anchor_left = 0.5
+    editor_exit_demo_button.anchor_top = 0.0
+    editor_exit_demo_button.anchor_right = 0.5
+    editor_exit_demo_button.anchor_bottom = 0.0
+    editor_exit_demo_button.offset_left = 260.0
+    editor_exit_demo_button.offset_top = 74.0
+    editor_exit_demo_button.offset_right = 470.0
+    editor_exit_demo_button.offset_bottom = 112.0
+    editor_exit_demo_button.z_index = 210
+    editor_exit_demo_button.mouse_filter = Control.MOUSE_FILTER_STOP
+    editor_exit_demo_button.text = "EXIT DEMO MODE"
+    editor_exit_demo_button.pressed.connect(_on_editor_exit_demo_pressed)
+    %CanvasLayer2.add_child(editor_exit_demo_button)
+    _refresh_editor_exit_demo_button()
+
+func _refresh_editor_exit_demo_button() -> void:
+    if editor_exit_demo_button == null or not is_instance_valid(editor_exit_demo_button):
+        return
+    editor_exit_demo_button.visible = OS.has_feature("editor") and _is_demo_mode_enabled() and not _is_any_popup_visible()
 
 func _refresh_editor_regenerate_planet_button() -> void:
     if editor_regenerate_planet_button == null or not is_instance_valid(editor_regenerate_planet_button):
@@ -2335,9 +2471,20 @@ func _on_editor_demo_toggle_pressed() -> void:
     if not OS.has_feature("editor"):
         return
     var new_demo: bool = not bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
-    ProjectSettings.set_setting(DEMO_PROJECT_SETTING, new_demo)
+    _set_editor_demo_mode(new_demo)
+
+func _on_editor_exit_demo_pressed() -> void:
+    if not OS.has_feature("editor"):
+        return
+    _set_editor_demo_mode(false)
+
+func _set_editor_demo_mode(enabled: bool) -> void:
+    if not OS.has_feature("editor"):
+        return
+    ProjectSettings.set_setting(DEMO_PROJECT_SETTING, enabled)
     _refresh_editor_demo_toggle_button_text()
     _refresh_demo_mode_label_visibility()
+    _refresh_editor_exit_demo_button()
     _setup_wishlist_button()
     if tech_tree != null and is_instance_valid(tech_tree):
         _ensure_tree_initialized(true)
@@ -2502,6 +2649,9 @@ func _refresh_editor_cash_button_text() -> void:
     if editor_add_core_button != null:
         editor_add_core_button.visible = Util.is_open_pit_game_active()
         editor_add_core_button.text = _trf("UPGRADE_EDITOR_ADD_ROOT_KEYS", [editor_add_core_amount])
+    if editor_auto_buy_button != null:
+        editor_auto_buy_button.visible = Util.is_open_pit_game_active()
+        editor_auto_buy_button.text = "AUTO BUY"
 
 func _on_editor_add_cash_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -2532,6 +2682,185 @@ func _on_editor_add_core_pressed() -> void:
     _refresh_editor_cash_button_text()
     _reload_simulation_upgrade_tree_from_save()
     update()
+
+func _on_editor_auto_buy_pressed() -> void:
+    if not OS.has_feature("editor") or not Util.is_open_pit_game_active():
+        return
+    var result: Dictionary = _open_pit_editor_auto_buy_all_affordable()
+    if int(result.get("count", 0)) > 0:
+        _reload_simulation_upgrade_tree_from_save()
+    _refresh_editor_cash_button_text()
+    _refresh_bottom_wallet_display()
+    _refresh_mining_time_label()
+    update()
+
+func _open_pit_editor_auto_buy_all_affordable() -> Dictionary:
+    var bought: Array[Dictionary] = []
+    var data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
+    var cash_catalog: Array[Dictionary] = OPEN_PIT_PROGRESS_SCRIPT.BALANCE.get_upgrade_catalog()
+    var xp_catalog: Array[Dictionary] = OPEN_PIT_PROGRESS_SCRIPT.BALANCE.get_xp_upgrade_catalog()
+    var core_catalog: Array[Dictionary] = OPEN_PIT_PROGRESS_SCRIPT.BALANCE.get_core_upgrade_catalog()
+    var pass_count := 0
+    var bought_this_pass := true
+    while bought_this_pass and pass_count < 128:
+        bought_this_pass = false
+        pass_count += 1
+        for entry in cash_catalog:
+            if _open_pit_try_buy_upgrade_in_data(data, str(entry.get("id", "")), "cash", bought):
+                bought_this_pass = true
+        for entry in xp_catalog:
+            if _open_pit_try_buy_upgrade_in_data(data, str(entry.get("id", "")), "xp", bought):
+                bought_this_pass = true
+        for entry in core_catalog:
+            var upgrade_id := str(entry.get("id", ""))
+            if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_reward_core_upgrade(upgrade_id):
+                continue
+            if _open_pit_try_buy_upgrade_in_data(data, upgrade_id, "core", bought):
+                bought_this_pass = true
+    _open_pit_append_auto_buy_chat(data, bought)
+    OPEN_PIT_PROGRESS_SCRIPT.save_data(data)
+    return {"count": bought.size(), "purchases": bought}
+
+func _open_pit_try_buy_upgrade_in_data(data: Dictionary, upgrade_id: String, currency_kind: String, bought: Array[Dictionary]) -> bool:
+    if upgrade_id == "":
+        return false
+    if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_demo_upgrade_hidden(upgrade_id):
+        return false
+    var current_level := _open_pit_owned_level(data, upgrade_id)
+    var max_level := _open_pit_max_level(upgrade_id)
+    if current_level >= max_level:
+        return false
+    if not _open_pit_dependency_met(data, upgrade_id):
+        return false
+    var cost := _open_pit_cost_for(upgrade_id, current_level)
+    var wallet_key := _open_pit_wallet_key(currency_kind)
+    var wallet := int(data.get(wallet_key, 0))
+    if wallet < cost:
+        return false
+    if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_core_upgrade(upgrade_id):
+        var core_upgrade_id := upgrade_id.trim_prefix(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.CORE_PREFIX)
+        var purchased: Array = data.get("purchased_core_upgrades", []).duplicate()
+        if core_upgrade_id not in purchased:
+            purchased.append(core_upgrade_id)
+        data["purchased_core_upgrades"] = purchased
+        if core_upgrade_id == "planet_mastery":
+            data["planet_mastery_unlocked"] = true
+            data["free_planet_mode"] = true
+        elif core_upgrade_id == "center_unlock":
+            data["free_planet_mode"] = false
+    elif OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_xp_upgrade(upgrade_id):
+        var xp_upgrades: Dictionary = data.get("xp_upgrades", {}).duplicate(true)
+        xp_upgrades[upgrade_id] = current_level + 1
+        data["xp_upgrades"] = xp_upgrades
+    else:
+        var upgrades: Dictionary = data.get("upgrades", {}).duplicate(true)
+        upgrades[upgrade_id] = current_level + 1
+        data["upgrades"] = upgrades
+        OPEN_PIT_PROGRESS_SCRIPT.BALANCE.refresh_depth_unlocks(data)
+    data[wallet_key] = max(0, wallet - cost)
+    bought.append({
+        "id": upgrade_id,
+        "level": current_level + 1,
+        "currency": currency_kind,
+        "cost": cost,
+    })
+    return true
+
+func _open_pit_owned_level(data: Dictionary, upgrade_id: String) -> int:
+    if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_core_upgrade(upgrade_id):
+        var trimmed := upgrade_id.trim_prefix(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.CORE_PREFIX)
+        return 1 if trimmed in Array(data.get("purchased_core_upgrades", [])) else 0
+    if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_xp_upgrade(upgrade_id):
+        return int(Dictionary(data.get("xp_upgrades", {})).get(upgrade_id, 0))
+    return int(Dictionary(data.get("upgrades", {})).get(upgrade_id, 0))
+
+func _open_pit_max_level(upgrade_id: String) -> int:
+    if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_core_upgrade(upgrade_id):
+        return int(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.CORE_UPGRADES.get(upgrade_id.trim_prefix(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.CORE_PREFIX), {}).get("max_level", 1))
+    if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_xp_upgrade(upgrade_id):
+        return OPEN_PIT_PROGRESS_SCRIPT.BALANCE.get_xp_upgrade_max_level(upgrade_id)
+    return OPEN_PIT_PROGRESS_SCRIPT.BALANCE.get_upgrade_max_level(upgrade_id)
+
+func _open_pit_cost_for(upgrade_id: String, current_level: int) -> int:
+    if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_core_upgrade(upgrade_id):
+        return OPEN_PIT_PROGRESS_SCRIPT.BALANCE.get_core_upgrade_cost(upgrade_id, current_level)
+    if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_xp_upgrade(upgrade_id):
+        return OPEN_PIT_PROGRESS_SCRIPT.BALANCE.get_xp_upgrade_cost(upgrade_id, current_level)
+    return OPEN_PIT_PROGRESS_SCRIPT.BALANCE.get_upgrade_cost(upgrade_id, current_level)
+
+func _open_pit_dependency_met(data: Dictionary, upgrade_id: String) -> bool:
+    var dependency := ""
+    if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_core_upgrade(upgrade_id):
+        dependency = OPEN_PIT_PROGRESS_SCRIPT.BALANCE.get_core_upgrade_dependency(upgrade_id)
+    elif OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_xp_upgrade(upgrade_id):
+        dependency = OPEN_PIT_PROGRESS_SCRIPT.BALANCE.get_xp_upgrade_dependency(upgrade_id)
+    else:
+        dependency = OPEN_PIT_PROGRESS_SCRIPT.BALANCE.get_upgrade_dependency(upgrade_id)
+    if dependency == "" or dependency == "start":
+        return true
+    return _open_pit_owned_level(data, dependency) > 0
+
+func _open_pit_wallet_key(currency_kind: String) -> String:
+    match currency_kind:
+        "xp":
+            return "xp_currency"
+        "core":
+            return "core_currency"
+        _:
+            return "wallet"
+
+func _open_pit_upgrade_label(upgrade_id: String) -> String:
+    if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_core_upgrade(upgrade_id):
+        var core_id := upgrade_id.trim_prefix(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.CORE_PREFIX)
+        return str(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.CORE_UPGRADES.get(core_id, {}).get("label", core_id))
+    if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_xp_upgrade(upgrade_id):
+        var xp_id := upgrade_id.trim_prefix(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.XP_PREFIX)
+        return str(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.XP_UPGRADES.get(xp_id, {}).get("label", xp_id))
+    return str(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.RAW_NODE_DATA.get(upgrade_id, {}).get("label", upgrade_id))
+
+func _open_pit_purchase_type_label(currency_kind: String) -> String:
+    match currency_kind:
+        "cash":
+            return "Cash"
+        "xp":
+            return "XP"
+        "core":
+            return "Root"
+        _:
+            return currency_kind.capitalize()
+
+func _open_pit_format_purchase_cost(currency_kind: String, cost: int) -> String:
+    match currency_kind:
+        "cash":
+            return "$%d" % cost
+        "xp":
+            return "%d XP" % cost
+        "core":
+            return "%d root" % cost
+        _:
+            return "%d %s" % [cost, currency_kind]
+
+func _open_pit_append_auto_buy_chat(data: Dictionary, bought: Array[Dictionary]) -> void:
+    var chat_log: Array = data.get("chat_log", []).duplicate()
+    if bought.is_empty():
+        chat_log.append("[color=#8fdcff]AUTO BUY[/color] No affordable upgrades found.")
+        data["chat_log"] = chat_log
+        return
+    chat_log.append("[color=#8fdcff]AUTO BUY[/color] Bought %d upgrade%s:" % [bought.size(), "" if bought.size() == 1 else "s"])
+    for currency_kind in ["cash", "xp", "core"]:
+        for purchase in bought:
+            if str(purchase.get("currency", "")) != currency_kind:
+                continue
+            var upgrade_id := str(purchase.get("id", ""))
+            var level := int(purchase.get("level", 0))
+            var cost := int(purchase.get("cost", 0))
+            chat_log.append("%s  %s  %s  Lv %d" % [
+                _open_pit_purchase_type_label(currency_kind),
+                _open_pit_format_purchase_cost(currency_kind, cost),
+                _open_pit_upgrade_label(upgrade_id),
+                level,
+            ])
+    data["chat_log"] = chat_log
 
 func _on_editor_reset_add_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -2701,6 +3030,8 @@ func _on_editor_unlock_all_pressed() -> void:
         open_pit_data["purchased_core_upgrades"] = []
         for key_variant: Variant in max_level_by_key.keys():
             var open_pit_key: String = str(key_variant)
+            if OPEN_PIT_PROGRESS_SCRIPT.BALANCE.is_demo_upgrade_hidden(open_pit_key):
+                continue
             var open_pit_level: int = int(max_level_by_key[open_pit_key])
             if open_pit_key.begins_with(OPEN_PIT_PROGRESS_SCRIPT.BALANCE.XP_PREFIX):
                 open_pit_data["xp_upgrades"][open_pit_key] = open_pit_level
@@ -2968,31 +3299,6 @@ func _setup_fullscreen_button() -> void:
     fullscreen_icon_off = _make_fullscreen_icon_texture(false)
     _refresh_fullscreen_button_icon()
 
-func _setup_touch_input_button() -> void:
-    if not _should_show_editor_only_touch_toggle():
-        return
-    if touch_input_button != null and is_instance_valid(touch_input_button):
-        return
-    touch_input_button = Button.new()
-    touch_input_button.name = "TouchInputButton"
-    touch_input_button.anchor_left = 1.0
-    touch_input_button.anchor_top = 0.0
-    touch_input_button.anchor_right = 1.0
-    touch_input_button.anchor_bottom = 0.0
-    touch_input_button.offset_left = -256.0
-    touch_input_button.offset_top = 112.0
-    touch_input_button.offset_right = -16.0
-    touch_input_button.offset_bottom = 200.0
-    touch_input_button.z_index = 210
-    touch_input_button.focus_mode = Control.FOCUS_NONE
-    touch_input_button.custom_minimum_size = Vector2(240, 88)
-    touch_input_button.add_theme_font_size_override("font_size", 26)
-    touch_input_button.pressed.connect(_on_touch_input_button_pressed)
-    _style_utility_button(touch_input_button)
-    %CanvasLayer2.add_child(touch_input_button)
-    _update_upgrade_top_button_positions()
-    _refresh_touch_input_button()
-
 func _update_upgrade_top_button_positions() -> void:
     var viewport: Viewport = get_viewport()
     if viewport == null:
@@ -3010,10 +3316,6 @@ func _update_upgrade_top_button_positions() -> void:
     if open_pit_chat_panel != null and is_instance_valid(open_pit_chat_panel):
         open_pit_chat_panel.offset_top = 180.0 + vertical_shift
         open_pit_chat_panel.offset_bottom = 612.0 + vertical_shift
-    if touch_input_button != null and is_instance_valid(touch_input_button):
-        touch_input_button.offset_top = 112.0 + vertical_shift
-        touch_input_button.offset_bottom = 200.0 + vertical_shift
-
 func _on_viewport_size_changed() -> void:
     _update_upgrade_top_button_positions()
     _update_leaderboard_panel_position()
@@ -3275,17 +3577,6 @@ func _on_fullscreen_button_pressed() -> void:
         SaveHandler.SCREEN_MODES.WINDOWED if is_fullscreen else SaveHandler.SCREEN_MODES.FULL_SCREEN
     )
     _refresh_fullscreen_button_icon()
-    if settings_content != null:
-        settings_content.refresh_from_save()
-
-func _refresh_touch_input_button() -> void:
-    if touch_input_button == null:
-        return
-    touch_input_button.text = tr("UI_CONFIRM_UPGRADE_PURCHASE_ON") if SaveHandler.confirm_upgrade_purchase else tr("UI_CONFIRM_UPGRADE_PURCHASE_OFF")
-
-func _on_touch_input_button_pressed() -> void:
-    SaveHandler.update_confirm_upgrade_purchase(not SaveHandler.confirm_upgrade_purchase)
-    _refresh_touch_input_button()
     if settings_content != null:
         settings_content.refresh_from_save()
 

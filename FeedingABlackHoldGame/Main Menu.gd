@@ -82,8 +82,13 @@ func do_tween_state_change(pivot_pos, zoom, to_stuff, show_logo = false):
 
 
 func _input(event: InputEvent) -> void :
-    if event.is_action_pressed("back"):
-        state = STATES.MENU
+    if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+        match state:
+            STATES.SETTINGS, STATES.GAME_MODE:
+                state = STATES.MENU
+            _:
+                state = STATES.SETTINGS
+        get_viewport().set_input_as_handled()
 
 func _notification(what: int) -> void:
     if what == NOTIFICATION_TRANSLATION_CHANGED:
@@ -215,7 +220,10 @@ func _on_contiunue_old_game_pressed() -> void :
 
 
 func _on_quit_pressed() -> void :
-    SteamHandler.request_app_quit()
+    if SteamHandler != null and SteamHandler.has_method("request_app_quit"):
+        SteamHandler.request_app_quit()
+        return
+    get_tree().quit()
 
 
 func _on_wishlist_pressed() -> void :

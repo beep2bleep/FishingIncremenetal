@@ -312,6 +312,7 @@ var multi_mode_intro_countdown_label: Label
 var multi_mode_intro_note_label: Label
 var multi_mode_step_reported := false
 var open_pit_defense_step: Dictionary = {}
+var open_pit_defense_progress_snapshot: Dictionary = {}
 var defense_hunter_active := false
 var defense_hunter_spawned := false
 var defense_hunter_pos := Vector2.ZERO
@@ -334,6 +335,8 @@ func _ready() -> void:
     Global.game_state = Util.GAME_STATES.PLAYING
     multi_mode_step = MULTI_GAME_MODE.get_active_step_for_game(Util.ACTIVE_GAME_MINING)
     open_pit_defense_step = _get_open_pit_defense_step()
+    if not open_pit_defense_step.is_empty():
+        open_pit_defense_progress_snapshot = MINING_PROGRESS_SCRIPT.load_data().duplicate(true)
     if multi_mode_step.is_empty() and not open_pit_defense_step.is_empty():
         multi_mode_step = open_pit_defense_step.duplicate(true)
     multi_mode_step_reported = false
@@ -421,11 +424,19 @@ func _complete_open_pit_defense_challenge(success: bool, payload: Dictionary) ->
     result["payload"] = payload.duplicate(true)
     Global.open_pit_defense_result = result
     Global.open_pit_defense_challenge = {}
+    _restore_open_pit_defense_progress_snapshot()
     Util.set_active_game_id(Util.ACTIVE_GAME_OPEN_PIT)
     Util.set_high_level_mode_id(Util.HIGH_LEVEL_MODE_ALL)
     Global.start_in_upgrade_scene = false
     Global.load_saved_run = true
     SceneChanger.change_to_new_scene(Util.PATH_OPEN_PIT_MAIN, null, 0.2)
+
+func _restore_open_pit_defense_progress_snapshot() -> void:
+    if open_pit_defense_progress_snapshot.is_empty():
+        return
+    MINING_PROGRESS_SCRIPT.save_data(open_pit_defense_progress_snapshot.duplicate(true))
+    persistent_data = open_pit_defense_progress_snapshot.duplicate(true)
+    open_pit_defense_progress_snapshot.clear()
 
 func _update_multi_mode_overlay() -> void:
     if multi_mode_intro_countdown_label == null:

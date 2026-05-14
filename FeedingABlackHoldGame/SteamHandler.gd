@@ -11,6 +11,8 @@ const STEAM_STORE_PATH := "Vanguard__Idle_Auto_Battler"
 const LEADERBOARD_LEVEL7_SHARED := "level7_clear_time"
 const LEADERBOARD_LEVEL20_FULL := "full_level20_clear_time"
 const LEADERBOARD_DEEPCORE_TIME_TO_TIER8 := "DeepcoreTimeToTier8"
+const LEADERBOARD_DATA_BREACH_DEMO_CORE8 := "DataBreachIncDemoCore8Time"
+const LEADERBOARD_DATA_BREACH_FULL_CLEAR := "DataBreachIncFullClearTime"
 const LEADERBOARD_FETCH_COUNT := 5
 const LEADERBOARD_AROUND_USER_RADIUS := 2
 const OPEN_PIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitEmpire/OpenPitEmpireProgress.gd")
@@ -83,6 +85,7 @@ var _leaderboard_last_polled_handle: int = 0
 var _quit_requested := false
 var _steam_shutdown_started := false
 
+const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
 
 func get_store_url() -> String:
     var combined_export_url := "https://store.steampowered.com/app/%s/%s/" % [STEAM_BLEEPWARE_INCREMENTALS_APP_ID, STEAM_BLEEPWARE_INCREMENTALS_STORE_PATH]
@@ -91,6 +94,12 @@ func get_store_url() -> String:
     if Util.is_mining_game_active():
         return "https://store.steampowered.com/app/%s/Deepcore/" % STEAM_DEEPCORE_APP_ID
     return "https://store.steampowered.com/app/%s/%s/" % [_resolve_steam_app_id(), STEAM_STORE_PATH]
+
+func get_demo_wishlist_url() -> String:
+    var configured_url: String = str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()
+    if configured_url != "":
+        return configured_url
+    return get_store_url().strip_edges()
 
 func is_steam_deck():
     if OS.has_feature("web"):
@@ -245,6 +254,24 @@ func _resolve_steam_app_id() -> int:
 func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
     if Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active():
         return []
+    if Util.is_open_pit_game_active():
+        if _is_demo_build():
+            return [
+                {
+                    "id": LEADERBOARD_DATA_BREACH_DEMO_CORE8,
+                    "steam_name": LEADERBOARD_DATA_BREACH_DEMO_CORE8,
+                    "title": "8th Core",
+                    "description": "Fastest time to defeat the 8th daemon core.",
+                }
+            ]
+        return [
+            {
+                "id": LEADERBOARD_DATA_BREACH_FULL_CLEAR,
+                "steam_name": LEADERBOARD_DATA_BREACH_FULL_CLEAR,
+                "title": "Full Clear",
+                "description": "Fastest time to clear Data Breach Inc.",
+            }
+        ]
     if Util.is_mining_game_active():
         if _is_demo_build():
             return [
@@ -470,6 +497,12 @@ func submit_level20_clear_time(clear_time_seconds: float) -> void:
 
 func submit_deepcore_tier8_time(clear_time_seconds: float) -> void:
     _submit_fishing_boss_clear_time_to_board(LEADERBOARD_DEEPCORE_TIME_TO_TIER8, clear_time_seconds)
+
+func submit_open_pit_demo_core8_time(clear_time_seconds: float) -> void:
+    _submit_fishing_boss_clear_time_to_board(LEADERBOARD_DATA_BREACH_DEMO_CORE8, clear_time_seconds)
+
+func submit_open_pit_full_clear_time(clear_time_seconds: float) -> void:
+    _submit_fishing_boss_clear_time_to_board(LEADERBOARD_DATA_BREACH_FULL_CLEAR, clear_time_seconds)
 
 func _submit_fishing_boss_clear_time_to_board(board_id: String, clear_time_seconds: float) -> void:
     if board_id == "" or clear_time_seconds < 0.0:

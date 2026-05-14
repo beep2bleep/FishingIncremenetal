@@ -5270,10 +5270,9 @@ func _is_demo_mode_enabled() -> bool:
     return bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
 
 func _get_demo_wishlist_url() -> String:
-    var configured_url: String = str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()
-    if configured_url != "":
-        return configured_url
-    return SteamHandler.get_store_url().strip_edges()
+    if SteamHandler != null and SteamHandler.has_method("get_demo_wishlist_url"):
+        return SteamHandler.get_demo_wishlist_url()
+    return str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()
 
 func _can_open_demo_wishlist_url() -> bool:
     var url: String = _get_demo_wishlist_url()

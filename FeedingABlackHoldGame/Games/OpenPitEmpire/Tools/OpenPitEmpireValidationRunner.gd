@@ -7,6 +7,7 @@ const MAIN_SCENE := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpireMain.
 const DEFAULT_MODES: Array[String] = ["fast_render", "no_render", "full_render"]
 const DEFAULT_MAX_SORTIES := 160
 const DEFAULT_TIMEOUT_SECONDS := 1800.0
+const DEMO_END_CORE_COUNT := 8
 const CHECKPOINT_INTERVAL_SORTIES := 10
 const BASE_SEED := 913572
 
@@ -524,6 +525,8 @@ func _buy_all_affordable_upgrades() -> Dictionary:
 func _try_buy_upgrade_in_data(data: Dictionary, upgrade_id: String, currency_kind: String, bought: Array[Dictionary]) -> bool:
     if upgrade_id == "":
         return false
+    if BALANCE.is_demo_upgrade_hidden(upgrade_id):
+        return false
     var current_level := _owned_level(data, upgrade_id)
     var max_level := _max_level(upgrade_id)
     if current_level >= max_level:
@@ -632,7 +635,18 @@ func _wallet_key(currency_kind: String) -> String:
             return "wallet"
 
 func _is_end_reached(data: Dictionary) -> bool:
+    if BALANCE.is_demo_mode_enabled() and int(data.get("total_cores_destroyed", 0)) >= DEMO_END_CORE_COUNT:
+        return true
+    if BALANCE.is_demo_mode_enabled() and _is_demo_mineable_layer_cap_reached(data):
+        return true
     return bool(data.get("boss_defeated", false)) or bool(data.get("planet_mastery_unlocked", false))
+
+func _is_demo_mineable_layer_cap_reached(data: Dictionary) -> bool:
+    var remaining: Dictionary = data.get("remaining_layer_block_counts", {})
+    for layer in range(1, BALANCE.DEMO_MINEABLE_MAX_LAYER + 1):
+        if int(remaining.get(str(layer), remaining.get(layer, 0))) > 0:
+            return false
+    return int(data.get("total_cores_destroyed", 0)) > 0
 
 func _reset_validation_progress() -> void:
     PROGRESS.flush_async_planet_state_save()

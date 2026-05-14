@@ -301,6 +301,25 @@ text = "BACK"
 icon_alignment = 1
 expand_icon = true
 
+[node name="HBoxContainer2" type="HBoxContainer" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_constants/separation = 5
+
+[node name="Controller Glyph" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer/HBoxContainer2" instance=ExtResource("5")]
+layout_mode = 2
+enabled = false
+
+[node name="Quit Settings" parent="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer/HBoxContainer2" node_paths=PackedStringArray("glyph_comp") instance=ExtResource("6")]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_vertical = 1
+text = "QUIT"
+icon_alignment = 1
+expand_icon = true
+enable_on_focus = true
+glyph_comp = NodePath("../Controller Glyph")
+
 [node name="Pivot" type="Node2D" parent="." unique_id=2055434077]
 unique_name_in_owner = true
 
@@ -352,3 +371,4 @@ bus = &"Effects"
 [connection signal="continue_game_mode" from="CanvasLayer/Game Mode Screen" to="." method="_on_game_mode_screen_continue_game_mode"]
 [connection signal="play_new_game_mode" from="CanvasLayer/Game Mode Screen" to="." method="_on_game_mode_screen_play_new_game_mode"]
 [connection signal="pressed" from="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer/HBoxContainer/Hide Settings" to="." method="_on_hide_settings_pressed"]
+[connection signal="pressed" from="CanvasLayer/Setting Pannel/MarginContainer/MarginContainer2/VBoxContainer/HBoxContainer2/Quit Settings" to="." method="_on_quit_pressed"]

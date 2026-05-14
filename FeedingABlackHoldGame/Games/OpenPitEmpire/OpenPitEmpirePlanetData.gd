@@ -116,6 +116,7 @@ var _final_core_exposed_emitted: bool = false
 var balance_script: Variant = null
 var world_rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var core_difficulty_mult: float = 1.0
+var max_attackable_zone: int = Zone.CENTER
 var _dirty_sections: Dictionary = {}
 var _section_dirty_revision: Dictionary = {}
 var _section_dirty_msec: Dictionary = {}
@@ -402,6 +403,8 @@ func get_block_type(pos: Vector2i) -> int:
 func is_zone_unlocked(zone: int, free_planet_mode: bool = false) -> bool:
     if free_planet_mode:
         return true
+    if zone > max_attackable_zone:
+        return false
     var required_boss_id: int = int(ZONE_UNLOCK_REQUIRES.get(zone, -1))
     if required_boss_id < 0:
         return true

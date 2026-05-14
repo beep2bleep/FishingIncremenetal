@@ -214,6 +214,8 @@ func _process(_delta: float) -> void:
         needs_redraw = true
     if not scene_ref.hit_timers.is_empty():
         needs_redraw = true
+    if not scene_ref.lock_flash_timers.is_empty():
+        needs_redraw = true
     if not scene_ref.tetromino_bursts.is_empty():
         needs_redraw = true
     if not scene_ref.roaming_powerups.is_empty():
@@ -630,6 +632,7 @@ func _draw() -> void:
     _draw_cipher_lasers(ultra_reduce_detail)
     _draw_root_cross_lasers(ultra_reduce_detail)
     _draw_core_shields(ultra_reduce_detail)
+    _draw_lock_flashes(visible_grid_min, visible_grid_max, ultra_reduce_detail)
     _draw_ghost_debris(ultra_reduce_detail)
     if not ultra_reduce_detail:
         _draw_roaming_powerups()
@@ -698,6 +701,40 @@ func _draw_active_block_effects(grid_min: Vector2i, grid_max: Vector2i) -> void:
             draw_rect(Rect2(rect.position + Vector2(3.0, 3.0), Vector2(rect.size.x - 6.0, 2.0)), Color(0.0, 0.0, 0.0, 0.5), true)
             draw_rect(Rect2(rect.position + Vector2(3.0, 3.0), Vector2((rect.size.x - 6.0) * health_ratio, 2.0)), Color(0.6, 1.8, 2.4, 0.88), true)
         draw_rect(rect.grow(-2.0), Color(HIT_GLOW.r, HIT_GLOW.g, HIT_GLOW.b, hit_timer / scene_ref.HIT_FLASH_DURATION), false, 2.0)
+
+func _draw_lock_flashes(grid_min: Vector2i, grid_max: Vector2i, compact: bool) -> void:
+    if scene_ref.lock_flash_timers.is_empty():
+        return
+    for grid_variant in scene_ref.lock_flash_timers.keys():
+        var grid: Vector2i = grid_variant
+        if grid.x < grid_min.x or grid.x > grid_max.x or grid.y < grid_min.y or grid.y > grid_max.y:
+            continue
+        if not scene_ref.blocks.has(grid):
+            continue
+        var timer := float(scene_ref.lock_flash_timers.get(grid, 0.0))
+        if timer <= 0.0:
+            continue
+        var life_ratio := clampf(timer / scene_ref.LOCK_FLASH_DURATION, 0.0, 1.0)
+        var pulse := 0.55 + 0.45 * absf(sin(_time_elapsed * 34.0))
+        var alpha := life_ratio * pulse
+        var center := scene_ref.grid_to_world(grid)
+        var size := scene_ref.BLOCK_SIZE * (0.46 if compact else 0.58)
+        var shackle_center := center + Vector2(0.0, -size * 0.06)
+        var body_rect := Rect2(
+            center + Vector2(-size * 0.34, -size * 0.02),
+            Vector2(size * 0.68, size * 0.42)
+        )
+        var glow := Color(1.0, 0.12, 0.04, alpha * 0.22)
+        draw_circle(center + Vector2(0.0, size * 0.12), size * 0.68, glow)
+        var edge := Color(1.0, 0.86, 0.22, alpha)
+        var fill := Color(0.12, 0.02, 0.02, alpha * 0.78)
+        draw_arc(shackle_center, size * 0.24, PI, TAU, 12, edge, 2.6 if compact else 3.2)
+        draw_line(shackle_center + Vector2(-size * 0.24, 0.0), shackle_center + Vector2(-size * 0.24, size * 0.12), edge, 2.4 if compact else 3.0)
+        draw_line(shackle_center + Vector2(size * 0.24, 0.0), shackle_center + Vector2(size * 0.24, size * 0.12), edge, 2.4 if compact else 3.0)
+        draw_rect(body_rect, fill, true)
+        draw_rect(body_rect, edge, false, 2.2 if compact else 2.8)
+        draw_circle(center + Vector2(0.0, size * 0.15), size * 0.055, edge)
+        draw_line(center + Vector2(0.0, size * 0.19), center + Vector2(0.0, size * 0.29), edge, 1.8 if compact else 2.2)
 
 func _draw_direct_reduced_fill(grid_min: Vector2i, grid_max: Vector2i) -> void:
     for x in range(grid_min.x, grid_max.x + 1):

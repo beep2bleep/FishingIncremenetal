@@ -4,6 +4,10 @@ class_name OpenPitEmpireBalance
 const MAX_DEPTH_LEVEL := 5
 const MIN_START_DEPTH_LEVEL := 1
 const PLANET_LAYOUT_VERSION := 5
+const DEMO_PROJECT_SETTING := "global/Demo"
+const DEMO_CASH_LOCK_START_ID := "mirror_saws"
+const DEMO_XP_LOCK_START_ID := "graveyard_index"
+const DEMO_MINEABLE_MAX_LAYER := 2
 const XP_PREFIX := "xp:"
 const CORE_PREFIX := "core:"
 const XP_ORDER := [
@@ -73,6 +77,26 @@ const XP_UPGRADES := {
     "null_archive": {"base_cost": 4300, "cost_mult": 2.22, "max_level": 10, "label": "Null Archive", "summary": "Boost resonance and chain depth per level.", "icon": "N", "effects": {"resonance_enhance": 0.25, "electric_chain": 1}},
     "ash_scriptures": {"base_cost": 6800, "cost_mult": 2.24, "max_level": 10, "label": "Ash Scriptures", "summary": "Late inversion scripture: more XP and resonance per level.", "icon": "A", "effects": {"xp_gain_mult": 0.18, "resonance_enhance": 0.2}},
 }
+const XP_DEMO_BLOCK_BY_ID := {
+    "packet_sniffer": 1,
+    "trace_scrubber": 1,
+    "heap_climber": 1,
+    "cache_warmers": 1,
+    "deep_scan": 1,
+    "sidechannel": 1,
+    "zero_day": 2,
+    "crash_cartography": 2,
+    "kernel_rehearsal": 2,
+    "deep_manifest": 2,
+    "thermal_mapping": 2,
+    "vault_heuristics": 2,
+    "graveyard_index": 3,
+    "mirror_daemons": 3,
+    "inversion_ledger": 3,
+    "fault_oracles": 3,
+    "null_archive": 3,
+    "ash_scriptures": 3,
+}
 const REWARD_CORE_UPGRADES := [
     "clear_proxy_25", "clear_proxy_50", "clear_proxy_75",
     "clear_cipher_25", "clear_cipher_50", "clear_cipher_75",
@@ -91,7 +115,7 @@ const CORE_ORDER := [
     "core_siphon", "salvage_limiter", "mantle_permits",
     "inversion_tether", "voidfire_brakes", "mirror_keys",
     "fault_insulation", "null_anchor", "ash_ward", "autopilot_drone",
-    "planet_mastery"
+    "planet_mastery", "countermeasure_suite"
 ]
 const CORE_LAYOUT := {
     "core:clear_proxy_25": Vector2(-2, -2),
@@ -128,6 +152,7 @@ const CORE_LAYOUT := {
     "core:ash_ward": Vector2(5, 14),
     "core:autopilot_drone": Vector2(7, 14),
     "core:planet_mastery": Vector2(5, 16),
+    "core:countermeasure_suite": Vector2(5, 18),
 }
 const CORE_CONNECTIONS := {
     "core:clear_proxy_25": [],
@@ -164,6 +189,7 @@ const CORE_CONNECTIONS := {
     "core:ash_ward": ["core:null_anchor"],
     "core:autopilot_drone": ["core:ash_ward"],
     "core:planet_mastery": ["core:autopilot_drone"],
+    "core:countermeasure_suite": ["core:planet_mastery"],
 }
 const CORE_UPGRADES := {
     "clear_proxy_25": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Proxy Cache 25%", "summary": "Auto-awarded at 25% clear of Proxy Cache. Adds +50% global damage.", "icon": "P", "effects": {"global_damage_mult": 0.50}},
@@ -185,7 +211,7 @@ const CORE_UPGRADES := {
     "return_shortcut": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Backdoor Exit", "summary": "Makes the extraction zone larger and easier to reach.", "icon": "E", "effects": {}},
     "emergency_return": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Panic Tunnel", "summary": "Fuel failure triggers an emergency extraction instead of losing the run.", "icon": "P", "effects": {}},
     "core_focus": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Daemon Focus", "summary": "Improves lock-on against daemon cores and adds +25% core damage.", "icon": "D", "effects": {"core_damage_mult": 0.25}},
-    "countermeasure_bridge": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Countermeasure Bridge", "summary": "Unlocks Red Sky Defense and Deepcore countermeasure fights, then returns to Open Pit Empire.", "icon": "B", "effects": {}},
+    "countermeasure_bridge": {"base_cost": 2, "cost_mult": 1.0, "max_level": 1, "label": "Countermeasure Bridge", "summary": "Unlocks Red Sky Defense and Deepcore countermeasure fights, then returns to Data Breach Inc.", "icon": "B", "effects": {}},
     "kernel_breach": {"base_cost": 3, "cost_mult": 1.0, "max_level": 1, "label": "Kernel Breach", "summary": "Breach the kernel tier and add +12% core damage.", "icon": "K", "effects": {"core_damage_mult": 0.12}},
     "core_stasis": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Core Stasis", "summary": "Fuel stops draining while your rig is inside a live core circle.", "icon": "S", "effects": {"core_fuel_stasis": true}},
     "center_unlock": {"base_cost": 4, "cost_mult": 1.0, "max_level": 1, "label": "Root Access", "summary": "Unlock attacks against the deepest root kernel at the center.", "icon": "R", "effects": {}},
@@ -200,6 +226,7 @@ const CORE_UPGRADES := {
     "ash_ward": {"base_cost": 14, "cost_mult": 1.0, "max_level": 1, "label": "Ash Ward", "summary": "Adds 1 barrier and empowers overdrive.", "icon": "A", "effects": {"barrier": 1, "overdrive_enhance": true}},
     "autopilot_drone": {"base_cost": 12, "cost_mult": 1.0, "max_level": 1, "label": "Autopilot Drone", "summary": "Adds one light support drone for autopilot-heavy late sorties.", "icon": "A", "effects": {"drone_unlock": true, "drone_add": 1, "drone_damage_up": 6.0, "drone_fire_rate": 0.08}},
     "planet_mastery": {"base_cost": 14, "cost_mult": 1.0, "max_level": 1, "label": "Demo Lock Override", "summary": "After clearing the pit, unlock full regeneration control.", "icon": "O", "effects": {"global_resource_mult": 0.15}},
+    "countermeasure_suite": {"base_cost": 1, "cost_mult": 1.0, "max_level": 1, "label": "Full Countermeasures", "summary": "Unlock the full Red Sky Defense and Deepcore games, including their leaderboards.", "icon": "F", "effects": {}},
 }
 
 const PHASE_BRIDGES := {
@@ -504,6 +531,24 @@ static func is_core_upgrade(upgrade_id: String) -> bool:
 static func is_xp_upgrade(upgrade_id: String) -> bool:
     return upgrade_id.begins_with(XP_PREFIX)
 
+static func is_demo_mode_enabled() -> bool:
+    return bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
+
+static func is_demo_upgrade_hidden(upgrade_id: String) -> bool:
+    if not is_demo_mode_enabled():
+        return false
+    if is_core_upgrade(upgrade_id):
+        return false
+    if is_xp_upgrade(upgrade_id):
+        var xp_id := upgrade_id.trim_prefix(XP_PREFIX)
+        var xp_lock_index := XP_ORDER.find(DEMO_XP_LOCK_START_ID)
+        var xp_index := XP_ORDER.find(xp_id)
+        return xp_lock_index >= 0 and xp_index >= xp_lock_index
+    var cash_order: Array = PHASE_NODE_ORDER.get(5, [])
+    var cash_lock_index := cash_order.find(DEMO_CASH_LOCK_START_ID)
+    var cash_index := cash_order.find(upgrade_id)
+    return cash_lock_index >= 0 and cash_index >= cash_lock_index
+
 static func is_reward_core_upgrade(upgrade_id: String) -> bool:
     var trimmed: String = upgrade_id.trim_prefix(CORE_PREFIX)
     return trimmed in REWARD_CORE_UPGRADES
@@ -582,11 +627,16 @@ static func get_upgrade_dependency(upgrade_id: String) -> String:
 static func refresh_depth_unlocks(data: Dictionary) -> void:
     var upgrades: Dictionary = data.get("upgrades", {})
     var unlocked_phase := MIN_START_DEPTH_LEVEL
+    var existing_depth := int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL))
     for upgrade_id in upgrades.keys():
         if int(upgrades.get(upgrade_id, 0)) <= 0:
             continue
+        if is_demo_upgrade_hidden(str(upgrade_id)):
+            continue
         unlocked_phase = max(unlocked_phase, int(RAW_NODE_DATA.get(str(upgrade_id), {}).get("phase", 1)))
-    data["deepest_level_unlocked"] = clampi(max(int(data.get("deepest_level_unlocked", MIN_START_DEPTH_LEVEL)), unlocked_phase), MIN_START_DEPTH_LEVEL, MAX_DEPTH_LEVEL)
+    var max_depth_allowed: int = MAX_DEPTH_LEVEL
+    var depth_basis: int = unlocked_phase if is_demo_mode_enabled() else max(existing_depth, unlocked_phase)
+    data["deepest_level_unlocked"] = clampi(depth_basis, MIN_START_DEPTH_LEVEL, max_depth_allowed)
     data["selected_depth_level"] = clampi(int(data.get("selected_depth_level", data["deepest_level_unlocked"])), MIN_START_DEPTH_LEVEL, int(data["deepest_level_unlocked"]))
 
 static func get_layer_for_depth(depth_level: int) -> Dictionary:
@@ -641,6 +691,8 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
     for upgrade_id in upgrades.keys():
         var level: int = int(upgrades.get(upgrade_id, 0))
         if level <= 0:
+            continue
+        if is_demo_upgrade_hidden(str(upgrade_id)):
             continue
         var raw_upgrade: Dictionary = RAW_NODE_DATA.get(str(upgrade_id), {})
         level = _get_consolidated_effective_level(raw_upgrade, level)
@@ -698,6 +750,8 @@ static func build_runtime_stats(upgrades: Dictionary, xp_upgrades: Dictionary = 
     for upgrade_id in xp_upgrades.keys():
         var xp_level: int = int(xp_upgrades.get(upgrade_id, 0))
         if xp_level <= 0:
+            continue
+        if is_demo_upgrade_hidden(str(upgrade_id)):
             continue
         var raw_xp_upgrade: Dictionary = XP_UPGRADES.get(str(upgrade_id).trim_prefix(XP_PREFIX), {})
         xp_level = _get_consolidated_effective_level(raw_xp_upgrade, xp_level)

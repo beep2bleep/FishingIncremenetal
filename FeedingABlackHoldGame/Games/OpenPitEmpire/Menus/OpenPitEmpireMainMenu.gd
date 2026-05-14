@@ -2,10 +2,12 @@ extends "res://Main Menu.gd"
 
 const SAVE_PATH := "user://open_pit_empire_save_v1.json"
 const STARFIELD_SCRIPT := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpireStarfield.gd")
+const MENU_GAME_IMAGE := preload("res://Games/OpenPitEmpire/Art/event-header-1920x622 - Copy - Copy.png")
 
 func _ready() -> void:
 	super._ready()
 	_install_open_pit_empire_backdrop()
+	_install_open_pit_empire_menu_image()
 
 func get_main_title_translation_key() -> String:
     return "OPEN PIT EMPIRE"
@@ -39,3 +41,18 @@ func _install_open_pit_empire_backdrop() -> void:
 	var title := get_node_or_null("%MainTitle") as Label
 	if title != null:
 		title.add_theme_color_override("font_color", Color(0.86, 0.93, 1.0, 1.0))
+
+func _install_open_pit_empire_menu_image() -> void:
+	var pivot := get_node_or_null("Pivot")
+	if pivot != null:
+		var inherited_showcase := pivot.get_node_or_null("StartShowcase")
+		if inherited_showcase != null:
+			inherited_showcase.queue_free()
+
+	var logo := get_node_or_null("%Logo") as TextureRect
+	if logo == null:
+		return
+	logo.texture = MENU_GAME_IMAGE
+	logo.visible = true
+	logo.modulate = Color.WHITE
+	logo.custom_minimum_size = Vector2(560.0, 182.0)
