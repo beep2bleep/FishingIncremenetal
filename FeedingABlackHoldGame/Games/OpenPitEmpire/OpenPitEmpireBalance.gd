@@ -934,66 +934,66 @@ static func _get_summary(upgrade_id: String, effects: Dictionary) -> String:
     if effects.has("season_dmg_mult"):
         var zone_idx: int = int(effects.get("boost_zone", -1))
         var pct: int = int(round((float(effects.get("season_dmg_mult", 1.0)) - 1.0) * 100.0))
-        return "+%d%% mining damage in the %s layer." % [pct, _get_zone_label(zone_idx)]
+        return _format_translated("+%d%% mining damage in the %s layer.", [pct, _get_zone_label(zone_idx)])
     if effects.has("season_res_mult"):
         var res_zone_idx: int = int(effects.get("boost_zone", -1))
         var res_pct: int = int(round((float(effects.get("season_res_mult", 1.0)) - 1.0) * 100.0))
-        return "+%d%% payout in the %s layer." % [res_pct, _get_zone_label(res_zone_idx)]
+        return _format_translated("+%d%% payout in the %s layer.", [res_pct, _get_zone_label(res_zone_idx)])
     if effects.has("damage_flat"):
-        return "+%s laser damage per level." % _format_effect_number(float(effects.get("damage_flat", 0.0)))
+        return _format_translated("+%s laser damage per level.", [_format_effect_number(float(effects.get("damage_flat", 0.0)))])
     if effects.has("fire_rate"):
-        return "-%ss shot interval per level." % _format_effect_number(absf(float(effects.get("fire_rate", 0.0))))
+        return _format_translated("-%ss shot interval per level.", [_format_effect_number(absf(float(effects.get("fire_rate", 0.0))))])
     if effects.has("speed"):
-        return "+%s move speed per level." % _format_effect_number(float(effects.get("speed", 0.0)))
+        return _format_translated("+%s move speed per level.", [_format_effect_number(float(effects.get("speed", 0.0)))])
     if effects.has("cargo_expand"):
-        return "+%s cargo capacity per level." % _format_effect_number(float(effects.get("cargo_expand", 0.0)))
+        return _format_translated("+%s cargo capacity per level.", [_format_effect_number(float(effects.get("cargo_expand", 0.0)))])
     if effects.has("fuel_expand"):
-        return "+%s seconds of run time per level." % _format_effect_number(float(effects.get("fuel_expand", 0.0)))
+        return _format_translated("+%s seconds of run time per level.", [_format_effect_number(float(effects.get("fuel_expand", 0.0)))])
     if effects.has("fuel_efficiency"):
         var efficiency_pct: int = int(round((1.0 - float(effects.get("fuel_efficiency", 1.0))) * 100.0))
-        return "%d%% less fuel drain." % efficiency_pct
+        return _format_translated("%d%% less fuel drain.", [efficiency_pct])
     if effects.has("fuel_loss_reduce"):
         var keep_pct: int = int(round(float(effects.get("fuel_loss_reduce", 0.0)) * 100.0))
-        return "Keep %d%% of payout after a failed run." % keep_pct
+        return _format_translated("Keep %d%% of payout after a failed run.", [keep_pct])
     if effects.has("resource_flat"):
-        return "+%s payout per mined block per level." % _format_effect_number(float(effects.get("resource_flat", 0.0)))
+        return _format_translated("+%s payout per mined block per level.", [_format_effect_number(float(effects.get("resource_flat", 0.0)))])
     if effects.has("gold_bonus_flat"):
-        return "+%s bonus value on gold blocks per level." % _format_effect_number(float(effects.get("gold_bonus_flat", 0.0)))
+        return _format_translated("+%s bonus value on gold blocks per level.", [_format_effect_number(float(effects.get("gold_bonus_flat", 0.0)))])
     if effects.has("range") and effects.has("magnet"):
-        return "+%s mining range and pickup radius per level." % _format_effect_number(float(effects.get("range", 0.0)))
+        return _format_translated("+%s mining range and pickup radius per level.", [_format_effect_number(float(effects.get("range", 0.0)))])
     if effects.has("range"):
-        return "+%s mining range per level." % _format_effect_number(float(effects.get("range", 0.0)))
+        return _format_translated("+%s mining range per level.", [_format_effect_number(float(effects.get("range", 0.0)))])
     if effects.has("magnet"):
-        return "+%s pickup radius per level." % _format_effect_number(float(effects.get("magnet", 0.0)))
+        return _format_translated("+%s pickup radius per level.", [_format_effect_number(float(effects.get("magnet", 0.0)))])
     if effects.has("barrier"):
-        return "+%d barrier." % int(effects.get("barrier", 0))
+        return _format_translated("+%d barrier.", [int(effects.get("barrier", 0))])
     if effects.has("multi_laser"):
-        return "+%d extra target per shot." % int(effects.get("multi_laser", 0))
+        return _format_translated("+%d extra target per shot.", [int(effects.get("multi_laser", 0))])
     if effects.has("combo_bonus"):
         var combo_pct: int = int(round(float(effects.get("combo_bonus", 0.0)) * 100.0))
-        return "+%d%% payout per combo stack." % combo_pct
+        return _format_translated("+%d%% payout per combo stack.", [combo_pct])
     if effects.has("power_capacity"):
-        return "+%s max power per level." % _format_effect_number(float(effects.get("power_capacity", 0.0)))
+        return _format_translated("+%s max power per level.", [_format_effect_number(float(effects.get("power_capacity", 0.0)))])
     if effects.has("power_gain_mult"):
-        return "+%d%% power gain per level." % int(round(float(effects.get("power_gain_mult", 0.0)) * 100.0))
+        return _format_translated("+%d%% power gain per level.", [int(round(float(effects.get("power_gain_mult", 0.0)) * 100.0))])
     if effects.has("electric_range"):
-        return "Packet bursts reach %d extra cells per level." % int(effects.get("electric_range", 0))
+        return _format_translated("Packet bursts reach %d extra cells per level.", [int(effects.get("electric_range", 0))])
     if effects.has("electric_chain"):
-        return "Exploit bursts gain %d extra chain depth per level." % int(effects.get("electric_chain", 0))
+        return _format_translated("Exploit bursts gain %d extra chain depth per level.", [int(effects.get("electric_chain", 0))])
     if effects.has("drone_damage_up"):
-        return "+%s drone damage per level." % _format_effect_number(float(effects.get("drone_damage_up", 0.0)))
+        return _format_translated("+%s drone damage per level.", [_format_effect_number(float(effects.get("drone_damage_up", 0.0)))])
     if effects.has("drone_add"):
-        return "+%d drone per level." % int(effects.get("drone_add", 0))
+        return _format_translated("+%d drone per level.", [int(effects.get("drone_add", 0))])
     if effects.has("drone_fire_rate"):
-        return "-%ss drone shot interval per level." % _format_effect_number(float(effects.get("drone_fire_rate", 0.0)))
+        return _format_translated("-%ss drone shot interval per level.", [_format_effect_number(float(effects.get("drone_fire_rate", 0.0)))])
     if effects.has("drone_pierce_up"):
-        return "+%d drone pierce." % int(effects.get("drone_pierce_up", 0))
+        return _format_translated("+%d drone pierce.", [int(effects.get("drone_pierce_up", 0))])
     if effects.has("mining_drone_add"):
-        return "+%d autonomous mining drone; fleet speed, cargo, and damage scale toward their caps." % int(effects.get("mining_drone_add", 0))
+        return _format_translated("+%d autonomous mining drone; fleet speed, cargo, and damage scale toward their caps.", [int(effects.get("mining_drone_add", 0))])
     if effects.has("mining_drone_frenzy_unlock") or effects.has("mining_drone_frenzy_speed_bonus") or effects.has("mining_drone_frenzy_efficiency_bonus"):
         return "Improves ship- or laser-triggered mining drone frenzy speed, duration, and mining efficiency."
     if effects.has("resonance_enhance"):
-        return "+%s resonance multiplier per level." % _format_effect_number(float(effects.get("resonance_enhance", 0.0)))
+        return _format_translated("+%s resonance multiplier per level.", [_format_effect_number(float(effects.get("resonance_enhance", 0.0)))])
     if effects.has("mega_enhance"):
         return "Mega Laser charges 5 kills sooner and lasts 1 second longer per level."
     if effects.has("shockwave_enhance"):
@@ -1005,18 +1005,21 @@ static func _format_effect_number(value: float) -> String:
         return str(int(round(value)))
     return str(snappedf(value, 0.01))
 
+static func _format_translated(template: String, args: Array) -> String:
+    return TranslationServer.translate(template) % args
+
 static func _get_zone_label(zone_idx: int) -> String:
     match zone_idx:
         0:
-            return "Proxy Cache"
+            return TranslationServer.translate("Proxy Cache")
         1:
-            return "Cipher Depths"
+            return TranslationServer.translate("Cipher Depths")
         2:
-            return "Ghost Sector"
+            return TranslationServer.translate("Ghost Sector")
         3:
-            return "Root Well"
+            return TranslationServer.translate("Root Well")
         _:
-            return "Kernel Vault"
+            return TranslationServer.translate("Kernel Vault")
 
 static func _get_icon(upgrade_id: String) -> String:
     if upgrade_id.contains("drone"):

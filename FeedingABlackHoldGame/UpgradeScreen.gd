@@ -125,6 +125,7 @@ var game_mode_label: Label
 var mining_time_label: Label
 var wishlist_button: Button
 var web_wishlist_button: Button
+var leaderboard_button: Button
 var leaderboard_panel: PanelContainer
 var leaderboard_title_label: Label
 var leaderboard_body_label: Label
@@ -132,6 +133,7 @@ var leaderboard_submit_30m_button: Button
 var leaderboard_submit_1h_button: Button
 var leaderboard_submit_2h_level20_button: Button
 var leaderboard_submit_3h_level20_button: Button
+var leaderboard_panel_open := false
 var open_pit_chat_button: Button
 var open_pit_chat_panel: PanelContainer
 var open_pit_chat_label: RichTextLabel
@@ -222,11 +224,21 @@ func _refresh_upgrade_tree_for_locale_change() -> void:
         _update_go_again_button_state()
     _loaded_tree_locale = active_locale
 
-func _should_show_leaderboards() -> bool:
+func _can_use_leaderboard_ui() -> bool:
+    if OS.has_feature("web"):
+        return false
+    return OS.has_feature("editor") or OS.has_feature("windows") or OS.has_feature("linux") or OS.has_feature("macos")
+
+func _should_offer_leaderboards() -> bool:
+    if not _can_use_leaderboard_ui():
+        return false
     if Util.is_open_pit_game_active():
         var data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
-        return not OS.has_feature("web") and not Array(data.get("attempt_history", [])).is_empty()
-    return not OS.has_feature("web")
+        return not Array(data.get("attempt_history", [])).is_empty()
+    return true
+
+func _should_show_leaderboards() -> bool:
+    return _should_offer_leaderboards() and leaderboard_panel_open
 
 func _should_show_deepcore_demo_leaderboard() -> bool:
     return Util.is_mining_game_active() and bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
@@ -1110,6 +1122,8 @@ func _is_any_popup_visible() -> bool:
         return true
     if open_pit_chat_panel != null and is_instance_valid(open_pit_chat_panel) and open_pit_chat_panel.visible:
         return true
+    if leaderboard_panel != null and is_instance_valid(leaderboard_panel) and leaderboard_panel.visible:
+        return true
     if popup_layer != null and is_instance_valid(popup_layer):
         for child in popup_layer.get_children():
             if child is CanvasItem and (child as CanvasItem).visible:
@@ -1127,7 +1141,7 @@ func _refresh_demo_mode_label_visibility() -> void:
             game_mode_label.text = tr("OPEN PIT EMPIRE")
             game_mode_label.add_theme_color_override("font_color", Color(0.95, 0.76, 0.38, 1.0))
         elif Util.is_open_pit_orbit_game_active():
-            game_mode_label.text = "OPEN PIT ORBIT"
+            game_mode_label.text = tr("OPEN_PIT_ORBIT")
             game_mode_label.add_theme_color_override("font_color", Color(0.54, 0.86, 1.0, 1.0))
         elif Util.is_red_sky_game_active():
             game_mode_label.text = tr("RED SKY MODE")
@@ -1179,7 +1193,7 @@ func _refresh_mining_time_label() -> void:
             assist_note = tr("OPEN_PIT_EDITOR_ASSISTS_DISABLED_NOTE")
         mining_time_label.text = _trf("OPEN_PIT_UPGRADE_STATUS", [next_flight, OPEN_PIT_PROGRESS_SCRIPT.get_core_wallet(), assist_note])
     elif Util.is_open_pit_orbit_game_active():
-        mining_time_label.text = "Open Pit Orbit runs use orbit-tech weapons. Mine, dock, and cash out before fuel ends. Core shards: %d." % OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet()
+        mining_time_label.text = _trf("OPEN_PIT_ORBIT_UPGRADE_STATUS", [OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_core_wallet()])
     else:
         mining_time_label.text = _trf("BATTLE_CLOCK_LABEL", [Util.format_time(SaveHandler.fishing_run_clock_seconds)])
 
@@ -1267,7 +1281,7 @@ func _refresh_open_pit_chat_panel() -> void:
     var chat_open := open_pit_chat_panel != null and is_instance_valid(open_pit_chat_panel) and open_pit_chat_panel.visible
     if open_pit_chat_button != null and is_instance_valid(open_pit_chat_button):
         open_pit_chat_button.visible = show_controls and (chat_open or not _is_any_popup_visible())
-        open_pit_chat_button.text = tr("HIDE CHAT") if chat_open else tr("CHAT")
+        open_pit_chat_button.text = tr("UPGRADE_HIDE_CHAT") if chat_open else tr("CHAT")
     if not show_controls:
         if open_pit_chat_panel != null and is_instance_valid(open_pit_chat_panel):
             open_pit_chat_panel.hide()
@@ -1283,9 +1297,9 @@ func _refresh_open_pit_chat_panel() -> void:
         if line.strip_edges() != "":
             lines.append(line)
     if lines.is_empty():
-        open_pit_chat_label.text = "[color=#7dd6ff]BLACK CHANNEL // SUMP-9[/color]\n" + tr("No channel traffic yet.")
+        open_pit_chat_label.text = _trf("OPEN_PIT_CHAT_EMPTY")
     else:
-        open_pit_chat_label.text = "[color=#7dd6ff]BLACK CHANNEL // SUMP-9[/color]\n" + "\n".join(lines)
+        open_pit_chat_label.text = _trf("OPEN_PIT_CHAT_BODY", ["\n".join(lines)])
     call_deferred("_scroll_open_pit_chat_to_bottom")
 
 func _scroll_open_pit_chat_to_bottom() -> void:
@@ -1339,13 +1353,31 @@ func _run_queued_wishlist_button_setup() -> void:
     _setup_wishlist_button()
 
 func _setup_leaderboard_panel() -> void:
-    if not _should_show_leaderboards():
+    if not _should_offer_leaderboards():
         return
     if leaderboard_panel != null and is_instance_valid(leaderboard_panel):
         return
     var panel_host: CanvasLayer = %CanvasLayer2
     if panel_host == null:
         return
+    if leaderboard_button == null or not is_instance_valid(leaderboard_button):
+        leaderboard_button = Button.new()
+        leaderboard_button.name = "LeaderboardButton"
+        leaderboard_button.anchor_left = 0.0
+        leaderboard_button.anchor_top = 0.0
+        leaderboard_button.anchor_right = 0.0
+        leaderboard_button.anchor_bottom = 0.0
+        leaderboard_button.offset_left = 16.0
+        leaderboard_button.offset_top = _get_leaderboard_button_top_offset()
+        leaderboard_button.offset_right = 184.0
+        leaderboard_button.offset_bottom = leaderboard_button.offset_top + 60.0
+        leaderboard_button.z_index = 210
+        leaderboard_button.focus_mode = Control.FOCUS_NONE
+        leaderboard_button.custom_minimum_size = Vector2(168.0, 60.0)
+        leaderboard_button.add_theme_font_size_override("font_size", 20)
+        leaderboard_button.pressed.connect(_on_leaderboard_button_pressed)
+        _style_utility_button(leaderboard_button)
+        panel_host.add_child(leaderboard_button)
     leaderboard_panel = PanelContainer.new()
     leaderboard_panel.name = "LeaderboardPanel"
     leaderboard_panel.anchor_left = 0.0
@@ -1358,7 +1390,8 @@ func _setup_leaderboard_panel() -> void:
     leaderboard_panel.offset_bottom = leaderboard_panel.offset_top + 310.0
     leaderboard_panel.custom_minimum_size = Vector2(404.0, 0.0)
     leaderboard_panel.z_index = 210
-    leaderboard_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    leaderboard_panel.visible = false
+    leaderboard_panel.mouse_filter = Control.MOUSE_FILTER_STOP
     var panel_style := StyleBoxFlat.new()
     panel_style.bg_color = Color(0.05, 0.08, 0.14, 0.48)
     panel_style.border_color = Color(0.2, 0.72, 0.94, 0.7)
@@ -1402,13 +1435,13 @@ func _setup_leaderboard_panel() -> void:
         vbox.add_child(editor_button_row)
 
         leaderboard_submit_30m_button = Button.new()
-        leaderboard_submit_30m_button.text = tr("L7 Submit 30m")
+        leaderboard_submit_30m_button.text = tr("UPGRADE_LEADERBOARD_SUBMIT_L7_30M")
         leaderboard_submit_30m_button.mouse_filter = Control.MOUSE_FILTER_STOP
         leaderboard_submit_30m_button.pressed.connect(_on_submit_editor_level7_30m_pressed)
         editor_button_row.add_child(leaderboard_submit_30m_button)
 
         leaderboard_submit_1h_button = Button.new()
-        leaderboard_submit_1h_button.text = tr("L7 Submit 1h")
+        leaderboard_submit_1h_button.text = tr("UPGRADE_LEADERBOARD_SUBMIT_L7_1H")
         leaderboard_submit_1h_button.mouse_filter = Control.MOUSE_FILTER_STOP
         leaderboard_submit_1h_button.pressed.connect(_on_submit_editor_level7_1h_pressed)
         editor_button_row.add_child(leaderboard_submit_1h_button)
@@ -1418,13 +1451,13 @@ func _setup_leaderboard_panel() -> void:
         vbox.add_child(editor_button_row_2)
 
         leaderboard_submit_2h_level20_button = Button.new()
-        leaderboard_submit_2h_level20_button.text = tr("L20 Submit 2h")
+        leaderboard_submit_2h_level20_button.text = tr("UPGRADE_LEADERBOARD_SUBMIT_L20_2H")
         leaderboard_submit_2h_level20_button.mouse_filter = Control.MOUSE_FILTER_STOP
         leaderboard_submit_2h_level20_button.pressed.connect(_on_submit_editor_level20_2h_pressed)
         editor_button_row_2.add_child(leaderboard_submit_2h_level20_button)
 
         leaderboard_submit_3h_level20_button = Button.new()
-        leaderboard_submit_3h_level20_button.text = tr("L20 Submit 3h")
+        leaderboard_submit_3h_level20_button.text = tr("UPGRADE_LEADERBOARD_SUBMIT_L20_3H")
         leaderboard_submit_3h_level20_button.mouse_filter = Control.MOUSE_FILTER_STOP
         leaderboard_submit_3h_level20_button.pressed.connect(_on_submit_editor_level20_3h_pressed)
         editor_button_row_2.add_child(leaderboard_submit_3h_level20_button)
@@ -1432,12 +1465,10 @@ func _setup_leaderboard_panel() -> void:
     panel_host.add_child(leaderboard_panel)
     if SteamHandler != null and SteamHandler.has_signal("leaderboard_data_updated") and not SteamHandler.leaderboard_data_updated.is_connected(_refresh_leaderboard_panel):
         SteamHandler.leaderboard_data_updated.connect(_refresh_leaderboard_panel)
-    if SteamHandler != null and SteamHandler.has_method("request_active_fishing_leaderboards"):
-        SteamHandler.request_active_fishing_leaderboards()
     _refresh_leaderboard_panel()
 
 func _get_leaderboard_panel_top_offset() -> float:
-    var top_offset := LEADERBOARD_PANEL_TOP_DEFAULT
+    var top_offset: float = maxf(LEADERBOARD_PANEL_TOP_DEFAULT, _get_leaderboard_button_top_offset() + 68.0)
     if not Util.is_all_high_level_mode_active():
         return top_offset
     var viewport: Viewport = get_viewport()
@@ -1447,7 +1478,19 @@ func _get_leaderboard_panel_top_offset() -> float:
     var shifted_button_bottom := 104.0 + vertical_shift
     return max(top_offset, shifted_button_bottom + LEADERBOARD_PANEL_TOP_MARGIN_FROM_MENU)
 
+func _get_leaderboard_button_top_offset() -> float:
+    var top_offset := 132.0
+    if not Util.is_all_high_level_mode_active():
+        return top_offset
+    var viewport: Viewport = get_viewport()
+    var vertical_shift := viewport.get_visible_rect().size.y * UPGRADE_TOP_BUTTON_VERTICAL_SHIFT_RATIO if viewport != null else 0.0
+    return maxf(top_offset, 112.0 + vertical_shift)
+
 func _update_leaderboard_panel_position() -> void:
+    if leaderboard_button != null and is_instance_valid(leaderboard_button):
+        var button_top := _get_leaderboard_button_top_offset()
+        leaderboard_button.offset_top = button_top
+        leaderboard_button.offset_bottom = button_top + 60.0
     if leaderboard_panel == null or not is_instance_valid(leaderboard_panel):
         return
     var top_offset := _get_leaderboard_panel_top_offset()
@@ -1455,12 +1498,40 @@ func _update_leaderboard_panel_position() -> void:
     leaderboard_panel.offset_top = top_offset
     leaderboard_panel.offset_bottom = top_offset + panel_height
 
+func _on_leaderboard_button_pressed() -> void:
+    if not _should_offer_leaderboards():
+        leaderboard_panel_open = false
+        _refresh_leaderboard_panel()
+        return
+    _hide_settings_panel()
+    _hide_continue_locked_panel()
+    if open_pit_chat_panel != null and is_instance_valid(open_pit_chat_panel):
+        open_pit_chat_panel.hide()
+    leaderboard_panel_open = not leaderboard_panel_open
+    if leaderboard_panel_open and SteamHandler != null and SteamHandler.has_method("request_active_fishing_leaderboards"):
+        SteamHandler.request_active_fishing_leaderboards()
+    _refresh_leaderboard_panel()
+    _refresh_open_pit_chat_panel()
+    _refresh_demo_mode_label_visibility()
+    _refresh_mining_time_label()
+
 func _refresh_leaderboard_panel() -> void:
+    var offer_leaderboards := _should_offer_leaderboards()
+    var panel_open := offer_leaderboards and leaderboard_panel_open
     if leaderboard_panel == null or not is_instance_valid(leaderboard_panel):
+        if leaderboard_button != null and is_instance_valid(leaderboard_button):
+            leaderboard_button.visible = offer_leaderboards and not _is_any_popup_visible()
+            leaderboard_button.text = tr("UPGRADE_LEADERBOARD")
         return
-    if not _should_show_leaderboards():
+    if not panel_open:
         leaderboard_panel.visible = false
+        if leaderboard_button != null and is_instance_valid(leaderboard_button):
+            leaderboard_button.visible = offer_leaderboards and not _is_any_popup_visible()
+            leaderboard_button.text = tr("UPGRADE_LEADERBOARD")
         return
+    if leaderboard_button != null and is_instance_valid(leaderboard_button):
+        leaderboard_button.visible = true
+        leaderboard_button.text = tr("UPGRADE_HIDE_RANKS")
     var configs: Array = SteamHandler.get_active_fishing_leaderboard_configs() if SteamHandler != null and SteamHandler.has_method("get_active_fishing_leaderboard_configs") else []
     var show_panel: bool = not configs.is_empty()
     leaderboard_panel.visible = show_panel
@@ -1706,12 +1777,12 @@ func _show_battle_level_choice_dialog(max_level: int) -> void:
         var open_pit_data: Dictionary = OPEN_PIT_PROGRESS_SCRIPT.load_data()
         var open_pit_min_depth: int = OPEN_PIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
         battle_level_choice_selected_level = clampi(int(open_pit_data.get("selected_depth_level", max_level)), open_pit_min_depth, max_level)
-        battle_level_choice_dialog.title = "Choose Empire Layer"
+        battle_level_choice_dialog.title = tr("OPEN_PIT_CHOOSE_EMPIRE_LAYER")
     elif Util.is_open_pit_orbit_game_active():
         var orbit_data: Dictionary = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.load_data()
         var orbit_min_depth: int = OPEN_PIT_ORBIT_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
         battle_level_choice_selected_level = clampi(int(orbit_data.get("selected_depth_level", max_level)), orbit_min_depth, max_level)
-        battle_level_choice_dialog.title = "Choose Orbit Layer"
+        battle_level_choice_dialog.title = tr("OPEN_PIT_ORBIT_CHOOSE_LAYER")
     else:
         battle_level_choice_selected_level = clamp(SaveHandler.fishing_next_battle_level, 1, max_level)
         battle_level_choice_dialog.title = tr("UI_CHOOSE_BATTLE_LEVEL")
@@ -3427,7 +3498,7 @@ func _update_go_again_button_state() -> void:
         return
     if Util.is_open_pit_orbit_game_active():
         go_again_button.disabled = false
-        go_again_button.text = "START SORTIE"
+        go_again_button.text = tr("OPEN_PIT_ORBIT_START_SORTIE")
         go_again_button.tooltip_text = ""
         go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
         return

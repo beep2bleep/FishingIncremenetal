@@ -25,13 +25,13 @@ func _begin_generation() -> void:
         return
     var saved_planet_state: Dictionary = PROGRESS.load_planet_state(depth_level)
     if not saved_planet_state.is_empty():
-        status_label.text = "Loading Saved Firewall"
+        status_label.text = tr("OPEN_PIT_LOADING_SAVED_FIREWALL")
         var saved_planet = PLANET_DATA_SCRIPT.new()
         await saved_planet.load_save_data_async(get_tree(), saved_planet_state, Callable(self, "_on_generation_progress"))
         PROGRESS.save_runtime_planet_data(depth_level, saved_planet)
         _go_to_battle()
         return
-    status_label.text = "Generating Firewall"
+    status_label.text = tr("OPEN_PIT_GENERATING_FIREWALL")
     var persistent_destroyed := {}
     for saved_variant in progress_data.get("destroyed_cells", []):
         if saved_variant is String:

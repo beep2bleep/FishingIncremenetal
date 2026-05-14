@@ -1484,7 +1484,7 @@ func _build_editor_debug_panel(panel_style: StyleBoxFlat) -> void:
     margin.add_child(vbox)
 
     var title := Label.new()
-    title.text = "Editor Assist"
+    title.text = tr("OPEN_PIT_EDITOR_ASSIST")
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     title.add_theme_font_size_override("font_size", 18)
     title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.58, 1.0))
@@ -1562,7 +1562,7 @@ func _refresh_editor_debug_panel() -> void:
             continue
         var enabled := _is_editor_debug_toggle_enabled(key)
         button.set_pressed_no_signal(enabled)
-        button.text = "%s: %s" % [_get_editor_debug_button_label(key), "ON" if enabled else "OFF"]
+        button.text = "%s: %s" % [_get_editor_debug_button_label(key), tr("OPEN_PIT_ON") if enabled else tr("OPEN_PIT_OFF")]
 
 func _is_editor_debug_toggle_enabled(key: String) -> bool:
     match key:
@@ -1583,17 +1583,17 @@ func _is_editor_debug_toggle_enabled(key: String) -> bool:
 func _get_editor_debug_button_label(key: String) -> String:
     match key:
         "barrier":
-            return "Unlimited Barrier"
+            return tr("OPEN_PIT_EDITOR_UNLIMITED_BARRIER")
         "fuel":
-            return "Unlimited Fuel"
+            return tr("OPEN_PIT_EDITOR_UNLIMITED_FUEL")
         "cargo":
-            return "Unlimited Cargo"
+            return tr("OPEN_PIT_UNLIMITED_CARGO")
         "speed":
-            return "Attack Speed x10"
+            return tr("OPEN_PIT_ATTACK_SPEED_X10")
         "damage":
-            return "Damage x100"
+            return tr("OPEN_PIT_DAMAGE_X100")
         "release_hud":
-            return "Preview Non-Editor HUD"
+            return tr("OPEN_PIT_EDITOR_PREVIEW_RELEASE_HUD")
     return key.capitalize()
 
 func _get_editor_debug_summary() -> String:
@@ -1601,7 +1601,7 @@ func _get_editor_debug_summary() -> String:
     for key in ["barrier", "fuel", "cargo", "speed", "damage", "release_hud"]:
         if _is_editor_debug_toggle_enabled(key):
             parts.append(_get_editor_debug_button_label(key))
-    return "no assists active" if parts.is_empty() else ", ".join(parts)
+    return tr("OPEN_PIT_EDITOR_NO_ASSISTS_ACTIVE") if parts.is_empty() else ", ".join(parts)
 
 func _start_run() -> void:
     persistent_data = PROGRESS.load_data()
@@ -1955,7 +1955,7 @@ func _bank_rewards_before_core_defense() -> void:
         "depth_level": current_depth_level,
         "nodes_broken": nodes_mined,
         "boss_defeated": boss_defeated,
-        "summary_text": "Banked before daemon defense: $%d, %d XP, %d root keys." % [total_money, xp_earned_this_run, core_currency_earned_this_run],
+        "summary_text": _trf("OPEN_PIT_SUMMARY_BANKED_BEFORE_DEFENSE", [total_money, xp_earned_this_run, core_currency_earned_this_run]),
         "persistent_clear": _get_persistent_clear_percent(),
         "chat_line_counts": breach_chat.get_persistent_line_counts() if breach_chat != null else persistent_data.get("chat_line_counts", {}),
         "chat_thread_counts": breach_chat.get_persistent_thread_counts() if breach_chat != null else persistent_data.get("chat_thread_counts", {}),
@@ -2283,9 +2283,9 @@ func _render_hacker_typer() -> void:
         var visible_text := hacker_typer_current_text.substr(0, mini(hacker_typer_revealed_chars, hacker_typer_current_text.length()))
         lines.append(_format_hacker_typer_block("%s%s" % [visible_text, cursor], true))
     if lines.is_empty():
-        hacker_typer_label.text = "[color=#7dd6ff]BREACH CONSOLE[/color]"
+        hacker_typer_label.text = _trf("OPEN_PIT_BREACH_CONSOLE_TITLE")
     else:
-        hacker_typer_label.text = "[color=#7dd6ff]BREACH CONSOLE[/color]\n%s" % "\n".join(lines)
+        hacker_typer_label.text = _trf("OPEN_PIT_BREACH_CONSOLE_BODY", ["\n".join(lines)])
 
 func _format_hacker_typer_block(text: String, active: bool) -> String:
     var prompt_color := "#f2fffb" if active else "#7dffbf"
@@ -5952,7 +5952,7 @@ func _ensure_demo_core8_end_dialog() -> void:
     if demo_core8_end_dialog != null and is_instance_valid(demo_core8_end_dialog):
         return
     demo_core8_end_dialog = ConfirmationDialog.new()
-    demo_core8_end_dialog.title = "Data Breach Inc. Demo Complete"
+    demo_core8_end_dialog.title = tr("OPEN_PIT_DEMO_COMPLETE_TITLE")
     demo_core8_end_dialog.process_mode = Node.PROCESS_MODE_ALWAYS
     demo_core8_end_dialog.exclusive = true
     demo_core8_end_dialog.min_size = Vector2i(760, 620)
@@ -6021,7 +6021,7 @@ func _ensure_demo_core8_end_dialog() -> void:
     video_vbox.add_child(demo_core8_video_progress)
 
     var body := Label.new()
-    body.text = "You defeated the 8th daemon core and reached the end of the demo. Wishlist the full game to keep the breach going when Data Breach Inc. launches."
+    body.text = tr("OPEN_PIT_DEMO_COMPLETE_BODY")
     body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     body.add_theme_font_size_override("font_size", 22)
@@ -6034,7 +6034,7 @@ func _ensure_demo_core8_end_dialog() -> void:
     vbox.add_child(button_row)
 
     demo_core8_wishlist_button = Button.new()
-    demo_core8_wishlist_button.text = "Wishlist"
+    demo_core8_wishlist_button.text = tr("UPGRADE_WISHLIST")
     demo_core8_wishlist_button.custom_minimum_size = Vector2(220.0, 54.0)
     demo_core8_wishlist_button.focus_mode = Control.FOCUS_ALL
     demo_core8_wishlist_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -6042,7 +6042,7 @@ func _ensure_demo_core8_end_dialog() -> void:
     button_row.add_child(demo_core8_wishlist_button)
 
     demo_core8_continue_button = Button.new()
-    demo_core8_continue_button.text = "Continue"
+    demo_core8_continue_button.text = tr("UI_CONTINUE")
     demo_core8_continue_button.custom_minimum_size = Vector2(220.0, 54.0)
     demo_core8_continue_button.focus_mode = Control.FOCUS_ALL
     demo_core8_continue_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -6059,12 +6059,17 @@ func _update_demo_core8_end_dialog(delta: float) -> void:
     demo_core8_dialog_time = fmod(demo_core8_dialog_time + delta, DEMO_CORE8_VIDEO_DURATION)
     var ratio := demo_core8_dialog_time / DEMO_CORE8_VIDEO_DURATION
     var frame := int(floor(ratio * 4.0))
-    var titles := ["BREACH COMPLETE", "THE FIREWALL GOES DEEPER", "FULL GAME: MORE SYSTEMS", "WISHLIST TO CONTINUE"]
+    var titles := [
+        tr("OPEN_PIT_DEMO_VIDEO_TITLE_1"),
+        tr("OPEN_PIT_DEMO_VIDEO_TITLE_2"),
+        tr("OPEN_PIT_DEMO_VIDEO_TITLE_3"),
+        tr("OPEN_PIT_DEMO_VIDEO_TITLE_4")
+    ]
     var bodies := [
-        "You cracked eight daemon cores and proved the route is viable.",
-        "The demo stops here, but deeper layers, late-game upgrades, and full countermeasures are waiting.",
-        "The full version adds the rest of Data Breach Inc., direct Red Sky and Deepcore access, and leaderboards.",
-        "Wishlist now so Steam reminds you when the full breach is ready."
+        tr("OPEN_PIT_DEMO_VIDEO_BODY_1"),
+        tr("OPEN_PIT_DEMO_VIDEO_BODY_2"),
+        tr("OPEN_PIT_DEMO_VIDEO_BODY_3"),
+        tr("OPEN_PIT_DEMO_VIDEO_BODY_4")
     ]
     frame = clampi(frame, 0, titles.size() - 1)
     if demo_core8_video_title_label != null:
@@ -6286,8 +6291,8 @@ func _refresh_hud() -> void:
     var visible_run_xp := xp_earned_this_run + mining_drone_xp + int(pending_drone_rewards.get("xp", 0))
     var barrier_text := tr("OPEN_PIT_INF") if editor_debug_unlimited_barrier else str(barriers_left)
     if show_release_hud:
-        cargo_label.text = "Value $%s" % _format_large_number(visible_run_money)
-        wallet_label.text = "Barriers left %s" % barrier_text
+        cargo_label.text = _trf("OPEN_PIT_HUD_VALUE", [_format_large_number(visible_run_money)])
+        wallet_label.text = _trf("OPEN_PIT_HUD_BARRIERS_LEFT", [barrier_text])
         if validation_haul_label != null:
             validation_haul_label.visible = validation_autopilot_mode != "" and not run_finished
             if validation_haul_label.visible:
@@ -6354,10 +6359,10 @@ func _refresh_bottom_cinematic_overlay() -> void:
 
 func _get_bottom_cutscene_caption(progress: float) -> String:
     if progress < 0.28:
-        return "[center][b]CORE VEIL COLLAPSING[/b]\nThe shaft folds inward.[/center]"
+        return tr("OPEN_PIT_BOTTOM_CUTSCENE_1")
     if progress < 0.62:
-        return "[center][b]THE FUNNEL TURNS UPSIDE DOWN[/b]\nEvery route points at the heart.[/center]"
-    return "[center][b]SIDE SENTRIES ONLINE[/b]\nHold the lane. Burn into the core.[/center]"
+        return tr("OPEN_PIT_BOTTOM_CUTSCENE_2")
+    return tr("OPEN_PIT_BOTTOM_CUTSCENE_3")
 
 func get_return_zone_progress() -> float:
     return clampf(return_zone_timer / RETURN_ZONE_DELAY, 0.0, 1.0)

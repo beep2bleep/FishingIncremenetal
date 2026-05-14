@@ -212,14 +212,16 @@ static func _build_sim_description(entry: Dictionary, upgrade_id: String, best_l
     var target_percent: float = BALANCE.get_reward_core_upgrade_target_percent(upgrade_id)
     var current_percent: float = min(float(best_layer_clear_percents.get(target_layer_depth, 0.0)), target_percent)
     if current_percent >= target_percent:
-        return "%s\nUnlocked at %.1f%% clear of %s." % [summary, target_percent, layer_name]
-    return "%s\nProgress: %.1f%% / %.1f%% clear of %s." % [summary, current_percent, target_percent, layer_name]
+        return "%s\n%s" % [summary, str(TranslationServer.translate("OPEN_PIT_REWARD_UNLOCKED_AT")) % [target_percent, _translate_if_key(layer_name)]]
+    return "%s\n%s" % [summary, str(TranslationServer.translate("OPEN_PIT_REWARD_PROGRESS")) % [current_percent, target_percent, _translate_if_key(layer_name)]]
 
 static func _translate_if_key(text: String) -> String:
-    if not text.begins_with("OPEN_PIT_"):
-        return text
     var translated := TranslationServer.translate(text)
-    return str(translated) if str(translated) != "" and str(translated) != text else text.trim_prefix("OPEN_PIT_").replace("_", " ").capitalize()
+    if str(translated) != "" and str(translated) != text:
+        return str(translated)
+    if text.begins_with("OPEN_PIT_"):
+        return text.trim_prefix("OPEN_PIT_").replace("_", " ").capitalize()
+    return text
 
 static func _build_tier_costs(upgrade_id: String, max_tier: int) -> Array:
     var costs: Array = []

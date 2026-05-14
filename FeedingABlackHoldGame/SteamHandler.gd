@@ -205,7 +205,6 @@ func _setup_leaderboard_support() -> void:
         Steam.leaderboard_scores_downloaded.connect(_on_leaderboard_scores_downloaded)
     if Steam.has_signal("leaderboard_score_uploaded") and not Steam.leaderboard_score_uploaded.is_connected(_on_leaderboard_score_uploaded):
         Steam.leaderboard_score_uploaded.connect(_on_leaderboard_score_uploaded)
-    request_active_fishing_leaderboards()
 
 func _debug_print_leaderboard_api() -> void:
     var signal_names: Array[String] = []

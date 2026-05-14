@@ -441,7 +441,7 @@ func notify_core_destroyed(core: Dictionary) -> void:
         notify_final_core_destroyed()
         return
     var speaker := _friend_id(rng.randi_range(0, FRIENDS.size() - 1))
-    _queue_unique_event("core_%d" % core_id, speaker, "node %d just folded in %s. somebody put that shard where the suits cannot pray over it." % [core_id, zone_name], 0.0)
+    _queue_unique_event("core_%d" % core_id, speaker, _format_translated("node %d just folded in %s. somebody put that shard where the suits cannot pray over it.", [core_id, zone_name]), 0.0)
     _queue_unique_variant_message(_friend_id(rng.randi_range(0, FRIENDS.size() - 1)), [
         "nice. one more private choke point off the board.",
         "good cut. that shard pays somebody's way out.",
@@ -460,7 +460,7 @@ func notify_core_destroyed(core: Dictionary) -> void:
     )
     if role == "boss":
         suspicion_level = mini(suspicion_level + 2, 10)
-        _queue_unique_event("boss_%d" % core_id, "undertow", "%s oversight just lost a throat. Keep the rig moving before they remember panic procedures." % zone_name, 1.4)
+        _queue_unique_event("boss_%d" % core_id, "undertow", _format_translated("%s oversight just lost a throat. Keep the rig moving before they remember panic procedures.", [zone_name]), 1.4)
         var boss_enemy_lines := [
             "[b]That core was under executive protection.[/b]",
             "[b]You have just crossed into executive retaliation territory.[/b]",
@@ -478,7 +478,7 @@ func notify_defense_challenge_started(core: Dictionary, defense_name: String) ->
     var zone_name := _zone_name(int(core.get("zone", 0)))
     _queue_enemy_line(
         mini(4, maxi(2, _zone_enemy_tier(int(core.get("zone", 0))) + 1)),
-        "[b]Command node %d is pushing back.[/b] %s protocols are live." % [core_id, defense_name],
+        _format_translated("[b]Command node %d is pushing back.[/b] %s protocols are live.", [core_id, defense_name]),
         0.0,
         "defense_start_%d" % core_id
     )
@@ -487,12 +487,12 @@ func notify_defense_challenge_started(core: Dictionary, defense_name: String) ->
         "that node is refusing death with a %s defense. rude, expensive, and beatable.",
         "%s defense just lit up. take the side fight; we will hold the breach open."
     ], [defense_name], "defense_reply_%d" % core_id, 0.9)
-    _queue_unique_event("defense_zone_%d" % core_id, "taxhound", "%s oversight bought a panic room. let's repossess it." % zone_name, 1.7)
+    _queue_unique_event("defense_zone_%d" % core_id, "taxhound", _format_translated("%s oversight bought a panic room. let's repossess it.", [zone_name]), 1.7)
 
 func notify_defense_challenge_failed(core_id: int, defense_name: String) -> void:
     _queue_enemy_line(
         mini(4, maxi(2, _zone_enemy_tier(OpenPitEmpirePlanetData.get_core_zone(core_id)) + 1)),
-        "[b]%s held.[/b] The node has restored itself to emergency health. Try not to make this inspirational." % defense_name,
+        _format_translated("[b]%s held.[/b] The node has restored itself to emergency health. Try not to make this inspirational.", [defense_name]),
         0.0,
         "defense_fail_%d" % core_id
     )
@@ -503,7 +503,7 @@ func notify_defense_challenge_failed(core_id: int, defense_name: String) -> void
     ], [], "defense_fail_reply_%d" % core_id, 1.0)
 
 func notify_defense_challenge_succeeded(core_id: int, defense_name: String) -> void:
-    _queue_unique_event("defense_success_%d" % core_id, "mothbit", "%s cracked. command node has no second argument with physics." % defense_name, 0.0)
+    _queue_unique_event("defense_success_%d" % core_id, "mothbit", _format_translated("%s cracked. command node has no second argument with physics.", [defense_name]), 0.0)
     _queue_enemy_line(
         mini(4, maxi(2, _zone_enemy_tier(OpenPitEmpirePlanetData.get_core_zone(core_id)) + 1)),
         "[b]Defense screen lost.[/b] This node is not authorized to die.",
@@ -732,7 +732,7 @@ func _queue_ambient_line(snapshot: Dictionary) -> void:
 
 func _queue_room_intro(depth_level: int) -> void:
     _queue_message("room", "SUMP-9 opened. Masks on. Quiet hands.", 0.0, "#7dd6ff")
-    _queue_message("undertow", "Breach Tier %d is live. Keep side operations moving and logs clean." % depth_level, 1.0)
+    _queue_message("undertow", _format_translated("Breach Tier %d is live. Keep side operations moving and logs clean.", [depth_level]), 1.0)
     _queue_message("mothbit", "side board is up: clinic, payroll, water, archive, station. very relaxing crime calendar.", 2.1)
     _queue_enemy_line(1, "Unknown signal in the shell. Probably another scavenger.", 3.2, "enemy_intro_unknown")
 
@@ -740,7 +740,7 @@ func _queue_layer_intro(layer_depth: int, layer_name: String) -> void:
     if layer_depth <= 1:
         _queue_unique_event("layer_%d" % layer_depth, "GlassAudit", "[b]Surface shell breached.[/b] Logging intruder.", 0.0, "#ff7c7c")
         return
-    _queue_unique_event("layer_%d" % layer_depth, "undertow", "%s breached. Deeper shell, meaner accounting." % layer_name, 0.0)
+    _queue_unique_event("layer_%d" % layer_depth, "undertow", _format_translated("%s breached. Deeper shell, meaner accounting.", [layer_name]), 0.0)
     _queue_unique_variant_message(_friend_id(rng.randi_range(0, FRIENDS.size() - 1)), [
         "routing table changed. watch the side jobs for retaliation.",
         "new shell means new vendor lies. log everything.",
@@ -758,7 +758,7 @@ func _queue_layer_intro(layer_depth: int, layer_name: String) -> void:
         3: "%s is [b]not public terrain[/b]. [b]Leave now[/b] before your little rig becomes a training memo.",
         4: "You kept going. Interesting. [b]Nobody reaches %s without being archived afterward.[/b]",
     }
-    var enemy_text := str(enemy_lines.get(enemy_tier, "[b]New shell breach detected[/b] in %s. [b]Leave.[/b]")) % layer_name
+    var enemy_text := _format_translated(str(enemy_lines.get(enemy_tier, "[b]New shell breach detected[/b] in %s. [b]Leave.[/b]")), [layer_name])
     _queue_enemy_line(enemy_tier, enemy_text, 1.4, "layer_enemy_%d" % layer_depth)
 
 func _queue_pressure_exchange(stage: int, tier: int, zone_name: String) -> void:
@@ -766,7 +766,7 @@ func _queue_pressure_exchange(stage: int, tier: int, zone_name: String) -> void:
     var enemy_text := ""
     match stage:
         1:
-            enemy_text = "Motion inside %s influence. [b]That is close enough.[/b] [b]Stop pretending you belong here.[/b]" % zone_name
+            enemy_text = _format_translated("Motion inside %s influence. [b]That is close enough.[/b] [b]Stop pretending you belong here.[/b]", [zone_name])
         2:
             enemy_text = "You are inside counter-hack weather now. [b]Back out[/b] before the room forgets your name for you."
         3:
@@ -1038,6 +1038,9 @@ func _format_money(amount: int) -> String:
     if amount < 1000000:
         return "$%.1fk" % (float(amount) / 1000.0)
     return "$%.2fm" % (float(amount) / 1000000.0)
+
+func _format_translated(template: String, args: Array) -> String:
+    return _translate(template) % args
 
 func _zone_name(zone: int) -> String:
     match zone:
