@@ -10,6 +10,8 @@ const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const RED_SKY_GAME_KEY := "12617c1402467d51b3ce07143b20ea50"
 const RED_SKY_SECRET_KEY := "6249954fe53e2f5438c7354d9093045fdf47be4c"
 const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
+const DATA_BREACH_GAME_KEY := "08d072ebb31009683f3a3014c977fd79"
+const DATA_BREACH_SECRET_KEY := "a415652cddcf0d0b5626eaa6182d654745d618c2"
 const PROGRESSION_STATUS_MAP := {
     "start": "Start",
     "complete": "Complete",
@@ -440,6 +442,12 @@ func _get_active_credentials() -> Dictionary:
             "game_id": Util.ACTIVE_GAME_RED_SKY,
             "game_key": RED_SKY_GAME_KEY,
             "secret_key": RED_SKY_SECRET_KEY,
+        }
+    if Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active():
+        return {
+            "game_id": Util.ACTIVE_GAME_OPEN_PIT,
+            "game_key": DATA_BREACH_GAME_KEY,
+            "secret_key": DATA_BREACH_SECRET_KEY,
         }
     if Util.is_turkey_game_active():
         return {

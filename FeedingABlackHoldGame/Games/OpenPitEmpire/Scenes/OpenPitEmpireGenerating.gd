@@ -12,10 +12,16 @@ const STARFIELD_SCRIPT := preload("res://Games/OpenPitEmpire/Scenes/OpenPitEmpir
 var _transition_started: bool = false
 
 func _ready() -> void:
+    _pause_music_for_firewall_loading()
     _build_visual_theme()
     progress_bar.value = 0.0
     detail_label.text = "0%"
     call_deferred("_begin_generation")
+
+func _pause_music_for_firewall_loading() -> void:
+    var music_player := get_node_or_null("/root/MusicPlayer")
+    if music_player != null and music_player.has_method("pause_for_firewall_loading"):
+        music_player.pause_for_firewall_loading()
 
 func _begin_generation() -> void:
     var progress_data: Dictionary = PROGRESS.load_data()

@@ -259,6 +259,8 @@ const AUTOPILOT_MODE_RIGHT_SWEEP := "right sweep"
 const AUTOPILOT_MODE_TOP_SWEEP := "top sweep"
 const AUTOPILOT_DIG_DEEP_TARGET_HITS := 22.0
 const AUTOPILOT_DIG_DEEP_SWEEP_BAND_CELLS := 18
+const ANALYTICS_EVENT_FIRST_PLAY := "data_breach:first_play"
+const ANALYTICS_EVENT_CORE_DEFEATED := "data_breach:core_defeated"
 
 enum BlockType { NORMAL, CORE, ELECTRIC, GOLD, THORN }
 enum OutlineMode { OFF, GROUP_EDGES, ALL_BLOCKS, ALL_BLOCKS_MASK }
@@ -386,6 +388,7 @@ var mining_drone_xp := 0
 var mining_drone_cargo_units_banked := 0
 var mining_drone_cargo_units_pending := 0
 var player_engaged_cores_this_run: Dictionary = {}
+var core_defeat_analytics_pending: Array[Dictionary] = []
 var seismic_charge_timer := 0.0
 var seismic_charge_bursts: Array[Dictionary] = []
 var seismic_charge_tracers: Array[Dictionary] = []
@@ -482,6 +485,8 @@ var bottom_cutscene_label: RichTextLabel
 var breach_log_lines: Array[String] = []
 var breach_log_idle_timer := 0.0
 var breach_chat
+var power_ready_chat_line := ""
+var power_ready_chat_visible := false
 var final_core_exposed := false
 var pickups_spawned_this_frame := 0
 var _last_block_break_audio_ms := -100000
@@ -741,6 +746,9 @@ func _can_show_editor_release_hud_preview() -> bool:
     return OS.has_feature("editor")
 
 func _ready() -> void:
+    var music_player := get_node_or_null("/root/MusicPlayer")
+    if music_player != null and music_player.has_method("resume_after_firewall_loading"):
+        music_player.resume_after_firewall_loading()
     Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
     editor_debug_unlock_chord_enabled = PROGRESS.has_editor_assists_used()
     if VirtualCursor != null:
@@ -1609,6 +1617,7 @@ func _start_run() -> void:
     upgrades = persistent_data.get("upgrades", {}).duplicate(true)
     runtime_stats = BALANCE.build_runtime_stats(upgrades, PROGRESS.get_xp_upgrade_levels(), PROGRESS.get_core_upgrade_levels())
     current_depth_level = clampi(int(persistent_data.get("selected_depth_level", 1)), 1, BALANCE.MAX_DEPTH_LEVEL)
+    _track_first_play_analytics_if_needed()
     bottom_phase_unlocked = bool(persistent_data.get("bottom_phase_unlocked", false))
     current_layer_depth = 1
     defense_transition_pending = false
@@ -1685,6 +1694,7 @@ func _start_run() -> void:
     mining_drone_cargo_units_banked = 0
     mining_drone_cargo_units_pending = 0
     player_engaged_cores_this_run.clear()
+    core_defeat_analytics_pending.clear()
     seismic_charge_bursts.clear()
     seismic_charge_tracers.clear()
     seismic_charge_timer = 0.0
@@ -1738,7 +1748,12 @@ func _start_run() -> void:
     core_shockwave_timer = CORE_SHOCKWAVE_INTERVAL
     _reset_run_perf_tracking()
     breach_log_lines = _get_saved_breach_log_lines()
+    if current_flight_number <= 2:
+        breach_log_lines.clear()
+        persistent_data["chat_log"] = []
     breach_log_idle_timer = 0.0
+    power_ready_chat_line = ""
+    power_ready_chat_visible = false
     if bottom_cinematic_overlay != null:
         bottom_cinematic_overlay.visible = false
     if bottom_cutscene_label != null:
@@ -1752,7 +1767,8 @@ func _start_run() -> void:
         persistent_data.get("chat_event_signatures", {}),
         str(persistent_data.get("chat_active_thread_id", "")),
         persistent_data.get("chat_active_thread_ids", []),
-        int(persistent_data.get("chat_active_thread_target_count", 2))
+        int(persistent_data.get("chat_active_thread_target_count", 2)),
+        current_flight_number
     )
     _flush_breach_chat(true)
     _consume_open_pit_defense_result()
@@ -1946,6 +1962,7 @@ func _bank_rewards_before_core_defense() -> void:
             "chat_event_signatures": breach_chat.get_persistent_event_signatures() if breach_chat != null else persistent_data.get("chat_event_signatures", {}),
             "chat_log": persistent_data.get("chat_log", []),
         })
+        _flush_core_defeat_analytics("partial_save_before_core_defense_empty")
         return
     persistent_data = PROGRESS.bank_partial_run_rewards({
         "money": total_money,
@@ -1966,6 +1983,7 @@ func _bank_rewards_before_core_defense() -> void:
         "chat_log": persistent_data.get("chat_log", []),
         "bottom_phase_unlocked": bottom_phase_unlocked,
     })
+    _flush_core_defeat_analytics("partial_save_before_core_defense")
     cargo_money = 0
     cargo_units = 0
     pickups.clear()
@@ -3349,8 +3367,91 @@ func _is_core_player_engaged_this_run(core_id: int) -> bool:
     return bool(player_engaged_cores_this_run.get(str(core_id), false))
 
 func _mark_core_player_engaged(core_id: int) -> void:
-    if core_id >= 0:
-        player_engaged_cores_this_run[str(core_id)] = true
+    if core_id < 0 or _is_core_player_engaged_this_run(core_id):
+        return
+    player_engaged_cores_this_run[str(core_id)] = true
+
+func _track_first_play_analytics_if_needed() -> void:
+    if validation_autopilot_mode != "" or bool(persistent_data.get("analytics_first_play_sent", false)):
+        return
+    persistent_data["analytics_first_play_sent"] = true
+    PROGRESS.save_data(persistent_data)
+    GameAnalytics.track_design_event(ANALYTICS_EVENT_FIRST_PLAY, null, {
+        "flight": current_flight_number,
+        "depth_level": current_depth_level,
+        "demo_build": bool(ProjectSettings.get_setting("global/Demo", false)),
+    })
+
+func _queue_core_defeat_analytics(core: Dictionary) -> void:
+    var core_id: int = int(core.get("id", -1))
+    if core_id < 0 or validation_autopilot_mode != "":
+        return
+    core_defeat_analytics_pending.append(_build_core_analytics_fields(core_id, core, {
+        "event_source": "save",
+        "queued_at_nodes_mined": nodes_mined,
+        "queued_at_cores_destroyed_this_run": cores_destroyed_this_run,
+    }))
+
+func _flush_core_defeat_analytics(save_reason: String) -> void:
+    if core_defeat_analytics_pending.is_empty() or validation_autopilot_mode != "":
+        return
+    var pending := core_defeat_analytics_pending.duplicate(true)
+    core_defeat_analytics_pending.clear()
+    for fields_variant in pending:
+        var fields: Dictionary = fields_variant
+        fields["save_reason"] = save_reason
+        fields["saved_total_cores_destroyed"] = int(persistent_data.get("total_cores_destroyed", 0))
+        GameAnalytics.track_design_event(ANALYTICS_EVENT_CORE_DEFEATED, int(fields.get("core_id", -1)), fields)
+
+func _build_core_analytics_fields(core_id: int, core: Dictionary = {}, extra_fields: Dictionary = {}) -> Dictionary:
+    var analytics_core := core
+    if analytics_core.is_empty():
+        analytics_core = _get_core_analytics_data(core_id)
+    var zone := int(analytics_core.get("zone", PLANET_DATA_SCRIPT.get_core_zone(core_id)))
+    var role := str(analytics_core.get("role", PLANET_DATA_SCRIPT.get_core_role(core_id)))
+    var run_time := maxf(0.0, float(runtime_stats.get("run_time", 30.0)))
+    var fields := {
+        "core_id": core_id,
+        "core_zone": _core_analytics_zone_name(zone),
+        "core_zone_index": zone,
+        "core_role": role,
+        "core_tier": PLANET_DATA_SCRIPT.get_core_tier(core_id),
+        "depth_level": current_depth_level,
+        "flight": current_flight_number,
+        "run_time_seconds": run_time,
+        "sortie_time_seconds": maxf(0.0, run_time - time_left),
+        "nodes_mined": nodes_mined,
+        "cores_destroyed_this_run": cores_destroyed_this_run,
+        "total_cores_destroyed": int(persistent_data.get("total_cores_destroyed", 0)),
+        "demo_build": bool(ProjectSettings.get_setting("global/Demo", false)),
+    }
+    for key in extra_fields.keys():
+        fields[key] = extra_fields[key]
+    return fields
+
+func _get_core_analytics_data(core_id: int) -> Dictionary:
+    if planet_data != null:
+        for core in planet_data.cores:
+            if int(core.get("id", -1)) == core_id:
+                return core
+    return {
+        "id": core_id,
+        "zone": PLANET_DATA_SCRIPT.get_core_zone(core_id),
+        "role": PLANET_DATA_SCRIPT.get_core_role(core_id),
+    }
+
+func _core_analytics_zone_name(zone: int) -> String:
+    match zone:
+        PLANET_DATA_SCRIPT.Zone.PROXY:
+            return "proxy"
+        PLANET_DATA_SCRIPT.Zone.CIPHER:
+            return "cipher"
+        PLANET_DATA_SCRIPT.Zone.GHOST:
+            return "ghost"
+        PLANET_DATA_SCRIPT.Zone.ROOT:
+            return "root"
+        _:
+            return "center"
 
 func _is_drone_mineable_block(grid: Vector2i) -> bool:
     var block: Dictionary = blocks.get(grid, {})
@@ -5179,6 +5280,8 @@ func _gain_power(amount: float) -> void:
     power_peak = maxf(power_peak, current_power)
     if (autopilot_enabled or bool(runtime_stats.get("power_auto_trigger", false))) and not _is_power_active() and _is_power_ready():
         _try_activate_power(autopilot_enabled)
+    elif _is_power_ready():
+        _show_power_ready_chat_hint()
     if VirtualCursor != null:
         if VirtualCursor.has_method("set_open_pit_empire_cursor_power"):
             VirtualCursor.set_open_pit_empire_cursor_power(_get_power_ratio(), _is_power_active(), _is_power_ready())
@@ -5188,6 +5291,7 @@ func _gain_power(amount: float) -> void:
 func _try_activate_power(manual_trigger: bool = false) -> bool:
     if run_finished or _is_power_active() or not _is_power_ready():
         return false
+    _dismiss_power_ready_chat_hint()
     power_active = true
     power_ring_overcharge = maxf(power_ring_overcharge, 0.45)
     seismic_charge_timer = 0.0
@@ -5211,8 +5315,11 @@ func _update_power_state(delta: float) -> void:
         if current_power <= 0.01:
             current_power = 0.0
             power_active = false
+            _dismiss_power_ready_chat_hint()
     else:
         power_active = false
+        if _is_power_ready():
+            _show_power_ready_chat_hint()
     if VirtualCursor != null:
         if VirtualCursor.has_method("set_open_pit_empire_cursor_power"):
             VirtualCursor.set_open_pit_empire_cursor_power(_get_power_ratio(), _is_power_active(), _is_power_ready())
@@ -5665,6 +5772,36 @@ func _push_breach_log(message: String) -> void:
     persistent_data["chat_log"] = breach_log_lines.duplicate(true)
     _render_breach_log()
 
+func _remove_breach_log_line(message: String) -> void:
+    if message == "":
+        return
+    var removed := false
+    for idx in range(breach_log_lines.size() - 1, -1, -1):
+        if breach_log_lines[idx] == message:
+            breach_log_lines.remove_at(idx)
+            removed = true
+    if not removed:
+        return
+    persistent_data["chat_log"] = breach_log_lines.duplicate(true)
+    _render_breach_log()
+
+func _format_breach_system_line(key: String) -> String:
+    return "[color=#ffd66b]%s[/color]  %s" % [tr("OPEN_PIT_CHAT_SYSTEM"), tr(key)]
+
+func _show_power_ready_chat_hint() -> void:
+    if power_ready_chat_visible or not _is_power_ready() or _is_power_active() or bool(runtime_stats.get("power_auto_trigger", false)):
+        return
+    power_ready_chat_line = _format_breach_system_line("OPEN_PIT_CHAT_POWER_READY_HINT")
+    _push_breach_log(power_ready_chat_line)
+    power_ready_chat_visible = true
+
+func _dismiss_power_ready_chat_hint() -> void:
+    if not power_ready_chat_visible:
+        return
+    _remove_breach_log_line(power_ready_chat_line)
+    power_ready_chat_line = ""
+    power_ready_chat_visible = false
+
 func _get_saved_breach_log_lines() -> Array[String]:
     var lines: Array[String] = []
     var saved_lines: Variant = persistent_data.get("chat_log", [])
@@ -5896,6 +6033,7 @@ func _finish_run_save_async(money_award: int, xp_award: int, reason: String) -> 
     else:
         PROGRESS.clear_runtime_planet_data()
     persistent_data = PROGRESS.load_data()
+    _flush_core_defeat_analytics("sortie_finish")
     _submit_clear_time_leaderboards_if_needed(previous_total_cores_destroyed, sortie_time_seconds)
     _show_demo_core8_end_screen_if_needed(previous_total_cores_destroyed)
     if not summary_save_pending:
@@ -7275,6 +7413,7 @@ func _on_core_destroyed(core: Dictionary) -> void:
     var core_id: int = int(core.get("id", -1))
     cores_destroyed_this_run += 1
     core_currency_earned_this_run += 1
+    _queue_core_defeat_analytics(core)
     cipher_laser_states.erase(core_id)
     ghost_debris_timers.erase("debris_%d" % core_id)
     root_cross_lasers.erase(core_id)

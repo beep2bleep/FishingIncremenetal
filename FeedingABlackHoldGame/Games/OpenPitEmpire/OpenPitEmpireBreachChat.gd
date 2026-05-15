@@ -230,10 +230,11 @@ var ambient_cooldown_until := 0.0
 var node_hit_counts: Dictionary = {}
 var suspicion_level := 0
 var hint_stage := 0
+var early_run_tutorial_mode := false
 var persistent_line_counts: Dictionary = {}
 var persistent_thread_counts: Dictionary = {}
 
-func reset_for_run(depth_level: int, source_rng: RandomNumberGenerator = null, line_counts: Dictionary = {}, thread_counts: Dictionary = {}, event_signatures: Dictionary = {}, saved_active_thread_id: String = "", saved_active_thread_ids: Array = [], saved_active_thread_target_count: int = 2) -> void:
+func reset_for_run(depth_level: int, source_rng: RandomNumberGenerator = null, line_counts: Dictionary = {}, thread_counts: Dictionary = {}, event_signatures: Dictionary = {}, saved_active_thread_id: String = "", saved_active_thread_ids: Array = [], saved_active_thread_target_count: int = 2, flight_number: int = 999) -> void:
     rng = RandomNumberGenerator.new()
     rng.seed = source_rng.randi() if source_rng != null else Time.get_unix_time_from_system()
     queued_lines.clear()
@@ -265,6 +266,7 @@ func reset_for_run(depth_level: int, source_rng: RandomNumberGenerator = null, l
     node_hit_counts.clear()
     suspicion_level = 0
     hint_stage = 0
+    early_run_tutorial_mode = flight_number <= 2
     persistent_line_counts = line_counts.duplicate(true)
     persistent_thread_counts = thread_counts.duplicate(true)
     for line_variant in persistent_line_counts.keys():
@@ -277,7 +279,10 @@ func reset_for_run(depth_level: int, source_rng: RandomNumberGenerator = null, l
     else:
         _fill_active_threads(false)
     active_thread_id = active_thread_ids[0] if not active_thread_ids.is_empty() else ""
-    _queue_room_intro(depth_level)
+    if early_run_tutorial_mode:
+        _queue_tutorial_intro()
+    else:
+        _queue_room_intro(depth_level)
 
 func get_persistent_line_counts() -> Dictionary:
     return persistent_line_counts.duplicate(true)
@@ -313,6 +318,8 @@ func update(delta: float, snapshot: Dictionary) -> void:
     time_alive += delta
     _trim_windows()
     _react_to_snapshot(snapshot)
+    if early_run_tutorial_mode:
+        return
     if time_alive < next_generation_time:
         return
     if time_alive >= next_thread_time and _should_emit_thread(snapshot) and _advance_thread():
@@ -344,6 +351,8 @@ func record_money(amount: int) -> void:
     recent_money.append({"time": time_alive, "amount": amount})
 
 func notify_node_engaged(core_id: int, zone: int, role: String, shielded: bool = false) -> void:
+    if early_run_tutorial_mode:
+        return
     var zone_name := _zone_name(zone)
     var tier := _zone_enemy_tier(zone)
     if shielded:
@@ -393,6 +402,8 @@ func notify_node_engaged(core_id: int, zone: int, role: String, shielded: bool =
         ], [], "engaged_reply_%d" % core_id, 1.0)
 
 func notify_node_landed_hit(core_id: int, zone: int, role: String, barriers_left: int) -> void:
+    if early_run_tutorial_mode:
+        return
     var tier := _zone_enemy_tier(zone)
     var hit_count := int(node_hit_counts.get(core_id, 0)) + 1
     node_hit_counts[core_id] = hit_count
@@ -540,6 +551,10 @@ func build_summary_epilogue() -> String:
     return "\n\n" + _translate("[color=#7dd6ff]Room Aftermath[/color]") + "\n" + "\n".join(final_epilogue_lines)
 
 func _react_to_snapshot(snapshot: Dictionary) -> void:
+    if early_run_tutorial_mode:
+        if bool(snapshot.get("final_core_exposed", false)):
+            notify_final_core_exposed()
+        return
     var layer_depth: int = int(snapshot.get("layer_depth", 1))
     if layer_depth != last_layer_depth:
         last_layer_depth = layer_depth
@@ -560,6 +575,8 @@ func _react_to_snapshot(snapshot: Dictionary) -> void:
         notify_final_core_exposed()
 
 func _advance_identity_hunt(snapshot: Dictionary) -> void:
+    if early_run_tutorial_mode:
+        return
     var layer_depth: int = int(snapshot.get("layer_depth", 1))
     if hint_stage == 0 and (recent_attacks.size() >= 5 or layer_depth >= 2):
         hint_stage = 1
@@ -736,6 +753,11 @@ func _queue_room_intro(depth_level: int) -> void:
     _queue_message("mothbit", "side board is up: clinic, payroll, water, archive, station. very relaxing crime calendar.", 2.1)
     _queue_enemy_line(1, "Unknown signal in the shell. Probably another scavenger.", 3.2, "enemy_intro_unknown")
 
+func _queue_tutorial_intro() -> void:
+    _queue_system_message("OPEN_PIT_CHAT_TUTORIAL_MOVE_ATTACK", 0.0)
+    _queue_system_message("OPEN_PIT_CHAT_TUTORIAL_COLLECT_PAYLOAD", 1.4)
+    _queue_system_message("OPEN_PIT_CHAT_TUTORIAL_RETURN_HOME", 2.8)
+
 func _queue_layer_intro(layer_depth: int, layer_name: String) -> void:
     if layer_depth <= 1:
         _queue_unique_event("layer_%d" % layer_depth, "GlassAudit", "[b]Surface shell breached.[/b] Logging intruder.", 0.0, "#ff7c7c")
@@ -783,6 +805,8 @@ func _queue_pressure_exchange(stage: int, tier: int, zone_name: String) -> void:
     _queue_unique_variant_message(_friend_id(rng.randi_range(0, FRIENDS.size() - 1)), friendly_lines, [], "pressure_reply_%d_%d_%s" % [stage, tier, zone_name], 1.1)
 
 func _queue_enemy_line(enemy_tier: int, text: String, delay: float, event_key: String = "") -> void:
+    if early_run_tutorial_mode:
+        return
     var enemy: Dictionary = ENEMIES.get(enemy_tier, ENEMIES[1])
     var speaker := str(enemy.get("id", "GlassAudit"))
     if event_key == "":
@@ -799,6 +823,12 @@ func _queue_message(speaker: String, text: String, delay: float = 0.0, color_ove
     queued_lines.append({
         "time": time_alive + delay,
         "line": line,
+    })
+
+func _queue_system_message(key: String, delay: float = 0.0) -> void:
+    queued_lines.append({
+        "time": time_alive + delay,
+        "line": _format_chat_line("system", _translate(key), "#ffd66b"),
     })
 
 func _queue_unique_event(event_key: String, speaker: String, text: String, delay: float = 0.0, color_override: String = "") -> void:
@@ -979,7 +1009,7 @@ func _is_chat_digit(character: String) -> bool:
     return character >= "0" and character <= "9"
 
 func _speaker_text_case(speaker: String) -> String:
-    if speaker == "room":
+    if speaker == "room" or speaker == "system":
         return "proper"
     for friend in FRIENDS:
         if str(friend.get("id", "")) == speaker:
@@ -992,6 +1022,8 @@ func _speaker_text_case(speaker: String) -> String:
 func _speaker_display_name(speaker: String) -> String:
     if speaker == "room":
         return "ROOM"
+    if speaker == "system":
+        return _translate("OPEN_PIT_CHAT_SYSTEM")
     for friend in FRIENDS:
         if str(friend.get("id", "")) == speaker:
             return str(friend.get("display", speaker))
@@ -1009,6 +1041,8 @@ func _is_enemy_speaker(speaker: String) -> bool:
 func _speaker_color(speaker: String) -> String:
     if speaker == "room":
         return "#7dd6ff"
+    if speaker == "system":
+        return "#ffd66b"
     for friend in FRIENDS:
         if str(friend.get("id", "")) == speaker:
             return str(friend.get("color", "#86ffd1"))

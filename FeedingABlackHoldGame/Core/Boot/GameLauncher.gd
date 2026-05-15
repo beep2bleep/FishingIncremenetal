@@ -75,6 +75,7 @@ var reset_all_meta_progress_button: Button
 var settings_panel: PanelContainer
 var settings_title_label: Label
 var settings_content: Settings
+var settings_quit_button: Button
 var settings_close_button: Button
 var reset_all_meta_progress_dialog: ConfirmationDialog
 var language_button: Button
@@ -167,6 +168,9 @@ func _input(event: InputEvent) -> void:
     if _is_settings_panel_open():
         _hide_settings_panel()
         get_viewport().set_input_as_handled()
+        return
+    _on_settings_button_pressed()
+    get_viewport().set_input_as_handled()
 
 func _on_vanguard_button_pressed() -> void:
     _start_game(Util.ACTIVE_GAME_VANGUARD)
@@ -235,6 +239,7 @@ func _refresh_text() -> void:
     _refresh_countermeasure_card_locks()
     _refresh_currency_strip()
     _refresh_multi_tier_dialog_text()
+    _refresh_reset_all_meta_progress_visibility()
 
     if settings_button != null and is_instance_valid(settings_button):
         settings_button.text = tr("UI_SETTINGS")
@@ -242,6 +247,8 @@ func _refresh_text() -> void:
         reset_all_meta_progress_button.text = tr("MAIN_RESET_ALL_META_PROGRESS")
     if settings_title_label != null and is_instance_valid(settings_title_label):
         settings_title_label.text = tr("UI_SETTINGS_TITLE")
+    if settings_quit_button != null and is_instance_valid(settings_quit_button):
+        settings_quit_button.text = tr("QUIT")
     if settings_close_button != null and is_instance_valid(settings_close_button):
         settings_close_button.text = tr("UI_BACK")
     if reset_all_meta_progress_dialog != null and is_instance_valid(reset_all_meta_progress_dialog):
@@ -336,6 +343,15 @@ func _setup_settings_panel() -> void:
         settings_content.scale = Vector2(1.7, 1.7)
         vbox.add_child(settings_content)
 
+    settings_quit_button = Button.new()
+    settings_quit_button.name = "SettingsQuitButton"
+    settings_quit_button.focus_mode = Control.FOCUS_NONE
+    settings_quit_button.custom_minimum_size = Vector2(0, 120)
+    settings_quit_button.add_theme_font_size_override("font_size", 30)
+    settings_quit_button.pressed.connect(_on_settings_quit_pressed)
+    _style_utility_button(settings_quit_button)
+    vbox.add_child(settings_quit_button)
+
     settings_close_button = Button.new()
     settings_close_button.name = "SettingsCloseButton"
     settings_close_button.focus_mode = Control.FOCUS_NONE
@@ -371,6 +387,7 @@ func _setup_reset_all_meta_progress_controls() -> void:
     reset_all_meta_progress_dialog.name = "ResetAllMetaProgressDialog"
     reset_all_meta_progress_dialog.confirmed.connect(_on_reset_all_meta_progress_confirmed)
     add_child(reset_all_meta_progress_dialog)
+    _refresh_reset_all_meta_progress_visibility()
 
 func _setup_game_cards() -> void:
     if game_cards_grid != null and is_instance_valid(game_cards_grid):
@@ -466,6 +483,17 @@ func _refresh_currency_strip() -> void:
         if label == null or not is_instance_valid(label):
             continue
         label.text = CROSS_GAME_BONUSES.get_currency_display_text(str(currency_id))
+
+func _refresh_reset_all_meta_progress_visibility() -> void:
+    if reset_all_meta_progress_button == null or not is_instance_valid(reset_all_meta_progress_button):
+        return
+    var should_show := true
+    if _is_data_breach_inc_mode():
+        should_show = _has_countermeasure_full_game_unlock()
+    reset_all_meta_progress_button.visible = should_show
+    reset_all_meta_progress_button.disabled = not should_show
+    if not should_show and reset_all_meta_progress_dialog != null and is_instance_valid(reset_all_meta_progress_dialog):
+        reset_all_meta_progress_dialog.hide()
 
 func _setup_multi_tier_dialog() -> void:
     if multi_tier_dialog != null and is_instance_valid(multi_tier_dialog):
@@ -1955,6 +1983,13 @@ func _hide_settings_panel() -> void:
 func _is_settings_panel_open() -> bool:
     return settings_panel != null and is_instance_valid(settings_panel) and settings_panel.visible
 
+func _on_settings_quit_pressed() -> void:
+    _hide_settings_panel()
+    if SteamHandler != null and SteamHandler.has_method("request_app_quit"):
+        SteamHandler.request_app_quit()
+        return
+    get_tree().quit()
+
 func _on_language_button_pressed() -> void:
     if reset_all_meta_progress_dialog != null and is_instance_valid(reset_all_meta_progress_dialog):
         reset_all_meta_progress_dialog.hide()
@@ -1986,6 +2021,7 @@ func _on_reset_all_meta_progress_pressed() -> void:
 func _on_reset_all_meta_progress_confirmed() -> void:
     SaveHandler.reset_all_meta_progress()
     _refresh_currency_strip()
+    _refresh_reset_all_meta_progress_visibility()
 
 func _style_utility_button(button: Button) -> void:
     if button == null:
