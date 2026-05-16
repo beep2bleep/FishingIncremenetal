@@ -6242,7 +6242,7 @@ func _ensure_demo_core8_end_dialog() -> void:
     demo_core8_continue_button.custom_minimum_size = Vector2(220.0, 54.0)
     demo_core8_continue_button.focus_mode = Control.FOCUS_ALL
     demo_core8_continue_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-    demo_core8_continue_button.pressed.connect(_on_demo_core8_end_dialog_closed)
+    demo_core8_continue_button.pressed.connect(_on_demo_core8_continue_pressed)
     button_row.add_child(demo_core8_continue_button)
 
     _refresh_demo_core8_wishlist_button()
@@ -6285,9 +6285,13 @@ func _on_demo_core8_end_dialog_closed() -> void:
     if VirtualCursor != null and ControllerIcons != null and ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER:
         VirtualCursor.set_scene_enabled(true)
 
+func _on_demo_core8_continue_pressed() -> void:
+    _on_demo_core8_end_dialog_closed()
+    _return_to_upgrades()
+
 func _on_demo_core8_wishlist_pressed() -> void:
     _open_demo_wishlist_url()
-    _on_demo_core8_end_dialog_closed()
+    _on_demo_core8_continue_pressed()
 
 func _get_demo_wishlist_url() -> String:
     if SteamHandler != null and SteamHandler.has_method("get_demo_wishlist_url"):
@@ -6638,16 +6642,17 @@ func _get_backdoor_exit_position() -> Vector2:
     if planet_data == null or not _has_core_upgrade("return_shortcut"):
         return Vector2.INF
     var best_core: Dictionary = {}
-    var best_y := -INF
+    var best_score := -INF
     for core_variant in planet_data.cores:
         var core: Dictionary = core_variant
         if bool(core.get("alive", false)):
             continue
-        if int(core.get("zone", PLANET_DATA_SCRIPT.Zone.PROXY)) != int(PLANET_DATA_SCRIPT.Zone.CENTER):
-            continue
         var center: Vector2i = core.get("center", Vector2i.ZERO)
-        if float(center.y) > best_y:
-            best_y = float(center.y)
+        var centerline_bonus := 1.0 - clampf(absf(float(center.x)) / 140.0, 0.0, 1.0)
+        var center_zone_bonus := 1000.0 if int(core.get("zone", PLANET_DATA_SCRIPT.Zone.PROXY)) == int(PLANET_DATA_SCRIPT.Zone.CENTER) else 0.0
+        var score := center_zone_bonus + float(center.y) + centerline_bonus
+        if score > best_score:
+            best_score = score
             best_core = core
     if best_core.is_empty():
         return Vector2.INF
@@ -7597,6 +7602,12 @@ func _on_core_destroyed(core: Dictionary) -> void:
         boss_defeated = true
         final_core_exposed = true
         _push_ship_above_final_core_arena(core)
+    active_return_zone_position = Vector2(_get_nearest_return_zone().get("position", spawn_position))
+    active_return_zone_radius = float(_get_nearest_return_zone().get("radius", return_zone_radius))
+    if planet_renderer != null and not autopilot_no_render_enabled:
+        planet_renderer.queue_redraw()
+    if ship_renderer != null and not autopilot_no_render_enabled:
+        ship_renderer.queue_redraw()
     if minimap != null and not autopilot_no_render_enabled:
         minimap.queue_redraw()
 
