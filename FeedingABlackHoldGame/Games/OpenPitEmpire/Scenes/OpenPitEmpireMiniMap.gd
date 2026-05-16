@@ -113,24 +113,30 @@ func _draw() -> void:
             draw_circle(Vector2(cx, cy), 3.0, core_col)
         else:
             draw_arc(Vector2(cx, cy), 3.0, 0.0, TAU, 12, CORE_DEAD, 1.0)
-    var spawn_pos := _world_to_map(scene_ref.spawn_position)
-    var extraction_zone_radius := maxf(5.0, scene_ref.return_zone_radius / scene_ref.BLOCK_SIZE * _map_scale())
-    var extraction_ring_radius := extraction_zone_radius + 4.0
     var extraction_progress := scene_ref.get_return_zone_progress()
-    draw_circle(spawn_pos, extraction_zone_radius, Color(RETURN_ZONE_COLOR.r, RETURN_ZONE_COLOR.g, RETURN_ZONE_COLOR.b, 0.18))
-    draw_arc(spawn_pos, extraction_zone_radius, 0.0, TAU, 28, Color(RETURN_ZONE_COLOR.r, RETURN_ZONE_COLOR.g, RETURN_ZONE_COLOR.b, 0.8), 2.0)
-    draw_arc(spawn_pos, extraction_ring_radius, -PI * 0.5, TAU - PI * 0.5, 28, Color(0.2, 0.5, 0.24, 0.45), 3.0)
-    if extraction_progress > 0.0:
-        draw_arc(
-            spawn_pos,
-            extraction_ring_radius,
-            -PI * 0.5,
-            -PI * 0.5 + TAU * extraction_progress,
-            28,
-            Color(0.7, 2.2, 1.0, 1.0),
-            4.0
-        )
-    draw_circle(spawn_pos, 2.5, Color(RETURN_ZONE_COLOR.r, RETURN_ZONE_COLOR.g, RETURN_ZONE_COLOR.b, 0.8))
+    for exit_entry in scene_ref.get_return_zone_entries():
+        var exit_world := Vector2(exit_entry.get("position", scene_ref.spawn_position))
+        var exit_pos := _world_to_map(exit_world)
+        var world_radius := float(exit_entry.get("radius", scene_ref.return_zone_radius))
+        var extraction_zone_radius := maxf(3.0, world_radius / scene_ref.BLOCK_SIZE * _map_scale())
+        var extraction_ring_radius := extraction_zone_radius + 4.0
+        var is_active := exit_world.distance_to(scene_ref.active_return_zone_position) < 1.0
+        var fill_alpha := 0.18 if is_active else 0.09
+        var ring_alpha := 0.85 if is_active else 0.45
+        draw_circle(exit_pos, extraction_zone_radius, Color(RETURN_ZONE_COLOR.r, RETURN_ZONE_COLOR.g, RETURN_ZONE_COLOR.b, fill_alpha))
+        draw_arc(exit_pos, extraction_zone_radius, 0.0, TAU, 28, Color(RETURN_ZONE_COLOR.r, RETURN_ZONE_COLOR.g, RETURN_ZONE_COLOR.b, ring_alpha), 2.0)
+        draw_arc(exit_pos, extraction_ring_radius, -PI * 0.5, TAU - PI * 0.5, 28, Color(0.2, 0.5, 0.24, 0.45), 3.0)
+        if is_active and extraction_progress > 0.0:
+            draw_arc(
+                exit_pos,
+                extraction_ring_radius,
+                -PI * 0.5,
+                -PI * 0.5 + TAU * extraction_progress,
+                28,
+                Color(0.7, 2.2, 1.0, 1.0),
+                4.0
+            )
+        draw_circle(exit_pos, 2.5, Color(RETURN_ZONE_COLOR.r, RETURN_ZONE_COLOR.g, RETURN_ZONE_COLOR.b, ring_alpha))
     for drone_variant in scene_ref.mining_drone_states:
         var drone: Dictionary = drone_variant
         var drone_pos := _world_to_map(Vector2(drone.get("position", scene_ref.spawn_position)))

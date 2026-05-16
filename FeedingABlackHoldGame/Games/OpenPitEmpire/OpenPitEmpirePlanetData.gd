@@ -38,6 +38,9 @@ const ELECTRIC_CHAIN_MAX_TARGETS_PER_STEP: int = 8
 const ELECTRIC_CHAIN_MAX_TOTAL_RESULTS: int = 96
 const CORE_SHARED_HP_BLOCK_MULT: float = 2.0
 const CORE_TOTAL_HP_MULT: float = 4.0
+const CORE_EFFECTIVE_RATIO_MIN: float = 10.0
+const CORE_EFFECTIVE_RATIO_MAX: float = 55.0
+const CORE_MAX_DAEMON_DAMAGE_MULT: float = 23.109692035264523
 const NON_CORE_INFLUENCE_HP_STRENGTH: float = 0.55
 const CORE_DIRECT_DR: float = 0.2
 const CORE_BOSS_DIRECT_DR: float = 0.75
@@ -169,17 +172,115 @@ static func get_core_config(core_id: int) -> Dictionary:
             return config
     return {}
 
+static func get_core_config_index(core_id: int) -> int:
+    for index in range(CORE_CONFIGS.size()):
+        if int(CORE_CONFIGS[index].id) == core_id:
+            return index
+    return -1
+
+static func get_core_target_effective_ratio(core_id: int) -> float:
+    var index := get_core_config_index(core_id)
+    if index < 0:
+        return CORE_EFFECTIVE_RATIO_MIN
+    var denominator := maxi(1, CORE_CONFIGS.size() - 1)
+    return lerpf(CORE_EFFECTIVE_RATIO_MIN, CORE_EFFECTIVE_RATIO_MAX, float(index) / float(denominator))
+
 static func get_authored_core_hp_cap(core_id: int) -> float:
+    return get_target_core_hp(core_id)
+
+static func get_target_core_hp(core_id: int) -> float:
     var config := get_core_config(core_id)
     if config.is_empty():
         return 0.0
-    var role := str(config.get("role", ""))
-    var total_hp := float(config.get("total_hp", 0.0))
-    if role == "final" and total_hp > 0.0:
-        return total_hp
-    if role == "boss" and total_hp >= CORE_AUTHORED_HP_CAP_MIN:
-        return total_hp
-    return 0.0
+    var adjacent_hp := _get_average_adjacent_normal_hp_for_core(config)
+    if adjacent_hp <= 0.0:
+        adjacent_hp = _calc_authored_block_hp(config.get("center", Vector2i.ZERO))
+    var role := str(config.get("role", "outer"))
+    var direct_damage_factor := _get_core_direct_damage_factor(role)
+    var effective_ratio := get_core_target_effective_ratio(core_id)
+    return maxf(1.0, adjacent_hp * effective_ratio * CORE_MAX_DAEMON_DAMAGE_MULT * direct_damage_factor)
+
+static func _get_core_direct_damage_factor(role: String) -> float:
+    match role:
+        "final":
+            return CORE_FINAL_DIRECT_DR
+        "boss":
+            return CORE_BOSS_DIRECT_DR
+        _:
+            return CORE_DIRECT_DR
+
+static func _get_average_adjacent_normal_hp_for_core(config: Dictionary) -> float:
+    var center: Vector2i = config.get("center", Vector2i.ZERO)
+    var core_size := int(config.get("size", 3))
+    var half := core_size / 2
+    var total_hp := 0.0
+    var sample_count := 0
+    for dx in range(-half - 1, half + core_size % 2 + 1):
+        for dy in range(-half - 1, half + core_size % 2 + 1):
+            var inside_core := dx >= -half and dx < half + core_size % 2 and dy >= -half and dy < half + core_size % 2
+            if inside_core:
+                continue
+            var pos := Vector2i(center.x + dx, center.y + dy)
+            if not _is_inside_pit_shape(pos) or _is_wall_cell(pos) or _is_core_config_cell(pos):
+                continue
+            total_hp += _calc_authored_block_hp(pos) * _get_config_non_core_influence_hp_mult(pos)
+            sample_count += 1
+    if sample_count <= 0:
+        return 0.0
+    return total_hp / float(sample_count)
+
+static func _calc_authored_block_hp(pos: Vector2i) -> float:
+    var zone: int = get_zone(pos)
+    var depth: float = _get_authored_zone_depth(pos)
+    var hp_range: Dictionary = ZONE_HP_RANGE.get(zone, {"min": 15.0, "max": 300.0})
+    return round(float(hp_range["min"]) * pow(float(hp_range["max"]) / float(hp_range["min"]), depth))
+
+static func _get_authored_zone_depth(pos: Vector2i) -> float:
+    var zone: int = get_zone(pos)
+    var depth_ratio := _get_depth_ratio(pos)
+    match zone:
+        Zone.PROXY:
+            return clampf(depth_ratio / 0.25, 0.0, 1.0)
+        Zone.CIPHER:
+            return clampf((depth_ratio - 0.25) / 0.25, 0.0, 1.0)
+        Zone.GHOST:
+            return clampf((depth_ratio - 0.5) / 0.25, 0.0, 1.0)
+        Zone.ROOT:
+            return clampf((depth_ratio - 0.75) / 0.17, 0.0, 1.0)
+        Zone.CENTER:
+            return clampf((depth_ratio - 0.92) / 0.08, 0.0, 1.0)
+        _:
+            return depth_ratio
+
+static func _get_config_non_core_influence_hp_mult(pos: Vector2i) -> float:
+    return 1.0 + (_get_config_influence_hp_mult(pos) - 1.0) * NON_CORE_INFLUENCE_HP_STRENGTH
+
+static func _get_config_influence_hp_mult(pos: Vector2i) -> float:
+    var max_mult := 1.0
+    for config in CORE_CONFIGS:
+        var inf_mult := float(config.get("inf_mult", 1.0))
+        var bonus_base := maxf(0.0, inf_mult - 1.0)
+        if bonus_base <= 0.0:
+            continue
+        var center: Vector2i = config.get("center", Vector2i.ZERO)
+        var dx := float(pos.x - center.x)
+        var dy := float(pos.y - center.y)
+        var dist := sqrt(dx * dx + dy * dy)
+        var influence_r := float(config.get("influence", 0))
+        if influence_r <= 0.0 or dist >= influence_r:
+            continue
+        var proximity := 1.0 - dist / influence_r
+        max_mult = maxf(max_mult, 1.0 + bonus_base * proximity)
+    return max_mult
+
+static func _is_core_config_cell(pos: Vector2i) -> bool:
+    for config in CORE_CONFIGS:
+        var center: Vector2i = config.get("center", Vector2i.ZERO)
+        var core_size := int(config.get("size", 3))
+        var half := core_size / 2
+        if pos.x >= center.x - half and pos.x < center.x + half + core_size % 2 and pos.y >= center.y - half and pos.y < center.y + half + core_size % 2:
+            return true
+    return false
 
 func get_map_bounds() -> Rect2:
     return Rect2(float(PIT_MIN_X), float(PIT_CAP_TOP_Y), float(PIT_MAX_X - PIT_MIN_X), float(PIT_BOTTOM_Y - PIT_CAP_TOP_Y))
@@ -1459,19 +1560,7 @@ func _place_cores() -> void:
         var core_size: int = int(config.size)
         var center: Vector2i = config.get("center", Vector2i.ZERO)
         var block_count: int = core_size * core_size
-        var normal_block_hp: float = _calc_block_hp(center) * _get_influence_hp_mult(center, true)
-        var core_hp: float = maxf(
-            maxf(
-                normal_block_hp * float(block_count) * CORE_SHARED_HP_BLOCK_MULT,
-                _calc_block_hp(center) * float(config.get("hp_mult", 1.0))
-            ),
-            float(config.get("total_hp", 0.0))
-        )
-        core_hp *= CORE_TOTAL_HP_MULT
-        core_hp *= core_difficulty_mult
-        var authored_hp_cap := get_authored_core_hp_cap(core_id)
-        if authored_hp_cap > 0.0:
-            core_hp = minf(core_hp, authored_hp_cap)
+        var core_hp := get_target_core_hp(core_id)
         var base_res: float = _calc_block_resource(center)
         var core_res: float = base_res * float(config.res_mult) * float(block_count)
         cores.append({

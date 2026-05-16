@@ -257,12 +257,13 @@ func _draw_barrier_count_number() -> void:
 func _draw_extraction_zone() -> void:
     if not _is_extraction_zone_visible():
         return
-    var local_spawn := scene_ref.spawn_position - scene_ref.ship_pos
+    var local_spawn := scene_ref.active_return_zone_position - scene_ref.ship_pos
     var extraction_progress := scene_ref.get_return_zone_progress()
-    var extraction_ring_radius := scene_ref.return_zone_radius + 18.0
-    draw_circle(local_spawn, scene_ref.return_zone_radius, Color(0.22, 0.9, 0.45, 0.18))
-    draw_arc(local_spawn, scene_ref.return_zone_radius, 0.0, TAU, 48, Color(0.45, 1.8, 0.8, 1.0), 5.0)
-    draw_circle(local_spawn, maxf(18.0, scene_ref.return_zone_radius * 0.16), Color(0.8, 2.4, 1.2, 0.78))
+    var zone_radius: float = scene_ref.active_return_zone_radius
+    var extraction_ring_radius := zone_radius + 18.0
+    draw_circle(local_spawn, zone_radius, Color(0.22, 0.9, 0.45, 0.18))
+    draw_arc(local_spawn, zone_radius, 0.0, TAU, 48, Color(0.45, 1.8, 0.8, 1.0), 5.0)
+    draw_circle(local_spawn, maxf(18.0, zone_radius * 0.16), Color(0.8, 2.4, 1.2, 0.78))
     draw_arc(local_spawn, extraction_ring_radius, -PI * 0.5, TAU - PI * 0.5, 48, Color(0.2, 0.55, 0.3, 0.45), 10.0)
     if extraction_progress > 0.0:
         draw_arc(

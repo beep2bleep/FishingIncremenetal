@@ -22,6 +22,7 @@ const SHIP_RADIUS := 10.0
 const RETURN_ZONE_RADIUS := 220.0
 const RETURN_ZONE_DELAY := 1.5
 const RETURN_ZONE_ARM_DISTANCE_MULT := 1.15
+const BACKDOOR_EXIT_RADIUS_MULT := 0.38
 const EXTRACTION_ASCENT_TIME := 1.1
 const EXTRACTION_ASCENT_SCREEN_MARGIN := 180.0
 const HIT_FLASH_DURATION := 0.15
@@ -312,6 +313,8 @@ var run_finished := false
 var has_left_spawn := false
 var return_zone_radius := RETURN_ZONE_RADIUS
 var return_zone_timer := 0.0
+var active_return_zone_position := Vector2.ZERO
+var active_return_zone_radius := RETURN_ZONE_RADIUS
 var extracting := false
 var extraction_timer := 0.0
 var extraction_start_pos := Vector2.ZERO
@@ -1642,18 +1645,15 @@ func _start_run() -> void:
     run_start_destroyed_count = persistent_destroyed_count
     _setup_minimap()
     spawn_position = planet_data.get_spawn_world_position()
-    if bottom_phase_unlocked and planet_data != null:
-        for core_variant in planet_data.cores:
-            var core: Dictionary = core_variant
-            if int(core.get("id", -1)) == int(PLANET_DATA_SCRIPT.FINAL_CORE_ID):
-                spawn_position = scene_to_spawn_ring(Vector2i(int(core.center.x), int(core.center.y)))
-                break
     ship_pos = spawn_position
     ship_root.global_position = ship_pos
     camera_pos = ship_pos
     current_layer_name = "Proxy Cache"
     final_core_exposed = false
     return_zone_radius = RETURN_ZONE_RADIUS + (36.0 if _has_core_upgrade("return_shortcut") else 0.0)
+    active_return_zone_position = spawn_position
+    active_return_zone_radius = return_zone_radius
+    has_left_spawn = false
     extracting = false
     extraction_timer = 0.0
     extraction_start_pos = ship_pos
@@ -2626,7 +2626,7 @@ func _get_autopilot_direction(delta: float) -> Vector2:
         autopilot_return_reason = return_reason
     autopilot_retarget_timer -= delta
     if autopilot_returning:
-        autopilot_target = spawn_position
+        autopilot_target = _get_autopilot_return_target()
         autopilot_aim_dir = Vector2.ZERO
         autopilot_status = "returning: %s" % (autopilot_return_reason if autopilot_return_reason != "" else "manual")
     elif autopilot_retarget_timer <= 0.0 or ship_pos.distance_to(autopilot_target) <= AUTOPILOT_TARGET_REACHED_DISTANCE:
@@ -2722,14 +2722,17 @@ func _get_autopilot_return_reason() -> String:
         return "fuel reserve %.0fs" % ceil(run_time * AUTOPILOT_FUEL_RETURN_RATIO)
     return ""
 
+func _get_autopilot_return_target() -> Vector2:
+    return Vector2(_get_nearest_return_zone().get("position", spawn_position))
+
 func _find_autopilot_mining_target() -> Vector2:
     if autopilot_no_valid_targets:
         autopilot_aim_dir = Vector2.ZERO
         autopilot_status = "returning: no valid targets"
-        return spawn_position
+        return _get_autopilot_return_target()
     if _is_demo_mineable_layer_cap_exhausted():
         _set_autopilot_no_valid_targets("demo layer cap reached")
-        return spawn_position
+        return _get_autopilot_return_target()
     var search_deadline_usec := Time.get_ticks_usec() + AUTOPILOT_TARGET_SEARCH_BUDGET_USEC
     _update_autopilot_stuck_mode()
     if _is_autopilot_core_attack_mode():
@@ -2865,7 +2868,7 @@ func _find_autopilot_mining_target() -> Vector2:
             status_text = "seeking shared"
     if not found_local_target and status_text != "seeking shared" and not _has_any_valid_autopilot_target(true):
         _set_autopilot_no_valid_targets("no valid targets")
-        return spawn_position
+        return _get_autopilot_return_target()
     autopilot_aim_dir = best_aim_dir
     autopilot_status = status_text
     autopilot_last_target = best_world
@@ -3581,7 +3584,7 @@ func _set_autopilot_no_valid_targets(reason: String) -> void:
     mining_drone_no_valid_targets = true
     autopilot_returning = true
     autopilot_return_reason = reason
-    autopilot_target = spawn_position
+    autopilot_target = _get_autopilot_return_target()
     autopilot_aim_dir = Vector2.ZERO
     autopilot_status = "returning: %s" % reason
     _send_mining_drones_home()
@@ -3943,10 +3946,13 @@ func _update_zone_return(delta: float) -> void:
     if extracting:
         return_zone_timer = RETURN_ZONE_DELAY
         return
-    var dist_to_spawn := ship_pos.distance_to(spawn_position)
-    if not has_left_spawn and dist_to_spawn > _get_return_zone_arm_distance():
+    var nearest_exit := _get_nearest_return_zone()
+    active_return_zone_position = Vector2(nearest_exit.get("position", spawn_position))
+    active_return_zone_radius = float(nearest_exit.get("radius", return_zone_radius))
+    var dist_to_active_exit := ship_pos.distance_to(active_return_zone_position)
+    if not has_left_spawn and ship_pos.distance_to(spawn_position) > _get_return_zone_arm_distance():
         has_left_spawn = true
-    if has_left_spawn and dist_to_spawn < return_zone_radius:
+    if has_left_spawn and dist_to_active_exit < active_return_zone_radius:
         return_zone_timer = minf(return_zone_timer + delta, RETURN_ZONE_DELAY)
         if return_zone_timer >= RETURN_ZONE_DELAY:
             _begin_extraction()
@@ -3961,7 +3967,7 @@ func _begin_extraction() -> void:
     ship_vel = Vector2.ZERO
     return_zone_timer = RETURN_ZONE_DELAY
     extraction_start_pos = ship_pos
-    extraction_camera_anchor = spawn_position
+    extraction_camera_anchor = active_return_zone_position
     var zoom_y := camera.zoom.y if camera != null else 1.0
     var half_viewport_height := get_viewport_rect().size.y * 0.5 / maxf(zoom_y, 0.001)
     extraction_target_pos = extraction_camera_anchor + Vector2.UP * (half_viewport_height + EXTRACTION_ASCENT_SCREEN_MARGIN)
@@ -6592,24 +6598,102 @@ func _is_return_zone_charging() -> bool:
     return not extracting and return_zone_timer > 0.0
 
 func _is_ship_inside_return_zone() -> bool:
-    return has_left_spawn and ship_pos.distance_to(spawn_position) < return_zone_radius
+    var nearest_exit := _get_nearest_return_zone()
+    return has_left_spawn and ship_pos.distance_to(Vector2(nearest_exit.get("position", spawn_position))) < float(nearest_exit.get("radius", return_zone_radius))
 
 func _get_return_zone_arm_distance() -> float:
     return return_zone_radius * RETURN_ZONE_ARM_DISTANCE_MULT
 
+func get_return_zone_entries() -> Array[Dictionary]:
+    var entries: Array[Dictionary] = [{
+        "position": spawn_position,
+        "radius": return_zone_radius,
+        "kind": "surface",
+    }]
+    var backdoor_pos := _get_backdoor_exit_position()
+    if backdoor_pos != Vector2.INF:
+        entries.append({
+            "position": backdoor_pos,
+            "radius": _get_backdoor_exit_radius(),
+            "kind": "backdoor",
+        })
+    return entries
+
+func _get_nearest_return_zone() -> Dictionary:
+    var entries := get_return_zone_entries()
+    var best: Dictionary = entries[0]
+    var best_distance := INF
+    for entry in entries:
+        var pos := Vector2(entry.get("position", spawn_position))
+        var distance := ship_pos.distance_to(pos)
+        if distance < best_distance:
+            best_distance = distance
+            best = entry
+    return best
+
+func _get_backdoor_exit_radius() -> float:
+    return maxf(48.0, return_zone_radius * BACKDOOR_EXIT_RADIUS_MULT)
+
+func _get_backdoor_exit_position() -> Vector2:
+    if planet_data == null or not _has_core_upgrade("return_shortcut"):
+        return Vector2.INF
+    var best_core: Dictionary = {}
+    var best_y := -INF
+    for core_variant in planet_data.cores:
+        var core: Dictionary = core_variant
+        if bool(core.get("alive", false)):
+            continue
+        if int(core.get("zone", PLANET_DATA_SCRIPT.Zone.PROXY)) != int(PLANET_DATA_SCRIPT.Zone.CENTER):
+            continue
+        var center: Vector2i = core.get("center", Vector2i.ZERO)
+        if float(center.y) > best_y:
+            best_y = float(center.y)
+            best_core = core
+    if best_core.is_empty():
+        return Vector2.INF
+    return _find_backdoor_exit_world_near_core(best_core)
+
+func _find_backdoor_exit_world_near_core(core: Dictionary) -> Vector2:
+    var center_variant: Vector2i = core.get("center", Vector2i.ZERO)
+    var center := Vector2i(int(center_variant.x), int(center_variant.y))
+    if is_grid_empty(center):
+        return grid_to_world(center)
+    var best_grid := Vector2i(999999, 999999)
+    var best_dist := INF
+    for radius in range(1, 13):
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                if abs(dx) != radius and abs(dy) != radius:
+                    continue
+                var check := Vector2i(center.x + dx, center.y + dy)
+                if not is_grid_empty(check):
+                    continue
+                var dist := Vector2(float(dx), float(dy)).length_squared()
+                if dist < best_dist:
+                    best_dist = dist
+                    best_grid = check
+        if best_grid.x < 999999:
+            return grid_to_world(best_grid)
+    return grid_to_world(center)
+
 func should_render_extraction_zone() -> bool:
-    var extraction_ring_radius := return_zone_radius + 18.0
+    var nearest_exit := _get_nearest_return_zone()
+    active_return_zone_position = Vector2(nearest_exit.get("position", spawn_position))
+    active_return_zone_radius = float(nearest_exit.get("radius", return_zone_radius))
+    var extraction_ring_radius := active_return_zone_radius + 18.0
     var outline_draw_radius := maxf(1.0, float(planet_outline_radius_cells) * BLOCK_SIZE)
-    var spawn_offset := spawn_position - ship_pos
+    var spawn_offset := active_return_zone_position - ship_pos
     if spawn_offset.length() - extraction_ring_radius > outline_draw_radius:
         return false
+    if str(nearest_exit.get("kind", "surface")) == "backdoor":
+        return true
 
     var surface_radius := float(planet_radius_cells) * BLOCK_SIZE
     if ship_pos.length() >= surface_radius:
         return true
 
     var ship_dir := ship_pos.normalized()
-    var spawn_dir := spawn_position.normalized()
+    var spawn_dir := active_return_zone_position.normalized()
     if ship_dir.length() < 0.01 or spawn_dir.length() < 0.01:
         return false
 

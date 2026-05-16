@@ -609,7 +609,8 @@ func _draw() -> void:
     section_start_us = scene_ref.perf_probe_begin()
     if not ultra_reduce_detail:
         var spawn_arc_points := 24 if reduce_detail else 64
-        draw_arc(scene_ref.spawn_position, scene_ref.return_zone_radius, 0.0, TAU, spawn_arc_points, Color(0.3, 1.5, 0.5, 0.25), 2.0)
+        for exit_entry in scene_ref.get_return_zone_entries():
+            draw_arc(Vector2(exit_entry.get("position", scene_ref.spawn_position)), float(exit_entry.get("radius", scene_ref.return_zone_radius)), 0.0, TAU, spawn_arc_points, Color(0.3, 1.5, 0.5, 0.25), 2.0)
     if not ultra_reduce_detail:
         for ring in scene_ref.shockwave_rings:
             var radius: float = minf(float(ring.get("radius", 0.0)), LOCAL_SHOCKWAVE_VISUAL_RADIUS)
