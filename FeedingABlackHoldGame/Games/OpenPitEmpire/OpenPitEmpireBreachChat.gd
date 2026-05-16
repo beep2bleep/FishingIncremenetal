@@ -231,10 +231,11 @@ var node_hit_counts: Dictionary = {}
 var suspicion_level := 0
 var hint_stage := 0
 var early_run_tutorial_mode := false
+var editor_assists_enabled := false
 var persistent_line_counts: Dictionary = {}
 var persistent_thread_counts: Dictionary = {}
 
-func reset_for_run(depth_level: int, source_rng: RandomNumberGenerator = null, line_counts: Dictionary = {}, thread_counts: Dictionary = {}, event_signatures: Dictionary = {}, saved_active_thread_id: String = "", saved_active_thread_ids: Array = [], saved_active_thread_target_count: int = 2, flight_number: int = 999) -> void:
+func reset_for_run(depth_level: int, source_rng: RandomNumberGenerator = null, line_counts: Dictionary = {}, thread_counts: Dictionary = {}, event_signatures: Dictionary = {}, saved_active_thread_id: String = "", saved_active_thread_ids: Array = [], saved_active_thread_target_count: int = 2, flight_number: int = 999, assists_enabled: bool = false) -> void:
     rng = RandomNumberGenerator.new()
     rng.seed = source_rng.randi() if source_rng != null else Time.get_unix_time_from_system()
     queued_lines.clear()
@@ -267,6 +268,7 @@ func reset_for_run(depth_level: int, source_rng: RandomNumberGenerator = null, l
     suspicion_level = 0
     hint_stage = 0
     early_run_tutorial_mode = flight_number <= 2
+    editor_assists_enabled = assists_enabled
     persistent_line_counts = line_counts.duplicate(true)
     persistent_thread_counts = thread_counts.duplicate(true)
     for line_variant in persistent_line_counts.keys():
@@ -283,6 +285,9 @@ func reset_for_run(depth_level: int, source_rng: RandomNumberGenerator = null, l
         _queue_tutorial_intro()
     else:
         _queue_room_intro(depth_level)
+
+func set_editor_assists_enabled(enabled: bool) -> void:
+    editor_assists_enabled = enabled
 
 func get_persistent_line_counts() -> Dictionary:
     return persistent_line_counts.duplicate(true)
@@ -351,7 +356,7 @@ func record_money(amount: int) -> void:
     recent_money.append({"time": time_alive, "amount": amount})
 
 func notify_node_engaged(core_id: int, zone: int, role: String, shielded: bool = false) -> void:
-    if early_run_tutorial_mode:
+    if early_run_tutorial_mode and not editor_assists_enabled:
         return
     var zone_name := _zone_name(zone)
     var tier := _zone_enemy_tier(zone)
@@ -402,7 +407,7 @@ func notify_node_engaged(core_id: int, zone: int, role: String, shielded: bool =
         ], [], "engaged_reply_%d" % core_id, 1.0)
 
 func notify_node_landed_hit(core_id: int, zone: int, role: String, barriers_left: int) -> void:
-    if early_run_tutorial_mode:
+    if early_run_tutorial_mode and not editor_assists_enabled:
         return
     var tier := _zone_enemy_tier(zone)
     var hit_count := int(node_hit_counts.get(core_id, 0)) + 1
@@ -805,7 +810,7 @@ func _queue_pressure_exchange(stage: int, tier: int, zone_name: String) -> void:
     _queue_unique_variant_message(_friend_id(rng.randi_range(0, FRIENDS.size() - 1)), friendly_lines, [], "pressure_reply_%d_%d_%s" % [stage, tier, zone_name], 1.1)
 
 func _queue_enemy_line(enemy_tier: int, text: String, delay: float, event_key: String = "") -> void:
-    if early_run_tutorial_mode:
+    if early_run_tutorial_mode and not editor_assists_enabled:
         return
     var enemy: Dictionary = ENEMIES.get(enemy_tier, ENEMIES[1])
     var speaker := str(enemy.get("id", "GlassAudit"))

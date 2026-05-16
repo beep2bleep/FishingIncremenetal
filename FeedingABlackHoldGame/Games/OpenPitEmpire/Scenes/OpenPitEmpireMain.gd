@@ -477,6 +477,7 @@ var demo_core8_wishlist_button: Button
 var demo_core8_continue_button: Button
 var demo_core8_dialog_time := 0.0
 var demo_core8_dialog_active := false
+var demo_green_core_end_pending := false
 var breach_log_label: RichTextLabel
 var bottom_cinematic_overlay: Control
 var bottom_letterbox_top: ColorRect
@@ -487,6 +488,7 @@ var breach_log_idle_timer := 0.0
 var breach_chat
 var power_ready_chat_line := ""
 var power_ready_chat_visible := false
+var demo_layer_locked_chat_hint_shown := false
 var final_core_exposed := false
 var pickups_spawned_this_frame := 0
 var _last_block_break_audio_ms := -100000
@@ -1037,6 +1039,7 @@ func _unhandled_input(event: InputEvent) -> void:
         elif _is_editor_debug_unlock_chord_pressed():
             editor_debug_unlock_chord_enabled = true
             PROGRESS.mark_editor_assists_used()
+            _set_breach_chat_editor_assists_enabled()
             _toggle_editor_debug_panel()
             _push_breach_log("[color=#ffd66b]EDITOR ASSIST[/color]  unlocked. Leaderboard writes disabled until progress reset.")
             get_viewport().set_input_as_handled()
@@ -1521,6 +1524,10 @@ func _toggle_editor_debug_panel() -> void:
     editor_debug_panel.visible = not editor_debug_panel.visible
     _refresh_editor_debug_panel()
 
+func _set_breach_chat_editor_assists_enabled() -> void:
+    if breach_chat != null and breach_chat.has_method("set_editor_assists_enabled"):
+        breach_chat.set_editor_assists_enabled(true)
+
 func _on_editor_debug_button_pressed(key: String) -> void:
     match key:
         "barrier":
@@ -1549,6 +1556,7 @@ func _on_editor_debug_button_pressed(key: String) -> void:
             _set_editor_release_hud_preview(not editor_debug_preview_release_hud)
     _refresh_editor_debug_panel()
     _refresh_hud_now()
+    _set_breach_chat_editor_assists_enabled()
     _push_breach_log("[color=#ffd66b]EDITOR ASSIST[/color]  %s." % _get_editor_debug_summary())
 
 func _toggle_editor_release_hud_preview() -> void:
@@ -1754,6 +1762,8 @@ func _start_run() -> void:
     breach_log_idle_timer = 0.0
     power_ready_chat_line = ""
     power_ready_chat_visible = false
+    demo_layer_locked_chat_hint_shown = false
+    demo_green_core_end_pending = false
     if bottom_cinematic_overlay != null:
         bottom_cinematic_overlay.visible = false
     if bottom_cutscene_label != null:
@@ -1768,7 +1778,8 @@ func _start_run() -> void:
         str(persistent_data.get("chat_active_thread_id", "")),
         persistent_data.get("chat_active_thread_ids", []),
         int(persistent_data.get("chat_active_thread_target_count", 2)),
-        current_flight_number
+        current_flight_number,
+        editor_debug_unlock_chord_enabled
     )
     _flush_breach_chat(true)
     _consume_open_pit_defense_result()
@@ -1835,8 +1846,6 @@ func _setup_minimap() -> void:
 func _try_start_core_defense(core: Dictionary, _shared_max_hp: float) -> Dictionary:
     var core_id: int = int(core.get("id", -1))
     if core_id < 0 or str(core.get("role", "")) != "boss":
-        return {"handled": false}
-    if not _has_core_upgrade("countermeasure_bridge"):
         return {"handled": false}
     if validation_autopilot_mode != "":
         _complete_core_defense_for_validation(core)
@@ -2001,6 +2010,7 @@ func _consume_open_pit_defense_result() -> void:
     if core_id < 0 or planet_data == null:
         return
     var defense_name: String = str(result.get("defense_name", "Defense"))
+    var should_finish_demo_green_core := false
     if bool(result.get("success", false)):
         var destroy_result: Dictionary = planet_data.force_destroy_core(core_id)
         if bool(destroy_result.get("destroyed", false)):
@@ -2011,6 +2021,7 @@ func _consume_open_pit_defense_result() -> void:
             if breach_chat != null:
                 breach_chat.notify_defense_challenge_succeeded(core_id, defense_name)
                 _flush_breach_chat()
+            should_finish_demo_green_core = _should_finish_demo_green_core_end(core_id)
     else:
         planet_data.set_core_hp_ratio(core_id, DEFENSE_RETRY_HP_RATIO)
         var failed_once: Dictionary = persistent_data.get("core_defense_failed_once", {})
@@ -2026,8 +2037,36 @@ func _consume_open_pit_defense_result() -> void:
     damaged_cells.clear()
     if planet_renderer != null:
         planet_renderer.mark_dirty(true, "defense_result")
+    if should_finish_demo_green_core and _finish_demo_green_core_end_if_needed(core_id):
+        return
     _save_planet_snapshot()
     _refresh_hud()
+
+func _should_finish_demo_green_core_end(core_id: int) -> bool:
+    if validation_autopilot_mode != "":
+        return false
+    if not BALANCE.is_demo_mode_enabled():
+        return false
+    return core_id == int(PLANET_DATA_SCRIPT.ZONE_BOSS_IDS.get(PLANET_DATA_SCRIPT.Zone.CIPHER, -1))
+
+func _finish_demo_green_core_end_if_needed(core_id: int) -> bool:
+    if run_finished:
+        return true
+    if not _should_finish_demo_green_core_end(core_id):
+        return false
+    demo_green_core_end_pending = true
+    _fill_demo_end_cargo()
+    _finish_run(true, "Cipher command node defeated.")
+    return true
+
+func _fill_demo_end_cargo() -> void:
+    for pickup in pickups:
+        cargo_money += int(pickup.get("money", 0))
+        cargo_units += int(pickup.get("cargo", 1))
+    pickups.clear()
+    var cargo_capacity := int(runtime_stats.get("cargo_capacity", 15))
+    if cargo_capacity > 0:
+        cargo_units = cargo_capacity
 
 func _handle_core_destroyed_result(result: Dictionary) -> void:
     _invalidate_autopilot_target_exhaustion()
@@ -3584,7 +3623,7 @@ func _has_any_valid_drone_target() -> bool:
 func _is_autopilot_attackable_block(block: Dictionary, grid: Vector2i = Vector2i(999999, 999999)) -> bool:
     if bool(block.get("unbreakable", false)):
         return false
-    if _is_demo_layer_locked_block(block):
+    if _is_demo_layer_locked_block(block, grid):
         return false
     var core_id := int(block.get("core_id", -1))
     if core_id >= 0 and planet_data != null and planet_data.is_core_locked(core_id, _core_unlocks_center()):
@@ -4635,9 +4674,10 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         return {}
     var block_before: Dictionary = blocks.get(pos, {})
     var source_is_drone := _is_drone_damage_source(source)
-    if _is_demo_layer_locked_block(block_before):
+    if _is_demo_layer_locked_block(block_before, pos):
         if not source_is_drone:
             _mark_lock_flash(pos)
+            _show_demo_layer_locked_chat_hint()
         perf_probe_end("damage_block", perf_start_us)
         return {
             "destroyed": false,
@@ -4711,6 +4751,9 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE and bool(result.get("final_core", false)):
             boss_defeated = true
             _finish_run(true, "The final core ruptured.")
+            perf_probe_end("damage_block", perf_start_us)
+            return result
+        if int(result.get("type", BlockType.NORMAL)) == BlockType.CORE and _finish_demo_green_core_end_if_needed(int(result.get("core_id", int(block_before.get("core_id", -1))))):
             perf_probe_end("damage_block", perf_start_us)
             return result
         if source != "mining_drone" and bool(runtime_stats.get("shockwave_enabled", false)):
@@ -5788,6 +5831,12 @@ func _remove_breach_log_line(message: String) -> void:
 func _format_breach_system_line(key: String) -> String:
     return "[color=#ffd66b]%s[/color]  %s" % [tr("OPEN_PIT_CHAT_SYSTEM"), tr(key)]
 
+func _show_demo_layer_locked_chat_hint() -> void:
+    if demo_layer_locked_chat_hint_shown:
+        return
+    demo_layer_locked_chat_hint_shown = true
+    _push_breach_log(_format_breach_system_line("OPEN_PIT_CHAT_DEMO_LAYER_LOCKED"))
+
 func _show_power_ready_chat_hint() -> void:
     if power_ready_chat_visible or not _is_power_ready() or _is_power_active() or bool(runtime_stats.get("power_auto_trigger", false)):
         return
@@ -6048,9 +6097,8 @@ func _show_demo_core8_end_screen_if_needed(previous_total_cores_destroyed: int) 
         return
     if not bool(ProjectSettings.get_setting("global/Demo", false)):
         return
-    if previous_total_cores_destroyed >= DEMO_CORE8_END_SCREEN_CORE_COUNT:
-        return
-    if int(persistent_data.get("total_cores_destroyed", 0)) < DEMO_CORE8_END_SCREEN_CORE_COUNT:
+    var reached_core_count := previous_total_cores_destroyed < DEMO_CORE8_END_SCREEN_CORE_COUNT and int(persistent_data.get("total_cores_destroyed", 0)) >= DEMO_CORE8_END_SCREEN_CORE_COUNT
+    if not demo_green_core_end_pending and not reached_core_count:
         return
     if bool(persistent_data.get("demo_core8_end_screen_shown", false)):
         return
@@ -6080,6 +6128,9 @@ func _show_demo_core8_end_dialog() -> void:
     _ensure_demo_core8_end_dialog()
     if demo_core8_end_dialog == null:
         return
+    Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+    if VirtualCursor != null:
+        VirtualCursor.set_scene_enabled(false)
     demo_core8_dialog_time = 0.0
     demo_core8_dialog_active = true
     _update_demo_core8_end_dialog(0.0)
@@ -6177,6 +6228,7 @@ func _ensure_demo_core8_end_dialog() -> void:
     demo_core8_wishlist_button.focus_mode = Control.FOCUS_ALL
     demo_core8_wishlist_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
     demo_core8_wishlist_button.pressed.connect(_on_demo_core8_wishlist_pressed)
+    _apply_demo_wishlist_button_style(demo_core8_wishlist_button)
     button_row.add_child(demo_core8_wishlist_button)
 
     demo_core8_continue_button = Button.new()
@@ -6224,6 +6276,8 @@ func _on_demo_core8_end_dialog_closed() -> void:
     demo_core8_dialog_active = false
     if demo_core8_end_dialog != null and is_instance_valid(demo_core8_end_dialog):
         demo_core8_end_dialog.hide()
+    if VirtualCursor != null and ControllerIcons != null and ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER:
+        VirtualCursor.set_scene_enabled(true)
 
 func _on_demo_core8_wishlist_pressed() -> void:
     _open_demo_wishlist_url()
@@ -6262,6 +6316,30 @@ func _refresh_demo_core8_wishlist_button() -> void:
     var can_open := _can_open_demo_wishlist_url()
     demo_core8_wishlist_button.disabled = not can_open
     demo_core8_wishlist_button.tooltip_text = wishlist_url
+    _apply_demo_wishlist_button_style(demo_core8_wishlist_button)
+
+func _apply_demo_wishlist_button_style(button: Button) -> void:
+    var normal := StyleBoxFlat.new()
+    normal.bg_color = Color(0.04, 0.48, 0.22, 1.0)
+    normal.border_color = Color(0.32, 1.0, 0.56, 0.9)
+    normal.set_border_width_all(2)
+    normal.set_corner_radius_all(8)
+    var hover := normal.duplicate(true)
+    hover.bg_color = Color(0.06, 0.62, 0.3, 1.0)
+    hover.border_color = Color(0.58, 1.0, 0.72, 1.0)
+    var pressed := normal.duplicate(true)
+    pressed.bg_color = Color(0.02, 0.34, 0.16, 1.0)
+    var disabled := normal.duplicate(true)
+    disabled.bg_color = Color(0.1, 0.18, 0.13, 0.9)
+    disabled.border_color = Color(0.28, 0.42, 0.32, 0.8)
+    button.add_theme_stylebox_override("normal", normal)
+    button.add_theme_stylebox_override("hover", hover)
+    button.add_theme_stylebox_override("pressed", pressed)
+    button.add_theme_stylebox_override("disabled", disabled)
+    button.add_theme_color_override("font_color", Color(0.95, 1.0, 0.92, 1.0))
+    button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
+    button.add_theme_color_override("font_pressed_color", Color(0.9, 1.0, 0.88, 1.0))
+    button.add_theme_color_override("font_disabled_color", Color(0.58, 0.68, 0.6, 1.0))
 
 func _focus_demo_core8_end_dialog() -> void:
     _refresh_demo_core8_wishlist_button()
@@ -6270,12 +6348,17 @@ func _focus_demo_core8_end_dialog() -> void:
         target = demo_core8_continue_button
     if target != null and is_instance_valid(target):
         target.grab_focus()
-    if VirtualCursor != null:
+    var should_use_virtual_cursor := VirtualCursor != null and ControllerIcons != null and ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER
+    if should_use_virtual_cursor:
         VirtualCursor.use_open_pit_empire_cursor(true)
         VirtualCursor.set_scene_enabled(true)
         VirtualCursor.activate_for_controller()
         if target != null and is_instance_valid(target):
             call_deferred("_move_virtual_cursor_to_demo_core8_button", target)
+    else:
+        Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+        if VirtualCursor != null:
+            VirtualCursor.set_scene_enabled(false)
 
 func _move_virtual_cursor_to_demo_core8_button(target: Control) -> void:
     if VirtualCursor == null or target == null or not is_instance_valid(target):
@@ -7186,16 +7269,18 @@ func _mark_lock_flash(pos: Vector2i) -> void:
 func _is_invincible_attack_block(block: Dictionary, grid: Vector2i = Vector2i(999999, 999999)) -> bool:
     if bool(block.get("unbreakable", false)):
         return true
-    if _is_demo_layer_locked_block(block):
+    if _is_demo_layer_locked_block(block, grid):
         return true
     var core_id := int(block.get("core_id", -1))
     return core_id >= 0 and planet_data != null and planet_data.is_core_locked(core_id, _core_unlocks_center())
 
-func _is_demo_layer_locked_block(block: Dictionary) -> bool:
+func _is_demo_layer_locked_block(block: Dictionary, grid: Vector2i = Vector2i(999999, 999999)) -> bool:
     if not BALANCE.is_demo_mode_enabled():
         return false
     if int(block.get("core_id", -1)) >= 0 or int(block.get("type", BlockType.NORMAL)) == BlockType.CORE:
         return false
+    if grid != Vector2i(999999, 999999):
+        return PLANET_DATA_SCRIPT.get_zone(grid) >= PLANET_DATA_SCRIPT.Zone.GHOST
     return int(block.get("layer_depth", 1)) > BALANCE.DEMO_MINEABLE_MAX_LAYER
 
 func _is_demo_mineable_layer_cap_exhausted() -> bool:
