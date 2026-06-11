@@ -1,18 +1,18 @@
-Data Breach Inc. is an arcade incremental about piloting a breach rig through hostile corporate infrastructure, mining the firewall for resources, and cracking the daemon cores that protect the center.
+Data Breach Inc. is an arcade incremental about breaking into hostile corporate infrastructure one risky sortie at a time. Pilot a breach rig, mine the firewall for resources, crack daemon cores, extract before the run turns ugly, and use the payout to make the next breach go deeper.
 
-Every sortie is a quick tactical run. Mine blocks, collect payouts, fight through defensive pressure, and decide when to extract before the system turns the run against you. Bank the haul, buy permanent upgrades, and return with better damage, cargo, fuel, drones, range, payout scaling, and core-cracking tools.
+Every flight is part action run, part upgrade puzzle. You choose how hard to push: carve a safe route, chase valuable blocks, pressure a daemon core, or turn back early and bank the haul. Money, XP, and root kernels feed permanent upgrades for damage, attack speed, cargo, fuel, drones, range, payout scaling, and core-cracking power.
 
-The breach gets meaner as you push deeper. Daemon cores strike back, countermeasures interrupt the route, and new layers ask for better builds instead of louder buttons. Learn the firewall, tune the rig, and turn messy runs into cleaner clears.
+The firewall does not sit still. Deeper layers hit harder, daemon cores fight back, and defensive pressure forces cleaner routes instead of mindless grinding. Learn the layout, tune your rig, and turn messy extraction runs into faster clears.
 
-Data Breach Inc. also connects side operations into the campaign structure, including Red Sky Defense and Deepcore. Unlock new routes, feed resources back into the breach, and chase faster clears on leaderboard-ready challenges.
+The demo is built around defeating the demo breach and chasing a cleaner time on the Defeat Demo leaderboard. The full Data Breach Inc. structure also connects side operations into the campaign, including Red Sky Defense and Deepcore, with resources and unlocks feeding back into the central breach.
 
 Features:
 
-- Arcade breach runs built around mining, movement, survival, and extraction
+- Arcade breach sorties built around mining, movement, survival, and extraction
+- Persistent firewall progress across runs
 - Permanent upgrades for damage, speed, cargo, fuel, drones, range, payouts, and core damage
 - Daemon core encounters with escalating defensive pressure
-- Persistent firewall progress and sortie history
-- Connected side operations including Red Sky Defense and Deepcore
-- Demo goals, speed targets, and leaderboard-ready challenge routes
-- Fast runs with long-term incremental progression
-
+- Multiple resource paths: cash, XP, and root kernels
+- Demo clear target with leaderboard-ready timing
+- Connected side operations in the full Data Breach Inc. structure
+- Short runs with long-term incremental progression

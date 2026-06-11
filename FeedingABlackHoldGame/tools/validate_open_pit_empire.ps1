@@ -2,7 +2,8 @@ param(
     [string]$Modes = "normal,fast_render,no_render",
     [int]$MaxSorties = 160,
     [double]$TimeoutSeconds = 1800,
-    [string]$ResumeCheckpoint = ""
+    [string]$ResumeCheckpoint = "",
+    [string]$DemoOverride = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -39,6 +40,9 @@ $GodotArgs = @(
 )
 if ($ResumeCheckpoint -ne "") {
     $GodotArgs += "--resume-checkpoint=$ResumeCheckpoint"
+}
+if ($DemoOverride -ne "") {
+    $GodotArgs += "--demo=$DemoOverride"
 }
 
 & $GodotExe @GodotArgs

@@ -14,19 +14,18 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Bleepware - Incrementals"
+config/name="Data Breach Inc."
 run/main_scene="res://Core/Boot/AppBootstrap.tscn"
 config/use_custom_user_dir=true
-config/custom_user_dir_name="Beep2Bleep Incremental"
+config/custom_user_dir_name="Data Breach Inc."
 config/features=PackedStringArray("4.6", "Forward Plus")
 run/max_fps=60
 boot_splash/bg_color=Color(0.3234, 0.3234, 0.33, 1)
 boot_splash/show_image=false
-config/icon="res://Art/game_icon.png"
+config/icon="res://Art/data_breach_client_icon_32.png"
 
 [audio]
 
-general/default_playback_type.web=1
 driver/output_latency.web=100
 
 [autoload]
@@ -60,7 +59,7 @@ mouse_cursor/custom_image="uid://dn32a26n8jhcq"
 
 [dotnet]
 
-project/assembly_name="Beep2Bleep Incremental"
+project/assembly_name="Data Breach Inc."
 
 [editor_overrides]
 
@@ -80,8 +79,8 @@ info_log=true
 [global]
 
 Build="v1.3.1"
-Demo=true
-DemoWishlistUrl="https://store.steampowered.com/app/4637560/BleepWare_Incrementals"
+Demo=false
+DemoWishlistUrl="https://store.steampowered.com/app/4671270/Data_Breach_Inc/"
 ShowAllModesInBuild=true
 DataBreachIncMode=true
 ActiveGame="vanguard"
@@ -225,7 +224,6 @@ common/size/viewport_height=648
 
 [rendering]
 
-renderer/rendering_method.web="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
 textures/default_filters/use_nearest_mipmap_filter=true
 textures/default_filters/anisotropic_filtering_level=3
@@ -234,7 +232,7 @@ anti_aliasing/quality/screen_space_aa=1
 
 [steam]
 
-initialization/app_id=4519820
+initialization/app_id=4671270
 initialization/initialize_on_startup=false
 initialization/embed_callbacks=false
 multiplayer_peer/max_channels=4

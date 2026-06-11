@@ -28,7 +28,7 @@ const DEFAULT_DATA := {
     "upgrades": {},
     "xp_upgrades": {},
     "destroyed_cells": [],
-    "last_run_summary": "No Open Pit Empire sortie completed yet.",
+    "last_run_summary": "No Data Breach Inc. flight completed yet.",
     "last_run_breakdown": {},
     "boss_defeated": false,
     "core_currency": 0,
@@ -184,7 +184,7 @@ static func regenerate_planet_state() -> Dictionary:
     var data := load_data()
     data["destroyed_cells"] = []
     data["boss_defeated"] = false
-    data["last_run_summary"] = "Open Pit Empire firewall regenerated in editor."
+    data["last_run_summary"] = "Data Breach Inc. firewall regenerated in editor."
     data["last_run_breakdown"] = {}
     data["attempt_history"] = []
     data["planet_state"] = {}
@@ -368,7 +368,7 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
         data["run_clock_seconds"] = max(0.0, float(data.get("run_clock_seconds", 0.0)) + max(0.0, float(results.get("sortie_time_seconds", 0.0))))
     data["wallet"] = max(0, int(data.get("wallet", 0)) + int(results.get("money", 0)))
     data["xp_currency"] = max(0, int(data.get("xp_currency", 0)) + int(results.get("xp", 0)))
-    data["last_run_summary"] = str(results.get("summary_text", "Open Pit Empire sortie complete."))
+    data["last_run_summary"] = str(results.get("summary_text", "Data Breach Inc. flight complete."))
     var breakdown := results.duplicate(false)
     breakdown.erase("planet_state")
     breakdown.erase("chat_line_counts")
@@ -385,7 +385,7 @@ static func apply_run_results(results: Dictionary) -> Dictionary:
         next_flight_number = max(next_flight_number, int(Dictionary(attempt_history[0]).get("flight", attempt_history.size())) + 1)
     attempt_history.push_front({
         "flight": next_flight_number,
-        "summary": str(results.get("summary_text", "Open Pit Empire sortie complete.")),
+        "summary": str(results.get("summary_text", "Data Breach Inc. flight complete.")),
         "money": int(results.get("money", 0)),
         "xp": int(results.get("xp", 0)),
         "nodes_broken": int(results.get("nodes_broken", 0)),
@@ -492,7 +492,7 @@ static func bank_partial_run_rewards(results: Dictionary) -> Dictionary:
             next_flight_number = max(next_flight_number, int(Dictionary(attempt_history[0]).get("flight", attempt_history.size())) + 1)
         attempt_history.push_front({
             "flight": next_flight_number,
-            "summary": str(results.get("summary_text", "Open Pit Empire rewards banked before defense.")),
+            "summary": str(results.get("summary_text", "Data Breach Inc. rewards banked before defense.")),
             "money": money,
             "xp": xp,
             "nodes_broken": int(results.get("nodes_broken", 0)),
@@ -502,7 +502,7 @@ static func bank_partial_run_rewards(results: Dictionary) -> Dictionary:
         if attempt_history.size() > 8:
             attempt_history.resize(8)
         data["attempt_history"] = attempt_history
-        data["last_run_summary"] = str(results.get("summary_text", "Open Pit Empire rewards banked before defense."))
+        data["last_run_summary"] = str(results.get("summary_text", "Data Breach Inc. rewards banked before defense."))
         BALANCE.refresh_depth_unlocks(data)
     save_data(data)
     return data

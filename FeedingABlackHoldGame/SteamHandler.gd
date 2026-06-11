@@ -6,13 +6,16 @@ const STEAM_DEEPCORE_APP_ID := 4562070
 const STEAM_DEEPCORE_DEMO_APP_ID := 4615740
 const STEAM_BLEEPWARE_INCREMENTALS_APP_ID := 4637560
 const STEAM_BLEEPWARE_INCREMENTALS_DEMO_APP_ID := 4642530
+const STEAM_DATA_BREACH_INC_APP_ID := 4671270
+const STEAM_DATA_BREACH_INC_DEMO_APP_ID := 4671300
 const STEAM_BLEEPWARE_INCREMENTALS_STORE_PATH := "BleepWare_Incrementals"
+const STEAM_DATA_BREACH_INC_STORE_PATH := "Data_Breach_Inc"
 const STEAM_STORE_PATH := "Vanguard__Idle_Auto_Battler"
 const LEADERBOARD_LEVEL7_SHARED := "level7_clear_time"
 const LEADERBOARD_LEVEL20_FULL := "full_level20_clear_time"
 const LEADERBOARD_DEEPCORE_TIME_TO_TIER8 := "DeepcoreTimeToTier8"
-const LEADERBOARD_DATA_BREACH_DEMO_CORE8 := "DataBreachIncDemoCore8Time"
-const LEADERBOARD_DATA_BREACH_FULL_CLEAR := "DataBreachIncFullClearTime"
+const LEADERBOARD_DATA_BREACH_DEMO_DEFEAT := "Defeat Demo"
+const LEADERBOARD_DATA_BREACH_FULL_CLEAR := "Complete Game"
 const LEADERBOARD_FETCH_COUNT := 5
 const LEADERBOARD_AROUND_USER_RADIUS := 2
 const OPEN_PIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitEmpire/OpenPitEmpireProgress.gd")
@@ -88,6 +91,8 @@ var _steam_shutdown_started := false
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
 
 func get_store_url() -> String:
+    if _is_data_breach_inc_build():
+        return "https://store.steampowered.com/app/%s/%s/" % [STEAM_DATA_BREACH_INC_APP_ID, STEAM_DATA_BREACH_INC_STORE_PATH]
     var combined_export_url := "https://store.steampowered.com/app/%s/%s/" % [STEAM_BLEEPWARE_INCREMENTALS_APP_ID, STEAM_BLEEPWARE_INCREMENTALS_STORE_PATH]
     if Util.is_all_high_level_mode_active():
         return combined_export_url
@@ -237,7 +242,14 @@ func _rebuild_leaderboard_name_maps() -> void:
 func _is_demo_build() -> bool:
     return bool(ProjectSettings.get_setting("global/Demo", false))
 
+func _is_data_breach_inc_build() -> bool:
+    return bool(ProjectSettings.get_setting("global/DataBreachIncMode", false))
+
 func _resolve_steam_app_id() -> int:
+    if _is_data_breach_inc_build():
+        if _is_demo_build():
+            return STEAM_DATA_BREACH_INC_DEMO_APP_ID
+        return STEAM_DATA_BREACH_INC_APP_ID
     if Util.is_all_high_level_mode_active():
         if _is_demo_build():
             return STEAM_BLEEPWARE_INCREMENTALS_DEMO_APP_ID
@@ -257,18 +269,20 @@ func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
         if _is_demo_build():
             return [
                 {
-                    "id": LEADERBOARD_DATA_BREACH_DEMO_CORE8,
-                    "steam_name": LEADERBOARD_DATA_BREACH_DEMO_CORE8,
-                    "title": "8th Core",
-                    "description": "Fastest time to defeat the 8th daemon core.",
+                    "id": LEADERBOARD_DATA_BREACH_DEMO_DEFEAT,
+                    "steam_name": LEADERBOARD_DATA_BREACH_DEMO_DEFEAT,
+                    "title": "Defeat Demo",
+                    "description": "Gameplay seconds to defeat the demo.",
+                    "score_unit": "seconds",
                 }
             ]
         return [
             {
                 "id": LEADERBOARD_DATA_BREACH_FULL_CLEAR,
                 "steam_name": LEADERBOARD_DATA_BREACH_FULL_CLEAR,
-                "title": "Full Clear",
-                "description": "Fastest time to clear Data Breach Inc.",
+                "title": "Complete Game",
+                "description": "Gameplay seconds to complete Data Breach Inc.",
+                "score_unit": "seconds",
             }
         ]
     if Util.is_mining_game_active():
@@ -498,15 +512,24 @@ func submit_deepcore_tier8_time(clear_time_seconds: float) -> void:
     _submit_fishing_boss_clear_time_to_board(LEADERBOARD_DEEPCORE_TIME_TO_TIER8, clear_time_seconds)
 
 func submit_open_pit_demo_core8_time(clear_time_seconds: float) -> void:
-    _submit_fishing_boss_clear_time_to_board(LEADERBOARD_DATA_BREACH_DEMO_CORE8, clear_time_seconds)
+    _submit_seconds_score_to_board(LEADERBOARD_DATA_BREACH_DEMO_DEFEAT, clear_time_seconds)
 
 func submit_open_pit_full_clear_time(clear_time_seconds: float) -> void:
-    _submit_fishing_boss_clear_time_to_board(LEADERBOARD_DATA_BREACH_FULL_CLEAR, clear_time_seconds)
+    _submit_seconds_score_to_board(LEADERBOARD_DATA_BREACH_FULL_CLEAR, clear_time_seconds)
 
 func _submit_fishing_boss_clear_time_to_board(board_id: String, clear_time_seconds: float) -> void:
     if board_id == "" or clear_time_seconds < 0.0:
         return
     var score: int = maxi(1, int(round(clear_time_seconds * 1000.0)))
+    _submit_leaderboard_score(board_id, score)
+
+func _submit_seconds_score_to_board(board_id: String, clear_time_seconds: float) -> void:
+    if board_id == "" or clear_time_seconds < 0.0:
+        return
+    var score: int = maxi(1, int(ceil(clear_time_seconds)))
+    _submit_leaderboard_score(board_id, score)
+
+func _submit_leaderboard_score(board_id: String, score: int) -> void:
     leaderboard_pending_submissions[board_id] = score
     leaderboard_last_submitted_scores[board_id] = score
     leaderboard_statuses[board_id] = "Submitted"

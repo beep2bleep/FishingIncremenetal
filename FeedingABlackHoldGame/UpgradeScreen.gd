@@ -1139,7 +1139,7 @@ func _refresh_demo_mode_label_visibility() -> void:
         if Util.is_mining_game_active():
             game_mode_label.text = ""
         elif Util.is_open_pit_game_active():
-            game_mode_label.text = tr("OPEN PIT EMPIRE")
+            game_mode_label.text = "Data Breach Inc."
             game_mode_label.add_theme_color_override("font_color", Color(0.95, 0.76, 0.38, 1.0))
         elif Util.is_open_pit_orbit_game_active():
             game_mode_label.text = tr("OPEN_PIT_ORBIT")
@@ -1568,36 +1568,27 @@ func _refresh_leaderboard_panel() -> void:
         var local_best: float = _get_local_leaderboard_best_time(board_id, level)
         lines.append("Your best: %s" % (_format_leaderboard_time(local_best) if local_best >= 0.0 else "--"))
         var status: String = SteamHandler.get_cached_leaderboard_status(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_status") else "Unavailable"
-        var submitted_score_ms: int = SteamHandler.get_cached_leaderboard_last_submitted_score(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_last_submitted_score") else -1
-        if submitted_score_ms >= 0:
-            lines.append("Steam submitted: %s" % _format_leaderboard_time(float(submitted_score_ms) / 1000.0))
+        var score_unit: String = str(config.get("score_unit", "milliseconds"))
+        var submitted_score: int = SteamHandler.get_cached_leaderboard_last_submitted_score(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_last_submitted_score") else -1
+        if submitted_score >= 0:
+            lines.append("Steam submitted: %s" % _format_leaderboard_score(submitted_score, score_unit))
         var top_entries: Array = SteamHandler.get_cached_leaderboard_display_entries(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_display_entries") else []
         var around_entries: Array = SteamHandler.get_cached_leaderboard_around_user_display_entries(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_around_user_display_entries") else []
-        if top_entries.is_empty():
+        var entries_to_show: Array = around_entries if not around_entries.is_empty() else top_entries
+        if entries_to_show.is_empty():
             lines.append("Steam status: %s" % status)
         else:
-            lines.append("Top 5")
+            lines.append("Around You" if not around_entries.is_empty() else "Top 5")
             var display_rank: int = 1
-            for entry_variant: Variant in top_entries:
+            for entry_variant: Variant in entries_to_show:
                 if not (entry_variant is Dictionary):
                     continue
                 var entry: Dictionary = entry_variant
                 var rank: int = SteamHandler.get_leaderboard_entry_rank(entry, display_rank) if SteamHandler != null and SteamHandler.has_method("get_leaderboard_entry_rank") else display_rank
-                var score_ms: int = int(entry.get("score", 0))
+                var score: int = int(entry.get("score", 0))
                 var persona: String = SteamHandler.get_leaderboard_entry_display_name(entry) if SteamHandler != null and SteamHandler.has_method("get_leaderboard_entry_display_name") else "Player"
-                lines.append("#%d %s  %s" % [rank, persona, _format_leaderboard_time(float(score_ms) / 1000.0)])
+                lines.append("#%d %s  %s" % [rank, persona, _format_leaderboard_score(score, score_unit)])
                 display_rank += 1
-        if not around_entries.is_empty():
-            lines.append("")
-            lines.append("Around You")
-            for entry_variant: Variant in around_entries:
-                if not (entry_variant is Dictionary):
-                    continue
-                var entry: Dictionary = entry_variant
-                var rank: int = SteamHandler.get_leaderboard_entry_rank(entry, 0) if SteamHandler != null and SteamHandler.has_method("get_leaderboard_entry_rank") else 0
-                var score_ms: int = int(entry.get("score", 0))
-                var persona: String = SteamHandler.get_leaderboard_entry_display_name(entry) if SteamHandler != null and SteamHandler.has_method("get_leaderboard_entry_display_name") else "Player"
-                lines.append("#%d %s  %s" % [rank, persona, _format_leaderboard_time(float(score_ms) / 1000.0)])
         lines.append("")
     if not lines.is_empty() and lines[lines.size() - 1] == "":
         lines.remove_at(lines.size() - 1)
@@ -1608,12 +1599,23 @@ func _format_leaderboard_time(seconds: float) -> String:
         return "--"
     return Util.format_time(seconds)
 
+func _format_leaderboard_score(score: int, score_unit: String = "milliseconds") -> String:
+    if score < 0:
+        return "--"
+    if score_unit == "seconds":
+        return Util.format_time(float(score))
+    return Util.format_time(float(score) / 1000.0)
+
 func _get_local_leaderboard_best_time(board_id: String, level: int) -> float:
     match board_id:
         "DeepcoreTimeToTier8":
             return SaveHandler.get_deepcore_tier8_time()
+        "Defeat Demo":
+            return OPEN_PIT_PROGRESS_SCRIPT.get_demo_core8_time()
         "DataBreachIncDemoCore8Time":
             return OPEN_PIT_PROGRESS_SCRIPT.get_demo_core8_time()
+        "Complete Game":
+            return OPEN_PIT_PROGRESS_SCRIPT.get_full_clear_time()
         "DataBreachIncFullClearTime":
             return OPEN_PIT_PROGRESS_SCRIPT.get_full_clear_time()
         _:

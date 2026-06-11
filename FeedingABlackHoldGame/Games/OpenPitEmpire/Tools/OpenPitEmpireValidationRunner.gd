@@ -19,6 +19,7 @@ var _report_dir := "user://validation"
 var _continue_current_progress := false
 var _restore_progress_after_run := true
 var _skip_first_purchase := false
+var _demo_override := ""
 var _start_sortie_index := 0
 var _resume_checkpoint_path := ""
 var _exit_code := 0
@@ -35,6 +36,8 @@ func _ready() -> void:
 func _run() -> void:
     ProjectSettings.set_setting(Util.ACTIVE_GAME_PROJECT_SETTING, Util.ACTIVE_GAME_OPEN_PIT)
     _parse_args()
+    if _demo_override != "":
+        ProjectSettings.set_setting("global/Demo", _demo_override == "true")
     DirAccess.make_dir_recursive_absolute(_global_path(_report_dir))
     _backup_dir = "%s/save_backup" % _report_dir
     _validation_id = Time.get_datetime_string_from_system(true, true).replace(":", "").replace("-", "").replace(" ", "_")
@@ -115,6 +118,8 @@ func _parse_args() -> void:
             _restore_progress_after_run = false
         elif arg == "--skip-first-purchase":
             _skip_first_purchase = true
+        elif arg.begins_with("--demo="):
+            _demo_override = arg.trim_prefix("--demo=").strip_edges().to_lower()
         elif arg.begins_with("--start-sortie-index="):
             _start_sortie_index = maxi(0, int(arg.trim_prefix("--start-sortie-index=")))
         elif arg.begins_with("--resume-checkpoint="):
@@ -175,7 +180,7 @@ func _run_mode(mode: String) -> Dictionary:
         if _should_save_perf_data_for_mode(mode):
             _append_json_line(_perf_jsonl_path, _build_perf_record(run_record))
         _append_json_line(_run_summary_jsonl_path, _build_balance_record(run_record))
-        print("[OpenPitValidation] mode=%s sortie=%d auto=%s return=%s cargo=%d/%d fuel=%.1f/%.1fs money=%d xp=%d cores=%d clear=%.3f remaining=%s live_remaining=%s boss=%s bought=%d" % [
+        print("[OpenPitValidation] mode=%s sortie=%d auto=%s return=%s cargo=%d/%d fuel=%.1f/%.1fs money=%d xp=%d cores=%d clear=%.3f remaining=%s live_remaining=%s boss=%s bought=%d drones=%d/t%d drone_nodes=%d drone_cargo=%d+%d/%d" % [
             mode,
             sortie_index + 1,
             str(run_record.get("autopilot_sortie_mode", "")),
@@ -192,6 +197,12 @@ func _run_mode(mode: String) -> Dictionary:
             _format_layer_block_counts(run_record.get("live_remaining_layer_block_counts", {})),
             str(bool(data_after.get("boss_defeated", false))),
             int(purchase_result.get("count", 0)),
+            int(run_record.get("mining_drone_count", 0)),
+            int(run_record.get("mining_drone_tier", 0)),
+            int(run_record.get("mining_drone_nodes_mined", 0)),
+            int(run_record.get("mining_drone_cargo_banked", 0)),
+            int(run_record.get("mining_drone_cargo_pending", 0)),
+            int(run_record.get("mining_drone_cargo_capacity", 0)),
         ])
         if (sortie_index + 1) % CHECKPOINT_INTERVAL_SORTIES == 0:
             _write_validation_checkpoint(mode, sortie_index + 1, run_record)
@@ -272,7 +283,7 @@ func _run_mode_sequence(sequence: Array[Dictionary]) -> Dictionary:
             if _should_save_perf_data_for_mode(mode):
                 _append_json_line(_perf_jsonl_path, _build_perf_record(run_record))
             _append_json_line(_run_summary_jsonl_path, _build_balance_record(run_record))
-            print("[OpenPitValidation] sequence sortie=%d/%d mode=%s segment_run=%d/%d auto=%s return=%s cargo=%d/%d fuel=%.1f/%.1fs money=%d xp=%d cores=%d clear=%.3f remaining=%s live_remaining=%s boss=%s bought=%d auto_buy=\"%s\"" % [
+            print("[OpenPitValidation] sequence sortie=%d/%d mode=%s segment_run=%d/%d auto=%s return=%s cargo=%d/%d fuel=%.1f/%.1fs money=%d xp=%d cores=%d clear=%.3f remaining=%s live_remaining=%s boss=%s bought=%d drones=%d/t%d drone_nodes=%d drone_cargo=%d+%d/%d auto_buy=\"%s\"" % [
                 global_sortie_index + 1,
                 planned_total,
                 mode,
@@ -292,6 +303,12 @@ func _run_mode_sequence(sequence: Array[Dictionary]) -> Dictionary:
                 _format_layer_block_counts(run_record.get("live_remaining_layer_block_counts", {})),
                 str(bool(data_after.get("boss_defeated", false))),
                 int(purchase_result.get("count", 0)),
+                int(run_record.get("mining_drone_count", 0)),
+                int(run_record.get("mining_drone_tier", 0)),
+                int(run_record.get("mining_drone_nodes_mined", 0)),
+                int(run_record.get("mining_drone_cargo_banked", 0)),
+                int(run_record.get("mining_drone_cargo_pending", 0)),
+                int(run_record.get("mining_drone_cargo_capacity", 0)),
                 _format_purchase_summary(purchase_result),
             ])
             if (global_sortie_index + 1) % CHECKPOINT_INTERVAL_SORTIES == 0:
@@ -327,6 +344,7 @@ func _run_one_sortie(mode: String, sortie_index: int) -> Dictionary:
     var scene = MAIN_SCENE.instantiate()
     scene.validation_rng_seed = BASE_SEED + sortie_index
     scene.validation_autopilot_mode = mode
+    scene.validation_sortie_index = sortie_index
     var wall_started_msec := Time.get_ticks_msec()
     get_tree().root.add_child(scene)
     await get_tree().process_frame
@@ -371,6 +389,14 @@ func _build_run_record(mode: String, sortie_index: int, data_before_purchase: Di
         "wall_elapsed_s": float(scene_summary.get("wall_elapsed_seconds", 0.0)),
         "rendered_frames": int(scene_summary.get("rendered_frames", 0)),
         "nodes_mined": nodes_mined,
+        "mining_drone_count": int(scene_summary.get("mining_drone_count", 0)),
+        "mining_drone_tier": int(scene_summary.get("mining_drone_tier", 0)),
+        "mining_drone_cargo_capacity": int(scene_summary.get("mining_drone_cargo_capacity", 0)),
+        "mining_drone_nodes_mined": int(scene_summary.get("mining_drone_nodes_mined", 0)),
+        "mining_drone_money_banked": int(scene_summary.get("mining_drone_money_banked", 0)),
+        "mining_drone_xp_banked": int(scene_summary.get("mining_drone_xp_banked", 0)),
+        "mining_drone_cargo_banked": int(scene_summary.get("mining_drone_cargo_banked", 0)),
+        "mining_drone_cargo_pending": int(scene_summary.get("mining_drone_cargo_pending", 0)),
         "nodes_per_run_second": float(nodes_mined) / maxf(run_time, 0.001),
         "nodes_per_mining_second": float(nodes_mined) / maxf(mining_time, 0.001),
         "end_cargo_units": end_cargo_units,

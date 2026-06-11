@@ -388,6 +388,7 @@ var mining_drone_states: Array[Dictionary] = []
 var mining_drone_beams: Array[Dictionary] = []
 var mining_drone_money := 0
 var mining_drone_xp := 0
+var mining_drone_nodes_mined := 0
 var mining_drone_cargo_units_banked := 0
 var mining_drone_cargo_units_pending := 0
 var player_engaged_cores_this_run: Dictionary = {}
@@ -441,6 +442,7 @@ var autopilot_dig_deep_anchor_grid := Vector2i(999999, 999999)
 var autopilot_dig_deep_sweep_left := true
 var validation_rng_seed: int = -1
 var validation_autopilot_mode: String = ""
+var validation_sortie_index: int = -1
 var defense_transition_pending := false
 
 var planet_renderer: Node2D
@@ -821,6 +823,7 @@ func get_validation_run_summary() -> Dictionary:
         "mining_drone_count": mining_drone_states.size(),
         "mining_drone_tier": int(runtime_stats.get("mining_drone_tier", 0)),
         "mining_drone_cargo_capacity": _get_mining_drone_cargo_capacity() if int(runtime_stats.get("mining_drone_count", 0)) > 0 else 0,
+        "mining_drone_nodes_mined": mining_drone_nodes_mined,
         "mining_drone_money_banked": mining_drone_money,
         "mining_drone_xp_banked": mining_drone_xp,
         "mining_drone_cargo_banked": mining_drone_cargo_units_banked,
@@ -1397,7 +1400,7 @@ func _build_ui() -> void:
     summary_margin.add_child(summary_vbox)
 
     var title := Label.new()
-    title.text = tr("OPEN_PIT_EMPIRE")
+    title.text = "Data Breach Inc."
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     title.add_theme_font_size_override("font_size", 32)
     title.add_theme_color_override("font_color", Color(0.7, 0.9, 1.0, 1.0))
@@ -1699,6 +1702,7 @@ func _start_run() -> void:
     mining_drone_beams.clear()
     mining_drone_money = 0
     mining_drone_xp = 0
+    mining_drone_nodes_mined = 0
     mining_drone_cargo_units_banked = 0
     mining_drone_cargo_units_pending = 0
     player_engaged_cores_this_run.clear()
@@ -2692,19 +2696,26 @@ func _get_autopilot_direction(delta: float) -> Vector2:
     return direction
 
 func _choose_autopilot_sortie_mode() -> void:
+    if _should_validation_force_core_attack():
+        autopilot_sortie_mode = AUTOPILOT_MODE_CORE_ATTACK
+        return
     var roll := rng.randf()
     if roll < 0.34:
         autopilot_sortie_mode = AUTOPILOT_MODE_DIG_DEEP
-    elif roll < 0.48:
+    elif roll < 0.53:
         autopilot_sortie_mode = AUTOPILOT_MODE_TOP_SWEEP
-    elif roll < 0.61:
+    elif roll < 0.69:
         autopilot_sortie_mode = AUTOPILOT_MODE_LEFT_SWEEP
-    elif roll < 0.74:
+    elif roll < 0.85:
         autopilot_sortie_mode = AUTOPILOT_MODE_RIGHT_SWEEP
-    elif roll < 0.80:
-        autopilot_sortie_mode = AUTOPILOT_MODE_CENTER
     else:
-        autopilot_sortie_mode = AUTOPILOT_MODE_CORE_ATTACK
+        autopilot_sortie_mode = AUTOPILOT_MODE_CENTER
+
+func _should_validation_force_core_attack() -> bool:
+    if validation_autopilot_mode == "" or validation_sortie_index < 0:
+        return false
+    var run_number := validation_sortie_index + 1
+    return run_number % 10 == 0 or run_number % 10 == 5
 
 func _get_autopilot_return_reason() -> String:
     if autopilot_returning:
@@ -2986,6 +2997,14 @@ func _find_autopilot_core_attack_target(search_deadline_usec: int = 0) -> Dictio
     if best_core.is_empty():
         return {}
     var core_center := Vector2i(int(best_core.center.x), int(best_core.center.y))
+    if _is_validation_core_attack_rush():
+        var core_world := grid_to_world(core_center)
+        return {
+            "grid": core_center,
+            "target_world": core_world,
+            "world": core_world,
+            "status": "core attack rush",
+        }
     var tunnel_target := _find_autopilot_core_breach_corridor_target(core_center, search_deadline_usec)
     if not tunnel_target.is_empty():
         var target_grid := Vector2i(tunnel_target.get("grid", core_center))
@@ -4732,6 +4751,8 @@ func _damage_block(pos: Vector2i, damage: float, defer_visual_sync: bool = false
         persistent_destroyed_count += 1
         destroyed_cells_this_run[pos] = "drone" if source == "mining_drone" else "player"
         nodes_mined += 1
+        if source == "mining_drone":
+            mining_drone_nodes_mined += 1
         if source != "mining_drone":
             xp_earned_this_run += _get_xp_reward_for_block(block_before)
         if source != "mining_drone":
@@ -6063,7 +6084,7 @@ func _finish_run_save_async(money_award: int, xp_award: int, reason: String) -> 
         "planet_state": planet_snapshot if has_sector_updates else {},
         "remaining_layer_block_counts": _get_live_remaining_layer_block_counts(),
         "defer_planet_state_save": has_sector_updates,
-        "summary_text": _trf("OPEN_PIT_SUMMARY_BANKED", [reason, money_award, xp_award]),
+        "summary_text": "Data Breach Inc. rewards banked: %s cash and %s XP. Return: %s." % [money_award, xp_award, reason],
         "persistent_clear": _get_persistent_clear_percent(),
         "chat_line_counts": breach_chat.get_persistent_line_counts() if breach_chat != null else persistent_data.get("chat_line_counts", {}),
         "chat_thread_counts": breach_chat.get_persistent_thread_counts() if breach_chat != null else persistent_data.get("chat_thread_counts", {}),
