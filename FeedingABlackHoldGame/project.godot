@@ -79,7 +79,7 @@ info_log=true
 [global]
 
 Build="v1.3.1"
-Demo=false
+Demo=true
 DemoWishlistUrl="https://store.steampowered.com/app/4671270/Data_Breach_Inc/"
 ShowAllModesInBuild=true
 DataBreachIncMode=true
@@ -232,7 +232,7 @@ anti_aliasing/quality/screen_space_aa=1
 
 [steam]
 
-initialization/app_id=4671270
+initialization/app_id=4671300
 initialization/initialize_on_startup=false
 initialization/embed_callbacks=false
 multiplayer_peer/max_channels=4
