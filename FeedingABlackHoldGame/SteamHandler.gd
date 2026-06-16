@@ -14,6 +14,7 @@ const STEAM_STORE_PATH := "Vanguard__Idle_Auto_Battler"
 const LEADERBOARD_LEVEL7_SHARED := "level7_clear_time"
 const LEADERBOARD_LEVEL20_FULL := "full_level20_clear_time"
 const LEADERBOARD_DEEPCORE_TIME_TO_TIER8 := "DeepcoreTimeToTier8"
+const LEADERBOARD_DEEPCORE_TIME_TO_TIER20 := "DeepcoreTimeToTier20"
 const LEADERBOARD_DATA_BREACH_DEMO_DEFEAT := "Defeat Demo"
 const LEADERBOARD_DATA_BREACH_FULL_CLEAR := "Complete Game"
 const LEADERBOARD_FETCH_COUNT := 5
@@ -295,7 +296,14 @@ func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
                     "description_key": "DEEPCORE_LEADERBOARD_TIME_TO_TIER8_DESC",
                 }
             ]
-        return []
+        return [
+            {
+                "id": LEADERBOARD_DEEPCORE_TIME_TO_TIER20,
+                "steam_name": LEADERBOARD_DEEPCORE_TIME_TO_TIER20,
+                "title": "Time to Tier 20",
+                "description": "Your total Deepcore mining time when you first unlock tier 20. Lower times rank higher.",
+            }
+        ]
     if _is_demo_build():
         return [
             {
@@ -510,6 +518,9 @@ func submit_level20_clear_time(clear_time_seconds: float) -> void:
 
 func submit_deepcore_tier8_time(clear_time_seconds: float) -> void:
     _submit_fishing_boss_clear_time_to_board(LEADERBOARD_DEEPCORE_TIME_TO_TIER8, clear_time_seconds)
+
+func submit_deepcore_tier20_time(clear_time_seconds: float) -> void:
+    _submit_fishing_boss_clear_time_to_board(LEADERBOARD_DEEPCORE_TIME_TO_TIER20, clear_time_seconds)
 
 func submit_open_pit_demo_core8_time(clear_time_seconds: float) -> void:
     _submit_seconds_score_to_board(LEADERBOARD_DATA_BREACH_DEMO_DEFEAT, clear_time_seconds)

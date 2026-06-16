@@ -1568,12 +1568,20 @@ func _finish_run(reason_key: String) -> void:
     if simulation_commit_progress:
         SaveHandler.fishing_run_clock_seconds = max(0.0, SaveHandler.fishing_run_clock_seconds + run_seconds)
         persistent_data = MINING_PROGRESS_SCRIPT.apply_run_results(results)
+        var recorded_progress_leaderboard_time := false
         if previous_display_tier < 8 and projected_display_tier >= 8:
             var tier8_time_seconds: float = SaveHandler.fishing_run_clock_seconds
             var registered_time: bool = SaveHandler.register_deepcore_tier8_time(tier8_time_seconds)
             if registered_time and bool(ProjectSettings.get_setting("global/Demo", false)) and SteamHandler != null and SteamHandler.has_method("submit_deepcore_tier8_time"):
                 SteamHandler.submit_deepcore_tier8_time(tier8_time_seconds)
-        else:
+            recorded_progress_leaderboard_time = registered_time
+        if previous_display_tier < 20 and projected_display_tier >= 20:
+            var tier20_time_seconds: float = SaveHandler.fishing_run_clock_seconds
+            var registered_tier20_time: bool = SaveHandler.register_deepcore_tier20_time(tier20_time_seconds)
+            if registered_tier20_time and not bool(ProjectSettings.get_setting("global/Demo", false)) and SteamHandler != null and SteamHandler.has_method("submit_deepcore_tier20_time"):
+                SteamHandler.submit_deepcore_tier20_time(tier20_time_seconds)
+            recorded_progress_leaderboard_time = recorded_progress_leaderboard_time or registered_tier20_time
+        if not recorded_progress_leaderboard_time:
             SaveHandler.save_fishing_progress()
     else:
         persistent_data = results.get("projected_data", persistent_data).duplicate(true)

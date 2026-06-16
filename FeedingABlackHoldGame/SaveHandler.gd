@@ -596,6 +596,7 @@ var fishing_l3_boss_clear_clock_seconds := -1.0
 var fishing_first_boss_clear_levels: Dictionary = {}
 var fishing_best_boss_clear_times: Dictionary = {}
 var deepcore_tier8_clock_seconds := -1.0
+var deepcore_tier20_clock_seconds := -1.0
 var fishing_ufo_spawn_timer_remaining := -1.0
 var fishing_battle_speed_index := 0
 
@@ -616,6 +617,7 @@ func reset_fishing_progress() -> void:
     fishing_first_boss_clear_levels = {}
     fishing_best_boss_clear_times = {}
     deepcore_tier8_clock_seconds = -1.0
+    deepcore_tier20_clock_seconds = -1.0
     fishing_ufo_spawn_timer_remaining = -1.0
     fishing_battle_speed_index = 0
 
@@ -656,6 +658,7 @@ func load_fishing_progress():
     fishing_first_boss_clear_levels = json_data.get("first_boss_clear_levels", {})
     fishing_best_boss_clear_times = json_data.get("best_boss_clear_times", {})
     deepcore_tier8_clock_seconds = float(json_data.get("deepcore_tier8_clock_seconds", json_data.get("deepcore_level10_clock_seconds", -1.0)))
+    deepcore_tier20_clock_seconds = float(json_data.get("deepcore_tier20_clock_seconds", -1.0))
     fishing_ufo_spawn_timer_remaining = float(json_data.get("ufo_spawn_timer_remaining", -1.0))
     fishing_battle_speed_index = max(0, int(json_data.get("battle_speed_index", 0)))
     if fishing_first_boss_clear_levels.is_empty():
@@ -688,6 +691,7 @@ func _build_fishing_progress_save_data() -> Dictionary:
         "first_boss_clear_levels": fishing_first_boss_clear_levels,
         "best_boss_clear_times": fishing_best_boss_clear_times,
         "deepcore_tier8_clock_seconds": deepcore_tier8_clock_seconds,
+        "deepcore_tier20_clock_seconds": deepcore_tier20_clock_seconds,
         "ufo_spawn_timer_remaining": fishing_ufo_spawn_timer_remaining,
         "battle_speed_index": fishing_battle_speed_index,
     }
@@ -733,6 +737,18 @@ func register_deepcore_tier8_time(clear_time_seconds: float) -> bool:
 
 func get_deepcore_tier8_time() -> float:
     return max(-1.0, float(deepcore_tier8_clock_seconds))
+
+func register_deepcore_tier20_time(clear_time_seconds: float) -> bool:
+    if clear_time_seconds < 0.0:
+        return false
+    if deepcore_tier20_clock_seconds >= 0.0 and clear_time_seconds >= deepcore_tier20_clock_seconds:
+        return false
+    deepcore_tier20_clock_seconds = clear_time_seconds
+    save_fishing_progress()
+    return true
+
+func get_deepcore_tier20_time() -> float:
+    return max(-1.0, float(deepcore_tier20_clock_seconds))
 
 func _migrate_armor_upgrade_keys() -> void:
     # Migrate old single key (core_armor_enemy etc.) to track 1 (core_armor_enemy_1) so progress is preserved.

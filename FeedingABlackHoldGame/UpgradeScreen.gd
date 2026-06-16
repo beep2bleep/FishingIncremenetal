@@ -1574,11 +1574,12 @@ func _refresh_leaderboard_panel() -> void:
             lines.append("Steam submitted: %s" % _format_leaderboard_score(submitted_score, score_unit))
         var top_entries: Array = SteamHandler.get_cached_leaderboard_display_entries(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_display_entries") else []
         var around_entries: Array = SteamHandler.get_cached_leaderboard_around_user_display_entries(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_around_user_display_entries") else []
-        var entries_to_show: Array = around_entries if not around_entries.is_empty() else top_entries
+        var has_around_entries := not around_entries.is_empty()
+        var entries_to_show: Array = around_entries if has_around_entries else top_entries
         if entries_to_show.is_empty():
             lines.append("Steam status: %s" % status)
         else:
-            lines.append("Around You" if not around_entries.is_empty() else "Top 5")
+            lines.append("Around You" if has_around_entries else "Top 5")
             var display_rank: int = 1
             for entry_variant: Variant in entries_to_show:
                 if not (entry_variant is Dictionary):
@@ -1610,6 +1611,8 @@ func _get_local_leaderboard_best_time(board_id: String, level: int) -> float:
     match board_id:
         "DeepcoreTimeToTier8":
             return SaveHandler.get_deepcore_tier8_time()
+        "DeepcoreTimeToTier20":
+            return SaveHandler.get_deepcore_tier20_time()
         "Defeat Demo":
             return OPEN_PIT_PROGRESS_SCRIPT.get_demo_core8_time()
         "DataBreachIncDemoCore8Time":
