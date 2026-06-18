@@ -276,12 +276,12 @@ func get_display_name(node: Dictionary) -> String:
     var display_name: String = _humanize_name(clean_key)
     if level > 1 and not display_name.ends_with(_roman(level)):
         display_name += " " + _roman(level)
-    return display_name
+    return tr(display_name)
 
 func get_description(node: Dictionary) -> String:
     var explicit_description: String = str(node.get("description", "")).strip_edges()
     if explicit_description != "":
-        return _with_editor_note(node, explicit_description)
+        return _with_editor_note(node, tr(explicit_description))
 
     var key: String = str(node.get("key", ""))
     if key == "battle_speed_unlock_2x":
@@ -589,7 +589,7 @@ func _extra_skill_name(key: String) -> String:
     if n <= 0:
         return tr("UPGRADE_DB_NAME_EXTRA_SKILL_FALLBACK")
     var idx: int = (n - 1) % EXTRA_NAME_A.size()
-    return _trf("UPGRADE_DB_NAME_EXTRA_SKILL", [EXTRA_NAME_A[idx], EXTRA_NAME_B[idx], n])
+    return _trf("UPGRADE_DB_NAME_EXTRA_SKILL", [tr(EXTRA_NAME_A[idx]), tr(EXTRA_NAME_B[idx]), n])
 
 func _core_name(key: String, level: int = 1) -> String:
     if key == "core_armor":
@@ -640,7 +640,7 @@ func _core_name(key: String, level: int = 1) -> String:
         return tr("UPGRADE_DB_NAME_CORE_MAGE_SPEED")
     if key.find("mage") != -1 and key.find("active_cap") != -1:
         return tr("UPGRADE_DB_NAME_CORE_MAGE_ACTIVE_CAP")
-    return _humanize_name(key)
+    return tr(_humanize_name(key))
 
 func _hero_core_name(key: String) -> String:
     if key.find("knight") != -1:

@@ -614,7 +614,7 @@ func _setup_countermeasures_hud_label() -> void:
         return
     countermeasures_hud_label = Label.new()
     countermeasures_hud_label.name = "CountermeasuresLabel"
-    countermeasures_hud_label.text = "CM 0/3"
+    countermeasures_hud_label.text = tr("CM 0/3")
     countermeasures_hud_label.add_theme_font_size_override("font_size", 18)
     hud_root.add_child(countermeasures_hud_label)
     if nukes_label != null:
@@ -3345,19 +3345,19 @@ func _build_run_results(reason: String, from_pause_end_run: bool = false) -> Dic
     var gem_reward_line: String = CROSS_GAME_BONUSES.get_reward_summary_line(Util.ACTIVE_GAME_RED_SKY, gem_reward_count)
     var payout_chart: Array[Dictionary] = []
     payout_chart.append({
-        "label": "Scrap banked (run)",
+        "label": tr("Scrap banked (run)"),
         "money": float(score),
         "color": Color(0.96, 0.78, 0.42, 1.0)
     })
     if wallet_bonus > 0:
         payout_chart.append({
-            "label": "Meta multiplier bonus",
+            "label": tr("Meta multiplier bonus"),
             "money": float(wallet_bonus),
             "color": Color(0.42, 0.88, 0.62, 1.0)
         })
     var combat_chart: Array[Dictionary] = [
-        {"label": "Enemy kills", "money": float(total_kills), "color": Color(0.45, 0.87, 0.99, 1.0)},
-        {"label": "Waves cleared (run)", "money": float(waves_cleared_this_run), "color": Color(0.83, 0.74, 1.0, 1.0)}
+        {"label": tr("Enemy kills"), "money": float(total_kills), "color": Color(0.45, 0.87, 0.99, 1.0)},
+        {"label": tr("Waves cleared (run)"), "money": float(waves_cleared_this_run), "color": Color(0.83, 0.74, 1.0, 1.0)}
     ]
     var damage_dealt_breakdown: Array[Dictionary] = []
     _append_summary_chart_row_if_positive(damage_dealt_breakdown, tr("Main gun"), damage_dealt_gun, Color(1.0, 0.52, 0.36, 1.0))
@@ -3372,7 +3372,7 @@ func _build_run_results(reason: String, from_pause_end_run: bool = false) -> Dic
     _append_summary_chart_row_if_positive(damage_prevented_breakdown, tr("Armor / hull mitigation"), hull_damage_mitigated, Color(0.65, 0.7, 0.82, 1.0))
     _append_summary_chart_row_if_positive(damage_prevented_breakdown, tr("Shots destroyed"), intercepted_enemy_shot_damage, Color(0.48, 0.92, 0.88, 1.0))
     _append_summary_chart_row_if_positive(damage_prevented_breakdown, tr("Shots redirected (threat)"), deflected_threat_damage, Color(0.78, 0.92, 0.55, 1.0))
-    var summary_text := _trf("%s — Cleared %d waves this run — +%d scrap to wallet", [reason, waves_cleared_this_run, wallet_gain])
+    var summary_text := _trf("%s - Cleared %d waves this run - +%d scrap to wallet", [reason, waves_cleared_this_run, wallet_gain])
     if gem_reward_line != "":
         summary_text += "\n" + gem_reward_line
     var summary_stats_text := _trf("Best score: %d    Best wave: %d    Total runs: %d    Shots fired: %d", [
@@ -3459,7 +3459,7 @@ func _refresh_ui() -> void:
         var lines: Array[String] = []
         for slot_key in power_slot_order:
             lines.append("%s %d%%" % [slot_key.replace("_", " ").capitalize(), int(round(float(power_display_values.get(slot_key, 1.0)) * 100.0))])
-        power_wheel_label.text = "Power Wheel\n" + "\n".join(lines)
+        power_wheel_label.text = tr("Power Wheel") + "\n" + "\n".join(lines)
     if power_warning_label != null:
         var warnings: Array[String] = []
         for slot_key in power_slot_order:
@@ -3467,7 +3467,7 @@ func _refresh_ui() -> void:
                 warnings.append(slot_key.replace("_", " ").capitalize())
         if run_state == RUN_STATES.RUNNING and _is_boss_wave(current_wave + 1):
             warnings.append(tr("Bias Countermeasures before boss"))
-        power_warning_label.text = "" if warnings.is_empty() else "Low power: %s" % ", ".join(warnings)
+        power_warning_label.text = "" if warnings.is_empty() else tr("Low power: %s") % ", ".join(warnings)
 
 func _update_upgrade_offer_layout(visible_count: int) -> void:
     if upgrade_buttons_grid == null:
@@ -4800,13 +4800,13 @@ func _refresh_summary_payout_chart(results: Dictionary) -> void:
     var root := VBoxContainer.new()
     root.add_theme_constant_override("separation", 10)
     margin.add_child(root)
-    root.add_child(_make_summary_chart_label("Scrap payout", 0.0, 20, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_TITLE_COLOR))
+    root.add_child(_make_summary_chart_label(tr("Scrap payout"), 0.0, 20, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_TITLE_COLOR))
     var rows: Array = results.get("payout_breakdown_chart", [])
     var max_money: float = 0.0
     for row_variant in rows:
         max_money = max(max_money, float(row_variant.get("money", 0.0)))
     if rows.is_empty():
-        root.add_child(_make_summary_chart_label("No scrap recorded", 0.0, 16, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_MUTED_COLOR))
+        root.add_child(_make_summary_chart_label(tr("No scrap recorded"), 0.0, 16, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_MUTED_COLOR))
         return
     for row_variant in rows:
         var row_data: Dictionary = row_variant
@@ -4831,13 +4831,13 @@ func _refresh_summary_combat_chart(results: Dictionary) -> void:
     var root := VBoxContainer.new()
     root.add_theme_constant_override("separation", 10)
     margin.add_child(root)
-    root.add_child(_make_summary_chart_label("Run performance", 0.0, 20, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_TITLE_COLOR))
+    root.add_child(_make_summary_chart_label(tr("Run performance"), 0.0, 20, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_TITLE_COLOR))
     var rows: Array = results.get("combat_breakdown_chart", [])
     var max_value: float = 0.0
     for row_variant in rows:
         max_value = max(max_value, float(row_variant.get("money", 0.0)))
     if rows.is_empty():
-        root.add_child(_make_summary_chart_label("No combat data", 0.0, 16, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_MUTED_COLOR))
+        root.add_child(_make_summary_chart_label(tr("No combat data"), 0.0, 16, HORIZONTAL_ALIGNMENT_CENTER, SUMMARY_CHART_MUTED_COLOR))
         return
     for row_variant in rows:
         var row_data: Dictionary = row_variant

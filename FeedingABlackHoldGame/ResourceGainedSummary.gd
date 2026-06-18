@@ -39,8 +39,8 @@ func setup(resoruce_type: Util.RESOURCE_TYPES, _resource_gained: int, _money_gai
     if is_total == true:
 
         %Icon.hide()
-        %TYPE.text = "TOTAL"
-        %"Stat Name".text = "MONEY_EARNED_THIS_SESSION"
+        %TYPE.text = tr("TOTAL")
+        %"Stat Name".text = tr("MONEY_EARNED_THIS_SESSION")
         %TYPE.show()
 
     if demo_locked == true:

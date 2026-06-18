@@ -262,7 +262,11 @@ static func _mod_for_mining_upgrade_key(upgrade_key: String) -> Util.MODS:
 static func _format_group_label(base_label: String, start_level: int, end_level: int, max_level: int) -> String:
     if max_level <= GROUPED_TIER_MAX:
         return base_label
-    return "%s %d-%d" % [base_label, start_level, end_level]
+    var label_template: String = str(TranslationServer.translate("UPGRADE_RANGE_LABEL"))
+    label_template = label_template.replace("{0}", str(TranslationServer.translate(base_label)))
+    label_template = label_template.replace("{1}", str(start_level))
+    label_template = label_template.replace("{2}", str(end_level))
+    return label_template
 
 static func _build_tier_costs(upgrade_def: Dictionary) -> Array:
     var costs: Array = []

@@ -542,6 +542,12 @@ static func _group_start_level(level: int) -> int:
 static func _translate(key: String) -> String:
     return TranslationServer.translate(key)
 
+static func _translate_or_fallback(key: String, fallback: String) -> String:
+    var translated: String = _translate(key)
+    if translated == key:
+        return fallback
+    return translated
+
 static func _trf(key: String, args: Array = []) -> String:
     var translated: String = _translate(key)
     for index in range(args.size()):
@@ -553,8 +559,8 @@ static func _localize_upgrade_entry(entry: Dictionary) -> Dictionary:
     var upgrade_id: String = str(entry.get("id", "")).strip_edges()
     if upgrade_id.is_empty():
         return localized
-    localized["label"] = _translate("MINING_UPGRADE_%s_NAME" % upgrade_id.to_upper())
-    localized["summary"] = _translate("MINING_UPGRADE_%s_SUMMARY" % upgrade_id.to_upper())
+    localized["label"] = _translate_or_fallback("MINING_UPGRADE_%s_NAME" % upgrade_id.to_upper(), str(entry.get("label", upgrade_id)))
+    localized["summary"] = _translate_or_fallback("MINING_UPGRADE_%s_SUMMARY" % upgrade_id.to_upper(), str(entry.get("summary", "")))
     return localized
 
 static func _localize_material_entry(entry: Dictionary) -> Dictionary:
@@ -572,7 +578,7 @@ static func _localize_material_entry(entry: Dictionary) -> Dictionary:
         base_material_id = "_".join(id_parts)
 
     var base_name_key := "MINING_MATERIAL_%s_NAME" % base_material_id.to_upper()
-    var base_name: String = _translate(base_name_key)
+    var base_name: String = _translate_or_fallback(base_name_key, str(entry.get("name", material_id)))
     localized["name"] = base_name if cycle_number <= 1 else _trf("MINING_MATERIAL_CYCLE_FORMAT", [base_name, cycle_number])
     return localized
 

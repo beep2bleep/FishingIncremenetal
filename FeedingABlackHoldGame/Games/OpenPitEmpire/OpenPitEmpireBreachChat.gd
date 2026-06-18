@@ -795,11 +795,11 @@ func _queue_pressure_exchange(stage: int, tier: int, zone_name: String) -> void:
         1:
             enemy_text = _format_translated("Motion inside %s influence. [b]That is close enough.[/b] [b]Stop pretending you belong here.[/b]", [zone_name])
         2:
-            enemy_text = "You are inside counter-hack weather now. [b]Back out[/b] before the room forgets your name for you."
+            enemy_text = _format_translated("You are inside counter-hack weather now. [b]Back out[/b] before the room forgets your name for you.", [])
         3:
-            enemy_text = "How are you this close to the core already? [b]Who taught that pilot to breathe underwater?[/b]"
+            enemy_text = _format_translated("How are you this close to the core already? [b]Who taught that pilot to breathe underwater?[/b]", [])
         _:
-            enemy_text = "No. Absolutely not. [b]Pull away from the center[/b] and accept being smaller than us."
+            enemy_text = _format_translated("No. Absolutely not. [b]Pull away from the center[/b] and accept being smaller than us.", [])
     _queue_enemy_line(enemy_tier, enemy_text, 0.0, "pressure_%d_%d_%s" % [stage, tier, zone_name])
     var friendly_lines := [
         "hear that surprise. noted.",

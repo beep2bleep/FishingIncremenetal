@@ -1397,9 +1397,9 @@ func _wrap_chart(title: String, content: VBoxContainer) -> PanelContainer:
 	return panel
 
 func _update_hud() -> void:
-	timer_label.text = "Time %.1fs" % timer_left
-	depth_label.text = "Depth %.1fm" % hook_depth
-	wallet_label.text = "Haul $%s" % Util.get_number_short_text(int(summary_results.get("money_earned", 0)))
+	timer_label.text = tr("Time %.1fs") % timer_left
+	depth_label.text = tr("Depth %.1fm") % hook_depth
+	wallet_label.text = tr("Haul $%s") % Util.get_number_short_text(int(summary_results.get("money_earned", 0)))
 	_update_crt_hud_label()
 	var fight_hud_visible: bool = run_state == RunState.HOOKED
 	player_stamina_bar.visible = fight_hud_visible

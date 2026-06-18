@@ -246,7 +246,7 @@ func _should_show_deepcore_demo_leaderboard() -> bool:
 
 func _get_leaderboard_panel_title() -> String:
     if Util.is_open_pit_game_active():
-        return "Data Breach Leaderboards"
+        return tr("DATA_BREACH_LEADERBOARDS_TITLE")
     if _should_show_deepcore_demo_leaderboard():
         return tr("DEEPCORE_DEMO_LEADERBOARD_TITLE")
     return tr("MINING_LEADERBOARDS_TITLE")
@@ -1139,7 +1139,7 @@ func _refresh_demo_mode_label_visibility() -> void:
         if Util.is_mining_game_active():
             game_mode_label.text = ""
         elif Util.is_open_pit_game_active():
-            game_mode_label.text = "Data Breach Inc."
+            game_mode_label.text = tr("Data Breach Inc.")
             game_mode_label.add_theme_color_override("font_color", Color(0.95, 0.76, 0.38, 1.0))
         elif Util.is_open_pit_orbit_game_active():
             game_mode_label.text = tr("OPEN_PIT_ORBIT")
@@ -1566,20 +1566,20 @@ func _refresh_leaderboard_panel() -> void:
         elif str(config.get("description", "")).strip_edges() != "":
             lines.append(str(config.get("description", "")).strip_edges())
         var local_best: float = _get_local_leaderboard_best_time(board_id, level)
-        lines.append("Your best: %s" % (_format_leaderboard_time(local_best) if local_best >= 0.0 else "--"))
-        var status: String = SteamHandler.get_cached_leaderboard_status(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_status") else "Unavailable"
+        lines.append(tr("UPGRADE_LEADERBOARD_YOUR_BEST") % (_format_leaderboard_time(local_best) if local_best >= 0.0 else "--"))
+        var status: String = SteamHandler.get_cached_leaderboard_status(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_status") else tr("UI_UNAVAILABLE")
         var score_unit: String = str(config.get("score_unit", "milliseconds"))
         var submitted_score: int = SteamHandler.get_cached_leaderboard_last_submitted_score(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_last_submitted_score") else -1
         if submitted_score >= 0:
-            lines.append("Steam submitted: %s" % _format_leaderboard_score(submitted_score, score_unit))
+            lines.append(tr("UPGRADE_LEADERBOARD_STEAM_SUBMITTED") % _format_leaderboard_score(submitted_score, score_unit))
         var top_entries: Array = SteamHandler.get_cached_leaderboard_display_entries(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_display_entries") else []
         var around_entries: Array = SteamHandler.get_cached_leaderboard_around_user_display_entries(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_around_user_display_entries") else []
         var has_around_entries := not around_entries.is_empty()
         var entries_to_show: Array = around_entries if has_around_entries else top_entries
         if entries_to_show.is_empty():
-            lines.append("Steam status: %s" % status)
+            lines.append(tr("UPGRADE_LEADERBOARD_STEAM_STATUS") % status)
         else:
-            lines.append("Around You" if has_around_entries else "Top 5")
+            lines.append(tr("UPGRADE_LEADERBOARD_AROUND_YOU") if has_around_entries else tr("UPGRADE_LEADERBOARD_TOP_5"))
             var display_rank: int = 1
             for entry_variant: Variant in entries_to_show:
                 if not (entry_variant is Dictionary):
@@ -2362,13 +2362,13 @@ func _refresh_editor_mode_jump_buttons() -> void:
         return
     var active_game_id := Util.get_active_game_id()
     if editor_data_breach_jump_button != null and is_instance_valid(editor_data_breach_jump_button):
-        editor_data_breach_jump_button.text = "DATA BREACH"
+        editor_data_breach_jump_button.text = tr("DATA BREACH")
         editor_data_breach_jump_button.disabled = active_game_id == Util.ACTIVE_GAME_OPEN_PIT
     if editor_deepcore_jump_button != null and is_instance_valid(editor_deepcore_jump_button):
-        editor_deepcore_jump_button.text = "DEEPCORE"
+        editor_deepcore_jump_button.text = tr("DEEPCORE")
         editor_deepcore_jump_button.disabled = active_game_id == Util.ACTIVE_GAME_MINING
     if editor_red_sky_jump_button != null and is_instance_valid(editor_red_sky_jump_button):
-        editor_red_sky_jump_button.text = "RED SKY"
+        editor_red_sky_jump_button.text = tr("RED SKY")
         editor_red_sky_jump_button.disabled = active_game_id == Util.ACTIVE_GAME_RED_SKY
 
 func _on_editor_mode_jump_pressed(game_id: String) -> void:

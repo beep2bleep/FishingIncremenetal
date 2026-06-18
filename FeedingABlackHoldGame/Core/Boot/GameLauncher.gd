@@ -17,6 +17,13 @@ const TURKEY_BUTTON_TEXT := "TURKEY"
 const REEL_BUTTON_TEXT := "REEL INTO DARKNESS"
 const COMBINED_BUTTON_TEXT := "COMBINED MODE"
 const VANGUARD_LAUNCHER_DETAIL_KEY := "GAME_LAUNCHER_VANGUARD_CARD_DETAIL"
+const MINING_LAUNCHER_DETAIL_KEY := "GAME_LAUNCHER_DEEPCORE_CARD_DETAIL"
+const OPEN_PIT_LAUNCHER_DETAIL_KEY := "GAME_LAUNCHER_DATA_BREACH_CARD_DETAIL"
+const RED_SKY_LAUNCHER_DETAIL_KEY := "GAME_LAUNCHER_RED_SKY_CARD_DETAIL"
+const TURKEY_LAUNCHER_DETAIL_KEY := "GAME_LAUNCHER_TURKEY_CARD_DETAIL"
+const REEL_LAUNCHER_DETAIL_KEY := "GAME_LAUNCHER_REEL_CARD_DETAIL"
+const DATA_BREACH_LAUNCHER_SUBTITLE_KEY := "GAME_LAUNCHER_DATA_BREACH_SUBTITLE"
+const DATA_BREACH_LOCK_TEXT_KEY := "GAME_LAUNCHER_DATA_BREACH_LOCK"
 const LANGUAGE_BUTTON_WIDTH := 340.0
 const LANGUAGE_BUTTON_FONT_SIZE := 20
 const LANGUAGE_BUTTON_TITLE_FONT_SIZE := 26
@@ -228,7 +235,7 @@ func _refresh_text() -> void:
     if title_label != null and is_instance_valid(title_label):
         title_label.text = OPEN_PIT_BUTTON_TEXT if _is_data_breach_inc_mode() else tr(TITLE_TEXT_KEY)
     if subtitle_label != null and is_instance_valid(subtitle_label):
-        subtitle_label.text = "Select a breach route." if _is_data_breach_inc_mode() else tr("PLAY_NEW_MODES")
+        subtitle_label.text = tr(DATA_BREACH_LAUNCHER_SUBTITLE_KEY) if _is_data_breach_inc_mode() else tr("PLAY_NEW_MODES")
     _refresh_game_card_text(vanguard_button, Util.ACTIVE_GAME_VANGUARD)
     _refresh_game_card_text(mining_button, Util.ACTIVE_GAME_MINING)
     _refresh_game_card_text(open_pit_button, Util.ACTIVE_GAME_OPEN_PIT)
@@ -1054,7 +1061,7 @@ func _fit_game_cards() -> void:
         _fit_game_card_content(button)
 
 func _is_open_pit_launcher_available() -> bool:
-    return _is_data_breach_inc_mode() or OS.has_feature("editor") or _should_show_all_modes_in_build()
+    return _is_data_breach_inc_mode() or OS.has_feature("editor")
 
 func _should_show_all_modes_in_build() -> bool:
     return bool(ProjectSettings.get_setting(SHOW_ALL_MODES_IN_BUILD_SETTING, false))
@@ -1088,7 +1095,7 @@ func _apply_countermeasure_launcher_card_state(button: Button, game_id: String) 
     var locked := visible_on_launcher and not _has_countermeasure_full_game_unlock()
     button.visible = visible_on_launcher
     button.disabled = locked or not visible_on_launcher
-    _set_game_card_lock(button, locked, "LOCKED\nRoot key upgrade needed")
+    _set_game_card_lock(button, locked, tr(DATA_BREACH_LOCK_TEXT_KEY))
 
 func _refresh_countermeasure_card_locks() -> void:
     if not _is_data_breach_inc_mode():
@@ -1256,7 +1263,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
         Util.ACTIVE_GAME_MINING:
             return {
                 "title": MINING_BUTTON_TEXT,
-                "detail": "Drill deeper, haul ore, and upgrade the rig.",
+                "detail": MINING_LAUNCHER_DETAIL_KEY,
                 "asset_rel_path": "Mining/1232x706.png",
                 "accent": Color(0.86, 0.69, 0.33, 1.0),
                 "bg_top": Color(0.18, 0.12, 0.05, 1.0),
@@ -1265,7 +1272,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
         Util.ACTIVE_GAME_OPEN_PIT:
             return {
                 "title": OPEN_PIT_BUTTON_TEXT,
-                "detail": "Breach the firewall, mine data blocks, and extract before the trace catches you.",
+                "detail": OPEN_PIT_LAUNCHER_DETAIL_KEY,
                 "asset_rel_path": "OpenPitEmpire/launcher_preview.png",
                 "accent": Color(0.32, 0.92, 0.78, 1.0),
                 "bg_top": Color(0.03, 0.11, 0.13, 1.0),
@@ -1274,7 +1281,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
         Util.ACTIVE_GAME_RED_SKY:
             return {
                 "title": RED_SKY_BUTTON_TEXT,
-                "detail": "Defend the base and survive the next wave.",
+                "detail": RED_SKY_LAUNCHER_DETAIL_KEY,
                 "asset_rel_path": "RedSky/titlecard with word no gemini star.png",
                 "accent": Color(0.98, 0.62, 0.42, 1.0),
                 "bg_top": Color(0.22, 0.05, 0.06, 1.0),
@@ -1283,7 +1290,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
         Util.ACTIVE_GAME_TURKEY:
             return {
                 "title": TURKEY_BUTTON_TEXT,
-                "detail": "Arcade bowling with short frames, loud hits, and score chasing.",
+                "detail": TURKEY_LAUNCHER_DETAIL_KEY,
                 "asset_rel_path": "Turkey/Title card.png",
                 "accent": Color(0.96, 0.84, 0.45, 1.0),
                 "bg_top": Color(0.24, 0.1, 0.03, 1.0),
@@ -1292,7 +1299,7 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
         Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
             return {
                 "title": REEL_BUTTON_TEXT,
-                "detail": "Haunted fishing in the dark with eerie catches.",
+                "detail": REEL_LAUNCHER_DETAIL_KEY,
                 "asset_rel_path": "Reel/reel title.png",
                 "accent": Color(0.56, 0.84, 0.94, 1.0),
                 "bg_top": Color(0.03, 0.08, 0.12, 1.0),

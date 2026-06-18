@@ -1400,7 +1400,7 @@ func _build_ui() -> void:
     summary_margin.add_child(summary_vbox)
 
     var title := Label.new()
-    title.text = "Data Breach Inc."
+    title.text = tr("Data Breach Inc.")
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     title.add_theme_font_size_override("font_size", 32)
     title.add_theme_color_override("font_color", Color(0.7, 0.9, 1.0, 1.0))

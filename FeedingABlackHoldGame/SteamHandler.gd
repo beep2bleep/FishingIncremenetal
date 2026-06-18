@@ -272,8 +272,8 @@ func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
                 {
                     "id": LEADERBOARD_DATA_BREACH_DEMO_DEFEAT,
                     "steam_name": LEADERBOARD_DATA_BREACH_DEMO_DEFEAT,
-                    "title": "Defeat Demo",
-                    "description": "Gameplay seconds to defeat the demo.",
+                    "title_key": "DATA_BREACH_LEADERBOARD_DEFEAT_DEMO",
+                    "description_key": "DATA_BREACH_LEADERBOARD_DEFEAT_DEMO_DESC",
                     "score_unit": "seconds",
                 }
             ]
@@ -281,8 +281,8 @@ func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
             {
                 "id": LEADERBOARD_DATA_BREACH_FULL_CLEAR,
                 "steam_name": LEADERBOARD_DATA_BREACH_FULL_CLEAR,
-                "title": "Complete Game",
-                "description": "Gameplay seconds to complete Data Breach Inc.",
+                "title_key": "DATA_BREACH_LEADERBOARD_COMPLETE_GAME",
+                "description_key": "DATA_BREACH_LEADERBOARD_COMPLETE_GAME_DESC",
                 "score_unit": "seconds",
             }
         ]
@@ -300,8 +300,8 @@ func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
             {
                 "id": LEADERBOARD_DEEPCORE_TIME_TO_TIER20,
                 "steam_name": LEADERBOARD_DEEPCORE_TIME_TO_TIER20,
-                "title": "Time to Tier 20",
-                "description": "Your total Deepcore mining time when you first unlock tier 20. Lower times rank higher.",
+                "title_key": "DEEPCORE_LEADERBOARD_TIME_TO_TIER20",
+                "description_key": "DEEPCORE_LEADERBOARD_TIME_TO_TIER20_DESC",
             }
         ]
     if _is_demo_build():
@@ -310,7 +310,7 @@ func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
                 "id": LEADERBOARD_LEVEL7_SHARED,
                 "steam_name": LEADERBOARD_LEVEL7_SHARED,
                 "level": 7,
-                "title": "Level 7",
+                "title_key": "LEADERBOARD_LEVEL_7",
             }
         ]
     return [
@@ -318,13 +318,13 @@ func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
             "id": LEADERBOARD_LEVEL7_SHARED,
             "steam_name": LEADERBOARD_LEVEL7_SHARED,
             "level": 7,
-            "title": "Level 7",
+            "title_key": "LEADERBOARD_LEVEL_7",
         },
         {
             "id": LEADERBOARD_LEVEL20_FULL,
             "steam_name": LEADERBOARD_LEVEL20_FULL,
             "level": 20,
-            "title": "Level 20",
+            "title_key": "LEADERBOARD_LEVEL_20",
         }
     ]
 

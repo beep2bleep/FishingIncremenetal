@@ -98,7 +98,7 @@ func update():
             if game_mode_data.coming_soon == true:
                 %"Coming Soon Date".text = str(tr("DEMO_LOCKED"), " \n", game_mode_data.get_coming_soon_text())
             else:
-                %"Coming Soon Date".text = "DEMO_LOCKED"
+                %"Coming Soon Date".text = tr("DEMO_LOCKED")
             %Description.hide()
         else:
             %"Coming Soon Date".hide()
@@ -111,13 +111,13 @@ func update():
         if game_mode_data.is_beta == true:
             %Beta.show()
             %Description.show()
-            %Description.text = "IN_BETA_TESTING"
+            %Description.text = tr("IN_BETA_TESTING")
         else:
             %Description.hide()
 
 
     elif game_mode_data.game_mode != Util.GAME_MODES.MAIN and SaveHandler.has_beated_main_mode() == false:
-        %"Description".text = "COMPLETE_MAIN_MODE_TO_UNLOCK"
+        %"Description".text = tr("COMPLETE_MAIN_MODE_TO_UNLOCK")
         %Beta.visible = game_mode_data.is_beta
 
     else:
