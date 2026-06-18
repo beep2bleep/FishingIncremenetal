@@ -157,6 +157,14 @@ func track_progression_event(status: String, progression01: String, progression0
         options["attemptNum"] = attempt_num
     addProgressionEvent(options)
 
+func refresh_active_game_session_deferred(delay_seconds: float = 0.0, force_restart: bool = false) -> void:
+    call_deferred("_refresh_active_game_session_after_delay", maxf(delay_seconds, 0.0), force_restart)
+
+func _refresh_active_game_session_after_delay(delay_seconds: float, force_restart: bool) -> void:
+    if delay_seconds > 0.0:
+        await get_tree().create_timer(delay_seconds).timeout
+    refresh_active_game_session(force_restart)
+
 func refresh_active_game_session(force_restart: bool = false) -> void:
     var credentials: Dictionary = _get_active_credentials()
     var game_id: String = str(credentials.get("game_id", Util.ACTIVE_GAME_VANGUARD))
@@ -433,6 +441,12 @@ func _get_state_path() -> String:
     return STATE_PATH_TEMPLATE % game_id
 
 func _get_active_credentials() -> Dictionary:
+    if bool(ProjectSettings.get_setting("global/DataBreachIncMode", false)):
+        return {
+            "game_id": Util.ACTIVE_GAME_OPEN_PIT,
+            "game_key": DATA_BREACH_GAME_KEY,
+            "secret_key": DATA_BREACH_SECRET_KEY,
+        }
     if Util.is_mining_game_active():
         return {
             "game_id": Util.ACTIVE_GAME_MINING,

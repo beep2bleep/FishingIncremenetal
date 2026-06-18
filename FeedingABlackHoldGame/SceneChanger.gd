@@ -19,6 +19,7 @@ const LOAD_TIME_SMOOTHING: float = 0.35
 
 var estimated_scene_load_seconds: float = 0.22
 var scene_change_started_msec: int = 0
+var warm_scene_paths: Dictionary = {}
 
 const MAX_SCENE_SWAP_WAIT_FRAMES: int = 600
 
@@ -59,6 +60,17 @@ func change_to_new_scene(path, _to_state = null, duration_override: float = -1.0
     _set_web_transition_music_paused(true)
     $AudioStreamPlayer.play()
     $AnimationPlayer.play("Change Scene")
+
+
+func warm_scene(path: String) -> void:
+    if path.is_empty() or warm_scene_paths.has(path):
+        return
+    if ResourceLoader.has_cached(path):
+        warm_scene_paths[path] = true
+        return
+    var error := ResourceLoader.load_threaded_request(path, "PackedScene", true, ResourceLoader.CACHE_MODE_REUSE)
+    if error == OK or error == ERR_BUSY or error == ERR_ALREADY_EXISTS:
+        warm_scene_paths[path] = true
 
 
 func do_transition(_from_node, _to_node):
@@ -115,7 +127,7 @@ func do_scene_change() -> void :
 
     # Single synchronous load — avoids threaded + sync races that produced wrong PackedScene / wrong scene.
     var load_started_msec: int = Time.get_ticks_msec()
-    var packed: PackedScene = ResourceLoader.load(path_to_load, "", ResourceLoader.CACHE_MODE_REUSE) as PackedScene
+    var packed: PackedScene = _load_scene_resource(path_to_load)
     var load_elapsed_s: float = float(Time.get_ticks_msec() - load_started_msec) / 1000.0
     if _should_profile_open_pit_upgrade_scene(path_to_load):
         Global.open_pit_upgrade_scene_resource_load_msec = Time.get_ticks_msec() - load_started_msec
@@ -135,6 +147,16 @@ func do_scene_change() -> void :
     var previous_scene: Node = get_tree().current_scene
     get_tree().call_deferred("change_scene_to_packed", packed)
     _capture_scene_load_time(previous_scene)
+
+
+func _load_scene_resource(path_to_load: String) -> PackedScene:
+    if warm_scene_paths.has(path_to_load):
+        var threaded_status := ResourceLoader.load_threaded_get_status(path_to_load)
+        if threaded_status == ResourceLoader.THREAD_LOAD_LOADED or threaded_status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+            return ResourceLoader.load_threaded_get(path_to_load) as PackedScene
+        if threaded_status == ResourceLoader.THREAD_LOAD_FAILED or threaded_status == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+            warm_scene_paths.erase(path_to_load)
+    return ResourceLoader.load(path_to_load, "", ResourceLoader.CACHE_MODE_REUSE) as PackedScene
 
 
 func _capture_scene_load_time(previous_scene: Node) -> void :

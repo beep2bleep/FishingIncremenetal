@@ -344,8 +344,7 @@ func _ready() -> void :
     ready_step_started_msec = _print_open_pit_ready_step("ready_popup_layer_bindings", ready_step_started_msec)
     _queue_wishlist_button_setup()
     ready_step_started_msec = _print_open_pit_ready_step("ready_wishlist_button", ready_step_started_msec)
-    _setup_leaderboard_panel()
-    ready_step_started_msec = _print_open_pit_ready_step("ready_leaderboard_panel", ready_step_started_msec)
+    call_deferred("_setup_leaderboard_panel_after_tree_start")
     _setup_continue_locked_dialog()
     ready_step_started_msec = _print_open_pit_ready_step("ready_continue_locked_dialog", ready_step_started_msec)
     _update_go_again_button_state()
@@ -356,7 +355,13 @@ func _ready() -> void :
     if _is_standalone_mode_upgrade_scene() and get_tree().current_scene == self:
         setup()
         show_screen()
+    if AudioManager != null and AudioManager.has_method("connect_hover_sound"):
+        AudioManager.connect_hover_sound(self)
     _print_open_pit_startup("ready_end", Time.get_ticks_msec() - _open_pit_startup_ready_started_msec)
+
+func _setup_leaderboard_panel_after_tree_start() -> void:
+    await get_tree().process_frame
+    _setup_leaderboard_panel()
 
 func _on_tech_tree_build_completed() -> void:
     if _should_profile_open_pit_upgrade_startup():
@@ -3056,6 +3061,7 @@ func _on_legacy_reset_canceled() -> void:
 func _perform_progress_reset() -> void:
     if Util.is_mining_game_active():
         MINING_PROGRESS_SCRIPT.reset_progress()
+        _reset_save_handler_clock_for_active_game()
     elif Util.is_open_pit_game_active():
         OPEN_PIT_PROGRESS_SCRIPT.reset_progress()
     elif Util.is_open_pit_orbit_game_active():
@@ -3067,8 +3073,7 @@ func _perform_progress_reset() -> void:
     elif Util.is_reel_into_darkness_game_active():
         REEL_INTO_DARKNESS_PROGRESS_SCRIPT.reset_progress()
     else:
-        SaveHandler.reset_fishing_progress()
-        SaveHandler.save_fishing_progress()
+        _reset_save_handler_clock_for_active_game()
     editor_add_cash_amount = 1000
     editor_add_xp_amount = 100
     editor_add_core_amount = 1
@@ -3082,6 +3087,10 @@ func _perform_progress_reset() -> void:
     _update_go_again_button_state()
     _refresh_mining_time_label()
     _refresh_leaderboard_panel()
+
+func _reset_save_handler_clock_for_active_game() -> void:
+    SaveHandler.reset_fishing_progress()
+    SaveHandler.save_fishing_progress()
 
 func _on_editor_unlock_all_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -3634,6 +3643,8 @@ func _style_utility_button(button: Button) -> void:
     button.add_theme_stylebox_override("normal", normal)
     button.add_theme_stylebox_override("hover", hover)
     button.add_theme_stylebox_override("pressed", hover)
+    if AudioManager != null and AudioManager.has_method("connect_hover_sound"):
+        AudioManager.connect_hover_sound(button)
 
 func _style_utility_button_panel(panel: PanelContainer) -> void:
     if panel == null:

@@ -1718,7 +1718,10 @@ func _format_depth_status_text(unlocked_depth: int, current_rank: int) -> String
     return _trf("Unlocked Depth: %d   %s: %d", [unlocked_depth, MINING_BALANCE.get_rank_label(), current_rank])
 
 func _format_rank_xp_status_text(current_xp: int, next_xp: int, run_gain: int) -> String:
-    return _trf("%s %d / %d   Dive +%d", [MINING_BALANCE.get_rank_xp_label(), current_xp, next_xp, run_gain])
+    var rank_xp_label := str(MINING_BALANCE.get_rank_xp_label()).strip_edges()
+    if rank_xp_label == "":
+        rank_xp_label = tr("XP")
+    return "%s %d / %d   %s +%d" % [rank_xp_label, current_xp, next_xp, tr("Dive"), run_gain]
 
 func _format_rank_summary_text(rank: int, current_xp: int, next_xp: int) -> String:
     return _trf("%s %d   %s %d/%d", [MINING_BALANCE.get_rank_label(), rank, MINING_BALANCE.get_rank_xp_label(), current_xp, next_xp])
@@ -2653,7 +2656,8 @@ func _format_level_bonus_summary(level_bonus_gains: Dictionary) -> String:
         bonus_parts.append(_trf("+%.1fs timing", [snappedf(time_gain, 0.1)]))
     if bonus_parts.is_empty():
         return ""
-    return _trf("Level bonus%s: %s", ["es" if bonus_parts.size() > 1 else "", ", ".join(bonus_parts)])
+    var label := "Level bonuses" if bonus_parts.size() > 1 else "Level bonus"
+    return "%s: %s" % [label, ", ".join(bonus_parts)]
 
 func _format_depth_unlock_summary(previous_depth_unlock: int, new_depth_unlock: int) -> String:
     if new_depth_unlock <= previous_depth_unlock:

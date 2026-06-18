@@ -55,7 +55,7 @@ const GAME_LAUNCHER_PANEL_MIN_WIDTH := 1080.0
 const GAME_LAUNCHER_PANEL_MAX_WIDTH := 1680.0
 const GAME_LAUNCHER_PANEL_VIEWPORT_RATIO := 0.94
 const GAME_LAUNCHER_RIGHT_MARGIN := 16.0
-const GAME_CARD_HOVER_VOLUME_DB_OFFSET := -12.0
+const GAME_CARD_HOVER_VOLUME_DB_OFFSET := 0.0
 const GAME_CARD_HOVER_SCALE := 1.04
 const GAME_CARD_HOVER_DURATION := 0.16
 const GAME_CARD_RESET_DURATION := 0.3
@@ -122,6 +122,8 @@ func _ready() -> void:
     _setup_multi_summary_overlay()
     _refresh_text()
     _apply_data_breach_inc_launcher_mode()
+    _apply_deepcore_launcher_mode()
+    _warm_deepcore_upgrade_screen()
     _apply_background_palette(_get_background_palette_for_game(""), false)
     _refresh_launcher_panel_layout()
     if not get_viewport().size_changed.is_connected(_on_viewport_size_changed):
@@ -145,6 +147,9 @@ func _ready() -> void:
     if _is_data_breach_inc_mode():
         if open_pit_button != null:
             open_pit_button.grab_focus()
+    elif _is_deepcore_launcher_mode():
+        if mining_button != null:
+            mining_button.grab_focus()
     elif vanguard_button != null:
         vanguard_button.grab_focus()
 
@@ -216,8 +221,6 @@ func _start_game(game_id: String) -> void:
         return
     Util.set_active_game_id(game_id)
     Util.set_high_level_mode_id(Util.HIGH_LEVEL_MODE_ALL)
-    if GameAnalytics != null and GameAnalytics.has_method("refresh_active_game_session"):
-        GameAnalytics.refresh_active_game_session(true)
     SaveHandler.load_fishing_progress()
     Global.current_game_mode_data = null
     Global.ensure_default_game_mode_data()
@@ -227,15 +230,36 @@ func _start_game(game_id: String) -> void:
     Global.load_saved_run = false
 
     if game_id == Util.ACTIVE_GAME_MINING or game_id == Util.ACTIVE_GAME_OPEN_PIT or game_id == Util.ACTIVE_GAME_OPEN_PIT_ORBIT or game_id == Util.ACTIVE_GAME_RED_SKY or game_id == Util.ACTIVE_GAME_TURKEY or game_id == Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
+        _refresh_gameanalytics_session_after_transition()
         SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
         return
     SceneChanger.change_to_new_scene(Util.get_main_scene_path(), null, 0.2)
 
+func _refresh_gameanalytics_session_after_transition() -> void:
+    if GameAnalytics == null:
+        return
+    if GameAnalytics.has_method("refresh_active_game_session_deferred"):
+        GameAnalytics.refresh_active_game_session_deferred(1.0, true)
+        return
+    if not GameAnalytics.has_method("refresh_active_game_session"):
+        return
+    GameAnalytics.call_deferred("refresh_active_game_session", true)
+
 func _refresh_text() -> void:
     if title_label != null and is_instance_valid(title_label):
-        title_label.text = OPEN_PIT_BUTTON_TEXT if _is_data_breach_inc_mode() else tr(TITLE_TEXT_KEY)
+        if _is_data_breach_inc_mode():
+            title_label.text = OPEN_PIT_BUTTON_TEXT
+        elif _is_deepcore_launcher_mode():
+            title_label.text = tr(MINING_BUTTON_TEXT)
+        else:
+            title_label.text = tr(TITLE_TEXT_KEY)
     if subtitle_label != null and is_instance_valid(subtitle_label):
-        subtitle_label.text = tr(DATA_BREACH_LAUNCHER_SUBTITLE_KEY) if _is_data_breach_inc_mode() else tr("PLAY_NEW_MODES")
+        if _is_data_breach_inc_mode():
+            subtitle_label.text = tr(DATA_BREACH_LAUNCHER_SUBTITLE_KEY)
+        elif _is_deepcore_launcher_mode():
+            subtitle_label.text = tr(MINING_LAUNCHER_DETAIL_KEY)
+        else:
+            subtitle_label.text = tr("PLAY_NEW_MODES")
     _refresh_game_card_text(vanguard_button, Util.ACTIVE_GAME_VANGUARD)
     _refresh_game_card_text(mining_button, Util.ACTIVE_GAME_MINING)
     _refresh_game_card_text(open_pit_button, Util.ACTIVE_GAME_OPEN_PIT)
@@ -425,6 +449,7 @@ func _setup_game_cards() -> void:
     _decorate_game_button(combined_button, Util.HIGH_LEVEL_MODE_ALL)
     _apply_open_pit_launcher_availability()
     _apply_data_breach_inc_launcher_mode()
+    _apply_deepcore_launcher_mode()
     _refresh_game_card_layout()
 
 func _setup_currency_strip(root_vbox: VBoxContainer) -> void:
@@ -581,6 +606,8 @@ func _rebuild_multi_tier_dialog_content() -> void:
             multi_tier_dialog.hide()
     )
     vbox.add_child(cancel_button)
+    if AudioManager != null and AudioManager.has_method("connect_hover_sound"):
+        AudioManager.connect_hover_sound(vbox)
 
 func _on_multi_tier_selected(tier: int) -> void:
     if multi_tier_dialog != null:
@@ -1007,6 +1034,13 @@ func _refresh_game_card_layout() -> void:
             button.custom_minimum_size = Vector2(full_width, 312.0)
         _queue_fit_game_cards()
         return
+    if _is_deepcore_launcher_mode():
+        game_cards_grid.columns = 1
+        var deepcore_width := 360.0 * 3.0 + 18.0 * 2.0
+        if mining_button != null and is_instance_valid(mining_button):
+            mining_button.custom_minimum_size = Vector2(deepcore_width, 384.0)
+        _queue_fit_game_cards()
+        return
     game_cards_grid.columns = 3 if viewport_width >= 1340.0 else 2
     var card_min_width: float = 360.0 if game_cards_grid.columns >= 3 else 460.0
     var card_height: float = 368.0 if game_cards_grid.columns >= 3 else 408.0
@@ -1069,6 +1103,12 @@ func _should_show_all_modes_in_build() -> bool:
 func _is_data_breach_inc_mode() -> bool:
     return bool(ProjectSettings.get_setting(DATA_BREACH_INC_MODE_SETTING, true))
 
+func _is_deepcore_launcher_mode() -> bool:
+    if _is_data_breach_inc_mode() or _should_show_all_modes_in_build():
+        return false
+    var configured_game := str(ProjectSettings.get_setting(Util.ACTIVE_GAME_PROJECT_SETTING, Util.ACTIVE_GAME_VANGUARD))
+    return configured_game == Util.ACTIVE_GAME_MINING
+
 func _apply_data_breach_inc_launcher_mode() -> void:
     if not _is_data_breach_inc_mode():
         return
@@ -1085,6 +1125,28 @@ func _apply_data_breach_inc_launcher_mode() -> void:
     _apply_countermeasure_launcher_card_state(red_sky_button, Util.ACTIVE_GAME_RED_SKY)
     if currency_strip != null and is_instance_valid(currency_strip):
         currency_strip.visible = false
+
+func _apply_deepcore_launcher_mode() -> void:
+    if not _is_deepcore_launcher_mode():
+        return
+    for button in [vanguard_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button]:
+        if button == null or not is_instance_valid(button):
+            continue
+        button.visible = false
+        button.disabled = true
+    if mining_button != null and is_instance_valid(mining_button):
+        mining_button.visible = true
+        mining_button.disabled = false
+        _set_game_card_lock(mining_button, false)
+    if currency_strip != null and is_instance_valid(currency_strip):
+        currency_strip.visible = false
+
+func _warm_deepcore_upgrade_screen() -> void:
+    if not _is_deepcore_launcher_mode():
+        return
+    if SceneChanger == null or not SceneChanger.has_method("warm_scene"):
+        return
+    SceneChanger.warm_scene(Util.get_upgrade_scene_path())
 
 func _apply_countermeasure_launcher_card_state(button: Button, game_id: String) -> void:
     if button == null or not is_instance_valid(button):
@@ -1140,6 +1202,7 @@ func _apply_open_pit_launcher_availability() -> void:
         open_pit_button.visible = is_open_pit_available
         open_pit_button.disabled = not is_open_pit_available
     _apply_data_breach_inc_launcher_mode()
+    _apply_deepcore_launcher_mode()
 func _fit_game_card_content(button: Button) -> void:
     if button == null or not is_instance_valid(button):
         return
@@ -2049,6 +2112,8 @@ func _style_utility_button(button: Button) -> void:
     button.add_theme_stylebox_override("normal", normal)
     button.add_theme_stylebox_override("hover", hover)
     button.add_theme_stylebox_override("pressed", hover)
+    if AudioManager != null and AudioManager.has_method("connect_hover_sound"):
+        AudioManager.connect_hover_sound(button)
 
 func _style_utility_panel(panel: PanelContainer) -> void:
     if panel == null:

@@ -246,12 +246,19 @@ func _is_demo_build() -> bool:
 func _is_data_breach_inc_build() -> bool:
     return bool(ProjectSettings.get_setting("global/DataBreachIncMode", false))
 
+func _is_show_all_modes_build() -> bool:
+    return bool(ProjectSettings.get_setting("global/ShowAllModesInBuild", false))
+
 func _resolve_steam_app_id() -> int:
     if _is_data_breach_inc_build():
         if _is_demo_build():
             return STEAM_DATA_BREACH_INC_DEMO_APP_ID
         return STEAM_DATA_BREACH_INC_APP_ID
     if Util.is_all_high_level_mode_active():
+        if not _is_show_all_modes_build() and Util.is_mining_game_active():
+            if _is_demo_build():
+                return STEAM_DEEPCORE_DEMO_APP_ID
+            return STEAM_DEEPCORE_APP_ID
         if _is_demo_build():
             return STEAM_BLEEPWARE_INCREMENTALS_DEMO_APP_ID
         return STEAM_BLEEPWARE_INCREMENTALS_APP_ID

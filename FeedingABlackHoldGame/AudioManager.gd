@@ -5,11 +5,14 @@ var cached_web_audio_players: Dictionary = {}
 var cached_web_audio_last_play_ms: Dictionary = {}
 var pooled_web_audio_players: Dictionary = {}
 var pooled_web_audio_next_index: Dictionary = {}
+var last_ui_hover_sound_control: Object
+var last_ui_hover_sound_msec: int = 0
 
 const WEB_CACHED_AUDIO_COOLDOWN_MS := {
     SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER: 90,
 }
 const WEB_AUDIO_POOL_MAX_PLAYERS_PER_TYPE := 4
+const UI_HOVER_SOUND_COOLDOWN_MS := 45
 
 @export var sound_effect_settings: Array[SoundEffectSettings]
 
@@ -98,6 +101,40 @@ func create_audio(type: SoundEffectSettings.SOUND_EFFECT_TYPE, volume_db_offset:
             new_audio.play()
     else:
         push_error("Audio Manager failed to find setting for type ", type)
+
+func connect_hover_sound(root: Node, volume_db_offset: float = 0.0) -> void:
+    if root == null:
+        return
+    _connect_hover_sound_recursive(root, volume_db_offset)
+
+func _connect_hover_sound_recursive(node: Node, volume_db_offset: float) -> void:
+    if node is BaseButton:
+        _connect_hover_sound_to_button(node as BaseButton, volume_db_offset)
+    for child in node.get_children():
+        _connect_hover_sound_recursive(child, volume_db_offset)
+
+func _connect_hover_sound_to_button(button: BaseButton, volume_db_offset: float) -> void:
+    if button == null:
+        return
+    if bool(button.get_meta("ui_hover_sound_connected", false)):
+        return
+    button.set_meta("ui_hover_sound_connected", true)
+    if not button.mouse_entered.is_connected(_on_ui_hover_sound_requested.bind(button, volume_db_offset)):
+        button.mouse_entered.connect(_on_ui_hover_sound_requested.bind(button, volume_db_offset))
+    if not button.focus_entered.is_connected(_on_ui_hover_sound_requested.bind(button, volume_db_offset)):
+        button.focus_entered.connect(_on_ui_hover_sound_requested.bind(button, volume_db_offset))
+
+func _on_ui_hover_sound_requested(control: BaseButton, volume_db_offset: float) -> void:
+    if control == null or not is_instance_valid(control):
+        return
+    if not control.visible or control.disabled:
+        return
+    var now_msec := Time.get_ticks_msec()
+    if last_ui_hover_sound_control == control and now_msec - last_ui_hover_sound_msec < UI_HOVER_SOUND_COOLDOWN_MS:
+        return
+    last_ui_hover_sound_control = control
+    last_ui_hover_sound_msec = now_msec
+    create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.TECH_TREE_NODE_HOVER, volume_db_offset)
 
 func _should_use_cached_web_audio(type: SoundEffectSettings.SOUND_EFFECT_TYPE) -> bool:
     return OS.has_feature("web") and WEB_CACHED_AUDIO_COOLDOWN_MS.has(type)

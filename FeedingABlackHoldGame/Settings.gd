@@ -35,6 +35,8 @@ func _ready():
     refresh_static_text()
     _refresh_hidden_control_visibility()
     refresh_from_save()
+    if AudioManager != null and AudioManager.has_method("connect_hover_sound"):
+        AudioManager.connect_hover_sound(self)
 
     show()
 
