@@ -263,6 +263,8 @@ static func _format_group_label(base_label: String, start_level: int, end_level:
     if max_level <= GROUPED_TIER_MAX:
         return base_label
     var label_template: String = str(TranslationServer.translate("UPGRADE_RANGE_LABEL"))
+    if label_template == "UPGRADE_RANGE_LABEL" or label_template.strip_edges().is_empty():
+        label_template = "{0} {1}-{2}"
     label_template = label_template.replace("{0}", str(TranslationServer.translate(base_label)))
     label_template = label_template.replace("{1}", str(start_level))
     label_template = label_template.replace("{2}", str(end_level))
