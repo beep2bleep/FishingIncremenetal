@@ -238,7 +238,7 @@ static func can_afford_target_bonus(target_game_id: String, tier_index: int) -> 
     return get_available_currency_total_for_target(target_game_id) >= int(CROSS_NODE_COSTS[tier_index])
 
 static func purchase_target_bonus(target_game_id: String) -> bool:
-    if not Util.is_all_high_level_mode_active():
+    if not Util.are_cross_game_features_enabled():
         return false
     if not TARGET_GAME_IDS.has(target_game_id):
         return false

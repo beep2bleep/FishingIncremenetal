@@ -1,4 +1,4 @@
-extends Control
+﻿extends Control
 
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const STAR_TEXTURE: Texture2D = preload("res://Art/star_tiny.png")
@@ -122,6 +122,7 @@ func _ready() -> void:
     _setup_multi_summary_overlay()
     _refresh_text()
     _apply_data_breach_inc_launcher_mode()
+    _apply_vanguard_launcher_mode()
     _apply_deepcore_launcher_mode()
     _warm_deepcore_upgrade_screen()
     _apply_background_palette(_get_background_palette_for_game(""), false)
@@ -147,6 +148,9 @@ func _ready() -> void:
     if _is_data_breach_inc_mode():
         if open_pit_button != null:
             open_pit_button.grab_focus()
+    elif _is_vanguard_launcher_mode():
+        if vanguard_button != null:
+            vanguard_button.grab_focus()
     elif _is_deepcore_launcher_mode():
         if mining_button != null:
             mining_button.grab_focus()
@@ -249,6 +253,8 @@ func _refresh_text() -> void:
     if title_label != null and is_instance_valid(title_label):
         if _is_data_breach_inc_mode():
             title_label.text = OPEN_PIT_BUTTON_TEXT
+        elif _is_vanguard_launcher_mode():
+            title_label.text = tr(VANGUARD_BUTTON_TEXT)
         elif _is_deepcore_launcher_mode():
             title_label.text = tr(MINING_BUTTON_TEXT)
         else:
@@ -256,6 +262,8 @@ func _refresh_text() -> void:
     if subtitle_label != null and is_instance_valid(subtitle_label):
         if _is_data_breach_inc_mode():
             subtitle_label.text = tr(DATA_BREACH_LAUNCHER_SUBTITLE_KEY)
+        elif _is_vanguard_launcher_mode():
+            subtitle_label.text = tr(VANGUARD_LAUNCHER_DETAIL_KEY)
         elif _is_deepcore_launcher_mode():
             subtitle_label.text = tr(MINING_LAUNCHER_DETAIL_KEY)
         else:
@@ -449,6 +457,7 @@ func _setup_game_cards() -> void:
     _decorate_game_button(combined_button, Util.HIGH_LEVEL_MODE_ALL)
     _apply_open_pit_launcher_availability()
     _apply_data_breach_inc_launcher_mode()
+    _apply_vanguard_launcher_mode()
     _apply_deepcore_launcher_mode()
     _refresh_game_card_layout()
 
@@ -519,9 +528,7 @@ func _refresh_currency_strip() -> void:
 func _refresh_reset_all_meta_progress_visibility() -> void:
     if reset_all_meta_progress_button == null or not is_instance_valid(reset_all_meta_progress_button):
         return
-    var should_show := true
-    if _is_data_breach_inc_mode():
-        should_show = _has_countermeasure_full_game_unlock()
+    var should_show := Util.is_all_high_level_mode_active() and _should_show_all_modes_in_build() and not _is_data_breach_inc_mode()
     reset_all_meta_progress_button.visible = should_show
     reset_all_meta_progress_button.disabled = not should_show
     if not should_show and reset_all_meta_progress_dialog != null and is_instance_valid(reset_all_meta_progress_dialog):
@@ -1041,6 +1048,13 @@ func _refresh_game_card_layout() -> void:
             mining_button.custom_minimum_size = Vector2(deepcore_width, 384.0)
         _queue_fit_game_cards()
         return
+    if _is_vanguard_launcher_mode():
+        game_cards_grid.columns = 1
+        var vanguard_width := 360.0 * 3.0 + 18.0 * 2.0
+        if vanguard_button != null and is_instance_valid(vanguard_button):
+            vanguard_button.custom_minimum_size = Vector2(vanguard_width, 768.0)
+        _queue_fit_game_cards()
+        return
     game_cards_grid.columns = 3 if viewport_width >= 1340.0 else 2
     var card_min_width: float = 360.0 if game_cards_grid.columns >= 3 else 460.0
     var card_height: float = 368.0 if game_cards_grid.columns >= 3 else 408.0
@@ -1109,6 +1123,12 @@ func _is_deepcore_launcher_mode() -> bool:
     var configured_game := str(ProjectSettings.get_setting(Util.ACTIVE_GAME_PROJECT_SETTING, Util.ACTIVE_GAME_VANGUARD))
     return configured_game == Util.ACTIVE_GAME_MINING
 
+func _is_vanguard_launcher_mode() -> bool:
+    if _is_data_breach_inc_mode() or _should_show_all_modes_in_build():
+        return false
+    var configured_game := str(ProjectSettings.get_setting(Util.ACTIVE_GAME_PROJECT_SETTING, Util.ACTIVE_GAME_VANGUARD))
+    return configured_game == Util.ACTIVE_GAME_VANGUARD
+
 func _apply_data_breach_inc_launcher_mode() -> void:
     if not _is_data_breach_inc_mode():
         return
@@ -1123,6 +1143,21 @@ func _apply_data_breach_inc_launcher_mode() -> void:
         _set_game_card_lock(open_pit_button, false)
     _apply_countermeasure_launcher_card_state(mining_button, Util.ACTIVE_GAME_MINING)
     _apply_countermeasure_launcher_card_state(red_sky_button, Util.ACTIVE_GAME_RED_SKY)
+    if currency_strip != null and is_instance_valid(currency_strip):
+        currency_strip.visible = false
+
+func _apply_vanguard_launcher_mode() -> void:
+    if not _is_vanguard_launcher_mode():
+        return
+    for button in [mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button]:
+        if button == null or not is_instance_valid(button):
+            continue
+        button.visible = false
+        button.disabled = true
+    if vanguard_button != null and is_instance_valid(vanguard_button):
+        vanguard_button.visible = true
+        vanguard_button.disabled = false
+        _set_game_card_lock(vanguard_button, false)
     if currency_strip != null and is_instance_valid(currency_strip):
         currency_strip.visible = false
 
@@ -1202,7 +1237,9 @@ func _apply_open_pit_launcher_availability() -> void:
         open_pit_button.visible = is_open_pit_available
         open_pit_button.disabled = not is_open_pit_available
     _apply_data_breach_inc_launcher_mode()
+    _apply_vanguard_launcher_mode()
     _apply_deepcore_launcher_mode()
+
 func _fit_game_card_content(button: Button) -> void:
     if button == null or not is_instance_valid(button):
         return
@@ -1228,6 +1265,9 @@ func _fit_game_card_content(button: Button) -> void:
     var detail_font_size := GAME_CARD_DETAIL_FONT_SIZE
     var available_content_height := target_height - 24.0
     var content_padding := 14.0
+    var game_id := str(button.get_meta("game_id", ""))
+    if _is_vanguard_launcher_mode() and game_id == Util.ACTIVE_GAME_VANGUARD:
+        preview_height = maxf(preview_height, available_content_height - 110.0)
 
     for _i in range(32):
         preview_panel.custom_minimum_size.y = preview_height

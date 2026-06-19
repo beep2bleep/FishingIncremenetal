@@ -11,6 +11,8 @@ var PATH_FISHING_BATTLE = "res://Fishing/BattleScene.tscn"
 const ACTIVE_GAME_PROJECT_SETTING := "global/ActiveGame"
 const HIGH_LEVEL_MODE_PROJECT_SETTING := "global/HighLevelMode"
 const START_SCREEN_PROJECT_SETTING := "global/StartScreen"
+const SHOW_ALL_MODES_IN_BUILD_SETTING := "global/ShowAllModesInBuild"
+const DATA_BREACH_INC_MODE_SETTING := "global/DataBreachIncMode"
 
 const ACTIVE_GAME_VANGUARD := "vanguard"
 const ACTIVE_GAME_MINING := "mining"
@@ -62,6 +64,11 @@ func get_high_level_mode_id() -> String:
 
 func is_all_high_level_mode_active() -> bool:
     return get_high_level_mode_id() == HIGH_LEVEL_MODE_ALL
+
+func are_cross_game_features_enabled() -> bool:
+    return is_all_high_level_mode_active() \
+        and bool(ProjectSettings.get_setting(SHOW_ALL_MODES_IN_BUILD_SETTING, false)) \
+        and not bool(ProjectSettings.get_setting(DATA_BREACH_INC_MODE_SETTING, false))
 
 func is_mining_game_active() -> bool:
     return get_active_game_id() == ACTIVE_GAME_MINING

@@ -14,10 +14,10 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Deepcore"
+config/name="Vanguard"
 run/main_scene="res://Core/Boot/AppBootstrap.tscn"
 config/use_custom_user_dir=true
-config/custom_user_dir_name="Deepcore"
+config/custom_user_dir_name="Vanguard"
 config/features=PackedStringArray("4.6", "Forward Plus")
 run/max_fps=60
 boot_splash/bg_color=Color(0.3234, 0.3234, 0.33, 1)
@@ -72,18 +72,18 @@ enabled=PackedStringArray("res://addons/controller_icons/plugin.cfg")
 [gameanalytics]
 
 build="v1.3.1"
-game_key="b8a2581219b15c0021b5b3a16949645f"
-secret_key="fd45f4799dbac827b520bd9963deaa6cc8bad0b0"
+game_key="de9707a68cd6fe69f19a31bf0c9efc3a"
+secret_key="705c5804eacaa943ebf386f91feec118cf4a01f2"
 info_log=true
 
 [global]
 
 Build="v1.3.1"
 Demo=false
-DemoWishlistUrl="https://store.steampowered.com/app/4562070/Deepcore/"
+DemoWishlistUrl="https://store.steampowered.com/app/4519820/Vanguard__Idle_Auto_Battler/"
 ShowAllModesInBuild=false
 DataBreachIncMode=false
-ActiveGame="mining"
+ActiveGame="vanguard"
 HighLevelMode="all"
 StartScreen="menu"
 mining_demo_max_group=3
@@ -232,7 +232,7 @@ anti_aliasing/quality/screen_space_aa=1
 
 [steam]
 
-initialization/app_id=4562070
+initialization/app_id=4519820
 initialization/initialize_on_startup=false
 initialization/embed_callbacks=false
 multiplayer_peer/max_channels=4

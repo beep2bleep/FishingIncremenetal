@@ -54,7 +54,7 @@ static func apply_simulation_upgrades() -> void:
     var upgrade_catalog: Array[Dictionary] = MINING_PROGRESS_SCRIPT.get_upgrade_catalog()
     var grouped_upgrades: Array[Dictionary] = _group_upgrades(upgrade_catalog)
     var cross_entry: Dictionary = {}
-    if Util.is_all_high_level_mode_active():
+    if Util.are_cross_game_features_enabled():
         cross_entry = CROSS_GAME_BONUSES.get_cross_bonus_node_definition(Util.ACTIVE_GAME_MINING)
         grouped_upgrades.append(cross_entry)
     var id_to_cell: Dictionary = _build_tree_layout(grouped_upgrades)

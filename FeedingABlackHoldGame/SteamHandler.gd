@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 
 const STEAM_VANGUARD_APP_ID := 4519820
 const STEAM_VANGUARD_DEMO_APP_ID := 4524190
@@ -95,7 +95,7 @@ func get_store_url() -> String:
     if _is_data_breach_inc_build():
         return "https://store.steampowered.com/app/%s/%s/" % [STEAM_DATA_BREACH_INC_APP_ID, STEAM_DATA_BREACH_INC_STORE_PATH]
     var combined_export_url := "https://store.steampowered.com/app/%s/%s/" % [STEAM_BLEEPWARE_INCREMENTALS_APP_ID, STEAM_BLEEPWARE_INCREMENTALS_STORE_PATH]
-    if Util.is_all_high_level_mode_active():
+    if Util.is_all_high_level_mode_active() and _is_show_all_modes_build():
         return combined_export_url
     if Util.is_mining_game_active():
         return "https://store.steampowered.com/app/%s/Deepcore/" % STEAM_DEEPCORE_APP_ID
@@ -259,6 +259,10 @@ func _resolve_steam_app_id() -> int:
             if _is_demo_build():
                 return STEAM_DEEPCORE_DEMO_APP_ID
             return STEAM_DEEPCORE_APP_ID
+        if not _is_show_all_modes_build() and Util.is_vanguard_game_active():
+            if _is_demo_build():
+                return STEAM_VANGUARD_DEMO_APP_ID
+            return STEAM_VANGUARD_APP_ID
         if _is_demo_build():
             return STEAM_BLEEPWARE_INCREMENTALS_DEMO_APP_ID
         return STEAM_BLEEPWARE_INCREMENTALS_APP_ID
