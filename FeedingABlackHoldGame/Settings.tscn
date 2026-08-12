@@ -294,7 +294,7 @@ size_flags_vertical = 3
 bbcode_enabled = false
 scroll_active = true
 fit_content = false
-text = "CREDITS_BODY"
+text = ""
 
 [node name="Hide Credits" parent="Credits Panel/Credits Margin/Credits VBox" instance=ExtResource("4")]
 unique_name_in_owner = true

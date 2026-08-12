@@ -1,6 +1,20 @@
 extends VBoxContainer
 class_name Settings
 
+const CREDIT_MUSIC_TRACKS: Array[String] = [
+    "Hellfire Tempest - Carnage Cabaret - LOOP",
+    "Verdant Glade - The Quiet Wild",
+    "Wayward Realm - Celestial Veil",
+    "Shadow Exile - Synth Shogun",
+    "Shadow Exile - Night Splice",
+    "Verdant Glade - Fernsong",
+    "Shadow Exile - Tokyo Uprising",
+    "Verdant Glade - Roots of Serenity",
+    "Skyward Spire - Nova Rift",
+    "Wayward Realm - Astral Winds",
+    "Wayward Realm - Moonsong Kingdom",
+]
+
 var screen_modes = {
     SaveHandler.SCREEN_MODES.FULL_SCREEN: "FULLSCREEN", 
     SaveHandler.SCREEN_MODES.WINDOWED: "WINDOWED", 
@@ -265,7 +279,7 @@ func refresh_static_text() -> void:
     _set_label_text("GridContainer/Ctrl Sens", "CONTROLLER_SENSETIVITY")
     _set_button_text("Credits Button", "UI_CREDITS")
     _set_label_text("Credits Panel/Credits Margin/Credits VBox/Credits Title", "UI_CREDITS")
-    _set_rich_text("Credits Panel/Credits Margin/Credits VBox/Credits Text", "CREDITS_BODY")
+    _set_rich_text_value("Credits Panel/Credits Margin/Credits VBox/Credits Text", _build_credits_text())
     _set_button_text("Credits Panel/Credits Margin/Credits VBox/Hide Credits", "UI_BACK")
 
 func _set_label_text(path: String, key: String) -> void:
@@ -278,7 +292,19 @@ func _set_button_text(path: String, key: String) -> void:
     if button != null:
         button.text = tr(key)
 
-func _set_rich_text(path: String, key: String) -> void:
+func _set_rich_text_value(path: String, value: String) -> void:
     var label := get_node_or_null(path) as RichTextLabel
     if label != null:
-        label.text = tr(key)
+        label.text = value
+
+func _build_credits_text() -> String:
+    var music_lines: Array[String] = []
+    for track in CREDIT_MUSIC_TRACKS:
+        music_lines.append("  %s" % track)
+    return "\n\n".join([
+        tr("CREDITS_BUILT_BY"),
+        tr("CREDITS_MADE_IN_GODOT"),
+        tr("CREDITS_THANK_YOU"),
+        "%s\n%s" % [tr("CREDITS_SOUND_EFFECTS"), "https://www.zapsplat.com/"],
+        "%s\n%s" % [tr("CREDITS_MUSIC_BY"), "\n".join(music_lines)],
+    ])

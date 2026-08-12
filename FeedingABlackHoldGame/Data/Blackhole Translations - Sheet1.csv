@@ -398,7 +398,13 @@ BATTLE_CURRENCY_LABEL,Currency: %d,العملة: %d,Moneda: %d,Měna: %d,Währun
 BATTLE_CLOCK_LABEL,Clock: %s,الساعة: %s,Rellotge: %s,Hodiny: %s,Uhr: %s,Reloj: %s,Horloge : %s,שעון: %s,Jam: %s,Orologio: %s,時計: %s,시계: %s,Zegar: %s,Relógio: %s,Часы: %s,นาฬิกา: %s,Saat: %s,Đồng hồ: %s,时钟：%s
 BATTLE_VICTORY,VICTORY,انتصار,VICTORIA,VÍTĚZSTVÍ,SIEG,VICTORIA,VICTOIRE,נִצָחוֹן,KEMENANGAN,VITTORIA,勝利,승리,ZWYCIĘSTWO,VITÓRIA,ПОБЕДА,ชัยชนะ,ZAFER,CHIẾN THẮNG,胜利
 BATTLE_DEFEAT,DEFEAT,هزيمة,DERROTA,PORAZIT,VERLUST,FRACASO,DÉFAITE,לִהַבִיס,MENGALAHKAN,SCONFITTA,敗北,패배시키다,POKONAĆ,DERROTA,ПОРАЖЕНИЕ,ความพ่ายแพ้,YENMEK,ĐÁNH BẠI,击败
-BATTLE_SUMMARY_BODY,BATTLE OVER  |  %sLevel: %dEnemies defeated: %dBoss segments broken: %dCoins gained this run: %dGold total: %d,"انتهت المعركة |  %s
+BATTLE_SUMMARY_BODY,"BATTLE OVER  |  %s
+
+Level: %d
+Enemies defeated: %d
+Boss segments broken: %d
+Coins gained this run: %d
+Gold total: %d","انتهت المعركة |  %s
 
 المستوى: %d
 هزم الأعداء: %d
@@ -508,7 +514,12 @@ Boss 段损坏：%d
 本次比赛获得的金币：%d
 黄金总数：%d"
 BATTLE_COLLECTING_LOOT,Collecting remaining loot...,جمع الغنائم المتبقية...,S'està recollint el botí restant...,Sbírání zbývající kořisti...,Restliche Beute einsammeln...,Recogiendo el botín restante...,Récupérer le butin restant...,אוספים את השלל שנותר...,Mengumpulkan sisa jarahan...,Raccolta del bottino rimanente...,残りの戦利品を集めています...,남은 전리품을 수집 중입니다...,Zbieranie pozostałych łupów...,Coletando o saque restante...,Собираем оставшуюся добычу...,รวบรวมไอเทมที่เหลือ...,Geriye kalan ganimetler toplanıyor...,Thu thập chiến lợi phẩm còn sót lại...,收集剩余的战利品...
-BATTLE_LEVEL20_CLEAR_BODY,Congratulations on beating level 20!Level 20 clear time: %sThanks for playing.This game was created by a single developer.Please leave feedback or email to web@beep2bleep.com if you would like more content.Creator: Beep2Bleep.,"تهانينا على التغلب على المستوى 20!
+BATTLE_LEVEL20_CLEAR_BODY,"Congratulations on beating level 20!
+Level 20 clear time: %s
+Thanks for playing.
+This game was created by a single developer.
+Please leave feedback or email to web@beep2bleep.com if you would like more content.
+Creator: Beep2Bleep.","تهانينا على التغلب على المستوى 20!
 الوقت الواضح للمستوى 20: %s
 شكرا للعب.
 تم إنشاء هذه اللعبة بواسطة مطور واحد.
@@ -599,7 +610,11 @@ Người tạo: Beep2Bleep.","恭喜您突破 20 级！
 该游戏是由单个开发者创建的。
 如果您想了解更多内容，请留下反馈或发送电子邮件至 web@beep2bleep.com。
 创建者：Beep2Bleep。"
-BATTLE_DEMO_THANK_YOU_BODY,Thanks for playing the demo!Time to reach Level %d: %sThis game was created by a single developer.Please leave feedback or email to web@beep2bleep.com if you would like more content.Creator: Beep2Bleep.,"شكرا للعب التجريبي!
+BATTLE_DEMO_THANK_YOU_BODY,"Thanks for playing the demo!
+Time to reach Level %d: %s
+This game was created by a single developer.
+Please leave feedback or email to web@beep2bleep.com if you would like more content.
+Creator: Beep2Bleep.","شكرا للعب التجريبي!
 الوقت للوصول إلى المستوى %d: %s
 تم إنشاء هذه اللعبة بواسطة مطور واحد.
 يرجى ترك تعليقات أو إرسال بريد إلكتروني إلى web@beep2bleep.com إذا كنت ترغب في المزيد من المحتوى.
@@ -1083,79 +1098,11 @@ TOUCH INPUT,Touch Input,المس الإدخال,Toqueu Entrada,Klepněte na Vstu
 UI_CONFIRM_UPGRADE_PURCHASE_TOUCH,Confirm Upgrade Purchase - Best for Touch,تأكيد شراء الترقية - الأفضل للمس,Confirmeu la compra d'actualització: millor per al tacte,Potvrďte nákup upgradu – Best for Touch,Bestätigen Sie den Upgrade-Kauf – Best for Touch,Confirmar compra de actualización: lo mejor para Touch,Confirmer l'achat de la mise à niveau - Idéal pour le toucher,אשר רכישת שדרוג - הטוב ביותר למגע,Konfirmasi Pembelian Peningkatan - Terbaik untuk Sentuhan,Conferma l'acquisto dell'aggiornamento: il migliore per il tocco,アップグレード購入の確認 - タッチに最適,업그레이드 구매 확인 - 터치에 가장 적합,Potwierdź zakup aktualizacji — Best for Touch,Confirme a compra do upgrade – Melhor para Touch,Подтвердите покупку обновления — Лучшее для сенсорного экрана,ยืนยันการซื้ออัปเกรด - ดีที่สุดสำหรับการสัมผัส,Yükseltme Satın Alma İşlemini Onaylayın - Dokunma için En İyisi,Xác nhận mua bản nâng cấp - Best for Touch,确认升级购买 - Best for Touch
 Confirm Upgrade Purchase - Best for Touch,Confirm Upgrade Purchase - Best for Touch,تأكيد شراء الترقية - الأفضل للمس,Confirmeu la compra d'actualització: millor per al tacte,Potvrďte nákup upgradu – nejlepší na dotyk,Bestätigen Sie den Upgrade-Kauf – Best For Touch,Confirmar compra de actualización - Best For Touch,Confirmer l'achat de la mise à niveau - Best For Touch,אשר רכישת שדרוג - הטוב ביותר למגע,Konfirmasi Pembelian Peningkatan - Terbaik Untuk Sentuhan,Conferma l'acquisto dell'aggiornamento: il migliore per il tocco,アップグレード購入の確認 - タッチに最適,업그레이드 구매 확인 - 터치에 가장 적합,Potwierdź zakup aktualizacji — Best For Touch,Confirmar compra de atualização – Melhor para Touch,Подтвердить покупку обновления — Best For Touch,ยืนยันการซื้ออัปเกรด - ดีที่สุดสำหรับการสัมผัส,Yükseltme Satın Alma İşlemini Onaylayın - Dokunma İçin En İyisi,Xác nhận mua bản nâng cấp - Best For Touch,确认升级购买 - Best For Touch
 UI_CREDITS,Credits,الاعتمادات,Crèdits,Kredity,Credits,Créditos,Crédits,קרדיטים,Kredit,Crediti,クレジット,크레딧,Kredyty,Créditos,Кредиты,เครดิต,Kredi,Tín dụng,制作人员
-CREDITS_BODY,Created by Stick.Built with Godot.Thank you for playing.,"تم إنشاؤها بواسطة عصا.
-
-بنيت مع جودو.
-
-شكرا للعب.","Creat per Stick.
-
-Construït amb Godot.
-
-Gràcies per jugar.","Vytvořil Stick.
-
-Postaveno s Godotem.
-
-Děkujeme, že hrajete.","Erstellt von Stick.
-
-Gebaut mit Godot.
-
-Danke fürs Spielen.","Creado por Palo.
-
-Construido con Godot.
-
-Gracias por jugar.","Créé par Stick.
-
-Construit avec Godot.
-
-Merci d'avoir joué.","נוצר על ידי סטיק.
-
-נבנה עם Godot.
-
-תודה ששיחקת.","Dibuat oleh Tongkat.
-
-Dibangun dengan Godot.
-
-Terima kasih sudah bermain.","Creato da Stick.
-
-Costruito con Godot.
-
-Grazie per aver giocato.","スティックによって作成されました。
-
-ゴドーで構築されました。
-
-遊んでいただきありがとうございます。","스틱에서 제작했습니다.
-
-Godot로 제작되었습니다.
-
-플레이해주셔서 감사합니다.","Stworzony przez Sticka.
-
-Zbudowany z Godotem.
-
-Dziękuję za grę.","Criado por Stick.
-
-Construído com Godot.
-
-Obrigado por jogar.","Создано Стиком.
-
-Построен с Годо.
-
-Спасибо за игру.","สร้างโดย Stick.
-
-สร้างด้วยโกโดต์
-
-ขอบคุณสำหรับการเล่น","Stick tarafından düzenlendi.
-
-Godot ile inşa edilmiştir.
-
-Oynadığınız için teşekkür ederiz.","Được tạo bởi Stick.
-
-Được xây dựng với Godot.
-
-Cảm ơn bạn đã chơi.","由棍子创建。
-
-与戈多一起建造。
-
-感谢您的参与。"
+CREDITS_BUILT_BY,Built by Beep2Bleep.,تم الإنشاء بواسطة Beep2Bleep.,Creat per Beep2Bleep.,Vytvořil Beep2Bleep.,Erstellt von Beep2Bleep.,Creado por Beep2Bleep.,Créé par Beep2Bleep.,נבנה על ידי Beep2Bleep.,Dibuat oleh Beep2Bleep.,Creato da Beep2Bleep.,Beep2Bleep によって制作されました。,Beep2Bleep 제작.,Stworzone przez Beep2Bleep.,Criado por Beep2Bleep.,Создано Beep2Bleep.,สร้างโดย Beep2Bleep.,Beep2Bleep tarafından yapıldı.,Được tạo bởi Beep2Bleep.,由 Beep2Bleep 制作。
+CREDITS_MADE_IN_GODOT,Made in Godot.,صُنعت باستخدام Godot.,Fet amb Godot.,Vytvořeno v Godotu.,Mit Godot erstellt.,Hecho con Godot.,Réalisé avec Godot.,נוצר באמצעות Godot.,Dibuat dengan Godot.,Realizzato con Godot.,Godotで制作。,Godot로 제작되었습니다.,Stworzone w Godot.,Feito com Godot.,Сделано в Godot.,สร้างด้วย Godot.,Godot ile yapıldı.,Được làm bằng Godot.,使用 Godot 制作。
+CREDITS_THANK_YOU,Thank you for playing.,شكرًا لك على اللعب.,Gràcies per jugar.,Děkujeme za hraní.,Danke fürs Spielen.,Gracias por jugar.,Merci d'avoir joué.,תודה ששיחקת.,Terima kasih sudah bermain.,Grazie per aver giocato.,遊んでいただきありがとうございます。,플레이해주셔서 감사합니다.,Dziękujemy za grę.,Obrigado por jogar.,Спасибо за игру.,ขอบคุณสำหรับการเล่น,Oynadığınız için teşekkür ederiz.,Cảm ơn bạn đã chơi.,感谢您的游玩。
+CREDITS_SOUND_EFFECTS,Sound effects from ZapSplat:,مؤثرات صوتية من ZapSplat:,Efectes de so de ZapSplat:,Zvukové efekty ze ZapSplat:,Soundeffekte von ZapSplat:,Efectos de sonido de ZapSplat:,Effets sonores de ZapSplat :,אפקטים קוליים מ-ZapSplat:,Efek suara dari ZapSplat:,Effetti sonori da ZapSplat:,ZapSplatの効果音：,ZapSplat의 음향 효과:,Efekty dźwiękowe z ZapSplat:,Efeitos sonoros do ZapSplat:,Звуковые эффекты от ZapSplat:,เอฟเฟกต์เสียงจาก ZapSplat:,ZapSplat'tan ses efektleri:,Hiệu ứng âm thanh từ ZapSplat:,音效来自 ZapSplat：
+CREDITS_MUSIC_BY,Music by Phat Phrog Studio:,موسيقى Phat Phrog Studio:,Música de Phat Phrog Studio:,Hudba od Phat Phrog Studio:,Musik von Phat Phrog Studio:,Música de Phat Phrog Studio:,Musique de Phat Phrog Studio :,מוזיקה מאת Phat Phrog Studio:,Musik oleh Phat Phrog Studio:,Musica di Phat Phrog Studio:,Phat Phrog Studio による音楽：,Phat Phrog Studio의 음악:,Muzyka: Phat Phrog Studio:,Música de Phat Phrog Studio:,Музыка Phat Phrog Studio:,ดนตรีโดย Phat Phrog Studio:,Phat Phrog Studio'nun müziği:,Nhạc của Phat Phrog Studio:,音乐来自 Phat Phrog Studio：
 MINING_END_RUN,End Run,حيلة يراد بها التملص,Finalitzar la carrera,Ukončit běh,Lauf beenden,Finalizar ejecución,Fin de l'exécution,סוף ריצה,Akhiri Jalankan,Fine corsa,エンドラン,종료 실행,Koniec biegu,Finalizar corrida,Конец пробега,สิ้นสุดการวิ่ง,Koşuyu Bitir,Kết thúc cuộc chạy,结束运行
 OPEN_PIT_XP_WALLET,XP %s,إكس بي %s,XP %s,XP %s,XP %s,XP%s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,XP %s,EXP %s,Опыт %s,XP %s,XP %s,Kinh nghiệm %s,经验%s
 OPEN_PIT_ROOT_KEYS_WALLET,R.K. %s,ر.ك. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,ר.ק. %s,RK %s,R.K. %s,R.K. %s,R.K. %s,R.K. %s,R. K. %s,Р.К. %s,อาร์.เค. %s,R.K. %s,R.K. %s,R.K. %s
@@ -2226,7 +2173,8 @@ BATTLE_SOURCE,Source,مصدر,Font,Zdroj,Quelle,Fuente,Source,מקור,Sumber,Fo
 BATTLE_DAMAGE,Damage,ضرر,Danys,Poškození,Schaden,Daño,Dommages,נזק,Kerusakan,Danno,ダメージ,손상,Uszkodzenie,Dano,Урон,ความเสียหาย,Hasar,thiệt hại,损坏
 BATTLE_HEALED,Healed,شفيت,Curat,Vyléčeno,Geheilt,sanado,Guéri,נרפא,Sembuh,Guarito,癒されました,치유됨,Uzdrowiony,Curado,Исцеленный,หายเป็นปกติแล้ว,İyileşti,được chữa lành,痊愈了
 BATTLE_PREVENTED,Prevented,منع,Prevenit,Zabráněno,Verhindert,Prevenido,Empêché,נמנע,Dicegah,Prevenuto,防止された,방지됨,Zapobiegnięto,Prevenido,Предотвращено,ป้องกันแล้ว,Önlendi,ngăn chặn,预防
-BATTLE_LEVEL_UNLOCKED_DIALOG_BODY,You unlocked new battle levels by defeating bosses.Choose your next level.,"لقد فتحت مستويات معركة جديدة بهزيمة الزعماء.
+BATTLE_LEVEL_UNLOCKED_DIALOG_BODY,"You unlocked new battle levels by defeating bosses.
+Choose your next level.","لقد فتحت مستويات معركة جديدة بهزيمة الزعماء.
 اختر مستواك التالي.","Has desbloquejat nous nivells de batalla derrotant caps.
 Tria el teu següent nivell.","Nové bitevní úrovně jste odemykali porážkou bossů.
 Vyberte si další úroveň.","Durch das Besiegen von Bossen hast du neue Kampflevel freigeschaltet.

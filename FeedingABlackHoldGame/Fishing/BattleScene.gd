@@ -5259,7 +5259,7 @@ func _build_battle_summary_text(is_live: bool) -> String:
         ])
     if battle_victory and current_level == 3 and SaveHandler.fishing_l3_boss_clear_clock_seconds >= 0.0:
         summary_text += "\n\n" + _trf("BATTLE_LEVEL3_CLEAR_TIME", [Util.format_time(SaveHandler.fishing_l3_boss_clear_clock_seconds)])
-    if battle_gem_reward_line != "":
+    if battle_gem_reward_line != "" and not Util.is_vanguard_game_active():
         summary_text += "\n\n" + battle_gem_reward_line
     return summary_text
 
