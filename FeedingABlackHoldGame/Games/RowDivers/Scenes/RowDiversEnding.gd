@@ -8,6 +8,7 @@ var continue_button: Button
 var reveal: Tween
 var persist_results = true
 var audio: Node
+var illustration: TextureRect
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -39,6 +40,13 @@ func _ready() -> void:
 	column.add_child(tag)
 	heading = Style.label("ONE LAST CHOICE", 42, true)
 	column.add_child(heading)
+	illustration = TextureRect.new()
+	illustration.custom_minimum_size = Vector2(0, 150)
+	illustration.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	illustration.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	illustration.visible = preload("res://Games/RowDivers/RowDiversGraphics.gd").original()
+	if illustration.visible: illustration.texture = preload("res://Games/RowDivers/RowDiversGraphics.gd").texture("Throne.png")
+	column.add_child(illustration)
 	story = RichTextLabel.new()
 	story.fit_content = true
 	story.custom_minimum_size = Vector2(790, 215)
@@ -80,7 +88,12 @@ func _choose(choice: String) -> void:
 	if persist_results: Progress.save_data(data)
 	choices.hide()
 	heading.text = "A NEW DAWN" if choice == "BenevolentGod" else "THE CROWN IS YOURS"
+	if illustration != null and illustration.visible:
+		illustration.texture = preload("res://Games/RowDivers/RowDiversGraphics.gd").texture("BenevolentGod.png" if choice == "BenevolentGod" else "DevilGod.png")
 	story.text = ("You break the engine's hold and open the gates. For the first time, the row carries no prisoners.\n\nThe tracks stretch into daylight. Whatever comes next, they will choose it freely." if choice == "BenevolentGod" else "You sit upon the empty throne. The engine wakes to your command, and every gate bows before you.\n\nThe row runs again. This time, you decide where it leads.") + "\n\nThank you for playing Railway Fury.\nArt: Synty Studios  •  Audio: see asset credits\nInspired by the mechanics of Row Divers."
+	if preload("res://Games/RowDivers/RowDiversGraphics.gd").original():
+		story.text = story.text.replace("Art: Synty Studios", "Reference artwork: Row Divers / Hermurx")
+		story.text = story.text.replace("  •  Audio:", "\nAudio:")
 	if reveal != null: reveal.kill()
 	_reveal()
 	continue_button.show()

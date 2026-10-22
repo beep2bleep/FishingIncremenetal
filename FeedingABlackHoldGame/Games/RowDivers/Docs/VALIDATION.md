@@ -1,5 +1,7 @@
 # Differential logic comparison — 22 October 2026
 
+Original-art option: the shared settings screen now exposes **Original Row Divers Graphics**. Both rendering modes pass 342 checks, including all 95 source textures and 112 upgrade icons, immediate switching, local preference persistence, and identical simulated gameplay state/random draws for identical inputs. The original and modern views, settings toggle and ending illustrations were rendered and inspected. The full four-row original-art campaign also passes all 66 checks, with the same row times, distances, kills and remaining health as the modern-art fixture. The upgrade layout still uses the same source coordinates and 114 edges. Both ending choices exist; the narrative, credits layout and HUD are Railway Fury presentations, rather than copies of the source screens. Credits now identify the source game's developer/artwork and this version's art/audio separately.
+
 See `PARITY_SIMULATION.md` and `PARITY_SIMULATION.json`: 72 original-C#/Godot replay cases match at 2,129 checkpoints after parity corrections. The four-row gameplay fixture now carries one progress dictionary through all prestiges. Exact full original-campaign/native-physics parity remains **uncertified**; the strict harness gate reports that explicitly.
 
 # Polish verification — 22 October 2026

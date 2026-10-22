@@ -11,6 +11,8 @@ static func _badge(key: String, drawing: String, color: String) -> Texture2D:
 	return cache[key]
 
 static func achievement(key: String) -> Texture2D:
+	var graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
+	if graphics.original() and graphics.catalog().achievements.has(key): return graphics.texture(graphics.catalog().achievements[key])
 	var art := '<path d="M22 15h20v12c0 15-20 15-20 0zM22 20H15v7q0 9 10 9M42 20h7v7q0 9-10 9M32 39v10M23 50h18"/>'
 	if "Bow" in key: art = '<path d="M19 13q30 19 0 38l10-19zM14 32h37m-8-8 8 8-8 8"/>'
 	elif "Armor" in key: art = '<path d="m32 12 18 7v13q-2 15-18 22Q16 47 14 32V19zM32 20v24m-9-12h18"/>'
@@ -24,6 +26,8 @@ static func achievement(key: String) -> Texture2D:
 	return _badge("achievement_" + key, art, "eec782")
 
 static func enemy(kind: int) -> Texture2D:
+	var graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
+	if graphics.original(): return graphics.texture(graphics.ENEMIES[clampi(kind, 0, 6)])
 	var colors := ["d6d0b1", "9ebacb", "dc9b96", "a4c29e", "aabd73", "c5a9df", "eeae71"]
 	var art := '<path d="M13 55q1-15 19-15t19 15M20 34V24q0-16 12-16t12 16v10l-7 8H27z"/><path d="M23 26h5m8 0h5m-12 9h6"/>'
 	if kind == 1: art += '<path d="m17 22 4-13h22l4 13M12 48l9-6m31 6-9-6"/>'

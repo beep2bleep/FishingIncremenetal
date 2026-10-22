@@ -124,6 +124,17 @@ func build(owner_battle: Node3D) -> void:
 	_build_debug_speed_controls()
 	SignalBus.text_size_changed.connect(_apply_text_scale)
 	_apply_text_scale()
+	SignalBus.settings_updated.connect(_refresh_graphics)
+	_refresh_graphics()
+
+func _refresh_graphics() -> void:
+	var graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
+	var icons := {"ArrowShield": "Arrow Shield.png", "Harvester": "Harvester.png", "Shuriken": "shuriken.png", "SlowDown": "Remedy.png"}
+	for ability in ability_buttons:
+		var button: Button = ability_buttons[ability]
+		button.icon = graphics.texture(icons[ability]) if graphics.original() else null
+		button.expand_icon = true
+		button.add_theme_constant_override("icon_max_width", 30)
 
 # TEMPORARY QA PANEL: gated by railway_fury/debug/enable_speed_cheats and debug builds.
 func _build_debug_speed_controls() -> void:

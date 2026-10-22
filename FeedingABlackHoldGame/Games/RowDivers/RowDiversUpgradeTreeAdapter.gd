@@ -10,6 +10,7 @@ const ICON_MODS: Array[int] = [
 ]
 
 static func apply_simulation_upgrades() -> void:
+	if not SignalBus.settings_updated.is_connected(_refresh_icons): SignalBus.settings_updated.connect(_refresh_icons)
 	var data: Dictionary = PROGRESS.design()
 	var progress: Dictionary = PROGRESS.load_data()
 	PROGRESS.check_achievements(progress)
@@ -72,6 +73,8 @@ static func apply_simulation_upgrades() -> void:
 			Global.game_mode_data_manager.unlocked_upgrades[upgrade.cell] = upgrade.to_dict()
 
 static func _icon_for(entry: Dictionary) -> String:
+	var graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
+	if graphics.original(): return graphics.ROOT + str(graphics.catalog().upgrades[str(entry.id)])
 	var title: String = str(entry.get("upgradeName", "")).to_lower()
 	if "arrow" in title or "bow" in title: return "➶"
 	if "hp" in title or "health" in title: return "+"
@@ -80,3 +83,9 @@ static func _icon_for(entry: Dictionary) -> String:
 	if "fire" in title or "burn" in title: return "△"
 	if not Dictionary(entry.get("unlocks", {})).is_empty(): return "★"
 	return "○"
+
+static func _refresh_icons() -> void:
+	if not Util.is_row_divers_game_active(): return
+	for upgrade in Global.game_mode_data_manager.upgrades.values():
+		var entry: Dictionary = PROGRESS.find_upgrade(upgrade.sim_key)
+		if not entry.is_empty(): upgrade.sim_icon = _icon_for(entry)

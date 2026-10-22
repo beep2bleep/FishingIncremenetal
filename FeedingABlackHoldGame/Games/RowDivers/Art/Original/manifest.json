@@ -1,0 +1,614 @@
+{
+  "source": "User-supplied Row Divers decompilation",
+  "upgrades": {
+    "5480": "DaggerRange.png",
+    "5491": "porcupine.png",
+    "5501": "MiniBossIcon.png",
+    "5507": "Arrow Damage.png",
+    "5531": "ArmorAgainstBosses.png",
+    "5552": "band-aid.png",
+    "5568": "LifeSteal.png",
+    "5576": "GainArmorWhenTakingDamage.png",
+    "5596": "Heart1.png",
+    "5603": "DaggerRange.png",
+    "5609": "pill.png",
+    "5615": "GainArmorWhenTakingDamage.png",
+    "5622": "HealOnKill.png",
+    "5626": "DaggerAttackRate.png",
+    "5640": "LifeSteal.png",
+    "5648": "DaggerDamage.png",
+    "5659": "Max HP.png",
+    "5679": "Achievement.png",
+    "5685": "HealOnKill.png",
+    "5691": "Arrow Damage.png",
+    "5709": "UnlockDagger.png",
+    "5723": "Heart1.png",
+    "5731": "FireRate.png",
+    "5755": "pill.png",
+    "5764": "HealOnHitChance.png",
+    "5776": "Max HP.png",
+    "5781": "ArmorAgainstRow.png",
+    "5791": "syringe.png",
+    "5796": "fire particle_0.png",
+    "5811": "Forward Movement.png",
+    "5833": "HealOnHit.png",
+    "5848": "DaggerRange.png",
+    "5853": "HoldToShoot.png",
+    "5860": "HorizontalSpeed.png",
+    "5871": "DamageAgainstBosses.png",
+    "5887": "Arrow Shield.png",
+    "5897": "HealOnHit.png",
+    "5914": "DaggerDamage.png",
+    "5932": "Arrow Damage.png",
+    "5944": "DaggerDamage.png",
+    "5964": "Arrow Damage.png",
+    "5982": "Arrow Damage.png",
+    "5997": "ArmorAgainstRow.png",
+    "6003": "DaggerDamage.png",
+    "6012": "Critic.png",
+    "6024": "Heart1.png",
+    "6035": "Heart1.png",
+    "6050": "Max HP.png",
+    "6063": "Critic.png",
+    "6067": "Remedy.png",
+    "6076": "Arrow Damage.png",
+    "6096": "DamageAgainstBosses.png",
+    "6118": "GainArmorWhenTakingDamage.png",
+    "6122": "FireRate.png",
+    "6130": "DaggerDamage.png",
+    "6153": "Critic.png",
+    "6170": "BleedDuration.png",
+    "6182": "BurnDuration.png",
+    "6200": "syringe.png",
+    "6213": "Heart1.png",
+    "6224": "Heart1.png",
+    "6229": "CurseDamage.png",
+    "6242": "HorizontalSpeed.png",
+    "6246": "BeamFireRate.png",
+    "6255": "Magnetism.png",
+    "6263": "Arrow Speed.png",
+    "6272": "DaggerDamage.png",
+    "6293": "Critic.png",
+    "6302": "Magnetism.png",
+    "6319": "Arrow Damage.png",
+    "6335": "CurseDuration.png",
+    "6347": "HealOnKillChance.png",
+    "6357": "FireRate.png",
+    "6364": "Heart1.png",
+    "6372": "DamageAgainstBosses.png",
+    "6378": "Arrow Speed.png",
+    "6388": "shuriken.png",
+    "6409": "HealOnKillChance.png",
+    "6426": "dark gem.png",
+    "6433": "BeamDamage.png",
+    "6448": "Heart1.png",
+    "6452": "AttackSpeed.png",
+    "6463": "BeamDamage.png",
+    "6469": "AutoShooting.png",
+    "6481": "Aim.png",
+    "6491": "Aim.png",
+    "6500": "BeamDamage.png",
+    "6508": "Critic.png",
+    "6516": "DamageAgainstBosses.png",
+    "6531": "Curse_0.png",
+    "6541": "BleedChance.png",
+    "6552": "HorizontalSpeed.png",
+    "6560": "FireArrowDamage.png",
+    "6585": "Arrow Damage.png",
+    "6589": "+1 Arrows.png",
+    "6593": "pill.png",
+    "6601": "Harvester.png",
+    "6629": "Arrow Damage.png",
+    "6642": "ArmorAgainstRow.png",
+    "6655": "BleedChance.png",
+    "6660": "fire gem.png",
+    "6666": "Arrow Damage.png",
+    "6671": "DaggerAttackRate.png",
+    "6675": "BeamDamage.png",
+    "6688": "third eye_0.png",
+    "6695": "Remedy.png",
+    "6701": "enemy bullet template.png",
+    "6705": "band-aid.png",
+    "6721": "+2 Arrows.png",
+    "6725": "BeamCriticChance.png",
+    "6751": "Magnetism.png",
+    "6766": "HealOnHitChance.png"
+  },
+  "achievements": {
+    "FirstDive": "First Dive.png",
+    "FirstMiniBoss": "First Mini Boss.png",
+    "FirstBoss": "First Boss.png",
+    "RowDiver": "Prestige0.png",
+    "Prestige1": "Prestige1.png",
+    "Prestige2": "Prestige2.png",
+    "Prestige3": "Prestige3.png",
+    "PrestigeMaster": "PrestigeMaster.png",
+    "BossSlayer": "BossSlayer.png",
+    "BeatTheGame": "CompleteTheGame.png",
+    "BenevolentGod": "BenevolentGod.png",
+    "EvilGod": "DevilGod.png",
+    "ArmoredTank": "Armored Tank.png",
+    "BowMaster": "Bow Master.png",
+    "Vampire": "Vampire.png",
+    "Healer": "Healer.png",
+    "CoinMaster": "Coins Collector.png",
+    "GemMaster": "GemCollector.png"
+  },
+  "files": [
+    {
+      "file": "+1 Arrows.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\+1 Arrows.png",
+      "sha256": "0049c250abb052a887692451a6890f4ba60e66f64c2e8a483c8dcc70fade3ca4"
+    },
+    {
+      "file": "+2 Arrows.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\+2 Arrows.png",
+      "sha256": "3e9c923cf748a22bde362900e15c21d22a697389a38ba85490716be3a4f5f9d9"
+    },
+    {
+      "file": "1.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\1.png",
+      "sha256": "6b9d46c5fa690bd179bc41d01e8aa7d9742f9b57971b0c25111aa3bfa9359a5d"
+    },
+    {
+      "file": "Achievement.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Achievement.png",
+      "sha256": "f5931d01b3600205589db1f95cdaa0c250098462cf0001261f157209ab704505"
+    },
+    {
+      "file": "Aim.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Aim.png",
+      "sha256": "2373d11941b4d36d688967ba37f50fe28fe4af594f4001000562a6b90b1f4de1"
+    },
+    {
+      "file": "ArmorAgainstBosses.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\ArmorAgainstBosses.png",
+      "sha256": "48b30b018450d1e01df5bdd6b415d80f723a0792e879081b2a4697d9fd3b4e81"
+    },
+    {
+      "file": "ArmorAgainstRow.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\ArmorAgainstRow.png",
+      "sha256": "7c528da4c0404c34fb87a389976d54b41f37aad98e490a7801e37240ca09c17c"
+    },
+    {
+      "file": "Armored Tank.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Armored Tank.png",
+      "sha256": "8012c97c2d1e96edf3c79c43d54e03ec8f3f531a80fccfe4bd9542549ff8458d"
+    },
+    {
+      "file": "Arrow Damage.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Arrow Damage.png",
+      "sha256": "559a434a48f65fa0e3cb0d2d1da5c19f6ac00d6f8355be267c965b1ce3481197"
+    },
+    {
+      "file": "Arrow Shield.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Arrow Shield.png",
+      "sha256": "bf9ab734bc8c943f3b0dd94a052d432af38f72a551de36ac75e54f9e032f8e32"
+    },
+    {
+      "file": "Arrow Speed.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Arrow Speed.png",
+      "sha256": "d90f4ef995a0194aecd1225e1487888e59362db4380e64f9173376ba4fe290d8"
+    },
+    {
+      "file": "Arrow.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Arrow.png",
+      "sha256": "6d60c7ed6748bf9713f1342ef9e26f995deefa7779628522656b21c405146c3a"
+    },
+    {
+      "file": "Arrow_0.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Arrow_0.png",
+      "sha256": "52ec56b40c80427d1d34c059160480ffa5d3bff40410775dd6bf779a2c545f74"
+    },
+    {
+      "file": "AttackSpeed.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\AttackSpeed.png",
+      "sha256": "2bbf8b0df535168f06fcb9e1aa86e3bc201bbfe2976152e6aa6b929c1a037c9e"
+    },
+    {
+      "file": "AutoShooting.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\AutoShooting.png",
+      "sha256": "be414ddfd59b00036e9dd372e9008be6f28b77159b544ea87277125d156e9bef"
+    },
+    {
+      "file": "BeamCriticChance.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\BeamCriticChance.png",
+      "sha256": "670e60151d7ac2e568f84dd0acca19367d9dee6b3e023bfb3b23e37d70abf7a0"
+    },
+    {
+      "file": "BeamDamage.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\BeamDamage.png",
+      "sha256": "23220de1dade35b85675098040daffc8bdb450d6c8a6946714a142da91454f60"
+    },
+    {
+      "file": "BeamFireRate.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\BeamFireRate.png",
+      "sha256": "0fec598a0a478502bc630a0986470780e251f03469937f6c12a01e4f45f02f4e"
+    },
+    {
+      "file": "BenevolentGod.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\BenevolentGod.png",
+      "sha256": "6ad94a722107d00ba5e6de310423b7d468ff9d351386f4058db9698fdca5aaa5"
+    },
+    {
+      "file": "BleedChance.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\BleedChance.png",
+      "sha256": "e04bd6191f7bec82b609d84f7c53d52664e1e450d78aa04479cbcfde8d93ce61"
+    },
+    {
+      "file": "BleedDuration.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\BleedDuration.png",
+      "sha256": "323d7e81441a120860dab18e07e1c3481e4b3b3c072d5ea14bf5cc779f180e0f"
+    },
+    {
+      "file": "Boss.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Boss.png",
+      "sha256": "52bf3772c5a2fdca5ccfd33443d6d6955867477c5eb0f5683ea45e302c9e3c40"
+    },
+    {
+      "file": "BossSlayer.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\BossSlayer.png",
+      "sha256": "677f426b9846c9e10d4543e327ec0b3bd62bdc03975efdd0364cdf8ebae528f8"
+    },
+    {
+      "file": "Bow Master.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Bow Master.png",
+      "sha256": "d4a16fbf91146614ae0d8db55b4e2e57cf7e6858cf75a5634f696cbb1788d744"
+    },
+    {
+      "file": "BurnDuration.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\BurnDuration.png",
+      "sha256": "e9a0115d5b1954875053419ec66604924d0c98fbec21651e759f5c5227389f16"
+    },
+    {
+      "file": "Coin.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Coin.png",
+      "sha256": "c6fe54d981286e05c85ae84de5bd337eb272e0f737f004c7a7d5c333292babd7"
+    },
+    {
+      "file": "Coins Collector.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Coins Collector.png",
+      "sha256": "4e3922e63d49b4ee0de68a478eeb9d2deadae06f744a405a2e5b82b119af4245"
+    },
+    {
+      "file": "CompleteTheGame.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\CompleteTheGame.png",
+      "sha256": "39441f458ed3624fed670db4a126e8aaf698e7713d5c9722423b2ebd9ec01abb"
+    },
+    {
+      "file": "Critic.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Critic.png",
+      "sha256": "c5a407d0e1cc66ff8d1afb97af8011289b547126278686d8a0546c6870d899fd"
+    },
+    {
+      "file": "Crown.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Crown.png",
+      "sha256": "4f8bf523c094578fa755c40df62ac979a80ad6ae1807663c875f2a0b5fcc8499"
+    },
+    {
+      "file": "CurseDamage.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\CurseDamage.png",
+      "sha256": "29a3c990fdd74bc2d2d4053e21428c7b426ba1763487685c8b4ce9e156b8199b"
+    },
+    {
+      "file": "CurseDuration.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\CurseDuration.png",
+      "sha256": "f3837b12317565919448ae96121802c25b51907f4137656d166b46968252e84d"
+    },
+    {
+      "file": "Curse_0.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Curse_0.png",
+      "sha256": "c8344864578899bac4070236d77723ac699eca10010b9746321ce6460c76adab"
+    },
+    {
+      "file": "DaggerAttackRate.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\DaggerAttackRate.png",
+      "sha256": "80dfc3656c89a63ec1ff4776a8a5ddbb046a4f24edd2228ff2637cead299cf89"
+    },
+    {
+      "file": "DaggerDamage.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\DaggerDamage.png",
+      "sha256": "85b4ac63fcad3102e51979894caebef30dfa3c9792b52bd23deb3e38be611dad"
+    },
+    {
+      "file": "DaggerRange.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\DaggerRange.png",
+      "sha256": "ff2d9811ee13f52b8fe862d56e5c7a52c76ceda2baa5be6859618d1b2671c7c9"
+    },
+    {
+      "file": "DamageAgainstBosses.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\DamageAgainstBosses.png",
+      "sha256": "dcd472df41e5180799d90b8ea8499f11e9c03e837feea54d3ca48c81770013cf"
+    },
+    {
+      "file": "DevilGod.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\DevilGod.png",
+      "sha256": "8b8e1c3c135cfc906b91d9a34277b9ab158c2355cdcf696b5b90cb5be1ec96bf"
+    },
+    {
+      "file": "Enemy1.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Enemy1.png",
+      "sha256": "1fee85a48700ac94ae28a478e6395858cc7e7956bc7c9f4c5f38049442b98dc5"
+    },
+    {
+      "file": "Enemy2.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Enemy2.png",
+      "sha256": "18236887cc4a3831e58df9a7a73af889bbd758b8c9c31095c1cc6512b223ef8e"
+    },
+    {
+      "file": "Enemy3.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Enemy3.png",
+      "sha256": "46f4ec9119b7221ba1edf03d178674d007a487af211c77342c62bbabd89a3bea"
+    },
+    {
+      "file": "Enemy4.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Enemy4.png",
+      "sha256": "673592e06f9a48b0fdafa988663c700ec730121c010479f4e24112b00191fde2"
+    },
+    {
+      "file": "FireArrowDamage.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\FireArrowDamage.png",
+      "sha256": "bd6645bd63fa7699683bf85ea19edfaf46072d135b39a8ce85d58fcf29dbd990"
+    },
+    {
+      "file": "FireRate.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\FireRate.png",
+      "sha256": "05fdaede9ddeb41962a99c20488e7d6987620e00401aa6b562e81ad7985efcc9"
+    },
+    {
+      "file": "First Boss.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\First Boss.png",
+      "sha256": "55c4bf922d13840a93745a19810a3f4c17e4a394cef9d74d37a1d967569271f3"
+    },
+    {
+      "file": "First Dive.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\First Dive.png",
+      "sha256": "0ef25c1572152c1ca193e85dc3e683a8d65c4ffef399d475ceed57574270da9b"
+    },
+    {
+      "file": "First Mini Boss.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\First Mini Boss.png",
+      "sha256": "1481649e35577f3118eb8d78b20048384601404c7163c831b5a61832cf9562c7"
+    },
+    {
+      "file": "Floor Texture 2.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Floor Texture 2.png",
+      "sha256": "a735cb1b03978e3e6f7aacca01a9d5c41629e919d09bcbf070e3d8d0b36f80e6"
+    },
+    {
+      "file": "Floor Texture.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Floor Texture.png",
+      "sha256": "5d69077d5657d423105144daef542b370bbadda52053823b472ff6833f8b89d3"
+    },
+    {
+      "file": "Forward Movement.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Forward Movement.png",
+      "sha256": "997d2d95287d2c7b3767d2f6da80e8ee5fbda77823225bb34625e03eb3e59242"
+    },
+    {
+      "file": "GainArmorWhenTakingDamage.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\GainArmorWhenTakingDamage.png",
+      "sha256": "1d0093fadf87f0c3628f619b642cbfe81c4ab552fec8afa8467c3055321d2ad6"
+    },
+    {
+      "file": "Gem.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Gem.png",
+      "sha256": "f61d6b7e99c9502cf20aebec431fb9ba1a85f36e4543abab09e670b7c3484f71"
+    },
+    {
+      "file": "GemCollector.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\GemCollector.png",
+      "sha256": "292b53e59b954cfcec167efd378744b48d7a8687f1ae24d213274b3ed6c88bb9"
+    },
+    {
+      "file": "Harvester.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Harvester.png",
+      "sha256": "f81df57b613aed9b3a518dc7d01f4cd6eb35ec09a94ba7cf3d8ef155218ab652"
+    },
+    {
+      "file": "HealOnHit.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\HealOnHit.png",
+      "sha256": "758355173c408d4a78f1a8e88c70de8c7ec7210576d9a9bf74434d531ea2eb43"
+    },
+    {
+      "file": "HealOnHitChance.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\HealOnHitChance.png",
+      "sha256": "500aee5375d4bff34ed7616382fc6b7ac3dc50c93436ffb03507fe7a973464ce"
+    },
+    {
+      "file": "HealOnKill.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\HealOnKill.png",
+      "sha256": "73a7dbfb95ffdcff744805785a2f5924fde1d8be6c99a7d0c44252478dd36c5c"
+    },
+    {
+      "file": "HealOnKillChance.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\HealOnKillChance.png",
+      "sha256": "cd69caf83151d8ce3d0b173585b96086ed9910c3682ea101bfdfd0d8a3244e18"
+    },
+    {
+      "file": "Healer.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Healer.png",
+      "sha256": "9d0aae7960b08ae35a4a76e4f019697b4a8223a65028b668c2b0f260a67f0823"
+    },
+    {
+      "file": "Heart1.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Heart1.png",
+      "sha256": "61ad1d6b8738ea9fa3bd2456bb498da008cbda911498b404d6e06ba3bf4cbbcb"
+    },
+    {
+      "file": "HoldToShoot.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\HoldToShoot.png",
+      "sha256": "73cca78722d3b0b7bc25dd1f6d429834b96e8de2d7108f498193f901ca1f7964"
+    },
+    {
+      "file": "HorizontalSpeed.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\HorizontalSpeed.png",
+      "sha256": "528d47b2cac6e0e138b9f1d25ec62e99910e9ddd534ff9abbd24c4a84099966b"
+    },
+    {
+      "file": "LifeSteal.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\LifeSteal.png",
+      "sha256": "a99e398cd2d0d0054b332559327c8666b49cac2701904758b15d22db9db1cf58"
+    },
+    {
+      "file": "Magnetism.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Magnetism.png",
+      "sha256": "bf2bdbfc6c0c0a79be7e2a52e607b402821c90b0d6d054c059986d3bd8d72327"
+    },
+    {
+      "file": "Max HP.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Max HP.png",
+      "sha256": "5119eb58167fc1187b40c2bf1d1430c27e17e331d3cdbf5cbab782e049b1c0b5"
+    },
+    {
+      "file": "MiniBoss.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\MiniBoss.png",
+      "sha256": "bc1d7533b95e1bec70ed14bdeb7f5579bd5e9cc17055ee78dd63ee167495ab67"
+    },
+    {
+      "file": "MiniBoss2.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\MiniBoss2.png",
+      "sha256": "c021a21f795e52735c10de615154154b5c015ff36f78a6db768dfef32d30f520"
+    },
+    {
+      "file": "MiniBossIcon.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\MiniBossIcon.png",
+      "sha256": "604454e970b07a6746e4af80fe46aa57dba8ba80b8c6b3ae7d4c17493b00226c"
+    },
+    {
+      "file": "Prestige0.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Prestige0.png",
+      "sha256": "5a78182f85bcfedfe0c809b2f70f6bbe7af075497dcb1d445530e986a47c487f"
+    },
+    {
+      "file": "Prestige1.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Prestige1.png",
+      "sha256": "006fc003d5c4c76773849ed0b1f5423b1b7f420c9d93f1aa6854efd9a643398a"
+    },
+    {
+      "file": "Prestige2.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Prestige2.png",
+      "sha256": "ad7dea7b572d522b60cdfcf8a361ee39b80f4c6258c514b7c2852649f64e1890"
+    },
+    {
+      "file": "Prestige3.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Prestige3.png",
+      "sha256": "6c4bfb35683e47471d887097326c53d025f6c5e468c0f8af416ebdc116adeaa0"
+    },
+    {
+      "file": "PrestigeMaster.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\PrestigeMaster.png",
+      "sha256": "718608221449dd01f317910157b57997e44bdc73d5f97e227b80aec5e3d89ef1"
+    },
+    {
+      "file": "Remedy.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Remedy.png",
+      "sha256": "9970012ea36e19070cf433e4ae8b51fbd129a8949187b97bb37b9c67d0af6aee"
+    },
+    {
+      "file": "Throne.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Throne.png",
+      "sha256": "ade87d60af6e05973586a2182b7f962ffdf94bedceb4d88591ac131373d9bfe0"
+    },
+    {
+      "file": "UnlockDagger.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\UnlockDagger.png",
+      "sha256": "b6ef8f19429ed1c7ad67a37e9f1004959b9e2991be47cccd0c467e82a89edb31"
+    },
+    {
+      "file": "Vampire.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Vampire.png",
+      "sha256": "75b9c9899aef6f6e8fb836199fd07e38269f7bca8b4902127d15020d2b3c575b"
+    },
+    {
+      "file": "Wall Texture 2.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Wall Texture 2.png",
+      "sha256": "d1a543318414194e59fee440b4738279055b7cea631b87212fa0cad40ca22370"
+    },
+    {
+      "file": "Wall Texture.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Wall Texture.png",
+      "sha256": "c575ca3cf2af89e5978a12970c24747d389b9fb101ba3c92686fd809e6ba47ca"
+    },
+    {
+      "file": "Wall_Boss_Texture.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\Wall_Boss_Texture.png",
+      "sha256": "3c500fa80d90699e746ba6d88b37d438465cf980ee11b388ce1e03f5698df0c3"
+    },
+    {
+      "file": "band-aid.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\band-aid.png",
+      "sha256": "f0dc2c76f9259ca918a25800be901e8ca45cf42a1d6535d6971d3320974dd857"
+    },
+    {
+      "file": "boss_room_floor_texture1.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\boss_room_floor_texture1.png",
+      "sha256": "54c65440dc636204accc1cc893a5d9bb36da4b7f8fe19bdc1bd2654438e99bf2"
+    },
+    {
+      "file": "dagger.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\dagger.png",
+      "sha256": "24f67668e1b63040dc2a07507220569583f175f13101fada5d3933359ca447d8"
+    },
+    {
+      "file": "dark gem.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\dark gem.png",
+      "sha256": "5ee65fa8a11a3d0cee969b378ba256c1665f2e4d84259d6ed62afbfa7e79ff73"
+    },
+    {
+      "file": "dm.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\dm.png",
+      "sha256": "eb4fe2d6da3c477e82b31abb6ae3c82d40dbe496a2bf7629c127447912859aa9"
+    },
+    {
+      "file": "dmf.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\dmf.png",
+      "sha256": "1f480e534817be282b7ad615579f4b5c586f8a7f88a21daecc8e5f7bcacc4562"
+    },
+    {
+      "file": "enemy bullet template.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\enemy bullet template.png",
+      "sha256": "a63fe2df639ae68ca0d978854970cc28bbeaca76541453dbaa17ba3b2f42bc8f"
+    },
+    {
+      "file": "fire gem.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\fire gem.png",
+      "sha256": "a511b784d88692bf00735fa17abd39e9e2993ee1b55350b17cebaf5713aaea59"
+    },
+    {
+      "file": "fire particle_0.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\fire particle_0.png",
+      "sha256": "c67335c2bb2803a1f241a88316b3de911bef2fcf4e9ad756428d81ab3fafb535"
+    },
+    {
+      "file": "pill.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\pill.png",
+      "sha256": "4048543b1be4c4df374fb608720d4c92260e0c5b0675f3288aaa9124c0b5c7b2"
+    },
+    {
+      "file": "porcupine.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\porcupine.png",
+      "sha256": "818aa13fb39d40a090944a60ee9f20950f8ab22df2a9ca64bf6d625fb184e8c4"
+    },
+    {
+      "file": "shuriken.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\shuriken.png",
+      "sha256": "f9688d182ff66de4b670f5d49f5975ef6bcde4a42cdfac55f2e4685a66dba864"
+    },
+    {
+      "file": "syringe.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\syringe.png",
+      "sha256": "aecc8752439159470b19e9b718418e1286e54822935f2b1449d3a694b491077d"
+    },
+    {
+      "file": "third eye.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\third eye.png",
+      "sha256": "73d9713dcbd3cb7d6d8e956083788e78b47cb9338d0ca00ee3cae480f14eb0ef"
+    },
+    {
+      "file": "third eye_0.png",
+      "source": "C:\\Decompiled\\Row Divers\\ExportedProject\\Assets\\Texture2D\\third eye_0.png",
+      "sha256": "e4fb9d531c5cb764037b98ae4ea335d0a11f6aa5d21552e1ec0d1e84ffb16ba7"
+    }
+  ]
+}

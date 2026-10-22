@@ -2,6 +2,11 @@ extends Node3D
 ## Native Synty rig with a looping skeletal idle; never changes combat bounds.
 const ROOT = "res://Games/RowDivers/Art/Synty/Prefabs/Characters/SM_Chr_"
 const SKINS = ["Skeleton_01", "Skeleton_HeavyArmor_01", "Skeleton_Flesh_01", "Skeleton_Ranger_01", "PlagueDoctor_01", "Priest_Female_01", "DarkLord_Male_01"]
+const Graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
+var enemy_kind = 0
+var is_boss = false
+var source_sprite: Sprite3D
+var idle_phase = 0.0
 var rig: Node3D
 var idle: AnimationPlayer
 var skeleton: Skeleton3D
@@ -15,6 +20,31 @@ var rest_rotations: Dictionary = {}
 var skin_meshes: Array[MeshInstance3D] = []
 
 func setup(kind: int, boss: bool) -> void:
+	enemy_kind = kind
+	is_boss = boss
+	# Consume the same one phase draw for both styles, and none when switching.
+	idle_phase = randf() * 3.2
+	_refresh_graphics()
+	SignalBus.settings_updated.connect(_refresh_graphics)
+
+func _refresh_graphics() -> void:
+	if idle != null: idle.free()
+	idle = null
+	skeleton = null
+	source_sprite = null
+	if rig != null: rig.free()
+	skin_meshes.clear()
+	rest_rotations.clear()
+	if Graphics.original():
+		rig = Node3D.new()
+		add_child(rig)
+		source_sprite = Graphics.sprite(Graphics.ENEMIES[enemy_kind], 2.0 if is_boss else 1.4)
+		rig.add_child(source_sprite)
+		source_sprite.position.y = 0.65
+		rig.position.y = -0.65
+		return
+	var kind: int = enemy_kind
+	var boss: bool = is_boss
 	rig = load(ROOT + SKINS[clampi(kind, 0, 6)] + ".tscn").instantiate()
 	rig.name = "Rig"
 	add_child(rig)
@@ -77,7 +107,7 @@ func _create_idle() -> void:
 	idle.animation_finished.connect(func(name):
 		if name == "attack": idle.play("idle", 0.1))
 	idle.play("idle")
-	idle.seek(randf() * 3.2, true)
+	idle.seek(idle_phase, true)
 
 func hit() -> void:
 	flash = 0.18
@@ -100,6 +130,9 @@ func _process(delta: float) -> void:
 	charge = maxf(0, charge - delta)
 	if hit_material != null:
 		hit_material.albedo_color.a = flash * 3.5
+	if source_sprite != null:
+		source_sprite.modulate = Color(1, 0.65, 0.55) if flash > 0 else Color.WHITE
+		source_sprite.scale = Vector3(1.0 + sin(time * 2.2) * 0.025, 1.0 - sin(time * 2.2) * 0.025, 1.0)
 	if rig != null:
 		rig.position.y = -0.65 + sin(time * 2.2) * 0.045
 		rig.position.z = sin((0.8 - charge) / 0.8 * PI) * 0.24 if charge > 0 else 0.0

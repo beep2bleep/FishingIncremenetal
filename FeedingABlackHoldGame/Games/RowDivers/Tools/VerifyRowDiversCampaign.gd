@@ -24,6 +24,9 @@ func make_battle(data: Dictionary):
 
 func run() -> void:
 	seed(445817)
+	var settings_save = root.get_node("SaveHandler")
+	settings_save.local_settings_file_path = "user://row_divers_campaign_settings.json"
+	settings_save.row_divers_original_graphics = false # Rig assertions use the modern skeleton.
 	root.get_node("Util").set_active_game_id("rowdivers")
 	var fresh: Dictionary = Progress.fresh()
 	var battle = make_battle(fresh)
@@ -145,6 +148,7 @@ func run() -> void:
 	check(purchases == 330, "Campaign loadout obtained through 330 legal purchases")
 	check(not loadout.unlocks.get("GodTab", false), "Maxed upgrades alone do not unlock ending")
 	loadout.controls_seen = true
+	settings_save.row_divers_original_graphics = "--original-graphics" in OS.get_cmdline_user_args()
 	for prestige in range(4):
 		var data: Dictionary = loadout
 		data.prestige = prestige
@@ -208,6 +212,7 @@ func run() -> void:
 		check(false, "Final choice scene opens after completion")
 	ending.queue_free()
 	print("ROW DIVERS CAMPAIGN %s: %d checks, %d failures" % ["PASSED" if failures == 0 else "FAILED", checks, failures])
+	if FileAccess.file_exists(settings_save.local_settings_file_path): DirAccess.remove_absolute(settings_save.local_settings_file_path)
 	quit(0 if failures == 0 else 1)
 
 func purchase_priority(data: Dictionary, entry: Dictionary) -> int:

@@ -4,6 +4,7 @@ const Audio = preload("res://Games/RowDivers/RowDiversAudio.gd")
 const Actor = preload("res://Games/RowDivers/RowDiversActor.gd")
 const HUD = preload("res://Games/RowDivers/RowDiversHUD.gd")
 const Style = preload("res://Games/RowDivers/RowDiversStyle.gd")
+const Graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
 var data: Dictionary
 var camera: Camera3D
 var player_position = Vector3(0, 0.9, 0)
@@ -117,15 +118,36 @@ func _ready() -> void:
 	if not data.controls_seen:
 		presentation.show_tutorial()
 	_update_hud()
+	SignalBus.settings_updated.connect(_refresh_graphics)
+	_refresh_graphics()
+
+func _refresh_graphics() -> void:
+	for visual in find_children("*", "Node3D", true, false):
+		if visual.has_meta("original_texture"):
+			var original: bool = Graphics.original()
+			if visual is MeshInstance3D:
+				visual.material_override = Graphics.surface(visual.get_meta("original_texture"), Vector3(2, 8, 1)) if original else visual.get_meta("default_material")
+			else:
+				visual.get_node("Original").visible = original
+				visual.get_node("Modern").visible = not original
 
 func _weapon_mesh(mesh_name: String, parent: Node3D, pos: Vector3, size: float) -> Node3D:
+	var visual := Node3D.new()
+	parent.add_child(visual)
+	visual.position = pos
+	visual.set_meta("original_texture", "dagger.png" if mesh_name == "Sword_01" else ("1.png" if mesh_name == "Crossbow_01" else "Arrow.png"))
+	var original := Graphics.sprite(visual.get_meta("original_texture"), 0.48 if mesh_name == "Crossbow_01" else 0.32)
+	original.name = "Original"
+	visual.add_child(original)
+	original.visible = Graphics.original()
 	var mesh: Node3D = load("res://Games/RowDivers/Art/Synty/Prefabs/Weapons/SM_Wep_" + mesh_name + ".tscn").instantiate()
 	for collider in mesh.find_children("*", "StaticBody3D", true, false):
 		collider.free()
-	parent.add_child(mesh)
-	mesh.position = pos
+	visual.add_child(mesh)
+	mesh.name = "Modern"
+	mesh.visible = not Graphics.original()
 	mesh.scale = Vector3.ONE * size
-	return mesh
+	return visual
 
 func _ring(parent: Node3D, pos: Vector3, color: Color, radius: float) -> MeshInstance3D:
 	var instance := MeshInstance3D.new()
@@ -154,7 +176,26 @@ func _box(parent: Node, pos: Vector3, dimensions: Vector3, color: Color) -> Mesh
 	mesh.material_override = material
 	parent.add_child(mesh)
 	mesh.position = pos
+	if dimensions.z == 20 and (dimensions.x > 3.0 or dimensions.y > 3.0):
+		mesh.set_meta("original_texture", "Wall Texture.png" if dimensions.y > 3.0 else "Floor Texture.png")
+		mesh.set_meta("default_material", material)
+		if Graphics.original(): mesh.material_override = Graphics.surface(mesh.get_meta("original_texture"), Vector3(2, 8, 1))
 	return mesh
+
+func _source_billboard(modern: Node3D, image: String, height: float) -> Node3D:
+	var visual := Node3D.new()
+	modern.get_parent().add_child(visual)
+	visual.position = modern.position
+	modern.reparent(visual, false)
+	modern.position = Vector3.ZERO
+	modern.name = "Modern"
+	modern.visible = not Graphics.original()
+	var original := Graphics.sprite(image, height)
+	original.name = "Original"
+	original.visible = Graphics.original()
+	visual.add_child(original)
+	visual.set_meta("original_texture", image)
+	return visual
 
 func _build_section(number: int) -> void:
 	var root = Node3D.new()
@@ -581,6 +622,7 @@ func _hit(enemy: Dictionary, amount: float) -> void:
 			var value = 1.0
 			if currency == 0: value = [1.0, 10.0, 100.0, 1000.0][int(data.prestige)]
 			var node = _box(self, enemy.node.position, Vector3(0.16, 0.16, 0.16), Color("eeb34c") if currency == 0 else Color("ad8de8"))
+			node = _source_billboard(node, "Coin.png" if currency == 0 else "Gem.png", 0.28)
 			drops.append({"node": node, "currency": currency, "value": value})
 		if not first_death: return
 		enemies.erase(enemy)
@@ -618,6 +660,7 @@ func _update_enemies(delta: float) -> void:
 				audio.sound("shot")
 				for angle in [-7.5, 0.0, 7.5] if enemy.boss else [0.0]:
 					var node = _box(self, enemy.node.position, Vector3(0.07, 0.07, 0.25), Color("dd617b"))
+					node = _source_billboard(node, "enemy bullet template.png", 0.24)
 					projectiles.append({"node": node, "dir": Vector3(sin(deg_to_rad(angle)), 0, cos(deg_to_rad(angle))), "speed": 4.0, "type": "Poison" if int(enemy.kind) == 4 else ("LifeSteal" if int(enemy.kind) == 5 else "Critical"), "life": 2.0, "hostile": true})
 		if not enemy.contact and absf(offset.z) < 0.4 and absf(offset.x) < 0.5:
 			enemy.contact = true
