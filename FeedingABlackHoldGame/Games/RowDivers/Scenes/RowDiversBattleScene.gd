@@ -225,7 +225,7 @@ func _build_hud() -> void:
 	upgrades.custom_minimum_size.y = 60
 	upgrades.pressed.connect(func():
 		if not ended: _finish(false)
-		get_tree().change_scene_to_file("res://Games/RowDivers/Scenes/RowDiversUpgrades.tscn"))
+		get_tree().change_scene_to_file(Util.get_upgrade_scene_path()))
 	box.add_child(upgrades)
 	overlay.hide()
 

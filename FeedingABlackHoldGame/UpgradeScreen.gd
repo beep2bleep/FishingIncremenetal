@@ -8,8 +8,8 @@ const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const MINING_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/Mining/MiningUpgradeTreeAdapter.gd")
 const OPEN_PIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitEmpire/OpenPitEmpireProgress.gd")
 const OPEN_PIT_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/OpenPitEmpire/OpenPitEmpireUpgradeTreeAdapter.gd")
-var OPEN_PIT_ORBIT_PROGRESS_SCRIPT = load("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd")
-var OPEN_PIT_ORBIT_UPGRADE_TREE_ADAPTER_SCRIPT = load("res://Games/OpenPitOrbit/OpenPitOrbitUpgradeTreeAdapter.gd")
+var OPEN_PIT_ORBIT_PROGRESS_SCRIPT = load("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd") if ResourceLoader.exists("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd") else null
+var OPEN_PIT_ORBIT_UPGRADE_TREE_ADAPTER_SCRIPT = load("res://Games/OpenPitOrbit/OpenPitOrbitUpgradeTreeAdapter.gd") if ResourceLoader.exists("res://Games/OpenPitOrbit/OpenPitOrbitUpgradeTreeAdapter.gd") else null
 const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
 const RED_SKY_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyUpgradeTreeAdapter.gd")
 const TURKEY_PROGRESS_SCRIPT = preload("res://Games/Turkey/TurkeyProgress.gd")
@@ -17,6 +17,8 @@ const TURKEY_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/Turkey/TurkeyUpg
 var REEL_INTO_DARKNESS_PROGRESS_SCRIPT = load("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
 var REEL_INTO_DARKNESS_DATA_SCRIPT = load("res://Games/ReelIntoDarkness/ReelIntoDarknessData.gd")
 var REEL_INTO_DARKNESS_UPGRADE_TREE_ADAPTER_SCRIPT = load("res://Games/ReelIntoDarkness/ReelIntoDarknessUpgradeTreeAdapter.gd")
+const ROW_DIVERS_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/RowDivers/RowDiversUpgradeTreeAdapter.gd")
+const ROW_DIVERS_PROGRESS_SCRIPT = preload("res://Games/RowDivers/RowDiversProgress.gd")
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
 const GO_AGAIN_DISABLED_HINT := "UPGRADE_GO_AGAIN_DISABLED_HINT"
@@ -123,6 +125,11 @@ var reset_progress_button: Button
 var go_again_button: Button
 var demo_mode_label: Label
 var game_mode_label: Label
+var row_divers_wallet_label: Label
+var row_divers_prestige: OptionButton
+var row_divers_achievements_button: Button
+var row_divers_bestiary_button: Button
+var row_divers_collection_panel: PanelContainer
 var mining_time_label: Label
 var wishlist_button: Button
 var web_wishlist_button: Button
@@ -331,8 +338,11 @@ func _ready() -> void :
     _setup_fullscreen_button()
     ready_step_started_msec = _print_open_pit_ready_step("ready_fullscreen_button", ready_step_started_msec)
     go_again_button = get_node_or_null("%Go Again")
+    if go_again_button == null:
+        go_again_button = get_node_or_null("CanvasLayer2/VBoxContainer/Bottom Bar/MarginContainer/HBoxContainer/MarginContainer2/VBoxContainer/HBoxContainer/Go Again") as Button
     demo_mode_label = get_node_or_null("%Demo Mode Label")
     game_mode_label = get_node_or_null("%Game Mode Label")
+    _setup_row_divers_wallet_display()
     _setup_editor_exit_demo_button()
     _setup_mining_time_label()
     ready_step_started_msec = _print_open_pit_ready_step("ready_mining_time_label", ready_step_started_msec)
@@ -628,6 +638,125 @@ func _refresh_bottom_wallet_display() -> void:
     var money_ui := get_node_or_null("%Moeny UI")
     if money_ui != null and money_ui.has_method("refresh_amounts"):
         money_ui.call("refresh_amounts")
+    if row_divers_wallet_label != null and is_instance_valid(row_divers_wallet_label):
+        var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
+        row_divers_wallet_label.text = "● %s     ◆ %s     ♛ %s" % [str(int(row_progress.wallet[0])), str(int(row_progress.wallet[1])), str(int(row_progress.wallet[2]))]
+        row_divers_achievements_button.visible = bool(row_progress.unlocks.get("AchievementsTab", false))
+        row_divers_bestiary_button.visible = bool(row_progress.unlocks.get("BestiaryTab", false))
+        if row_divers_prestige.item_count != int(row_progress.max_prestige) + 1:
+            row_divers_prestige.clear()
+            for prestige_level in range(int(row_progress.max_prestige) + 1):
+                row_divers_prestige.add_item("Prestige %d" % prestige_level)
+        row_divers_prestige.select(clampi(int(row_progress.prestige), 0, maxi(row_divers_prestige.item_count - 1, 0)))
+
+func _setup_row_divers_wallet_display() -> void:
+    if not Util.is_row_divers_game_active():
+        return
+    var layer := get_node_or_null("CanvasLayer2") as CanvasLayer
+    if layer == null:
+        return
+    row_divers_wallet_label = Label.new()
+    row_divers_wallet_label.name = "RowDiversWallet"
+    row_divers_wallet_label.set_anchors_preset(Control.PRESET_TOP_LEFT)
+    row_divers_wallet_label.position = Vector2(280.0, 28.0)
+    row_divers_wallet_label.size = Vector2(430.0, 42.0)
+    row_divers_wallet_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+    row_divers_wallet_label.add_theme_font_size_override("font_size", 22)
+    row_divers_wallet_label.add_theme_color_override("font_color", Color(0.96, 0.93, 0.82, 1.0))
+    layer.add_child(row_divers_wallet_label)
+    row_divers_prestige = OptionButton.new()
+    row_divers_prestige.name = "RowDiversPrestige"
+    row_divers_prestige.position = Vector2(28.0, 166.0)
+    row_divers_prestige.custom_minimum_size = Vector2(210.0, 44.0)
+    row_divers_prestige.item_selected.connect(_on_row_divers_prestige_selected)
+    layer.add_child(row_divers_prestige)
+    row_divers_achievements_button = Button.new()
+    row_divers_achievements_button.name = "RowDiversAchievements"
+    row_divers_achievements_button.text = "ACHIEVEMENTS"
+    row_divers_achievements_button.position = Vector2(28.0, 220.0)
+    row_divers_achievements_button.custom_minimum_size = Vector2(210.0, 44.0)
+    row_divers_achievements_button.pressed.connect(_show_row_divers_achievements)
+    layer.add_child(row_divers_achievements_button)
+    row_divers_bestiary_button = Button.new()
+    row_divers_bestiary_button.name = "RowDiversBestiary"
+    row_divers_bestiary_button.text = "BESTIARY"
+    row_divers_bestiary_button.position = Vector2(28.0, 274.0)
+    row_divers_bestiary_button.custom_minimum_size = Vector2(210.0, 44.0)
+    row_divers_bestiary_button.pressed.connect(_show_row_divers_bestiary)
+    layer.add_child(row_divers_bestiary_button)
+    row_divers_collection_panel = PanelContainer.new()
+    row_divers_collection_panel.name = "RowDiversCollection"
+    row_divers_collection_panel.set_anchors_preset(Control.PRESET_CENTER)
+    row_divers_collection_panel.position = Vector2(-520.0, -350.0)
+    row_divers_collection_panel.custom_minimum_size = Vector2(1040.0, 700.0)
+    row_divers_collection_panel.visible = false
+    layer.add_child(row_divers_collection_panel)
+    var shared_money_ui := get_node_or_null("%Moeny UI")
+    if shared_money_ui != null:
+        shared_money_ui.hide()
+    _refresh_bottom_wallet_display()
+
+func _on_row_divers_prestige_selected(index: int) -> void:
+    var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
+    row_progress.prestige = clampi(index, 0, int(row_progress.max_prestige))
+    ROW_DIVERS_PROGRESS_SCRIPT.save_data(row_progress)
+
+func _show_row_divers_collection(title: String, rows: Array[Control]) -> void:
+    if row_divers_collection_panel == null or not is_instance_valid(row_divers_collection_panel):
+        return
+    for child in row_divers_collection_panel.get_children():
+        row_divers_collection_panel.remove_child(child)
+        child.queue_free()
+    var box := VBoxContainer.new()
+    box.add_theme_constant_override("separation", 12)
+    row_divers_collection_panel.add_child(box)
+    var close := Button.new()
+    close.text = title + "  —  CLOSE"
+    close.custom_minimum_size.y = 48.0
+    close.pressed.connect(row_divers_collection_panel.hide)
+    box.add_child(close)
+    var scroll := ScrollContainer.new()
+    scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    box.add_child(scroll)
+    var content := VBoxContainer.new()
+    content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    content.add_theme_constant_override("separation", 10)
+    scroll.add_child(content)
+    for row in rows:
+        content.add_child(row)
+    row_divers_collection_panel.show()
+
+func _show_row_divers_achievements() -> void:
+    var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
+    var rows: Array[Control] = []
+    for achievement in ROW_DIVERS_PROGRESS_SCRIPT.design().settings.achievements:
+        var key: String = str(ROW_DIVERS_PROGRESS_SCRIPT.design().enums.AchievementType[str(int(achievement.achievementType))])
+        var row := Button.new()
+        row.custom_minimum_size.y = 82.0
+        row.text = "%s — %s\nReward: %s %s  •  %s" % [achievement.achievementName, achievement.description, str(achievement.reward), ["Gold", "Gems", "Crowns"][int(achievement.currencyType)], "Claimed" if row_progress.claimed.get(key, false) else ("CLAIM" if row_progress.achievements.get(key, false) else "Locked")]
+        row.disabled = not row_progress.achievements.get(key, false) or row_progress.claimed.get(key, false)
+        row.pressed.connect(_claim_row_divers_achievement.bind(achievement))
+        rows.append(row)
+    _show_row_divers_collection("ACHIEVEMENTS", rows)
+
+func _claim_row_divers_achievement(achievement: Dictionary) -> void:
+    var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
+    if ROW_DIVERS_PROGRESS_SCRIPT.claim(row_progress, achievement):
+        ROW_DIVERS_PROGRESS_SCRIPT.save_data(row_progress)
+        _refresh_bottom_wallet_display()
+        _show_row_divers_achievements()
+
+func _show_row_divers_bestiary() -> void:
+    var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
+    var rows: Array[Control] = []
+    for index in range(7):
+        var label := Label.new()
+        label.add_theme_font_size_override("font_size", 24)
+        label.custom_minimum_size.y = 50.0
+        var enemy_name: String = str(ROW_DIVERS_PROGRESS_SCRIPT.design().enums.ZombieType[str(index)]).replace("_", " ")
+        label.text = "%s    •    Defeated: %d" % [enemy_name, int(row_progress.bestiary.get(str(index), 0))]
+        rows.append(label)
+    _show_row_divers_collection("BESTIARY", rows)
 
 
 func _on_pallet_updated():
@@ -924,6 +1053,9 @@ func _should_show_editor_crt_preview() -> bool:
 
 
 func _on_go_again_pressed() -> void :
+    if Util.is_row_divers_game_active():
+        SceneChanger.change_to_new_scene(Util.get_battle_scene_path())
+        return
     if Util.is_mining_game_active():
         var mining_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
         var min_depth: int = MINING_PROGRESS_SCRIPT.MIN_START_DEPTH_LEVEL
@@ -1024,6 +1156,8 @@ func _ensure_tree_initialized(force_rebuild: bool = false) -> void:
             TURKEY_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
         elif Util.is_reel_into_darkness_game_active():
             REEL_INTO_DARKNESS_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
+        elif Util.is_row_divers_game_active():
+            ROW_DIVERS_UPGRADE_TREE_ADAPTER_SCRIPT.apply_simulation_upgrades()
         else:
             FishingUpgradeTreeAdapter.apply_simulation_upgrades()
         _print_open_pit_startup("apply_simulation_upgrades", Time.get_ticks_msec() - adapter_started_msec)
@@ -1071,6 +1205,9 @@ func _sync_simulation_currency_from_save() -> void:
         Global.global_resoruce_manager.change_resource_by_type(Util.RESOURCE_TYPES.MONEY, target_money - current_money)
 
 func _get_upgrade_wallet_amount() -> int:
+    if Util.is_row_divers_game_active():
+        var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
+        return int(row_progress.wallet[0])
     if Util.is_mining_game_active():
         return MINING_PROGRESS_SCRIPT.get_wallet()
     if Util.is_open_pit_game_active():
@@ -3499,7 +3636,7 @@ func _hide_settings_panel() -> void:
         settings_panel.hide()
 
 func _can_continue_to_battle() -> bool:
-    if Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active():
+    if Util.is_row_divers_game_active() or Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active():
         return true
     if not _is_simulation_upgrade_tree():
         return true
@@ -3507,6 +3644,12 @@ func _can_continue_to_battle() -> bool:
 
 func _update_go_again_button_state() -> void:
     if go_again_button == null:
+        return
+    if Util.is_row_divers_game_active():
+        go_again_button.disabled = false
+        go_again_button.text = "PLAY"
+        go_again_button.tooltip_text = ""
+        go_again_button.modulate = Color.WHITE
         return
     if Util.is_mining_game_active():
         go_again_button.disabled = false
@@ -3551,7 +3694,7 @@ func _update_go_again_button_state() -> void:
     go_again_button.modulate = Color(1.0, 1.0, 1.0, 1.0) if can_continue else Color(0.7, 0.7, 0.7, 1.0)
 
 func _is_standalone_mode_upgrade_scene() -> bool:
-    return Util.is_mining_game_active() or Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active()
+    return Util.is_row_divers_game_active() or Util.is_mining_game_active() or Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active()
 
 func _setup_continue_locked_dialog() -> void:
     var parent_layer: CanvasLayer = %CanvasLayer2

@@ -101,6 +101,7 @@ var currency_count_labels: Dictionary = {}
 var multi_tier_dialog: ConfirmationDialog
 var multi_summary_overlay: ColorRect
 var game_cards_grid: GridContainer
+var row_divers_button: Button
 var game_card_texture_cache: Dictionary = {}
 var background_particles_root: Node2D
 var background_particles_light: GPUParticles2D
@@ -238,6 +239,9 @@ func _start_game(game_id: String) -> void:
         _refresh_gameanalytics_session_after_transition()
         SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
         return
+    if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
+        SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
+        return
     SceneChanger.change_to_new_scene(Util.get_main_scene_path(), null, 0.2)
 
 func _refresh_gameanalytics_session_after_transition() -> void:
@@ -252,7 +256,9 @@ func _refresh_gameanalytics_session_after_transition() -> void:
 
 func _refresh_text() -> void:
     if title_label != null and is_instance_valid(title_label):
-        if _is_data_breach_inc_mode():
+        if _is_row_divers_launcher_mode():
+            title_label.text = "RAILWAY FURY"
+        elif _is_data_breach_inc_mode():
             title_label.text = OPEN_PIT_BUTTON_TEXT
         elif _is_vanguard_launcher_mode():
             title_label.text = tr(VANGUARD_BUTTON_TEXT)
@@ -261,7 +267,9 @@ func _refresh_text() -> void:
         else:
             title_label.text = tr(TITLE_TEXT_KEY)
     if subtitle_label != null and is_instance_valid(subtitle_label):
-        if _is_data_breach_inc_mode():
+        if _is_row_divers_launcher_mode():
+            subtitle_label.text = "ROW DIVERS"
+        elif _is_data_breach_inc_mode():
             subtitle_label.text = tr(DATA_BREACH_LAUNCHER_SUBTITLE_KEY)
         elif _is_vanguard_launcher_mode():
             subtitle_label.text = tr(VANGUARD_LAUNCHER_DETAIL_KEY)
@@ -276,6 +284,7 @@ func _refresh_text() -> void:
     _refresh_game_card_text(turkey_button, Util.ACTIVE_GAME_TURKEY)
     _refresh_game_card_text(reel_button, Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
     _refresh_game_card_text(combined_button, Util.HIGH_LEVEL_MODE_ALL)
+    _refresh_game_card_text(row_divers_button, Util.ACTIVE_GAME_ROW_DIVERS)
     _refresh_countermeasure_card_locks()
     _refresh_currency_strip()
     _refresh_multi_tier_dialog_text()
@@ -1056,10 +1065,16 @@ func _refresh_game_card_layout() -> void:
             vanguard_button.custom_minimum_size = Vector2(vanguard_width, 768.0)
         _queue_fit_game_cards()
         return
+    if _is_row_divers_launcher_mode():
+        game_cards_grid.columns = 1
+        if row_divers_button != null and is_instance_valid(row_divers_button):
+            row_divers_button.custom_minimum_size = Vector2(1116.0, 520.0)
+        _queue_fit_game_cards()
+        return
     game_cards_grid.columns = 3 if viewport_width >= 1340.0 else 2
     var card_min_width: float = 360.0 if game_cards_grid.columns >= 3 else 460.0
     var card_height: float = 368.0 if game_cards_grid.columns >= 3 else 408.0
-    for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button]:
+    for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button, row_divers_button]:
         if button == null or not is_instance_valid(button):
             continue
         button.custom_minimum_size = Vector2(card_min_width, card_height)
@@ -1106,7 +1121,7 @@ func _on_game_card_control_resized() -> void:
 
 func _fit_game_cards() -> void:
     game_card_fit_queued = false
-    for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button]:
+    for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button, row_divers_button]:
         _fit_game_card_content(button)
 
 func _is_open_pit_launcher_available() -> bool:
@@ -1117,6 +1132,11 @@ func _should_show_all_modes_in_build() -> bool:
 
 func _is_data_breach_inc_mode() -> bool:
     return bool(ProjectSettings.get_setting(DATA_BREACH_INC_MODE_SETTING, true))
+
+func _is_row_divers_launcher_mode() -> bool:
+    return not _is_data_breach_inc_mode() \
+        and not _should_show_all_modes_in_build() \
+        and str(ProjectSettings.get_setting(Util.ACTIVE_GAME_PROJECT_SETTING, "")) == Util.ACTIVE_GAME_ROW_DIVERS
 
 func _is_deepcore_launcher_mode() -> bool:
     if _is_data_breach_inc_mode() or _should_show_all_modes_in_build():
@@ -1408,6 +1428,15 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
                 "accent": Color(0.56, 0.84, 0.94, 1.0),
                 "bg_top": Color(0.03, 0.08, 0.12, 1.0),
                 "bg_bottom": Color(0.01, 0.03, 0.06, 1.0)
+            }
+        Util.ACTIVE_GAME_ROW_DIVERS:
+            return {
+                "title": "RAILWAY FURY  /  ROW DIVERS",
+                "detail": "A first person horde run. Upgrade your diver, then play.",
+                "asset_rel_path": "",
+                "accent": Color(0.83, 0.59, 0.28, 1.0),
+                "bg_top": Color(0.16, 0.12, 0.09, 1.0),
+                "bg_bottom": Color(0.04, 0.05, 0.07, 1.0)
             }
         Util.HIGH_LEVEL_MODE_ALL:
             return {
@@ -1855,6 +1884,8 @@ func _get_game_card_hover_rotation(button: Button) -> float:
             return 2.2
         Util.ACTIVE_GAME_TURKEY:
             return -1.8
+        Util.ACTIVE_GAME_ROW_DIVERS:
+            return 1.2
         Util.ACTIVE_GAME_REEL_INTO_DARKNESS:
             return 1.8
         Util.HIGH_LEVEL_MODE_ALL:
@@ -1864,6 +1895,8 @@ func _get_game_card_hover_rotation(button: Button) -> float:
 
 func _get_game_button_for_id(game_id: String) -> Button:
     match game_id:
+        Util.ACTIVE_GAME_ROW_DIVERS:
+            return row_divers_button
         Util.ACTIVE_GAME_VANGUARD:
             return vanguard_button
         Util.ACTIVE_GAME_MINING:
@@ -2173,16 +2206,26 @@ func _style_utility_panel(panel: PanelContainer) -> void:
     panel.add_theme_stylebox_override("panel", box)
 
 func _setup_row_divers_button() -> void:
-    var button := Button.new()
-    button.name = "RowDiversButton"
-    button.text = "RAILWAY FURY  /  ROW DIVERS"
-    button.custom_minimum_size = Vector2(420, 100)
-    button.add_theme_font_size_override("font_size", 26)
-    if game_cards_grid != null:
-        game_cards_grid.add_child(button)
-    else:
-        add_child(button)
-    button.pressed.connect(func():
-        Util.set_active_game_id(Util.ACTIVE_GAME_ROW_DIVERS)
-        Util.set_high_level_mode_id(Util.ACTIVE_GAME_ROW_DIVERS)
-        get_tree().change_scene_to_file(Util.PATH_ROW_DIVERS_UPGRADES))
+    if game_cards_grid == null or not is_instance_valid(game_cards_grid):
+        return
+    row_divers_button = Button.new()
+    row_divers_button.name = "RowDiversButton"
+    row_divers_button.custom_minimum_size = Vector2(460, 408)
+    game_cards_grid.add_child(row_divers_button)
+    _decorate_game_button(row_divers_button, Util.ACTIVE_GAME_ROW_DIVERS)
+    row_divers_button.pressed.connect(_on_row_divers_button_pressed)
+    for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button]:
+        if button != null and is_instance_valid(button):
+            button.hide()
+            button.disabled = true
+    if currency_strip != null and is_instance_valid(currency_strip):
+        currency_strip.hide()
+    if title_label != null:
+        title_label.text = "RAILWAY FURY"
+    if subtitle_label != null:
+        subtitle_label.text = "ROW DIVERS"
+    game_cards_grid.columns = 1
+    _refresh_game_card_layout()
+
+func _on_row_divers_button_pressed() -> void:
+    _start_game(Util.ACTIVE_GAME_ROW_DIVERS)

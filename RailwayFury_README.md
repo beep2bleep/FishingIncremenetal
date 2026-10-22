@@ -2,13 +2,13 @@
 
 Open `FeedingABlackHoldGame/project.godot` with Godot 4.6, or run `Launch-RailwayFury.ps1`.
 
-This checkout uses branch `RailwayFury`, based on GitHub HEAD `041f383a036fdb06c216335010abf67647dcc792` of `beep2bleep/FishingIncremenetal`. Startup selects only `rowdivers` and opens its upgrade screen. PLAY opens `Games/RowDivers/Scenes/RowDiversBattleScene.tscn`; the end screen returns to upgrades. A Row Divers button is also registered in the existing multi-game launcher.
+This checkout uses branch `RailwayFury`, based on GitHub HEAD `041f383a036fdb06c216335010abf67647dcc792` of `beep2bleep/FishingIncremenetal`. Startup uses the main project's `AppBootstrap` and `GameLauncher`, with a single Railway Fury / Row Divers entry. That entry opens the main project's shared `UpgradeScreen.tscn`; PLAY opens `Games/RowDivers/Scenes/RowDiversBattleScene.tscn`, and the end screen returns to the shared upgrade screen.
 
 The module is under `FeedingABlackHoldGame/Games/RowDivers`. Other games' gameplay files are unchanged. Routing is added to `Util.gd`; the existing shared application services remain loaded.
 
 ## Imported design
 
-`Data/row_divers.json` records the reference's 112 upgrade nodes, 114 directed connections, original tree coordinates, descriptions, level caps, parent-level thresholds, currencies, base costs, stat effects and unlock types. It also records 37 nonzero base stats, ability timings, enemy prefab values, spawn groups for all six corridor variants, and 18 achievements with their rewards. The importer uses the local decompiled Unity data; it copies no reference textures, models, music, or sound effects.
+`Data/row_divers.json` records the reference's 112 upgrade nodes, 114 directed connections, original tree coordinates, descriptions, level caps, parent-level thresholds, currencies, base costs, stat effects and unlock types. `RowDiversUpgradeTreeAdapter.gd` presents this data through the main project's upgrade graph, including the original node positions and all parent connections. It also records 37 nonzero base stats, ability timings, enemy prefab values, spawn groups for all six corridor variants, and 18 achievements with their rewards. The importer uses the local decompiled Unity data; it copies no reference textures, models, music, or sound effects.
 
 Regenerate with Python plus PyYAML: `python tools/import_row_divers.py --source "C:\Decompiled\Row Divers\ExportedProject"`.
 

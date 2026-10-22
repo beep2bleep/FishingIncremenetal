@@ -3,22 +3,39 @@ extends RefCounted
 const DATA_PATH = "res://Games/RowDivers/Data/row_divers.json"
 const SAVE_PATH = "user://row_divers_progress_v1.json"
 static var catalog: Dictionary = {}
+static var active_data_cache: Dictionary = {}
 
 static func design() -> Dictionary:
 	if catalog.is_empty():
 		catalog = JSON.parse_string(FileAccess.get_file_as_string(DATA_PATH))
 	return catalog
 
+static func find_upgrade(id: String) -> Dictionary:
+	for entry in design().get("upgrades", []):
+		if str(entry.get("id", "")) == id:
+			return entry
+	return {}
+
 static func fresh() -> Dictionary:
 	return {"levels": {}, "stats": design().base_stats.duplicate(true), "unlocks": {"Bow": true}, "wallet": [0.0, 0.0, 0.0], "spent": [0.0, 0.0, 0.0], "achievements": {}, "claimed": {}, "bestiary": {}, "runs": 0, "best_distance": 0.0, "kills": 0, "prestige": 0, "max_prestige": 0, "crowns_dropped": {}, "controls_seen": false}
 
 static func load_data(path = SAVE_PATH) -> Dictionary:
+	if path == SAVE_PATH and not active_data_cache.is_empty():
+		return active_data_cache
 	if not FileAccess.file_exists(path):
-		return fresh()
+		var initial: Dictionary = fresh()
+		if path == SAVE_PATH:
+			active_data_cache = initial
+		return initial
 	var value = JSON.parse_string(FileAccess.get_file_as_string(path))
-	return fresh().merged(value, true) if value is Dictionary else fresh()
+	var loaded: Dictionary = fresh().merged(value, true) if value is Dictionary else fresh()
+	if path == SAVE_PATH:
+		active_data_cache = loaded
+	return loaded
 
 static func save_data(data: Dictionary, path = SAVE_PATH) -> void:
+	if path == SAVE_PATH:
+		active_data_cache = data
 	var file = FileAccess.open(path + ".tmp", FileAccess.WRITE)
 	if file == null:
 		push_error("Cannot save Row Divers progression: " + error_string(FileAccess.get_open_error()))

@@ -22,7 +22,6 @@ const ACTIVE_GAME_RED_SKY := "redsky"
 const ACTIVE_GAME_TURKEY := "turkey"
 const ACTIVE_GAME_REEL_INTO_DARKNESS := "reelintodarkness"
 const ACTIVE_GAME_ROW_DIVERS := "rowdivers"
-const PATH_ROW_DIVERS_UPGRADES := "res://Games/RowDivers/Scenes/RowDiversUpgrades.tscn"
 const PATH_ROW_DIVERS_BATTLE := "res://Games/RowDivers/Scenes/RowDiversBattleScene.tscn"
 const HIGH_LEVEL_MODE_ALL := "all"
 
@@ -130,14 +129,14 @@ func get_game_hub_scene_path() -> String:
 
 func get_direct_launch_scene_path() -> String:
     if is_row_divers_game_active():
-        return PATH_ROW_DIVERS_UPGRADES
+        return get_upgrade_scene_path()
     if is_mining_game_active() or is_open_pit_game_active() or is_open_pit_orbit_game_active() or is_red_sky_game_active() or is_turkey_game_active() or is_reel_into_darkness_game_active():
         return get_upgrade_scene_path()
     return get_main_scene_path()
 
 func get_main_scene_path() -> String:
     if is_row_divers_game_active():
-        return PATH_ROW_DIVERS_UPGRADES
+        return get_upgrade_scene_path()
     if is_mining_game_active():
         return PATH_MINING_MAIN
     if is_open_pit_game_active():
@@ -154,7 +153,7 @@ func get_main_scene_path() -> String:
 
 func get_main_menu_scene_path() -> String:
     if is_row_divers_game_active():
-        return PATH_ROW_DIVERS_UPGRADES
+        return get_upgrade_scene_path()
     if is_mining_game_active():
         return PATH_MINING_MAIN_MENU
     if is_open_pit_game_active():
@@ -170,8 +169,6 @@ func get_main_menu_scene_path() -> String:
     return PATH_VANGUARD_MAIN_MENU
 
 func get_upgrade_scene_path() -> String:
-    if is_row_divers_game_active():
-        return PATH_ROW_DIVERS_UPGRADES
     return PATH_FISHING_UPGRADES
 
 func get_battle_scene_path() -> String:

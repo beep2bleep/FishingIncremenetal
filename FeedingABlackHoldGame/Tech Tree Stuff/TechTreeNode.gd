@@ -10,12 +10,13 @@ const MOUSE_TOOLTIP_EXTRA_OFFSET: float = 18.0
 const TOOLTIP_GROUP: StringName = &"tech_tree_tooltips"
 const MINING_PROGRESS_SCRIPT = preload("res://Games/Mining/MiningProgress.gd")
 const OPEN_PIT_PROGRESS_SCRIPT = preload("res://Games/OpenPitEmpire/OpenPitEmpireProgress.gd")
-var OPEN_PIT_ORBIT_PROGRESS_SCRIPT = load("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd")
+var OPEN_PIT_ORBIT_PROGRESS_SCRIPT = load("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd") if ResourceLoader.exists("res://Games/OpenPitOrbit/OpenPitOrbitProgress.gd") else null
 const RED_SKY_PROGRESS_SCRIPT = preload("res://Games/RedSkyDefense/RedSkyProgress.gd")
 const TURKEY_PROGRESS_SCRIPT = preload("res://Games/Turkey/TurkeyProgress.gd")
 var REEL_INTO_DARKNESS_PROGRESS_SCRIPT = load("res://Games/ReelIntoDarkness/ReelIntoDarknessProgress.gd")
 const RED_SKY_ICON_FACTORY = preload("res://Games/RedSkyDefense/RedSkyIconFactory.gd")
 const CROSS_GAME_BONUSES := preload("res://CrossGameBonuses.gd")
+const ROW_DIVERS_PROGRESS := preload("res://Games/RowDivers/RowDiversProgress.gd")
 static var _icon_texture_cache: Dictionary = {}
 static var _active_tooltip_node: TechTreeNode = null
 
@@ -397,7 +398,14 @@ func _purchase_upgrade() -> void:
             update()
             return
     else:
-        if _is_open_pit_core_upgrade() or _is_open_pit_xp_upgrade():
+        if Util.is_row_divers_game_active():
+            var row_progress: Dictionary = ROW_DIVERS_PROGRESS.load_data()
+            var row_upgrade: Dictionary = ROW_DIVERS_PROGRESS.find_upgrade(upgrade.sim_key)
+            if row_upgrade.is_empty() or not ROW_DIVERS_PROGRESS.buy(row_progress, row_upgrade):
+                update()
+                return
+            ROW_DIVERS_PROGRESS.save_data(row_progress)
+        elif _is_open_pit_core_upgrade() or _is_open_pit_xp_upgrade():
             var core_purchase_level: int = max(1, int(upgrade.sim_level) + int(upgrade.current_tier))
             if Util.is_open_pit_game_active():
                 OPEN_PIT_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, core_purchase_level, _get_tree_currency_amount() - int(cost))
@@ -432,7 +440,9 @@ func _purchase_upgrade() -> void:
             return
         var new_amount: int = _get_tree_currency_amount()
         var target_level: int = int(upgrade.sim_level) + int(upgrade.current_tier) - 1
-        if Util.is_mining_game_active():
+        if Util.is_row_divers_game_active():
+            pass # Row Divers progression was saved through its source upgrade catalog above.
+        elif Util.is_mining_game_active():
             MINING_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
         elif Util.is_open_pit_game_active():
             OPEN_PIT_PROGRESS_SCRIPT.apply_tree_purchase(upgrade.sim_key, max(1, target_level), new_amount)
@@ -637,8 +647,14 @@ func update():
 
 
     cost = upgrade.get_cost()
+    if Util.is_row_divers_game_active():
+        var row_upgrade: Dictionary = ROW_DIVERS_PROGRESS.find_upgrade(upgrade.sim_key)
+        if not row_upgrade.is_empty():
+            cost = ROW_DIVERS_PROGRESS.cost(ROW_DIVERS_PROGRESS.load_data(), row_upgrade)
     %Cost.visible = cost != 0
-    if upgrade != null and CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
+    if Util.is_row_divers_game_active():
+        %Cost.text = "%s %s" % [["●", "◆", "♛"][clampi(upgrade.sim_currency, 0, 2)], Util.get_number_short_text(cost)]
+    elif upgrade != null and CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
         %Cost.text = CROSS_GAME_BONUSES.get_cost_text(int(cost))
     elif _is_open_pit_xp_upgrade():
         %Cost.text = str("XP ", Util.get_number_short_text(cost))
@@ -725,7 +741,11 @@ func _refresh_tooltip_visibility() -> void:
 
 func update_can_pay_cost():
     var check = true
-    if upgrade != null and CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
+    if Util.is_row_divers_game_active():
+        var row_progress: Dictionary = ROW_DIVERS_PROGRESS.load_data()
+        var row_upgrade: Dictionary = ROW_DIVERS_PROGRESS.find_upgrade(upgrade.sim_key)
+        check = not row_upgrade.is_empty() and ROW_DIVERS_PROGRESS.can_buy(row_progress, row_upgrade)
+    elif upgrade != null and CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
         var target_game_id: String = CROSS_GAME_BONUSES.get_target_from_cross_bonus_key(upgrade.sim_key)
         check = CROSS_GAME_BONUSES.can_afford_target_bonus(target_game_id, upgrade.current_tier)
     elif cost > _get_tree_currency_amount():
@@ -744,6 +764,9 @@ func _get_theme_dark_color() -> Color:
     return Refs.pallet.act_1_dark
 
 func _get_tree_currency_amount() -> int:
+    if Util.is_row_divers_game_active():
+        var row_progress: Dictionary = ROW_DIVERS_PROGRESS.load_data()
+        return int(row_progress.wallet[clampi(upgrade.sim_currency, 0, 2)])
     if _is_open_pit_xp_upgrade():
         return OPEN_PIT_PROGRESS_SCRIPT.get_xp_wallet() if Util.is_open_pit_game_active() else OPEN_PIT_ORBIT_PROGRESS_SCRIPT.get_xp_wallet()
     if _is_open_pit_core_upgrade():

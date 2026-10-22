@@ -211,11 +211,13 @@ func setup():
 
 
     for upgrade: Upgrade in Global.game_mode_data_manager.upgrades.values():
-        if upgrade.forced_cell != null:
-            if forced_connections_to_from.has(upgrade.forced_cell) == false:
-                forced_connections_to_from[upgrade.forced_cell] = []
-
-            forced_connections_to_from[upgrade.forced_cell].append(upgrade.cell)
+        var connection_cells: Array[Vector2] = upgrade.sim_connections.duplicate()
+        if connection_cells.is_empty() and upgrade.forced_cell != null:
+            connection_cells.append(upgrade.forced_cell)
+        for connection_cell in connection_cells:
+            if not forced_connections_to_from.has(connection_cell):
+                forced_connections_to_from[connection_cell] = []
+            forced_connections_to_from[connection_cell].append(upgrade.cell)
 
 
     if _is_simulation_upgrade_tree():
@@ -239,6 +241,7 @@ func setup():
 
 
 func update_connected_nodes_available(from_cell: Vector2):
+    var parent_node: TechTreeNode = node_dict.get(from_cell) as TechTreeNode
     for connected_cell in get_all_connected_cells(from_cell):
         var node: TechTreeNode
         if node_dict.has(connected_cell) == false:
@@ -246,6 +249,9 @@ func update_connected_nodes_available(from_cell: Vector2):
         else:
             node = node_dict[connected_cell]
 
+        var threshold: int = int(node.upgrade.sim_parent_thresholds.get(from_cell, 1)) if node != null and node.upgrade != null else 1
+        if parent_node != null and parent_node.upgrade != null and parent_node.upgrade.current_tier < threshold:
+            continue
         if node != null and (node.state == TechTreeNode.STATES.LOCKED or node.state == TechTreeNode.STATES.SHADOW):
             node.state = TechTreeNode.STATES.AVAILABLE
 
@@ -289,7 +295,7 @@ func create_new_tech_tree_node(cell) -> TechTreeNode:
         var node: TechTreeNode = Refs.packed_tech_tree_node.instantiate()
         %"Tech Nodes".add_child(node)
         node.setup(upgrade, self)
-        node.position = cell_spacing * upgrade.cell
+        node.position = upgrade.sim_position if Util.is_row_divers_game_active() else cell_spacing * upgrade.cell
         node_dict[upgrade.cell] = node
         node.state_changed.connect(_on_node_state_changed)
 
@@ -354,11 +360,11 @@ func setup_nodes_from_data():
         var node: TechTreeNode = Refs.packed_tech_tree_node.instantiate()
         %"Tech Nodes".add_child(node)
         node.setup(upgrade, self)
-        node.position = cell_spacing * upgrade.cell
+        node.position = upgrade.sim_position if Util.is_row_divers_game_active() else cell_spacing * upgrade.cell
         node_dict[upgrade.cell] = node
         node.state_changed.connect(_on_node_state_changed)
 
-        if upgrade.forced_cell != null:
+        if not upgrade.sim_connections.is_empty() or upgrade.forced_cell != null:
             node_with_forced_connections.append(node)
 
         if use_grid_adjacency:
@@ -375,11 +381,16 @@ func setup_nodes_from_data():
     selected_node = center_node
 
     for node: TechTreeNode in node_with_forced_connections:
-        if node_dict.has(node.upgrade.forced_cell):
+        var connection_cells: Array[Vector2] = node.upgrade.sim_connections.duplicate()
+        if connection_cells.is_empty() and node.upgrade.forced_cell != null:
+            connection_cells.append(node.upgrade.forced_cell)
+        for connection_cell in connection_cells:
+            if not node_dict.has(connection_cell):
+                continue
             var new_line: TechTreeLine = Refs.packed_tech_tree_line.instantiate()
 
             new_line.from_node = node
-            new_line.to_node = node_dict[node.upgrade.forced_cell]
+            new_line.to_node = node_dict[connection_cell]
 
             %"Tech Lines".add_child(new_line)
 
@@ -436,11 +447,11 @@ func _process_batched_build() -> void:
                 var node: TechTreeNode = Refs.packed_tech_tree_node.instantiate()
                 %"Tech Nodes".add_child(node)
                 node.setup(upgrade, self)
-                node.position = cell_spacing * upgrade.cell
+                node.position = upgrade.sim_position if Util.is_row_divers_game_active() else cell_spacing * upgrade.cell
                 node_dict[upgrade.cell] = node
                 node.state_changed.connect(_on_node_state_changed)
                 _batched_line_cells.append(upgrade.cell)
-                if upgrade.forced_cell != null:
+                if upgrade.forced_cell != null or not upgrade.sim_connections.is_empty():
                     _batched_forced_nodes.append(node)
             if _batched_upgrade_queue.is_empty():
                 _capture_open_pit_profile_stage("nodes")
@@ -463,8 +474,14 @@ func _process_batched_build() -> void:
             var forced_count: int = min(BUILD_BATCH_SIZE, _batched_forced_nodes.size())
             for i in range(forced_count):
                 var node: TechTreeNode = _batched_forced_nodes.pop_back()
-                if node.upgrade != null and node_dict.has(node.upgrade.forced_cell):
-                    _add_line_between(node, node_dict[node.upgrade.forced_cell])
+                if node.upgrade == null:
+                    continue
+                var connection_cells: Array[Vector2] = node.upgrade.sim_connections.duplicate()
+                if connection_cells.is_empty() and node.upgrade.forced_cell != null:
+                    connection_cells.append(node.upgrade.forced_cell)
+                for connection_cell in connection_cells:
+                    if node_dict.has(connection_cell):
+                        _add_line_between(node, node_dict[connection_cell])
             if _batched_forced_nodes.is_empty():
                 _capture_open_pit_profile_stage("forced_lines")
                 _finish_batched_build()

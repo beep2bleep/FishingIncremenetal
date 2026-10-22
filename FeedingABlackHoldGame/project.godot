@@ -84,8 +84,8 @@ DemoWishlistUrl="https://store.steampowered.com/app/4637560/BleepWare_Incrementa
 ShowAllModesInBuild=false
 DataBreachIncMode=false
 ActiveGame="rowdivers"
-HighLevelMode="rowdivers"
-StartScreen="upgrade"
+HighLevelMode="all"
+StartScreen="menu"
 mining_demo_max_group=3
 red_sky_demo_max_meta_step=3
 

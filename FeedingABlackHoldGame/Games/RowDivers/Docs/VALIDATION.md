@@ -3,9 +3,10 @@
 ## Automated checks
 
 - `Tools/ValidateRowDivers.gd`: **1,676 assertions passed**, including 112 nodes, 114 edges, noncollapsed coordinates, fresh-save visibility, 330 legal purchases, all nodes reachable and maxed, costs, caps, unlock/stat exclusivity and every stat effect.
-- `Tools/SmokeRowDivers.gd`: **15 assertions passed**, covering automatic forward movement, Shift toggle and multiplier, two-second health drain, running damage, projectile damage, firing cooldown, ability duration/cooldown, armor reduction, pause and idempotent run completion. These fixtures disable result persistence.
-- Godot 4.6 loaded the upgrade and battle scenes without Row Divers script errors.
-- `Tools/PreviewRowDivers.gd` rendered and visually inspected fresh upgrades, the complete tree and first-person gameplay. Images are in `Previews/`.
+- `Tools/SmokeRowDivers.gd`: **22 assertions passed**, covering gameplay movement/combat, shared `UpgradeScreen.tscn` loading all 112 source upgrades and 114 source connections, root unlock visibility, Row Divers wallet presentation, PLAY routing label, and a saved upgrade purchase. The purchase fixture backs up and restores its save.
+- `Tools/ValidateRowDivers.gd`: **1,676 assertions passed**, including legal upgrade purchases and every imported effect.
+- Godot 4.6 loaded the main launcher, shared upgrade screen and battle scene without Row Divers script errors.
+- `Tools/PreviewRowDivers.gd` rendered fresh upgrades, the complete shared tree and first-person gameplay. Images are in `Previews/`.
 
 Run checks from the repository root:
 

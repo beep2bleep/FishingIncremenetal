@@ -21,6 +21,10 @@ var sim_icon: String = ""
 var sim_group: int = 0
 var sim_level: int = 1
 var sim_group_pos: int = 1
+var sim_position: Vector2 = Vector2.ZERO
+var sim_connections: Array[Vector2] = []
+var sim_parent_thresholds: Dictionary = {}
+var sim_currency: int = 0
 
 var type: Util.NODE_TYPES = Util.NODE_TYPES.NORMAL
 

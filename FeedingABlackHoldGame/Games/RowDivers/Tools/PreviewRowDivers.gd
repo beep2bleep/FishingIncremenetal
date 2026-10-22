@@ -1,5 +1,5 @@
 extends SceneTree
-## Render engine-owned viewports for layout QA; does not read or change reference saves.
+## Render the main project's shared upgrade screen and Row Divers battle scene without changing the save.
 const Progress = preload("res://Games/RowDivers/RowDiversProgress.gd")
 
 func _initialize() -> void:
@@ -8,34 +8,37 @@ func _initialize() -> void:
 func run() -> void:
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	DisplayServer.window_set_size(Vector2i(1280, 800))
-	DisplayServer.window_set_position(Vector2i.ZERO)
-	var directory = "res://Games/RowDivers/Docs/Previews"
+	var util = root.get_node("Util")
+	var global_state = root.get_node("Global")
+	util.set_active_game_id("rowdivers")
+	global_state.current_game_mode_data = null
+	global_state.ensure_default_game_mode_data()
+	global_state.new_game()
+	global_state.start_in_upgrade_scene = true
+	Progress.active_data_cache = Progress.fresh()
+	var directory := "res://Games/RowDivers/Docs/Previews"
 	DirAccess.make_dir_recursive_absolute(directory)
-	var upgrades = load("res://Games/RowDivers/Scenes/RowDiversUpgrades.tscn").instantiate()
+	var upgrades: Node = load("res://UpgradeScreen.tscn").instantiate()
 	root.add_child(upgrades)
 	current_scene = upgrades
-	upgrades.data = Progress.fresh()
-	upgrades._refresh()
-	await process_frame
-	await process_frame
+	upgrades.setup()
+	upgrades.show_screen()
+	for _frame in range(18):
+		await process_frame
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png(directory + "/upgrades-fresh.png")
-	upgrades.data.wallet = [1e30, 1e30, 1e30]
-	var buying = true
-	while buying:
-		buying = false
-		for node in Progress.design().upgrades:
-			if Progress.buy(upgrades.data, node): buying = true
-	upgrades.zoom = 0.32
-	upgrades.pan = Vector2(620, 280)
-	upgrades._update_transform()
-	upgrades._refresh()
+	var tech_tree: Node = upgrades.get_node("CanvasLayer/Tech Tree")
+	for upgrade in global_state.game_mode_data_manager.upgrades.values():
+		upgrade.current_tier = upgrade.max_tier
+	for node in tech_tree.node_dict.values():
+		node.update()
+	tech_tree._refresh_states_after_full_build()
 	await process_frame
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png(directory + "/upgrades-complete.png")
 	root.remove_child(upgrades)
-	upgrades.queue_free()
-	var battle = load("res://Games/RowDivers/Scenes/RowDiversBattleScene.tscn").instantiate()
+	upgrades.free()
+	var battle: Node = load("res://Games/RowDivers/Scenes/RowDiversBattleScene.tscn").instantiate()
 	battle.persist_results = false
 	root.add_child(battle)
 	current_scene = battle
@@ -43,9 +46,10 @@ func run() -> void:
 	battle.data = Progress.fresh()
 	battle.overlay.hide()
 	battle.suspended = false
-	for i in range(100): battle._physics_process(1.0 / 60.0)
+	for _frame in range(100):
+		battle._physics_process(1.0 / 60.0)
 	await process_frame
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png(directory + "/gameplay.png")
-	print("ROW DIVERS PREVIEWS RENDERED")
+	print("ROW DIVERS PREVIEWS RENDERED USING THE SHARED UPGRADE SCREEN")
 	quit()
