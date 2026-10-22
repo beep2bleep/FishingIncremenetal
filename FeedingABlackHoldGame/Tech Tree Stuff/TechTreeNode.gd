@@ -325,6 +325,8 @@ func setup(upgarde: Upgrade, _tech_tree: TechTree):
     is_setup = true
     upgrade = upgarde
     tech_tree = _tech_tree
+    if Util.is_row_divers_game_active():
+        preload("res://Games/RowDivers/RowDiversStyle.gd").apply_fonts(self)
 
     if upgrade != null:
         cell = upgrade.cell
@@ -364,6 +366,11 @@ func update_colors():
 
 
 func _on_click_mask_pressed() -> void :
+    if Util.is_row_divers_game_active() and state == STATES.AVAILABLE and not can_pay_cost:
+        var screen := _get_active_upgrade_screen()
+        if screen != null:
+            screen.show_row_divers_feedback("Not enough %s" % ["gold", "gems", "crowns"][clampi(upgrade.sim_currency, 0, 2)])
+        return
     if state == STATES.AVAILABLE and can_pay_cost == true:
         if SaveHandler.confirm_upgrade_purchase:
             is_highlighted = true

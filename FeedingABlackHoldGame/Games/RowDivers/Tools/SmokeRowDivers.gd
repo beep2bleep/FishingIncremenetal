@@ -96,6 +96,7 @@ func run() -> void:
 	var root_upgrade = global_state.game_mode_data_manager.upgrades.values().filter(func(upgrade): return upgrade.sim_key == str(root_entry.id))[0]
 	check(root_upgrade.sim_name == "Arrow Damage I" and root_upgrade.sim_position == Vector2(float(root_entry.position[0]), -float(root_entry.position[1])) * 20.0, "Shared tree retains source root and Unity layout position")
 	check(int(tree.node_dict[root_upgrade.cell].state) == 1, "Fresh Row Divers root is available")
+	check(tree.node_dict[root_upgrade.cell].get_global_transform_with_canvas().origin.distance_to(tree.get_viewport_rect().size * 0.5) < 12, "Fresh upgrade is centered inside the visible viewport")
 	var purchase_fixture: Dictionary = Progress.fresh()
 	purchase_fixture.wallet[0] = 1000.0
 	Progress.save_data(purchase_fixture)

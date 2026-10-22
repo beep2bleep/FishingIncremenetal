@@ -6,6 +6,8 @@ This checkout uses branch `RailwayFury`, based on GitHub HEAD `041f383a036fdb06c
 
 The module is under `FeedingABlackHoldGame/Games/RowDivers`. Other games' gameplay files are unchanged. Routing is added to `Util.gd`; the existing shared application services remain loaded.
 
+The polish pass uses selected Synty Dark Fantasy character and weapon meshes, with looping skeletal idle animations, weapon recoil, damage/loot feedback, boss bars and ability cooldown cards. Start, settings and upgrades reuse the main project's scenes. The pause screen embeds the same `Settings.tscn`, including volume, display and text-size controls. A four-page tutorial appears on the first dive and can be reopened through HOW TO PLAY.
+
 ## Imported design
 
 `Data/row_divers.json` records the reference's 112 upgrade nodes, 114 directed connections, original tree coordinates, descriptions, level caps, parent-level thresholds, currencies, base costs, stat effects and unlock types. `RowDiversUpgradeTreeAdapter.gd` presents this data through the main project's upgrade graph, including the original node positions and all parent connections. It also records 37 nonzero base stats, ability timings, enemy prefab values, spawn groups for all six corridor variants, and 18 achievements with their rewards. The importer uses the local decompiled Unity data; it copies no reference textures, models, music, or sound effects.
@@ -25,6 +27,8 @@ Upgrade prices use `ceil(base * 1.2^level)` after the initial base-price purchas
 - Right-drag pans the upgrade tree; mouse wheel zooms. Hover inspects; click buys an affordable upgrade.
 
 The save is `%APPDATA%\RailwayFury\row_divers_progress_v1.json`. Test fixtures do not write gameplay progress. The reference save was backed up before resetting: `%USERPROFILE%\AppData\LocalLow\Hermurx\RowDivers\savefile.before-railwayfury-20261021.json` and `savefile.reset-backup-20261021.json`. Settings were preserved.
+
+After clearing Prestige 3 and maxing at least 100 upgrade nodes, YOUR FINAL CHOICE appears in the shared upgrade screen. It opens two original endings with the reference's Benevolent God / Evil God achievement states. A crown is still awarded only once per prestige. Upgrade purchase order affects final stats, matching the reference's compounding percentages.
 
 ## Assets and verification
 

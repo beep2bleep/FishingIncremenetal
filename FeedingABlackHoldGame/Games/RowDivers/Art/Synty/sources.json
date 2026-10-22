@@ -1,0 +1,145 @@
+{
+  "archive": "C:\\Game Assets\\Synty Pass\\Godot\\POLYGON - Dark Fantasy\\POLYGON_Dark_Fantasy_Godot_4_6_2_v1_0_0.zip",
+  "assets": [
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Textures/Alts/PolygonDarkFantasy_01_A.png",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Textures/Alts/PolygonDarkFantasy_01_A.png",
+      "bytes": 2029473
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Textures/Emissive/PolygonDarkFantasy_01_A_Emissive.png",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Textures/Emissive/PolygonDarkFantasy_01_A_Emissive.png",
+      "bytes": 186463
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Textures/Misc/PolygonDarkFantasy_01_Normals.png",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Textures/Misc/PolygonDarkFantasy_01_Normals.png",
+      "bytes": 1052870
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Materials/Alts/PolygonDarkFantasy_01_A_mat.tres",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Materials/Alts/PolygonDarkFantasy_01_A_mat.tres",
+      "bytes": 789
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Chr_Skeleton_01.mesh",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Chr_Skeleton_01.mesh",
+      "bytes": 545552
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Prefabs/Characters/SM_Chr_Skeleton_01.tscn",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Prefabs/Characters/SM_Chr_Skeleton_01.tscn",
+      "bytes": 32574
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Chr_Skeleton_HeavyArmor_01.mesh",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Chr_Skeleton_HeavyArmor_01.mesh",
+      "bytes": 1008311
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Prefabs/Characters/SM_Chr_Skeleton_HeavyArmor_01.tscn",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Prefabs/Characters/SM_Chr_Skeleton_HeavyArmor_01.tscn",
+      "bytes": 32609
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Chr_Skeleton_Flesh_01.mesh",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Chr_Skeleton_Flesh_01.mesh",
+      "bytes": 672378
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Prefabs/Characters/SM_Chr_Skeleton_Flesh_01.tscn",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Prefabs/Characters/SM_Chr_Skeleton_Flesh_01.tscn",
+      "bytes": 32592
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Chr_Attach_Hood_Skeleton_Ranger_01.mesh",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Chr_Attach_Hood_Skeleton_Ranger_01.mesh",
+      "bytes": 97294
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Chr_Skeleton_Ranger_01.mesh",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Chr_Skeleton_Ranger_01.mesh",
+      "bytes": 881255
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Prefabs/Characters/SM_Chr_Skeleton_Ranger_01.tscn",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Prefabs/Characters/SM_Chr_Skeleton_Ranger_01.tscn",
+      "bytes": 35456
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Chr_PlagueDoctor_01.mesh",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Chr_PlagueDoctor_01.mesh",
+      "bytes": 438403
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Prefabs/Characters/SM_Chr_PlagueDoctor_01.tscn",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Prefabs/Characters/SM_Chr_PlagueDoctor_01.tscn",
+      "bytes": 32589
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Chr_Attach_Priest_Veil_01.mesh",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Chr_Attach_Priest_Veil_01.mesh",
+      "bytes": 82473
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Chr_Priest_Female_01.mesh",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Chr_Priest_Female_01.mesh",
+      "bytes": 367377
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Prefabs/Characters/SM_Chr_Priest_Female_01.tscn",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Prefabs/Characters/SM_Chr_Priest_Female_01.tscn",
+      "bytes": 36429
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Chr_DarkLord_Male_01.mesh",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Chr_DarkLord_Male_01.mesh",
+      "bytes": 853508
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Prefabs/Characters/SM_Chr_DarkLord_Male_01.tscn",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Prefabs/Characters/SM_Chr_DarkLord_Male_01.tscn",
+      "bytes": 32589
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Wep_Crossbow_01.res",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Wep_Crossbow_01.res",
+      "bytes": 102527
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Prefabs/Weapons/SM_Wep_Crossbow_01.tscn",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Prefabs/Weapons/SM_Wep_Crossbow_01.tscn",
+      "bytes": 1380
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Wep_Crossbow_01_Arrow_01.res",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Wep_Crossbow_01_Arrow_01.res",
+      "bytes": 23899
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Prefabs/Weapons/SM_Wep_Crossbow_01_Arrow_01.tscn",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Prefabs/Weapons/SM_Wep_Crossbow_01_Arrow_01.tscn",
+      "bytes": 1421
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Wep_Sword_01.res",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Wep_Sword_01.res",
+      "bytes": 88519
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Prefabs/Weapons/SM_Wep_Sword_01.tscn",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Prefabs/Weapons/SM_Wep_Sword_01.tscn",
+      "bytes": 1382
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Models/extracted/SM_Wep_Sword_02.res",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Models/extracted/SM_Wep_Sword_02.res",
+      "bytes": 36323
+    },
+    {
+      "path": "res://Games/RowDivers/Art/Synty/Prefabs/Weapons/SM_Wep_Sword_02.tscn",
+      "source_entry": "polygon-dark-fantasy-01/Assets/Synty/PolygonDarkFantasy/Prefabs/Weapons/SM_Wep_Sword_02.tscn",
+      "bytes": 1379
+    }
+  ]
+}

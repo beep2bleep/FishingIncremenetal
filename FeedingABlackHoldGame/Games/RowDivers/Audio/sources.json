@@ -38,5 +38,10 @@
     "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2024 - Game Audio Bundle\\Doex Studio - Qantum UI\\UI_Noisy_Impact_09.wav",
     "output": "ability.wav",
     "processing": "PCM16 normalized to 0.7; full music, effects limited to 2 seconds"
+  },
+  "step": {
+    "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2016- Game Audio Bundle\\Levan Nadashvili - Soldier Footsteps\\FS Concrete Soldier Crouch N05.wav",
+    "output": "step.wav",
+    "processing": "Original stereo PCM24 96 kHz, 0.8 seconds; runtime -24 dB with randomized pitch"
   }
 }

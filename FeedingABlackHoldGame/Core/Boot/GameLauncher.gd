@@ -117,6 +117,11 @@ func _ready() -> void:
     _setup_background_fx()
     _setup_game_cards()
     _setup_row_divers_button()
+    if Util.is_row_divers_game_active():
+        MusicPlayer.stop()
+        var row_audio = preload("res://Games/RowDivers/RowDiversAudio.gd").new()
+        add_child(row_audio)
+        row_audio.play_music(false)
     _setup_settings_panel()
     _setup_reset_all_meta_progress_controls()
     _setup_language_panel()
@@ -166,6 +171,10 @@ func _initial_game_card_layout_after_ready() -> void:
     await get_tree().process_frame
     await get_tree().process_frame
     _queue_fit_game_cards()
+    if Util.is_row_divers_game_active():
+        preload("res://Games/RowDivers/RowDiversStyle.gd").apply_fonts(self)
+        if title_label != null:
+            title_label.add_theme_font_override("font", preload("res://Theme/Exo2-Bold.ttf"))
 
 func _on_viewport_size_changed() -> void:
     _layout_background_fx()
@@ -877,7 +886,7 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
 
     var card_def: Dictionary = _get_game_card_definition(game_id)
     button.text = ""
-    button.tooltip_text = tr(str(card_def.get("title", game_id)))
+    button.tooltip_text = "" if game_id == Util.ACTIVE_GAME_ROW_DIVERS else tr(str(card_def.get("title", game_id)))
     button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     button.focus_mode = Control.FOCUS_ALL
     button.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -1462,6 +1471,13 @@ func _get_game_card_texture(game_id: String) -> Texture2D:
         return game_card_texture_cache[game_id] as Texture2D
     var card_def: Dictionary = _get_game_card_definition(game_id)
     var texture := _load_external_asset_texture(str(card_def.get("asset_rel_path", "")))
+    if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
+        var row_art := "res://Games/RowDivers/Art/RailwayFuryTitle.png"
+        if ResourceLoader.exists(row_art):
+            texture = load(row_art) as Texture2D
+        elif FileAccess.file_exists(row_art):
+            var image := Image.load_from_file(row_art)
+            if image != null: texture = ImageTexture.create_from_image(image)
     if texture == null:
         texture = _build_fallback_game_card_texture(game_id)
     game_card_texture_cache[game_id] = texture

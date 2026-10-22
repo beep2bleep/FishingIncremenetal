@@ -126,6 +126,8 @@ var go_again_button: Button
 var demo_mode_label: Label
 var game_mode_label: Label
 var row_divers_wallet_label: Label
+var row_divers_ending_button: Button
+var row_divers_purchase_feedback: Label
 var row_divers_prestige: OptionButton
 var row_divers_achievements_button: Button
 var row_divers_bestiary_button: Button
@@ -370,6 +372,8 @@ func _ready() -> void :
     _print_open_pit_startup("ready_end", Time.get_ticks_msec() - _open_pit_startup_ready_started_msec)
 
 func _setup_leaderboard_panel_after_tree_start() -> void:
+    if Util.is_row_divers_game_active():
+        return
     await get_tree().process_frame
     _setup_leaderboard_panel()
 
@@ -643,6 +647,8 @@ func _refresh_bottom_wallet_display() -> void:
         row_divers_wallet_label.text = "● %s     ◆ %s     ♛ %s" % [str(int(row_progress.wallet[0])), str(int(row_progress.wallet[1])), str(int(row_progress.wallet[2]))]
         row_divers_achievements_button.visible = bool(row_progress.unlocks.get("AchievementsTab", false))
         row_divers_bestiary_button.visible = bool(row_progress.unlocks.get("BestiaryTab", false))
+        if row_divers_ending_button != null:
+            row_divers_ending_button.visible = bool(row_progress.unlocks.get("GodTab", false))
         if row_divers_prestige.item_count != int(row_progress.max_prestige) + 1:
             row_divers_prestige.clear()
             for prestige_level in range(int(row_progress.max_prestige) + 1):
@@ -684,6 +690,21 @@ func _setup_row_divers_wallet_display() -> void:
     row_divers_bestiary_button.custom_minimum_size = Vector2(210.0, 44.0)
     row_divers_bestiary_button.pressed.connect(_show_row_divers_bestiary)
     layer.add_child(row_divers_bestiary_button)
+    var row_style = preload("res://Games/RowDivers/RowDiversStyle.gd")
+    MusicPlayer.stop()
+    var row_audio = preload("res://Games/RowDivers/RowDiversAudio.gd").new()
+    add_child(row_audio)
+    row_audio.play_music(false)
+    row_divers_ending_button = Button.new()
+    row_divers_ending_button.text = "YOUR FINAL CHOICE"
+    row_divers_ending_button.position = Vector2(28.0, 328.0)
+    row_divers_ending_button.custom_minimum_size = Vector2(210.0, 48.0)
+    row_style.style_button(row_divers_ending_button)
+    row_divers_ending_button.pressed.connect(func(): SceneChanger.change_to_new_scene("res://Games/RowDivers/Scenes/RowDiversEnding.tscn", null, 0.2))
+    layer.add_child(row_divers_ending_button)
+    row_divers_purchase_feedback = row_style.label("", 20, true)
+    row_divers_purchase_feedback.position = Vector2(280.0, 80.0)
+    layer.add_child(row_divers_purchase_feedback)
     row_divers_collection_panel = PanelContainer.new()
     row_divers_collection_panel.name = "RowDiversCollection"
     row_divers_collection_panel.set_anchors_preset(Control.PRESET_CENTER)
@@ -695,6 +716,7 @@ func _setup_row_divers_wallet_display() -> void:
     if shared_money_ui != null:
         shared_money_ui.hide()
     _refresh_bottom_wallet_display()
+    row_style.apply_fonts(self)
 
 func _on_row_divers_prestige_selected(index: int) -> void:
     var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
@@ -733,7 +755,7 @@ func _show_row_divers_achievements() -> void:
         var key: String = str(ROW_DIVERS_PROGRESS_SCRIPT.design().enums.AchievementType[str(int(achievement.achievementType))])
         var row := Button.new()
         row.custom_minimum_size.y = 82.0
-        row.text = "%s — %s\nReward: %s %s  •  %s" % [achievement.achievementName, achievement.description, str(achievement.reward), ["Gold", "Gems", "Crowns"][int(achievement.currencyType)], "Claimed" if row_progress.claimed.get(key, false) else ("CLAIM" if row_progress.achievements.get(key, false) else "Locked")]
+        row.text = "%s — %s\nReward: %s %s  •  %s" % [achievement.achievementName, achievement.description, str(achievement.reward), ["Gold", "Gems", "Crowns", ""][clampi(int(achievement.currencyType), 0, 3)], "Claimed" if row_progress.claimed.get(key, false) else ("CLAIM" if row_progress.achievements.get(key, false) else "Locked")]
         row.disabled = not row_progress.achievements.get(key, false) or row_progress.claimed.get(key, false)
         row.pressed.connect(_claim_row_divers_achievement.bind(achievement))
         rows.append(row)
@@ -898,6 +920,8 @@ var nodes_unlocked_this_session = 0
 
 func on_node_unlocked(node: TechTreeNode):
     _refresh_bottom_wallet_display()
+    if Util.is_row_divers_game_active() and row_divers_purchase_feedback != null:
+        show_row_divers_feedback("%s  ·  %d / %d" % [node.upgrade.sim_name, node.upgrade.current_tier, node.upgrade.max_tier])
     if Global.game_state == Util.GAME_STATES.UPGRADES:
 
         match nodes_unlocked_this_session:
@@ -926,6 +950,12 @@ func on_node_unlocked(node: TechTreeNode):
 
     check_upgrade_tree_achivements()
     _update_go_again_button_state()
+
+func show_row_divers_feedback(message: String) -> void:
+    if row_divers_purchase_feedback == null: return
+    row_divers_purchase_feedback.text = message
+    row_divers_purchase_feedback.modulate.a = 1.0
+    create_tween().tween_property(row_divers_purchase_feedback, "modulate:a", 0.0, 2.0).set_delay(1.0)
 
 
 func update_input(input_type):
@@ -2387,6 +2417,8 @@ func _find_battle_level_choice_control_at_cursor(root: Control, screen_position:
     return null
 
 func _setup_editor_cash_controls() -> void:
+    if Util.is_row_divers_game_active():
+        return
     if not OS.has_feature("editor"):
         return
     if editor_cash_controls != null and is_instance_valid(editor_cash_controls):
@@ -2460,6 +2492,8 @@ func _setup_editor_cash_controls() -> void:
     _refresh_editor_regenerate_planet_button()
 
 func _setup_editor_mode_jump_controls() -> void:
+    if Util.is_row_divers_game_active():
+        return
     if editor_mode_jump_controls != null and is_instance_valid(editor_mode_jump_controls):
         _refresh_editor_mode_jump_buttons()
         return
@@ -2543,6 +2577,8 @@ func _has_countermeasure_direct_access_unlocked() -> bool:
     return "countermeasure_suite" in purchased
 
 func _setup_editor_sell_popup_menu() -> void:
+    if Util.is_row_divers_game_active():
+        return
     if not OS.has_feature("editor"):
         return
     if editor_sell_popup_menu != null and is_instance_valid(editor_sell_popup_menu):
@@ -2661,6 +2697,8 @@ func _refresh_editor_demo_toggle_button_text() -> void:
     _refresh_editor_exit_demo_button()
 
 func _setup_editor_exit_demo_button() -> void:
+    if Util.is_row_divers_game_active():
+        return
     if not OS.has_feature("editor"):
         return
     if editor_exit_demo_button != null and is_instance_valid(editor_exit_demo_button):
@@ -2741,6 +2779,8 @@ func _on_editor_regenerate_planet_pressed() -> void:
     update()
 
 func _setup_editor_center_offset_controls() -> void:
+    if Util.is_row_divers_game_active():
+        return
     if not OS.has_feature("editor"):
         return
     if editor_center_offset_controls != null and is_instance_valid(editor_center_offset_controls):
@@ -2859,7 +2899,7 @@ func _recenter_tech_tree_on_core() -> void:
         tech_tree.call("recenter_on_core")
 
 func _should_recenter_upgrade_tree_on_core() -> bool:
-    return Util.is_mining_game_active() or Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active()
+    return Util.is_row_divers_game_active() or Util.is_mining_game_active() or Util.is_open_pit_game_active() or Util.is_open_pit_orbit_game_active() or Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active()
 
 func _on_editor_center_offset_rebuild_pressed() -> void:
     if not OS.has_feature("editor"):
@@ -3100,6 +3140,8 @@ func _on_editor_reset_add_pressed() -> void:
     _refresh_editor_cash_button_text()
 
 func _setup_reset_progress_controls() -> void:
+    if Util.is_row_divers_game_active():
+        return
     if reset_progress_button != null and is_instance_valid(reset_progress_button):
         return
     reset_progress_button = Button.new()

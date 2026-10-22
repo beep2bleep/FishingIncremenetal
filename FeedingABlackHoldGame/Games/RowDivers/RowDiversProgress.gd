@@ -21,6 +21,7 @@ static func fresh() -> Dictionary:
 
 static func load_data(path = SAVE_PATH) -> Dictionary:
 	if path == SAVE_PATH and not active_data_cache.is_empty():
+		apply_reference_repairs(active_data_cache)
 		return active_data_cache
 	if not FileAccess.file_exists(path):
 		var initial: Dictionary = fresh()
@@ -29,9 +30,19 @@ static func load_data(path = SAVE_PATH) -> Dictionary:
 		return initial
 	var value = JSON.parse_string(FileAccess.get_file_as_string(path))
 	var loaded: Dictionary = fresh().merged(value, true) if value is Dictionary else fresh()
+	apply_reference_repairs(loaded)
 	if path == SAVE_PATH:
 		active_data_cache = loaded
 	return loaded
+
+static func apply_reference_repairs(data: Dictionary) -> void:
+	# UpgradeController.Start has this explicit correction for completed older
+	# critical-chance trees. Match it when entering/reloading a screen.
+	if stat(data, "Critic_Chance") >= 50.0: return
+	for entry in design().upgrades:
+		if entry.upgradeName == "Arrow Critic Chance IV" and level(data, entry) >= int(entry.maxLevel):
+			data.stats.Critic_Chance = 65.3184
+			return
 
 static func save_data(data: Dictionary, path = SAVE_PATH) -> void:
 	if path == SAVE_PATH:
@@ -93,11 +104,20 @@ static func check_achievements(data: Dictionary) -> void:
 		if stat(data, requirements[key][0]) >= requirements[key][1]: data.achievements[key] = true
 	if data.spent[0] >= 10000: data.achievements.CoinMaster = true
 	if data.spent[1] >= 50: data.achievements.GemMaster = true
+	# UpgradesTreeManager.CheckMaxed uses 100 maxed nodes, not the full 112.
+	var maxed := 0
+	for entry in design().upgrades:
+		if level(data, entry) >= int(entry.maxLevel): maxed += 1
+	if maxed >= 100 and (data.crowns_dropped.get("3", false) or data.achievements.get("PrestigeMaster", false) or data.achievements.get("Prestige3", false)):
+		data.unlocks.GodTab = true
+		data.achievements.BeatTheGame = true
 
 static func claim(data: Dictionary, achievement: Dictionary) -> bool:
 	var key = str(design().enums.AchievementType[str(int(achievement.achievementType))])
 	if not data.achievements.get(key, false) or data.claimed.get(key, false): return false
-	data.wallet[int(achievement.currencyType)] += float(achievement.reward)
+	var currency := int(achievement.currencyType)
+	if currency >= 0 and currency < data.wallet.size():
+		data.wallet[currency] += float(achievement.reward)
 	data.claimed[key] = true
 	return true
 

@@ -735,6 +735,13 @@ func recenter_on_core() -> void:
     if center_node == null or not is_instance_valid(center_node):
         return
     update_min_max_for_all_nodes()
+    if Util.is_row_divers_game_active():
+        set_debug_center_offset(Vector2.ZERO)
+        for node in node_dict.values():
+            if node.upgrade != null and node.upgrade.sim_connections.is_empty():
+                selected_node = node
+                set_tech_tree_pos(-node.position)
+                return
     set_tech_tree_pos(-center_node.position)
 
 func frame_all_nodes() -> void:

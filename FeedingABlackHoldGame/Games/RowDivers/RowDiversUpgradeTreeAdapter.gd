@@ -12,6 +12,7 @@ const ICON_MODS: Array[int] = [
 static func apply_simulation_upgrades() -> void:
 	var data: Dictionary = PROGRESS.design()
 	var progress: Dictionary = PROGRESS.load_data()
+	PROGRESS.check_achievements(progress)
 	var raw_upgrades: Array = data.get("upgrades", [])
 	var id_to_cell: Dictionary = {}
 	for index in range(raw_upgrades.size()):
