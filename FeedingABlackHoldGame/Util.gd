@@ -21,6 +21,9 @@ const ACTIVE_GAME_OPEN_PIT_ORBIT := "openpitorbit"
 const ACTIVE_GAME_RED_SKY := "redsky"
 const ACTIVE_GAME_TURKEY := "turkey"
 const ACTIVE_GAME_REEL_INTO_DARKNESS := "reelintodarkness"
+const ACTIVE_GAME_ROW_DIVERS := "rowdivers"
+const PATH_ROW_DIVERS_UPGRADES := "res://Games/RowDivers/Scenes/RowDiversUpgrades.tscn"
+const PATH_ROW_DIVERS_BATTLE := "res://Games/RowDivers/Scenes/RowDiversBattleScene.tscn"
 const HIGH_LEVEL_MODE_ALL := "all"
 
 const START_SCREEN_MENU := "menu"
@@ -70,6 +73,9 @@ func are_cross_game_features_enabled() -> bool:
         and bool(ProjectSettings.get_setting(SHOW_ALL_MODES_IN_BUILD_SETTING, false)) \
         and not bool(ProjectSettings.get_setting(DATA_BREACH_INC_MODE_SETTING, false))
 
+func is_row_divers_game_active() -> bool:
+    return get_active_game_id() == ACTIVE_GAME_ROW_DIVERS
+
 func is_mining_game_active() -> bool:
     return get_active_game_id() == ACTIVE_GAME_MINING
 
@@ -93,7 +99,7 @@ func is_reel_into_darkness_game_active() -> bool:
 
 ## Mining / Red Sky / Reel set Input.mouse_mode during PLAYING (capture, hidden, etc.). Global must not override.
 func is_standalone_battle_mouse_managed() -> bool:
-    return is_mining_game_active() or is_open_pit_game_active() or is_open_pit_orbit_game_active() or is_red_sky_game_active() or is_reel_into_darkness_game_active()
+    return is_row_divers_game_active() or is_mining_game_active() or is_open_pit_game_active() or is_open_pit_orbit_game_active() or is_red_sky_game_active() or is_reel_into_darkness_game_active()
 
 func set_active_game_id(game_id: String) -> void:
     ProjectSettings.set_setting(ACTIVE_GAME_PROJECT_SETTING, _normalize_game_id(game_id))
@@ -123,11 +129,15 @@ func get_game_hub_scene_path() -> String:
     return PATH_GAME_LAUNCHER
 
 func get_direct_launch_scene_path() -> String:
+    if is_row_divers_game_active():
+        return PATH_ROW_DIVERS_UPGRADES
     if is_mining_game_active() or is_open_pit_game_active() or is_open_pit_orbit_game_active() or is_red_sky_game_active() or is_turkey_game_active() or is_reel_into_darkness_game_active():
         return get_upgrade_scene_path()
     return get_main_scene_path()
 
 func get_main_scene_path() -> String:
+    if is_row_divers_game_active():
+        return PATH_ROW_DIVERS_UPGRADES
     if is_mining_game_active():
         return PATH_MINING_MAIN
     if is_open_pit_game_active():
@@ -143,6 +153,8 @@ func get_main_scene_path() -> String:
     return PATH_VANGUARD_MAIN
 
 func get_main_menu_scene_path() -> String:
+    if is_row_divers_game_active():
+        return PATH_ROW_DIVERS_UPGRADES
     if is_mining_game_active():
         return PATH_MINING_MAIN_MENU
     if is_open_pit_game_active():
@@ -158,9 +170,13 @@ func get_main_menu_scene_path() -> String:
     return PATH_VANGUARD_MAIN_MENU
 
 func get_upgrade_scene_path() -> String:
+    if is_row_divers_game_active():
+        return PATH_ROW_DIVERS_UPGRADES
     return PATH_FISHING_UPGRADES
 
 func get_battle_scene_path() -> String:
+    if is_row_divers_game_active():
+        return PATH_ROW_DIVERS_BATTLE
     if is_mining_game_active():
         return PATH_MINING_BATTLE
     if is_open_pit_game_active():
@@ -177,6 +193,8 @@ func get_battle_scene_path() -> String:
 
 func _normalize_game_id(game_id: Variant) -> String:
     var normalized_game_id: String = str(game_id).strip_edges().to_lower()
+    if normalized_game_id == ACTIVE_GAME_ROW_DIVERS:
+        return ACTIVE_GAME_ROW_DIVERS
     if normalized_game_id == ACTIVE_GAME_MINING:
         return ACTIVE_GAME_MINING
     if normalized_game_id == ACTIVE_GAME_OPEN_PIT:

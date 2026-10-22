@@ -14,10 +14,10 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Bleepware Incrementals"
+config/name="RailwayFury"
 run/main_scene="res://Core/Boot/AppBootstrap.tscn"
 config/use_custom_user_dir=true
-config/custom_user_dir_name="Bleepware Incrementals"
+config/custom_user_dir_name="RailwayFury"
 config/features=PackedStringArray("4.6", "Forward Plus")
 run/max_fps=60
 boot_splash/bg_color=Color(0.3234, 0.3234, 0.33, 1)
@@ -81,11 +81,11 @@ info_log=true
 Build="v1.3.1"
 Demo=false
 DemoWishlistUrl="https://store.steampowered.com/app/4637560/BleepWare_Incrementals/"
-ShowAllModesInBuild=true
+ShowAllModesInBuild=false
 DataBreachIncMode=false
-ActiveGame="vanguard"
-HighLevelMode="all"
-StartScreen="menu"
+ActiveGame="rowdivers"
+HighLevelMode="rowdivers"
+StartScreen="upgrade"
 mining_demo_max_group=3
 red_sky_demo_max_meta_step=3
 

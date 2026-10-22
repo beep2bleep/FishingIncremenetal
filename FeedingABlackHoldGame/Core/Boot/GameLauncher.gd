@@ -115,6 +115,7 @@ func _ready() -> void:
     _apply_open_pit_launcher_availability()
     _setup_background_fx()
     _setup_game_cards()
+    _setup_row_divers_button()
     _setup_settings_panel()
     _setup_reset_all_meta_progress_controls()
     _setup_language_panel()
@@ -2170,3 +2171,18 @@ func _style_utility_panel(panel: PanelContainer) -> void:
     box.corner_radius_bottom_left = 6
     box.corner_radius_bottom_right = 6
     panel.add_theme_stylebox_override("panel", box)
+
+func _setup_row_divers_button() -> void:
+    var button := Button.new()
+    button.name = "RowDiversButton"
+    button.text = "RAILWAY FURY  /  ROW DIVERS"
+    button.custom_minimum_size = Vector2(420, 100)
+    button.add_theme_font_size_override("font_size", 26)
+    if game_cards_grid != null:
+        game_cards_grid.add_child(button)
+    else:
+        add_child(button)
+    button.pressed.connect(func():
+        Util.set_active_game_id(Util.ACTIVE_GAME_ROW_DIVERS)
+        Util.set_high_level_mode_id(Util.ACTIVE_GAME_ROW_DIVERS)
+        get_tree().change_scene_to_file(Util.PATH_ROW_DIVERS_UPGRADES))

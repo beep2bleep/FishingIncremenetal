@@ -1,0 +1,42 @@
+{
+  "upgrades": {
+    "source": "C:\\Game Assets\\Music\\darkabyss_rpgmusiccollection_V3\\darkabyss_rpgmusiccollection\\2 - Phat Phrog Studio - Dark Abyss - Shaded Fragments.wav",
+    "output": "upgrades.wav",
+    "processing": "PCM16 normalized to 0.7; full music, effects limited to 2 seconds"
+  },
+  "battle": {
+    "source": "C:\\Game Assets\\Music\\darkabyss_rpgmusiccollection_V3\\darkabyss_rpgmusiccollection\\5 - Phat Phrog Studio - Dark Abyss - Void Warden.wav",
+    "output": "battle.wav",
+    "processing": "PCM16 normalized to 0.7; full music, effects limited to 2 seconds"
+  },
+  "purchase": {
+    "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2024 - Game Audio Bundle\\CB Sounddesign - Activation 2\\UIClick_UI Click 33_CB Sounddesign_ACTIVATION2.wav",
+    "output": "purchase.wav",
+    "processing": "PCM16 normalized to 0.7; full music, effects limited to 2 seconds"
+  },
+  "coin": {
+    "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\Varazuvi - California Foley\\coins2.wav",
+    "output": "coin.wav",
+    "processing": "PCM16 normalized to 0.7; full music, effects limited to 2 seconds"
+  },
+  "dagger": {
+    "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\Soundopolis - Blades\\Knife_Sword_Shing_Fienup_001.wav",
+    "output": "dagger.wav",
+    "processing": "PCM16 normalized to 0.7; full music, effects limited to 2 seconds"
+  },
+  "hit": {
+    "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\Soundopolis - Blades\\Knife_Sword_Hit_Multiple_Fienup_003.wav",
+    "output": "hit.wav",
+    "processing": "PCM16 normalized to 0.7; full music, effects limited to 2 seconds"
+  },
+  "shot": {
+    "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2024 - Game Audio Bundle\\Chupapsound - Essential Scifi\\WHOOSH PASS SF LOW.wav",
+    "output": "shot.wav",
+    "processing": "PCM16 normalized to 0.7; full music, effects limited to 2 seconds"
+  },
+  "ability": {
+    "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2024 - Game Audio Bundle\\Doex Studio - Qantum UI\\UI_Noisy_Impact_09.wav",
+    "output": "ability.wav",
+    "processing": "PCM16 normalized to 0.7; full music, effects limited to 2 seconds"
+  }
+}
