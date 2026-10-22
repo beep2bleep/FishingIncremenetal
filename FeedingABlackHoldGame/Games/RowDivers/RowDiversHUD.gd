@@ -147,10 +147,10 @@ func _build_debug_speed_controls() -> void:
 	for multiplier in [1, 2, 4, 8]:
 		var button := make_button("%dx" % multiplier, func(): battle.set_debug_speed(multiplier))
 		button.custom_minimum_size = Vector2(90, 38)
-		button.tooltip_text = "Speed up the entire simulation. Damage and cooldowns also accelerate. Resets each dive."
+		button.tooltip_text = "Speed up the entire simulation. Damage and cooldowns also accelerate. Carries between dives until you quit the game."
 		buttons.add_child(button)
 		debug_speed_buttons[multiplier] = button
-	var hint := Style.label("F7 CYCLE  /  F8 NORMAL  ·  resets each dive", 13)
+	var hint := Style.label("F7 CYCLE  /  F8 NORMAL  ·  session only", 13)
 	column.add_child(hint)
 	panel.mouse_entered.connect(func(): Input.mouse_mode = Input.MOUSE_MODE_VISIBLE)
 	panel.mouse_exited.connect(func():

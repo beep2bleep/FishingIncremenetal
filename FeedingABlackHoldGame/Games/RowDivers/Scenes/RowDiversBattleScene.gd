@@ -56,7 +56,7 @@ var persist_results = true
 var damage_sources: Dictionary = {}
 var last_damage_source = "the row"
 var footstep_timer = 0.0
-var debug_speed = 1 # TEMPORARY QA: session-only; never stored in the progression save.
+static var debug_speed = 1 # TEMPORARY QA: shared across dives in memory; never saved.
 
 func s(key: String) -> float:
 	return Progress.stat(data, key)

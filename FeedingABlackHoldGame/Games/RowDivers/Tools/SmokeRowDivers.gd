@@ -33,6 +33,9 @@ func run() -> void:
 	check(battle.presentation.root_ui.has_node("TEMP_CHEATS_REMOVE_BEFORE_RELEASE"), "Debug build shows conspicuous temporary speed buttons")
 	var starting_position: Vector3 = battle.player_position
 	battle.set_debug_speed(8)
+	var next_dive = Battle.new()
+	check(next_dive.debug_speed == 8, "Next dive inherits gameplay speed from memory")
+	next_dive.free()
 	for i in range(15): battle._physics_process(1.0 / 60.0)
 	check(absf(battle.elapsed - 2.0) < 0.001 and absf(battle.distance - 2.6) < 0.001, "8x cheat advances eight normal simulation steps per frame")
 	check(is_equal_approx(battle.health, 95.0), "Speed cheat accelerates normal row damage with movement")
