@@ -33,3 +33,9 @@ After clearing Prestige 3 and maxing at least 100 upgrade nodes, YOUR FINAL CHOI
 ## Assets and verification
 
 See `FeedingABlackHoldGame/Games/RowDivers/Docs/PLACEHOLDERS.md` for the replacement-art inventory, `Audio/sources.json` for the music/effect provenance, and `Docs/VALIDATION.md` for checks and remaining parity limitations. Rendered previews are in `Docs/Previews`.
+
+## TEMPORARY CHEATS — REMOVE BEFORE RELEASE
+
+The bright pink gameplay panel offers **1× / 2× / 4× / 8×** simulation speed. **F7** cycles speeds; **F8** restores normal speed. The panel stays available while paused. Speed resets to 1× on each dive and is never written to the progression save. Gameplay, row damage, projectiles, cooldowns and enemy animations all accelerate together; normal-sized physics steps preserve collision checks. Menus and UI remain at normal speed.
+
+Remove these controls by setting `railway_fury/debug/enable_speed_cheats=false` in `FeedingABlackHoldGame/project.godot`. They are automatically absent and inactive in release builds even when that setting remains enabled. The implementation is marked `TEMPORARY QA` in the battle/HUD scripts. Progress earned in a fast run saves normally.

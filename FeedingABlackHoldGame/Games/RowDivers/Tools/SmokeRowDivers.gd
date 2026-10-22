@@ -30,6 +30,30 @@ func run() -> void:
 	battle.next_section_trigger = 1000
 	for enemy in battle.enemies: enemy.node.queue_free()
 	battle.enemies.clear()
+	check(battle.presentation.root_ui.has_node("TEMP_CHEATS_REMOVE_BEFORE_RELEASE"), "Debug build shows conspicuous temporary speed buttons")
+	var starting_position: Vector3 = battle.player_position
+	battle.set_debug_speed(8)
+	for i in range(15): battle._physics_process(1.0 / 60.0)
+	check(absf(battle.elapsed - 2.0) < 0.001 and absf(battle.distance - 2.6) < 0.001, "8x cheat advances eight normal simulation steps per frame")
+	check(is_equal_approx(battle.health, 95.0), "Speed cheat accelerates normal row damage with movement")
+	battle.suspended = true
+	battle._physics_process(1.0)
+	check(absf(battle.elapsed - 2.0) < 0.001, "Pause still freezes an accelerated run")
+	battle.suspended = false
+	var reset_speed := InputEventKey.new()
+	reset_speed.keycode = KEY_F8
+	reset_speed.pressed = true
+	battle._unhandled_input(reset_speed)
+	check(battle.debug_speed == 1, "F8 immediately restores normal speed")
+	ProjectSettings.set_setting("railway_fury/debug/enable_speed_cheats", false)
+	battle.set_debug_speed(8)
+	check(battle.debug_speed == 1, "Shipping toggle disables accelerated simulation")
+	ProjectSettings.set_setting("railway_fury/debug/enable_speed_cheats", true)
+	battle.player_position = starting_position
+	battle.elapsed = 0.0
+	battle.distance = 0.0
+	battle.row_timer = 0.0
+	battle.health = 100.0
 	for i in range(120): battle._physics_process(1.0 / 60.0)
 	check(is_equal_approx(battle.health, 95.0), "Row drains 5 HP every 2 seconds")
 	check(absf(battle.distance - 2.6) < 0.001, "Forward movement is 1.3 units/s")

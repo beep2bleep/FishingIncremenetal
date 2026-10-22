@@ -56,6 +56,7 @@ var persist_results = true
 var damage_sources: Dictionary = {}
 var last_damage_source = "the row"
 var footstep_timer = 0.0
+var debug_speed = 1 # TEMPORARY QA: session-only; never stored in the progression save.
 
 func s(key: String) -> float:
 	return Progress.stat(data, key)
@@ -258,6 +259,13 @@ func _unhandled_input(event: InputEvent) -> void:
 				presentation.pause()
 				Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 			return
+		if debug_speed_cheats_enabled():
+			if event.keycode == KEY_F7:
+				set_debug_speed(1 if debug_speed == 8 else debug_speed * 2)
+				return
+			if event.keycode == KEY_F8:
+				set_debug_speed(1)
+				return
 		if suspended or ended: return
 		if event.keycode == KEY_SHIFT:
 			running = not running
@@ -285,7 +293,22 @@ func _activate(key: String) -> void:
 	else:
 		presentation.toast("ABILITY LOCKED" if not unlocked(key) else "ABILITY RECHARGING", Color("d98e7b"))
 
+func debug_speed_cheats_enabled() -> bool:
+	return OS.is_debug_build() and bool(ProjectSettings.get_setting("railway_fury/debug/enable_speed_cheats", false))
+
+func set_debug_speed(multiplier: int) -> void:
+	debug_speed = multiplier if debug_speed_cheats_enabled() and multiplier in [1, 2, 4, 8] else 1
+	if presentation != null:
+		presentation.refresh_debug_speed()
+		presentation.toast("CHEAT: GAMEPLAY SPEED %dx" % debug_speed, Color("ff83d4"))
+
 func _physics_process(delta: float) -> void:
+	# Repeat normal-size physics steps rather than increasing delta, preserving
+	# projectile/contact checks, row ticks and all ability durations at fast speed.
+	for step in range(debug_speed if debug_speed_cheats_enabled() else 1):
+		_simulate_step(delta)
+
+func _simulate_step(delta: float) -> void:
 	if ended or suspended: return
 	elapsed += delta
 	row_timer += delta
@@ -647,3 +670,4 @@ func _update_hud() -> void:
 func _process(_delta: float) -> void:
 	for enemy in enemies:
 		enemy.actor.frozen = ended or suspended
+		enemy.actor.playback_speed = float(debug_speed) if debug_speed_cheats_enabled() else 1.0

@@ -236,3 +236,8 @@ initialization/app_id=4637560
 initialization/initialize_on_startup=false
 initialization/embed_callbacks=false
 multiplayer_peer/max_channels=4
+
+[railway_fury]
+
+; TEMPORARY QA CONTROLS - turn off before shipping (also hidden in release builds).
+debug/enable_speed_cheats=true

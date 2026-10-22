@@ -27,6 +27,8 @@ var upgrades_button: Button
 var settings_button: Button
 var tutorial_button: Button
 var tutorial_page = -1
+var debug_speed_label: Label
+var debug_speed_buttons: Dictionary = {}
 
 func build(owner_battle: Node3D) -> void:
 	battle = owner_battle
@@ -119,8 +121,47 @@ func build(owner_battle: Node3D) -> void:
 	feedback.color = Color(0.8, 0.15, 0.12, 0)
 	_build_overlay()
 	_build_settings()
+	_build_debug_speed_controls()
 	SignalBus.text_size_changed.connect(_apply_text_scale)
 	_apply_text_scale()
+
+# TEMPORARY QA PANEL: gated by railway_fury/debug/enable_speed_cheats and debug builds.
+func _build_debug_speed_controls() -> void:
+	if not battle.debug_speed_cheats_enabled(): return
+	var panel := PanelContainer.new()
+	panel.name = "TEMP_CHEATS_REMOVE_BEFORE_RELEASE"
+	root_ui.add_child(panel)
+	panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	panel.position += Vector2(-470, 78)
+	panel.custom_minimum_size.x = 440
+	panel.add_theme_stylebox_override("panel", Style.panel(Color("45152e"), Color("ff69c5")))
+	var column := VBoxContainer.new()
+	panel.add_child(column)
+	var warning := Style.label("CHEATS — REMOVE BEFORE RELEASE", 18, true)
+	warning.modulate = Color("ff8ad3")
+	column.add_child(warning)
+	debug_speed_label = Style.label("", 16, true)
+	column.add_child(debug_speed_label)
+	var buttons := HBoxContainer.new()
+	column.add_child(buttons)
+	for multiplier in [1, 2, 4, 8]:
+		var button := make_button("%dx" % multiplier, func(): battle.set_debug_speed(multiplier))
+		button.custom_minimum_size = Vector2(90, 38)
+		button.tooltip_text = "Speed up the entire simulation. Damage and cooldowns also accelerate. Resets each dive."
+		buttons.add_child(button)
+		debug_speed_buttons[multiplier] = button
+	var hint := Style.label("F7 CYCLE  /  F8 NORMAL  ·  resets each dive", 13)
+	column.add_child(hint)
+	panel.mouse_entered.connect(func(): Input.mouse_mode = Input.MOUSE_MODE_VISIBLE)
+	panel.mouse_exited.connect(func():
+		if not battle.suspended and not battle.ended: Input.mouse_mode = Input.MOUSE_MODE_HIDDEN)
+	refresh_debug_speed()
+
+func refresh_debug_speed() -> void:
+	if debug_speed_label == null: return
+	debug_speed_label.text = "GAMEPLAY SPEED: %dx" % battle.debug_speed
+	for multiplier in debug_speed_buttons:
+		debug_speed_buttons[multiplier].modulate = Color("ff8ad3") if multiplier == battle.debug_speed else Color.WHITE
 
 func _apply_text_scale() -> void:
 	Style.scale_fonts(root_ui)
