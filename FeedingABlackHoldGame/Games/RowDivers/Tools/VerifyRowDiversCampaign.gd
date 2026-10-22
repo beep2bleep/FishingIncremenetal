@@ -82,6 +82,7 @@ func run() -> void:
 		battle.drops.append({"node": token, "currency": currency, "value": 1.0})
 	battle._update_drops(0.02)
 	check(battle.coins == [2.0, 2.0, 1.0], "Harvester doubles gold/gems but not crowns")
+	check(battle.data.wallet == [2.0, 2.0, 1.0], "Pickup earnings enter the wallet immediately before the run ends")
 	battle.data.unlocks.Shuriken = true
 	battle._activate("Shuriken")
 	battle.shot_timer = 0
@@ -105,6 +106,9 @@ func run() -> void:
 		state.cooldown = 0.01
 		battle._physics_process(0.02)
 		check(state.cooldown == 0, "Ability %s becomes ready after its cooldown" % key)
+	var wallet_before_finish: Array = battle.data.wallet.duplicate()
+	battle._finish(false)
+	check(battle.data.wallet == wallet_before_finish, "Run completion does not count already-banked loot twice")
 	battle.queue_free()
 	await process_frame
 
@@ -124,6 +128,14 @@ func run() -> void:
 				break
 		if not bought: break
 	print("MAX LOADOUT: hp=%s armor=%s arrow=%s beam=%s" % [str(loadout.stats.MaxHP), str(loadout.stats.Armor), str(loadout.stats.Arrow_Damage), str(loadout.stats.Beam_Damage)])
+	if "--export-reference-fixture" in OS.get_cmdline_user_args():
+		var fixture_path := OS.get_environment("TEMP").path_join("RailwayFury-maxed-reference-fixture.json")
+		var fixture := FileAccess.open(fixture_path, FileAccess.WRITE)
+		fixture.store_string(JSON.stringify(loadout, "\t"))
+		fixture.close()
+		print("REFERENCE FIXTURE EXPORTED: ", fixture_path)
+		quit(0)
+		return
 	check(purchases == 330, "Campaign loadout obtained through 330 legal purchases")
 	check(not loadout.unlocks.get("GodTab", false), "Maxed upgrades alone do not unlock ending")
 	loadout.controls_seen = true
@@ -172,6 +184,12 @@ func run() -> void:
 			Progress.active_data_cache = data
 		battle.queue_free()
 		await process_frame
+	var ending_data: Dictionary = Progress.active_data_cache
+	ending_data.wallet = [199999.0, 10.0, 4.0]
+	check(not Progress.unlock_final_chamber(ending_data) and ending_data.wallet == [199999.0, 10.0, 4.0], "Final chamber rejects insufficient funds without charging")
+	ending_data.wallet = [200000.0, 10.0, 4.0]
+	check(Progress.unlock_final_chamber(ending_data) and ending_data.wallet == [0.0, 0.0, 0.0], "Final chamber charges exact source cost")
+	check(Progress.unlock_final_chamber(ending_data) and ending_data.wallet == [0.0, 0.0, 0.0], "Final chamber reopening is free")
 	var ending = load("res://Games/RowDivers/Scenes/RowDiversEnding.tscn").instantiate()
 	ending.persist_results = false
 	root.add_child(ending)

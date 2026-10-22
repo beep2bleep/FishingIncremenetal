@@ -112,6 +112,17 @@ static func check_achievements(data: Dictionary) -> void:
 		data.unlocks.GodTab = true
 		data.achievements.BeatTheGame = true
 
+# PanelManager.UnlockGodButton charges this once after GodTab becomes visible.
+static func unlock_final_chamber(data: Dictionary) -> bool:
+	if not data.unlocks.get("GodTab", false): return false
+	if data.get("god_panel_unlocked", false): return true
+	var prices := [200000.0, 10.0, 4.0]
+	for currency in range(3):
+		if data.wallet[currency] < prices[currency]: return false
+	for currency in range(3): data.wallet[currency] -= prices[currency]
+	data.god_panel_unlocked = true
+	return true
+
 static func claim(data: Dictionary, achievement: Dictionary) -> bool:
 	var key = str(design().enums.AchievementType[str(int(achievement.achievementType))])
 	if not data.achievements.get(key, false) or data.claimed.get(key, false): return false

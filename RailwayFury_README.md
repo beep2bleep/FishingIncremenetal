@@ -23,12 +23,12 @@ Upgrade prices use `ceil(base * 1.2^level)` after the initial base-price purchas
 - Left click shoots. Hold fire and automatic fire require their original upgrades; 1/2 switch bow firing modes after Auto Shoot unlocks.
 - Dagger attacks automatically in range after unlocking. Third Eye targets enemies under the mouse.
 - 3: Arrow Shield; 4: Harvester; 5: Shuriken; 6: Slow Down, each requiring its upgrade.
-- Escape pauses. Upgrades on the pause/end screen banks the run and returns to the tree.
+- Escape pauses. Loot enters the wallet immediately on pickup, including when quitting mid-run. Upgrades on the pause/end screen returns to the tree.
 - Right-drag pans the upgrade tree; mouse wheel zooms. Hover inspects; click buys an affordable upgrade.
 
 The save is `%APPDATA%\RailwayFury\row_divers_progress_v1.json`. Test fixtures do not write gameplay progress. The reference save was backed up before resetting: `%USERPROFILE%\AppData\LocalLow\Hermurx\RowDivers\savefile.before-railwayfury-20261021.json` and `savefile.reset-backup-20261021.json`. Settings were preserved.
 
-After clearing Prestige 3 and maxing at least 100 upgrade nodes, YOUR FINAL CHOICE appears in the shared upgrade screen. It opens two original endings with the reference's Benevolent God / Evil God achievement states. A crown is still awarded only once per prestige. Upgrade purchase order affects final stats, matching the reference's compounding percentages.
+After clearing Prestige 3 and maxing at least 100 upgrade nodes, YOUR FINAL CHOICE appears in the shared upgrade screen. Opening the final chamber then costs 200,000 gold, 10 gems and 4 crowns once, matching the reference. It offers two original endings with the reference's Benevolent God / Evil God achievement states. Each new dive defaults to the highest unlocked prestige; the shared upgrade screen lets you select a lower row before PLAY. A crown is still awarded only once per prestige. Upgrade purchase order affects final stats, matching the reference's compounding percentages.
 
 ## Assets and verification
 

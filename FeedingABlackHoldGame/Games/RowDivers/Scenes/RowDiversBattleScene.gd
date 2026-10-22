@@ -510,7 +510,7 @@ func _hit(enemy: Dictionary, amount: float) -> void:
 				data.achievements.PrestigeMaster = true
 			var key = str(int(data.prestige))
 			if not data.crowns_dropped.get(key, false):
-				coins[2] += 1
+				_award_loot(2, 1.0)
 				data.crowns_dropped[key] = true
 			data.max_prestige = mini(3, maxi(int(data.max_prestige), int(data.prestige) + 1))
 			Progress.check_achievements(data)
@@ -572,7 +572,7 @@ func _update_drops(delta: float) -> void:
 		if gap <= s("PickupRange"):
 			drop.node.position = drop.node.position.lerp(player_position, minf(1, delta * 5.0))
 			if gap < 0.15:
-				coins[drop.currency] += float(drop.value) * (2.0 if active("Harvester") and drop.currency != 2 else 1.0)
+				_award_loot(int(drop.currency), float(drop.value) * (2.0 if active("Harvester") and drop.currency != 2 else 1.0))
 				_floating_text(player_position + Vector3(0.2, 0.25, -0.6), "+%s %s" % [str(int(float(drop.value) * (2.0 if active("Harvester") else 1.0))), "GOLD" if int(drop.currency) == 0 else "GEM"], Style.GOLD, true)
 				audio.sound("coin")
 				drop.node.queue_free()
@@ -580,6 +580,12 @@ func _update_drops(delta: float) -> void:
 		elif drop.node.position.z > player_position.z + 15:
 			drop.node.queue_free()
 			drops.erase(drop)
+
+func _award_loot(currency: int, amount: float) -> void:
+	coins[currency] += amount
+	data.wallet[currency] += amount
+	# CurrencyItem.CollectItem saves immediately; quitting mid-run keeps pickups.
+	if persist_results: Progress.save_data(data)
 
 func _damage_player(amount: float, ignore_armor = false, source = "enemy arrows") -> void:
 	if ended: return
@@ -623,7 +629,6 @@ func _finish(won: bool) -> void:
 	data.runs += 1
 	data.kills += run_kills
 	data.best_distance = maxf(float(data.best_distance), distance)
-	for i in range(3): data.wallet[i] += coins[i]
 	if persist_results: Progress.save_data(data)
 	overlay_title.text = "THE ROW IS YOURS" if won else "THE ROW CLAIMED YOU"
 	presentation.overlay_detail.text = "Distance %.1f m  •  Kills %d\nGold %s  •  Gems %s  •  Crowns %s\n\n%s" % [distance, run_kills, str(int(coins[0])), str(int(coins[1])), str(int(coins[2])), ("Prestige %d unlocked. Return to upgrades to choose your next row." % int(data.max_prestige)) if won and int(data.prestige) < 3 else ("Prestige complete. Max 100 upgrade nodes to unlock your final choice." if won else "Your loot is banked. Spend it in Upgrades and come back stronger.")]

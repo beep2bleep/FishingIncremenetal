@@ -261,7 +261,7 @@ func refresh() -> void:
 	hp_bar.max_value = maxf(1, battle.s("MaxHP"))
 	hp_bar.value = battle.health
 	armor_label.text = "ARMOR %s  /  %s  /  %s" % [Util.get_number_short_text(battle.armor), "RUN" if battle.running else "WALK", battle.fire_mode.to_upper()]
-	currency.text = "GOLD %s   GEMS %s   CROWNS %s" % [str(int(battle.coins[0])), str(int(battle.coins[1])), str(int(battle.coins[2]))]
+	currency.text = "GOLD %s   GEMS %s   CROWNS %s" % [Util.get_number_short_text(battle.data.wallet[0]), Util.get_number_short_text(battle.data.wallet[1]), Util.get_number_short_text(battle.data.wallet[2])]
 	battle.ability_hud.text = "%.1f m    SECTION %d / 15    PRESTIGE %d    ESC PAUSE" % [battle.distance, mini(15, battle.section), int(battle.data.prestige)]
 	var key = 3
 	for ability in NAMES:

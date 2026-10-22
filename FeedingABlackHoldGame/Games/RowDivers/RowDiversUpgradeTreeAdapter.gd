@@ -13,6 +13,9 @@ static func apply_simulation_upgrades() -> void:
 	var data: Dictionary = PROGRESS.design()
 	var progress: Dictionary = PROGRESS.load_data()
 	PROGRESS.check_achievements(progress)
+	# PanelManager.PrestigePanelVisibility defaults each new dive to the highest
+	# unlocked prestige. The shared scene exposes that choice before PLAY instead.
+	progress.prestige = int(progress.max_prestige)
 	var raw_upgrades: Array = data.get("upgrades", [])
 	var id_to_cell: Dictionary = {}
 	for index in range(raw_upgrades.size()):

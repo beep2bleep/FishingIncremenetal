@@ -69,6 +69,7 @@ func run() -> void:
 	battle.queue_free()
 	await process_frame
 	Progress.active_data_cache.unlocks.GodTab = true
+	Progress.active_data_cache.god_panel_unlocked = true
 	var ending: Node = load("res://Games/RowDivers/Scenes/RowDiversEnding.tscn").instantiate()
 	ending.persist_results = false
 	root.add_child(ending)

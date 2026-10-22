@@ -17,7 +17,7 @@ func _ready() -> void:
 	audio.play_music(false)
 	var data: Dictionary = Progress.load_data()
 	Progress.check_achievements(data)
-	if not data.unlocks.get("GodTab", false):
+	if not data.unlocks.get("GodTab", false) or not data.get("god_panel_unlocked", false):
 		get_tree().call_deferred("change_scene_to_file", Util.get_upgrade_scene_path())
 		return
 	var background := ColorRect.new()

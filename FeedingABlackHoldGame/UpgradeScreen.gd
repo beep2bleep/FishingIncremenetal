@@ -649,6 +649,8 @@ func _refresh_bottom_wallet_display() -> void:
         row_divers_bestiary_button.visible = bool(row_progress.unlocks.get("BestiaryTab", false))
         if row_divers_ending_button != null:
             row_divers_ending_button.visible = bool(row_progress.unlocks.get("GodTab", false))
+            row_divers_ending_button.text = "YOUR FINAL CHOICE" if row_progress.get("god_panel_unlocked", false) else "OPEN FINAL CHAMBER"
+            row_divers_ending_button.tooltip_text = "One-time cost: 200,000 gold, 10 gems, 4 crowns" if not row_progress.get("god_panel_unlocked", false) else ""
         if row_divers_prestige.item_count != int(row_progress.max_prestige) + 1:
             row_divers_prestige.clear()
             for prestige_level in range(int(row_progress.max_prestige) + 1):
@@ -700,7 +702,7 @@ func _setup_row_divers_wallet_display() -> void:
     row_divers_ending_button.position = Vector2(28.0, 328.0)
     row_divers_ending_button.custom_minimum_size = Vector2(210.0, 48.0)
     row_style.style_button(row_divers_ending_button)
-    row_divers_ending_button.pressed.connect(func(): SceneChanger.change_to_new_scene("res://Games/RowDivers/Scenes/RowDiversEnding.tscn", null, 0.2))
+    row_divers_ending_button.pressed.connect(_open_row_divers_ending)
     layer.add_child(row_divers_ending_button)
     row_divers_purchase_feedback = row_style.label("", 20, true)
     row_divers_purchase_feedback.position = Vector2(280.0, 80.0)
@@ -717,6 +719,14 @@ func _setup_row_divers_wallet_display() -> void:
         shared_money_ui.hide()
     _refresh_bottom_wallet_display()
     row_style.apply_fonts(self)
+
+func _open_row_divers_ending() -> void:
+    var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
+    if not ROW_DIVERS_PROGRESS_SCRIPT.unlock_final_chamber(row_progress):
+        show_row_divers_feedback("Final chamber requires 200,000 gold, 10 gems and 4 crowns.")
+        return
+    ROW_DIVERS_PROGRESS_SCRIPT.save_data(row_progress)
+    SceneChanger.change_to_new_scene("res://Games/RowDivers/Scenes/RowDiversEnding.tscn", null, 0.2)
 
 func _on_row_divers_prestige_selected(index: int) -> void:
     var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
