@@ -39,3 +39,7 @@ See `FeedingABlackHoldGame/Games/RowDivers/Docs/PLACEHOLDERS.md` for the replace
 The bright pink gameplay panel offers **1× / 2× / 4× / 8×** simulation speed. **F7** cycles speeds; **F8** restores normal speed. The panel stays available while paused. Speed carries between dives in memory until you quit the game; restarting the game restores 1×. It is never written to the progression save. Gameplay, row damage, projectiles, cooldowns and enemy animations all accelerate together; normal-sized physics steps preserve collision checks. Menus and UI remain at normal speed.
 
 Remove these controls by setting `railway_fury/debug/enable_speed_cheats=false` in `FeedingABlackHoldGame/project.godot`. They are automatically absent and inactive in release builds even when that setting remains enabled. The implementation is marked `TEMPORARY QA` in the battle/HUD scripts. Progress earned in a fast run saves normally.
+
+## Original-code comparison
+
+Run `python tools/rowdivers_parity/run.py --campaign --self-test` to compare the original C# methods with our runtime logic. See `tools/rowdivers_parity/README.md` and `FeedingABlackHoldGame/Games/RowDivers/Docs/PARITY_SIMULATION.md` for scope, reproduced differences, fixes and limits. The covered 72 cases pass; exact native-physics and full original-campaign parity is not certified. `--require-end-to-end` fails closed for that stronger requirement.

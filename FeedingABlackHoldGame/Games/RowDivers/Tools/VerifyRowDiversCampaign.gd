@@ -146,7 +146,7 @@ func run() -> void:
 	check(not loadout.unlocks.get("GodTab", false), "Maxed upgrades alone do not unlock ending")
 	loadout.controls_seen = true
 	for prestige in range(4):
-		var data: Dictionary = loadout.duplicate(true)
+		var data: Dictionary = loadout
 		data.prestige = prestige
 		battle = make_battle(data)
 		battle.running = true
@@ -181,7 +181,7 @@ func run() -> void:
 			if frames % 120 == 0: await process_frame
 		var won: bool = data.crowns_dropped.get(str(prestige), false)
 		check(battle.ended and won, "Prestige %d traverses full row and defeats final boss" % prestige)
-		check(battle.data.runs == 1, "Campaign banks exactly one run")
+		check(battle.data.runs == prestige + 1, "Consecutive campaign carries run count forward")
 		reports.append("Prestige %d: %.1fs, %.1fm, %d kills, hp %.0f, won=%s" % [prestige, battle.elapsed, battle.distance, battle.run_kills, battle.health, str(won)])
 		print(reports.back())
 		if not won: print("DAMAGE SOURCES: ", battle.damage_sources)

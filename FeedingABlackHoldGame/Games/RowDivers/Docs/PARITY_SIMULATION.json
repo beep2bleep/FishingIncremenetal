@@ -1,0 +1,592 @@
+{
+  "exact_end_to_end_certified": false,
+  "unverified": [
+    "Unity native collision and rigidbody solver; adapters do not reproduce geometry",
+    "Raw key-to-Input.GetAxis smoothing, actual render/fixed/coroutine scheduling",
+    "Full original projectile flight, raycasts, shuffle and section selection RNG",
+    "Original full-campaign gameplay and a natural fresh-save grind; component and victory-event replays are not a substitute"
+  ],
+  "source_design_mismatches": 0,
+  "cases": 72,
+  "passing": 72,
+  "failing": 0,
+  "numeric_tolerance": {
+    "relative": 2e-06,
+    "absolute": 2e-05,
+    "health_relative": 1e-12
+  },
+  "results": [
+    {
+      "first_divergent_action": null,
+      "id": "all-upgrades-order-0",
+      "actions": 332,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "all-upgrades-order-1",
+      "actions": 332,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "all-upgrades-order-2",
+      "actions": 332,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "consecutive-victory-progression",
+      "actions": 338,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "complete-unlock-ending-and-reward-sequence",
+      "actions": 381,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "row-movement-0",
+      "actions": 7,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-health-0",
+      "actions": 28,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "row-movement-1",
+      "actions": 7,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-health-1",
+      "actions": 28,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "row-movement-2",
+      "actions": 7,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-health-2",
+      "actions": 28,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "row-movement-3",
+      "actions": 7,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-health-3",
+      "actions": 28,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "ability-ArrowShield",
+      "actions": 8,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "ability-repeated-ArrowShield",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "ability-Harvester",
+      "actions": 8,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "ability-repeated-Harvester",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "ability-Shuriken",
+      "actions": 8,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "ability-repeated-Shuriken",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "ability-SlowDown",
+      "actions": 8,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "ability-repeated-SlowDown",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "Arrow-uncursed-then-cursed",
+      "actions": 8,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "Arrow-repeat-burning",
+      "actions": 8,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "Arrow-repeat-bleeding",
+      "actions": 9,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "FireArrow-uncursed-then-cursed",
+      "actions": 8,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "FireArrow-repeat-burning",
+      "actions": 8,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "FireArrow-repeat-bleeding",
+      "actions": 9,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "CursedArrow-uncursed-then-cursed",
+      "actions": 8,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "CursedArrow-repeat-burning",
+      "actions": 8,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "CursedArrow-repeat-bleeding",
+      "actions": 9,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "ShurikenProjectile-uncursed-then-cursed",
+      "actions": 8,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "ShurikenProjectile-repeat-burning",
+      "actions": 8,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "ShurikenProjectile-repeat-bleeding",
+      "actions": 9,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "life-steal-critical-order",
+      "actions": 2,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "boss-finishing-life-steal-reentry",
+      "actions": 2,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-0-0",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-0-1",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-0-2",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-0-3",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-1-0",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-1-1",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-1-2",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-1-3",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-2-0",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-2-1",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-2-2",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-2-3",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-3-0",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-3-1",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-3-2",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "enemy-arrow-3-3",
+      "actions": 4,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "arrow-shield-block-0",
+      "actions": 2,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "arrow-shield-block-1",
+      "actions": 2,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "arrow-shield-block-2",
+      "actions": 2,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "arrow-shield-block-3",
+      "actions": 2,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "harvester-wallet",
+      "actions": 6,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "dagger-plain-False",
+      "actions": 2,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "dagger-plain-True",
+      "actions": 2,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "dagger-Cursed-False",
+      "actions": 3,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "dagger-Cursed-True",
+      "actions": 3,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "dagger-Burning-False",
+      "actions": 3,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "dagger-Burning-True",
+      "actions": 3,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "dagger-Bleeding-False",
+      "actions": 3,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "dagger-Bleeding-True",
+      "actions": 3,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "beam-plain-False",
+      "actions": 2,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "beam-plain-True",
+      "actions": 2,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "beam-Cursed-False",
+      "actions": 3,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "beam-Cursed-True",
+      "actions": 3,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "beam-Burning-False",
+      "actions": 3,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "beam-Burning-True",
+      "actions": 3,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "beam-Bleeding-False",
+      "actions": 3,
+      "difference_count": 0,
+      "first_differences": []
+    },
+    {
+      "first_divergent_action": null,
+      "id": "beam-Bleeding-True",
+      "actions": 3,
+      "difference_count": 0,
+      "first_differences": []
+    }
+  ],
+  "action_checkpoints": 2129,
+  "original_source_sha256": {
+    "Stat.cs": "cbe240bdbee498aeb3867beb4791820927c11bab338e3b08ecb3ca1d39abb942",
+    "StatType.cs": "3119a9eafa9fdddebdb9598526288ebd14fa2928768b7bfa26450a7a21f49036",
+    "WeaponType.cs": "f78312683f9f128ce5383a728f6d3b56f2c0d74c22647c3e59d00c671d88cc00",
+    "FireType.cs": "38f1df30c5088f5074e240493bf86feb415f3c0077bb01556fbafc545699e12b",
+    "TabType.cs": "c18bb323db80e3dd3491c3f2fd531e16bf57d7c23a966f663c513c5998013a0e",
+    "AbilityType.cs": "197d92e92e6d5051b442ffc9c353af687a7af7311b3c769bb74111c3e9e5723f",
+    "CurrencyType.cs": "15c535f561dbc846f7abe8a75cf4a0df1de13e98600984d21219dba9df91df37",
+    "ZombieType.cs": "a78b5210d0e99e9952591bae7d376db0da5912be36180148855961b31b8542ff",
+    "ProjectileType.cs": "8593500d155591372a7d90613f953b49f7440c8dba4153603940c47fdb27fb1a",
+    "Rarity.cs": "093c8812d66befe46e4c1e4f824d948fa554e431703e482b0af44604fcc32050",
+    "Pair.cs": "4da5c8d2dfc99d49fd42c1c44c4061b7b77fb8afc127d90df6998e3c1745cf1b",
+    "CurrencyCost.cs": "ba411b3d5c1e6f0d93026399bc8cbdb07dfe1e0d4f418bc6d7eded2e59a41c98",
+    "IDamageable.cs": "0b6666ce06f66aaab2ac1077a4bb01ad45d948db6b8f6e1ba02662000d35f50c",
+    "Entity.cs": "616f68e0c0d3c17483e89ad4e3f53eeb57a8d9c8d0dcbbcf247321ea932ef563",
+    "Player.cs": "32a984b0af27463eb41bb146b639807a068e73d922604e1b6edfd19bb9ea6282",
+    "PlayerController.cs": "1c2b1c44a50f154cf7d167e38df8a7dbbc8229ae8cc29005c904969e60059020",
+    "Enemy.cs": "79d9a7b03816097547e7e125628c06d789cbd5c63546b62d8d8c6738f72c6783",
+    "Zombie.cs": "0cf5188b153ae98b9d6feaff149ad8225d1ceef869c936e5d9496b0b159621b9",
+    "MiniBoss.cs": "5968bf09cddbe3683c912afa3b17d5761acdd446fd8a3dfc9e53197a5ddedde2",
+    "Boss.cs": "dd6bb0ad9b017206773e874d7060a7f3b9f154b5e561a0826cd4bd8ae668736d",
+    "EnemyEffectManager.cs": "65e32e27a157df869504eaca1570e7c7276bd7153adb5a8d1029d10d2dfcd29b",
+    "Projectile.cs": "a77a7e09592645e3d2ec7a94b0b50dbda1cf3ff9f85264d1afebaa8ecb278c22",
+    "Arrow.cs": "6efb01fd94a103535fae08c45aede2cd58b0c16b5d237771f29788a2874052d3",
+    "FireArrow.cs": "2dd2efc3c97b7d11a552f78d50b28a5453e4f706e2136259a2b95040981d1399",
+    "CursedArrow.cs": "293bc617ed62bc90ac8bb6e654adf31bc66d2a1d140942ef4deb5875a5b170d5",
+    "ShurikenProjectile.cs": "3df3f837117b247d303d4aa33a8b2af141f5600be46b52f6648b7fe6f45df5a2",
+    "EnemyArrow.cs": "c953d715cd5ce57753aee97fa5f7bab31a2c92128e7ce5b3d5dcffdecd24b1cb",
+    "Ability.cs": "e6a1dd273fdcadb31f33fb352a1319c5a5dc3240de5cd3e60cac79c132559cf6",
+    "ArrowShield.cs": "8947f3dc25584ff25d72e1bb83d1e2a48c2774a5a034b2bbd60a758d02c6d79a",
+    "Harvester.cs": "19ed167785644e39066d8ce3880681de400a427a4b3224aa0663126a33230ea4",
+    "Shuriken.cs": "eda493754ce7eea4a3eba8db485e3ccbb4772be72bf96fdcb16ee139b53539fc",
+    "SlowDown.cs": "3f9f3674e759640ebc7d7702f16f9bb1943c47806bd55e70594cf2d2a4adf6ed",
+    "UpgradeData.cs": "0d45c9d44d47afefc81b043805d12a6bf69a145457b92b4f962be0abe98ee6a8",
+    "AchievementChecker.cs": "3d7975a5ec80f455c21ae9f3d496a69db7c533dacbe370cb9d86e240f7f394c2",
+    "AchievementType.cs": "80bd512f7fe43379e81571e81cd42f6cb5dd3f9aa4d047ecaa0c0a1cd757886e",
+    "Achievement.cs": "4552a5fdc809dc554b98c0c8ee26d4bdc8f49d2703eb927aa2b1902b27b129ac",
+    "CurrencyItem.cs": "67a40ddce5e7754ca0ff42498a6227b317984fca0d50f41029a0ba14a5b422a9",
+    "Item.cs": "538ee83f23b776f9ad16fc86c1d8eb3323fdf9cd33999686cb24880fc6228334",
+    "PrestigeSystem.cs": "51db363672baf6fb3f960a008b50059ad6d6b50353e71ee850b59ceead544c62",
+    "Weapon.cs": "e7c70aa77d2f035c6e77e590f9e395d0c5102e8e64b0f94e2582bf8867fe4095",
+    "MeleeWeapon.cs": "58aeb318edc9e909b1c278d48c05e77ccd0c7057d7ec5ef6cea9c0ff0595da86",
+    "ThirdEye.cs": "2bc0f43fb028e3c93b9b041c5622e62735994743795804737e0638e46afc5e69",
+    "EndGamePanel.cs": "a3c754da6dcdcf7d755530f3707ba35e5ba4da8965ea8897e046e36d36975ff1",
+    "Stats.cs": "a486e610a132fa143ce2dc4493c8c0ef7192d44759166b3b998bdd817d8eaa26",
+    "UDictionary.cs": "a17c64e0a9b0f3357f17ef5c2c20fa6fce270fa9acf8d866389296784f88347c",
+    "UpgradeController.cs": "4b480a715cd41a3e758d68bf9740a4f74d9fa748a0f5ad7ab5090c6709be0063",
+    "UpgradesTreeManager.cs": "da42c02100cd425e782bfe7d2407bd199741d97e6542ad8c963e7b09280f8650",
+    "AchievementManager.cs": "78199433c3843cbbebc7d1fc5449ceeb8753397fd46084ed04cba453eb1ae1ed",
+    "PanelManager.cs": "30818c23d6ffbd0e6c712b493c7339fe06ce762d551369214229252e857e6af8",
+    "GameManager.cs": "e1245692499ac4f8510b9835966dedce5b89b40e0338aa08a132e28af9882f00"
+  },
+  "harness_self_test": {
+    "injected_error": "original Arrow base damage +1 in ignored copy",
+    "detected_by_cases": 5,
+    "passed": true
+  },
+  "railway_consecutive_campaign": {
+    "passed": true,
+    "rows": [
+      "Prestige 0: 88.7s, 289.2m, 33 kills, hp 15440, won=true",
+      "Prestige 1: 88.7s, 289.7m, 33 kills, hp 15440, won=true",
+      "Prestige 2: 88.7s, 289.5m, 33 kills, hp 13304, won=true",
+      "Prestige 3: 90.8s, 301.6m, 63 kills, hp 445, won=true"
+    ],
+    "reference_full_campaign_compared": false
+  }
+}

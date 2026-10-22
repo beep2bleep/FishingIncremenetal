@@ -1,0 +1,235 @@
+{
+  "confounds": [
+    "Different section/spawn RNG algorithms and consumption",
+    "Native fixed-update 50Hz versus Godot physics/update scheduling",
+    "Scene warmup, collider/raycast and projectile-flight differences",
+    "Prestige is forced only if our preceding replay did not unlock it"
+  ],
+  "description": "Recorded native axis/key/mouse controls replayed in our real runtime; not a synchronized-environment comparison",
+  "exact_end_to_end_certified": false,
+  "runs": [
+    {
+      "first_vitals_difference": {
+        "frame": 3516.0,
+        "railway_armor": 2800.36,
+        "railway_hp": 15440.0,
+        "reference_armor": 2870.36,
+        "reference_hp": 15440.0,
+        "time": 58.6000061
+      },
+      "forced_prestige_for_probe": false,
+      "frames_replayed": 5326,
+      "max_position_delta_m": 0.848804116249084,
+      "native": {
+        "armor": 2792.96000000001,
+        "elapsed": 88.78334,
+        "hp": 15440.0,
+        "prestige": 0.0,
+        "result": true,
+        "run": 0.0,
+        "won": true,
+        "x": 2.49999976,
+        "z": 260.039246
+      },
+      "prestige": 0,
+      "railway": {
+        "armor": 2687.96000000001,
+        "distance": 289.26726995036,
+        "elapsed": 88.6833377675019,
+        "ended": true,
+        "hp": 15440.0,
+        "won": true
+      }
+    },
+    {
+      "first_vitals_difference": {},
+      "forced_prestige_for_probe": false,
+      "frames_replayed": 5326,
+      "max_position_delta_m": 0.848068833351135,
+      "native": {
+        "armor": 1657.76,
+        "elapsed": 88.78334,
+        "hp": 15440.0,
+        "prestige": 1.0,
+        "result": true,
+        "run": 1.0,
+        "won": true,
+        "x": 2.50000024,
+        "z": 260.039246
+      },
+      "prestige": 1,
+      "railway": {
+        "armor": 1657.76,
+        "distance": 289.191357851028,
+        "elapsed": 88.6833377675019,
+        "ended": true,
+        "hp": 15440.0,
+        "won": true
+      }
+    },
+    {
+      "first_vitals_difference": {
+        "frame": 2643.0,
+        "railway_armor": 49.600000000001,
+        "railway_hp": 15440.0,
+        "reference_armor": 749.600000000001,
+        "reference_hp": 15440.0,
+        "time": 44.0499878
+      },
+      "forced_prestige_for_probe": false,
+      "frames_replayed": 5326,
+      "max_position_delta_m": 0.85226184129715,
+      "native": {
+        "armor": 0.0,
+        "elapsed": 88.7833252,
+        "hp": 13326.0,
+        "prestige": 2.0,
+        "result": true,
+        "run": 2.0,
+        "won": true,
+        "x": 2.50000024,
+        "z": 260.052246
+      },
+      "prestige": 2,
+      "railway": {
+        "armor": 0.0,
+        "distance": 289.508959531784,
+        "elapsed": 88.7000044350019,
+        "ended": true,
+        "hp": 12389.475,
+        "won": true
+      }
+    },
+    {
+      "first_vitals_difference": {
+        "frame": 1441.0,
+        "railway_armor": 0.0,
+        "railway_hp": 14519.075,
+        "reference_armor": 0.0,
+        "reference_hp": 14464.0,
+        "time": 24.0166626
+      },
+      "forced_prestige_for_probe": false,
+      "frames_replayed": 4940,
+      "max_position_delta_m": 81.4094314575195,
+      "native": {
+        "armor": 0.0,
+        "elapsed": 82.3499756,
+        "hp": 0.0,
+        "prestige": 3.0,
+        "result": true,
+        "run": 3.0,
+        "won": false,
+        "x": 2.038,
+        "z": 226.025177
+      },
+      "prestige": 3,
+      "railway": {
+        "armor": 0.0,
+        "distance": 177.342077925801,
+        "elapsed": 61.9666697649957,
+        "ended": true,
+        "hp": 0.0,
+        "won": false
+      }
+    }
+  ],
+  "capture": {
+    "exceptions": 0,
+    "metadata": [
+      {
+        "meta": true,
+        "run": 0,
+        "engine": "6000.0.68f1",
+        "level_time": 0.0333333351,
+        "fixed_dt": 0.0199999921,
+        "screen": [
+          640,
+          480
+        ],
+        "viewport": [
+          640,
+          480
+        ],
+        "fov": 65.0,
+        "origin": [
+          2.5,
+          0.87,
+          -28.474
+        ]
+      },
+      {
+        "meta": true,
+        "run": 1,
+        "engine": "6000.0.68f1",
+        "level_time": 0.0333333351,
+        "fixed_dt": 0.0199999921,
+        "screen": [
+          640,
+          480
+        ],
+        "viewport": [
+          640,
+          480
+        ],
+        "fov": 65.0,
+        "origin": [
+          2.5,
+          0.87,
+          -28.474
+        ]
+      },
+      {
+        "meta": true,
+        "run": 2,
+        "engine": "6000.0.68f1",
+        "level_time": 0.0333333351,
+        "fixed_dt": 0.0199999921,
+        "screen": [
+          640,
+          480
+        ],
+        "viewport": [
+          640,
+          480
+        ],
+        "fov": 65.0,
+        "origin": [
+          2.5,
+          0.87,
+          -28.474
+        ]
+      },
+      {
+        "meta": true,
+        "run": 3,
+        "engine": "6000.0.68f1",
+        "level_time": 0.0333333351,
+        "fixed_dt": 0.0199999921,
+        "screen": [
+          640,
+          480
+        ],
+        "viewport": [
+          640,
+          480
+        ],
+        "fov": 65.0,
+        "origin": [
+          2.5,
+          0.87,
+          -28.474
+        ]
+      }
+    ],
+    "finished": [
+      {
+        "finished": "original run died; input trace retained",
+        "exit_code": 0
+      }
+    ],
+    "trace_sha256": "a12bc47085937614264928db4f02370a117da94f5b66defd47ef367d1ff4df95",
+    "fixture_sha256": "c7b1e02122ab120f148c3728ed464aac5fc4fc0372543e66bbe38e1c4b6a3418"
+  },
+  "observed_differences": true
+}

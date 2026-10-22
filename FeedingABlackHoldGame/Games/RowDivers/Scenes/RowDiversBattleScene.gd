@@ -56,6 +56,7 @@ var persist_results = true
 var damage_sources: Dictionary = {}
 var last_damage_source = "the row"
 var footstep_timer = 0.0
+var projectile_state_pools: Dictionary = {}
 static var debug_speed = 1 # TEMPORARY QA: shared across dives in memory; never saved.
 
 func s(key: String) -> float:
@@ -231,6 +232,7 @@ func _spawn_enemy(pos: Vector3, kind: int, boss = false) -> void:
 	if kind == 1: hp *= 1.2
 	enemies.append({"node": root, "actor": actor, "hp": hp, "max_hp": hp, "base_hp": base_hp, "label": label, "kind": kind, "boss": boss, "next_shot": 1.0, "contact": false, "effect": "", "effect_time": 0.0, "tick": 0.0})
 	label.text = str(int(hp))
+	enemies.back()["crown_dropped_on_spawn"] = bool(data.crowns_dropped.get(str(prestige_level), false))
 
 func _build_hud() -> void:
 	presentation = HUD.new()
@@ -309,19 +311,18 @@ func _physics_process(delta: float) -> void:
 		_simulate_step(delta)
 
 func _simulate_step(delta: float) -> void:
-	if ended or suspended: return
-	elapsed += delta
+	if ended: return
+	# Unity's RowDamage coroutine waits in wall-clock game time even while paused;
+	# a tick reached during pause is skipped, rather than freezing its phase.
 	row_timer += delta
+	var row_tick: bool = row_timer >= 2.0 - 0.000001
+	if row_tick: row_timer = 0.0
+	if suspended: return
+	elapsed += delta
 	shot_timer = maxf(0, shot_timer - delta)
 	for weapon in extra_timers: extra_timers[weapon] = maxf(0, extra_timers[weapon] - delta)
 	dagger_timer = maxf(0, dagger_timer - delta)
 	beam_timer = maxf(0, beam_timer - delta)
-	for state in abilities.values():
-		if state.active > 0:
-			state.active -= delta
-			if state.active <= 0: state.cooldown = state.wait
-		else:
-			state.cooldown = maxf(0, state.cooldown - delta)
 	var horizontal = float(Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT)) if is_nan(horizontal_override) else horizontal_override
 	var speed = (forward_speed - (0.5 if active("SlowDown") else 0.0)) * (1.5 if running else 1.0)
 	var previous = player_position
@@ -349,8 +350,7 @@ func _simulate_step(delta: float) -> void:
 		forward_speed += 0.1333
 		_build_section(section + 2)
 		presentation.toast("SECTION %d" % section)
-	if row_timer >= 2.0 - 0.000001:
-		row_timer -= 2.0
+	if row_tick:
 		var damage = [5.0, 30.0, 100.0, 300.0][int(data.prestige)]
 		if armor > 0: damage *= maxf(0, 1.0 - s("Armor_Against_Row") / 100.0)
 		_damage_player(damage * (1.5 if running else 1.0), false, "the row")
@@ -365,23 +365,11 @@ func _simulate_step(delta: float) -> void:
 	if unlocked("Dagger") and dagger_timer <= 0:
 		var near = _target(s("Melee_range"))
 		if not near.is_empty():
-			var amount = s("Dagger_Damage")
-			if near.effect == "Cursed": amount *= s("Curse_Effect")
-			if _roll("Bleed_Chance") and near.effect != "Bleeding":
-				amount *= 3
-				_effect(near, "Bleeding", s("Burn_Duration"))
-			_hit(near, amount + (s("Damage_Against_Bosses") if near.boss else 0.0))
-			dagger_timer = 1.0 / maxf(0.01, s("Dagger_Attack_Rate"))
-			audio.sound("dagger")
-			dagger_recoil = 1.0
+			_dagger_hit(near)
 	if unlocked("ThirdEye") and beam_timer <= 0:
 		var eye_target = _target(maxf(0.1, s("Distance_Range") - 2.0), true)
 		if not eye_target.is_empty():
-			var amount = s("Beam_Damage") * (s("Curse_Effect") if eye_target.effect == "Cursed" else 1.0)
-			if _roll("Beam_Critic_Chance"): amount += s("Beam_Critic_Multiplier")
-			_hit(eye_target, amount)
-			_beam_effect(eye_target.node.position)
-			beam_timer = 1.0 / maxf(0.01, s("Beam_Fire_Rate"))
+			_beam_hit(eye_target)
 	_update_enemies(delta)
 	_update_projectiles(delta)
 	_update_drops(delta)
@@ -392,7 +380,31 @@ func _simulate_step(delta: float) -> void:
 			poison_ticks -= 1
 			# ApplyPoison in the reference resets to basePoisonDamage (10), even on prestige.
 			_damage_player(10.0, true, "poison")
+	for state in abilities.values():
+		if state.active > 0:
+			state.active -= delta
+			if state.active <= 0: state.cooldown = state.wait
+		else:
+			state.cooldown = maxf(0, state.cooldown - delta)
 	_update_hud()
+
+func _dagger_hit(near: Dictionary) -> void:
+	var amount = s("Dagger_Damage")
+	if _has_effect(near, "Cursed"): amount *= s("Curse_Effect")
+	if _roll("Bleed_Chance") and not _has_effect(near, "Bleeding"):
+		amount *= 3
+		_effect(near, "Bleeding", s("Burn_Duration"))
+	_hit(near, amount + (s("Damage_Against_Bosses") if near.boss else 0.0))
+	dagger_timer = 1.0 / maxf(0.01, s("Dagger_Attack_Rate"))
+	audio.sound("dagger")
+	dagger_recoil = 1.0
+
+func _beam_hit(eye_target: Dictionary) -> void:
+	var amount = s("Beam_Damage") * (s("Curse_Effect") if _has_effect(eye_target, "Cursed") else 1.0)
+	if _roll("Beam_Critic_Chance"): amount += s("Beam_Critic_Multiplier")
+	_hit(eye_target, amount)
+	_beam_effect(eye_target.node.position)
+	beam_timer = 1.0 / maxf(0.01, s("Beam_Fire_Rate"))
 
 func _beam_effect(target: Vector3) -> void:
 	var origin: Vector3 = player_position + Vector3(0, 0.12, -0.2)
@@ -436,16 +448,18 @@ func _shoot(weapon = "Bow") -> void:
 	var spread = [0.0, 0.0, 2.0, 3.0, 4.0, 5.0, 5.0, 5.0][mini(types.size(), 7)]
 	for i in range(types.size()):
 		# ShootingWeapon.TryDealDirectDamage skips travel only below 1.3 metres.
+		var projectile_state: Dictionary = _take_projectile_state(types[i])
 		var contact: Dictionary = _target(1.3)
 		if not contact.is_empty():
-			_projectile_hit(contact, types[i])
+			_projectile_hit(contact, types[i], projectile_state)
+			_return_projectile_state(types[i], projectile_state)
 			continue
 		var angle = deg_to_rad(lerpf(-spread / 2.0, spread / 2.0, float(i) / maxf(1, types.size() - 1)))
 		var node := _weapon_mesh("Crossbow_01_Arrow_01", self, player_position + Vector3(0, -0.1, -0.4), 0.4)
 		node.rotation.y = PI - angle
 		if types[i] != "Arrow":
 			_ring(node, Vector3.ZERO, Color("fbb16c") if types[i] == "Fire" else Color("a98ee8"), 0.16)
-		projectiles.append({"node": node, "dir": Vector3(sin(angle), 0, -cos(angle)), "speed": s("Arrow_Speed"), "type": types[i], "life": minf(10.0, s("Distance_Range") / maxf(0.1, s("Arrow_Speed"))), "hostile": false})
+		projectiles.append({"node": node, "dir": Vector3(sin(angle), 0, -cos(angle)), "speed": s("Arrow_Speed"), "type": types[i], "life": minf(10.0, s("Distance_Range") / maxf(0.1, s("Arrow_Speed"))), "hostile": false, "cached_state": projectile_state})
 	audio.sound("shot")
 	weapon_recoil = 1.0
 
@@ -459,13 +473,15 @@ func _update_projectiles(delta: float) -> void:
 			var closest: Vector3 = Geometry3D.get_closest_point_to_segment(player_position, previous, projectile.node.position)
 			if closest.distance_to(player_position) < 0.3:
 				if not active("ArrowShield"):
-					_damage_player(float([10, 200, 500, 2000][int(data.prestige)]) * (2.0 if projectile.type == "Critical" else 1.0), false, "enemy arrows")
 					if projectile.type == "LifeSteal": _damage_player(s("HP_Steal"))
 					if projectile.type == "Poison":
 						poison_hits += 1
 						if poison_ticks == 0:
-							poison_ticks = 3
-							poison_timer = 0
+							# Player.ApplyPeriodicDamage hits immediately before its first yield.
+							_damage_player(10.0, true, "poison")
+							poison_ticks = 2
+							poison_timer = 1.0
+					_damage_player(float([10, 200, 500, 2000][int(data.prestige)]) * (2.0 if projectile.type == "Critical" else 1.0), false, "enemy arrows")
 				else:
 					presentation.toast("ARROW BLOCKED", Color("80cfd9"))
 					audio.sound("hit")
@@ -474,35 +490,55 @@ func _update_projectiles(delta: float) -> void:
 			for enemy in enemies.duplicate():
 				var pos: Vector3 = enemy.node.position
 				if absf(pos.x - projectile.node.position.x) < (0.6 if enemy.boss else 0.3) and pos.z <= previous.z + 0.1 and pos.z >= projectile.node.position.z - 0.4 and enemy.hp > 0:
-					_projectile_hit(enemy, projectile.type)
+					_projectile_hit(enemy, projectile.type, projectile.get("cached_state", {}))
 					projectile.life = 0
 					break
 		if projectile.life <= 0:
+			if not projectile.hostile and projectile.has("cached_state"): _return_projectile_state(projectile.type, projectile.cached_state)
 			projectiles.erase(projectile)
 			projectile.node.queue_free()
 
-func _projectile_hit(enemy: Dictionary, kind: String) -> void:
-	var amount = s("Arrow_Damage")
-	if kind == "Fire":
-		amount = s("FireArrow_Damage")
-		if _roll("Burn_Chance") and enemy.effect != "Burning":
-			_effect(enemy, "Burning", s("Burn_Duration"))
-			amount *= 2.5
-	if kind == "Cursed":
-		amount = s("CursedArrow_Damage")
-		if _roll("Curse_Chance"): _effect(enemy, "Cursed", s("Curse_Duration"))
-	if kind == "Shuriken":
-		amount = s("FireArrow_Damage") * (3.0 if enemy.effect == "Bleeding" else 1.0)
-	if enemy.effect == "Cursed": amount *= s("Curse_Effect")
-	if enemy.boss: amount += s("Damage_Against_Bosses")
-	if kind == "Arrow" and _roll("Critic_Chance"): amount *= s("Critic_Damage")
+func _new_projectile_state(kind: String) -> Dictionary:
+	return {"base_damage": s("Arrow_Damage") if kind == "Arrow" else s("CursedArrow_Damage") if kind == "Cursed" else s("FireArrow_Damage"), "curse_multiplier": s("Curse_Effect")}
+
+func _take_projectile_state(kind: String) -> Dictionary:
+	if not projectile_state_pools.has(kind):
+		projectile_state_pools[kind] = []
+		for slot in range(10): projectile_state_pools[kind].append({})
+	var state: Dictionary = projectile_state_pools[kind].pop_front() if not projectile_state_pools[kind].is_empty() else {}
+	if state.is_empty(): state.merge(_new_projectile_state(kind))
+	return state
+
+func _return_projectile_state(kind: String, state: Dictionary) -> void:
+	projectile_state_pools[kind].append(state)
+
+func _has_effect(enemy: Dictionary, kind: String) -> bool:
+	return bool(enemy.get("effect_flags", {}).get(kind, enemy.effect == kind))
+
+func _projectile_hit(enemy: Dictionary, kind: String, cached_state: Dictionary = {}) -> void:
+	if cached_state.is_empty(): cached_state.merge(_new_projectile_state(kind))
+	var critical_multiplier := s("Critic_Damage") if kind == "Arrow" and _roll("Critic_Chance") else 1.0
+	# Projectile.HPSteal is a separate hit before the arrow's principal damage.
 	if kind == "Arrow" and _roll("HP_Steal_Chance"):
-		amount += s("HP_Steal")
+		_hit(enemy, s("HP_Steal"))
 		_heal(s("HP_Steal"))
+	if kind == "Fire" and not _has_effect(enemy, "Burning") and _roll("Burn_Chance"):
+		_effect(enemy, "Burning", s("Burn_Duration"))
+		cached_state.base_damage *= 2.5
+	if kind == "Cursed" and not _has_effect(enemy, "Cursed") and _roll("Curse_Chance"):
+		_effect(enemy, "Cursed", s("Curse_Duration"))
+	# These assignments are sticky in the original pooled projectile components.
+	if not _has_effect(enemy, "Cursed"): cached_state.curse_multiplier = 1.0
+	if kind == "Shuriken" and _has_effect(enemy, "Bleeding"): cached_state.base_damage *= 3.0
+	var amount: float = float(cached_state.base_damage) * float(cached_state.curse_multiplier)
+	if enemy.boss: amount += s("Damage_Against_Bosses")
+	amount *= critical_multiplier
 	if kind == "Arrow" and armor <= 0 and _roll("HealOnHit_Chance"): _heal(s("HealOnHit_Amount"))
 	_hit(enemy, amount)
 
 func _effect(enemy: Dictionary, kind: String, duration: float) -> void:
+	if not enemy.has("effect_flags"): enemy.effect_flags = {}
+	enemy.effect_flags[kind] = true
 	enemy.effect = kind
 	enemy.effect_time = duration
 	enemy.tick = 0.0
@@ -511,20 +547,22 @@ func _roll(key: String) -> bool:
 	return randf() * 100.0 < s(key)
 
 func _hit(enemy: Dictionary, amount: float) -> void:
-	if enemy.hp <= 0: return
+	var first_death: bool = enemy.hp > 0
+	# Boss.Die skips Enemy.Die's dead flag; an in-flight life-steal arrow can reenter it.
+	if not first_death and int(enemy.kind) != 6: return
 	enemy.hp -= amount
 	enemy.actor.hit()
 	_floating_text(enemy.node.position + Vector3(0, 0.7, 0), Util.get_number_short_text(amount), Style.GOLD)
 	enemy.label.text = str(maxi(0, int(ceil(enemy.hp))))
 	audio.sound("hit")
 	if enemy.hp <= 0:
-		run_kills += 1
+		if first_death: run_kills += 1
 		var enemy_key = str(int(enemy.kind))
-		data.bestiary[enemy_key] = int(data.bestiary.get(enemy_key, 0)) + 1
+		if first_death: data.bestiary[enemy_key] = int(data.bestiary.get(enemy_key, 0)) + 1
 		if int(enemy.kind) in [4, 5]:
 			data.achievements.FirstMiniBoss = true
 			presentation.toast("GATE CLEARED · KEEP GOING")
-		if armor <= 0 and _roll("HealOnKill_Chance"): _heal(s("HealOnKill_Amount"))
+		if int(enemy.kind) != 6 and armor <= 0 and _roll("HealOnKill_Chance"): _heal(s("HealOnKill_Amount"))
 		if int(enemy.kind) == 6:
 			data.achievements.FirstBoss = true
 			data.achievements["RowDiver" if int(data.prestige) == 0 else "Prestige" + str(int(data.prestige))] = true
@@ -532,10 +570,10 @@ func _hit(enemy: Dictionary, amount: float) -> void:
 				data.achievements.BossSlayer = true
 				data.achievements.PrestigeMaster = true
 			var key = str(int(data.prestige))
-			if not data.crowns_dropped.get(key, false):
+			if not enemy.get("crown_dropped_on_spawn", data.crowns_dropped.get(key, false)):
 				_award_loot(2, 1.0)
 				data.crowns_dropped[key] = true
-			data.max_prestige = mini(3, maxi(int(data.max_prestige), int(data.prestige) + 1))
+				if int(data.prestige) < 3: data.max_prestige = mini(3, int(data.max_prestige) + 1)
 			Progress.check_achievements(data)
 			_finish(true)
 		else:
@@ -544,6 +582,7 @@ func _hit(enemy: Dictionary, amount: float) -> void:
 			if currency == 0: value = [1.0, 10.0, 100.0, 1000.0][int(data.prestige)]
 			var node = _box(self, enemy.node.position, Vector3(0.16, 0.16, 0.16), Color("eeb34c") if currency == 0 else Color("ad8de8"))
 			drops.append({"node": node, "currency": currency, "value": value})
+		if not first_death: return
 		enemies.erase(enemy)
 		enemy.label.hide()
 		enemy.actor.frozen = true
@@ -558,7 +597,9 @@ func _update_enemies(delta: float) -> void:
 		if enemy.effect_time > 0:
 			enemy.effect_time -= delta
 			enemy.tick += delta
-			if enemy.effect_time <= 0: enemy.effect = ""
+			if enemy.effect_time <= 0:
+				enemy.effect = ""
+				if enemy.has("effect_flags"): enemy.effect_flags.clear()
 		if enemy.effect != "":
 			enemy.label.modulate = {"Burning": Color("f5ad71"), "Cursed": Color("bfa2f4"), "Bleeding": Color("e38787")}[enemy.effect]
 		else:
@@ -626,7 +667,6 @@ func _damage_player(amount: float, ignore_armor = false, source = "enemy arrows"
 	if health <= 0: _finish(false)
 
 func _heal(amount: float) -> void:
-	if ended: return
 	health = minf(s("MaxHP"), health + amount)
 	if amount > 0: presentation.toast("+%s VITALITY" % Util.get_number_short_text(amount), Color("9ed7ae"))
 
@@ -649,11 +689,14 @@ func _floating_text(pos: Vector3, text: String, color: Color, currency = false) 
 	tween.chain().tween_callback(label.queue_free)
 
 func _finish(won: bool) -> void:
-	if ended: return
+	var first_finish: bool = not ended
+	if ended and (not won or overlay_title.text != "THE ROW IS YOURS"): return
 	ended = true
-	data.runs += 1
-	data.kills += run_kills
-	data.best_distance = maxf(float(data.best_distance), distance)
+	if first_finish:
+		data.runs += 1
+		data.kills += run_kills
+		data.best_distance = maxf(float(data.best_distance), distance)
+	# A reentrant Boss.Die may change crowns/prestige after the first victory.
 	if persist_results: Progress.save_data(data)
 	overlay_title.text = "THE ROW IS YOURS" if won else "THE ROW CLAIMED YOU"
 	presentation.overlay_detail.text = "Distance %.1f m  •  Kills %d\nGold %s  •  Gems %s  •  Crowns %s\n\n%s" % [distance, run_kills, str(int(coins[0])), str(int(coins[1])), str(int(coins[2])), ("Prestige %d unlocked. Return to upgrades to choose your next row." % int(data.max_prestige)) if won and int(data.prestige) < 3 else ("Prestige complete. Max 100 upgrade nodes to unlock your final choice." if won else "Your loot is banked. Spend it in Upgrades and come back stronger.")]

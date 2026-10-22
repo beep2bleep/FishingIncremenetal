@@ -17,3 +17,6 @@ Godot/*.exe
 
 # Ignore local validation output
 **/.validation/
+
+# Local Python simulation/import bytecode
+__pycache__/

@@ -1,0 +1,43 @@
+// Bodies at the markers are extracted verbatim by name from the original source.
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
+public class UpgradeController:MonoBehaviour {
+ public UpgradeData _upgradeData; public UpgradeController[] childUpgrades=Array.Empty<UpgradeController>();
+ bool _isProcessing; Currency _currency=>CurrencyManager.Instance.Currencies()[_upgradeData.cost.currencyType];
+ void UpdateInteractableState(bool b){}void UpdateVisualState(){}
+ public UpgradeData GetUpgradeData()=>_upgradeData;
+ public void Buy()=>StartCoroutine(UpgradeFlow());
+ /* UpgradeController */
+}
+public class UpgradesTreeManager {
+ public static UpgradesTreeManager Instance=new UpgradesTreeManager();int countMaxedUpgrades;
+ /* UpgradesTreeManager */
+}
+public class AchievementManager {
+ public Dictionary<AchievementType,Achievement> achievements=new Dictionary<AchievementType,Achievement>();
+ public void ClaimAchievement(AchievementType type){achievements[type].ClaimRewardNoBalance();}
+ public static AchievementManager Instance=new AchievementManager();GameManager _gameManager=>GameManager.Instance;
+ public bool IsAchievementUnlocked(AchievementType t)=>GameManager.Instance.memory.GetValueOrDefault(t.ToString()) is true;
+ public void UnlockAchievement(AchievementType t){GameManager.Instance.memory[t.ToString()]=true;}
+ void QueueUIUpdate(){}
+ /* AchievementManager */
+}
+
+public partial class GameManager {
+ public bool isGameOver;
+ void UnlockCursor(){}
+ public void PauseGame(){paused=true;}
+ bool isGameSucceeded;void SetupSuccessButtons(GameObject panel){}
+ /* GameManager */
+}
+
+public class PanelManager {
+ public static PanelManager Instance;
+ public Dictionary<TabType,Pair<Button,bool>> menuButtons=new Dictionary<TabType,Pair<Button,bool>>{{TabType.GodTab,new Pair<Button,bool>(new Button(),true)}};
+ public void SetupTabsAvailable(){}public void ShowPanel(TabType t){}
+ /* PanelManager */
+}

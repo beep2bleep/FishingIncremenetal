@@ -102,8 +102,15 @@ static func check_achievements(data: Dictionary) -> void:
 	var requirements = {"ArmoredTank": ["Armor", 1000.0], "BowMaster": ["Arrow_Damage", 60000000.0], "Vampire": ["HP_Steal_Chance", 1.0], "Healer": ["HealOnHit_Chance", 1.0]}
 	for key in requirements:
 		if stat(data, requirements[key][0]) >= requirements[key][1]: data.achievements[key] = true
-	if data.spent[0] >= 10000: data.achievements.CoinMaster = true
-	if data.spent[1] >= 50: data.achievements.GemMaster = true
+	# UpgradeFlow calls AchievementChecker after IncreaseLevel/UpdateCost. The
+	# reference counts that next price, including the retained last-tier price.
+	var achievement_spend := [0.0, 0.0, 0.0]
+	for entry in design().upgrades:
+		for rank in range(1, level(data, entry) + 1):
+			var price_rank := mini(rank, int(entry.maxLevel) - 1)
+			achievement_spend[int(entry.cost.currencyType)] += float(entry.baseUpgradeCost) if price_rank == 0 else ceil(float(entry.baseUpgradeCost) * pow(1.2, price_rank))
+	if maxf(data.spent[0], achievement_spend[0]) >= 10000: data.achievements.CoinMaster = true
+	if maxf(data.spent[1], achievement_spend[1]) >= 50: data.achievements.GemMaster = true
 	# UpgradesTreeManager.CheckMaxed uses 100 maxed nodes, not the full 112.
 	var maxed := 0
 	for entry in design().upgrades:

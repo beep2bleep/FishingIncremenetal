@@ -1,3 +1,7 @@
+# Differential logic comparison — 22 October 2026
+
+See `PARITY_SIMULATION.md` and `PARITY_SIMULATION.json`: 72 original-C#/Godot replay cases match at 2,129 checkpoints after parity corrections. The four-row gameplay fixture now carries one progress dictionary through all prestiges. Exact full original-campaign/native-physics parity remains **uncertified**; the strict harness gate reports that explicitly.
+
 # Polish verification — 22 October 2026
 
 The main project's AppBootstrap/GameLauncher, shared UpgradeScreen and Settings scenes are reused. The first source upgrade now centers in the viewport; editor-only controls no longer overlap the Row Divers controls. Synty character/weapon art, skeletal idle loops, recoil, floating feedback, boss bars, a replayable four-page tutorial and the final choice scene are implemented. Asset provenance and remaining placeholders are listed in `PLACEHOLDERS.md`.
