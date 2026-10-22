@@ -477,6 +477,11 @@ func _return_to_game_launcher() -> void:
 
 func _input(event: InputEvent) -> void :
     if Global.game_state == Util.GAME_STATES.UPGRADES:
+        if row_divers_collection_panel != null and row_divers_collection_panel.visible:
+            if event.is_action_pressed("escape") or event.is_action_pressed("back"):
+                row_divers_collection_panel.hide()
+                get_viewport().set_input_as_handled()
+            return
         if _is_editor_return_to_launcher_shortcut(event):
             _return_to_game_launcher()
             get_viewport().set_input_as_handled()
@@ -655,6 +660,7 @@ func _refresh_bottom_wallet_display() -> void:
             row_divers_prestige.clear()
             for prestige_level in range(int(row_progress.max_prestige) + 1):
                 row_divers_prestige.add_item("Prestige %d" % prestige_level)
+        row_divers_prestige.visible = int(row_progress.max_prestige) > 0
         row_divers_prestige.select(clampi(int(row_progress.prestige), 0, maxi(row_divers_prestige.item_count - 1, 0)))
 
 func _setup_row_divers_wallet_display() -> void:
@@ -711,7 +717,9 @@ func _setup_row_divers_wallet_display() -> void:
     row_divers_collection_panel.name = "RowDiversCollection"
     row_divers_collection_panel.set_anchors_preset(Control.PRESET_CENTER)
     row_divers_collection_panel.position = Vector2(-520.0, -350.0)
-    row_divers_collection_panel.custom_minimum_size = Vector2(1040.0, 700.0)
+    row_divers_collection_panel.size = Vector2(1040.0, 700.0)
+    row_divers_collection_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+    row_divers_collection_panel.add_theme_stylebox_override("panel", row_style.panel(Color("14202c")))
     row_divers_collection_panel.visible = false
     layer.add_child(row_divers_collection_panel)
     var shared_money_ui := get_node_or_null("%Moeny UI")
@@ -748,6 +756,8 @@ func _show_row_divers_collection(title: String, rows: Array[Control]) -> void:
     close.pressed.connect(row_divers_collection_panel.hide)
     box.add_child(close)
     var scroll := ScrollContainer.new()
+    scroll.name = "CollectionScroll"
+    scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
     scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
     box.add_child(scroll)
     var content := VBoxContainer.new()
@@ -756,6 +766,7 @@ func _show_row_divers_collection(title: String, rows: Array[Control]) -> void:
     scroll.add_child(content)
     for row in rows:
         content.add_child(row)
+    preload("res://Games/RowDivers/RowDiversStyle.gd").apply_fonts(row_divers_collection_panel)
     row_divers_collection_panel.show()
 
 func _show_row_divers_achievements() -> void:
@@ -765,6 +776,13 @@ func _show_row_divers_achievements() -> void:
         var key: String = str(ROW_DIVERS_PROGRESS_SCRIPT.design().enums.AchievementType[str(int(achievement.achievementType))])
         var row := Button.new()
         row.custom_minimum_size.y = 82.0
+        row.icon = preload("res://Games/RowDivers/RowDiversIcons.gd").achievement(key)
+        row.expand_icon = true
+        row.add_theme_font_size_override("font_size", 20)
+        row.add_theme_color_override("font_disabled_color", Color("aebbc8"))
+        row.add_theme_constant_override("icon_max_width", 52)
+        row.alignment = HORIZONTAL_ALIGNMENT_LEFT
+        row.mouse_force_pass_scroll_events = true
         row.text = "%s — %s\nReward: %s %s  •  %s" % [achievement.achievementName, achievement.description, str(achievement.reward), ["Gold", "Gems", "Crowns", ""][clampi(int(achievement.currencyType), 0, 3)], "Claimed" if row_progress.claimed.get(key, false) else ("CLAIM" if row_progress.achievements.get(key, false) else "Locked")]
         row.disabled = not row_progress.achievements.get(key, false) or row_progress.claimed.get(key, false)
         row.pressed.connect(_claim_row_divers_achievement.bind(achievement))
@@ -787,7 +805,17 @@ func _show_row_divers_bestiary() -> void:
         label.custom_minimum_size.y = 50.0
         var enemy_name: String = str(ROW_DIVERS_PROGRESS_SCRIPT.design().enums.ZombieType[str(index)]).replace("_", " ")
         label.text = "%s    •    Defeated: %d" % [enemy_name, int(row_progress.bestiary.get(str(index), 0))]
-        rows.append(label)
+        var row := HBoxContainer.new()
+        row.add_theme_constant_override("separation", 18)
+        var portrait := TextureRect.new()
+        portrait.texture = preload("res://Games/RowDivers/RowDiversIcons.gd").enemy(index)
+        portrait.custom_minimum_size = Vector2(56, 56)
+        portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        row.add_child(portrait)
+        row.add_child(label)
+        rows.append(row)
     _show_row_divers_collection("BESTIARY", rows)
 
 
@@ -1291,6 +1319,7 @@ func _on_popup_layer_child_exiting_tree(_node: Node) -> void:
     _refresh_demo_mode_label_visibility()
 
 func _is_any_popup_visible() -> bool:
+    if row_divers_collection_panel != null and row_divers_collection_panel.visible: return true
     if _is_reel_depth_tier_dialog_open():
         return true
     if battle_level_choice_dialog != null and is_instance_valid(battle_level_choice_dialog) and battle_level_choice_dialog.visible:

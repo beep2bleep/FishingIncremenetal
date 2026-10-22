@@ -10,6 +10,7 @@ var flash = 0.0
 var charge = 0.0
 var time = 0.0
 var frozen = false
+var rest_rotations: Dictionary = {}
 var skin_meshes: Array[MeshInstance3D] = []
 
 func setup(kind: int, boss: bool) -> void:
@@ -39,7 +40,7 @@ func _create_idle() -> void:
 		var pose := skeleton.get_bone_global_pose(bone)
 		var parent := skeleton.get_bone_parent(bone)
 		var parent_rotation := skeleton.get_bone_global_pose(parent).basis.get_rotation_quaternion()
-		var down := Quaternion(Vector3.FORWARD, signf(pose.origin.x) * 1.0)
+		var down := Quaternion(Vector3.FORWARD, signf(pose.origin.x) * 1.35)
 		skeleton.set_bone_pose_rotation(bone, parent_rotation.inverse() * down * pose.basis.get_rotation_quaternion())
 	idle = AnimationPlayer.new()
 	idle.name = "IdleAnimation"
@@ -47,19 +48,33 @@ func _create_idle() -> void:
 	var animation := Animation.new()
 	animation.length = 3.2
 	animation.loop_mode = Animation.LOOP_LINEAR
-	for bone_name in ["Spine_01", "Spine_02", "Neck", "Head", "Shoulder_L", "Shoulder_R"]:
+	for bone_name in ["Spine_01", "Spine_02", "Neck", "Head", "Shoulder_L", "Shoulder_R", "Elbow_L", "Elbow_R"]:
 		var bone: int = skeleton.find_bone(bone_name)
 		if bone < 0: continue
 		var base: Quaternion = skeleton.get_bone_pose_rotation(bone)
 		var track := animation.add_track(Animation.TYPE_ROTATION_3D)
 		animation.track_set_path(track, NodePath(str(get_path_to(skeleton)) + ":" + bone_name))
-		var strength := 0.018 if "Spine" in bone_name else 0.035
+		rest_rotations[bone_name] = base
+		var strength := 0.11 if "Spine" in bone_name else 0.18
 		for frame in range(5):
 			var phase := float(frame) / 4.0 * TAU
-			animation.rotation_track_insert_key(track, float(frame) * 0.8, base * Quaternion(Vector3.FORWARD, sin(phase) * strength))
+			animation.rotation_track_insert_key(track, float(frame) * 0.8, base * Quaternion(Vector3.FORWARD, sin(phase + (PI if bone_name.ends_with("_R") else 0.0)) * strength))
 	var library := AnimationLibrary.new()
 	library.add_animation("idle", animation)
+	var attack := Animation.new()
+	attack.length = 0.8
+	for bone_name in rest_rotations:
+		var track := attack.add_track(Animation.TYPE_ROTATION_3D)
+		attack.track_set_path(track, NodePath(str(get_path_to(skeleton)) + ":" + bone_name))
+		var base: Quaternion = rest_rotations[bone_name]
+		var strength := 0.65 if "Shoulder" in bone_name else (0.4 if "Elbow" in bone_name else 0.23)
+		var axis := Vector3.RIGHT if "Spine" in bone_name or bone_name == "Head" else Vector3.UP
+		for frame in [[0.0, 0.0], [0.26, -0.6], [0.4, 1.0], [0.8, 0.0]]:
+			attack.rotation_track_insert_key(track, frame[0], base * Quaternion(axis, frame[1] * strength))
+	library.add_animation("attack", attack)
 	idle.add_animation_library("", library)
+	idle.animation_finished.connect(func(name):
+		if name == "attack": idle.play("idle", 0.1))
 	idle.play("idle")
 	idle.seek(randf() * 3.2, true)
 
@@ -68,7 +83,9 @@ func hit() -> void:
 	for mesh in skin_meshes: mesh.material_overlay = hit_material
 
 func windup() -> void:
-	charge = 0.35
+	if frozen or charge > 0: return
+	charge = 0.8
+	if idle != null: idle.play("attack")
 
 func _process(delta: float) -> void:
 	if idle != null: idle.speed_scale = 0.0 if frozen else 1.0
@@ -82,5 +99,7 @@ func _process(delta: float) -> void:
 	if hit_material != null:
 		hit_material.albedo_color.a = flash * 3.5
 	if rig != null:
-		rig.position.y = -0.65 + sin(time * 2.2) * 0.012
-		rig.rotation.x = -charge * 0.2
+		rig.position.y = -0.65 + sin(time * 2.2) * 0.045
+		rig.position.z = sin((0.8 - charge) / 0.8 * PI) * 0.24 if charge > 0 else 0.0
+		rig.rotation.x = -sin((0.8 - charge) / 0.8 * PI) * 0.22 if charge > 0 else 0.0
+		rig.rotation.z = sin(time * 1.4) * 0.035

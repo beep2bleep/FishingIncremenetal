@@ -36,6 +36,10 @@ func run() -> void:
 	upgrades.setup()
 	upgrades.show_screen()
 	await capture("upgrades-polished")
+	upgrades._show_row_divers_achievements()
+	await capture("achievements-polished")
+	upgrades._show_row_divers_bestiary()
+	await capture("bestiary-polished")
 	upgrades.queue_free()
 	await process_frame
 	var battle = load("res://Games/RowDivers/Scenes/RowDiversBattleScene.gd").new()

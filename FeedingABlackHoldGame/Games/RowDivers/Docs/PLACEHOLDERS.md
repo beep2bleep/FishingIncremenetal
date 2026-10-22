@@ -1,6 +1,6 @@
 # Art inventory and remaining placeholders
 
-Enemy and weapon art now uses the owned Synty Dark Fantasy Godot pack from `C:\Game Assets\Synty Pass\Godot`. `Art/Synty/sources.json` lists all 28 selected files and the exact archive entries. The importer prunes unused skins from each character scene and copies its dependencies. No Row Divers Unity art is bundled. `RowDiversActor.gd` adds an authored looping skeletal idle, breathing, hit flashes and attack windup; death uses a short collapse tween.
+Enemy and weapon art now uses the owned Synty Dark Fantasy Godot pack from `C:\Game Assets\Synty Pass\Godot`. `Art/Synty/sources.json` lists all 28 selected files and the exact archive entries. The importer prunes unused skins from each character scene and copies its dependencies. No Row Divers Unity art is bundled. `RowDiversActor.gd` adds an authored looping skeletal idle, visible breathing/arm sway, hit flashes and skeletal attack/lunge clips; death uses a short collapse tween.
 
 | Element | Current representation | Replacement needed |
 | --- | --- | --- |
@@ -23,7 +23,7 @@ Enemy and weapon art now uses the owned Synty Dark Fantasy Godot pack from `C:\G
 | Upgrade icons | Arrow, cross, diamond, dagger, triangle, star and circle glyphs | 112 upgrade icons; original graph coordinates and rarity borders are retained |
 | Ability states | Four clickable hotkey cards with active/recharge fills and timers; shield ring | Dedicated ability icons |
 | Health, armor, distance | Vitality bar, armor/run-mode text and boss bars; Exo 2 / Poppins fonts | Optional final HUD illustration |
-| Bestiary / achievements | Text lists and claim buttons | Enemy portraits and achievement icons |
+| Bestiary / achievements | Original vector portrait badges, achievement icons and scrolling claim list | Optional rendered mesh portraits and bespoke achievement illustrations |
 | Upgrade background | Main project's shared upgrade-screen background and effects | Optional final background art |
 | Damage, critical, heal, status | Floating damage/loot numbers, hit flashes, health-loss tint, toasts and status colors | Dedicated status icons and particles |
 | Startup card | In-engine render of the Synty enemy lineup | Optional illustrated capsule art |

@@ -19,6 +19,11 @@ func run() -> void:
 	root.add_child(battle)
 	battle.set_physics_process(false)
 	battle.data = Progress.fresh()
+	battle.presentation.refresh()
+	check(battle.presentation.ability_columns.values().all(func(column): return not column.visible), "Fresh run hides all unpurchased ability cards")
+	battle.data.unlocks.Harvester = true
+	battle.presentation.refresh()
+	check(battle.presentation.ability_columns.Harvester.visible and not battle.presentation.ability_columns.ArrowShield.visible, "Only purchased ability cards appear")
 	battle.health = 100
 	battle.armor = 0
 	battle.suspended = false
@@ -97,6 +102,41 @@ func run() -> void:
 	check(root_upgrade.sim_name == "Arrow Damage I" and root_upgrade.sim_position == Vector2(float(root_entry.position[0]), -float(root_entry.position[1])) * 20.0, "Shared tree retains source root and Unity layout position")
 	check(int(tree.node_dict[root_upgrade.cell].state) == 1, "Fresh Row Divers root is available")
 	check(tree.node_dict[root_upgrade.cell].get_global_transform_with_canvas().origin.distance_to(tree.get_viewport_rect().size * 0.5) < 12, "Fresh upgrade is centered inside the visible viewport")
+	check(not upgrade_scene.row_divers_prestige.visible, "Prestige selector is hidden until the first row is beaten")
+	Progress.active_data_cache.max_prestige = 1
+	upgrade_scene._refresh_bottom_wallet_display()
+	check(upgrade_scene.row_divers_prestige.visible, "First victory reveals prestige selection")
+	Progress.active_data_cache.max_prestige = 0
+	upgrade_scene._show_row_divers_achievements()
+	for frame in range(3): await process_frame
+	var collection: PanelContainer = upgrade_scene.row_divers_collection_panel
+	var close_button: Button = collection.get_child(0).get_child(0)
+	check(close_button.has_node("RailwayButtonFeedback"), "Popup close button has hover/click feedback")
+	close_button.get_node("RailwayButtonFeedback")._hover()
+	await create_timer(0.07).timeout
+	check(close_button.scale.x > 1.0 and absf(close_button.rotation) > 0.001, "Hover visibly grows and tilts the button")
+	await create_timer(0.35).timeout
+	check(close_button.scale.is_equal_approx(Vector2.ONE) and is_zero_approx(close_button.rotation), "Button hover returns to its resting transform")
+	var scroll: ScrollContainer = collection.find_child("CollectionScroll", true, false)
+	check(upgrade_scene._is_any_popup_visible(), "Collections block tree zoom input")
+	check(scroll.get_v_scroll_bar().max_value > scroll.size.y, "Achievement list has bounded vertical overflow")
+	check(scroll.get_child(0).get_children().all(func(row): return row.icon != null), "Every achievement has an icon")
+	var wheel := InputEventMouseButton.new()
+	wheel.button_index = MOUSE_BUTTON_WHEEL_DOWN
+	wheel.pressed = true
+	wheel.position = scroll.get_global_rect().get_center()
+	var motion := InputEventMouseMotion.new()
+	motion.position = wheel.position
+	motion.global_position = wheel.position
+	root.push_input(motion, true)
+	root.push_input(wheel, true)
+	for frame in range(3): await process_frame
+	check(scroll.scroll_vertical > 0, "Mouse wheel scrolls over achievement rows")
+	upgrade_scene._show_row_divers_bestiary()
+	for frame in range(3): await process_frame
+	var bestiary_scroll: ScrollContainer = collection.find_child("CollectionScroll", true, false)
+	check(bestiary_scroll.get_child(0).get_children().all(func(row): return row.get_child(0) is TextureRect and row.get_child(0).texture != null), "Every bestiary row has a portrait icon")
+	collection.hide()
 	var purchase_fixture: Dictionary = Progress.fresh()
 	purchase_fixture.wallet[0] = 1000.0
 	Progress.save_data(purchase_fixture)

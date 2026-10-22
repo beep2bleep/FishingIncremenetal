@@ -18,7 +18,21 @@ static func panel(color = Color("182430"), border = Color("425365")) -> StyleBox
 	style.content_margin_bottom = 14
 	return style
 
+static func button_feedback(button: BaseButton) -> void:
+	if button is CustomButton:
+		var motion := button.get_node_or_null("CustomTweenComponent") as CustomTweenComponent
+		if motion != null:
+			motion.do_scale = true
+			motion.do_rotation = true
+			motion.rotation_amount = 3.0
+		return
+	if button.has_node("RailwayButtonFeedback"): return
+	var feedback := preload("res://Games/RowDivers/RowDiversButtonFeedback.gd").new()
+	feedback.name = "RailwayButtonFeedback"
+	button.add_child(feedback)
+
 static func apply_fonts(node: Node) -> void:
+	if node is BaseButton: button_feedback(node)
 	if node is Label or node is BaseButton or node is LineEdit or node is OptionButton:
 		node.add_theme_font_override("font", HEADING if node is BaseButton else BODY)
 	if node is RichTextLabel:
@@ -28,6 +42,7 @@ static func apply_fonts(node: Node) -> void:
 		apply_fonts(child)
 
 static func style_button(button: Button) -> void:
+	button_feedback(button)
 	button.add_theme_font_override("font", HEADING)
 	button.add_theme_font_size_override("font_size", 20)
 	button.set_meta("railway_font_size", 20)

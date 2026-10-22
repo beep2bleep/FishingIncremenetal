@@ -52,6 +52,12 @@ func run() -> void:
 		var idle_start: Quaternion = enemy.actor.skeleton.get_bone_pose_rotation(bone)
 		enemy.actor.idle.advance(0.8)
 		check(not idle_start.is_equal_approx(enemy.actor.skeleton.get_bone_pose_rotation(bone)), "Idle animation moves the enemy skeleton")
+		enemy.actor.windup()
+		check(enemy.actor.idle.current_animation == "attack", "Enemy windup plays a skeletal attack clip")
+		enemy.actor.idle.advance(0.4)
+		check(idle_start.angle_to(enemy.actor.skeleton.get_bone_pose_rotation(bone)) > 0.1, "Attack visibly bends the enemy torso")
+		enemy.actor.idle.advance(0.8)
+		check(enemy.actor.idle.current_animation == "idle", "Attack returns to the looping idle")
 		enemy.next_shot = 0
 		battle._update_enemies(0.01)
 		check(battle.projectiles.size() == 3, "Boss %d shoots three arrows" % kind)

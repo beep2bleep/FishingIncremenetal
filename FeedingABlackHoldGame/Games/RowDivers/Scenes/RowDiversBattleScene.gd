@@ -541,6 +541,8 @@ func _update_enemies(delta: float) -> void:
 		else:
 			enemy.label.modulate = Color.WHITE
 		var offset: Vector3 = enemy.node.position - player_position
+		if not enemy.boss and offset.z < 0 and offset.length() < 2.8:
+			enemy.actor.windup()
 		if int(enemy.kind) == 3:
 			enemy.node.position.z += 0.5 * delta
 		if enemy.boss:

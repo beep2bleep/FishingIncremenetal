@@ -19,6 +19,7 @@ var toast_time = 0.0
 var feedback: ColorRect
 var ability_buttons: Dictionary = {}
 var ability_bars: Dictionary = {}
+var ability_columns: Dictionary = {}
 var settings_panel: PanelContainer
 var settings_content: Control
 var overlay_detail: Label
@@ -81,13 +82,17 @@ func build(owner_battle: Node3D) -> void:
 	battle.crosshair.position -= Vector2(9, 20)
 	var abilities := HBoxContainer.new()
 	root_ui.add_child(abilities)
-	abilities.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	abilities.position += Vector2(-410, -102)
+	abilities.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	abilities.offset_top = -102
+	abilities.offset_bottom = -30
+	abilities.alignment = BoxContainer.ALIGNMENT_CENTER
 	abilities.add_theme_constant_override("separation", 12)
 	var key = 3
 	for ability in NAMES:
 		var column := VBoxContainer.new()
 		abilities.add_child(column)
+		ability_columns[ability] = column
+		column.visible = battle.unlocked(ability)
 		var button := make_button("[%d] %s" % [key, NAMES[ability]], func(): battle._activate(ability))
 		button.custom_minimum_size = Vector2(196, 52)
 		button.add_theme_font_size_override("font_size", 15)
@@ -126,7 +131,6 @@ func make_button(text: String, action: Callable) -> Button:
 	button.custom_minimum_size.y = 48
 	Style.style_button(button)
 	button.pressed.connect(func():
-		if battle.audio != null: battle.audio.sound("purchase")
 		action.call())
 	return button
 
@@ -262,11 +266,12 @@ func refresh() -> void:
 	hp_bar.value = battle.health
 	armor_label.text = "ARMOR %s  /  %s  /  %s" % [Util.get_number_short_text(battle.armor), "RUN" if battle.running else "WALK", battle.fire_mode.to_upper()]
 	currency.text = "GOLD %s   GEMS %s   CROWNS %s" % [Util.get_number_short_text(battle.data.wallet[0]), Util.get_number_short_text(battle.data.wallet[1]), Util.get_number_short_text(battle.data.wallet[2])]
-	battle.ability_hud.text = "%.1f m    SECTION %d / 15    PRESTIGE %d    ESC PAUSE" % [battle.distance, mini(15, battle.section), int(battle.data.prestige)]
+	battle.ability_hud.text = "%.1f m    SECTION %d / 15%s    ESC PAUSE" % [battle.distance, mini(15, battle.section), ("    PRESTIGE %d" % int(battle.data.prestige)) if int(battle.data.max_prestige) > 0 else ""]
 	var key = 3
 	for ability in NAMES:
 		var state: Dictionary = battle.abilities[ability]
 		var owned: bool = battle.unlocked(ability)
+		ability_columns[ability].visible = owned
 		var status: String = "LOCKED" if not owned else ("ACTIVE %.1fs" % state.active if state.active > 0 else ("%.0fs" % ceil(state.cooldown) if state.cooldown > 0 else "READY"))
 		ability_buttons[ability].text = "[%d] %s\n%s" % [key, NAMES[ability], status]
 		ability_buttons[ability].disabled = not owned or state.active > 0 or state.cooldown > 0
