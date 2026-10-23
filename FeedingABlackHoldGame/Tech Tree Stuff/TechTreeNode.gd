@@ -582,6 +582,10 @@ func update():
     var sim_effect_text: String = ""
     if using_sim_display:
         sim_effect_text = upgrade.sim_description.strip_edges()
+        if Util.is_row_divers_game_active():
+            var row_entry: Dictionary = ROW_DIVERS_PROGRESS.find_upgrade(upgrade.sim_key)
+            if not row_entry.is_empty():
+                sim_effect_text += "\n\n%s\nPaid with %s" % [ROW_DIVERS_PROGRESS.requirement_text(row_entry), ROW_DIVERS_PROGRESS.CURRENCY_NAMES[clampi(upgrade.sim_currency, 0, 2)]]
         if sim_effect_text == "":
             sim_effect_text = tr("Upgrade effect applied on unlock.")
     if using_sim_display:
@@ -660,7 +664,7 @@ func update():
             cost = ROW_DIVERS_PROGRESS.cost(ROW_DIVERS_PROGRESS.load_data(), row_upgrade)
     %Cost.visible = cost != 0
     if Util.is_row_divers_game_active():
-        %Cost.text = "%s %s" % [["●", "◆", "♛"][clampi(upgrade.sim_currency, 0, 2)], Util.get_number_short_text(cost)]
+        %Cost.text = "%s %s" % [Util.get_number_short_text(cost), ROW_DIVERS_PROGRESS.CURRENCY_NAMES[clampi(upgrade.sim_currency, 0, 2)]]
     elif upgrade != null and CROSS_GAME_BONUSES.is_cross_bonus_key(upgrade.sim_key):
         %Cost.text = CROSS_GAME_BONUSES.get_cost_text(int(cost))
     elif _is_open_pit_xp_upgrade():

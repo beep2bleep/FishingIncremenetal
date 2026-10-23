@@ -2,6 +2,7 @@ extends RefCounted
 ## Purchase order matters: percentages compound against the current stat, as in UpgradeController.
 const DATA_PATH = "res://Games/RowDivers/Data/row_divers.json"
 const SAVE_PATH = "user://row_divers_progress_v1.json"
+const CURRENCY_NAMES = ["GOLD", "GEMS", "CROWNS"]
 static var catalog: Dictionary = {}
 static var active_data_cache: Dictionary = {}
 
@@ -66,6 +67,13 @@ static func cost(data: Dictionary, node: Dictionary) -> float:
 	if rank <= 0:
 		return float(node.baseUpgradeCost)
 	return ceil(float(node.baseUpgradeCost) * pow(1.2, rank))
+
+static func requirement_text(node: Dictionary) -> String:
+	if node.parents.is_empty(): return "Starting upgrade"
+	var requirements: PackedStringArray = []
+	for parent in node.parents:
+		requirements.append("%s level %d" % [find_upgrade(str(parent)).upgradeName, int(node.unlockAtParentLevel)])
+	return "Unlock: " + " OR ".join(requirements)
 
 static func visible(data: Dictionary, node: Dictionary) -> bool:
 	if node.isVisible or level(data, node) > 0:

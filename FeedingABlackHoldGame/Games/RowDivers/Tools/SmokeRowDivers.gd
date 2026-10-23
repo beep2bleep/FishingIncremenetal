@@ -130,6 +130,26 @@ func run() -> void:
 	check(int(tree.node_dict[root_upgrade.cell].state) == 1, "Fresh Row Divers root is available")
 	check(tree.node_dict[root_upgrade.cell].get_global_transform_with_canvas().origin.distance_to(tree.get_viewport_rect().size * 0.5) < 12, "Fresh upgrade is centered inside the visible viewport")
 	check(not upgrade_scene.row_divers_prestige.visible, "Prestige selector is hidden until the first row is beaten")
+	var damage5: Dictionary = Progress.design().upgrades.filter(func(entry): return entry.upgradeName == "Arrow Damage V")[0]
+	var damage6: Dictionary = Progress.design().upgrades.filter(func(entry): return entry.upgradeName == "Arrow Damage VI")[0]
+	check(damage5.cost.currencyType == 1 and damage6.cost.currencyType == 1, "Damage V and VI use gems, not gold")
+	var upgrade5 = global_state.game_mode_data_manager.upgrades.values().filter(func(upgrade): return upgrade.sim_key == damage5.id)[0]
+	var node5 = tree.node_dict[upgrade5.cell]
+	node5.state = 1
+	node5.update()
+	check(node5.get_node("%Cost").text == "3 GEMS", "Actual upgrade tooltip spells out the gem price")
+	check("Bleed Duration level 1" in node5.get_node("%Description").text, "Tooltip explains the source prerequisite")
+	var branch_data: Dictionary = Progress.fresh()
+	branch_data.levels[damage5.parents[0]] = 1
+	branch_data.wallet = [1000000.0, 0.0, 0.0]
+	check(not Progress.buy(branch_data, damage5), "Gold alone cannot buy Damage V")
+	branch_data.wallet[1] = 3.0
+	check(Progress.buy(branch_data, damage5) and branch_data.wallet == [1000000.0, 0.0, 0.0], "Damage V charges three gems without spending gold")
+	check(not Progress.visible(branch_data, damage6), "Damage VI stays locked after only one Damage V level")
+	branch_data.wallet[1] = 4.0
+	check(Progress.buy(branch_data, damage5) and Progress.visible(branch_data, damage6), "Damage V level two unlocks VI on the original branch")
+	check(not Progress.buy(branch_data, damage6), "Damage VI also rejects gold-only payment")
+	node5.state = 0
 	Progress.active_data_cache.max_prestige = 1
 	upgrade_scene._refresh_bottom_wallet_display()
 	check(upgrade_scene.row_divers_prestige.visible, "First victory reveals prestige selection")

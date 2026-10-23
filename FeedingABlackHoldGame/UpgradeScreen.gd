@@ -649,7 +649,7 @@ func _refresh_bottom_wallet_display() -> void:
         money_ui.call("refresh_amounts")
     if row_divers_wallet_label != null and is_instance_valid(row_divers_wallet_label):
         var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
-        row_divers_wallet_label.text = "● %s     ◆ %s     ♛ %s" % [str(int(row_progress.wallet[0])), str(int(row_progress.wallet[1])), str(int(row_progress.wallet[2]))]
+        row_divers_wallet_label.text = "GOLD %s   GEMS %s   CROWNS %s" % [Util.get_number_short_text(row_progress.wallet[0]), Util.get_number_short_text(row_progress.wallet[1]), Util.get_number_short_text(row_progress.wallet[2])]
         row_divers_achievements_button.visible = bool(row_progress.unlocks.get("AchievementsTab", false))
         row_divers_bestiary_button.visible = bool(row_progress.unlocks.get("BestiaryTab", false))
         if row_divers_ending_button != null:

@@ -24,6 +24,22 @@ def cases(design):
             actions.append({'op':'buy','id':n['id']}); levels[n['id']] = levels.get(n['id'], n['level']) + 1
         actions += [{'op':'prestige3'}]
         result.append({'id':f'all-upgrades-order-{order}', 'type':'progress','actions':actions})
+    # Source damage V/VI belong to the dagger/bleed branch, and spend gems.
+    named = {n['upgradeName']: n for n in nodes}
+    levels = {}; branch = [{'op':'grant','wallet':[1e6,1000,100]}]
+    def own(node, rank):
+        while levels.get(node['id'], 0) < rank:
+            if node['parents'] and not any(levels.get(p,0) >= node['unlockAtParentLevel'] for p in node['parents']):
+                own(by_id[node['parents'][0]], node['unlockAtParentLevel'])
+            branch.append({'op':'buy','id':node['id']}); levels[node['id']] = levels.get(node['id'],0)+1
+    damage5, damage6 = named['Arrow Damage V'], named['Arrow Damage VI']
+    own(by_id[damage5['parents'][0]], damage5['unlockAtParentLevel'])
+    branch += [{'op':'set_wallet','wallet':[1e6,0,0]}, {'op':'buy','id':damage5['id']},
+               {'op':'set_wallet','wallet':[0,3,0]}, {'op':'buy','id':damage5['id']}, {'op':'buy','id':damage6['id']},
+               {'op':'set_wallet','wallet':[0,4,0]}, {'op':'buy','id':damage5['id']},
+               {'op':'set_wallet','wallet':[1e6,0,0]}, {'op':'buy','id':damage6['id']},
+               {'op':'set_wallet','wallet':[0,3,0]}, {'op':'buy','id':damage6['id']}]
+    result.append({'id':'damage-v-vi-source-branch-and-gem-payment','type':'progress','actions':branch})
     sequential = json.loads(json.dumps(result[0]['actions'][:-1]))
     sequential += [{'op':'win','prestige':p} for p in [0,0,1,1,2,3,3]]
     result.append({'id':'consecutive-victory-progression','type':'progress','actions':sequential})
