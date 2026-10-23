@@ -45,3 +45,9 @@ Remove these controls by setting `railway_fury/debug/enable_speed_cheats=false` 
 Settings → **Original Row Divers Graphics** toggles the source artwork immediately and remembers the preference. The shared start/settings/upgrade screens remain in use. The option covers enemies, weapon/projectile/loot artwork, corridor textures, all upgrade icons, collections/ability icons and ending illustrations; it does not reproduce Unity's shaders or exact HUD. See `Games/RowDivers/Docs/PLACEHOLDERS.md` under the Godot project for the art manifest and scope. Verify with `VerifyOriginalGraphics.gd`, or run `VerifyRowDiversCampaign.gd -- --original-graphics` for the complete original-art campaign fixture.
 
 Run `python tools/rowdivers_parity/run.py --campaign --self-test` to compare the original C# methods with our runtime logic. See `tools/rowdivers_parity/README.md` and `FeedingABlackHoldGame/Games/RowDivers/Docs/PARITY_SIMULATION.md` for scope, reproduced differences, fixes and limits. The covered 72 cases pass; exact native-physics and full original-campaign parity is not certified. `--require-end-to-end` fails closed for that stronger requirement.
+
+## Windows QA build
+
+Launch `Build - RailwayFury/Windows-QA/RailwayFury.exe`. Keep its `.pck` and both DLLs beside the executable. This debug build includes speed cheats and the original-art toggle, and uses the normal RailwayFury save folder. `BUILD_INFO.json` beside it records the source revision and file hashes.
+
+Rebuild from the repository root with `Godot/Godot_v4.6-stable_win64_console.exe --headless --path FeedingABlackHoldGame --export-debug "Railway Fury QA"`. The preset includes JSON/CSV design data and excludes the module's test tools and documentation.
