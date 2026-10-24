@@ -133,7 +133,7 @@ var row_divers_achievements_button: Button
 var row_divers_bestiary_button: Button
 var row_divers_collection_panel: PanelContainer
 var row_divers_color_button: Button
-static var row_divers_editor_background := Color("c4ddbf")
+static var row_divers_editor_background := Color("2e5b4f")
 var mining_time_label: Label
 var wishlist_button: Button
 var web_wishlist_button: Button
@@ -883,7 +883,7 @@ func update_colors():
     color_dark.v *= 0.95
     %"GPUParticles2D2 Dark".modulate = color_dark
     if Util.is_row_divers_game_active():
-        var background := row_divers_editor_background if OS.has_feature("editor") else Color("c4ddbf")
+        var background := row_divers_editor_background if OS.has_feature("editor") else Color("2e5b4f")
         %"Click Mask".color = background
         %"GPUParticles2D Light".modulate = background.lightened(0.12)
         %"GPUParticles2D2 Dark".modulate = background.darkened(0.14)
