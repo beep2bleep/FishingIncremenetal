@@ -27,6 +27,7 @@ func run() -> void:
 	var settings_save = root.get_node("SaveHandler")
 	settings_save.local_settings_file_path = "user://row_divers_campaign_settings.json"
 	settings_save.row_divers_original_graphics = false # Rig assertions use the modern skeleton.
+	settings_save.row_divers_illustrated_graphics = false
 	root.get_node("Util").set_active_game_id("rowdivers")
 	var fresh: Dictionary = Progress.fresh()
 	var battle = make_battle(fresh)
@@ -148,7 +149,8 @@ func run() -> void:
 	check(purchases == 330, "Campaign loadout obtained through 330 legal purchases")
 	check(not loadout.unlocks.get("GodTab", false), "Maxed upgrades alone do not unlock ending")
 	loadout.controls_seen = true
-	settings_save.row_divers_original_graphics = "--original-graphics" in OS.get_cmdline_user_args()
+	settings_save.row_divers_original_graphics = "--original-graphics" in OS.get_cmdline_user_args() or "--illustrated" in OS.get_cmdline_user_args()
+	settings_save.row_divers_illustrated_graphics = "--illustrated" in OS.get_cmdline_user_args()
 	for prestige in range(4):
 		var data: Dictionary = loadout
 		data.prestige = prestige
@@ -211,7 +213,7 @@ func run() -> void:
 	else:
 		check(false, "Final choice scene opens after completion")
 	ending.queue_free()
-	print("ROW DIVERS CAMPAIGN %s: %d checks, %d failures" % ["PASSED" if failures == 0 else "FAILED", checks, failures])
+	print("RAILWAY FURY CAMPAIGN %s: %d checks, %d failures" % ["PASSED" if failures == 0 else "FAILED", checks, failures])
 	if FileAccess.file_exists(settings_save.local_settings_file_path): DirAccess.remove_absolute(settings_save.local_settings_file_path)
 	quit(0 if failures == 0 else 1)
 

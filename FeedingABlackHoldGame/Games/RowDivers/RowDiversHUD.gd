@@ -155,10 +155,10 @@ func _build_debug_speed_controls() -> void:
 	column.add_child(debug_speed_label)
 	var buttons := HBoxContainer.new()
 	column.add_child(buttons)
-	for multiplier in [1, 2, 4, 8]:
+	for multiplier in battle.DEBUG_SPEEDS:
 		var button := make_button("%dx" % multiplier, func(): battle.set_debug_speed(multiplier))
-		button.custom_minimum_size = Vector2(90, 38)
-		button.tooltip_text = "Speed up the entire simulation. Damage and cooldowns also accelerate. Carries between dives until you quit the game."
+		button.custom_minimum_size = Vector2(62, 38)
+		button.tooltip_text = "Speed up the entire simulation. At 4x and above: automatically aim and fire at the closest enemy without lateral movement, use unlocked abilities as soon as they are ready, and ignore enemy arrows. Row and contact damage still apply. Carries between dives until you quit the game."
 		buttons.add_child(button)
 		debug_speed_buttons[multiplier] = button
 	var hint := Style.label("F7 CYCLE  /  F8 NORMAL  ·  session only", 13)
@@ -201,7 +201,7 @@ func _build_overlay() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 14)
 	panel.add_child(box)
-	var eyebrow := Style.label("RAILWAY FURY  /  ROW DIVERS", 16, true)
+	var eyebrow := Style.label("RAILWAY FURY", 16, true)
 	eyebrow.modulate = Style.GOLD
 	eyebrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(eyebrow)

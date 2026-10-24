@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://brex0udb4lob4"
+path="res://.godot/imported/Komiku - The adventure goes on_ vol.1 - 11 Don't flinch.ogg-1dd8a039fae17bc555655e1c4755cbe3.oggvorbisstr"
+
+[deps]
+
+source_file="res://Games/RowDivers/Art/Original/Audio/Komiku - The adventure goes on_ vol.1 - 11 Don't flinch.ogg"
+dest_files=["res://.godot/imported/Komiku - The adventure goes on_ vol.1 - 11 Don't flinch.ogg-1dd8a039fae17bc555655e1c4755cbe3.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

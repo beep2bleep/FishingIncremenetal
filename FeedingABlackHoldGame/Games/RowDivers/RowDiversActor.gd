@@ -5,7 +5,7 @@ const SKINS = ["Skeleton_01", "Skeleton_HeavyArmor_01", "Skeleton_Flesh_01", "Sk
 const Graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
 var enemy_kind = 0
 var is_boss = false
-var source_sprite: Sprite3D
+var source_sprite: Node3D
 var idle_phase = 0.0
 var rig: Node3D
 var idle: AnimationPlayer
@@ -36,12 +36,9 @@ func _refresh_graphics() -> void:
 	skin_meshes.clear()
 	rest_rotations.clear()
 	if Graphics.original():
-		rig = Node3D.new()
+		rig = preload("res://Games/RowDivers/RowDiversOriginalPresentation.gd").build("Actor_" + str(enemy_kind), false)
 		add_child(rig)
-		source_sprite = Graphics.sprite(Graphics.ENEMIES[enemy_kind], 2.0 if is_boss else 1.4)
-		rig.add_child(source_sprite)
-		source_sprite.position.y = 0.65
-		rig.position.y = -0.65
+		source_sprite = rig.get_child(0)
 		return
 	var kind: int = enemy_kind
 	var boss: bool = is_boss
@@ -113,6 +110,12 @@ func hit() -> void:
 	flash = 0.18
 	for mesh in skin_meshes: mesh.material_overlay = hit_material
 
+func set_effects(flags: Dictionary) -> void:
+	if source_sprite == null: return
+	for effect in {"Burning": "Burn Icon", "Cursed": "Curse Icon", "Bleeding": "Bleed Icon"}:
+		var icon := source_sprite.find_child({"Burning": "Burn Icon", "Cursed": "Curse Icon", "Bleeding": "Bleed Icon"}[effect], true, false) as Node3D
+		if icon != null: icon.visible = bool(flags.get(effect, false))
+
 func windup() -> void:
 	if frozen or charge > 0: return
 	charge = 0.8
@@ -131,8 +134,8 @@ func _process(delta: float) -> void:
 	if hit_material != null:
 		hit_material.albedo_color.a = flash * 3.5
 	if source_sprite != null:
-		source_sprite.modulate = Color(1, 0.65, 0.55) if flash > 0 else Color.WHITE
-		source_sprite.scale = Vector3(1.0 + sin(time * 2.2) * 0.025, 1.0 - sin(time * 2.2) * 0.025, 1.0)
+		preload("res://Games/RowDivers/RowDiversOriginalPresentation.gd").animate(source_sprite, "BossIdle" if is_boss else "EnemyIdle", fmod(time, 0.6666667))
+		return
 	if rig != null:
 		rig.position.y = -0.65 + sin(time * 2.2) * 0.045
 		rig.position.z = sin((0.8 - charge) / 0.8 * PI) * 0.24 if charge > 0 else 0.0

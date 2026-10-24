@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://b5i2e5pdox2wl"
+path="res://.godot/imported/Komiku - The adventure goes on_ vol.1 - 05 Sweet night and friends.ogg-8b9c61b3cf39ab532876773be66c641e.oggvorbisstr"
+
+[deps]
+
+source_file="res://Games/RowDivers/Art/Original/Audio/Komiku - The adventure goes on_ vol.1 - 05 Sweet night and friends.ogg"
+dest_files=["res://.godot/imported/Komiku - The adventure goes on_ vol.1 - 05 Sweet night and friends.ogg-8b9c61b3cf39ab532876773be66c641e.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

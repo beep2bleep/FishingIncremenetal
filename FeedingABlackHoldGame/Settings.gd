@@ -17,7 +17,7 @@ var fps_limits: Dictionary = {
     }
 var locale_codes: Array[String] = []
 var _is_refreshing: bool = false
-var row_divers_graphics_toggle: CheckButton
+var row_divers_graphics_toggle: OptionButton
 
 func show_screen():
     _set_credits_visible(false)
@@ -76,8 +76,7 @@ func _refresh_hidden_control_visibility() -> void:
 func refresh_from_save() -> void:
     _is_refreshing = true
     if row_divers_graphics_toggle != null:
-        row_divers_graphics_toggle.set_pressed_no_signal(SaveHandler.row_divers_original_graphics)
-        row_divers_graphics_toggle.text = "ON — ORIGINAL ARTWORK" if SaveHandler.row_divers_original_graphics else "OFF — SYNTY ARTWORK"
+        row_divers_graphics_toggle.select(preload("res://Games/RowDivers/RowDiversGraphics.gd").mode())
     %"Music Volume".value = SaveHandler.music_volume
     %"Main Volume".value = SaveHandler.main_volume
     %"Effect Volume Slider".value = SaveHandler.effect_volume
@@ -96,16 +95,16 @@ func _setup_row_divers_graphics() -> void:
     if not Util.is_row_divers_game_active(): return
     var grid: GridContainer = get_node("GridContainer")
     var label := Label.new()
-    label.text = "ORIGINAL ROW DIVERS GRAPHICS"
+    label.text = "ART & AUDIO STYLE"
     grid.add_child(label)
-    row_divers_graphics_toggle = CheckButton.new()
+    row_divers_graphics_toggle = OptionButton.new()
     row_divers_graphics_toggle.name = "OriginalRowDiversGraphics"
-    row_divers_graphics_toggle.text = "ON / OFF"
-    row_divers_graphics_toggle.tooltip_text = "Original enemies, weapons, textures and icons. Applies immediately."
+    for title in ["MODERN / SYNTY", "CLASSIC / ORIGINAL", "ILLUSTRATED / NEW"]:
+        row_divers_graphics_toggle.add_item(title)
+    row_divers_graphics_toggle.tooltip_text = "Three complete art and audio styles. Illustrated uses new inked sprites, the restored corridor layout, and a new fantasy soundtrack. Applies immediately."
     grid.add_child(row_divers_graphics_toggle)
-    row_divers_graphics_toggle.toggled.connect(func(enabled: bool):
-        SaveHandler.row_divers_original_graphics = enabled
-        row_divers_graphics_toggle.text = "ON — ORIGINAL ARTWORK" if enabled else "OFF — SYNTY ARTWORK"
+    row_divers_graphics_toggle.item_selected.connect(func(index: int):
+        preload("res://Games/RowDivers/RowDiversGraphics.gd").select_mode(index)
         SaveHandler.save_local_settings()
         SignalBus.settings_updated.emit()
         if visible: AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK))
@@ -292,7 +291,9 @@ func refresh_static_text() -> void:
     _set_rich_text("Credits Panel/Credits Margin/Credits VBox/Credits Text", "CREDITS_BODY")
     if Util.is_row_divers_game_active():
         var credits: RichTextLabel = get_node("Credits Panel/Credits Margin/Credits VBox/Credits Text")
-        credits.text = "[b]RAILWAY FURY[/b]\n\nOriginal Row Divers game and reference artwork: Hermurx\nSynty character and weapon artwork: Synty Studios\nMusic: Phat Phrog Studio — Dark Abyss\nSound effects: local Game Assets collection; concrete footsteps by Levan Nadashvili / Sonniss GDC 2016\n\nOriginal Row Divers credits: Developed by Hermurx; original game's music by Loyalty Freak Music.\n\nThe graphics toggle changes artwork. Railway Fury continues to use its own music, shared menus and ending presentation."
+        credits.bbcode_enabled = true
+        get_node("Credits Panel/Credits Margin/Credits VBox/Credits Title").add_theme_color_override("font_color", Color("f2e4ce"))
+        credits.text = "[b]RAILWAY FURY[/b]\n\n[b]Artwork[/b]\nClassic artwork: Hermurx\nModern characters and weapons: Synty Studios\nIllustrated artwork and menu illustration: AI-generated\n\n[b]Music[/b]\nPhat Phrog Studio — fantasy, medieval and Dark Abyss collections\nClassic soundtrack: Loyalty Freak Music and Komiku\n\n[b]Sound Effects[/b]\nGame Assets collection and Sonniss libraries\nConcrete footsteps: Levan Nadashvili / Sonniss GDC 2016\n\nThank you for playing Railway Fury."
     _set_button_text("Credits Panel/Credits Margin/Credits VBox/Hide Credits", "UI_BACK")
 
 func _set_label_text(path: String, key: String) -> void:

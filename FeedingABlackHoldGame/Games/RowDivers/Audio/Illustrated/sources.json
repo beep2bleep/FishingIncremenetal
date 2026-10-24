@@ -1,0 +1,276 @@
+{
+  "music": {
+    "battle_quest": {
+      "file": "battle_quest.ogg",
+      "source": "C:\\Game Assets\\Music\\serpentsrequiem_adventuremusiccollection\\3 - Phat Phrog Studio - Serpents Requiem - Enchanted Quest.wav",
+      "sha256": "3f6cb205084ee99b772eb957e738e03c8c709a96ea2211e3264a7a36db0081e0",
+      "duration": 141.2,
+      "volume": 0.65,
+      "reason": "Melodic fantasy adventure; first combat selection",
+      "processing": "Full track; -20 LUFS normalization, -2 dBTP limit, stereo Vorbis q5"
+    },
+    "battle_wyverns": {
+      "file": "battle_wyverns.ogg",
+      "source": "C:\\Game Assets\\Music\\serpentsrequiem_adventuremusiccollection\\4 - Phat Phrog Studio - Serpents Requiem - Wizards and Wyverns.wav",
+      "sha256": "7d549d364f9b54e025379d90651f8fafc5c91a598562c746fb74cc08de02b87a",
+      "duration": 128.5,
+      "volume": 0.65,
+      "reason": "Fantasy adventure variation for combat",
+      "processing": "Full track; -20 LUFS normalization, -2 dBTP limit, stereo Vorbis q5"
+    },
+    "battle_heraldry": {
+      "file": "battle_heraldry.ogg",
+      "source": "C:\\Game Assets\\Music\\medievalmusicbundle_volume1_wav\\Heraldry - Medieval Combat Music Collection\\3 - Phat Phrog Studios - Heraldry Medieval Combat Music Collection.wav",
+      "sha256": "39afce43e547854e7e98a615218cf20a00bfea60b9f4e056da77b7fc688c1de7",
+      "duration": 100.7,
+      "volume": 0.65,
+      "reason": "Rhythmic medieval combat selection",
+      "processing": "Full track; -20 LUFS normalization, -2 dBTP limit, stereo Vorbis q5"
+    },
+    "menu": {
+      "file": "menu.ogg",
+      "source": "C:\\Game Assets\\Music\\medievalmusicbundle_volume1_wav\\Taverns - Medieval Inn Music Collection\\2 - Phat Phrog Studios - Taverns Medieval Inn Music Collection.wav",
+      "sha256": "3558d87378af681394ea69897ad3a52a1bc9ba2ab58ed3907992c22ae795b429",
+      "duration": 132.0,
+      "volume": 0.65,
+      "reason": "Acoustic medieval menu contrast",
+      "processing": "Full track; -20 LUFS normalization, -2 dBTP limit, stereo Vorbis q5"
+    },
+    "god": {
+      "file": "god.ogg",
+      "source": "C:\\Game Assets\\Music\\twilightpilgrims_rpgmusiccollection\\3 - Phat Phrog Studio - Twilight Pilgrims - Silent Horizon.wav",
+      "sha256": "2e93d7c52d7a235116bf79519df794d59941be5739414e7c845f70086a12ca3b",
+      "duration": 125.6,
+      "volume": 0.65,
+      "reason": "Quieter final-chamber selection",
+      "processing": "Full track; -20 LUFS normalization, -2 dBTP limit, stereo Vorbis q5"
+    },
+    "credits": {
+      "file": "credits.ogg",
+      "source": "C:\\Game Assets\\Music\\serpentsrequiem_adventuremusiccollection\\7 - Phat Phrog Studio - Serpents Requiem - Lost Chronicle.wav",
+      "sha256": "f0c7b1178459e8f9bc4bef21fdd2956a4772ad6ae4a393eca2d6e3899500a2dd",
+      "duration": 126.4,
+      "volume": 0.65,
+      "reason": "Melodic fantasy closing track",
+      "processing": "Full track; -20 LUFS normalization, -2 dBTP limit, stereo Vorbis q5"
+    }
+  },
+  "effects": {
+    "shot": {
+      "file": "shot.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\Membrans - Cartoon Arrow Sound Pack 01\\Cartoon Arrow 09.wav",
+      "sha256": "4d72ebcd90124bfd0ae95548b15372448dba23566f124475943af115ddde4df2",
+      "volume": 0.45,
+      "pitch": 1.0,
+      "duration": 0.65,
+      "trim_start": 0.009062500000000001,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "hit": {
+      "file": "hit.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2016- Game Audio Bundle\\The AudioVille - Wooden Staffs and Sword Fight\\WOODEN SWORD HIT-11.M.wav",
+      "sha256": "2f654f62b4302ea96c2bc70a07f2ab34deabcd2642babb3912c71dba5e23efa1",
+      "volume": 0.38,
+      "pitch": 1.0,
+      "duration": 0.2089795918367347,
+      "trim_start": 0.0576875,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "dagger": {
+      "file": "dagger.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2019 - Game Audio Bundle\\L.A. Sounds - Transition Movement Pack 002\\Sword Ring Scrape Gleam 02.wav",
+      "sha256": "4e93681717850ff05f92509933ccfe3b9f9678049872b1db5d3d5ee9057b6948",
+      "volume": 0.45,
+      "pitch": 1.0,
+      "duration": 1.8,
+      "trim_start": 0.0,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "step": {
+      "file": "step.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2016- Game Audio Bundle\\Levan Nadashvili - Soldier Footsteps\\FS Concrete Soldier Crouch N02.wav",
+      "sha256": "e18c77548ab475ef0963188705c2e93b9ef8b54014311d9e704cde6e027c949c",
+      "volume": 0.18,
+      "pitch": 1.0,
+      "duration": 0.65,
+      "trim_start": 0.0,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "coin": {
+      "file": "coin.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2017 - Game Audio Bundle\\Hzandbits - Money\\Money,Coins,Drop In Cash Register.wav",
+      "sha256": "b8c65479bd52e9a3a822dd021f4f54daf5c665bacb2e7c4eb8eadd0ce119e2f0",
+      "volume": 0.38,
+      "pitch": 1.0,
+      "duration": 0.9076643990929705,
+      "trim_start": 0.44684375,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "ability": {
+      "file": "ability.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2019 - Game Audio Bundle\\Articulated Sounds - Magic Elements vol.1\\MAGIC AIR Large Whoosh, Swirl, Wind Gust, Foliage 01.wav",
+      "sha256": "b043bd250f27486880fbfa65435cc75b1f201dfccbb0b2ddb4e85c451038e64f",
+      "volume": 0.4,
+      "pitch": 1.0,
+      "duration": 1.8,
+      "trim_start": 0.365875,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "purchase": {
+      "file": "purchase.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\Eiravaein Works - Start Select\\StartSelect,UI,set1,strings,ethnic,tonal,plucked,aura,hold_release.wav",
+      "sha256": "54256efb92dfc4f2de04afc43a374c1e3de91580c2611f169eec6ee885ed94cd",
+      "volume": 0.35,
+      "pitch": 1.0,
+      "duration": 1.8,
+      "trim_start": 0.0034062499999999996,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "click": {
+      "file": "click.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\Eiravaein Works - Start Select\\StartSelect,UI,set34,mechanical,subtle,percussive,thick,bright,holdrelease.wav",
+      "sha256": "4ddd9dcc32787ea5fc4fdd6cb9a8909bad02aad23d2a8bd1d735ca9031be0232",
+      "volume": 0.28,
+      "pitch": 1.0,
+      "duration": 0.4693424036281179,
+      "trim_start": 0.0,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "hover": {
+      "file": "hover.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\Eiravaein Works - Start Select\\StartSelect,UI,set3,pure,warm,simple,quick,tonal,deaction.wav",
+      "sha256": "a6e700faf7c52fd9e1931f8abfc28e9141a887168a53519ef2df37fd960ab64c",
+      "volume": 0.18,
+      "pitch": 1.0,
+      "duration": 0.65,
+      "trim_start": 0.0189375,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "damage": {
+      "file": "damage.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2019 - Game Audio Bundle\\Sound Spark LLC \u2013 Gore\\Melee_Sword_Attack_04.wav",
+      "sha256": "77e022f2123c679700e186f21e89d653ea57aba44c72c0e1ef6a1a0fcdf3da52",
+      "volume": 0.32,
+      "pitch": 1.0,
+      "duration": 1.3086167800453514,
+      "trim_start": 0.06372916666666667,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "death": {
+      "file": "death.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\Varazuvi - California Foley\\stone29.wav",
+      "sha256": "179aac5079b5ec984a82839afffe77d33c53c3ec3fb96d3ce13c09fd4f267fdf",
+      "volume": 0.38,
+      "pitch": 1.0,
+      "duration": 1.8,
+      "trim_start": 0.05359375000000001,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "boss_death": {
+      "file": "boss_death.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\Membrans - Monster Pack 01\\Monster 31.wav",
+      "sha256": "8db0a3bdf06866e18858fc869be0df7bd854d24b4b50199f38ccfb16b35cc096",
+      "volume": 0.48,
+      "pitch": 1.0,
+      "duration": 2.92297052154195,
+      "trim_start": 0.29360416666666667,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "mini_death": {
+      "file": "mini_death.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\Membrans - Monster Pack 01\\Monster 20.wav",
+      "sha256": "e656bf8f5916c29837c7410a616595fda6548f237ce45e8f8eef1f62d5506fec",
+      "volume": 0.42,
+      "pitch": 1.0,
+      "duration": 1.8,
+      "trim_start": 0.20570833333333333,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "gate": {
+      "file": "gate.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2020 - Game Audio Bundle\\344 Audio - Practical Doors\\Dungeon Door Open, Close, Locked.wav",
+      "sha256": "960c31494bc80247df419068d7c1a0a9455ea7d92105e3d13fa5e358375447d1",
+      "volume": 0.4,
+      "pitch": 1.0,
+      "duration": 3.0,
+      "trim_start": 0.01571875,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "boss_hello": {
+      "file": "boss_hello.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\TheLibrarybyEmptySea - SeaMonsters 2\\TheLibrarybyMTC_GrowlMonster_Effort_92_96k.wav",
+      "sha256": "7208c3b708dd9a4e3b55572aba12086a67d6c15b7fa3f9a0d64f07daf65d530c",
+      "volume": 0.35,
+      "pitch": 1.0,
+      "duration": 1.8,
+      "trim_start": 0.10152083333333334,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "horn": {
+      "file": "horn.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\TheLibrarybyEmptySea - SeaMonsters 2\\TheLibrarybyMTC_GrowlMonster_Roar_26_96k.wav",
+      "sha256": "01f5982a138ee17a9242f9204859df2218a4c19bd7266e664bafdeb1f44b8c81",
+      "volume": 0.38,
+      "pitch": 1.0,
+      "duration": 1.8,
+      "trim_start": 0.08484375000000001,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "win": {
+      "file": "win.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2019 - Game Audio Bundle\\Chris Logsdon - Ambient Puzzle SFX Pack\\Success 2a.wav",
+      "sha256": "e3859e9901dbae1f534e3d840a47fefec239156736eceb9b4c68bb82c97b8ecd",
+      "volume": 0.55,
+      "pitch": 1.0,
+      "duration": 2.5684807256235827,
+      "trim_start": 0.0,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "lose": {
+      "file": "lose.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\Eiravaein Works - Start Select\\StartSelect,UI,set100,lady,vocalizations,crunchy,multipitched,multitimbral,back.wav",
+      "sha256": "962085ab3c898700f3ab37ef22a7fd47beab7f4ad8daf663228206e40acb9931",
+      "volume": 0.4,
+      "pitch": 1.0,
+      "duration": 0.9751927437641723,
+      "trim_start": 0.02747916666666667,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "lose_voice": {
+      "file": "lose_voice.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC - Game Audio Bundle\\Coll Anderson - Monster Zombie Vocal\\EFX SD Monster Voices 11 A.wav",
+      "sha256": "1ffbf9b61e7adad3ce606819cace1c7b4d4ac218baa314aa0b3712bcbfce9293",
+      "volume": 0.25,
+      "pitch": 1.0,
+      "duration": 1.8,
+      "trim_start": 0.09115625000000001,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    },
+    "beam": {
+      "file": "beam.wav",
+      "source": "C:\\Game Assets\\Sound Effects\\Sonniss.com - GDC 2020 - Game Audio Bundle\\Articulated Sounds - Magic Elements vol.2\\MAGIC GENERIC Texture, Shimmer, Processed Glass, Reversed Layer, Disturbing, High.wav",
+      "sha256": "f3b26e762b4fa84fdf5df60ffd4bdedaacc08b2a07ed5dcc295a73234cef2632",
+      "volume": 0.25,
+      "pitch": 1.0,
+      "duration": 1.8,
+      "trim_start": 0.3970625,
+      "processing": "First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz"
+    }
+  },
+  "music_pools": {
+    "battle": [
+      "battle_quest",
+      "battle_wyverns",
+      "battle_heraldry"
+    ],
+    "menu": [
+      "menu"
+    ],
+    "god": [
+      "god"
+    ],
+    "credits": [
+      "credits"
+    ]
+  }
+}

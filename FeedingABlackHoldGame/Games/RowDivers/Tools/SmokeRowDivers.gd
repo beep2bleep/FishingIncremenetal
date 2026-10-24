@@ -52,6 +52,68 @@ func run() -> void:
 	battle.set_debug_speed(8)
 	check(battle.debug_speed == 1, "Shipping toggle disables accelerated simulation")
 	ProjectSettings.set_setting("railway_fury/debug/enable_speed_cheats", true)
+	for multiplier in [4, 8, 16, 32]:
+		battle.set_debug_speed(multiplier)
+		check(battle.presentation.debug_speed_buttons.has(multiplier), "%dx has a speed button" % multiplier)
+		var elapsed_before: float = battle.elapsed
+		battle._physics_process(1.0 / 60.0)
+		check(absf(battle.elapsed - elapsed_before - multiplier / 60.0) < 0.001, "%dx advances the requested number of simulation steps" % multiplier)
+		battle._spawn_enemy(battle.player_position + Vector3(1, -0.23, -3), 0)
+		var aimed_enemy = battle.enemies.back()
+		aimed_enemy.hp = 100
+		battle._spawn_enemy(battle.player_position + Vector3(-1, -0.23, -5), 0)
+		check(battle._target(10).node == aimed_enemy.node, "%dx targets the closest enemy across lanes" % multiplier)
+		var lateral_position: float = battle.player_position.x
+		battle.shot_timer = 0
+		battle._simulate_step(1.0 / 60.0)
+		check(not battle.projectiles.is_empty() and battle.projectiles[0].dir.x > 0, "%dx automatically fires toward an off-axis enemy" % multiplier)
+		check(is_equal_approx(battle.player_position.x, lateral_position), "Auto aim does not steer the player")
+		for i in range(120): battle._update_projectiles(1.0 / 60.0)
+		check(aimed_enemy.hp < 100, "Assisted arrows hit off-axis enemies")
+		var health_before: float = battle.health
+		battle.armor = 20
+		for kind in ["Critical", "Poison", "LifeSteal"]:
+			var arrow := Node3D.new()
+			battle.add_child(arrow)
+			arrow.position = battle.player_position
+			battle.projectiles.append({"node": arrow, "dir": Vector3.ZERO, "speed": 4.0, "type": kind, "life": 2.0, "hostile": true})
+		battle._update_projectiles(1.0 / 60.0)
+		battle._damage_player(10)
+		check(battle.health == health_before and battle.armor == 20 and battle.poison_ticks == 0, "%dx ignores arrow damage, armor loss and poison" % multiplier)
+		for foe in battle.enemies: foe.node.queue_free()
+		battle.enemies.clear()
+	var saved_unlocks: Dictionary = battle.data.unlocks.duplicate()
+	for multiplier in [1, 2, 4, 8, 16, 32]:
+		battle.set_debug_speed(multiplier)
+		for key in battle.abilities:
+			battle.data.unlocks[key] = true
+			battle.abilities[key].active = 0.0
+			battle.abilities[key].cooldown = 0.0
+		battle._simulate_step(0.01)
+		check(battle.abilities.keys().all(func(key): return battle.active(key) == (multiplier >= 4)), "%dx auto activates all ready abilities only at 4x and above" % multiplier)
+		for key in battle.abilities:
+			battle.abilities[key].active = 0.0
+			battle.abilities[key].cooldown = 0.005
+		battle._simulate_step(0.01)
+		check(battle.abilities.keys().all(func(key): return battle.active(key) == (multiplier >= 4)), "%dx reactivates abilities the instant cooldown expires" % multiplier)
+		for key in battle.abilities:
+			battle.data.unlocks[key] = false
+			battle.abilities[key].active = 0.0
+			battle.abilities[key].cooldown = 0.0
+		battle._simulate_step(0.01)
+		check(battle.abilities.keys().all(func(key): return not battle.active(key)), "Locked abilities never auto activate")
+	battle.data.unlocks = saved_unlocks
+	var cycle_speed := InputEventKey.new()
+	cycle_speed.keycode = KEY_F7
+	cycle_speed.pressed = true
+	battle._unhandled_input(cycle_speed)
+	check(battle.debug_speed == 1, "F7 cycles from 32x back to 1x")
+	battle.set_debug_speed(2)
+	var health_before: float = battle.health
+	battle.armor = 0
+	battle._damage_player(10)
+	check(battle.health == health_before - 10 and not battle.fast_combat_assist_enabled(), "2x retains normal arrow damage and aiming")
+	battle.set_debug_speed(1)
 	battle.player_position = starting_position
 	battle.elapsed = 0.0
 	battle.distance = 0.0
@@ -119,15 +181,15 @@ func run() -> void:
 	for _frame in range(20):
 		await process_frame
 	var tree = upgrade_scene.get_node("CanvasLayer/Tech Tree")
-	check(upgrade_scene.get("row_divers_wallet_label") != null and upgrade_scene.get("row_divers_wallet_label").visible, "Shared upgrade scene shows the Row Divers three-currency wallet")
+	check(upgrade_scene.get("row_divers_wallet_label") != null and upgrade_scene.get("row_divers_wallet_label").visible, "Shared upgrade scene shows the Railway Fury three-currency wallet")
 	check(upgrade_scene.get("go_again_button") != null and upgrade_scene.get("go_again_button").text == "PLAY", "Shared scene labels its battle transition PLAY")
-	check(tree.node_dict.size() == 113, "Shared UpgradeScreen builds center and all 112 Row Divers upgrades")
+	check(tree.node_dict.size() == 113, "Shared UpgradeScreen builds center and all 112 Railway Fury upgrades")
 	var lines: Node = tree.get_node("Pivot/Tech Lines")
 	check(lines.get_child_count() == 115, "Shared tree draws all 114 source edges and its center edge (got %d)" % lines.get_child_count())
 	var root_entry: Dictionary = Progress.design().upgrades.filter(func(node): return node.parents.is_empty())[0]
 	var root_upgrade = global_state.game_mode_data_manager.upgrades.values().filter(func(upgrade): return upgrade.sim_key == str(root_entry.id))[0]
 	check(root_upgrade.sim_name == "Arrow Damage I" and root_upgrade.sim_position == Vector2(float(root_entry.position[0]), -float(root_entry.position[1])) * 20.0, "Shared tree retains source root and Unity layout position")
-	check(int(tree.node_dict[root_upgrade.cell].state) == 1, "Fresh Row Divers root is available")
+	check(int(tree.node_dict[root_upgrade.cell].state) == 1, "Fresh Railway Fury root is available")
 	check(tree.node_dict[root_upgrade.cell].get_global_transform_with_canvas().origin.distance_to(tree.get_viewport_rect().size * 0.5) < 12, "Fresh upgrade is centered inside the visible viewport")
 	check(not upgrade_scene.row_divers_prestige.visible, "Prestige selector is hidden until the first row is beaten")
 	var damage5: Dictionary = Progress.design().upgrades.filter(func(entry): return entry.upgradeName == "Arrow Damage V")[0]
@@ -202,5 +264,5 @@ func run() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(Progress.SAVE_PATH))
 		Progress.active_data_cache = {}
 	upgrade_scene.queue_free()
-	print("ROW DIVERS GAMEPLAY + SHARED UPGRADE SCREEN SMOKE %s: %d assertions, %d failures" % ["PASSED" if failures == 0 else "FAILED", checks, failures])
+	print("RAILWAY FURY GAMEPLAY + SHARED UPGRADE SCREEN SMOKE %s: %d assertions, %d failures" % ["PASSED" if failures == 0 else "FAILED", checks, failures])
 	quit(0 if failures == 0 else 1)

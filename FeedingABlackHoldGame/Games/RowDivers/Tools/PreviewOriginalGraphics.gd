@@ -16,6 +16,8 @@ func run() -> void:
 	root.get_node("Util").set_active_game_id("rowdivers")
 	var settings_save = root.get_node("SaveHandler")
 	var original_preference: bool = settings_save.row_divers_original_graphics
+	var illustrated_preference: bool = settings_save.row_divers_illustrated_graphics
+	settings_save.row_divers_illustrated_graphics = false
 	var original_settings_path: String = settings_save.local_settings_file_path
 	settings_save.local_settings_file_path = "user://original_graphics_preview_settings.json"
 	settings_save.row_divers_original_graphics = true
@@ -59,6 +61,7 @@ func run() -> void:
 	await capture("ending-benevolent")
 	ending.free()
 	settings_save.row_divers_original_graphics = original_preference
+	settings_save.row_divers_illustrated_graphics = illustrated_preference
 	DirAccess.remove_absolute(settings_save.local_settings_file_path)
 	settings_save.local_settings_file_path = original_settings_path
 	print("GRAPHICS PREVIEWS: ", output)

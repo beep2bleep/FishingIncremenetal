@@ -70,6 +70,9 @@ func create_2d_audio_at_location(location, type: SoundEffectSettings.SOUND_EFFEC
 
 
 func create_audio(type: SoundEffectSettings.SOUND_EFFECT_TYPE, volume_db_offset: float = 0.0, pitch_scale_offset: float = 0.0):
+    for provider in get_tree().get_nodes_in_group("audio_cue_override"):
+        if provider.override_audio_cue(type):
+            return
     if sound_effect_dict.has(type):
         var sound_effect_setting: SoundEffectSettings = sound_effect_dict[type]
         if _should_use_cached_web_audio(type):

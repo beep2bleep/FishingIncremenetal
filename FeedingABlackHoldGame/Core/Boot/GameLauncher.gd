@@ -277,7 +277,7 @@ func _refresh_text() -> void:
             title_label.text = tr(TITLE_TEXT_KEY)
     if subtitle_label != null and is_instance_valid(subtitle_label):
         if _is_row_divers_launcher_mode():
-            subtitle_label.text = "ROW DIVERS"
+            subtitle_label.text = "FOUR CROWNS. ONE LAST CHOICE."
         elif _is_data_breach_inc_mode():
             subtitle_label.text = tr(DATA_BREACH_LAUNCHER_SUBTITLE_KEY)
         elif _is_vanguard_launcher_mode():
@@ -1077,7 +1077,7 @@ func _refresh_game_card_layout() -> void:
     if _is_row_divers_launcher_mode():
         game_cards_grid.columns = 1
         if row_divers_button != null and is_instance_valid(row_divers_button):
-            row_divers_button.custom_minimum_size = Vector2(1116.0, 520.0)
+            row_divers_button.custom_minimum_size = Vector2(1116.0, 740.0)
         _queue_fit_game_cards()
         return
     game_cards_grid.columns = 3 if viewport_width >= 1340.0 else 2
@@ -1298,6 +1298,8 @@ func _fit_game_card_content(button: Button) -> void:
     var game_id := str(button.get_meta("game_id", ""))
     if _is_vanguard_launcher_mode() and game_id == Util.ACTIVE_GAME_VANGUARD:
         preview_height = maxf(preview_height, available_content_height - 110.0)
+    elif _is_row_divers_launcher_mode() and game_id == Util.ACTIVE_GAME_ROW_DIVERS:
+        preview_height = maxf(preview_height, available_content_height - 110.0)
 
     for _i in range(32):
         preview_panel.custom_minimum_size.y = preview_height
@@ -1346,6 +1348,8 @@ func _layout_game_card_preview_texture(button: Button, preview_height: float) ->
 
     var game_id := str(button.get_meta("game_id", ""))
     var cover_scale := maxf(panel_width / texture_size.x, preview_height / texture_size.y)
+    if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
+        cover_scale = minf(panel_width / texture_size.x, preview_height / texture_size.y)
     cover_scale *= _get_game_card_preview_zoom(game_id)
     var fitted_size := texture_size * cover_scale
     var overflow_y := maxf(fitted_size.y - preview_height, 0.0)
@@ -1356,6 +1360,8 @@ func _layout_game_card_preview_texture(button: Button, preview_height: float) ->
         (panel_width - fitted_size.x) * 0.5,
         -overflow_y * focus_y
     )
+    if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
+        preview_texture.position.y = (preview_height - fitted_size.y) * 0.5
 
 func _get_game_card_preview_focus_y(game_id: String) -> float:
     match game_id:
@@ -1440,8 +1446,8 @@ func _get_game_card_definition(game_id: String) -> Dictionary:
             }
         Util.ACTIVE_GAME_ROW_DIVERS:
             return {
-                "title": "RAILWAY FURY  /  ROW DIVERS",
-                "detail": "A first person horde run. Upgrade your diver, then play.",
+                "title": "RAILWAY FURY",
+                "detail": "A first person horde run. Upgrade your arsenal, then play.",
                 "asset_rel_path": "",
                 "accent": Color(0.83, 0.59, 0.28, 1.0),
                 "bg_top": Color(0.16, 0.12, 0.09, 1.0),
@@ -1472,7 +1478,7 @@ func _get_game_card_texture(game_id: String) -> Texture2D:
     var card_def: Dictionary = _get_game_card_definition(game_id)
     var texture := _load_external_asset_texture(str(card_def.get("asset_rel_path", "")))
     if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
-        var row_art := "res://Games/RowDivers/Art/RailwayFuryTitle.png"
+        var row_art := "res://Games/RowDivers/Art/Illustrated/RailwayFuryMenu.png"
         if ResourceLoader.exists(row_art):
             texture = load(row_art) as Texture2D
         elif FileAccess.file_exists(row_art):
@@ -2239,7 +2245,7 @@ func _setup_row_divers_button() -> void:
     if title_label != null:
         title_label.text = "RAILWAY FURY"
     if subtitle_label != null:
-        subtitle_label.text = "ROW DIVERS"
+        subtitle_label.text = "FOUR CROWNS. ONE LAST CHOICE."
     game_cards_grid.columns = 1
     _refresh_game_card_layout()
 

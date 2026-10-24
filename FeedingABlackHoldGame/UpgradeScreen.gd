@@ -651,11 +651,20 @@ func _refresh_bottom_wallet_display() -> void:
         var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
         row_divers_wallet_label.text = "GOLD %s   GEMS %s   CROWNS %s" % [Util.get_number_short_text(row_progress.wallet[0]), Util.get_number_short_text(row_progress.wallet[1]), Util.get_number_short_text(row_progress.wallet[2])]
         row_divers_achievements_button.visible = bool(row_progress.unlocks.get("AchievementsTab", false))
+        var claimable := false
+        for achievement in ROW_DIVERS_PROGRESS_SCRIPT.design().settings.achievements:
+            var key: String = str(ROW_DIVERS_PROGRESS_SCRIPT.design().enums.AchievementType[str(int(achievement.achievementType))])
+            if row_progress.achievements.get(key, false) and not row_progress.claimed.get(key, false):
+                claimable = true
+                break
+        row_divers_achievements_button.get_parent().set_claimable(claimable and row_divers_achievements_button.visible)
         row_divers_bestiary_button.visible = bool(row_progress.unlocks.get("BestiaryTab", false))
         if row_divers_ending_button != null:
             row_divers_ending_button.visible = bool(row_progress.unlocks.get("GodTab", false))
             row_divers_ending_button.text = "YOUR FINAL CHOICE" if row_progress.get("god_panel_unlocked", false) else "OPEN FINAL CHAMBER"
             row_divers_ending_button.tooltip_text = "One-time cost: 200,000 gold, 10 gems, 4 crowns" if not row_progress.get("god_panel_unlocked", false) else ""
+            var chamber_ready: bool = row_progress.get("god_panel_unlocked", false) or (row_progress.wallet[0] >= 200000.0 and row_progress.wallet[1] >= 10.0 and row_progress.wallet[2] >= 4.0)
+            row_divers_ending_button.get_parent().set_claimable(row_divers_ending_button.visible and chamber_ready)
         if row_divers_prestige.item_count != int(row_progress.max_prestige) + 1:
             row_divers_prestige.clear()
             for prestige_level in range(int(row_progress.max_prestige) + 1):
@@ -676,7 +685,7 @@ func _setup_row_divers_wallet_display() -> void:
     row_divers_wallet_label.size = Vector2(430.0, 42.0)
     row_divers_wallet_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
     row_divers_wallet_label.add_theme_font_size_override("font_size", 22)
-    row_divers_wallet_label.add_theme_color_override("font_color", Color(0.96, 0.93, 0.82, 1.0))
+    row_divers_wallet_label.add_theme_color_override("font_color", Color("244536"))
     layer.add_child(row_divers_wallet_label)
     row_divers_prestige = OptionButton.new()
     row_divers_prestige.name = "RowDiversPrestige"
@@ -690,7 +699,13 @@ func _setup_row_divers_wallet_display() -> void:
     row_divers_achievements_button.position = Vector2(28.0, 220.0)
     row_divers_achievements_button.custom_minimum_size = Vector2(210.0, 44.0)
     row_divers_achievements_button.pressed.connect(_show_row_divers_achievements)
-    layer.add_child(row_divers_achievements_button)
+    var achievement_pulse = preload("res://Games/RowDivers/RowDiversAchievementPulse.gd").new()
+    achievement_pulse.name = "RowDiversAchievementPulse"
+    achievement_pulse.position = row_divers_achievements_button.position
+    achievement_pulse.size = row_divers_achievements_button.custom_minimum_size
+    layer.add_child(achievement_pulse)
+    row_divers_achievements_button.position = Vector2.ZERO
+    achievement_pulse.add_child(row_divers_achievements_button)
     row_divers_bestiary_button = Button.new()
     row_divers_bestiary_button.name = "RowDiversBestiary"
     row_divers_bestiary_button.text = "BESTIARY"
@@ -709,7 +724,13 @@ func _setup_row_divers_wallet_display() -> void:
     row_divers_ending_button.custom_minimum_size = Vector2(210.0, 48.0)
     row_style.style_button(row_divers_ending_button)
     row_divers_ending_button.pressed.connect(_open_row_divers_ending)
-    layer.add_child(row_divers_ending_button)
+    var chamber_pulse = preload("res://Games/RowDivers/RowDiversAchievementPulse.gd").new()
+    chamber_pulse.name = "RowDiversFinalChamberPulse"
+    chamber_pulse.position = row_divers_ending_button.position
+    chamber_pulse.size = row_divers_ending_button.custom_minimum_size
+    layer.add_child(chamber_pulse)
+    row_divers_ending_button.position = Vector2.ZERO
+    chamber_pulse.add_child(row_divers_ending_button)
     row_divers_purchase_feedback = row_style.label("", 20, true)
     row_divers_purchase_feedback.position = Vector2(280.0, 80.0)
     layer.add_child(row_divers_purchase_feedback)
@@ -838,7 +859,11 @@ func update_colors():
     var color_dark = Refs.pallet.background
     color_dark.v *= 0.95
     %"GPUParticles2D2 Dark".modulate = color_dark
-    if Util.is_mining_game_active():
+    if Util.is_row_divers_game_active():
+        %"Click Mask".color = Color("c4ddbf")
+        %"GPUParticles2D Light".modulate = Color("dcebd1")
+        %"GPUParticles2D2 Dark".modulate = Color("a4c69c")
+    elif Util.is_mining_game_active():
         %"Click Mask".color = Color(0.13, 0.1, 0.08, 1.0)
         %"GPUParticles2D Light".modulate = Color(0.72, 0.55, 0.22, 0.65)
         %"GPUParticles2D2 Dark".modulate = Color(0.28, 0.18, 0.1, 0.55)

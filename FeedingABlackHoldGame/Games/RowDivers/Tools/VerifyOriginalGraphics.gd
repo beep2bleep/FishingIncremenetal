@@ -42,6 +42,23 @@ func simulate(original: bool) -> Dictionary:
 	signal_bus.settings_updated.emit()
 	for enemy in battle.enemies:
 		check((enemy.actor.source_sprite != null) == original, "Actor matches selected graphics")
+	for corridor in battle.sections:
+		check(corridor.get_node("OriginalHallway").visible == original, "Corridor geometry follows the selected mode")
+		check(corridor.get_node("ModernHallway").visible != original, "Replacement corridor is hidden in original mode")
+	check(battle.original_weapons.visible == original, "Original weapon geometry follows the selected mode")
+	check(is_equal_approx(battle.camera.position.y, 1.71 if original else 0.9), "Original camera eye height comes from the source hierarchy")
+	if original:
+		check(battle.audio.music.stream.resource_path.begins_with(Graphics.ROOT + "Audio/"), "Original music is selected")
+		battle.audio.sound("shot")
+		var shot_found := false
+		for player in battle.audio.effects:
+			if player.stream != null and player.stream.resource_path.ends_with("Shot.ogg"):
+				shot_found = true
+				check(is_equal_approx(player.volume_linear, 0.45 * 0.45) and player.pitch_scale == 1.0, "Original shot volume and fixed pitch")
+		check(shot_found, "Original shot clip is used")
+	battle.horizontal_axis = 0
+	check(is_equal_approx(battle._advance_horizontal_axis(1, 0.1), 0.3), "Movement uses original input sensitivity")
+	check(is_equal_approx(battle._advance_horizontal_axis(-1, 0.1), -0.3), "Reversing movement uses original snap")
 	for frame in range(300):
 		battle.horizontal_override = 0.2 if frame < 120 else -0.1
 		battle._physics_process(1.0 / 60.0)
@@ -57,22 +74,62 @@ func run() -> void:
 	signal_bus = root.get_node("SignalBus")
 	root.get_node("Util").set_active_game_id("rowdivers")
 	var saved_mode: bool = save_handler.row_divers_original_graphics
+	var saved_illustrated: bool = save_handler.row_divers_illustrated_graphics
+	save_handler.row_divers_illustrated_graphics = false
 	var saved_settings_path: String = save_handler.local_settings_file_path
 	save_handler.local_settings_file_path = "user://original_graphics_verification.json"
 	for asset in Graphics.catalog().files:
 		check(Graphics.texture(asset.file) != null, "Texture loads: " + str(asset.file))
 	check(Graphics.catalog().upgrades.size() == 112, "All 112 original upgrade icons resolve")
+	var presentation = load("res://Games/RowDivers/RowDiversOriginalPresentation.gd")
+	for layout in presentation.catalog().layouts:
+		var scenery: Node3D = presentation.build(layout)
+		check(scenery.find_children("*", "MeshInstance3D", true, false).size() > 0, "Original geometry loads: " + layout)
+		if layout.begins_with("Section ") or layout == "Initial":
+			check(scenery.find_child("Column", true, false) != null, "Original columns exist: " + layout)
+		scenery.free()
+	# Repeat dives select the crownless room after that prestige's crown is earned.
+	# Scenery is built even in modern mode, so exercise all three style settings.
+	check(presentation.catalog().layouts.has("Crownless Boss Section"), "Crownless boss room is imported")
+	for mode in range(3):
+		save_handler.row_divers_original_graphics = mode != 0
+		save_handler.row_divers_illustrated_graphics = mode == 2
+		for prestige in range(4):
+			var repeat_data: Dictionary = Progress.fresh()
+			repeat_data.prestige = prestige
+			repeat_data.controls_seen = true
+			repeat_data.crowns_dropped[str(prestige)] = true
+			Progress.active_data_cache = repeat_data
+			var repeat_battle = load("res://Games/RowDivers/Scenes/RowDiversBattleScene.gd").new()
+			repeat_battle.persist_results = false
+			root.add_child(repeat_battle)
+			repeat_battle.set_physics_process(false)
+			repeat_battle._build_section(15)
+			var hallway: Node3D = repeat_battle.sections.back().get_node("OriginalHallway")
+			check(hallway.find_child("Crownless Boss Section", true, false) != null, "Repeat prestige %d in style %d builds crownless room" % [prestige, mode])
+			check(hallway.find_children("*", "MeshInstance3D", true, false).size() > 0, "Repeat boss room contains scenery")
+			check(repeat_battle.enemies.any(func(enemy): return enemy.kind == 6 and enemy.crown_dropped_on_spawn), "Repeat boss retains crown reward state")
+			repeat_battle.free()
+	save_handler.row_divers_illustrated_graphics = false
+	for cue in presentation.catalog().audio:
+		check(load(Graphics.ROOT + "Audio/" + str(presentation.catalog().audio[cue].file)) != null, "Original audio loads: " + cue)
+	var gate: Node3D = presentation.build("MiniBoss1 Section")
+	var entrance := gate.find_child("Room Entrance", true, false) as Node3D
+	presentation.animate(entrance, "BossEntranceOpen", 0.8333333)
+	check(is_equal_approx(entrance.get_node("Content").position.y, -0.4821723), "Original gate animation reaches the source endpoint")
+	gate.free()
 	var modern := simulate(false)
 	var original := simulate(true)
 	check(modern == original, "Identical inputs produce identical gameplay state with either art style")
 	load("res://Games/RowDivers/RowDiversUpgradeTreeAdapter.gd").apply_simulation_upgrades()
 	var manager = root.get_node("Global").game_mode_data_manager
 	for upgrade in manager.upgrades.values():
-		check(upgrade.sim_icon.begins_with(Graphics.ROOT), "Original upgrade icon path: " + upgrade.sim_key)
+		check(not upgrade.sim_icon.begins_with(Graphics.ROOT), "Modern upgrade icon retained in original mode: " + upgrade.sim_key)
 	var settings = load("res://Settings.tscn").instantiate()
 	root.add_child(settings)
 	check(settings.row_divers_graphics_toggle != null, "Shared settings exposes original graphics toggle")
-	settings.row_divers_graphics_toggle.button_pressed = not save_handler.row_divers_original_graphics
+	settings.row_divers_graphics_toggle.select(0)
+	settings.row_divers_graphics_toggle.item_selected.emit(0)
 	var stored: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(save_handler.local_settings_file_path))
 	check(stored.row_divers_original_graphics == save_handler.row_divers_original_graphics, "Toggle persists local preference")
 	for upgrade in manager.upgrades.values():
@@ -95,5 +152,6 @@ func run() -> void:
 	DirAccess.remove_absolute(save_handler.local_settings_file_path)
 	save_handler.local_settings_file_path = saved_settings_path
 	save_handler.row_divers_original_graphics = saved_mode
+	save_handler.row_divers_illustrated_graphics = saved_illustrated
 	print("ORIGINAL GRAPHICS: ", checks, " checks; ", failures, " failures")
 	quit(1 if failures else 0)

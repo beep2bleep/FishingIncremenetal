@@ -50,13 +50,13 @@ static func save_data(data: Dictionary, path = SAVE_PATH) -> void:
 		active_data_cache = data
 	var file = FileAccess.open(path + ".tmp", FileAccess.WRITE)
 	if file == null:
-		push_error("Cannot save Row Divers progression: " + error_string(FileAccess.get_open_error()))
+		push_error("Cannot save Railway Fury progression: " + error_string(FileAccess.get_open_error()))
 		return
 	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
 	var result = DirAccess.rename_absolute(path + ".tmp", path)
 	if result != OK:
-		push_error("Cannot finalize Row Divers save: " + error_string(result))
+		push_error("Cannot finalize Railway Fury save: " + error_string(result))
 
 static func level(data: Dictionary, node: Dictionary) -> int:
 	return int(data.levels.get(node.id, node.level))

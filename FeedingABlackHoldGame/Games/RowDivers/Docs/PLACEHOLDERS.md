@@ -2,7 +2,11 @@
 
 Enemy and weapon art defaults to the owned Synty Dark Fantasy Godot pack from `C:\Game Assets\Synty Pass\Godot`. `Art/Synty/sources.json` lists all 28 selected files and the exact archive entries. The importer prunes unused skins from each character scene and copies its dependencies. `RowDiversActor.gd` adds an authored looping skeletal idle, visible breathing/arm sway, hit flashes and skeletal attack/lunge clips; death uses a short collapse tween.
 
-Settings → **Original Row Divers Graphics** switches immediately to the user-requested reference artwork: seven enemy portraits with idle/attack motion, bow/dagger/arrow artwork, corridor wall/floor textures, enemy bullets, coins/gems, ability/achievement/bestiary icons, all 112 upgrade icons, and ending illustrations. `Art/Original/manifest.json` records 95 byte-for-byte texture copies, original paths, hashes and icon mappings. Regenerate with `python tools/import_row_divers_art.py`. This uses the original artwork in our renderer; it does not reproduce Unity's shaders, exact mesh layout, particles, fonts or HUD. The shared start/settings/upgrade screens, music and Railway Fury ending narrative remain in use. The preference persists in local settings and changes no combat bounds or progression. Settings credits distinguish the original game/art from this version's art/audio.
+Settings → **Art & Audio Style → Original / Row Divers** switches to the supplied reference scenery, artwork and sound. Corridor imports preserve the initial scene, all six regular sections, miniboss/final rooms, columns, plants, webs, decorations, transforms and materials. Original enemy/weapon/projectile geometry, idle and gate curves, music and sound mappings are included. `Art/Original/presentation.json` records the imported data and source SHA-256 hashes. Regenerate with `python tools/import_row_divers_art.py` followed by `python tools/import_row_divers_original.py`.
+
+**Illustrated / New** adds 38 newly generated combat images and a new six-track/20-effect audio set while retaining both previous styles. See `ILLUSTRATED_PRESENTATION.md` for assets, source records and validation.
+
+This remains a Godot port. Shared menus/HUD, fonts, ending narrative, some effects/animations, native collision/scheduling and cross-engine randomness are not established as exact matches. See `ORIGINAL_PRESENTATION.md` for restoration details and verification limits.
 
 | Element | Current representation | Replacement needed |
 | --- | --- | --- |

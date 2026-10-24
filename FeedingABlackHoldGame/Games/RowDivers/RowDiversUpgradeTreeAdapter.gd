@@ -43,7 +43,7 @@ static func apply_simulation_upgrades() -> void:
 		upgrade.epilogue = 0
 		upgrade.type = Util.NODE_TYPES.NORMAL
 		upgrade.sim_key = str(entry.get("id", ""))
-		upgrade.sim_name = str(entry.get("upgradeName", "Row Divers Upgrade"))
+		upgrade.sim_name = str(entry.get("upgradeName", "Railway Fury Upgrade"))
 		upgrade.sim_description = str(entry.get("upgradeDescription", ""))
 		upgrade.sim_icon = _icon_for(entry)
 		upgrade.sim_group = int(entry.get("rarity", 0))
@@ -73,8 +73,6 @@ static func apply_simulation_upgrades() -> void:
 			Global.game_mode_data_manager.unlocked_upgrades[upgrade.cell] = upgrade.to_dict()
 
 static func _icon_for(entry: Dictionary) -> String:
-	var graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
-	if graphics.original(): return graphics.ROOT + str(graphics.catalog().upgrades[str(entry.id)])
 	var title: String = str(entry.get("upgradeName", "")).to_lower()
 	if "arrow" in title or "bow" in title: return "➶"
 	if "hp" in title or "health" in title: return "+"

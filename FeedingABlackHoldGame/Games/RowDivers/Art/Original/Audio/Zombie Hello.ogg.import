@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dw6rd3s1jyh2v"
+path="res://.godot/imported/Zombie Hello.ogg-ec763de79b9ac6e84ec39c57354bf561.oggvorbisstr"
+
+[deps]
+
+source_file="res://Games/RowDivers/Art/Original/Audio/Zombie Hello.ogg"
+dest_files=["res://.godot/imported/Zombie Hello.ogg-ec763de79b9ac6e84ec39c57354bf561.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

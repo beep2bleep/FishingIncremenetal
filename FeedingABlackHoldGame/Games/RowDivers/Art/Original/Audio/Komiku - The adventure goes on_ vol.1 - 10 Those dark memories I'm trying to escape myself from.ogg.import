@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://tkm0envyx4wg"
+path="res://.godot/imported/Komiku - The adventure goes on_ vol.1 - 10 Those dark memories I'm trying to escape myself from.ogg-428554e6cfdebc29f3fec61d22852b6f.oggvorbisstr"
+
+[deps]
+
+source_file="res://Games/RowDivers/Art/Original/Audio/Komiku - The adventure goes on_ vol.1 - 10 Those dark memories I'm trying to escape myself from.ogg"
+dest_files=["res://.godot/imported/Komiku - The adventure goes on_ vol.1 - 10 Those dark memories I'm trying to escape myself from.ogg-428554e6cfdebc29f3fec61d22852b6f.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

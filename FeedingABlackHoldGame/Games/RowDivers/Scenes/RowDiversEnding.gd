@@ -15,7 +15,7 @@ func _ready() -> void:
 	Global.game_state = Util.GAME_STATES.UPGRADES
 	audio = preload("res://Games/RowDivers/RowDiversAudio.gd").new()
 	add_child(audio)
-	audio.play_music(false)
+	audio.play_context("god")
 	var data: Dictionary = Progress.load_data()
 	Progress.check_achievements(data)
 	if not data.unlocks.get("GodTab", false) or not data.get("god_panel_unlocked", false):
@@ -80,6 +80,7 @@ func _reveal() -> void:
 	reveal.tween_property(story, "visible_ratio", 1.0, 3.5)
 
 func _choose(choice: String) -> void:
+	audio.play_context("credits")
 	audio.sound("ability")
 	var data: Dictionary = Progress.load_data()
 	data.achievements[choice] = true
@@ -90,9 +91,11 @@ func _choose(choice: String) -> void:
 	heading.text = "A NEW DAWN" if choice == "BenevolentGod" else "THE CROWN IS YOURS"
 	if illustration != null and illustration.visible:
 		illustration.texture = preload("res://Games/RowDivers/RowDiversGraphics.gd").texture("BenevolentGod.png" if choice == "BenevolentGod" else "DevilGod.png")
-	story.text = ("You break the engine's hold and open the gates. For the first time, the row carries no prisoners.\n\nThe tracks stretch into daylight. Whatever comes next, they will choose it freely." if choice == "BenevolentGod" else "You sit upon the empty throne. The engine wakes to your command, and every gate bows before you.\n\nThe row runs again. This time, you decide where it leads.") + "\n\nThank you for playing Railway Fury.\nArt: Synty Studios  •  Audio: see asset credits\nInspired by the mechanics of Row Divers."
-	if preload("res://Games/RowDivers/RowDiversGraphics.gd").original():
-		story.text = story.text.replace("Art: Synty Studios", "Reference artwork: Row Divers / Hermurx")
+	story.text = ("You break the engine's hold and open the gates. For the first time, the row carries no prisoners.\n\nThe tracks stretch into daylight. Whatever comes next, they will choose it freely." if choice == "BenevolentGod" else "You sit upon the empty throne. The engine wakes to your command, and every gate bows before you.\n\nThe row runs again. This time, you decide where it leads.") + "\n\nThank you for playing Railway Fury.\nArt: Synty Studios  •  Audio: see asset credits"
+	if preload("res://Games/RowDivers/RowDiversGraphics.gd").illustrated():
+		story.text = story.text.replace("Art: Synty Studios", "Illustrated artwork: AI-generated")
+	elif preload("res://Games/RowDivers/RowDiversGraphics.gd").original():
+		story.text = story.text.replace("Art: Synty Studios", "Classic artwork: Hermurx")
 		story.text = story.text.replace("  •  Audio:", "\nAudio:")
 	if reveal != null: reveal.kill()
 	_reveal()

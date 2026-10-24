@@ -1,5 +1,5 @@
 extends SceneTree
-## Render the main project's shared upgrade screen and Row Divers battle scene without changing the save.
+## Render the main project's shared upgrade screen and Railway Fury battle scene without changing the save.
 const Progress = preload("res://Games/RowDivers/RowDiversProgress.gd")
 
 func _initialize() -> void:
@@ -51,5 +51,5 @@ func run() -> void:
 	await process_frame
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png(directory + "/gameplay.png")
-	print("ROW DIVERS PREVIEWS RENDERED USING THE SHARED UPGRADE SCREEN")
+	print("RAILWAY FURY PREVIEWS RENDERED USING THE SHARED UPGRADE SCREEN")
 	quit()

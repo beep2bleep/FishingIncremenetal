@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://bhmubvws41jby"
+path="res://.godot/imported/Komiku - The adventure goes on_ vol.1 - 02 On the tracks of the elders.ogg-d2729b5369647287f5c260f9335ad01a.oggvorbisstr"
+
+[deps]
+
+source_file="res://Games/RowDivers/Art/Original/Audio/Komiku - The adventure goes on_ vol.1 - 02 On the tracks of the elders.ogg"
+dest_files=["res://.godot/imported/Komiku - The adventure goes on_ vol.1 - 02 On the tracks of the elders.ogg-d2729b5369647287f5c260f9335ad01a.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

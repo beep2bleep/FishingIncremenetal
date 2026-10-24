@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dyugadg3mb77i"
+path="res://.godot/imported/Komiku - The adventure goes on_ vol.1 - 03 The urge of moving_ smile on the faces.ogg-905fa87879d33d5d0ed9f44de4541ed5.oggvorbisstr"
+
+[deps]
+
+source_file="res://Games/RowDivers/Art/Original/Audio/Komiku - The adventure goes on_ vol.1 - 03 The urge of moving_ smile on the faces.ogg"
+dest_files=["res://.godot/imported/Komiku - The adventure goes on_ vol.1 - 03 The urge of moving_ smile on the faces.ogg-905fa87879d33d5d0ed9f44de4541ed5.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

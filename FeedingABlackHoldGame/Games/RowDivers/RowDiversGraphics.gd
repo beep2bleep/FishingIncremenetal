@@ -8,11 +8,24 @@ static var manifest: Dictionary = {}
 static func original() -> bool:
 	return SaveHandler.row_divers_original_graphics
 
+static func illustrated() -> bool:
+	return original() and SaveHandler.row_divers_illustrated_graphics
+
+static func mode() -> int:
+	return 2 if illustrated() else 1 if original() else 0
+
+static func select_mode(index: int) -> void:
+	SaveHandler.row_divers_original_graphics = index != 0
+	SaveHandler.row_divers_illustrated_graphics = index == 2
+
 static func catalog() -> Dictionary:
 	if manifest.is_empty(): manifest = JSON.parse_string(FileAccess.get_file_as_string(ROOT + "manifest.json"))
 	return manifest
 
 static func texture(name: String) -> Texture2D:
+	if illustrated():
+		var replacement: Texture2D = preload("res://Games/RowDivers/RowDiversIllustrated.gd").texture(name)
+		if replacement != null: return replacement
 	if not textures.has(name): textures[name] = load(ROOT + name)
 	return textures[name]
 

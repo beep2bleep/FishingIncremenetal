@@ -63,5 +63,5 @@ func _initialize() -> void:
 	Progress.save_data(data, roundtrip)
 	check(Progress.load_data(roundtrip).wallet == data.wallet, "Atomic save replaces an existing save")
 	DirAccess.remove_absolute(roundtrip)
-	print("ROW DIVERS VALIDATION %s: %d assertions; %d purchases; %d failures; all 112 nodes maxed through legal edges" % ["PASSED" if failures == 0 else "FAILED", checks, purchased, failures])
+	print("RAILWAY FURY VALIDATION %s: %d assertions; %d purchases; %d failures; all 112 nodes maxed through legal edges" % ["PASSED" if failures == 0 else "FAILED", checks, purchased, failures])
 	quit(0 if failures == 0 else 1)

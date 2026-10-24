@@ -332,6 +332,7 @@ var audio_muted = false
 var touch_input_mode = true
 var confirm_upgrade_purchase = false
 var row_divers_original_graphics = false
+var row_divers_illustrated_graphics = false
 const VANGUARD_CRT_LEVEL_MAX := 11
 var vanguard_battle_crt_level: int = 0
 
@@ -374,6 +375,7 @@ func save_local_settings():
     save_data["touch_input_mode"] = touch_input_mode
     save_data["confirm_upgrade_purchase"] = confirm_upgrade_purchase
     save_data["row_divers_original_graphics"] = row_divers_original_graphics
+    save_data["row_divers_illustrated_graphics"] = row_divers_illustrated_graphics
     save_data["vanguard_battle_crt_level"] = vanguard_battle_crt_level
     var file = FileAccess.open(local_settings_file_path, FileAccess.WRITE)
     file.store_string(str(save_data))
@@ -405,6 +407,7 @@ func load_local_settings():
         touch_input_mode = _load_bool_local_setting(json_data, "touch_input_mode", true)
         confirm_upgrade_purchase = _load_bool_local_setting(json_data, "confirm_upgrade_purchase", false)
         row_divers_original_graphics = _load_bool_local_setting(json_data, "row_divers_original_graphics", false)
+        row_divers_illustrated_graphics = _load_bool_local_setting(json_data, "row_divers_illustrated_graphics", false)
         vanguard_battle_crt_level = clampi(int(json_data["vanguard_battle_crt_level"]) if json_data.has("vanguard_battle_crt_level") else 0, 0, VANGUARD_CRT_LEVEL_MAX)
         # Migrate: if save had mouse mode, switch to touch and persist
         if not touch_input_mode:
