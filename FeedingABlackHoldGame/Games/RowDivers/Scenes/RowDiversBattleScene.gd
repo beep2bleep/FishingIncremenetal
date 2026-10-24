@@ -399,7 +399,7 @@ func _activate(key: String) -> void:
 		presentation.toast("ABILITY LOCKED" if not unlocked(key) else "ABILITY RECHARGING", Color("d98e7b"))
 
 func debug_speed_cheats_enabled() -> bool:
-	return OS.is_debug_build() and bool(ProjectSettings.get_setting("railway_fury/debug/enable_speed_cheats", false))
+	return OS.has_feature("editor") and bool(ProjectSettings.get_setting("railway_fury/debug/enable_speed_cheats", false))
 
 func set_debug_speed(multiplier: int) -> void:
 	debug_speed = multiplier if debug_speed_cheats_enabled() and multiplier in DEBUG_SPEEDS else 1

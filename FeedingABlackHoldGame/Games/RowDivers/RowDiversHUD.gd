@@ -136,7 +136,7 @@ func _refresh_graphics() -> void:
 		button.expand_icon = true
 		button.add_theme_constant_override("icon_max_width", 30)
 
-# TEMPORARY QA PANEL: gated by railway_fury/debug/enable_speed_cheats and debug builds.
+# Editor-only QA panel, also gated by railway_fury/debug/enable_speed_cheats.
 func _build_debug_speed_controls() -> void:
 	if not battle.debug_speed_cheats_enabled(): return
 	var panel := PanelContainer.new()
@@ -148,7 +148,7 @@ func _build_debug_speed_controls() -> void:
 	panel.add_theme_stylebox_override("panel", Style.panel(Color("45152e"), Color("ff69c5")))
 	var column := VBoxContainer.new()
 	panel.add_child(column)
-	var warning := Style.label("CHEATS — REMOVE BEFORE RELEASE", 18, true)
+	var warning := Style.label("EDITOR CHEATS", 18, true)
 	warning.modulate = Color("ff8ad3")
 	column.add_child(warning)
 	debug_speed_label = Style.label("", 16, true)

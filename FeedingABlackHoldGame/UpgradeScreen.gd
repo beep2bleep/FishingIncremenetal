@@ -132,6 +132,8 @@ var row_divers_prestige: OptionButton
 var row_divers_achievements_button: Button
 var row_divers_bestiary_button: Button
 var row_divers_collection_panel: PanelContainer
+var row_divers_color_button: Button
+static var row_divers_editor_background := Color("c4ddbf")
 var mining_time_label: Label
 var wishlist_button: Button
 var web_wishlist_button: Button
@@ -734,6 +736,16 @@ func _setup_row_divers_wallet_display() -> void:
     row_divers_purchase_feedback = row_style.label("", 20, true)
     row_divers_purchase_feedback.position = Vector2(280.0, 80.0)
     layer.add_child(row_divers_purchase_feedback)
+    if OS.has_feature("editor"):
+        row_divers_color_button = Button.new()
+        row_divers_color_button.name = "EditorRandomBackground"
+        row_divers_color_button.text = "EDITOR: RANDOM BACKGROUND"
+        row_divers_color_button.position = Vector2(740.0, 28.0)
+        row_divers_color_button.custom_minimum_size = Vector2(330.0, 42.0)
+        row_divers_color_button.tooltip_text = "Try a random background. Copy the RAILWAY FURY BACKGROUND line from Godot's Output panel. Session only."
+        row_style.style_button(row_divers_color_button)
+        row_divers_color_button.pressed.connect(_randomize_row_divers_background)
+        layer.add_child(row_divers_color_button)
     row_divers_collection_panel = PanelContainer.new()
     row_divers_collection_panel.name = "RowDiversCollection"
     row_divers_collection_panel.set_anchors_preset(Control.PRESET_CENTER)
@@ -748,6 +760,17 @@ func _setup_row_divers_wallet_display() -> void:
         shared_money_ui.hide()
     _refresh_bottom_wallet_display()
     row_style.apply_fonts(self)
+    update_colors()
+
+func _randomize_row_divers_background() -> void:
+    if not OS.has_feature("editor") or not Util.is_row_divers_game_active(): return
+    var color_rng := RandomNumberGenerator.new()
+    color_rng.randomize()
+    row_divers_editor_background = Color.from_hsv(color_rng.randf(), color_rng.randf_range(0.12, 0.55), color_rng.randf_range(0.28, 0.9))
+    update_colors()
+    var hex := row_divers_editor_background.to_html(false)
+    row_divers_color_button.text = "RANDOM BACKGROUND  #%s" % hex.to_upper()
+    print('RAILWAY FURY BACKGROUND: #%s | Color("%s")' % [hex, hex])
 
 func _open_row_divers_ending() -> void:
     var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
@@ -860,9 +883,12 @@ func update_colors():
     color_dark.v *= 0.95
     %"GPUParticles2D2 Dark".modulate = color_dark
     if Util.is_row_divers_game_active():
-        %"Click Mask".color = Color("c4ddbf")
-        %"GPUParticles2D Light".modulate = Color("dcebd1")
-        %"GPUParticles2D2 Dark".modulate = Color("a4c69c")
+        var background := row_divers_editor_background if OS.has_feature("editor") else Color("c4ddbf")
+        %"Click Mask".color = background
+        %"GPUParticles2D Light".modulate = background.lightened(0.12)
+        %"GPUParticles2D2 Dark".modulate = background.darkened(0.14)
+        if is_instance_valid(row_divers_wallet_label):
+            row_divers_wallet_label.add_theme_color_override("font_color", Color("102018") if background.get_luminance() > 0.4 else Color("f2e4ce"))
     elif Util.is_mining_game_active():
         %"Click Mask".color = Color(0.13, 0.1, 0.08, 1.0)
         %"GPUParticles2D Light".modulate = Color(0.72, 0.55, 0.22, 0.65)
