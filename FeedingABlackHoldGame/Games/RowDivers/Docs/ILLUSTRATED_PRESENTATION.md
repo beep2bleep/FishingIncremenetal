@@ -12,6 +12,8 @@ Upgrade-screen icons always retain the Modern/Synty style in all three choices. 
 
 ## New artwork
 
+The main menu uses `Art/Illustrated/RailwayFuryGameplayCover.png`, captured directly from the running game in style 3, without HUD overlays. Rebuild it with `Tools/RenderIllustratedMenuCover.gd` using a rendering display server. The standalone concept illustration remains at `Art/Illustrated/RailwayFuryMenu.png` as an alternative, with its prompt in `menu_generation.json`.
+
 38 PNG assets were made with the built-in `image_gen` tool. The direction is thick hand-inked outlines, muted stone/wood/copper colors, simple shading and readable cartoon silhouettes. All generated PNGs are copied unchanged into `Art/Illustrated/`; generated alpha is preserved. Original/Modern images are not overwritten.
 
 The set includes seven distinct enemies, regular/boss masonry and floors, lava/slime, crossbow, dagger, normal/fire/curse arrows, enemy bolt, throwing star, spell crystals, plants, cobweb, spikes, cell bars, wall plaque, throne, loot, status sprites and ability icons. Existing pillar/room geometry and idle/gate motion are retained. A simple procedural shadow is stored as SVG.

@@ -1478,7 +1478,7 @@ func _get_game_card_texture(game_id: String) -> Texture2D:
     var card_def: Dictionary = _get_game_card_definition(game_id)
     var texture := _load_external_asset_texture(str(card_def.get("asset_rel_path", "")))
     if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
-        var row_art := "res://Games/RowDivers/Art/Illustrated/RailwayFuryMenu.png"
+        var row_art := "res://Games/RowDivers/Art/Illustrated/RailwayFuryGameplayCover.png"
         if ResourceLoader.exists(row_art):
             texture = load(row_art) as Texture2D
         elif FileAccess.file_exists(row_art):
