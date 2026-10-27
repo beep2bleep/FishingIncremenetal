@@ -97,3 +97,13 @@ Latest polish: results use plain vertical-bar separators; artwork disclosure cop
 was removed from credits, endings and store prose. Both language selectors
 use the same platform-filtered language list. The rebuilt exports pass the
 strict 20-check packaged test; localization passes 17,911 checks.
+
+## Published page
+
+Published at https://beep2bleep.itch.io/railway-fury-demo on 27 October 2026.
+The page includes four screenshots, browser play and the Windows download.
+Hosted menu, Free Aim upgrades, tutorial and first-run results were checked
+in Chrome without script errors. Final exports include the revised credits,
+plain result separators and filtered language selectors.
+
+Published-page screenshot: `StoreAssets_RailwayFury/itchio/page-published.jpg`.
