@@ -52,7 +52,7 @@ def sources():
                 if human(value): result.add(value)
     shared = {
         'UpgradeScreen.gd': lambda name: ('row_divers' in name and not any(x in name for x in ['auto_buy','auto_run','editor_loop','randomize'])) or name in ['_refresh_bottom_wallet_display','_get_leaderboard_panel_title','_refresh_leaderboard_panel'],
-        'Settings.gd': lambda name: name.startswith('_setup_row_divers') or name=='_set_credits_visible',
+        'Settings.gd': lambda name: name.startswith('_setup_row_divers') or name in ['_set_credits_visible','_row_divers_credits_text'],
         'Core/Boot/GameLauncher.gd': lambda name: name in ['_refresh_text','_refresh_game_card_text','_setup_row_divers_button'],
         'Tech Tree Stuff/TechTreeNode.gd': lambda name: name=='update',
     }

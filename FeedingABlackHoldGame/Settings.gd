@@ -314,8 +314,11 @@ func refresh_static_text() -> void:
         var credits: RichTextLabel = get_node("Credits Panel/Credits Margin/Credits VBox/Credits Text")
         credits.bbcode_enabled = true
         get_node("Credits Panel/Credits Margin/Credits VBox/Credits Title").add_theme_color_override("font_color", Color("f2e4ce"))
-        credits.text = "[b]RAILWAY FURY[/b]\n\n[b]Artwork[/b]\nClassic artwork: Hermurx\nModern characters and weapons: Synty Studios\n\n[b]Music[/b]\nPhat Phrog Studio — fantasy, medieval and Dark Abyss collections\nClassic soundtrack: Loyalty Freak Music and Komiku\n\n[b]Sound Effects[/b]\nGame Assets collection and Sonniss libraries\nConcrete footsteps: Levan Nadashvili / Sonniss GDC 2016\n\nThank you for playing Railway Fury."
+        credits.text = _row_divers_credits_text()
     _set_button_text("Credits Panel/Credits Margin/Credits VBox/Hide Credits", "UI_BACK")
+
+func _row_divers_credits_text() -> String:
+    return tr("[b]RAILWAY FURY[/b]\n\n[b]Artwork[/b]\nClassic artwork: Hermurx\nModern characters and weapons: Synty Studios\n\n[b]Music[/b]\nPhat Phrog Studio — fantasy, medieval and Dark Abyss collections\nClassic soundtrack: Loyalty Freak Music and Komiku\n\n[b]Sound Effects[/b]\nGame Assets collection and Sonniss libraries\nConcrete footsteps: Levan Nadashvili / Sonniss GDC 2016\n\nThank you for playing Railway Fury.")
 
 func _set_label_text(path: String, key: String) -> void:
     var label := get_node_or_null(path) as Label

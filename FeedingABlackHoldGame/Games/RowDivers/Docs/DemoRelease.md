@@ -25,7 +25,7 @@ The itch.io builds skip Steam initialization. Analytics includes a `demo` field.
 
 ## Localization
 
-`Translations/catalog.json` contains 508 source messages in 17 languages:
+`Translations/catalog.json` contains 509 source messages in 17 languages:
 English, Spanish, German, Portuguese, French, Italian, Chinese, Japanese,
 Korean, Russian, Polish, Turkish, Thai, Indonesian, Czech, Catalan, Vietnamese.
 This covers upgrade/achievement data, HUD, tutorial, results, collections,
@@ -72,7 +72,7 @@ Store page: https://beep2bleep.itch.io/railway-fury-demo
 
 ## Validation
 
-- Demo/localization suite: **17,876 checks**, including format integrity,
+- Demo/localization suite: **17,911 checks**, including format integrity,
   all locales, crown/level gates, demo completion, save/profile separation and
   a live demo-toggle regression check.
 - Presentation/audio suite: **242 checks**.
@@ -96,4 +96,4 @@ Primary export/hosting references:
 Latest polish: results use plain vertical-bar separators; artwork disclosure copy
 was removed from credits, endings and store prose. Both language selectors
 use the same platform-filtered language list. The rebuilt exports pass the
-strict 20-check packaged test; localization passes 17,876 checks.
+strict 20-check packaged test; localization passes 17,911 checks.
