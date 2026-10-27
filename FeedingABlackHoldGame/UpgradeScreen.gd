@@ -236,6 +236,16 @@ func _refresh_upgrade_tree_for_locale_change() -> void:
     if _loaded_tree_locale == active_locale:
         return
 
+    if Util.is_row_divers_game_active():
+        # A locale change only affects presentation. Rebuilding the large tree
+        # here frees live controls and spikes allocations in the Web runtime.
+        # Updating shared Upgrade resources also covers nodes still being built.
+        ROW_DIVERS_UPGRADE_TREE_ADAPTER_SCRIPT.refresh_localized_text()
+        for node: TechTreeNode in tech_tree.get_nodes():
+            node.update()
+        _loaded_tree_locale = active_locale
+        return
+
     _ensure_tree_initialized(true)
     if not tech_tree.build_in_progress:
         tech_tree.update_active()
@@ -262,7 +272,7 @@ func _should_show_deepcore_demo_leaderboard() -> bool:
     return Util.is_mining_game_active() and bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
 
 func _get_leaderboard_panel_title() -> String:
-    if Util.is_row_divers_game_active(): return "RAILWAY FURY · DIVE TIMES"
+    if Util.is_row_divers_game_active(): return "RAILWAY FURY · TRACK RUN TIMES"
     if Util.is_open_pit_game_active():
         return tr("DATA_BREACH_LEADERBOARDS_TITLE")
     if _should_show_deepcore_demo_leaderboard():
@@ -354,6 +364,7 @@ func _ready() -> void :
     demo_mode_label = get_node_or_null("%Demo Mode Label")
     game_mode_label = get_node_or_null("%Game Mode Label")
     _setup_row_divers_wallet_display()
+    _setup_row_divers_other_games()
     _setup_editor_exit_demo_button()
     _setup_mining_time_label()
     ready_step_started_msec = _print_open_pit_ready_step("ready_mining_time_label", ready_step_started_msec)
@@ -657,8 +668,8 @@ func _refresh_bottom_wallet_display() -> void:
         money_ui.call("refresh_amounts")
     if row_divers_wallet_label != null and is_instance_valid(row_divers_wallet_label):
         var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
-        row_divers_wallet_label.text = tr("GOLD %s   GEMS %s   CROWNS %s\nDIVE TIME  %s") % [Util.get_number_short_text(row_progress.wallet[0]), Util.get_number_short_text(row_progress.wallet[1]), Util.get_number_short_text(row_progress.wallet[2]), preload("res://Games/RowDivers/RowDiversTiming.gd").format_time(float(row_progress.get("gameplay_seconds",0)))]
-        row_divers_wallet_label.tooltip_text = tr("Total active dive time across all runs. Pauses and upgrade time are excluded.")
+        row_divers_wallet_label.text = tr("GOLD %s   GEMS %s   CROWNS %s\nTRACK RUN TIME  %s") % [Util.get_number_short_text(row_progress.wallet[0]), Util.get_number_short_text(row_progress.wallet[1]), Util.get_number_short_text(row_progress.wallet[2]), preload("res://Games/RowDivers/RowDiversTiming.gd").format_time(float(row_progress.get("gameplay_seconds",0)))]
+        row_divers_wallet_label.tooltip_text = tr("Total active track time across all runs. Pauses and upgrade time are excluded.")
         if ROW_DIVERS_PROGRESS_SCRIPT.Demo.enabled(): row_divers_wallet_label.text += "\n" + tr("DEMO MODE")
         if not row_progress.get("timing_complete",false): row_divers_wallet_label.tooltip_text += "\n" + tr("This older campaign has no complete starting time; timed leaderboards require a new save.")
         elif row_progress.get("leaderboards_assisted",false): row_divers_wallet_label.tooltip_text += "\n" + tr("Editor-assisted campaign: times stay local.")
@@ -683,6 +694,20 @@ func _refresh_bottom_wallet_display() -> void:
                 row_divers_prestige.add_item(tr("Level %d") % (prestige_level+1))
         row_divers_prestige.visible = int(row_progress.max_prestige) > 0
         row_divers_prestige.select(clampi(int(row_progress.prestige), 0, maxi(row_divers_prestige.item_count - 1, 0)))
+
+func _setup_row_divers_other_games() -> void:
+    if not Util.is_row_divers_game_active(): return
+    var promo = preload("res://Games/RowDivers/RowDiversOtherGames.gd").new()
+    promo.capsule_count = 1
+    promo.vertical_layout = true
+    promo.fade_after_delay = true
+    promo.capsule_size = Vector2(300, 140)
+    get_node("CanvasLayer2").add_child(promo)
+    promo.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+    promo.offset_left = -348.0
+    promo.offset_right = -24.0
+    promo.offset_top = -362.0
+    promo.offset_bottom = -138.0
 
 func _setup_row_divers_wallet_display() -> void:
     if not Util.is_row_divers_game_active():
@@ -827,7 +852,7 @@ func _run_row_divers_auto_buy(automatic = false) -> void:
         if int(result.count)>0 or int(result.claims)>0:
             _ensure_tree_initialized(true)
             _refresh_bottom_wallet_display()
-            show_row_divers_feedback("Bought %d upgrades; claimed %d achievements." % [int(result.count),int(result.claims)])
+            show_row_divers_feedback(tr("Bought %d upgrades; claimed %d achievements.") % [int(result.count),int(result.claims)])
         else:
             show_row_divers_feedback("No purchase available; entry funds reserved if ready.")
         if _row_divers_loop_active():
@@ -853,7 +878,7 @@ func _randomize_row_divers_background() -> void:
     row_divers_editor_background = Color.from_hsv(color_rng.randf(), color_rng.randf_range(0.12, 0.55), color_rng.randf_range(0.28, 0.9))
     update_colors()
     var hex := row_divers_editor_background.to_html(false)
-    row_divers_color_button.text = "RANDOM BACKGROUND  #%s" % hex.to_upper()
+    row_divers_color_button.text = tr("RANDOM BACKGROUND  #%s") % hex.to_upper()
     print('RAILWAY FURY BACKGROUND: #%s | Color("%s")' % [hex, hex])
 
 func _open_row_divers_ending() -> void:
@@ -1913,7 +1938,7 @@ func _refresh_leaderboard_panel() -> void:
         leaderboard_title_label.text = _get_leaderboard_panel_title()
     var lines: Array[String] = []
     if Util.is_row_divers_game_active():
-        lines.append(tr("Cumulative active dive time · fastest first"))
+        lines.append(tr("Cumulative active track time · fastest first"))
         var data: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
         if not preload("res://Games/RowDivers/RowDiversTiming.gd").eligible(data): lines.append(tr("Local timing only: older or editor-assisted campaign."))
         lines.append("")
@@ -3344,8 +3369,6 @@ func _on_editor_reset_add_pressed() -> void:
     _refresh_editor_cash_button_text()
 
 func _setup_reset_progress_controls() -> void:
-    if Util.is_row_divers_game_active():
-        return
     if reset_progress_button != null and is_instance_valid(reset_progress_button):
         return
     reset_progress_button = Button.new()
@@ -3363,6 +3386,13 @@ func _setup_reset_progress_controls() -> void:
     reset_progress_button.text = tr("UPGRADE_RESET_PROGRESS")
     reset_progress_button.pressed.connect(_on_reset_progress_button_pressed)
     %CanvasLayer2.add_child(reset_progress_button)
+    if Util.is_row_divers_game_active():
+        reset_progress_button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+        reset_progress_button.offset_left = 28.0
+        reset_progress_button.offset_right = 268.0
+        reset_progress_button.offset_top = -190.0
+        reset_progress_button.offset_bottom = -142.0
+        preload("res://Games/RowDivers/RowDiversStyle.gd").style_button(reset_progress_button)
 
     reset_progress_confirm_dialog = ConfirmationDialog.new()
     reset_progress_confirm_dialog.name = "ResetProgressConfirmDialog"
@@ -3442,7 +3472,18 @@ func _on_legacy_reset_canceled() -> void:
         legacy_reset_dialog.call_deferred("popup_centered")
 
 func _perform_progress_reset() -> void:
-    if Util.is_mining_game_active():
+    if Util.is_row_divers_game_active():
+        ROW_DIVERS_EDITOR_LOOP.stop()
+        if row_divers_editor_buyer != null:
+            row_divers_editor_buyer.cancel()
+        load("res://Games/RowDivers/Scenes/RowDiversBattleScene.gd").debug_speed = 1
+        ROW_DIVERS_PROGRESS_SCRIPT.reset_progress()
+        if row_divers_collection_panel != null:
+            row_divers_collection_panel.hide()
+        if row_divers_auto_buy_button != null:
+            row_divers_auto_buy_button.text = "EDITOR: AUTO BUY"
+        row_divers_loop_busy = false
+    elif Util.is_mining_game_active():
         MINING_PROGRESS_SCRIPT.reset_progress()
         _reset_save_handler_clock_for_active_game()
     elif Util.is_open_pit_game_active():
@@ -3462,7 +3503,7 @@ func _perform_progress_reset() -> void:
     editor_add_core_amount = 1
     _refresh_editor_cash_button_text()
 
-    if Global.global_resoruce_manager != null:
+    if not Util.is_row_divers_game_active() and Global.global_resoruce_manager != null:
         Global.global_resoruce_manager.reset_resource_amount(Util.RESOURCE_TYPES.MONEY)
 
     _reload_simulation_upgrade_tree_from_save()
@@ -3470,6 +3511,8 @@ func _perform_progress_reset() -> void:
     _update_go_again_button_state()
     _refresh_mining_time_label()
     _refresh_leaderboard_panel()
+    if Util.is_row_divers_game_active():
+        tech_tree.recenter_on_core()
 
 func _reset_save_handler_clock_for_active_game() -> void:
     SaveHandler.reset_fishing_progress()

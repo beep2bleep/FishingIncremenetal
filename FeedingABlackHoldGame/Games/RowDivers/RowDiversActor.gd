@@ -4,6 +4,7 @@ const ROOT = "res://Games/RowDivers/Art/Synty/Prefabs/Characters/SM_Chr_"
 const SKINS = ["Skeleton_01", "Skeleton_HeavyArmor_01", "Skeleton_Flesh_01", "Skeleton_Ranger_01", "PlagueDoctor_01", "Priest_Female_01", "DarkLord_Male_01"]
 const Graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
 var bat_material: ShaderMaterial
+const MELEE_GROUND_OFFSET = -0.15
 var enemy_kind = 0
 var level_index = 0
 var is_boss = false
@@ -20,11 +21,15 @@ var frozen = false
 var playback_speed = 1.0
 var rest_rotations: Dictionary = {}
 var skin_meshes: Array[MeshInstance3D] = []
+var status_visual: Node3D
 
 func setup(kind: int, boss: bool, level = 0) -> void:
 	level_index = clampi(level,0,3)
 	enemy_kind = kind
 	is_boss = boss
+	status_visual = preload("res://Games/RowDivers/RowDiversEnemyStatus.gd").new()
+	add_child(status_visual)
+	status_visual.setup(boss, kind == 7)
 	# Consume the same one phase draw for both styles, and none when switching.
 	idle_phase = randf() * 3.2
 	_refresh_graphics()
@@ -46,6 +51,7 @@ func _refresh_graphics() -> void:
 	if Graphics.original():
 		rig = preload("res://Games/RowDivers/RowDiversOriginalPresentation.gd").build("Actor_" + str(enemy_kind), false)
 		add_child(rig)
+		if enemy_kind in [0, 1, 2] and not is_boss: rig.position.y += MELEE_GROUND_OFFSET
 		source_sprite = rig.get_child(0)
 		_apply_level_tint()
 		return
@@ -56,7 +62,7 @@ func _refresh_graphics() -> void:
 	add_child(rig)
 	# Synty units are metres; original collision dimensions stay in the battle scene.
 	rig.scale = Vector3.ONE * (0.94 if boss else 0.68)
-	rig.position.y = -0.65
+	rig.position.y = -0.65 + (MELEE_GROUND_OFFSET if enemy_kind in [0, 1, 2] and not is_boss else 0.0)
 	skeleton = rig.find_child("Skeleton3D", true, false) as Skeleton3D
 	if skeleton != null:
 		_create_idle()
@@ -91,7 +97,7 @@ func _build_bat() -> void:
 	add_child(rig)
 	var sprite := MeshInstance3D.new()
 	var quad := QuadMesh.new()
-	quad.size = Vector2(1.5, 1.0)
+	quad.size = Vector2(1.2, 0.8)
 	quad.subdivide_width = 20
 	quad.subdivide_depth = 8
 	sprite.mesh = quad
@@ -155,6 +161,7 @@ func hit() -> void:
 	for mesh in skin_meshes: mesh.material_overlay = hit_material
 
 func set_effects(flags: Dictionary) -> void:
+	if status_visual != null: status_visual.set_effects(flags)
 	if source_sprite == null: return
 	for effect in {"Burning": "Burn Icon", "Cursed": "Curse Icon", "Bleeding": "Bleed Icon"}:
 		var icon := source_sprite.find_child({"Burning": "Burn Icon", "Cursed": "Curse Icon", "Bleeding": "Bleed Icon"}[effect], true, false) as Node3D
@@ -170,6 +177,7 @@ func _process(delta: float) -> void:
 	if frozen: return
 	delta *= playback_speed
 	time += delta
+	if status_visual != null: status_visual.advance(delta)
 	var was_flashing: bool = flash > 0
 	flash = maxf(0, flash - delta)
 	if was_flashing and flash <= 0:
@@ -185,7 +193,7 @@ func _process(delta: float) -> void:
 		preload("res://Games/RowDivers/RowDiversOriginalPresentation.gd").animate(source_sprite, "BossIdle" if is_boss else "EnemyIdle", fmod(time, 0.6666667))
 		return
 	if rig != null:
-		rig.position.y = -0.65 + sin(time * 2.2) * 0.045
+		rig.position.y = -0.65 + (MELEE_GROUND_OFFSET if enemy_kind in [0, 1, 2] and not is_boss else 0.0) + sin(time * 2.2) * 0.045
 		rig.position.z = sin((0.8 - charge) / 0.8 * PI) * 0.24 if charge > 0 else 0.0
 		rig.rotation.x = -sin((0.8 - charge) / 0.8 * PI) * 0.22 if charge > 0 else 0.0
 		rig.rotation.z = sin(time * 1.4) * 0.035

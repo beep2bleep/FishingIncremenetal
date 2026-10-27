@@ -117,6 +117,8 @@ func _ready() -> void:
     _apply_open_pit_launcher_availability()
     _setup_background_fx()
     _setup_game_cards()
+    if Util.is_row_divers_game_active():
+        preload("res://Games/RowDivers/RowDiversProgress.gd").free_aim_mode = true
     _setup_row_divers_button()
     if Util.is_row_divers_game_active():
         MusicPlayer.stop()
@@ -162,6 +164,9 @@ func _ready() -> void:
     elif _is_deepcore_launcher_mode():
         if mining_button != null:
             mining_button.grab_focus()
+    elif _is_row_divers_launcher_mode():
+        if row_divers_free_aim_button != null:
+            row_divers_free_aim_button.grab_focus()
     elif vanguard_button != null:
         vanguard_button.grab_focus()
 
@@ -1077,10 +1082,9 @@ func _refresh_game_card_layout() -> void:
         _queue_fit_game_cards()
         return
     if _is_row_divers_launcher_mode():
-        game_cards_grid.columns = 2
-        for button in [row_divers_button, row_divers_free_aim_button]:
-            if button != null and is_instance_valid(button):
-                button.custom_minimum_size = Vector2(549.0, 620.0)
+        game_cards_grid.columns = 1
+        if row_divers_free_aim_button != null and is_instance_valid(row_divers_free_aim_button):
+            row_divers_free_aim_button.custom_minimum_size = Vector2(1116.0, 570.0)
         _queue_fit_game_cards()
         return
     game_cards_grid.columns = 3 if viewport_width >= 1340.0 else 2
@@ -1121,9 +1125,9 @@ func _refresh_game_card_text(button: Button, game_id: String) -> void:
     if detail != null and is_instance_valid(detail):
         detail.text = tr(str(card_def.get("detail", "")))
     if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
-        if title != null: title.text = tr("FREE AIM") if button == row_divers_free_aim_button else tr("CLASSIC")
+        if title != null: title.text = "RAILWAY FURY"
         if detail != null:
-            detail.text = tr("Aim, strafe and collect loot. Dodge fire waves that intensify after bosses. Own upgrade tree and progress.") if button == row_divers_free_aim_button else tr("The original Railway Fury. Shoot straight ahead and steer through the row.")
+            detail.text = tr("Aim, strafe and collect loot. Dodge fire waves that intensify after bosses.")
     _queue_fit_game_cards()
 
 func _queue_fit_game_cards() -> void:
@@ -2235,24 +2239,31 @@ func _style_utility_panel(panel: PanelContainer) -> void:
     panel.add_theme_stylebox_override("panel", box)
 
 func _setup_row_divers_button() -> void:
+    if not Util.is_row_divers_game_active():
+        return
     if game_cards_grid == null or not is_instance_valid(game_cards_grid):
         return
-    row_divers_button = Button.new()
-    row_divers_button.name = "RowDiversButton"
-    row_divers_button.custom_minimum_size = Vector2(460, 408)
-    game_cards_grid.add_child(row_divers_button)
-    _decorate_game_button(row_divers_button, Util.ACTIVE_GAME_ROW_DIVERS)
-    row_divers_button.pressed.connect(_on_row_divers_button_pressed)
     row_divers_free_aim_button = Button.new()
-    row_divers_free_aim_button.name = "RowDiversFreeAimButton"
+    row_divers_free_aim_button.name = "RailwayFuryButton"
     game_cards_grid.add_child(row_divers_free_aim_button)
     _decorate_game_button(row_divers_free_aim_button, Util.ACTIVE_GAME_ROW_DIVERS)
-    row_divers_free_aim_button.pressed.connect(func():
-        preload("res://Games/RowDivers/RowDiversProgress.gd").free_aim_mode = true
-        _start_game(Util.ACTIVE_GAME_ROW_DIVERS)
-    )
-    _refresh_game_card_text(row_divers_button, Util.ACTIVE_GAME_ROW_DIVERS)
+    row_divers_free_aim_button.pressed.connect(_on_row_divers_button_pressed)
     _refresh_game_card_text(row_divers_free_aim_button, Util.ACTIVE_GAME_ROW_DIVERS)
+    var version_label = Label.new()
+    version_label.name = "RailwayVersion"
+    version_label.text = "v" + str(ProjectSettings.get_setting("application/config/version", "0.1"))
+    version_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    version_label.add_theme_font_size_override("font_size", 22)
+    version_label.add_theme_color_override("font_color", Color("a4b3c2"))
+    add_child(version_label)
+    version_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+    version_label.offset_left = -140.0
+    version_label.offset_top = -52.0
+    version_label.offset_right = -24.0
+    version_label.offset_bottom = -20.0
+    version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+    var other_games = preload("res://Games/RowDivers/RowDiversOtherGames.gd").new()
+    game_cards_grid.get_parent().add_child(other_games)
     for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button]:
         if button != null and is_instance_valid(button):
             button.hide()
@@ -2267,5 +2278,5 @@ func _setup_row_divers_button() -> void:
     _refresh_game_card_layout()
 
 func _on_row_divers_button_pressed() -> void:
-    preload("res://Games/RowDivers/RowDiversProgress.gd").free_aim_mode = false
+    preload("res://Games/RowDivers/RowDiversProgress.gd").free_aim_mode = true
     _start_game(Util.ACTIVE_GAME_ROW_DIVERS)

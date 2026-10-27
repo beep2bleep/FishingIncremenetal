@@ -82,7 +82,7 @@ func run() -> void:
 	battle._update_enemies(0.01)
 	var protected_hp: float = battle.health
 	for frame in range(20): battle._update_projectiles(1.0 / 30.0)
-	check(battle.health == protected_hp, "Arrow Shield blocks boss volleys")
+	check(is_equal_approx(battle.health, protected_hp - 10.0), "Shield halves the boss critical arrow hit")
 	battle.data.unlocks.Harvester = true
 	battle._activate("Harvester")
 	for currency in range(3):
@@ -97,22 +97,25 @@ func run() -> void:
 	battle._activate("Shuriken")
 	battle.shot_timer = 0
 	battle._shoot()
-	check(battle.projectiles.any(func(projectile): return projectile.type == "Shuriken"), "Shuriken adds its special projectile")
+	check(battle.projectiles.any(func(projectile): return projectile.type == "Shuriken"), "Arrow Storm adds its bonus arrow")
 	for enemy in battle.enemies: enemy.node.queue_free()
 	battle.enemies.clear()
 	battle.data.unlocks.SlowDown = true
 	battle._activate("SlowDown")
 	initial = battle.player_position
 	battle.next_section_trigger = 10000
+	var regen_before: float = battle.health
+	var regen_expected: float = battle.s("MaxHP") * battle.regen_percent_per_second() / 100.0
 	battle._physics_process(1)
-	check(absf(battle.player_position.z - initial.z + 0.8) < 0.001, "Slow Down subtracts 0.5 from forward speed")
+	check(absf(battle.player_position.z - initial.z + battle.forward_speed) < 0.001, "Regen preserves normal forward speed")
+	check(is_equal_approx(battle.health, minf(battle.s("MaxHP"), regen_before + regen_expected)), "Regen restores health at its percentage rate")
 	for key in battle.abilities:
 		var state: Dictionary = battle.abilities[key]
 		check(state.duration > 0 and state.wait > 0, "Ability %s imports duration and cooldown" % key)
 		state.active = 0.01
 		state.cooldown = 0
 		battle._physics_process(0.02)
-		check(state.active <= 0 and is_equal_approx(state.cooldown, state.wait), "Ability %s starts cooldown when effect expires" % key)
+		check(state.active <= 0 and is_equal_approx(state.cooldown, state.wait - 0.01), "Ability %s starts cooldown when effect expires" % key)
 		state.cooldown = 0.01
 		battle._physics_process(0.02)
 		check(state.cooldown == 0, "Ability %s becomes ready after its cooldown" % key)

@@ -25,6 +25,7 @@ static func button_feedback(button: BaseButton) -> void:
 			motion.do_scale = true
 			motion.do_rotation = true
 			motion.rotation_amount = 3.0
+			motion.scale_hover_to_width = true
 		return
 	if button.has_node("RailwayButtonFeedback"): return
 	var feedback := preload("res://Games/RowDivers/RowDiversButtonFeedback.gd").new()
@@ -32,6 +33,15 @@ static func button_feedback(button: BaseButton) -> void:
 	button.add_child(feedback)
 
 static func apply_fonts(node: Node) -> void:
+	if node is TechTreeNode:
+		for path in ["CustomTweenComponent", "Tooltip Pivot/Tooltip CustomTweenComponent"]:
+			var motion := node.get_node_or_null(path) as CustomTweenComponent
+			if motion != null:
+				motion.rotation_amount = 1.25
+				motion.scale_hover_to_width = true
+				if path == "CustomTweenComponent": motion.hover_size_node = node.click_mask
+				motion.do_scale = true
+				motion.scale_amount = Vector2(1.08, 1.08)
 	if node is BaseButton: button_feedback(node)
 	if node is Label or node is BaseButton or node is LineEdit or node is OptionButton:
 		node.add_theme_font_override("font", HEADING if node is BaseButton else BODY)

@@ -107,3 +107,26 @@ in Chrome without script errors. Final exports include the revised credits,
 plain result separators and filtered language selectors.
 
 Published-page screenshot: `StoreAssets_RailwayFury/itchio/page-published.jpg`.
+
+
+## Demo 0.1 — 27 October 2026
+
+The main menu displays v0.1, and the Windows executable and build manifest
+carry the same release version. Both the Web and Windows demo ZIPs are rebuilt.
+Melee actor visuals (kinds 0–2) sit 0.15 world units lower in every art style;
+combat positions, targeting and collision bounds are unchanged.
+
+This update includes the single Free Aim menu, simplified settings, local
+other-game capsules, enemy status visuals, hallway width changes, revised
+powers and the earlier Magpie unlock. Ghost uses its own icon in upgrades and
+combat and adds a subtle light-blue glow with rising particles. It suppresses
+melee pursuit and flier shots while bosses remain aware. Boss attack range
+tracks the player range. Track runtime counts simulation time, including
+Shift and editor speed multipliers, and stops on pause or run completion.
+
+The dedicated exports exclude unused shared music and unrelated simulation
+reports. The Web PCK is 184,787,548 bytes, below itch.io's 200 MiB file limit.
+Validation: menu/layout 17 checks; powerups 161 checks; demo/localization
+18,549 checks; isolated Windows package 22 checks. The preceding timing suite
+passed 134 checks, including every editor multiplier with and without Shift.
+Rendered menu and melee-grounding previews were inspected.

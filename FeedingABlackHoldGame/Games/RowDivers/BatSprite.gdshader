@@ -15,4 +15,7 @@ void fragment() {
     vec4 sprite = texture(bat_texture, UV);
     ALBEDO = mix(sprite.rgb * level_tint.rgb, vec3(1.0, 0.85, 0.55), clamp(hit_flash, 0.0, 0.8));
     ALPHA = sprite.a;
+    // Match the black exponential-squared distance fog on the other enemies.
+    float depth = length(VERTEX);
+    FOG = vec4(0.0, 0.0, 0.0, 1.0 - exp(-pow(depth * 0.14, 2.0)));
 }

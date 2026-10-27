@@ -3,10 +3,13 @@ import hashlib
 import json
 import pathlib
 import zipfile
+import re
 
 ROOT=pathlib.Path(__file__).resolve().parents[2]
 BUILD=ROOT/'Build - RailwayFury/Demo'
-manifest={}
+project=(ROOT/'FeedingABlackHoldGame/project.godot').read_text(encoding='utf8')
+version=re.search(r'^config/version="([^"]+)"',project,re.M).group(1)
+manifest={'version':version}
 for folder,name in [('Windows','RailwayFuryDemo-Windows.zip'),('Web','RailwayFuryDemo-Web.zip')]:
     files=sorted(p for p in (BUILD/folder).rglob('*') if p.is_file())
     if not files: raise RuntimeError('Missing export: '+folder)

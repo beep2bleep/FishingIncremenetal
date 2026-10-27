@@ -19,15 +19,29 @@ ROW = GAME / 'Games/RowDivers'
 OUT = ROW / 'Translations'
 LOCALES = 'en es de pt fr it zh ja ko ru pl tr th id cs ca vi'.split()
 STRING = re.compile(r'"(?:[^"\\]|\\.)*"')
-TOKEN = re.compile(r'Railway Fury|RAILWAY FURY|%(?:[-+0#]*\d*(?:\.\d+)?[sdfxX]|%)|\d+(?:[.,]\d+)*|\[/?(?:b|i|u|color[^\]]*)\]|\b(?:VIII|VII|VI|IV|III|II|I)\b')
+TOKEN = re.compile(r'Railway Fury|RAILWAY FURY|%(?:[-+0#]*\d*(?:\.\d+)?[sdfxX]|%)|\{[A-Z][A-Z0-9_]*\}|\d+(?:[.,]\d+)*|\[/?(?:b|i|u|color[^\]]*)\]|\b(?:VIII|VII|VI|IV|III|II|I)\b')
+NON_MESSAGES = {'Data', 'Simulation', 'Railway editor forecasts', 'Fire Gem Pivot', 'Cursed Gem Pivot', 'Cost Hbox', 'Vanguard - Idle Auto Battler', 'Deepcore', 'BleepWare Incrementals', 'Bleeping Spaceships', 'Bounty For Sharks', 'Home Plate Baseball'}
+FORMAT = re.compile(r'%(?:[-+0#]*\d*(?:\.\d+)?[sdfxX]|%)|\{[A-Z][A-Z0-9_]*\}')
+# Identical spellings can be valid borrowed words or proper names. Everything
+# else must be translated rather than silently retaining an English draft.
+INVARIANT = {'RAILWAY FURY', 'RK ', 'XP '}
+BORROWED = {
+    'de': {'AUTO', 'GOLD', 'Gold', 'Level %d', 'Modern', 'Original', 'Prestige', 'Shuriken', 'Zombie'},
+    'pt': {'Shuriken'}, 'it': {'Shuriken', 'Zombie'},
+    'fr': {'Dragon', 'Poison', 'Prestige', 'SECTION %d', 'Shuriken', 'Vampire', 'poison'},
+    'pl': {'AUTO', 'Zombie'},
+    'ca': {'AUTO', 'Art: Synty Studios', 'Modern', 'Original', 'Shuriken'},
+    'id': {'Modern'}, 'cs': {'AUTO', 'Shuriken', 'Zombie'}, 'vi': {'Shuriken'},
+}
 
 
 def human(s):
+    if s in NON_MESSAGES: return False
     if not re.search('[A-Za-z]', s) or len(s) > 2000: return False
     # These are identifiers in the shared translation table, not English copy.
     # Adding identity translations for them could shadow their real messages.
     if re.fullmatch('[A-Z0-9_]+',s) and '_' in s: return False
-    if any(v in s for v in ['res://', 'user://', '.png', '.wav', '.ogg', '.tscn', '.json', '.gd', '.ttf', '.tres', 'EDITOR', 'F8', 'F7', 'TEMP_', 'railway_', 'row_', 'RAILWAY AUTO', 'RAILWAY FURY BACKGROUND']): return False
+    if any(v in s for v in ['res://', 'user://', '.png', '.wav', '.ogg', '.tscn', '.json', '.gd', '.ttf', '.tres', 'TEMP_', 'railway_', 'row_', 'RAILWAY AUTO', 'RAILWAY FURY BACKGROUND']): return False
     return ' ' in s.strip() or s.isupper() or bool(re.fullmatch('[A-Z][a-z]+', s))
 
 
@@ -40,18 +54,17 @@ def sources():
         for entry in data['settings']['achievements']:
             result.update([entry['achievementName'], entry['description']])
         result.update(v.replace('_', ' ') for v in data['enums']['ZombieType'].values())
-    files = [ROW / p for p in ['RowDiversHUD.gd', 'Scenes/RowDiversBattleScene.gd', 'Scenes/RowDiversEnding.gd', 'RowDiversEndings.gd', 'RowDiversTiming.gd', 'RowDiversLevelThemes.gd', 'RowDiversProgress.gd']]
+    files = [ROW / p for p in ['RowDiversHUD.gd', 'Scenes/RowDiversBattleScene.gd', 'Scenes/RowDiversEnding.gd', 'RowDiversEndings.gd', 'RowDiversTiming.gd', 'RowDiversLevelThemes.gd', 'RowDiversProgress.gd', 'RowDiversOtherGames.gd', 'RowDiversEditorBuyer.gd']]
     for file in files:
         function = ''
         for line in file.read_text(encoding='utf-8-sig').splitlines():
             if line.startswith('func ') or line.startswith('static func '): function = line
-            if any(v in function for v in ['debug_speed', '_auto_return', '_return_to_editor', '_build_debug']): continue
             if line.lstrip().startswith('#') or 'print(' in line or 'push_error(' in line: continue
             for match in STRING.finditer(line):
                 value = ast.literal_eval(match.group())
                 if human(value): result.add(value)
     shared = {
-        'UpgradeScreen.gd': lambda name: ('row_divers' in name and not any(x in name for x in ['auto_buy','auto_run','editor_loop','randomize'])) or name in ['_refresh_bottom_wallet_display','_get_leaderboard_panel_title','_refresh_leaderboard_panel'],
+        'UpgradeScreen.gd': lambda name: 'row_divers' in name or name in ['_refresh_bottom_wallet_display','_get_leaderboard_panel_title','_refresh_leaderboard_panel'],
         'Settings.gd': lambda name: name.startswith('_setup_row_divers') or name in ['_set_credits_visible','_row_divers_credits_text'],
         'Core/Boot/GameLauncher.gd': lambda name: name in ['_refresh_text','_refresh_game_card_text','_setup_row_divers_button'],
         'Tech Tree Stuff/TechTreeNode.gd': lambda name: name=='update',
@@ -65,7 +78,7 @@ def sources():
             for match in STRING.finditer(line):
                 value=ast.literal_eval(match.group())
                 if human(value): result.add(value)
-    result.update(['DEMO MODE','DEMO COMPLETE','DEMO MODE — DEFEAT THE FIRST BOSS','Full game upgrade — locked in demo mode',' OR ','Unlock: ','Gold','Gems','Crowns','CLAIM','Claimed','Locked','CLICK','HOLD','AUTO','the row','fire waves','poison','contact','enemy projectile','FULL GAME ONLY','Railway Fury Upgrade'])
+    result.update(['Play my other games','DEMO MODE','DEMO COMPLETE','DEMO MODE — DEFEAT THE FIRST BOSS','Full game upgrade — locked in demo mode',' OR ','Unlock: ','Gold','Gems','Crowns','CLAIM','Claimed','Locked','CLICK','HOLD','AUTO','the row','fire waves','poison','contact','enemy projectile','FULL GAME ONLY','Railway Fury Upgrade'])
     return sorted(v for v in result if v)
 
 
@@ -110,6 +123,11 @@ def request_batch(locale, batch):
 def translate(locale, source, reuse):
     path=OUT/(locale+'.json')
     cache=json.loads(path.read_text(encoding='utf8')) if path.exists() else {}
+    # Preserve reviewed terminology across regenerated catalogs. This is also
+    # where unchanged English drafts are repaired rather than reused forever.
+    overrides_path=OUT/'overrides.json'
+    overrides=json.loads(overrides_path.read_text(encoding='utf8')).get(locale,{}) if overrides_path.exists() else {}
+    cache.update(overrides)
     for text in source:
         if text in reuse and reuse[text].get(locale): cache.setdefault(text,reuse[text][locale])
     missing=[s for s in source if s not in cache]
@@ -128,7 +146,23 @@ def translate(locale, source, reuse):
                 time.sleep(2+attempt*2)
         path.write_text(json.dumps(cache,ensure_ascii=False,indent=2),encoding='utf8')
         print(locale,i+1,'/',len(batches),flush=True)
+    cache.update(overrides)
+    path.write_text(json.dumps(cache,ensure_ascii=False,indent=2),encoding='utf8')
     return locale,{s:cache[s] for s in source}
+
+
+def audit_catalog(source, output):
+    problems=[]
+    for locale in LOCALES:
+        messages=output[locale]
+        if set(messages)!=set(source): problems.append(locale+': source coverage mismatch')
+        for text,value in messages.items():
+            if not value.strip(): problems.append(locale+': empty translation: '+text)
+            if FORMAT.findall(text)!=FORMAT.findall(value): problems.append(locale+': formatting mismatch: '+text)
+            visible=FORMAT.sub('',text)
+            if locale!='en' and value==text and re.search('[A-Za-z]',visible) and text not in INVARIANT|BORROWED.get(locale,set()):
+                problems.append(locale+': untranslated English: '+text)
+    if problems: raise ValueError('\n'.join(problems))
 
 
 def main():
@@ -145,6 +179,8 @@ def main():
         futures=[pool.submit(translate,locale,source,reuse) for locale in LOCALES if locale!='en']
         for future in concurrent.futures.as_completed(futures):
             locale,translated=future.result();output[locale]=translated
+    output={locale:output[locale] for locale in LOCALES}
+    audit_catalog(source,output)
     (OUT/'catalog.json').write_text(json.dumps(output,ensure_ascii=False,indent=2),encoding='utf8')
     print('COMPLETE',len(output),'languages;',len(source),'messages per language',flush=True)
 

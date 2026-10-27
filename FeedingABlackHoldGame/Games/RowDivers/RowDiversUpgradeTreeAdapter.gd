@@ -79,6 +79,10 @@ static func apply_simulation_upgrades() -> void:
 			Global.game_mode_data_manager.unlocked_upgrades[upgrade.cell] = upgrade.to_dict()
 
 static func _icon_for(entry: Dictionary) -> String:
+	var ability: String = str(entry.get("unlocks", {}).get("abilityType", ""))
+	if ability == "GhostPower": return "res://Games/RowDivers/Art/Powerups/ghost.svg"
+	if ability == "ArrowShield": return "➶"
+	if ability in ["Shuriken", "Harvester", "SlowDown"]: return "★"
 	var title: String = str(entry.get("upgradeName", "")).to_lower()
 	if "arrow" in title or "bow" in title: return "➶"
 	if "hp" in title or "health" in title: return "+"
@@ -90,9 +94,16 @@ static func _icon_for(entry: Dictionary) -> String:
 
 static func _refresh_icons() -> void:
 	if not Util.is_row_divers_game_active(): return
+	refresh_localized_text()
 	for upgrade in Global.game_mode_data_manager.upgrades.values():
 		var entry: Dictionary = PROGRESS.find_upgrade(upgrade.sim_key)
 		if not entry.is_empty():
 			upgrade.sim_icon = _icon_for(entry)
+
+static func refresh_localized_text() -> void:
+	# Translate from the catalog's source strings without recreating upgrades.
+	for upgrade in Global.game_mode_data_manager.upgrades.values():
+		var entry: Dictionary = PROGRESS.find_upgrade(upgrade.sim_key)
+		if not entry.is_empty():
 			upgrade.sim_name = TranslationServer.translate(entry.upgradeName)
 			upgrade.sim_description = TranslationServer.translate(entry.upgradeDescription)

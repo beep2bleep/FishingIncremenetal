@@ -8,10 +8,11 @@ path=PROJECT/'export_presets.cfg'
 text=path.read_text(encoding='utf8')
 blocks=re.split(r'(?=\[preset\.\d+\]\n)',text)
 blocks=[b for b in blocks if b.strip() and 'name="Railway Fury Demo ' not in b]
-exclude='Games/*/Docs/*,Games/*/Tools/*,Games/*/Simulation/*,Games/RowDivers/Translations/sources.json,Games/RowDivers/Translations/en.json,Games/RowDivers/Translations/es.json,Games/RowDivers/Translations/de.json,Games/RowDivers/Translations/pt.json,Games/RowDivers/Translations/fr.json,Games/RowDivers/Translations/it.json,Games/RowDivers/Translations/zh.json,Games/RowDivers/Translations/ja.json,Games/RowDivers/Translations/ko.json,Games/RowDivers/Translations/ru.json,Games/RowDivers/Translations/pl.json,Games/RowDivers/Translations/tr.json,Games/RowDivers/Translations/th.json,Games/RowDivers/Translations/id.json,Games/RowDivers/Translations/cs.json,Games/RowDivers/Translations/ca.json,Games/RowDivers/Translations/vi.json,StoreAssets*/*,tools/*,simulation/*'
+exclude='Audio/Main Music Playlist.tres,Audio/Music/*,Games/*/Reports/*,Games/*/Docs/*,Games/*/Tools/*,Games/*/Simulation/*,Games/RowDivers/Translations/sources.json,Games/RowDivers/Translations/en.json,Games/RowDivers/Translations/es.json,Games/RowDivers/Translations/de.json,Games/RowDivers/Translations/pt.json,Games/RowDivers/Translations/fr.json,Games/RowDivers/Translations/it.json,Games/RowDivers/Translations/zh.json,Games/RowDivers/Translations/ja.json,Games/RowDivers/Translations/ko.json,Games/RowDivers/Translations/ru.json,Games/RowDivers/Translations/pl.json,Games/RowDivers/Translations/tr.json,Games/RowDivers/Translations/th.json,Games/RowDivers/Translations/id.json,Games/RowDivers/Translations/cs.json,Games/RowDivers/Translations/ca.json,Games/RowDivers/Translations/vi.json,StoreAssets*/*,tools/*,simulation/*'
 class_cache=(PROJECT/'.godot/global_script_class_cache.cfg').read_text(encoding='utf8')
 classes=dict(re.findall(r'"class":\s*&?"([^"]+)".*?"path":\s*"res://([^"]+)"',class_cache,re.S))
 project_text=(PROJECT/'project.godot').read_text(encoding='utf8')
+version=re.search(r'^config/version="([^"]+)"',project_text,re.M).group(1)
 autoload_section=project_text.split('[autoload]',1)[1].split('\n[',1)[0]
 autoloads=set(re.findall(r'="\*res://([^"]+)"',autoload_section))
 
@@ -54,6 +55,9 @@ for platform,base,folder,filename in [('Windows',0,'Windows','RailwayFuryDemo.ex
     export_files='export_files=PackedStringArray('+', '.join(json.dumps('res://'+f) for f in sorted(selected))+')'
     block=block.replace('export_filter="resources"','export_filter="resources"\n'+export_files)
     block=block.replace('application/product_name="Bleepware Incrementals"','application/product_name="Railway Fury Demo"')
+    if platform=='Windows':
+        for key in ['application/file_version','application/product_version']:
+            block=re.sub(r'^'+re.escape(key)+r'=.*$',key+'="'+version+'.0.0"',block,flags=re.M)
     block=block.replace('debug/export_console_wrapper=1','debug/export_console_wrapper=0')
     (ROOT/'Build - RailwayFury/Demo'/folder).mkdir(parents=True,exist_ok=True)
     blocks.append(block)

@@ -33,4 +33,7 @@ func _configure_fonts() -> void:
 		fallbacks.append(load("res://Theme/Fallbacks/NotoSansThai-Regular.ttf"))
 	for filename in ["Montserrat-SemiBold.ttf","Poppins-Bold.ttf","Poppins-Regular.ttf","Poppins-SemiBold.ttf","RobotoMono-SemiBold.ttf","Exo2-Bold.ttf","Exo2-BoldItalic.ttf"]:
 		var font: FontFile = load("res://Theme/"+filename)
-		font.fallbacks = fallbacks
+		# Reassigning identical fallbacks invalidates every label using this font.
+		# Web uses the same fallback for every supported language.
+		if font.fallbacks != fallbacks:
+			font.fallbacks = fallbacks

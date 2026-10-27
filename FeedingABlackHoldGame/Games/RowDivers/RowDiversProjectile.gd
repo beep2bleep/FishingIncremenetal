@@ -31,9 +31,6 @@ static func _build(kind: String, hostile: bool) -> ArrayMesh:
 		_burst(surface, -.35, .13, color)
 		_burst(surface, -.355, .045, color.lightened(.6))
 		_fin(surface, .075, .19, .66, color.darkened(.25))
-	elif kind == "Shuriken":
-		_diamond(outline, Vector3.ZERO, Vector3(.24,.07,.24), ink)
-		_diamond(surface, Vector3.ZERO, Vector3(.20,.045,.20), color)
 	else:
 		# A narrow shaft and clear broadhead remain readable when seen from behind.
 		_diamond(outline, Vector3(0,0,.04), Vector3(.035,.035,.33), ink)

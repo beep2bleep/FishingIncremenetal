@@ -1,0 +1,47 @@
+{
+  "franchise": "https://store.steampowered.com/franchise/Beep2Bleep",
+  "games": [
+    {
+      "app_id": 4519820,
+      "title": "Vanguard - Idle Auto Battler",
+      "texture": "res://Games/RowDivers/Art/OtherGames/4519820.jpg",
+      "source_image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4519820/5770b564dc3720727f54b437ab7708eba6c38133/header.jpg?t=1787175519",
+      "store_page": "https://store.steampowered.com/app/4519820/"
+    },
+    {
+      "app_id": 4562070,
+      "title": "Deepcore",
+      "texture": "res://Games/RowDivers/Art/OtherGames/4562070.jpg",
+      "source_image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4562070/510334cac230606c3c244c51475c447a3d4092e3/header.jpg?t=1783962384",
+      "store_page": "https://store.steampowered.com/app/4562070/"
+    },
+    {
+      "app_id": 4637560,
+      "title": "BleepWare Incrementals",
+      "texture": "res://Games/RowDivers/Art/OtherGames/4637560.jpg",
+      "source_image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4637560/47c4f4c9baf6bdd42a73a9221a8109280e314795/header.jpg?t=1783535865",
+      "store_page": "https://store.steampowered.com/app/4637560/"
+    },
+    {
+      "app_id": 3821510,
+      "title": "Bleeping Spaceships",
+      "texture": "res://Games/RowDivers/Art/OtherGames/3821510.jpg",
+      "source_image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3821510/f558bddddb68ceda424033a4b47a3cf039c5efc9/header.jpg?t=1785130157",
+      "store_page": "https://store.steampowered.com/app/3821510/"
+    },
+    {
+      "app_id": 1237090,
+      "title": "Bounty For Sharks",
+      "texture": "res://Games/RowDivers/Art/OtherGames/1237090.jpg",
+      "source_image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1237090/header.jpg?t=1582043560",
+      "store_page": "https://store.steampowered.com/app/1237090/"
+    },
+    {
+      "app_id": 989260,
+      "title": "Home Plate Baseball",
+      "texture": "res://Games/RowDivers/Art/OtherGames/989260.jpg",
+      "source_image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/989260/header.jpg?t=1572376297",
+      "store_page": "https://store.steampowered.com/app/989260/"
+    }
+  ]
+}

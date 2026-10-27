@@ -127,9 +127,10 @@ func run() -> void:
 		check(not upgrade.sim_icon.begins_with(Graphics.ROOT), "Modern upgrade icon retained in original mode: " + upgrade.sim_key)
 	var settings = load("res://Settings.tscn").instantiate()
 	root.add_child(settings)
-	check(settings.row_divers_graphics_toggle != null, "Shared settings exposes original graphics toggle")
-	settings.row_divers_graphics_toggle.select(0)
-	settings.row_divers_graphics_toggle.item_selected.emit(0)
+	check(settings.find_child("OriginalRowDiversGraphics",true,false) == null, "Art style picker is removed")
+	Graphics.select_mode(0)
+	save_handler.save_local_settings()
+	root.get_node("SignalBus").settings_updated.emit()
 	var stored: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(save_handler.local_settings_file_path))
 	check(stored.row_divers_original_graphics == save_handler.row_divers_original_graphics, "Toggle persists local preference")
 	for upgrade in manager.upgrades.values():

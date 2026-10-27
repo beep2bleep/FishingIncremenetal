@@ -1,6 +1,9 @@
 extends CanvasLayer
 const Style = preload("res://Games/RowDivers/RowDiversStyle.gd")
-const NAMES = {"ArrowShield": "ARROW SHIELD", "Harvester": "HARVESTER", "Shuriken": "SHURIKEN", "SlowDown": "SLOW DOWN"}
+const NAMES = {"ArrowShield": "SHIELD", "Harvester": "MAGPIE", "Shuriken": "ARROW STORM", "SlowDown": "REGEN", "GhostPower": "GHOST"}
+const POWERUP_ICONS = {"ArrowShield": "res://Games/RowDivers/Art/Powerups/shield.svg", "Harvester": "res://Games/RowDivers/Art/Powerups/magpie.svg", "Shuriken": "res://Games/RowDivers/Art/Powerups/arrow_storm.svg", "GhostPower": "res://Games/RowDivers/Art/Powerups/ghost.svg"}
+var powerup_effects: Control
+var powerup_highlights: Dictionary = {}
 var battle: Node3D
 var root_ui: Control
 var hp_bar: ProgressBar
@@ -31,6 +34,9 @@ func build(owner_battle: Node3D) -> void:
 	root_ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root_ui)
+	powerup_effects = preload("res://Games/RowDivers/RowDiversPowerupEffects.gd").new()
+	powerup_effects.battle = battle
+	root_ui.add_child(powerup_effects)
 	var stats := PanelContainer.new()
 	stats.position = Vector2(24, 20)
 	stats.custom_minimum_size = Vector2(350, 130)
@@ -87,14 +93,15 @@ func build(owner_battle: Node3D) -> void:
 	abilities.offset_bottom = -30
 	abilities.alignment = BoxContainer.ALIGNMENT_CENTER
 	abilities.add_theme_constant_override("separation", 12)
-	var key = 3
 	for ability in NAMES:
 		var column := VBoxContainer.new()
 		abilities.add_child(column)
 		ability_columns[ability] = column
 		column.visible = battle.unlocked(ability)
-		var button := make_button(tr("[%d] %s") % [key, NAMES[ability]], func(): battle._activate(ability))
-		button.custom_minimum_size = Vector2(196, 52)
+		var button := make_button(tr(NAMES[ability]), func(): battle._activate(ability))
+		# Space always belongs to the power queue, even after clicking a card.
+		button.focus_mode = Control.FOCUS_NONE
+		button.custom_minimum_size = Vector2(170, 52)
 		button.add_theme_font_size_override("font_size", 15)
 		button.set_meta("railway_font_size", 15)
 		button.tooltip_text = "Unlock this ability in Upgrades."
@@ -107,7 +114,6 @@ func build(owner_battle: Node3D) -> void:
 		bar.add_theme_stylebox_override("fill", Style.bar(Style.GOLD))
 		column.add_child(bar)
 		ability_bars[ability] = bar
-		key += 1
 	battle.ability_hud = Style.label("", 14)
 	root_ui.add_child(battle.ability_hud)
 	battle.ability_hud.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
@@ -135,7 +141,7 @@ func _refresh_graphics() -> void:
 	var icons := {"ArrowShield": "Arrow Shield.png", "Harvester": "Harvester.png", "Shuriken": "shuriken.png", "SlowDown": "Remedy.png"}
 	for ability in ability_buttons:
 		var button: Button = ability_buttons[ability]
-		button.icon = graphics.texture(icons[ability]) if graphics.original() else null
+		button.icon = load(POWERUP_ICONS[ability]) if POWERUP_ICONS.has(ability) else graphics.texture(icons[ability])
 		button.expand_icon = true
 		button.add_theme_constant_override("icon_max_width", 30)
 
@@ -162,7 +168,7 @@ func _build_debug_speed_controls() -> void:
 	for multiplier in battle.DEBUG_SPEEDS:
 		var button := make_button(tr("%dx") % multiplier, func(): battle.set_debug_speed(multiplier))
 		button.custom_minimum_size = Vector2(62, 38)
-		button.tooltip_text = "Speed up the entire simulation. At 4x and above: automatically aim and fire at the closest enemy without lateral movement, use unlocked abilities as soon as they are ready, and ignore enemy arrows. Row and contact damage still apply. Carries between dives until you quit the game."
+		button.tooltip_text = "Speed up the entire simulation. At 4x and above: automatically aim and fire at the closest enemy without lateral movement, use unlocked abilities as soon as they are ready, and ignore enemy arrows. Row and contact damage still apply. Carries between track runs until you quit the game."
 		if battle.free_aim_mode:
 			button.tooltip_text = "At 4x and above, the simulation pilot aims, shoots, dodges fire and projectiles, collects loot and uses abilities. All damage still applies. Below 4x you control the player."
 		buttons.add_child(button)
@@ -176,8 +182,8 @@ func _build_debug_speed_controls() -> void:
 
 func refresh_debug_speed() -> void:
 	if debug_speed_label == null: return
-	debug_speed_label.text = "GAMEPLAY SPEED: %dx" % battle.debug_speed
-	if battle.editor_autopilot_enabled(): debug_speed_label.text += "  /  AUTOPILOT"
+	debug_speed_label.text = tr("GAMEPLAY SPEED: %dx") % battle.debug_speed
+	if battle.editor_autopilot_enabled(): debug_speed_label.text += tr("  /  AUTOPILOT")
 	for multiplier in debug_speed_buttons:
 		debug_speed_buttons[multiplier].modulate = Color("ff8ad3") if multiplier == battle.debug_speed else Color.WHITE
 
@@ -233,10 +239,19 @@ func _build_overlay() -> void:
 		var caption = Style.label("CLICK TO SHOOT" if shooting else "MOVE LEFT / RIGHT", 20, true)
 		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		card.add_child(caption)
+		if not shooting:
+			var speed_hint = Style.label("Press Shift to toggle double speed", 16)
+			speed_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			card.add_child(speed_hint)
+	var power_hint := Style.label("SPACE: Activate the highlighted power.\nEach press uses one ready power.", 16)
+	power_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	power_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	power_hint.custom_minimum_size.x = 700
+	box.add_child(power_hint)
 	tutorial_cards.hide()
 	battle.resume = make_button("RESUME", battle._resume)
 	box.add_child(battle.resume)
-	battle.retry = make_button("DIVE AGAIN", func(): battle.get_tree().reload_current_scene())
+	battle.retry = make_button("RUN THE TRACKS", func(): battle.get_tree().reload_current_scene())
 	box.add_child(battle.retry)
 	battle.retry.hide()
 	upgrades_button = make_button("UPGRADES", func():
@@ -341,22 +356,31 @@ func refresh() -> void:
 	battle.hud.text = tr("VITALITY  %s / %s") % [Util.get_number_short_text(battle.health), Util.get_number_short_text(battle.s("MaxHP"))]
 	hp_bar.max_value = maxf(1, battle.s("MaxHP"))
 	hp_bar.value = battle.health
-	armor_label.text = tr("ARMOR %s  /  %s  /  %s\nDIVE TIME %s") % [Util.get_number_short_text(battle.armor), tr("DOUBLE SPEED") if battle.running else tr("NORMAL SPEED"), tr(battle.fire_mode.to_upper()), preload("res://Games/RowDivers/RowDiversTiming.gd").format_time(float(battle.data.get("gameplay_seconds",0)))]
+	armor_label.text = tr("ARMOR %s  /  %s  /  %s\nTRACK RUN TIME %s") % [Util.get_number_short_text(battle.armor), tr("DOUBLE SPEED") if battle.running else tr("NORMAL SPEED"), tr(battle.fire_mode.to_upper()), preload("res://Games/RowDivers/RowDiversTiming.gd").format_time(float(battle.data.get("gameplay_seconds",0)))]
 	currency.text = tr("GOLD %s   GEMS %s   CROWNS %s") % [Util.get_number_short_text(battle.data.wallet[0]), Util.get_number_short_text(battle.data.wallet[1]), Util.get_number_short_text(battle.data.wallet[2])]
 	battle.ability_hud.text = tr("%.1f m    SECTION %d / 15    %s    ESC PAUSE") % [(-battle.player_position.z if battle.free_aim_mode else battle.distance), mini(15, battle.section), preload("res://Games/RowDivers/RowDiversLevelThemes.gd").level_name(int(battle.data.prestige))]
 	if battle.free_aim_mode:
 		battle.ability_hud.text += tr("    FIRE %d / 3 · CONTROL %d%%") % [battle.fire_waves.stage + 1, battle.s("Fire_Wave_Control_" + str(int(battle.data.prestige)))]
-	var key = 3
+	var next: String = battle.next_powerup()
 	for ability in NAMES:
 		var state: Dictionary = battle.abilities[ability]
 		var owned: bool = battle.unlocked(ability)
 		ability_columns[ability].visible = owned
 		var status: String = "LOCKED" if not owned else (tr("ACTIVE %.1fs") % state.active if state.active > 0 else (tr("%.0fs") % ceil(state.cooldown) if state.cooldown > 0 else "READY"))
-		ability_buttons[ability].text = tr("[%d] %s\n%s") % [key, tr(NAMES[ability]), tr(status)]
+		var selected: bool = ability == next
+		ability_buttons[ability].text = (tr("[SPACE] ") if selected else "") + tr(NAMES[ability]) + "\n" + tr(status)
+		if powerup_highlights.get(ability) != selected:
+			powerup_highlights[ability] = selected
+			var card_style = Style.panel(Color("29333d") if selected else Color("172431"), Style.GOLD if selected else Color("465462"))
+			card_style.content_margin_left = 10
+			card_style.content_margin_right = 10
+			card_style.set_border_width_all(2 if selected else 1)
+			ability_buttons[ability].add_theme_stylebox_override("normal", card_style)
 		ability_buttons[ability].disabled = not owned or state.active > 0 or state.cooldown > 0
-		ability_buttons[ability].tooltip_text = tr("Press %d or click to activate. Cooldown starts after the effect ends.") % key if owned else "Unlock this ability in Upgrades."
+		ability_buttons[ability].tooltip_text = tr("Press Space to use the highlighted power, or click a ready power. Lasts 10 seconds; recharges for 30 seconds after it ends.") if owned else tr("Unlock this ability in Upgrades.")
+		if ability == "SlowDown" and owned:
+			ability_buttons[ability].tooltip_text += "\n" + tr("Regenerates %.2f%% of maximum health per second (1.5x walking damage).") % battle.regen_percent_per_second()
 		ability_bars[ability].value = state.active / state.duration if state.active > 0 else (1.0 - state.cooldown / state.wait if owned else 0.0)
-		key += 1
 	var nearest: Dictionary = {}
 	for enemy in battle.enemies:
 		if enemy.boss and enemy.node.position.distance_to(battle.player_position) < 20:

@@ -10,6 +10,8 @@ func check(ok, message):
 		failures += 1
 		push_error(message)
 func run():
+	check(ProjectSettings.get_setting("application/config/version", "") == "0.1", "Pack version is 0.1")
+	check(load("res://Games/RowDivers/Art/Powerups/ghost.svg") is Texture2D, "Packed Ghost icon loads")
 	check(Progress.Demo.enabled(), "Export forces demo mode")
 	check(OS.get_user_data_dir().ends_with("RailwayFuryDemo"), "Export isolates the full-game save directory")
 	ProjectSettings.set_setting("railway_fury/debug/enable_speed_cheats", false)

@@ -86,6 +86,7 @@ static func apply_section(section: Node3D, battle: Node3D) -> void:
 					material.albedo_texture = load(ROOT+"hell_basalt.png")
 					material.uv1_scale = Vector3(3,3,3)
 				mesh.material_override = material
+	preload("res://Games/RowDivers/RowDiversHallway.gd").apply(section)
 
 static func _on_column(mesh: Node) -> bool:
 	var node = mesh.get_parent()

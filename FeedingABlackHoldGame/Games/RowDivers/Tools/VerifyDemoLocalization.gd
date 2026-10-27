@@ -30,7 +30,7 @@ func run():
 	var identifier := RegEx.create_from_string("^[A-Z0-9_]+$")
 	for source in catalog.en:
 		check(not ("_" in source and identifier.search(source)!=null), "Shared translation identifiers are not shadowed: "+source)
-	for source in ["RAILWAY FURY · DIVE TIMES","\n\n%s\nPaid with %s","%s ACTIVE"]:
+	for source in ["RAILWAY FURY · TRACK RUN TIMES","\n\n%s\nPaid with %s","%s ACTIVE", "RUN THE TRACKS", "MAGPIE", "ARROW STORM", "SHIELD", "REGEN", "[SPACE] ", "SPACE: Activate the highlighted power.\nEach press uses one ready power.", "Regenerates %.2f%% of maximum health per second (1.5x walking damage)."]:
 		check(catalog.en.has(source), "Dynamic UI copy is covered: "+source)
 	for locale in catalog:
 		TranslationServer.set_locale(locale)

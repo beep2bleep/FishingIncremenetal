@@ -6,6 +6,46 @@ var checks = {}
 class Capture extends Node:
 	var events = []
 	func submit_row_divers_time(id: String, seconds: float): events.append([id,seconds])
+func _verify_speed_clock():
+	Progress.active_data_cache = Progress.fresh()
+	Progress.active_data_cache.controls_seen = true
+	# Compile after autoload initialization; enable editor controls only in this fixture.
+	var fixture_script = GDScript.new()
+	fixture_script.source_code = FileAccess.get_file_as_string("res://Games/RowDivers/Scenes/RowDiversBattleScene.gd").replace('return OS.has_feature("editor") and bool(ProjectSettings.get_setting("railway_fury/debug/enable_speed_cheats", false))', 'return true').replace('return free_aim_mode and debug_speed_cheats_enabled() and debug_speed >= 4', 'return false')
+	fixture_script.reload()
+	var battle = fixture_script.new()
+	battle.persist_results = false
+	root.add_child(battle)
+	battle.set_physics_process(false)
+	battle.set_process(false)
+	for enemy in battle.enemies: enemy.node.free()
+	battle.enemies.clear()
+	battle.next_section_trigger = 10000
+	battle.fire_waves.timer = 10000
+	battle.health = 1e12
+	battle.horizontal_override = 0.0
+	for multiplier in battle.DEBUG_SPEEDS:
+		battle.set_debug_speed(multiplier)
+		for boost in [false,true]:
+			battle.running = boost
+			var before = float(battle.data.gameplay_seconds)
+			var elapsed_before = battle.elapsed
+			battle._physics_process(1.0/60.0)
+			var expected = multiplier * (2 if boost else 1) / 60.0
+			checks["speed_clock_%d_shift_%s" % [multiplier,str(boost)]] = is_equal_approx(float(battle.data.gameplay_seconds)-before,expected) and is_equal_approx(battle.elapsed-elapsed_before,expected)
+		var before_pause = float(battle.data.gameplay_seconds)
+		battle.suspended = true
+		battle._physics_process(1.0/60.0)
+		checks["speed_pause_%d" % multiplier] = battle.data.gameplay_seconds==before_pause
+		battle.suspended = false
+	checks.editor_speed_marks_assisted = battle.data.leaderboards_assisted
+	battle.ended = true
+	var before_finish = float(battle.data.gameplay_seconds)
+	battle._physics_process(1.0/60.0)
+	checks.editor_finished_clock = battle.data.gameplay_seconds==before_finish
+	battle.set_debug_speed(1)
+	battle.free()
+
 func _initialize(): call_deferred("run")
 func run():
 	root.size = Vector2i(1280,720)
@@ -59,7 +99,8 @@ func run():
 			checks.exit_clock_checkpoint = is_equal_approx(float(Progress.load_data("user://railway_exit_clock_fixture.json").gameplay_seconds),before)
 			DirAccess.remove_absolute("user://railway_exit_clock_fixture.json")
 	checks.double_full_simulation = is_equal_approx(snapshots[1].elapsed,2*snapshots[0].elapsed) and is_equal_approx(snapshots[1].z,2*snapshots[0].z) and is_equal_approx(10-snapshots[1].shot,2*(10-snapshots[0].shot))
-	checks.clock_counts_active_seconds = is_equal_approx(snapshots[0].clock,1) and is_equal_approx(snapshots[1].clock,1)
+	checks.clock_counts_simulation_seconds = is_equal_approx(snapshots[0].clock,1) and is_equal_approx(snapshots[1].clock,2)
+	_verify_speed_clock()
 	checks.no_extra_run_damage = snapshots[0].hp==100 and snapshots[1].hp==95
 	checks.cursor_restored_on_exit = Input.mouse_mode==Input.MOUSE_MODE_VISIBLE
 	var data = Progress.fresh()

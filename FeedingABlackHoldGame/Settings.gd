@@ -17,7 +17,6 @@ var fps_limits: Dictionary = {
     }
 var locale_codes: Array[String] = []
 var _is_refreshing: bool = false
-var row_divers_graphics_toggle: OptionButton
 var row_divers_tree_toggle: OptionButton
 
 func show_screen():
@@ -35,7 +34,6 @@ func _ready():
     populate_window_mode_list()
     populate_fps_list()
     refresh_static_text()
-    _setup_row_divers_graphics()
     _setup_row_divers_tree()
     _refresh_hidden_control_visibility()
     refresh_from_save()
@@ -77,8 +75,6 @@ func _refresh_hidden_control_visibility() -> void:
 
 func refresh_from_save() -> void:
     _is_refreshing = true
-    if row_divers_graphics_toggle != null:
-        row_divers_graphics_toggle.select(preload("res://Games/RowDivers/RowDiversGraphics.gd").mode())
     if row_divers_tree_toggle != null:
         row_divers_tree_toggle.select(1 if SaveHandler.row_divers_previous_upgrade_tree else 0)
     %"Music Volume".value = SaveHandler.music_volume
@@ -95,27 +91,9 @@ func refresh_from_save() -> void:
     _refresh_fps_selection()
     _is_refreshing = false
 
-func _setup_row_divers_graphics() -> void:
-    if not Util.is_row_divers_game_active(): return
-    var grid: GridContainer = get_node("GridContainer")
-    var label := Label.new()
-    label.text = "ART & AUDIO STYLE"
-    grid.add_child(label)
-    row_divers_graphics_toggle = OptionButton.new()
-    row_divers_graphics_toggle.name = "OriginalRowDiversGraphics"
-    for title in ["MODERN / SYNTY", "CLASSIC / ORIGINAL", "ILLUSTRATED / NEW"]:
-        row_divers_graphics_toggle.add_item(title)
-    row_divers_graphics_toggle.tooltip_text = "Three complete art and audio styles. Illustrated uses new inked sprites, the restored corridor layout, and a new fantasy soundtrack. Applies immediately."
-    grid.add_child(row_divers_graphics_toggle)
-    row_divers_graphics_toggle.item_selected.connect(func(index: int):
-        preload("res://Games/RowDivers/RowDiversGraphics.gd").select_mode(index)
-        SaveHandler.save_local_settings()
-        SignalBus.settings_updated.emit()
-        if visible: AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK))
-    preload("res://Games/RowDivers/RowDiversStyle.gd").style_button(row_divers_graphics_toggle)
-
 func _setup_row_divers_tree() -> void:
     if not Util.is_row_divers_game_active(): return
+    if preload("res://Games/RowDivers/RowDiversProgress.gd").free_aim_mode: return
     var grid: GridContainer = get_node("GridContainer")
     var label := Label.new()
     label.text = "UPGRADE TREE (RESTART)"

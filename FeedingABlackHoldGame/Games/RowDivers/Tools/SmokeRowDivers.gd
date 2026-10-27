@@ -145,8 +145,11 @@ func run() -> void:
 	battle.data.unlocks.ArrowShield = true
 	battle._activate("ArrowShield")
 	check(battle.active("ArrowShield"), "Unlocked ability activates")
-	for i in range(301): battle._physics_process(1.0 / 60.0)
-	check(not battle.active("ArrowShield") and battle.abilities.ArrowShield.cooldown > 119, "Shield lasts 5 seconds then 120-second cooldown")
+	var health_before_shield = battle.health
+	battle.health = 100000
+	for i in range(601): battle._physics_process(1.0 / 60.0)
+	battle.health = health_before_shield
+	check(not battle.active("ArrowShield") and battle.abilities.ArrowShield.cooldown > 29, "Shield lasts 10 seconds then 30-second cooldown")
 	battle._activate("ArrowShield")
 	check(not battle.active("ArrowShield"), "Cooldown blocks repeat use")
 	battle.data.stats.Armor_Against_Row = 50
@@ -185,7 +188,7 @@ func run() -> void:
 	var tree = upgrade_scene.get_node("CanvasLayer/Tech Tree")
 	check(upgrade_scene.get("row_divers_wallet_label") != null and upgrade_scene.get("row_divers_wallet_label").visible, "Shared upgrade scene shows the Railway Fury three-currency wallet")
 	check(upgrade_scene.get("go_again_button") != null and upgrade_scene.get("go_again_button").text == "PLAY", "Shared scene labels its battle transition PLAY")
-	check(tree.node_dict.size() == 113, "Shared UpgradeScreen builds center and all 112 Railway Fury upgrades")
+	check(tree.node_dict.size() == root.get_node("Global").game_mode_data_manager.upgrades.size() + 1, "Shared UpgradeScreen builds center and every available Railway Fury upgrade")
 	var lines: Node = tree.get_node("Pivot/Tech Lines")
 	var drawn_edges = {}
 	for line in lines.get_children():

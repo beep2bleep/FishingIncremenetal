@@ -1455,8 +1455,8 @@
       ]
     },
     {
-      "upgradeName": "Slow Down",
-      "upgradeDescription": "When active, player forward movement slows down by 0.5 for 4 seconds",
+      "upgradeName": "Regen",
+      "upgradeDescription": "Regenerates a percentage of maximum health each second, equal to 1.5x the current level walking damage per second. Lasts 10 seconds, then recharges for 30 seconds.",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -1736,8 +1736,8 @@
       ]
     },
     {
-      "upgradeName": "Arrow Shield",
-      "upgradeDescription": "Grants immunity to enemy arrows while active",
+      "upgradeName": "Shield",
+      "upgradeDescription": "Reduces all incoming damage by 50% for 10 seconds, then recharges for 30 seconds.",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -1924,7 +1924,8 @@
         "6452",
         "5860",
         "6751",
-        "5659"
+        "5659",
+        "6601"
       ],
       "parents": []
     },
@@ -3252,7 +3253,7 @@
         }
       ],
       "children": [
-        "6601"
+        "ghost_power"
       ],
       "parents": [
         "6751"
@@ -3457,7 +3458,7 @@
       ],
       "children": [],
       "parents": [
-        "6601"
+        "ghost_power"
       ]
     },
     {
@@ -3815,8 +3816,8 @@
       ]
     },
     {
-      "upgradeName": "Shuriken",
-      "upgradeDescription": "While active, spawns a shuriken that deals normal arrow base damage, doubled against bleeding enemies",
+      "upgradeName": "Arrow Storm",
+      "upgradeDescription": "Fires an additional arrow with each shot for 10 seconds. Deals triple damage to bleeding enemies, then recharges for 30 seconds.",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -4798,15 +4799,15 @@
       ]
     },
     {
-      "upgradeName": "Harvester",
-      "upgradeDescription": "When active, this effect doubles all resources except Boss crown",
+      "upgradeName": "Magpie",
+      "upgradeDescription": "Doubles collected gold and gems for 10 seconds, then recharges for 30 seconds. Boss crowns are unaffected.",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 1,
-      "rarity": 5,
+      "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 200,
+      "baseUpgradeCost": 2,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -4814,12 +4815,12 @@
       "statsToIncrease": [],
       "id": "6601",
       "position": [
-        16.999999,
-        -25.400001
+        34.969751,
+        -8.623116
       ],
       "local_position": {
-        "x": -8.564751,
-        "y": -25.146885
+        "x": 9.405001,
+        "y": -8.37
       },
       "size": {
         "x": 5,
@@ -4829,11 +4830,9 @@
         "abilityType": "Harvester"
       },
       "effects": [],
-      "children": [
-        "6302"
-      ],
+      "children": [],
       "parents": [
-        "6255"
+        "5932"
       ]
     },
     {
@@ -5569,6 +5568,45 @@
       "parents": [
         "6067"
       ]
+    },
+    {
+      "upgradeName": "Ghost",
+      "upgradeDescription": "Enemies lose track of you for 10 seconds: melee enemies stop pursuing and fliers stop shooting. Bosses remain aware. Recharges for 30 seconds.",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 5,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 200,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [],
+      "id": "ghost_power",
+      "position": [
+        16.999999,
+        -25.400001
+      ],
+      "local_position": {
+        "x": -8.564751,
+        "y": -25.146885
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "abilityType": "GhostPower"
+      },
+      "effects": [],
+      "children": [
+        "6302"
+      ],
+      "parents": [
+        "6255"
+      ]
     }
   ],
   "base_stats": {
@@ -5627,9 +5665,9 @@
         "reward": 300
       },
       {
-        "achievementName": "First Dive",
+        "achievementName": "First Track Run",
         "achievementType": 0,
-        "description": "Dive For The First Time",
+        "description": "Run the Tracks for the First Time",
         "currencyType": 0,
         "reward": 25
       },
@@ -5741,28 +5779,34 @@
     ],
     "abilities": [
       {
-        "abilityName": "Shuriken",
+        "abilityName": "Arrow Storm",
         "abilityType": 3,
         "abilityDuration": 10,
-        "cooldownDuration": 120
+        "cooldownDuration": 30
       },
       {
-        "abilityName": "Arrow Shield",
+        "abilityName": "Shield",
         "abilityType": 2,
-        "abilityDuration": 5,
-        "cooldownDuration": 120
+        "abilityDuration": 10,
+        "cooldownDuration": 30
       },
       {
-        "abilityName": "Harvester",
+        "abilityName": "Magpie",
         "abilityType": 1,
         "abilityDuration": 10,
-        "cooldownDuration": 60
+        "cooldownDuration": 30
       },
       {
-        "abilityName": "Slow Down",
+        "abilityName": "Regen",
         "abilityType": 4,
-        "abilityDuration": 4,
-        "cooldownDuration": 160
+        "abilityDuration": 10,
+        "cooldownDuration": 30
+      },
+      {
+        "abilityName": "Ghost",
+        "abilityType": 5,
+        "abilityDuration": 10,
+        "cooldownDuration": 30
       }
     ],
     "movement": {
@@ -7732,7 +7776,8 @@
       "1": "Harvester",
       "2": "ArrowShield",
       "3": "Shuriken",
-      "4": "SlowDown"
+      "4": "SlowDown",
+      "5": "GhostPower"
     },
     "CurrencyType": {
       "0": "GoldCoin",

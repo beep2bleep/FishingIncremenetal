@@ -13,7 +13,7 @@ MODULE = ROOT / 'FeedingABlackHoldGame/Games/RowDivers'
 source = (MODULE / 'Scenes/RowDiversBattleScene.gd').read_text(encoding='utf-8')
 header, *parts = re.split(r'(?=^func )', source, flags=re.M)
 functions = {p.split('(', 1)[0][5:]: p for p in parts}
-keep = ['s', 'unlocked', 'active', '_simulate_step', '_dagger_hit', '_beam_hit',
+keep = ['s', 'unlocked', 'active', 'walking_damage', 'regen_percent_per_second', '_update_powerups', '_simulate_step', '_dagger_target', '_dagger_hit', '_beam_hit',
         '_target', '_shoot', '_update_projectiles', '_new_projectile_state',
         '_take_projectile_state', '_return_projectile_state', '_has_effect',
         '_projectile_hit', '_effect', '_roll', '_hit', '_update_enemies',
@@ -94,6 +94,7 @@ func fast_combat_assist_enabled() -> bool: return true
 func _read_horizontal(_delta): return 0.0
 func _update_camera_presentation(): pass
 func _update_dagger_presentation(): pass
+func _launch_dagger(_target): pass
 func _aim_pointer() -> Vector2: return Vector2.ZERO
 func _aim_direction() -> Vector3: return Vector3.FORWARD
 func _aim_origin() -> Vector3: return player_position
@@ -171,6 +172,9 @@ for name in keep:
         body = body.replace('Util.get_number_short_text(amount)', 'str(amount)')
     if name == '_heal':
         body = body.replace('\thealth =', '\thealing_received += minf(amount, maxf(0.0, s("MaxHP") - health))\n\thealth =').replace('Util.get_number_short_text(amount)', 'str(amount)')
+    if name == '_update_powerups':
+        body = body.replace('\t\thealth =', '\t\tvar health_before_regen = health\n\t\thealth =')
+        body = body.replace('\tfor state in abilities.values():', '\t\thealing_received += maxf(0, health - health_before_regen)\n\tfor state in abilities.values():')
     if name == '_damage_player':
         body = body.replace('\tif ended: return', '\tif ended: return\n\tif source == "the row": amount *= row_damage_scale')
     body = '\n'.join(line for line in body.split('\n') if not any(token in line for token in ['_floating_text(', 'enemy.label.text =', 'presentation.toast(', 'crosshair.modulate =', 'presentation.feedback.color.a =']))

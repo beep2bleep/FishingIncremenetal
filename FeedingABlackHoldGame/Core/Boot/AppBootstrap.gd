@@ -6,6 +6,8 @@ func _ready() -> void:
 func _open_configured_start_scene() -> void:
     if not Util.is_all_high_level_mode_active():
         Util.set_active_game_id(Util.get_high_level_mode_id())
+    if Util.is_row_divers_game_active():
+        preload("res://Games/RowDivers/RowDiversProgress.gd").free_aim_mode = true
     SaveHandler.load_fishing_progress()
     Global.current_game_mode_data = null
     Global.ensure_default_game_mode_data()

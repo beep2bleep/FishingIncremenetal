@@ -63,6 +63,14 @@ static func fresh() -> Dictionary:
 	preload("res://Games/RowDivers/RowDiversTiming.gd").ensure(data)
 	return data
 
+static func reset_progress(path = SAVE_PATH) -> Dictionary:
+	# Rebuild the complete campaign, including gameplay_seconds, milestones,
+	# upgrades, permanent stat bonuses, currencies, unlocks and ending choices.
+	var data = fresh()
+	Demo.constrain(data)
+	save_data(data, path)
+	return data
+
 static func load_data(path = SAVE_PATH) -> Dictionary:
 	if path == SAVE_PATH:
 		sync_tree_preference()

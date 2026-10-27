@@ -15,6 +15,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="RailwayFury"
+config/version="0.1"
 config/name.railway_demo="Railway Fury Demo"
 run/main_scene="res://Core/Boot/AppBootstrap.tscn"
 config/use_custom_user_dir=true

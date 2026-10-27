@@ -89,9 +89,9 @@ func run() -> void:
 	root.add_child(launcher)
 	current_scene = launcher
 	for frame in range(5): await process_frame
-	check(launcher.row_divers_button.visible and launcher.row_divers_free_aim_button.visible, "Both choices appear on menu")
-	check(launcher.game_cards_grid.columns == 2, "Modes appear side by side")
-	check(launcher.row_divers_free_aim_button.get_meta("card_title_label").text == "FREE AIM", "New mode is labeled")
+	check(launcher.row_divers_button == null and launcher.row_divers_free_aim_button.visible, "Only Railway Fury appears on menu")
+	check(launcher.game_cards_grid.columns == 1, "Single play option")
+	check(launcher.row_divers_free_aim_button.get_meta("card_title_label").text == "RAILWAY FURY", "Game is labeled Railway Fury")
 	if "--preview" in OS.get_cmdline_user_args():
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://../free_aim_menu.png")

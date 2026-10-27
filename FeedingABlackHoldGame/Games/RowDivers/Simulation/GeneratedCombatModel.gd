@@ -4,6 +4,7 @@ const FireWaves = preload("res://Games/RowDivers/RowDiversFireWaves.gd")
 var free_aim_mode = false # Offline classic assisted mode.
 var corridor_width = 1.0
 var data: Dictionary
+var progress_save_path = ""
 var camera: Camera3D
 var player_position = Vector3(0, 0.9, 0)
 var forward_speed = 1.3
@@ -25,6 +26,7 @@ var next_section_trigger = 3.474
 var group_index = 0
 var fire_mode = "Click"
 var ended = false
+var victory = false
 var suspended = false
 var run_kills = 0
 var distance = 0.0
@@ -34,6 +36,8 @@ var projectiles: Array[Dictionary] = []
 var drops: Array[Dictionary] = []
 var sections: Array = []
 var abilities: Dictionary = {}
+# Keep the existing keys so purchased powers in older saves still work.
+var next_powerup_index = 0
 var hud: Label
 var ability_hud: Label
 var crosshair: Label
@@ -49,6 +53,8 @@ var dagger: Node3D
 var presentation: Node
 var weapon_recoil = 0.0
 var dagger_recoil = 0.0
+var dagger_flights: Array = []
+var dagger_throw_count = 0
 var shield_ring: Spatial
 var horizontal_override = NAN # Deterministic input for the end-to-end fixture; NaN reads real controls.
 var pointer_override = Vector2(NAN, NAN)
@@ -141,6 +147,7 @@ func fast_combat_assist_enabled() -> bool: return true
 func _read_horizontal(_delta): return 0.0
 func _update_camera_presentation(): pass
 func _update_dagger_presentation(): pass
+func _launch_dagger(_target): pass
 func _aim_pointer() -> Vector2: return Vector2.ZERO
 func _aim_direction() -> Vector3: return Vector3.FORWARD
 func _aim_origin() -> Vector3: return player_position
@@ -213,9 +220,9 @@ func _build_section(number: int) -> void:
 			_spawn_enemy(Vector3((float(point[0]) - 2.5) * corridor_width, float(point[1]), root.position.z - (float(point[2]) + 28.474)), int(allowed.pick_random()))
 	# Airborne ranged threats are exclusive to the active variant.
 	if free_aim_mode and number not in [5, 10, 15]:
-		_spawn_enemy(Vector3(randf_range(-1.4, 1.4), 1.9, root.position.z - 12.0), 7)
+		_spawn_enemy(Vector3(randf_range(-1.4, 1.4), 1.75, root.position.z - 12.0), 7)
 		if number >= 3:
-			_spawn_enemy(Vector3(randf_range(-1.4, 1.4), 2.25, root.position.z - 18.0), 7)
+			_spawn_enemy(Vector3(randf_range(-1.4, 1.4), 1.95, root.position.z - 18.0), 7)
 
 func _spawn_enemy(pos: Vector3, kind: int, boss = false) -> void:
 	var root = Spatial.new()
@@ -251,6 +258,36 @@ func active(key: String) -> bool:
 	return abilities.has(key) and float(abilities[key].active) > 0
 
 
+func walking_damage() -> float:
+	var amount: float = [5.0, 30.0, 100.0, 300.0][clampi(int(data.prestige), 0, 3)]
+	if armor > 0: amount *= maxf(0, 1.0 - s("Armor_Against_Row") / 100.0)
+	return amount
+
+
+func regen_percent_per_second() -> float:
+	# Walking ticks once per two simulation seconds. Use actual max HP rather
+	# than assuming a purchase order, so all upgrade trees get the same 1.5x help.
+	# Shield stacks with Regen; armor absorption is excluded because it can run out.
+	return 100.0 * 1.5 * (walking_damage() / 2.0) / maxf(1.0, s("MaxHP"))
+
+
+func _update_powerups(delta: float) -> void:
+	if active("SlowDown"):
+		var healing_time = minf(delta, abilities.SlowDown.active)
+		var health_before_regen = health
+		health = minf(s("MaxHP"), health + s("MaxHP") * regen_percent_per_second() / 100.0 * healing_time)
+		healing_received += maxf(0, health - health_before_regen)
+	for state in abilities.values():
+		if state.active > 0:
+			var remaining = state.active - delta
+			state.active = maxf(0, remaining)
+			if remaining <= 0.000001:
+				state.active = 0.0
+				state.cooldown = maxf(0, state.wait + minf(0, remaining))
+		else:
+			state.cooldown = maxf(0, state.cooldown - delta)
+
+
 func _simulate_step(delta: float) -> void:
 	if ended: return
 	# Unity's RowDamage coroutine waits in wall-clock game time even while paused;
@@ -267,10 +304,11 @@ func _simulate_step(delta: float) -> void:
 	dagger_timer = maxf(0, dagger_timer - delta)
 	beam_timer = maxf(0, beam_timer - delta)
 	var horizontal = _read_horizontal(delta) if is_nan(horizontal_override) else horizontal_override
-	var speed = (forward_speed - (0.5 if active("SlowDown") else 0.0)) * (1.5 if running else 1.0)
+	var speed = forward_speed
 	var previous = player_position
 	# Source walls at x=1 and 4, player sphere radius 0.4 * root scale 0.7.
-	player_position.x = clampf(player_position.x + horizontal * s("Horizontal_Speed") * delta, -1.22 * corridor_width, 1.22 * corridor_width)
+	var hallway_width = corridor_width * preload("res://Games/RowDivers/RowDiversHallway.gd").width_scale(player_position.z)
+	player_position.x = clampf(player_position.x + horizontal * s("Horizontal_Speed") * delta, -1.22 * hallway_width, 1.22 * hallway_width)
 	player_position.z -= speed * delta
 	for enemy in enemies:
 		if enemy.boss and enemy.hp > 0:
@@ -282,9 +320,7 @@ func _simulate_step(delta: float) -> void:
 		forward_speed += 0.1333
 		_build_section(section + 2)
 	if row_tick:
-		var damage = [5.0, 30.0, 100.0, 300.0][int(data.prestige)]
-		if armor > 0: damage *= maxf(0, 1.0 - s("Armor_Against_Row") / 100.0)
-		_damage_player(damage * (1.5 if running else 1.0), false, "the row")
+		_damage_player(walking_damage(), false, "the row")
 	if free_aim_mode: _update_fire_waves(delta)
 	if free_aim_mode:
 		crosshair.position = _aim_pointer() - crosshair.size * 0.5
@@ -298,7 +334,7 @@ func _simulate_step(delta: float) -> void:
 		if auxiliary_fire_mode == "Hold" and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT): _shoot(weapon)
 		if (auxiliary_fire_mode == "Auto" or fast_combat_assist_enabled()) and not target.is_empty(): _shoot(weapon)
 	if unlocked("Dagger") and dagger_timer <= 0:
-		var near = _target(s("Melee_range"))
+		var near = _dagger_target()
 		if not near.is_empty():
 			_dagger_hit(near)
 	if unlocked("ThirdEye") and beam_timer <= 0:
@@ -315,17 +351,29 @@ func _simulate_step(delta: float) -> void:
 			poison_ticks -= 1
 			# ApplyPoison in the reference resets to basePoisonDamage (10), even on prestige.
 			_damage_player(10.0, true, "poison")
-	for state in abilities.values():
-		if state.active > 0:
-			state.active -= delta
-			if state.active <= 0: state.cooldown = state.wait
-		else:
-			state.cooldown = maxf(0, state.cooldown - delta)
+	if not ended: _update_powerups(delta)
 	_auto_activate_abilities()
 	_update_hud()
 	_flush_retired()
 
+func _dagger_target() -> Dictionary:
+	if not free_aim_mode: return _target(s("Melee_range"))
+	var closest: Dictionary = {}
+	var best := s("Melee_range")
+	for enemy in enemies:
+		if enemy.hp <= 0: continue
+		var offset: Vector3 = enemy.node.position - player_position
+		var reach := Vector2(offset.x, offset.z).length()
+		if offset.z <= 0.2 and reach <= best:
+			closest = enemy
+			best = reach
+	return closest
+
+
 func _dagger_hit(near: Dictionary) -> void:
+	# Capture before _hit: a lethal strike may remove the actor. Flight never
+	# retains the target node and never consumes combat randomness.
+	var strike: Vector3 = near.node.position + Vector3(0, 0.15, 0)
 	var amount = s("Dagger_Damage")
 	if _has_effect(near, "Cursed"): amount *= s("Curse_Effect")
 	if _roll("Bleed_Chance") and not _has_effect(near, "Bleeding"):
@@ -335,6 +383,7 @@ func _dagger_hit(near: Dictionary) -> void:
 	dagger_timer = 1.0 / maxf(0.01, s("Dagger_Attack_Rate"))
 	audio.sound("dagger")
 	dagger_recoil = 1.0
+	_launch_dagger(strike)
 
 
 func _beam_hit(eye_target: Dictionary) -> void:
@@ -438,7 +487,6 @@ func _update_projectiles(delta: float) -> void:
 		var previous: Vector3 = projectile.node.position
 		projectile.node.position += projectile.dir * projectile.speed * delta
 		projectile.life -= delta
-		if projectile.type == "Shuriken": projectile.node.rotate_z(delta * 18)
 		if projectile.hostile:
 			if fast_combat_assist_enabled():
 				projectiles.erase(projectile)
@@ -446,18 +494,14 @@ func _update_projectiles(delta: float) -> void:
 				continue
 			var closest: Vector3 = Geometry3D.get_closest_point_to_segment(player_position, previous, projectile.node.position)
 			if closest.distance_to(player_position) < 0.3:
-				if not active("ArrowShield"):
-					if projectile.type == "LifeSteal": _damage_player(s("HP_Steal"))
-					if projectile.type == "Poison":
-						poison_hits += 1
-						if poison_ticks == 0:
-							# Player.ApplyPeriodicDamage hits immediately before its first yield.
-							_damage_player(10.0, true, "poison")
-							poison_ticks = 2
-							poison_timer = 1.0
-					_damage_player(float([10, 200, 500, 2000][int(data.prestige)]) * (2.0 if projectile.type == "Critical" else 1.0), false, "enemy arrows")
-				else:
-					audio.sound("hit")
+				if projectile.type == "LifeSteal": _damage_player(s("HP_Steal"))
+				if projectile.type == "Poison":
+					poison_hits += 1
+					if poison_ticks == 0:
+						_damage_player(10.0, true, "poison")
+						poison_ticks = 2
+						poison_timer = 1.0
+				_damage_player(float([10, 200, 500, 2000][int(data.prestige)]) * (2.0 if projectile.type == "Critical" else 1.0), false, "enemy arrows")
 				projectile.life = 0
 		else:
 			for enemy in enemies.duplicate():
@@ -567,7 +611,7 @@ func _hit(enemy: Dictionary, amount: float) -> void:
 			if not enemy.get("crown_dropped_on_spawn", data.crowns_dropped.get(key, false)):
 				_award_loot(2, 1.0)
 				data.crowns_dropped[key] = true
-				if int(data.prestige) < 3: data.max_prestige = mini(3, int(data.max_prestige) + 1)
+				if int(data.prestige) < 3 and not Progress.Demo.enabled(): data.max_prestige = mini(3, int(data.max_prestige) + 1)
 			Progress.check_achievements(data)
 			_finish(true)
 		else:
@@ -599,12 +643,16 @@ func _update_enemies(delta: float) -> void:
 				enemy.effect = ""
 				if enemy.has("effect_flags"): enemy.effect_flags.clear()
 		var offset: Vector3 = enemy.node.position - player_position
+		var unaware: bool = not enemy.boss and active("GhostPower")
+		if unaware and enemy.has("chasing"): enemy.chasing = false
+		if not unaware and not enemy.boss and offset.z < 0 and offset.length() < 2.8:
+			enemy.actor.windup()
 		if free_aim_mode and int(enemy.kind) == 7:
 			var origin: Vector3 = enemy.hover_origin
 			var phase: float = elapsed * 1.7 + float(enemy.hover_phase)
 			enemy.node.position = origin + Vector3(sin(phase) * 0.3, cos(phase * 1.3) * 0.18, sin(phase * 0.7) * 0.12)
 			enemy.next_shot -= delta
-			if enemy.next_shot <= 0 and offset.z < 0 and offset.length() < 14.0:
+			if not unaware and enemy.next_shot <= 0 and offset.z < 0 and offset.length() < 14.0:
 				enemy.next_shot = 2.4
 				enemy.actor.windup()
 				var bullet := _flight_projectile("Bat", enemy.node.position, true)
@@ -614,24 +662,24 @@ func _update_enemies(delta: float) -> void:
 		elif free_aim_mode and not enemy.boss:
 			# The nearest 20% of the default (unupgraded) bow range triggers pursuit.
 			var chase_range: float = float(Progress.design().base_stats.Distance_Range) * 0.2
-			if offset.z < 0 and -offset.z <= chase_range: enemy.chasing = true
+			if not unaware and offset.z < 0 and -offset.z <= chase_range: enemy.chasing = true
 			if enemy.chasing and not enemy.contact:
 				var destination := Vector3(player_position.x, enemy.node.position.y, player_position.z)
 				enemy.node.position = enemy.node.position.move_toward(destination, maxf(3.5, forward_speed * 2.5) * delta)
 			offset = enemy.node.position - player_position
-		elif int(enemy.kind) == 3:
+		elif int(enemy.kind) == 3 and not unaware:
 			enemy.node.position.z += 0.5 * delta
 		if enemy.boss:
 			enemy.next_shot -= delta
 			if enemy.next_shot > 0 and enemy.next_shot <= 0.35:
 				enemy.actor.windup()
-			if enemy.next_shot <= 0 and offset.z < 0 and offset.z > -20:
+			if enemy.next_shot <= 0 and offset.z < 0 and -offset.z <= s("Distance_Range"):
 				enemy.next_shot = 2.0
 				if not false: audio.sound("shot")
 				for angle in [-7.5, 0.0, 7.5] if enemy.boss else [0.0]:
 					var node = _flight_projectile("Poison" if int(enemy.kind) == 4 else ("LifeSteal" if int(enemy.kind) == 5 else "Critical"), enemy.node.position, true)
 					node.look_at(node.position + Vector3(sin(deg_to_rad(angle)), 0, cos(deg_to_rad(angle))))
-					projectiles.append({"node": node, "dir": Vector3(sin(deg_to_rad(angle)), 0, cos(deg_to_rad(angle))), "speed": 4.0, "type": "Poison" if int(enemy.kind) == 4 else ("LifeSteal" if int(enemy.kind) == 5 else "Critical"), "life": 2.0, "hostile": true})
+					projectiles.append({"node": node, "dir": Vector3(sin(deg_to_rad(angle)), 0, cos(deg_to_rad(angle))), "speed": 4.0, "type": "Poison" if int(enemy.kind) == 4 else ("LifeSteal" if int(enemy.kind) == 5 else "Critical"), "life": maxf(2.0, s("Distance_Range") / 4.0), "hostile": true})
 		if int(enemy.kind) != 7 and not enemy.contact and absf(offset.z) < 0.4 and absf(offset.x) < 0.5:
 			enemy.contact = true
 			var reflected = float(enemy.base_hp) * s("Porcupine_Damage") / 100.0
@@ -665,7 +713,7 @@ func _award_loot(currency: int, amount: float) -> void:
 	coins[currency] += amount
 	data.wallet[currency] += amount
 	# CurrencyItem.CollectItem saves immediately; quitting mid-run keeps pickups.
-	if persist_results: Progress.save_data(data)
+	if persist_results: Progress.save_data(data, progress_save_path)
 
 
 func _damage_player(amount: float, ignore_armor = false, source = "enemy arrows") -> void:
@@ -673,6 +721,7 @@ func _damage_player(amount: float, ignore_armor = false, source = "enemy arrows"
 	if source == "the row": amount *= row_damage_scale
 	if source == "enemy arrows" and fast_combat_assist_enabled(): return
 	if source == "enemy arrows" and free_aim_mode: amount *= 1.0 - clampf(s("Armor_Against_Projectiles"), 0, 90) / 100.0
+	if active("ArrowShield"): amount *= 0.5
 	damage_sources[source] = float(damage_sources.get(source, 0)) + amount
 	last_damage_source = source
 	if amount > 0:
@@ -708,7 +757,7 @@ func _advance_horizontal_axis(target: float, delta: float) -> float:
 func _free_aim_intersects(enemy: Dictionary, from: Vector3, to: Vector3) -> bool:
 	var center: Vector3 = enemy.node.position
 	if int(enemy.kind) == 7:
-		return Geometry3D.get_closest_point_to_segment(center, from, to).distance_to(center) < 0.36
+		return Geometry3D.get_closest_point_to_segment(center, from, to).distance_to(center) < 0.48
 	# Generous body-shaped ellipsoid, rather than a tiny point at the waist.
 	center.y += 0.15
 	var scale_y = Vector3(1, 1.0 / 1.5, 1)
