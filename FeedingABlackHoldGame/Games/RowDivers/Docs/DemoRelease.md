@@ -130,3 +130,9 @@ Validation: menu/layout 17 checks; powerups 161 checks; demo/localization
 18,549 checks; isolated Windows package 22 checks. The preceding timing suite
 passed 134 checks, including every editor multiplier with and without Shift.
 Rendered menu and melee-grounding previews were inspected.
+
+
+The 0.1 browser and Windows uploads were saved to the existing published
+itch.io project. Their display names identify version 0.1; the browser upload
+is configured for HTML play and the Windows download retains its platform flag.
+The matching source commit is f296c62 on codex/railway-fury-demo-polish.
