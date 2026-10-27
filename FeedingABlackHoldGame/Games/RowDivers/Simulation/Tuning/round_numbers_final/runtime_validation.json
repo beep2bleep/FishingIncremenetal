@@ -1,0 +1,234 @@
+{
+	"cases": [
+		{
+			"case": 0,
+			"model": {
+				"armor": 0.0,
+				"damage": {
+					"enemy contact": 50.0,
+					"the row": 65.0
+				},
+				"distance": 40.7679595947266,
+				"frames": 1660,
+				"health": 0.0,
+				"kills": 5,
+				"loot": [
+					5.0,
+					0.0,
+					0.0
+				],
+				"won": false
+			},
+			"passed": true,
+			"prestige": 0,
+			"runtime": {
+				"armor": 0.0,
+				"damage": {
+					"enemy contact": 50.0,
+					"the row": 65.0
+				},
+				"distance": 40.7679595947266,
+				"frames": 1660,
+				"health": 0.0,
+				"kills": 5,
+				"loot": [
+					5.0,
+					0.0,
+					0.0
+				],
+				"won": false
+			}
+		},
+		{
+			"case": 1,
+			"model": {
+				"armor": 2789.52,
+				"damage": {
+					"the row": 230.48
+				},
+				"distance": 289.932800292969,
+				"frames": 8119,
+				"health": 20350.0,
+				"kills": 33,
+				"loot": [
+					31.0,
+					5.0,
+					1.0
+				],
+				"won": true
+			},
+			"passed": true,
+			"prestige": 0,
+			"runtime": {
+				"armor": 2789.52,
+				"damage": {
+					"the row": 230.48
+				},
+				"distance": 289.932800292969,
+				"frames": 8119,
+				"health": 20350.0,
+				"kills": 33,
+				"loot": [
+					31.0,
+					5.0,
+					1.0
+				],
+				"won": true
+			}
+		},
+		{
+			"case": 2,
+			"model": {
+				"armor": 1637.12,
+				"damage": {
+					"the row": 1382.88
+				},
+				"distance": 289.932800292969,
+				"frames": 8119,
+				"health": 20350.0,
+				"kills": 33,
+				"loot": [
+					320.0,
+					4.0,
+					1.0
+				],
+				"won": true
+			},
+			"passed": true,
+			"prestige": 1,
+			"runtime": {
+				"armor": 1637.12,
+				"damage": {
+					"the row": 1382.88
+				},
+				"distance": 289.932800292969,
+				"frames": 8119,
+				"health": 20350.0,
+				"kills": 33,
+				"loot": [
+					320.0,
+					4.0,
+					1.0
+				],
+				"won": true
+			}
+		},
+		{
+			"case": 3,
+			"model": {
+				"armor": 0.0,
+				"damage": {
+					"the row": 5327.2
+				},
+				"distance": 289.932800292969,
+				"frames": 8119,
+				"health": 18082.8,
+				"kills": 33,
+				"loot": [
+					3400.0,
+					2.0,
+					1.0
+				],
+				"won": true
+			},
+			"passed": true,
+			"prestige": 2,
+			"runtime": {
+				"armor": 0.0,
+				"damage": {
+					"the row": 5327.2
+				},
+				"distance": 289.932800292969,
+				"frames": 8119,
+				"health": 18082.8,
+				"kills": 33,
+				"loot": [
+					3400.0,
+					2.0,
+					1.0
+				],
+				"won": true
+			}
+		},
+		{
+			"case": 4,
+			"model": {
+				"armor": 0.0,
+				"damage": {
+					"enemy contact": 2100.0,
+					"the row": 18996.0
+				},
+				"distance": 296.091979980469,
+				"frames": 8231,
+				"health": 3478.57500000001,
+				"kills": 58,
+				"loot": [
+					55000.0,
+					8.0,
+					1.0
+				],
+				"won": true
+			},
+			"passed": true,
+			"prestige": 3,
+			"runtime": {
+				"armor": 0.0,
+				"damage": {
+					"enemy contact": 2100.0,
+					"the row": 18996.0
+				},
+				"distance": 296.091979980469,
+				"frames": 8231,
+				"health": 3478.57500000001,
+				"kills": 58,
+				"loot": [
+					55000.0,
+					8.0,
+					1.0
+				],
+				"won": true
+			}
+		},
+		{
+			"case": 5,
+			"model": {
+				"armor": 0.0,
+				"damage": {
+					"the row": 18067.2
+				},
+				"distance": 293.012390136719,
+				"frames": 8175,
+				"health": 5862.325,
+				"kills": 63,
+				"loot": [
+					62000.0,
+					8.0,
+					1.0
+				],
+				"won": true
+			},
+			"passed": true,
+			"prestige": 3,
+			"runtime": {
+				"armor": 0.0,
+				"damage": {
+					"the row": 18067.2
+				},
+				"distance": 293.012390136719,
+				"frames": 8175,
+				"health": 5862.325,
+				"kills": 63,
+				"loot": [
+					62000.0,
+					8.0,
+					1.0
+				],
+				"won": true
+			}
+		}
+	],
+	"catalog_path": "res://Games/RowDivers/Simulation/Tuning/round_numbers_final/catalog.json",
+	"catalog_sha256": "181bf9e96c1d30aea54cc2fa301649030c90c29c2c22fc8d60bcc5a5942549db",
+	"failures": 0,
+	"tree": "rebalanced"
+}

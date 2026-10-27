@@ -1,0 +1,717 @@
+extends Node3D
+const Progress = preload("res://Games/RowDivers/RowDiversProgress.gd")
+const FireWaves = preload("res://Games/RowDivers/RowDiversFireWaves.gd")
+var free_aim_mode = false # Offline classic assisted mode.
+var corridor_width = 1.0
+var data: Dictionary
+var camera: Camera3D
+var player_position = Vector3(0, 0.9, 0)
+var forward_speed = 1.3
+var running = false
+var health = 100.0
+var armor = 0.0
+var elapsed = 0.0
+var row_timer = 0.0
+var shot_timer = 0.0
+var extra_timers = {"Dragon": 0.0, "Ghost": 0.0}
+var auxiliary_fire_mode = "Click"
+var dagger_timer = 0.0
+var beam_timer = 0.0
+var poison_timer = 0.0
+var poison_ticks = 0
+var poison_hits = 0
+var section = 1
+var next_section_trigger = 3.474
+var group_index = 0
+var fire_mode = "Click"
+var ended = false
+var suspended = false
+var run_kills = 0
+var distance = 0.0
+var coins = [0.0, 0.0, 0.0]
+var enemies: Array[Dictionary] = []
+var projectiles: Array[Dictionary] = []
+var drops: Array[Dictionary] = []
+var sections: Array = []
+var abilities: Dictionary = {}
+var hud: Label
+var ability_hud: Label
+var crosshair: Label
+var overlay: ColorRect
+var overlay_title: Label
+var resume: Button
+var retry: Button
+var audio
+var bow: Node3D
+var source_bow: Node3D
+var source_bow_rest: Transform3D
+var dagger: Node3D
+var presentation: Node
+var weapon_recoil = 0.0
+var dagger_recoil = 0.0
+var shield_ring: Spatial
+var horizontal_override = NAN # Deterministic input for the end-to-end fixture; NaN reads real controls.
+var pointer_override = Vector2(NAN, NAN)
+var hit_flash = 0.0
+var persist_results = true
+var damage_sources: Dictionary = {}
+var last_damage_source = "the row"
+var footstep_timer = 0.0
+var world_environment: Environment
+var world_light: DirectionalLight3D
+var original_weapons: Node3D
+var horizontal_axis = 0.0
+var projectile_state_pools: Dictionary = {}
+var fire_waves = FireWaves.new()
+var fire_visual: Node3D
+var aim_override = Vector3.INF
+var fire_override = false
+var auto_abilities_override = false
+var editor_pilot
+static var debug_speed = 1 # TEMPORARY QA: shared across dives in memory; never saved.
+
+
+class Spatial extends RefCounted:
+	var position = Vector3.ZERO
+	var rotation = Vector3.ZERO
+	var scale = Vector3.ONE
+	var name = ""
+	var visible = true
+	func add_child(_node): pass
+	func hide(): visible = false
+	func rotate_z(angle): rotation.z += angle
+	func look_at(_target): pass
+	func rotate_y(angle): rotation.y += angle
+
+class SilentActor extends RefCounted:
+	var frozen = false
+	func sound(_key): pass
+	func hit(): pass
+	func windup(): pass
+	func set_effects(_effects): pass
+
+class SilentHUD extends Node:
+	var feedback = ColorRect.new()
+	func toast(_text, _color = Color.WHITE): pass
+	func _notification(what):
+		if what == NOTIFICATION_PREDELETE: feedback.free()
+
+class SilentLabel extends RefCounted:
+	var text = ""
+	var modulate = Color.WHITE
+	func hide(): pass
+
+var kill_records: Array = []
+var won_run = false
+var damage_dealt = 0.0
+var healing_received = 0.0
+var row_damage_scale = 1.0 # Counterfactual experiments only; default is exact gameplay.
+var retired_nodes: Dictionary = {}
+
+func _retire(node): retired_nodes[node.get_instance_id()] = node
+func _flush_retired():
+	retired_nodes.clear()
+
+func _ready():
+	persist_results = false
+	set_physics_process(false)
+	set_process(false)
+	Progress.apply_reference_repairs(data)
+	data.achievements.FirstDive = true
+	health = s("MaxHP")
+	armor = s("Armor")
+	forward_speed = float(Progress.design().settings.movement.forwardSpeed)
+	fire_mode = "Auto" if unlocked("Auto") else ("Hold" if unlocked("Hold") else "Click")
+	auxiliary_fire_mode = fire_mode
+	audio = SilentActor.new()
+	presentation = SilentHUD.new()
+	add_child(presentation)
+	bow = Node3D.new()
+	dagger = Node3D.new()
+	shield_ring = Spatial.new()
+	crosshair = Label.new()
+	for node in [bow, dagger, crosshair]: add_child(node)
+	for ability in Progress.design().settings.abilities:
+		var key = str(Progress.design().enums.AbilityType[str(int(ability.abilityType))])
+		abilities[key] = {"active": 0.0, "cooldown": 0.0, "duration": float(ability.abilityDuration), "wait": float(ability.cooldownDuration)}
+	for number in range(1, 4): _build_section(number)
+	horizontal_override = 0.0
+
+func fast_combat_assist_enabled() -> bool: return true
+func _read_horizontal(_delta): return 0.0
+func _update_camera_presentation(): pass
+func _update_dagger_presentation(): pass
+func _aim_pointer() -> Vector2: return Vector2.ZERO
+func _aim_direction() -> Vector3: return Vector3.FORWARD
+func _aim_origin() -> Vector3: return player_position
+func _aim_point() -> Vector3: return Vector3.ZERO
+func _bow_muzzle() -> Vector3: return Vector3.ZERO
+func _update_bow_aim(): pass
+func _update_hud(): pass
+func _update_gates(_delta): pass
+func _open_gate(_corridor): pass
+func _beam_effect(_target): pass
+func _floating_text(_pos, _text, _color, _currency = false): pass
+
+func _auto_activate_abilities():
+	if ended: return
+	for key in abilities:
+		if unlocked(key) and abilities[key].active <= 0 and abilities[key].cooldown <= 0:
+			abilities[key].active = abilities[key].duration
+
+func _box(_parent, pos, _dimensions, _color) -> Spatial:
+	var node = Spatial.new()
+	node.position = pos
+	return node
+
+func _weapon_mesh(_mesh, _parent, pos, _size, _prefab = "") -> Spatial:
+	var node = Spatial.new()
+	node.position = pos
+	return node
+
+func _flight_projectile(_kind, pos, _hostile = false) -> Spatial:
+	return _box(null, pos, Vector3.ZERO, Color.WHITE)
+
+func _ring(parent, pos, _color, _radius) -> Spatial:
+	return _box(parent, pos, Vector3.ZERO, Color.WHITE)
+
+func _source_billboard(node, _image, _height, _prefab = ""): return node
+
+func _finish(won):
+	if ended: return
+	ended = true
+	won_run = won
+	data.runs += 1
+	data.kills += run_kills
+	data.best_distance = maxf(data.best_distance, distance)
+
+func _build_section(number: int) -> void:
+	var root = Spatial.new()
+	root.name = "Section_" + str(number)
+	root.set_meta("section_number", number)
+	root.position.z = -float((number - 1) * 20)
+	sections.append(root)
+	if number in [5, 10, 15]:
+		_spawn_enemy(Vector3(0, 0.65, root.position.z - 18.658), 4 if number == 5 else (5 if number == 10 else 6), true)
+		enemies.back()["hallway"] = root
+	var layouts: Dictionary = Progress.design().settings.sections
+	var layout_key = "Section " + str(randi_range(1, 6))
+	if number == 1: layout_key = "Initial"
+	if number == 5: layout_key = "MiniBoss1 Section"
+	if number == 10: layout_key = "MiniBoss2 Section"
+	if number == 15: layout_key = "Boss Section"
+	var layout: Array = layouts[layout_key]
+	for i in range(mini(2, layout.size())):
+			# Unity chooses distributed groups (round(i * group_count / 2)), then a random side.
+		var group: Dictionary = layout[clampi(roundi(float(i) * layout.size() / 2.0), 0, layout.size() - 1)]
+		var points: Array = group.left if randi_range(0, 1) == 0 else group.right
+		group_index += 1
+		var allowed: Array = [0, 1, 2, 3].filter(func(kind): return not group.banned.has(float(kind)) and not group.banned.has(kind))
+		for j in range(2 if int(data.prestige) == 3 else 1):
+			if j >= points.size() or allowed.is_empty(): continue
+			var point: Array = points[j]
+			_spawn_enemy(Vector3((float(point[0]) - 2.5) * corridor_width, float(point[1]), root.position.z - (float(point[2]) + 28.474)), int(allowed.pick_random()))
+	# Airborne ranged threats are exclusive to the active variant.
+	if free_aim_mode and number not in [5, 10, 15]:
+		_spawn_enemy(Vector3(randf_range(-1.4, 1.4), 1.9, root.position.z - 12.0), 7)
+		if number >= 3:
+			_spawn_enemy(Vector3(randf_range(-1.4, 1.4), 2.25, root.position.z - 18.0), 7)
+
+func _spawn_enemy(pos: Vector3, kind: int, boss = false) -> void:
+	var root = Spatial.new()
+	root.position = pos
+	var actor = SilentActor.new()
+	randf() # Actor.setup consumes an idle-phase draw; keep combat RNG aligned.
+	root.add_child(actor)
+	var label = SilentLabel.new()
+	var prestige_level = int(data.prestige)
+	var health_multiplier = [1.0, 110.0, 100.0, 120.0][prestige_level]
+	if kind == 6 and prestige_level == 3: health_multiplier *= 1.25
+	var base_hp = 80.0 if boss else 40.0
+	var health_index: int = group_index + (1 if kind in [4, 5] else 0)
+	var hp = floor(base_hp * pow(1.15, health_index) * pow(health_multiplier, prestige_level))
+	if kind == 1: hp *= 1.2
+	enemies.append({"node": root, "actor": actor, "hp": hp, "max_hp": hp, "base_hp": base_hp, "label": label, "kind": kind, "boss": boss, "next_shot": 1.0, "contact": false, "effect": "", "effect_time": 0.0, "tick": 0.0})
+	enemies.back()["hover_origin"] = pos
+	enemies.back()["hover_phase"] = randf() * TAU if kind == 7 else 0.0
+	enemies.back()["chasing"] = false
+	label.text = str(int(hp))
+	enemies.back()["crown_dropped_on_spawn"] = bool(data.crowns_dropped.get(str(prestige_level), false))
+
+
+func s(key: String) -> float:
+	return Progress.stat(data, key)
+
+
+func unlocked(key: String) -> bool:
+	return bool(data.unlocks.get(key, false))
+
+
+func active(key: String) -> bool:
+	return abilities.has(key) and float(abilities[key].active) > 0
+
+
+func _simulate_step(delta: float) -> void:
+	if ended: return
+	# Unity's RowDamage coroutine waits in wall-clock game time even while paused;
+	# a tick reached during pause is skipped, rather than freezing its phase.
+	row_timer += delta
+	var row_tick: bool = row_timer >= 2.0 - 0.000001
+	if row_tick: row_timer = 0.0
+	if suspended: return
+	_auto_activate_abilities()
+	elapsed += delta
+	_update_gates(delta)
+	shot_timer = maxf(0, shot_timer - delta)
+	for weapon in extra_timers: extra_timers[weapon] = maxf(0, extra_timers[weapon] - delta)
+	dagger_timer = maxf(0, dagger_timer - delta)
+	beam_timer = maxf(0, beam_timer - delta)
+	var horizontal = _read_horizontal(delta) if is_nan(horizontal_override) else horizontal_override
+	var speed = (forward_speed - (0.5 if active("SlowDown") else 0.0)) * (1.5 if running else 1.0)
+	var previous = player_position
+	# Source walls at x=1 and 4, player sphere radius 0.4 * root scale 0.7.
+	player_position.x = clampf(player_position.x + horizontal * s("Horizontal_Speed") * delta, -1.22 * corridor_width, 1.22 * corridor_width)
+	player_position.z -= speed * delta
+	for enemy in enemies:
+		if enemy.boss and enemy.hp > 0:
+			player_position.z = maxf(player_position.z, float(enemy.node.position.z) + 0.75)
+	distance += player_position.distance_to(previous)
+	if -player_position.z >= next_section_trigger:
+		section += 1
+		next_section_trigger += 20.0
+		forward_speed += 0.1333
+		_build_section(section + 2)
+	if row_tick:
+		var damage = [5.0, 30.0, 100.0, 300.0][int(data.prestige)]
+		if armor > 0: damage *= maxf(0, 1.0 - s("Armor_Against_Row") / 100.0)
+		_damage_player(damage * (1.5 if running else 1.0), false, "the row")
+	if free_aim_mode: _update_fire_waves(delta)
+	if free_aim_mode:
+		crosshair.position = _aim_pointer() - crosshair.size * 0.5
+	var target = _target(s("Distance_Range"))
+	if fire_mode == "Hold" and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT): _shoot()
+	if fire_override: _shoot()
+	if (fire_mode == "Auto" or fast_combat_assist_enabled()) and not target.is_empty(): _shoot()
+	for weapon in extra_timers:
+		if not unlocked(weapon): continue
+		if fire_override: _shoot(weapon)
+		if auxiliary_fire_mode == "Hold" and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT): _shoot(weapon)
+		if (auxiliary_fire_mode == "Auto" or fast_combat_assist_enabled()) and not target.is_empty(): _shoot(weapon)
+	if unlocked("Dagger") and dagger_timer <= 0:
+		var near = _target(s("Melee_range"))
+		if not near.is_empty():
+			_dagger_hit(near)
+	if unlocked("ThirdEye") and beam_timer <= 0:
+		var eye_target = _target(maxf(0.1, s("Distance_Range") - 2.0), true)
+		if not eye_target.is_empty():
+			_beam_hit(eye_target)
+	_update_enemies(delta)
+	_update_projectiles(delta)
+	_update_drops(delta)
+	if poison_ticks > 0:
+		poison_timer -= delta
+		if poison_timer <= 0:
+			poison_timer = 1.0
+			poison_ticks -= 1
+			# ApplyPoison in the reference resets to basePoisonDamage (10), even on prestige.
+			_damage_player(10.0, true, "poison")
+	for state in abilities.values():
+		if state.active > 0:
+			state.active -= delta
+			if state.active <= 0: state.cooldown = state.wait
+		else:
+			state.cooldown = maxf(0, state.cooldown - delta)
+	_auto_activate_abilities()
+	_update_hud()
+	_flush_retired()
+
+func _dagger_hit(near: Dictionary) -> void:
+	var amount = s("Dagger_Damage")
+	if _has_effect(near, "Cursed"): amount *= s("Curse_Effect")
+	if _roll("Bleed_Chance") and not _has_effect(near, "Bleeding"):
+		amount *= 3
+		_effect(near, "Bleeding", s("Burn_Duration"))
+	_hit(near, amount + (s("Damage_Against_Bosses") if near.boss else 0.0))
+	dagger_timer = 1.0 / maxf(0.01, s("Dagger_Attack_Rate"))
+	audio.sound("dagger")
+	dagger_recoil = 1.0
+
+
+func _beam_hit(eye_target: Dictionary) -> void:
+	var amount = s("Beam_Damage") * (s("Curse_Effect") if _has_effect(eye_target, "Cursed") else 1.0)
+	if _roll("Beam_Critic_Chance"): amount += s("Beam_Critic_Multiplier")
+	_hit(eye_target, amount)
+	audio.sound("beam")
+	_beam_effect(eye_target.node.position)
+	beam_timer = 1.0 / maxf(0.01, s("Beam_Fire_Rate"))
+
+
+func _target(reach: float, mouse = false) -> Dictionary:
+	var closest: Dictionary = {}
+	var best = reach
+	for enemy in enemies:
+		if enemy.hp <= 0: continue
+		var offset: Vector3 = enemy.node.position - player_position
+		if fast_combat_assist_enabled():
+			var target_distance := Vector2(offset.x, offset.z).length()
+			if target_distance <= best:
+				closest = enemy
+				best = target_distance
+			continue
+		if free_aim_mode and not mouse:
+			var ray_origin := _aim_origin()
+			var ray := _aim_direction()
+			var along: float = (enemy.node.position - ray_origin).dot(ray)
+			if along > 0 and along <= best and _free_aim_intersects(enemy, ray_origin, ray_origin + ray * reach):
+				closest = enemy
+				best = along
+			continue
+		var ahead = -offset.z
+		var aligned = absf(offset.x) < (0.55 if enemy.boss else 0.3)
+		if mouse:
+			if free_aim_mode:
+				var ray = _aim_direction()
+				var along = (enemy.node.position - _aim_origin()).dot(ray)
+				var miss = (enemy.node.position - (_aim_origin() + ray * along)).length()
+				if along > 0 and along <= best and miss < maxf(0.4, along * 0.12):
+					closest = enemy
+					best = along
+				continue
+			var screen = camera.unproject_position(enemy.node.position)
+			var pointer: Vector2 = get_viewport().get_mouse_position() if is_nan(pointer_override.x) else pointer_override
+			aligned = screen.distance_to(pointer) < 80
+		if ahead > 0 and ahead <= best and aligned:
+			closest = enemy
+			best = ahead
+	return closest
+
+
+func _shoot(weapon = "Bow") -> void:
+	if free_aim_mode: _update_bow_aim()
+	if weapon == "Bow":
+		if shot_timer > 0: return
+		shot_timer = 1.0 / maxf(0.01, s("Bow_Fire_Rate"))
+	else:
+		if extra_timers[weapon] > 0: return
+		extra_timers[weapon] = 1.0 / maxf(0.01, s("Dragon_Fire_Rate") if weapon == "Dragon" else s("Ghost_Fire_Rate"))
+	var types: Array = []
+	# All ShootingWeapon subclasses construct a default projectile plus unlocked extras.
+	for i in range(maxi(1, int(s("Amount_Of_Arrows"))) if weapon == "Bow" else 1): types.append("Arrow")
+	if unlocked("Dragon"): types.append("Fire")
+	if unlocked("Ghost"): types.append("Cursed")
+	if active("Shuriken"): types.append("Shuriken")
+	# The source shuffles forwards, including a draw for the final element.
+	for index in range(types.size()):
+		var swap_index := randi_range(index, types.size() - 1)
+		var previous_type = types[index]
+		types[index] = types[swap_index]
+		types[swap_index] = previous_type
+	var spread = [0.0, 0.0, 2.0, 3.0, 4.0, 5.0, 5.0, 5.0][mini(types.size(), 7)]
+	for i in range(types.size()):
+		# ShootingWeapon.TryDealDirectDamage skips travel only below 1.3 metres.
+		var projectile_state: Dictionary = _take_projectile_state(types[i])
+		var contact: Dictionary = {} if free_aim_mode else _target(1.3)
+		if not contact.is_empty():
+			_projectile_hit(contact, types[i], projectile_state)
+			_return_projectile_state(types[i], projectile_state)
+			continue
+		var angle = deg_to_rad(lerpf(-spread / 2.0, spread / 2.0, float(i) / maxf(1, types.size() - 1)))
+		var node := _flight_projectile(types[i], player_position + Vector3(0, -0.1, -0.4))
+		var assisted := fast_combat_assist_enabled()
+		if assisted:
+			var aim_target := _target(s("Distance_Range"))
+			if not aim_target.is_empty():
+				var offset: Vector3 = aim_target.node.position - node.position
+				angle += atan2(offset.x, -offset.z)
+		var direction := Vector3(sin(angle), 0, -cos(angle))
+		if free_aim_mode:
+			node.position = _bow_muzzle()
+			direction = (_aim_point() - node.position).normalized().rotated(Vector3.UP, angle)
+		node.look_at(node.position + direction)
+		projectiles.append({"node": node, "dir": direction, "speed": s("Arrow_Speed"), "type": types[i], "life": minf(10.0, s("Distance_Range") / maxf(0.1, s("Arrow_Speed"))), "hostile": false, "assisted": assisted, "cached_state": projectile_state})
+	audio.sound("shot")
+	weapon_recoil = 1.0
+
+
+func _update_projectiles(delta: float) -> void:
+	for projectile in projectiles.duplicate():
+		var previous: Vector3 = projectile.node.position
+		projectile.node.position += projectile.dir * projectile.speed * delta
+		projectile.life -= delta
+		if projectile.type == "Shuriken": projectile.node.rotate_z(delta * 18)
+		if projectile.hostile:
+			if fast_combat_assist_enabled():
+				projectiles.erase(projectile)
+				_retire(projectile.node)
+				continue
+			var closest: Vector3 = Geometry3D.get_closest_point_to_segment(player_position, previous, projectile.node.position)
+			if closest.distance_to(player_position) < 0.3:
+				if not active("ArrowShield"):
+					if projectile.type == "LifeSteal": _damage_player(s("HP_Steal"))
+					if projectile.type == "Poison":
+						poison_hits += 1
+						if poison_ticks == 0:
+							# Player.ApplyPeriodicDamage hits immediately before its first yield.
+							_damage_player(10.0, true, "poison")
+							poison_ticks = 2
+							poison_timer = 1.0
+					_damage_player(float([10, 200, 500, 2000][int(data.prestige)]) * (2.0 if projectile.type == "Critical" else 1.0), false, "enemy arrows")
+				else:
+					audio.sound("hit")
+				projectile.life = 0
+		else:
+			for enemy in enemies.duplicate():
+				var pos: Vector3 = enemy.node.position
+				var intersects: bool = absf(pos.x - projectile.node.position.x) < (0.6 if enemy.boss else 0.3) and pos.z <= previous.z + 0.1 and pos.z >= projectile.node.position.z - 0.4
+				if free_aim_mode:
+					intersects = _free_aim_intersects(enemy, previous, projectile.node.position)
+				elif projectile.get("assisted", false):
+					var flat_pos := Vector3(pos.x, previous.y, pos.z)
+					intersects = Geometry3D.get_closest_point_to_segment(flat_pos, previous, projectile.node.position).distance_to(flat_pos) < (0.6 if enemy.boss else 0.3)
+				if intersects and enemy.hp > 0:
+					_projectile_hit(enemy, projectile.type, projectile.get("cached_state", {}))
+					projectile.life = 0
+					break
+		if projectile.life <= 0:
+			if not projectile.hostile and projectile.has("cached_state"): _return_projectile_state(projectile.type, projectile.cached_state)
+			projectiles.erase(projectile)
+			_retire(projectile.node)
+
+
+func _new_projectile_state(kind: String) -> Dictionary:
+	return {"base_damage": s("Arrow_Damage") if kind == "Arrow" else s("CursedArrow_Damage") if kind == "Cursed" else s("FireArrow_Damage"), "curse_multiplier": s("Curse_Effect")}
+
+
+func _take_projectile_state(kind: String) -> Dictionary:
+	if not projectile_state_pools.has(kind):
+		projectile_state_pools[kind] = []
+		for slot in range(10): projectile_state_pools[kind].append({})
+	var state: Dictionary = projectile_state_pools[kind].pop_front() if not projectile_state_pools[kind].is_empty() else {}
+	if state.is_empty(): state.merge(_new_projectile_state(kind))
+	return state
+
+
+func _return_projectile_state(kind: String, state: Dictionary) -> void:
+	projectile_state_pools[kind].append(state)
+
+
+func _has_effect(enemy: Dictionary, kind: String) -> bool:
+	return bool(enemy.get("effect_flags", {}).get(kind, enemy.effect == kind))
+
+
+func _projectile_hit(enemy: Dictionary, kind: String, cached_state: Dictionary = {}) -> void:
+	if cached_state.is_empty(): cached_state.merge(_new_projectile_state(kind))
+	var critical_multiplier := s("Critic_Damage") if kind == "Arrow" and _roll("Critic_Chance") else 1.0
+	# Projectile.HPSteal is a separate hit before the arrow's principal damage.
+	if kind == "Arrow" and _roll("HP_Steal_Chance"):
+		_hit(enemy, s("HP_Steal"))
+		_heal(s("HP_Steal"))
+	if kind == "Fire" and not _has_effect(enemy, "Burning") and _roll("Burn_Chance"):
+		_effect(enemy, "Burning", s("Burn_Duration"))
+		cached_state.base_damage *= 2.5
+	if kind == "Cursed" and not _has_effect(enemy, "Cursed") and _roll("Curse_Chance"):
+		_effect(enemy, "Cursed", s("Curse_Duration"))
+	# These assignments are sticky in the original pooled projectile components.
+	if not _has_effect(enemy, "Cursed"): cached_state.curse_multiplier = 1.0
+	if kind == "Shuriken" and _has_effect(enemy, "Bleeding"): cached_state.base_damage *= 3.0
+	var amount: float = float(cached_state.base_damage) * float(cached_state.curse_multiplier)
+	if enemy.boss: amount += s("Damage_Against_Bosses")
+	amount *= critical_multiplier
+	if kind == "Arrow" and armor <= 0 and _roll("HealOnHit_Chance"): _heal(s("HealOnHit_Amount"))
+	_hit(enemy, amount)
+
+
+func _effect(enemy: Dictionary, kind: String, duration: float) -> void:
+	if not enemy.has("effect_flags"): enemy.effect_flags = {}
+	enemy.effect_flags[kind] = true
+	enemy.effect = kind
+	enemy.effect_time = duration
+	enemy.tick = 0.0
+	enemy.actor.set_effects(enemy.effect_flags)
+
+
+func _roll(key: String) -> bool:
+	return randf() * 100.0 < s(key)
+
+
+func _hit(enemy: Dictionary, amount: float) -> void:
+	var first_death: bool = enemy.hp > 0
+	# Boss.Die skips Enemy.Die's dead flag; an in-flight life-steal arrow can reenter it.
+	if not first_death and int(enemy.kind) != 6: return
+	damage_dealt += minf(maxf(enemy.hp, 0.0), amount)
+	if first_death and enemy.hp <= amount:
+		var gap = Vector2(enemy.node.position.x - player_position.x, enemy.node.position.z - player_position.z).length()
+		kill_records.append({"time": elapsed, "distance": distance, "kind": enemy.kind, "boss": enemy.boss, "range": gap, "range_fraction": gap / s("Distance_Range"), "ahead": player_position.z - enemy.node.position.z})
+	enemy.hp -= amount
+	enemy.actor.hit()
+	audio.sound("hit")
+	if enemy.hp <= 0:
+		if first_death:
+			run_kills += 1
+			if free_aim_mode and enemy.boss: fire_waves.boss_defeated(int(enemy.kind))
+			audio.sound("death")
+			if enemy.boss: audio.sound("boss_death" if int(enemy.kind) == 6 else "mini_death")
+		var enemy_key = str(int(enemy.kind))
+		if first_death: data.bestiary[enemy_key] = int(data.bestiary.get(enemy_key, 0)) + 1
+		if int(enemy.kind) in [4, 5]:
+			_open_gate(enemy.get("hallway"))
+			data.achievements.FirstMiniBoss = true
+		if int(enemy.kind) != 6 and armor <= 0 and _roll("HealOnKill_Chance"): _heal(s("HealOnKill_Amount"))
+		if int(enemy.kind) == 6:
+			data.achievements.FirstBoss = true
+			data.achievements["RowDiver" if int(data.prestige) == 0 else "Prestige" + str(int(data.prestige))] = true
+			if int(data.prestige) == 3:
+				data.achievements.BossSlayer = true
+				data.achievements.PrestigeMaster = true
+			var key = str(int(data.prestige))
+			if not enemy.get("crown_dropped_on_spawn", data.crowns_dropped.get(key, false)):
+				_award_loot(2, 1.0)
+				data.crowns_dropped[key] = true
+				if int(data.prestige) < 3: data.max_prestige = mini(3, int(data.max_prestige) + 1)
+			Progress.check_achievements(data)
+			_finish(true)
+		else:
+			var currency = 1 if int(enemy.kind) in [3, 4, 5] else 0
+			var value = 1.0
+			if currency == 0: value = [1.0, 10.0, 100.0, 1000.0][int(data.prestige)]
+			if free_aim_mode: value *= float(Progress.design().settings.get("flight_rewards", {}).get("gold" if currency == 0 else "gems", 1))
+			var loot_position: Vector3 = enemy.node.position
+			if int(enemy.kind) == 7: loot_position.y = 0.65
+			var node = _box(self, loot_position, Vector3(0.16, 0.16, 0.16), Color("eeb34c") if currency == 0 else Color("ad8de8"))
+			node = _source_billboard(node, "Coin.png" if currency == 0 else "Gem.png", 0.28)
+			drops.append({"node": node, "currency": currency, "value": value})
+		if not first_death: return
+		enemies.erase(enemy)
+		enemy.label.hide()
+		enemy.actor.frozen = true
+		if false:
+			enemy.node.hide()
+		_retire(enemy.node)
+
+
+func _update_enemies(delta: float) -> void:
+	for enemy in enemies.duplicate():
+		if enemy.hp <= 0: continue
+		if enemy.effect_time > 0:
+			enemy.effect_time -= delta
+			enemy.tick += delta
+			if enemy.effect_time <= 0:
+				enemy.effect = ""
+				if enemy.has("effect_flags"): enemy.effect_flags.clear()
+		var offset: Vector3 = enemy.node.position - player_position
+		if free_aim_mode and int(enemy.kind) == 7:
+			var origin: Vector3 = enemy.hover_origin
+			var phase: float = elapsed * 1.7 + float(enemy.hover_phase)
+			enemy.node.position = origin + Vector3(sin(phase) * 0.3, cos(phase * 1.3) * 0.18, sin(phase * 0.7) * 0.12)
+			enemy.next_shot -= delta
+			if enemy.next_shot <= 0 and offset.z < 0 and offset.length() < 14.0:
+				enemy.next_shot = 2.4
+				enemy.actor.windup()
+				var bullet := _flight_projectile("Bat", enemy.node.position, true)
+				var direction: Vector3 = (player_position - bullet.position).normalized()
+				bullet.look_at(bullet.position + direction)
+				projectiles.append({"node": bullet, "dir": direction, "speed": 3.5, "type": "Bat", "life": 5.0, "hostile": true})
+		elif free_aim_mode and not enemy.boss:
+			# The nearest 20% of the default (unupgraded) bow range triggers pursuit.
+			var chase_range: float = float(Progress.design().base_stats.Distance_Range) * 0.2
+			if offset.z < 0 and -offset.z <= chase_range: enemy.chasing = true
+			if enemy.chasing and not enemy.contact:
+				var destination := Vector3(player_position.x, enemy.node.position.y, player_position.z)
+				enemy.node.position = enemy.node.position.move_toward(destination, maxf(3.5, forward_speed * 2.5) * delta)
+			offset = enemy.node.position - player_position
+		elif int(enemy.kind) == 3:
+			enemy.node.position.z += 0.5 * delta
+		if enemy.boss:
+			enemy.next_shot -= delta
+			if enemy.next_shot > 0 and enemy.next_shot <= 0.35:
+				enemy.actor.windup()
+			if enemy.next_shot <= 0 and offset.z < 0 and offset.z > -20:
+				enemy.next_shot = 2.0
+				if not false: audio.sound("shot")
+				for angle in [-7.5, 0.0, 7.5] if enemy.boss else [0.0]:
+					var node = _flight_projectile("Poison" if int(enemy.kind) == 4 else ("LifeSteal" if int(enemy.kind) == 5 else "Critical"), enemy.node.position, true)
+					node.look_at(node.position + Vector3(sin(deg_to_rad(angle)), 0, cos(deg_to_rad(angle))))
+					projectiles.append({"node": node, "dir": Vector3(sin(deg_to_rad(angle)), 0, cos(deg_to_rad(angle))), "speed": 4.0, "type": "Poison" if int(enemy.kind) == 4 else ("LifeSteal" if int(enemy.kind) == 5 else "Critical"), "life": 2.0, "hostile": true})
+		if int(enemy.kind) != 7 and not enemy.contact and absf(offset.z) < 0.4 and absf(offset.x) < 0.5:
+			enemy.contact = true
+			var reflected = float(enemy.base_hp) * s("Porcupine_Damage") / 100.0
+			if enemy.hp <= reflected:
+				_hit(enemy, reflected)
+				continue
+			var damage = float([50, 500, 1000, 3000][int(data.prestige)]) * (2.0 if int(enemy.kind) == 2 else 1.0)
+			if enemy.boss: damage = 100000.0
+			_damage_player(maxf(0, damage * (1 - s("Impact_Armor") / 100.0)), false, "enemy contact")
+		if offset.z > 15:
+			enemies.erase(enemy)
+			_retire(enemy.node)
+
+
+func _update_drops(delta: float) -> void:
+	for drop in drops.duplicate():
+		var gap = drop.node.position.distance_to(player_position)
+		if gap <= s("PickupRange"):
+			drop.node.position = drop.node.position.lerp(player_position, minf(1, delta * (12.0 if free_aim_mode else 5.0)))
+			if gap < 0.15:
+				_award_loot(int(drop.currency), float(drop.value) * (2.0 if active("Harvester") and drop.currency != 2 else 1.0))
+				audio.sound("coin")
+				_retire(drop.node)
+				drops.erase(drop)
+		elif drop.node.position.z > player_position.z + 15:
+			_retire(drop.node)
+			drops.erase(drop)
+
+
+func _award_loot(currency: int, amount: float) -> void:
+	coins[currency] += amount
+	data.wallet[currency] += amount
+	# CurrencyItem.CollectItem saves immediately; quitting mid-run keeps pickups.
+	if persist_results: Progress.save_data(data)
+
+
+func _damage_player(amount: float, ignore_armor = false, source = "enemy arrows") -> void:
+	if ended: return
+	if source == "the row": amount *= row_damage_scale
+	if source == "enemy arrows" and fast_combat_assist_enabled(): return
+	if source == "enemy arrows" and free_aim_mode: amount *= 1.0 - clampf(s("Armor_Against_Projectiles"), 0, 90) / 100.0
+	damage_sources[source] = float(damage_sources.get(source, 0)) + amount
+	last_damage_source = source
+	if amount > 0:
+		audio.sound("damage")
+	if not ignore_armor and armor > 0:
+		var absorbed = minf(armor, amount)
+		armor -= absorbed
+		amount -= absorbed
+	health = maxf(0, health - amount)
+	if health <= 0: _finish(false)
+
+
+func _heal(amount: float) -> void:
+	healing_received += minf(amount, maxf(0.0, s("MaxHP") - health))
+	health = minf(s("MaxHP"), health + amount)
+
+
+func _update_fire_waves(delta: float) -> void:
+	var control = s("Fire_Wave_Control_" + str(int(data.prestige)))
+	var hits = fire_waves.advance(delta, player_position, control, elapsed)
+	for hit in range(hits): _damage_player(fire_waves.damage, false, "fire waves")
+	if fire_visual != null: fire_visual.sync(fire_waves.waves)
+
+
+func _advance_horizontal_axis(target: float, delta: float) -> float:
+	# Unity InputManager: sensitivity/gravity=3, snap=true, dead zone=0.001.
+	if target != 0.0 and signf(target) != signf(horizontal_axis): horizontal_axis = 0.0
+	horizontal_axis = move_toward(horizontal_axis, target, 3.0 * delta)
+	if absf(horizontal_axis) < 0.001: horizontal_axis = 0.0
+	return horizontal_axis
+
+
+func _free_aim_intersects(enemy: Dictionary, from: Vector3, to: Vector3) -> bool:
+	var center: Vector3 = enemy.node.position
+	if int(enemy.kind) == 7:
+		return Geometry3D.get_closest_point_to_segment(center, from, to).distance_to(center) < 0.36
+	# Generous body-shaped ellipsoid, rather than a tiny point at the waist.
+	center.y += 0.15
+	var scale_y = Vector3(1, 1.0 / 1.5, 1)
+	var point = Geometry3D.get_closest_point_to_segment(center * scale_y, from * scale_y, to * scale_y)
+	return point.distance_to(center * scale_y) < (0.9 if enemy.boss else 0.7)
+

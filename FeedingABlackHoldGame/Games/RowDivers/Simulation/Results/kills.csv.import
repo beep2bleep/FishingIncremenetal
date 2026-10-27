@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://bu6tjb0174sui"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/Results/kills.prestige.translation", "res://Games/RowDivers/Simulation/Results/kills.ahead.translation", "res://Games/RowDivers/Simulation/Results/kills.boss.translation", "res://Games/RowDivers/Simulation/Results/kills.distance.translation", "res://Games/RowDivers/Simulation/Results/kills.kind.translation", "res://Games/RowDivers/Simulation/Results/kills.range.translation", "res://Games/RowDivers/Simulation/Results/kills.range.translation", "res://Games/RowDivers/Simulation/Results/kills.time.translation"]
+
+source_file="res://Games/RowDivers/Simulation/Results/kills.csv"
+dest_files=["res://Games/RowDivers/Simulation/Results/kills.prestige.translation", "res://Games/RowDivers/Simulation/Results/kills.ahead.translation", "res://Games/RowDivers/Simulation/Results/kills.boss.translation", "res://Games/RowDivers/Simulation/Results/kills.distance.translation", "res://Games/RowDivers/Simulation/Results/kills.kind.translation", "res://Games/RowDivers/Simulation/Results/kills.range.translation", "res://Games/RowDivers/Simulation/Results/kills.range.translation", "res://Games/RowDivers/Simulation/Results/kills.time.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

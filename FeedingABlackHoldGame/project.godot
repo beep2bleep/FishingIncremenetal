@@ -1,4 +1,4 @@
-﻿; Engine configuration file.
+ï»¿; Engine configuration file.
 ; It's best edited using the editor UI and not directly,
 ; since the parameters that go here are not all obvious.
 ;
@@ -15,9 +15,11 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="RailwayFury"
+config/name.railway_demo="Railway Fury Demo"
 run/main_scene="res://Core/Boot/AppBootstrap.tscn"
 config/use_custom_user_dir=true
 config/custom_user_dir_name="RailwayFury"
+config/custom_user_dir_name.railway_demo="RailwayFuryDemo"
 config/features=PackedStringArray("4.6", "Forward Plus")
 run/max_fps=60
 boot_splash/bg_color=Color(0.3234, 0.3234, 0.33, 1)
@@ -44,6 +46,7 @@ FlairManager="*res://FlairManager.tscn"
 SteamHandler="*res://SteamHandler.gd"
 ThemeManager="*res://ThemeManager.tscn"
 GameAnalytics="*res://GameAnalyticsManager.gd"
+RailwayLocalization="*res://Games/RowDivers/RowDiversLocalization.gd"
 
 [debug]
 
@@ -88,6 +91,7 @@ HighLevelMode="all"
 StartScreen="menu"
 mining_demo_max_group=3
 red_sky_demo_max_meta_step=3
+
 
 [input]
 
@@ -224,6 +228,7 @@ common/size/viewport_height=648
 
 [rendering]
 
+renderer/rendering_method.web="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
 textures/default_filters/use_nearest_mipmap_filter=true
 textures/default_filters/anisotropic_filtering_level=3
@@ -238,6 +243,8 @@ initialization/embed_callbacks=false
 multiplayer_peer/max_channels=4
 
 [railway_fury]
+
+demo/enabled=false
 
 ; TEMPORARY QA CONTROLS - turn off before shipping (also hidden in release builds).
 debug/enable_speed_cheats=true

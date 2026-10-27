@@ -1,0 +1,22 @@
+{
+	"checks": {
+		"classic_restored": true,
+		"control_purchase_legal": true,
+		"control_whole_points": true,
+		"cost_paid": true,
+		"fast_mode_still_takes_projectiles": true,
+		"future_locked": true,
+		"own_catalog": true,
+		"projectile_armor_works": true,
+		"separate_slot": true,
+		"shop_count_0": true,
+		"shop_count_1": true,
+		"shop_count_3": true,
+		"shop_node_0": true,
+		"shop_node_1": true,
+		"shop_node_3": true,
+		"shop_payable_1": true,
+		"shop_payable_3": true
+	},
+	"passed": true
+}

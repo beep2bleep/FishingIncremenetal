@@ -143,11 +143,11 @@ func run() -> void:
 	var ending = load("res://Games/RowDivers/Scenes/RowDiversEnding.tscn").instantiate()
 	ending.persist_results = false
 	root.add_child(ending)
-	check(ending.illustration.visible and ending.illustration.texture == Graphics.texture("Throne.png"), "Original final-chamber illustration")
-	ending._choose("BenevolentGod")
-	check(ending.illustration.texture == Graphics.texture("BenevolentGod.png"), "Original benevolent-ending illustration")
-	ending._choose("EvilGod")
-	check(ending.illustration.texture == Graphics.texture("DevilGod.png"), "Original evil-ending illustration")
+	check(ending.choices.get_child_count() == 2, "Two illustrated final choices in Original mode")
+	ending._choose("LastStation")
+	check(ending.illustration.visible and ending.illustration.texture.resource_path.ends_with("last_station.png"), "Last Station ending artwork in Original mode")
+	ending._choose("BeyondTheRails")
+	check(ending_data.ending == "LastStation", "Ending choice cannot change after selection")
 	ending.free()
 	DirAccess.remove_absolute(save_handler.local_settings_file_path)
 	save_handler.local_settings_file_path = saved_settings_path

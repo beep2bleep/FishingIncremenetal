@@ -1,0 +1,7921 @@
+{
+  "source": "C:\\Decompiled\\Row Divers\\ExportedProject",
+  "home_sha256": "916a06057f1479e637195bb2b8de622df9890cbb891d8c503caa6fa2a52b51a7",
+  "upgrades": [
+    {
+      "upgradeName": "Dagger Attack Range III",
+      "upgradeDescription": "Increases Dagger Attack Range By 1",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 33,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 59,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "5480",
+      "position": [
+        -34.611684,
+        3.962503
+      ],
+      "local_position": {
+        "x": -60.176434,
+        "y": 4.2156186
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Melee_range",
+          "percentage": false,
+          "amount": 0.25
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5848"
+      ]
+    },
+    {
+      "upgradeName": "Porcupine",
+      "upgradeDescription": "Deals damage equal to 20% of the enemy's maximum health upon collision. If the enemy dies from the impact, the player takes no damage; otherwise, the player is damaged",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 2,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 33,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 69,
+          "second": {
+            "first": 1,
+            "second": 20
+          }
+        }
+      ],
+      "id": "5491",
+      "position": [
+        79.099998,
+        -8.7
+      ],
+      "local_position": {
+        "x": 53.535248,
+        "y": -8.446884
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Porcupine_Damage",
+          "percentage": true,
+          "amount": 20
+        }
+      ],
+      "children": [
+        "6213",
+        "5997"
+      ],
+      "parents": [
+        "5576"
+      ]
+    },
+    {
+      "upgradeName": "Bestiary",
+      "upgradeDescription": "Unlock Bestiary Tab",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [],
+      "id": "5501",
+      "position": [
+        34.2,
+        -17.113116
+      ],
+      "local_position": {
+        "x": 8.63525,
+        "y": -16.86
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "tabType": "BestiaryTab"
+      },
+      "effects": [],
+      "children": [
+        "5679"
+      ],
+      "parents": [
+        "6751"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Damage IV",
+      "upgradeDescription": "Increases Arrow Damage By 65",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 4,
+          "second": {
+            "first": 0,
+            "second": 65
+          }
+        }
+      ],
+      "id": "5507",
+      "position": [
+        -10.0,
+        -20.800002
+      ],
+      "local_position": {
+        "x": -35.56475,
+        "y": -20.546886
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Arrow_Damage",
+          "percentage": false,
+          "amount": 50
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6263"
+      ]
+    },
+    {
+      "upgradeName": "Impact Armor I",
+      "upgradeDescription": "Reduces collision damage with enemies by 30%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 0,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 4,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 67,
+          "second": {
+            "first": 1,
+            "second": 30
+          }
+        }
+      ],
+      "id": "5531",
+      "position": [
+        69.700004,
+        -16.900001
+      ],
+      "local_position": {
+        "x": 44.135254,
+        "y": -16.646885
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Impact_Armor",
+          "percentage": true,
+          "amount": 85
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5576"
+      ]
+    },
+    {
+      "upgradeName": "Band-Aid I",
+      "upgradeDescription": "Increases Max Health By 300",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 2,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 4400,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 300
+          }
+        }
+      ],
+      "id": "5552",
+      "position": [
+        105.23475,
+        3.995298
+      ],
+      "local_position": {
+        "x": 79.67,
+        "y": 4.2484136
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 405.0
+        }
+      ],
+      "children": [
+        "6695"
+      ],
+      "parents": [
+        "5640"
+      ]
+    },
+    {
+      "upgradeName": "Life Steal Amount",
+      "upgradeDescription": "Increases Life Steal Amount By 10",
+      "maxLevel": 3,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1650,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 55,
+          "second": {
+            "first": 0,
+            "second": 10
+          }
+        }
+      ],
+      "id": "5568",
+      "position": [
+        95.700004,
+        -4.4
+      ],
+      "local_position": {
+        "x": 70.135254,
+        "y": -4.1468844
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "HP_Steal",
+          "percentage": false,
+          "amount": 10
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5640"
+      ]
+    },
+    {
+      "upgradeName": "Gain Armor and Health II",
+      "upgradeDescription": "Increases Max Health and Max Armor By 30",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 33,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 1,
+          "second": {
+            "first": 0,
+            "second": 30
+          }
+        },
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 30
+          }
+        }
+      ],
+      "id": "5576",
+      "position": [
+        69.721942,
+        -8.699999
+      ],
+      "local_position": {
+        "x": 44.157192,
+        "y": -8.446883
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Armor",
+          "percentage": false,
+          "amount": 30
+        },
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 30
+        }
+      ],
+      "children": [
+        "5491",
+        "5531"
+      ],
+      "parents": [
+        "6701"
+      ]
+    },
+    {
+      "upgradeName": "Red Heart",
+      "upgradeDescription": "Increases Max Health By 1,200",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 3,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 16500,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 1200
+          }
+        }
+      ],
+      "id": "5596",
+      "position": [
+        122.200004,
+        -0.2
+      ],
+      "local_position": {
+        "x": 96.635254,
+        "y": 0.05311565
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 1620.0
+        }
+      ],
+      "children": [
+        "5640"
+      ],
+      "parents": [
+        "6695"
+      ]
+    },
+    {
+      "upgradeName": "Dagger Attack Range I",
+      "upgradeDescription": "Increases Dagger Attack Range By 25%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 59,
+          "second": {
+            "first": 1,
+            "second": 25
+          }
+        }
+      ],
+      "id": "5603",
+      "position": [
+        -3.9,
+        10.5
+      ],
+      "local_position": {
+        "x": -29.46475,
+        "y": 10.753116
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Melee_range",
+          "percentage": true,
+          "amount": 5
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5914"
+      ]
+    },
+    {
+      "upgradeName": "Pill I",
+      "upgradeDescription": "Increases Max Health By 50",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 50
+          }
+        }
+      ],
+      "id": "5609",
+      "position": [
+        62.03208,
+        4.080399
+      ],
+      "local_position": {
+        "x": 36.46733,
+        "y": 4.3335147
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 55
+        }
+      ],
+      "children": [
+        "6347"
+      ],
+      "parents": [
+        "6409"
+      ]
+    },
+    {
+      "upgradeName": "Gain Armor and Health I",
+      "upgradeDescription": "Increases Max Health and Max Armor By 10",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 6,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 1,
+          "second": {
+            "first": 0,
+            "second": 10
+          }
+        },
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 10
+          }
+        }
+      ],
+      "id": "5615",
+      "position": [
+        51.7,
+        -12.900001
+      ],
+      "local_position": {
+        "x": 26.13525,
+        "y": -12.646885
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Armor",
+          "percentage": false,
+          "amount": 10
+        },
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 10
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6224"
+      ]
+    },
+    {
+      "upgradeName": "Heal On Enemy Kill Amount II",
+      "upgradeDescription": "Heal +5 HP on kill when healing chance activates",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 28,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 53,
+          "second": {
+            "first": 0,
+            "second": 5
+          }
+        }
+      ],
+      "id": "5622",
+      "position": [
+        69.5,
+        16.600001
+      ],
+      "local_position": {
+        "x": 43.93525,
+        "y": 16.853117
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "HealOnKill_Amount",
+          "percentage": false,
+          "amount": 5
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6347"
+      ]
+    },
+    {
+      "upgradeName": "Dagger Attack Speed II",
+      "upgradeDescription": "Increases Dagger Attack Speed By 1",
+      "maxLevel": 4,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 11,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 29,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "5626",
+      "position": [
+        -25.800004,
+        3.956884
+      ],
+      "local_position": {
+        "x": -51.364754,
+        "y": 4.21
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Dagger_Attack_Rate",
+          "percentage": false,
+          "amount": 0.75
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6541"
+      ]
+    },
+    {
+      "upgradeName": "Life Steal",
+      "upgradeDescription": "Increases Life Steal Chance By 5%",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 5,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1650,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 56,
+          "second": {
+            "first": 1,
+            "second": 5
+          }
+        }
+      ],
+      "id": "5640",
+      "position": [
+        95.725105,
+        3.986884
+      ],
+      "local_position": {
+        "x": 70.160355,
+        "y": 4.24
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "HP_Steal_Chance",
+          "percentage": true,
+          "amount": 5
+        }
+      ],
+      "children": [
+        "5568",
+        "5552"
+      ],
+      "parents": [
+        "5596",
+        "6448"
+      ]
+    },
+    {
+      "upgradeName": "Triples Dagger Damage II",
+      "upgradeDescription": "Increases Dagger Damage by 200%",
+      "maxLevel": 3,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 5500,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 30,
+          "second": {
+            "first": 1,
+            "second": 200
+          }
+        }
+      ],
+      "id": "5648",
+      "position": [
+        -51.39923,
+        -49.582763
+      ],
+      "local_position": {
+        "x": -76.96398,
+        "y": -49.329647
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Dagger_Damage",
+          "percentage": true,
+          "amount": 200
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5944"
+      ]
+    },
+    {
+      "upgradeName": "Max HP I",
+      "upgradeDescription": "Increases Max Health By 5",
+      "maxLevel": 10,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 5
+          }
+        }
+      ],
+      "id": "5659",
+      "position": [
+        34.969751,
+        -0.253116
+      ],
+      "local_position": {
+        "x": 9.405001,
+        "y": 0
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 6
+        }
+      ],
+      "children": [
+        "5791",
+        "6364",
+        "6024"
+      ],
+      "parents": [
+        "5932"
+      ]
+    },
+    {
+      "upgradeName": "Unlock achievements",
+      "upgradeDescription": "Unlock Achievements Tab",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 6,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [],
+      "id": "5679",
+      "position": [
+        34.199999,
+        -25.399999
+      ],
+      "local_position": {
+        "x": 8.635249,
+        "y": -25.146883
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "tabType": "AchievementsTab"
+      },
+      "effects": [],
+      "children": [],
+      "parents": [
+        "5501"
+      ]
+    },
+    {
+      "upgradeName": "Heal On Enemy Kill Amount I",
+      "upgradeDescription": "Heal +3 HP on kill when healing chance activates",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 53,
+          "second": {
+            "first": 0,
+            "second": 3
+          }
+        }
+      ],
+      "id": "5685",
+      "position": [
+        51.77475,
+        12.356884
+      ],
+      "local_position": {
+        "x": 26.21,
+        "y": 12.61
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "HealOnKill_Amount",
+          "percentage": false,
+          "amount": 3
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6409"
+      ]
+    },
+    {
+      "upgradeName": "Triples Arrow Damage I",
+      "upgradeDescription": "Increases Arrow Damage by 200%",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 4,
+          "second": {
+            "first": 1,
+            "second": 200
+          }
+        }
+      ],
+      "id": "5691",
+      "position": [
+        -60.899224,
+        -41.179646
+      ],
+      "local_position": {
+        "x": -86.463974,
+        "y": -40.92653
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Arrow_Damage",
+          "percentage": true,
+          "amount": 200
+        }
+      ],
+      "children": [
+        "6063",
+        "6666"
+      ],
+      "parents": [
+        "5944"
+      ]
+    },
+    {
+      "upgradeName": "Dagger",
+      "upgradeDescription": "Unlocks Dagger: Ideal for Close Combat",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 4,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 6,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [],
+      "id": "5709",
+      "position": [
+        8.767158,
+        3.873309
+      ],
+      "local_position": {
+        "x": -16.797592,
+        "y": 4.126425
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "weaponType": "Dagger"
+      },
+      "effects": [],
+      "children": [
+        "5914",
+        "6671"
+      ],
+      "parents": [
+        "6452"
+      ]
+    },
+    {
+      "upgradeName": "Armor VI",
+      "upgradeDescription": "Increases Max Armor By 30",
+      "maxLevel": 10,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 440,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 1,
+          "second": {
+            "first": 0,
+            "second": 30
+          }
+        }
+      ],
+      "id": "5723",
+      "position": [
+        96.16582,
+        -12.809502
+      ],
+      "local_position": {
+        "x": 70.60107,
+        "y": -12.556386
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Armor",
+          "percentage": false,
+          "amount": 30
+        }
+      ],
+      "children": [
+        "6642",
+        "6035"
+      ],
+      "parents": [
+        "6213"
+      ]
+    },
+    {
+      "upgradeName": "Bow Attack Speed III",
+      "upgradeDescription": "Increases Bow Attack Speed By 1",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 660,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 17,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "5731",
+      "position": [
+        -66.32015,
+        -6.076991
+      ],
+      "local_position": {
+        "x": -91.8849,
+        "y": -5.8238754
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Bow_Fire_Rate",
+          "percentage": false,
+          "amount": 1
+        }
+      ],
+      "children": [
+        "6076"
+      ],
+      "parents": [
+        "6012"
+      ]
+    },
+    {
+      "upgradeName": "Pill III",
+      "upgradeDescription": "Increases Max Health By 200",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1100,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 200
+          }
+        }
+      ],
+      "id": "5755",
+      "position": [
+        124.0,
+        12.498919
+      ],
+      "local_position": {
+        "x": 98.43525,
+        "y": 12.752035
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 270.0
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6766"
+      ]
+    },
+    {
+      "upgradeName": "Chance to Heal on Enemy Hit I",
+      "upgradeDescription": "Increase your chance to heal by 5% when you hit an enemy",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 10,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 220,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 52,
+          "second": {
+            "first": 1,
+            "second": 5
+          }
+        }
+      ],
+      "id": "5764",
+      "position": [
+        86.453788,
+        12.48392
+      ],
+      "local_position": {
+        "x": 60.889038,
+        "y": 12.737036
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "HealOnHit_Chance",
+          "percentage": true,
+          "amount": 5
+        }
+      ],
+      "children": [
+        "5897",
+        "6593"
+      ],
+      "parents": [
+        "5776"
+      ]
+    },
+    {
+      "upgradeName": "Max HP III",
+      "upgradeDescription": "Increases Max Health By 45",
+      "maxLevel": 10,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 16,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 45
+          }
+        }
+      ],
+      "id": "5776",
+      "position": [
+        78.941253,
+        8.310405
+      ],
+      "local_position": {
+        "x": 53.376503,
+        "y": 8.563521
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 45
+        }
+      ],
+      "children": [
+        "5764",
+        "6448",
+        "6200"
+      ],
+      "parents": [
+        "6347"
+      ]
+    },
+    {
+      "upgradeName": "Row Damage Resistance III",
+      "upgradeDescription": "Reduces the damage dealt by the row by 30%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 65,
+          "second": {
+            "first": 1,
+            "second": 30
+          }
+        }
+      ],
+      "id": "5781",
+      "position": [
+        123.4,
+        -18.100002
+      ],
+      "local_position": {
+        "x": 97.83525,
+        "y": -17.846886
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Armor_Against_Row",
+          "percentage": true,
+          "amount": 30
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6118"
+      ]
+    },
+    {
+      "upgradeName": "Syringe I",
+      "upgradeDescription": "Increases Max Health By 10",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 8,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 10
+          }
+        }
+      ],
+      "id": "5791",
+      "position": [
+        44.34975,
+        -0.283116
+      ],
+      "local_position": {
+        "x": 18.785,
+        "y": -0.03
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 10
+        }
+      ],
+      "children": [
+        "6224",
+        "6409"
+      ],
+      "parents": [
+        "5659"
+      ]
+    },
+    {
+      "upgradeName": "Burn Chance",
+      "upgradeDescription": "Increases Burn Chance By 20%",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 33,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 18,
+          "second": {
+            "first": 1,
+            "second": 20
+          }
+        }
+      ],
+      "id": "5796",
+      "position": [
+        -25.74397,
+        -3.553115
+      ],
+      "local_position": {
+        "x": -51.30872,
+        "y": -3.2999997
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Burn_Chance",
+          "percentage": true,
+          "amount": 20
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6660"
+      ]
+    },
+    {
+      "upgradeName": "Slow Down",
+      "upgradeDescription": "When active, player forward movement slows down by 0.5 for 4 seconds",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 5,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [],
+      "id": "5811",
+      "position": [
+        25.25475,
+        33.400004
+      ],
+      "local_position": {
+        "x": -0.31,
+        "y": 33.65312
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "abilityType": "SlowDown"
+      },
+      "effects": [],
+      "children": [],
+      "parents": [
+        "6242"
+      ]
+    },
+    {
+      "upgradeName": "Heal On Enemy Hit Amount II",
+      "upgradeDescription": "Heal +10 HP when you hit an enemy and healing chance activates",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2200,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 51,
+          "second": {
+            "first": 0,
+            "second": 10
+          }
+        }
+      ],
+      "id": "5833",
+      "position": [
+        114.6,
+        20.9
+      ],
+      "local_position": {
+        "x": 89.03525,
+        "y": 21.153116
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "HealOnHit_Amount",
+          "percentage": false,
+          "amount": 10
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6766"
+      ]
+    },
+    {
+      "upgradeName": "Dagger Attack Range II",
+      "upgradeDescription": "Increases Dagger Attack Range By 1",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 33,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 59,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "5848",
+      "position": [
+        -31.385663,
+        10.549998
+      ],
+      "local_position": {
+        "x": -56.950413,
+        "y": 10.803114
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Melee_range",
+          "percentage": false,
+          "amount": 0.25
+        }
+      ],
+      "children": [
+        "6655",
+        "6170",
+        "5480"
+      ],
+      "parents": [
+        "6541"
+      ]
+    },
+    {
+      "upgradeName": "Shoot On Hold",
+      "upgradeDescription": "Fire continuously by holding left-click",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [],
+      "id": "5853",
+      "position": [
+        17.001628,
+        16.223446
+      ],
+      "local_position": {
+        "x": -8.563122,
+        "y": 16.476562
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "fireType": "Hold"
+      },
+      "effects": [],
+      "children": [
+        "6469"
+      ],
+      "parents": [
+        "5860"
+      ]
+    },
+    {
+      "upgradeName": "Horizontal Speed I",
+      "upgradeDescription": "Increases horizontal movement speed by 20%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 6,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 61,
+          "second": {
+            "first": 1,
+            "second": 20
+          }
+        }
+      ],
+      "id": "5860",
+      "position": [
+        25.56475,
+        7.500324
+      ],
+      "local_position": {
+        "x": 0,
+        "y": 7.75344
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Horizontal_Speed",
+          "percentage": true,
+          "amount": 20
+        }
+      ],
+      "children": [
+        "5853",
+        "6552"
+      ],
+      "parents": [
+        "5932"
+      ]
+    },
+    {
+      "upgradeName": "Damage Against Bosses II",
+      "upgradeDescription": "Increases Damage Against Bosses By 60",
+      "maxLevel": 3,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 16,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 31,
+          "second": {
+            "first": 0,
+            "second": 60
+          }
+        }
+      ],
+      "id": "5871",
+      "position": [
+        -0.544854,
+        -12.526428
+      ],
+      "local_position": {
+        "x": -26.109604,
+        "y": -12.273312
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Damage_Against_Bosses",
+          "percentage": false,
+          "amount": 6000
+        }
+      ],
+      "children": [
+        "6629"
+      ],
+      "parents": [
+        "6585"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Shield",
+      "upgradeDescription": "Grants immunity to enemy arrows while active",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 5,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 110,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [],
+      "id": "5887",
+      "position": [
+        86.800002,
+        -21.300002
+      ],
+      "local_position": {
+        "x": 61.235252,
+        "y": -21.046886
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "abilityType": "ArrowShield"
+      },
+      "effects": [],
+      "children": [],
+      "parents": [
+        "6213"
+      ]
+    },
+    {
+      "upgradeName": "Heal On Enemy Hit Amount I",
+      "upgradeDescription": "Heal +4 HP when you hit an enemy and healing chance activates",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 330,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 51,
+          "second": {
+            "first": 0,
+            "second": 4
+          }
+        }
+      ],
+      "id": "5897",
+      "position": [
+        86.4,
+        20.9
+      ],
+      "local_position": {
+        "x": 60.83525,
+        "y": 21.153116
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "HealOnHit_Amount",
+          "percentage": false,
+          "amount": 4
+        }
+      ],
+      "children": [
+        "6593"
+      ],
+      "parents": [
+        "5764"
+      ]
+    },
+    {
+      "upgradeName": "Dagger Damage I",
+      "upgradeDescription": "Increases Dagger Damage By 100",
+      "maxLevel": 4,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 30,
+          "second": {
+            "first": 0,
+            "second": 100
+          }
+        }
+      ],
+      "id": "5914",
+      "position": [
+        -0.607463,
+        3.893309
+      ],
+      "local_position": {
+        "x": -26.172213,
+        "y": 4.1464243
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Dagger_Damage",
+          "percentage": false,
+          "amount": 55.0
+        }
+      ],
+      "children": [
+        "5603",
+        "6122"
+      ],
+      "parents": [
+        "5709"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Damage I",
+      "upgradeDescription": "Increases Arrow Damage By 3",
+      "maxLevel": 10,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 1,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 4,
+          "second": {
+            "first": 0,
+            "second": 3
+          }
+        }
+      ],
+      "id": "5932",
+      "position": [
+        25.56475,
+        -0.253116
+      ],
+      "local_position": {
+        "x": 0,
+        "y": 0
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Arrow_Damage",
+          "percentage": false,
+          "amount": 3
+        }
+      ],
+      "children": [
+        "6372",
+        "6452",
+        "5860",
+        "6751",
+        "5659"
+      ],
+      "parents": []
+    },
+    {
+      "upgradeName": "Triples Dagger Damage I",
+      "upgradeDescription": "Increases Dagger Damage by 200%",
+      "maxLevel": 3,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 4400,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 30,
+          "second": {
+            "first": 1,
+            "second": 200
+          }
+        }
+      ],
+      "id": "5944",
+      "position": [
+        -51.39923,
+        -41.179649
+      ],
+      "local_position": {
+        "x": -76.96398,
+        "y": -40.926533
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Dagger_Damage",
+          "percentage": true,
+          "amount": 200
+        }
+      ],
+      "children": [
+        "5691",
+        "5648"
+      ],
+      "parents": [
+        "6388"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Damage VIII",
+      "upgradeDescription": "Increases Arrow Damage By 245,000",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 4,
+          "second": {
+            "first": 0,
+            "second": 245000
+          }
+        }
+      ],
+      "id": "5964",
+      "position": [
+        -75.754464,
+        -21.079648
+      ],
+      "local_position": {
+        "x": -101.319214,
+        "y": -20.826532
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Arrow_Damage",
+          "percentage": false,
+          "amount": 200000
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6293"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Damage VI",
+      "upgradeDescription": "Increases Arrow Damage By 18,000",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 2,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 4,
+          "second": {
+            "first": 0,
+            "second": 18000
+          }
+        }
+      ],
+      "id": "5982",
+      "position": [
+        -52.4,
+        3.966884
+      ],
+      "local_position": {
+        "x": -77.96475,
+        "y": 4.22
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Arrow_Damage",
+          "percentage": false,
+          "amount": 12600.0
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6319"
+      ]
+    },
+    {
+      "upgradeName": "Row Damage Resistance I",
+      "upgradeDescription": "Reduces the damage dealt to armor by the row by 20%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 65,
+          "second": {
+            "first": 1,
+            "second": 20
+          }
+        }
+      ],
+      "id": "5997",
+      "position": [
+        79.10836,
+        -16.900001
+      ],
+      "local_position": {
+        "x": 53.54361,
+        "y": -16.646885
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Armor_Against_Row",
+          "percentage": true,
+          "amount": 20
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5491"
+      ]
+    },
+    {
+      "upgradeName": "Dagger Damage III",
+      "upgradeDescription": "Increases Dagger Damage By 450,000",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1100,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 30,
+          "second": {
+            "first": 0,
+            "second": 450000
+          }
+        }
+      ],
+      "id": "6003",
+      "position": [
+        -63.799996,
+        1.0
+      ],
+      "local_position": {
+        "x": -89.364746,
+        "y": 1.2531157
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Dagger_Damage",
+          "percentage": false,
+          "amount": 247500.0
+        }
+      ],
+      "children": [
+        "6153"
+      ],
+      "parents": [
+        "6012"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Critic Chance I",
+      "upgradeDescription": "Increases Arrow Critic Chance By 10%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 550,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 22,
+          "second": {
+            "first": 1,
+            "second": 10
+          }
+        }
+      ],
+      "id": "6012",
+      "position": [
+        -56.953866,
+        -6.013385
+      ],
+      "local_position": {
+        "x": -82.518616,
+        "y": -5.760269
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Critic_Chance",
+          "percentage": true,
+          "amount": 10
+        }
+      ],
+      "children": [
+        "6003",
+        "5731"
+      ],
+      "parents": [
+        "6378"
+      ]
+    },
+    {
+      "upgradeName": "Armor I",
+      "upgradeDescription": "Increases Max Armor By 5",
+      "maxLevel": 4,
+      "level": 0,
+      "unlockAtParentLevel": 4,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 1,
+          "second": {
+            "first": 0,
+            "second": 5
+          }
+        }
+      ],
+      "id": "6024",
+      "position": [
+        39.112359,
+        -7.815006
+      ],
+      "local_position": {
+        "x": 13.547609,
+        "y": -7.5618906
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Armor",
+          "percentage": false,
+          "amount": 5
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5659"
+      ]
+    },
+    {
+      "upgradeName": "Shiny Armor",
+      "upgradeDescription": "Increases Max Armor By 500",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 5500,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 1,
+          "second": {
+            "first": 0,
+            "second": 500
+          }
+        }
+      ],
+      "id": "6035",
+      "position": [
+        105.6,
+        -12.800001
+      ],
+      "local_position": {
+        "x": 80.03525,
+        "y": -12.546885
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Armor",
+          "percentage": false,
+          "amount": 500
+        }
+      ],
+      "children": [
+        "6118"
+      ],
+      "parents": [
+        "5723"
+      ]
+    },
+    {
+      "upgradeName": "Max HP IV",
+      "upgradeDescription": "Increases Max Health By 150",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 3,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 220,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 150
+          }
+        }
+      ],
+      "id": "6050",
+      "position": [
+        95.8,
+        20.8
+      ],
+      "local_position": {
+        "x": 70.23525,
+        "y": 21.053116
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 205
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6593"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Critic Chance IV",
+      "upgradeDescription": "Increases Arrow Critic Chance By 80%",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 4400,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 22,
+          "second": {
+            "first": 1,
+            "second": 80
+          }
+        }
+      ],
+      "id": "6063",
+      "position": [
+        -69.35447,
+        -41.179649
+      ],
+      "local_position": {
+        "x": -94.91922,
+        "y": -40.926533
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Critic_Chance",
+          "percentage": true,
+          "amount": 80
+        }
+      ],
+      "children": [
+        "6508"
+      ],
+      "parents": [
+        "5691"
+      ]
+    },
+    {
+      "upgradeName": "Medicine I",
+      "upgradeDescription": "Increase Current Max Health By 200",
+      "maxLevel": 10,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 220,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 200
+          }
+        }
+      ],
+      "id": "6067",
+      "position": [
+        105.25475,
+        12.5
+      ],
+      "local_position": {
+        "x": 79.69,
+        "y": 12.753116
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 270.0
+        }
+      ],
+      "children": [
+        "6705",
+        "6766"
+      ],
+      "parents": [
+        "6593"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Damage VII",
+      "upgradeDescription": "Increases Arrow Damage By 240,000",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 4,
+          "second": {
+            "first": 0,
+            "second": 240000
+          }
+        }
+      ],
+      "id": "6076",
+      "position": [
+        -66.4,
+        -13.7
+      ],
+      "local_position": {
+        "x": -91.96475,
+        "y": -13.446884
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Arrow_Damage",
+          "percentage": false,
+          "amount": 168000.0
+        }
+      ],
+      "children": [
+        "6293"
+      ],
+      "parents": [
+        "5731"
+      ]
+    },
+    {
+      "upgradeName": "Damage Against Bosses III",
+      "upgradeDescription": "Increases Damage Against Bosses By 100",
+      "maxLevel": 3,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 660,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 31,
+          "second": {
+            "first": 0,
+            "second": 100
+          }
+        }
+      ],
+      "id": "6096",
+      "position": [
+        -43.95228,
+        17.149694
+      ],
+      "local_position": {
+        "x": -69.51703,
+        "y": 17.40281
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Damage_Against_Bosses",
+          "percentage": false,
+          "amount": 400000
+        }
+      ],
+      "children": [
+        "6516"
+      ],
+      "parents": [
+        "6170"
+      ]
+    },
+    {
+      "upgradeName": "Gain Armor and Health III",
+      "upgradeDescription": "Increases Max Health and Max Armor By 300",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3300,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 1,
+          "second": {
+            "first": 0,
+            "second": 300
+          }
+        },
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 200
+          }
+        }
+      ],
+      "id": "6118",
+      "position": [
+        114.1,
+        -18.100002
+      ],
+      "local_position": {
+        "x": 88.53525,
+        "y": -17.846886
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Armor",
+          "percentage": false,
+          "amount": 300
+        },
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 270.0
+        }
+      ],
+      "children": [
+        "5781"
+      ],
+      "parents": [
+        "6035"
+      ]
+    },
+    {
+      "upgradeName": "Bow Attack Speed II",
+      "upgradeDescription": "Increases Bow Attack Speed By 35%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 2,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 16,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 17,
+          "second": {
+            "first": 1,
+            "second": 15
+          }
+        }
+      ],
+      "id": "6122",
+      "position": [
+        -9.907754,
+        3.906884
+      ],
+      "local_position": {
+        "x": -35.472504,
+        "y": 4.16
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Bow_Fire_Rate",
+          "percentage": true,
+          "amount": 15
+        }
+      ],
+      "children": [
+        "6660",
+        "6589"
+      ],
+      "parents": [
+        "5914",
+        "6272"
+      ]
+    },
+    {
+      "upgradeName": "Dagger Damage IV",
+      "upgradeDescription": "Increases Dagger Damage By 450,000",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 30,
+          "second": {
+            "first": 0,
+            "second": 450000
+          }
+        }
+      ],
+      "id": "6130",
+      "position": [
+        -80.70525,
+        1.0
+      ],
+      "local_position": {
+        "x": -106.27,
+        "y": 1.2531157
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Dagger_Damage",
+          "percentage": false,
+          "amount": 247500.0
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6153"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Critic Chance II",
+      "upgradeDescription": "Arrow Increases Critic Chance By 20%",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 550,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 22,
+          "second": {
+            "first": 1,
+            "second": 20
+          }
+        }
+      ],
+      "id": "6153",
+      "position": [
+        -72.26525,
+        1.00046
+      ],
+      "local_position": {
+        "x": -97.83,
+        "y": 1.2535753
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Critic_Chance",
+          "percentage": true,
+          "amount": 20
+        }
+      ],
+      "children": [
+        "6130"
+      ],
+      "parents": [
+        "6003"
+      ]
+    },
+    {
+      "upgradeName": "Bleed Duration",
+      "upgradeDescription": "Increases Bleed Duration By 1 second",
+      "maxLevel": 3,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 22,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 15,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "6170",
+      "position": [
+        -40.6,
+        10.55
+      ],
+      "local_position": {
+        "x": -66.16475,
+        "y": 10.803116
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Bleed_Duration",
+          "percentage": false,
+          "amount": 1
+        }
+      ],
+      "children": [
+        "6096",
+        "6319"
+      ],
+      "parents": [
+        "5848"
+      ]
+    },
+    {
+      "upgradeName": "Burn Duration",
+      "upgradeDescription": "Increases Burn Duration By 1 second",
+      "maxLevel": 3,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 22,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 20,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "6182",
+      "position": [
+        -24.29525,
+        -19.353116
+      ],
+      "local_position": {
+        "x": -49.86,
+        "y": -19.1
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Burn_Duration",
+          "percentage": false,
+          "amount": 1
+        }
+      ],
+      "children": [
+        "6426"
+      ],
+      "parents": [
+        "6560"
+      ]
+    },
+    {
+      "upgradeName": "Syringe II",
+      "upgradeDescription": "Increases Max Health By 60",
+      "maxLevel": 10,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 22,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 60
+          }
+        }
+      ],
+      "id": "6200",
+      "position": [
+        78.9,
+        16.644884
+      ],
+      "local_position": {
+        "x": 53.33525,
+        "y": 16.898
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 63.0
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5776"
+      ]
+    },
+    {
+      "upgradeName": "Armor V",
+      "upgradeDescription": "Increases Max Armor By 50",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 165,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 1,
+          "second": {
+            "first": 0,
+            "second": 50
+          }
+        }
+      ],
+      "id": "6213",
+      "position": [
+        86.786224,
+        -12.809502
+      ],
+      "local_position": {
+        "x": 61.221474,
+        "y": -12.556386
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Armor",
+          "percentage": false,
+          "amount": 50
+        }
+      ],
+      "children": [
+        "5723",
+        "5887"
+      ],
+      "parents": [
+        "5491"
+      ]
+    },
+    {
+      "upgradeName": "Armor II",
+      "upgradeDescription": "Increases Max Armor By 20",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 5,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 1,
+          "second": {
+            "first": 0,
+            "second": 20
+          }
+        }
+      ],
+      "id": "6224",
+      "position": [
+        51.715474,
+        -4.490615
+      ],
+      "local_position": {
+        "x": 26.150724,
+        "y": -4.2374997
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Armor",
+          "percentage": false,
+          "amount": 20
+        }
+      ],
+      "children": [
+        "5615",
+        "6701"
+      ],
+      "parents": [
+        "5791"
+      ]
+    },
+    {
+      "upgradeName": "Cursed Arrow Damage",
+      "upgradeDescription": "Increases Cursed Arrow Damage By 2,000",
+      "maxLevel": 3,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 110,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 64,
+          "second": {
+            "first": 0,
+            "second": 2000
+          }
+        }
+      ],
+      "id": "6229",
+      "position": [
+        -48.235566,
+        -13.700002
+      ],
+      "local_position": {
+        "x": -73.800316,
+        "y": -13.446886
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "CursedArrow_Damage",
+          "percentage": false,
+          "amount": 2000
+        }
+      ],
+      "children": [
+        "6335"
+      ],
+      "parents": [
+        "6531"
+      ]
+    },
+    {
+      "upgradeName": "Horizontal Speed III",
+      "upgradeDescription": "Increases horizontal movement speed by 50%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2200,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 61,
+          "second": {
+            "first": 1,
+            "second": 50
+          }
+        }
+      ],
+      "id": "6242",
+      "position": [
+        34.100002,
+        24.599999
+      ],
+      "local_position": {
+        "x": 8.535252,
+        "y": 24.853115
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Horizontal_Speed",
+          "percentage": true,
+          "amount": 50
+        }
+      ],
+      "children": [
+        "5811"
+      ],
+      "parents": [
+        "6552"
+      ]
+    },
+    {
+      "upgradeName": "Beam Damage Rate",
+      "upgradeDescription": "Increases Beam Damage Rate By 1",
+      "maxLevel": 4,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 4400,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 12,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "6246",
+      "position": [
+        -57.987046,
+        -25.125457
+      ],
+      "local_position": {
+        "x": -83.551796,
+        "y": -24.872341
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Beam_Fire_Rate",
+          "percentage": false,
+          "amount": 1
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6675"
+      ]
+    },
+    {
+      "upgradeName": "Pickup Range II",
+      "upgradeDescription": "Increases Pickup Range By 100%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 22,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 60,
+          "second": {
+            "first": 1,
+            "second": 100
+          }
+        }
+      ],
+      "id": "6255",
+      "position": [
+        16.95341,
+        -17.103298
+      ],
+      "local_position": {
+        "x": -8.61134,
+        "y": -16.850182
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "PickupRange",
+          "percentage": true,
+          "amount": 100
+        }
+      ],
+      "children": [
+        "6601"
+      ],
+      "parents": [
+        "6751"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Move Speed I",
+      "upgradeDescription": "Increase Arrow Move Speed By 2",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 7,
+          "second": {
+            "first": 0,
+            "second": 2
+          }
+        }
+      ],
+      "id": "6263",
+      "position": [
+        -10.046075,
+        -12.51105
+      ],
+      "local_position": {
+        "x": -35.610825,
+        "y": -12.257934
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Arrow_Speed",
+          "percentage": false,
+          "amount": 2
+        }
+      ],
+      "children": [
+        "5507"
+      ],
+      "parents": [
+        "6585"
+      ]
+    },
+    {
+      "upgradeName": "Dagger Damage II",
+      "upgradeDescription": "Increases Dagger Damage By 500",
+      "maxLevel": 10,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 16,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 30,
+          "second": {
+            "first": 0,
+            "second": 500
+          }
+        }
+      ],
+      "id": "6272",
+      "position": [
+        -25.844304,
+        17.130982
+      ],
+      "local_position": {
+        "x": -51.409054,
+        "y": 17.384098
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Dagger_Damage",
+          "percentage": false,
+          "amount": 275.0
+        }
+      ],
+      "children": [
+        "6122"
+      ],
+      "parents": [
+        "6541"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Critic Chance III",
+      "upgradeDescription": "Increases Arrow Critic Chance By 40%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 550,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 22,
+          "second": {
+            "first": 1,
+            "second": 40
+          }
+        }
+      ],
+      "id": "6293",
+      "position": [
+        -75.754464,
+        -13.67965
+      ],
+      "local_position": {
+        "x": -101.319214,
+        "y": -13.426534
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Critic_Chance",
+          "percentage": true,
+          "amount": 40
+        }
+      ],
+      "children": [
+        "5964"
+      ],
+      "parents": [
+        "6076"
+      ]
+    },
+    {
+      "upgradeName": "Super Magnet",
+      "upgradeDescription": "Increases Pick Up range by 250% ",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 550,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 60,
+          "second": {
+            "first": 1,
+            "second": 250
+          }
+        }
+      ],
+      "id": "6302",
+      "position": [
+        25.7,
+        -33.999999
+      ],
+      "local_position": {
+        "x": 0.13525009,
+        "y": -33.746883
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "PickupRange",
+          "percentage": true,
+          "amount": 250
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6601"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Damage V",
+      "upgradeDescription": "Increases Arrow Damage By 4,000",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 4,
+          "second": {
+            "first": 0,
+            "second": 4000
+          }
+        }
+      ],
+      "id": "6319",
+      "position": [
+        -43.90525,
+        3.966884
+      ],
+      "local_position": {
+        "x": -69.47,
+        "y": 4.22
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Arrow_Damage",
+          "percentage": false,
+          "amount": 2800.0
+        }
+      ],
+      "children": [
+        "5982"
+      ],
+      "parents": [
+        "6170"
+      ]
+    },
+    {
+      "upgradeName": "Curse Duration",
+      "upgradeDescription": "Increases Curse Duration By 1 second",
+      "maxLevel": 3,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 220,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 26,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "6335",
+      "position": [
+        -57.55446,
+        -13.690479
+      ],
+      "local_position": {
+        "x": -83.11921,
+        "y": -13.437363
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Curse_Duration",
+          "percentage": false,
+          "amount": 1
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6229"
+      ]
+    },
+    {
+      "upgradeName": "Chance to Heal on Enemy Kill  II",
+      "upgradeDescription": "Increases your chance to heal by 15% when you kill an enemy",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 2,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 28,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 54,
+          "second": {
+            "first": 1,
+            "second": 15
+          }
+        }
+      ],
+      "id": "6347",
+      "position": [
+        69.5,
+        8.3
+      ],
+      "local_position": {
+        "x": 43.93525,
+        "y": 8.553116
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "HealOnKill_Chance",
+          "percentage": true,
+          "amount": 15
+        }
+      ],
+      "children": [
+        "5622",
+        "5776"
+      ],
+      "parents": [
+        "5609"
+      ]
+    },
+    {
+      "upgradeName": "Bow Attack Speed IV",
+      "upgradeDescription": "Increases Bow Attack Speed By 1",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 5500,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 17,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "6357",
+      "position": [
+        -39.154465,
+        -34.179649
+      ],
+      "local_position": {
+        "x": -64.719215,
+        "y": -33.926533
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Bow_Fire_Rate",
+          "percentage": false,
+          "amount": 1
+        }
+      ],
+      "children": [
+        "6388"
+      ],
+      "parents": [
+        "6688"
+      ]
+    },
+    {
+      "upgradeName": "Big Heart I",
+      "upgradeDescription": "Increases Max Health By 15",
+      "maxLevel": 4,
+      "level": 0,
+      "unlockAtParentLevel": 10,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 15
+          }
+        }
+      ],
+      "id": "6364",
+      "position": [
+        39.070596,
+        7.320835
+      ],
+      "local_position": {
+        "x": 13.505846,
+        "y": 7.5739503
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 15
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5659"
+      ]
+    },
+    {
+      "upgradeName": "Damage Against Bosses I",
+      "upgradeDescription": "Increases Damage Against Bosses By 20",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 8,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 31,
+          "second": {
+            "first": 0,
+            "second": 20
+          }
+        }
+      ],
+      "id": "6372",
+      "position": [
+        18.087539,
+        -4.516427
+      ],
+      "local_position": {
+        "x": -7.477211,
+        "y": -4.2633114
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Damage_Against_Bosses",
+          "percentage": false,
+          "amount": 100
+        }
+      ],
+      "children": [
+        "6481"
+      ],
+      "parents": [
+        "5932"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Speed II",
+      "upgradeDescription": "Increases Arrow Speed By 1",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 55,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 7,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "6378",
+      "position": [
+        -47.55445,
+        -6.000478
+      ],
+      "local_position": {
+        "x": -73.1192,
+        "y": -5.747362
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Arrow_Speed",
+          "percentage": false,
+          "amount": 1
+        }
+      ],
+      "children": [
+        "6012"
+      ],
+      "parents": [
+        "6721"
+      ]
+    },
+    {
+      "upgradeName": "Shuriken",
+      "upgradeDescription": "While active, spawns a shuriken that deals normal arrow base damage, doubled against bleeding enemies",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 5,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 5,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [],
+      "id": "6388",
+      "position": [
+        -42.95446,
+        -41.179649
+      ],
+      "local_position": {
+        "x": -68.51921,
+        "y": -40.926533
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "abilityType": "Shuriken"
+      },
+      "effects": [],
+      "children": [
+        "5944"
+      ],
+      "parents": [
+        "6357"
+      ]
+    },
+    {
+      "upgradeName": "Chance to Heal on Enemy Kill  I",
+      "upgradeDescription": "Increases your chance to heal by 15% when you kill an enemy",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 5,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 54,
+          "second": {
+            "first": 1,
+            "second": 15
+          }
+        }
+      ],
+      "id": "6409",
+      "position": [
+        51.762079,
+        4.070399
+      ],
+      "local_position": {
+        "x": 26.197329,
+        "y": 4.3235145
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "HealOnKill_Chance",
+          "percentage": true,
+          "amount": 15
+        }
+      ],
+      "children": [
+        "5609",
+        "5685"
+      ],
+      "parents": [
+        "5791"
+      ]
+    },
+    {
+      "upgradeName": "Cursed Gem",
+      "upgradeDescription": "The bow shoots a purple arrow that curses enemies. Cursed enemies take 3x their base damage from all weapons",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 4,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1,
+      "cost": {
+        "amount": 0,
+        "currencyType": 2
+      },
+      "statsToIncrease": [],
+      "id": "6426",
+      "position": [
+        -33.537434,
+        -19.358123
+      ],
+      "local_position": {
+        "x": -59.102184,
+        "y": -19.105007
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "weaponType": "Ghost"
+      },
+      "effects": [],
+      "children": [
+        "6531",
+        "6688"
+      ],
+      "parents": [
+        "6182"
+      ]
+    },
+    {
+      "upgradeName": "Beam Damage III",
+      "upgradeDescription": "Increases Beam Damage By 10,000,000",
+      "maxLevel": 10,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 4400,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 10,
+          "second": {
+            "first": 0,
+            "second": 10000000
+          }
+        }
+      ],
+      "id": "6433",
+      "position": [
+        -66.47971,
+        -33.57965
+      ],
+      "local_position": {
+        "x": -92.04446,
+        "y": -33.326534
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Beam_Damage",
+          "percentage": false,
+          "amount": 9500000.0
+        }
+      ],
+      "children": [
+        "6463"
+      ],
+      "parents": [
+        "6500"
+      ]
+    },
+    {
+      "upgradeName": "Big Heart II",
+      "upgradeDescription": "Increases Max Health By 100",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 6,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 22,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 100
+          }
+        }
+      ],
+      "id": "6448",
+      "position": [
+        86.477485,
+        3.995298
+      ],
+      "local_position": {
+        "x": 60.912735,
+        "y": 4.2484136
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 135.0
+        }
+      ],
+      "children": [
+        "5640"
+      ],
+      "parents": [
+        "5776"
+      ]
+    },
+    {
+      "upgradeName": "Bow Attack Speed I",
+      "upgradeDescription": "Increases Bow Attack Speed By 20%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 5,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 4,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 17,
+          "second": {
+            "first": 1,
+            "second": 20
+          }
+        }
+      ],
+      "id": "6452",
+      "position": [
+        18.10754,
+        3.903309
+      ],
+      "local_position": {
+        "x": -7.4572105,
+        "y": 4.1564245
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Bow_Fire_Rate",
+          "percentage": true,
+          "amount": 18.0
+        }
+      ],
+      "children": [
+        "5709"
+      ],
+      "parents": [
+        "5932"
+      ]
+    },
+    {
+      "upgradeName": "Beam Critical Multiplier x4",
+      "upgradeDescription": "Quadruples damage on critical hit (Default multiplier is 3)",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 63,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "6463",
+      "position": [
+        -74.97971,
+        -33.57965
+      ],
+      "local_position": {
+        "x": -100.54446,
+        "y": -33.326534
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Beam_Critic_Multiplier",
+          "percentage": false,
+          "amount": 1
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6433"
+      ]
+    },
+    {
+      "upgradeName": "Auto Shoot",
+      "upgradeDescription": "Fires Automatically",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 5,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [],
+      "id": "6469",
+      "position": [
+        17.001628,
+        24.613446
+      ],
+      "local_position": {
+        "x": -8.563122,
+        "y": 24.866562
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "fireType": "Auto"
+      },
+      "effects": [],
+      "children": [],
+      "parents": [
+        "5853"
+      ]
+    },
+    {
+      "upgradeName": "Bow Attack Range I",
+      "upgradeDescription": "Increases Bow Attack Range By 1",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 32,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "6481",
+      "position": [
+        8.772157,
+        -4.536427
+      ],
+      "local_position": {
+        "x": -16.792593,
+        "y": -4.283311
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Distance_Range",
+          "percentage": false,
+          "amount": 0.25
+        }
+      ],
+      "children": [
+        "6585"
+      ],
+      "parents": [
+        "6372"
+      ]
+    },
+    {
+      "upgradeName": "Bow Attack Range II",
+      "upgradeDescription": "Increases Bow Attack Range By 1",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 33,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 32,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "6491",
+      "position": [
+        -16.72525,
+        17.141744
+      ],
+      "local_position": {
+        "x": -42.29,
+        "y": 17.39486
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Distance_Range",
+          "percentage": false,
+          "amount": 0.25
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6589"
+      ]
+    },
+    {
+      "upgradeName": "Beam Damage II",
+      "upgradeDescription": "Increases Beam Damage By 5,500,000",
+      "maxLevel": 6,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3300,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 10,
+          "second": {
+            "first": 0,
+            "second": 5500000
+          }
+        }
+      ],
+      "id": "6500",
+      "position": [
+        -57.95446,
+        -33.57965
+      ],
+      "local_position": {
+        "x": -83.51921,
+        "y": -33.326534
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Beam_Damage",
+          "percentage": false,
+          "amount": 5225000.0
+        }
+      ],
+      "children": [
+        "6433"
+      ],
+      "parents": [
+        "6725"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Critic Damage x3",
+      "upgradeDescription": "Triples Damage On Critical Hit (Default multiplier is 2)",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 23,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "6508",
+      "position": [
+        -77.754464,
+        -41.179649
+      ],
+      "local_position": {
+        "x": -103.319214,
+        "y": -40.926533
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Critic_Damage",
+          "percentage": false,
+          "amount": 1
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6063"
+      ]
+    },
+    {
+      "upgradeName": "Damage Against Bosses IV",
+      "upgradeDescription": "Increases Damage Against Bosses By 150",
+      "maxLevel": 3,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 6600,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 31,
+          "second": {
+            "first": 0,
+            "second": 150
+          }
+        }
+      ],
+      "id": "6516",
+      "position": [
+        -52.4,
+        17.149694
+      ],
+      "local_position": {
+        "x": -77.96475,
+        "y": 17.40281
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Damage_Against_Bosses",
+          "percentage": false,
+          "amount": 200000000
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6096"
+      ]
+    },
+    {
+      "upgradeName": "Curse Chance",
+      "upgradeDescription": "Increases Curse Chance By 20%",
+      "maxLevel": 7,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 220,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 25,
+          "second": {
+            "first": 1,
+            "second": 20
+          }
+        }
+      ],
+      "id": "6531",
+      "position": [
+        -39.10001,
+        -13.7
+      ],
+      "local_position": {
+        "x": -64.66476,
+        "y": -13.446884
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Curse_Chance",
+          "percentage": true,
+          "amount": 20
+        }
+      ],
+      "children": [
+        "6721",
+        "6229"
+      ],
+      "parents": [
+        "6426"
+      ]
+    },
+    {
+      "upgradeName": "Bleed Chance I",
+      "upgradeDescription": "Increases the dagger's bleed chance by 20% (Dagger deals double base damage to bleeding enemies)",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 22,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 13,
+          "second": {
+            "first": 1,
+            "second": 20
+          }
+        }
+      ],
+      "id": "6541",
+      "position": [
+        -22.527768,
+        10.55
+      ],
+      "local_position": {
+        "x": -48.092518,
+        "y": 10.803116
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Bleed_Chance",
+          "percentage": true,
+          "amount": 20
+        }
+      ],
+      "children": [
+        "5848",
+        "6272",
+        "5626"
+      ],
+      "parents": [
+        "6589"
+      ]
+    },
+    {
+      "upgradeName": "Horizontal Speed II",
+      "upgradeDescription": "Increases horizontal movement speed by 25%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 11,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 61,
+          "second": {
+            "first": 1,
+            "second": 25
+          }
+        }
+      ],
+      "id": "6552",
+      "position": [
+        34.112872,
+        16.223446
+      ],
+      "local_position": {
+        "x": 8.548122,
+        "y": 16.476562
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Horizontal_Speed",
+          "percentage": true,
+          "amount": 25
+        }
+      ],
+      "children": [
+        "6242"
+      ],
+      "parents": [
+        "5860"
+      ]
+    },
+    {
+      "upgradeName": "Fire Arrow Damage",
+      "upgradeDescription": "Increases Fire Arrow Damage By 300",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 11,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 41,
+          "second": {
+            "first": 0,
+            "second": 300
+          }
+        }
+      ],
+      "id": "6560",
+      "position": [
+        -17.400002,
+        -12.513116
+      ],
+      "local_position": {
+        "x": -42.964752,
+        "y": -12.26
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "FireArrow_Damage",
+          "percentage": false,
+          "amount": 300
+        }
+      ],
+      "children": [
+        "6182"
+      ],
+      "parents": [
+        "6660"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Damage II",
+      "upgradeDescription": "Increases Arrow Damage By 25",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 4,
+          "second": {
+            "first": 0,
+            "second": 25
+          }
+        }
+      ],
+      "id": "6585",
+      "position": [
+        -0.544854,
+        -4.546427
+      ],
+      "local_position": {
+        "x": -26.109604,
+        "y": -4.293311
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Arrow_Damage",
+          "percentage": false,
+          "amount": 20
+        }
+      ],
+      "children": [
+        "5871",
+        "6263"
+      ],
+      "parents": [
+        "6481"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Count I",
+      "upgradeDescription": "Fire 1 Additional Arrow",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 44,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 0,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "6589",
+      "position": [
+        -13.29315,
+        10.543229
+      ],
+      "local_position": {
+        "x": -38.8579,
+        "y": 10.796345
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Amount_Of_Arrows",
+          "percentage": false,
+          "amount": 1
+        }
+      ],
+      "children": [
+        "6491",
+        "6541"
+      ],
+      "parents": [
+        "6122"
+      ]
+    },
+    {
+      "upgradeName": "Pill II",
+      "upgradeDescription": "Increases Max Health By 100",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 110,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 100
+          }
+        }
+      ],
+      "id": "6593",
+      "position": [
+        95.816825,
+        12.498919
+      ],
+      "local_position": {
+        "x": 70.252075,
+        "y": 12.752035
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 135.0
+        }
+      ],
+      "children": [
+        "6050",
+        "6067"
+      ],
+      "parents": [
+        "5764",
+        "5897"
+      ]
+    },
+    {
+      "upgradeName": "Harvester",
+      "upgradeDescription": "When active, this effect doubles all resources except Boss crown",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 5,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 220,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [],
+      "id": "6601",
+      "position": [
+        16.999999,
+        -25.400001
+      ],
+      "local_position": {
+        "x": -8.564751,
+        "y": -25.146885
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "abilityType": "Harvester"
+      },
+      "effects": [],
+      "children": [
+        "6302"
+      ],
+      "parents": [
+        "6255"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Damage III",
+      "upgradeDescription": "Increases Arrow Damage By 50",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 4,
+          "second": {
+            "first": 0,
+            "second": 50
+          }
+        }
+      ],
+      "id": "6629",
+      "position": [
+        -0.544854,
+        -20.816429
+      ],
+      "local_position": {
+        "x": -26.109604,
+        "y": -20.563313
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Arrow_Damage",
+          "percentage": false,
+          "amount": 35.0
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5871"
+      ]
+    },
+    {
+      "upgradeName": "Row Damage Resistance II",
+      "upgradeDescription": "Reduces the damage dealt by the row by 20%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 65,
+          "second": {
+            "first": 1,
+            "second": 20
+          }
+        }
+      ],
+      "id": "6642",
+      "position": [
+        96.18709,
+        -21.2
+      ],
+      "local_position": {
+        "x": 70.62234,
+        "y": -20.946884
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Armor_Against_Row",
+          "percentage": true,
+          "amount": 20
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5723"
+      ]
+    },
+    {
+      "upgradeName": "Bleed Chance II",
+      "upgradeDescription": "Increases the dagger's bleed chance by 30% (Dagger deals double base damage to bleeding enemies)",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 44,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 13,
+          "second": {
+            "first": 1,
+            "second": 30
+          }
+        }
+      ],
+      "id": "6655",
+      "position": [
+        -34.611684,
+        17.164456
+      ],
+      "local_position": {
+        "x": -60.176434,
+        "y": 17.417572
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Bleed_Chance",
+          "percentage": true,
+          "amount": 30
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5848"
+      ]
+    },
+    {
+      "upgradeName": "Fire Gem",
+      "upgradeDescription": "The bow fires a red arrow with a chance to ignite enemies, setting them ablaze. Burning enemies take 1.5x base damage from each fire arrow",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 4,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1,
+      "cost": {
+        "amount": 0,
+        "currencyType": 2
+      },
+      "statsToIncrease": [],
+      "id": "6660",
+      "position": [
+        -17.346554,
+        -3.53215
+      ],
+      "local_position": {
+        "x": -42.911304,
+        "y": -3.2790341
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "weaponType": "Dragon"
+      },
+      "effects": [],
+      "children": [
+        "6560",
+        "5796"
+      ],
+      "parents": [
+        "6122"
+      ]
+    },
+    {
+      "upgradeName": "Triples Arrow Damage II",
+      "upgradeDescription": "Increases Arrow Damage by 200%",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 1
+      },
+      "statsToIncrease": [
+        {
+          "first": 4,
+          "second": {
+            "first": 1,
+            "second": 200
+          }
+        }
+      ],
+      "id": "6666",
+      "position": [
+        -60.899224,
+        -49.579646
+      ],
+      "local_position": {
+        "x": -86.463974,
+        "y": -49.32653
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Arrow_Damage",
+          "percentage": true,
+          "amount": 200
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5691"
+      ]
+    },
+    {
+      "upgradeName": "Dagger Attack Rate I",
+      "upgradeDescription": "Increases Dagger Attack Rate By 15%",
+      "maxLevel": 3,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 29,
+          "second": {
+            "first": 1,
+            "second": 15
+          }
+        }
+      ],
+      "id": "6671",
+      "position": [
+        5.562288,
+        10.490738
+      ],
+      "local_position": {
+        "x": -20.002462,
+        "y": 10.743854
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Dagger_Attack_Rate",
+          "percentage": true,
+          "amount": 10
+        }
+      ],
+      "children": [],
+      "parents": [
+        "5709"
+      ]
+    },
+    {
+      "upgradeName": "Beam Damage I",
+      "upgradeDescription": "Increases Beam Damage By 5,000,000",
+      "maxLevel": 6,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 3300,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 10,
+          "second": {
+            "first": 0,
+            "second": 5000000
+          }
+        }
+      ],
+      "id": "6675",
+      "position": [
+        -48.57465,
+        -25.125459
+      ],
+      "local_position": {
+        "x": -74.1394,
+        "y": -24.872343
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Beam_Damage",
+          "percentage": false,
+          "amount": 4750000.0
+        }
+      ],
+      "children": [
+        "6246",
+        "6725"
+      ],
+      "parents": [
+        "6688"
+      ]
+    },
+    {
+      "upgradeName": "Third Eye",
+      "upgradeDescription": "Inflicts continuous damage with a chance to deliver a critical hit, dealing up to three times the base damage",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 4,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1,
+      "cost": {
+        "amount": 0,
+        "currencyType": 2
+      },
+      "statsToIncrease": [],
+      "id": "6688",
+      "position": [
+        -39.17195,
+        -25.145454
+      ],
+      "local_position": {
+        "x": -64.7367,
+        "y": -24.892338
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {
+        "weaponType": "ThirdEye"
+      },
+      "effects": [],
+      "children": [
+        "6675",
+        "6357"
+      ],
+      "parents": [
+        "6426"
+      ]
+    },
+    {
+      "upgradeName": "Medicine II",
+      "upgradeDescription": "Increase Current Max Health By 400",
+      "maxLevel": 10,
+      "level": 0,
+      "unlockAtParentLevel": 4,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 4400,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 400
+          }
+        }
+      ],
+      "id": "6695",
+      "position": [
+        112.8,
+        -0.2
+      ],
+      "local_position": {
+        "x": 87.23525,
+        "y": 0.053115845
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 540.0
+        }
+      ],
+      "children": [
+        "5596"
+      ],
+      "parents": [
+        "5552"
+      ]
+    },
+    {
+      "upgradeName": "Armor Against Projectiles",
+      "upgradeDescription": "Increases Armor Against Projectiles By 15%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 11,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 68,
+          "second": {
+            "first": 1,
+            "second": 15
+          }
+        }
+      ],
+      "id": "6701",
+      "position": [
+        62.1,
+        -4.5
+      ],
+      "local_position": {
+        "x": 36.53525,
+        "y": -4.2468843
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Armor_Against_Projectiles",
+          "percentage": true,
+          "amount": 15
+        }
+      ],
+      "children": [
+        "5576"
+      ],
+      "parents": [
+        "6224"
+      ]
+    },
+    {
+      "upgradeName": "Band-Aid II",
+      "upgradeDescription": "Increase Current Max Health By 300",
+      "maxLevel": 5,
+      "level": 0,
+      "unlockAtParentLevel": 3,
+      "rarity": 1,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 220,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 57,
+          "second": {
+            "first": 0,
+            "second": 300
+          }
+        }
+      ],
+      "id": "6705",
+      "position": [
+        105.24475,
+        20.899998
+      ],
+      "local_position": {
+        "x": 79.68,
+        "y": 21.153114
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "MaxHP",
+          "percentage": false,
+          "amount": 405.0
+        }
+      ],
+      "children": [],
+      "parents": [
+        "6067"
+      ]
+    },
+    {
+      "upgradeName": "Arrow Count II",
+      "upgradeDescription": "Fire 1 Additional Arrow",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 660,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 0,
+          "second": {
+            "first": 0,
+            "second": 1
+          }
+        }
+      ],
+      "id": "6721",
+      "position": [
+        -39.18016,
+        -6.010905
+      ],
+      "local_position": {
+        "x": -64.74491,
+        "y": -5.7577896
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Amount_Of_Arrows",
+          "percentage": false,
+          "amount": 1
+        }
+      ],
+      "children": [
+        "6378"
+      ],
+      "parents": [
+        "6531"
+      ]
+    },
+    {
+      "upgradeName": "Beam Critic Chance",
+      "upgradeDescription": "Increases Beam Critic Chance by 40%",
+      "maxLevel": 4,
+      "level": 0,
+      "unlockAtParentLevel": 1,
+      "rarity": 2,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 4400,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 62,
+          "second": {
+            "first": 1,
+            "second": 40
+          }
+        }
+      ],
+      "id": "6725",
+      "position": [
+        -48.55446,
+        -33.57965
+      ],
+      "local_position": {
+        "x": -74.11921,
+        "y": -33.326534
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "Beam_Critic_Chance",
+          "percentage": true,
+          "amount": 40
+        }
+      ],
+      "children": [
+        "6500"
+      ],
+      "parents": [
+        "6675"
+      ]
+    },
+    {
+      "upgradeName": "Pickup Range I",
+      "upgradeDescription": "Increases Pickup Range By 40%",
+      "maxLevel": 1,
+      "level": 0,
+      "unlockAtParentLevel": 4,
+      "rarity": 0,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 2,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 60,
+          "second": {
+            "first": 1,
+            "second": 40
+          }
+        }
+      ],
+      "id": "6751",
+      "position": [
+        25.56475,
+        -8.623116
+      ],
+      "local_position": {
+        "x": 0,
+        "y": -8.37
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "PickupRange",
+          "percentage": true,
+          "amount": 40
+        }
+      ],
+      "children": [
+        "5501",
+        "6255"
+      ],
+      "parents": [
+        "5932"
+      ]
+    },
+    {
+      "upgradeName": "Chance to Heal on Enemy Hit II",
+      "upgradeDescription": "Increase your chance to heal by 5% when you hit an enemy",
+      "maxLevel": 2,
+      "level": 0,
+      "unlockAtParentLevel": 5,
+      "rarity": 3,
+      "isVisible": 0,
+      "isUnlocked": 0,
+      "baseUpgradeCost": 1100,
+      "cost": {
+        "amount": 0,
+        "currencyType": 0
+      },
+      "statsToIncrease": [
+        {
+          "first": 55,
+          "second": {
+            "first": 1,
+            "second": 5
+          }
+        }
+      ],
+      "id": "6766",
+      "position": [
+        114.6,
+        12.5
+      ],
+      "local_position": {
+        "x": 89.03525,
+        "y": 12.753116
+      },
+      "size": {
+        "x": 5,
+        "y": 5
+      },
+      "unlocks": {},
+      "effects": [
+        {
+          "stat": "HP_Steal",
+          "percentage": true,
+          "amount": 5
+        }
+      ],
+      "children": [
+        "5833",
+        "5755"
+      ],
+      "parents": [
+        "6067"
+      ]
+    }
+  ],
+  "base_stats": {
+    "MaxHP": 100,
+    "Bow_Fire_Rate": 1,
+    "Distance_Range": 10,
+    "Amount_Of_Arrows": 1,
+    "Arrow_Speed": 5,
+    "Arrow_Damage": 16,
+    "PickupRange": 0.6,
+    "Dagger_Damage": 150,
+    "Dagger_Attack_Rate": 0.6,
+    "Melee_range": 4,
+    "Horizontal_Speed": 0.8,
+    "HealOnKill_Amount": 4,
+    "HealOnHit_Amount": 4,
+    "Dragon_Fire_Rate": 0.5,
+    "FireArrow_Damage": 50,
+    "CursedArrow_Damage": 200,
+    "Ghost_Fire_Rate": 0.5,
+    "Curse_Effect": 3,
+    "Curse_Chance": 30,
+    "Curse_Duration": 2,
+    "Burn_Chance": 30,
+    "Burning_Rate": 1,
+    "Burn_Duration": 2,
+    "Burn_Damage": 200,
+    "Beam_Fire_Rate": 1,
+    "Beam_Damage": 1000000,
+    "Beam_Duration": 3,
+    "Bleed_Damage": 1000,
+    "Bleed_Duration": 2,
+    "Bleeding_Rate": 1,
+    "EnemiesPerGroup": 1,
+    "GroupsPerSection": 2,
+    "Beam_Critic_Multiplier": 3,
+    "Beam_Range": 6,
+    "Critic_Damage": 2,
+    "Max_Bullet_Rebounds": 1,
+    "Explosion_Size": 4
+  },
+  "settings": {
+    "achievements": [
+      {
+        "achievementName": "Prestige Master",
+        "achievementType": 8,
+        "description": "Complete All Prestiges",
+        "currencyType": 0,
+        "reward": 3000
+      },
+      {
+        "achievementName": "Vampire",
+        "achievementType": 11,
+        "description": "Unlock Life Steal",
+        "currencyType": 0,
+        "reward": 300
+      },
+      {
+        "achievementName": "First Dive",
+        "achievementType": 0,
+        "description": "Dive For The First Time",
+        "currencyType": 0,
+        "reward": 25
+      },
+      {
+        "achievementName": "Coin Master",
+        "achievementType": 9,
+        "description": "Spend +10,000 coins",
+        "currencyType": 0,
+        "reward": 400
+      },
+      {
+        "achievementName": "Boss Slayer",
+        "achievementType": 3,
+        "description": "Defeat All Bosses",
+        "currencyType": 0,
+        "reward": 3000
+      },
+      {
+        "achievementName": "Healer",
+        "achievementType": 12,
+        "description": "Unlock Heal On Hit Chance",
+        "currencyType": 0,
+        "reward": 200
+      },
+      {
+        "achievementName": "Prestige 1",
+        "achievementType": 5,
+        "description": "Complete Prestige 1",
+        "currencyType": 0,
+        "reward": 200
+      },
+      {
+        "achievementName": "First MiniBoss",
+        "achievementType": 1,
+        "description": "Defeat The First Mini Boss",
+        "currencyType": 0,
+        "reward": 50
+      },
+      {
+        "achievementName": "First Crown",
+        "achievementType": 4,
+        "description": "Complete The Row",
+        "currencyType": 0,
+        "reward": 100
+      },
+      {
+        "achievementName": "Evil God",
+        "achievementType": 16,
+        "description": "Become an Evil God",
+        "currencyType": 3,
+        "reward": 0
+      },
+      {
+        "achievementName": "Bow Master",
+        "achievementType": 10,
+        "description": "Reach +60,000,000 Arrow Damage",
+        "currencyType": 1,
+        "reward": 5
+      },
+      {
+        "achievementName": "Prestige 2",
+        "achievementType": 6,
+        "description": "Complete Prestige 2",
+        "currencyType": 0,
+        "reward": 500
+      },
+      {
+        "achievementName": "Benevolent God",
+        "achievementType": 15,
+        "description": "Become a Benevolent God",
+        "currencyType": 3,
+        "reward": 0
+      },
+      {
+        "achievementName": "Prestige 3",
+        "achievementType": 7,
+        "description": "Complete Prestige 3",
+        "currencyType": 0,
+        "reward": 3000
+      },
+      {
+        "achievementName": "Beat The Game",
+        "achievementType": 14,
+        "description": "Complete The Game",
+        "currencyType": 2,
+        "reward": 3
+      },
+      {
+        "achievementName": "Armored Tank",
+        "achievementType": 13,
+        "description": "Reach +1000 Armor",
+        "currencyType": 1,
+        "reward": 5
+      },
+      {
+        "achievementName": "First Boss",
+        "achievementType": 2,
+        "description": "Defeat The First Boss",
+        "currencyType": 0,
+        "reward": 100
+      },
+      {
+        "achievementName": "Gem Master",
+        "achievementType": 17,
+        "description": "Spend +50 gems",
+        "currencyType": 1,
+        "reward": 10
+      }
+    ],
+    "abilities": [
+      {
+        "abilityName": "Shuriken",
+        "abilityType": 3,
+        "abilityDuration": 10,
+        "cooldownDuration": 120
+      },
+      {
+        "abilityName": "Arrow Shield",
+        "abilityType": 2,
+        "abilityDuration": 5,
+        "cooldownDuration": 120
+      },
+      {
+        "abilityName": "Harvester",
+        "abilityType": 1,
+        "abilityDuration": 10,
+        "cooldownDuration": 60
+      },
+      {
+        "abilityName": "Slow Down",
+        "abilityType": 4,
+        "abilityDuration": 4,
+        "cooldownDuration": 160
+      }
+    ],
+    "movement": {
+      "forwardSpeed": 1.3,
+      "horizontalSpeed": 0.8,
+      "runningSpeedMultiplier": 1.5
+    },
+    "prefabs": {
+      "Boss Section": [
+        {
+          "spawnPoints": [
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4225286259459049
+                },
+                {
+                  "fileID": 4735156096940890
+                },
+                {
+                  "fileID": 4069473573298406
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4225286259459049
+                },
+                {
+                  "fileID": 4735156096940890
+                },
+                {
+                  "fileID": 4069473573298406
+                }
+              ],
+              "bannedEnemies": "03000000"
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4767906120272818
+                },
+                {
+                  "fileID": 4410865556287939
+                },
+                {
+                  "fileID": 4414892031709472
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4767906120272818
+                },
+                {
+                  "fileID": 4410865556287939
+                },
+                {
+                  "fileID": 4414892031709472
+                }
+              ],
+              "bannedEnemies": "03000000"
+            }
+          ]
+        },
+        {
+          "baseHealth": 80,
+          "baseShield": 0,
+          "baseDamage": 100000,
+          "zombieType": 6
+        },
+        {
+          "fireRate": 0.5,
+          "amountOfBullets": 3,
+          "burstCount": 1,
+          "burstDelay": 0.1
+        }
+      ],
+      "Coin": [
+        {
+          "currencyValue": 1,
+          "currencyType": 0
+        }
+      ],
+      "Copper Chest": [
+        {
+          "currencyValue": 10,
+          "currencyType": 0
+        }
+      ],
+      "Crown": [
+        {
+          "currencyValue": 1,
+          "currencyType": 2
+        }
+      ],
+      "Crownless Boss Section": [
+        {
+          "spawnPoints": [
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4652820779262545
+                },
+                {
+                  "fileID": 4545644887736600
+                },
+                {
+                  "fileID": 4594813517421274
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4652820779262545
+                },
+                {
+                  "fileID": 4545644887736600
+                },
+                {
+                  "fileID": 4594813517421274
+                }
+              ],
+              "bannedEnemies": "03000000"
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4098859912240070
+                },
+                {
+                  "fileID": 4562348022089416
+                },
+                {
+                  "fileID": 4692879205857874
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4098859912240070
+                },
+                {
+                  "fileID": 4562348022089416
+                },
+                {
+                  "fileID": 4692879205857874
+                }
+              ],
+              "bannedEnemies": "03000000"
+            }
+          ]
+        },
+        {
+          "baseHealth": 80,
+          "baseShield": 0,
+          "baseDamage": 100000,
+          "zombieType": 6
+        },
+        {
+          "fireRate": 0.5,
+          "amountOfBullets": 3,
+          "burstCount": 1,
+          "burstDelay": 0.1
+        }
+      ],
+      "Gem": [
+        {
+          "currencyValue": 1,
+          "currencyType": 1
+        }
+      ],
+      "Gold Chest": [
+        {
+          "currencyValue": 1000,
+          "currencyType": 0
+        }
+      ],
+      "MiniBoss1 Section": [
+        {
+          "spawnPoints": [
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4680316814070636
+                },
+                {
+                  "fileID": 4840865588260109
+                },
+                {
+                  "fileID": 4529032754734995
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4680316814070636
+                },
+                {
+                  "fileID": 4840865588260109
+                },
+                {
+                  "fileID": 4529032754734995
+                }
+              ],
+              "bannedEnemies": "03000000"
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4610726481676589
+                },
+                {
+                  "fileID": 4858067511853781
+                },
+                {
+                  "fileID": 4447154140589267
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4610726481676589
+                },
+                {
+                  "fileID": 4858067511853781
+                },
+                {
+                  "fileID": 4447154140589267
+                }
+              ],
+              "bannedEnemies": "03000000"
+            }
+          ]
+        },
+        {
+          "baseHealth": 80,
+          "baseShield": 0,
+          "baseDamage": 100000,
+          "zombieType": 4
+        },
+        {
+          "fireRate": 0.5,
+          "amountOfBullets": 3,
+          "burstCount": 1,
+          "burstDelay": 0.1
+        }
+      ],
+      "MiniBoss2 Section": [
+        {
+          "spawnPoints": [
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4680316814070636
+                },
+                {
+                  "fileID": 4840865588260109
+                },
+                {
+                  "fileID": 4529032754734995
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4680316814070636
+                },
+                {
+                  "fileID": 4840865588260109
+                },
+                {
+                  "fileID": 4529032754734995
+                }
+              ],
+              "bannedEnemies": "03000000"
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4610726481676589
+                },
+                {
+                  "fileID": 4858067511853781
+                },
+                {
+                  "fileID": 4447154140589267
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4610726481676589
+                },
+                {
+                  "fileID": 4858067511853781
+                },
+                {
+                  "fileID": 4447154140589267
+                }
+              ],
+              "bannedEnemies": "03000000"
+            }
+          ]
+        },
+        {
+          "baseHealth": 80,
+          "baseShield": 0,
+          "baseDamage": 100000,
+          "zombieType": 5
+        },
+        {
+          "fireRate": 0.5,
+          "amountOfBullets": 3,
+          "burstCount": 1,
+          "burstDelay": 0.1
+        }
+      ],
+      "Mummy": [
+        {
+          "baseHealth": 40,
+          "baseShield": 0,
+          "baseDamage": 50,
+          "zombieType": 3
+        }
+      ],
+      "Section 1": [
+        {
+          "spawnPoints": [
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4641204913154593
+                },
+                {
+                  "fileID": 4521597976012101
+                },
+                {
+                  "fileID": 4989434536655964
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4422702022971346
+                },
+                {
+                  "fileID": 4067212629291419
+                },
+                {
+                  "fileID": 4119337346424409
+                }
+              ],
+              "bannedEnemies": "03000000"
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4208269818966246
+                },
+                {
+                  "fileID": 4401429660297866
+                },
+                {
+                  "fileID": 4000342987746139
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4998495239010246
+                },
+                {
+                  "fileID": 4960577952585462
+                },
+                {
+                  "fileID": 4415925016355036
+                }
+              ],
+              "bannedEnemies": null
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4055535033279528
+                },
+                {
+                  "fileID": 4094283985748868
+                },
+                {
+                  "fileID": 4878983242975409
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4838352681112328
+                },
+                {
+                  "fileID": 4993076962757715
+                },
+                {
+                  "fileID": 4911451331743778
+                }
+              ],
+              "bannedEnemies": null
+            }
+          ]
+        }
+      ],
+      "Section 2": [
+        {
+          "spawnPoints": [
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4703850765261885
+                },
+                {
+                  "fileID": 4692131138185966
+                },
+                {
+                  "fileID": 4161342230376464
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4734143864522482
+                },
+                {
+                  "fileID": 4201897449910191
+                },
+                {
+                  "fileID": 4659395017433157
+                }
+              ],
+              "bannedEnemies": "03000000"
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4781547038788540
+                },
+                {
+                  "fileID": 4045320508559585
+                },
+                {
+                  "fileID": 4919715546813240
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4161079637499176
+                },
+                {
+                  "fileID": 4031355914570132
+                },
+                {
+                  "fileID": 4056435115414594
+                }
+              ],
+              "bannedEnemies": null
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4667785438668446
+                },
+                {
+                  "fileID": 4554240831246011
+                },
+                {
+                  "fileID": 4714397710475260
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4587083680832752
+                },
+                {
+                  "fileID": 4534964404139401
+                },
+                {
+                  "fileID": 4356700911858394
+                }
+              ],
+              "bannedEnemies": null
+            }
+          ]
+        }
+      ],
+      "Section 3": [
+        {
+          "spawnPoints": [
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4660454898600107
+                },
+                {
+                  "fileID": 4079961849258352
+                },
+                {
+                  "fileID": 4238834308295387
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4008770253507523
+                },
+                {
+                  "fileID": 4652476007473644
+                },
+                {
+                  "fileID": 4045549052472940
+                }
+              ],
+              "bannedEnemies": "03000000"
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4797698078144085
+                },
+                {
+                  "fileID": 4809288501262078
+                },
+                {
+                  "fileID": 4733197508254210
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4391381606989912
+                },
+                {
+                  "fileID": 4327995293081625
+                },
+                {
+                  "fileID": 4653717033421991
+                }
+              ],
+              "bannedEnemies": null
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4070205081729383
+                },
+                {
+                  "fileID": 4610208554618962
+                },
+                {
+                  "fileID": 4135074601103973
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4191838273672616
+                },
+                {
+                  "fileID": 4536873717977885
+                },
+                {
+                  "fileID": 4038464535041785
+                }
+              ],
+              "bannedEnemies": null
+            }
+          ]
+        }
+      ],
+      "Section 4": [
+        {
+          "spawnPoints": [
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4039761640139988
+                },
+                {
+                  "fileID": 4244195695387915
+                },
+                {
+                  "fileID": 4413102554676527
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4225286259459049
+                },
+                {
+                  "fileID": 4735156096940890
+                },
+                {
+                  "fileID": 4069473573298406
+                }
+              ],
+              "bannedEnemies": "03000000"
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4410865556287939
+                },
+                {
+                  "fileID": 4414892031709472
+                },
+                {
+                  "fileID": 4610617575939957
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4289607371863407
+                },
+                {
+                  "fileID": 4786040797758650
+                },
+                {
+                  "fileID": 4713443856332608
+                }
+              ],
+              "bannedEnemies": null
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4445189754957145
+                },
+                {
+                  "fileID": 4694102898667704
+                },
+                {
+                  "fileID": 4725357837634651
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4656800814296031
+                },
+                {
+                  "fileID": 4760841117647324
+                },
+                {
+                  "fileID": 4742177870120833
+                }
+              ],
+              "bannedEnemies": null
+            }
+          ]
+        }
+      ],
+      "Section 5": [
+        {
+          "spawnPoints": [
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4007271993718322
+                },
+                {
+                  "fileID": 4133854062310043
+                },
+                {
+                  "fileID": 4947810564538834
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4041320612064254
+                },
+                {
+                  "fileID": 4228214996573471
+                },
+                {
+                  "fileID": 4641204913154593
+                }
+              ],
+              "bannedEnemies": "03000000"
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4329075794784248
+                },
+                {
+                  "fileID": 4422702022971346
+                },
+                {
+                  "fileID": 4067212629291419
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4562080017223558
+                },
+                {
+                  "fileID": 4129116114662800
+                },
+                {
+                  "fileID": 4208269818966246
+                }
+              ],
+              "bannedEnemies": null
+            }
+          ]
+        }
+      ],
+      "Section 6": [
+        {
+          "spawnPoints": [
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4274088443893264
+                },
+                {
+                  "fileID": 4283415492601351
+                },
+                {
+                  "fileID": 4693528703414765
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4222115391670268
+                },
+                {
+                  "fileID": 4236825115137097
+                },
+                {
+                  "fileID": 4660454898600107
+                }
+              ],
+              "bannedEnemies": "03000000"
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4295988352646080
+                },
+                {
+                  "fileID": 4008770253507523
+                },
+                {
+                  "fileID": 4652476007473644
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4824711297872077
+                },
+                {
+                  "fileID": 4891103352497787
+                },
+                {
+                  "fileID": 4797698078144085
+                }
+              ],
+              "bannedEnemies": null
+            },
+            {
+              "leftSpawnPointsGroup": [
+                {
+                  "fileID": 4290410981445608
+                },
+                {
+                  "fileID": 4391381606989912
+                },
+                {
+                  "fileID": 4327995293081625
+                }
+              ],
+              "rightSpawnPointsGroup": [
+                {
+                  "fileID": 4717369901526261
+                },
+                {
+                  "fileID": 4710268039719040
+                },
+                {
+                  "fileID": 4070205081729383
+                }
+              ],
+              "bannedEnemies": null
+            }
+          ]
+        }
+      ],
+      "Silver Chest": [
+        {
+          "currencyValue": 100,
+          "currencyType": 0
+        }
+      ],
+      "Zombie 2": [
+        {
+          "baseHealth": 40,
+          "baseShield": 0,
+          "baseDamage": 50,
+          "zombieType": 1
+        }
+      ],
+      "Zombie 3": [
+        {
+          "baseHealth": 40,
+          "baseShield": 0,
+          "baseDamage": 50,
+          "zombieType": 2
+        }
+      ],
+      "Zombie": [
+        {
+          "baseHealth": 40,
+          "baseShield": 0,
+          "baseDamage": 50,
+          "zombieType": 0
+        }
+      ]
+    },
+    "sections": {
+      "Initial": [
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -21.25
+            ],
+            [
+              1.75,
+              0.67,
+              -20.5
+            ],
+            [
+              2.75,
+              0.67,
+              -20.5
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -21.25
+            ],
+            [
+              2.25,
+              0.67,
+              -20.5
+            ],
+            [
+              3.25,
+              0.67,
+              -20.5
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        },
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -13.5
+            ],
+            [
+              1.75,
+              0.67,
+              -12.75
+            ],
+            [
+              2.75,
+              0.67,
+              -12.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -13.5
+            ],
+            [
+              2.25,
+              0.67,
+              -12.75
+            ],
+            [
+              3.25,
+              0.67,
+              -12.75
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        }
+      ],
+      "Boss Section": [
+        {
+          "left": [
+            [
+              2.5,
+              0.67,
+              -28.0
+            ],
+            [
+              2.0,
+              0.67,
+              -27.25
+            ],
+            [
+              3.0,
+              0.67,
+              -27.25
+            ]
+          ],
+          "right": [
+            [
+              2.5,
+              0.67,
+              -28.0
+            ],
+            [
+              2.0,
+              0.67,
+              -27.25
+            ],
+            [
+              3.0,
+              0.67,
+              -27.25
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        },
+        {
+          "left": [
+            [
+              2.5,
+              0.67,
+              -20.0
+            ],
+            [
+              2.0,
+              0.67,
+              -19.25
+            ],
+            [
+              3.0,
+              0.67,
+              -19.25
+            ]
+          ],
+          "right": [
+            [
+              2.5,
+              0.67,
+              -20.0
+            ],
+            [
+              2.0,
+              0.67,
+              -19.25
+            ],
+            [
+              3.0,
+              0.67,
+              -19.25
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        }
+      ],
+      "Crownless Boss Section": [
+        {
+          "left": [
+            [
+              2.5,
+              0.67,
+              -28.0
+            ],
+            [
+              2.0,
+              0.67,
+              -27.25
+            ],
+            [
+              3.0,
+              0.67,
+              -27.25
+            ]
+          ],
+          "right": [
+            [
+              2.5,
+              0.67,
+              -28.0
+            ],
+            [
+              2.0,
+              0.67,
+              -27.25
+            ],
+            [
+              3.0,
+              0.67,
+              -27.25
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        },
+        {
+          "left": [
+            [
+              2.5,
+              0.67,
+              -20.0
+            ],
+            [
+              2.0,
+              0.67,
+              -19.25
+            ],
+            [
+              3.0,
+              0.67,
+              -19.25
+            ]
+          ],
+          "right": [
+            [
+              2.5,
+              0.67,
+              -20.0
+            ],
+            [
+              2.0,
+              0.67,
+              -19.25
+            ],
+            [
+              3.0,
+              0.67,
+              -19.25
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        }
+      ],
+      "MiniBoss1 Section": [
+        {
+          "left": [
+            [
+              2.5,
+              0.67,
+              -28.0
+            ],
+            [
+              2.0,
+              0.67,
+              -27.25
+            ],
+            [
+              3.0,
+              0.67,
+              -27.25
+            ]
+          ],
+          "right": [
+            [
+              2.5,
+              0.67,
+              -28.0
+            ],
+            [
+              2.0,
+              0.67,
+              -27.25
+            ],
+            [
+              3.0,
+              0.67,
+              -27.25
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        },
+        {
+          "left": [
+            [
+              2.5,
+              0.67,
+              -20.0
+            ],
+            [
+              2.0,
+              0.67,
+              -19.25
+            ],
+            [
+              3.0,
+              0.67,
+              -19.25
+            ]
+          ],
+          "right": [
+            [
+              2.5,
+              0.67,
+              -20.0
+            ],
+            [
+              2.0,
+              0.67,
+              -19.25
+            ],
+            [
+              3.0,
+              0.67,
+              -19.25
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        }
+      ],
+      "MiniBoss2 Section": [
+        {
+          "left": [
+            [
+              2.5,
+              0.67,
+              -28.0
+            ],
+            [
+              2.0,
+              0.67,
+              -27.25
+            ],
+            [
+              3.0,
+              0.67,
+              -27.25
+            ]
+          ],
+          "right": [
+            [
+              2.5,
+              0.67,
+              -28.0
+            ],
+            [
+              2.0,
+              0.67,
+              -27.25
+            ],
+            [
+              3.0,
+              0.67,
+              -27.25
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        },
+        {
+          "left": [
+            [
+              2.5,
+              0.67,
+              -20.0
+            ],
+            [
+              2.0,
+              0.67,
+              -19.25
+            ],
+            [
+              3.0,
+              0.67,
+              -19.25
+            ]
+          ],
+          "right": [
+            [
+              2.5,
+              0.67,
+              -20.0
+            ],
+            [
+              2.0,
+              0.67,
+              -19.25
+            ],
+            [
+              3.0,
+              0.67,
+              -19.25
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        }
+      ],
+      "Section 1": [
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -28.0
+            ],
+            [
+              1.75,
+              0.67,
+              -27.25
+            ],
+            [
+              2.75,
+              0.67,
+              -27.25
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -28.0
+            ],
+            [
+              2.25,
+              0.67,
+              -27.25
+            ],
+            [
+              3.25,
+              0.67,
+              -27.25
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        },
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -20.5
+            ],
+            [
+              1.75,
+              0.67,
+              -19.75
+            ],
+            [
+              2.75,
+              0.67,
+              -19.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -20.5
+            ],
+            [
+              2.25,
+              0.67,
+              -19.75
+            ],
+            [
+              3.25,
+              0.67,
+              -19.75
+            ]
+          ],
+          "banned": []
+        },
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -13.5
+            ],
+            [
+              1.75,
+              0.67,
+              -12.75
+            ],
+            [
+              2.75,
+              0.67,
+              -12.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -13.5
+            ],
+            [
+              2.25,
+              0.67,
+              -12.75
+            ],
+            [
+              3.25,
+              0.67,
+              -12.75
+            ]
+          ],
+          "banned": []
+        }
+      ],
+      "Section 2": [
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -27.5
+            ],
+            [
+              1.75,
+              0.67,
+              -26.75
+            ],
+            [
+              2.75,
+              0.67,
+              -26.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -27.5
+            ],
+            [
+              2.25,
+              0.67,
+              -26.75
+            ],
+            [
+              3.25,
+              0.67,
+              -26.75
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        },
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -21.0
+            ],
+            [
+              1.75,
+              0.67,
+              -20.25
+            ],
+            [
+              2.75,
+              0.67,
+              -20.25
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -21.0
+            ],
+            [
+              2.25,
+              0.67,
+              -20.25
+            ],
+            [
+              3.25,
+              0.67,
+              -20.25
+            ]
+          ],
+          "banned": []
+        },
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -14.5
+            ],
+            [
+              1.75,
+              0.67,
+              -13.75
+            ],
+            [
+              2.75,
+              0.67,
+              -13.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -14.5
+            ],
+            [
+              2.25,
+              0.67,
+              -13.75
+            ],
+            [
+              3.25,
+              0.67,
+              -13.75
+            ]
+          ],
+          "banned": []
+        }
+      ],
+      "Section 3": [
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -27.5
+            ],
+            [
+              1.75,
+              0.67,
+              -26.75
+            ],
+            [
+              2.75,
+              0.67,
+              -26.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -27.5
+            ],
+            [
+              2.25,
+              0.67,
+              -26.75
+            ],
+            [
+              3.25,
+              0.67,
+              -26.75
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        },
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -20.5
+            ],
+            [
+              1.75,
+              0.67,
+              -19.75
+            ],
+            [
+              2.75,
+              0.67,
+              -19.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -20.5
+            ],
+            [
+              2.25,
+              0.67,
+              -19.75
+            ],
+            [
+              3.25,
+              0.67,
+              -19.75
+            ]
+          ],
+          "banned": []
+        },
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -14.5
+            ],
+            [
+              1.75,
+              0.67,
+              -13.75
+            ],
+            [
+              2.75,
+              0.67,
+              -13.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -14.5
+            ],
+            [
+              2.25,
+              0.67,
+              -13.75
+            ],
+            [
+              3.25,
+              0.67,
+              -13.75
+            ]
+          ],
+          "banned": []
+        }
+      ],
+      "Section 4": [
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -27.5
+            ],
+            [
+              1.75,
+              0.67,
+              -26.75
+            ],
+            [
+              2.75,
+              0.67,
+              -26.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -27.5
+            ],
+            [
+              2.25,
+              0.67,
+              -26.75
+            ],
+            [
+              3.25,
+              0.67,
+              -26.75
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        },
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -20.5
+            ],
+            [
+              1.75,
+              0.67,
+              -19.75
+            ],
+            [
+              2.75,
+              0.67,
+              -19.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -20.5
+            ],
+            [
+              2.25,
+              0.67,
+              -19.75
+            ],
+            [
+              3.25,
+              0.67,
+              -19.75
+            ]
+          ],
+          "banned": []
+        },
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -14.5
+            ],
+            [
+              1.75,
+              0.67,
+              -13.75
+            ],
+            [
+              2.75,
+              0.67,
+              -13.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -14.5
+            ],
+            [
+              2.25,
+              0.67,
+              -13.75
+            ],
+            [
+              3.25,
+              0.67,
+              -13.75
+            ]
+          ],
+          "banned": []
+        }
+      ],
+      "Section 5": [
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -27.0
+            ],
+            [
+              1.75,
+              0.67,
+              -26.25
+            ],
+            [
+              2.75,
+              0.67,
+              -26.25
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -27.0
+            ],
+            [
+              2.25,
+              0.67,
+              -26.25
+            ],
+            [
+              3.25,
+              0.67,
+              -26.25
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        },
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -16.5
+            ],
+            [
+              1.75,
+              0.67,
+              -15.75
+            ],
+            [
+              2.75,
+              0.67,
+              -15.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -16.5
+            ],
+            [
+              2.25,
+              0.67,
+              -15.75
+            ],
+            [
+              3.25,
+              0.67,
+              -15.75
+            ]
+          ],
+          "banned": []
+        }
+      ],
+      "Section 6": [
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -27.5
+            ],
+            [
+              1.75,
+              0.67,
+              -26.75
+            ],
+            [
+              2.75,
+              0.67,
+              -26.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -27.5
+            ],
+            [
+              2.25,
+              0.67,
+              -26.75
+            ],
+            [
+              3.25,
+              0.67,
+              -26.75
+            ]
+          ],
+          "banned": [
+            3
+          ]
+        },
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -20.5
+            ],
+            [
+              1.75,
+              0.67,
+              -19.75
+            ],
+            [
+              2.75,
+              0.67,
+              -19.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -20.5
+            ],
+            [
+              2.25,
+              0.67,
+              -19.75
+            ],
+            [
+              3.25,
+              0.67,
+              -19.75
+            ]
+          ],
+          "banned": []
+        },
+        {
+          "left": [
+            [
+              2.25,
+              0.67,
+              -14.5
+            ],
+            [
+              1.75,
+              0.67,
+              -13.75
+            ],
+            [
+              2.75,
+              0.67,
+              -13.75
+            ]
+          ],
+          "right": [
+            [
+              2.75,
+              0.67,
+              -14.5
+            ],
+            [
+              2.25,
+              0.67,
+              -13.75
+            ],
+            [
+              3.25,
+              0.67,
+              -13.75
+            ]
+          ],
+          "banned": []
+        }
+      ]
+    }
+  },
+  "enums": {
+    "Stat": {
+      "0": "Amount_Of_Arrows",
+      "1": "Armor",
+      "2": "Armor_Against_Bosses",
+      "3": "Armor_Penetration_Chance",
+      "4": "Arrow_Damage",
+      "5": "Arrow_Piercing",
+      "6": "Arrow_Rebound_Chance",
+      "7": "Arrow_Speed",
+      "8": "GroupsPerSection",
+      "9": "Beam_Cooldown",
+      "10": "Beam_Damage",
+      "11": "Beam_Duration",
+      "12": "Beam_Fire_Rate",
+      "13": "Bleed_Chance",
+      "14": "Bleed_Damage",
+      "15": "Bleed_Duration",
+      "16": "Bleeding_Rate",
+      "17": "Bow_Fire_Rate",
+      "18": "Burn_Chance",
+      "19": "Burn_Damage",
+      "20": "Burn_Duration",
+      "21": "Burning_Rate",
+      "22": "Critic_Chance",
+      "23": "Critic_Damage",
+      "24": "Crown_Currency",
+      "25": "Curse_Chance",
+      "26": "Curse_Duration",
+      "27": "Curse_Effect",
+      "28": "Curse_Factor",
+      "29": "Dagger_Attack_Rate",
+      "30": "Dagger_Damage",
+      "31": "Damage_Against_Bosses",
+      "32": "Distance_Range",
+      "33": "Dragon_Fire_Rate",
+      "34": "Enemy_Armor",
+      "35": "Enemy_Armor_Chance",
+      "36": "Enemy_Health",
+      "37": "EnemiesPerGroup",
+      "38": "Explosion_Chance",
+      "39": "Explosion_Damage",
+      "40": "Explosion_Size",
+      "41": "FireArrow_Damage",
+      "42": "Ghost_Fire_Rate",
+      "43": "Gem_Currency_Amount",
+      "44": "Gem_Currency_Value",
+      "45": "Gem_Spawn_Chance",
+      "46": "GoldCoin_Currency_Amount",
+      "47": "GoldCoin_Currency_Value",
+      "48": "GoldCoin_Spawn_Chance",
+      "49": "Crown_Currency_Amount",
+      "50": "Crown_Currency_Value",
+      "51": "HealOnHit_Amount",
+      "52": "HealOnHit_Chance",
+      "53": "HealOnKill_Amount",
+      "54": "HealOnKill_Chance",
+      "55": "HP_Steal",
+      "56": "HP_Steal_Chance",
+      "57": "MaxHP",
+      "58": "Max_Bullet_Rebounds",
+      "59": "Melee_range",
+      "60": "PickupRange",
+      "61": "Horizontal_Speed",
+      "62": "Beam_Critic_Chance",
+      "63": "Beam_Critic_Multiplier",
+      "64": "CursedArrow_Damage",
+      "65": "Armor_Against_Row",
+      "66": "Beam_Range",
+      "67": "Impact_Armor",
+      "68": "Armor_Against_Projectiles",
+      "69": "Porcupine_Damage"
+    },
+    "StatType": {
+      "0": "Amount",
+      "1": "Percentage"
+    },
+    "WeaponType": {
+      "0": "Bow",
+      "1": "Dagger",
+      "2": "Dragon",
+      "3": "Ghost",
+      "4": "ThirdEye",
+      "5": "None"
+    },
+    "FireType": {
+      "0": "Click",
+      "1": "Hold",
+      "2": "Auto",
+      "3": "None"
+    },
+    "TabType": {
+      "0": "UpgradesTab",
+      "1": "AchievementsTab",
+      "2": "BestiaryTab",
+      "3": "None",
+      "4": "GodTab"
+    },
+    "AbilityType": {
+      "0": "None",
+      "1": "Harvester",
+      "2": "ArrowShield",
+      "3": "Shuriken",
+      "4": "SlowDown"
+    },
+    "CurrencyType": {
+      "0": "GoldCoin",
+      "1": "Gem",
+      "2": "Crown",
+      "3": "None"
+    },
+    "ZombieType": {
+      "0": "Zombie",
+      "1": "Zombie_Variant_I",
+      "2": "Zombie_Variant_II",
+      "3": "Mummy",
+      "4": "Mini_Boss_I",
+      "5": "Mini_Boss_II",
+      "6": "Boss"
+    },
+    "AchievementType": {
+      "0": "FirstDive",
+      "1": "FirstMiniBoss",
+      "2": "FirstBoss",
+      "3": "BossSlayer",
+      "4": "RowDiver",
+      "5": "Prestige1",
+      "6": "Prestige2",
+      "7": "Prestige3",
+      "8": "PrestigeMaster",
+      "9": "CoinMaster",
+      "10": "BowMaster",
+      "11": "Vampire",
+      "12": "Healer",
+      "13": "ArmoredTank",
+      "14": "BeatTheGame",
+      "15": "BenevolentGod",
+      "16": "EvilGod",
+      "17": "GemMaster"
+    }
+  },
+  "serialized_stats": [
+    {
+      "m_ObjectHideFlags": 0,
+      "m_CorrespondingSourceObject": {
+        "fileID": 0
+      },
+      "m_PrefabInstance": {
+        "fileID": 0
+      },
+      "m_PrefabAsset": {
+        "fileID": 0
+      },
+      "m_GameObject": {
+        "fileID": 422
+      },
+      "m_Enabled": 1,
+      "m_EditorHideFlags": 0,
+      "m_Script": {
+        "fileID": 11500000,
+        "guid": "77dcf41e70dc5789a62c4abc4eb0e1a6",
+        "type": 3
+      },
+      "m_Name": null,
+      "m_EditorClassIdentifier": null,
+      "baseStats": {
+        "keys": "3900000011000000200000000000000007000000040000003c0000001e0000001d0000003b0000003d00000035000000330000002100000029000000400000002a0000001b000000190000001a000000120000001500000014000000130000000c0000000a0000000b0000000e0000000f0000001000000025000000080000003f00000042000000170000003a00000028000000",
+        "values": [
+          100,
+          1,
+          10,
+          1,
+          5,
+          16,
+          0.6,
+          150,
+          0.6,
+          4,
+          0.8,
+          4,
+          4,
+          0.5,
+          50,
+          200,
+          0.5,
+          3,
+          30,
+          2,
+          30,
+          1,
+          2,
+          200,
+          1,
+          1000000,
+          3,
+          1000,
+          2,
+          1,
+          1,
+          2,
+          3,
+          6,
+          2,
+          1,
+          4
+        ]
+      },
+      "currentStats": {
+        "keys": "000000000100000002000000030000000400000005000000060000000700000008000000090000000a0000000b0000000c0000000d0000000e0000000f000000100000001100000012000000130000001400000015000000160000001700000018000000190000001a0000001b0000001c0000001d0000001e0000001f000000200000002100000022000000230000002400000025000000260000002700000028000000290000002a0000002b0000002c0000002d0000002e0000002f000000300000003100000032000000330000003400000035000000360000003700000038000000390000003a0000003b0000003c0000003d0000003e0000003f000000400000004100000042000000430000004400000045000000",
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "OnStatUpdated": {
+        "m_PersistentCalls": {
+          "m_Calls": []
+        }
+      }
+    }
+  ]
+}

@@ -1,16 +1,20 @@
 extends Control
 const Progress = preload("res://Games/RowDivers/RowDiversProgress.gd")
 const Style = preload("res://Games/RowDivers/RowDiversStyle.gd")
+const Analytics = preload("res://Games/RowDivers/RowDiversAnalytics.gd")
+const Endings = preload("res://Games/RowDivers/RowDiversEndings.gd")
 var heading: Label
 var story: RichTextLabel
-var choices: HBoxContainer
+var choices: GridContainer
 var continue_button: Button
 var reveal: Tween
 var persist_results = true
 var audio: Node
 var illustration: TextureRect
+var choice_made = false
 
 func _ready() -> void:
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Global.game_state = Util.GAME_STATES.UPGRADES
 	audio = preload("res://Games/RowDivers/RowDiversAudio.gd").new()
@@ -18,7 +22,7 @@ func _ready() -> void:
 	audio.play_context("god")
 	var data: Dictionary = Progress.load_data()
 	Progress.check_achievements(data)
-	if not data.unlocks.get("GodTab", false) or not data.get("god_panel_unlocked", false):
+	if Progress.Demo.enabled() or not data.unlocks.get("GodTab", false) or not data.get("god_panel_unlocked", false):
 		get_tree().call_deferred("change_scene_to_file", Util.get_upgrade_scene_path())
 		return
 	var background := ColorRect.new()
@@ -29,11 +33,11 @@ func _ready() -> void:
 	add_child(center)
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(850, 530)
+	panel.custom_minimum_size = Vector2(1100, 530)
 	panel.add_theme_stylebox_override("panel", Style.panel())
 	center.add_child(panel)
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 24)
+	column.add_theme_constant_override("separation", 16)
 	panel.add_child(column)
 	var tag := Style.label("RAILWAY FURY  /  THE END OF THE ROW", 16, true)
 	tag.modulate = Style.GOLD
@@ -41,29 +45,40 @@ func _ready() -> void:
 	heading = Style.label("ONE LAST CHOICE", 42, true)
 	column.add_child(heading)
 	illustration = TextureRect.new()
-	illustration.custom_minimum_size = Vector2(0, 150)
+	illustration.custom_minimum_size = Vector2(0, 440)
 	illustration.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	illustration.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	illustration.visible = preload("res://Games/RowDivers/RowDiversGraphics.gd").original()
-	if illustration.visible: illustration.texture = preload("res://Games/RowDivers/RowDiversGraphics.gd").texture("Throne.png")
+	illustration.hide()
 	column.add_child(illustration)
 	story = RichTextLabel.new()
 	story.fit_content = true
-	story.custom_minimum_size = Vector2(790, 215)
+	story.custom_minimum_size = Vector2(1056, 215)
 	story.add_theme_font_override("normal_font", Style.BODY)
 	story.add_theme_font_size_override("normal_font_size", 23)
-	story.text = "Four rows. Four crowns. The last sovereign falls, and the wheels finally slow.\n\nThe power that kept this place turning now belongs to you.\nWill you free those who remain, or take the throne for yourself?"
+	story.text = "Four rows. Four crowns. The last sovereign falls, and the wheels finally slow.\n\nBuild a home from the railway, or leave its power behind and step into the unknown.\n\nWhat will you do with the end of the line?"
 	column.add_child(story)
-	choices = HBoxContainer.new()
-	choices.add_theme_constant_override("separation", 18)
+	choices = GridContainer.new()
+	choices.columns = 2
+	choices.add_theme_constant_override("h_separation", 18)
+	choices.add_theme_constant_override("v_separation", 12)
 	column.add_child(choices)
-	for choice in ["BenevolentGod", "EvilGod"]:
+	for choice in Endings.CHOICES:
+		var card := VBoxContainer.new()
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		choices.add_child(card)
+		var picture := TextureRect.new()
+		picture.texture = load(Endings.CHOICES[choice].texture)
+		picture.custom_minimum_size = Vector2(0, 255)
+		picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		picture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.add_child(picture)
 		var button := Button.new()
-		button.text = "FREE THEM" if choice == "BenevolentGod" else "CLAIM THE THRONE"
+		button.text = Endings.CHOICES[choice].button
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		Style.style_button(button)
 		button.pressed.connect(_choose.bind(choice))
-		choices.add_child(button)
+		card.add_child(button)
 	continue_button = Button.new()
 	continue_button.text = "THANKS FOR PLAYING  /  MAIN MENU"
 	Style.style_button(continue_button)
@@ -80,23 +95,29 @@ func _reveal() -> void:
 	reveal.tween_property(story, "visible_ratio", 1.0, 3.5)
 
 func _choose(choice: String) -> void:
+	if choice_made or not Endings.CHOICES.has(choice): return
+	choice_made = true
+	var definition: Dictionary = Endings.CHOICES[choice]
 	audio.play_context("credits")
 	audio.sound("ability")
 	var data: Dictionary = Progress.load_data()
-	data.achievements[choice] = true
-	data.claimed[choice] = true
 	data["ending"] = choice
-	if persist_results: Progress.save_data(data)
+	if not data.has("endings_seen"): data.endings_seen = {}
+	data.endings_seen[choice] = true
+	if persist_results:
+		preload("res://Games/RowDivers/RowDiversTiming.gd").record(data,"ending")
+		Analytics.ending(data, Progress.free_aim_mode, Progress.active_tree)
+		Progress.save_data(data)
 	choices.hide()
-	heading.text = "A NEW DAWN" if choice == "BenevolentGod" else "THE CROWN IS YOURS"
-	if illustration != null and illustration.visible:
-		illustration.texture = preload("res://Games/RowDivers/RowDiversGraphics.gd").texture("BenevolentGod.png" if choice == "BenevolentGod" else "DevilGod.png")
-	story.text = ("You break the engine's hold and open the gates. For the first time, the row carries no prisoners.\n\nThe tracks stretch into daylight. Whatever comes next, they will choose it freely." if choice == "BenevolentGod" else "You sit upon the empty throne. The engine wakes to your command, and every gate bows before you.\n\nThe row runs again. This time, you decide where it leads.") + "\n\nThank you for playing Railway Fury.\nArt: Synty Studios  •  Audio: see asset credits"
+	heading.text = tr(definition.title)
+	illustration.texture = load(definition.texture)
+	illustration.show()
+	var credits := tr("Art: Synty Studios")
 	if preload("res://Games/RowDivers/RowDiversGraphics.gd").illustrated():
-		story.text = story.text.replace("Art: Synty Studios", "Illustrated artwork: AI-generated")
+		credits = ""
 	elif preload("res://Games/RowDivers/RowDiversGraphics.gd").original():
-		story.text = story.text.replace("Art: Synty Studios", "Classic artwork: Hermurx")
-		story.text = story.text.replace("  •  Audio:", "\nAudio:")
+		credits = tr("Classic artwork: Hermurx")
+	story.text = tr(definition.story) + "\n\n" + tr("Thank you for playing Railway Fury.") + "\n" + credits + "\n" + tr("Audio: see asset credits")
 	if reveal != null: reveal.kill()
 	_reveal()
 	continue_button.show()

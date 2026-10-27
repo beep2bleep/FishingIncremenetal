@@ -4,14 +4,14 @@
   "upgrades": [
     {
       "upgradeName": "Dagger Attack Range III",
-      "upgradeDescription": "Increases Dagger Attack Range By 1",
+      "upgradeDescription": "Per level: dagger range +0.25.",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 30,
+      "baseUpgradeCost": 33,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -43,7 +43,7 @@
         {
           "stat": "Melee_range",
           "percentage": false,
-          "amount": 1
+          "amount": 0.25
         }
       ],
       "children": [],
@@ -60,7 +60,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 30,
+      "baseUpgradeCost": 33,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -144,7 +144,7 @@
     },
     {
       "upgradeName": "Arrow Damage IV",
-      "upgradeDescription": "Increases Arrow Damage By 65",
+      "upgradeDescription": "Per level: arrow damage +45.",
       "maxLevel": 5,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -183,7 +183,7 @@
         {
           "stat": "Arrow_Damage",
           "percentage": false,
-          "amount": 65
+          "amount": 45
         }
       ],
       "children": [],
@@ -193,14 +193,14 @@
     },
     {
       "upgradeName": "Impact Armor I",
-      "upgradeDescription": "Reduces collision damage with enemies by 30%",
+      "upgradeDescription": "Per level: contact damage reduction +85%.",
       "maxLevel": 1,
       "level": 0,
-      "unlockAtParentLevel": 2,
+      "unlockAtParentLevel": 0,
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 40,
+      "baseUpgradeCost": 4,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -232,7 +232,7 @@
         {
           "stat": "Impact_Armor",
           "percentage": true,
-          "amount": 30
+          "amount": 85
         }
       ],
       "children": [],
@@ -242,14 +242,14 @@
     },
     {
       "upgradeName": "Band-Aid I",
-      "upgradeDescription": "Increases Max Health By 300",
+      "upgradeDescription": "Per level: maximum health +405.",
       "maxLevel": 5,
       "level": 0,
       "unlockAtParentLevel": 2,
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 4000,
+      "baseUpgradeCost": 4400,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -281,7 +281,7 @@
         {
           "stat": "MaxHP",
           "percentage": false,
-          "amount": 300
+          "amount": 405.0
         }
       ],
       "children": [
@@ -300,7 +300,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 1500,
+      "baseUpgradeCost": 1650,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -349,7 +349,7 @@
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 30,
+      "baseUpgradeCost": 33,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -406,14 +406,14 @@
     },
     {
       "upgradeName": "Red Heart",
-      "upgradeDescription": "Increases Max Health By 1,200",
+      "upgradeDescription": "Per level: maximum health +1,620.",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 3,
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 15000,
+      "baseUpgradeCost": 16500,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -445,7 +445,7 @@
         {
           "stat": "MaxHP",
           "percentage": false,
-          "amount": 1200
+          "amount": 1620.0
         }
       ],
       "children": [
@@ -457,7 +457,7 @@
     },
     {
       "upgradeName": "Dagger Attack Range I",
-      "upgradeDescription": "Increases Dagger Attack Range By 25%",
+      "upgradeDescription": "Per level: dagger range +5%.",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -496,7 +496,7 @@
         {
           "stat": "Melee_range",
           "percentage": true,
-          "amount": 25
+          "amount": 5
         }
       ],
       "children": [],
@@ -564,7 +564,7 @@
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 5,
+      "baseUpgradeCost": 6,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -625,7 +625,7 @@
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 25,
+      "baseUpgradeCost": 28,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -667,14 +667,14 @@
     },
     {
       "upgradeName": "Dagger Attack Speed II",
-      "upgradeDescription": "Increases Dagger Attack Speed By 1",
+      "upgradeDescription": "Per level: dagger attack rate +0.75.",
       "maxLevel": 4,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 10,
+      "baseUpgradeCost": 11,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -706,7 +706,7 @@
         {
           "stat": "Dagger_Attack_Rate",
           "percentage": false,
-          "amount": 1
+          "amount": 0.75
         }
       ],
       "children": [],
@@ -723,7 +723,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 1500,
+      "baseUpgradeCost": 1650,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -776,7 +776,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 5000,
+      "baseUpgradeCost": 5500,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -818,7 +818,7 @@
     },
     {
       "upgradeName": "Max HP I",
-      "upgradeDescription": "Increases Max Health By 5",
+      "upgradeDescription": "Per level: maximum health +6.",
       "maxLevel": 10,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -857,7 +857,7 @@
         {
           "stat": "MaxHP",
           "percentage": false,
-          "amount": 5
+          "amount": 6
         }
       ],
       "children": [
@@ -878,7 +878,7 @@
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 5,
+      "baseUpgradeCost": 6,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1056,7 +1056,7 @@
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 400,
+      "baseUpgradeCost": 440,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1108,7 +1108,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 600,
+      "baseUpgradeCost": 660,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1152,14 +1152,14 @@
     },
     {
       "upgradeName": "Pill III",
-      "upgradeDescription": "Increases Max Health By 200",
+      "upgradeDescription": "Per level: maximum health +270.",
       "maxLevel": 5,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 1000,
+      "baseUpgradeCost": 1100,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1191,7 +1191,7 @@
         {
           "stat": "MaxHP",
           "percentage": false,
-          "amount": 200
+          "amount": 270.0
         }
       ],
       "children": [],
@@ -1208,7 +1208,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 200,
+      "baseUpgradeCost": 220,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1260,7 +1260,7 @@
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 15,
+      "baseUpgradeCost": 16,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1414,7 +1414,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 30,
+      "baseUpgradeCost": 33,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1500,7 +1500,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 2000,
+      "baseUpgradeCost": 2200,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1542,14 +1542,14 @@
     },
     {
       "upgradeName": "Dagger Attack Range II",
-      "upgradeDescription": "Increases Dagger Attack Range By 1",
+      "upgradeDescription": "Per level: dagger range +0.25.",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 30,
+      "baseUpgradeCost": 33,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1581,7 +1581,7 @@
         {
           "stat": "Melee_range",
           "percentage": false,
-          "amount": 1
+          "amount": 0.25
         }
       ],
       "children": [
@@ -1686,14 +1686,14 @@
     },
     {
       "upgradeName": "Damage Against Bosses II",
-      "upgradeDescription": "Increases Damage Against Bosses By 60",
+      "upgradeDescription": "Per level: bonus damage against bosses +6,000.",
       "maxLevel": 3,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 2,
+      "baseUpgradeCost": 16,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1725,7 +1725,7 @@
         {
           "stat": "Damage_Against_Bosses",
           "percentage": false,
-          "amount": 60
+          "amount": 6000
         }
       ],
       "children": [
@@ -1744,7 +1744,7 @@
       "rarity": 5,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 100,
+      "baseUpgradeCost": 110,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1781,7 +1781,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 300,
+      "baseUpgradeCost": 330,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1825,7 +1825,7 @@
     },
     {
       "upgradeName": "Dagger Damage I",
-      "upgradeDescription": "Increases Dagger Damage By 100",
+      "upgradeDescription": "Per level: dagger damage +55.",
       "maxLevel": 4,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -1864,7 +1864,7 @@
         {
           "stat": "Dagger_Damage",
           "percentage": false,
-          "amount": 100
+          "amount": 55.0
         }
       ],
       "children": [
@@ -1937,7 +1937,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 4000,
+      "baseUpgradeCost": 4400,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -1982,7 +1982,7 @@
     },
     {
       "upgradeName": "Arrow Damage VIII",
-      "upgradeDescription": "Increases Arrow Damage By 245,000",
+      "upgradeDescription": "Per level: arrow damage +200,000.",
       "maxLevel": 2,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -2021,7 +2021,7 @@
         {
           "stat": "Arrow_Damage",
           "percentage": false,
-          "amount": 245000
+          "amount": 200000
         }
       ],
       "children": [],
@@ -2031,7 +2031,7 @@
     },
     {
       "upgradeName": "Arrow Damage VI",
-      "upgradeDescription": "Increases Arrow Damage By 18,000",
+      "upgradeDescription": "Per level: arrow damage +12,600.",
       "maxLevel": 2,
       "level": 0,
       "unlockAtParentLevel": 2,
@@ -2070,7 +2070,7 @@
         {
           "stat": "Arrow_Damage",
           "percentage": false,
-          "amount": 18000
+          "amount": 12600.0
         }
       ],
       "children": [],
@@ -2129,14 +2129,14 @@
     },
     {
       "upgradeName": "Dagger Damage III",
-      "upgradeDescription": "Increases Dagger Damage By 450,000",
+      "upgradeDescription": "Per level: dagger damage +247,500.",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 1000,
+      "baseUpgradeCost": 1100,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2168,7 +2168,7 @@
         {
           "stat": "Dagger_Damage",
           "percentage": false,
-          "amount": 450000
+          "amount": 247500.0
         }
       ],
       "children": [
@@ -2187,7 +2187,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 500,
+      "baseUpgradeCost": 550,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2235,7 +2235,7 @@
       "upgradeDescription": "Increases Max Armor By 5",
       "maxLevel": 4,
       "level": 0,
-      "unlockAtParentLevel": 8,
+      "unlockAtParentLevel": 4,
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
@@ -2288,7 +2288,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 5000,
+      "baseUpgradeCost": 5500,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2332,14 +2332,14 @@
     },
     {
       "upgradeName": "Max HP IV",
-      "upgradeDescription": "Increases Max Health By 150",
+      "upgradeDescription": "Per level: maximum health +200.",
       "maxLevel": 5,
       "level": 0,
       "unlockAtParentLevel": 3,
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 200,
+      "baseUpgradeCost": 220,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2371,7 +2371,7 @@
         {
           "stat": "MaxHP",
           "percentage": false,
-          "amount": 150
+          "amount": 200
         }
       ],
       "children": [],
@@ -2388,7 +2388,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 4000,
+      "baseUpgradeCost": 4400,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2432,14 +2432,14 @@
     },
     {
       "upgradeName": "Medicine I",
-      "upgradeDescription": "Increase Current Max Health By 200",
+      "upgradeDescription": "Per level: maximum health +270.",
       "maxLevel": 10,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 200,
+      "baseUpgradeCost": 220,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2471,7 +2471,7 @@
         {
           "stat": "MaxHP",
           "percentage": false,
-          "amount": 200
+          "amount": 270.0
         }
       ],
       "children": [
@@ -2484,7 +2484,7 @@
     },
     {
       "upgradeName": "Arrow Damage VII",
-      "upgradeDescription": "Increases Arrow Damage By 240,000",
+      "upgradeDescription": "Per level: arrow damage +168,000.",
       "maxLevel": 2,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -2523,7 +2523,7 @@
         {
           "stat": "Arrow_Damage",
           "percentage": false,
-          "amount": 240000
+          "amount": 168000.0
         }
       ],
       "children": [
@@ -2535,14 +2535,14 @@
     },
     {
       "upgradeName": "Damage Against Bosses III",
-      "upgradeDescription": "Increases Damage Against Bosses By 100",
+      "upgradeDescription": "Per level: bonus damage against bosses +400,000.",
       "maxLevel": 3,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 30,
+      "baseUpgradeCost": 660,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2574,7 +2574,7 @@
         {
           "stat": "Damage_Against_Bosses",
           "percentage": false,
-          "amount": 100
+          "amount": 400000
         }
       ],
       "children": [
@@ -2586,14 +2586,14 @@
     },
     {
       "upgradeName": "Gain Armor and Health III",
-      "upgradeDescription": "Increases Max Health and Max Armor By 300",
+      "upgradeDescription": "Per level: armor +300; maximum health +270.",
       "maxLevel": 5,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 3000,
+      "baseUpgradeCost": 3300,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2637,7 +2637,7 @@
         {
           "stat": "MaxHP",
           "percentage": false,
-          "amount": 200
+          "amount": 270.0
         }
       ],
       "children": [
@@ -2656,7 +2656,7 @@
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 15,
+      "baseUpgradeCost": 16,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2702,7 +2702,7 @@
     },
     {
       "upgradeName": "Dagger Damage IV",
-      "upgradeDescription": "Increases Dagger Damage By 450,000",
+      "upgradeDescription": "Per level: dagger damage +247,500.",
       "maxLevel": 2,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -2741,7 +2741,7 @@
         {
           "stat": "Dagger_Damage",
           "percentage": false,
-          "amount": 450000
+          "amount": 247500.0
         }
       ],
       "children": [],
@@ -2758,7 +2758,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 500,
+      "baseUpgradeCost": 550,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2809,7 +2809,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 20,
+      "baseUpgradeCost": 22,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2861,7 +2861,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 20,
+      "baseUpgradeCost": 22,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2905,14 +2905,14 @@
     },
     {
       "upgradeName": "Syringe II",
-      "upgradeDescription": "Increases Max Health By 60",
+      "upgradeDescription": "Per level: maximum health +63.",
       "maxLevel": 10,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 20,
+      "baseUpgradeCost": 22,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -2944,7 +2944,7 @@
         {
           "stat": "MaxHP",
           "percentage": false,
-          "amount": 60
+          "amount": 63.0
         }
       ],
       "children": [],
@@ -2961,7 +2961,7 @@
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 150,
+      "baseUpgradeCost": 165,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3065,7 +3065,7 @@
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 100,
+      "baseUpgradeCost": 110,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3116,7 +3116,7 @@
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 2000,
+      "baseUpgradeCost": 2200,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3167,7 +3167,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 4000,
+      "baseUpgradeCost": 4400,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3216,7 +3216,7 @@
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 20,
+      "baseUpgradeCost": 22,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3311,14 +3311,14 @@
     },
     {
       "upgradeName": "Dagger Damage II",
-      "upgradeDescription": "Increases Dagger Damage By 500",
+      "upgradeDescription": "Per level: dagger damage +275.",
       "maxLevel": 10,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 15,
+      "baseUpgradeCost": 16,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3350,7 +3350,7 @@
         {
           "stat": "Dagger_Damage",
           "percentage": false,
-          "amount": 500
+          "amount": 275.0
         }
       ],
       "children": [
@@ -3369,7 +3369,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 500,
+      "baseUpgradeCost": 550,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3420,7 +3420,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 500,
+      "baseUpgradeCost": 550,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3462,7 +3462,7 @@
     },
     {
       "upgradeName": "Arrow Damage V",
-      "upgradeDescription": "Increases Arrow Damage By 4,000",
+      "upgradeDescription": "Per level: arrow damage +2,800.",
       "maxLevel": 2,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -3501,7 +3501,7 @@
         {
           "stat": "Arrow_Damage",
           "percentage": false,
-          "amount": 4000
+          "amount": 2800.0
         }
       ],
       "children": [
@@ -3520,7 +3520,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 200,
+      "baseUpgradeCost": 220,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3569,7 +3569,7 @@
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 25,
+      "baseUpgradeCost": 28,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3621,7 +3621,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 5000,
+      "baseUpgradeCost": 5500,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3714,7 +3714,7 @@
     },
     {
       "upgradeName": "Damage Against Bosses I",
-      "upgradeDescription": "Increases Damage Against Bosses By 20",
+      "upgradeDescription": "Per level: bonus damage against bosses +100.",
       "maxLevel": 2,
       "level": 0,
       "unlockAtParentLevel": 8,
@@ -3753,7 +3753,7 @@
         {
           "stat": "Damage_Against_Bosses",
           "percentage": false,
-          "amount": 20
+          "amount": 100
         }
       ],
       "children": [
@@ -3772,7 +3772,7 @@
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 50,
+      "baseUpgradeCost": 55,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3947,14 +3947,14 @@
     },
     {
       "upgradeName": "Beam Damage III",
-      "upgradeDescription": "Increases Beam Damage By 10,000,000",
+      "upgradeDescription": "Per level: Third Eye damage +9,500,000.",
       "maxLevel": 10,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 4000,
+      "baseUpgradeCost": 4400,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -3986,7 +3986,7 @@
         {
           "stat": "Beam_Damage",
           "percentage": false,
-          "amount": 10000000
+          "amount": 9500000.0
         }
       ],
       "children": [
@@ -3998,14 +3998,14 @@
     },
     {
       "upgradeName": "Big Heart II",
-      "upgradeDescription": "Increases Max Health By 100",
+      "upgradeDescription": "Per level: maximum health +135.",
       "maxLevel": 5,
       "level": 0,
       "unlockAtParentLevel": 6,
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 20,
+      "baseUpgradeCost": 22,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -4037,7 +4037,7 @@
         {
           "stat": "MaxHP",
           "percentage": false,
-          "amount": 100
+          "amount": 135.0
         }
       ],
       "children": [
@@ -4049,7 +4049,7 @@
     },
     {
       "upgradeName": "Bow Attack Speed I",
-      "upgradeDescription": "Increases Bow Attack Speed By 20%",
+      "upgradeDescription": "Per level: bow fire rate +18%.",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 5,
@@ -4088,7 +4088,7 @@
         {
           "stat": "Bow_Fire_Rate",
           "percentage": true,
-          "amount": 20
+          "amount": 18.0
         }
       ],
       "children": [
@@ -4186,7 +4186,7 @@
     },
     {
       "upgradeName": "Bow Attack Range I",
-      "upgradeDescription": "Increases Bow Attack Range By 1",
+      "upgradeDescription": "Per level: bow range +0.25.",
       "maxLevel": 2,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -4225,7 +4225,7 @@
         {
           "stat": "Distance_Range",
           "percentage": false,
-          "amount": 1
+          "amount": 0.25
         }
       ],
       "children": [
@@ -4237,14 +4237,14 @@
     },
     {
       "upgradeName": "Bow Attack Range II",
-      "upgradeDescription": "Increases Bow Attack Range By 1",
+      "upgradeDescription": "Per level: bow range +0.25.",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 30,
+      "baseUpgradeCost": 33,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -4276,7 +4276,7 @@
         {
           "stat": "Distance_Range",
           "percentage": false,
-          "amount": 1
+          "amount": 0.25
         }
       ],
       "children": [],
@@ -4286,14 +4286,14 @@
     },
     {
       "upgradeName": "Beam Damage II",
-      "upgradeDescription": "Increases Beam Damage By 5,500,000",
+      "upgradeDescription": "Per level: Third Eye damage +5,225,000.",
       "maxLevel": 6,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 3000,
+      "baseUpgradeCost": 3300,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -4325,7 +4325,7 @@
         {
           "stat": "Beam_Damage",
           "percentage": false,
-          "amount": 5500000
+          "amount": 5225000.0
         }
       ],
       "children": [
@@ -4386,14 +4386,14 @@
     },
     {
       "upgradeName": "Damage Against Bosses IV",
-      "upgradeDescription": "Increases Damage Against Bosses By 150",
+      "upgradeDescription": "Per level: bonus damage against bosses +200,000,000.",
       "maxLevel": 3,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 30,
+      "baseUpgradeCost": 6600,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -4425,7 +4425,7 @@
         {
           "stat": "Damage_Against_Bosses",
           "percentage": false,
-          "amount": 150
+          "amount": 200000000
         }
       ],
       "children": [],
@@ -4442,7 +4442,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 200,
+      "baseUpgradeCost": 220,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -4494,7 +4494,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 20,
+      "baseUpgradeCost": 22,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -4547,7 +4547,7 @@
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 10,
+      "baseUpgradeCost": 11,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -4598,7 +4598,7 @@
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 10,
+      "baseUpgradeCost": 11,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -4642,7 +4642,7 @@
     },
     {
       "upgradeName": "Arrow Damage II",
-      "upgradeDescription": "Increases Arrow Damage By 25",
+      "upgradeDescription": "Per level: arrow damage +20.",
       "maxLevel": 5,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -4681,7 +4681,7 @@
         {
           "stat": "Arrow_Damage",
           "percentage": false,
-          "amount": 25
+          "amount": 20
         }
       ],
       "children": [
@@ -4701,7 +4701,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 40,
+      "baseUpgradeCost": 44,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -4746,14 +4746,14 @@
     },
     {
       "upgradeName": "Pill II",
-      "upgradeDescription": "Increases Max Health By 100",
+      "upgradeDescription": "Per level: maximum health +135.",
       "maxLevel": 5,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 0,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 100,
+      "baseUpgradeCost": 110,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -4785,7 +4785,7 @@
         {
           "stat": "MaxHP",
           "percentage": false,
-          "amount": 100
+          "amount": 135.0
         }
       ],
       "children": [
@@ -4806,7 +4806,7 @@
       "rarity": 5,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 200,
+      "baseUpgradeCost": 220,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -4838,7 +4838,7 @@
     },
     {
       "upgradeName": "Arrow Damage III",
-      "upgradeDescription": "Increases Arrow Damage By 50",
+      "upgradeDescription": "Per level: arrow damage +35.",
       "maxLevel": 5,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -4877,7 +4877,7 @@
         {
           "stat": "Arrow_Damage",
           "percentage": false,
-          "amount": 50
+          "amount": 35.0
         }
       ],
       "children": [],
@@ -4943,7 +4943,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 40,
+      "baseUpgradeCost": 44,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -5074,7 +5074,7 @@
     },
     {
       "upgradeName": "Dagger Attack Rate I",
-      "upgradeDescription": "Increases Dagger Attack Rate By 15%",
+      "upgradeDescription": "Per level: dagger attack rate +10%.",
       "maxLevel": 3,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -5113,7 +5113,7 @@
         {
           "stat": "Dagger_Attack_Rate",
           "percentage": true,
-          "amount": 15
+          "amount": 10
         }
       ],
       "children": [],
@@ -5123,14 +5123,14 @@
     },
     {
       "upgradeName": "Beam Damage I",
-      "upgradeDescription": "Increases Beam Damage By 5,000,000",
+      "upgradeDescription": "Per level: Third Eye damage +4,750,000.",
       "maxLevel": 6,
       "level": 0,
       "unlockAtParentLevel": 1,
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 3000,
+      "baseUpgradeCost": 3300,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -5162,7 +5162,7 @@
         {
           "stat": "Beam_Damage",
           "percentage": false,
-          "amount": 5000000
+          "amount": 4750000.0
         }
       ],
       "children": [
@@ -5215,14 +5215,14 @@
     },
     {
       "upgradeName": "Medicine II",
-      "upgradeDescription": "Increase Current Max Health By 400",
+      "upgradeDescription": "Per level: maximum health +540.",
       "maxLevel": 10,
       "level": 0,
       "unlockAtParentLevel": 4,
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 4000,
+      "baseUpgradeCost": 4400,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -5254,7 +5254,7 @@
         {
           "stat": "MaxHP",
           "percentage": false,
-          "amount": 400
+          "amount": 540.0
         }
       ],
       "children": [
@@ -5273,7 +5273,7 @@
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 10,
+      "baseUpgradeCost": 11,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -5317,14 +5317,14 @@
     },
     {
       "upgradeName": "Band-Aid II",
-      "upgradeDescription": "Increase Current Max Health By 300",
+      "upgradeDescription": "Per level: maximum health +405.",
       "maxLevel": 5,
       "level": 0,
       "unlockAtParentLevel": 3,
       "rarity": 1,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 200,
+      "baseUpgradeCost": 220,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -5356,7 +5356,7 @@
         {
           "stat": "MaxHP",
           "percentage": false,
-          "amount": 300
+          "amount": 405.0
         }
       ],
       "children": [],
@@ -5373,7 +5373,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 600,
+      "baseUpgradeCost": 660,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -5424,7 +5424,7 @@
       "rarity": 2,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 4000,
+      "baseUpgradeCost": 4400,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -5527,7 +5527,7 @@
       "rarity": 3,
       "isVisible": 0,
       "isUnlocked": 0,
-      "baseUpgradeCost": 1000,
+      "baseUpgradeCost": 1100,
       "cost": {
         "amount": 0,
         "currencyType": 0
@@ -5613,9 +5613,9 @@
   "settings": {
     "achievements": [
       {
-        "achievementName": "Prestige Master",
+        "achievementName": "Railway Master",
         "achievementType": 8,
-        "description": "Complete All Prestiges",
+        "description": "Complete All Levels",
         "currencyType": 0,
         "reward": 3000
       },
@@ -5655,9 +5655,9 @@
         "reward": 200
       },
       {
-        "achievementName": "Prestige 1",
+        "achievementName": "Level 2",
         "achievementType": 5,
-        "description": "Complete Prestige 1",
+        "description": "Complete Level 2",
         "currencyType": 0,
         "reward": 200
       },
@@ -5690,9 +5690,9 @@
         "reward": 5
       },
       {
-        "achievementName": "Prestige 2",
+        "achievementName": "Level 3",
         "achievementType": 6,
-        "description": "Complete Prestige 2",
+        "description": "Complete Level 3",
         "currencyType": 0,
         "reward": 500
       },
@@ -5704,9 +5704,9 @@
         "reward": 0
       },
       {
-        "achievementName": "Prestige 3",
+        "achievementName": "Level 4",
         "achievementType": 7,
-        "description": "Complete Prestige 3",
+        "description": "Complete Level 4",
         "currencyType": 0,
         "reward": 3000
       },

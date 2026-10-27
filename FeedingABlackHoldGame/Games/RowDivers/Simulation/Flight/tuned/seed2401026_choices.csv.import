@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://bikpq0eo6mivb"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.alternatives.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.baseline.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.currency.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.expense.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.frontier.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.gain.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.id.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.level.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.name.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.predicted.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.prestige.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.price.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.proxy.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.score.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.wallet.translation"]
+
+source_file="res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.csv"
+dest_files=["res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.alternatives.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.baseline.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.currency.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.expense.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.frontier.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.gain.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.id.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.level.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.name.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.predicted.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.prestige.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.price.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.proxy.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.score.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_choices.wallet.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

@@ -1,0 +1,63 @@
+extends RefCounted
+## Shared deterministic hazard physics. Rendering and the pilot only observe this state.
+var waves: Array[Dictionary] = []
+var rng = RandomNumberGenerator.new()
+var timer = 3.5
+var sequence = 0
+var stage = 0
+var prestige = 0
+var damage = 15.0
+var spawned = 0
+var hits = 0
+var dodged = 0
+var records: Array[Dictionary] = []
+
+func setup(level: int, initial_seed: int, settings: Dictionary) -> void:
+	prestige = level
+	rng.seed = initial_seed
+	damage = float(settings.get("damage", [15, 100, 400, 1200])[level])
+	waves.clear()
+	stage = 0
+	timer = 3.5
+	sequence = 0
+	spawned = 0
+	hits = 0
+	dodged = 0
+	records.clear()
+
+func parameters(control: float) -> Dictionary:
+	var pressure = stage * (1.0 - clampf(control, 0, 80) / 100.0)
+	return {"interval": 5.0 / (1.0 + 2.5 * pressure * pressure),
+		"gap_width": 1.9 - 0.45 * pressure, "speed": 6.0 + 2.0 * pressure}
+
+func boss_defeated(kind: int) -> void:
+	# One escalation per gate; never scale damage inside a prestige.
+	if kind == 4: stage = maxi(stage, 1)
+	if kind == 5: stage = maxi(stage, 2)
+
+func advance(delta: float, player: Vector3, control: float, elapsed: float) -> int:
+	var count = 0
+	timer -= delta
+	if timer <= 0:
+		var p = parameters(control)
+		timer += p.interval
+		var pattern = [-1.1, 0.0, 1.1, 0.0]
+		var center = float(pattern[sequence % pattern.size()])
+		center += rng.randf_range(-0.08, 0.08)
+		waves.append({"id": sequence, "z": player.z - 24.0, "gap_x": center,
+			"gap_width": p.gap_width, "speed": p.speed, "stage": stage})
+		sequence += 1
+		spawned += 1
+	for wave in waves.duplicate():
+		wave.z += wave.speed * delta
+		# Swept crossing includes player movement; one hit at most per wall.
+		if wave.z >= player.z - 0.18:
+			var hit = absf(player.x - wave.gap_x) > wave.gap_width * 0.5 - 0.28
+			if hit:
+				hits += 1
+				count += 1
+			else: dodged += 1
+			records.append({"time": elapsed, "stage": wave.stage, "hit": hit, "x": player.x,
+				"gap_x": wave.gap_x, "gap_width": wave.gap_width, "damage": damage if hit else 0})
+			waves.erase(wave)
+	return count

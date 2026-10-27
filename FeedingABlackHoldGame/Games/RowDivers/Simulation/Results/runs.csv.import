@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://eebghghwyl10"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/Results/runs.capped.translation", "res://Games/RowDivers/Simulation/Results/runs.damage.translation", "res://Games/RowDivers/Simulation/Results/runs.damage.translation", "res://Games/RowDivers/Simulation/Results/runs.death.translation", "res://Games/RowDivers/Simulation/Results/runs.distance.translation", "res://Games/RowDivers/Simulation/Results/runs.far.translation", "res://Games/RowDivers/Simulation/Results/runs.healing.translation", "res://Games/RowDivers/Simulation/Results/runs.health.translation", "res://Games/RowDivers/Simulation/Results/runs.kills.translation", "res://Games/RowDivers/Simulation/Results/runs.loot.translation", "res://Games/RowDivers/Simulation/Results/runs.mean.translation", "res://Games/RowDivers/Simulation/Results/runs.mean.translation", "res://Games/RowDivers/Simulation/Results/runs.median.translation", "res://Games/RowDivers/Simulation/Results/runs.p10.translation", "res://Games/RowDivers/Simulation/Results/runs.p90.translation", "res://Games/RowDivers/Simulation/Results/runs.prestige.translation", "res://Games/RowDivers/Simulation/Results/runs.run.translation", "res://Games/RowDivers/Simulation/Results/runs.seconds.translation", "res://Games/RowDivers/Simulation/Results/runs.upgrade.translation", "res://Games/RowDivers/Simulation/Results/runs.wallet.translation", "res://Games/RowDivers/Simulation/Results/runs.wallet.translation", "res://Games/RowDivers/Simulation/Results/runs.won.translation"]
+
+source_file="res://Games/RowDivers/Simulation/Results/runs.csv"
+dest_files=["res://Games/RowDivers/Simulation/Results/runs.capped.translation", "res://Games/RowDivers/Simulation/Results/runs.damage.translation", "res://Games/RowDivers/Simulation/Results/runs.damage.translation", "res://Games/RowDivers/Simulation/Results/runs.death.translation", "res://Games/RowDivers/Simulation/Results/runs.distance.translation", "res://Games/RowDivers/Simulation/Results/runs.far.translation", "res://Games/RowDivers/Simulation/Results/runs.healing.translation", "res://Games/RowDivers/Simulation/Results/runs.health.translation", "res://Games/RowDivers/Simulation/Results/runs.kills.translation", "res://Games/RowDivers/Simulation/Results/runs.loot.translation", "res://Games/RowDivers/Simulation/Results/runs.mean.translation", "res://Games/RowDivers/Simulation/Results/runs.mean.translation", "res://Games/RowDivers/Simulation/Results/runs.median.translation", "res://Games/RowDivers/Simulation/Results/runs.p10.translation", "res://Games/RowDivers/Simulation/Results/runs.p90.translation", "res://Games/RowDivers/Simulation/Results/runs.prestige.translation", "res://Games/RowDivers/Simulation/Results/runs.run.translation", "res://Games/RowDivers/Simulation/Results/runs.seconds.translation", "res://Games/RowDivers/Simulation/Results/runs.upgrade.translation", "res://Games/RowDivers/Simulation/Results/runs.wallet.translation", "res://Games/RowDivers/Simulation/Results/runs.wallet.translation", "res://Games/RowDivers/Simulation/Results/runs.won.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

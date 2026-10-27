@@ -1,10 +1,20 @@
 extends AudioStreamPlayer
 @export var playlist: AudioStreamPlaylist
-@export var game_over_song: AudioStreamMP3
+@export var game_over_song: AudioStream
 var playing_game_over: = false
 var firewall_loading_pause_active := false
 
 func _ready() -> void :
+    # Railway Fury supplies its own persistent session music. Avoid loading the
+    # unrelated shared playlist into memory (and into the web demo's package).
+    if Util.is_row_divers_game_active():
+        playlist = AudioStreamPlaylist.new()
+        finished.connect(_on_finished)
+        return
+    if playlist == null:
+        playlist = load("res://Audio/Main Music Playlist.tres")
+    if game_over_song == null:
+        game_over_song = load("res://Audio/Music/3 - Phat Phrog Studio - Wayward Realm - Moonsong Kingdom.wav")
     # Volumes come from SaveHandler.set_audio() on startup; keep playlist flags in sync.
     update()
 

@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dyocgtxeg3yfv"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/CrownValidation/kills.prestige.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.ahead.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.boss.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.distance.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.kind.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.range.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.range.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.time.translation"]
+
+source_file="res://Games/RowDivers/Simulation/CrownValidation/kills.csv"
+dest_files=["res://Games/RowDivers/Simulation/CrownValidation/kills.prestige.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.ahead.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.boss.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.distance.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.kind.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.range.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.range.translation", "res://Games/RowDivers/Simulation/CrownValidation/kills.time.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://7426gev8ij3k"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.prestige.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.ahead.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.boss.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.path.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.kind.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.range.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.range.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.time.translation"]
+
+source_file="res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.csv"
+dest_files=["res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.prestige.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.ahead.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.boss.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.path.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.kind.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.range.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.range.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401027_kills.time.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://bnb6mdnb4yllx"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/Tuning/installed_value_changes.field.translation", "res://Games/RowDivers/Simulation/Tuning/installed_value_changes.previous.translation", "res://Games/RowDivers/Simulation/Tuning/installed_value_changes.rebalanced.translation"]
+
+source_file="res://Games/RowDivers/Simulation/Tuning/installed_value_changes.csv"
+dest_files=["res://Games/RowDivers/Simulation/Tuning/installed_value_changes.field.translation", "res://Games/RowDivers/Simulation/Tuning/installed_value_changes.previous.translation", "res://Games/RowDivers/Simulation/Tuning/installed_value_changes.rebalanced.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

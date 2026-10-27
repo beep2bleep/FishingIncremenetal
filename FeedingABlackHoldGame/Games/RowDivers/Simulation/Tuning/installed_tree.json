@@ -1,0 +1,696 @@
+{
+  "profile": "round_numbers_p3_buffer",
+  "control_profile": "control_p3_buffer",
+  "original_sha256": "309d71f72a941cf4dab54d81edc36e110dbc09d26c6d5dee663b5421b3fff567",
+  "previous_sha256": "309d71f72a941cf4dab54d81edc36e110dbc09d26c6d5dee663b5421b3fff567",
+  "installed_sha256": "24bed665db67479ee57cbf813e00697bf1f3a23e918b9e2d45ff5c6c3c532879",
+  "changes": [
+    {
+      "upgrade": "Dagger Attack Range III",
+      "field": "baseUpgradeCost",
+      "previous": 30,
+      "rebalanced": 33
+    },
+    {
+      "upgrade": "Dagger Attack Range III",
+      "field": "effects.Melee_range",
+      "previous": 1,
+      "rebalanced": 0.25
+    },
+    {
+      "upgrade": "Porcupine",
+      "field": "baseUpgradeCost",
+      "previous": 30,
+      "rebalanced": 33
+    },
+    {
+      "upgrade": "Arrow Damage IV",
+      "field": "effects.Arrow_Damage",
+      "previous": 65,
+      "rebalanced": 45
+    },
+    {
+      "upgrade": "Impact Armor I",
+      "field": "baseUpgradeCost",
+      "previous": 40,
+      "rebalanced": 4
+    },
+    {
+      "upgrade": "Impact Armor I",
+      "field": "unlockAtParentLevel",
+      "previous": 2,
+      "rebalanced": 0
+    },
+    {
+      "upgrade": "Impact Armor I",
+      "field": "effects.Impact_Armor",
+      "previous": 30,
+      "rebalanced": 85
+    },
+    {
+      "upgrade": "Band-Aid I",
+      "field": "baseUpgradeCost",
+      "previous": 4000,
+      "rebalanced": 4400
+    },
+    {
+      "upgrade": "Band-Aid I",
+      "field": "effects.MaxHP",
+      "previous": 300,
+      "rebalanced": 405.0
+    },
+    {
+      "upgrade": "Life Steal Amount",
+      "field": "baseUpgradeCost",
+      "previous": 1500,
+      "rebalanced": 1650
+    },
+    {
+      "upgrade": "Gain Armor and Health II",
+      "field": "baseUpgradeCost",
+      "previous": 30,
+      "rebalanced": 33
+    },
+    {
+      "upgrade": "Red Heart",
+      "field": "baseUpgradeCost",
+      "previous": 15000,
+      "rebalanced": 16500
+    },
+    {
+      "upgrade": "Red Heart",
+      "field": "effects.MaxHP",
+      "previous": 1200,
+      "rebalanced": 1620.0
+    },
+    {
+      "upgrade": "Dagger Attack Range I",
+      "field": "effects.Melee_range",
+      "previous": 25,
+      "rebalanced": 5
+    },
+    {
+      "upgrade": "Gain Armor and Health I",
+      "field": "baseUpgradeCost",
+      "previous": 5,
+      "rebalanced": 6
+    },
+    {
+      "upgrade": "Heal On Enemy Kill Amount II",
+      "field": "baseUpgradeCost",
+      "previous": 25,
+      "rebalanced": 28
+    },
+    {
+      "upgrade": "Dagger Attack Speed II",
+      "field": "baseUpgradeCost",
+      "previous": 10,
+      "rebalanced": 11
+    },
+    {
+      "upgrade": "Dagger Attack Speed II",
+      "field": "effects.Dagger_Attack_Rate",
+      "previous": 1,
+      "rebalanced": 0.75
+    },
+    {
+      "upgrade": "Life Steal",
+      "field": "baseUpgradeCost",
+      "previous": 1500,
+      "rebalanced": 1650
+    },
+    {
+      "upgrade": "Triples Dagger Damage II",
+      "field": "baseUpgradeCost",
+      "previous": 5000,
+      "rebalanced": 5500
+    },
+    {
+      "upgrade": "Max HP I",
+      "field": "effects.MaxHP",
+      "previous": 5,
+      "rebalanced": 6
+    },
+    {
+      "upgrade": "Unlock achievements",
+      "field": "baseUpgradeCost",
+      "previous": 5,
+      "rebalanced": 6
+    },
+    {
+      "upgrade": "Armor VI",
+      "field": "baseUpgradeCost",
+      "previous": 400,
+      "rebalanced": 440
+    },
+    {
+      "upgrade": "Bow Attack Speed III",
+      "field": "baseUpgradeCost",
+      "previous": 600,
+      "rebalanced": 660
+    },
+    {
+      "upgrade": "Pill III",
+      "field": "baseUpgradeCost",
+      "previous": 1000,
+      "rebalanced": 1100
+    },
+    {
+      "upgrade": "Pill III",
+      "field": "effects.MaxHP",
+      "previous": 200,
+      "rebalanced": 270.0
+    },
+    {
+      "upgrade": "Chance to Heal on Enemy Hit I",
+      "field": "baseUpgradeCost",
+      "previous": 200,
+      "rebalanced": 220
+    },
+    {
+      "upgrade": "Max HP III",
+      "field": "baseUpgradeCost",
+      "previous": 15,
+      "rebalanced": 16
+    },
+    {
+      "upgrade": "Burn Chance",
+      "field": "baseUpgradeCost",
+      "previous": 30,
+      "rebalanced": 33
+    },
+    {
+      "upgrade": "Heal On Enemy Hit Amount II",
+      "field": "baseUpgradeCost",
+      "previous": 2000,
+      "rebalanced": 2200
+    },
+    {
+      "upgrade": "Dagger Attack Range II",
+      "field": "baseUpgradeCost",
+      "previous": 30,
+      "rebalanced": 33
+    },
+    {
+      "upgrade": "Dagger Attack Range II",
+      "field": "effects.Melee_range",
+      "previous": 1,
+      "rebalanced": 0.25
+    },
+    {
+      "upgrade": "Damage Against Bosses II",
+      "field": "baseUpgradeCost",
+      "previous": 2,
+      "rebalanced": 16
+    },
+    {
+      "upgrade": "Damage Against Bosses II",
+      "field": "effects.Damage_Against_Bosses",
+      "previous": 60,
+      "rebalanced": 6000
+    },
+    {
+      "upgrade": "Arrow Shield",
+      "field": "baseUpgradeCost",
+      "previous": 100,
+      "rebalanced": 110
+    },
+    {
+      "upgrade": "Heal On Enemy Hit Amount I",
+      "field": "baseUpgradeCost",
+      "previous": 300,
+      "rebalanced": 330
+    },
+    {
+      "upgrade": "Dagger Damage I",
+      "field": "effects.Dagger_Damage",
+      "previous": 100,
+      "rebalanced": 55.0
+    },
+    {
+      "upgrade": "Triples Dagger Damage I",
+      "field": "baseUpgradeCost",
+      "previous": 4000,
+      "rebalanced": 4400
+    },
+    {
+      "upgrade": "Arrow Damage VIII",
+      "field": "effects.Arrow_Damage",
+      "previous": 245000,
+      "rebalanced": 200000
+    },
+    {
+      "upgrade": "Arrow Damage VI",
+      "field": "effects.Arrow_Damage",
+      "previous": 18000,
+      "rebalanced": 12600.0
+    },
+    {
+      "upgrade": "Dagger Damage III",
+      "field": "baseUpgradeCost",
+      "previous": 1000,
+      "rebalanced": 1100
+    },
+    {
+      "upgrade": "Dagger Damage III",
+      "field": "effects.Dagger_Damage",
+      "previous": 450000,
+      "rebalanced": 247500.0
+    },
+    {
+      "upgrade": "Arrow Critic Chance I",
+      "field": "baseUpgradeCost",
+      "previous": 500,
+      "rebalanced": 550
+    },
+    {
+      "upgrade": "Armor I",
+      "field": "unlockAtParentLevel",
+      "previous": 8,
+      "rebalanced": 4
+    },
+    {
+      "upgrade": "Shiny Armor",
+      "field": "baseUpgradeCost",
+      "previous": 5000,
+      "rebalanced": 5500
+    },
+    {
+      "upgrade": "Max HP IV",
+      "field": "baseUpgradeCost",
+      "previous": 200,
+      "rebalanced": 220
+    },
+    {
+      "upgrade": "Max HP IV",
+      "field": "effects.MaxHP",
+      "previous": 150,
+      "rebalanced": 200
+    },
+    {
+      "upgrade": "Arrow Critic Chance IV",
+      "field": "baseUpgradeCost",
+      "previous": 4000,
+      "rebalanced": 4400
+    },
+    {
+      "upgrade": "Medicine I",
+      "field": "baseUpgradeCost",
+      "previous": 200,
+      "rebalanced": 220
+    },
+    {
+      "upgrade": "Medicine I",
+      "field": "effects.MaxHP",
+      "previous": 200,
+      "rebalanced": 270.0
+    },
+    {
+      "upgrade": "Arrow Damage VII",
+      "field": "effects.Arrow_Damage",
+      "previous": 240000,
+      "rebalanced": 168000.0
+    },
+    {
+      "upgrade": "Damage Against Bosses III",
+      "field": "baseUpgradeCost",
+      "previous": 30,
+      "rebalanced": 660
+    },
+    {
+      "upgrade": "Damage Against Bosses III",
+      "field": "effects.Damage_Against_Bosses",
+      "previous": 100,
+      "rebalanced": 400000
+    },
+    {
+      "upgrade": "Gain Armor and Health III",
+      "field": "baseUpgradeCost",
+      "previous": 3000,
+      "rebalanced": 3300
+    },
+    {
+      "upgrade": "Gain Armor and Health III",
+      "field": "effects.MaxHP",
+      "previous": 200,
+      "rebalanced": 270.0
+    },
+    {
+      "upgrade": "Bow Attack Speed II",
+      "field": "baseUpgradeCost",
+      "previous": 15,
+      "rebalanced": 16
+    },
+    {
+      "upgrade": "Dagger Damage IV",
+      "field": "effects.Dagger_Damage",
+      "previous": 450000,
+      "rebalanced": 247500.0
+    },
+    {
+      "upgrade": "Arrow Critic Chance II",
+      "field": "baseUpgradeCost",
+      "previous": 500,
+      "rebalanced": 550
+    },
+    {
+      "upgrade": "Bleed Duration",
+      "field": "baseUpgradeCost",
+      "previous": 20,
+      "rebalanced": 22
+    },
+    {
+      "upgrade": "Burn Duration",
+      "field": "baseUpgradeCost",
+      "previous": 20,
+      "rebalanced": 22
+    },
+    {
+      "upgrade": "Syringe II",
+      "field": "baseUpgradeCost",
+      "previous": 20,
+      "rebalanced": 22
+    },
+    {
+      "upgrade": "Syringe II",
+      "field": "effects.MaxHP",
+      "previous": 60,
+      "rebalanced": 63.0
+    },
+    {
+      "upgrade": "Armor V",
+      "field": "baseUpgradeCost",
+      "previous": 150,
+      "rebalanced": 165
+    },
+    {
+      "upgrade": "Cursed Arrow Damage",
+      "field": "baseUpgradeCost",
+      "previous": 100,
+      "rebalanced": 110
+    },
+    {
+      "upgrade": "Horizontal Speed III",
+      "field": "baseUpgradeCost",
+      "previous": 2000,
+      "rebalanced": 2200
+    },
+    {
+      "upgrade": "Beam Damage Rate",
+      "field": "baseUpgradeCost",
+      "previous": 4000,
+      "rebalanced": 4400
+    },
+    {
+      "upgrade": "Pickup Range II",
+      "field": "baseUpgradeCost",
+      "previous": 20,
+      "rebalanced": 22
+    },
+    {
+      "upgrade": "Dagger Damage II",
+      "field": "baseUpgradeCost",
+      "previous": 15,
+      "rebalanced": 16
+    },
+    {
+      "upgrade": "Dagger Damage II",
+      "field": "effects.Dagger_Damage",
+      "previous": 500,
+      "rebalanced": 275.0
+    },
+    {
+      "upgrade": "Arrow Critic Chance III",
+      "field": "baseUpgradeCost",
+      "previous": 500,
+      "rebalanced": 550
+    },
+    {
+      "upgrade": "Super Magnet",
+      "field": "baseUpgradeCost",
+      "previous": 500,
+      "rebalanced": 550
+    },
+    {
+      "upgrade": "Arrow Damage V",
+      "field": "effects.Arrow_Damage",
+      "previous": 4000,
+      "rebalanced": 2800.0
+    },
+    {
+      "upgrade": "Curse Duration",
+      "field": "baseUpgradeCost",
+      "previous": 200,
+      "rebalanced": 220
+    },
+    {
+      "upgrade": "Chance to Heal on Enemy Kill  II",
+      "field": "baseUpgradeCost",
+      "previous": 25,
+      "rebalanced": 28
+    },
+    {
+      "upgrade": "Bow Attack Speed IV",
+      "field": "baseUpgradeCost",
+      "previous": 5000,
+      "rebalanced": 5500
+    },
+    {
+      "upgrade": "Damage Against Bosses I",
+      "field": "effects.Damage_Against_Bosses",
+      "previous": 20,
+      "rebalanced": 100
+    },
+    {
+      "upgrade": "Arrow Speed II",
+      "field": "baseUpgradeCost",
+      "previous": 50,
+      "rebalanced": 55
+    },
+    {
+      "upgrade": "Beam Damage III",
+      "field": "baseUpgradeCost",
+      "previous": 4000,
+      "rebalanced": 4400
+    },
+    {
+      "upgrade": "Beam Damage III",
+      "field": "effects.Beam_Damage",
+      "previous": 10000000,
+      "rebalanced": 9500000.0
+    },
+    {
+      "upgrade": "Big Heart II",
+      "field": "baseUpgradeCost",
+      "previous": 20,
+      "rebalanced": 22
+    },
+    {
+      "upgrade": "Big Heart II",
+      "field": "effects.MaxHP",
+      "previous": 100,
+      "rebalanced": 135.0
+    },
+    {
+      "upgrade": "Bow Attack Speed I",
+      "field": "effects.Bow_Fire_Rate",
+      "previous": 20,
+      "rebalanced": 18.0
+    },
+    {
+      "upgrade": "Bow Attack Range I",
+      "field": "effects.Distance_Range",
+      "previous": 1,
+      "rebalanced": 0.25
+    },
+    {
+      "upgrade": "Bow Attack Range II",
+      "field": "baseUpgradeCost",
+      "previous": 30,
+      "rebalanced": 33
+    },
+    {
+      "upgrade": "Bow Attack Range II",
+      "field": "effects.Distance_Range",
+      "previous": 1,
+      "rebalanced": 0.25
+    },
+    {
+      "upgrade": "Beam Damage II",
+      "field": "baseUpgradeCost",
+      "previous": 3000,
+      "rebalanced": 3300
+    },
+    {
+      "upgrade": "Beam Damage II",
+      "field": "effects.Beam_Damage",
+      "previous": 5500000,
+      "rebalanced": 5225000.0
+    },
+    {
+      "upgrade": "Damage Against Bosses IV",
+      "field": "baseUpgradeCost",
+      "previous": 30,
+      "rebalanced": 6600
+    },
+    {
+      "upgrade": "Damage Against Bosses IV",
+      "field": "effects.Damage_Against_Bosses",
+      "previous": 150,
+      "rebalanced": 200000000
+    },
+    {
+      "upgrade": "Curse Chance",
+      "field": "baseUpgradeCost",
+      "previous": 200,
+      "rebalanced": 220
+    },
+    {
+      "upgrade": "Bleed Chance I",
+      "field": "baseUpgradeCost",
+      "previous": 20,
+      "rebalanced": 22
+    },
+    {
+      "upgrade": "Horizontal Speed II",
+      "field": "baseUpgradeCost",
+      "previous": 10,
+      "rebalanced": 11
+    },
+    {
+      "upgrade": "Fire Arrow Damage",
+      "field": "baseUpgradeCost",
+      "previous": 10,
+      "rebalanced": 11
+    },
+    {
+      "upgrade": "Arrow Damage II",
+      "field": "effects.Arrow_Damage",
+      "previous": 25,
+      "rebalanced": 20
+    },
+    {
+      "upgrade": "Arrow Count I",
+      "field": "baseUpgradeCost",
+      "previous": 40,
+      "rebalanced": 44
+    },
+    {
+      "upgrade": "Pill II",
+      "field": "baseUpgradeCost",
+      "previous": 100,
+      "rebalanced": 110
+    },
+    {
+      "upgrade": "Pill II",
+      "field": "effects.MaxHP",
+      "previous": 100,
+      "rebalanced": 135.0
+    },
+    {
+      "upgrade": "Harvester",
+      "field": "baseUpgradeCost",
+      "previous": 200,
+      "rebalanced": 220
+    },
+    {
+      "upgrade": "Arrow Damage III",
+      "field": "effects.Arrow_Damage",
+      "previous": 50,
+      "rebalanced": 35.0
+    },
+    {
+      "upgrade": "Bleed Chance II",
+      "field": "baseUpgradeCost",
+      "previous": 40,
+      "rebalanced": 44
+    },
+    {
+      "upgrade": "Dagger Attack Rate I",
+      "field": "effects.Dagger_Attack_Rate",
+      "previous": 15,
+      "rebalanced": 10
+    },
+    {
+      "upgrade": "Beam Damage I",
+      "field": "baseUpgradeCost",
+      "previous": 3000,
+      "rebalanced": 3300
+    },
+    {
+      "upgrade": "Beam Damage I",
+      "field": "effects.Beam_Damage",
+      "previous": 5000000,
+      "rebalanced": 4750000.0
+    },
+    {
+      "upgrade": "Medicine II",
+      "field": "baseUpgradeCost",
+      "previous": 4000,
+      "rebalanced": 4400
+    },
+    {
+      "upgrade": "Medicine II",
+      "field": "effects.MaxHP",
+      "previous": 400,
+      "rebalanced": 540.0
+    },
+    {
+      "upgrade": "Armor Against Projectiles",
+      "field": "baseUpgradeCost",
+      "previous": 10,
+      "rebalanced": 11
+    },
+    {
+      "upgrade": "Band-Aid II",
+      "field": "baseUpgradeCost",
+      "previous": 200,
+      "rebalanced": 220
+    },
+    {
+      "upgrade": "Band-Aid II",
+      "field": "effects.MaxHP",
+      "previous": 300,
+      "rebalanced": 405.0
+    },
+    {
+      "upgrade": "Arrow Count II",
+      "field": "baseUpgradeCost",
+      "previous": 600,
+      "rebalanced": 660
+    },
+    {
+      "upgrade": "Beam Critic Chance",
+      "field": "baseUpgradeCost",
+      "previous": 4000,
+      "rebalanced": 4400
+    },
+    {
+      "upgrade": "Chance to Heal on Enemy Hit II",
+      "field": "baseUpgradeCost",
+      "previous": 1000,
+      "rebalanced": 1100
+    }
+  ],
+  "campaigns": [
+    {
+      "file": "round_numbers_p3_buffer\\campaign.json",
+      "sha256": "dd3dfd151673c7c9b1d482d253bc7f04d7cab3ce3268c126638feb26348230ea",
+      "seed": 2401026.0
+    },
+    {
+      "file": "round_numbers_p3_buffer\\campaign_seed2401027.json",
+      "sha256": "4bbd116c4f9148172c713b7fae64ca05e92b227b1d9d5c7fd0a71ccfb89c0270",
+      "seed": 2401027.0
+    },
+    {
+      "file": "round_numbers_p3_buffer\\campaign_seed2401028.json",
+      "sha256": "f2768d5862222d022684dbeb8f7f00be4bfd142a217de025b9c6681f3fb06257",
+      "seed": 2401028.0
+    }
+  ],
+  "allowed_balance_changes": "Upgrade effect amounts, base prices, numeric parent thresholds; descriptions updated to match.",
+  "previous_progress": "user://row_divers_progress_v1.json",
+  "rebalanced_progress": "user://row_divers_progress_balanced_v1.json",
+  "setting": "Settings > UPGRADE TREE (RESTART) > PREVIOUS"
+}

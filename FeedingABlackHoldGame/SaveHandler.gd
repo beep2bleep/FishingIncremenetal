@@ -47,7 +47,7 @@ func _ready():
 
     load_local_settings()
 
-    if OS.has_feature("web") and not supported_locales.has(locale):
+    if not available_locales().has(locale):
         locale = "en"
 
     load_progression_data()
@@ -86,6 +86,15 @@ func _remove_web_unsupported_locales() -> void:
     supported_locales.erase("ja")
     supported_locales.erase("ko")
     supported_locales.erase("th")
+
+
+func available_locales(web: bool = OS.has_feature("web")) -> Dictionary:
+    # Both language pickers use this filtered list, including after UI rebuilds.
+    var available := supported_locales.duplicate()
+    if web:
+        for code in ["zh", "ja", "ko", "th"]:
+            available.erase(code)
+    return available
 
 
 func set_bus_volume_from_slider(bus_name: String, slider_unit: float) -> void:
@@ -331,8 +340,9 @@ var run_timer = true
 var audio_muted = false
 var touch_input_mode = true
 var confirm_upgrade_purchase = false
-var row_divers_original_graphics = false
-var row_divers_illustrated_graphics = false
+var row_divers_original_graphics = OS.has_feature("railway_demo")
+var row_divers_illustrated_graphics = OS.has_feature("railway_demo")
+var row_divers_previous_upgrade_tree = false
 const VANGUARD_CRT_LEVEL_MAX := 11
 var vanguard_battle_crt_level: int = 0
 
@@ -376,6 +386,7 @@ func save_local_settings():
     save_data["confirm_upgrade_purchase"] = confirm_upgrade_purchase
     save_data["row_divers_original_graphics"] = row_divers_original_graphics
     save_data["row_divers_illustrated_graphics"] = row_divers_illustrated_graphics
+    save_data["row_divers_previous_upgrade_tree"] = row_divers_previous_upgrade_tree
     save_data["vanguard_battle_crt_level"] = vanguard_battle_crt_level
     var file = FileAccess.open(local_settings_file_path, FileAccess.WRITE)
     file.store_string(str(save_data))
@@ -408,6 +419,7 @@ func load_local_settings():
         confirm_upgrade_purchase = _load_bool_local_setting(json_data, "confirm_upgrade_purchase", false)
         row_divers_original_graphics = _load_bool_local_setting(json_data, "row_divers_original_graphics", false)
         row_divers_illustrated_graphics = _load_bool_local_setting(json_data, "row_divers_illustrated_graphics", false)
+        row_divers_previous_upgrade_tree = _load_bool_local_setting(json_data, "row_divers_previous_upgrade_tree", false)
         vanguard_battle_crt_level = clampi(int(json_data["vanguard_battle_crt_level"]) if json_data.has("vanguard_battle_crt_level") else 0, 0, VANGUARD_CRT_LEVEL_MAX)
         # Migrate: if save had mouse mode, switch to touch and persist
         if not touch_input_mode:
@@ -499,8 +511,8 @@ func update_vysnc(new_value: bool):
 func update_locale(value):
     if supported_locales.has(value):
         if locale != value:
-            TranslationServer.set_locale(value)
             locale = value
+            TranslationServer.set_locale(value)
     save_local_settings()
 
 func update_has_shown_pick_locale_first_time(value):

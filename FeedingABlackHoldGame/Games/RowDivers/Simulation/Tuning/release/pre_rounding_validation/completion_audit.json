@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "checks": {
+    "installed_catalog_matches_manifest": true,
+    "only_upgrade_numeric_values_and_derived_descriptions_changed": true,
+    "previous_catalog_byte_identical": true,
+    "combat_code_unchanged": true,
+    "multiple_complete_tree_variants": true,
+    "three_selected_campaigns_complete": true,
+    "matched_policy_three_seed_control": true,
+    "similar_campaign_length": true,
+    "more_consistent_forward_progress": true,
+    "upgrade_purchase_after_every_run": true,
+    "close_enemies_in_every_campaign": true,
+    "occasional_contact_deaths": true,
+    "legitimate_resource_accounting": true,
+    "all_three_replays_match": true,
+    "runtime_validation": true,
+    "runtime_validation_previous": true,
+    "live_setting_save_restore_and_shop": true,
+    "original_save_untouched": true,
+    "bow_master_still_achievable": true,
+    "maxed_repeat20": true,
+    "final_build_repeat20": true,
+    "report_and_exact_values_present": true,
+    "per_run_kill_and_purchase_logs_present": true
+  },
+  "soft_target": {
+    "name": "farther on every individual attempt",
+    "advancing_attempts": 110,
+    "comparable_attempts": 121,
+    "distance_regressions": 7,
+    "note": "Improved steady progression; random-contact setbacks remain, as reported. Every run makes a permanent upgrade purchase."
+  }
+}

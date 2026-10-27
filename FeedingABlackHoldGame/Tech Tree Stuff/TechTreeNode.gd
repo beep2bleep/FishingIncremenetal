@@ -585,7 +585,7 @@ func update():
         if Util.is_row_divers_game_active():
             var row_entry: Dictionary = ROW_DIVERS_PROGRESS.find_upgrade(upgrade.sim_key)
             if not row_entry.is_empty():
-                sim_effect_text += "\n\n%s\nPaid with %s" % [ROW_DIVERS_PROGRESS.requirement_text(row_entry), ROW_DIVERS_PROGRESS.CURRENCY_NAMES[clampi(upgrade.sim_currency, 0, 2)]]
+                sim_effect_text += tr("\n\n%s\nPaid with %s") % [ROW_DIVERS_PROGRESS.requirement_text(row_entry), tr(ROW_DIVERS_PROGRESS.CURRENCY_NAMES[clampi(upgrade.sim_currency, 0, 2)])]
         if sim_effect_text == "":
             sim_effect_text = tr("Upgrade effect applied on unlock.")
     if using_sim_display:
@@ -610,7 +610,7 @@ func update():
             %Description.text = Global.mods.get_from_to(upgrade.mod, upgrade.get_current_teir_value())
         %"Mod Icon".texture = locked_texture
         if demo_lock_label != null:
-            demo_lock_label.text = tr("Locked in Demo")
+            demo_lock_label.text = tr("LOCKED_IN_DEMO_MODE") if Util.is_row_divers_game_active() else tr("Locked in Demo")
             demo_lock_label.show()
 
     elif upgrade.demo_locked == 2:

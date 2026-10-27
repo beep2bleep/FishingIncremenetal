@@ -1,0 +1,8 @@
+{
+  "free_aim": true,
+  "replay_trace": "C:/Godot Projects/RailwayFury/FeedingABlackHoldGame/Games/RowDivers/Simulation/Flight/final/campaign.json",
+  "pilot": {
+    "reaction": 0.18,
+    "aim_error": 0.012
+  }
+}

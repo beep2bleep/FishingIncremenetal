@@ -1,0 +1,75 @@
+[
+  {
+    "upgrade": "Arrow Damage IV",
+    "stat": "Arrow_Damage",
+    "previous": 45.5,
+    "rounded": 45
+  },
+  {
+    "upgrade": "Impact Armor I",
+    "stat": "Impact_Armor",
+    "previous": 85,
+    "rounded": 90,
+    "reason": "Protect the prestige transition exposed by whole-number rounding."
+  },
+  {
+    "upgrade": "Gain Armor and Health II",
+    "stat": "MaxHP",
+    "previous": 31.5,
+    "rounded": 30
+  },
+  {
+    "upgrade": "Dagger Attack Range I",
+    "stat": "Melee_range",
+    "previous": 6.25,
+    "rounded": 5
+  },
+  {
+    "upgrade": "Pill I",
+    "stat": "MaxHP",
+    "previous": 52.5,
+    "rounded": 50
+  },
+  {
+    "upgrade": "Bow Attack Speed III",
+    "stat": "Bow_Fire_Rate",
+    "previous": 0.9,
+    "rounded": 1
+  },
+  {
+    "upgrade": "Max HP III",
+    "stat": "MaxHP",
+    "previous": 47.25,
+    "rounded": 45
+  },
+  {
+    "upgrade": "Max HP IV",
+    "stat": "MaxHP",
+    "previous": 202.5,
+    "rounded": 200
+  },
+  {
+    "upgrade": "Bow Attack Speed II",
+    "stat": "Bow_Fire_Rate",
+    "previous": 13.5,
+    "rounded": 15
+  },
+  {
+    "upgrade": "Bow Attack Speed IV",
+    "stat": "Bow_Fire_Rate",
+    "previous": 0.9,
+    "rounded": 1
+  },
+  {
+    "upgrade": "Arrow Damage II",
+    "stat": "Arrow_Damage",
+    "previous": 17.5,
+    "rounded": 20
+  },
+  {
+    "upgrade": "Dagger Attack Rate I",
+    "stat": "Dagger_Attack_Rate",
+    "previous": 11.25,
+    "rounded": 10
+  }
+]

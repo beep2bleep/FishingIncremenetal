@@ -1,0 +1,299 @@
+{
+	"choices": [],
+	"claims": [],
+	"config": {
+		"dt": 0.0166666666666667,
+		"max_runs": 1500.0,
+		"mode": "recommend",
+		"output": "C:/Godot Projects/RailwayFury/FeedingABlackHoldGame/Games/RowDivers/Simulation/Results/scenario.json",
+		"prestige": 0.0,
+		"repeats": 10.0,
+		"seed": 2401026.0,
+		"shortlist": 112.0,
+		"source_manifest": {
+			"catalog_sha256": "309d71f72a941cf4dab54d81edc36e110dbc09d26c6d5dee663b5421b3fff567",
+			"methods": {
+				"_award_loot": "8106ce51c7f204eed279a00c22db7c223e103cfe577b2e522a31d18c2edbf7c7",
+				"_beam_hit": "764a34311af01d7587759287ac94f469076febc4046088a114a2d336ff4a7d2e",
+				"_dagger_hit": "0beed90879656bb2a7ae0c8d5de333c1ce78f9cf815bb6f51c1c2a6853bdbe8c",
+				"_damage_player": "d07ed46d0e862fc498a4e47b40437f12406757f3f39a23a4d617c44c603ec8b3",
+				"_effect": "0e8546a13cab9011b24b6fbd4ce44b59087d9774a6598159939286008325d9f7",
+				"_has_effect": "de29ecd742e39f88239c182392ce42bcfe2d593c7dc86394ef57f30829e8ca1a",
+				"_heal": "72afa8f9e7e5d4a58e0524bb53777df9686532566cefc2599649ab5d200aa375",
+				"_hit": "c3b5415dafa2ecba3a039fffebb3a84b100307dc17d0e437481def4a7d6d1908",
+				"_new_projectile_state": "7b9ae539c51aacbb6ed58aed67f2909492e90f5d1c3854359e3acd708fd4e576",
+				"_projectile_hit": "ca87083b342ac9ddfb13c0bbeb8a4dc968816db6bc5bafe288fad386766b7448",
+				"_return_projectile_state": "cdd3402ca49fd82065180dda33285cefd88434790762137807b8c879e550feeb",
+				"_roll": "9ce9fa092a10ab51da932f4f97f7b5d833411d5693fcb1d2e52a9009152f854d",
+				"_shoot": "af6afe15c1da15728c98453ec86a3cac8297a77f420d3983207e942b32a700e7",
+				"_simulate_step": "2cc9cfcb08ccd2b37071c26336806f1a5af563c21427db2d152cd76473604004",
+				"_take_projectile_state": "b483723837ce2f5c1cb0eca0a7f37c9442e434da7aae3202c87894a5a3a43482",
+				"_target": "6c2157dd73131565e4b28879b411f40960172cb3296b4486ae46465ae16dcca3",
+				"_update_drops": "e74e4fc77397755fcf6870503aff8f978ebbf2aa57481122458c741796d4f797",
+				"_update_enemies": "751395b3f2f6b3a16edf4985d355d46acff0fefe50a2087c9b5fc94be20d16ac",
+				"_update_projectiles": "e01d4e3b3e96220f15e7249d981aa46ddb22c57fa2288a359c0ec2df94e25dc4",
+				"active": "b113f156d72d4000fa178f9a09d73bb6b5a4c82f6f64c2347dbe222bcc14a043",
+				"s": "728528640dc50698f7da3ae34cd14e085a463cad4a2b555df440f7f62b0d6671",
+				"unlocked": "6da09e59c9879becaa8c364e027b6658790ba7280888a76111098f40d547cd5c"
+			},
+			"progression_sha256": "74a3990e05df66b7928da611a761a053a2551a4033bed280b3dfee11b392c13b",
+			"replacements": "No rendering/audio, HUD, gates animation, save writes, or input polling; record damage/healing/kill distances; always enable existing assist; same spawn RNG and combat order.",
+			"source": "Games/RowDivers/Scenes/RowDiversBattleScene.gd",
+			"source_sha256": "7d609b0ec62d7e03fcefd27e60dc044d34b53be8175a693062974973b4f00e97"
+		},
+		"upgrades": [
+			{
+				"levels": 1.0,
+				"name": "Arrow Damage I"
+			},
+			{
+				"levels": 1.0,
+				"name": "Max HP I"
+			}
+		],
+		"wallet": [
+			15.0,
+			2.0,
+			0.0
+		],
+		"weights": {
+			"distance": 0.55,
+			"gem_rate": 0.15,
+			"gold_rate": 0.3
+		}
+	},
+	"engine": {
+		"build": "official",
+		"hash": "89cea143987d564363e15d207438530651d943ac",
+		"hex": 263680,
+		"major": 4,
+		"minor": 6,
+		"patch": 0,
+		"status": "stable",
+		"string": "4.6-stable (official)",
+		"timestamp": 0
+	},
+	"final_state": {
+		"achievements": {
+
+		},
+		"best_distance": 0.0,
+		"bestiary": {
+
+		},
+		"claimed": {
+
+		},
+		"controls_seen": false,
+		"crowns_dropped": {
+
+		},
+		"kills": 0,
+		"levels": {
+			"5659": 1,
+			"5932": 1
+		},
+		"max_prestige": 0,
+		"prestige": 0,
+		"runs": 0,
+		"spent": [
+			2.0,
+			0.0,
+			0.0
+		],
+		"stats": {
+			"Amount_Of_Arrows": 1.0,
+			"Arrow_Damage": 19.0,
+			"Arrow_Speed": 5.0,
+			"Beam_Critic_Multiplier": 3.0,
+			"Beam_Damage": 1000000.0,
+			"Beam_Duration": 3.0,
+			"Beam_Fire_Rate": 1.0,
+			"Beam_Range": 6.0,
+			"Bleed_Damage": 1000.0,
+			"Bleed_Duration": 2.0,
+			"Bleeding_Rate": 1.0,
+			"Bow_Fire_Rate": 1.0,
+			"Burn_Chance": 30.0,
+			"Burn_Damage": 200.0,
+			"Burn_Duration": 2.0,
+			"Burning_Rate": 1.0,
+			"Critic_Damage": 2.0,
+			"Curse_Chance": 30.0,
+			"Curse_Duration": 2.0,
+			"Curse_Effect": 3.0,
+			"CursedArrow_Damage": 200.0,
+			"Dagger_Attack_Rate": 0.6,
+			"Dagger_Damage": 150.0,
+			"Distance_Range": 10.0,
+			"Dragon_Fire_Rate": 0.5,
+			"EnemiesPerGroup": 1.0,
+			"Explosion_Size": 4.0,
+			"FireArrow_Damage": 50.0,
+			"Ghost_Fire_Rate": 0.5,
+			"GroupsPerSection": 2.0,
+			"HealOnHit_Amount": 4.0,
+			"HealOnKill_Amount": 4.0,
+			"Horizontal_Speed": 0.8,
+			"MaxHP": 105.0,
+			"Max_Bullet_Rebounds": 1.0,
+			"Melee_range": 4.0,
+			"PickupRange": 0.6
+		},
+		"unlocks": {
+			"Bow": true
+		},
+		"wallet": [
+			15.0,
+			2.0,
+			0.0
+		]
+	},
+	"initial_state": {
+		"achievements": {
+
+		},
+		"best_distance": 0.0,
+		"bestiary": {
+
+		},
+		"claimed": {
+
+		},
+		"controls_seen": false,
+		"crowns_dropped": {
+
+		},
+		"kills": 0,
+		"levels": {
+			"5659": 1,
+			"5932": 1
+		},
+		"max_prestige": 0,
+		"prestige": 0,
+		"runs": 0,
+		"spent": [
+			2.0,
+			0.0,
+			0.0
+		],
+		"stats": {
+			"Amount_Of_Arrows": 1.0,
+			"Arrow_Damage": 19.0,
+			"Arrow_Speed": 5.0,
+			"Beam_Critic_Multiplier": 3.0,
+			"Beam_Damage": 1000000.0,
+			"Beam_Duration": 3.0,
+			"Beam_Fire_Rate": 1.0,
+			"Beam_Range": 6.0,
+			"Bleed_Damage": 1000.0,
+			"Bleed_Duration": 2.0,
+			"Bleeding_Rate": 1.0,
+			"Bow_Fire_Rate": 1.0,
+			"Burn_Chance": 30.0,
+			"Burn_Damage": 200.0,
+			"Burn_Duration": 2.0,
+			"Burning_Rate": 1.0,
+			"Critic_Damage": 2.0,
+			"Curse_Chance": 30.0,
+			"Curse_Duration": 2.0,
+			"Curse_Effect": 3.0,
+			"CursedArrow_Damage": 200.0,
+			"Dagger_Attack_Rate": 0.6,
+			"Dagger_Damage": 150.0,
+			"Distance_Range": 10.0,
+			"Dragon_Fire_Rate": 0.5,
+			"EnemiesPerGroup": 1.0,
+			"Explosion_Size": 4.0,
+			"FireArrow_Damage": 50.0,
+			"Ghost_Fire_Rate": 0.5,
+			"GroupsPerSection": 2.0,
+			"HealOnHit_Amount": 4.0,
+			"HealOnKill_Amount": 4.0,
+			"Horizontal_Speed": 0.8,
+			"MaxHP": 105.0,
+			"Max_Bullet_Rebounds": 1.0,
+			"Melee_range": 4.0,
+			"PickupRange": 0.6
+		},
+		"unlocks": {
+			"Bow": true
+		},
+		"wallet": [
+			15.0,
+			2.0,
+			0.0
+		]
+	},
+	"modeled_variant": "classic assisted; centered walking; no hostile-arrow damage",
+	"recommendation": {
+		"after_run": 0,
+		"alternatives": [
+			{
+				"currency": 0,
+				"expense": 1.70710678118655,
+				"frontier": 0.0166714285714286,
+				"gain": 0.036650868547969,
+				"id": "5932",
+				"name": "Arrow Damage I",
+				"predicted": {
+					"distance": 40.0107231140137,
+					"gems": 0.0,
+					"gold": 4.0,
+					"won": false
+				},
+				"price": 2.0,
+				"proxy": 0.0312940571194179,
+				"score": 0.0123481044241024
+			},
+			{
+				"currency": 0,
+				"expense": 1.70710678118655,
+				"frontier": 0.00714285714285714,
+				"gain": 0.0209340070357023,
+				"id": "5659",
+				"name": "Max HP I",
+				"predicted": {
+					"distance": 40.0107231140137,
+					"gems": 0.0,
+					"gold": 4.0,
+					"won": false
+				},
+				"price": 2.0,
+				"proxy": 0.0165056248906555,
+				"score": 0.00566158959337252
+			}
+		],
+		"baseline": {
+			"distance": 40.0107231140137,
+			"gems": 0.0,
+			"gold": 4.0,
+			"won": false
+		},
+		"currency": 0,
+		"expense": 1.70710678118655,
+		"frontier": 0.0166714285714286,
+		"gain": 0.036650868547969,
+		"id": "5932",
+		"level_before": 1,
+		"name": "Arrow Damage I",
+		"predicted": {
+			"distance": 40.0107231140137,
+			"gems": 0.0,
+			"gold": 4.0,
+			"won": false
+		},
+		"prestige": 0,
+		"price": 2.0,
+		"proxy": 0.0312940571194179,
+		"score": 0.0123481044241024,
+		"wallet_before": [
+			15.0,
+			2.0,
+			0.0
+		]
+	},
+	"runs": [],
+	"trial_count": 3,
+	"wall_seconds": 0.186
+}

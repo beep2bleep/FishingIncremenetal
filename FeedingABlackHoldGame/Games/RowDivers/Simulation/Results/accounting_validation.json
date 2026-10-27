@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "checks": {
+    "completed": true,
+    "all_four_crowns": true,
+    "no_time_caps": true,
+    "no_arrow_damage": true,
+    "all_kills_recorded": true,
+    "all_purchases_affordable": true,
+    "levels_within_caps": true,
+    "at_least_100_maxed_nodes": true,
+    "currency_0_balances": true,
+    "currency_0_spend_matches": true,
+    "currency_1_balances": true,
+    "currency_1_spend_matches": true,
+    "currency_2_balances": true,
+    "currency_2_spend_matches": true
+  }
+}

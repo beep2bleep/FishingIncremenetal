@@ -106,8 +106,9 @@ func run() -> void:
 	var cycle_speed := InputEventKey.new()
 	cycle_speed.keycode = KEY_F7
 	cycle_speed.pressed = true
+	battle.set_debug_speed(128)
 	battle._unhandled_input(cycle_speed)
-	check(battle.debug_speed == 1, "F7 cycles from 32x back to 1x")
+	check(battle.debug_speed == 1, "F7 cycles from 128x back to 1x")
 	battle.set_debug_speed(2)
 	var health_before: float = battle.health
 	battle.armor = 0
@@ -126,10 +127,10 @@ func run() -> void:
 	shift.keycode = KEY_SHIFT
 	shift.pressed = true
 	battle._unhandled_input(shift)
-	check(battle.running, "Shift toggles running")
+	check(battle.running, "Shift toggles double speed")
 	for i in range(120): battle._physics_process(1.0 / 60.0)
-	check(absf(battle.distance - 6.5) < 0.001, "Running uses 1.5 multiplier")
-	check(is_equal_approx(battle.health, 87.5), "Running scales row damage")
+	check(absf(battle.distance - 7.8) < 0.001, "Double speed advances two simulation steps")
+	check(is_equal_approx(battle.health, 85.0), "Double speed doubles row ticks without amplifying each hit")
 	battle.running = false
 	battle.row_timer = 0
 	battle._spawn_enemy(battle.player_position + Vector3(0, -0.23, -3), 0)
@@ -170,8 +171,9 @@ func run() -> void:
 	global_state.ensure_default_game_mode_data()
 	global_state.new_game()
 	global_state.start_in_upgrade_scene = true
-	var row_save_existed := FileAccess.file_exists(Progress.SAVE_PATH)
-	var row_save_backup := FileAccess.get_file_as_string(Progress.SAVE_PATH) if row_save_existed else ""
+	var row_save_path = Progress.progress_path()
+	var row_save_existed := FileAccess.file_exists(row_save_path)
+	var row_save_backup := FileAccess.get_file_as_string(row_save_path) if row_save_existed else ""
 	Progress.active_data_cache = Progress.fresh()
 	var upgrade_scene: Node = load("res://UpgradeScreen.tscn").instantiate()
 	root.add_child(upgrade_scene)
@@ -185,7 +187,19 @@ func run() -> void:
 	check(upgrade_scene.get("go_again_button") != null and upgrade_scene.get("go_again_button").text == "PLAY", "Shared scene labels its battle transition PLAY")
 	check(tree.node_dict.size() == 113, "Shared UpgradeScreen builds center and all 112 Railway Fury upgrades")
 	var lines: Node = tree.get_node("Pivot/Tech Lines")
-	check(lines.get_child_count() == 115, "Shared tree draws all 114 source edges and its center edge (got %d)" % lines.get_child_count())
+	var drawn_edges = {}
+	for line in lines.get_children():
+		if line.from_node.upgrade==null or line.to_node.upgrade==null: continue
+		var ids = [line.from_node.upgrade.sim_key,line.to_node.upgrade.sim_key]
+		ids.sort()
+		drawn_edges["/".join(ids)] = true
+	var missing_edges = 0
+	for entry in Progress.design().upgrades:
+		for child in entry.children:
+			var ids = [str(entry.id),str(child)]
+			ids.sort()
+			if not drawn_edges.has("/".join(ids)): missing_edges += 1
+	check(missing_edges==0, "Shared tree draws every source connection")
 	var root_entry: Dictionary = Progress.design().upgrades.filter(func(node): return node.parents.is_empty())[0]
 	var root_upgrade = global_state.game_mode_data_manager.upgrades.values().filter(func(upgrade): return upgrade.sim_key == str(root_entry.id))[0]
 	check(root_upgrade.sim_name == "Arrow Damage I" and root_upgrade.sim_position == Vector2(float(root_entry.position[0]), -float(root_entry.position[1])) * 20.0, "Shared tree retains source root and Unity layout position")
@@ -255,13 +269,13 @@ func run() -> void:
 	var purchased_data: Dictionary = Progress.load_data()
 	check(Progress.level(purchased_data, root_entry) == 1 and purchased_data.stats.Arrow_Damage > 16.0, "Shared tree purchase applies and saves the source upgrade effect")
 	if row_save_existed:
-		var restore := FileAccess.open(Progress.SAVE_PATH, FileAccess.WRITE)
+		var restore := FileAccess.open(row_save_path, FileAccess.WRITE)
 		restore.store_string(row_save_backup)
 		restore.close()
 		Progress.active_data_cache = {}
 		Progress.load_data()
 	else:
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(Progress.SAVE_PATH))
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(row_save_path))
 		Progress.active_data_cache = {}
 	upgrade_scene.queue_free()
 	print("RAILWAY FURY GAMEPLAY + SHARED UPGRADE SCREEN SMOKE %s: %d assertions, %d failures" % ["PASSED" if failures == 0 else "FAILED", checks, failures])

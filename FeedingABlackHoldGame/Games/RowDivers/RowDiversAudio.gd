@@ -124,6 +124,9 @@ func _start_music(offset = 0.0) -> void:
 
 func sound(cue: String) -> void:
 	if Graphics.illustrated():
+		if cue == "dagger":
+			original_sound("Dagger", 0.1)
+			return
 		var entry: Dictionary = illustrated_catalog().effects.get(cue, {})
 		if not entry.is_empty(): _play_entry(cue, entry, ILLUSTRATED_ROOT + entry.file, 0.08 if cue in ["shot", "hit", "coin", "damage", "beam"] else 0.0, false)
 		return

@@ -55,7 +55,7 @@ func run() -> void:
 	ending.reveal.kill()
 	ending.story.visible_ratio = 1.0
 	await capture("ending-choice")
-	ending._choose("BenevolentGod")
+	ending._choose("LastStation")
 	ending.reveal.kill()
 	ending.story.visible_ratio = 1.0
 	await capture("ending-benevolent")

@@ -1,0 +1,11 @@
+{
+  "revision": "8eae2577e6b0bb407bb4416acb05de91cb880561",
+  "files": {
+    "config.json": "35570ce8d522dfc95bbb6f65638e5332d805182e7d93bd70c1c7d3455a4c7c65",
+    "GeneratedCombatModel.gd.txt": "61db51597958beaa82fbdd312329d6b8eb9d7e132a0d2e5f592bd571efc3731c",
+    "RowDiversBattleScene.gd.txt": "234e5a10a45a89ed311229250c3fc9312e6c07e77c74f4282793d771414afcc0",
+    "RowDiversProgress.gd.txt": "ea314cb26c54cbd88ca3d026ada4a593e08bddb47e146e6a3c93e1d73ebac6ac",
+    "row_divers.json": "309d71f72a941cf4dab54d81edc36e110dbc09d26c6d5dee663b5421b3fff567",
+    "RunBalanceCampaign.gd.txt": "21de298124e8883778021bc586b808472ab5f5105920a715b4059bd9c46e1a41"
+  }
+}

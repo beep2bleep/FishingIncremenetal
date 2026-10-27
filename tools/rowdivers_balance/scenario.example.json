@@ -1,0 +1,12 @@
+{
+  "mode": "recommend",
+  "prestige": 0,
+  "wallet": [15, 2, 0],
+  "upgrades": [
+    {"name": "Arrow Damage I", "levels": 1},
+    {"name": "Max HP I", "levels": 1}
+  ],
+  "shortlist": 112,
+  "weights": {"distance": 0.55, "gold_rate": 0.30, "gem_rate": 0.15},
+  "seed": 2401026
+}

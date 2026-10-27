@@ -232,6 +232,9 @@ func _send_first_game_start_event() -> void:
 func _send_active_game_progression_start_event() -> void:
     if not _enabled:
         return
+    if Util.is_row_divers_game_active():
+        track_progression_event("start", Util.ACTIVE_GAME_ROW_DIVERS, "game")
+        return
     if Util.is_mining_game_active():
         var mining_data: Dictionary = MINING_PROGRESS_SCRIPT.load_data()
         var player_level: int = max(1, int(mining_data.get("player_level", 1)))
@@ -446,6 +449,12 @@ func _get_active_credentials() -> Dictionary:
             "game_id": Util.ACTIVE_GAME_OPEN_PIT,
             "game_key": DATA_BREACH_GAME_KEY,
             "secret_key": DATA_BREACH_SECRET_KEY,
+        }
+    if Util.is_row_divers_game_active():
+        return {
+            "game_id": Util.ACTIVE_GAME_ROW_DIVERS,
+            "game_key": _default_vanguard_game_key,
+            "secret_key": _default_vanguard_secret_key,
         }
     if Util.is_mining_game_active():
         return {

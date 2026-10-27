@@ -1,0 +1,12 @@
+{
+  "seed": 2401028,
+  "max_runs": 90,
+  "shortlist": 4,
+  "ending_reserve": true,
+  "policy": "boss-and-impact-aware-v3",
+  "weights": {
+    "distance": 0.75,
+    "gold_rate": 0.18,
+    "gem_rate": 0.07
+  }
+}

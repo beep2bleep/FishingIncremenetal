@@ -206,10 +206,10 @@ func run() -> void:
 	ending.persist_results = false
 	root.add_child(ending)
 	if ending.story != null:
-		ending._choose("BenevolentGod")
-		check(Progress.active_data_cache.achievements.get("BenevolentGod", false), "Benevolent ending persists achievement state")
-		ending._choose("EvilGod")
-		check(Progress.active_data_cache.achievements.get("EvilGod", false), "Evil ending persists achievement state")
+		ending._choose("LastStation")
+		check(Progress.active_data_cache.endings_seen.get("LastStation", false), "Last Station ending records selection")
+		ending._choose("BeyondTheRails")
+		check(Progress.active_data_cache.ending == "LastStation", "Ending selection is final")
 	else:
 		check(false, "Final choice scene opens after completion")
 	ending.queue_free()

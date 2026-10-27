@@ -43,6 +43,11 @@ void fragment() {
 """
 
 var _scene_enabled := false
+var _gameplay_pointer_hidden := false
+
+func set_gameplay_pointer_hidden(value: bool) -> void:
+    _gameplay_pointer_hidden = value
+    _refresh_cursor_display_mode()
 var _virtual_cursor_active := false
 var _cursor_position := Vector2.ZERO
 var _left_mouse_down := false
@@ -352,6 +357,10 @@ func _ensure_open_pit_cursor_material() -> void:
 
 func _refresh_cursor_display_mode() -> void:
     if _cursor_sprite == null:
+        return
+    if _gameplay_pointer_hidden:
+        Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+        _cursor_sprite.hide()
         return
     var force_sprite_cursor: bool = _open_pit_cursor_enabled and _scene_enabled
     Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN if force_sprite_cursor or _virtual_cursor_active else Input.MOUSE_MODE_VISIBLE)

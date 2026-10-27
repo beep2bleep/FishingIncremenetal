@@ -1,0 +1,4 @@
+*.log
+__pycache__/
+pack_runtime/
+save_backups/

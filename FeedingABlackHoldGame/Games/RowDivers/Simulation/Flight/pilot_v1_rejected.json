@@ -1,0 +1,3 @@
+{
+  "reason": "Initial offline model did not initialize unlocked Auto/Hold fire modes. Runtime parity exposed this; corrected in SourceSnapshot_v2. Initial partial trace is exploratory only."
+}

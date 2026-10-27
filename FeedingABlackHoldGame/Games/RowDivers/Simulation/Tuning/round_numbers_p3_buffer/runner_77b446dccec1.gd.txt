@@ -1,0 +1,309 @@
+extends SceneTree
+## Offline runner. No gameplay save writes; configuration and results are explicit files.
+const Progress = preload("res://Games/RowDivers/RowDiversProgress.gd")
+const Combat = preload("res://Games/RowDivers/Simulation/GeneratedCombatModel.gd")
+var config: Dictionary = {}
+var results: Dictionary = {"runs": [], "choices": [], "claims": []}
+var dt = 1.0 / 60.0
+var experiment_seed = 2401026
+var trials = 0
+var started = 0
+var output = "res://Games/RowDivers/Simulation/Results/campaign.json"
+
+func _initialize(): call_deferred("run")
+
+func simulate(state: Dictionary, trial_seed: int, step = -1.0) -> Dictionary:
+	seed(trial_seed)
+	var battle = Combat.new()
+	battle.data = state.duplicate(true)
+	battle.row_damage_scale = float(config.get("row_damage_scale", 1.0))
+	root.add_child(battle)
+	var tick = dt if step < 0 else step
+	var frames = 0
+	var cap = int(float(config.get("max_run_seconds", 1800.0)) / tick)
+	while not battle.ended and frames < cap:
+		battle._simulate_step(tick)
+		frames += 1
+	var ranges: Array = []
+	var fractions: Array = []
+	var far = 0
+	var close = 0
+	for kill in battle.kill_records:
+		ranges.append(kill.range)
+		fractions.append(kill.range_fraction)
+		if kill.range_fraction >= 0.8: far += 1
+		if kill.range <= 2.0: close += 1
+	ranges.sort()
+	fractions.sort()
+	var report = {"prestige": int(state.prestige), "won": battle.won_run, "capped": not battle.ended,
+		"seconds": battle.elapsed, "distance": battle.distance, "kills": battle.run_kills,
+		"loot": battle.coins.duplicate(), "health": battle.health, "armor": battle.armor,
+		"damage_sources": battle.damage_sources.duplicate(), "death_source": "time cap" if not battle.ended else "victory" if battle.won_run else battle.last_damage_source,
+		"damage_dealt": battle.damage_dealt, "healing": battle.healing_received,
+		"mean_kill_range": mean(ranges), "median_kill_range": quantile(ranges, 0.5),
+		"p10_kill_range": quantile(ranges, 0.1), "p90_kill_range": quantile(ranges, 0.9),
+		"mean_range_fraction": mean(fractions), "far_kill_fraction": float(far) / maxf(1, ranges.size()),
+		"close_kills": close, "close_kill_fraction": float(close) / maxf(1, ranges.size()),
+		"kill_records": battle.kill_records.duplicate(true), "state": battle.data.duplicate(true)}
+	battle.free()
+	trials += 1
+	return report
+
+func mean(values):
+	var total = 0.0
+	for value in values: total += value
+	return total / maxf(1, values.size())
+
+func quantile(values, fraction):
+	return values[mini(values.size() - 1, int(fraction * (values.size() - 1)))] if not values.is_empty() else 0.0
+
+func claim_rewards(state, run_index):
+	Progress.check_achievements(state)
+	if not state.unlocks.get("AchievementsTab", false): return
+	for achievement in Progress.design().settings.achievements:
+		if Progress.claim(state, achievement):
+			results.claims.append({"after_run": run_index, "achievement": achievement.achievementName, "currency": achievement.currencyType, "reward": achievement.reward})
+
+func potential(state):
+	var stats = state.stats
+	var armor = Progress.stat(state, "Armor")
+	var row_resist = minf(99.0, Progress.stat(state, "Armor_Against_Row")) / 100.0
+	var effective = Progress.stat(state, "MaxHP") + armor / (1.0 - row_resist)
+	var contact_effective = (Progress.stat(state, "MaxHP") + armor) / maxf(0.05, 1.0 - Progress.stat(state, "Impact_Armor") / 100.0)
+	var critical = 1.0 + Progress.stat(state, "Critic_Chance") / 100.0 * (Progress.stat(state, "Critic_Damage") - 1.0)
+	var dps = Progress.stat(state, "Arrow_Damage") * Progress.stat(state, "Bow_Fire_Rate") * maxf(1, Progress.stat(state, "Amount_Of_Arrows")) * critical
+	if state.unlocks.get("Dagger", false): dps += Progress.stat(state, "Dagger_Damage") * Progress.stat(state, "Dagger_Attack_Rate") * 0.35
+	if state.unlocks.get("Dragon", false): dps += Progress.stat(state, "FireArrow_Damage") * (Progress.stat(state, "Dragon_Fire_Rate") + Progress.stat(state, "Bow_Fire_Rate"))
+	if state.unlocks.get("Ghost", false): dps += Progress.stat(state, "CursedArrow_Damage") * (Progress.stat(state, "Ghost_Fire_Rate") + Progress.stat(state, "Bow_Fire_Rate"))
+	if state.unlocks.get("ThirdEye", false): dps += Progress.stat(state, "Beam_Damage") * Progress.stat(state, "Beam_Fire_Rate")
+	# Boss-only damage buys time at fixed corridor gates without making normal
+	# enemies disappear at long range. Include that value in the shortlist.
+	var boss_hits = Progress.stat(state, "Bow_Fire_Rate") * maxf(1, Progress.stat(state, "Amount_Of_Arrows"))
+	if state.unlocks.get("Dagger", false): boss_hits += Progress.stat(state, "Dagger_Attack_Rate") * 0.35
+	var boss_dps = dps + Progress.stat(state, "Damage_Against_Bosses") * boss_hits
+	var heal = Progress.stat(state, "HealOnKill_Amount") * Progress.stat(state, "HealOnKill_Chance") / 100.0
+	heal += Progress.stat(state, "HealOnHit_Amount") * Progress.stat(state, "HealOnHit_Chance") / 100.0 * Progress.stat(state, "Bow_Fire_Rate")
+	heal += Progress.stat(state, "HP_Steal") * Progress.stat(state, "HP_Steal_Chance") / 100.0 * Progress.stat(state, "Bow_Fire_Rate")
+	return 0.30 * log(maxf(1, effective)) + 0.15 * log(maxf(1, contact_effective)) + 0.21 * log(maxf(1, dps)) + 0.04 * log(maxf(1, boss_dps)) + 0.10 * log(1 + heal) + 0.08 * log(maxf(0.01, Progress.stat(state, "Distance_Range"))) + 0.12 * log(maxf(0.01, Progress.stat(state, "PickupRange"))) + (0.08 if state.unlocks.get("Harvester", false) else 0)
+
+func unlock_value(state, entry):
+	var value = 0.0
+	for child_id in entry.children:
+		var child = Progress.find_upgrade(str(child_id))
+		if not Progress.visible(state, child):
+			value += 0.018 / maxf(1, int(child.unlockAtParentLevel) - Progress.level(state, entry))
+	if entry.unlocks.get("tabType", "") == "AchievementsTab": value += 0.12
+	return value
+
+func utility(report):
+	var seconds = maxf(1.0, report.seconds)
+	# Ratios against a baseline are applied below, keeping gold and gems separate.
+	return [report.distance, report.loot[0] / seconds, report.loot[1] / seconds]
+
+func select_upgrade(state, run_index):
+	if not Progress.design().upgrades.any(func(entry): return Progress.can_buy(state, entry)): return {}
+	var baseline = simulate(state, experiment_seed + run_index)
+	var base_potential = potential(state)
+	var candidates: Array = []
+	for entry in Progress.design().upgrades:
+		if not Progress.can_buy(state, entry): continue
+		var after = state.duplicate(true)
+		Progress.buy(after, entry)
+		var currency = int(entry.cost.currencyType)
+		var price = Progress.cost(state, entry)
+		var frontier = unlock_value(state, entry)
+		var gain = potential(after) - base_potential
+		# Price measured in expected runs of that currency. Crowns are finite unlock tokens.
+		var income = maxf(1.0, baseline.loot[currency])
+		var expense = 1.0 + sqrt(price / income)
+		var proxy = (gain + frontier + 0.0001) / expense
+		candidates.append({"id": entry.id, "name": entry.upgradeName, "price": price, "currency": currency,
+			"gain": gain, "frontier": frontier, "expense": expense, "proxy": proxy})
+	if candidates.is_empty(): return {}
+	candidates.sort_custom(func(a,b): return a.proxy > b.proxy)
+	var shortlist = candidates.slice(0, int(config.get("shortlist", 4)))
+	var before = utility(baseline)
+	for candidate in shortlist:
+		var after = state.duplicate(true)
+		Progress.buy(after, Progress.find_upgrade(candidate.id))
+		var probe = simulate(after, experiment_seed + run_index)
+		var following = utility(probe)
+		var reach_gain = (following[0] - before[0]) / maxf(20, before[0])
+		var gold_gain = (following[1] - before[1]) / maxf(0.01, before[1])
+		var gem_gain = (following[2] - before[2]) / maxf(0.005, before[2])
+		var weights = config.get("weights", {"distance": 0.55, "gold_rate": 0.30, "gem_rate": 0.15})
+		candidate.score = (float(weights.distance) * reach_gain + float(weights.gold_rate) * gold_gain + float(weights.gem_rate) * gem_gain + 0.12 * candidate.gain + candidate.frontier + 0.00001) / candidate.expense
+		candidate.predicted = {"distance": probe.distance, "gold": probe.loot[0], "gems": probe.loot[1], "won": probe.won}
+		candidate.score += (2.0 if probe.won and not baseline.won else 0.0)
+	shortlist.sort_custom(func(a,b): return a.score > b.score)
+	var selected = shortlist[0].duplicate(true)
+	selected.after_run = run_index
+	selected.prestige = state.prestige
+	selected.wallet_before = state.wallet.duplicate()
+	selected.level_before = Progress.level(state, Progress.find_upgrade(selected.id))
+	selected.alternatives = shortlist
+	selected.baseline = {"distance": baseline.distance, "gold": baseline.loot[0], "gems": baseline.loot[1], "won": baseline.won}
+	return selected
+
+func save_results():
+	results.trial_count = trials
+	results.wall_seconds = float(Time.get_ticks_msec() - started) / 1000.0
+	var file = FileAccess.open(output, FileAccess.WRITE)
+	file.store_string(JSON.stringify(results, "\t"))
+	file.close()
+
+func equivalent(a, b):
+	if (a is float or a is int) and (b is float or b is int): return absf(float(a) - float(b)) <= maxf(0.000001, absf(float(a)) * 0.000000001)
+	if a is Dictionary and b is Dictionary:
+		if a.size() != b.size(): return false
+		for key in a:
+			if not b.has(key) or not equivalent(a[key], b[key]): return false
+		return true
+	if a is Array and b is Array:
+		if a.size() != b.size(): return false
+		for index in range(a.size()):
+			if not equivalent(a[index], b[index]): return false
+		return true
+	return a == b
+
+func replay_trace():
+	var trace = JSON.parse_string(FileAccess.get_file_as_string(str(config.replay_trace)))
+	var state = trace.initial_state.duplicate(true)
+	results.loadouts = {}
+	results.replay_checks = []
+	var passed = true
+	for expected in trace.runs:
+		var index = int(expected.run)
+		state.prestige = int(expected.prestige)
+		claim_rewards(state, index - 1)
+		for choice in trace.choices:
+			if int(choice.after_run) != index - 1: continue
+			if not Progress.buy(state, Progress.find_upgrade(choice.id)): passed = false
+			claim_rewards(state, index - 1)
+		results.loadouts[str(index)] = state.duplicate(true)
+		var actual = simulate(state, int(trace.config.get("seed", 2401026)) + index * 1009)
+		var match_run = true
+		for field in ["distance", "kills", "loot", "health", "armor", "damage_sources", "won", "capped", "kill_records"]:
+			if not equivalent(expected[field], actual[field]): match_run = false
+		results.replay_checks.append({"run": index, "passed": match_run})
+		passed = passed and match_run
+		state = actual.state
+		if index % 10 == 0:
+			print("REPLAY ", index, " ", passed)
+			await process_frame
+	claim_rewards(state, trace.runs.size())
+	for choice in trace.choices:
+		if int(choice.after_run) != trace.runs.size(): continue
+		if not Progress.buy(state, Progress.find_upgrade(choice.id)): passed = false
+		claim_rewards(state, trace.runs.size())
+	if trace.get("completed", false): passed = Progress.unlock_final_chamber(state) and passed
+	results.final_state_matches = equivalent(state, trace.final_state)
+	results.replay_passed = passed and results.final_state_matches
+	results.final_state = state
+	save_results()
+	print("REPLAY PASSED: ", results.replay_passed)
+	quit(0 if results.replay_passed else 1)
+
+func run():
+	started = Time.get_ticks_msec()
+	var args = OS.get_cmdline_user_args()
+	if args.size() > 0: config = JSON.parse_string(FileAccess.get_file_as_string(args[0]))
+	dt = float(config.get("dt", dt))
+	experiment_seed = int(config.get("seed", experiment_seed))
+	output = str(config.get("output", output))
+	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
+	var state = Progress.fresh()
+	if config.has("input"): state = Progress.load_data(str(config.input)).duplicate(true)
+	if config.has("prestige"): state.prestige = int(config.prestige)
+	if config.has("wallet"): state.wallet = config.wallet.duplicate()
+	# Ordered purchases preserve the game's flat/percentage purchase-order behavior.
+	if config.has("upgrades"):
+		var saved_wallet = state.wallet.duplicate()
+		state.wallet = [1e30, 1e30, 1e30]
+		for request in config.upgrades:
+			var entry = {}
+			for node in Progress.design().upgrades:
+				if node.upgradeName == request.name or node.id == request.name: entry = node
+			if entry.is_empty():
+				push_error("Unknown upgrade: " + str(request.name))
+				quit(1)
+				return
+			for rank in range(int(request.get("levels", 1))):
+				if not Progress.buy(state, entry):
+					push_error("Illegal purchase order/level: " + str(request.name))
+					quit(1)
+					return
+		state.wallet = saved_wallet
+	results.config = config
+	results.engine = Engine.get_version_info()
+	results.modeled_variant = "classic assisted; centered walking; no hostile-arrow damage"
+	results.initial_state = state.duplicate(true)
+	if config.has("replay_trace"):
+		await replay_trace()
+		return
+	if config.get("mode", "campaign") == "recommend":
+		results.recommendation = select_upgrade(state, 0)
+		results.final_state = state
+		save_results()
+		quit()
+		return
+	if config.get("mode", "campaign") == "snapshot":
+		for repeat in range(int(config.get("repeats", 10))):
+			var report = simulate(state, experiment_seed + repeat)
+			report.erase("state")
+			results.runs.append(report)
+		results.final_state = state
+		save_results()
+		quit()
+		return
+	for run_index in range(1, int(config.get("max_runs", 1500)) + 1):
+		state.prestige = int(state.max_prestige)
+		claim_rewards(state, run_index - 1)
+		for purchase_index in range(400):
+			# Keep final chamber entry funds once the ending tree is unlocked.
+			if state.unlocks.get("GodTab", false) and (not config.get("ending_reserve", false) or purchase_index > 0) and Progress.unlock_final_chamber(state): break
+			# Once the ending is available, bank entry funds while still taking one
+			# useful affordable upgrade each dive instead of exhausting the whole tree.
+			if config.get("ending_reserve", false) and state.unlocks.get("GodTab", false) and purchase_index >= 1: break
+			var choice = select_upgrade(state, run_index - 1)
+			if choice.is_empty():
+				if state.unlocks.get("GodTab", false): Progress.unlock_final_chamber(state)
+				break
+			if config.get("purchase_buffer", false) and state.prestige >= int(config.get("purchase_buffer_min_prestige", 0)) and purchase_index > 0:
+				var after_purchase = state.duplicate(true)
+				Progress.buy(after_purchase, Progress.find_upgrade(choice.id))
+				if after_purchase.unlocks.get("AchievementsTab", false):
+					for achievement in Progress.design().settings.achievements:
+						Progress.claim(after_purchase, achievement)
+				# Once this shop has improved the build, retain one legal affordable
+				# purchase for a possible zero-income dive. Include imminent rewards
+				# in that check, and let the ending's existing banking rule take over.
+				if not after_purchase.unlocks.get("GodTab", false) and not Progress.design().upgrades.any(func(entry): return Progress.can_buy(after_purchase, entry)):
+					break
+			Progress.buy(state, Progress.find_upgrade(choice.id))
+			results.choices.append(choice)
+			claim_rewards(state, run_index - 1)
+			if results.choices.size() % 10 == 0:
+				print("CHOICES ", results.choices.size(), " after run ", run_index - 1, " P", state.prestige, " ", choice.name)
+				await process_frame
+		if state.get("god_panel_unlocked", false):
+			results.completed = true
+			break
+		var wallet_before = state.wallet.duplicate()
+		var report = simulate(state, experiment_seed + run_index * 1009)
+		state = report.state
+		report.erase("state")
+		report.run = run_index
+		report.wallet_before = wallet_before
+		report.wallet_after = state.wallet.duplicate()
+		report.upgrade_levels = state.levels.duplicate()
+		results.runs.append(report)
+		print("RUN %d P%d %.1fm kills=%d loot=%s won=%s" % [run_index, report.prestige, report.distance, report.kills, str(report.loot), str(report.won)])
+		results.final_state = state.duplicate(true)
+		if run_index % 10 == 0: save_results()
+		await process_frame
+	results.final_state = state
+	results.completed = bool(state.get("god_panel_unlocked", false))
+	save_results()
+	print("BALANCE COMPLETE: ", results.completed, " runs=", results.runs.size(), " trials=", trials, " seconds=", results.wall_seconds)
+	quit()

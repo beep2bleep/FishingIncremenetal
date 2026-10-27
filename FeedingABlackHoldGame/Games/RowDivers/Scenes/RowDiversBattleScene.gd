@@ -6,7 +6,16 @@ const HUD = preload("res://Games/RowDivers/RowDiversHUD.gd")
 const Style = preload("res://Games/RowDivers/RowDiversStyle.gd")
 const OriginalPresentation = preload("res://Games/RowDivers/RowDiversOriginalPresentation.gd")
 const Graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
+const FireWaves = preload("res://Games/RowDivers/RowDiversFireWaves.gd")
+const Analytics = preload("res://Games/RowDivers/RowDiversAnalytics.gd")
+const ProjectileVisual = preload("res://Games/RowDivers/RowDiversProjectile.gd")
+const EditorLoop = preload("res://Games/RowDivers/RowDiversEditorLoop.gd")
+const Timing = preload("res://Games/RowDivers/RowDiversTiming.gd")
+const LevelThemes = preload("res://Games/RowDivers/RowDiversLevelThemes.gd")
+var free_aim_mode = Progress.free_aim_mode
+var corridor_width = 1.0
 var data: Dictionary
+var progress_save_path = ""
 var camera: Camera3D
 var player_position = Vector3(0, 0.9, 0)
 var forward_speed = 1.3
@@ -28,6 +37,7 @@ var next_section_trigger = 3.474
 var group_index = 0
 var fire_mode = "Click"
 var ended = false
+var victory = false
 var suspended = false
 var run_kills = 0
 var distance = 0.0
@@ -46,10 +56,14 @@ var resume: Button
 var retry: Button
 var audio: Node
 var bow: Node3D
+var source_bow: Node3D
+var source_bow_rest: Transform3D
 var dagger: Node3D
 var presentation: CanvasLayer
 var weapon_recoil = 0.0
 var dagger_recoil = 0.0
+var dagger_flights: Array[Node3D] = []
+var dagger_throw_count = 0
 var shield_ring: MeshInstance3D
 var horizontal_override = NAN # Deterministic input for the end-to-end fixture; NaN reads real controls.
 var pointer_override = Vector2(NAN, NAN)
@@ -63,7 +77,13 @@ var world_light: DirectionalLight3D
 var original_weapons: Node3D
 var horizontal_axis = 0.0
 var projectile_state_pools: Dictionary = {}
-const DEBUG_SPEEDS = [1, 2, 4, 8, 16, 32]
+var fire_waves = FireWaves.new()
+var fire_visual: Node3D
+var aim_override = Vector3.INF
+var fire_override = false
+var auto_abilities_override = false
+var editor_pilot
+const DEBUG_SPEEDS = [1, 2, 4, 8, 16, 32, 64, 128]
 static var debug_speed = 1 # TEMPORARY QA: shared across dives in memory; never saved.
 
 func s(key: String) -> float:
@@ -76,7 +96,9 @@ func active(key: String) -> bool:
 	return abilities.has(key) and float(abilities[key].active) > 0
 
 func _ready() -> void:
+	corridor_width = 1.4 if free_aim_mode else 1.0
 	data = Progress.load_data()
+	progress_save_path = ProjectSettings.globalize_path(Progress.progress_path())
 	data.achievements.FirstDive = true
 	health = s("MaxHP")
 	armor = s("Armor")
@@ -85,7 +107,7 @@ func _ready() -> void:
 	auxiliary_fire_mode = fire_mode
 	Global.game_state = Util.GAME_STATES.PLAYING
 	MusicPlayer.stop()
-	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+	VirtualCursor.set_gameplay_pointer_hidden(true)
 	var environment = WorldEnvironment.new()
 	var env = Environment.new()
 	env.background_mode = Environment.BG_COLOR
@@ -115,6 +137,8 @@ func _ready() -> void:
 	add_child(original_weapons)
 	original_weapons.scale = Vector3.ONE * 0.7
 	var source_weapons := original_weapons.get_child(0)
+	source_bow = source_weapons.get_node("Bow Pivot")
+	source_bow_rest = source_bow.transform
 	source_weapons.get_node("Dagger Pivot").set_meta("source_position", source_weapons.get_node("Dagger Pivot").position)
 	source_weapons.get_node("Dagger Pivot").visible = unlocked("Dagger")
 	source_weapons.get_node("Fire Gem Pivot").visible = unlocked("Dragon")
@@ -127,21 +151,34 @@ func _ready() -> void:
 		abilities[key] = {"active": 0.0, "cooldown": 0.0, "duration": float(ability.abilityDuration), "wait": float(ability.cooldownDuration)}
 	for number in range(1, 4):
 		_build_section(number)
+	if free_aim_mode:
+		fire_waves.setup(int(data.prestige), randi(), Progress.design().settings.get("fire_waves", {}))
+		fire_visual = preload("res://Games/RowDivers/RowDiversFireWaveVisual.gd").new()
+		fire_visual.level_index = int(data.prestige)
+		add_child(fire_visual)
 	_build_hud()
 	audio = Audio.new()
 	add_child(audio)
 	audio.play_music(true)
-	if not data.controls_seen:
+	if EditorLoop.active(debug_speed):
+		data.controls_seen = true
+	elif not data.controls_seen:
 		presentation.show_tutorial()
 	_update_hud()
 	SignalBus.settings_updated.connect(_refresh_graphics)
 	_refresh_graphics()
+	if persist_results:
+		if debug_speed_cheats_enabled() and debug_speed>1: data.leaderboards_assisted = true
+		Timing.submit_pending(data)
+		Analytics.started(data, free_aim_mode, Progress.active_tree)
+		Progress.save_data(data, progress_save_path)
 
 func _refresh_graphics() -> void:
 	OriginalPresentation.refresh_materials(self)
 	for corridor in sections:
 		corridor.get_node("OriginalHallway").visible = Graphics.original()
 		corridor.get_node("ModernHallway").visible = not Graphics.original()
+		corridor.get_node("RailwayTracks").position.y = .52 if Graphics.original() else 0.0
 	world_environment.background_color = Color.BLACK if Graphics.original() else Color("13121b")
 	# Original materials implement the source's exponential-squared fog equation.
 	world_environment.fog_enabled = false
@@ -153,10 +190,8 @@ func _refresh_graphics() -> void:
 	world_light.visible = not Graphics.original()
 	camera.near = 0.01 if Graphics.original() else 0.05
 	original_weapons.visible = Graphics.original()
-	var source_dagger := original_weapons.get_child(0).get_node("Dagger Pivot") as Node3D
-	source_dagger.position = source_dagger.get_meta("source_position") + (Vector3(-0.45, 0, 0) if Graphics.illustrated() else Vector3.ZERO)
+	_update_dagger_presentation()
 	bow.visible = not Graphics.original()
-	dagger.visible = not Graphics.original() and unlocked("Dagger")
 	_update_camera_presentation()
 	for visual in find_children("*", "Node3D", true, false):
 		if visual.has_meta("modern_decoration"): visual.visible = not Graphics.original()
@@ -169,11 +204,61 @@ func _refresh_graphics() -> void:
 				visual.get_node("Modern").visible = not original
 				var sprite := visual.get_node("Original") as Sprite3D
 				if sprite != null: sprite.texture = Graphics.texture(visual.get_meta("original_texture"))
+	LevelThemes.configure_world(self)
+	for corridor in sections: LevelThemes.apply_section(corridor,self)
 
 func _update_camera_presentation() -> void:
 	camera.position = player_position + (Vector3(0, 0.81, 0.301) if Graphics.original() else Vector3.ZERO)
 	camera.rotation_degrees.x = -2.0 if Graphics.original() else 0.0
 	original_weapons.position = player_position + Vector3(0, -0.03, 0)
+	if free_aim_mode: _update_bow_aim()
+
+func _update_dagger_presentation() -> void:
+	dagger.rotation.z = deg_to_rad(-25)
+	dagger.visible = not Graphics.original() and unlocked("Dagger") and dagger_flights.is_empty()
+	# Both sprite styles display the imported weapon hierarchy, not the camera mesh.
+	var source_dagger := original_weapons.get_child(0).get_node("Dagger Pivot") as Node3D
+	var rest: Vector3 = source_dagger.get_meta("source_position")
+	if Graphics.illustrated(): rest.x -= 0.45
+	source_dagger.position = rest
+	source_dagger.rotation.z = 0
+	source_dagger.visible = unlocked("Dagger") and dagger_flights.is_empty()
+
+func _dagger_hand() -> Vector3:
+	if Graphics.original():
+		return (original_weapons.find_child("Dagger Weapon", true, false) as Node3D).global_position
+	return dagger.global_position
+
+func _launch_dagger(target: Vector3) -> void:
+	var flight := preload("res://Games/RowDivers/RowDiversDaggerFlight.gd").new()
+	add_child(flight)
+	var visual := _weapon_mesh("Sword_01", flight, Vector3.ZERO, 0.3)
+	# Billboard rotation would cancel the tumble; the flight faces the camera itself.
+	(visual.get_node("Original") as Sprite3D).billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	flight.setup(_dagger_hand(), target, clampf(dagger_timer * 0.9, 0.16, 0.5), 1.0 if dagger_throw_count % 2 == 0 else -1.0)
+	dagger_throw_count += 1
+	dagger_flights.append(flight)
+	_update_dagger_presentation()
+
+func _advance_daggers(delta: float) -> void:
+	for index in range(dagger_flights.size() - 1, -1, -1):
+		if dagger_flights[index].advance(delta, _dagger_hand(), camera.basis):
+			dagger_flights[index].hide()
+			dagger_flights[index].queue_free()
+			dagger_flights.remove_at(index)
+
+func _dagger_target() -> Dictionary:
+	if not free_aim_mode: return _target(s("Melee_range"))
+	var closest: Dictionary = {}
+	var best := s("Melee_range")
+	for enemy in enemies:
+		if enemy.hp <= 0: continue
+		var offset: Vector3 = enemy.node.position - player_position
+		var reach := Vector2(offset.x, offset.z).length()
+		if offset.z <= 0.2 and reach <= best:
+			closest = enemy
+			best = reach
+	return closest
 
 func _weapon_mesh(mesh_name: String, parent: Node3D, pos: Vector3, size: float, original_prefab = "") -> Node3D:
 	var visual := Node3D.new()
@@ -262,11 +347,18 @@ func _build_section(number: int) -> void:
 	modern.name = "ModernHallway"
 	root.add_child(modern)
 	_build_modern_hallway(modern)
+	modern.scale.x = corridor_width
 	modern.visible = not Graphics.original()
 	var visual_layout: String = "Crownless Boss Section" if number == 15 and data.crowns_dropped.get(str(int(data.prestige)), false) else layout_key
-	var original := OriginalPresentation.build(visual_layout)
+	var original := OriginalPresentation.build(visual_layout,true,true)
 	root.add_child(original)
+	original.scale.x = corridor_width
+	original.position.x *= corridor_width
+	if Graphics.illustrated(): OriginalPresentation.refresh_materials(original)
 	original.visible = Graphics.original()
+	var tracks = preload("res://Games/RowDivers/RowDiversTracks.gd").build(number,corridor_width)
+	tracks.position.y = .52 if Graphics.original() else 0.0
+	root.add_child(tracks)
 	var layout: Array = layouts[layout_key]
 	for i in range(mini(2, layout.size())):
 			# Unity chooses distributed groups (round(i * group_count / 2)), then a random side.
@@ -277,11 +369,17 @@ func _build_section(number: int) -> void:
 		for j in range(2 if int(data.prestige) == 3 else 1):
 			if j >= points.size() or allowed.is_empty(): continue
 			var point: Array = points[j]
-			_spawn_enemy(Vector3(float(point[0]) - 2.5, float(point[1]), root.position.z - (float(point[2]) + 28.474)), int(allowed.pick_random()))
+			_spawn_enemy(Vector3((float(point[0]) - 2.5) * corridor_width, float(point[1]), root.position.z - (float(point[2]) + 28.474)), int(allowed.pick_random()))
+	# Airborne ranged threats are exclusive to the active variant.
+	if free_aim_mode and number not in [5, 10, 15]:
+		_spawn_enemy(Vector3(randf_range(-1.4, 1.4), 1.9, root.position.z - 12.0), 7)
+		if number >= 3:
+			_spawn_enemy(Vector3(randf_range(-1.4, 1.4), 2.25, root.position.z - 18.0), 7)
 	for old in sections.duplicate():
 		if old.position.z > player_position.z + 30:
 			sections.erase(old)
 			old.queue_free()
+	LevelThemes.apply_section(root,self)
 
 func _build_modern_hallway(root: Node3D) -> void:
 	_box(root, Vector3(0, -0.18, -10), Vector3(3.6, 0.3, 20), Color("3b3540"))
@@ -292,9 +390,7 @@ func _build_modern_hallway(root: Node3D) -> void:
 		_box(root, Vector3(0, -0.01, -float(z)), Vector3(3.6, 0.02, 0.04), Color("1f1b25"))
 		for x in [-1.78, 1.78]:
 			_box(root, Vector3(x, 1.4, -float(z)), Vector3(0.04, 3, 0.07), Color("302b38"))
-	# Rails, warm sconces and section markers improve speed/depth perception.
-	for x in [-0.62, 0.62]:
-		_box(root, Vector3(x, 0.012, -10), Vector3(0.045, 0.03, 20), Color("92836e"))
+	# Warm sconces and section markers improve speed/depth perception.
 	for z in [3.0, 13.0]:
 		for x in [-1.73, 1.73]:
 			_box(root, Vector3(x, 1.6, -z), Vector3(0.12, 0.22, 0.12), Color("e2b56c"))
@@ -311,7 +407,7 @@ func _spawn_enemy(pos: Vector3, kind: int, boss = false) -> void:
 	root.position = pos
 	var actor := Actor.new()
 	root.add_child(actor)
-	actor.setup(kind, boss)
+	actor.setup(kind, boss,int(data.prestige))
 	if boss:
 		var extra_weapon := _weapon_mesh("Crossbow_01", actor, Vector3(0.35, 0.3, 0.18), 0.52)
 		extra_weapon.set_meta("modern_decoration", true)
@@ -334,6 +430,9 @@ func _spawn_enemy(pos: Vector3, kind: int, boss = false) -> void:
 	var hp = floor(base_hp * pow(1.15, health_index) * pow(health_multiplier, prestige_level))
 	if kind == 1: hp *= 1.2
 	enemies.append({"node": root, "actor": actor, "hp": hp, "max_hp": hp, "base_hp": base_hp, "label": label, "kind": kind, "boss": boss, "next_shot": 1.0, "contact": false, "effect": "", "effect_time": 0.0, "tick": 0.0})
+	enemies.back()["hover_origin"] = pos
+	enemies.back()["hover_phase"] = randf() * TAU if kind == 7 else 0.0
+	enemies.back()["chasing"] = false
 	label.text = str(int(hp))
 	enemies.back()["crown_dropped_on_spawn"] = bool(data.crowns_dropped.get(str(prestige_level), false))
 
@@ -349,10 +448,15 @@ func _resume() -> void:
 	if presentation.advance_tutorial(): return
 	suspended = false
 	data.controls_seen = true
-	if persist_results: Progress.save_data(data)
+	if persist_results: Progress.save_data(data, progress_save_path)
 	overlay.hide()
 	resume.text = "RESUME"
-	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+	VirtualCursor.set_gameplay_pointer_hidden(true)
+
+func _exit_tree() -> void:
+	VirtualCursor.set_gameplay_pointer_hidden(false)
+	if persist_results and not ended and not data.is_empty() and not progress_save_path.is_empty():
+		Progress.save_data(data,progress_save_path)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -362,6 +466,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			else:
 				suspended = true
 				presentation.pause()
+				VirtualCursor.set_gameplay_pointer_hidden(false)
 				Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 			return
 		if debug_speed_cheats_enabled():
@@ -374,7 +479,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if suspended or ended: return
 		if event.keycode == KEY_SHIFT:
 			running = not running
-			presentation.toast("RUNNING · ROW DAMAGE +50%" if running else "WALKING")
+			presentation.toast("DOUBLE SPEED" if running else "NORMAL SPEED")
 		if unlocked("Auto"):
 			if event.keycode in [KEY_1, KEY_KP_1]:
 				fire_mode = "Hold"
@@ -394,7 +499,7 @@ func _activate(key: String) -> void:
 	if unlocked(key) and abilities[key].cooldown <= 0 and abilities[key].active <= 0:
 		abilities[key].active = abilities[key].duration
 		audio.sound("ability")
-		presentation.toast(presentation.NAMES[key] + " ACTIVE", Color("80cfd9"))
+		presentation.toast(tr("%s ACTIVE") % tr(presentation.NAMES[key]), Color("80cfd9"))
 	else:
 		presentation.toast("ABILITY LOCKED" if not unlocked(key) else "ABILITY RECHARGING", Color("d98e7b"))
 
@@ -403,15 +508,32 @@ func debug_speed_cheats_enabled() -> bool:
 
 func set_debug_speed(multiplier: int) -> void:
 	debug_speed = multiplier if debug_speed_cheats_enabled() and multiplier in DEBUG_SPEEDS else 1
+	if debug_speed>1 and data!=null: data.leaderboards_assisted = true
+	if debug_speed <= 4: EditorLoop.stop()
+	if not editor_autopilot_enabled():
+		editor_pilot = null
+		horizontal_override = NAN
+		aim_override = Vector3.INF
+		fire_override = false
+		auto_abilities_override = false
 	if presentation != null:
 		presentation.refresh_debug_speed()
-		presentation.toast("CHEAT: GAMEPLAY SPEED %dx" % debug_speed, Color("ff83d4"))
+		presentation.toast(tr("CHEAT: GAMEPLAY SPEED %dx") % debug_speed, Color("ff83d4"))
 
 func fast_combat_assist_enabled() -> bool:
-	return debug_speed_cheats_enabled() and debug_speed >= 4
+	return not free_aim_mode and debug_speed_cheats_enabled() and debug_speed >= 4
+
+func editor_autopilot_enabled() -> bool:
+	return free_aim_mode and debug_speed_cheats_enabled() and debug_speed >= 4
+
+func _step_editor_pilot(delta: float) -> void:
+	if editor_pilot == null:
+		editor_pilot = load("res://Games/RowDivers/Simulation/FlightPilot.gd").new()
+		editor_pilot.setup(2401026 + int(data.runs)*1009, {})
+	editor_pilot.step(self,delta)
 
 func _auto_activate_abilities() -> void:
-	if not fast_combat_assist_enabled() or suspended or ended: return
+	if not (fast_combat_assist_enabled() or auto_abilities_override or (free_aim_mode and debug_speed_cheats_enabled() and debug_speed >= 4)) or suspended or ended: return
 	for key in abilities:
 		if unlocked(key) and abilities[key].active <= 0 and abilities[key].cooldown <= 0:
 			_activate(key)
@@ -419,7 +541,10 @@ func _auto_activate_abilities() -> void:
 func _physics_process(delta: float) -> void:
 	# Repeat normal-size physics steps rather than increasing delta, preserving
 	# projectile/contact checks, row ticks and all ability durations at fast speed.
-	for step in range(debug_speed if debug_speed_cheats_enabled() else 1):
+	var steps = (debug_speed if debug_speed_cheats_enabled() else 1) * (2 if running else 1)
+	for step in range(steps):
+		if not suspended and not ended:
+			data.gameplay_seconds = float(data.get("gameplay_seconds",0)) + delta / steps
 		_simulate_step(delta)
 
 func _advance_horizontal_axis(target: float, delta: float) -> float:
@@ -441,6 +566,7 @@ func _simulate_step(delta: float) -> void:
 	var row_tick: bool = row_timer >= 2.0 - 0.000001
 	if row_tick: row_timer = 0.0
 	if suspended: return
+	if editor_autopilot_enabled(): _step_editor_pilot(delta)
 	_auto_activate_abilities()
 	elapsed += delta
 	_update_gates(delta)
@@ -449,10 +575,10 @@ func _simulate_step(delta: float) -> void:
 	dagger_timer = maxf(0, dagger_timer - delta)
 	beam_timer = maxf(0, beam_timer - delta)
 	var horizontal = _read_horizontal(delta) if is_nan(horizontal_override) else horizontal_override
-	var speed = (forward_speed - (0.5 if active("SlowDown") else 0.0)) * (1.5 if running else 1.0)
+	var speed = forward_speed - (0.5 if active("SlowDown") else 0.0)
 	var previous = player_position
 	# Source walls at x=1 and 4, player sphere radius 0.4 * root scale 0.7.
-	player_position.x = clampf(player_position.x + horizontal * s("Horizontal_Speed") * delta, -1.22, 1.22)
+	player_position.x = clampf(player_position.x + horizontal * s("Horizontal_Speed") * delta, -1.22 * corridor_width, 1.22 * corridor_width)
 	player_position.z -= speed * delta
 	for enemy in enemies:
 		if enemy.boss and enemy.hp > 0:
@@ -467,7 +593,9 @@ func _simulate_step(delta: float) -> void:
 	dagger_recoil = maxf(0, dagger_recoil - delta * 3)
 	bow.position = Vector3(0.18, -0.26 + sin(elapsed * 9) * 0.008, -0.6 + weapon_recoil * 0.12)
 	bow.rotation.x = weapon_recoil * 0.1
-	dagger.rotation.z = deg_to_rad(-25) - sin(dagger_recoil * PI) * 0.7
+	if free_aim_mode: _update_bow_aim()
+	_advance_daggers(delta)
+	_update_dagger_presentation()
 	shield_ring.visible = active("ArrowShield")
 	shield_ring.rotation.z += delta
 	if -player_position.z >= next_section_trigger:
@@ -475,21 +603,26 @@ func _simulate_step(delta: float) -> void:
 		next_section_trigger += 20.0
 		forward_speed += 0.1333
 		_build_section(section + 2)
-		presentation.toast("SECTION %d" % section)
+		presentation.toast(tr("SECTION %d") % section)
 	if row_tick:
 		var damage = [5.0, 30.0, 100.0, 300.0][int(data.prestige)]
 		if armor > 0: damage *= maxf(0, 1.0 - s("Armor_Against_Row") / 100.0)
-		_damage_player(damage * (1.5 if running else 1.0), false, "the row")
+		_damage_player(damage, false, "the row")
+	if free_aim_mode: _update_fire_waves(delta)
+	if free_aim_mode:
+		crosshair.position = _aim_pointer() - crosshair.size * 0.5
 	var target = _target(s("Distance_Range"))
 	crosshair.modulate = Color("8fe6a0") if not target.is_empty() else Color("eadbc5")
 	if fire_mode == "Hold" and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT): _shoot()
+	if fire_override: _shoot()
 	if (fire_mode == "Auto" or fast_combat_assist_enabled()) and not target.is_empty(): _shoot()
 	for weapon in extra_timers:
 		if not unlocked(weapon): continue
+		if fire_override: _shoot(weapon)
 		if auxiliary_fire_mode == "Hold" and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT): _shoot(weapon)
 		if (auxiliary_fire_mode == "Auto" or fast_combat_assist_enabled()) and not target.is_empty(): _shoot(weapon)
 	if unlocked("Dagger") and dagger_timer <= 0:
-		var near = _target(s("Melee_range"))
+		var near = _dagger_target()
 		if not near.is_empty():
 			_dagger_hit(near)
 	if unlocked("ThirdEye") and beam_timer <= 0:
@@ -515,6 +648,12 @@ func _simulate_step(delta: float) -> void:
 	_auto_activate_abilities()
 	_update_hud()
 
+func _update_fire_waves(delta: float) -> void:
+	var control = s("Fire_Wave_Control_" + str(int(data.prestige)))
+	var hits = fire_waves.advance(delta, player_position, control, elapsed)
+	for hit in range(hits): _damage_player(fire_waves.damage, false, "fire waves")
+	if fire_visual != null: fire_visual.sync(fire_waves.waves)
+
 func _open_gate(corridor: Node3D) -> void:
 	if corridor == null or corridor.has_meta("gate_time"): return
 	corridor.set_meta("gate_time", 0.0)
@@ -534,6 +673,9 @@ func _update_gates(delta: float) -> void:
 		OriginalPresentation.animate(entrance, "BossEntranceOpen", time)
 
 func _dagger_hit(near: Dictionary) -> void:
+	# Capture before _hit: a lethal strike may remove the actor. Flight never
+	# retains the target node and never consumes combat randomness.
+	var strike: Vector3 = near.node.position + Vector3(0, 0.15, 0)
 	var amount = s("Dagger_Damage")
 	if _has_effect(near, "Cursed"): amount *= s("Curse_Effect")
 	if _roll("Bleed_Chance") and not _has_effect(near, "Bleeding"):
@@ -543,6 +685,7 @@ func _dagger_hit(near: Dictionary) -> void:
 	dagger_timer = 1.0 / maxf(0.01, s("Dagger_Attack_Rate"))
 	audio.sound("dagger")
 	dagger_recoil = 1.0
+	_launch_dagger(strike)
 
 func _beam_hit(eye_target: Dictionary) -> void:
 	var amount = s("Beam_Damage") * (s("Curse_Effect") if _has_effect(eye_target, "Cursed") else 1.0)
@@ -560,6 +703,29 @@ func _beam_effect(target: Vector3) -> void:
 	tween.tween_property(beam, "scale", Vector3(0.01, 0.01, 1), 0.15)
 	tween.tween_callback(beam.queue_free)
 
+func _aim_pointer() -> Vector2:
+	if editor_autopilot_enabled() and aim_override.is_finite():
+		return camera.unproject_position(_aim_origin() + aim_override * maxf(1,s("Distance_Range")))
+	return get_viewport().get_mouse_position() if is_nan(pointer_override.x) else pointer_override
+
+func _aim_direction() -> Vector3:
+	# Project through the actual cursor from the camera, including its height/pitch.
+	if aim_override.is_finite(): return aim_override.normalized()
+	return camera.project_ray_normal(_aim_pointer()).normalized()
+
+func _aim_origin() -> Vector3:
+	return player_position + Vector3(0, 0.81, 0.301) if Graphics.original() else player_position
+
+func _free_aim_intersects(enemy: Dictionary, from: Vector3, to: Vector3) -> bool:
+	var center: Vector3 = enemy.node.position
+	if int(enemy.kind) == 7:
+		return Geometry3D.get_closest_point_to_segment(center, from, to).distance_to(center) < 0.36
+	# Generous body-shaped ellipsoid, rather than a tiny point at the waist.
+	center.y += 0.15
+	var scale_y = Vector3(1, 1.0 / 1.5, 1)
+	var point = Geometry3D.get_closest_point_to_segment(center * scale_y, from * scale_y, to * scale_y)
+	return point.distance_to(center * scale_y) < (0.9 if enemy.boss else 0.7)
+
 func _target(reach: float, mouse = false) -> Dictionary:
 	var closest: Dictionary = {}
 	var best = reach
@@ -572,9 +738,25 @@ func _target(reach: float, mouse = false) -> Dictionary:
 				closest = enemy
 				best = target_distance
 			continue
+		if free_aim_mode and not mouse:
+			var ray_origin := _aim_origin()
+			var ray := _aim_direction()
+			var along: float = (enemy.node.position - ray_origin).dot(ray)
+			if along > 0 and along <= best and _free_aim_intersects(enemy, ray_origin, ray_origin + ray * reach):
+				closest = enemy
+				best = along
+			continue
 		var ahead = -offset.z
 		var aligned = absf(offset.x) < (0.55 if enemy.boss else 0.3)
 		if mouse:
+			if free_aim_mode:
+				var ray = _aim_direction()
+				var along = (enemy.node.position - _aim_origin()).dot(ray)
+				var miss = (enemy.node.position - (_aim_origin() + ray * along)).length()
+				if along > 0 and along <= best and miss < maxf(0.4, along * 0.12):
+					closest = enemy
+					best = along
+				continue
 			var screen = camera.unproject_position(enemy.node.position)
 			var pointer: Vector2 = get_viewport().get_mouse_position() if is_nan(pointer_override.x) else pointer_override
 			aligned = screen.distance_to(pointer) < 80
@@ -583,7 +765,38 @@ func _target(reach: float, mouse = false) -> Dictionary:
 			best = ahead
 	return closest
 
+func _aim_point() -> Vector3:
+	var origin := _aim_origin()
+	var direction := _aim_direction()
+	var depth := maxf(1.0, s("Distance_Range"))
+	# Converge on the cursor ray at the pointed enemy's depth, avoiding parallax.
+	var target := _target(s("Distance_Range"))
+	if not target.is_empty(): depth = maxf(0.5, (target.node.position - origin).dot(direction))
+	return origin + direction * depth
+
+func _update_bow_aim() -> void:
+	var point := _aim_point()
+	bow.position = Vector3(0.18, -0.26, -0.6 + weapon_recoil * 0.12)
+	bow.look_at(point, Vector3.UP, true)
+	var rest_origin: Vector3 = source_bow.get_parent().to_global(source_bow_rest.origin)
+	var local_direction: Vector3 = source_bow.get_parent().global_basis.inverse() * (point - rest_origin).normalized()
+	var turn := Basis(Quaternion(Vector3.FORWARD, local_direction.normalized()))
+	source_bow.transform = Transform3D(turn * source_bow_rest.basis, source_bow_rest.origin + Vector3(0, 0, weapon_recoil * 0.05))
+	# Keep both visible weapon styles on the same physics muzzle.
+	if free_aim_mode:
+		if Graphics.original():
+			source_bow.global_position += _bow_muzzle() - source_bow.get_node("Bow").to_global(Vector3(0, 0, 4.3))
+		else:
+			bow.global_position += _bow_muzzle() - bow.to_global(Vector3(0, 0, 0.3))
+
+func _bow_muzzle() -> Vector3:
+	if free_aim_mode: return player_position + Vector3(0.18, 0.55, -0.45)
+	# The sprite plane is ten units long; its painted bolt tip sits near +Z.
+	if Graphics.original(): return source_bow.get_node("Bow").to_global(Vector3(0, 0, 4.3))
+	return bow.to_global(Vector3(0, 0, 0.3))
+
 func _shoot(weapon = "Bow") -> void:
+	if free_aim_mode: _update_bow_aim()
 	if weapon == "Bow":
 		if shot_timer > 0: return
 		shot_timer = 1.0 / maxf(0.01, s("Bow_Fire_Rate"))
@@ -606,28 +819,33 @@ func _shoot(weapon = "Bow") -> void:
 	for i in range(types.size()):
 		# ShootingWeapon.TryDealDirectDamage skips travel only below 1.3 metres.
 		var projectile_state: Dictionary = _take_projectile_state(types[i])
-		var contact: Dictionary = _target(1.3)
+		var contact: Dictionary = {} if free_aim_mode else _target(1.3)
 		if not contact.is_empty():
 			_projectile_hit(contact, types[i], projectile_state)
 			_return_projectile_state(types[i], projectile_state)
 			continue
 		var angle = deg_to_rad(lerpf(-spread / 2.0, spread / 2.0, float(i) / maxf(1, types.size() - 1)))
-		var original_prefab: String = {"Arrow": "Arrow Projectile", "Fire": "Fire Arrow Projectile", "Cursed": "Cursed Arrow Projectile", "Shuriken": "Shuriken Projectile"}[types[i]]
-		var node := _weapon_mesh("Crossbow_01_Arrow_01", self, player_position + Vector3(0, -0.1, -0.4), 0.4, original_prefab)
+		var node := _flight_projectile(types[i], player_position + Vector3(0, -0.1, -0.4))
 		var assisted := fast_combat_assist_enabled()
 		if assisted:
 			var aim_target := _target(s("Distance_Range"))
 			if not aim_target.is_empty():
 				var offset: Vector3 = aim_target.node.position - node.position
 				angle += atan2(offset.x, -offset.z)
-		node.rotation.y = PI - angle
-		if types[i] != "Arrow":
-			var extra_ring := _ring(node, Vector3.ZERO, Color("fbb16c") if types[i] == "Fire" else Color("a98ee8"), 0.16)
-			extra_ring.set_meta("modern_decoration", true)
-			extra_ring.visible = not Graphics.original()
-		projectiles.append({"node": node, "dir": Vector3(sin(angle), 0, -cos(angle)), "speed": s("Arrow_Speed"), "type": types[i], "life": minf(10.0, s("Distance_Range") / maxf(0.1, s("Arrow_Speed"))), "hostile": false, "assisted": assisted, "cached_state": projectile_state})
+		var direction := Vector3(sin(angle), 0, -cos(angle))
+		if free_aim_mode:
+			node.position = _bow_muzzle()
+			direction = (_aim_point() - node.position).normalized().rotated(Vector3.UP, angle)
+		node.look_at(node.position + direction)
+		projectiles.append({"node": node, "dir": direction, "speed": s("Arrow_Speed"), "type": types[i], "life": minf(10.0, s("Distance_Range") / maxf(0.1, s("Arrow_Speed"))), "hostile": false, "assisted": assisted, "cached_state": projectile_state})
 	audio.sound("shot")
 	weapon_recoil = 1.0
+
+func _flight_projectile(kind: String, pos: Vector3, hostile = false) -> Node3D:
+	var node = ProjectileVisual.create(kind, hostile)
+	add_child(node)
+	node.position = pos
+	return node
 
 func _update_projectiles(delta: float) -> void:
 	for projectile in projectiles.duplicate():
@@ -660,7 +878,9 @@ func _update_projectiles(delta: float) -> void:
 			for enemy in enemies.duplicate():
 				var pos: Vector3 = enemy.node.position
 				var intersects: bool = absf(pos.x - projectile.node.position.x) < (0.6 if enemy.boss else 0.3) and pos.z <= previous.z + 0.1 and pos.z >= projectile.node.position.z - 0.4
-				if projectile.get("assisted", false):
+				if free_aim_mode:
+					intersects = _free_aim_intersects(enemy, previous, projectile.node.position)
+				elif projectile.get("assisted", false):
 					var flat_pos := Vector3(pos.x, previous.y, pos.z)
 					intersects = Geometry3D.get_closest_point_to_segment(flat_pos, previous, projectile.node.position).distance_to(flat_pos) < (0.6 if enemy.boss else 0.3)
 				if intersects and enemy.hp > 0:
@@ -733,6 +953,7 @@ func _hit(enemy: Dictionary, amount: float) -> void:
 	if enemy.hp <= 0:
 		if first_death:
 			run_kills += 1
+			if free_aim_mode and enemy.boss: fire_waves.boss_defeated(int(enemy.kind))
 			audio.sound("death")
 			if enemy.boss: audio.sound("boss_death" if int(enemy.kind) == 6 else "mini_death")
 		var enemy_key = str(int(enemy.kind))
@@ -752,14 +973,17 @@ func _hit(enemy: Dictionary, amount: float) -> void:
 			if not enemy.get("crown_dropped_on_spawn", data.crowns_dropped.get(key, false)):
 				_award_loot(2, 1.0)
 				data.crowns_dropped[key] = true
-				if int(data.prestige) < 3: data.max_prestige = mini(3, int(data.max_prestige) + 1)
+				if int(data.prestige) < 3 and not Progress.Demo.enabled(): data.max_prestige = mini(3, int(data.max_prestige) + 1)
 			Progress.check_achievements(data)
 			_finish(true)
 		else:
 			var currency = 1 if int(enemy.kind) in [3, 4, 5] else 0
 			var value = 1.0
 			if currency == 0: value = [1.0, 10.0, 100.0, 1000.0][int(data.prestige)]
-			var node = _box(self, enemy.node.position, Vector3(0.16, 0.16, 0.16), Color("eeb34c") if currency == 0 else Color("ad8de8"))
+			if free_aim_mode: value *= float(Progress.design().settings.get("flight_rewards", {}).get("gold" if currency == 0 else "gems", 1))
+			var loot_position: Vector3 = enemy.node.position
+			if int(enemy.kind) == 7: loot_position.y = 0.65
+			var node = _box(self, loot_position, Vector3(0.16, 0.16, 0.16), Color("eeb34c") if currency == 0 else Color("ad8de8"))
 			node = _source_billboard(node, "Coin.png" if currency == 0 else "Gem.png", 0.28)
 			drops.append({"node": node, "currency": currency, "value": value})
 		if not first_death: return
@@ -790,7 +1014,27 @@ func _update_enemies(delta: float) -> void:
 		var offset: Vector3 = enemy.node.position - player_position
 		if not enemy.boss and offset.z < 0 and offset.length() < 2.8:
 			enemy.actor.windup()
-		if int(enemy.kind) == 3:
+		if free_aim_mode and int(enemy.kind) == 7:
+			var origin: Vector3 = enemy.hover_origin
+			var phase: float = elapsed * 1.7 + float(enemy.hover_phase)
+			enemy.node.position = origin + Vector3(sin(phase) * 0.3, cos(phase * 1.3) * 0.18, sin(phase * 0.7) * 0.12)
+			enemy.next_shot -= delta
+			if enemy.next_shot <= 0 and offset.z < 0 and offset.length() < 14.0:
+				enemy.next_shot = 2.4
+				enemy.actor.windup()
+				var bullet := _flight_projectile("Bat", enemy.node.position, true)
+				var direction: Vector3 = (player_position - bullet.position).normalized()
+				bullet.look_at(bullet.position + direction)
+				projectiles.append({"node": bullet, "dir": direction, "speed": 3.5, "type": "Bat", "life": 5.0, "hostile": true})
+		elif free_aim_mode and not enemy.boss:
+			# The nearest 20% of the default (unupgraded) bow range triggers pursuit.
+			var chase_range: float = float(Progress.design().base_stats.Distance_Range) * 0.2
+			if offset.z < 0 and -offset.z <= chase_range: enemy.chasing = true
+			if enemy.chasing and not enemy.contact:
+				var destination := Vector3(player_position.x, enemy.node.position.y, player_position.z)
+				enemy.node.position = enemy.node.position.move_toward(destination, maxf(3.5, forward_speed * 2.5) * delta)
+			offset = enemy.node.position - player_position
+		elif int(enemy.kind) == 3:
 			enemy.node.position.z += 0.5 * delta
 		if enemy.boss:
 			enemy.next_shot -= delta
@@ -800,11 +1044,10 @@ func _update_enemies(delta: float) -> void:
 				enemy.next_shot = 2.0
 				if not Graphics.original(): audio.sound("shot")
 				for angle in [-7.5, 0.0, 7.5] if enemy.boss else [0.0]:
-					var node = _box(self, enemy.node.position, Vector3(0.07, 0.07, 0.25), Color("dd617b"))
-					node = _source_billboard(node, "enemy bullet template.png", 0.24, "MiniBoss Projectile" if int(enemy.kind) == 4 else "MiniBoss 2 Projectile" if int(enemy.kind) == 5 else "Boss Projectile")
-					node.rotation.y = deg_to_rad(angle)
+					var node = _flight_projectile("Poison" if int(enemy.kind) == 4 else ("LifeSteal" if int(enemy.kind) == 5 else "Critical"), enemy.node.position, true)
+					node.look_at(node.position + Vector3(sin(deg_to_rad(angle)), 0, cos(deg_to_rad(angle))))
 					projectiles.append({"node": node, "dir": Vector3(sin(deg_to_rad(angle)), 0, cos(deg_to_rad(angle))), "speed": 4.0, "type": "Poison" if int(enemy.kind) == 4 else ("LifeSteal" if int(enemy.kind) == 5 else "Critical"), "life": 2.0, "hostile": true})
-		if not enemy.contact and absf(offset.z) < 0.4 and absf(offset.x) < 0.5:
+		if int(enemy.kind) != 7 and not enemy.contact and absf(offset.z) < 0.4 and absf(offset.x) < 0.5:
 			enemy.contact = true
 			var reflected = float(enemy.base_hp) * s("Porcupine_Damage") / 100.0
 			if enemy.hp <= reflected:
@@ -821,10 +1064,10 @@ func _update_drops(delta: float) -> void:
 	for drop in drops.duplicate():
 		var gap = drop.node.position.distance_to(player_position)
 		if gap <= s("PickupRange"):
-			drop.node.position = drop.node.position.lerp(player_position, minf(1, delta * 5.0))
+			drop.node.position = drop.node.position.lerp(player_position, minf(1, delta * (12.0 if free_aim_mode else 5.0)))
 			if gap < 0.15:
 				_award_loot(int(drop.currency), float(drop.value) * (2.0 if active("Harvester") and drop.currency != 2 else 1.0))
-				_floating_text(player_position + Vector3(0.2, 0.25, -0.6), "+%s %s" % [str(int(float(drop.value) * (2.0 if active("Harvester") else 1.0))), "GOLD" if int(drop.currency) == 0 else "GEM"], Style.GOLD, true)
+				_floating_text(player_position + Vector3(0.2, 0.25, -0.6), tr("+%s %s") % [str(int(float(drop.value) * (2.0 if active("Harvester") else 1.0))), tr("GOLD") if int(drop.currency) == 0 else tr("GEM")], Style.GOLD, true)
 				audio.sound("coin")
 				drop.node.queue_free()
 				drops.erase(drop)
@@ -836,11 +1079,12 @@ func _award_loot(currency: int, amount: float) -> void:
 	coins[currency] += amount
 	data.wallet[currency] += amount
 	# CurrencyItem.CollectItem saves immediately; quitting mid-run keeps pickups.
-	if persist_results: Progress.save_data(data)
+	if persist_results: Progress.save_data(data, progress_save_path)
 
 func _damage_player(amount: float, ignore_armor = false, source = "enemy arrows") -> void:
 	if ended: return
 	if source == "enemy arrows" and fast_combat_assist_enabled(): return
+	if source == "enemy arrows" and free_aim_mode: amount *= 1.0 - clampf(s("Armor_Against_Projectiles"), 0, 90) / 100.0
 	damage_sources[source] = float(damage_sources.get(source, 0)) + amount
 	last_damage_source = source
 	if amount > 0:
@@ -855,10 +1099,22 @@ func _damage_player(amount: float, ignore_armor = false, source = "enemy arrows"
 
 func _heal(amount: float) -> void:
 	health = minf(s("MaxHP"), health + amount)
-	if amount > 0: presentation.toast("+%s VITALITY" % Util.get_number_short_text(amount), Color("9ed7ae"))
+	if amount > 0: presentation.toast(tr("+%s VITALITY") % Util.get_number_short_text(amount), Color("9ed7ae"))
 
 func _floating_text(pos: Vector3, text: String, color: Color, currency = false) -> void:
 	if currency and not SaveHandler.money_text: return
+	if currency:
+		# Keep pickups above the weapons in both camera styles and while moving.
+		var popup := Style.label(text, 24, true)
+		popup.modulate = color
+		popup.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		presentation.root_ui.add_child(popup)
+		popup.position = get_viewport().get_visible_rect().size * Vector2(0.5, 0.58) + Vector2(-50, 0)
+		var float_up := create_tween().set_parallel(true)
+		float_up.tween_property(popup, "position:y", popup.position.y - 48, 0.8)
+		float_up.tween_property(popup, "modulate:a", 0.0, 0.8)
+		float_up.chain().tween_callback(popup.queue_free)
+		return
 	if not currency and not SaveHandler.damage_text: return
 	var label := Label3D.new()
 	label.text = text
@@ -877,7 +1133,8 @@ func _floating_text(pos: Vector3, text: String, color: Color, currency = false) 
 
 func _finish(won: bool) -> void:
 	var first_finish: bool = not ended
-	if ended and (not won or overlay_title.text != "THE ROW IS YOURS"): return
+	if ended and (not won or not victory): return
+	victory = won
 	ended = true
 	if first_finish:
 		audio.sound("win" if won else "lose")
@@ -886,15 +1143,37 @@ func _finish(won: bool) -> void:
 		data.kills += run_kills
 		data.best_distance = maxf(float(data.best_distance), distance)
 	# A reentrant Boss.Die may change crowns/prestige after the first victory.
-	if persist_results: Progress.save_data(data)
+	if persist_results:
+		if won: Timing.record(data,tr("boss_%d") % int(data.prestige))
+		Analytics.finished_run(data, won, free_aim_mode, Progress.active_tree)
+		Progress.save_data(data, progress_save_path)
 	overlay_title.text = "THE ROW IS YOURS" if won else "THE ROW CLAIMED YOU"
-	presentation.overlay_detail.text = "Distance %.1f m  •  Kills %d\nGold %s  •  Gems %s  •  Crowns %s\n\n%s" % [distance, run_kills, str(int(coins[0])), str(int(coins[1])), str(int(coins[2])), ("Prestige %d unlocked. Return to upgrades to choose your next row." % int(data.max_prestige)) if won and int(data.prestige) < 3 else ("Prestige complete. Max 100 upgrade nodes to unlock your final choice." if won else "Your loot is banked. Spend it in Upgrades and come back stronger.")]
+	presentation.overlay_detail.text = tr("Distance %.1f m  |  Kills %d\nGold %s  |  Gems %s  |  Crowns %s\n\n%s") % [distance, run_kills, str(int(coins[0])), str(int(coins[1])), str(int(coins[2])), (tr("Level %d unlocked. Return to upgrades to choose your next railway.") % (int(data.max_prestige)+1)) if won and int(data.prestige) < 3 else ((tr("Level complete. Max %d upgrade nodes to unlock your final choice.") % int(Progress.design().settings.get("ending_maxed_nodes",100))) if won else tr("Your loot is banked. Spend it in Upgrades and come back stronger."))]
+	if won and Progress.Demo.enabled():
+		data.demo_completed = true
+		overlay_title.text = tr("DEMO COMPLETE")
+		presentation.overlay_detail.text = tr("You defeated the first railway boss! Thanks for playing Railway Fury.\n\nThe full game continues across three more levels with new scenery, stronger enemies, fire-control upgrades and two endings.\n\nReplay Level 1 or return to Upgrades.")
+		if persist_results: Progress.save_data(data, progress_save_path)
 	resume.hide()
 	presentation.tutorial_button.hide()
-	if not won: presentation.overlay_detail.text += "\nDefeated by %s." % last_damage_source
+	if not won: presentation.overlay_detail.text += tr("\nDefeated by %s.") % tr(last_damage_source)
 	retry.show()
 	overlay.show()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	VirtualCursor.set_gameplay_pointer_hidden(false)
+	if first_finish and persist_results and EditorLoop.active(debug_speed):
+		presentation.overlay_detail.text += "\nAuto play: returning to upgrades… (F8 to stop)"
+		_auto_return_to_upgrades()
+
+func _auto_return_to_upgrades() -> void:
+	var generation = EditorLoop.generation
+	await get_tree().create_timer(1.0).timeout
+	if not is_inside_tree() or get_tree().current_scene != self: return
+	if generation != EditorLoop.generation or not EditorLoop.active(debug_speed): return
+	_return_to_editor_upgrades()
+
+func _return_to_editor_upgrades() -> void:
+	get_tree().change_scene_to_file(Util.get_upgrade_scene_path())
 
 func _update_hud() -> void:
 	presentation.refresh()
@@ -902,4 +1181,4 @@ func _update_hud() -> void:
 func _process(_delta: float) -> void:
 	for enemy in enemies:
 		enemy.actor.frozen = ended or suspended
-		enemy.actor.playback_speed = float(debug_speed) if debug_speed_cheats_enabled() else 1.0
+		enemy.actor.playback_speed = (float(debug_speed) if debug_speed_cheats_enabled() else 1.0) * (2.0 if running else 1.0)

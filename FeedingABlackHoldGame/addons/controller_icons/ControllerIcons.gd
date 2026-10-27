@@ -402,7 +402,8 @@ func _convert_event_to_path(event: InputEvent, controller: int = _last_controlle
     if event is InputEventKey:
 
         if event.keycode == 0:
-            return _convert_key_to_path(DisplayServer.keyboard_get_keycode_from_physical(event.physical_keycode))
+            # Web's display server cannot translate physical key codes.
+            return _convert_key_to_path(event.physical_keycode if OS.has_feature("web") else DisplayServer.keyboard_get_keycode_from_physical(event.physical_keycode))
         return _convert_key_to_path(event.keycode)
     elif event is InputEventMouseButton:
         return _convert_mouse_button_to_path(event.button_index)

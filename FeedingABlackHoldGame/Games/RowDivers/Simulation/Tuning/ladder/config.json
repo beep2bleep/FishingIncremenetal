@@ -1,0 +1,12 @@
+{
+  "seed": 2401026,
+  "max_runs": 90,
+  "shortlist": 4,
+  "ending_reserve": true,
+  "policy": "separate-normal-and-boss-v4",
+  "weights": {
+    "distance": 0.6,
+    "gold_rate": 0.28,
+    "gem_rate": 0.12
+  }
+}

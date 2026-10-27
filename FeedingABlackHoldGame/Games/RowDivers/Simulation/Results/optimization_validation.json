@@ -1,0 +1,5 @@
+{
+  "cases": 10,
+  "passed": true,
+  "description": "Immediate cleanup at the end of each simulation step and lightweight labels preserve all recorded run and kill fields."
+}

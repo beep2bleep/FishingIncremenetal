@@ -18,6 +18,7 @@ var fps_limits: Dictionary = {
 var locale_codes: Array[String] = []
 var _is_refreshing: bool = false
 var row_divers_graphics_toggle: OptionButton
+var row_divers_tree_toggle: OptionButton
 
 func show_screen():
     _set_credits_visible(false)
@@ -35,6 +36,7 @@ func _ready():
     populate_fps_list()
     refresh_static_text()
     _setup_row_divers_graphics()
+    _setup_row_divers_tree()
     _refresh_hidden_control_visibility()
     refresh_from_save()
     if AudioManager != null and AudioManager.has_method("connect_hover_sound"):
@@ -77,6 +79,8 @@ func refresh_from_save() -> void:
     _is_refreshing = true
     if row_divers_graphics_toggle != null:
         row_divers_graphics_toggle.select(preload("res://Games/RowDivers/RowDiversGraphics.gd").mode())
+    if row_divers_tree_toggle != null:
+        row_divers_tree_toggle.select(1 if SaveHandler.row_divers_previous_upgrade_tree else 0)
     %"Music Volume".value = SaveHandler.music_volume
     %"Main Volume".value = SaveHandler.main_volume
     %"Effect Volume Slider".value = SaveHandler.effect_volume
@@ -110,10 +114,27 @@ func _setup_row_divers_graphics() -> void:
         if visible: AudioManager.create_audio(SoundEffectSettings.SOUND_EFFECT_TYPE.BUTTON_CLICK))
     preload("res://Games/RowDivers/RowDiversStyle.gd").style_button(row_divers_graphics_toggle)
 
+func _setup_row_divers_tree() -> void:
+    if not Util.is_row_divers_game_active(): return
+    var grid: GridContainer = get_node("GridContainer")
+    var label := Label.new()
+    label.text = "UPGRADE TREE (RESTART)"
+    grid.add_child(label)
+    row_divers_tree_toggle = OptionButton.new()
+    row_divers_tree_toggle.name = "RowDiversUpgradeTree"
+    row_divers_tree_toggle.add_item("REBALANCED")
+    row_divers_tree_toggle.add_item("PREVIOUS")
+    row_divers_tree_toggle.tooltip_text = "Restart to apply. Each tree keeps separate progress; PREVIOUS restores your original tree and save."
+    grid.add_child(row_divers_tree_toggle)
+    row_divers_tree_toggle.item_selected.connect(func(index: int):
+        SaveHandler.row_divers_previous_upgrade_tree = index == 1
+        SaveHandler.save_local_settings())
+    preload("res://Games/RowDivers/RowDiversStyle.gd").style_button(row_divers_tree_toggle)
+
 func populate_language_list() -> void:
     locale_codes.clear()
     %"Language Dropdown".clear()
-    for locale_code: String in SaveHandler.supported_locales.keys():
+    for locale_code: String in SaveHandler.available_locales().keys():
         locale_codes.append(locale_code)
         %"Language Dropdown".add_item(str(SaveHandler.supported_locales[locale_code]))
     _refresh_language_selection()
@@ -293,7 +314,7 @@ func refresh_static_text() -> void:
         var credits: RichTextLabel = get_node("Credits Panel/Credits Margin/Credits VBox/Credits Text")
         credits.bbcode_enabled = true
         get_node("Credits Panel/Credits Margin/Credits VBox/Credits Title").add_theme_color_override("font_color", Color("f2e4ce"))
-        credits.text = "[b]RAILWAY FURY[/b]\n\n[b]Artwork[/b]\nClassic artwork: Hermurx\nModern characters and weapons: Synty Studios\nIllustrated artwork and menu illustration: AI-generated\n\n[b]Music[/b]\nPhat Phrog Studio — fantasy, medieval and Dark Abyss collections\nClassic soundtrack: Loyalty Freak Music and Komiku\n\n[b]Sound Effects[/b]\nGame Assets collection and Sonniss libraries\nConcrete footsteps: Levan Nadashvili / Sonniss GDC 2016\n\nThank you for playing Railway Fury."
+        credits.text = "[b]RAILWAY FURY[/b]\n\n[b]Artwork[/b]\nClassic artwork: Hermurx\nModern characters and weapons: Synty Studios\n\n[b]Music[/b]\nPhat Phrog Studio — fantasy, medieval and Dark Abyss collections\nClassic soundtrack: Loyalty Freak Music and Komiku\n\n[b]Sound Effects[/b]\nGame Assets collection and Sonniss libraries\nConcrete footsteps: Levan Nadashvili / Sonniss GDC 2016\n\nThank you for playing Railway Fury."
     _set_button_text("Credits Panel/Credits Margin/Credits VBox/Hide Credits", "UI_BACK")
 
 func _set_label_text(path: String, key: String) -> void:

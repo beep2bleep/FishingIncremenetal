@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "checks": {
+    "completed": true,
+    "ending_paid": true,
+    "all_prestiges": true,
+    "no_caps": true,
+    "no_arrow_damage": true,
+    "all_kills_recorded": true,
+    "all_purchases_affordable": true,
+    "100_maxed": true,
+    "currency_0": true,
+    "currency_1": true,
+    "currency_2": true
+  }
+}

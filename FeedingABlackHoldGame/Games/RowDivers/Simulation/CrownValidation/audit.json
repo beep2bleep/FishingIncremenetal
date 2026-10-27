@@ -1,0 +1,124 @@
+{
+  "passed": true,
+  "checks": {
+    "completed": true,
+    "final_fee_paid": true,
+    "fresh_start": true,
+    "four_crowns": true,
+    "no_time_caps": true,
+    "all_choices_legal": true,
+    "chosen_best_tested_score": true,
+    "levels_reconciled": true,
+    "enough_maxed_nodes": true,
+    "all_kills_recorded": true,
+    "constant_fire_damage": true,
+    "wave_counts": true,
+    "currency_0_conserved": true,
+    "currency_1_conserved": true,
+    "currency_2_conserved": true,
+    "achievement_wallet_audit": true,
+    "all_four_damage_sources_active": true,
+    "catalog_matches_campaign": true,
+    "live_model_parity": true,
+    "actual_shop_gates": true,
+    "replay": true,
+    "same_purchase_scoring": true,
+    "same_combat_models": true,
+    "crown_features_complete.log": true,
+    "editor_autobuy_complete.log": true
+  },
+  "rewards": {
+    "passed": true,
+    "checks": {
+      "each_achievement_claimed_once": true,
+      "catalog_rewards_only": true,
+      "shop_0_credits_match_claims": true,
+      "shop_1_credits_match_claims": true,
+      "shop_2_credits_match_claims": true,
+      "shop_3_credits_match_claims": true,
+      "shop_4_credits_match_claims": true,
+      "shop_5_credits_match_claims": true,
+      "shop_6_credits_match_claims": true,
+      "shop_7_credits_match_claims": true,
+      "shop_8_credits_match_claims": true,
+      "shop_9_credits_match_claims": true,
+      "shop_10_credits_match_claims": true,
+      "shop_11_credits_match_claims": true,
+      "shop_12_credits_match_claims": true,
+      "shop_13_credits_match_claims": true,
+      "shop_14_credits_match_claims": true,
+      "shop_15_credits_match_claims": true,
+      "shop_16_credits_match_claims": true,
+      "shop_17_credits_match_claims": true,
+      "shop_18_credits_match_claims": true,
+      "shop_19_credits_match_claims": true,
+      "shop_20_credits_match_claims": true,
+      "shop_21_credits_match_claims": true,
+      "shop_22_credits_match_claims": true,
+      "shop_23_credits_match_claims": true,
+      "shop_24_credits_match_claims": true,
+      "shop_25_credits_match_claims": true,
+      "shop_26_credits_match_claims": true,
+      "shop_27_credits_match_claims": true,
+      "shop_28_credits_match_claims": true,
+      "shop_29_credits_match_claims": true,
+      "shop_30_credits_match_claims": true,
+      "shop_31_credits_match_claims": true,
+      "shop_32_credits_match_claims": true,
+      "shop_33_credits_match_claims": true,
+      "shop_34_credits_match_claims": true,
+      "shop_35_credits_match_claims": true,
+      "shop_36_credits_match_claims": true,
+      "shop_37_credits_match_claims": true,
+      "shop_38_credits_match_claims": true,
+      "shop_39_credits_match_claims": true,
+      "shop_40_credits_match_claims": true
+    },
+    "reward_totals": [
+      10875.0,
+      20.0,
+      3.0
+    ],
+    "purchases_requiring_immediately_preceding_reward": [
+      {
+        "after_run": 5,
+        "upgrade": "Pickup Range II",
+        "before_reward": 18.0,
+        "after_reward": 93.0,
+        "price": 22.0
+      }
+    ]
+  },
+  "summary": {
+    "seed": 2401026,
+    "runs": 40,
+    "runs_per_prestige": {
+      "0": 8,
+      "1": 12,
+      "2": 8,
+      "3": 12
+    },
+    "first_clear": {
+      "0": 8,
+      "1": 12,
+      "2": 8,
+      "3": 10
+    },
+    "deaths": {
+      "enemy contact": 8,
+      "the row": 10,
+      "enemy arrows": 2,
+      "fire waves": 14
+    },
+    "purchases": 352,
+    "mean_kill_range": 6.7740602227837545,
+    "median_kill_range": 7.21915626525879,
+    "kills": 1505,
+    "near_max_fraction": 0.24916943521594684,
+    "reward_totals": [
+      10875.0,
+      20.0,
+      3.0
+    ]
+  }
+}

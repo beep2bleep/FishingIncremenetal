@@ -55,6 +55,90 @@ func replay(mode: int) -> Dictionary:
 	battle.free()
 	return result
 
+func verify_dagger_flight() -> void:
+	for mode in range(3):
+		graphics.select_mode(mode)
+		var data: Dictionary = Progress.fresh()
+		data.controls_seen = true
+		data.unlocks.Dagger = true
+		Progress.active_data_cache = data
+		var battle = load("res://Games/RowDivers/Scenes/RowDiversBattleScene.gd").new()
+		battle.persist_results = false
+		root.add_child(battle)
+		battle.set_physics_process(false)
+		battle.set_process(false)
+		battle.horizontal_override = 0.0
+		battle.forward_speed = 0.0
+		for enemy in battle.enemies: enemy.node.queue_free()
+		battle.enemies.clear()
+		battle._spawn_enemy(battle.player_position + Vector3(0, 0, -2.5), 0)
+		var enemy: Dictionary = battle.enemies.back()
+		enemy.hp = 1000000.0
+		var hp: float = enemy.hp
+		var pivot: Node3D = battle.original_weapons.get_child(0).get_node("Dagger Pivot")
+		battle._physics_process(0.01)
+		check(enemy.hp < hp and battle.dagger_recoil == 1.0, "Automatic dagger attack triggers in style %d" % mode)
+		var sound_path: String = "Audio/dagger.wav" if mode == 0 else "Art/Original/Audio/Dagger.ogg"
+		check(battle.audio.effects.any(func(player): return player.playing and player.stream != null and player.stream.resource_path.ends_with(sound_path)), "Dagger swipe sound plays in style %d" % mode)
+		check(battle.dagger_flights.size() == 1 and not pivot.visible and not battle.dagger.visible, "Throw leaves the hand in style %d" % mode)
+		var flight: Node3D = battle.dagger_flights[0]
+		var origin: Vector3 = flight.origin
+		var strike: Vector3 = flight.strike
+		enemy.hp = 0.0 # Target may disappear without invalidating its captured flight path.
+		battle._advance_daggers(flight.duration * 0.25)
+		var outbound: Vector3 = flight.position
+		if "--preview" in OS.get_cmdline_user_args():
+			battle.pointer_override = root.get_visible_rect().size * 0.5
+			battle.crosshair.position = battle._aim_pointer() - battle.crosshair.size * 0.5
+			for i in range(4): await process_frame
+			RenderingServer.force_draw(false)
+			root.get_texture().get_image().save_png("res://Games/RowDivers/Docs/Previews/dagger_style_%d.png" % mode)
+		check(not outbound.is_equal_approx(origin) and not outbound.is_equal_approx(strike), "Dagger travels through an outbound arc")
+		battle.aim_override = Vector3.RIGHT
+		root.get_node("SignalBus").settings_updated.emit()
+		check(flight.position == outbound and flight.strike == strike and not pivot.visible, "Aim/style refresh cannot redirect or duplicate the throw")
+		battle._advance_daggers(flight.duration * 0.25)
+		check(flight.position.is_equal_approx(strike), "Dagger reaches the captured enemy position")
+		battle.player_position.x += 0.4
+		battle._update_camera_presentation()
+		battle._advance_daggers(flight.duration * 0.25)
+		check(not flight.position.is_equal_approx(outbound), "Return follows a separate arc toward the moving player")
+		var paused_position: Vector3 = flight.position
+		battle.suspended = true
+		battle._physics_process(0.2)
+		check(flight.position == paused_position, "Pause freezes the dagger flight")
+		battle.suspended = false
+		battle._advance_daggers(flight.duration * 0.25)
+		check(flight.position.is_equal_approx(battle._dagger_hand()) and battle.dagger_flights.is_empty(), "Dagger catches up with the moving hand")
+		battle._update_dagger_presentation()
+		check(pivot.visible and battle.dagger.visible == (mode == 0), "Held dagger is restored after return")
+		# Free aim dagger acquisition is autonomous, even when the bow points away.
+		battle.free_aim_mode = true
+		battle._spawn_enemy(battle.player_position + Vector3(0, 0, -0.5), 0)
+		check(not battle._dagger_target().is_empty(), "Dagger selects a nearby enemy independently of bow aim")
+		seed(391)
+		var expected_draw := randf()
+		seed(391)
+		battle.dagger_timer = 0.01
+		battle._launch_dagger(strike)
+		battle._launch_dagger(strike)
+		check(randf() == expected_draw and battle.dagger_flights.size() == 2, "Rapid throws can overlap without consuming combat RNG")
+		battle._advance_daggers(0.2)
+		check(battle.dagger_flights.is_empty(), "A large simulation step completes all rapid throws")
+		for foe in battle.enemies: foe.hp = 0.0
+		battle.dagger_timer = 10.0
+		battle._launch_dagger(strike)
+		var boosted: Node3D = battle.dagger_flights[0]
+		battle.running = true
+		battle._physics_process(0.01)
+		check(is_equal_approx(boosted.age, 0.02), "Shift double speed advances dagger flight twice")
+		battle.running = false
+		battle.debug_speed = 8
+		battle._physics_process(0.01)
+		check(is_equal_approx(boosted.age, 0.1 if battle.debug_speed_cheats_enabled() else 0.03), "Editor speed advances dagger flight with combat")
+		battle.debug_speed = 1
+		battle.free()
+
 func verify_menu_music_continuity() -> void:
 	for mode in range(3):
 		graphics.select_mode(mode)
@@ -121,7 +205,7 @@ func run() -> void:
 	save.local_settings_file_path = "user://illustrated_presentation_verification.json"
 	root.get_node("Util").set_active_game_id("rowdivers")
 	graphics.select_mode(2)
-	check(art.catalog().files.size() == 38, "All 38 newly generated assets are installed")
+	check(art.catalog().files.size() == 41, "All 41 generated assets are installed")
 	for file in art.catalog().files:
 		check(load(art.ROOT + file.file) != null, "Generated image loads: " + file.name)
 	for material in source.catalog().materials.values():
@@ -138,6 +222,7 @@ func run() -> void:
 	var original := replay(1)
 	var illustrated := replay(2)
 	check(modern == original and original == illustrated, "Identical normalized inputs produce identical state in all three styles")
+	await verify_dagger_flight()
 	await verify_menu_music_continuity()
 	verify_upgrade_icons()
 	var settings = load("res://Settings.tscn").instantiate()

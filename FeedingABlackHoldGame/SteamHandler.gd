@@ -60,6 +60,7 @@ enum ACHIVEMENTS{
 var app_id = STEAM_VANGUARD_APP_ID
 signal steamworks_error
 signal leaderboard_data_updated
+var steam_api = Engine.get_singleton("Steam") if Engine.has_singleton("Steam") else null
 var steam_enabled: bool = false
 
 var statistics: Dictionary = {
@@ -114,10 +115,10 @@ func is_steam_deck():
     if not steam_enabled:
         return false
 
-    if not Steam.has_method("isSteamRunningOnSteamDeck"):
+    if not steam_api.has_method("isSteamRunningOnSteamDeck"):
         return false
 
-    return bool(Steam.call("isSteamRunningOnSteamDeck"))
+    return bool(steam_api.call("isSteamRunningOnSteamDeck"))
 
 func _ready():
     app_id = _resolve_steam_app_id()
@@ -159,38 +160,42 @@ func shutdown_steam() -> void:
     if not steam_enabled:
         return
 
-    if Steam.has_method("storeStats"):
-        Steam.call("storeStats")
+    if steam_api.has_method("storeStats"):
+        steam_api.call("storeStats")
 
-    if Steam.has_method("run_callbacks"):
-        Steam.call("run_callbacks")
-    elif Steam.has_method("runCallbacks"):
-        Steam.call("runCallbacks")
+    if steam_api.has_method("run_callbacks"):
+        steam_api.call("run_callbacks")
+    elif steam_api.has_method("runCallbacks"):
+        steam_api.call("runCallbacks")
 
-    if Steam.has_method("steamShutdown"):
-        Steam.call("steamShutdown")
-    elif Steam.has_method("shutdown"):
-        Steam.call("shutdown")
+    if steam_api.has_method("steamShutdown"):
+        steam_api.call("steamShutdown")
+    elif steam_api.has_method("shutdown"):
+        steam_api.call("shutdown")
 
     steam_enabled = false
 
 
 func initialize_steam() -> void :
+    if Util.is_row_divers_game_active() and preload("res://Games/RowDivers/RowDiversDemo.gd").enabled():
+        steam_enabled = false
+        return
     if OS.has_feature("web"):
         print_debug("Steam integration disabled on Web export")
         steam_enabled = false
         return
 
-    if not Engine.has_singleton("Steam") and not ClassDB.class_exists("Steam"):
+    if steam_api == null:
         print_debug("Steam API not available; Steam integration disabled")
         steam_enabled = false
         return
 
-    var initialize_data: Dictionary = Steam.call("steamInitEx", app_id, true)
+    var initialize_data: Dictionary = steam_api.call("steamInitEx", app_id, true)
     print_debug("Did Steam initialize: %s" % initialize_data)
 
-    if initialize_data.get("status") != Steam.STEAM_API_INIT_RESULT_OK:
-        print_debug("Failed to initialize Steam. Reason: %s" % initialize_data.get("verbal", "unknown"))
+    # ESteamAPIInitResult_OK is zero; keep the optional SDK out of parser symbols.
+    if initialize_data.get("status") != 0:
+        print_debug("Failed to initialize steam_api. Reason: %s" % initialize_data.get("verbal", "unknown"))
         steamworks_error.emit("Failed to initialized Steam! Skillet will now shut down. Check your log files to find out more.")
         steam_enabled = false
         return
@@ -205,16 +210,16 @@ func _setup_leaderboard_support() -> void:
     if not steam_enabled:
         return
     _debug_print_leaderboard_api()
-    if Steam.has_signal("leaderboard_find_result") and not Steam.leaderboard_find_result.is_connected(_on_leaderboard_find_result):
-        Steam.leaderboard_find_result.connect(_on_leaderboard_find_result)
-    if Steam.has_signal("leaderboard_scores_downloaded") and not Steam.leaderboard_scores_downloaded.is_connected(_on_leaderboard_scores_downloaded):
-        Steam.leaderboard_scores_downloaded.connect(_on_leaderboard_scores_downloaded)
-    if Steam.has_signal("leaderboard_score_uploaded") and not Steam.leaderboard_score_uploaded.is_connected(_on_leaderboard_score_uploaded):
-        Steam.leaderboard_score_uploaded.connect(_on_leaderboard_score_uploaded)
+    if steam_api.has_signal("leaderboard_find_result") and not steam_api.leaderboard_find_result.is_connected(_on_leaderboard_find_result):
+        steam_api.leaderboard_find_result.connect(_on_leaderboard_find_result)
+    if steam_api.has_signal("leaderboard_scores_downloaded") and not steam_api.leaderboard_scores_downloaded.is_connected(_on_leaderboard_scores_downloaded):
+        steam_api.leaderboard_scores_downloaded.connect(_on_leaderboard_scores_downloaded)
+    if steam_api.has_signal("leaderboard_score_uploaded") and not steam_api.leaderboard_score_uploaded.is_connected(_on_leaderboard_score_uploaded):
+        steam_api.leaderboard_score_uploaded.connect(_on_leaderboard_score_uploaded)
 
 func _debug_print_leaderboard_api() -> void:
     var signal_names: Array[String] = []
-    for signal_data: Dictionary in Steam.get_signal_list():
+    for signal_data: Dictionary in steam_api.get_signal_list():
         var signal_name: String = str(signal_data.get("name", ""))
         if signal_name.to_lower().contains("leaderboard"):
             signal_names.append(signal_name)
@@ -222,7 +227,7 @@ func _debug_print_leaderboard_api() -> void:
     print("STEAM LEADERBOARD SIGNALS: ", signal_names)
 
     var method_names: Array[String] = []
-    for method_data: Dictionary in Steam.get_method_list():
+    for method_data: Dictionary in steam_api.get_method_list():
         var method_name: String = str(method_data.get("name", ""))
         if method_name.to_lower().contains("leaderboard"):
             method_names.append(method_name)
@@ -275,6 +280,8 @@ func _resolve_steam_app_id() -> int:
     return STEAM_VANGUARD_APP_ID
 
 func get_active_fishing_leaderboard_configs() -> Array[Dictionary]:
+    if Util.is_row_divers_game_active():
+        return load("res://Games/RowDivers/RowDiversTiming.gd").configs()
     if Util.is_red_sky_game_active() or Util.is_turkey_game_active() or Util.is_reel_into_darkness_game_active():
         return []
     if Util.is_open_pit_game_active():
@@ -384,10 +391,13 @@ func _pump_leaderboard_request_queue() -> void:
         _leaderboard_active_request_started_msec = 0
         leaderboard_data_updated.emit()
         return
-    if Steam.has_method("set_leaderboard_handle"):
-        Steam.call("set_leaderboard_handle", 0)
-    if Steam.has_method("findLeaderboard"):
-        Steam.call("findLeaderboard", board_name)
+    if steam_api.has_method("set_leaderboard_handle"):
+        steam_api.call("set_leaderboard_handle", 0)
+    if board_name.begins_with("railway_fury_") and steam_api.has_method("findOrCreateLeaderboard"):
+        # Ascending time, milliseconds. Steam creates each mode's boards on demand.
+        steam_api.call("findOrCreateLeaderboard", board_name, 1, 3)
+    elif steam_api.has_method("findLeaderboard"):
+        steam_api.call("findLeaderboard", board_name)
     else:
         leaderboard_statuses[_leaderboard_active_request_id] = "findLeaderboard unavailable"
         _leaderboard_active_request_id = ""
@@ -402,8 +412,8 @@ func _on_leaderboard_find_result(new_handle: int, was_found: int) -> void:
         _pump_leaderboard_request_queue()
         return
     var expected_name: String = str(leaderboard_id_to_name.get(board_id, ""))
-    if new_handle != 0 and expected_name != "" and Steam.has_method("getLeaderboardName"):
-        var resolved_name: String = str(Steam.call("getLeaderboardName", new_handle))
+    if new_handle != 0 and expected_name != "" and steam_api.has_method("getLeaderboardName"):
+        var resolved_name: String = str(steam_api.call("getLeaderboardName", new_handle))
         if resolved_name != "" and resolved_name != expected_name:
             leaderboard_statuses[board_id] = "Handle mismatch: %s" % resolved_name
             leaderboard_data_updated.emit()
@@ -455,16 +465,16 @@ func _download_leaderboard_entries(board_id: String, scope: String = "top") -> v
     if not leaderboard_handles.has(board_id):
         request_leaderboard(board_id)
         return
-    if not Steam.has_method("downloadLeaderboardEntries"):
+    if not steam_api.has_method("downloadLeaderboardEntries"):
         leaderboard_statuses[board_id] = "downloadLeaderboardEntries unavailable"
         leaderboard_data_updated.emit()
         return
-    if Steam.has_method("set_leaderboard_handle"):
-        Steam.call("set_leaderboard_handle", int(leaderboard_handles[board_id]))
-    if Steam.has_method("set_leaderboard_entries"):
-        Steam.call("set_leaderboard_entries", [])
-    if scope == "top" and Steam.has_method("getLeaderboardEntryCount"):
-        leaderboard_entry_counts[board_id] = int(Steam.call("getLeaderboardEntryCount", int(leaderboard_handles[board_id])))
+    if steam_api.has_method("set_leaderboard_handle"):
+        steam_api.call("set_leaderboard_handle", int(leaderboard_handles[board_id]))
+    if steam_api.has_method("set_leaderboard_entries"):
+        steam_api.call("set_leaderboard_entries", [])
+    if scope == "top" and steam_api.has_method("getLeaderboardEntryCount"):
+        leaderboard_entry_counts[board_id] = int(steam_api.call("getLeaderboardEntryCount", int(leaderboard_handles[board_id])))
     _leaderboard_active_download_id = board_id
     _leaderboard_active_download_scope = scope
     _leaderboard_active_download_started_msec = Time.get_ticks_msec()
@@ -475,7 +485,7 @@ func _download_leaderboard_entries(board_id: String, scope: String = "top") -> v
         range_start = -LEADERBOARD_AROUND_USER_RADIUS
         range_end = LEADERBOARD_AROUND_USER_RADIUS
         request_type = 1
-    Steam.call("downloadLeaderboardEntries", range_start, range_end, request_type, int(leaderboard_handles[board_id]))
+    steam_api.call("downloadLeaderboardEntries", range_start, range_end, request_type, int(leaderboard_handles[board_id]))
     leaderboard_statuses[board_id] = "Refreshing..."
     leaderboard_data_updated.emit()
 
@@ -551,6 +561,15 @@ func _submit_seconds_score_to_board(board_id: String, clear_time_seconds: float)
     var score: int = maxi(1, int(ceil(clear_time_seconds)))
     _submit_leaderboard_score(board_id, score)
 
+func submit_row_divers_time(board_id: String, seconds: float) -> void:
+    if not Util.is_row_divers_game_active() or not is_finite(seconds) or seconds<0: return
+    var timing = load("res://Games/RowDivers/RowDiversTiming.gd")
+    var data: Dictionary = load("res://Games/RowDivers/RowDiversProgress.gd").load_data()
+    if not timing.eligible(data): return
+    if not timing.configs().any(func(c): return c.id==board_id): return
+    _rebuild_leaderboard_name_maps()
+    _submit_fishing_boss_clear_time_to_board(board_id,seconds)
+
 func _submit_leaderboard_score(board_id: String, score: int) -> void:
     leaderboard_pending_submissions[board_id] = score
     leaderboard_last_submitted_scores[board_id] = score
@@ -567,6 +586,14 @@ func _submit_leaderboard_score(board_id: String, score: int) -> void:
 func _submit_pending_leaderboard_score(board_id: String) -> void:
     if not steam_enabled or not leaderboard_pending_submissions.has(board_id):
         return
+    if board_id.begins_with("railway_fury_"):
+        var timing = load("res://Games/RowDivers/RowDiversTiming.gd")
+        var data: Dictionary = load("res://Games/RowDivers/RowDiversProgress.gd").load_data()
+        if not Util.is_row_divers_game_active() or not timing.eligible(data) or not timing.configs().any(func(c): return c.id==board_id):
+            leaderboard_pending_submissions.erase(board_id)
+            leaderboard_statuses[board_id] = "Campaign not eligible"
+            leaderboard_data_updated.emit()
+            return
     if Util.is_open_pit_game_active() and not OPEN_PIT_PROGRESS_SCRIPT.can_write_leaderboards():
         leaderboard_pending_submissions.erase(board_id)
         leaderboard_statuses[board_id] = "Editor assists used"
@@ -575,12 +602,12 @@ func _submit_pending_leaderboard_score(board_id: String) -> void:
     if not leaderboard_handles.has(board_id):
         request_leaderboard(board_id)
         return
-    if not Steam.has_method("uploadLeaderboardScore"):
+    if not steam_api.has_method("uploadLeaderboardScore"):
         leaderboard_statuses[board_id] = "uploadLeaderboardScore unavailable"
         leaderboard_data_updated.emit()
         return
     var score: int = int(leaderboard_pending_submissions[board_id])
-    Steam.call("uploadLeaderboardScore", score, true, PackedInt32Array(), int(leaderboard_handles[board_id]))
+    steam_api.call("uploadLeaderboardScore", score, not board_id.begins_with("railway_fury_"), PackedInt32Array(), int(leaderboard_handles[board_id]))
     leaderboard_pending_submissions.erase(board_id)
     _queue_leaderboard_download(board_id, "top")
     _queue_leaderboard_download(board_id, "around_user")
@@ -602,8 +629,8 @@ func get_cached_leaderboard_display_entries(board_id: String) -> Array:
     var submitted_score: int = get_cached_leaderboard_last_submitted_score(board_id)
     if entry_count > 0 and submitted_score >= 0:
         var persona_name := "Player"
-        if steam_enabled and Steam.has_method("getPersonaName"):
-            var resolved_name: String = str(Steam.call("getPersonaName")).strip_edges()
+        if steam_enabled and steam_api.has_method("getPersonaName"):
+            var resolved_name: String = str(steam_api.call("getPersonaName")).strip_edges()
             if resolved_name != "":
                 persona_name = resolved_name
         return [{
@@ -622,8 +649,8 @@ func get_cached_leaderboard_around_user_display_entries(board_id: String) -> Arr
         return []
     var fallback_rank: int = int(leaderboard_last_uploaded_ranks.get(board_id, 0))
     var persona_name := "Player"
-    if steam_enabled and Steam.has_method("getPersonaName"):
-        var resolved_name: String = str(Steam.call("getPersonaName")).strip_edges()
+    if steam_enabled and steam_api.has_method("getPersonaName"):
+        var resolved_name: String = str(steam_api.call("getPersonaName")).strip_edges()
         if resolved_name != "":
             persona_name = resolved_name
     return [{
@@ -652,12 +679,12 @@ func get_leaderboard_entry_display_name(entry: Dictionary) -> String:
                 break
 
     if steam_id != 0:
-        if Steam.has_method("getFriendPersonaName"):
-            var friend_name: String = str(Steam.call("getFriendPersonaName", steam_id)).strip_edges()
+        if steam_api.has_method("getFriendPersonaName"):
+            var friend_name: String = str(steam_api.call("getFriendPersonaName", steam_id)).strip_edges()
             if friend_name != "":
                 return friend_name
-        if Steam.has_method("getPersonaName"):
-            var own_name: String = str(Steam.call("getPersonaName")).strip_edges()
+        if steam_api.has_method("getPersonaName"):
+            var own_name: String = str(steam_api.call("getPersonaName")).strip_edges()
             if own_name != "":
                 return own_name
 
@@ -668,20 +695,20 @@ func get_leaderboard_entry_display_name(entry: Dictionary) -> String:
 
 func _process(_delta):
     if steam_enabled:
-        if Steam.has_method("run_callbacks"):
-            Steam.call("run_callbacks")
-        elif Steam.has_method("runCallbacks"):
-            Steam.call("runCallbacks")
+        if steam_api.has_method("run_callbacks"):
+            steam_api.call("run_callbacks")
+        elif steam_api.has_method("runCallbacks"):
+            steam_api.call("runCallbacks")
         _poll_leaderboard_fallbacks()
 
 func _poll_leaderboard_fallbacks() -> void:
-    if _leaderboard_active_request_id != "" and Steam.has_method("get_leaderboard_handle"):
-        var polled_handle: int = int(Steam.call("get_leaderboard_handle"))
+    if _leaderboard_active_request_id != "" and steam_api.has_method("get_leaderboard_handle"):
+        var polled_handle: int = int(steam_api.call("get_leaderboard_handle"))
         if polled_handle != 0:
             var expected_name: String = str(leaderboard_id_to_name.get(_leaderboard_active_request_id, ""))
             var resolved_name: String = ""
-            if Steam.has_method("getLeaderboardName"):
-                resolved_name = str(Steam.call("getLeaderboardName", polled_handle))
+            if steam_api.has_method("getLeaderboardName"):
+                resolved_name = str(steam_api.call("getLeaderboardName", polled_handle))
             if resolved_name != "" and expected_name != "" and resolved_name == expected_name and polled_handle != _leaderboard_last_polled_handle:
                 _leaderboard_last_polled_handle = polled_handle
                 _on_leaderboard_find_result(polled_handle, 1)
@@ -694,8 +721,8 @@ func _poll_leaderboard_fallbacks() -> void:
             _pump_leaderboard_request_queue()
             return
 
-    if _leaderboard_active_download_id != "" and Steam.has_method("get_leaderboard_entries"):
-        var polled_entries: Variant = Steam.call("get_leaderboard_entries")
+    if _leaderboard_active_download_id != "" and steam_api.has_method("get_leaderboard_entries"):
+        var polled_entries: Variant = steam_api.call("get_leaderboard_entries")
         if polled_entries is Array:
             var entries: Array = polled_entries
             if not entries.is_empty():
@@ -703,8 +730,8 @@ func _poll_leaderboard_fallbacks() -> void:
                 return
             var expected_handle: int = int(leaderboard_handles.get(_leaderboard_active_download_id, 0))
             var entry_count: int = -1
-            if _leaderboard_active_download_scope == "top" and expected_handle != 0 and Steam.has_method("getLeaderboardEntryCount"):
-                entry_count = int(Steam.call("getLeaderboardEntryCount", expected_handle))
+            if _leaderboard_active_download_scope == "top" and expected_handle != 0 and steam_api.has_method("getLeaderboardEntryCount"):
+                entry_count = int(steam_api.call("getLeaderboardEntryCount", expected_handle))
             if (entry_count == 0 or _leaderboard_active_download_scope == "around_user") and _leaderboard_active_download_started_msec > 0 and Time.get_ticks_msec() - _leaderboard_active_download_started_msec > 1000:
                 _on_leaderboard_scores_downloaded(expected_handle, entries)
                 return
@@ -735,8 +762,8 @@ func load_steam_stats() -> void :
         print_debug("Steam integration disabled - skipping load_steam_stats")
         return
 
-    if Steam.has_method("requestCurrentStats"):
-        Steam.call("requestCurrentStats")
+    if steam_api.has_method("requestCurrentStats"):
+        steam_api.call("requestCurrentStats")
 
 
 func load_steam_achievements() -> void :
@@ -745,8 +772,8 @@ func load_steam_achievements() -> void :
         return
 
     for key in achievements.keys():
-        if Steam.has_method("getAchievement"):
-            var data = Steam.call("getAchievement", str(key))
+        if steam_api.has_method("getAchievement"):
+            var data = steam_api.call("getAchievement", str(key))
             if data is Dictionary and data.has("achieved"):
                 achievements[key] = data["achieved"]
             elif data is Array and data.size() > 0:
@@ -766,8 +793,8 @@ func set_achievement(achivement, store_now = true) -> bool:
         return false
 
     var success := false
-    if Steam.has_method("setAchievement"):
-        success = bool(Steam.call("setAchievement", achivement_name))
+    if steam_api.has_method("setAchievement"):
+        success = bool(steam_api.call("setAchievement", achivement_name))
 
     if success:
         achievements[achivement_name] = true
@@ -785,8 +812,8 @@ func set_statistic(this_stat: String, new_value: int = 1) -> void :
         return
 
     statistics[this_stat] = new_value
-    if Steam.has_method("setStatInt"):
-        Steam.call("setStatInt", this_stat, new_value)
+    if steam_api.has_method("setStatInt"):
+        steam_api.call("setStatInt", this_stat, new_value)
 
 
 func store_steam_data() -> void :
@@ -794,5 +821,5 @@ func store_steam_data() -> void :
         print_debug("Steam integration disabled - skipping store_steam_data")
         return
 
-    if Steam.has_method("storeStats"):
-        Steam.call("storeStats")
+    if steam_api.has_method("storeStats"):
+        steam_api.call("storeStats")

@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dwvhf18mjoxat"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/Results/choices.alternatives.translation", "res://Games/RowDivers/Simulation/Results/choices.baseline.translation", "res://Games/RowDivers/Simulation/Results/choices.currency.translation", "res://Games/RowDivers/Simulation/Results/choices.expense.translation", "res://Games/RowDivers/Simulation/Results/choices.frontier.translation", "res://Games/RowDivers/Simulation/Results/choices.gain.translation", "res://Games/RowDivers/Simulation/Results/choices.id.translation", "res://Games/RowDivers/Simulation/Results/choices.level.translation", "res://Games/RowDivers/Simulation/Results/choices.name.translation", "res://Games/RowDivers/Simulation/Results/choices.predicted.translation", "res://Games/RowDivers/Simulation/Results/choices.prestige.translation", "res://Games/RowDivers/Simulation/Results/choices.price.translation", "res://Games/RowDivers/Simulation/Results/choices.proxy.translation", "res://Games/RowDivers/Simulation/Results/choices.score.translation", "res://Games/RowDivers/Simulation/Results/choices.wallet.translation"]
+
+source_file="res://Games/RowDivers/Simulation/Results/choices.csv"
+dest_files=["res://Games/RowDivers/Simulation/Results/choices.alternatives.translation", "res://Games/RowDivers/Simulation/Results/choices.baseline.translation", "res://Games/RowDivers/Simulation/Results/choices.currency.translation", "res://Games/RowDivers/Simulation/Results/choices.expense.translation", "res://Games/RowDivers/Simulation/Results/choices.frontier.translation", "res://Games/RowDivers/Simulation/Results/choices.gain.translation", "res://Games/RowDivers/Simulation/Results/choices.id.translation", "res://Games/RowDivers/Simulation/Results/choices.level.translation", "res://Games/RowDivers/Simulation/Results/choices.name.translation", "res://Games/RowDivers/Simulation/Results/choices.predicted.translation", "res://Games/RowDivers/Simulation/Results/choices.prestige.translation", "res://Games/RowDivers/Simulation/Results/choices.price.translation", "res://Games/RowDivers/Simulation/Results/choices.proxy.translation", "res://Games/RowDivers/Simulation/Results/choices.score.translation", "res://Games/RowDivers/Simulation/Results/choices.wallet.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

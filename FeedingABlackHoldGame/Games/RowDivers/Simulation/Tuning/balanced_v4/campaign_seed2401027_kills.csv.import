@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://c60mhvulvn2oh"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.prestige.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.ahead.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.boss.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.distance.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.kind.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.range.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.range.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.time.translation"]
+
+source_file="res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.csv"
+dest_files=["res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.prestige.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.ahead.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.boss.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.distance.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.kind.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.range.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.range.translation", "res://Games/RowDivers/Simulation/Tuning/balanced_v4/campaign_seed2401027_kills.time.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

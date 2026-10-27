@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-25",
+  "profile": "tuned",
+  "catalog_sha256": "d68ec69019c40ba58a944ab6d326521dfbe2421c905ae08e39db0e2ce955cdbd",
+  "physics_snapshot": "SourceSnapshotFinal",
+  "source_sha256": {
+    "FeedingABlackHoldGame\\Games\\RowDivers\\RowDiversFireWaves.gd": "4b21ee35914641b783d82f675753a363c2bafa255a00a453535810b391e34eae",
+    "FeedingABlackHoldGame\\Games\\RowDivers\\Scenes\\RowDiversBattleScene.gd": "eb204f6e57050b88b5cb641391647cb95fe06edf59382f17e451fe6cd208d978",
+    "FeedingABlackHoldGame\\Games\\RowDivers\\Simulation\\FlightPilot.gd": "240b0467f2fd1233ee825ff44b9c16293a802e5001d25f605f3bce84fd2791f6",
+    "FeedingABlackHoldGame\\Games\\RowDivers\\Simulation\\GeneratedFreeAimModel.gd": "af0bf620479a21a75b8932d0f21e81fc6da8a2fb3e135ccfc7b5d0f8c3095a3e",
+    "FeedingABlackHoldGame\\Games\\RowDivers\\RowDiversProgress.gd": "123bab96bda4c19bea287e9f112f80e2e39b00d37ac8572a68c3d2c8625a64d4",
+    "FeedingABlackHoldGame\\Games\\RowDivers\\Simulation\\RunBalanceCampaign.gd": "0a255370633a29b59ec1a6d61f35ca109b8b6d8d9029c146c6b65095c728db4f",
+    "FeedingABlackHoldGame\\Games\\RowDivers\\RowDiversFireWaveVisual.gd": "db059313997f4b4405b7a1557d3509b31a82d3cb4298cdb3b8e636bf695e4f54",
+    "FeedingABlackHoldGame\\Games\\RowDivers\\FireWave.gdshader": "2720618ed7e4d306361df238b84071c5929b2459670a8901179aafe3ebc49dde",
+    "FeedingABlackHoldGame\\Games\\RowDivers\\Data\\row_divers.json": "24bed665db67479ee57cbf813e00697bf1f3a23e918b9e2d45ff5c6c3c532879",
+    "FeedingABlackHoldGame\\Games\\RowDivers\\Data\\row_divers_previous.json": "309d71f72a941cf4dab54d81edc36e110dbc09d26c6d5dee663b5421b3fff567",
+    "tools\\rowdivers_balance\\prepare_flight.py": "8426f1430e802be078dd8059af0fd4d8e96a8336d7553a478758127c0c21ae8a",
+    "tools\\rowdivers_balance\\build_model.py": "aca61446e5ecfe4edcebff27548727610b601fa2fdaa470d2ea06512f7da47fb",
+    "tools\\rowdivers_balance\\run.py": "39544d80a364a2586955392ba95ce8e6f539378cba85fd31104463fd0a0115be",
+    "tools\\rowdivers_balance\\report_flight.py": "b80bbf895b4e88c46e5e10cdb14720bc3bf3b9343a5b214827f744ed8e79246f"
+  },
+  "pilot": {
+    "reaction_seconds": 0.18,
+    "angular_error_radians": 0.012,
+    "max_aim_radians_per_second": 5,
+    "click_rate": 6
+  },
+  "campaign_seeds": [
+    2401026,
+    2401027,
+    2401028
+  ],
+  "dt": 0.016666666666666666,
+  "note": "Frozen campaign runner has an obsolete classic modeled_variant label; config.free_aim=true and GeneratedFreeAimModel identify these flying trials. Current runner corrects the label and extends replay checks without changing decisions or combat."
+}

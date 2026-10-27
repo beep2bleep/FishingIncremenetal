@@ -3,7 +3,9 @@ extends Node3D
 const ROOT = "res://Games/RowDivers/Art/Synty/Prefabs/Characters/SM_Chr_"
 const SKINS = ["Skeleton_01", "Skeleton_HeavyArmor_01", "Skeleton_Flesh_01", "Skeleton_Ranger_01", "PlagueDoctor_01", "Priest_Female_01", "DarkLord_Male_01"]
 const Graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
+var bat_material: ShaderMaterial
 var enemy_kind = 0
+var level_index = 0
 var is_boss = false
 var source_sprite: Node3D
 var idle_phase = 0.0
@@ -19,7 +21,8 @@ var playback_speed = 1.0
 var rest_rotations: Dictionary = {}
 var skin_meshes: Array[MeshInstance3D] = []
 
-func setup(kind: int, boss: bool) -> void:
+func setup(kind: int, boss: bool, level = 0) -> void:
+	level_index = clampi(level,0,3)
 	enemy_kind = kind
 	is_boss = boss
 	# Consume the same one phase draw for both styles, and none when switching.
@@ -35,10 +38,16 @@ func _refresh_graphics() -> void:
 	if rig != null: rig.free()
 	skin_meshes.clear()
 	rest_rotations.clear()
+	bat_material = null
+	if enemy_kind == 7:
+		_build_bat()
+		bat_material.set_shader_parameter("level_tint",preload("res://Games/RowDivers/RowDiversLevelThemes.gd").ENEMY_TINTS[level_index])
+		return
 	if Graphics.original():
 		rig = preload("res://Games/RowDivers/RowDiversOriginalPresentation.gd").build("Actor_" + str(enemy_kind), false)
 		add_child(rig)
 		source_sprite = rig.get_child(0)
+		_apply_level_tint()
 		return
 	var kind: int = enemy_kind
 	var boss: bool = is_boss
@@ -57,6 +66,41 @@ func _refresh_graphics() -> void:
 	hit_material.albedo_color = Color(1, 0.85, 0.55, 0)
 	for mesh in rig.find_children("*", "MeshInstance3D", true, false):
 		skin_meshes.append(mesh)
+	_apply_level_tint()
+
+func _apply_level_tint() -> void:
+	var tint: Color = preload("res://Games/RowDivers/RowDiversLevelThemes.gd").ENEMY_TINTS[level_index]
+	for mesh in rig.find_children("*","MeshInstance3D",true,false):
+		var material: Material = mesh.material_override
+		if material==null and mesh.mesh!=null and mesh.mesh.get_surface_count()>0: material = mesh.mesh.surface_get_material(0)
+		if material is ShaderMaterial:
+			var copy = material.duplicate()
+			var base = copy.get_shader_parameter("tint_color")
+			if base is Color:
+				mesh.set_meta("row_enemy_tint",tint)
+				copy.set_shader_parameter("tint_color",base*tint)
+				mesh.material_override = copy
+		elif material is StandardMaterial3D:
+			var copy = material.duplicate()
+			copy.albedo_color *= tint
+			mesh.material_override = copy
+
+func _build_bat() -> void:
+	rig = Node3D.new()
+	rig.name = "Bat"
+	add_child(rig)
+	var sprite := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(1.5, 1.0)
+	quad.subdivide_width = 20
+	quad.subdivide_depth = 8
+	sprite.mesh = quad
+	bat_material = ShaderMaterial.new()
+	bat_material.shader = preload("res://Games/RowDivers/BatSprite.gdshader")
+	bat_material.set_shader_parameter("bat_texture", preload("res://Games/RowDivers/Art/Illustrated/bat.png"))
+	sprite.material_override = bat_material
+	sprite.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	rig.add_child(sprite)
 
 func _create_idle() -> void:
 	skeleton.force_update_all_bone_transforms()
@@ -133,6 +177,10 @@ func _process(delta: float) -> void:
 	charge = maxf(0, charge - delta)
 	if hit_material != null:
 		hit_material.albedo_color.a = flash * 3.5
+	if enemy_kind == 7:
+		bat_material.set_shader_parameter("wing_phase", time * 11.0)
+		bat_material.set_shader_parameter("hit_flash", flash * 3.5)
+		return
 	if source_sprite != null:
 		preload("res://Games/RowDivers/RowDiversOriginalPresentation.gd").animate(source_sprite, "BossIdle" if is_boss else "EnemyIdle", fmod(time, 0.6666667))
 		return

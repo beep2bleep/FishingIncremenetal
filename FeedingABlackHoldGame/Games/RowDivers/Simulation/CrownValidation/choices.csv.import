@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cxd6kq438pfvb"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/CrownValidation/choices.alternatives.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.baseline.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.currency.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.expense.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.frontier.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.gain.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.id.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.level.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.name.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.predicted.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.prestige.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.price.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.proxy.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.score.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.wallet.translation"]
+
+source_file="res://Games/RowDivers/Simulation/CrownValidation/choices.csv"
+dest_files=["res://Games/RowDivers/Simulation/CrownValidation/choices.alternatives.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.baseline.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.currency.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.expense.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.frontier.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.gain.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.id.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.level.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.name.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.predicted.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.prestige.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.price.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.proxy.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.score.translation", "res://Games/RowDivers/Simulation/CrownValidation/choices.wallet.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

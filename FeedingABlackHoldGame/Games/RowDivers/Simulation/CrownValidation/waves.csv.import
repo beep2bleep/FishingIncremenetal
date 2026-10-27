@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://djfdclceha3uq"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/CrownValidation/waves.prestige.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.damage.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.gap.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.gap.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.hit.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.stage.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.time.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.x.translation"]
+
+source_file="res://Games/RowDivers/Simulation/CrownValidation/waves.csv"
+dest_files=["res://Games/RowDivers/Simulation/CrownValidation/waves.prestige.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.damage.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.gap.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.gap.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.hit.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.stage.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.time.translation", "res://Games/RowDivers/Simulation/CrownValidation/waves.x.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

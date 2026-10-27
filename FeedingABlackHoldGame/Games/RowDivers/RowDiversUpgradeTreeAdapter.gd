@@ -10,6 +10,7 @@ const ICON_MODS: Array[int] = [
 ]
 
 static func apply_simulation_upgrades() -> void:
+	PROGRESS.sync_tree_preference()
 	if not SignalBus.settings_updated.is_connected(_refresh_icons): SignalBus.settings_updated.connect(_refresh_icons)
 	var data: Dictionary = PROGRESS.design()
 	var progress: Dictionary = PROGRESS.load_data()
@@ -17,7 +18,7 @@ static func apply_simulation_upgrades() -> void:
 	# PanelManager.PrestigePanelVisibility defaults each new dive to the highest
 	# unlocked prestige. The shared scene exposes that choice before PLAY instead.
 	progress.prestige = int(progress.max_prestige)
-	var raw_upgrades: Array = data.get("upgrades", [])
+	var raw_upgrades: Array = data.get("upgrades", []).filter(func(entry): return int(entry.get("minPrestige", 0)) <= int(progress.max_prestige))
 	var id_to_cell: Dictionary = {}
 	for index in range(raw_upgrades.size()):
 		id_to_cell[str(raw_upgrades[index].get("id", ""))] = Vector2(index + 1, 0)
@@ -37,14 +38,14 @@ static func apply_simulation_upgrades() -> void:
 		upgrade.tier_costs = []
 		for tier in range(upgrade.max_tier):
 			upgrade.tier_costs.append(ceil(float(upgrade.base_cost) * pow(1.2, mini(tier, upgrade.max_tier - 1))))
-		upgrade.demo_locked = 0
+		upgrade.demo_locked = 1 if PROGRESS.Demo.locked(entry) else 0
 		upgrade.section = 0
 		upgrade.act = clampi(int(entry.get("rarity", 0)) + 1, 1, 7)
 		upgrade.epilogue = 0
 		upgrade.type = Util.NODE_TYPES.NORMAL
 		upgrade.sim_key = str(entry.get("id", ""))
-		upgrade.sim_name = str(entry.get("upgradeName", "Railway Fury Upgrade"))
-		upgrade.sim_description = str(entry.get("upgradeDescription", ""))
+		upgrade.sim_name = TranslationServer.translate(str(entry.get("upgradeName", "Railway Fury Upgrade")))
+		upgrade.sim_description = TranslationServer.translate(str(entry.get("upgradeDescription", "")))
 		upgrade.sim_icon = _icon_for(entry)
 		upgrade.sim_group = int(entry.get("rarity", 0))
 		upgrade.sim_level = 1
@@ -61,6 +62,11 @@ static func apply_simulation_upgrades() -> void:
 				var parent_cell: Vector2 = id_to_cell[str(parent_id)]
 				upgrade.sim_connections.append(parent_cell)
 				upgrade.sim_parent_thresholds[parent_cell] = int(entry.get("unlockAtParentLevel", 1))
+		# A numeric zero threshold is already unconditional in Progress.visible.
+		# Anchor it to the shop's starting node as well so UI availability agrees.
+		if int(entry.get("unlockAtParentLevel", 1)) <= 0:
+			upgrade.sim_connections.append(Vector2.ZERO)
+			upgrade.sim_parent_thresholds[Vector2.ZERO] = 0
 		if upgrade.sim_connections.size() == 1:
 			upgrade.forced_cell = upgrade.sim_connections[0]
 		elif upgrade.sim_connections.is_empty():
@@ -78,7 +84,7 @@ static func _icon_for(entry: Dictionary) -> String:
 	if "hp" in title or "health" in title: return "+"
 	if "armor" in title: return "◇"
 	if "dagger" in title: return "†"
-	if "fire" in title or "burn" in title: return "△"
+	if "fire" in title or "burn" in title or "ember" in title: return "△"
 	if not Dictionary(entry.get("unlocks", {})).is_empty(): return "★"
 	return "○"
 
@@ -86,4 +92,7 @@ static func _refresh_icons() -> void:
 	if not Util.is_row_divers_game_active(): return
 	for upgrade in Global.game_mode_data_manager.upgrades.values():
 		var entry: Dictionary = PROGRESS.find_upgrade(upgrade.sim_key)
-		if not entry.is_empty(): upgrade.sim_icon = _icon_for(entry)
+		if not entry.is_empty():
+			upgrade.sim_icon = _icon_for(entry)
+			upgrade.sim_name = TranslationServer.translate(entry.upgradeName)
+			upgrade.sim_description = TranslationServer.translate(entry.upgradeDescription)

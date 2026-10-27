@@ -10,6 +10,9 @@ func check(value: bool, message: String) -> void:
 		push_error(message)
 
 func _initialize() -> void:
+	if "--previous" in OS.get_cmdline_user_args():
+		Progress.active_tree = "previous"
+		Progress.tree_selected = true
 	var data = Progress.fresh()
 	var design = Progress.design()
 	check(design.upgrades.size() == 112, "112 reference nodes")
@@ -24,7 +27,9 @@ func _initialize() -> void:
 	check(data.stats.Arrow_Speed == 5 and data.stats.Horizontal_Speed == 0.8, "Movement and arrow defaults")
 	check(design.settings.movement.forwardSpeed == 1.3, "Serialized forward speed")
 	var visible = design.upgrades.filter(func(n): return Progress.visible(data, n))
-	check(visible.size() == 1 and visible[0].upgradeName == "Arrow Damage I", "Fresh visibility")
+	var visible_names = visible.map(func(n): return n.upgradeName)
+	var expected_names = ["Arrow Damage I"] if Progress.active_tree == "previous" else ["Impact Armor I", "Arrow Damage I"]
+	check(visible_names == expected_names, "Fresh tree has the intended starting upgrades")
 	check(not Progress.buy(data, visible[0]), "Empty wallet rejected")
 	data.wallet = [1e30, 1e30, 1e30]
 	# Buy the reachable graph in legal order, checking each effect against an independent formula.

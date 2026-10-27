@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cfsmuunby1lew"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.alternatives.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.baseline.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.currency.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.expense.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.frontier.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.gain.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.id.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.level.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.name.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.predicted.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.prestige.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.price.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.proxy.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.score.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.wallet.translation"]
+
+source_file="res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.csv"
+dest_files=["res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.alternatives.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.baseline.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.currency.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.expense.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.frontier.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.gain.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.id.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.level.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.name.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.predicted.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.prestige.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.price.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.proxy.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.score.translation", "res://Games/RowDivers/Simulation/Tuning/round_numbers_whole/campaign_choices.wallet.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

@@ -1,0 +1,1568 @@
+{
+	"choices": [],
+	"claims": [],
+	"config": {
+		"dt": 0.0166666666666667,
+		"input": "C:/Godot Projects/RailwayFury/FeedingABlackHoldGame/Games/RowDivers/Simulation/Results/run25_loadout.json",
+		"max_runs": 1500.0,
+		"mode": "snapshot",
+		"output": "C:/Godot Projects/RailwayFury/FeedingABlackHoldGame/Games/RowDivers/Simulation/Results/run25_normal.json",
+		"repeats": 10.0,
+		"row_damage_scale": 1.0,
+		"seed": 2426251.0,
+		"source_manifest": {
+			"catalog_sha256": "309d71f72a941cf4dab54d81edc36e110dbc09d26c6d5dee663b5421b3fff567",
+			"methods": {
+				"_award_loot": "8106ce51c7f204eed279a00c22db7c223e103cfe577b2e522a31d18c2edbf7c7",
+				"_beam_hit": "764a34311af01d7587759287ac94f469076febc4046088a114a2d336ff4a7d2e",
+				"_dagger_hit": "0beed90879656bb2a7ae0c8d5de333c1ce78f9cf815bb6f51c1c2a6853bdbe8c",
+				"_damage_player": "d07ed46d0e862fc498a4e47b40437f12406757f3f39a23a4d617c44c603ec8b3",
+				"_effect": "0e8546a13cab9011b24b6fbd4ce44b59087d9774a6598159939286008325d9f7",
+				"_has_effect": "de29ecd742e39f88239c182392ce42bcfe2d593c7dc86394ef57f30829e8ca1a",
+				"_heal": "72afa8f9e7e5d4a58e0524bb53777df9686532566cefc2599649ab5d200aa375",
+				"_hit": "aaa9f170cca81d17a40aa9d50f6585341c37a10a7f7b6ac40d6fa4dd6ae9ccc8",
+				"_new_projectile_state": "7b9ae539c51aacbb6ed58aed67f2909492e90f5d1c3854359e3acd708fd4e576",
+				"_projectile_hit": "ca87083b342ac9ddfb13c0bbeb8a4dc968816db6bc5bafe288fad386766b7448",
+				"_return_projectile_state": "cdd3402ca49fd82065180dda33285cefd88434790762137807b8c879e550feeb",
+				"_roll": "9ce9fa092a10ab51da932f4f97f7b5d833411d5693fcb1d2e52a9009152f854d",
+				"_shoot": "7ca85ebf0b2a755e11a9ddb2cca7aecb309e3c8930d48054da77b3e9cf72a7c0",
+				"_simulate_step": "ed161697c323ca676f65f61e0d64ed16fcd98f4a4441b83b1fe2c02ba255274a",
+				"_take_projectile_state": "b483723837ce2f5c1cb0eca0a7f37c9442e434da7aae3202c87894a5a3a43482",
+				"_target": "6c2157dd73131565e4b28879b411f40960172cb3296b4486ae46465ae16dcca3",
+				"_update_drops": "e74e4fc77397755fcf6870503aff8f978ebbf2aa57481122458c741796d4f797",
+				"_update_enemies": "751395b3f2f6b3a16edf4985d355d46acff0fefe50a2087c9b5fc94be20d16ac",
+				"_update_projectiles": "e01d4e3b3e96220f15e7249d981aa46ddb22c57fa2288a359c0ec2df94e25dc4",
+				"active": "b113f156d72d4000fa178f9a09d73bb6b5a4c82f6f64c2347dbe222bcc14a043",
+				"s": "728528640dc50698f7da3ae34cd14e085a463cad4a2b555df440f7f62b0d6671",
+				"unlocked": "6da09e59c9879becaa8c364e027b6658790ba7280888a76111098f40d547cd5c"
+			},
+			"progression_sha256": "74a3990e05df66b7928da611a761a053a2551a4033bed280b3dfee11b392c13b",
+			"replacements": "No rendering/audio, HUD, gates animation, save writes, or input polling; record damage/healing/kill distances; always enable existing assist; same spawn RNG and combat order.",
+			"source": "Games/RowDivers/Scenes/RowDiversBattleScene.gd",
+			"source_sha256": "590c840d78fc2280ebb43ee3cee1293db4f9e118c2e18092fe8e4096494d5d96"
+		}
+	},
+	"engine": {
+		"build": "official",
+		"hash": "89cea143987d564363e15d207438530651d943ac",
+		"hex": 263680,
+		"major": 4,
+		"minor": 6,
+		"patch": 0,
+		"status": "stable",
+		"string": "4.6-stable (official)",
+		"timestamp": 0
+	},
+	"final_state": {
+		"achievements": {
+
+		},
+		"best_distance": 0.0,
+		"bestiary": {
+
+		},
+		"claimed": {
+
+		},
+		"controls_seen": true,
+		"crowns_dropped": {
+			"0": true,
+			"1": true
+		},
+		"kills": 0.0,
+		"levels": {
+			"5491": 1.0,
+			"5501": 1.0,
+			"5507": 5.0,
+			"5576": 2.0,
+			"5603": 1.0,
+			"5609": 2.0,
+			"5615": 2.0,
+			"5622": 2.0,
+			"5626": 2.0,
+			"5659": 10.0,
+			"5679": 1.0,
+			"5685": 2.0,
+			"5709": 1.0,
+			"5723": 1.0,
+			"5731": 1.0,
+			"5764": 1.0,
+			"5776": 10.0,
+			"5791": 5.0,
+			"5848": 1.0,
+			"5853": 1.0,
+			"5860": 1.0,
+			"5871": 3.0,
+			"5914": 4.0,
+			"5932": 8.0,
+			"5982": 2.0,
+			"5997": 1.0,
+			"6012": 1.0,
+			"6024": 4.0,
+			"6076": 2.0,
+			"6096": 1.0,
+			"6122": 1.0,
+			"6170": 1.0,
+			"6182": 1.0,
+			"6200": 8.0,
+			"6213": 1.0,
+			"6224": 1.0,
+			"6229": 1.0,
+			"6255": 1.0,
+			"6263": 1.0,
+			"6272": 1.0,
+			"6319": 2.0,
+			"6347": 2.0,
+			"6364": 4.0,
+			"6372": 1.0,
+			"6378": 1.0,
+			"6409": 2.0,
+			"6426": 1.0,
+			"6448": 5.0,
+			"6452": 1.0,
+			"6469": 1.0,
+			"6481": 2.0,
+			"6491": 1.0,
+			"6531": 1.0,
+			"6541": 1.0,
+			"6552": 1.0,
+			"6560": 5.0,
+			"6585": 5.0,
+			"6589": 1.0,
+			"6593": 3.0,
+			"6601": 1.0,
+			"6629": 5.0,
+			"6642": 1.0,
+			"6660": 1.0,
+			"6671": 3.0,
+			"6701": 1.0,
+			"6721": 1.0,
+			"6751": 1.0
+		},
+		"max_prestige": 2.0,
+		"prestige": 2.0,
+		"runs": 24.0,
+		"spent": [
+			5020.0,
+			39.0,
+			2.0
+		],
+		"stats": {
+			"Amount_Of_Arrows": 3.0,
+			"Armor": 200.0,
+			"Armor_Against_Projectiles": 15.0,
+			"Armor_Against_Row": 24.0,
+			"Arrow_Damage": 524740.0,
+			"Arrow_Speed": 8.0,
+			"Beam_Critic_Multiplier": 3.0,
+			"Beam_Damage": 1000000.0,
+			"Beam_Duration": 3.0,
+			"Beam_Fire_Rate": 1.0,
+			"Beam_Range": 6.0,
+			"Bleed_Chance": 20.0,
+			"Bleed_Damage": 1000.0,
+			"Bleed_Duration": 3.0,
+			"Bleeding_Rate": 1.0,
+			"Bow_Fire_Rate": 2.38,
+			"Burn_Chance": 30.0,
+			"Burn_Damage": 200.0,
+			"Burn_Duration": 3.0,
+			"Burning_Rate": 1.0,
+			"Critic_Chance": 10.0,
+			"Critic_Damage": 2.0,
+			"Curse_Chance": 36.0,
+			"Curse_Duration": 2.0,
+			"Curse_Effect": 3.0,
+			"CursedArrow_Damage": 2200.0,
+			"Dagger_Attack_Rate": 3.557525,
+			"Dagger_Damage": 1050.0,
+			"Damage_Against_Bosses": 300.0,
+			"Distance_Range": 13.0,
+			"Dragon_Fire_Rate": 0.5,
+			"EnemiesPerGroup": 1.0,
+			"Explosion_Size": 4.0,
+			"FireArrow_Damage": 1550.0,
+			"Ghost_Fire_Rate": 0.5,
+			"GroupsPerSection": 2.0,
+			"HealOnHit_Amount": 4.0,
+			"HealOnHit_Chance": 5.0,
+			"HealOnKill_Amount": 20.0,
+			"HealOnKill_Chance": 22.813125,
+			"Horizontal_Speed": 1.2,
+			"MaxHP": 2170.0,
+			"Max_Bullet_Rebounds": 1.0,
+			"Melee_range": 6.0,
+			"PickupRange": 1.68,
+			"Porcupine_Damage": 20.0
+		},
+		"unlocks": {
+			"AchievementsTab": true,
+			"Auto": true,
+			"BestiaryTab": true,
+			"Bow": true,
+			"Dagger": true,
+			"Dragon": true,
+			"Ghost": true,
+			"Harvester": true,
+			"Hold": true
+		},
+		"wallet": [
+			1.0,
+			3.0,
+			0.0
+		]
+	},
+	"initial_state": {
+		"achievements": {
+
+		},
+		"best_distance": 0.0,
+		"bestiary": {
+
+		},
+		"claimed": {
+
+		},
+		"controls_seen": true,
+		"crowns_dropped": {
+			"0": true,
+			"1": true
+		},
+		"kills": 0.0,
+		"levels": {
+			"5491": 1.0,
+			"5501": 1.0,
+			"5507": 5.0,
+			"5576": 2.0,
+			"5603": 1.0,
+			"5609": 2.0,
+			"5615": 2.0,
+			"5622": 2.0,
+			"5626": 2.0,
+			"5659": 10.0,
+			"5679": 1.0,
+			"5685": 2.0,
+			"5709": 1.0,
+			"5723": 1.0,
+			"5731": 1.0,
+			"5764": 1.0,
+			"5776": 10.0,
+			"5791": 5.0,
+			"5848": 1.0,
+			"5853": 1.0,
+			"5860": 1.0,
+			"5871": 3.0,
+			"5914": 4.0,
+			"5932": 8.0,
+			"5982": 2.0,
+			"5997": 1.0,
+			"6012": 1.0,
+			"6024": 4.0,
+			"6076": 2.0,
+			"6096": 1.0,
+			"6122": 1.0,
+			"6170": 1.0,
+			"6182": 1.0,
+			"6200": 8.0,
+			"6213": 1.0,
+			"6224": 1.0,
+			"6229": 1.0,
+			"6255": 1.0,
+			"6263": 1.0,
+			"6272": 1.0,
+			"6319": 2.0,
+			"6347": 2.0,
+			"6364": 4.0,
+			"6372": 1.0,
+			"6378": 1.0,
+			"6409": 2.0,
+			"6426": 1.0,
+			"6448": 5.0,
+			"6452": 1.0,
+			"6469": 1.0,
+			"6481": 2.0,
+			"6491": 1.0,
+			"6531": 1.0,
+			"6541": 1.0,
+			"6552": 1.0,
+			"6560": 5.0,
+			"6585": 5.0,
+			"6589": 1.0,
+			"6593": 3.0,
+			"6601": 1.0,
+			"6629": 5.0,
+			"6642": 1.0,
+			"6660": 1.0,
+			"6671": 3.0,
+			"6701": 1.0,
+			"6721": 1.0,
+			"6751": 1.0
+		},
+		"max_prestige": 2.0,
+		"prestige": 2.0,
+		"runs": 24.0,
+		"spent": [
+			5020.0,
+			39.0,
+			2.0
+		],
+		"stats": {
+			"Amount_Of_Arrows": 3.0,
+			"Armor": 200.0,
+			"Armor_Against_Projectiles": 15.0,
+			"Armor_Against_Row": 24.0,
+			"Arrow_Damage": 524740.0,
+			"Arrow_Speed": 8.0,
+			"Beam_Critic_Multiplier": 3.0,
+			"Beam_Damage": 1000000.0,
+			"Beam_Duration": 3.0,
+			"Beam_Fire_Rate": 1.0,
+			"Beam_Range": 6.0,
+			"Bleed_Chance": 20.0,
+			"Bleed_Damage": 1000.0,
+			"Bleed_Duration": 3.0,
+			"Bleeding_Rate": 1.0,
+			"Bow_Fire_Rate": 2.38,
+			"Burn_Chance": 30.0,
+			"Burn_Damage": 200.0,
+			"Burn_Duration": 3.0,
+			"Burning_Rate": 1.0,
+			"Critic_Chance": 10.0,
+			"Critic_Damage": 2.0,
+			"Curse_Chance": 36.0,
+			"Curse_Duration": 2.0,
+			"Curse_Effect": 3.0,
+			"CursedArrow_Damage": 2200.0,
+			"Dagger_Attack_Rate": 3.557525,
+			"Dagger_Damage": 1050.0,
+			"Damage_Against_Bosses": 300.0,
+			"Distance_Range": 13.0,
+			"Dragon_Fire_Rate": 0.5,
+			"EnemiesPerGroup": 1.0,
+			"Explosion_Size": 4.0,
+			"FireArrow_Damage": 1550.0,
+			"Ghost_Fire_Rate": 0.5,
+			"GroupsPerSection": 2.0,
+			"HealOnHit_Amount": 4.0,
+			"HealOnHit_Chance": 5.0,
+			"HealOnKill_Amount": 20.0,
+			"HealOnKill_Chance": 22.813125,
+			"Horizontal_Speed": 1.2,
+			"MaxHP": 2170.0,
+			"Max_Bullet_Rebounds": 1.0,
+			"Melee_range": 6.0,
+			"PickupRange": 1.68,
+			"Porcupine_Damage": 20.0
+		},
+		"unlocks": {
+			"AchievementsTab": true,
+			"Auto": true,
+			"BestiaryTab": true,
+			"Bow": true,
+			"Dagger": true,
+			"Dragon": true,
+			"Ghost": true,
+			"Harvester": true,
+			"Hold": true
+		},
+		"wallet": [
+			1.0,
+			3.0,
+			0.0
+		]
+	},
+	"runs": [
+		{
+			"armor": 0.0,
+			"capped": false,
+			"damage_dealt": 10190499.8,
+			"damage_sources": {
+				"the row": 2528.0
+			},
+			"death_source": "the row",
+			"distance": 83.3469467163086,
+			"far_kill_fraction": 0.5,
+			"healing": 120.0,
+			"health": 0.0,
+			"kill_records": [
+				{
+					"ahead": 6.16233372688293,
+					"boss": false,
+					"distance": 1.06166625022888,
+					"kind": 0,
+					"range": 6.16740274429321,
+					"range_fraction": 0.474415595714863,
+					"time": 0.816666666666665
+				},
+				{
+					"ahead": 10.912341594696,
+					"boss": false,
+					"distance": 4.06165838241577,
+					"kind": 1,
+					"range": 10.9152050018311,
+					"range_fraction": 0.839631153987004,
+					"time": 3.08333333333332
+				},
+				{
+					"ahead": 10.7747144699097,
+					"boss": false,
+					"distance": 9.69928646087646,
+					"kind": 2,
+					"range": 10.7776145935059,
+					"range_fraction": 0.829047276423528,
+					"time": 7.01666666666664
+				},
+				{
+					"ahead": 10.7341156005859,
+					"boss": false,
+					"distance": 24.2398834228516,
+					"kind": 1,
+					"range": 10.7370262145996,
+					"range_fraction": 0.825925093430739,
+					"time": 17.116666666667
+				},
+				{
+					"ahead": 10.5722274780273,
+					"boss": false,
+					"distance": 30.4017715454102,
+					"kind": 2,
+					"range": 10.5751829147339,
+					"range_fraction": 0.813475608825684,
+					"time": 21.0500000000001
+				},
+				{
+					"ahead": 10.5687675476074,
+					"boss": false,
+					"distance": 43.4052314758301,
+					"kind": 0,
+					"range": 10.5717239379883,
+					"range_fraction": 0.813209533691406,
+					"time": 29.3499999999996
+				},
+				{
+					"ahead": 9.73453140258789,
+					"boss": false,
+					"distance": 47.6483345031738,
+					"kind": 3,
+					"range": 9.73774147033691,
+					"range_fraction": 0.749057036179763,
+					"time": 31.8499999999995
+				},
+				{
+					"ahead": 10.3408584594727,
+					"boss": false,
+					"distance": 51.1331405639648,
+					"kind": 0,
+					"range": 10.3438806533813,
+					"range_fraction": 0.795683127183181,
+					"time": 33.8999999999994
+				},
+				{
+					"ahead": 10.1743469238281,
+					"boss": false,
+					"distance": 70.2996520996094,
+					"kind": 1,
+					"range": 10.1743469238281,
+					"range_fraction": 0.782642071063702,
+					"time": 44.8833333333321
+				},
+				{
+					"ahead": 9.52707672119141,
+					"boss": false,
+					"distance": 78.9469223022461,
+					"kind": 1,
+					"range": 9.52707672119141,
+					"range_fraction": 0.732852055476262,
+					"time": 49.5999999999985
+				}
+			],
+			"kills": 10,
+			"loot": [
+				1000.0,
+				1.0,
+				0.0
+			],
+			"mean_kill_range": 9.95272011756897,
+			"mean_range_fraction": 0.765593855197613,
+			"median_kill_range": 10.3438806533813,
+			"p10_kill_range": 6.16740274429321,
+			"p90_kill_range": 10.7776145935059,
+			"prestige": 2,
+			"seconds": 51.9999999999983,
+			"won": false
+		},
+		{
+			"armor": 0.0,
+			"capped": false,
+			"damage_dealt": 9726934.8,
+			"damage_sources": {
+				"the row": 2428.0
+			},
+			"death_source": "the row",
+			"distance": 79.6802597045898,
+			"far_kill_fraction": 0.4,
+			"healing": 48.0,
+			"health": 0.0,
+			"kill_records": [
+				{
+					"ahead": 6.16233372688293,
+					"boss": false,
+					"distance": 1.06166625022888,
+					"kind": 0,
+					"range": 6.16740274429321,
+					"range_fraction": 0.474415595714863,
+					"time": 0.816666666666665
+				},
+				{
+					"ahead": 10.912341594696,
+					"boss": false,
+					"distance": 4.06165838241577,
+					"kind": 1,
+					"range": 10.9152050018311,
+					"range_fraction": 0.839631153987004,
+					"time": 3.08333333333332
+				},
+				{
+					"ahead": 10.7713937759399,
+					"boss": false,
+					"distance": 10.7026071548462,
+					"kind": 0,
+					"range": 10.7742948532104,
+					"range_fraction": 0.828791911785419,
+					"time": 7.71666666666664
+				},
+				{
+					"ahead": 10.1632194519043,
+					"boss": false,
+					"distance": 16.0775356292725,
+					"kind": 3,
+					"range": 10.1662940979004,
+					"range_fraction": 0.782022622915415,
+					"time": 11.4666666666668
+				},
+				{
+					"ahead": 10.5461177825928,
+					"boss": false,
+					"distance": 30.4278812408447,
+					"kind": 2,
+					"range": 10.5490808486938,
+					"range_fraction": 0.811467757591834,
+					"time": 21.0666666666667
+				},
+				{
+					"ahead": 11.0816249847412,
+					"boss": false,
+					"distance": 31.8900241851807,
+					"kind": 3,
+					"range": 11.0844449996948,
+					"range_fraction": 0.85264961536114,
+					"time": 22.0
+				},
+				{
+					"ahead": 9.09543228149414,
+					"boss": false,
+					"distance": 49.6882209777832,
+					"kind": 3,
+					"range": 9.09886741638184,
+					"range_fraction": 0.699912878183218,
+					"time": 33.0499999999994
+				},
+				{
+					"ahead": 9.61420440673828,
+					"boss": false,
+					"distance": 51.3597946166992,
+					"kind": 0,
+					"range": 9.61745452880859,
+					"range_fraction": 0.739804194523738,
+					"time": 34.0333333333327
+				},
+				{
+					"ahead": 10.1743469238281,
+					"boss": false,
+					"distance": 70.2996520996094,
+					"kind": 1,
+					"range": 10.1743469238281,
+					"range_fraction": 0.782642071063702,
+					"time": 44.8833333333321
+				},
+				{
+					"ahead": 9.52707672119141,
+					"boss": false,
+					"distance": 78.9469223022461,
+					"kind": 2,
+					"range": 9.52707672119141,
+					"range_fraction": 0.732852055476262,
+					"time": 49.5999999999985
+				}
+			],
+			"kills": 10,
+			"loot": [
+				800.0,
+				3.0,
+				0.0
+			],
+			"mean_kill_range": 9.80744681358337,
+			"mean_range_fraction": 0.75441898566026,
+			"median_kill_range": 10.1662940979004,
+			"p10_kill_range": 6.16740274429321,
+			"p90_kill_range": 10.9152050018311,
+			"prestige": 2,
+			"seconds": 49.9999999999984,
+			"won": false
+		},
+		{
+			"armor": 0.0,
+			"capped": false,
+			"damage_dealt": 9742804.8,
+			"damage_sources": {
+				"the row": 2528.0
+			},
+			"death_source": "the row",
+			"distance": 83.3469467163086,
+			"far_kill_fraction": 0.5,
+			"healing": 80.0,
+			"health": 0.0,
+			"kill_records": [
+				{
+					"ahead": 6.16233372688293,
+					"boss": false,
+					"distance": 1.06166625022888,
+					"kind": 0,
+					"range": 6.16740274429321,
+					"range_fraction": 0.474415595714863,
+					"time": 0.816666666666665
+				},
+				{
+					"ahead": 10.434579372406,
+					"boss": false,
+					"distance": 4.53942060470581,
+					"kind": 0,
+					"range": 10.4375743865967,
+					"range_fraction": 0.802890337430514,
+					"time": 3.41666666666666
+				},
+				{
+					"ahead": 10.7730541229248,
+					"boss": false,
+					"distance": 10.2009468078613,
+					"kind": 1,
+					"range": 10.775954246521,
+					"range_fraction": 0.828919557424692,
+					"time": 7.36666666666664
+				},
+				{
+					"ahead": 10.7779483795166,
+					"boss": false,
+					"distance": 23.1960506439209,
+					"kind": 2,
+					"range": 10.7808475494385,
+					"range_fraction": 0.829295965341421,
+					"time": 16.4333333333337
+				},
+				{
+					"ahead": 10.5461177825928,
+					"boss": false,
+					"distance": 30.4278812408447,
+					"kind": 2,
+					"range": 10.5490808486938,
+					"range_fraction": 0.811467757591834,
+					"time": 21.0666666666667
+				},
+				{
+					"ahead": 10.5948791503906,
+					"boss": false,
+					"distance": 43.3791198730469,
+					"kind": 0,
+					"range": 10.597827911377,
+					"range_fraction": 0.815217531644381,
+					"time": 29.3333333333329
+				},
+				{
+					"ahead": 9.82876968383789,
+					"boss": false,
+					"distance": 49.1215858459473,
+					"kind": 3,
+					"range": 9.83194828033447,
+					"range_fraction": 0.756303713871883,
+					"time": 32.7166666666661
+				},
+				{
+					"ahead": 10.209171295166,
+					"boss": false,
+					"distance": 50.7648277282715,
+					"kind": 0,
+					"range": 10.2122316360474,
+					"range_fraction": 0.785556279695951,
+					"time": 33.6833333333327
+				},
+				{
+					"ahead": 10.1437911987305,
+					"boss": false,
+					"distance": 70.330207824707,
+					"kind": 1,
+					"range": 10.1437911987305,
+					"range_fraction": 0.780291630671574,
+					"time": 44.8999999999987
+				},
+				{
+					"ahead": 9.55763244628906,
+					"boss": false,
+					"distance": 78.9163665771484,
+					"kind": 2,
+					"range": 9.55763244628906,
+					"range_fraction": 0.735202495868389,
+					"time": 49.5833333333318
+				}
+			],
+			"kills": 10,
+			"loot": [
+				1000.0,
+				1.0,
+				0.0
+			],
+			"mean_kill_range": 9.90542912483215,
+			"mean_range_fraction": 0.76195608652555,
+			"median_kill_range": 10.2122316360474,
+			"p10_kill_range": 6.16740274429321,
+			"p90_kill_range": 10.775954246521,
+			"prestige": 2,
+			"seconds": 51.9999999999983,
+			"won": false
+		},
+		{
+			"armor": 0.0,
+			"capped": false,
+			"damage_dealt": 10016071.4,
+			"damage_sources": {
+				"the row": 2528.0
+			},
+			"death_source": "the row",
+			"distance": 83.3469467163086,
+			"far_kill_fraction": 0.3,
+			"healing": 64.0,
+			"health": 0.0,
+			"kill_records": [
+				{
+					"ahead": 6.16233372688293,
+					"boss": false,
+					"distance": 1.06166625022888,
+					"kind": 0,
+					"range": 6.16740274429321,
+					"range_fraction": 0.474415595714863,
+					"time": 0.816666666666665
+				},
+				{
+					"ahead": 10.912341594696,
+					"boss": false,
+					"distance": 4.06165838241577,
+					"kind": 0,
+					"range": 10.9152050018311,
+					"range_fraction": 0.839631153987004,
+					"time": 3.08333333333332
+				},
+				{
+					"ahead": 10.7952823638916,
+					"boss": false,
+					"distance": 10.6787185668945,
+					"kind": 2,
+					"range": 10.7981767654419,
+					"range_fraction": 0.830628981957069,
+					"time": 7.69999999999997
+				},
+				{
+					"ahead": 10.2828712463379,
+					"boss": false,
+					"distance": 21.6911296844482,
+					"kind": 1,
+					"range": 10.28590965271,
+					"range_fraction": 0.791223819439228,
+					"time": 15.3833333333337
+				},
+				{
+					"ahead": 10.4249725341797,
+					"boss": false,
+					"distance": 30.8717460632324,
+					"kind": 3,
+					"range": 10.4279699325562,
+					"range_fraction": 0.80215153327355,
+					"time": 21.3500000000001
+				},
+				{
+					"ahead": 10.00172996521,
+					"boss": false,
+					"distance": 31.4722690582275,
+					"kind": 2,
+					"range": 10.0048542022705,
+					"range_fraction": 0.769604169405424,
+					"time": 21.7333333333334
+				},
+				{
+					"ahead": 10.350830078125,
+					"boss": false,
+					"distance": 50.6231689453125,
+					"kind": 1,
+					"range": 10.3538484573364,
+					"range_fraction": 0.796449881333571,
+					"time": 33.5999999999994
+				},
+				{
+					"ahead": 10.3354530334473,
+					"boss": false,
+					"distance": 63.6385459899902,
+					"kind": 2,
+					"range": 10.3384761810303,
+					"range_fraction": 0.79526739854079,
+					"time": 41.2499999999989
+				},
+				{
+					"ahead": 10.1743469238281,
+					"boss": false,
+					"distance": 70.2996520996094,
+					"kind": 0,
+					"range": 10.1743469238281,
+					"range_fraction": 0.782642071063702,
+					"time": 44.8833333333321
+				},
+				{
+					"ahead": 9.52707672119141,
+					"boss": false,
+					"distance": 78.9469223022461,
+					"kind": 1,
+					"range": 9.52707672119141,
+					"range_fraction": 0.732852055476262,
+					"time": 49.5999999999985
+				}
+			],
+			"kills": 10,
+			"loot": [
+				1000.0,
+				1.0,
+				0.0
+			],
+			"mean_kill_range": 9.8993266582489,
+			"mean_range_fraction": 0.761486666019146,
+			"median_kill_range": 10.28590965271,
+			"p10_kill_range": 6.16740274429321,
+			"p90_kill_range": 10.7981767654419,
+			"prestige": 2,
+			"seconds": 51.9999999999983,
+			"won": false
+		},
+		{
+			"armor": 0.0,
+			"capped": false,
+			"damage_dealt": 9988525.0,
+			"damage_sources": {
+				"the row": 2428.0
+			},
+			"death_source": "the row",
+			"distance": 79.6802597045898,
+			"far_kill_fraction": 0.5,
+			"healing": 48.0,
+			"health": 0.0,
+			"kill_records": [
+				{
+					"ahead": 6.16233372688293,
+					"boss": false,
+					"distance": 1.06166625022888,
+					"kind": 0,
+					"range": 6.16740274429321,
+					"range_fraction": 0.474415595714863,
+					"time": 0.816666666666665
+				},
+				{
+					"ahead": 10.912341594696,
+					"boss": false,
+					"distance": 4.06165838241577,
+					"kind": 1,
+					"range": 10.9152050018311,
+					"range_fraction": 0.839631153987004,
+					"time": 3.08333333333332
+				},
+				{
+					"ahead": 10.7969427108765,
+					"boss": false,
+					"distance": 10.1770582199097,
+					"kind": 1,
+					"range": 10.7998371124268,
+					"range_fraction": 0.830756700955904,
+					"time": 7.34999999999998
+				},
+				{
+					"ahead": 10.7779483795166,
+					"boss": false,
+					"distance": 23.1960506439209,
+					"kind": 1,
+					"range": 10.7808475494385,
+					"range_fraction": 0.829295965341421,
+					"time": 16.4333333333337
+				},
+				{
+					"ahead": 10.5722274780273,
+					"boss": false,
+					"distance": 30.4017715454102,
+					"kind": 0,
+					"range": 10.5751829147339,
+					"range_fraction": 0.813475608825684,
+					"time": 21.0500000000001
+				},
+				{
+					"ahead": 10.5687675476074,
+					"boss": false,
+					"distance": 43.4052314758301,
+					"kind": 0,
+					"range": 10.5717239379883,
+					"range_fraction": 0.813209533691406,
+					"time": 29.3499999999996
+				},
+				{
+					"ahead": 9.75543594360352,
+					"boss": false,
+					"distance": 49.1782493591309,
+					"kind": 3,
+					"range": 9.75863933563232,
+					"range_fraction": 0.75066456427941,
+					"time": 32.7499999999994
+				},
+				{
+					"ahead": 10.2658348083496,
+					"boss": false,
+					"distance": 50.7081642150879,
+					"kind": 0,
+					"range": 10.2688789367676,
+					"range_fraction": 0.789913764366737,
+					"time": 33.6499999999994
+				},
+				{
+					"ahead": 9.53267669677734,
+					"boss": false,
+					"distance": 70.9413223266602,
+					"kind": 1,
+					"range": 9.53267669677734,
+					"range_fraction": 0.733282822829026,
+					"time": 45.233333333332
+				},
+				{
+					"ahead": 10.1381912231445,
+					"boss": false,
+					"distance": 78.335807800293,
+					"kind": 2,
+					"range": 10.1381912231445,
+					"range_fraction": 0.77986086331881,
+					"time": 49.2666666666651
+				}
+			],
+			"kills": 10,
+			"loot": [
+				1000.0,
+				1.0,
+				0.0
+			],
+			"mean_kill_range": 9.95085854530334,
+			"mean_range_fraction": 0.765450657331027,
+			"median_kill_range": 10.2688789367676,
+			"p10_kill_range": 6.16740274429321,
+			"p90_kill_range": 10.7998371124268,
+			"prestige": 2,
+			"seconds": 49.9999999999984,
+			"won": false
+		},
+		{
+			"armor": 0.0,
+			"capped": false,
+			"damage_dealt": 10318489.4,
+			"damage_sources": {
+				"the row": 2528.0
+			},
+			"death_source": "the row",
+			"distance": 83.3469467163086,
+			"far_kill_fraction": 0.5,
+			"healing": 88.0,
+			"health": 0.0,
+			"kill_records": [
+				{
+					"ahead": 6.16233372688293,
+					"boss": false,
+					"distance": 1.06166625022888,
+					"kind": 2,
+					"range": 6.16740274429321,
+					"range_fraction": 0.474415595714863,
+					"time": 0.816666666666665
+				},
+				{
+					"ahead": 10.912341594696,
+					"boss": false,
+					"distance": 4.06165838241577,
+					"kind": 0,
+					"range": 10.9152050018311,
+					"range_fraction": 0.839631153987004,
+					"time": 3.08333333333332
+				},
+				{
+					"ahead": 10.7747144699097,
+					"boss": false,
+					"distance": 9.69928646087646,
+					"kind": 0,
+					"range": 10.7776145935059,
+					"range_fraction": 0.829047276423528,
+					"time": 7.01666666666664
+				},
+				{
+					"ahead": 10.7341156005859,
+					"boss": false,
+					"distance": 24.2398834228516,
+					"kind": 2,
+					"range": 10.7370262145996,
+					"range_fraction": 0.825925093430739,
+					"time": 17.116666666667
+				},
+				{
+					"ahead": 10.5722274780273,
+					"boss": false,
+					"distance": 30.4017715454102,
+					"kind": 1,
+					"range": 10.5751829147339,
+					"range_fraction": 0.813475608825684,
+					"time": 21.0500000000001
+				},
+				{
+					"ahead": 10.4271469116211,
+					"boss": false,
+					"distance": 32.3861351013184,
+					"kind": 3,
+					"range": 10.4301433563232,
+					"range_fraction": 0.802318719717173,
+					"time": 22.3166666666667
+				},
+				{
+					"ahead": 10.3791618347168,
+					"boss": false,
+					"distance": 50.5948371887207,
+					"kind": 1,
+					"range": 10.3821716308594,
+					"range_fraction": 0.798628586989183,
+					"time": 33.5833333333327
+				},
+				{
+					"ahead": 9.72438049316406,
+					"boss": false,
+					"distance": 64.2496185302734,
+					"kind": 0,
+					"range": 9.72759342193604,
+					"range_fraction": 0.748276417072003,
+					"time": 41.5833333333322
+				},
+				{
+					"ahead": 9.563232421875,
+					"boss": false,
+					"distance": 70.9107666015625,
+					"kind": 1,
+					"range": 9.563232421875,
+					"range_fraction": 0.735633263221154,
+					"time": 45.2166666666654
+				},
+				{
+					"ahead": 10.1687469482422,
+					"boss": false,
+					"distance": 78.3052520751953,
+					"kind": 1,
+					"range": 10.1687469482422,
+					"range_fraction": 0.782211303710938,
+					"time": 49.2499999999985
+				}
+			],
+			"kills": 10,
+			"loot": [
+				1000.0,
+				1.0,
+				0.0
+			],
+			"mean_kill_range": 9.94443192481995,
+			"mean_range_fraction": 0.764956301909227,
+			"median_kill_range": 10.3821716308594,
+			"p10_kill_range": 6.16740274429321,
+			"p90_kill_range": 10.7776145935059,
+			"prestige": 2,
+			"seconds": 51.9999999999983,
+			"won": false
+		},
+		{
+			"armor": 0.0,
+			"capped": false,
+			"damage_dealt": 10157581.0,
+			"damage_sources": {
+				"the row": 2428.0
+			},
+			"death_source": "the row",
+			"distance": 79.6802597045898,
+			"far_kill_fraction": 0.5,
+			"healing": 0.0,
+			"health": 0.0,
+			"kill_records": [
+				{
+					"ahead": 6.16233372688293,
+					"boss": false,
+					"distance": 1.06166625022888,
+					"kind": 2,
+					"range": 6.16740274429321,
+					"range_fraction": 0.474415595714863,
+					"time": 0.816666666666665
+				},
+				{
+					"ahead": 10.434579372406,
+					"boss": false,
+					"distance": 4.53942060470581,
+					"kind": 0,
+					"range": 10.4375743865967,
+					"range_fraction": 0.802890337430514,
+					"time": 3.41666666666666
+				},
+				{
+					"ahead": 10.7747144699097,
+					"boss": false,
+					"distance": 9.69928646087646,
+					"kind": 0,
+					"range": 10.7776145935059,
+					"range_fraction": 0.829047276423528,
+					"time": 7.01666666666664
+				},
+				{
+					"ahead": 10.7341156005859,
+					"boss": false,
+					"distance": 24.2398834228516,
+					"kind": 2,
+					"range": 10.7370262145996,
+					"range_fraction": 0.825925093430739,
+					"time": 17.116666666667
+				},
+				{
+					"ahead": 10.5722274780273,
+					"boss": false,
+					"distance": 30.4017715454102,
+					"kind": 2,
+					"range": 10.5751829147339,
+					"range_fraction": 0.813475608825684,
+					"time": 21.0500000000001
+				},
+				{
+					"ahead": 10.4271469116211,
+					"boss": false,
+					"distance": 32.3861351013184,
+					"kind": 3,
+					"range": 10.4301433563232,
+					"range_fraction": 0.802318719717173,
+					"time": 22.3166666666667
+				},
+				{
+					"ahead": 10.350830078125,
+					"boss": false,
+					"distance": 50.6231689453125,
+					"kind": 1,
+					"range": 10.3538484573364,
+					"range_fraction": 0.796449881333571,
+					"time": 33.5999999999994
+				},
+				{
+					"ahead": 10.3660049438477,
+					"boss": false,
+					"distance": 63.6079940795898,
+					"kind": 2,
+					"range": 10.3690195083618,
+					"range_fraction": 0.797616885258601,
+					"time": 41.2333333333323
+				},
+				{
+					"ahead": 9.563232421875,
+					"boss": false,
+					"distance": 70.9107666015625,
+					"kind": 1,
+					"range": 9.563232421875,
+					"range_fraction": 0.735633263221154,
+					"time": 45.2166666666654
+				},
+				{
+					"ahead": 10.1381912231445,
+					"boss": false,
+					"distance": 78.335807800293,
+					"kind": 1,
+					"range": 10.1381912231445,
+					"range_fraction": 0.77986086331881,
+					"time": 49.2666666666651
+				}
+			],
+			"kills": 10,
+			"loot": [
+				1000.0,
+				1.0,
+				0.0
+			],
+			"mean_kill_range": 9.95492358207703,
+			"mean_range_fraction": 0.765763352467464,
+			"median_kill_range": 10.3690195083618,
+			"p10_kill_range": 6.16740274429321,
+			"p90_kill_range": 10.7370262145996,
+			"prestige": 2,
+			"seconds": 49.9999999999984,
+			"won": false
+		},
+		{
+			"armor": 0.0,
+			"capped": false,
+			"damage_dealt": 10084700.0,
+			"damage_sources": {
+				"the row": 2528.0
+			},
+			"death_source": "the row",
+			"distance": 83.3469467163086,
+			"far_kill_fraction": 0.5,
+			"healing": 60.0,
+			"health": 0.0,
+			"kill_records": [
+				{
+					"ahead": 6.14066708087921,
+					"boss": false,
+					"distance": 1.08333289623261,
+					"kind": 0,
+					"range": 6.14575386047363,
+					"range_fraction": 0.47275029695951,
+					"time": 0.833333333333332
+				},
+				{
+					"ahead": 10.912341594696,
+					"boss": false,
+					"distance": 4.06165838241577,
+					"kind": 0,
+					"range": 10.9152050018311,
+					"range_fraction": 0.839631153987004,
+					"time": 3.08333333333332
+				},
+				{
+					"ahead": 10.7969427108765,
+					"boss": false,
+					"distance": 10.1770582199097,
+					"kind": 2,
+					"range": 10.7998371124268,
+					"range_fraction": 0.830756700955904,
+					"time": 7.34999999999998
+				},
+				{
+					"ahead": 10.7540607452393,
+					"boss": false,
+					"distance": 23.2199382781982,
+					"kind": 1,
+					"range": 10.7569665908813,
+					"range_fraction": 0.827458968529334,
+					"time": 16.4500000000003
+				},
+				{
+					"ahead": 10.5461177825928,
+					"boss": false,
+					"distance": 30.4278812408447,
+					"kind": 2,
+					"range": 10.5490808486938,
+					"range_fraction": 0.811467757591834,
+					"time": 21.0666666666667
+				},
+				{
+					"ahead": 10.5948791503906,
+					"boss": false,
+					"distance": 43.3791198730469,
+					"kind": 2,
+					"range": 10.597827911377,
+					"range_fraction": 0.815217531644381,
+					"time": 29.3333333333329
+				},
+				{
+					"ahead": 10.3791618347168,
+					"boss": false,
+					"distance": 50.5948371887207,
+					"kind": 0,
+					"range": 10.3821716308594,
+					"range_fraction": 0.798628586989183,
+					"time": 33.5833333333327
+				},
+				{
+					"ahead": 10.3354530334473,
+					"boss": false,
+					"distance": 63.6385459899902,
+					"kind": 0,
+					"range": 10.3384761810303,
+					"range_fraction": 0.79526739854079,
+					"time": 41.2499999999989
+				},
+				{
+					"ahead": 9.53267669677734,
+					"boss": false,
+					"distance": 70.9413223266602,
+					"kind": 1,
+					"range": 9.53267669677734,
+					"range_fraction": 0.733282822829026,
+					"time": 45.233333333332
+				},
+				{
+					"ahead": 8.91596221923828,
+					"boss": false,
+					"distance": 79.5580368041992,
+					"kind": 1,
+					"range": 8.91596221923828,
+					"range_fraction": 0.685843247633714,
+					"time": 49.9333333333318
+				}
+			],
+			"kills": 10,
+			"loot": [
+				1100.0,
+				0.0,
+				0.0
+			],
+			"mean_kill_range": 9.89339580535889,
+			"mean_range_fraction": 0.761030446566068,
+			"median_kill_range": 10.3821716308594,
+			"p10_kill_range": 6.14575386047363,
+			"p90_kill_range": 10.7998371124268,
+			"prestige": 2,
+			"seconds": 51.9999999999983,
+			"won": false
+		},
+		{
+			"armor": 0.0,
+			"capped": false,
+			"damage_dealt": 9674176.2,
+			"damage_sources": {
+				"the row": 2428.0
+			},
+			"death_source": "the row",
+			"distance": 79.6802597045898,
+			"far_kill_fraction": 0.4,
+			"healing": 40.0,
+			"health": 0.0,
+			"kill_records": [
+				{
+					"ahead": 6.16233372688293,
+					"boss": false,
+					"distance": 1.06166625022888,
+					"kind": 2,
+					"range": 6.16740274429321,
+					"range_fraction": 0.474415595714863,
+					"time": 0.816666666666665
+				},
+				{
+					"ahead": 10.912341594696,
+					"boss": false,
+					"distance": 4.06165838241577,
+					"kind": 2,
+					"range": 10.9152050018311,
+					"range_fraction": 0.839631153987004,
+					"time": 3.08333333333332
+				},
+				{
+					"ahead": 10.7952823638916,
+					"boss": false,
+					"distance": 10.6787185668945,
+					"kind": 1,
+					"range": 10.7981767654419,
+					"range_fraction": 0.830628981957069,
+					"time": 7.69999999999997
+				},
+				{
+					"ahead": 10.1632194519043,
+					"boss": false,
+					"distance": 16.0775356292725,
+					"kind": 3,
+					"range": 10.1662940979004,
+					"range_fraction": 0.782022622915415,
+					"time": 11.4666666666668
+				},
+				{
+					"ahead": 10.5461177825928,
+					"boss": false,
+					"distance": 30.4278812408447,
+					"kind": 2,
+					"range": 10.5490808486938,
+					"range_fraction": 0.811467757591834,
+					"time": 21.0666666666667
+				},
+				{
+					"ahead": 10.5687675476074,
+					"boss": false,
+					"distance": 43.4052314758301,
+					"kind": 0,
+					"range": 10.5717239379883,
+					"range_fraction": 0.813209533691406,
+					"time": 29.3499999999996
+				},
+				{
+					"ahead": 10.3891334533691,
+					"boss": false,
+					"distance": 50.0848655700684,
+					"kind": 1,
+					"range": 10.3921413421631,
+					"range_fraction": 0.799395487858699,
+					"time": 33.2833333333327
+				},
+				{
+					"ahead": 9.06921768188477,
+					"boss": false,
+					"distance": 50.4815101623535,
+					"kind": 3,
+					"range": 9.07266235351563,
+					"range_fraction": 0.697897104116587,
+					"time": 33.516666666666
+				},
+				{
+					"ahead": 9.53267669677734,
+					"boss": false,
+					"distance": 70.9413223266602,
+					"kind": 0,
+					"range": 9.53267669677734,
+					"range_fraction": 0.733282822829026,
+					"time": 45.233333333332
+				},
+				{
+					"ahead": 9.52707672119141,
+					"boss": false,
+					"distance": 78.9469223022461,
+					"kind": 0,
+					"range": 9.52707672119141,
+					"range_fraction": 0.732852055476262,
+					"time": 49.5999999999985
+				}
+			],
+			"kills": 10,
+			"loot": [
+				900.0,
+				2.0,
+				0.0
+			],
+			"mean_kill_range": 9.76924405097961,
+			"mean_range_fraction": 0.751480311613816,
+			"median_kill_range": 10.1662940979004,
+			"p10_kill_range": 6.16740274429321,
+			"p90_kill_range": 10.7981767654419,
+			"prestige": 2,
+			"seconds": 49.9999999999984,
+			"won": false
+		},
+		{
+			"armor": 0.0,
+			"capped": false,
+			"damage_dealt": 10050579.4,
+			"damage_sources": {
+				"the row": 2528.0
+			},
+			"death_source": "the row",
+			"distance": 83.3469467163086,
+			"far_kill_fraction": 0.3,
+			"healing": 64.0,
+			"health": 0.0,
+			"kill_records": [
+				{
+					"ahead": 6.16233372688293,
+					"boss": false,
+					"distance": 1.06166625022888,
+					"kind": 0,
+					"range": 6.16740274429321,
+					"range_fraction": 0.474415595714863,
+					"time": 0.816666666666665
+				},
+				{
+					"ahead": 10.386803150177,
+					"boss": false,
+					"distance": 4.58719682693481,
+					"kind": 1,
+					"range": 10.3898115158081,
+					"range_fraction": 0.799216270446777,
+					"time": 3.44999999999999
+				},
+				{
+					"ahead": 10.7730541229248,
+					"boss": false,
+					"distance": 10.2009468078613,
+					"kind": 0,
+					"range": 10.775954246521,
+					"range_fraction": 0.828919557424692,
+					"time": 7.36666666666664
+				},
+				{
+					"ahead": 10.7540607452393,
+					"boss": false,
+					"distance": 23.2199382781982,
+					"kind": 2,
+					"range": 10.7569665908813,
+					"range_fraction": 0.827458968529334,
+					"time": 16.4500000000003
+				},
+				{
+					"ahead": 9.9978141784668,
+					"boss": false,
+					"distance": 30.9761848449707,
+					"kind": 0,
+					"range": 10.0009393692017,
+					"range_fraction": 0.769303028400128,
+					"time": 21.4166666666667
+				},
+				{
+					"ahead": 10.5948791503906,
+					"boss": false,
+					"distance": 43.3791198730469,
+					"kind": 2,
+					"range": 10.597827911377,
+					"range_fraction": 0.815217531644381,
+					"time": 29.3333333333329
+				},
+				{
+					"ahead": 9.06921768188477,
+					"boss": false,
+					"distance": 50.4815101623535,
+					"kind": 3,
+					"range": 9.07266235351563,
+					"range_fraction": 0.697897104116587,
+					"time": 33.516666666666
+				},
+				{
+					"ahead": 9.19919967651367,
+					"boss": false,
+					"distance": 51.2747993469238,
+					"kind": 2,
+					"range": 9.20259571075439,
+					"range_fraction": 0.707891977750338,
+					"time": 33.9833333333327
+				},
+				{
+					"ahead": 9.53267669677734,
+					"boss": false,
+					"distance": 70.9413223266602,
+					"kind": 1,
+					"range": 9.53267669677734,
+					"range_fraction": 0.733282822829026,
+					"time": 45.233333333332
+				},
+				{
+					"ahead": 10.1381912231445,
+					"boss": false,
+					"distance": 78.335807800293,
+					"kind": 1,
+					"range": 10.1381912231445,
+					"range_fraction": 0.77986086331881,
+					"time": 49.2666666666651
+				}
+			],
+			"kills": 10,
+			"loot": [
+				1000.0,
+				1.0,
+				0.0
+			],
+			"mean_kill_range": 9.66350283622742,
+			"mean_range_fraction": 0.743346372017494,
+			"median_kill_range": 10.0009393692017,
+			"p10_kill_range": 6.16740274429321,
+			"p90_kill_range": 10.7569665908813,
+			"prestige": 2,
+			"seconds": 51.9999999999983,
+			"won": false
+		}
+	],
+	"trial_count": 10,
+	"wall_seconds": 2.514
+}

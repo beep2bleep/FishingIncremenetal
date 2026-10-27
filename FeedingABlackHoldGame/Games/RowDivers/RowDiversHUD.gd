@@ -1,12 +1,6 @@
 extends CanvasLayer
 const Style = preload("res://Games/RowDivers/RowDiversStyle.gd")
 const NAMES = {"ArrowShield": "ARROW SHIELD", "Harvester": "HARVESTER", "Shuriken": "SHURIKEN", "SlowDown": "SLOW DOWN"}
-const TUTORIAL = [
-	["01 / KEEP MOVING", "The row carries you forward automatically.\nUse A / D or the arrow keys to steer around enemies.\nShift toggles running: 50% faster, with 50% more row damage."],
-	["02 / MAKE EVERY SHOT COUNT", "Left click fires straight ahead. A green crosshair means a target is in range.\nHealth drains every two seconds. Defeat enemies and collect their drops.\nDeath banks your loot: buy upgrades, then dive again."],
-	["03 / BUILD YOUR LOADOUT", "Unlock Hold Fire and Auto Shoot in the upgrade tree.\nAfter Auto Shoot, use 1 for Hold and 2 for Auto.\nDagger strikes nearby foes automatically. Third Eye follows your mouse."],
-	["04 / TURN THE FIGHT", "3 — Arrow Shield: block enemy arrows for 5 seconds.\n4 — Harvester: double gold and gems collected for 10 seconds.\n5 — Shuriken: add shuriken shots for 10 seconds.\n6 — Slow Down: reduce forward speed for 4 seconds.\nBuy each ability first. Watch its cooldown; Escape pauses."]
-]
 var battle: Node3D
 var root_ui: Control
 var hp_bar: ProgressBar
@@ -27,6 +21,7 @@ var upgrades_button: Button
 var settings_button: Button
 var tutorial_button: Button
 var tutorial_page = -1
+var tutorial_cards: HBoxContainer
 var debug_speed_label: Label
 var debug_speed_buttons: Dictionary = {}
 
@@ -82,6 +77,9 @@ func build(owner_battle: Node3D) -> void:
 	root_ui.add_child(battle.crosshair)
 	battle.crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	battle.crosshair.position -= Vector2(9, 20)
+	battle.crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if battle.free_aim_mode:
+		battle.crosshair.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 	var abilities := HBoxContainer.new()
 	root_ui.add_child(abilities)
 	abilities.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
@@ -95,7 +93,7 @@ func build(owner_battle: Node3D) -> void:
 		abilities.add_child(column)
 		ability_columns[ability] = column
 		column.visible = battle.unlocked(ability)
-		var button := make_button("[%d] %s" % [key, NAMES[ability]], func(): battle._activate(ability))
+		var button := make_button(tr("[%d] %s") % [key, NAMES[ability]], func(): battle._activate(ability))
 		button.custom_minimum_size = Vector2(196, 52)
 		button.add_theme_font_size_override("font_size", 15)
 		button.set_meta("railway_font_size", 15)
@@ -126,6 +124,11 @@ func build(owner_battle: Node3D) -> void:
 	_apply_text_scale()
 	SignalBus.settings_updated.connect(_refresh_graphics)
 	_refresh_graphics()
+	if preload("res://Games/RowDivers/RowDiversDemo.gd").enabled():
+		var demo_label := Style.label("DEMO MODE", 18, true)
+		demo_label.position = Vector2(24, 163)
+		demo_label.modulate = Style.GOLD
+		root_ui.add_child(demo_label)
 
 func _refresh_graphics() -> void:
 	var graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
@@ -153,24 +156,28 @@ func _build_debug_speed_controls() -> void:
 	column.add_child(warning)
 	debug_speed_label = Style.label("", 16, true)
 	column.add_child(debug_speed_label)
-	var buttons := HBoxContainer.new()
+	var buttons := GridContainer.new()
+	buttons.columns = 4
 	column.add_child(buttons)
 	for multiplier in battle.DEBUG_SPEEDS:
-		var button := make_button("%dx" % multiplier, func(): battle.set_debug_speed(multiplier))
+		var button := make_button(tr("%dx") % multiplier, func(): battle.set_debug_speed(multiplier))
 		button.custom_minimum_size = Vector2(62, 38)
 		button.tooltip_text = "Speed up the entire simulation. At 4x and above: automatically aim and fire at the closest enemy without lateral movement, use unlocked abilities as soon as they are ready, and ignore enemy arrows. Row and contact damage still apply. Carries between dives until you quit the game."
+		if battle.free_aim_mode:
+			button.tooltip_text = "At 4x and above, the simulation pilot aims, shoots, dodges fire and projectiles, collects loot and uses abilities. All damage still applies. Below 4x you control the player."
 		buttons.add_child(button)
 		debug_speed_buttons[multiplier] = button
 	var hint := Style.label("F7 CYCLE  /  F8 NORMAL  ·  session only", 13)
 	column.add_child(hint)
-	panel.mouse_entered.connect(func(): Input.mouse_mode = Input.MOUSE_MODE_VISIBLE)
+	panel.mouse_entered.connect(func(): VirtualCursor.set_gameplay_pointer_hidden(false))
 	panel.mouse_exited.connect(func():
-		if not battle.suspended and not battle.ended: Input.mouse_mode = Input.MOUSE_MODE_HIDDEN)
+		if not battle.suspended and not battle.ended: VirtualCursor.set_gameplay_pointer_hidden(true))
 	refresh_debug_speed()
 
 func refresh_debug_speed() -> void:
 	if debug_speed_label == null: return
 	debug_speed_label.text = "GAMEPLAY SPEED: %dx" % battle.debug_speed
+	if battle.editor_autopilot_enabled(): debug_speed_label.text += "  /  AUTOPILOT"
 	for multiplier in debug_speed_buttons:
 		debug_speed_buttons[multiplier].modulate = Color("ff8ad3") if multiplier == battle.debug_speed else Color.WHITE
 
@@ -213,6 +220,20 @@ func _build_overlay() -> void:
 	overlay_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	overlay_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(overlay_detail)
+	tutorial_cards = HBoxContainer.new()
+	tutorial_cards.add_theme_constant_override("separation", 18)
+	box.add_child(tutorial_cards)
+	for shooting in [false, true]:
+		var card = VBoxContainer.new()
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tutorial_cards.add_child(card)
+		var picture = preload("res://Games/RowDivers/RowDiversControlsPicture.gd").new()
+		picture.shooting = shooting
+		card.add_child(picture)
+		var caption = Style.label("CLICK TO SHOOT" if shooting else "MOVE LEFT / RIGHT", 20, true)
+		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		card.add_child(caption)
+	tutorial_cards.hide()
 	battle.resume = make_button("RESUME", battle._resume)
 	box.add_child(battle.resume)
 	battle.retry = make_button("DIVE AGAIN", func(): battle.get_tree().reload_current_scene())
@@ -232,6 +253,7 @@ func _build_overlay() -> void:
 	tutorial_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(tutorial_button)
 	var menu := make_button("MAIN MENU", func():
+		preload("res://Games/RowDivers/RowDiversEditorLoop.gd").stop()
 		if not battle.ended: battle._finish(false)
 		battle.get_tree().change_scene_to_file(Util.PATH_GAME_LAUNCHER))
 	menu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -261,6 +283,7 @@ func _build_settings() -> void:
 
 func show_settings() -> void:
 	battle.suspended = true
+	VirtualCursor.set_gameplay_pointer_hidden(false)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	settings_panel.show()
 	settings_content.show_screen()
@@ -268,6 +291,7 @@ func show_settings() -> void:
 func show_tutorial() -> void:
 	tutorial_page = 0
 	battle.suspended = true
+	VirtualCursor.set_gameplay_pointer_hidden(false)
 	battle.overlay.show()
 	battle.retry.hide()
 	battle.resume.show()
@@ -278,17 +302,16 @@ func show_tutorial() -> void:
 	_refresh_tutorial()
 
 func _refresh_tutorial() -> void:
-	battle.overlay_title.text = TUTORIAL[tutorial_page][0]
-	overlay_detail.text = TUTORIAL[tutorial_page][1]
-	battle.resume.text = "START DIVING" if tutorial_page == TUTORIAL.size() - 1 else "NEXT"
+	battle.overlay_title.text = "HOW TO PLAY"
+	overlay_detail.hide()
+	tutorial_cards.show()
+	battle.resume.text = "PLAY"
 
 func advance_tutorial() -> bool:
 	if tutorial_page < 0: return false
-	tutorial_page += 1
-	if tutorial_page < TUTORIAL.size():
-		_refresh_tutorial()
-		return true
 	tutorial_page = -1
+	tutorial_cards.hide()
+	overlay_detail.show()
 	upgrades_button.show()
 	settings_button.show()
 	tutorial_button.show()
@@ -297,6 +320,8 @@ func advance_tutorial() -> bool:
 
 func pause() -> void:
 	tutorial_page = -1
+	tutorial_cards.hide()
+	overlay_detail.show()
 	battle.overlay_title.text = "TAKE A BREATHER"
 	overlay_detail.text = "Your run is paused."
 	battle.resume.text = "RESUME"
@@ -313,21 +338,23 @@ func toast(text: String, color = Color("eec782")) -> void:
 
 func refresh() -> void:
 	if not is_instance_valid(battle) or battle.data == null: return
-	battle.hud.text = "VITALITY  %s / %s" % [Util.get_number_short_text(battle.health), Util.get_number_short_text(battle.s("MaxHP"))]
+	battle.hud.text = tr("VITALITY  %s / %s") % [Util.get_number_short_text(battle.health), Util.get_number_short_text(battle.s("MaxHP"))]
 	hp_bar.max_value = maxf(1, battle.s("MaxHP"))
 	hp_bar.value = battle.health
-	armor_label.text = "ARMOR %s  /  %s  /  %s" % [Util.get_number_short_text(battle.armor), "RUN" if battle.running else "WALK", battle.fire_mode.to_upper()]
-	currency.text = "GOLD %s   GEMS %s   CROWNS %s" % [Util.get_number_short_text(battle.data.wallet[0]), Util.get_number_short_text(battle.data.wallet[1]), Util.get_number_short_text(battle.data.wallet[2])]
-	battle.ability_hud.text = "%.1f m    SECTION %d / 15%s    ESC PAUSE" % [battle.distance, mini(15, battle.section), ("    PRESTIGE %d" % int(battle.data.prestige)) if int(battle.data.max_prestige) > 0 else ""]
+	armor_label.text = tr("ARMOR %s  /  %s  /  %s\nDIVE TIME %s") % [Util.get_number_short_text(battle.armor), tr("DOUBLE SPEED") if battle.running else tr("NORMAL SPEED"), tr(battle.fire_mode.to_upper()), preload("res://Games/RowDivers/RowDiversTiming.gd").format_time(float(battle.data.get("gameplay_seconds",0)))]
+	currency.text = tr("GOLD %s   GEMS %s   CROWNS %s") % [Util.get_number_short_text(battle.data.wallet[0]), Util.get_number_short_text(battle.data.wallet[1]), Util.get_number_short_text(battle.data.wallet[2])]
+	battle.ability_hud.text = tr("%.1f m    SECTION %d / 15    %s    ESC PAUSE") % [(-battle.player_position.z if battle.free_aim_mode else battle.distance), mini(15, battle.section), preload("res://Games/RowDivers/RowDiversLevelThemes.gd").level_name(int(battle.data.prestige))]
+	if battle.free_aim_mode:
+		battle.ability_hud.text += tr("    FIRE %d / 3 · CONTROL %d%%") % [battle.fire_waves.stage + 1, battle.s("Fire_Wave_Control_" + str(int(battle.data.prestige)))]
 	var key = 3
 	for ability in NAMES:
 		var state: Dictionary = battle.abilities[ability]
 		var owned: bool = battle.unlocked(ability)
 		ability_columns[ability].visible = owned
-		var status: String = "LOCKED" if not owned else ("ACTIVE %.1fs" % state.active if state.active > 0 else ("%.0fs" % ceil(state.cooldown) if state.cooldown > 0 else "READY"))
-		ability_buttons[ability].text = "[%d] %s\n%s" % [key, NAMES[ability], status]
+		var status: String = "LOCKED" if not owned else (tr("ACTIVE %.1fs") % state.active if state.active > 0 else (tr("%.0fs") % ceil(state.cooldown) if state.cooldown > 0 else "READY"))
+		ability_buttons[ability].text = tr("[%d] %s\n%s") % [key, tr(NAMES[ability]), tr(status)]
 		ability_buttons[ability].disabled = not owned or state.active > 0 or state.cooldown > 0
-		ability_buttons[ability].tooltip_text = "Press %d or click to activate. Cooldown starts after the effect ends." % key if owned else "Unlock this ability in Upgrades."
+		ability_buttons[ability].tooltip_text = tr("Press %d or click to activate. Cooldown starts after the effect ends.") % key if owned else "Unlock this ability in Upgrades."
 		ability_bars[ability].value = state.active / state.duration if state.active > 0 else (1.0 - state.cooldown / state.wait if owned else 0.0)
 		key += 1
 	var nearest: Dictionary = {}
@@ -338,7 +365,7 @@ func refresh() -> void:
 	boss_label.visible = not nearest.is_empty()
 	boss_bar.visible = not nearest.is_empty()
 	if not nearest.is_empty():
-		boss_label.text = ["", "", "", "", "THE PLAGUEKEEPER", "THE SOUL WARDEN", "THE LAST SOVEREIGN"][int(nearest.kind)]
+		boss_label.text = tr(["", "", "", "", "THE PLAGUEKEEPER", "THE SOUL WARDEN", "THE LAST SOVEREIGN"][int(nearest.kind)])
 		boss_bar.max_value = nearest.max_hp
 		boss_bar.value = nearest.hp
 

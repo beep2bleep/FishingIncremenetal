@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://baqfqo024rwft"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.prestige.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.damage.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.gap.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.gap.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.hit.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.stage.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.time.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.x.translation"]
+
+source_file="res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.csv"
+dest_files=["res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.prestige.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.damage.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.gap.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.gap.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.hit.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.stage.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.time.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401026_waves.x.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

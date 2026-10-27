@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dfyj31e0dk25o"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.alternatives.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.baseline.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.currency.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.expense.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.frontier.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.gain.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.id.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.level.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.name.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.predicted.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.prestige.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.price.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.proxy.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.score.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.wallet.translation"]
+
+source_file="res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.csv"
+dest_files=["res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.alternatives.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.baseline.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.currency.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.expense.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.frontier.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.gain.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.id.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.level.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.name.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.predicted.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.prestige.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.price.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.proxy.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.score.translation", "res://Games/RowDivers/Simulation/Tuning/balanced/campaign_seed2401027_choices.wallet.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

@@ -1,0 +1,26 @@
+{
+	"checks": {
+		"active_dive_catalog_stable": true,
+		"active_dive_save_destination_stable": true,
+		"active_dive_wallet_stable": true,
+		"catalogs_differ": true,
+		"impact_affordable_in_real_shop": true,
+		"impact_available_in_real_shop": true,
+		"impact_node_exists": true,
+		"new_progress_separate": true,
+		"new_tree_default": true,
+		"new_tree_restored": true,
+		"old_cache_cleared": true,
+		"old_tree_preserved_exactly": true,
+		"preference_changed": true,
+		"preference_persists": true,
+		"previous_catalog_exact": true,
+		"previous_progress_restored": true,
+		"previous_saved_levels_restored": true,
+		"previous_saved_wallet_restored": true,
+		"setting_visible": true,
+		"starting_purchase_applies_value": true,
+		"starting_purchase_legal": true
+	},
+	"passed": true
+}

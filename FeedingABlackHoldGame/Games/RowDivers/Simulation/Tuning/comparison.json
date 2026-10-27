@@ -1,0 +1,324 @@
+{
+  "close\\campaign.json": {
+    "completed": true,
+    "runs": 57,
+    "first_clears": {
+      "0": 16,
+      "1": 12,
+      "2": 11,
+      "3": 15
+    },
+    "purchases": 330,
+    "runs_with_purchase_after": 54,
+    "no_purchase_runs": [
+      55,
+      56,
+      57
+    ],
+    "comparable_transitions": 50,
+    "advances": 38,
+    "regressions": 9,
+    "advance_fraction": 0.76,
+    "mean_distance_delta": 19.835544395446775,
+    "close_kill_fraction": 0.08741258741258741,
+    "runs_with_close_kills": 49,
+    "far_kill_fraction": 0.12937062937062938,
+    "contact_deaths": 37,
+    "row_only_deaths": 6,
+    "capped": 0,
+    "seconds": 547.518
+  },
+  "control\\campaign.json": {
+    "completed": true,
+    "runs": 44,
+    "first_clears": {
+      "0": 12,
+      "1": 8,
+      "2": 10,
+      "3": 11
+    },
+    "purchases": 313,
+    "runs_with_purchase_after": 43,
+    "no_purchase_runs": [
+      44
+    ],
+    "comparable_transitions": 37,
+    "advances": 34,
+    "regressions": 2,
+    "advance_fraction": 0.918918918918919,
+    "mean_distance_delta": 27.134055421159072,
+    "close_kill_fraction": 0.03270223752151463,
+    "runs_with_close_kills": 19,
+    "far_kill_fraction": 0.1764199655765921,
+    "contact_deaths": 14,
+    "row_only_deaths": 21,
+    "capped": 0,
+    "seconds": 847.97
+  },
+  "control_v2\\campaign.json": {
+    "completed": false,
+    "runs": 30,
+    "first_clears": {
+      "0": 12,
+      "1": 9,
+      "2": null,
+      "3": null
+    },
+    "purchases": 185,
+    "runs_with_purchase_after": 29,
+    "no_purchase_runs": [
+      30
+    ],
+    "comparable_transitions": 27,
+    "advances": 20,
+    "regressions": 4,
+    "advance_fraction": 0.7407407407407407,
+    "mean_distance_delta": 24.601988474527985,
+    "close_kill_fraction": 0.04275092936802974,
+    "runs_with_close_kills": 15,
+    "far_kill_fraction": 0.0724907063197026,
+    "contact_deaths": 12,
+    "row_only_deaths": 14,
+    "capped": 0,
+    "seconds": 241.573
+  },
+  "control_v3\\campaign.json": {
+    "completed": false,
+    "runs": 30,
+    "first_clears": {
+      "0": 12,
+      "1": 10,
+      "2": null,
+      "3": null
+    },
+    "purchases": 169,
+    "runs_with_purchase_after": 29,
+    "no_purchase_runs": [
+      30
+    ],
+    "comparable_transitions": 27,
+    "advances": 23,
+    "regressions": 1,
+    "advance_fraction": 0.8518518518518519,
+    "mean_distance_delta": 21.15237356115271,
+    "close_kill_fraction": 0.04904051172707889,
+    "runs_with_close_kills": 14,
+    "far_kill_fraction": 0.06823027718550106,
+    "contact_deaths": 10,
+    "row_only_deaths": 13,
+    "capped": 0,
+    "seconds": 188.462
+  },
+  "gates\\campaign.json": {
+    "completed": false,
+    "runs": 40,
+    "first_clears": {
+      "0": 13,
+      "1": 10,
+      "2": 11,
+      "3": null
+    },
+    "purchases": 233,
+    "runs_with_purchase_after": 39,
+    "no_purchase_runs": [
+      40
+    ],
+    "comparable_transitions": 36,
+    "advances": 28,
+    "regressions": 7,
+    "advance_fraction": 0.7777777777777778,
+    "mean_distance_delta": 22.03877523210313,
+    "close_kill_fraction": 0.0776255707762557,
+    "runs_with_close_kills": 27,
+    "far_kill_fraction": 0.0776255707762557,
+    "contact_deaths": 21,
+    "row_only_deaths": 8,
+    "capped": 0,
+    "seconds": 337.666
+  },
+  "gates_light\\campaign.json": {
+    "completed": false,
+    "runs": 50,
+    "first_clears": {
+      "0": 16,
+      "1": 10,
+      "2": 11,
+      "3": null
+    },
+    "purchases": 270,
+    "runs_with_purchase_after": 49,
+    "no_purchase_runs": [
+      50
+    ],
+    "comparable_transitions": 46,
+    "advances": 38,
+    "regressions": 5,
+    "advance_fraction": 0.8260869565217391,
+    "mean_distance_delta": 18.2229067760965,
+    "close_kill_fraction": 0.0748792270531401,
+    "runs_with_close_kills": 31,
+    "far_kill_fraction": 0.08091787439613526,
+    "contact_deaths": 23,
+    "row_only_deaths": 11,
+    "capped": 0,
+    "seconds": 374.288
+  },
+  "gentle\\campaign.json": {
+    "completed": true,
+    "runs": 45,
+    "first_clears": {
+      "0": 12,
+      "1": 8,
+      "2": 10,
+      "3": 12
+    },
+    "purchases": 308,
+    "runs_with_purchase_after": 44,
+    "no_purchase_runs": [
+      45
+    ],
+    "comparable_transitions": 39,
+    "advances": 31,
+    "regressions": 5,
+    "advance_fraction": 0.7948717948717948,
+    "mean_distance_delta": 25.742809833624428,
+    "close_kill_fraction": 0.07103321033210332,
+    "runs_with_close_kills": 32,
+    "far_kill_fraction": 0.13007380073800737,
+    "contact_deaths": 21,
+    "row_only_deaths": 13,
+    "capped": 0,
+    "seconds": 554.53
+  },
+  "guarded\\campaign.json": {
+    "completed": false,
+    "runs": 40,
+    "first_clears": {
+      "0": 15,
+      "1": 9,
+      "2": 11,
+      "3": null
+    },
+    "purchases": 241,
+    "runs_with_purchase_after": 39,
+    "no_purchase_runs": [
+      40
+    ],
+    "comparable_transitions": 36,
+    "advances": 28,
+    "regressions": 4,
+    "advance_fraction": 0.7777777777777778,
+    "mean_distance_delta": 22.178288989596908,
+    "close_kill_fraction": 0.08288770053475936,
+    "runs_with_close_kills": 31,
+    "far_kill_fraction": 0.09224598930481283,
+    "contact_deaths": 24,
+    "row_only_deaths": 7,
+    "capped": 0,
+    "seconds": 378.177
+  },
+  "guarded_plus\\campaign.json": {
+    "completed": false,
+    "runs": 40,
+    "first_clears": {
+      "0": 15,
+      "1": 7,
+      "2": 13,
+      "3": null
+    },
+    "purchases": 239,
+    "runs_with_purchase_after": 39,
+    "no_purchase_runs": [
+      40
+    ],
+    "comparable_transitions": 36,
+    "advances": 28,
+    "regressions": 5,
+    "advance_fraction": 0.7777777777777778,
+    "mean_distance_delta": 22.05466530058117,
+    "close_kill_fraction": 0.09145427286356822,
+    "runs_with_close_kills": 33,
+    "far_kill_fraction": 0.07946026986506746,
+    "contact_deaths": 23,
+    "row_only_deaths": 4,
+    "capped": 0,
+    "seconds": 327.215
+  },
+  "smooth\\campaign.json": {
+    "completed": true,
+    "runs": 51,
+    "first_clears": {
+      "0": 14,
+      "1": 6,
+      "2": 11,
+      "3": 17
+    },
+    "purchases": 322,
+    "runs_with_purchase_after": 50,
+    "no_purchase_runs": [
+      51
+    ],
+    "comparable_transitions": 44,
+    "advances": 34,
+    "regressions": 7,
+    "advance_fraction": 0.7727272727272727,
+    "mean_distance_delta": 22.769944841211494,
+    "close_kill_fraction": 0.08561020036429873,
+    "runs_with_close_kills": 39,
+    "far_kill_fraction": 0.13114754098360656,
+    "contact_deaths": 32,
+    "row_only_deaths": 6,
+    "capped": 0,
+    "seconds": 526.027
+  },
+  "steady\\campaign.json": {
+    "completed": true,
+    "runs": 48,
+    "first_clears": {
+      "0": 12,
+      "1": 9,
+      "2": 11,
+      "3": 13
+    },
+    "purchases": 313,
+    "runs_with_purchase_after": 48,
+    "no_purchase_runs": [],
+    "comparable_transitions": 41,
+    "advances": 32,
+    "regressions": 6,
+    "advance_fraction": 0.7804878048780488,
+    "mean_distance_delta": 24.87602820047518,
+    "close_kill_fraction": 0.06486486486486487,
+    "runs_with_close_kills": 36,
+    "far_kill_fraction": 0.12522522522522522,
+    "contact_deaths": 29,
+    "row_only_deaths": 7,
+    "capped": 0,
+    "seconds": 591.286
+  },
+  "steady_close\\campaign.json": {
+    "completed": true,
+    "runs": 55,
+    "first_clears": {
+      "0": 16,
+      "1": 9,
+      "2": 13,
+      "3": 14
+    },
+    "purchases": 314,
+    "runs_with_purchase_after": 55,
+    "no_purchase_runs": [],
+    "comparable_transitions": 49,
+    "advances": 39,
+    "regressions": 6,
+    "advance_fraction": 0.7959183673469388,
+    "mean_distance_delta": 20.794192041669564,
+    "close_kill_fraction": 0.0935430463576159,
+    "runs_with_close_kills": 45,
+    "far_kill_fraction": 0.1216887417218543,
+    "contact_deaths": 40,
+    "row_only_deaths": 6,
+    "capped": 0,
+    "seconds": 499.745
+  }
+}

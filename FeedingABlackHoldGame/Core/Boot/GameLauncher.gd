@@ -1,4 +1,4 @@
-﻿extends Control
+extends Control
 
 const SETTINGS_SCENE: PackedScene = preload("res://Settings.tscn")
 const STAR_TEXTURE: Texture2D = preload("res://Art/star_tiny.png")
@@ -101,6 +101,7 @@ var currency_count_labels: Dictionary = {}
 var multi_tier_dialog: ConfirmationDialog
 var multi_summary_overlay: ColorRect
 var game_cards_grid: GridContainer
+var row_divers_free_aim_button: Button
 var row_divers_button: Button
 var game_card_texture_cache: Dictionary = {}
 var background_particles_root: Node2D
@@ -277,7 +278,7 @@ func _refresh_text() -> void:
             title_label.text = tr(TITLE_TEXT_KEY)
     if subtitle_label != null and is_instance_valid(subtitle_label):
         if _is_row_divers_launcher_mode():
-            subtitle_label.text = "FOUR CROWNS. ONE LAST CHOICE."
+            subtitle_label.text = tr("DEMO MODE — DEFEAT THE FIRST BOSS") if preload("res://Games/RowDivers/RowDiversDemo.gd").enabled() else tr("FOUR CROWNS. ONE LAST CHOICE.")
         elif _is_data_breach_inc_mode():
             subtitle_label.text = tr(DATA_BREACH_LAUNCHER_SUBTITLE_KEY)
         elif _is_vanguard_launcher_mode():
@@ -294,6 +295,7 @@ func _refresh_text() -> void:
     _refresh_game_card_text(reel_button, Util.ACTIVE_GAME_REEL_INTO_DARKNESS)
     _refresh_game_card_text(combined_button, Util.HIGH_LEVEL_MODE_ALL)
     _refresh_game_card_text(row_divers_button, Util.ACTIVE_GAME_ROW_DIVERS)
+    _refresh_game_card_text(row_divers_free_aim_button, Util.ACTIVE_GAME_ROW_DIVERS)
     _refresh_countermeasure_card_locks()
     _refresh_currency_strip()
     _refresh_multi_tier_dialog_text()
@@ -1075,15 +1077,16 @@ func _refresh_game_card_layout() -> void:
         _queue_fit_game_cards()
         return
     if _is_row_divers_launcher_mode():
-        game_cards_grid.columns = 1
-        if row_divers_button != null and is_instance_valid(row_divers_button):
-            row_divers_button.custom_minimum_size = Vector2(1116.0, 740.0)
+        game_cards_grid.columns = 2
+        for button in [row_divers_button, row_divers_free_aim_button]:
+            if button != null and is_instance_valid(button):
+                button.custom_minimum_size = Vector2(549.0, 620.0)
         _queue_fit_game_cards()
         return
     game_cards_grid.columns = 3 if viewport_width >= 1340.0 else 2
     var card_min_width: float = 360.0 if game_cards_grid.columns >= 3 else 460.0
     var card_height: float = 368.0 if game_cards_grid.columns >= 3 else 408.0
-    for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button, row_divers_button]:
+    for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button, row_divers_button, row_divers_free_aim_button]:
         if button == null or not is_instance_valid(button):
             continue
         button.custom_minimum_size = Vector2(card_min_width, card_height)
@@ -1117,6 +1120,10 @@ func _refresh_game_card_text(button: Button, game_id: String) -> void:
         title.text = tr(str(card_def.get("title", game_id)))
     if detail != null and is_instance_valid(detail):
         detail.text = tr(str(card_def.get("detail", "")))
+    if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
+        if title != null: title.text = tr("FREE AIM") if button == row_divers_free_aim_button else tr("CLASSIC")
+        if detail != null:
+            detail.text = tr("Aim, strafe and collect loot. Dodge fire waves that intensify after bosses. Own upgrade tree and progress.") if button == row_divers_free_aim_button else tr("The original Railway Fury. Shoot straight ahead and steer through the row.")
     _queue_fit_game_cards()
 
 func _queue_fit_game_cards() -> void:
@@ -1130,7 +1137,7 @@ func _on_game_card_control_resized() -> void:
 
 func _fit_game_cards() -> void:
     game_card_fit_queued = false
-    for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button, row_divers_button]:
+    for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button, row_divers_button, row_divers_free_aim_button]:
         _fit_game_card_content(button)
 
 func _is_open_pit_launcher_available() -> bool:
@@ -1764,7 +1771,7 @@ func _rebuild_language_buttons() -> void:
     for child in language_list_container.get_children():
         child.queue_free()
 
-    for locale_code: String in SaveHandler.supported_locales.keys():
+    for locale_code: String in SaveHandler.available_locales().keys():
         var button := Button.new()
         button.text = str(SaveHandler.supported_locales[locale_code])
         button.icon = _get_flag_texture_for_locale(locale_code)
@@ -1786,7 +1793,7 @@ func _rebuild_language_button_preview() -> void:
     for child in language_button_preview_list.get_children():
         child.queue_free()
 
-    for locale_code: String in SaveHandler.supported_locales.keys():
+    for locale_code: String in SaveHandler.available_locales().keys():
         var row := HBoxContainer.new()
         row.mouse_filter = Control.MOUSE_FILTER_IGNORE
         row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2236,6 +2243,16 @@ func _setup_row_divers_button() -> void:
     game_cards_grid.add_child(row_divers_button)
     _decorate_game_button(row_divers_button, Util.ACTIVE_GAME_ROW_DIVERS)
     row_divers_button.pressed.connect(_on_row_divers_button_pressed)
+    row_divers_free_aim_button = Button.new()
+    row_divers_free_aim_button.name = "RowDiversFreeAimButton"
+    game_cards_grid.add_child(row_divers_free_aim_button)
+    _decorate_game_button(row_divers_free_aim_button, Util.ACTIVE_GAME_ROW_DIVERS)
+    row_divers_free_aim_button.pressed.connect(func():
+        preload("res://Games/RowDivers/RowDiversProgress.gd").free_aim_mode = true
+        _start_game(Util.ACTIVE_GAME_ROW_DIVERS)
+    )
+    _refresh_game_card_text(row_divers_button, Util.ACTIVE_GAME_ROW_DIVERS)
+    _refresh_game_card_text(row_divers_free_aim_button, Util.ACTIVE_GAME_ROW_DIVERS)
     for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button]:
         if button != null and is_instance_valid(button):
             button.hide()
@@ -2250,4 +2267,5 @@ func _setup_row_divers_button() -> void:
     _refresh_game_card_layout()
 
 func _on_row_divers_button_pressed() -> void:
+    preload("res://Games/RowDivers/RowDiversProgress.gd").free_aim_mode = false
     _start_game(Util.ACTIVE_GAME_ROW_DIVERS)

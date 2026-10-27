@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "checks": {
+    "ready_reward_claimed": true,
+    "recommendation_uses_reward": true,
+    "already_claimed_not_duplicated": true,
+    "locked_tab_not_claimed": true
+  }
+}

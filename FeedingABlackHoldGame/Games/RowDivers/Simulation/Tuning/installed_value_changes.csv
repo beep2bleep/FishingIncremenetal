@@ -1,0 +1,112 @@
+upgrade,field,previous,rebalanced
+Dagger Attack Range III,baseUpgradeCost,30,33
+Dagger Attack Range III,effects.Melee_range,1,0.25
+Porcupine,baseUpgradeCost,30,33
+Arrow Damage IV,effects.Arrow_Damage,65,45
+Impact Armor I,baseUpgradeCost,40,4
+Impact Armor I,unlockAtParentLevel,2,0
+Impact Armor I,effects.Impact_Armor,30,85
+Band-Aid I,baseUpgradeCost,4000,4400
+Band-Aid I,effects.MaxHP,300,405.0
+Life Steal Amount,baseUpgradeCost,1500,1650
+Gain Armor and Health II,baseUpgradeCost,30,33
+Red Heart,baseUpgradeCost,15000,16500
+Red Heart,effects.MaxHP,1200,1620.0
+Dagger Attack Range I,effects.Melee_range,25,5
+Gain Armor and Health I,baseUpgradeCost,5,6
+Heal On Enemy Kill Amount II,baseUpgradeCost,25,28
+Dagger Attack Speed II,baseUpgradeCost,10,11
+Dagger Attack Speed II,effects.Dagger_Attack_Rate,1,0.75
+Life Steal,baseUpgradeCost,1500,1650
+Triples Dagger Damage II,baseUpgradeCost,5000,5500
+Max HP I,effects.MaxHP,5,6
+Unlock achievements,baseUpgradeCost,5,6
+Armor VI,baseUpgradeCost,400,440
+Bow Attack Speed III,baseUpgradeCost,600,660
+Pill III,baseUpgradeCost,1000,1100
+Pill III,effects.MaxHP,200,270.0
+Chance to Heal on Enemy Hit I,baseUpgradeCost,200,220
+Max HP III,baseUpgradeCost,15,16
+Burn Chance,baseUpgradeCost,30,33
+Heal On Enemy Hit Amount II,baseUpgradeCost,2000,2200
+Dagger Attack Range II,baseUpgradeCost,30,33
+Dagger Attack Range II,effects.Melee_range,1,0.25
+Damage Against Bosses II,baseUpgradeCost,2,16
+Damage Against Bosses II,effects.Damage_Against_Bosses,60,6000
+Arrow Shield,baseUpgradeCost,100,110
+Heal On Enemy Hit Amount I,baseUpgradeCost,300,330
+Dagger Damage I,effects.Dagger_Damage,100,55.0
+Triples Dagger Damage I,baseUpgradeCost,4000,4400
+Arrow Damage VIII,effects.Arrow_Damage,245000,200000
+Arrow Damage VI,effects.Arrow_Damage,18000,12600.0
+Dagger Damage III,baseUpgradeCost,1000,1100
+Dagger Damage III,effects.Dagger_Damage,450000,247500.0
+Arrow Critic Chance I,baseUpgradeCost,500,550
+Armor I,unlockAtParentLevel,8,4
+Shiny Armor,baseUpgradeCost,5000,5500
+Max HP IV,baseUpgradeCost,200,220
+Max HP IV,effects.MaxHP,150,200
+Arrow Critic Chance IV,baseUpgradeCost,4000,4400
+Medicine I,baseUpgradeCost,200,220
+Medicine I,effects.MaxHP,200,270.0
+Arrow Damage VII,effects.Arrow_Damage,240000,168000.0
+Damage Against Bosses III,baseUpgradeCost,30,660
+Damage Against Bosses III,effects.Damage_Against_Bosses,100,400000
+Gain Armor and Health III,baseUpgradeCost,3000,3300
+Gain Armor and Health III,effects.MaxHP,200,270.0
+Bow Attack Speed II,baseUpgradeCost,15,16
+Dagger Damage IV,effects.Dagger_Damage,450000,247500.0
+Arrow Critic Chance II,baseUpgradeCost,500,550
+Bleed Duration,baseUpgradeCost,20,22
+Burn Duration,baseUpgradeCost,20,22
+Syringe II,baseUpgradeCost,20,22
+Syringe II,effects.MaxHP,60,63.0
+Armor V,baseUpgradeCost,150,165
+Cursed Arrow Damage,baseUpgradeCost,100,110
+Horizontal Speed III,baseUpgradeCost,2000,2200
+Beam Damage Rate,baseUpgradeCost,4000,4400
+Pickup Range II,baseUpgradeCost,20,22
+Dagger Damage II,baseUpgradeCost,15,16
+Dagger Damage II,effects.Dagger_Damage,500,275.0
+Arrow Critic Chance III,baseUpgradeCost,500,550
+Super Magnet,baseUpgradeCost,500,550
+Arrow Damage V,effects.Arrow_Damage,4000,2800.0
+Curse Duration,baseUpgradeCost,200,220
+Chance to Heal on Enemy Kill  II,baseUpgradeCost,25,28
+Bow Attack Speed IV,baseUpgradeCost,5000,5500
+Damage Against Bosses I,effects.Damage_Against_Bosses,20,100
+Arrow Speed II,baseUpgradeCost,50,55
+Beam Damage III,baseUpgradeCost,4000,4400
+Beam Damage III,effects.Beam_Damage,10000000,9500000.0
+Big Heart II,baseUpgradeCost,20,22
+Big Heart II,effects.MaxHP,100,135.0
+Bow Attack Speed I,effects.Bow_Fire_Rate,20,18.0
+Bow Attack Range I,effects.Distance_Range,1,0.25
+Bow Attack Range II,baseUpgradeCost,30,33
+Bow Attack Range II,effects.Distance_Range,1,0.25
+Beam Damage II,baseUpgradeCost,3000,3300
+Beam Damage II,effects.Beam_Damage,5500000,5225000.0
+Damage Against Bosses IV,baseUpgradeCost,30,6600
+Damage Against Bosses IV,effects.Damage_Against_Bosses,150,200000000
+Curse Chance,baseUpgradeCost,200,220
+Bleed Chance I,baseUpgradeCost,20,22
+Horizontal Speed II,baseUpgradeCost,10,11
+Fire Arrow Damage,baseUpgradeCost,10,11
+Arrow Damage II,effects.Arrow_Damage,25,20
+Arrow Count I,baseUpgradeCost,40,44
+Pill II,baseUpgradeCost,100,110
+Pill II,effects.MaxHP,100,135.0
+Harvester,baseUpgradeCost,200,220
+Arrow Damage III,effects.Arrow_Damage,50,35.0
+Bleed Chance II,baseUpgradeCost,40,44
+Dagger Attack Rate I,effects.Dagger_Attack_Rate,15,10
+Beam Damage I,baseUpgradeCost,3000,3300
+Beam Damage I,effects.Beam_Damage,5000000,4750000.0
+Medicine II,baseUpgradeCost,4000,4400
+Medicine II,effects.MaxHP,400,540.0
+Armor Against Projectiles,baseUpgradeCost,10,11
+Band-Aid II,baseUpgradeCost,200,220
+Band-Aid II,effects.MaxHP,300,405.0
+Arrow Count II,baseUpgradeCost,600,660
+Beam Critic Chance,baseUpgradeCost,4000,4400
+Chance to Heal on Enemy Hit II,baseUpgradeCost,1000,1100

@@ -118,8 +118,9 @@ func _on_spawn_ufo_pressed() -> void :
 
 
 func _on_reset_steam_achi_pressed() -> void :
-    if Steam.isSteamRunning():
-        Steam.resetAllStats(true)
+    var sdk = SteamHandler.steam_api
+    if sdk != null and sdk.call("isSteamRunning"):
+        sdk.call("resetAllStats", true)
 
 
 

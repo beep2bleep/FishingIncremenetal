@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://brrtxky1splqg"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/Flight/tuned/seed2401028_claims.after.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401028_claims.currency.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401028_claims.reward.translation"]
+
+source_file="res://Games/RowDivers/Simulation/Flight/tuned/seed2401028_claims.csv"
+dest_files=["res://Games/RowDivers/Simulation/Flight/tuned/seed2401028_claims.after.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401028_claims.currency.translation", "res://Games/RowDivers/Simulation/Flight/tuned/seed2401028_claims.reward.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

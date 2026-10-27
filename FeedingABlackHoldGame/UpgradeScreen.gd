@@ -19,6 +19,8 @@ var REEL_INTO_DARKNESS_DATA_SCRIPT = load("res://Games/ReelIntoDarkness/ReelInto
 var REEL_INTO_DARKNESS_UPGRADE_TREE_ADAPTER_SCRIPT = load("res://Games/ReelIntoDarkness/ReelIntoDarknessUpgradeTreeAdapter.gd")
 const ROW_DIVERS_UPGRADE_TREE_ADAPTER_SCRIPT = preload("res://Games/RowDivers/RowDiversUpgradeTreeAdapter.gd")
 const ROW_DIVERS_PROGRESS_SCRIPT = preload("res://Games/RowDivers/RowDiversProgress.gd")
+const ROW_DIVERS_EDITOR_LOOP = preload("res://Games/RowDivers/RowDiversEditorLoop.gd")
+var row_divers_loop_busy = false
 const MINING_CRT_OVERLAY_SCRIPT = preload("res://Games/Mining/UI/MiningCrtOverlay.gd")
 const CRT_TEXT_MIRROR_OVERLAY_SCRIPT = preload("res://Core/CrtTextMirrorOverlay.gd")
 const GO_AGAIN_DISABLED_HINT := "UPGRADE_GO_AGAIN_DISABLED_HINT"
@@ -128,6 +130,8 @@ var game_mode_label: Label
 var row_divers_wallet_label: Label
 var row_divers_ending_button: Button
 var row_divers_purchase_feedback: Label
+var row_divers_auto_buy_button: Button
+var row_divers_editor_buyer: Node
 var row_divers_prestige: OptionButton
 var row_divers_achievements_button: Button
 var row_divers_bestiary_button: Button
@@ -169,6 +173,8 @@ func _notification(what: int) -> void:
         _queue_upgrade_tree_locale_refresh()
 
 func _refresh_localized_text() -> void:
+    if Util.is_row_divers_game_active() and is_instance_valid(row_divers_wallet_label):
+        _refresh_bottom_wallet_display()
     if settings_button != null and is_instance_valid(settings_button):
         settings_button.text = tr("UI_SETTINGS")
     if return_to_main_menu_button != null and is_instance_valid(return_to_main_menu_button):
@@ -256,6 +262,7 @@ func _should_show_deepcore_demo_leaderboard() -> bool:
     return Util.is_mining_game_active() and bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
 
 func _get_leaderboard_panel_title() -> String:
+    if Util.is_row_divers_game_active(): return "RAILWAY FURY · DIVE TIMES"
     if Util.is_open_pit_game_active():
         return tr("DATA_BREACH_LEADERBOARDS_TITLE")
     if _should_show_deepcore_demo_leaderboard():
@@ -374,8 +381,6 @@ func _ready() -> void :
     _print_open_pit_startup("ready_end", Time.get_ticks_msec() - _open_pit_startup_ready_started_msec)
 
 func _setup_leaderboard_panel_after_tree_start() -> void:
-    if Util.is_row_divers_game_active():
-        return
     await get_tree().process_frame
     _setup_leaderboard_panel()
 
@@ -473,6 +478,7 @@ func _is_editor_return_to_launcher_shortcut(event: InputEvent) -> bool:
     return o_pressed and p_pressed
 
 func _return_to_game_launcher() -> void:
+    if Util.is_row_divers_game_active(): ROW_DIVERS_EDITOR_LOOP.stop()
     _refresh_virtual_cursor_state()
     Global.clear_upgrade_tree_cache()
     SceneChanger.change_to_new_scene(Util.PATH_GAME_LAUNCHER, null, 0.2)
@@ -651,7 +657,11 @@ func _refresh_bottom_wallet_display() -> void:
         money_ui.call("refresh_amounts")
     if row_divers_wallet_label != null and is_instance_valid(row_divers_wallet_label):
         var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
-        row_divers_wallet_label.text = "GOLD %s   GEMS %s   CROWNS %s" % [Util.get_number_short_text(row_progress.wallet[0]), Util.get_number_short_text(row_progress.wallet[1]), Util.get_number_short_text(row_progress.wallet[2])]
+        row_divers_wallet_label.text = tr("GOLD %s   GEMS %s   CROWNS %s\nDIVE TIME  %s") % [Util.get_number_short_text(row_progress.wallet[0]), Util.get_number_short_text(row_progress.wallet[1]), Util.get_number_short_text(row_progress.wallet[2]), preload("res://Games/RowDivers/RowDiversTiming.gd").format_time(float(row_progress.get("gameplay_seconds",0)))]
+        row_divers_wallet_label.tooltip_text = tr("Total active dive time across all runs. Pauses and upgrade time are excluded.")
+        if ROW_DIVERS_PROGRESS_SCRIPT.Demo.enabled(): row_divers_wallet_label.text += "\n" + tr("DEMO MODE")
+        if not row_progress.get("timing_complete",false): row_divers_wallet_label.tooltip_text += "\n" + tr("This older campaign has no complete starting time; timed leaderboards require a new save.")
+        elif row_progress.get("leaderboards_assisted",false): row_divers_wallet_label.tooltip_text += "\n" + tr("Editor-assisted campaign: times stay local.")
         row_divers_achievements_button.visible = bool(row_progress.unlocks.get("AchievementsTab", false))
         var claimable := false
         for achievement in ROW_DIVERS_PROGRESS_SCRIPT.design().settings.achievements:
@@ -670,7 +680,7 @@ func _refresh_bottom_wallet_display() -> void:
         if row_divers_prestige.item_count != int(row_progress.max_prestige) + 1:
             row_divers_prestige.clear()
             for prestige_level in range(int(row_progress.max_prestige) + 1):
-                row_divers_prestige.add_item("Prestige %d" % prestige_level)
+                row_divers_prestige.add_item(tr("Level %d") % (prestige_level+1))
         row_divers_prestige.visible = int(row_progress.max_prestige) > 0
         row_divers_prestige.select(clampi(int(row_progress.prestige), 0, maxi(row_divers_prestige.item_count - 1, 0)))
 
@@ -684,7 +694,7 @@ func _setup_row_divers_wallet_display() -> void:
     row_divers_wallet_label.name = "RowDiversWallet"
     row_divers_wallet_label.set_anchors_preset(Control.PRESET_TOP_LEFT)
     row_divers_wallet_label.position = Vector2(280.0, 28.0)
-    row_divers_wallet_label.size = Vector2(430.0, 42.0)
+    row_divers_wallet_label.size = Vector2(430.0, 64.0)
     row_divers_wallet_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
     row_divers_wallet_label.add_theme_font_size_override("font_size", 22)
     row_divers_wallet_label.add_theme_color_override("font_color", Color("244536"))
@@ -734,9 +744,23 @@ func _setup_row_divers_wallet_display() -> void:
     row_divers_ending_button.position = Vector2.ZERO
     chamber_pulse.add_child(row_divers_ending_button)
     row_divers_purchase_feedback = row_style.label("", 20, true)
-    row_divers_purchase_feedback.position = Vector2(280.0, 80.0)
+    row_divers_purchase_feedback.position = Vector2(280.0, 108.0)
     layer.add_child(row_divers_purchase_feedback)
     if OS.has_feature("editor"):
+        row_divers_editor_buyer = preload("res://Games/RowDivers/RowDiversEditorBuyer.gd").new()
+        add_child(row_divers_editor_buyer)
+        row_divers_auto_buy_button = Button.new()
+        row_divers_auto_buy_button.name = "EditorAutoBuy"
+        row_divers_auto_buy_button.text = "STOP AUTO LOOP" if ROW_DIVERS_EDITOR_LOOP.armed() else "EDITOR: AUTO BUY"
+        row_divers_auto_buy_button.position = Vector2(28.0, 394.0)
+        row_divers_auto_buy_button.custom_minimum_size = Vector2(210.0, 48.0)
+        row_divers_auto_buy_button.tooltip_text = "Buy using the campaign policy and claim achievements. At 8x or higher, repeat runs and shopping automatically, advancing levels. Click again to stop, or lower battle speed to 4x or below."
+        row_style.style_button(row_divers_auto_buy_button)
+        row_divers_auto_buy_button.pressed.connect(_run_row_divers_auto_buy)
+        row_divers_editor_buyer.progress.connect(func(count, last_name):
+            row_divers_auto_buy_button.text = "CANCEL AUTO BUY (%d)" % count
+            show_row_divers_feedback("Forecast %d: %s" % [count,last_name]))
+        layer.add_child(row_divers_auto_buy_button)
         row_divers_color_button = Button.new()
         row_divers_color_button.name = "EditorRandomBackground"
         row_divers_color_button.text = "EDITOR: RANDOM BACKGROUND"
@@ -761,6 +785,66 @@ func _setup_row_divers_wallet_display() -> void:
     _refresh_bottom_wallet_display()
     row_style.apply_fonts(self)
     update_colors()
+
+func _row_divers_loop_active() -> bool:
+    return Util.is_row_divers_game_active() and ROW_DIVERS_EDITOR_LOOP.active(load("res://Games/RowDivers/Scenes/RowDiversBattleScene.gd").debug_speed)
+
+func _resume_row_divers_editor_loop() -> void:
+    if _row_divers_loop_active() and not row_divers_loop_busy:
+        _run_row_divers_auto_buy(true)
+
+func _run_row_divers_auto_buy(automatic = false) -> void:
+    if not OS.has_feature("editor") or not Util.is_row_divers_game_active(): return
+    if not automatic and (row_divers_editor_buyer.busy or ROW_DIVERS_EDITOR_LOOP.armed()):
+        ROW_DIVERS_EDITOR_LOOP.stop()
+        row_divers_editor_buyer.cancel()
+        row_divers_auto_buy_button.text = "EDITOR: AUTO BUY"
+        show_row_divers_feedback("Auto play stopped.")
+        return
+    if automatic and (not _row_divers_loop_active() or row_divers_loop_busy): return
+    row_divers_loop_busy = true
+    if not automatic: ROW_DIVERS_EDITOR_LOOP.arm()
+    var generation = ROW_DIVERS_EDITOR_LOOP.generation
+    if _row_divers_loop_active():
+        var data: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
+        if int(data.prestige) != int(data.max_prestige):
+            data.prestige = int(data.max_prestige)
+            if row_divers_editor_buyer.persist_results: ROW_DIVERS_PROGRESS_SCRIPT.save_data(data)
+    row_divers_auto_buy_button.text = "CANCEL AUTO BUY"
+    var result: Dictionary = await row_divers_editor_buyer.buy_available()
+    if not is_inside_tree(): return
+    row_divers_auto_buy_button.text = "STOP AUTO LOOP" if ROW_DIVERS_EDITOR_LOOP.armed() else "EDITOR: AUTO BUY"
+    if result.has("error"):
+        ROW_DIVERS_EDITOR_LOOP.stop()
+        row_divers_auto_buy_button.text = "EDITOR: AUTO BUY"
+        show_row_divers_feedback(str(result.error))
+    elif result.get("cancelled",false):
+        ROW_DIVERS_EDITOR_LOOP.stop()
+        row_divers_auto_buy_button.text = "EDITOR: AUTO BUY"
+        show_row_divers_feedback("Auto buy cancelled. Wallet unchanged.")
+    else:
+        print("RAILWAY AUTO BUY: ", result)
+        if int(result.count)>0 or int(result.claims)>0:
+            _ensure_tree_initialized(true)
+            _refresh_bottom_wallet_display()
+            show_row_divers_feedback("Bought %d upgrades; claimed %d achievements." % [int(result.count),int(result.claims)])
+        else:
+            show_row_divers_feedback("No purchase available; entry funds reserved if ready.")
+        if _row_divers_loop_active():
+            await get_tree().create_timer(0.75).timeout
+            if generation == ROW_DIVERS_EDITOR_LOOP.generation and _row_divers_loop_active() and is_active:
+                _start_row_divers_auto_run()
+    row_divers_loop_busy = false
+
+func _start_row_divers_auto_run() -> void:
+    if not _row_divers_loop_active(): return
+    var data: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
+    # Probe a copy so the ordinary chamber action charges its fee exactly once.
+    if ROW_DIVERS_PROGRESS_SCRIPT.unlock_final_chamber(data.duplicate(true)):
+        ROW_DIVERS_EDITOR_LOOP.stop()
+        _open_row_divers_ending()
+    else:
+        _on_go_again_pressed()
 
 func _randomize_row_divers_background() -> void:
     if not OS.has_feature("editor") or not Util.is_row_divers_game_active(): return
@@ -827,7 +911,7 @@ func _show_row_divers_achievements() -> void:
         row.add_theme_constant_override("icon_max_width", 52)
         row.alignment = HORIZONTAL_ALIGNMENT_LEFT
         row.mouse_force_pass_scroll_events = true
-        row.text = "%s — %s\nReward: %s %s  •  %s" % [achievement.achievementName, achievement.description, str(achievement.reward), ["Gold", "Gems", "Crowns", ""][clampi(int(achievement.currencyType), 0, 3)], "Claimed" if row_progress.claimed.get(key, false) else ("CLAIM" if row_progress.achievements.get(key, false) else "Locked")]
+        row.text = tr("%s — %s\nReward: %s %s  •  %s") % [tr(achievement.achievementName), tr(achievement.description), str(achievement.reward), tr(["Gold", "Gems", "Crowns", ""][clampi(int(achievement.currencyType), 0, 3)]), tr("Claimed") if row_progress.claimed.get(key, false) else (tr("CLAIM") if row_progress.achievements.get(key, false) else tr("Locked"))]
         row.disabled = not row_progress.achievements.get(key, false) or row_progress.claimed.get(key, false)
         row.pressed.connect(_claim_row_divers_achievement.bind(achievement))
         rows.append(row)
@@ -848,7 +932,7 @@ func _show_row_divers_bestiary() -> void:
         label.add_theme_font_size_override("font_size", 24)
         label.custom_minimum_size.y = 50.0
         var enemy_name: String = str(ROW_DIVERS_PROGRESS_SCRIPT.design().enums.ZombieType[str(index)]).replace("_", " ")
-        label.text = "%s    •    Defeated: %d" % [enemy_name, int(row_progress.bestiary.get(str(index), 0))]
+        label.text = tr("%s    •    Defeated: %d") % [tr(enemy_name), int(row_progress.bestiary.get(str(index), 0))]
         var row := HBoxContainer.new()
         row.add_theme_constant_override("separation", 18)
         var portrait := TextureRect.new()
@@ -1104,6 +1188,8 @@ func show_screen():
     show()
     _show_legacy_reset_dialog_if_needed()
     _print_open_pit_startup("show_screen_end", Time.get_ticks_msec() - show_started_msec)
+    if Util.is_row_divers_game_active() and OS.has_feature("editor"):
+        call_deferred("_resume_row_divers_editor_loop")
 
 
 func check_upgrade_tree_achivements():
@@ -1700,7 +1786,18 @@ func _setup_leaderboard_panel() -> void:
     leaderboard_body_label.add_theme_font_size_override("font_size", 18)
     leaderboard_body_label.add_theme_color_override("font_color", Color(0.84, 0.9, 0.98, 1.0))
     leaderboard_body_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-    vbox.add_child(leaderboard_body_label)
+    if Util.is_row_divers_game_active():
+        leaderboard_panel.offset_left = 270
+        leaderboard_panel.offset_right = 970
+        leaderboard_panel.offset_bottom = leaderboard_panel.offset_top + 620
+        var scroll := ScrollContainer.new()
+        scroll.custom_minimum_size = Vector2(660,550)
+        scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        vbox.add_child(scroll)
+        leaderboard_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        scroll.add_child(leaderboard_body_label)
+    else:
+        vbox.add_child(leaderboard_body_label)
 
     if OS.has_feature("editor") and Util.is_vanguard_game_active():
         var editor_button_row := HBoxContainer.new()
@@ -1741,6 +1838,7 @@ func _setup_leaderboard_panel() -> void:
     _refresh_leaderboard_panel()
 
 func _get_leaderboard_panel_top_offset() -> float:
+    if Util.is_row_divers_game_active(): return 140.0
     var top_offset: float = maxf(LEADERBOARD_PANEL_TOP_DEFAULT, _get_leaderboard_button_top_offset() + 68.0)
     if not Util.is_all_high_level_mode_active():
         return top_offset
@@ -1752,6 +1850,7 @@ func _get_leaderboard_panel_top_offset() -> float:
     return max(top_offset, shifted_button_bottom + LEADERBOARD_PANEL_TOP_MARGIN_FROM_MENU)
 
 func _get_leaderboard_button_top_offset() -> float:
+    if Util.is_row_divers_game_active(): return 460.0
     var top_offset := 132.0
     if not Util.is_all_high_level_mode_active():
         return top_offset
@@ -1813,6 +1912,11 @@ func _refresh_leaderboard_panel() -> void:
     if leaderboard_title_label != null and is_instance_valid(leaderboard_title_label):
         leaderboard_title_label.text = _get_leaderboard_panel_title()
     var lines: Array[String] = []
+    if Util.is_row_divers_game_active():
+        lines.append(tr("Cumulative active dive time · fastest first"))
+        var data: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
+        if not preload("res://Games/RowDivers/RowDiversTiming.gd").eligible(data): lines.append(tr("Local timing only: older or editor-assisted campaign."))
+        lines.append("")
     for config_variant: Variant in configs:
         if not (config_variant is Dictionary):
             continue
@@ -1821,7 +1925,7 @@ func _refresh_leaderboard_panel() -> void:
         var board_id: String = str(config.get("id", ""))
         var title_key: String = str(config.get("title_key", "")).strip_edges()
         var description_key: String = str(config.get("description_key", "")).strip_edges()
-        var title: String = tr(title_key) if title_key != "" else str(config.get("title", "Level %d" % level))
+        var title: String = tr(title_key) if title_key != "" else tr(str(config.get("title", "Level %d" % level)))
         lines.append(title)
         if description_key != "":
             lines.append(tr(description_key))
@@ -1832,10 +1936,14 @@ func _refresh_leaderboard_panel() -> void:
         var status: String = SteamHandler.get_cached_leaderboard_status(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_status") else tr("UI_UNAVAILABLE")
         var score_unit: String = str(config.get("score_unit", "milliseconds"))
         var submitted_score: int = SteamHandler.get_cached_leaderboard_last_submitted_score(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_last_submitted_score") else -1
-        if submitted_score >= 0:
+        if submitted_score >= 0 and not Util.is_row_divers_game_active():
             lines.append(tr("UPGRADE_LEADERBOARD_STEAM_SUBMITTED") % _format_leaderboard_score(submitted_score, score_unit))
         var top_entries: Array = SteamHandler.get_cached_leaderboard_display_entries(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_display_entries") else []
         var around_entries: Array = SteamHandler.get_cached_leaderboard_around_user_display_entries(board_id) if SteamHandler != null and SteamHandler.has_method("get_cached_leaderboard_around_user_display_entries") else []
+        if Util.is_row_divers_game_active():
+            # Show downloaded ranks only; an offline pending score is not a rank.
+            top_entries = SteamHandler.get_cached_leaderboard_entries(board_id)
+            around_entries = SteamHandler.get_cached_leaderboard_around_user_entries(board_id)
         var has_around_entries := not around_entries.is_empty()
         var entries_to_show: Array = around_entries if has_around_entries else top_entries
         if entries_to_show.is_empty():
@@ -1870,6 +1978,12 @@ func _format_leaderboard_score(score: int, score_unit: String = "milliseconds") 
     return Util.format_time(float(score) / 1000.0)
 
 func _get_local_leaderboard_best_time(board_id: String, level: int) -> float:
+    if Util.is_row_divers_game_active():
+        var timing = preload("res://Games/RowDivers/RowDiversTiming.gd")
+        var data: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
+        for config in timing.configs():
+            if config.id == board_id: return float(data.get("timed_milestones",{}).get(config.milestone,-1))
+        return -1
     match board_id:
         "DeepcoreTimeToTier8":
             return SaveHandler.get_deepcore_tier8_time()
@@ -3721,6 +3835,7 @@ func _update_return_to_main_menu_button_visibility() -> void:
     _update_upgrade_settings_exit_buttons_layout()
 
 func _on_return_to_main_menu_pressed() -> void:
+    if Util.is_row_divers_game_active(): ROW_DIVERS_EDITOR_LOOP.stop()
     _hide_settings_panel()
     _hide_continue_locked_panel()
     if _is_reel_depth_tier_dialog_open():
@@ -3746,6 +3861,7 @@ func _on_settings_close_pressed() -> void:
     _hide_settings_panel()
 
 func _on_settings_main_menu_pressed() -> void:
+    if Util.is_row_divers_game_active(): ROW_DIVERS_EDITOR_LOOP.stop()
     _hide_settings_panel()
     _hide_continue_locked_panel()
     if _is_reel_depth_tier_dialog_open():

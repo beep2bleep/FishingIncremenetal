@@ -1,0 +1,26 @@
+{
+  "round_numbers_p3_buffer/campaign.json": {
+    "runs_checked": 33,
+    "identical_to_original_spending_policy": true
+  },
+  "round_numbers_p3_buffer/campaign_seed2401027.json": {
+    "runs_checked": 30,
+    "identical_to_original_spending_policy": true
+  },
+  "round_numbers_p3_buffer/campaign_seed2401028.json": {
+    "runs_checked": 33,
+    "identical_to_original_spending_policy": true
+  },
+  "control_p3_buffer/campaign.json": {
+    "runs_checked": 31,
+    "identical_to_original_spending_policy": true
+  },
+  "control_p3_buffer/campaign_seed2401027.json": {
+    "runs_checked": 35,
+    "identical_to_original_spending_policy": true
+  },
+  "control_p3_buffer/campaign_seed2401028.json": {
+    "runs_checked": 33,
+    "identical_to_original_spending_policy": true
+  }
+}

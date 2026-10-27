@@ -1,14 +1,52 @@
 extends RefCounted
 ## Purchase order matters: percentages compound against the current stat, as in UpgradeController.
 const DATA_PATH = "res://Games/RowDivers/Data/row_divers.json"
+const PREVIOUS_DATA_PATH = "res://Games/RowDivers/Data/row_divers_previous.json"
 const SAVE_PATH = "user://row_divers_progress_v1.json"
+const REBALANCED_SAVE_PATH = "user://row_divers_progress_balanced_v1.json"
+const FREE_AIM_DATA_PATH = "res://Games/RowDivers/Data/row_divers_free_aim.json"
+const FREE_AIM_SAVE_PATH = "user://row_divers_progress_flying_v1.json"
 const CURRENCY_NAMES = ["GOLD", "GEMS", "CROWNS"]
+const Demo = preload("res://Games/RowDivers/RowDiversDemo.gd")
+static var free_aim_mode = false:
+	set(value):
+		if free_aim_mode == value: return
+		free_aim_mode = value
+		catalog = {}
+		active_data_cache = {}
+		cache_profile_path = ""
 static var catalog: Dictionary = {}
-static var active_data_cache: Dictionary = {}
+static var active_data_cache: Dictionary = {}:
+	set(value):
+		active_data_cache = value
+		# Explicit cache injection is also used by isolated simulations/fixtures.
+		cache_profile_path = ""
+static var cache_profile_path = ""
+static var active_tree = "rebalanced"
+static var tree_selected = false
+
+static func sync_tree_preference() -> void:
+	# A restart applies the saved preference. Keep one catalog and save destination
+	# for the entire session, including retries, purchases and paused dives.
+	if tree_selected: return
+	tree_selected = true
+	var loop = Engine.get_main_loop()
+	var settings = loop.root.get_node_or_null("SaveHandler") if loop is SceneTree else null
+	var selected = "previous" if settings != null and settings.row_divers_previous_upgrade_tree else "rebalanced"
+	if selected == active_tree: return
+	active_tree = selected
+	catalog = {}
+	active_data_cache = {}
+	cache_profile_path = ""
+
+static func progress_path() -> String:
+	if free_aim_mode: return Demo.save_path(FREE_AIM_SAVE_PATH)
+	return Demo.save_path(SAVE_PATH if active_tree == "previous" else REBALANCED_SAVE_PATH)
 
 static func design() -> Dictionary:
 	if catalog.is_empty():
-		catalog = JSON.parse_string(FileAccess.get_file_as_string(DATA_PATH))
+		sync_tree_preference()
+		catalog = JSON.parse_string(FileAccess.get_file_as_string(FREE_AIM_DATA_PATH if free_aim_mode else (PREVIOUS_DATA_PATH if active_tree == "previous" else DATA_PATH)))
 	return catalog
 
 static func find_upgrade(id: String) -> Dictionary:
@@ -18,23 +56,70 @@ static func find_upgrade(id: String) -> Dictionary:
 	return {}
 
 static func fresh() -> Dictionary:
-	return {"levels": {}, "stats": design().base_stats.duplicate(true), "unlocks": {"Bow": true}, "wallet": [0.0, 0.0, 0.0], "spent": [0.0, 0.0, 0.0], "achievements": {}, "claimed": {}, "bestiary": {}, "runs": 0, "best_distance": 0.0, "kills": 0, "prestige": 0, "max_prestige": 0, "crowns_dropped": {}, "controls_seen": false}
+	var data = {"levels": {}, "stats": design().base_stats.duplicate(true), "unlocks": {"Bow": true}, "wallet": [0.0, 0.0, 0.0], "spent": [0.0, 0.0, 0.0], "achievements": {}, "claimed": {}, "bestiary": {}, "runs": 0, "best_distance": 0.0, "kills": 0, "prestige": 0, "max_prestige": 0, "crowns_dropped": {}, "controls_seen": false}
+	if free_aim_mode:
+		data.flight_pickup_v2 = true
+		data.crown_channels_v3 = true
+	preload("res://Games/RowDivers/RowDiversTiming.gd").ensure(data)
+	return data
 
 static func load_data(path = SAVE_PATH) -> Dictionary:
+	if path == SAVE_PATH:
+		sync_tree_preference()
+		var profile_path = progress_path()
+		if not cache_profile_path.is_empty() and cache_profile_path != profile_path: active_data_cache = {}
+		cache_profile_path = profile_path
 	if path == SAVE_PATH and not active_data_cache.is_empty():
+		preload("res://Games/RowDivers/RowDiversTiming.gd").ensure(active_data_cache)
+		apply_crown_channel_repairs(active_data_cache)
 		apply_reference_repairs(active_data_cache)
+		Demo.constrain(active_data_cache)
 		return active_data_cache
-	if not FileAccess.file_exists(path):
+	var resolved_path = progress_path() if path == SAVE_PATH else str(path)
+	if not FileAccess.file_exists(resolved_path):
 		var initial: Dictionary = fresh()
 		if path == SAVE_PATH:
 			active_data_cache = initial
+			cache_profile_path = resolved_path
 		return initial
-	var value = JSON.parse_string(FileAccess.get_file_as_string(path))
+	var value = JSON.parse_string(FileAccess.get_file_as_string(resolved_path))
 	var loaded: Dictionary = fresh().merged(value, true) if value is Dictionary else fresh()
+	if value is Dictionary and not value.has("gameplay_seconds"):
+		loaded.erase("gameplay_seconds")
+		preload("res://Games/RowDivers/RowDiversTiming.gd").ensure(loaded)
+	# Add the new starter allowance once, preserving every purchased range bonus.
+	if free_aim_mode and value is Dictionary and not value.get("flight_pickup_v2", false):
+		loaded.stats.PickupRange = float(loaded.stats.get("PickupRange", 0.6)) + 0.24
+		loaded.flight_pickup_v2 = true
+	if free_aim_mode and value is Dictionary:
+		loaded.crown_channels_v3 = bool(value.get("crown_channels_v3",false))
 	apply_reference_repairs(loaded)
+	apply_crown_channel_repairs(loaded)
+	Demo.constrain(loaded)
 	if path == SAVE_PATH:
 		active_data_cache = loaded
+		cache_profile_path = resolved_path
 	return loaded
+
+static func apply_crown_channel_repairs(data: Dictionary) -> void:
+	if not free_aim_mode or data.get("crown_channels_v3", false): return
+	var parents = {1:"6660",2:"6426",3:"6688"}
+	var refund = 0.0
+	for p in range(4):
+		var points = 0
+		for rank in range(4):
+			var key = "flight_%d_%d" % [p,rank]
+			var owned = int(data.levels.get(key,0))
+			var gated = p==0 or int(data.max_prestige)<p or int(data.levels.get(parents.get(p,""),0))<1
+			if gated and owned>0:
+				var base = [10,25,50,100][rank] * [1,20,200,2000][p]
+				for level_index in range(owned): refund += ceil(base * pow(1.2,level_index))
+				data.levels.erase(key)
+			else: points += owned * 10
+		data.stats["Fire_Wave_Control_"+str(p)] = points
+	data.wallet[0] += refund
+	if data.has("spent"): data.spent[0] = maxf(0,float(data.spent[0])-refund)
+	data.crown_channels_v3 = true
 
 static func apply_reference_repairs(data: Dictionary) -> void:
 	# UpgradeController.Start has this explicit correction for completed older
@@ -48,13 +133,15 @@ static func apply_reference_repairs(data: Dictionary) -> void:
 static func save_data(data: Dictionary, path = SAVE_PATH) -> void:
 	if path == SAVE_PATH:
 		active_data_cache = data
-	var file = FileAccess.open(path + ".tmp", FileAccess.WRITE)
+		cache_profile_path = progress_path()
+	var resolved_path = progress_path() if path == SAVE_PATH else str(path)
+	var file = FileAccess.open(resolved_path + ".tmp", FileAccess.WRITE)
 	if file == null:
 		push_error("Cannot save Railway Fury progression: " + error_string(FileAccess.get_open_error()))
 		return
 	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
-	var result = DirAccess.rename_absolute(path + ".tmp", path)
+	var result = DirAccess.rename_absolute(resolved_path + ".tmp", resolved_path)
 	if result != OK:
 		push_error("Cannot finalize Railway Fury save: " + error_string(result))
 
@@ -69,13 +156,15 @@ static func cost(data: Dictionary, node: Dictionary) -> float:
 	return ceil(float(node.baseUpgradeCost) * pow(1.2, rank))
 
 static func requirement_text(node: Dictionary) -> String:
-	if node.parents.is_empty(): return "Starting upgrade"
+	if Demo.locked(node): return TranslationServer.translate("Full game upgrade — locked in demo mode")
+	if node.parents.is_empty() or int(node.unlockAtParentLevel) <= 0: return TranslationServer.translate("Starting upgrade")
 	var requirements: PackedStringArray = []
 	for parent in node.parents:
-		requirements.append("%s level %d" % [find_upgrade(str(parent)).upgradeName, int(node.unlockAtParentLevel)])
-	return "Unlock: " + " OR ".join(requirements)
+		requirements.append(TranslationServer.translate("%s level %d") % [TranslationServer.translate(find_upgrade(str(parent)).upgradeName), int(node.unlockAtParentLevel)])
+	return TranslationServer.translate("Unlock: ") + TranslationServer.translate(" OR ").join(requirements)
 
 static func visible(data: Dictionary, node: Dictionary) -> bool:
+	if int(data.max_prestige) < int(node.get("minPrestige", 0)): return false
 	if node.isVisible or level(data, node) > 0:
 		return true
 	for parent in node.parents:
@@ -84,7 +173,7 @@ static func visible(data: Dictionary, node: Dictionary) -> bool:
 	return false
 
 static func can_buy(data: Dictionary, node: Dictionary) -> bool:
-	return visible(data, node) and level(data, node) < int(node.maxLevel) and float(data.wallet[int(node.cost.currencyType)]) >= cost(data, node)
+	return not Demo.locked(node) and visible(data, node) and level(data, node) < int(node.maxLevel) and float(data.wallet[int(node.cost.currencyType)]) >= cost(data, node)
 
 static func buy(data: Dictionary, node: Dictionary) -> bool:
 	if not can_buy(data, node):
@@ -123,12 +212,13 @@ static func check_achievements(data: Dictionary) -> void:
 	var maxed := 0
 	for entry in design().upgrades:
 		if level(data, entry) >= int(entry.maxLevel): maxed += 1
-	if maxed >= 100 and (data.crowns_dropped.get("3", false) or data.achievements.get("PrestigeMaster", false) or data.achievements.get("Prestige3", false)):
+	if maxed >= int(design().settings.get("ending_maxed_nodes", 100)) and (data.crowns_dropped.get("3", false) or data.achievements.get("PrestigeMaster", false) or data.achievements.get("Prestige3", false)):
 		data.unlocks.GodTab = true
 		data.achievements.BeatTheGame = true
 
 # PanelManager.UnlockGodButton charges this once after GodTab becomes visible.
 static func unlock_final_chamber(data: Dictionary) -> bool:
+	if Demo.enabled(): return false
 	if not data.unlocks.get("GodTab", false): return false
 	if data.get("god_panel_unlocked", false): return true
 	var prices := [200000.0, 10.0, 4.0]

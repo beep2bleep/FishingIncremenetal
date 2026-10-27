@@ -32,9 +32,9 @@
     "enemy bullet template.png": "enemy_bolt.png",
     "dm.png": "curse_gem.png",
     "dmf.png": "ember_gem.png",
-    "plant.png": "plant.png",
-    "plant2.png": "plant.png",
-    "plant3.png": "plant.png",
+    "plant.png": "plant_low_wide.png",
+    "plant2.png": "plant_wall_wide.png",
+    "plant3.png": "plant_overhead_wide.png",
     "spider web.png": "web.png",
     "Spikes.png": "spikes.png",
     "cell.png": "bars.png",
@@ -434,6 +434,33 @@
       "source": "C:\\Users\\stick\\.codex\\generated_images\\01a1662a-2647-7cb3-860a-4e06a047930c\\exec-374f352e-11ee-4f36-b5ae-08bf76c03200.png",
       "prompt": "Use case: stylized-concept. One single production sprite for an inked cartoon dungeon game. Thick irregular near-black outlines, broad muted earthy flat colors, sparse simple two-tone cel shading. Square image, isolated whole subject centered with 8% padding. Genuine transparent background. No text, frame, border, floor, cast shadow, perspective scene, bloom or haze. Subject: A ragged asymmetrical corner cobweb of thick ivory-gray silk, three curved radial strands and a few irregular connecting loops, one tiny ochre egg cocoon. Bold readable hand-inked shapes, front view. No spider character.",
       "generator": "Built-in image_gen"
+    },
+    {
+      "name": "plant_low_wide",
+      "file": "plant_low_wide.png",
+      "width": 1774,
+      "height": 887,
+      "sha256": "39302ed244c71c22337d34d2b7cd086324401f9a1feef04796fa360b0fc3528c",
+      "generator": "Built-in image_gen",
+      "prompt_reference": "../../Docs/SceneryProportions.md"
+    },
+    {
+      "name": "plant_wall_wide",
+      "file": "plant_wall_wide.png",
+      "width": 1774,
+      "height": 887,
+      "sha256": "c886e03a04704d015e779c4e1b9d50fe3a8edfafbdc3f6cedccae7716dc93ab6",
+      "generator": "Built-in image_gen",
+      "prompt_reference": "../../Docs/SceneryProportions.md"
+    },
+    {
+      "name": "plant_overhead_wide",
+      "file": "plant_overhead_wide.png",
+      "width": 2172,
+      "height": 724,
+      "sha256": "c50733286e6b210484a31ce45619a83f124f187b2e477de7ba9dd7960c6fd984",
+      "generator": "Built-in image_gen",
+      "prompt_reference": "../../Docs/SceneryProportions.md"
     }
   ],
   "notes": "New hand-inked combat sprites, seamless stone textures and props. Original geometry/animation and gameplay are retained. All generated PNG files are copied without editing."

@@ -10,9 +10,9 @@ static func catalog() -> Dictionary:
     if source.is_empty(): source = JSON.parse_string(FileAccess.get_file_as_string(ROOT + "presentation.json"))
     return source
 
-static func material(key: String) -> ShaderMaterial:
+static func material(key: String, environment_level = -1) -> ShaderMaterial:
     var variant: bool = preload("res://Games/RowDivers/RowDiversGraphics.gd").illustrated()
-    var cache_key := key + (":illustrated" if variant else ":original")
+    var cache_key := key + (":illustrated" if variant else ":original") + ":level"+str(environment_level)
     if materials.has(cache_key): return materials[cache_key]
     var result := ShaderMaterial.new()
     result.shader = preload("res://Games/RowDivers/OriginalSurface.gdshader")
@@ -24,9 +24,14 @@ static func material(key: String) -> ShaderMaterial:
             transparent_shader.code = result.shader.code.replace("shader_type spatial;", "shader_type spatial;\n#define ORIGINAL_TRANSPARENT\n")
         result.shader = transparent_shader
     result.set_shader_parameter("tint_color", Color(data.color[0], data.color[1], data.color[2], data.color[3]))
+    var themes = preload("res://Games/RowDivers/RowDiversLevelThemes.gd")
+    if environment_level>0:
+        result.set_shader_parameter("tint_color",Color(data.color[0],data.color[1],data.color[2],data.color[3])*themes.environment_tint(environment_level))
     if not data.texture.is_empty():
         var path: String = preload("res://Games/RowDivers/RowDiversIllustrated.gd").texture_path(data.texture) if variant else ""
         result.set_shader_parameter("source_texture", load(path if not path.is_empty() else ROOT + data.texture))
+        if environment_level==3 and (data.texture in themes.WALLS or data.texture in themes.FLOORS):
+            result.set_shader_parameter("source_texture",load(themes.ROOT+"hell_basalt.png"))
     var uv_scale := Vector2(data.uv_scale[0], data.uv_scale[1])
     var uv_offset := Vector2(data.uv_offset[0], data.uv_offset[1])
     # Flip only held weapons. Projectile prefabs already orient their tip-up
@@ -48,7 +53,19 @@ static func refresh_materials(root: Node) -> void:
 
 static func refresh_instance(instance: MeshInstance3D) -> void:
     var key: String = instance.get_meta("row_source_material")
-    instance.material_override = material(key)
+    var level = -1
+    var ancestor = instance.get_parent()
+    while ancestor!=null:
+        if ancestor.has_meta("row_environment_level"):
+            level = int(ancestor.get_meta("row_environment_level"))
+            break
+        ancestor = ancestor.get_parent()
+    instance.material_override = material(key,level)
+    if instance.has_meta("row_enemy_tint"):
+        var copy = instance.material_override.duplicate()
+        var base: Color = copy.get_shader_parameter("tint_color")
+        copy.set_shader_parameter("tint_color",base*instance.get_meta("row_enemy_tint"))
+        instance.material_override = copy
     instance.scale = Vector3.ONE
     if not preload("res://Games/RowDivers/RowDiversGraphics.gd").illustrated(): return
     var texture_name: String = catalog().materials.get(key, {}).get("texture", "")
@@ -56,6 +73,30 @@ static func refresh_instance(instance: MeshInstance3D) -> void:
     # Resize only its visual child so mount positions and gate animation stay put.
     if texture_name == "Decor2.png": instance.scale = Vector3.ONE * 0.22
     elif texture_name == "Spikes.png": instance.scale = Vector3.ONE * 0.45
+    if texture_name in ["plant.png", "plant2.png", "plant3.png", "spider web.png", "Decor.png", "Decor2.png", "Spikes.png"]:
+        _fit_decoration(instance)
+
+static func _fit_decoration(instance: MeshInstance3D) -> void:
+    # Unity's scenery planes have different inherited width/height scales. Fit
+    # the new artwork inside that footprint instead of squeezing its leaves or
+    # emblems. Only reduce the visual child; keep all mounts and gameplay intact.
+    if not (instance.mesh is PlaneMesh or instance.mesh is QuadMesh): return
+    var inherited := Basis.IDENTITY
+    var ancestor := instance.get_parent()
+    while ancestor is Node3D:
+        inherited = ancestor.transform.basis * inherited
+        ancestor = ancestor.get_parent()
+    var plane := not instance.mesh is QuadMesh
+    var bounds := instance.mesh.get_aabb().size
+    var width := (inherited * Vector3.RIGHT).length() * bounds.x
+    var height := (inherited * (Vector3.BACK if plane else Vector3.UP)).length() * (bounds.z if plane else bounds.y)
+    if minf(width, height) <= 0.000001: return
+    var texture: Texture2D = instance.material_override.get_shader_parameter("source_texture")
+    var aspect := float(texture.get_width()) / float(texture.get_height())
+    var footprint_aspect := width / height
+    instance.scale.x *= minf(1.0, aspect / footprint_aspect)
+    if plane: instance.scale.z *= minf(1.0, footprint_aspect / aspect)
+    else: instance.scale.y *= minf(1.0, footprint_aspect / aspect)
 
 static func mesh(data: Dictionary) -> Mesh:
     var key := str(data.get("mesh", data.get("primitive", "")))
@@ -103,7 +144,7 @@ static func mesh(data: Dictionary) -> Mesh:
     meshes[key] = result
     return result
 
-static func build(layout: String, corridor = true) -> Node3D:
+static func build(layout: String, corridor = true, clear_railway = false) -> Node3D:
     var root := Node3D.new()
     root.name = "OriginalHallway"
     root.position = Vector3(-2.5, 0, -28.474) if corridor else Vector3.ZERO
@@ -111,21 +152,26 @@ static func build(layout: String, corridor = true) -> Node3D:
     for data in catalog().layouts[layout]:
         var node := Node3D.new()
         node.name = str(data.name).replace("/", "_")
+        node.set_meta("row_source_name",str(data.name))
         (root if int(data.parent) < 0 else nodes[int(data.parent)]).add_child(node)
         var p: Array = data.position
         var q: Array = data.rotation
         var s: Array = data.scale
         node.transform = Transform3D(Basis(Quaternion(-q[0], -q[1], q[2], q[3])).scaled(Vector3(s[0], s[1], s[2])), Vector3(p[0], p[1], -p[2]))
+        # This source variant had a stack of columns in the center lane. Move
+        # each matching shaft/base/capital to the same wall-side mount.
+        if clear_railway and str(data.name)=="Column" and absf(float(p[0])-2.5)<.65:
+            node.position.x = .9 if int(absf(float(p[2]))*10)%2==0 else 4.1
         node.visible = data.active
         nodes.append(node)
         if data.has("primitive") or data.has("mesh"):
             var instance := MeshInstance3D.new()
             instance.mesh = mesh(data)
             instance.set_meta("row_source_material", data.material)
-            refresh_instance(instance)
             instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
             # Static-batched Unity meshes already contain world-space vertices.
             (root if data.get("baked", false) else node).add_child(instance)
+            refresh_instance(instance)
     return root
 
 static func animate(root: Node3D, clip: String, time: float) -> void:

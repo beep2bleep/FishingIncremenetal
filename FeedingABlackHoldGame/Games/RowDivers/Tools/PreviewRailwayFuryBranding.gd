@@ -61,7 +61,8 @@ func run() -> void:
 	ending.persist_results = false
 	root.add_child(ending)
 	current_scene = ending
-	for choice in ["BenevolentGod", "EvilGod"]:
+	for choice in ["LastStation", "BeyondTheRails"]:
+		ending.choice_made = false
 		ending._choose(choice)
 		ending.reveal.kill()
 		ending.story.visible_ratio = 1
