@@ -1,0 +1,96 @@
+{
+  "version": "0.1",
+  "full_app": 5520300,
+  "demo_app": 5520330,
+  "planned_release": "2027-03-22T10:00:00-07:00",
+  "requested_usd_price": 2.99,
+  "price_saved": false,
+  "published": false,
+  "base_commit": "d78c78e01d29482d4f5e92a75f3475e4f3b1163b",
+  "qa": {
+    "full_pack_checks": 11,
+    "demo_pack_checks": 11,
+    "controller_checks": 88
+  },
+  "binaries": {
+    "Full": {
+      "libgodotsteam.windows.template_release.x86_64.dll": {
+        "bytes": 3817984,
+        "sha256": "0252ea3a6bd72659d71f25874a55202062dd491e5aef94a14edbbf93bd4ade4b"
+      },
+      "RailwayFury.exe": {
+        "bytes": 104644608,
+        "sha256": "6f0b0f23807323301f974837bf09f693797bc74f142d000d3928c9d7a674891a"
+      },
+      "RailwayFury.pck": {
+        "bytes": 249862236,
+        "sha256": "332b4874c19d05091e012ddf33ad24d7b6c7af9455dd16fef87e0c1d74e004ff"
+      },
+      "steam_api64.dll": {
+        "bytes": 317080,
+        "sha256": "e3fe06e2d802c2f753aeb46869e2af898f34715ce85f08001456fd8a80ecd21e"
+      }
+    },
+    "Demo": {
+      "libgodotsteam.windows.template_release.x86_64.dll": {
+        "bytes": 3817984,
+        "sha256": "0252ea3a6bd72659d71f25874a55202062dd491e5aef94a14edbbf93bd4ade4b"
+      },
+      "RailwayFuryDemo.exe": {
+        "bytes": 104644608,
+        "sha256": "61823705f31a2b3d56df5de41deb51dc8edb8e039b98a622ab282e70651a03ac"
+      },
+      "RailwayFuryDemo.pck": {
+        "bytes": 237999512,
+        "sha256": "0fc6514a46c53f893015eb7e8df0f59522cfa4f02726516b09313093a4adceec"
+      },
+      "steam_api64.dll": {
+        "bytes": 317080,
+        "sha256": "e3fe06e2d802c2f753aeb46869e2af898f34715ce85f08001456fd8a80ecd21e"
+      }
+    }
+  },
+  "runtime_sources": {
+    "project.godot": "8d4a7a6fdd43c7c62de4a6570e8d4ded01f813f0e79f2015eb49ab7635f0de68",
+    "SteamHandler.gd": "23ceb7aae753acf374e7664f9108e1b2574bcced5815fd17212cac16535eeb25",
+    "VirtualCursor.gd": "89c9201fe02981df567fddbe0abd456b29f4dc351fb85e8c8255d320c564b9f3",
+    "UpgradeScreen.gd": "93babc0d21b225b4d2a72110feb1707adae38a1ef53fa280eb648ed0f1010551",
+    "Core/Boot/GameLauncher.gd": "94e178457223d125c8ef043c35cf3b5030186b067d5fa544180b1a495a17372a",
+    "Games/RowDivers/RowDiversAchievementPulse.gd": "b77856c15ccf6fa71acd52990ef6bce3c184d4bf3ee320cd108cddf28e9e416e",
+    "Games/RowDivers/RowDiversActor.gd": "cb1e8851a9925cf0f842bee916a14c3b1ce3d2206e72c77c49bf6e59f509f3a0",
+    "Games/RowDivers/RowDiversAnalytics.gd": "1bab242032cbebbfd6c35e90ef32734b802abfd00ab40df435472d81a66784df",
+    "Games/RowDivers/RowDiversAudio.gd": "089395f9fab8528315e647ce3cf36ad4a101d27de58f3366bcfc05d24a9c8478",
+    "Games/RowDivers/RowDiversButtonFeedback.gd": "c650cc02cc6bdbe2d7c1f57ef633f7ce3ead3ca5ef1286e6fc2471035c4f473e",
+    "Games/RowDivers/RowDiversController.gd": "f7f641079da7a8274649a1d77dc3c4bb2c084c3bcf9208d4e8fda9317fd6d6a0",
+    "Games/RowDivers/RowDiversControlsPicture.gd": "c4934ba817170d888792322c1dbf453aeafc93ad63d553d6495b989daa26244d",
+    "Games/RowDivers/RowDiversDaggerFlight.gd": "fd4db36cdcbc48718cab479663775f09eb9beebce38e0d1f39c3bf7558c5cb71",
+    "Games/RowDivers/RowDiversDemo.gd": "4b1ea7ac995529c364a7441e6c9ac5e54c80abeca531b014466d9fb1b7dc2d3b",
+    "Games/RowDivers/RowDiversEditorBuyer.gd": "51ef794ad83160e7554476a19a025b9f9fedab97b5c3dc8f898262eeb9291560",
+    "Games/RowDivers/RowDiversEditorLoop.gd": "47f73864ff8ea80b57d7e97ee143c91d76edf6ac29f7e7c2cbe05619a2b83200",
+    "Games/RowDivers/RowDiversEndingPicture.gd": "e7464dba8d556215c0315375edad4f9cb933e1e8bca2bb32b1cdabccecda743d",
+    "Games/RowDivers/RowDiversEndings.gd": "3e758702f028abc098503870e72fe173f1b76329835d3a3738b8b662427b87b9",
+    "Games/RowDivers/RowDiversEnemyStatus.gd": "8b26a9df6774b923bcd403d6a7430e80c816a9b3dafe1979072749f2f921c6bd",
+    "Games/RowDivers/RowDiversFireWaves.gd": "e028ef53327bb4e59643a61a418eadd968fe513bfb00ba0b3d462fdb9a251a71",
+    "Games/RowDivers/RowDiversFireWaveVisual.gd": "db919be825f95299f4f48d5728e5f1858615e321462875ff585505f163e26d11",
+    "Games/RowDivers/RowDiversGraphics.gd": "13bf31ee3ccbf96da50f54297c4313ee6798e05ca6c3e3639e52a5354bad8060",
+    "Games/RowDivers/RowDiversHallway.gd": "01c060ecff743057aeeb27fc01ce4aaa131c7f26f1b064c823372f22f9b99848",
+    "Games/RowDivers/RowDiversHUD.gd": "da49596705ffd1462e645a4430a556e021041ec0e002eb814385412ca9909e8a",
+    "Games/RowDivers/RowDiversIcons.gd": "0fd91a27374058a334bab354d632094aa8e26d4769570a3dc790dbaa043cbb24",
+    "Games/RowDivers/RowDiversIllustrated.gd": "ce729beeed0f81f90f884d44456e2aff4ca3f88ef9da834392ad772963042d93",
+    "Games/RowDivers/RowDiversInputHints.gd": "d9dc8f11902c4e4bacfc417d230b052b0d54d888d58741bed697f1a007861da9",
+    "Games/RowDivers/RowDiversLevelThemes.gd": "676608bda9d97a1882831bb08480731024c7515307a076107a15eb19dacdf270",
+    "Games/RowDivers/RowDiversLocalization.gd": "4990169dbc78c02993dc94055cc105b7f1cdef57d5be888504e88d58400ef65f",
+    "Games/RowDivers/RowDiversMenuMusic.gd": "30480ad619f24d21a92a084fba43e3546f3ab9d8a28dfe0c71ec019f1b88295e",
+    "Games/RowDivers/RowDiversOriginalPresentation.gd": "2c40e26fd6fc0a22b44fe8e7c4d2a5d3d5442149467cae3b80cf761a1e0883c1",
+    "Games/RowDivers/RowDiversOtherGames.gd": "59147340ba9c6c528c64f134aadfee565814b7f726abf4732e8e4934a4536439",
+    "Games/RowDivers/RowDiversPowerupEffects.gd": "9cbcda65fc4f1de11af4b8d9361bfad2431c885dc8b9fd0e67f40712845978fe",
+    "Games/RowDivers/RowDiversProgress.gd": "17f870984737b75b6d323830036c446ce3ccfb2c3899e2831d4ff1cfda667dc3",
+    "Games/RowDivers/RowDiversProjectile.gd": "1e0a2ae181bac4d32f7e2307357fc857505369d47f632ae9861de7712a19a31c",
+    "Games/RowDivers/RowDiversStyle.gd": "c655c0936f0ee63ff353235930f6959b94cdde742d911f23ad8f10626552bb10",
+    "Games/RowDivers/RowDiversTiming.gd": "7e007484de1d8b28de69000015d415e2ed8a200501c52b43be162fa3ff3a5089",
+    "Games/RowDivers/RowDiversTracks.gd": "8fe275cbd2ddbcbdec369c523bfb19287383d0699a6b24130ec971edf385ec01",
+    "Games/RowDivers/RowDiversUpgradeTreeAdapter.gd": "3dc3b37b22ad6545cda83c87b33e42c85d86ffdc2fc1229531a8ea2029a29b48",
+    "Games/RowDivers/Scenes/RowDiversBattleScene.gd": "f3c3358e11e1a1ec132143233507b32109205047b0c0f23bdd4b69262a811586",
+    "Games/RowDivers/Scenes/RowDiversEnding.gd": "e37c8ea1d72749576e780e8f4f3f5eff7368d863437e6d3ad606335b20e59637"
+  }
+}

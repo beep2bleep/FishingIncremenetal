@@ -26,6 +26,7 @@ run/max_fps=60
 boot_splash/bg_color=Color(0.3234, 0.3234, 0.33, 1)
 boot_splash/show_image=false
 config/icon="res://Art/game_icon.png"
+config/icon.railway_steam="res://Games/RowDivers/Art/UI/railway-icon.png"
 
 [audio]
 

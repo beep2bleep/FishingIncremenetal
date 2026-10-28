@@ -1,0 +1,4 @@
+*.log
+pack_runtime/
+__pycache__/
+trailer_frame_*.jpg

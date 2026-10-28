@@ -1,5 +1,7 @@
 ﻿extends Node
 
+const STEAM_RAILWAY_FURY_APP_ID := 5520300
+const STEAM_RAILWAY_FURY_DEMO_APP_ID := 5520330
 const STEAM_VANGUARD_APP_ID := 4519820
 const STEAM_VANGUARD_DEMO_APP_ID := 4524190
 const STEAM_DEEPCORE_APP_ID := 4562070
@@ -93,6 +95,8 @@ var _steam_shutdown_started := false
 const DEMO_WISHLIST_URL_SETTING := "global/DemoWishlistUrl"
 
 func get_store_url() -> String:
+    if Util.is_row_divers_game_active():
+        return "https://store.steampowered.com/app/5520300/Railway_Fury/"
     if _is_data_breach_inc_build():
         return "https://store.steampowered.com/app/%s/%s/" % [STEAM_DATA_BREACH_INC_APP_ID, STEAM_DATA_BREACH_INC_STORE_PATH]
     var combined_export_url := "https://store.steampowered.com/app/%s/%s/" % [STEAM_BLEEPWARE_INCREMENTALS_APP_ID, STEAM_BLEEPWARE_INCREMENTALS_STORE_PATH]
@@ -103,6 +107,8 @@ func get_store_url() -> String:
     return "https://store.steampowered.com/app/%s/%s/" % [_resolve_steam_app_id(), STEAM_STORE_PATH]
 
 func get_demo_wishlist_url() -> String:
+    if Util.is_row_divers_game_active():
+        return get_store_url()
     var configured_url: String = str(ProjectSettings.get_setting(DEMO_WISHLIST_URL_SETTING, "")).strip_edges()
     if configured_url != "":
         return configured_url
@@ -177,7 +183,7 @@ func shutdown_steam() -> void:
 
 
 func initialize_steam() -> void :
-    if Util.is_row_divers_game_active() and preload("res://Games/RowDivers/RowDiversDemo.gd").enabled():
+    if Util.is_row_divers_game_active() and preload("res://Games/RowDivers/RowDiversDemo.gd").enabled() and not OS.has_feature("railway_steam"):
         steam_enabled = false
         return
     if OS.has_feature("web"):
@@ -255,6 +261,10 @@ func _is_show_all_modes_build() -> bool:
     return bool(ProjectSettings.get_setting("global/ShowAllModesInBuild", false))
 
 func _resolve_steam_app_id() -> int:
+    if Util.is_row_divers_game_active():
+        if preload("res://Games/RowDivers/RowDiversDemo.gd").enabled():
+            return STEAM_RAILWAY_FURY_DEMO_APP_ID
+        return STEAM_RAILWAY_FURY_APP_ID
     if _is_data_breach_inc_build():
         if _is_demo_build():
             return STEAM_DATA_BREACH_INC_DEMO_APP_ID

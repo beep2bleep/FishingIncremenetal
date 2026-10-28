@@ -61,5 +61,6 @@ for platform,base,folder,filename in [('Windows',0,'Windows','RailwayFuryDemo.ex
     block=block.replace('debug/export_console_wrapper=1','debug/export_console_wrapper=0')
     (ROOT/'Build - RailwayFury/Demo'/folder).mkdir(parents=True,exist_ok=True)
     blocks.append(block)
+blocks=[re.sub(r'\[preset\.\d+(\.options)?\]',lambda m:f'[preset.{i}{m[1] or ""}]',b) for i,b in enumerate(blocks)]
 path.write_text('\n'.join(b.rstrip()+'\n' for b in blocks),encoding='utf8')
 print('Prepared dedicated Windows and single-threaded Web demo exports.')
