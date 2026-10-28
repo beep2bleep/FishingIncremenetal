@@ -1,0 +1,37 @@
+{
+  "configured_on": "2026-10-28",
+  "sort": "ascending",
+  "display": "milliseconds",
+  "client_writes": true,
+  "friends_only_reads": false,
+  "lobby_only": false,
+  "global_top_limit": 0,
+  "range_around_user_limit": 0,
+  "upload_policy": "keep_best",
+  "clock": "Cumulative active gameplay simulation time since the campaign started; menus and pauses excluded.",
+  "full": {
+    "app_id": 5520300,
+    "boards": [
+      {"id": 21438434, "name": "railway_fury_free_aim_boss_0_time", "title": "Level 1 Cleared"},
+      {"id": 21438439, "name": "railway_fury_free_aim_boss_1_time", "title": "Level 2 Cleared"},
+      {"id": 21438447, "name": "railway_fury_free_aim_boss_2_time", "title": "Level 3 Cleared"},
+      {"id": 21438441, "name": "railway_fury_free_aim_boss_3_time", "title": "Level 4 Cleared"},
+      {"id": 21438442, "name": "railway_fury_free_aim_ending_time", "title": "Ending Reached"}
+    ]
+  },
+  "demo": {
+    "app_id": 5520330,
+    "boards": [
+      {"id": 21438463, "name": "railway_fury_demo_free_aim_boss_0_time", "title": "Demo - Level 1 Cleared"}
+    ]
+  },
+  "validation": {
+    "timed_runs_checks": 134,
+    "timed_runs_passed": true,
+    "demo_localization_checks": 18549,
+    "demo_localization_failures": 0,
+    "portal_configuration_verified": true,
+    "authenticated_score_round_trip_verified": false,
+    "test_scores_uploaded": false
+  }
+}

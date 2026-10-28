@@ -126,3 +126,25 @@ Builds page after upload. Uploading does not publish app settings or store pages
 Before launch, finish media upload, authorized pricing, hardware review, demo
 survey inheritance, tag publication, Steam-installed playtesting and Valve
 reviews in a separate authorized publishing pass.
+
+## Steam leaderboards
+
+Configured the actual Steam backend for both apps on October 28, under the
+user's explicit leaderboard request. Unlike store/app drafts, Steam commits
+leaderboard edits immediately. No store publication or build promotion was done.
+`leaderboards.json` records the six exact API names and Steam board IDs.
+
+The full app has level 1, 2, 3, and 4 clear times plus the ending time. The
+demo app has only its separate level 1 clear-time board. All six use ascending
+milliseconds, unrestricted reads, client writes (not trusted-server-only),
+no lobby restriction, and no top/range limits. The existing runtime uses
+keep-best submissions and already targets these exact names and edition IDs;
+no runtime changes or rebuild were needed for this configuration.
+
+The clock measures cumulative active simulation time from campaign start,
+excluding menus/pauses. Editor assists and legacy campaigns missing the start
+of their timer are excluded. VerifyTimedRuns passed 134 checks; the demo and
+localization suite passed 18,549 checks with zero failures, including separate
+demo board naming and the first-boss cap. Existing headless renderer/resource
+shutdown warnings remain. No synthetic scores were submitted. Steam-installed,
+authenticated score upload/download verification remains pending.
