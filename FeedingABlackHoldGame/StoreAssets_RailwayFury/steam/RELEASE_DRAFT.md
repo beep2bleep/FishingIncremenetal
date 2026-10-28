@@ -148,3 +148,27 @@ localization suite passed 18,549 checks with zero failures, including separate
 demo board naming and the first-boss cap. Existing headless renderer/resource
 shutdown warnings remain. No synthetic scores were submitted. Steam-installed,
 authenticated score upload/download verification remains pending.
+
+## Steam Cloud saves
+
+Saved Steam Auto-Cloud configuration for both editions on October 28.
+`cloud-saves.json` records the exact settings. Each app has a 10 MiB quota
+and 100 files per player. Full uses WinAppDataRoaming/RailwayFury with
+`row_divers_progress*.json`; demo uses WinAppDataRoaming/RailwayFuryDemo
+with `row_divers_progress*_demo.json`. Both are nonrecursive and marked
+Cross-Platform for future compatibility. Native builds currently support
+Windows only; add root overrides before shipping native Linux/macOS builds.
+
+These paths match the existing Godot custom user directories and progression
+save filenames, including legacy classic profiles. They sync campaign state,
+upgrades, achievements, currencies, ending progress, and recorded milestone
+times. Temporary writes, local hardware/display settings, analytics files,
+and capture fixtures are excluded. Demo/full cloud storage remains separate.
+Dynamic suspend/resume sync is disabled because the runtime does not handle
+live remote file changes. Standard launch/exit Auto-Cloud needs no code change.
+
+Both store drafts have Steam Cloud checked. Steamworks explicitly requires
+publishing the app settings for Cloud activation. That was NOT performed,
+following the user's no-publication instruction. The configurations were
+reloaded and verified, but actual cross-machine sync remains untested until
+the settings are published and Steam-installed builds are available.

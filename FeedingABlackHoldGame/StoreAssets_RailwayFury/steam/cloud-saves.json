@@ -1,0 +1,37 @@
+{
+  "configured_on": "2026-10-28",
+  "integration": "Steam Auto-Cloud",
+  "status": "saved_unpublished",
+  "quota_bytes_per_user": 10485760,
+  "files_per_user": 100,
+  "developers_only": false,
+  "dynamic_suspend_resume_sync": false,
+  "shared_cloud_app_id": 0,
+  "full": {
+    "app_id": 5520300,
+    "root": "WinAppDataRoaming",
+    "subdirectory": "RailwayFury",
+    "pattern": "row_divers_progress*.json",
+    "recursive": false,
+    "os_restriction": "Cross-Platform"
+  },
+  "demo": {
+    "app_id": 5520330,
+    "root": "WinAppDataRoaming",
+    "subdirectory": "RailwayFuryDemo",
+    "pattern": "row_divers_progress*_demo.json",
+    "recursive": false,
+    "os_restriction": "Cross-Platform"
+  },
+  "store_feature_flags": "saved_unpublished_for_both_editions",
+  "excluded": ["*.tmp", "local_settings.save", "logs", "capture fixtures", "analytics state"],
+  "native_supported_os": ["Windows"],
+  "notes": [
+    "Current Windows executables also use these Windows roots under Proton.",
+    "Add corresponding root overrides before shipping native Linux or macOS versions.",
+    "The full game and demo have independent cloud storage and save filenames.",
+    "No runtime or binary change required; the game already saves JSON via temporary-file rename.",
+    "Steamworks app settings publication is required for activation; not performed.",
+    "Actual two-machine upload/download testing remains pending."
+  ]
+}
