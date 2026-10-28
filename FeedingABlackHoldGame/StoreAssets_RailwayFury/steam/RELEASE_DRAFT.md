@@ -72,12 +72,22 @@ screen-reader, directional audio, or untimed-play claims were added. The full
 requirements note was corrected and re-read after saving: "Keyboard and mouse
 or compatible gamepad." The same correction was saved for the demo.
 
-Chrome's actual client-icon file chooser opens, but selecting a local file
-does not attach it. The browser tool's documented recovery requires enabling
-"Allow access to file URLs" for the ChatGPT extension. This has been requested
-from the user. Client icons remain unuploaded. SteamCMD output folders still
-contain no upload results; authentication is pending in the local upload
-window. Do not claim any build IDs or successful depot uploads yet.
+The user enabled Chrome extension local-file access. Both full and demo
+shortcut icons were then uploaded, with conversion to app icons enabled.
+Both pages reported successful upload; reloading the full page shows the
+saved icon thumbnails. The browser's read-only DOM representation does not
+expose FileList reliably: use the actual filename shown in a screenshot and
+the server upload result rather than inferring failure from `input.files`.
+
+Store capsules, screenshots, library artwork, and trailers still require
+native file drag-and-drop, which the current browser connection cannot
+perform. Prepared drag-ready copies are in the ignored build folder
+`Build - RailwayFury/Steam/UploadReady/{Full,Demo}/{Store,Library,Screenshots,Trailer}`.
+Each edition has four store capsules, four library images, six screenshots,
+and its own trailer. Both store pages have a draft Gameplay trailer slot.
+SteamCMD output folders still contain no upload results; authentication is
+pending in the local upload window. Do not claim any build IDs or successful
+depot uploads yet.
 
 Local portal proof screenshots are under the ignored
 `Build - RailwayFury/Steam/Proof` folder. They are account-specific evidence,
