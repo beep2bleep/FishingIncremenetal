@@ -63,6 +63,26 @@ drag-only drop areas. The browser automation file chooser did not open from
 them. Do not mark these assets as uploaded until portal counts/thumbnails or
 trailer processing confirm success.
 
+Follow-up verification on October 28: both launch configurations persist with
+the correct executable, Windows, and 64-bit architecture. Both controller
+summaries show full Xbox support and USB-only DualShock/DualSense support.
+Both accessibility questionnaires are saved as drafts with Adjustable Text
+Size, Custom Volume Controls, and Playable without Quick Time Events. No
+screen-reader, directional audio, or untimed-play claims were added. The full
+requirements note was corrected and re-read after saving: "Keyboard and mouse
+or compatible gamepad." The same correction was saved for the demo.
+
+Chrome's actual client-icon file chooser opens, but selecting a local file
+does not attach it. The browser tool's documented recovery requires enabling
+"Allow access to file URLs" for the ChatGPT extension. This has been requested
+from the user. Client icons remain unuploaded. SteamCMD output folders still
+contain no upload results; authentication is pending in the local upload
+window. Do not claim any build IDs or successful depot uploads yet.
+
+Local portal proof screenshots are under the ignored
+`Build - RailwayFury/Steam/Proof` folder. They are account-specific evidence,
+not public store collateral.
+
 ## Reproduce and verify
 
 Run `tools/railway_steam/build.ps1` from PowerShell. Dedicated Steam features
