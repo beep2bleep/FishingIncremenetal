@@ -4,6 +4,9 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $railwayRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
+$railwayVersionMatch = [regex]::Match((Get-Content -LiteralPath (Join-Path $railwayRoot 'FeedingABlackHoldGame/project.godot') -Raw), '(?m)^config/version="([^"]+)"')
+if (-not $railwayVersionMatch.Success) { throw 'Project version is missing.' }
+$railwayVersion = $railwayVersionMatch.Groups[1].Value
 $railwayStaging = Join-Path $railwayRoot 'Build - RailwayFury/Steam'
 $railwayScripts = Join-Path $railwayStaging 'UploadScripts'
 New-Item -ItemType Directory -Force $railwayScripts | Out-Null
@@ -14,7 +17,7 @@ foreach ($railwayEdition in @(@('Full','5520300','5520301'),@('Demo','5520330','
 "AppBuild"
 {
     "AppID" "$($railwayEdition[1])"
-    "Desc" "Railway Fury $($railwayEdition[0]) Windows 0.1 - unpublished preparation"
+    "Desc" "Railway Fury $($railwayEdition[0]) Windows $railwayVersion"
     "BuildOutput" "$railwayOutput"
     "ContentRoot" "$railwayContent"
     "Preview" "0"

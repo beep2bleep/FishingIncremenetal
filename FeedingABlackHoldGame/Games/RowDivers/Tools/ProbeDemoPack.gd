@@ -10,7 +10,13 @@ func check(ok, message):
 		failures += 1
 		push_error(message)
 func run():
-	check(ProjectSettings.get_setting("application/config/version", "") == "0.1", "Pack version is 0.1")
+	var analytics = root.get_node("GameAnalytics")
+	root.get_node("Util").set_active_game_id("rowdivers")
+	var credentials = analytics._get_active_credentials()
+	check(not str(credentials.game_key).is_empty() and credentials.game_key == ProjectSettings.get_setting("gameanalytics/railway_demo_game_key", ""), "Demo analytics key is packed and selected")
+	check(not str(credentials.secret_key).is_empty() and credentials.secret_key == ProjectSettings.get_setting("gameanalytics/railway_demo_secret_key", ""), "Demo analytics secret is packed and selected")
+	check(analytics._get_state_path() == "user://gameanalytics_state_rowdivers_demo.cfg", "Demo analytics state is isolated")
+	check(ProjectSettings.get_setting("application/config/version", "") == "0.2", "Pack version is 0.2")
 	check(load("res://Games/RowDivers/Art/Powerups/ghost.svg") is Texture2D, "Packed Ghost icon loads")
 	check(Progress.Demo.enabled(), "Export forces demo mode")
 	check(OS.get_user_data_dir().ends_with("RailwayFuryDemo"), "Export isolates the full-game save directory")

@@ -321,6 +321,13 @@ func _ready() -> void :
 
     ControllerIcons.input_type_changed.connect(_on_input_type_changed)
     _bind_tech_tree(tech_tree)
+    if Util.is_row_divers_game_active():
+        var controller_hints = preload("res://Games/RowDivers/RowDiversInputHints.gd").new()
+        controller_hints.context = "upgrades"
+        var controls = %"Navigate DPAD".get_parent()
+        controls.get_node("VBoxContainer2").hide()
+        controller_hints.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+        controls.add_child(controller_hints)
     get_viewport().size_changed.connect(_on_viewport_size_changed)
     ready_step_started_msec = _print_open_pit_ready_step("ready_signals", ready_step_started_msec)
 
@@ -697,6 +704,7 @@ func _refresh_bottom_wallet_display() -> void:
 
 func _setup_row_divers_other_games() -> void:
     if not Util.is_row_divers_game_active(): return
+    if not ROW_DIVERS_PROGRESS_SCRIPT.Demo.enabled(): return
     var promo = preload("res://Games/RowDivers/RowDiversOtherGames.gd").new()
     promo.capsule_count = 1
     promo.vertical_layout = true
@@ -1169,7 +1177,7 @@ func update_input(input_type):
                 %"Navigate DPAD".show()
                 %"Mouse Drag Tree".hide()
 
-                if tech_tree.selected_node != null:
+                if tech_tree.selected_node != null and not _is_any_popup_visible() and not _is_settings_open():
                     tech_tree.selected_node.click_mask.grab_focus()
                     _on_tech_tree_selected_node_changed(tech_tree.selected_node)
 

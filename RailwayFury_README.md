@@ -1,5 +1,7 @@
 # RailwayFury / Row Divers
 
+Steam Windows builds for version **0.2** were uploaded on November 2, 2026: full game **26391624**, demo **26391630**. They were not set live. See [the upload record](FeedingABlackHoldGame/Games/RowDivers/Docs/RELEASE_0.2.md) for validation and reproduction instructions.
+
 Open `FeedingABlackHoldGame/project.godot` with Godot 4.6, or run `Launch-RailwayFury.ps1`.
 
 This checkout uses branch `RailwayFury`, based on GitHub HEAD `041f383a036fdb06c216335010abf67647dcc792` of `beep2bleep/FishingIncremenetal`. Startup uses the main project's `AppBootstrap` and `GameLauncher`, with a single Railway Fury / Row Divers entry. That entry opens the main project's shared `UpgradeScreen.tscn`; PLAY opens `Games/RowDivers/Scenes/RowDiversBattleScene.tscn`, and the end screen returns to the shared upgrade screen.
@@ -22,8 +24,11 @@ Upgrade prices use `ceil(base * 1.2^level)` after the initial base-price purchas
 - Shift toggles running, multiplying forward speed and row damage by 1.5.
 - Left click shoots. Hold fire and automatic fire require their original upgrades; 1/2 switch bow firing modes after Auto Shoot unlocks.
 - Dagger attacks automatically in range after unlocking. Third Eye targets enemies under the mouse.
-- 3: Arrow Shield; 4: Harvester; 5: Shuriken; 6: Slow Down, each requiring its upgrade.
+- Space activates the next ready, unlocked ability highlighted in the HUD.
 - Escape pauses. Loot enters the wallet immediately on pickup, including when quitting mid-run. Upgrades on the pause/end screen returns to the tree.
+- Enter starts a run from the upgrade screen.
+- Controllers: left stick steers, right stick aims in Free Aim, RT/RB (R2/R1) shoots, and LT/LB (L2/L1) activates the next ready power. Holding fire follows the same Hold/Auto upgrade rules as the mouse. Left stick click toggles running. Menu/Options starts a run or pauses/resumes gameplay.
+- In menus, use the left stick or D-pad to select and the right trigger or bumper to buy/confirm/play. Pause and end screens also support the left-stick cursor. Prompts switch automatically to keyboard/mouse, Xbox, or PlayStation artwork when the input method changes.
 - Right-drag pans the upgrade tree; mouse wheel zooms. Hover inspects; click buys an affordable upgrade.
 
 The save is `%APPDATA%\RailwayFury\row_divers_progress_v1.json`. Test fixtures do not write gameplay progress. The reference save was backed up before resetting: `%USERPROFILE%\AppData\LocalLow\Hermurx\RowDivers\savefile.before-railwayfury-20261021.json` and `savefile.reset-backup-20261021.json`. Settings were preserved.

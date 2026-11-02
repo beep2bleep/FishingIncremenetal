@@ -23,6 +23,9 @@ var overlay_detail: Label
 var upgrades_button: Button
 var settings_button: Button
 var tutorial_button: Button
+var tutorial_captions: Array[Label] = []
+var speed_hint: Label
+var power_hint: Label
 var tutorial_page = -1
 var tutorial_cards: HBoxContainer
 var debug_speed_label: Label
@@ -123,7 +126,14 @@ func build(owner_battle: Node3D) -> void:
 	feedback.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	feedback.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	feedback.color = Color(0.8, 0.15, 0.12, 0)
+	var input_hints := preload("res://Games/RowDivers/RowDiversInputHints.gd").new()
+	root_ui.add_child(input_hints)
+	input_hints.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	input_hints.offset_top = -148
+	input_hints.offset_bottom = -112
 	_build_overlay()
+	ControllerIcons.input_type_changed.connect(_refresh_input_hints)
+	_refresh_input_hints()
 	_build_settings()
 	_build_debug_speed_controls()
 	SignalBus.text_size_changed.connect(_apply_text_scale)
@@ -239,11 +249,12 @@ func _build_overlay() -> void:
 		var caption = Style.label("CLICK TO SHOOT" if shooting else "MOVE LEFT / RIGHT", 20, true)
 		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		card.add_child(caption)
+		tutorial_captions.append(caption)
 		if not shooting:
-			var speed_hint = Style.label("Press Shift to toggle double speed", 16)
+			speed_hint = Style.label("Press Shift to toggle double speed", 16)
 			speed_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			card.add_child(speed_hint)
-	var power_hint := Style.label("SPACE: Activate the highlighted power.\nEach press uses one ready power.", 16)
+	power_hint = Style.label("SPACE: Activate the highlighted power.\nEach press uses one ready power.", 16)
 	power_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	power_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	power_hint.custom_minimum_size.x = 700
@@ -358,7 +369,7 @@ func refresh() -> void:
 	hp_bar.value = battle.health
 	armor_label.text = tr("ARMOR %s  /  %s  /  %s\nTRACK RUN TIME %s") % [Util.get_number_short_text(battle.armor), tr("DOUBLE SPEED") if battle.running else tr("NORMAL SPEED"), tr(battle.fire_mode.to_upper()), preload("res://Games/RowDivers/RowDiversTiming.gd").format_time(float(battle.data.get("gameplay_seconds",0)))]
 	currency.text = tr("GOLD %s   GEMS %s   CROWNS %s") % [Util.get_number_short_text(battle.data.wallet[0]), Util.get_number_short_text(battle.data.wallet[1]), Util.get_number_short_text(battle.data.wallet[2])]
-	battle.ability_hud.text = tr("%.1f m    SECTION %d / 15    %s    ESC PAUSE") % [(-battle.player_position.z if battle.free_aim_mode else battle.distance), mini(15, battle.section), preload("res://Games/RowDivers/RowDiversLevelThemes.gd").level_name(int(battle.data.prestige))]
+	battle.ability_hud.text = tr("%.1f m    SECTION %d / 15    %s") % [(-battle.player_position.z if battle.free_aim_mode else battle.distance), mini(15, battle.section), preload("res://Games/RowDivers/RowDiversLevelThemes.gd").level_name(int(battle.data.prestige))]
 	if battle.free_aim_mode:
 		battle.ability_hud.text += tr("    FIRE %d / 3 · CONTROL %d%%") % [battle.fire_waves.stage + 1, battle.s("Fire_Wave_Control_" + str(int(battle.data.prestige)))]
 	var next: String = battle.next_powerup()
@@ -368,7 +379,7 @@ func refresh() -> void:
 		ability_columns[ability].visible = owned
 		var status: String = "LOCKED" if not owned else (tr("ACTIVE %.1fs") % state.active if state.active > 0 else (tr("%.0fs") % ceil(state.cooldown) if state.cooldown > 0 else "READY"))
 		var selected: bool = ability == next
-		ability_buttons[ability].text = (tr("[SPACE] ") if selected else "") + tr(NAMES[ability]) + "\n" + tr(status)
+		ability_buttons[ability].text = ((tr("NEXT · ") if RailwayController.using_controller() else tr("[SPACE] ")) if selected else "") + tr(NAMES[ability]) + "\n" + tr(status)
 		if powerup_highlights.get(ability) != selected:
 			powerup_highlights[ability] = selected
 			var card_style = Style.panel(Color("29333d") if selected else Color("172431"), Style.GOLD if selected else Color("465462"))
@@ -378,6 +389,8 @@ func refresh() -> void:
 			ability_buttons[ability].add_theme_stylebox_override("normal", card_style)
 		ability_buttons[ability].disabled = not owned or state.active > 0 or state.cooldown > 0
 		ability_buttons[ability].tooltip_text = tr("Press Space to use the highlighted power, or click a ready power. Lasts 10 seconds; recharges for 30 seconds after it ends.") if owned else tr("Unlock this ability in Upgrades.")
+		if owned and RailwayController.using_controller():
+			ability_buttons[ability].tooltip_text = tr("Use the left trigger or bumper to activate the highlighted ready power.")
 		if ability == "SlowDown" and owned:
 			ability_buttons[ability].tooltip_text += "\n" + tr("Regenerates %.2f%% of maximum health per second (1.5x walking damage).") % battle.regen_percent_per_second()
 		ability_bars[ability].value = state.active / state.duration if state.active > 0 else (1.0 - state.cooldown / state.wait if owned else 0.0)
@@ -397,3 +410,12 @@ func _process(delta: float) -> void:
 	toast_time = maxf(0, toast_time - delta)
 	toast_label.modulate.a = minf(1, toast_time * 3)
 	feedback.color.a = maxf(0, feedback.color.a - delta * 0.8)
+
+func _refresh_input_hints(_type = 0, _device = -1) -> void:
+	var controller := RailwayController.using_controller()
+	if tutorial_captions.size() == 2:
+		tutorial_captions[0].text = tr("LEFT STICK TO MOVE" if controller else "MOVE LEFT / RIGHT")
+		tutorial_captions[1].text = tr("RIGHT TRIGGER / BUMPER TO SHOOT" if controller else "CLICK TO SHOOT")
+	if speed_hint != null: speed_hint.text = tr("Click left stick to toggle double speed" if controller else "Press Shift to toggle double speed")
+	if power_hint != null: power_hint.text = tr("Left trigger / bumper: Activate the highlighted power.\nRight stick: Aim. Menu / Options: Play or pause." if controller else "SPACE: Activate the highlighted power.\nEach press uses one ready power.")
+	refresh()

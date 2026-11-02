@@ -20,3 +20,7 @@ Godot/*.exe
 
 # Local Python simulation/import bytecode
 __pycache__/
+
+# Local client analytics configuration is bundled in builds, never committed.
+/FeedingABlackHoldGame/railway_analytics.local.cfg
+/output/railway-fury-trailer*/

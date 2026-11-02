@@ -1,16 +1,15 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "full_app": 5520300,
   "demo_app": 5520330,
-  "planned_release": "2027-03-22T10:00:00-07:00",
-  "requested_usd_price": 2.99,
-  "price_saved": false,
-  "published": false,
-  "base_commit": "d78c78e01d29482d4f5e92a75f3475e4f3b1163b",
+  "generated_utc": "2026-11-02T22:38:10.704601+00:00",
+  "base_commit": "07629e1a1ca77cbf86870988800fc273069108d3",
   "qa": {
-    "full_pack_checks": 11,
-    "demo_pack_checks": 11,
-    "controller_checks": 88
+    "full_pack_checks": 15,
+    "demo_pack_checks": 15,
+    "controller_checks": 88,
+    "analytics_checks": 12,
+    "menu_checks": 19
   },
   "binaries": {
     "Full": {
@@ -20,11 +19,11 @@
       },
       "RailwayFury.exe": {
         "bytes": 104644608,
-        "sha256": "6f0b0f23807323301f974837bf09f693797bc74f142d000d3928c9d7a674891a"
+        "sha256": "7a0fc54be3f4a8eea45a087ac9f88b9aed0679a6572cb5d9cc5afe53f5d0b0bf"
       },
       "RailwayFury.pck": {
-        "bytes": 249862236,
-        "sha256": "332b4874c19d05091e012ddf33ad24d7b6c7af9455dd16fef87e0c1d74e004ff"
+        "bytes": 249864144,
+        "sha256": "73276dc64859116999005dd0a7e6bdc40f29f866e75d89cbe918cefa7d25ad21"
       },
       "steam_api64.dll": {
         "bytes": 317080,
@@ -38,11 +37,11 @@
       },
       "RailwayFuryDemo.exe": {
         "bytes": 104644608,
-        "sha256": "61823705f31a2b3d56df5de41deb51dc8edb8e039b98a622ab282e70651a03ac"
+        "sha256": "7ada45e05ac42c4f8dd0bd4eca290cc9eaf43d4f7735c6c344884e9253eb74b8"
       },
       "RailwayFuryDemo.pck": {
-        "bytes": 237999512,
-        "sha256": "0fc6514a46c53f893015eb7e8df0f59522cfa4f02726516b09313093a4adceec"
+        "bytes": 238001436,
+        "sha256": "5a17fbbe58505aa8cb51845a103af57eb42ddceba345feedef9e190945b73d8d"
       },
       "steam_api64.dll": {
         "bytes": 317080,
@@ -51,11 +50,12 @@
     }
   },
   "runtime_sources": {
-    "project.godot": "8d4a7a6fdd43c7c62de4a6570e8d4ded01f813f0e79f2015eb49ab7635f0de68",
+    "project.godot": "ef3b6c0bb0a33622acfe1512567f8c4960a1e9d60f128a617d5d0b793d02ce0f",
     "SteamHandler.gd": "23ceb7aae753acf374e7664f9108e1b2574bcced5815fd17212cac16535eeb25",
     "VirtualCursor.gd": "89c9201fe02981df567fddbe0abd456b29f4dc351fb85e8c8255d320c564b9f3",
-    "UpgradeScreen.gd": "93babc0d21b225b4d2a72110feb1707adae38a1ef53fa280eb648ed0f1010551",
-    "Core/Boot/GameLauncher.gd": "94e178457223d125c8ef043c35cf3b5030186b067d5fa544180b1a495a17372a",
+    "GameAnalyticsManager.gd": "f69198abc274cbde6f85db4f981f69f9d00006c2dad499c850e919213fa3f83a",
+    "UpgradeScreen.gd": "9be985f5a4ce9a0ba7dfdae15c11d064d129568c83dd0d0769bffffc7cc6b0f0",
+    "Core/Boot/GameLauncher.gd": "0ffaf4d4461d3b68494c973105c7f1673990883755662e97401e26a54d6a21db",
     "Games/RowDivers/RowDiversAchievementPulse.gd": "b77856c15ccf6fa71acd52990ef6bce3c184d4bf3ee320cd108cddf28e9e416e",
     "Games/RowDivers/RowDiversActor.gd": "cb1e8851a9925cf0f842bee916a14c3b1ce3d2206e72c77c49bf6e59f509f3a0",
     "Games/RowDivers/RowDiversAnalytics.gd": "1bab242032cbebbfd6c35e90ef32734b802abfd00ab40df435472d81a66784df",
@@ -92,5 +92,11 @@
     "Games/RowDivers/RowDiversUpgradeTreeAdapter.gd": "3dc3b37b22ad6545cda83c87b33e42c85d86ffdc2fc1229531a8ea2029a29b48",
     "Games/RowDivers/Scenes/RowDiversBattleScene.gd": "f3c3358e11e1a1ec132143233507b32109205047b0c0f23bdd4b69262a811586",
     "Games/RowDivers/Scenes/RowDiversEnding.gd": "e37c8ea1d72749576e780e8f4f3f5eff7368d863437e6d3ad606335b20e59637"
+  },
+  "steam_upload": {
+    "uploaded": true,
+    "set_live": false,
+    "full_build_id": 26391624,
+    "demo_build_id": 26391630
   }
 }

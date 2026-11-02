@@ -1,7 +1,27 @@
 # Railway Fury analytics
 
-Uses the existing GameAnalytics manager and configured project credentials. Railway
-Fury now has the `rowdivers` session identity instead of falling through to Vanguard.
+Uses the existing REST GameAnalytics manager with separate Windows/Steam games in
+the Beep2Bleep organization:
+
+| Edition | GameAnalytics game | Project settings prefix |
+|---|---|---|
+| Full | [Railway Fury (359020)](https://tool.gameanalytics.com/game/359020/realtime/live-events) | `gameanalytics/railway_full_` |
+| Demo | [Railway Fury Demo (359021)](https://tool.gameanalytics.com/game/359021/realtime/live-events) | `gameanalytics/railway_demo_` |
+
+Each prefix has `game_key` and `secret_key` settings loaded from the ignored local
+file `res://railway_analytics.local.cfg`. The file has a `[gameanalytics]` section
+with `railway_full_game_key`, `railway_full_secret_key`, `railway_demo_game_key`,
+and `railway_demo_secret_key` string values. Keep these values out of GitHub.
+The export tooling includes this local file in release packs, and the Steam build
+script requires it before exporting. The demo
+export feature (or the editor demo setting) selects the demo credentials; full
+builds select the full credentials. Neither falls back to another game's keys.
+The session identity remains `rowdivers`, with separate state files
+`user://gameanalytics_state_rowdivers_full.cfg` and
+`user://gameanalytics_state_rowdivers_demo.cfg`. These new state names also reset
+first-start tracking previously sent to the shared game's credentials.
+The launcher starts a session when entering Railway Fury, even when the save's
+once-only gameplay milestones have already been sent.
 
 | Design event | Trigger |
 |---|---|
@@ -37,11 +57,29 @@ JSON save/reload deduplication, separate modes/trees, older saves, and missing s
 Run it in an isolated project with the helper, `RowDiversEndings.gd`, and a fake GameAnalytics node;
 it deliberately does not use production analytics.
 
-The full-project integration check passes eight additional cases for actual payload
-construction, session identity, and preview suppression in both modes. It replaces
+The full-project integration check covers twelve cases for actual payload
+construction, edition credentials/state isolation, session identity, and preview
+suppression in both modes. It replaces
 the production manager with an in-memory transport and performs no analytics HTTP
 requests or player-progress writes. With `global/HighLevelMode=all`, run:
 
 ```powershell
 & './Godot/Godot_v4.6-stable_win64_console.exe' --headless --path FeedingABlackHoldGame --script res://Games/RowDivers/Tools/VerifyAnalyticsIntegration.gd
 ```
+
+On 2026-10-30, both editions passed a live smoke check through the real Godot
+manager: init and events requests returned HTTP 200. Verification sessions use
+build `analytics-verification-20261030` and the design event
+`railway_fury:integration_check`, with `verification=true` and the edition's `demo`
+flag. This intentionally creates a labelled test session in each live game.
+Run the explicit network check from the repository root with the source project
+in launcher mode (never as part of routine offline checks):
+
+```powershell
+& './Godot/Godot_v4.6-stable_win64_console.exe' --headless --path FeedingABlackHoldGame --script "$PWD/tools/railway_steam/verify_analytics_live.gd" -- full
+& './Godot/Godot_v4.6-stable_win64_console.exe' --headless --path FeedingABlackHoldGame --script "$PWD/tools/railway_steam/verify_analytics_live.gd" -- demo
+```
+
+Inspect Realtime > Live events for immediate verification; aggregated dashboards
+can lag behind ingestion. Older distributed builds retain their old keys until
+replaced by a rebuilt version.

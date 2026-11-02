@@ -15,7 +15,15 @@ func run():
 	root.add_child(capture)
 	root.get_node("Util").set_active_game_id("rowdivers")
 	checks.session_identity = capture._get_active_credentials().game_id == "rowdivers"
-	checks.state_identity = capture._get_state_path() == "user://gameanalytics_state_rowdivers.cfg"
+	checks.state_identity = capture._get_state_path() == "user://gameanalytics_state_rowdivers_full.cfg"
+	var full_credentials = capture._get_active_credentials()
+	ProjectSettings.set_setting("railway_fury/demo/enabled", true)
+	var demo_credentials = capture._get_active_credentials()
+	checks.demo_state_identity = capture._get_state_path() == "user://gameanalytics_state_rowdivers_demo.cfg"
+	checks.separate_keys = full_credentials.game_key != demo_credentials.game_key and full_credentials.secret_key != demo_credentials.secret_key
+	checks.full_credentials = full_credentials.game_key == ProjectSettings.get_setting("gameanalytics/railway_full_game_key") and full_credentials.secret_key == ProjectSettings.get_setting("gameanalytics/railway_full_secret_key") and not full_credentials.game_key.is_empty()
+	checks.demo_credentials = demo_credentials.game_key == ProjectSettings.get_setting("gameanalytics/railway_demo_game_key") and demo_credentials.secret_key == ProjectSettings.get_setting("gameanalytics/railway_demo_secret_key") and not demo_credentials.game_key.is_empty()
+	ProjectSettings.set_setting("railway_fury/demo/enabled", false)
 	capture._enabled = true
 	capture._send_active_game_progression_start_event()
 	checks.session_progression = capture.events.size() == 1 and capture.events[0].event_id == "Start:rowdivers:game"

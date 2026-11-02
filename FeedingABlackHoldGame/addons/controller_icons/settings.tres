@@ -4,5 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+joypad_fallback = 10
+joypad_deadzone = 0.2
 custom_mapper = null
 custom_label_settings = null

@@ -50,12 +50,10 @@ func _get_joypad_type(device, fallback, force_controller_icon_style):
         return ControllerSettings.Devices.LUNA
     elif "PS3 Controller" in controller_name:
         return ControllerSettings.Devices.PS3
-    elif "PS4 Controller" in controller_name or \
-"DUALSHOCK 4" in controller_name:
-        return ControllerSettings.Devices.PS4
-    elif "PS5 Controller" in controller_name or \
-"DualSense" in controller_name:
+    elif "ps5" in controller_name.to_lower() or "dualsense" in controller_name.to_lower():
         return ControllerSettings.Devices.PS5
+    elif "ps4" in controller_name.to_lower() or "dualshock" in controller_name.to_lower() or controller_name == "Wireless Controller" or "Sony" in controller_name:
+        return ControllerSettings.Devices.PS4
     elif "Stadia Controller" in controller_name:
         return ControllerSettings.Devices.STADIA
     elif "Steam Controller" in controller_name:

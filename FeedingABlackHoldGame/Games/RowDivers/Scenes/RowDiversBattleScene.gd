@@ -100,6 +100,10 @@ func active(key: String) -> bool:
 	return abilities.has(key) and float(abilities[key].active) > 0
 
 func _ready() -> void:
+	RailwayController.battle = self
+	RailwayController.pointer = Vector2.INF
+	RailwayController.action_pressed.connect(_controller_action)
+	VirtualCursor.set_scene_enabled(true)
 	corridor_width = 1.4 if free_aim_mode else 1.0
 	data = Progress.load_data()
 	progress_save_path = ProjectSettings.globalize_path(Progress.progress_path())
@@ -476,9 +480,32 @@ func _resume() -> void:
 	VirtualCursor.set_gameplay_pointer_hidden(true)
 
 func _exit_tree() -> void:
+	if RailwayController.battle == self: RailwayController.battle = null
+	VirtualCursor.set_scene_enabled(false)
 	VirtualCursor.set_gameplay_pointer_hidden(false)
 	if persist_results and not ended and not data.is_empty() and not progress_save_path.is_empty():
 		Progress.save_data(data,progress_save_path)
+
+func _controller_action(action: String) -> void:
+	if action == "pause":
+		if ended: return
+		if presentation.settings_panel.visible:
+			presentation.settings_panel.hide()
+		elif suspended:
+			_resume()
+		else:
+			suspended = true
+			presentation.pause()
+			VirtualCursor.set_gameplay_pointer_hidden(false)
+		return
+	if suspended or ended: return
+	match action:
+		"fire":
+			if fire_mode in ["Click", "Hold"]: _shoot()
+			for weapon in extra_timers:
+				if unlocked(weapon) and auxiliary_fire_mode in ["Click", "Hold"]: _shoot(weapon)
+		"ability": _activate_next_powerup()
+		"run": running = not running
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -622,6 +649,8 @@ func _advance_horizontal_axis(target: float, delta: float) -> float:
 
 func _read_horizontal(delta: float) -> float:
 	var target := float(Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT))
+	var stick := RailwayController.stick(JOY_AXIS_LEFT_X, JOY_AXIS_LEFT_Y)
+	if stick.x != 0: target = stick.x
 	return _advance_horizontal_axis(target, delta)
 
 func _simulate_step(delta: float) -> void:
@@ -632,6 +661,7 @@ func _simulate_step(delta: float) -> void:
 	var row_tick: bool = row_timer >= 2.0 - 0.000001
 	if row_tick: row_timer = 0.0
 	if suspended: return
+	if RailwayController.using_controller(): RailwayController.aim_pointer(delta, get_viewport().get_visible_rect().size)
 	if editor_autopilot_enabled(): _step_editor_pilot(delta)
 	_auto_activate_abilities()
 	elapsed += delta
@@ -677,13 +707,13 @@ func _simulate_step(delta: float) -> void:
 		crosshair.position = _aim_pointer() - crosshair.size * 0.5
 	var target = _target(s("Distance_Range"))
 	crosshair.modulate = Color("8fe6a0") if not target.is_empty() else Color("eadbc5")
-	if fire_mode == "Hold" and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT): _shoot()
+	if fire_mode == "Hold" and (Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or RailwayController.firing()): _shoot()
 	if fire_override: _shoot()
 	if (fire_mode == "Auto" or fast_combat_assist_enabled()) and not target.is_empty(): _shoot()
 	for weapon in extra_timers:
 		if not unlocked(weapon): continue
 		if fire_override: _shoot(weapon)
-		if auxiliary_fire_mode == "Hold" and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT): _shoot(weapon)
+		if auxiliary_fire_mode == "Hold" and (Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or RailwayController.firing()): _shoot(weapon)
 		if (auxiliary_fire_mode == "Auto" or fast_combat_assist_enabled()) and not target.is_empty(): _shoot(weapon)
 	if unlocked("Dagger") and dagger_timer <= 0:
 		var near = _dagger_target()
@@ -769,7 +799,10 @@ func _beam_effect(target: Vector3) -> void:
 func _aim_pointer() -> Vector2:
 	if editor_autopilot_enabled() and aim_override.is_finite():
 		return camera.unproject_position(_aim_origin() + aim_override * maxf(1,s("Distance_Range")))
-	return get_viewport().get_mouse_position() if is_nan(pointer_override.x) else pointer_override
+	if not is_nan(pointer_override.x): return pointer_override
+	if RailwayController.using_controller():
+		return RailwayController.aim_pointer(0, get_viewport().get_visible_rect().size)
+	return get_viewport().get_mouse_position()
 
 func _aim_direction() -> Vector3:
 	# Project through the actual cursor from the camera, including its height/pitch.
@@ -821,7 +854,7 @@ func _target(reach: float, mouse = false) -> Dictionary:
 					best = along
 				continue
 			var screen = camera.unproject_position(enemy.node.position)
-			var pointer: Vector2 = get_viewport().get_mouse_position() if is_nan(pointer_override.x) else pointer_override
+			var pointer: Vector2 = _aim_pointer()
 			aligned = screen.distance_to(pointer) < 80
 		if ahead > 0 and ahead <= best and aligned:
 			closest = enemy

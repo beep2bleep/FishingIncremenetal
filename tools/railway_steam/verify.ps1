@@ -16,6 +16,6 @@ foreach ($railwayEdition in @('Full','Demo')) {
     & (Join-Path $railwayRoot 'Godot/Godot_v4.6-stable_win64_console.exe') --headless --path $railwayRuntime --main-pack $railwayPack --script (Join-Path $railwayRoot 'FeedingABlackHoldGame/Games/RowDivers/Tools/ProbeSteamPack.gd') *> $railwayLog
     if ($LASTEXITCODE -ne 0) { throw "$railwayEdition pack probe failed." }
     $railwayText = Get-Content -LiteralPath $railwayLog -Raw
-    if ($railwayText -notmatch 'STEAM PACK: 11 checks; 0 failures' -or $railwayText -match 'SCRIPT ERROR|No loader found|Failed loading resource|Failed to load script') { throw "$railwayEdition pack is incomplete. See $railwayLog" }
-    Write-Output "$railwayEdition passed 11 independent packaged-runtime checks."
+    if ($railwayText -notmatch 'STEAM PACK: 15 checks; 0 failures' -or $railwayText -match 'SCRIPT ERROR|No loader found|Failed loading resource|Failed to load script') { throw "$railwayEdition pack is incomplete. See $railwayLog" }
+    Write-Output "$railwayEdition passed 15 independent packaged-runtime checks."
 }

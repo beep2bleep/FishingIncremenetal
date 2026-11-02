@@ -46,6 +46,8 @@ var _scene_enabled := false
 var _gameplay_pointer_hidden := false
 
 func set_gameplay_pointer_hidden(value: bool) -> void:
+    if value and _left_mouse_down: _emit_mouse_button(MOUSE_BUTTON_LEFT, false)
+    if value and _right_mouse_down: _emit_mouse_button(MOUSE_BUTTON_RIGHT, false)
     _gameplay_pointer_hidden = value
     _refresh_cursor_display_mode()
 var _virtual_cursor_active := false
@@ -99,8 +101,8 @@ func set_scene_enabled(value: bool) -> void:
         if ControllerIcons != null and ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER:
             _set_virtual_cursor_active(true)
     else:
-        _left_mouse_down = false
-        _right_mouse_down = false
+        if _left_mouse_down: _emit_mouse_button(MOUSE_BUTTON_LEFT, false)
+        if _right_mouse_down: _emit_mouse_button(MOUSE_BUTTON_RIGHT, false)
         _set_virtual_cursor_active(false)
 
 func activate_for_controller() -> void:
@@ -184,6 +186,8 @@ func _input(event: InputEvent) -> void:
         return
     if _injecting_mouse_event:
         return
+    if _gameplay_pointer_hidden:
+        return
 
     if event is InputEventMouseMotion:
         var motion_event := event as InputEventMouseMotion
@@ -241,6 +245,8 @@ func _process(delta: float) -> void:
         _open_pit_cursor_sparks[idx] = spark
     if _spark_canvas != null and not _open_pit_cursor_sparks.is_empty():
         _spark_canvas.queue_redraw()
+    if _gameplay_pointer_hidden:
+        return
     var device := _get_target_device()
     if device == -1:
         return

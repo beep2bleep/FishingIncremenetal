@@ -112,6 +112,13 @@ var last_hovered_game_id: String = ""
 var game_card_fit_queued: bool = false
 
 func _ready() -> void:
+    if Util.is_row_divers_game_active():
+        var controller_hints = preload("res://Games/RowDivers/RowDiversInputHints.gd").new()
+        controller_hints.context = "menu"
+        add_child(controller_hints)
+        controller_hints.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+        controller_hints.offset_top = -42
+        controller_hints.offset_bottom = -8
     Global.game_state = Util.GAME_STATES.MAIN_MENU
     Util.set_high_level_mode_id(Util.HIGH_LEVEL_MODE_ALL)
     _apply_open_pit_launcher_availability()
@@ -255,6 +262,7 @@ func _start_game(game_id: String) -> void:
         SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
         return
     if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
+        _refresh_gameanalytics_session_after_transition()
         SceneChanger.change_to_new_scene(Util.get_upgrade_scene_path(), null, 0.2)
         return
     SceneChanger.change_to_new_scene(Util.get_main_scene_path(), null, 0.2)
@@ -2262,8 +2270,9 @@ func _setup_row_divers_button() -> void:
     version_label.offset_right = -24.0
     version_label.offset_bottom = -20.0
     version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-    var other_games = preload("res://Games/RowDivers/RowDiversOtherGames.gd").new()
-    game_cards_grid.get_parent().add_child(other_games)
+    if preload("res://Games/RowDivers/RowDiversDemo.gd").enabled():
+        var other_games = preload("res://Games/RowDivers/RowDiversOtherGames.gd").new()
+        game_cards_grid.get_parent().add_child(other_games)
     for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button]:
         if button != null and is_instance_valid(button):
             button.hide()

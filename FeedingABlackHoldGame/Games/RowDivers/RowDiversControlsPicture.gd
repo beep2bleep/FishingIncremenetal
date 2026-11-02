@@ -7,6 +7,7 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(310, 170)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	resized.connect(queue_redraw)
+	ControllerIcons.input_type_changed.connect(func(_type, _device): queue_redraw())
 
 func _key(rect: Rect2, text: String) -> void:
 	draw_style_box(Style.panel(Color("263443"), Style.GOLD), rect)
@@ -16,6 +17,12 @@ func _key(rect: Rect2, text: String) -> void:
 func _draw() -> void:
 	var center = size.x * .5
 	var gold = Style.GOLD
+	if RailwayController.using_controller():
+		var paths := ["joypad/rt", "joypad/rb"] if shooting else ["joypad/l_stick", "joypad/r_stick"]
+		for i in range(paths.size()):
+			var texture := RailwayController.glyph(paths[i])
+			if texture != null: draw_texture_rect(texture, Rect2(center - 120 + i * 130, 22, 110, 110), false)
+		return
 	if shooting:
 		var mouse = Rect2(center-38, 16, 76, 116)
 		draw_style_box(Style.panel(Color("263443"), gold), mouse)

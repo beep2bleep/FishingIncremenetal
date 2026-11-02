@@ -11,8 +11,16 @@ func check(ok, message):
 func run():
 	ProjectSettings.set_setting("railway_fury/debug/enable_speed_cheats", false)
 	var demo = Progress.Demo.enabled()
+	check(ProjectSettings.get_setting("application/config/version", "") == "0.2", "Steam pack version is 0.2")
 	root.get_node("Util").set_active_game_id("rowdivers")
 	var steam = root.get_node("SteamHandler")
+	var analytics = root.get_node("GameAnalytics")
+	var credentials = analytics._get_active_credentials()
+	var edition = "demo" if demo else "full"
+	var expected_key = ProjectSettings.get_setting("gameanalytics/railway_%s_game_key" % edition, "")
+	check(not str(expected_key).is_empty() and credentials.game_key == expected_key, "Pack routes analytics to the correct edition key")
+	check(credentials.secret_key == ProjectSettings.get_setting("gameanalytics/railway_%s_secret_key" % edition, "") and not str(credentials.secret_key).is_empty(), "Edition ingestion secret is packed")
+	check(analytics._get_state_path() == "user://gameanalytics_state_rowdivers_%s.cfg" % edition, "Edition analytics state isolation")
 	check(OS.has_feature("railway_steam"), "Steam feature is packed")
 	check(Engine.has_singleton("Steam"), "Native Steam SDK loads from packaged DLLs")
 	var app_icon = ProjectSettings.get_setting_with_override("application/config/icon")

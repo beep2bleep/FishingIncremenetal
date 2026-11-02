@@ -9,7 +9,7 @@ func run():
 	var classic = Progress.design().duplicate(true)
 	Progress.free_aim_mode = true
 	checks.separate_slot = Progress.progress_path() != classic_path
-	checks.own_catalog = Progress.design().upgrades.size()==124 and classic.upgrades.size()==112
+	checks.own_catalog = Progress.design().upgrades.size()==125 and classic.upgrades.size()==113
 	var fresh = Progress.fresh()
 	fresh.max_prestige = 1
 	fresh.levels["6660"] = 1 # Owned crown gate; eligibility still requires its prestige.
@@ -42,7 +42,7 @@ func run():
 		state.max_prestige = p
 		Progress.active_data_cache = state
 		load("res://Games/RowDivers/RowDiversUpgradeTreeAdapter.gd").apply_simulation_upgrades()
-		checks["shop_count_"+str(p)] = global.game_mode_data_manager.upgrades.size() == {0:109,1:114,3:124}[p]
+		checks["shop_count_"+str(p)] = global.game_mode_data_manager.upgrades.size() == {0:110,1:115,3:125}[p]
 		var tree = load("res://Tech Tree Stuff/Tech Tree.tscn").instantiate()
 		root.add_child(tree)
 		tree.setup()

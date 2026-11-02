@@ -15,6 +15,8 @@ var choice_made = false
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	VirtualCursor.set_scene_enabled(true)
+	VirtualCursor.set_gameplay_pointer_hidden(false)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Global.game_state = Util.GAME_STATES.UPGRADES
 	audio = preload("res://Games/RowDivers/RowDiversAudio.gd").new()
@@ -121,3 +123,6 @@ func _choose(choice: String) -> void:
 	if reveal != null: reveal.kill()
 	_reveal()
 	continue_button.show()
+
+func _exit_tree() -> void:
+	VirtualCursor.set_scene_enabled(false)

@@ -45,7 +45,7 @@ func run():
 	Progress.free_aim_mode = true
 	var catalog = Progress.design()
 	checks.own_save = Progress.progress_path() == Progress.FREE_AIM_SAVE_PATH
-	checks.nodes = catalog.upgrades.size() == 124
+	checks.nodes = catalog.upgrades.size() == 125
 	var maxed = Progress.fresh()
 	maxed.max_prestige = 3
 	maxed.wallet = [1e30,1e30,1e30]

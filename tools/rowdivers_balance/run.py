@@ -60,10 +60,11 @@ def main():
             shutil.copyfile(source_file, dest / rel)
         if args.catalog:
             shutil.copyfile(args.catalog, dest / 'Data/row_divers.json')
-        for rel in ['RowDiversDemo.gd','RowDiversTiming.gd','RowDiversFireWaves.gd','Simulation/FlightPilot.gd','Simulation/GeneratedFreeAimModel.gd']:
+        for rel in ['RowDiversHallway.gd','RowDiversDemo.gd','RowDiversTiming.gd','RowDiversFireWaves.gd','Simulation/FlightPilot.gd','Simulation/GeneratedFreeAimModel.gd']:
             frozen = args.frozen_snapshot / (Path(rel).name+'.txt') if args.frozen_snapshot else None
             shutil.copyfile(frozen if frozen and frozen.exists() else MODULE/rel, dest/rel)
-        flight_catalog = args.catalog if args.catalog else MODULE/'Data/row_divers_free_aim.json'
+        frozen_flight_catalog = args.frozen_snapshot/'row_divers_free_aim.json' if args.frozen_snapshot else None
+        flight_catalog = args.catalog or (frozen_flight_catalog if frozen_flight_catalog and frozen_flight_catalog.exists() else MODULE/'Data/row_divers_free_aim.json')
         shutil.copyfile(flight_catalog, dest/'Data/row_divers_free_aim.json')
         if config.get('free_aim'):
             shutil.copyfile(flight_catalog, dest/'Data/row_divers.json')
@@ -80,6 +81,9 @@ def main():
         for line in process.stdout:
             print(line, end='', flush=True)
             script_error |= 'SCRIPT ERROR:' in line or line.startswith('ERROR:')
+            if script_error:
+                process.terminate()
+                break
         status = process.wait()
         if status or script_error:
             raise SystemExit(f'Godot simulation failed (exit={status}, error output={script_error})')

@@ -18,7 +18,9 @@
 	"crowns_dropped": {
 
 	},
+	"gameplay_seconds": 0.0,
 	"kills": 0,
+	"leaderboards_assisted": false,
 	"levels": {
 		"5480": 1,
 		"5491": 1,
@@ -131,13 +133,14 @@
 		"6721": 1,
 		"6725": 4,
 		"6751": 1,
-		"6766": 2
+		"6766": 2,
+		"ghost_power": 1
 	},
 	"max_prestige": 0,
 	"prestige": 3,
 	"runs": 0,
 	"spent": [
-		565057.0,
+		565059.0,
 		79.0,
 		3.0
 	],
@@ -193,6 +196,10 @@
 		"PickupRange": 5.88,
 		"Porcupine_Damage": 20.0
 	},
+	"timed_milestones": {
+
+	},
+	"timing_complete": true,
 	"unlocks": {
 		"AchievementsTab": true,
 		"ArrowShield": true,
@@ -202,6 +209,7 @@
 		"Dagger": true,
 		"Dragon": true,
 		"Ghost": true,
+		"GhostPower": true,
 		"Harvester": true,
 		"Hold": true,
 		"Shuriken": true,

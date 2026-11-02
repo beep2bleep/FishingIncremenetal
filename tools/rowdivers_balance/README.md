@@ -1,5 +1,17 @@
 # Railway Fury offline balance simulator
 
+Current Free Aim rerun (27 October 2026):
+[`CurrentPlaythrough20261027/REPORT.md`](../../FeedingABlackHoldGame/Games/RowDivers/Simulation/CurrentPlaythrough20261027/REPORT.md).
+Three fresh current-power campaigns finish in 37 / 33 / 33 runs, with complete
+purchase, achievement, kill-range and fire-wave logs plus deterministic replays.
+The report also records a full-candidate check showing the existing two-item
+buyer's shortlist misses a valuable Shield purchase. No balance changes were made.
+
+```powershell
+python tools/rowdivers_balance/run.py --free-aim --frozen-snapshot FeedingABlackHoldGame/Games/RowDivers/Simulation/CurrentPlaythrough20261027/SourceSnapshot --config FeedingABlackHoldGame/Games/RowDivers/Simulation/CurrentPlaythrough20261027/config.json --output current_free_aim_reproduced.json
+```
+
+
 The installed rebalance and its 35 full campaign comparisons are documented in
 [`TUNING_REPORT.md`](../../FeedingABlackHoldGame/Games/RowDivers/Simulation/Tuning/TUNING_REPORT.md).
 In the game, **Settings → UPGRADE TREE (RESTART)** selects **REBALANCED** or **PREVIOUS**.

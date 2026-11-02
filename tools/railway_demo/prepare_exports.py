@@ -37,7 +37,7 @@ for platform,base,folder,filename in [('Windows',0,'Windows','RailwayFuryDemo.ex
     block=next(b for b in blocks if b.startswith('[preset.%d]'%base))
     index=max(int(re.match(r'\[preset\.(\d+)\]',b).group(1)) for b in blocks)+1
     block=re.sub(r'\[preset\.\d+(\.options)?\]',lambda m:f'[preset.{index}{m[1] or ""}]',block)
-    values={'name':f'"Railway Fury Demo {platform}"','custom_features':'"railway_demo"','export_filter':'"resources"','include_filter':'"*.json,*.csv"','exclude_filter':f'"{exclude}"','export_path':f'"../Build - RailwayFury/Demo/{folder}/{filename}"','encrypt_pck':'false','script_export_mode':'1'}
+    values={'name':f'"Railway Fury Demo {platform}"','custom_features':'"railway_demo"','export_filter':'"resources"','include_filter':'"*.json,*.csv,railway_analytics.local.cfg"','exclude_filter':f'"{exclude}"','export_path':f'"../Build - RailwayFury/Demo/{folder}/{filename}"','encrypt_pck':'false','script_export_mode':'1'}
     for key,value in values.items():block=re.sub(r'^'+re.escape(key)+r'=.*$',key+'='+value,block,flags=re.M)
     # Select runtime scenes plus assets loaded by name. Godot includes their
     # recursive dependencies and autoloads; unrelated game artwork is omitted.

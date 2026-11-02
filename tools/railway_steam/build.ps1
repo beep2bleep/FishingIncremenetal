@@ -3,6 +3,9 @@ $railwayRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $railwayEngine = Join-Path $railwayRoot 'Godot/Godot_v4.6-stable_win64_console.exe'
 Push-Location $railwayRoot
 try {
+    if (-not (Test-Path -LiteralPath 'FeedingABlackHoldGame/railway_analytics.local.cfg')) {
+        throw 'Missing ignored railway_analytics.local.cfg. Configure edition analytics before exporting.'
+    }
     & python tools/railway_steam/prepare_exports.py
     if ($LASTEXITCODE -ne 0) { throw 'Steam export preparation failed.' }
     foreach ($railwayEdition in @('Full', 'Demo')) {

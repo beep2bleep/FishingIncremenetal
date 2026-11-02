@@ -46,6 +46,10 @@ var _request_in_flight := false
 var _init_done := false
 
 func _ready() -> void:
+    var local_config := ConfigFile.new()
+    if local_config.load("res://railway_analytics.local.cfg") == OK:
+        for key in local_config.get_section_keys("gameanalytics"):
+            ProjectSettings.set_setting("gameanalytics/" + key, local_config.get_value("gameanalytics", key))
     _http = HTTPRequest.new()
     _http.timeout = 10.0
     add_child(_http)
@@ -174,7 +178,7 @@ func refresh_active_game_session(force_restart: bool = false) -> void:
         _enabled = false
         push_warning("GameAnalyticsManager: missing analytics credentials for active game '%s'." % game_id)
         return
-    if not force_restart and _enabled and _configured_game_id == game_id and _session_id != "":
+    if not force_restart and _enabled and _configured_game_id == game_id and _game_key == game_key and _session_id != "":
         return
 
     _configured_game_id = game_id
@@ -441,6 +445,8 @@ func _get_state_path() -> String:
     var game_id: String = _configured_game_id
     if game_id == "":
         game_id = Util.get_active_game_id()
+    if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
+        game_id += "_demo" if preload("res://Games/RowDivers/RowDiversDemo.gd").enabled() else "_full"
     return STATE_PATH_TEMPLATE % game_id
 
 func _get_active_credentials() -> Dictionary:
@@ -451,10 +457,11 @@ func _get_active_credentials() -> Dictionary:
             "secret_key": DATA_BREACH_SECRET_KEY,
         }
     if Util.is_row_divers_game_active():
+        var edition := "demo" if preload("res://Games/RowDivers/RowDiversDemo.gd").enabled() else "full"
         return {
             "game_id": Util.ACTIVE_GAME_ROW_DIVERS,
-            "game_key": _default_vanguard_game_key,
-            "secret_key": _default_vanguard_secret_key,
+            "game_key": str(ProjectSettings.get_setting("gameanalytics/railway_%s_game_key" % edition, "")),
+            "secret_key": str(ProjectSettings.get_setting("gameanalytics/railway_%s_secret_key" % edition, "")),
         }
     if Util.is_mining_game_active():
         return {
