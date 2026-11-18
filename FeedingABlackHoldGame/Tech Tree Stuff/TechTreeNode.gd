@@ -1,5 +1,6 @@
 extends Node2D
 class_name TechTreeNode
+var controller_purchase_armed := false
 
 const PARTIAL_FILL_ALPHA: float = 0.42
 const TOOLTIP_CLOSE_DELAY: float = 0.0
@@ -240,9 +241,15 @@ func _on_settings_updated():
 func _process(_delta: float) -> void:
     if upgrade == null:
         return
+    if Util.is_row_divers_game_active() and RailwayController.using_controller() and not VirtualCursor._virtual_cursor_active and get_viewport().gui_get_focus_owner() == click_mask:
+        return
     _update_hover_regions()
     var cursor_over_node: bool = _is_cursor_over_node_area()
     var cursor_over_tooltip: bool = _is_cursor_over_tooltip_area()
+    # A popup can temporarily suppress mouse_entered on other nodes. Retry after
+    # it closes, including when stick panning moves a node beneath the pointer.
+    if Util.is_row_divers_game_active() and RailwayController.using_controller() and VirtualCursor._virtual_cursor_active and RailwayController.menu_context in ["upgrades", "purchase"] and cursor_over_node and not _is_highlighted:
+        _on_click_mask_mouse_entered()
     if cursor_over_node != is_hovering_node:
         is_hovering_node = cursor_over_node
     if cursor_over_tooltip != is_hovering_tooltip:
@@ -373,6 +380,11 @@ func _on_click_mask_pressed() -> void :
         return
     if state == STATES.AVAILABLE and can_pay_cost == true:
         if SaveHandler.confirm_upgrade_purchase:
+            if Util.is_row_divers_game_active() and RailwayController.using_controller() and controller_purchase_armed:
+                controller_purchase_armed = false
+                _purchase_upgrade()
+                return
+            controller_purchase_armed = Util.is_row_divers_game_active() and RailwayController.using_controller()
             is_highlighted = true
             %"Click Mask".grab_focus()
             update()
@@ -714,6 +726,8 @@ func update():
 
     update_colors()
     update_panel()
+    if Util.is_row_divers_game_active():
+        preload("res://Games/RowDivers/RowDiversGothic.gd").style_upgrade(self)
 
 func _update_touch_buy_button() -> void:
     if touch_buy_button == null:
@@ -933,14 +947,19 @@ func _is_cursor_over_click_mask() -> bool:
         hovered = hovered.get_parent() as Control
     return false
 
+func _hover_pointer_position() -> Vector2:
+    if Util.is_row_divers_game_active() and RailwayController.using_controller() and VirtualCursor._virtual_cursor_active:
+        return VirtualCursor.get_screen_position()
+    return get_viewport().get_mouse_position()
+
 func _is_cursor_over_tooltip_area() -> bool:
-    return %"Tool Tip".visible and (_is_cursor_over_tooltip() or _point_in_control_rect(%"Tool Tip", get_viewport().get_mouse_position()))
+    return %"Tool Tip".visible and (_is_cursor_over_tooltip() or _point_in_control_rect(%"Tool Tip", _hover_pointer_position()))
 
 func _is_cursor_over_node_area() -> bool:
-    return _is_cursor_over_click_mask() or cached_node_hover_rect.has_point(get_viewport().get_mouse_position())
+    return _is_cursor_over_click_mask() or cached_node_hover_rect.has_point(_hover_pointer_position())
 
 func _is_any_tooltip_hovered_by_cursor() -> bool:
-    return _get_tooltip_owner_at_screen_position(get_viewport().get_mouse_position()) != null
+    return _get_tooltip_owner_at_screen_position(_hover_pointer_position()) != null
 
 func _get_hover_locked_tooltip_owner() -> TechTreeNode:
     for node: Node in get_tree().get_nodes_in_group(TOOLTIP_GROUP):
@@ -1004,6 +1023,7 @@ func _close_all_tooltips() -> void:
             (node as TechTreeNode)._force_close_tooltip()
 
 func _force_close_tooltip() -> void:
+    controller_purchase_armed = false
     is_hovering_node = false
     is_hovering_tooltip = false
     _cancel_tooltip_close()
@@ -1097,7 +1117,7 @@ func _on_click_mask_mouse_entered() -> void :
         return
     if is_hovering_node and _is_highlighted:
         return
-    var tooltip_owner_under_cursor: TechTreeNode = _get_tooltip_owner_at_screen_position(get_viewport().get_mouse_position())
+    var tooltip_owner_under_cursor: TechTreeNode = _get_tooltip_owner_at_screen_position(_hover_pointer_position())
     if tooltip_owner_under_cursor != null and tooltip_owner_under_cursor != self:
         return
     var active_tooltip_owner: TechTreeNode = _get_active_tooltip_owner()
@@ -1121,9 +1141,14 @@ func _on_click_mask_mouse_exited() -> void :
 
 
 func _on_click_mask_focus_entered() -> void :
+    if Util.is_row_divers_game_active() and RailwayController.using_controller():
+        _close_other_tooltips()
+        _cancel_tooltip_close()
+        is_highlighted = true
+        return
     if _should_ignore_hover_selection():
         return
-    var tooltip_owner_under_cursor: TechTreeNode = _get_tooltip_owner_at_screen_position(get_viewport().get_mouse_position())
+    var tooltip_owner_under_cursor: TechTreeNode = _get_tooltip_owner_at_screen_position(_hover_pointer_position())
     if tooltip_owner_under_cursor != null and tooltip_owner_under_cursor != self:
         return
     var active_tooltip_owner: TechTreeNode = _get_active_tooltip_owner()
@@ -1138,9 +1163,11 @@ func _on_click_mask_focus_entered() -> void :
 
 
 func _on_click_mask_focus_exited() -> void :
-    pass
+    controller_purchase_armed = false
 
 func _should_ignore_hover_selection() -> bool:
+    if Util.is_row_divers_game_active():
+        return RailwayController.using_controller() and not VirtualCursor._virtual_cursor_active
     return Global.game_state == Util.GAME_STATES.UPGRADES \
         and ControllerIcons != null \
         and ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER

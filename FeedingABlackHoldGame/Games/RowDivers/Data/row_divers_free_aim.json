@@ -1305,8 +1305,8 @@
       ]
     },
     {
-      "upgradeName": "Row Damage Resistance III",
-      "upgradeDescription": "Reduces the damage dealt by the row by 30%",
+      "upgradeName": "Railway Damage Resistance III",
+      "upgradeDescription": "Reduces the damage dealt by the railway by 30%",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -2080,8 +2080,8 @@
       ]
     },
     {
-      "upgradeName": "Row Damage Resistance I",
-      "upgradeDescription": "Reduces the damage dealt to armor by the row by 20%",
+      "upgradeName": "Railway Damage Resistance I",
+      "upgradeDescription": "Reduces the damage dealt to armor by the railway by 20%",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -4890,8 +4890,8 @@
       ]
     },
     {
-      "upgradeName": "Row Damage Resistance II",
-      "upgradeDescription": "Reduces the damage dealt by the row by 20%",
+      "upgradeName": "Railway Damage Resistance II",
+      "upgradeDescription": "Reduces the damage dealt by the railway by 20%",
       "maxLevel": 1,
       "level": 0,
       "unlockAtParentLevel": 1,
@@ -6232,7 +6232,7 @@
       {
         "achievementName": "First Crown",
         "achievementType": 4,
-        "description": "Complete The Row",
+        "description": "Complete The Railway",
         "currencyType": 0,
         "reward": 100
       },

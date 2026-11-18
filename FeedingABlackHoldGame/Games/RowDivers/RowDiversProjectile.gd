@@ -5,7 +5,9 @@ static var meshes: Dictionary = {}
 static func create(kind: String, hostile: bool = false) -> Node3D:
 	var root = Node3D.new()
 	root.name = "InkedProjectile"
-	var key = kind + ("_hostile" if hostile else "_player")
+	root.set_meta("projectile_kind", kind)
+	root.set_meta("projectile_hostile", hostile)
+	var key = kind + ("_hostile" if hostile else "_player") + ("_gothic" if preload("res://Games/RowDivers/RowDiversGraphics.gd").gothic() else "")
 	if not meshes.has(key): meshes[key] = _build(kind, hostile)
 	var visual = MeshInstance3D.new()
 	visual.name = "FlightVisual"
@@ -14,9 +16,19 @@ static func create(kind: String, hostile: bool = false) -> Node3D:
 	root.add_child(visual)
 	return root
 
+static func refresh(root: Node3D) -> void:
+	var kind: String = root.get_meta("projectile_kind", "Normal")
+	var hostile: bool = root.get_meta("projectile_hostile", false)
+	var key := kind + ("_hostile" if hostile else "_player") + ("_gothic" if preload("res://Games/RowDivers/RowDiversGraphics.gd").gothic() else "")
+	if not meshes.has(key): meshes[key] = _build(kind, hostile)
+	root.get_node("FlightVisual").mesh = meshes[key]
+
 static func _build(kind: String, hostile: bool) -> ArrayMesh:
 	var ink = Color("201b25")
 	var color: Color = {"Fire": Color("f6ab55"), "Cursed": Color("b99be5"), "Bat": Color("cb94ed"), "Poison": Color("a8ce70"), "LifeSteal": Color("e291ae"), "Critical": Color("f17c64")}.get(kind, Color("ead7a7"))
+	if preload("res://Games/RowDivers/RowDiversGraphics.gd").gothic():
+		ink = Color("100b12")
+		color = Color("b52c49") if hostile else Color("bba98e")
 	var surface = SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var outline = SurfaceTool.new()
@@ -38,6 +50,12 @@ static func _build(kind: String, hostile: bool) -> ArrayMesh:
 		_diamond(outline, Vector3(0,0,-.32), Vector3(.105,.105,.18), ink)
 		_diamond(surface, Vector3(0,0,-.335), Vector3(.078,.078,.14), color.lightened(.2))
 		_fin(surface, .105, .14, .34, color)
+	if preload("res://Games/RowDivers/RowDiversGraphics.gd").gothic():
+		# Vertebrae, a blood-red core and hooked barbs replace the clean shaft.
+		for i in range(5):
+			_diamond(surface, Vector3(0, 0, -.15 + i * .09), Vector3(.05, .05, .04), Color("b7ab92"))
+		_diamond(surface, Vector3(0, 0, -.2), Vector3(.06, .06, .24), Color("9d1b38"))
+		_fin(surface, .18 if hostile else .13, -.23, -.02, Color("91304a"))
 	var material = StandardMaterial3D.new()
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.vertex_color_use_as_albedo = true

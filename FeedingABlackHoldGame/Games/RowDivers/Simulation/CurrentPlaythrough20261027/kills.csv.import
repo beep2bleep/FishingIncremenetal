@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://hgbh2nxitq21"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.level.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.ahead.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.boss.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.distance.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.kind.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.range.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.range.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.time.translation"]
+
+source_file="res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.csv"
+dest_files=["res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.level.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.ahead.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.boss.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.distance.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.kind.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.range.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.range.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/kills.time.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

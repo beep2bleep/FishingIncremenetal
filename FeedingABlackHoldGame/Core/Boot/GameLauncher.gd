@@ -102,6 +102,7 @@ var multi_tier_dialog: ConfirmationDialog
 var multi_summary_overlay: ColorRect
 var game_cards_grid: GridContainer
 var row_divers_free_aim_button: Button
+var row_divers_wishlist_button: Button
 var row_divers_button: Button
 var game_card_texture_cache: Dictionary = {}
 var background_particles_root: Node2D
@@ -113,6 +114,8 @@ var game_card_fit_queued: bool = false
 
 func _ready() -> void:
     if Util.is_row_divers_game_active():
+        VirtualCursor.set_gameplay_pointer_hidden(false)
+        VirtualCursor.set_scene_enabled(true)
         var controller_hints = preload("res://Games/RowDivers/RowDiversInputHints.gd").new()
         controller_hints.context = "menu"
         add_child(controller_hints)
@@ -179,6 +182,19 @@ func _ready() -> void:
 
     call_deferred("_show_pending_multi_mode_summary")
     Callable(self, "_initial_game_card_layout_after_ready").call_deferred()
+    if Util.is_row_divers_game_active(): RailwayController.configure_menu(self)
+
+func controller_menu() -> Dictionary:
+    if _is_language_panel_open():
+        return {"surface": language_panel, "default": language_close_button, "context": "language", "back": _hide_language_panel}
+    if _is_settings_panel_open():
+        var credits := settings_content.controller_credits_open()
+        return {"surface": settings_panel, "default": settings_content.get_node("%Hide Credits") if credits else settings_content.get_node("%Main Volume"), "context": "credits" if credits else "settings", "back": _controller_back}
+    return {"surface": self, "default": row_divers_free_aim_button, "context": "menu", "back": _on_settings_button_pressed, "start": _on_row_divers_button_pressed}
+
+func _controller_back() -> void:
+    if settings_content.controller_back(): return
+    _hide_settings_panel()
 
 func _initial_game_card_layout_after_ready() -> void:
     await get_tree().process_frame
@@ -186,6 +202,7 @@ func _initial_game_card_layout_after_ready() -> void:
     _queue_fit_game_cards()
     if Util.is_row_divers_game_active():
         preload("res://Games/RowDivers/RowDiversStyle.gd").apply_fonts(self)
+        preload("res://Games/RowDivers/RowDiversArtControl.gd").install(self)
         if title_label != null:
             title_label.add_theme_font_override("font", preload("res://Theme/Exo2-Bold.ttf"))
 
@@ -199,6 +216,7 @@ func _notification(what: int) -> void:
         _refresh_text()
 
 func _input(event: InputEvent) -> void:
+    if Util.is_row_divers_game_active() and (event is InputEventJoypadButton or event is InputEventJoypadMotion): return
     if not event.is_action_pressed("escape") and not event.is_action_pressed("back"):
         return
     if _is_language_panel_open():
@@ -206,6 +224,9 @@ func _input(event: InputEvent) -> void:
         get_viewport().set_input_as_handled()
         return
     if _is_settings_panel_open():
+        if settings_content.controller_back():
+            get_viewport().set_input_as_handled()
+            return
         _hide_settings_panel()
         get_viewport().set_input_as_handled()
         return
@@ -367,7 +388,7 @@ func _setup_settings_panel() -> void:
     settings_button.offset_top = 16.0
     settings_button.offset_right = -16.0
     settings_button.offset_bottom = 104.0
-    settings_button.focus_mode = Control.FOCUS_NONE
+    settings_button.focus_mode = Control.FOCUS_ALL
     settings_button.custom_minimum_size = Vector2(184, 88)
     settings_button.add_theme_font_size_override("font_size", 26)
     settings_button.pressed.connect(_on_settings_button_pressed)
@@ -383,7 +404,7 @@ func _setup_settings_panel() -> void:
     settings_panel.offset_left = SETTINGS_PANEL_LEFT_GUTTER
     settings_panel.offset_top = 16.0
     settings_panel.offset_right = -16.0
-    settings_panel.offset_bottom = -16.0
+    settings_panel.offset_bottom = -96.0 if Util.is_row_divers_game_active() else -16.0
     settings_panel.z_index = 50
     settings_panel.visible = false
     settings_panel.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -413,12 +434,18 @@ func _setup_settings_panel() -> void:
         settings_content.name = "SettingsContent"
         settings_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         settings_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        settings_content.scale = Vector2(1.7, 1.7)
-        vbox.add_child(settings_content)
+        if Util.is_row_divers_game_active():
+            var scroll := ScrollContainer.new()
+            scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+            vbox.add_child(scroll)
+            scroll.add_child(settings_content)
+        else:
+            settings_content.scale = Vector2(1.7, 1.7)
+            vbox.add_child(settings_content)
 
     settings_quit_button = Button.new()
     settings_quit_button.name = "SettingsQuitButton"
-    settings_quit_button.focus_mode = Control.FOCUS_NONE
+    settings_quit_button.focus_mode = Control.FOCUS_ALL
     settings_quit_button.custom_minimum_size = Vector2(0, 120)
     settings_quit_button.add_theme_font_size_override("font_size", 30)
     settings_quit_button.pressed.connect(_on_settings_quit_pressed)
@@ -427,7 +454,7 @@ func _setup_settings_panel() -> void:
 
     settings_close_button = Button.new()
     settings_close_button.name = "SettingsCloseButton"
-    settings_close_button.focus_mode = Control.FOCUS_NONE
+    settings_close_button.focus_mode = Control.FOCUS_ALL
     settings_close_button.custom_minimum_size = Vector2(0, 150)
     settings_close_button.add_theme_font_size_override("font_size", 34)
     settings_close_button.pressed.connect(_hide_settings_panel)
@@ -1366,9 +1393,12 @@ func _layout_game_card_preview_texture(button: Button, preview_height: float) ->
         return
 
     var game_id := str(button.get_meta("game_id", ""))
-    var cover_scale := maxf(panel_width / texture_size.x, preview_height / texture_size.y)
     if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
-        cover_scale = minf(panel_width / texture_size.x, preview_height / texture_size.y)
+        preview_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+        preview_texture.position = Vector2.ZERO
+        preview_texture.size = Vector2(panel_width, preview_height)
+        return
+    var cover_scale := maxf(panel_width / texture_size.x, preview_height / texture_size.y)
     cover_scale *= _get_game_card_preview_zoom(game_id)
     var fitted_size := texture_size * cover_scale
     var overflow_y := maxf(fitted_size.y - preview_height, 0.0)
@@ -1379,8 +1409,6 @@ func _layout_game_card_preview_texture(button: Button, preview_height: float) ->
         (panel_width - fitted_size.x) * 0.5,
         -overflow_y * focus_y
     )
-    if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
-        preview_texture.position.y = (preview_height - fitted_size.y) * 0.5
 
 func _get_game_card_preview_focus_y(game_id: String) -> float:
     match game_id:
@@ -1645,7 +1673,7 @@ func _setup_language_panel() -> void:
     language_button.offset_top = 16.0
     language_button.offset_right = LANGUAGE_BUTTON_WIDTH
     language_button.offset_bottom = -16.0
-    language_button.focus_mode = Control.FOCUS_NONE
+    language_button.focus_mode = Control.FOCUS_ALL
     language_button.text = ""
     language_button.add_theme_font_size_override("font_size", LANGUAGE_BUTTON_FONT_SIZE)
     language_button.pressed.connect(_on_language_button_pressed)
@@ -1735,7 +1763,7 @@ func _setup_language_panel() -> void:
     language_panel.offset_left = 16.0
     language_panel.offset_top = 16.0
     language_panel.offset_right = -16.0
-    language_panel.offset_bottom = -16.0
+    language_panel.offset_bottom = -96.0 if Util.is_row_divers_game_active() else -16.0
     language_panel.visible = false
     language_panel.mouse_filter = Control.MOUSE_FILTER_STOP
     _style_utility_panel(language_panel)
@@ -1765,11 +1793,14 @@ func _setup_language_panel() -> void:
     language_list_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
     language_list_container.add_theme_constant_override("h_separation", 12)
     language_list_container.add_theme_constant_override("v_separation", 10)
-    vbox.add_child(language_list_container)
+    var language_scroll := ScrollContainer.new()
+    language_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    vbox.add_child(language_scroll)
+    language_scroll.add_child(language_list_container)
 
     language_close_button = Button.new()
     language_close_button.name = "LanguageCloseButton"
-    language_close_button.focus_mode = Control.FOCUS_NONE
+    language_close_button.focus_mode = Control.FOCUS_ALL
     language_close_button.custom_minimum_size = Vector2(0, 80)
     language_close_button.add_theme_font_size_override("font_size", 30)
     language_close_button.pressed.connect(_hide_language_panel)
@@ -1789,7 +1820,7 @@ func _rebuild_language_buttons() -> void:
         button.icon = _get_flag_texture_for_locale(locale_code)
         button.custom_minimum_size = Vector2(0, LANGUAGE_ENTRY_HEIGHT)
         button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        button.focus_mode = Control.FOCUS_NONE
+        button.focus_mode = Control.FOCUS_ALL
         button.disabled = locale_code == SaveHandler.locale
         button.alignment = HORIZONTAL_ALIGNMENT_LEFT
         button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -2271,6 +2302,9 @@ func _setup_row_divers_button() -> void:
     version_label.offset_bottom = -20.0
     version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
     if preload("res://Games/RowDivers/RowDiversDemo.gd").enabled():
+        row_divers_wishlist_button = preload("res://Games/RowDivers/RowDiversWishlist.gd").make_button()
+        game_cards_grid.get_parent().add_child(row_divers_wishlist_button)
+        game_cards_grid.get_parent().move_child(row_divers_wishlist_button, game_cards_grid.get_index() + 1)
         var other_games = preload("res://Games/RowDivers/RowDiversOtherGames.gd").new()
         game_cards_grid.get_parent().add_child(other_games)
     for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button]:

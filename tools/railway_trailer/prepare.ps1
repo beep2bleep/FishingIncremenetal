@@ -1,8 +1,12 @@
+param([switch]$UpgradeRevision, [string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $source = Join-Path $root 'FeedingABlackHoldGame'
 $capture = Join-Path $root 'Build - RailwayFury/TrailerReview/project'
-$output = Join-Path $root 'Build - RailwayFury/TrailerReview'
+$output = Join-Path $root $(if ($UpgradeRevision) { 'Build - RailwayFury/TrailerUpgrade' } else { 'Build - RailwayFury/TrailerReview' })
+if ($OutputDirectory) { $output = Join-Path $root $OutputDirectory }
+$captureScript = if ($UpgradeRevision) { 'res://Games/RowDivers/Tools/CaptureUpgradeTrailer.gd' } else { 'res://Games/RowDivers/Tools/CaptureReviewTrailer.gd' }
+New-Item -ItemType Directory -Force -Path $output | Out-Null
 New-Item -ItemType Directory -Force -Path $capture | Out-Null
 Get-ChildItem -LiteralPath $source -Force | ForEach-Object {
     $destination = Join-Path $capture $_.Name
@@ -17,5 +21,5 @@ Get-ChildItem -LiteralPath $source -Force | ForEach-Object {
 $config = Get-Content -LiteralPath (Join-Path $source 'project.godot') -Raw
 $config = $config.Replace('config/custom_user_dir_name="RailwayFury"','config/custom_user_dir_name="RailwayFuryTrailerReview"')
 [IO.File]::WriteAllText((Join-Path $capture 'project.godot'), $config)
-& (Join-Path $root 'Godot/Godot_v4.6-stable_win64_console.exe') --path $capture --resolution 1920x1080 --write-movie (Join-Path $output 'source.avi') --fixed-fps 30 --disable-vsync --script res://Games/RowDivers/Tools/CaptureReviewTrailer.gd -- $output *> (Join-Path $output 'capture.log')
+& (Join-Path $root 'Godot/Godot_v4.6-stable_win64_console.exe') --path $capture --resolution 1920x1080 --write-movie (Join-Path $output 'source.avi') --fixed-fps 30 --disable-vsync --script $captureScript -- $output *> (Join-Path $output 'capture.log')
 exit $LASTEXITCODE

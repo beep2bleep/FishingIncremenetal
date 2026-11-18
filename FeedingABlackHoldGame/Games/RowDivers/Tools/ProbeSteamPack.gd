@@ -11,7 +11,7 @@ func check(ok, message):
 func run():
 	ProjectSettings.set_setting("railway_fury/debug/enable_speed_cheats", false)
 	var demo = Progress.Demo.enabled()
-	check(ProjectSettings.get_setting("application/config/version", "") == "0.2", "Steam pack version is 0.2")
+	check(ProjectSettings.get_setting("application/config/version", "") == "0.9", "Steam pack version is 0.9")
 	root.get_node("Util").set_active_game_id("rowdivers")
 	var steam = root.get_node("SteamHandler")
 	var analytics = root.get_node("GameAnalytics")
@@ -27,7 +27,7 @@ func run():
 	check(load(app_icon) is Texture2D and str(app_icon).ends_with("railway-icon.png"), "Railway Fury application icon is packed")
 	check(steam._resolve_steam_app_id() == (5520330 if demo else 5520300), "Correct edition Steam app ID")
 	check(steam.get_demo_wishlist_url() == "https://store.steampowered.com/app/5520300/Railway_Fury/", "Wishlist points to full Railway Fury")
-	check(OS.get_user_data_dir().ends_with("RailwayFuryDemo" if demo else "RailwayFury"), "Edition save isolation")
+	check(OS.get_user_data_dir().ends_with("RailwayFury"), "Steam editions share their save directory")
 	var packed_art = load("res://Games/RowDivers/Art/Powerups/ghost.svg") is Texture2D
 	if not demo:
 		for folder in ["Levels","Endings"]:
@@ -60,7 +60,7 @@ func run():
 	battle._spawn_enemy(battle.player_position+Vector3(0,0,-3),6)
 	var boss: Dictionary = battle.enemies.back()
 	battle._hit(boss,boss.hp+1)
-	check((data.max_prestige==0 and data.get("demo_completed",false)) if demo else data.max_prestige==1, "First boss edition progression gate")
+	check((battle.campaign_level()==0 and data.get("demo_completed",false)) if demo else data.max_prestige==1, "First boss edition progression gate")
 	battle.free()
 	check(load("res://Games/RowDivers/RowDiversTiming.gd").configs().size()==(1 if demo else 5), "Edition leaderboard count")
 	print("STEAM PACK: ",checks," checks; ",failures," failures; demo=",demo)

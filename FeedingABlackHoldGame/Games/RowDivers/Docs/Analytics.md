@@ -1,5 +1,15 @@
 # Railway Fury analytics
 
+Version 0.9 adds per-run `run_start`, `run_complete`, `run_death`, `run_abandoned`,
+`run_heartbeat` (30 active seconds), and `section_reached:01` through `:15` design
+events under the `railway_fury:` prefix. Fields include level, section, distance,
+run/campaign simulation time, attempt, kills, outcome/cause and edition. Matching
+progression Start/Complete/Fail events support completion funnels. The last
+checkpoint/heartbeat estimates dropoff when a crash or closed browser prevents
+the final event. Version 0.9 milestone deduplication uses separate
+`analytics_milestones_demo` and `analytics_milestones_full` dictionaries so shared
+saves do not hide the other edition's funnel. See RELEASE_0.9.md.
+
 Uses the existing REST GameAnalytics manager with separate Windows/Steam games in
 the Beep2Bleep organization:
 

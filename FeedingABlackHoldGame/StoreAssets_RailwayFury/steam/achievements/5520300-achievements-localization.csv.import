@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://on83yo8oqfp7"
+
+[deps]
+
+files=["res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-localization.field.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-localization.english.translation"]
+
+source_file="res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-localization.csv"
+dest_files=["res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-localization.field.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-localization.english.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

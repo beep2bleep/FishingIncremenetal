@@ -19,15 +19,28 @@ args = parser.parse_args()
 result = {'version':version, 'full_app':5520300, 'demo_app':5520330,
           'generated_utc':datetime.now(timezone.utc).isoformat(),
           'base_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
-          'qa':{'full_pack_checks':15,'demo_pack_checks':15,'controller_checks':88,'analytics_checks':12,'menu_checks':19},
+          'qa':{'full_pack_checks':15,'demo_pack_checks':15,'controller_checks':92,
+                'controller_menu_checks':36,'menu_checks':19,'itch_windows_pack_checks':25,
+                'source_flow_checks':142,'full_qa_flow_checks':142,'demo_qa_flow_checks':70,
+                'endings_checks':6,'full_qa_quit_routes':6,'demo_qa_quit_routes':5,
+                'physical_controller_verified':False},
           'binaries':{}, 'runtime_sources':{}}
 for edition in ['Full','Demo']:
     folder = ROOT/'Build - RailwayFury/Steam'/edition
     result['binaries'][edition] = {p.relative_to(folder).as_posix():{'bytes':p.stat().st_size,'sha256':digest(p)}
                                   for p in sorted(folder.rglob('*')) if p.is_file()}
+result['qa_packages'] = {}
+for edition in ['Full','Demo']:
+    path = ROOT/'.validation/controller'/edition/'RailwayControllerQA.pck'
+    if path.exists():
+        result['qa_packages'][edition] = {'bytes':path.stat().st_size,'sha256':digest(path),
+                                        'user_data_folder':'RailwayFuryControllerQA',
+                                        'note':'Release runtime sources with isolated QA user-folder configuration.'}
 sources = [PROJECT/'project.godot', PROJECT/'SteamHandler.gd', PROJECT/'VirtualCursor.gd', PROJECT/'GameAnalyticsManager.gd',
            PROJECT/'UpgradeScreen.gd', PROJECT/'Core/Boot/GameLauncher.gd']
 sources += sorted((PROJECT/'Games/RowDivers').rglob('*.gd'))
+sources += [PROJECT/p for p in ['Settings.gd','CustomButton.gd','Singletons/PauseScreen.gd',
+                              'Tech Tree Stuff/TechTreeNode.gd','addons/controller_icons/ControllerIcons.gd']]
 result['runtime_sources'] = {p.relative_to(PROJECT).as_posix():digest(p) for p in sources
                              if not any(part in p.parts for part in ['Simulation','Tools','Docs'])}
 target = PROJECT/'StoreAssets_RailwayFury/steam/build-manifest.json'

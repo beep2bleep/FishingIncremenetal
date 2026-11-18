@@ -502,6 +502,7 @@ func _return_to_game_launcher() -> void:
     SceneChanger.change_to_new_scene(Util.PATH_GAME_LAUNCHER, null, 0.2)
 
 func _input(event: InputEvent) -> void :
+    if Util.is_row_divers_game_active() and (event is InputEventJoypadButton or event is InputEventJoypadMotion): return
     if Global.game_state == Util.GAME_STATES.UPGRADES:
         if row_divers_collection_panel != null and row_divers_collection_panel.visible:
             if event.is_action_pressed("escape") or event.is_action_pressed("back"):
@@ -529,7 +530,7 @@ func _input(event: InputEvent) -> void :
                     return
         if _is_settings_open():
             if event.is_action_pressed("escape") or event.is_action_pressed("back"):
-                _hide_settings_panel()
+                _controller_upgrade_back()
                 get_viewport().set_input_as_handled()
             return
         if event.is_action_pressed("escape") or event.is_action_pressed("back"):
@@ -677,7 +678,7 @@ func _refresh_bottom_wallet_display() -> void:
         var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
         row_divers_wallet_label.text = tr("GOLD %s   GEMS %s   CROWNS %s\nTRACK RUN TIME  %s") % [Util.get_number_short_text(row_progress.wallet[0]), Util.get_number_short_text(row_progress.wallet[1]), Util.get_number_short_text(row_progress.wallet[2]), preload("res://Games/RowDivers/RowDiversTiming.gd").format_time(float(row_progress.get("gameplay_seconds",0)))]
         row_divers_wallet_label.tooltip_text = tr("Total active track time across all runs. Pauses and upgrade time are excluded.")
-        if ROW_DIVERS_PROGRESS_SCRIPT.Demo.enabled(): row_divers_wallet_label.text += "\n" + tr("DEMO MODE")
+        if ROW_DIVERS_PROGRESS_SCRIPT.Demo.enabled(): row_divers_wallet_label.text += "   " + tr("DEMO MODE")
         if not row_progress.get("timing_complete",false): row_divers_wallet_label.tooltip_text += "\n" + tr("This older campaign has no complete starting time; timed leaderboards require a new save.")
         elif row_progress.get("leaderboards_assisted",false): row_divers_wallet_label.tooltip_text += "\n" + tr("Editor-assisted campaign: times stay local.")
         row_divers_achievements_button.visible = bool(row_progress.unlocks.get("AchievementsTab", false))
@@ -690,16 +691,17 @@ func _refresh_bottom_wallet_display() -> void:
         row_divers_achievements_button.get_parent().set_claimable(claimable and row_divers_achievements_button.visible)
         row_divers_bestiary_button.visible = bool(row_progress.unlocks.get("BestiaryTab", false))
         if row_divers_ending_button != null:
-            row_divers_ending_button.visible = bool(row_progress.unlocks.get("GodTab", false))
+            row_divers_ending_button.visible = not ROW_DIVERS_PROGRESS_SCRIPT.Demo.enabled() and bool(row_progress.unlocks.get("GodTab", false))
             row_divers_ending_button.text = "YOUR FINAL CHOICE" if row_progress.get("god_panel_unlocked", false) else "OPEN FINAL CHAMBER"
             row_divers_ending_button.tooltip_text = "One-time cost: 200,000 gold, 10 gems, 4 crowns" if not row_progress.get("god_panel_unlocked", false) else ""
             var chamber_ready: bool = row_progress.get("god_panel_unlocked", false) or (row_progress.wallet[0] >= 200000.0 and row_progress.wallet[1] >= 10.0 and row_progress.wallet[2] >= 4.0)
             row_divers_ending_button.get_parent().set_claimable(row_divers_ending_button.visible and chamber_ready)
-        if row_divers_prestige.item_count != int(row_progress.max_prestige) + 1:
+        var playable_max = ROW_DIVERS_PROGRESS_SCRIPT.Demo.unlocked_level(row_progress)
+        if row_divers_prestige.item_count != playable_max + 1:
             row_divers_prestige.clear()
-            for prestige_level in range(int(row_progress.max_prestige) + 1):
+            for prestige_level in range(playable_max + 1):
                 row_divers_prestige.add_item(tr("Level %d") % (prestige_level+1))
-        row_divers_prestige.visible = int(row_progress.max_prestige) > 0
+        row_divers_prestige.visible = playable_max > 0
         row_divers_prestige.select(clampi(int(row_progress.prestige), 0, maxi(row_divers_prestige.item_count - 1, 0)))
 
 func _setup_row_divers_other_games() -> void:
@@ -817,6 +819,7 @@ func _setup_row_divers_wallet_display() -> void:
         shared_money_ui.hide()
     _refresh_bottom_wallet_display()
     row_style.apply_fonts(self)
+    preload("res://Games/RowDivers/RowDiversArtControl.gd").install(self)
     update_colors()
 
 func _row_divers_loop_active() -> bool:
@@ -898,6 +901,7 @@ func _open_row_divers_ending() -> void:
     SceneChanger.change_to_new_scene("res://Games/RowDivers/Scenes/RowDiversEnding.tscn", null, 0.2)
 
 func _on_row_divers_prestige_selected(index: int) -> void:
+    if ROW_DIVERS_PROGRESS_SCRIPT.Demo.enabled(): return
     var row_progress: Dictionary = ROW_DIVERS_PROGRESS_SCRIPT.load_data()
     row_progress.prestige = clampi(index, 0, int(row_progress.max_prestige))
     ROW_DIVERS_PROGRESS_SCRIPT.save_data(row_progress)
@@ -944,7 +948,7 @@ func _show_row_divers_achievements() -> void:
         row.add_theme_constant_override("icon_max_width", 52)
         row.alignment = HORIZONTAL_ALIGNMENT_LEFT
         row.mouse_force_pass_scroll_events = true
-        row.text = tr("%s — %s\nReward: %s %s  •  %s") % [tr(achievement.achievementName), tr(achievement.description), str(achievement.reward), tr(["Gold", "Gems", "Crowns", ""][clampi(int(achievement.currencyType), 0, 3)]), tr("Claimed") if row_progress.claimed.get(key, false) else (tr("CLAIM") if row_progress.achievements.get(key, false) else tr("Locked"))]
+        row.text = tr("%s — %s\nReward: %s %s  •  %s") % [tr(achievement.achievementName), tr(achievement.description), str(int(achievement.reward)), tr(["Gold", "Gems", "Crowns", ""][clampi(int(achievement.currencyType), 0, 3)]), tr("Claimed") if row_progress.claimed.get(key, false) else (tr("CLAIM") if row_progress.achievements.get(key, false) else tr("Locked"))]
         row.disabled = not row_progress.achievements.get(key, false) or row_progress.claimed.get(key, false)
         row.pressed.connect(_claim_row_divers_achievement.bind(achievement))
         rows.append(row)
@@ -1001,6 +1005,7 @@ func update_colors():
     %"GPUParticles2D2 Dark".modulate = color_dark
     if Util.is_row_divers_game_active():
         var background := row_divers_editor_background if OS.has_feature("editor") else Color("2e5b4f")
+        if preload("res://Games/RowDivers/RowDiversGraphics.gd").gothic(): background = Color("201e23")
         %"Click Mask".color = background
         %"GPUParticles2D Light".modulate = background.lightened(0.12)
         %"GPUParticles2D2 Dark".modulate = background.darkened(0.14)
@@ -1031,7 +1036,7 @@ func update_colors():
 func _process(delta: float) -> void :
     _poll_battle_level_choice_controller(delta)
     _refresh_mining_time_label()
-    if is_active == true and state == STATES.SHOWING_TREE:
+    if is_active == true and state == STATES.SHOWING_TREE and not _is_any_popup_visible() and not _is_settings_open():
 
         match ControllerIcons.get_last_input_type():
             ControllerIcons.InputType.KEYBOARD_MOUSE:
@@ -1042,6 +1047,9 @@ func _process(delta: float) -> void :
 
             ControllerIcons.InputType.CONTROLLER:
 
+                if Util.is_row_divers_game_active(): return
+                if Util.is_row_divers_game_active() and VirtualCursor._virtual_cursor_active:
+                    return
                 if Input.is_action_just_pressed("ui_left"):
                     tech_tree.select_node_in_direction(Vector2.LEFT)
                 elif Input.is_action_just_pressed("ui_right"):
@@ -1180,6 +1188,7 @@ func update_input(input_type):
                 if tech_tree.selected_node != null and not _is_any_popup_visible() and not _is_settings_open():
                     tech_tree.selected_node.click_mask.grab_focus()
                     _on_tech_tree_selected_node_changed(tech_tree.selected_node)
+        if Util.is_row_divers_game_active(): %"Navigate DPAD".hide()
 
 
 
@@ -1194,6 +1203,7 @@ func show_screen():
     _sync_simulation_currency_from_save()
     _refresh_bottom_wallet_display()
     is_active = true
+    if Util.is_row_divers_game_active(): RailwayController.configure_menu(self)
     Global.game_state = Util.GAME_STATES.UPGRADES
 
     %CanvasLayer.show()
@@ -1348,6 +1358,7 @@ func _on_go_again_pressed() -> void :
 
 func _on_tech_tree_selected_node_changed(new_selected_node: TechTreeNode) -> void :
     if ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER:
+        if Util.is_row_divers_game_active() and VirtualCursor._virtual_cursor_active: return
         if new_selected_node != null:
             tech_tree.tween_to_pos( - new_selected_node.position)
         else:
@@ -1461,6 +1472,7 @@ func _get_upgrade_wallet_amount() -> int:
     return int(SaveHandler.fishing_currency)
 
 func _is_demo_mode_enabled() -> bool:
+    if Util.is_row_divers_game_active(): return ROW_DIVERS_PROGRESS_SCRIPT.Demo.enabled()
     return bool(ProjectSettings.get_setting(DEMO_PROJECT_SETTING, false))
 
 func _bind_demo_label_visibility_to_popup(control: Node) -> void:
@@ -2104,7 +2116,7 @@ func _refresh_wishlist_button_text() -> void:
     var button: Button = web_wishlist_button if web_wishlist_button != null and is_instance_valid(web_wishlist_button) else wishlist_button
     if button == null:
         return
-    button.text = tr("UPGRADE_WISHLIST")
+    button.text = tr("WISHLIST NOW") if Util.is_row_divers_game_active() else tr("UPGRADE_WISHLIST")
 
 func _style_wishlist_button(button: Button) -> void:
     if button == null:
@@ -2540,11 +2552,44 @@ func _launch_battle_at_level(level: int) -> void:
 func _refresh_virtual_cursor_state() -> void:
     VirtualCursor.use_open_pit_orbit_cursor(false)
     var should_enable := is_active and (
+        Util.is_row_divers_game_active()
+        or
         ControllerIcons.get_last_input_type() != ControllerIcons.InputType.CONTROLLER
         or _is_battle_level_choice_open()
         or _is_reel_depth_tier_dialog_open()
     )
     VirtualCursor.set_scene_enabled(should_enable)
+
+func controller_menu() -> Dictionary:
+    if not is_active: return {}
+    if _is_settings_open():
+        var credits := settings_content.controller_credits_open()
+        return {"surface": settings_panel, "default": settings_content.get_node("%Hide Credits") if credits else settings_content.get_node("%Main Volume"), "context": "credits" if credits else "settings", "back": _controller_upgrade_back}
+    if row_divers_collection_panel != null and row_divers_collection_panel.visible:
+        return {"surface": row_divers_collection_panel, "context": "collection", "back": row_divers_collection_panel.hide}
+    if leaderboard_panel != null and leaderboard_panel.visible:
+        return {"surface": self, "default": leaderboard_button, "context": "leaderboard", "back": _on_leaderboard_button_pressed}
+    var first: Control = go_again_button
+    if tech_tree != null and is_instance_valid(tech_tree.selected_node): first = tech_tree.selected_node.click_mask
+    if tech_tree != null and is_instance_valid(tech_tree.selected_node) and tech_tree.selected_node.controller_purchase_armed:
+        return {"surface": self, "default": first, "context": "purchase", "back": _cancel_controller_purchase}
+    return {"surface": self, "default": first, "context": "upgrades", "back": _on_settings_button_pressed, "start": _on_go_again_pressed}
+
+func _cancel_controller_purchase() -> void:
+    if tech_tree != null and is_instance_valid(tech_tree.selected_node):
+        tech_tree.selected_node.controller_purchase_armed = false
+        tech_tree.selected_node._force_close_tooltip()
+
+func _controller_upgrade_back() -> void:
+    if settings_content.controller_back(): return
+    _hide_settings_panel()
+
+func controller_tree_navigation(button: int) -> bool:
+    var focused := get_viewport().gui_get_focus_owner()
+    if tech_tree == null or focused == null or not tech_tree.is_ancestor_of(focused): return false
+    var direction := {JOY_BUTTON_DPAD_LEFT: Vector2.LEFT, JOY_BUTTON_DPAD_RIGHT: Vector2.RIGHT, JOY_BUTTON_DPAD_UP: Vector2.UP, JOY_BUTTON_DPAD_DOWN: Vector2.DOWN}
+    tech_tree.select_node_in_direction(direction[button])
+    return true
 
 func _sync_battle_level_choice_from_input(max_level: int) -> void:
     if battle_level_choice_line_edit == null:
@@ -3701,7 +3746,7 @@ func _setup_settings_controls() -> void:
     settings_panel.offset_left = 16.0
     settings_panel.offset_top = 16.0
     settings_panel.offset_right = -16.0
-    settings_panel.offset_bottom = -16.0
+    settings_panel.offset_bottom = -96.0 if Util.is_row_divers_game_active() else -16.0
     settings_panel.z_index = 220
     settings_panel.visible = false
     settings_panel.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -3733,12 +3778,18 @@ func _setup_settings_controls() -> void:
         settings_content.name = "SettingsContent"
         settings_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         settings_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
-        settings_content.scale = Vector2(1.7, 1.7)
-        vbox.add_child(settings_content)
+        if Util.is_row_divers_game_active():
+            var scroll := ScrollContainer.new()
+            scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+            vbox.add_child(scroll)
+            scroll.add_child(settings_content)
+        else:
+            settings_content.scale = Vector2(1.7, 1.7)
+            vbox.add_child(settings_content)
 
     settings_main_menu_button = Button.new()
     settings_main_menu_button.name = "SettingsMainMenuButton"
-    settings_main_menu_button.focus_mode = Control.FOCUS_NONE
+    settings_main_menu_button.focus_mode = Control.FOCUS_ALL
     settings_main_menu_button.custom_minimum_size = Vector2(0, 120)
     settings_main_menu_button.add_theme_font_size_override("font_size", 30)
     settings_main_menu_button.pressed.connect(_on_settings_main_menu_pressed)
@@ -3747,7 +3798,7 @@ func _setup_settings_controls() -> void:
 
     settings_quit_button = Button.new()
     settings_quit_button.name = "SettingsQuitButton"
-    settings_quit_button.focus_mode = Control.FOCUS_NONE
+    settings_quit_button.focus_mode = Control.FOCUS_ALL
     settings_quit_button.custom_minimum_size = Vector2(0, 120)
     settings_quit_button.add_theme_font_size_override("font_size", 30)
     settings_quit_button.pressed.connect(_on_settings_quit_pressed)
@@ -3757,7 +3808,7 @@ func _setup_settings_controls() -> void:
     settings_close_button = Button.new()
     settings_close_button.name = "SettingsCloseButton"
     settings_close_button.text = tr("UI_BACK")
-    settings_close_button.focus_mode = Control.FOCUS_NONE
+    settings_close_button.focus_mode = Control.FOCUS_ALL
     settings_close_button.custom_minimum_size = Vector2(0, 150)
     settings_close_button.add_theme_font_size_override("font_size", 34)
     settings_close_button.pressed.connect(_on_settings_close_pressed)

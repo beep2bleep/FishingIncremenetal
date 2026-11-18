@@ -35,6 +35,7 @@ var is_animating: bool = false
 
 
 func _ready() -> void :
+    SignalBus.settings_updated.connect(update_colors)
     hide()
     update()
 
@@ -60,6 +61,8 @@ func update_line():
         add_point(to_node.position)
 
     _update_over_line_visual()
+    if Util.is_row_divers_game_active() and preload("res://Games/RowDivers/RowDiversGraphics.gd").gothic():
+        default_color = Color("49333e")
 
 
 func do_animate_show(line_2d: Line2D, start_pos: Vector2, end_pos: Vector2):
@@ -147,6 +150,8 @@ func _update_over_line_visual() -> void:
     %"Over Line".show()
 
 func _get_progress_color(target_node: TechTreeNode) -> Color:
+    if Util.is_row_divers_game_active() and preload("res://Games/RowDivers/RowDiversGraphics.gd").gothic():
+        return Color("ad435e")
     if target_node != null and target_node.upgrade != null:
         return Refs.get_act_light_color(target_node.upgrade.act)
     return Refs.get_act_light_color(1)

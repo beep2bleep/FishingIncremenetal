@@ -4,6 +4,7 @@ Translations are machine drafts. Numeric values, format tokens and BBCode are
 protected and audited; the output is checked into the game (no runtime network).
 """
 import ast
+import argparse
 import concurrent.futures
 import csv
 import json
@@ -20,18 +21,20 @@ OUT = ROW / 'Translations'
 LOCALES = 'en es de pt fr it zh ja ko ru pl tr th id cs ca vi'.split()
 STRING = re.compile(r'"(?:[^"\\]|\\.)*"')
 TOKEN = re.compile(r'Railway Fury|RAILWAY FURY|%(?:[-+0#]*\d*(?:\.\d+)?[sdfxX]|%)|\{[A-Z][A-Z0-9_]*\}|\d+(?:[.,]\d+)*|\[/?(?:b|i|u|color[^\]]*)\]|\b(?:VIII|VII|VI|IV|III|II|I)\b')
-NON_MESSAGES = {'Data', 'Simulation', 'Railway editor forecasts', 'Fire Gem Pivot', 'Cursed Gem Pivot', 'Cost Hbox', 'Vanguard - Idle Auto Battler', 'Deepcore', 'BleepWare Incrementals', 'Bleeping Spaceships', 'Bounty For Sharks', 'Home Plate Baseball'}
+NON_MESSAGES = {'%Moeny UI', 'Data', 'Simulation', 'Railway editor forecasts', 'Fire Gem Pivot', 'Cursed Gem Pivot', 'Cost Hbox', 'Vanguard - Idle Auto Battler', 'Deepcore', 'BleepWare Incrementals', 'Bleeping Spaceships', 'Bounty For Sharks', 'Home Plate Baseball'}
 FORMAT = re.compile(r'%(?:[-+0#]*\d*(?:\.\d+)?[sdfxX]|%)|\{[A-Z][A-Z0-9_]*\}')
 # Identical spellings can be valid borrowed words or proper names. Everything
 # else must be translated rather than silently retaining an English draft.
 INVARIANT = {'RAILWAY FURY', 'RK ', 'XP '}
+REFRESH = False
 BORROWED = {
+    'es': {'CURSOR'},
     'de': {'AUTO', 'GOLD', 'Gold', 'Level %d', 'Modern', 'Original', 'Prestige', 'Shuriken', 'Zombie'},
-    'pt': {'Shuriken'}, 'it': {'Shuriken', 'Zombie'},
-    'fr': {'Dragon', 'Poison', 'Prestige', 'SECTION %d', 'Shuriken', 'Vampire', 'poison'},
-    'pl': {'AUTO', 'Zombie'},
+    'pt': {'Shuriken', 'MENU'}, 'it': {'Shuriken', 'Zombie'},
+    'fr': {'Dragon', 'Poison', 'Prestige', 'SECTION %d', '%.1f m    SECTION %d / 15    %s', 'Shuriken', 'Vampire', 'poison', 'MENU'},
+    'pl': {'AUTO', 'Zombie', 'MENU'},
     'ca': {'AUTO', 'Art: Synty Studios', 'Modern', 'Original', 'Shuriken'},
-    'id': {'Modern'}, 'cs': {'AUTO', 'Shuriken', 'Zombie'}, 'vi': {'Shuriken'},
+    'id': {'Modern', 'MENU'}, 'cs': {'AUTO', 'Shuriken', 'Zombie'}, 'vi': {'Shuriken'},
 }
 
 
@@ -54,7 +57,7 @@ def sources():
         for entry in data['settings']['achievements']:
             result.update([entry['achievementName'], entry['description']])
         result.update(v.replace('_', ' ') for v in data['enums']['ZombieType'].values())
-    files = [ROW / p for p in ['RowDiversHUD.gd', 'Scenes/RowDiversBattleScene.gd', 'Scenes/RowDiversEnding.gd', 'RowDiversEndings.gd', 'RowDiversTiming.gd', 'RowDiversLevelThemes.gd', 'RowDiversProgress.gd', 'RowDiversOtherGames.gd', 'RowDiversEditorBuyer.gd']]
+    files = [ROW / p for p in ['RowDiversHUD.gd', 'Scenes/RowDiversBattleScene.gd', 'Scenes/RowDiversEnding.gd', 'RowDiversEndings.gd', 'RowDiversTiming.gd', 'RowDiversLevelThemes.gd', 'RowDiversProgress.gd', 'RowDiversOtherGames.gd', 'RowDiversEditorBuyer.gd', 'RowDiversInputHints.gd', 'RowDiversWishlist.gd']]
     for file in files:
         function = ''
         for line in file.read_text(encoding='utf-8-sig').splitlines():
@@ -78,7 +81,7 @@ def sources():
             for match in STRING.finditer(line):
                 value=ast.literal_eval(match.group())
                 if human(value): result.add(value)
-    result.update(['Play my other games','DEMO MODE','DEMO COMPLETE','DEMO MODE — DEFEAT THE FIRST BOSS','Full game upgrade — locked in demo mode',' OR ','Unlock: ','Gold','Gems','Crowns','CLAIM','Claimed','Locked','CLICK','HOLD','AUTO','the row','fire waves','poison','contact','enemy projectile','FULL GAME ONLY','Railway Fury Upgrade'])
+    result.update(['Play my other games','DEMO MODE','DEMO COMPLETE','DEMO MODE — DEFEAT THE FIRST BOSS','Full game upgrade — locked in demo mode',' OR ','Unlock: ','Gold','Gems','Crowns','CLAIM','Claimed','Locked','CLICK','HOLD','AUTO','the railway','fire waves','poison','contact','enemy projectile','FULL GAME ONLY','Railway Fury Upgrade'])
     return sorted(v for v in result if v)
 
 
@@ -122,14 +125,14 @@ def request_batch(locale, batch):
 
 def translate(locale, source, reuse):
     path=OUT/(locale+'.json')
-    cache=json.loads(path.read_text(encoding='utf8')) if path.exists() else {}
+    cache=json.loads(path.read_text(encoding='utf8')) if path.exists() and not REFRESH else {}
     # Preserve reviewed terminology across regenerated catalogs. This is also
     # where unchanged English drafts are repaired rather than reused forever.
     overrides_path=OUT/'overrides.json'
     overrides=json.loads(overrides_path.read_text(encoding='utf8')).get(locale,{}) if overrides_path.exists() else {}
     cache.update(overrides)
     for text in source:
-        if text in reuse and reuse[text].get(locale): cache.setdefault(text,reuse[text][locale])
+        if not REFRESH and text in reuse and reuse[text].get(locale): cache.setdefault(text,reuse[text][locale])
     missing=[s for s in source if s not in cache]
     batches=[];batch=[];size=0
     for text in missing:
@@ -147,6 +150,7 @@ def translate(locale, source, reuse):
         path.write_text(json.dumps(cache,ensure_ascii=False,indent=2),encoding='utf8')
         print(locale,i+1,'/',len(batches),flush=True)
     cache.update(overrides)
+    cache = {s: cache[s] for s in source}
     path.write_text(json.dumps(cache,ensure_ascii=False,indent=2),encoding='utf8')
     return locale,{s:cache[s] for s in source}
 
@@ -166,6 +170,10 @@ def audit_catalog(source, output):
 
 
 def main():
+    global REFRESH
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--refresh', action='store_true', help='Retranslate the entire catalog, retaining reviewed terminology overrides.')
+    REFRESH = parser.parse_args().refresh
     OUT.mkdir(exist_ok=True)
     source=sources()
     (OUT/'sources.json').write_text(json.dumps(source,ensure_ascii=False,indent=2),encoding='utf8')

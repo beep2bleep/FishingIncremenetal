@@ -1,0 +1,215 @@
+{
+  "itemid": "1169911",
+  "languages": {
+    "english": {
+      "app[content][about]": "[p]Data Breach Inc. is an arcade incremental about breaking into hostile corporate infrastructure one risky sortie at a time. Pilot a breach rig, mine the firewall for resources, crack daemon cores, extract before the run turns ugly, and use the payout to make the next breach go deeper.[/p][p]Every flight is part action run, part upgrade puzzle. You choose how hard to push: carve a safe route, chase valuable blocks, pressure a daemon core, or turn back early and bank the haul. Money, XP, and root kernels feed permanent upgrades for damage, attack speed, cargo, fuel, drones, range, payout scaling, and core-cracking power.[/p][p]The firewall does not sit still. Deeper layers hit harder, daemon cores fight back, and defensive pressure forces cleaner routes instead of mindless grinding. Learn the layout, tune your rig, and turn messy extraction runs into faster clears.[/p][p]The demo is built around defeating the demo breach and chasing a cleaner time on the Defeat Demo leaderboard. The full Data Breach Inc. structure also connects side operations into the campaign, including Red Sky Defense and Deepcore, with resources and unlocks feeding back into the central breach.[/p][p]Features:[/p][p]- Arcade breach sorties built around mining, movement, survival, and extraction[/p][p]- Persistent firewall progress across runs[/p][p]- Permanent upgrades for damage, speed, cargo, fuel, drones, range, payouts, and core damage[/p][p]- Daemon core encounters with escalating defensive pressure[/p][p]- Multiple resource paths: cash, XP, and root kernels[/p][p]- Demo clear target with leaderboard-ready timing[/p][p]- Connected side operations in the full Data Breach Inc. structure[/p][p]- Short runs with long-term incremental progression[/p]",
+      "app[content][short_description]": "Pilot a breach rig into hostile corporate infrastructure. Mine the firewall, crack daemon cores, extract your haul, and buy permanent upgrades between sorties.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "french": {
+      "app[content][about]": "[p]Data Breach Inc. est un jeu d'action arcade à progression incrémentale où chaque mission vous fait pénétrer dans les infrastructures d'une entreprise hostile. Pilotez un engin de piratage, creusez le pare-feu pour en extraire des ressources, brisez les cœurs de daemons et échappez-vous avant que la situation ne dégénère. Investissez vos gains pour aller plus loin à la prochaine tentative.[/p][p]Chaque vol combine action et stratégie de mise à niveau. Choisissez le niveau de risque : créez un itinéraire sûr, poursuivez des blocs précieux, attaquez un cœur de daemon ou revenez tôt pour sécuriser votre transport. Dépensez de l'argent, des XP et des noyaux racine pour des améliorations permanentes des dégâts, de la vitesse d'attaque, du fret, du carburant, des drones, de la portée, des gains et des dégâts contre les noyaux.[/p][p]Le pare-feu vous résiste activement. Les couches plus profondes sont plus dangereuses, les cœurs de daemons ripostent et les défenses ennemies exigent des itinéraires efficaces plutôt qu'une collecte répétitive de ressources. Apprenez la configuration, améliorez votre véhicule de piratage et accomplissez les missions d'extraction plus efficacement.[/p][p]Dans la démo, relevez le défi de piratage et essayez d'améliorer votre temps dans le classement Defeat Demo. La campagne Data Breach Inc. complète comprend également des opérations secondaires telles que Red Sky Defense et Deepcore. Les ressources et les déblocages de ces opérations contribuent à la principale campagne de piratage.[/p][p]Caractéristiques :[/p][p]- Missions de piratage d'arcade : exploitez des ressources, déplacez-vous, survivez et échappez-vous avec votre butin[/p][p]- Votre progression à travers le pare-feu est préservée entre les missions[/p][p]- Améliorations permanentes des dégâts, de la vitesse, de la capacité de chargement, du carburant, des drones, de la portée, des gains et des dégâts contre les noyaux[/p][p]- Combats contre des cœurs de daemons avec des défenses de plus en plus puissantes[/p][p]- Plusieurs chemins de ressources : cash, XP et noyaux racine[/p][p]- Un objectif de victoire dans la démo, avec un temps enregistré pour le classement[/p][p]- Opérations secondaires liées à la campagne principale dans le jeu complet Data Breach Inc.[/p][p]- Missions courtes avec progression incrémentale à long terme[/p]",
+      "app[content][short_description]": "Pilotez un engin de piratage dans les infrastructures d'une entreprise hostile. Creusez le pare-feu, brisez les cœurs de daemons, ramenez votre butin et achetez des améliorations permanentes entre les missions.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "italian": {
+      "app[content][about]": "[p]Data Breach Inc. è un gioco d'azione arcade con progressione incrementale. Irrompi nell'infrastruttura aziendale ostile attraverso missioni pericolose. Pilota un veicolo da hacker, estrai risorse dal firewall, distruggi i nuclei dei daemon, fuggi prima che la missione diventi troppo pericolosa e usa i tuoi guadagni per penetrare più in profondità la prossima volta.[/p][p]Ogni volo combina l'azione con la strategia di aggiornamento. Scegli quanto rischiare: crea un percorso sicuro, insegui blocchi preziosi, attacca un nucleo demoniaco o torna presto per proteggere il tuo bottino. Spendi denaro, XP e rooting dei kernel in aggiornamenti permanenti a danni, velocità di attacco, carico, carburante, droni, portata, guadagni e danni contro i core.[/p][p]Il firewall ti resiste attivamente. Gli strati più profondi sono più pericolosi, i nuclei dei daemon reagiscono e le difese nemiche richiedono percorsi efficienti anziché la raccolta ripetitiva di risorse. Impara la disposizione, potenzia il tuo veicolo di hacking e completa le missioni di estrazione in modo più efficiente.[/p][p]Nella demo, completa la sfida di hacking e prova a migliorare il tuo tempo nella classifica di Defeat Demo. L'intera campagna Data Breach Inc. include anche operazioni secondarie come Red Sky Defense e Deepcore. Le risorse e gli sblocchi derivanti da tali operazioni contribuiscono alla principale campagna di hacking.[/p][p]Caratteristiche:[/p][p]- Missioni di hacking arcade: estrai risorse, muoviti, sopravvivi e fuggi con il tuo bottino[/p][p]- I tuoi progressi attraverso il firewall vengono conservati tra una missione e l'altra[/p][p]- Miglioramenti permanenti a danni, velocità, capacità di carico, carburante, droni, portata, guadagni e danni contro i nuclei[/p][p]- Battaglie contro nuclei dei daemon con difese sempre più potenti[/p][p]- Percorsi multipli di risorse: contanti, XP e kernel root[/p][p]- Una sfida da completare nella demo, con tempi registrati in classifica[/p][p]- Operazioni secondarie collegate alla campagna principale nel gioco completo Data Breach Inc.[/p][p]- Missioni brevi con progressione incrementale a lungo termine[/p]",
+      "app[content][short_description]": "Pilota un mezzo da hacking nelle infrastrutture di un'azienda ostile. Scava nel firewall, distruggi i nuclei dei daemon, porta in salvo il bottino e acquista potenziamenti permanenti tra le missioni.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "german": {
+      "app[content][about]": "[p]Data Breach Inc. ist ein Arcade-Actionspiel mit inkrementellem Fortschritt. Dringe in riskanten Einsätzen in die Infrastruktur feindlicher Unternehmen ein. Steuere ein Hacking-Fahrzeug, baue Ressourcen aus der Firewall ab, knacke Daemon-Kerne und entkomme, bevor die Lage zu gefährlich wird. Investiere deinen Verdienst, um beim nächsten Einsatz tiefer vorzudringen.[/p][p]Jeder Flug kombiniert Action mit Upgrade-Strategie. Wählen Sie, wie viel Sie riskieren möchten: Erstellen Sie eine sichere Route, verfolgen Sie wertvolle Blöcke, greifen Sie einen Daemon-Kern an oder kehren Sie frühzeitig zurück, um Ihre Beute zu sichern. Geben Sie Geld, XP und Root-Kernel für dauerhafte Upgrades von Schaden, Angriffsgeschwindigkeit, Fracht, Treibstoff, Drohnen, Reichweite, Einnahmen und Schaden gegen Kerne aus.[/p][p]Die Firewall wehrt sich aktiv gegen Sie. Tiefere Schichten sind gefährlicher, Dämonenkerne wehren sich und die Verteidigung des Feindes erfordert effiziente Routen statt wiederholter Ressourcenbeschaffung. Erlernen Sie den Aufbau, rüsten Sie Ihr Hacking-Fahrzeug auf und erledigen Sie Extraktionsmissionen effizienter.[/p][p]Schließen Sie in der Demo die Hacking-Herausforderung ab und versuchen Sie, Ihre Zeit auf der Defeat Demo-Bestenliste zu verbessern. Die vollständige Data Breach Inc.-Kampagne umfasst auch Nebenvorgänge wie Red Sky Defense und Deepcore. Ressourcen und Freischaltungen aus diesen Operationen tragen zur Haupt-Hacking-Kampagne bei.[/p][p]Eigenschaften:[/p][p]- Arcade-Hacking-Missionen: Bauen Sie Ressourcen ab, bewegen Sie sich, überleben Sie und entkommen Sie mit Ihrer Beute[/p][p]- Ihr Fortschritt durch die Firewall bleibt zwischen den Missionen erhalten[/p][p]- Permanente Upgrades für Schaden, Geschwindigkeit, Ladekapazität, Treibstoff, Drohnen, Reichweite, Einnahmen und Schaden gegen Kerne[/p][p]- Kämpfe gegen Daemon-Kerne mit immer stärkerer Verteidigung[/p][p]– Mehrere Ressourcenpfade: Cash, XP und Root-Kernel[/p][p]- Eine Demo-Abschlussherausforderung mit Zeitmessung für die Bestenliste[/p][p]- Nebenoperationen im Zusammenhang mit der Hauptkampagne im vollständigen Data Breach Inc.-Spiel[/p][p]- Kurze Missionen mit langfristigem, schrittweisem Fortschritt[/p]",
+      "app[content][short_description]": "Steuere ein Hacking-Fahrzeug in feindliche Unternehmenssysteme. Baue die Firewall ab, knacke Daemon-Kerne, sichere deine Beute und kaufe zwischen den Einsätzen dauerhafte Upgrades.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "spanish": {
+      "app[content][about]": "[p]Data Breach Inc. es un juego de acción arcade con progresión incremental. Infiltra las infraestructuras de empresas hostiles en misiones peligrosas. Pilota un vehículo de piratería, extrae recursos del cortafuegos, destruye núcleos de daemons, escapa antes de que la misión se vuelva demasiado peligrosa y utiliza tus ganancias para penetrar más profundamente la próxima vez.[/p][p]Cada vuelo combina acción con estrategia de actualización. Elige cuánto arriesgar: crea una ruta segura, persigue bloques valiosos, ataca un núcleo de demonio o regresa temprano para asegurar tu botín. Gaste dinero, XP y rootee los núcleos en mejoras permanentes de daño, velocidad de ataque, carga, combustible, drones, alcance, ganancias y daño contra los núcleos.[/p][p]El firewall te resiste activamente. Las capas más profundas son más peligrosas, los núcleos demoníacos contraatacan y las defensas enemigas exigen rutas eficientes en lugar de una recolección repetitiva de recursos. Conozca el diseño, actualice su vehículo de piratería y complete misiones de extracción de manera más eficiente.[/p][p]En la demostración, completa el desafío de piratería e intenta mejorar tu tiempo en la tabla de clasificación Defeat Demo. La campaña completa Data Breach Inc. también incluye operaciones secundarias como Red Sky Defense y Deepcore. Los recursos y desbloqueos de esas operaciones contribuyen a la principal campaña de piratería.[/p][p]Características:[/p][p]- Misiones de piratería arcade: extrae recursos, muévete, sobrevive y escapa con tu botín[/p][p]- Tu progreso a través del firewall se conserva entre misiones.[/p][p]- Mejoras permanentes de daño, velocidad, capacidad de carga, combustible, drones, alcance, ganancias y daño contra núcleos.[/p][p]- Batallas contra núcleos de daemons con defensas cada vez más poderosas.[/p][p]- Múltiples rutas de recursos: efectivo, XP y kernels raíz[/p][p]- Un objetivo de completar la demo con tiempos registrados en la clasificación[/p][p]- Operaciones secundarias conectadas a la campaña principal en el juego Data Breach Inc. completo[/p][p]- Misiones cortas con progresión incremental a largo plazo.[/p]",
+      "app[content][short_description]": "Pilota un vehículo de intrusión en las infraestructuras de una empresa hostil. Excava el cortafuegos, destruye núcleos de daemons, extrae tu botín y compra mejoras permanentes entre misiones.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "bulgarian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "czech": {
+      "app[content][about]": "[p]Data Breach Inc. je arkádová akční hra s inkrementálním postupem. Pronikněte do nepřátelské podnikové infrastruktury prostřednictvím nebezpečných misí. Pilotujte hackerské vozidlo, těžte zdroje ve firewallu, ničte jádra démonů, unikněte dříve, než se mise stane příliš nebezpečnou, a použijte své výdělky k proniknutí příště hlouběji.[/p][p]Každý let kombinuje akci se strategií upgradu. Vyberte si, jak moc riskujete: vytvořte bezpečnou cestu, pronásledujte cenné bloky, zaútočte na jádro démona nebo se vraťte dříve, abyste si zajistili svůj úlovek. Utrácejte peníze, XP a kořenová jádra za trvalé vylepšení poškození, rychlosti útoku, nákladu, paliva, dronů, dosahu, výdělků a poškození proti jádrům.[/p][p]Firewall vám aktivně odolává. Hlubší vrstvy jsou nebezpečnější, démonová jádra se brání a nepřátelská obrana vyžaduje efektivní cesty spíše než opakované shromažďování zdrojů. Naučte se rozvržení, upgradujte své hackerské vozidlo a dokončujte extrakční mise efektivněji.[/p][p]V ukázce dokončete hackerskou výzvu a pokuste se zlepšit svůj čas v žebříčku Defeat Demo. Úplná kampaň Data Breach Inc. také zahrnuje vedlejší operace, jako jsou Red Sky Defense a Deepcore. Zdroje a odemknutí z těchto operací přispívají k hlavní hackerské kampani.[/p][p]Vlastnosti:[/p][p]- Arkádové hackerské mise: těžte zdroje, pohybujte se, přežívejte a unikněte se svým úlovkem[/p][p]- Váš postup přes firewall je mezi misemi zachován[/p][p]- Trvalé vylepšení poškození, rychlosti, kapacity nákladu, paliva, dronů, doletu, výdělků a poškození proti jádrům[/p][p]- Bitvy proti jádrům démonů se stále silnější obranou[/p][p]- Více cest zdrojů: hotovost, XP a kořenová jádra[/p][p]- Výzva k dokončení dema s měřením času pro žebříček[/p][p]- Vedlejší operace spojené s hlavní kampaní v plné hře Data Breach Inc.[/p][p]- Krátké mise s dlouhodobým inkrementálním postupem[/p]",
+      "app[content][short_description]": "Pilotuj hackerský stroj v nepřátelské firemní infrastruktuře. Těž firewall, nič jádra daemonů, unikni s kořistí a mezi misemi kupuj trvalá vylepšení.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "danish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "dutch": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "finnish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "greek": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "hungarian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "indonesian": {
+      "app[content][about]": "[p]Data Breach Inc. adalah game aksi arcade dengan perkembangan inkremental. Masuk ke infrastruktur perusahaan yang bermusuhan melalui misi berbahaya. Mengemudikan kendaraan peretas, menambang firewall untuk mendapatkan sumber daya, menghancurkan inti daemon, melarikan diri sebelum misi menjadi terlalu berbahaya, dan menggunakan penghasilan Anda untuk menembus lebih dalam di lain waktu.[/p][p]Setiap penerbangan menggabungkan tindakan dengan strategi peningkatan. Pilih seberapa besar risikonya: buat rute yang aman, kejar blok berharga, serang inti daemon, atau kembali lebih awal untuk mengamankan tangkapan Anda. Habiskan uang, XP, dan kernel root untuk peningkatan permanen pada kerusakan, kecepatan serangan, kargo, bahan bakar, drone, jangkauan, penghasilan, dan kerusakan terhadap inti.[/p][p]Firewall secara aktif menolak Anda. Lapisan yang lebih dalam lebih berbahaya, inti daemon melawan, dan pertahanan musuh menuntut rute yang efisien daripada pengumpulan sumber daya yang berulang-ulang. Pelajari tata letaknya, tingkatkan kendaraan peretasan Anda, dan selesaikan misi ekstraksi dengan lebih efisien.[/p][p]Dalam demo, selesaikan tantangan peretasan dan coba tingkatkan waktu Anda di papan peringkat Defeat Demo. Kampanye Data Breach Inc. lengkap juga mencakup operasi sampingan seperti Red Sky Defense dan Deepcore. Sumber daya dan pembukaan kunci dari operasi tersebut berkontribusi pada kampanye peretasan utama.[/p][p]Fitur:[/p][p]- Misi peretasan arcade: menambang sumber daya, bergerak, bertahan, dan melarikan diri dengan hasil tambang Anda[/p][p]- Kemajuan Anda melalui firewall dipertahankan di antara misi[/p][p]- Peningkatan permanen pada kerusakan, kecepatan, kapasitas kargo, bahan bakar, drone, jangkauan, pendapatan, dan kerusakan terhadap inti[/p][p]- Bertarung melawan inti daemon dengan pertahanan yang semakin kuat[/p][p]- Berbagai jalur sumber daya: uang tunai, XP, dan kernel root[/p][p]- Tantangan menamatkan demo dengan catatan waktu untuk papan peringkat[/p][p]- Operasi sampingan yang terhubung ke kampanye utama dalam game Data Breach Inc. lengkap[/p][p]- Misi pendek dengan perkembangan inkremental jangka panjang[/p]",
+      "app[content][short_description]": "Kendalikan kendaraan peretasan di infrastruktur perusahaan musuh. Tambang firewall, hancurkan inti daemon, bawa pulang jarahan, dan beli peningkatan permanen di antara misi.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "japanese": {
+      "app[content][about]": "[p]Data Breach Inc.は、危険な任務を重ねて敵対企業のシステムに侵入する、インクリメンタル要素を備えたアーケードアクションです。侵入用マシンを操り、ファイアウォールを掘って資源を集め、デーモンコアを破壊。状況が悪化する前に脱出し、得た報酬で強化して、次はさらに奥を目指しましょう。[/p][p]各出撃では、アクションと強化の戦略が試されます。安全な道を掘るか、価値の高いブロックを狙うか、デーモンコアを攻めるか、それとも早めに帰還して戦利品を確保するか。資金、XP、ルートカーネルを使い、攻撃力、攻撃速度、積載量、燃料、ドローン、射程、収益、コアへの攻撃力を永続的に強化しましょう。[/p][p]ファイアウォールも黙ってはいません。深い層ほど危険が増し、デーモンコアは反撃してきます。敵の防衛を突破するには、単調な資源集めより効率的なルート選びが重要。地形を覚え、侵入用マシンを強化し、回収と脱出をより素早くこなしましょう。[/p][p]体験版では侵入チャレンジのクリアを目指し、Defeat Demoランキングでより良いタイムに挑戦できます。Data Breach Inc.の製品版では、Red Sky DefenseやDeepcoreなどのサブ作戦もメインのキャンペーンと連動。そこで獲得した資源や解放要素が、中心となる侵入作戦に役立ちます。[/p][p]特徴:[/p][p]- アーケード ハッキング ミッション: 資源を採掘し、移動し、生き残り、荷物を持って脱出します。[/p][p]- ファイアウォールを通過した進行状況はミッション間で保持されます[/p][p]- ダメージ、速度、積載量、燃料、ドローン、航続距離、収益、コアに対するダメージの永続的なアップグレード[/p][p]- ますます強力な防御力を持つデーモンコアとの戦い[/p][p]- 複数の資源の種類: キャッシュ、XP、およびルート カーネル[/p][p]- クリアタイムをランキングで競える体験版の攻略チャレンジ[/p][p]- 完全な Data Breach Inc. ゲームのメイン キャンペーンに関連するサイド オペレーション[/p][p]- 長期にわたる段階的な進行を伴う短いミッション[/p]",
+      "app[content][short_description]": "侵入用マシンを操り、敵対企業のシステムへ潜入。ファイアウォールを掘り進み、デーモンコアを破壊し、戦利品を持ち帰ろう。ミッションの合間に永続強化を購入し、次はさらに奥へ。",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "koreana": {
+      "app[content][about]": "[p]Data Breach Inc.는 위험한 임무를 거듭하며 적대 기업의 시스템을 뚫는 점진적 성장 아케이드 액션 게임입니다. 침투 장비를 조종해 방화벽에서 자원을 캐고, 데몬 코어를 파괴하세요. 상황이 위험해지기 전에 탈출하고, 수익을 강화에 투자해 다음에는 더 깊이 침투하세요.[/p][p]매 출격은 액션과 강화 전략을 함께 시험합니다. 안전한 경로를 뚫거나, 값진 블록을 노리거나, 데몬 코어를 공격하거나, 일찍 돌아와 전리품을 확보하세요. 돈, XP, 루트 커널을 사용해 공격력, 공격 속도, 적재량, 연료, 드론, 사거리, 수익, 코어 공격력을 영구적으로 강화할 수 있습니다.[/p][p]방화벽도 가만히 있지 않습니다. 깊은 층일수록 위험해지고 데몬 코어는 반격합니다. 적의 방어를 뚫으려면 무작정 자원을 모으기보다 효율적인 경로가 필요합니다. 지형을 익히고 침투 장비를 강화해 자원 회수와 탈출을 더 빠르게 완수하세요.[/p][p]데모에서는 침투 도전을 완료하고 Defeat Demo 순위표에서 더 빠른 기록에 도전할 수 있습니다. Data Breach Inc. 정식 버전의 캠페인에는 Red Sky Defense와 Deepcore 같은 부가 작전도 연결됩니다. 해당 작전에서 얻은 자원과 해금 요소는 중심이 되는 침투 작전에 도움이 됩니다.[/p][p]특징:[/p][p]- 아케이드 해킹 임무: 자원 채굴, 이동, 생존, 탈출[/p][p]- 방화벽을 통한 진행 상황은 미션 간에 유지됩니다.[/p][p]- 손상, 속도, 화물 용량, 연료, 드론, 범위, 수입 및 코어 손상에 대한 영구 업그레이드[/p][p]- 점점 더 강력해지는 방어력으로 데몬 코어와의 전투[/p][p]- 다중 리소스 경로: 현금, XP 및 루트 커널[/p][p]- 완료 시간을 순위표에서 겨루는 데모 도전[/p][p]- 전체 Data Breach Inc. 게임의 메인 캠페인에 연결된 측면 작전[/p][p]- 장기적으로 점진적으로 진행되는 짧은 임무[/p]",
+      "app[content][short_description]": "침투 장비를 조종해 적대 기업의 시스템으로 들어가세요. 방화벽에서 자원을 캐고, 데몬 코어를 파괴하고, 전리품을 챙겨 탈출하세요. 임무 사이에 영구 강화를 구매해 다음에는 더 깊이 침투하세요.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "malay": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "norwegian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "polish": {
+      "app[content][about]": "[p]Data Breach Inc. to zręcznościowa gra akcji z postępem przyrostowym. Włamuj się do wrogiej infrastruktury korporacyjnej poprzez niebezpieczne misje. Pilotuj pojazd hakerski, wydobywaj zasoby z zapory ogniowej, niszcz rdzenie daemonów, uciekaj, zanim misja stanie się zbyt niebezpieczna, i wykorzystaj swoje zarobki, aby następnym razem penetrować głębiej.[/p][p]Każdy lot łączy akcję ze strategią ulepszeń. Wybierz, ile ryzykujesz: stwórz bezpieczną trasę, ścigaj cenne bloki, zaatakuj rdzeń demona lub wróć wcześniej, aby zabezpieczyć swój łup. Wydawaj pieniądze, XP i jądra rootowania na stałe ulepszenia obrażeń, prędkości ataku, ładunku, paliwa, dronów, zasięgu, zarobków i obrażeń przeciwko rdzeniom.[/p][p]Zapora sieciowa aktywnie stawia opór. Głębsze warstwy są bardziej niebezpieczne, rdzenie daemonów stawiają opór, a obrona wroga wymaga wydajnych tras, a nie powtarzalnego gromadzenia zasobów. Poznaj układ, ulepsz swój pojazd hakerski i wydajniej wykonuj misje ekstrakcyjne.[/p][p]W wersji demonstracyjnej ukończ wyzwanie hakerskie i spróbuj poprawić swój czas w tabeli liderów Defeat Demo. Pełna kampania Data Breach Inc. obejmuje także operacje poboczne, takie jak Red Sky Defense i Deepcore. Zasoby i elementy odblokowane z tych operacji przyczyniają się do głównej kampanii hakerskiej.[/p][p]Funkcje:[/p][p]- Zręcznościowe misje hakerskie: wydobywaj zasoby, poruszaj się, przetrwaj i ucieknij ze swoim łupem[/p][p]- Twoje postępy przez zaporę sieciową są zachowywane pomiędzy misjami[/p][p]- Stałe ulepszenia obrażeń, prędkości, pojemności ładunku, paliwa, dronów, zasięgu, zarobków i uszkodzeń rdzeni[/p][p]- Walki z rdzeniami demonów z coraz potężniejszą obroną[/p][p]- Wiele ścieżek zasobów: gotówka, XP i jądra główne[/p][p]- Cel ukończenia dema z pomiarem czasu do rankingu[/p][p]- Operacje poboczne powiązane z główną kampanią w pełnej wersji gry Data Breach Inc.[/p][p]- Krótkie misje z długoterminowym postępem[/p]",
+      "app[content][short_description]": "Pilotuj maszynę hakerską w infrastrukturze wrogiej korporacji. Wydobywaj zasoby z zapory, rozbijaj rdzenie daemonów, uciekaj z łupem i kupuj trwałe ulepszenia między misjami.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "brazilian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "portuguese": {
+      "app[content][about]": "[p]Data Breach Inc. é um jogo de ação arcade com progressão incremental. Invada infraestruturas empresariais hostis através de missões perigosas. Conduz um veículo hacker, explora a firewall em busca de recursos, destrói núcleos de daemon, escapa antes que a missão se torne demasiado perigosa e usa os teus ganhos para penetrar mais fundo da próxima vez.[/p][p]Cada voo combina a ação com a estratégia de atualização. Escolha quanto arriscar: crie uma rota segura, persiga blocos valiosos, ataque um núcleo de daemon ou regresse mais cedo para garantir a sua aquisição. Gaste dinheiro, XP e root kernels em actualizações permanentes para danos, velocidade de ataque, carga, combustível, drones, alcance, ganhos e danos contra núcleos.[/p][p]O firewall resiste-lhe ativamente. As camadas mais profundas são mais perigosas, os núcleos daemon contra-atacam e as defesas inimigas exigem rotas eficientes em vez da recolha repetitiva de recursos. Aprenda o layout, atualize o seu veículo hacker e complete missões de extração de forma mais eficiente.[/p][p]Na demonstração, completa o desafio de hacking e tenta melhorar o teu tempo na tabela de classificação Defeat Demo. A campanha Data Breach Inc. completa inclui também operações paralelas, como Red Sky Defense e Deepcore. Os recursos e desbloqueios destas operações contribuem para a principal campanha de hackers.[/p][p]Recursos:[/p][p]- Missões de hacking arcade: extraia recursos, mova-se, sobreviva e escape com o seu dinheiro[/p][p]- O seu progresso através da firewall é preservado entre missões[/p][p]- Atualizações permanentes para danos, velocidade, capacidade de carga, combustível, drones, alcance, ganhos e danos contra núcleos[/p][p]- Batalhas contra núcleos daemon com defesas cada vez mais poderosas[/p][p]- Vários caminhos de recursos: cash, XP e kernels raiz[/p][p]- Um desafio para concluir a demo, com tempos registados na classificação[/p][p]- Operações paralelas ligadas à campanha principal no jogo Data Breach Inc. completo[/p][p]- Missões curtas com progressão incremental a longo prazo[/p]",
+      "app[content][short_description]": "Pilota um veículo de intrusão nas infraestruturas de uma empresa hostil. Escava a firewall, destrói núcleos de daemons, regressa com o saque e compra melhorias permanentes entre missões.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "romanian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "russian": {
+      "app[content][about]": "[p]Data Breach Inc. — аркадный экшен с инкрементальным развитием, в котором вы проникаете в инфраструктуру враждебных корпораций, выполняя опасные вылазки. Управляйте машиной для взлома, добывайте ресурсы из фаервола, разрушайте ядра демонов и возвращайтесь до того, как ситуация выйдет из-под контроля. Вкладывайте заработанное в улучшения, чтобы в следующий раз пробраться глубже.[/p][p]Каждый полет сочетает в себе действие и стратегию обновления. Выбирайте, насколько вы рискуете: создайте безопасный маршрут, преследуйте ценные блоки, атакуйте ядро демона или возвращайтесь пораньше, чтобы обезопасить свою добычу. Тратьте деньги, XP и корневые ядра на постоянные улучшения урона, скорости атаки, груза, топлива, дронов, дальности, доходов и урона по ядрам.[/p][p]Брандмауэр активно сопротивляется вам. Более глубокие уровни более опасны, ядра демонов сопротивляются, а оборона противника требует эффективных маршрутов, а не повторяющегося сбора ресурсов. Изучите планировку, модернизируйте свою хакерскую машину и более эффективно выполняйте миссии по эвакуации.[/p][p]В демо-версии выполните хакерское задание и попытайтесь улучшить свое время в таблице лидеров Defeat Demo. Полная кампания Data Breach Inc. также включает дополнительные операции, такие как Red Sky Defense и Deepcore. Ресурсы и открытия, полученные в результате этих операций, способствуют основной хакерской кампании.[/p][p]Особенности:[/p][p]- Аркадные хакерские миссии: добывайте ресурсы, двигайтесь, выживайте и сбегайте со своим уловом.[/p][p]- Ваш прогресс через брандмауэр сохраняется между миссиями.[/p][p]- Постоянные улучшения урона, скорости, грузоподъемности, топлива, дронов, дальности, доходов и урона по ядрам.[/p][p]- Сражения с ядрами демонов с все более мощной защитой[/p][p]- Несколько путей к ресурсам: наличные, XP и корневые ядра.[/p][p]- Задача пройти демоверсию с учётом времени для таблицы лидеров[/p][p]- Дополнительные операции, связанные с основной кампанией в полной версии игры Data Breach Inc.[/p][p]- Короткие миссии с долгосрочным постепенным прогрессом.[/p]",
+      "app[content][short_description]": "Управляйте машиной для взлома в системах враждебной корпорации. Добывайте ресурсы из фаервола, разрушайте ядра демонов, возвращайтесь с добычей и покупайте постоянные улучшения между вылазками.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "schinese": {
+      "app[content][about]": "[p]Data Breach Inc. 是一款街机风格的增量动作游戏，你将在一次次高风险出击中突破敌对企业的基础设施。驾驶入侵装置，挖掘防火墙以获取资源，击破守护进程核心，并在局势恶化前带着收获撤离。把收益投入强化，让下一次入侵走得更深。[/p][p]每次出击都结合了动作挑战与强化策略。你可以开辟安全路线、追逐高价值方块、猛攻守护进程核心，或提前返航保住收获。使用金钱、XP 和根内核，永久提升伤害、攻击速度、货舱容量、燃料、无人机、射程、收益以及对核心的破坏力。[/p][p]防火墙不会坐以待毙。越深的地层威胁越大，守护进程核心会发起反击，层层防御要求你规划高效路线，而不是一味重复刷取资源。熟悉布局、调整入侵装置，让每次资源回收与撤离都更加干净利落。[/p][p]试玩版以完成入侵挑战为目标，你还可以在 Defeat Demo 排行榜上追求更快的通关时间。Data Breach Inc. 完整版的战役还串联了 Red Sky Defense 和 Deepcore 等支线行动。这些行动中获得的资源与解锁内容将反哺核心入侵任务。[/p][p]特点：[/p][p]- 街机黑客任务：开采资源、移动、生存，并带着你的战利品逃跑[/p][p]- 您通过防火墙的进度会在任务之间保留[/p][p]- 永久升级伤害、速度、货运能力、燃料、无人机、航程、收益和核心伤害[/p][p]- 与防御力日益强大的守护进程核心进行战斗[/p][p]- 多种资源路径：现金、XP和根内核[/p][p]- 以通关试玩版为目标，并记录时间参与排行榜[/p][p]- 完整的Data Breach Inc.游戏中与主线战役相关的支线行动[/p][p]- 具有长期渐进进展的短期任务[/p]",
+      "app[content][short_description]": "驾驶入侵装置，渗透敌对企业的基础设施。挖掘防火墙资源，击破守护进程核心，带着收获撤离，并在任务之间购买永久强化，向更深处发起下一次入侵。",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "latam": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "swedish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "thai": {
+      "app[content][about]": "[p]Data Breach Inc. เป็นเกมแอ็กชันอาร์เคดแบบสะสมพลังที่ให้คุณบุกโครงสร้างระบบของบริษัทศัตรูผ่านภารกิจเสี่ยงอันตราย บังคับเครื่องเจาะระบบ ขุดไฟร์วอลล์เพื่อเก็บทรัพยากร ทำลายแกนเดมอน แล้วถอนตัวก่อนสถานการณ์จะเลวร้าย นำรายได้ไปอัปเกรดเพื่อบุกได้ลึกขึ้นในครั้งต่อไป[/p][p]การออกบินแต่ละครั้งผสมทั้งแอ็กชันและการวางแผนอัปเกรด คุณเลือกได้ว่าจะเสี่ยงแค่ไหน จะเจาะทางที่ปลอดภัย ไล่เก็บบล็อกมีค่า โจมตีแกนเดมอน หรือกลับก่อนเพื่อรักษาของที่ได้มา ใช้เงิน XP และรูทเคอร์เนลอัปเกรดความเสียหาย ความเร็วโจมตี ความจุบรรทุก เชื้อเพลิง โดรน ระยะโจมตี รายได้ และพลังทำลายแกนอย่างถาวร[/p][p]ไฟร์วอลล์ไม่ได้อยู่นิ่ง ชั้นที่ลึกขึ้นมีอันตรายมากขึ้น แกนเดมอนจะตอบโต้ และการป้องกันของศัตรูบังคับให้คุณเลือกเส้นทางอย่างมีประสิทธิภาพแทนการเก็บทรัพยากรซ้ำไปมา เรียนรู้ผังพื้นที่ ปรับแต่งเครื่องเจาะระบบ แล้วเก็บทรัพยากรและถอนตัวให้รวดเร็วกว่าเดิม[/p][p]ในเดโม คุณจะต้องผ่านภารกิจเจาะระบบและพยายามทำเวลาให้ดีขึ้นบนกระดานผู้นำ Defeat Demo ส่วนแคมเปญ Data Breach Inc. ฉบับเต็มยังเชื่อมกับภารกิจเสริมอย่าง Red Sky Defense และ Deepcore ทรัพยากรและสิ่งที่ปลดล็อกจากภารกิจเหล่านั้นจะช่วยเสริมการเจาะระบบหลัก[/p][p]คุณสมบัติ:[/p][p]- ภารกิจแฮ็กอาร์เคด: ขุดทรัพยากร เคลื่อนย้าย เอาตัวรอด และหลบหนีด้วยลากของคุณ[/p][p]- ความคืบหน้าของคุณผ่านไฟร์วอลล์จะยังคงอยู่ระหว่างภารกิจ[/p][p]- อัปเกรดความเสียหาย ความเร็ว พื้นที่บรรทุกสินค้า เชื้อเพลิง โดรน ระยะทำการ รายได้ และความเสียหายต่อแกนอย่างถาวร[/p][p]- ต่อสู้กับเดมอนคอร์ด้วยการป้องกันที่ทรงพลังยิ่งขึ้น[/p][p]- เส้นทางทรัพยากรหลายเส้นทาง: เงินสด, XP และเคอร์เนลรูท[/p][p]- เป้าหมายผ่านเดโมพร้อมจับเวลาเพื่อแข่งขันบนกระดานผู้นำ[/p][p]- ภารกิจเสริมที่เชื่อมต่อกับแคมเปญหลักในเกม Data Breach Inc. ตัวเต็ม[/p][p]- ภารกิจระยะสั้นที่มีความก้าวหน้าเพิ่มขึ้นในระยะยาว[/p]",
+      "app[content][short_description]": "บังคับเครื่องเจาะระบบเข้าสู่โครงสร้างของบริษัทศัตรู ขุดไฟร์วอลล์ ทำลายแกนเดมอน หนีออกมาพร้อมของที่ได้ และซื้ออัปเกรดถาวรระหว่างภารกิจเพื่อบุกลึกกว่าเดิม",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "tchinese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "turkish": {
+      "app[content][about]": "[p]Data Breach Inc., artımlı ilerlemeye sahip bir arcade aksiyon oyunudur. Tehlikeli görevlerle düşmanca kurumsal altyapıya girin. Bir bilgisayar korsanlığı aracına pilotluk yapın, kaynaklar için güvenlik duvarını kazın, arka plan programı çekirdeklerini yok edin, görev çok tehlikeli hale gelmeden önce kaçın ve kazançlarınızı bir dahaki sefere daha derinlere nüfuz etmek için kullanın.[/p][p]Her uçuş, eylemi yükseltme stratejisiyle birleştirir. Ne kadar risk alacağınızı seçin: güvenli bir rota oluşturun, değerli blokların peşinden gidin, bir daemon çekirdeğine saldırın veya nakliyenizi güvence altına almak için erken dönün. Hasar, saldırı hızı, kargo, yakıt, dronlar, menzil, kazanç ve çekirdeklere verilen hasara yönelik kalıcı yükseltmeler için para, XP ve kök çekirdekleri harcayın.[/p][p]Güvenlik duvarı size aktif olarak direnir. Daha derin katmanlar daha tehlikelidir, arka plan programlarının çekirdekleri karşılık verir ve düşman savunması, tekrarlanan kaynak toplama yerine verimli rotalar gerektirir. Düzeni öğrenin, hackleme aracınızı yükseltin ve çıkarma görevlerini daha verimli bir şekilde tamamlayın.[/p][p]Demoda bilgisayar korsanlığı mücadelesini tamamlayın ve Defeat Demo skor tablosunda zamanınızı iyileştirmeye çalışın. Data Breach Inc. kampanyasının tamamı, Red Sky Defense ve Deepcore gibi yan işlemleri de içerir. Bu operasyonlardan elde edilen kaynaklar ve kilitlerin açılması, ana bilgisayar korsanlığı kampanyasına katkıda bulunur.[/p][p]Özellikler:[/p][p]- Arcade hackleme görevleri: kaynakları kazın, hareket edin, hayatta kalın ve elinizden geldiğince kaçın[/p][p]- Güvenlik duvarı boyunca ilerlemeniz görevler arasında korunur[/p][p]- Hasar, hız, kargo kapasitesi, yakıt, dronlar, menzil, kazanç ve çekirdeklere verilen hasarda kalıcı iyileştirmeler[/p][p]- Giderek daha güçlü savunmalara sahip daemon çekirdeklerine karşı savaşlar[/p][p]- Çoklu kaynak yolları: nakit, XP ve kök çekirdekler[/p][p]- Skor tablosu için süresi kaydedilen demo tamamlama hedefi[/p][p]- Data Breach Inc. oyununun tamamında ana kampanyaya bağlı yan operasyonlar[/p][p]- Uzun vadeli artımlı ilerleme içeren kısa görevler[/p]",
+      "app[content][short_description]": "Bir sızma aracını düşman şirketin altyapısına sok. Güvenlik duvarından kaynak çıkar, daemon çekirdeklerini parçala, ganimetinle kaç ve görevler arasında kalıcı yükseltmeler al.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "ukrainian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "vietnamese": {
+      "app[content][about]": "[p]Data Breach Inc. là một trò chơi hành động arcade với mức độ tiến triển tăng dần. Đột nhập vào cơ sở hạ tầng của công ty thù địch thông qua các nhiệm vụ nguy hiểm. Điều khiển một phương tiện hack, khai thác tường lửa để lấy tài nguyên, phá hủy lõi daemon, trốn thoát trước khi nhiệm vụ trở nên quá nguy hiểm và sử dụng số tiền kiếm được của bạn để thâm nhập sâu hơn vào lần tiếp theo.[/p][p]Mỗi chuyến bay kết hợp hành động với chiến lược nâng cấp. Chọn mức độ rủi ro: tạo một tuyến đường an toàn, theo đuổi các khối có giá trị, tấn công lõi daemon hoặc quay lại sớm để đảm bảo chuyến đi của bạn. Chi tiền, XP và hạt nhân gốc để nâng cấp vĩnh viễn về sát thương, tốc độ tấn công, hàng hóa, nhiên liệu, máy bay không người lái, tầm bắn, thu nhập và sát thương đối với lõi.[/p][p]Tường lửa tích cực chống lại bạn. Các lớp sâu hơn nguy hiểm hơn, lõi daemon chống trả và hệ thống phòng thủ của kẻ thù yêu cầu các tuyến đường hiệu quả thay vì thu thập tài nguyên lặp đi lặp lại. Tìm hiểu cách bố trí, nâng cấp phương tiện hack của bạn và hoàn thành nhiệm vụ khai thác hiệu quả hơn.[/p][p]Trong bản demo, hãy hoàn thành thử thách hack và cố gắng cải thiện thời gian của bạn trên bảng xếp hạng Defeat Demo. Chiến dịch Data Breach Inc. đầy đủ cũng bao gồm các hoạt động phụ như Red Sky Defense và Deepcore. Tài nguyên và phần mở khóa từ các hoạt động đó góp phần vào chiến dịch hack chính.[/p][p]Tính năng:[/p][p]- Nhiệm vụ hack trò chơi điện tử: khai thác tài nguyên, di chuyển, sinh tồn và trốn thoát bằng đường của bạn[/p][p]- Tiến trình của bạn thông qua tường lửa được bảo toàn giữa các nhiệm vụ[/p][p]- Nâng cấp vĩnh viễn về sát thương, tốc độ, sức chứa hàng hóa, nhiên liệu, máy bay không người lái, phạm vi, thu nhập và sát thương đối với lõi[/p][p]- Trận chiến chống lại lõi daemon với khả năng phòng thủ ngày càng mạnh mẽ[/p][p]- Nhiều đường dẫn tài nguyên: tiền mặt, XP và hạt nhân gốc[/p][p]- Thử thách hoàn thành bản demo với thời gian được ghi vào bảng xếp hạng[/p][p]- Các hoạt động phụ được kết nối với chiến dịch chính trong trò chơi Data Breach Inc. đầy đủ[/p][p]- Nhiệm vụ ngắn với sự tiến triển gia tăng dài hạn[/p]",
+      "app[content][short_description]": "Lái thiết bị xâm nhập vào hạ tầng của tập đoàn thù địch. Đào tường lửa lấy tài nguyên, phá lõi daemon, mang chiến lợi phẩm thoát ra và mua nâng cấp vĩnh viễn giữa các nhiệm vụ.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    }
+  }
+}

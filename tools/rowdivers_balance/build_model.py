@@ -176,7 +176,7 @@ for name in keep:
         body = body.replace('\t\thealth =', '\t\tvar health_before_regen = health\n\t\thealth =')
         body = body.replace('\tfor state in abilities.values():', '\t\thealing_received += maxf(0, health - health_before_regen)\n\tfor state in abilities.values():')
     if name == '_damage_player':
-        body = body.replace('\tif ended: return', '\tif ended: return\n\tif source == "the row": amount *= row_damage_scale')
+        body = body.replace('\tif ended: return', '\tif ended: return\n\tif source == "the railway": amount *= row_damage_scale')
     body = '\n'.join(line for line in body.split('\n') if not any(token in line for token in ['_floating_text(', 'enemy.label.text =', 'presentation.toast(', 'crosshair.modulate =', 'presentation.feedback.color.a =']))
     body = re.sub(r'(\w+\.node)\.queue_free\(\)', r'_retire(\1)', body)
     if name == '_simulate_step':

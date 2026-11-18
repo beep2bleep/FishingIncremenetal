@@ -22,7 +22,7 @@ var row_divers_tree_toggle: OptionButton
 func show_screen():
     _set_credits_visible(false)
     refresh_from_save()
-    %"Main Volume".grab_focus()
+    if %"Main Volume".focus_mode != Control.FOCUS_NONE: %"Main Volume".grab_focus()
 
     pass
 
@@ -48,6 +48,18 @@ func _set_credits_visible(is_visible: bool) -> void:
     var grid_container: GridContainer = get_node_or_null("GridContainer")
     if grid_container != null:
         grid_container.visible = not is_visible
+    if Util.is_row_divers_game_active() and is_visible_in_tree():
+        var target: Control = %"Hide Credits" if is_visible else %"Credits Button"
+        if target.focus_mode != Control.FOCUS_NONE: target.grab_focus()
+        RailwayController.sync_menu()
+
+func controller_credits_open() -> bool:
+    return %"Credits Panel".visible
+
+func controller_back() -> bool:
+    if not controller_credits_open(): return false
+    _set_credits_visible(false)
+    return true
 
 func _on_credits_button_pressed() -> void:
     _set_credits_visible(true)

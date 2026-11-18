@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cewpdxuiu60sp"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.alternatives.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.baseline.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.currency.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.expense.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.frontier.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.gain.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.id.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.level.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.name.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.predicted.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.prestige.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.price.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.proxy.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.score.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.wallet.translation"]
+
+source_file="res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.csv"
+dest_files=["res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.alternatives.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.baseline.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.currency.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.expense.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.frontier.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.gain.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.id.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.level.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.name.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.predicted.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.prestige.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.price.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.proxy.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.score.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/choices.wallet.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

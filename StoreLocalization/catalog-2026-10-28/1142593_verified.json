@@ -1,0 +1,215 @@
+{
+  "itemid": "1142593",
+  "languages": {
+    "english": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Drive the rig. Bank the ore. Build the next better dive.[/p][p]Deepcore is a run-based mining incremental built around short, high-pressure dives. Steer a drill rig through destructible underground terrain, break open ore, and get the haul back to the base ring before the timer expires, the drill burns out, or cargo pressure ends the push.[/p][h2][b]What You Do[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Pilot a drill rig through destructible underground routes\r\n• Manage timer pressure, drill depletion, and cargo limits during each dive\r\n• Collect ore and bank it for money and XP\r\n• Unlock deeper depth tiers with tougher layers and better payouts\r\n• Invest returns into permanent upgrades and drone support[/p][h2][b]Key Features[/b][/h2][p]• Fast run-based mining loop with strong repeat-dive momentum\r\n• Permanent upgrades for engine tuning, drill torque, plating, cooling, cargo, ore value, XP, and route efficiency\r\n• Depth-tier progression that steadily raises value, resistance, and risk\r\n• Support automation through salvage drones and delivery drones\r\n• Readable end-of-run summaries with payout, XP, and performance feedback\r\n• Single-player progression built for optimization and long-term growth[/p][h2][b]Why It Feels Good[/b][/h2][p]Every upgrade shows up quickly. The rig moves cleaner, the drill lasts longer, cargo runs get smoother, and deeper layers stop feeling impossible. Deepcore keeps the runs short enough to stay readable while the campaign keeps widening underneath them.[/p][h2][b]Best For Players Who Enjoy[/b][/h2][p]• Mining and drilling games\r\n• Incremental and progression-heavy systems\r\n• Short runs with persistent upgrades\r\n• Optimization-focused single-player loops[/p]",
+      "app[content][short_description]": "A run-based mining incremental where you steer a drill rig, bank ore, unlock deeper tiers, and turn fast dives into permanent upgrades.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "french": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Conduisez le véhicule de forage. Renvoyez votre minerai à la base. Améliorez votre équipement pour la prochaine expédition.[/p][p]Deepcore est un jeu minier incrémental fondé sur des expéditions souterraines courtes et intenses. Pilotez une foreuse dans un terrain destructible, extrayez du minerai et rapportez votre cargaison à l'anneau de la base avant la fin du temps imparti, l'usure de la foreuse ou la saturation de votre soute.[/p][h2][b]Ce que vous faites[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Conduisez un véhicule de forage à travers un terrain souterrain destructible\n• Gérer le temps limité, la durabilité des forages et la capacité de chargement au cours de chaque expédition\n• Remettez le minerai collecté à la base pour gagner de l'argent et XP.\n• Débloquez des couches plus profondes avec un terrain plus difficile et de meilleures récompenses\n• Investissez vos revenus dans des mises à niveau permanentes et des drones de support.[/p][h2][b]Principales fonctionnalités[/b][/h2][p]• De courtes expéditions minières qui vous permettent de progresser régulièrement à chaque tentative\n• Améliorations permanentes du moteur, du couple de forage, du blindage, du refroidissement, de la capacité de chargement, de la valeur du minerai, du XP et de l'efficacité des itinéraires.\n• Progression en profondeur qui augmente régulièrement la valeur, la résistance et le risque\n• Soutenir l'automatisation grâce à des drones de récupération et des drones de livraison\n• Résumés clairs des expéditions indiquant les revenus, les XP et les performances.\n• Progression solo conçue pour l'optimisation et la croissance à long terme[/p][h2][b]Une progression satisfaisante[/b][/h2][p]Vous ressentez rapidement l’effet de chaque amélioration. Votre véhicule de forage est plus maniable, votre foreuse dure plus longtemps, le transport de marchandises devient plus facile et les couches plus profondes deviennent accessibles. Deepcore propose des expéditions courtes et gérables dans le cadre d'une campagne en expansion.[/p][h2][b]Idéal pour les joueurs qui aiment[/b][/h2][p]• Jeux d'exploitation minière et de forage\n• Systèmes incrémentaux et à forte progression\n• Expéditions courtes avec améliorations permanentes\n• Un gameplay solo axé sur l'optimisation[/p]",
+      "app[content][short_description]": "Un jeu minier incrémental rythmé par de courtes expéditions. Pilotez une foreuse, rapportez le minerai à la base, débloquez des profondeurs inédites et investissez vos gains dans des améliorations permanentes.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "italian": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Guida il veicolo di perforazione. Riporta il minerale alla base. Aggiorna la tua attrezzatura per la prossima spedizione.[/p][p]Deepcore è un gioco minerario con progressione incrementale e spedizioni sotterranee brevi e intense. Guida un veicolo di perforazione attraverso terreni sotterranei distruttibili, estrai il minerale e riporta il tuo carico all'anello di base prima che scada il tempo, la trivella si consumi o il carico raggiunga il limite.[/p][h2][b]Cosa fai[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Guida un veicolo di perforazione attraverso un terreno sotterraneo distruttibile\n• Gestisci il tempo limitato, la durata dell'esercitazione e la capacità di carico durante ogni spedizione\n• Restituisci il minerale raccolto alla base per guadagnare denaro e XP\n• Sblocca strati più profondi con terreni più difficili e ricompense migliori\n• Investi i guadagni in aggiornamenti permanenti e supporta i droni[/p][h2][b]Caratteristiche principali[/b][/h2][p]• Brevi spedizioni minerarie che ti consentono di progredire costantemente ad ogni tentativo\n• Miglioramenti permanenti al motore, alla coppia di perforazione, alla corazzatura, al raffreddamento, alla capacità di carico, al valore del minerale, a XP e all'efficienza del percorso\n• Progressione del livello di profondità che aumenta costantemente valore, resistenza e rischio\n• Supportare l'automazione tramite droni di salvataggio e droni per le consegne\n• Riepiloghi chiari delle spedizioni che mostrano guadagni, XP e rendimento\n• Progressione per giocatore singolo pensata per l'ottimizzazione e la crescita a lungo termine[/p][h2][b]Progressione soddisfacente[/b][/h2][p]Senti rapidamente l'effetto di ogni potenziamento. Il tuo veicolo di perforazione è più maneggevole, la tua trivella dura più a lungo, il trasporto del carico diventa più semplice e gli strati più profondi diventano accessibili. Deepcore offre spedizioni brevi e gestibili all'interno di una campagna in espansione.[/p][h2][b]Il meglio per i giocatori che si divertono[/b][/h2][p]• Giochi di estrazione mineraria e perforazione\n• Sistemi incrementali e con progressione pesante\n• Brevi spedizioni con aggiornamenti permanenti\n• Gameplay per giocatore singolo incentrato sull'ottimizzazione[/p]",
+      "app[content][short_description]": "Un gioco minerario incrementale a spedizioni: guida una trivella, riporta il minerale alla base, sblocca strati più profondi e investi i guadagni di brevi spedizioni in potenziamenti permanenti.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "german": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Steuere das Bohrfahrzeug. Bringe dein Erz zur Basis. Verbessere deine Ausrüstung für die nächste Expedition.[/p][p]Deepcore ist ein Incremental-Bergbauspiel mit kurzen, intensiven Expeditionen unter Tage. Steuere ein Bohrfahrzeug durch zerstörbares Gelände, baue Erz ab und bringe deine Ladung zum Basisring zurück, bevor die Zeit abläuft, der Bohrer verschlissen ist oder dein Frachtraum an seine Grenzen stößt.[/p][h2][b]Was Sie tun[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Steuere ein Bohrfahrzeug durch zerstörbares Gelände unter Tage\n• Behalte Zeitlimit, Bohrerverschleiß und Ladekapazität im Blick\n• Bringe Erz zur Basis und erhalte Geld sowie XP\n• Erschließe tiefere Schichten mit härterem Gestein und besseren Belohnungen\n• Investiere Erträge in dauerhafte Upgrades und Unterstützungsdrohnen[/p][h2][b]Hauptmerkmale[/b][/h2][p]• Kurze Bergbauexpeditionen, bei denen Sie mit jedem Versuch stetig vorankommen\n• Permanente Verbesserungen an Motor, Bohrdrehmoment, Panzerung, Kühlung, Ladekapazität, Erzwert, XP und Routeneffizienz\n• Stufenweiser Fortschritt, der Wert, Widerstand und Risiko stetig erhöht\n• Unterstützen Sie die Automatisierung durch Bergungsdrohnen und Lieferdrohnen\n• Klare Expeditionszusammenfassungen mit Einnahmen, XP und Leistung\n• Einzelspieler-Fortschritt für Optimierung und langfristiges Wachstum[/p][h2][b]Befriedigender Fortschritt[/b][/h2][p]Sie spüren schnell die Wirkung jedes Upgrades. Ihr Bohrfahrzeug fährt sich besser, Ihr Bohrer hält länger, der Transport von Ladung wird einfacher und tiefere Schichten werden zugänglicher. Deepcore bietet kurze, überschaubare Expeditionen innerhalb einer expandierenden Kampagne.[/p][h2][b]Am besten für Spieler, die Spaß haben[/b][/h2][p]• Bergbau- und Bohrspiele\n• Inkrementelle und fortschrittslastige Systeme\n• Kurze Expeditionen mit permanenten Upgrades\n• Einzelspieler-Gameplay mit Fokus auf Optimierung[/p]",
+      "app[content][short_description]": "Ein Incremental-Bergbauspiel mit kurzen Expeditionen: Steuere dein Bohrfahrzeug, bringe Erz zur Basis, erschließe tiefere Schichten und investiere deine Erträge in dauerhafte Upgrades.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "spanish": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Conducir el vehículo de perforación. Devuelve tu mineral a la base. Mejora tu equipo para la próxima expedición.[/p][p]Deepcore es un juego de minería con progresión incremental y expediciones subterráneas cortas e intensas. Conduce un vehículo de perforación a través de terreno subterráneo destructible, extrae mineral y lleva tu cargamento de regreso al anillo base antes de que se acabe el tiempo, la perforadora se desgaste o tu carga alcance su límite.[/p][h2][b]lo que haces[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Conducir un vehículo de perforación a través de terreno subterráneo destructible\n• Gestionar el tiempo limitado, la durabilidad de la perforación y la capacidad de carga durante cada expedición.\n• Devuelve el mineral recolectado a la base para ganar dinero y XP\n• Desbloquea capas más profundas con terreno más duro y mejores recompensas.\n• Invierta las ganancias en actualizaciones permanentes y soporte a los drones.[/p][h2][b]Características clave[/b][/h2][p]• Expediciones mineras cortas que te permitirán progresar constantemente en cada intento.\n• Actualizaciones permanentes al motor, torque de perforación, blindaje, enfriamiento, capacidad de carga, valor del mineral, XP y eficiencia de ruta.\n• Progresión de niveles profundos que aumenta constantemente el valor, la resistencia y el riesgo\n• Apoyar la automatización mediante drones de salvamento y drones de reparto.\n• Resúmenes de expedición claros que muestran ganancias, XP y desempeño\n• Progresión para un jugador creada para la optimización y el crecimiento a largo plazo[/p][h2][b]Progresión satisfactoria[/b][/h2][p]Rápidamente sientes el efecto de cada mejora. Su vehículo de perforación se maneja mejor, su taladro dura más, el transporte de carga se vuelve más fácil y se puede acceder a capas más profundas. Deepcore ofrece expediciones breves y manejables dentro de una campaña en expansión.[/p][h2][b]Lo mejor para jugadores que disfrutan[/b][/h2][p]• Juegos de minería y perforación.\n• Sistemas incrementales y de gran progresión\n• Expediciones cortas con mejoras permanentes\n• Juego para un jugador centrado en la optimización.[/p]",
+      "app[content][short_description]": "Un juego minero incremental por expediciones: pilota una perforadora, lleva mineral a la base, desbloquea capas más profundas e invierte las ganancias de incursiones breves en mejoras permanentes.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "bulgarian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "czech": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Řídit vrtací vozidlo. Vraťte svou rudu na základnu. Vylepšete si vybavení na další výpravu.[/p][p]Deepcore je těžební hra s inkrementálním postupem a krátkými, intenzivními podzemními expedicemi. Projeďte vrtacím vozidlem zničitelným podzemním terénem, těžte rudu a dopravte svůj náklad zpět do základního prstence, než vyprší čas, vrták se opotřebuje nebo váš náklad dosáhne svého limitu.[/p][h2][b]Co děláš[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Projeďte vrtacím vozidlem zničitelným podzemním terénem\n• Spravujte omezený čas, trvanlivost vrtání a kapacitu nákladu během každé expedice\n• Vraťte shromážděnou rudu na základnu a vydělávejte peníze a XP\n• Odemkněte hlubší vrstvy s těžším terénem a lepšími odměnami\n• Investujte výdělky do trvalých upgradů a podpory dronů[/p][h2][b]Klíčové vlastnosti[/b][/h2][p]• Krátké těžařské expedice, které vám umožní plynule postupovat při každém pokusu\n• Trvalé vylepšení motoru, vrtacího momentu, pancéřování, chlazení, nákladové kapacity, hodnoty rudy, XP a efektivity trasy\n• Progrese na úrovni hloubky, která neustále zvyšuje hodnotu, odolnost a riziko\n• Podporujte automatizaci pomocí záchranných dronů a doručovacích dronů\n• Přehledné souhrny expedice zobrazující příjmy, XP a výkon\n• Postup pro jednoho hráče vytvořený pro optimalizaci a dlouhodobý růst[/p][h2][b]Uspokojivý pokrok[/b][/h2][p]Rychle pocítíte účinek každého upgradu. Vaše vrtací vozidlo se lépe ovládá, vaše vrtačka vydrží déle, přeprava nákladu je snadnější a hlubší vrstvy jsou přístupné. Deepcore nabízí krátké, zvládnutelné expedice v rámci rozšiřující se kampaně.[/p][h2][b]Nejlepší pro hráče, kteří se baví[/b][/h2][p]• Hry s těžbou a vrtáním\n• Inkrementální a progresivní systémy\n• Krátké expedice s permanentními upgrady\n• Hra pro jednoho hráče zaměřená na optimalizaci[/p]",
+      "app[content][short_description]": "Inkrementální těžební hra s krátkými výpravami. Řiď vrtný stroj, voz rudu na základnu, odemykej hlubší vrstvy a proměňuj odměny z výprav v trvalá vylepšení.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "danish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "dutch": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "finnish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "greek": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "hungarian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "indonesian": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Mengendarai kendaraan pengeboran. Kembalikan bijih Anda ke pangkalan. Tingkatkan peralatan Anda untuk ekspedisi berikutnya.[/p][p]Deepcore adalah game penambangan dengan perkembangan inkremental dan ekspedisi bawah tanah yang singkat dan intens. Kendarai kendaraan pengeboran melalui medan bawah tanah yang dapat dirusak, ekstrak bijih, dan bawa hasil tambang Anda kembali ke ring pangkalan sebelum waktu habis, bor habis, atau muatan Anda mencapai batasnya.[/p][h2][b]Apa yang Anda Lakukan[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Mengendarai kendaraan pengeboran melalui medan bawah tanah yang dapat dirusak\n• Kelola waktu terbatas, ketahanan bor, dan kapasitas kargo selama setiap ekspedisi\n• Kembalikan bijih yang dikumpulkan ke pangkalan untuk mendapatkan uang dan XP\n• Buka lapisan yang lebih dalam dengan medan yang lebih sulit dan hadiah yang lebih baik\n• Investasikan pendapatan dalam peningkatan permanen dan dukung drone[/p][h2][b]Fitur Utama[/b][/h2][p]• Ekspedisi penambangan singkat yang memungkinkan Anda terus maju dalam setiap upaya\n• Peningkatan permanen pada mesin, torsi bor, pelapisan baja, pendinginan, kapasitas kargo, nilai bijih, XP, dan efisiensi rute\n• Kemajuan tingkat mendalam yang terus meningkatkan nilai, resistensi, dan risiko\n• Mendukung otomatisasi melalui drone penyelamat dan drone pengiriman\n• Hapus ringkasan ekspedisi yang menunjukkan penghasilan, XP, dan kinerja\n• Perkembangan pemain tunggal dibangun untuk optimalisasi dan pertumbuhan jangka panjang[/p][h2][b]Kemajuan yang Memuaskan[/b][/h2][p]Anda dengan cepat merasakan efek dari setiap peningkatan. Kendaraan pengeboran Anda dapat menangani dengan lebih baik, bor Anda bertahan lebih lama, pengangkutan muatan menjadi lebih mudah, dan lapisan yang lebih dalam dapat diakses. Deepcore menawarkan ekspedisi singkat dan mudah dikelola dalam kampanye yang berkembang.[/p][h2][b]Terbaik Untuk Pemain yang Menikmati[/b][/h2][p]• Permainan penambangan dan pengeboran\n• Sistem yang inkremental dan penuh kemajuan\n• Ekspedisi singkat dengan peningkatan permanen\n• Gameplay pemain tunggal berfokus pada pengoptimalan[/p]",
+      "app[content][short_description]": "Game penambangan inkremental dengan ekspedisi singkat. Kendalikan kendaraan bor, bawa bijih ke markas, buka lapisan lebih dalam, dan investasikan hasil ekspedisi untuk peningkatan permanen.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "japanese": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]掘削車両を運転します。鉱石を基地に戻します。次の遠征に備えて装備をアップグレードしてください。[/p][p]Deepcoreは、短く緊張感のある地下遠征を繰り返す採掘インクリメンタルゲームです。掘削マシンで破壊可能な地形を掘り進み、鉱石を採掘。制限時間が切れる前に、ドリルが摩耗しきる前に、そして積載量が限界になる前に、戦利品を基地のリングへ持ち帰りましょう。[/p][h2][b]あなたがすること[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• 掘削車両を運転して破壊可能な地下地形を通過する\n• 各遠征中の限られた時間、ドリルの耐久性、積載量を管理\n• 集めた鉱石を基地に戻してお金を稼ぎ、XP\n• より困難な地形とより良い報酬を備えたより深い層のロックを解除する\n• 収益を恒久的なアップグレードとサポートドローンに投資します。[/p][h2][b]主な特長[/b][/h2][p]• 短い採掘遠征で、試行ごとに着実に進歩できる\n• エンジン、ドリルトルク、装甲装甲、冷却、貨物容量、鉱石価値、XP、ルート効率の恒久的なアップグレード\n• 価値、抵抗力、リスクを着実に高める深層段階の進行\n• サルベージドローンと配送ドローンによる自動化のサポート\n• 収益、XP、パフォーマンスを示す明確な遠征概要\n• 最適化と長期的な成長を目指して構築されたシングルプレイヤーの進行状況[/p][h2][b]満足のいく進歩[/b][/h2][p]各アップグレードの効果をすぐに実感できます。掘削車両の操作性が向上し、ドリルの寿命が長くなり、貨物の輸送が容易になり、より深い層にアクセスできるようになります。 Deepcore は、拡大するキャンペーン内で、短くて管理しやすい遠征を提供します。[/p][h2][b]楽しむプレイヤーに最適[/b][/h2][p]• 採掘および掘削ゲーム\n• インクリメンタルで進行性の高いシステム\n• 永続強化付きの短期遠征\n• 最適化に重点を置いたシングルプレイヤーゲームプレイ[/p]",
+      "app[content][short_description]": "短い遠征を繰り返す採掘インクリメンタルゲーム。掘削マシンを操り、鉱石を基地に持ち帰り、より深い層を解放。遠征で得た報酬を永続強化に使い、次の挑戦につなげよう。",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "koreana": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]드릴링 차량을 운전해 보세요. 광석을 기지로 돌려보내세요. 다음 탐험을 위해 장비를 업그레이드하세요.[/p][p]Deepcore는 짧고 긴장감 넘치는 지하 탐사를 반복하는 점진적 성장 채굴 게임입니다. 굴착 장비를 조종해 파괴 가능한 지형을 뚫고 광석을 캐세요. 제한 시간이 끝나거나 드릴이 닳거나 적재 한도에 이르기 전에 수확물을 기지의 링으로 가져와야 합니다.[/p][h2][b]당신이 하는 일[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• 파괴 가능한 지하 지형을 통해 시추 차량을 운전하세요.\n• 각 탐사 동안 제한된 시간, 드릴 내구성, 화물 용량을 관리합니다.\n• 수집된 광석을 기지로 반납하여 돈과 XP을(를) 획득하세요\n• 더 어려운 지형과 더 나은 보상으로 더 깊은 레이어를 잠금 해제하세요.\n• 영구 업그레이드 및 드론 지원에 수익을 투자하세요.[/p][h2][b]주요 특징[/b][/h2][p]• 시도할 때마다 꾸준히 진행할 수 있는 짧은 채굴 탐험\n• 엔진, 드릴 토크, 장갑 도금, 냉각, 화물 용량, 광석 가치, XP 및 경로 효율성에 대한 영구 업그레이드\n• 가치, 저항, 위험을 꾸준히 높이는 심도 있는 진행\n• 구난드론, 배송드론을 통한 자동화 지원\n• 수입, XP 및 성과를 보여주는 명확한 탐험 요약\n• 최적화와 장기적인 성장을 위해 구축된 싱글 플레이어 진행 방식[/p][h2][b]만족스러운 진행[/b][/h2][p]각 업그레이드의 효과를 빠르게 느낄 수 있습니다. 시추 차량의 핸들링이 향상되고, 드릴 수명이 길어지며, 화물 운송이 더 쉬워지고, 더 깊은 층에 접근할 수 있게 됩니다. Deepcore은 확장 캠페인 내에서 짧고 관리하기 쉬운 탐사를 제공합니다.[/p][h2][b]즐기는 플레이어에게 가장 적합[/b][/h2][p]• 채굴 및 시추 게임\n• 증분 및 진행 중심 시스템\n• 영구 업그레이드가 포함된 짧은 탐험\n• 최적화에 중점을 둔 싱글 플레이어 게임플레이[/p]",
+      "app[content][short_description]": "짧은 탐사를 반복하는 점진적 성장 채굴 게임입니다. 굴착 장비를 조종해 광석을 기지로 가져오고, 더 깊은 지층을 해금하세요. 탐사 보상을 영구 강화에 투자해 더 멀리 나아가세요.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "malay": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "norwegian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "polish": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Prowadź pojazd wiertniczy. Zwróć rudę do bazy. Ulepsz swój sprzęt na następną wyprawę.[/p][p]Deepcore to gra górnicza z postępem przyrostowym i krótkimi, intensywnymi wyprawami pod ziemię. Prowadź pojazd wiertniczy przez zniszczalny podziemny teren, wydobywaj rudę i sprowadź łup z powrotem do pierścienia bazowego, zanim upłynie czas, wiertło się zużyje lub twój ładunek osiągnie limit.[/p][h2][b]Co robisz[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Prowadź pojazd wiertniczy przez zniszczalny podziemny teren\n• Zarządzaj ograniczonym czasem, trwałością wierteł i pojemnością ładunku podczas każdej wyprawy\n• Zwróć zebraną rudę do bazy, aby zarobić pieniądze i XP\n• Odblokuj głębsze warstwy z trudniejszym terenem i lepszymi nagrodami\n• Inwestuj zarobki w stałe ulepszenia i wspieraj drony[/p][h2][b]Kluczowe funkcje[/b][/h2][p]• Krótkie wyprawy górnicze, które pozwalają na ciągły postęp przy każdej próbie\n• Stałe ulepszenia silnika, momentu obrotowego wiertła, opancerzenia, chłodzenia, pojemności ładunkowej, wartości rudy, XP i wydajności trasy\n• Głęboki rozwój, który stale podnosi wartość, opór i ryzyko\n• Wspieraj automatyzację za pomocą dronów ratowniczych i dostawczych\n• Przejrzyste podsumowania wypraw pokazujące zarobki, XP i wyniki\n• Postęp dla jednego gracza stworzony z myślą o optymalizacji i długoterminowym rozwoju[/p][h2][b]Satysfakcjonujący postęp[/b][/h2][p]Szybko odczuwasz efekt każdego ulepszenia. Twój pojazd wiertniczy radzi sobie lepiej, wiertnica wytrzyma dłużej, transport ładunku staje się łatwiejszy, a głębsze warstwy stają się dostępne. Deepcore oferuje krótkie, łatwe w zarządzaniu wyprawy w ramach rozwijającej się kampanii.[/p][h2][b]Najlepsze dla graczy, którzy lubią[/b][/h2][p]• Gry górnicze i wiertnicze\n• Systemy przyrostowe i obciążone progresją\n• Krótkie wyprawy ze stałymi ulepszeniami\n• Rozgrywka dla pojedynczego gracza skupiona na optymalizacji[/p]",
+      "app[content][short_description]": "Gra górnicza z przyrostowym rozwojem i krótkimi wyprawami. Steruj wiertnicą, dowoź rudę do bazy, odblokowuj głębsze warstwy i inwestuj zyski z wypraw w trwałe ulepszenia.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "brazilian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "portuguese": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Conduza o veículo de perfuração. Devolva o seu minério à base. Melhore o seu equipamento para a próxima expedição.[/p][p]Deepcore é um jogo de mineração com progressão incremental e expedições subterrâneas curtas e intensas. Conduza um veículo de perfuração por terreno subterrâneo destrutível, extraia minério e traga a sua carga de volta para o anel base antes que o tempo se esgote, a broca se desgaste ou a sua carga atinja o limite.[/p][h2][b]O que faz[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Conduzir um veículo de perfuração através de terreno subterrâneo destrutível\n• Gerir o tempo limitado, a durabilidade da perfuração e a capacidade de carga durante cada expedição\n• Devolva o minério recolhido à base para ganhar dinheiro e XP\n• Desbloqueie camadas mais profundas com terrenos mais difíceis e melhores recompensas\n• Invista os ganhos em melhorias permanentes e suporte de drones[/p][h2][b]Principais recursos[/b][/h2][p]• Expedições de mineração curtas que permitem progredir continuamente a cada tentativa\n• Melhorias permanentes no motor, binário de perfuração, blindagem, arrefecimento, capacidade de carga, valor do minério, XP e eficiência de rota\n• Progressão profunda que aumenta constantemente o valor, a resistência e o risco\n• Apoiar a automação através de drones de salvamento e drones de entrega\n• Resumos de expedições claros mostrando os ganhos, XP e o desempenho\n• Progressão para um jogador criada para otimização e crescimento a longo prazo[/p][h2][b]Progressão satisfatória[/b][/h2][p]Sente-se rapidamente o efeito de cada atualização. O seu veículo de perfuração tem um melhor desempenho, o seu berbequim dura mais tempo, o transporte de carga torna-se mais fácil e as camadas mais profundas tornam-se acessíveis. Deepcore oferece expedições curtas e geríveis numa campanha em expansão.[/p][h2][b]Melhor para jogadores que gostam[/b][/h2][p]• Jogos de mineração e perfuração\n• Sistemas incrementais e de progressão pesada\n• Expedições curtas com melhorias permanentes\n• Jogabilidade para um jogador focada na otimização[/p]",
+      "app[content][short_description]": "Um jogo mineiro incremental com expedições curtas. Conduz uma perfuradora, leva minério à base, desbloqueia camadas mais profundas e investe os ganhos das expedições em melhorias permanentes.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "romanian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "russian": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Управляйте буровой машиной. Верните руду на базу. Обновите свое снаряжение для следующей экспедиции.[/p][p]Deepcore — инкрементальная игра о добыче руды в коротких напряжённых экспедициях. Управляйте буровой машиной в разрушаемых подземельях, добывайте руду и доставляйте груз к кольцу базы, пока не истекло время, не износился бур или не был достигнут предел грузоподъёмности.[/p][h2][b]Что ты делаешь[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Проведите буровую машину по разрушаемой подземной местности.\n• Управляйте ограниченным временем, долговечностью тренировок и грузоподъемностью во время каждой экспедиции.\n• Верните собранную руду на базу, чтобы заработать деньги и XP.\n• Разблокируйте более глубокие уровни с более сложной местностью и лучшими наградами.\n• Инвестируйте доходы в постоянные обновления и поддержку дронов.[/p][h2][b]Ключевые особенности[/b][/h2][p]• Короткие горнодобывающие экспедиции, которые позволяют вам постепенно прогрессировать с каждой попыткой.\n• Постоянная модернизация двигателя, крутящего момента бурения, брони, охлаждения, грузоподъемности, ценности руды, XP и эффективности маршрута.\n• Прогресс на уровне глубины, который постоянно повышает ценность, сопротивление и риск.\n• Поддержка автоматизации с помощью дронов-спасателей и дронов-доставщиков.\n• Четкие сводные данные об экспедициях, показывающие доходы, XP и эффективность.\n• Прогресс в одиночной игре, созданный для оптимизации и долгосрочного роста.[/p][h2][b]Удовлетворяющий прогресс[/b][/h2][p]Вы быстро почувствуете эффект от каждого обновления. Ваша буровая машина лучше управляется, ваша буровая установка служит дольше, транспортировка грузов становится проще, а более глубокие слои становятся доступными. Deepcore предлагает короткие, управляемые экспедиции в рамках расширяющейся кампании.[/p][h2][b]Лучшее для игроков, которым нравится[/b][/h2][p]• Игры о добыче полезных ископаемых и бурении\n• Инкрементные и прогрессивные системы\n• Короткие экспедиции с постоянными улучшениями.\n• Одиночный игровой процесс, ориентированный на оптимизацию.[/p]",
+      "app[content][short_description]": "Инкрементальная игра о добыче руды в коротких экспедициях. Управляйте буровой машиной, доставляйте руду на базу, открывайте более глубокие слои и вкладывайте награды в постоянные улучшения.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "schinese": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]驾驶钻井车。将你的矿石送回基地。为下一次探险升级您的装备。[/p][p]Deepcore 是一款围绕短途高压探险展开的增量采矿游戏。驾驶钻探装置穿越可破坏的地下地形，开采矿石，并在倒计时结束、钻头耗尽或货舱达到极限之前，将收获运回基地环。[/p][h2][b]你做什么[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• 驾驶钻探车辆穿过可破坏的地下地形\n• 在每次探险期间管理有限的时间、钻探耐久性和货物容量\n• 将收集到的矿石返回基地以赚取金钱和XP\n• 解锁更深层次、更困难的地形和更好的奖励\n• 将收益投资于永久性升级和支持无人机[/p][h2][b]主要特点[/b][/h2][p]• 短暂的采矿探险，让您在每次尝试中稳步进步\n• 永久升级发动机、钻孔扭矩、装甲、冷却、载货能力、矿石价值、XP 和路线效率\n• 稳步提升价值、阻力和风险的深度层级进展\n• 通过救援无人机和送货无人机支持自动化\n• 清晰的考察摘要显示收入、XP 和绩效\n• 专为优化和长期发展而打造的单人游戏进程[/p][h2][b]令人满意的进步[/b][/h2][p]您很快就能感受到每次升级的效果。您的钻车操控性更好，钻机使用寿命更长，运输货物变得更容易，并且可以进入更深的地层。 Deepcore 在不断扩大的活动中提供简短且易于管理的探险活动。[/p][h2][b]最适合喜欢游戏的玩家[/b][/h2][p]• 采矿和钻探游戏\n• 渐进式和渐进式系统\n• 带有永久升级的短期探险\n• 注重优化的单人游戏玩法[/p]",
+      "app[content][short_description]": "以短途探险为核心的增量采矿游戏。驾驶钻探装置，将矿石运回基地，解锁更深的地层，再把每次探险的收益投入永久强化。",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "latam": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "swedish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "thai": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]ขับรถเจาะ. นำแร่ของคุณกลับคืนสู่ฐาน อัพเกรดอุปกรณ์ของคุณสำหรับการเดินทางครั้งต่อไป[/p][p]Deepcore เป็นเกมขุดแร่แบบสะสมพลังที่เน้นการสำรวจใต้ดินระยะสั้นแต่กดดัน บังคับรถเจาะผ่านภูมิประเทศที่ทำลายได้ ขุดแร่ แล้วขนกลับมายังวงแหวนฐานก่อนหมดเวลา หัวเจาะสึกจนใช้งานไม่ได้ หรือถึงขีดจำกัดการบรรทุก[/p][h2][b]สิ่งที่คุณทำ[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• ขับรถเจาะผ่านภูมิประเทศใต้ดินที่สามารถทำลายได้\n• จัดการเวลาที่จำกัด ความทนทานของการเจาะ และความสามารถในการบรรทุกสินค้าระหว่างการสำรวจแต่ละครั้ง\n• คืนแร่ที่รวบรวมไว้กลับฐานเพื่อหารายได้และ XP\n• ปลดล็อกชั้นที่ลึกลงไปด้วยภูมิประเทศที่ยากขึ้นและรางวัลที่ดีกว่า\n• ลงทุนในการอัพเกรดถาวรและสนับสนุนโดรน[/p][h2][b]คุณสมบัติที่สำคัญ[/b][/h2][p]• การสำรวจการขุดระยะสั้นที่ช่วยให้คุณก้าวหน้าอย่างต่อเนื่องในแต่ละครั้ง\n• การอัพเกรดเครื่องยนต์อย่างถาวร แรงบิดของการเจาะ การชุบเกราะ การระบายความร้อน ความจุในการบรรทุก มูลค่าแร่ XP และประสิทธิภาพของเส้นทาง\n• ความก้าวหน้าระดับความลึกที่เพิ่มมูลค่า การต่อต้าน และความเสี่ยงอย่างต่อเนื่อง\n• สนับสนุนระบบอัตโนมัติผ่านโดรนกู้ภัยและโดรนส่งสินค้า\n• สรุปการสำรวจที่ชัดเจนซึ่งแสดงรายได้ XP และประสิทธิภาพ\n• ความก้าวหน้าของผู้เล่นคนเดียวที่สร้างขึ้นเพื่อการเพิ่มประสิทธิภาพและการเติบโตในระยะยาว[/p][h2][b]ความก้าวหน้าที่น่าพอใจ[/b][/h2][p]คุณจะสัมผัสได้ถึงผลของการอัพเกรดแต่ละครั้งอย่างรวดเร็ว รถเจาะของคุณจัดการได้ดีขึ้น สว่านของคุณใช้งานได้นานขึ้น การขนส่งสินค้าง่ายขึ้น และเข้าถึงชั้นที่ลึกยิ่งขึ้นได้ Deepcore เสนอการสำรวจระยะสั้นและจัดการได้ภายในแคมเปญที่กำลังขยาย[/p][h2][b]ดีที่สุดสำหรับผู้เล่นที่ชื่นชอบ[/b][/h2][p]• เกมขุดและขุดเจาะ\n• ระบบที่เพิ่มขึ้นและก้าวหน้าอย่างหนัก\n• การเดินทางระยะสั้นพร้อมการอัพเกรดถาวร\n• รูปแบบการเล่นแบบผู้เล่นคนเดียวที่เน้นไปที่การเพิ่มประสิทธิภาพ[/p]",
+      "app[content][short_description]": "เกมขุดแร่แบบสะสมพลังผ่านการสำรวจสั้น ๆ บังคับรถเจาะ ขนแร่กลับฐาน ปลดล็อกชั้นดินที่ลึกขึ้น และนำรายได้จากการสำรวจไปซื้ออัปเกรดถาวร",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "tchinese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "turkish": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Sondaj aracını sürün. Cevherinizi üsse geri getirin. Bir sonraki sefer için ekipmanınızı yükseltin.[/p][p]Deepcore, artan ilerleme ve kısa, yoğun yer altı keşif gezileri içeren bir madencilik oyunudur. Yıkılabilir yeraltı arazisinde bir sondaj aracı kullanın, cevher çıkarın ve süre dolmadan, matkap aşınmadan veya kargonuz sınırına ulaşmadan önce nakliyenizi taban halkasına geri getirin.[/p][h2][b]Ne Yapıyorsun?[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Yıkılabilir yeraltı arazisinde bir sondaj aracı sürün\n• Her sefer sırasında sınırlı süreyi, sondaj dayanıklılığını ve kargo kapasitesini yönetin\n• Para kazanmak için toplanan cevheri üsse iade edin ve XP\n• Daha zorlu araziler ve daha iyi ödüllerle daha derin katmanların kilidini açın\n• Kazançlarınızı kalıcı yükseltmelere ve dronları desteklemeye yatırın[/p][h2][b]Temel Özellikler[/b][/h2][p]• Her denemede istikrarlı bir şekilde ilerlemenizi sağlayan kısa madencilik gezileri\n• Motor, sondaj torku, zırh kaplaması, soğutma, kargo kapasitesi, cevher değeri, XP ve rota verimliliğinde kalıcı iyileştirmeler\n• Değeri, direnci ve riski sürekli artıran derin kademeli ilerleme\n• Kurtarma dronları ve teslimat dronları aracılığıyla otomasyonu destekleyin\n• Kazançları, XP ve performansı gösteren anlaşılır keşif özetleri\n• Optimizasyon ve uzun vadeli büyüme için oluşturulmuş tek oyunculu ilerleme[/p][h2][b]Tatmin Edici İlerleme[/b][/h2][p]Her yükseltmenin etkisini hızla hissedersiniz. Sondaj aracınız daha iyi çalışır, matkabınız daha uzun süre dayanır, yükün taşınması kolaylaşır ve daha derin katmanlara erişilebilir hale gelir. Deepcore, genişleyen bir kampanya kapsamında kısa, yönetilebilir keşif gezileri sunar.[/p][h2][b]Keyif Alan Oyuncular İçin En İyisi[/b][/h2][p]• Madencilik ve sondaj oyunları\n• Artımlı ve ilerleme ağırlıklı sistemler\n• Kalıcı yükseltmelerle kısa keşif gezileri\n• Optimizasyona odaklı tek oyunculu oynanış[/p]",
+      "app[content][short_description]": "Kısa seferlere dayalı artımlı bir madencilik oyunu. Sondaj aracını sür, cevheri üsse taşı, daha derin katmanları aç ve seferlerden kazandıklarını kalıcı yükseltmelere yatır.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "ukrainian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "vietnamese": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Lái xe khoan. Đưa quặng của bạn về căn cứ. Nâng cấp thiết bị của bạn cho chuyến thám hiểm tiếp theo.[/p][p]Deepcore là một trò chơi khai thác có tiến trình tăng dần và các cuộc thám hiểm dưới lòng đất ngắn và căng thẳng. Lái một chiếc xe khoan qua địa hình ngầm có thể bị phá hủy, khai thác quặng và đưa hàng hóa của bạn trở lại vòng đế trước khi hết thời gian, mũi khoan bị mòn hoặc hàng hóa của bạn đạt đến giới hạn.[/p][h2][b]Bạn làm gì[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Lái xe khoan qua địa hình ngầm có thể phá hủy\n• Quản lý giới hạn thời gian, độ bền của máy khoan và sức chứa hàng hóa trong mỗi chuyến thám hiểm\n• Trả quặng đã thu thập về căn cứ để kiếm tiền và XP\n• Mở khóa các lớp sâu hơn với địa hình khó hơn và phần thưởng tốt hơn\n• Đầu tư thu nhập vào nâng cấp vĩnh viễn và hỗ trợ máy bay không người lái[/p][h2][b]Các tính năng chính[/b][/h2][p]• Các cuộc thám hiểm khai thác ngắn giúp bạn tiến bộ đều đặn sau mỗi lần thử\n• Nâng cấp vĩnh viễn động cơ, mô-men xoắn khoan, mạ giáp, làm mát, sức chứa hàng hóa, giá trị quặng, XP và hiệu quả của tuyến đường\n• Tiến triển theo cấp độ sâu giúp tăng đều đặn giá trị, mức kháng cự và rủi ro\n• Hỗ trợ tự động hóa thông qua máy bay không người lái cứu hộ và máy bay không người lái giao hàng\n• Xóa các bản tóm tắt cuộc thám hiểm hiển thị thu nhập, XP và hiệu suất\n• Tiến trình chơi đơn được xây dựng để tối ưu hóa và tăng trưởng lâu dài[/p][h2][b]Sự tiến bộ đạt yêu cầu[/b][/h2][p]Bạn nhanh chóng cảm nhận được hiệu quả của mỗi lần nâng cấp. Xe khoan của bạn xử lý tốt hơn, máy khoan của bạn hoạt động lâu hơn, vận chuyển hàng hóa trở nên dễ dàng hơn và có thể tiếp cận được các lớp sâu hơn. Deepcore cung cấp các chuyến thám hiểm ngắn, dễ quản lý trong chiến dịch mở rộng.[/p][h2][b]Tốt nhất cho người chơi thích thú[/b][/h2][p]• Trò chơi khai thác và khoan\n• Hệ thống tăng dần và nặng về tiến triển\n• Cuộc thám hiểm ngắn với nâng cấp vĩnh viễn\n• Lối chơi chơi đơn tập trung vào việc tối ưu hóa[/p]",
+      "app[content][short_description]": "Game khai khoáng tăng tiến với những chuyến thám hiểm ngắn. Lái giàn khoan, mang quặng về căn cứ, mở khóa tầng sâu hơn và dùng thu nhập từ mỗi chuyến đi để mua nâng cấp vĩnh viễn.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    }
+  }
+}

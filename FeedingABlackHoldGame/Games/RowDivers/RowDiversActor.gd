@@ -103,7 +103,7 @@ func _build_bat() -> void:
 	sprite.mesh = quad
 	bat_material = ShaderMaterial.new()
 	bat_material.shader = preload("res://Games/RowDivers/BatSprite.gdshader")
-	bat_material.set_shader_parameter("bat_texture", preload("res://Games/RowDivers/Art/Illustrated/bat.png"))
+	bat_material.set_shader_parameter("bat_texture", Graphics.texture("Bat.png") if Graphics.gothic() else preload("res://Games/RowDivers/Art/Illustrated/bat.png"))
 	sprite.material_override = bat_material
 	sprite.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	rig.add_child(sprite)

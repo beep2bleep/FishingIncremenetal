@@ -1,0 +1,37 @@
+api_name,field,english
+PrestigeMaster,name,Railway Master
+PrestigeMaster,description,Complete All Levels
+Vampire,name,Vampire
+Vampire,description,Unlock Life Steal
+FirstDive,name,First Track Run
+FirstDive,description,Run the Tracks for the First Time
+CoinMaster,name,Coin Master
+CoinMaster,description,"Spend +10,000 coins"
+BossSlayer,name,Boss Slayer
+BossSlayer,description,Defeat All Bosses
+Healer,name,Healer
+Healer,description,Unlock Heal On Hit Chance
+Prestige1,name,Level 2
+Prestige1,description,Complete Level 2
+FirstMiniBoss,name,First MiniBoss
+FirstMiniBoss,description,Defeat The First Mini Boss
+RowDiver,name,First Crown
+RowDiver,description,Complete The Railway
+EvilGod,name,Evil God
+EvilGod,description,Become an Evil God
+BowMaster,name,Bow Master
+BowMaster,description,"Reach +60,000,000 Arrow Damage"
+Prestige2,name,Level 3
+Prestige2,description,Complete Level 3
+BenevolentGod,name,Benevolent God
+BenevolentGod,description,Become a Benevolent God
+Prestige3,name,Level 4
+Prestige3,description,Complete Level 4
+BeatTheGame,name,Beat The Game
+BeatTheGame,description,Complete The Game
+ArmoredTank,name,Armored Tank
+ArmoredTank,description,Reach +1000 Armor
+FirstBoss,name,First Boss
+FirstBoss,description,Defeat The First Boss
+GemMaster,name,Gem Master
+GemMaster,description,Spend +50 gems

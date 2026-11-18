@@ -1,0 +1,236 @@
+[
+  {
+    "name": "BleepWare Incrementals",
+    "itemid": "1161426",
+    "supported": [
+      "english",
+      "french",
+      "italian",
+      "german",
+      "spanish",
+      "czech",
+      "indonesian",
+      "japanese",
+      "koreana",
+      "portuguese",
+      "russian",
+      "schinese",
+      "thai",
+      "turkish",
+      "vietnamese"
+    ],
+    "download": "C:\\Users\\stick\\Downloads\\storepage_1161426_all (4).json"
+  },
+  {
+    "name": "BleepWare Incrementals Demo",
+    "itemid": "1162587",
+    "supported": [
+      "english",
+      "french",
+      "italian",
+      "german",
+      "spanish",
+      "czech",
+      "indonesian",
+      "japanese",
+      "koreana",
+      "brazilian",
+      "portuguese",
+      "russian",
+      "schinese",
+      "thai",
+      "turkish",
+      "vietnamese"
+    ],
+    "download": "C:\\Users\\stick\\Downloads\\storepage_1162587_all.json"
+  },
+  {
+    "name": "Bleeping Spaceships",
+    "itemid": "916050",
+    "supported": [
+      "english"
+    ]
+  },
+  {
+    "name": "Bleeping Spaceships Demo",
+    "itemid": "916486",
+    "supported": [
+      "english"
+    ]
+  },
+  {
+    "name": "Bounty For Sharks",
+    "itemid": "263926",
+    "supported": [
+      "english"
+    ]
+  },
+  {
+    "name": "Data Breach Inc.",
+    "itemid": "1169911",
+    "supported": [
+      "english",
+      "french",
+      "italian",
+      "german",
+      "spanish",
+      "czech",
+      "indonesian",
+      "japanese",
+      "koreana",
+      "polish",
+      "portuguese",
+      "russian",
+      "schinese",
+      "thai",
+      "turkish",
+      "vietnamese"
+    ],
+    "download": "C:\\Users\\stick\\Downloads\\storepage_1169911_all.json"
+  },
+  {
+    "name": "Data Breach Inc. Demo",
+    "itemid": "1169917",
+    "supported": [
+      "english",
+      "french",
+      "italian",
+      "german",
+      "spanish",
+      "czech",
+      "indonesian",
+      "japanese",
+      "koreana",
+      "polish",
+      "brazilian",
+      "russian",
+      "schinese",
+      "thai",
+      "turkish",
+      "vietnamese"
+    ],
+    "download": "C:\\Users\\stick\\Downloads\\storepage_1169917_all.json"
+  },
+  {
+    "name": "Deepcore",
+    "itemid": "1142593",
+    "supported": [
+      "english",
+      "french",
+      "italian",
+      "german",
+      "spanish",
+      "czech",
+      "indonesian",
+      "japanese",
+      "koreana",
+      "polish",
+      "portuguese",
+      "russian",
+      "schinese",
+      "thai",
+      "turkish",
+      "vietnamese"
+    ],
+    "download": "C:\\Users\\stick\\Downloads\\storepage_1142593_all.json"
+  },
+  {
+    "name": "Deepcore Demo",
+    "itemid": "1156144",
+    "supported": [
+      "english",
+      "french",
+      "italian",
+      "german",
+      "spanish",
+      "czech",
+      "indonesian",
+      "japanese",
+      "koreana",
+      "polish",
+      "brazilian",
+      "portuguese",
+      "russian",
+      "schinese",
+      "thai",
+      "turkish",
+      "vietnamese"
+    ],
+    "download": "C:\\Users\\stick\\Downloads\\storepage_1156144_all.json"
+  },
+  {
+    "name": "Home Plate Baseball",
+    "itemid": "197606",
+    "supported": [
+      "english"
+    ]
+  },
+  {
+    "name": "Laser Swords",
+    "itemid": "540771",
+    "supported": [
+      "english"
+    ]
+  },
+  {
+    "name": "Only Jump!",
+    "itemid": "592447",
+    "supported": [
+      "english"
+    ]
+  },
+  {
+    "name": "Umpire Simulator",
+    "itemid": "91341",
+    "supported": [
+      "english"
+    ]
+  },
+  {
+    "name": "Vanguard - Idle Auto Battler",
+    "itemid": "1130923",
+    "supported": [
+      "english",
+      "french",
+      "italian",
+      "german",
+      "spanish",
+      "czech",
+      "indonesian",
+      "japanese",
+      "koreana",
+      "polish",
+      "portuguese",
+      "russian",
+      "schinese",
+      "thai",
+      "turkish",
+      "vietnamese"
+    ],
+    "download": "C:\\Users\\stick\\Downloads\\storepage_1130923_all.json"
+  },
+  {
+    "name": "Vanguard - Idle Auto Battler Demo",
+    "itemid": "1132600",
+    "supported": [
+      "english",
+      "french",
+      "italian",
+      "german",
+      "spanish",
+      "czech",
+      "indonesian",
+      "japanese",
+      "koreana",
+      "polish",
+      "brazilian",
+      "portuguese",
+      "russian",
+      "schinese",
+      "thai",
+      "turkish",
+      "vietnamese"
+    ],
+    "download": "C:\\Users\\stick\\Downloads\\storepage_1132600_all.json"
+  }
+]

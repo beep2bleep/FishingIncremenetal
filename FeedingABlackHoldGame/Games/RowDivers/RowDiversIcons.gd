@@ -12,6 +12,7 @@ static func _badge(key: String, drawing: String, color: String) -> Texture2D:
 
 static func achievement(key: String) -> Texture2D:
 	var graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
+	if graphics.gothic(): return load(preload("res://Games/RowDivers/RowDiversGothic.gd").icon({"upgradeName": key}))
 	if graphics.original() and graphics.catalog().achievements.has(key): return graphics.texture(graphics.catalog().achievements[key])
 	var art := '<path d="M22 15h20v12c0 15-20 15-20 0zM22 20H15v7q0 9 10 9M42 20h7v7q0 9-10 9M32 39v10M23 50h18"/>'
 	if "Bow" in key: art = '<path d="M19 13q30 19 0 38l10-19zM14 32h37m-8-8 8 8-8 8"/>'

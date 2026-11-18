@@ -28,6 +28,17 @@ var speed_hint: Label
 var power_hint: Label
 var tutorial_page = -1
 var tutorial_cards: HBoxContainer
+var menu_button: Button
+var quit_button: Button
+var settings_back_button: Button
+var results_title := ""
+var results_detail := ""
+var results_initialized := false
+var results_cursor_only := false
+var results_input_locked := false
+var demo_complete_results := false
+var wishlist_button: Button
+var choice_countdown
 var debug_speed_label: Label
 var debug_speed_buttons: Dictionary = {}
 
@@ -136,6 +147,7 @@ func build(owner_battle: Node3D) -> void:
 	_refresh_input_hints()
 	_build_settings()
 	_build_debug_speed_controls()
+	preload("res://Games/RowDivers/RowDiversArtControl.gd").install(root_ui)
 	SignalBus.text_size_changed.connect(_apply_text_scale)
 	_apply_text_scale()
 	SignalBus.settings_updated.connect(_refresh_graphics)
@@ -151,7 +163,7 @@ func _refresh_graphics() -> void:
 	var icons := {"ArrowShield": "Arrow Shield.png", "Harvester": "Harvester.png", "Shuriken": "shuriken.png", "SlowDown": "Remedy.png"}
 	for ability in ability_buttons:
 		var button: Button = ability_buttons[ability]
-		button.icon = load(POWERUP_ICONS[ability]) if POWERUP_ICONS.has(ability) else graphics.texture(icons[ability])
+		button.icon = load(preload("res://Games/RowDivers/RowDiversGothic.gd").icon({"upgradeName": ability, "unlocks": {"abilityType": ability}})) if graphics.gothic() else load(POWERUP_ICONS[ability]) if POWERUP_ICONS.has(ability) else graphics.texture(icons[ability])
 		button.expand_icon = true
 		button.add_theme_constant_override("icon_max_width", 30)
 
@@ -178,7 +190,7 @@ func _build_debug_speed_controls() -> void:
 	for multiplier in battle.DEBUG_SPEEDS:
 		var button := make_button(tr("%dx") % multiplier, func(): battle.set_debug_speed(multiplier))
 		button.custom_minimum_size = Vector2(62, 38)
-		button.tooltip_text = "Speed up the entire simulation. At 4x and above: automatically aim and fire at the closest enemy without lateral movement, use unlocked abilities as soon as they are ready, and ignore enemy arrows. Row and contact damage still apply. Carries between track runs until you quit the game."
+		button.tooltip_text = "Speed up the entire simulation. At 4x and above: automatically aim and fire at the closest enemy without lateral movement, use unlocked abilities as soon as they are ready, and ignore enemy arrows. Railway and contact damage still apply. Carries between track runs until you quit the game."
 		if battle.free_aim_mode:
 			button.tooltip_text = "At 4x and above, the simulation pilot aims, shoots, dodges fire and projectiles, collects loot and uses abilities. All damage still applies. Below 4x you control the player."
 		buttons.add_child(button)
@@ -259,15 +271,20 @@ func _build_overlay() -> void:
 	power_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	power_hint.custom_minimum_size.x = 700
 	box.add_child(power_hint)
+	power_hint.hide()
 	tutorial_cards.hide()
 	battle.resume = make_button("RESUME", battle._resume)
 	box.add_child(battle.resume)
-	battle.retry = make_button("RUN THE TRACKS", func(): battle.get_tree().reload_current_scene())
+	battle.retry = make_button("PLAY AGAIN", replay)
+	choice_countdown = preload("res://Games/RowDivers/RowDiversChoiceCountdown.gd").new()
+	box.add_child(choice_countdown)
+	choice_countdown.finished.connect(_unlock_result_choices)
+	wishlist_button = preload("res://Games/RowDivers/RowDiversWishlist.gd").make_button(true)
+	box.add_child(wishlist_button)
+	wishlist_button.hide()
 	box.add_child(battle.retry)
 	battle.retry.hide()
-	upgrades_button = make_button("UPGRADES", func():
-		if not battle.ended: battle._finish(false)
-		battle.get_tree().change_scene_to_file(Util.get_upgrade_scene_path()))
+	upgrades_button = make_button("END RUN / UPGRADES", return_to_upgrades)
 	box.add_child(upgrades_button)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
@@ -278,12 +295,11 @@ func _build_overlay() -> void:
 	tutorial_button = make_button("HOW TO PLAY", show_tutorial)
 	tutorial_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(tutorial_button)
-	var menu := make_button("MAIN MENU", func():
-		preload("res://Games/RowDivers/RowDiversEditorLoop.gd").stop()
-		if not battle.ended: battle._finish(false)
-		battle.get_tree().change_scene_to_file(Util.PATH_GAME_LAUNCHER))
-	menu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(menu)
+	menu_button = make_button("MAIN MENU", return_to_menu)
+	menu_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(menu_button)
+	quit_button = make_button("QUIT GAME", quit_game)
+	box.add_child(quit_button)
 	battle.overlay.hide()
 
 func _build_settings() -> void:
@@ -293,11 +309,12 @@ func _build_settings() -> void:
 	settings_panel.offset_left = 80
 	settings_panel.offset_top = 24
 	settings_panel.offset_right = -80
-	settings_panel.offset_bottom = -24
+	settings_panel.offset_bottom = -96
 	settings_panel.add_theme_stylebox_override("panel", Style.panel())
 	var box := VBoxContainer.new()
 	settings_panel.add_child(box)
-	box.add_child(make_button("SETTINGS  /  BACK TO PAUSE", settings_panel.hide))
+	settings_back_button = make_button("BACK", close_settings)
+	box.add_child(settings_back_button)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(scroll)
@@ -313,8 +330,107 @@ func show_settings() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	settings_panel.show()
 	settings_content.show_screen()
+	RailwayController.sync_menu()
+
+func close_settings() -> void:
+	settings_panel.hide()
+	RailwayController.sync_menu()
+
+func return_to_upgrades() -> void:
+	if not battle.ended: battle._finish(false)
+	battle.get_tree().change_scene_to_file(Util.get_upgrade_scene_path())
+
+func replay() -> void:
+	battle.get_tree().reload_current_scene()
+
+func return_to_menu() -> void:
+	preload("res://Games/RowDivers/RowDiversEditorLoop.gd").stop()
+	if not battle.ended: battle._finish(false)
+	battle.get_tree().change_scene_to_file(Util.PATH_GAME_LAUNCHER)
+
+func quit_game() -> void:
+	preload("res://Games/RowDivers/RowDiversEditorLoop.gd").stop()
+	if not battle.ended: battle._finish(false)
+	SteamHandler.request_app_quit()
+
+func controller_menu() -> Dictionary:
+	if settings_panel.visible:
+		var credits: bool = settings_content.controller_credits_open()
+		return {"surface": settings_panel, "default": settings_content.get_node("%Hide Credits") if credits else settings_content.get_node("%Main Volume"), "context": "credits" if credits else "settings", "back": controller_back, "start": controller_back}
+	if not battle.suspended and not battle.ended: return {}
+	var context := "tutorial" if tutorial_page >= 0 else "results" if battle.ended else "pause"
+	if context == "results" and demo_complete_results:
+		return {"surface": battle.overlay, "default": wishlist_button, "context": context, "cursor_only": true, "input_locked": results_input_locked}
+	if context == "results":
+		return {"surface": battle.overlay, "default": upgrades_button, "context": context, "cursor_only": true, "input_locked": results_input_locked}
+	return {"surface": battle.overlay, "default": battle.resume if tutorial_page >= 0 or not battle.ended else battle.retry, "context": context, "back": controller_back, "start": battle._resume if tutorial_page >= 0 or not battle.ended else replay}
+
+func controller_back() -> void:
+	if settings_panel.visible:
+		if settings_content.controller_back(): return
+		close_settings()
+	elif tutorial_page >= 0:
+		battle._resume()
+	elif battle.ended:
+		return_to_upgrades()
+	else:
+		battle._resume()
+
+func show_results(title := "", detail := "") -> void:
+	var first_show := not results_initialized
+	if first_show:
+		results_initialized = true
+		results_cursor_only = RailwayController.using_controller()
+		demo_complete_results = battle.victory and preload("res://Games/RowDivers/RowDiversDemo.gd").enabled()
+	if not title.is_empty():
+		results_title = title
+		results_detail = detail
+	tutorial_page = -1
+	tutorial_cards.hide()
+	power_hint.hide()
+	settings_panel.hide()
+	battle.overlay_title.text = results_title
+	overlay_detail.text = results_detail
+	overlay_detail.show()
+	battle.resume.hide()
+	battle.retry.show()
+	upgrades_button.text = tr("UPGRADES")
+	upgrades_button.show()
+	settings_button.show()
+	tutorial_button.show()
+	battle.overlay.show()
+	wishlist_button.visible = demo_complete_results
+	if first_show and ((results_cursor_only and not battle.victory) or demo_complete_results):
+		results_input_locked = true
+		VirtualCursor.release_buttons()
+		for button in [battle.retry, upgrades_button, settings_button, tutorial_button, menu_button, quit_button, wishlist_button]:
+			button.disabled = true
+			if results_cursor_only: button.focus_mode = Control.FOCUS_NONE
+		choice_countdown.start(5.0 if demo_complete_results else 1.0)
+	RailwayController.sync_menu()
+	if first_show:
+		_position_result_cursor()
+
+func _unlock_result_choices() -> void:
+	results_input_locked = false
+	VirtualCursor.release_buttons()
+	for button in [battle.retry, upgrades_button, settings_button, tutorial_button, menu_button, quit_button, wishlist_button]:
+		button.disabled = false
+	RailwayController.sync_menu()
+	_position_result_cursor()
+
+func _position_result_cursor() -> void:
+	# Hiding the timer shrinks/recenters the results panel. Target the button
+	# after the container has completed its layout, not its old position.
+	await get_tree().process_frame
+	if not is_inside_tree(): return
+	await get_tree().process_frame
+	if not is_inside_tree(): return
+	if RailwayController.using_controller() and battle.overlay.visible and not settings_panel.visible and tutorial_page < 0:
+		VirtualCursor.move_to_control(wishlist_button if demo_complete_results else upgrades_button)
 
 func show_tutorial() -> void:
+	wishlist_button.hide()
 	tutorial_page = 0
 	battle.suspended = true
 	VirtualCursor.set_gameplay_pointer_hidden(false)
@@ -326,6 +442,8 @@ func show_tutorial() -> void:
 	tutorial_button.hide()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_refresh_tutorial()
+	power_hint.show()
+	RailwayController.sync_menu()
 
 func _refresh_tutorial() -> void:
 	battle.overlay_title.text = "HOW TO PLAY"
@@ -347,6 +465,7 @@ func advance_tutorial() -> bool:
 func pause() -> void:
 	tutorial_page = -1
 	tutorial_cards.hide()
+	power_hint.hide()
 	overlay_detail.show()
 	battle.overlay_title.text = "TAKE A BREATHER"
 	overlay_detail.text = "Your run is paused."
@@ -356,6 +475,8 @@ func pause() -> void:
 	upgrades_button.show()
 	settings_button.show()
 	tutorial_button.show()
+	upgrades_button.text = tr("END RUN / UPGRADES")
+	RailwayController.sync_menu()
 
 func toast(text: String, color = Color("eec782")) -> void:
 	toast_label.text = text
@@ -369,9 +490,9 @@ func refresh() -> void:
 	hp_bar.value = battle.health
 	armor_label.text = tr("ARMOR %s  /  %s  /  %s\nTRACK RUN TIME %s") % [Util.get_number_short_text(battle.armor), tr("DOUBLE SPEED") if battle.running else tr("NORMAL SPEED"), tr(battle.fire_mode.to_upper()), preload("res://Games/RowDivers/RowDiversTiming.gd").format_time(float(battle.data.get("gameplay_seconds",0)))]
 	currency.text = tr("GOLD %s   GEMS %s   CROWNS %s") % [Util.get_number_short_text(battle.data.wallet[0]), Util.get_number_short_text(battle.data.wallet[1]), Util.get_number_short_text(battle.data.wallet[2])]
-	battle.ability_hud.text = tr("%.1f m    SECTION %d / 15    %s") % [(-battle.player_position.z if battle.free_aim_mode else battle.distance), mini(15, battle.section), preload("res://Games/RowDivers/RowDiversLevelThemes.gd").level_name(int(battle.data.prestige))]
+	battle.ability_hud.text = tr("%.1f m    SECTION %d / 15    %s") % [(-battle.player_position.z if battle.free_aim_mode else battle.distance), mini(15, battle.section), preload("res://Games/RowDivers/RowDiversLevelThemes.gd").level_name(battle.campaign_level())]
 	if battle.free_aim_mode:
-		battle.ability_hud.text += tr("    FIRE %d / 3 · CONTROL %d%%") % [battle.fire_waves.stage + 1, battle.s("Fire_Wave_Control_" + str(int(battle.data.prestige)))]
+		battle.ability_hud.text += tr("    FIRE %d / 3 · CONTROL %d%%") % [battle.fire_waves.stage + 1, battle.s("Fire_Wave_Control_" + str(battle.campaign_level()))]
 	var next: String = battle.next_powerup()
 	for ability in NAMES:
 		var state: Dictionary = battle.abilities[ability]

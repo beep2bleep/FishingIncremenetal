@@ -72,7 +72,7 @@ func verify_battle(battle) -> void:
 	reset_powers(battle)
 	battle.data.stats.MaxHP = 1000.0
 	battle.data.stats.Armor_Against_Projectiles = 0
-	for source in ["the row", "enemy arrows", "poison", "fire waves", "enemy contact"]:
+	for source in ["the railway", "enemy arrows", "poison", "fire waves", "enemy contact"]:
 		for ignore_armor in [false, true]:
 			battle.health = 1000
 			battle.armor = 0
@@ -105,7 +105,7 @@ func verify_battle(battle) -> void:
 		battle._activate("SlowDown")
 		for frame in range(600):
 			battle._update_powerups(1.0 / 60.0)
-			if (frame + 1) % 120 == 0: battle._damage_player(battle.walking_damage(), false, "the row")
+			if (frame + 1) % 120 == 0: battle._damage_player(battle.walking_damage(), false, "the railway")
 		check(absf(battle.health - before - walking_loss * 0.5) < 0.01, "Regen heals 1.5x ten seconds of walking loss at level %d" % stage)
 		print("REGEN level %d: %.4f%% max HP/s at %.0f HP, %.2f HP/s" % [stage + 1, battle.regen_percent_per_second(), battle.s("MaxHP"), battle.s("MaxHP") * battle.regen_percent_per_second() / 100.0])
 	reset_powers(battle)

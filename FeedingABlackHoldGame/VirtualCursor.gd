@@ -43,6 +43,7 @@ void fragment() {
 """
 
 var _scene_enabled := false
+var _scroll_repeat := 0.0
 var _gameplay_pointer_hidden := false
 
 func set_gameplay_pointer_hidden(value: bool) -> void:
@@ -104,6 +105,10 @@ func set_scene_enabled(value: bool) -> void:
         if _left_mouse_down: _emit_mouse_button(MOUSE_BUTTON_LEFT, false)
         if _right_mouse_down: _emit_mouse_button(MOUSE_BUTTON_RIGHT, false)
         _set_virtual_cursor_active(false)
+
+func release_buttons() -> void:
+    if _left_mouse_down: _emit_mouse_button(MOUSE_BUTTON_LEFT, false)
+    if _right_mouse_down: _emit_mouse_button(MOUSE_BUTTON_RIGHT, false)
 
 func activate_for_controller() -> void:
     if not _scene_enabled:
@@ -186,6 +191,8 @@ func _input(event: InputEvent) -> void:
         return
     if _injecting_mouse_event:
         return
+    if event.has_meta("virtual_cursor_event"):
+        return
     if _gameplay_pointer_hidden:
         return
 
@@ -224,6 +231,34 @@ func _input(event: InputEvent) -> void:
         var joy_button := event as InputEventJoypadButton
         if not _is_target_device(joy_button.device):
             return
+        if Util.is_row_divers_game_active():
+            if RailwayController.menu_state.get("input_locked", false):
+                # Let the controller service track the active device, but do
+                # not synthesize a click while the result choices are locked.
+                return
+            if joy_button.button_index in [JOY_BUTTON_DPAD_UP, JOY_BUTTON_DPAD_DOWN, JOY_BUTTON_DPAD_LEFT, JOY_BUTTON_DPAD_RIGHT]:
+                if RailwayController.menu_state.get("cursor_only", false):
+                    return
+                if _left_mouse_down: _emit_mouse_button(MOUSE_BUTTON_LEFT, false)
+                if _right_mouse_down: _emit_mouse_button(MOUSE_BUTTON_RIGHT, false)
+                _set_virtual_cursor_active(false)
+                return
+            # B belongs to the screen's Back handler. X replaces right-drag
+            # so cancelling a popup never leaves a synthetic mouse button held.
+            if joy_button.button_index == JOY_BUTTON_B:
+                if _left_mouse_down: _emit_mouse_button(MOUSE_BUTTON_LEFT, false)
+                if _right_mouse_down: _emit_mouse_button(MOUSE_BUTTON_RIGHT, false)
+                return
+            if joy_button.button_index == JOY_BUTTON_X:
+                _set_virtual_cursor_active(true)
+                _emit_mouse_button(MOUSE_BUTTON_RIGHT, joy_button.pressed)
+                get_viewport().set_input_as_handled()
+                return
+            if joy_button.button_index == JOY_BUTTON_A:
+                if _virtual_cursor_active or (not joy_button.pressed and _left_mouse_down):
+                    _emit_mouse_button(MOUSE_BUTTON_LEFT, joy_button.pressed)
+                    get_viewport().set_input_as_handled()
+                return
         if joy_button.button_index == JOY_BUTTON_A:
             _set_virtual_cursor_active(true)
             _emit_mouse_button(MOUSE_BUTTON_LEFT, joy_button.pressed)
@@ -251,10 +286,31 @@ func _process(delta: float) -> void:
     if device == -1:
         return
 
+    if Util.is_row_divers_game_active():
+        _scroll_repeat -= delta
+        var scroll_axis := RailwayController.read_axis(device, JOY_AXIS_RIGHT_Y)
+        var tree_navigation: bool = RailwayController.menu_context in ["upgrades", "purchase"] and is_instance_valid(RailwayController.menu_owner) and not RailwayController.native_popup_open()
+        var zoom_modifier: bool = RailwayController.read_axis(device, JOY_AXIS_TRIGGER_LEFT) > 0.55
+        if tree_navigation and not zoom_modifier:
+            var pan: Vector2 = RailwayController.stick(JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y)
+            if pan != Vector2.ZERO:
+                _set_virtual_cursor_active(true)
+                RailwayController.menu_owner.tech_tree.move_tech_tree(-pan * CURSOR_SPEED * delta)
+                # Re-evaluate hover as nodes move underneath a stationary cursor.
+                _emit_mouse_motion(_cursor_position, _cursor_position)
+        elif absf(scroll_axis) > 0.55 and _scroll_repeat <= 0.0:
+            _scroll_repeat = 0.12
+            _set_virtual_cursor_active(true)
+            var wheel := MOUSE_BUTTON_WHEEL_DOWN if scroll_axis > 0 else MOUSE_BUTTON_WHEEL_UP
+            _emit_mouse_button(wheel, true)
+            _emit_mouse_button(wheel, false)
+
     var stick := Vector2(
         Input.get_joy_axis(device, JOY_AXIS_LEFT_X),
         Input.get_joy_axis(device, JOY_AXIS_LEFT_Y)
     )
+    if Util.is_row_divers_game_active():
+        stick = Vector2(RailwayController.read_axis(device, JOY_AXIS_LEFT_X), RailwayController.read_axis(device, JOY_AXIS_LEFT_Y))
     var stick_length := stick.length()
     if stick_length < STICK_DEADZONE:
         return
@@ -299,8 +355,15 @@ func _emit_mouse_button(button_index: MouseButton, pressed: bool) -> void:
     _parse_input_event(mouse_button)
 
 func _parse_input_event(event: InputEvent) -> void:
+    event.set_meta("virtual_cursor_event", true)
     _injecting_mouse_event = true
-    Input.parse_input_event(event)
+    if Util.is_row_divers_game_active():
+        # Cursor/control coordinates are viewport-local. Input.parse_input_event
+        # treats mouse coordinates as window pixels and applies stretch again,
+        # causing displaced clicks at resolutions other than the design size.
+        get_viewport().push_input(event, true)
+    else:
+        Input.parse_input_event(event)
     _injecting_mouse_event = false
 
 func _current_button_mask() -> MouseButtonMask:
@@ -323,6 +386,10 @@ func _sync_cursor_to_mouse() -> void:
     _update_cursor_visual()
 
 func _warp_mouse(position: Vector2) -> void:
+    # Synthetic motion already updates GUI hover. Warping the physical mouse
+    # generates untagged OS motion that can switch prompts back to keyboard.
+    if Util.is_row_divers_game_active() and ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER:
+        return
     var viewport := get_viewport()
     if viewport == null:
         return
@@ -385,6 +452,8 @@ func _clamp_to_viewport(position: Vector2) -> Vector2:
 func _get_target_device() -> int:
     var connected := Input.get_connected_joypads()
     if connected.is_empty():
+        if Util.is_row_divers_game_active() and ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER:
+            return ControllerIcons._last_controller
         return -1
     if ControllerIcons != null and ControllerIcons._last_controller in connected:
         return int(ControllerIcons._last_controller)

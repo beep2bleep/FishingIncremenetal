@@ -24,3 +24,7 @@ __pycache__/
 # Local client analytics configuration is bundled in builds, never committed.
 /FeedingABlackHoldGame/railway_analytics.local.cfg
 /output/railway-fury-trailer*/
+/output/steam-achievements/
+
+# Local player-save audit fingerprints are not project sources.
+/tools/rowdivers_balance/*_save_hashes_before.json

@@ -12,6 +12,7 @@ var persist_results = true
 var audio: Node
 var illustration: TextureRect
 var choice_made = false
+var first_choice: Button
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -32,8 +33,13 @@ func _ready() -> void:
 	add_child(background)
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var center := CenterContainer.new()
-	add_child(center)
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var scroll := ScrollContainer.new()
+	add_child(scroll)
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.offset_bottom = -96
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(center)
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(1100, 530)
 	panel.add_theme_stylebox_override("panel", Style.panel())
@@ -41,7 +47,7 @@ func _ready() -> void:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 16)
 	panel.add_child(column)
-	var tag := Style.label("RAILWAY FURY  /  THE END OF THE ROW", 16, true)
+	var tag := Style.label("RAILWAY FURY  /  THE END OF THE LINE", 16, true)
 	tag.modulate = Style.GOLD
 	column.add_child(tag)
 	heading = Style.label("ONE LAST CHOICE", 42, true)
@@ -81,6 +87,7 @@ func _ready() -> void:
 		Style.style_button(button)
 		button.pressed.connect(_choose.bind(choice))
 		card.add_child(button)
+		if first_choice == null: first_choice = button
 	continue_button = Button.new()
 	continue_button.text = "THANKS FOR PLAYING  /  MAIN MENU"
 	Style.style_button(continue_button)
@@ -88,8 +95,16 @@ func _ready() -> void:
 	column.add_child(continue_button)
 	continue_button.hide()
 	Style.scale_fonts(self)
+	preload("res://Games/RowDivers/RowDiversArtControl.gd").install(self)
 	story.add_theme_font_size_override("normal_font_size", roundi(23 * SaveHandler.text_scale))
 	_reveal()
+	RailwayController.configure_menu(self)
+
+func controller_menu() -> Dictionary:
+	return {"surface": self, "default": continue_button if choice_made else first_choice, "context": "ending", "back": _return_to_menu, "start": _return_to_menu if choice_made else Callable()}
+
+func _return_to_menu() -> void:
+	get_tree().change_scene_to_file(Util.PATH_GAME_LAUNCHER)
 
 func _reveal() -> void:
 	story.visible_ratio = 0
@@ -123,6 +138,7 @@ func _choose(choice: String) -> void:
 	if reveal != null: reveal.kill()
 	_reveal()
 	continue_button.show()
+	RailwayController.sync_menu()
 
 func _exit_tree() -> void:
 	VirtualCursor.set_scene_enabled(false)

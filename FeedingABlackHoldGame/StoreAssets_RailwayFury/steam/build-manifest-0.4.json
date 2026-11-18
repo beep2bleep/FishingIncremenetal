@@ -1,0 +1,132 @@
+{
+  "version": "0.4",
+  "full_app": 5520300,
+  "demo_app": 5520330,
+  "generated_utc": "2026-11-16T23:47:55.361337+00:00",
+  "base_commit": "84020cc4bc2b18ab90bf760086f1f91feff6d173",
+  "qa": {
+    "full_pack_checks": 15,
+    "demo_pack_checks": 15,
+    "controller_checks": 92,
+    "controller_menu_checks": 36,
+    "menu_checks": 19,
+    "itch_windows_pack_checks": 25,
+    "source_flow_checks": 142,
+    "full_qa_flow_checks": 142,
+    "demo_qa_flow_checks": 70,
+    "endings_checks": 6,
+    "full_qa_quit_routes": 6,
+    "demo_qa_quit_routes": 5,
+    "physical_controller_verified": false
+  },
+  "binaries": {
+    "Full": {
+      "libgodotsteam.windows.template_release.x86_64.dll": {
+        "bytes": 3817984,
+        "sha256": "0252ea3a6bd72659d71f25874a55202062dd491e5aef94a14edbbf93bd4ade4b"
+      },
+      "RailwayFury.exe": {
+        "bytes": 104644608,
+        "sha256": "20474427072fdb49d57a8e1b25a1d4fdfe87a4c85015ca490bd00f04335402ca"
+      },
+      "RailwayFury.pck": {
+        "bytes": 277921168,
+        "sha256": "4d6a97f2e4e69d502b47fd97c4ffb6dc188fccb66ab0ee38671ea04fbd65aca3"
+      },
+      "steam_api64.dll": {
+        "bytes": 317080,
+        "sha256": "e3fe06e2d802c2f753aeb46869e2af898f34715ce85f08001456fd8a80ecd21e"
+      }
+    },
+    "Demo": {
+      "libgodotsteam.windows.template_release.x86_64.dll": {
+        "bytes": 3817984,
+        "sha256": "0252ea3a6bd72659d71f25874a55202062dd491e5aef94a14edbbf93bd4ade4b"
+      },
+      "RailwayFuryDemo.exe": {
+        "bytes": 104644608,
+        "sha256": "68d3084679cb0c61d55c7f8e7f6d0c832c8da65c90fb698ef6daf54b038828f5"
+      },
+      "RailwayFuryDemo.pck": {
+        "bytes": 266058444,
+        "sha256": "c2cb842386e2673de053f10b8597d6a7018810b573f989f04d633073feb94b18"
+      },
+      "steam_api64.dll": {
+        "bytes": 317080,
+        "sha256": "e3fe06e2d802c2f753aeb46869e2af898f34715ce85f08001456fd8a80ecd21e"
+      }
+    }
+  },
+  "runtime_sources": {
+    "project.godot": "724ffc57093687e502e70d447cf4891f55b63ac06ae34617ae124bf3bf040726",
+    "SteamHandler.gd": "23ceb7aae753acf374e7664f9108e1b2574bcced5815fd17212cac16535eeb25",
+    "VirtualCursor.gd": "5fab22536ea4d63e790f5c4dd364fd7af9bca108aa638b144e5f14702b263943",
+    "GameAnalyticsManager.gd": "f69198abc274cbde6f85db4f981f69f9d00006c2dad499c850e919213fa3f83a",
+    "UpgradeScreen.gd": "cda752b4b0375cd89a3d78cb38c6e08e4d7061ced3d93df1004637034ed70877",
+    "Core/Boot/GameLauncher.gd": "66a8dde2435a588c0ea3472a514247a9fba5829542e5b4ce0d7c30e02a964fa7",
+    "Games/RowDivers/RowDiversAchievementPulse.gd": "b77856c15ccf6fa71acd52990ef6bce3c184d4bf3ee320cd108cddf28e9e416e",
+    "Games/RowDivers/RowDiversActor.gd": "f87333e1bf57d60eccb3bee43b5cdfac9c1469a51a6ff62eb592407eaca1afa9",
+    "Games/RowDivers/RowDiversAnalytics.gd": "1bab242032cbebbfd6c35e90ef32734b802abfd00ab40df435472d81a66784df",
+    "Games/RowDivers/RowDiversArtControl.gd": "a51f52ca63218c08909c7daf7ddf4aef8e040dca96f7cdaf176f2aa475aa432b",
+    "Games/RowDivers/RowDiversAudio.gd": "1e61f233f96c47299d59e8972862751f195181e14b6cb165aa733d117f5a3b40",
+    "Games/RowDivers/RowDiversButtonFeedback.gd": "387fcc01e3263e6350277fb35d19f99e94afba09dcf8c5decbe6fc029acf322e",
+    "Games/RowDivers/RowDiversController.gd": "a39c23557333aa67328bd2bf1a58ed43bad4a745f399aff770534c98e401ebb8",
+    "Games/RowDivers/RowDiversControlsPicture.gd": "c4934ba817170d888792322c1dbf453aeafc93ad63d553d6495b989daa26244d",
+    "Games/RowDivers/RowDiversDaggerFlight.gd": "fd4db36cdcbc48718cab479663775f09eb9beebce38e0d1f39c3bf7558c5cb71",
+    "Games/RowDivers/RowDiversDemo.gd": "4b1ea7ac995529c364a7441e6c9ac5e54c80abeca531b014466d9fb1b7dc2d3b",
+    "Games/RowDivers/RowDiversEditorBuyer.gd": "51ef794ad83160e7554476a19a025b9f9fedab97b5c3dc8f898262eeb9291560",
+    "Games/RowDivers/RowDiversEditorLoop.gd": "47f73864ff8ea80b57d7e97ee143c91d76edf6ac29f7e7c2cbe05619a2b83200",
+    "Games/RowDivers/RowDiversEndingPicture.gd": "e7464dba8d556215c0315375edad4f9cb933e1e8bca2bb32b1cdabccecda743d",
+    "Games/RowDivers/RowDiversEndings.gd": "3e758702f028abc098503870e72fe173f1b76329835d3a3738b8b662427b87b9",
+    "Games/RowDivers/RowDiversEnemyStatus.gd": "8b26a9df6774b923bcd403d6a7430e80c816a9b3dafe1979072749f2f921c6bd",
+    "Games/RowDivers/RowDiversFireWaves.gd": "e028ef53327bb4e59643a61a418eadd968fe513bfb00ba0b3d462fdb9a251a71",
+    "Games/RowDivers/RowDiversFireWaveVisual.gd": "db919be825f95299f4f48d5728e5f1858615e321462875ff585505f163e26d11",
+    "Games/RowDivers/RowDiversGothic.gd": "933048ea7a5ea1d317130848ba544d2c5247340443e0a0357ee483240aa1fd14",
+    "Games/RowDivers/RowDiversGothicMusic.gd": "b6373edd61624cb764ac6fe995f11023b11e4d5b9564719e3cca836ea0a2d68c",
+    "Games/RowDivers/RowDiversGraphics.gd": "dd9410f2288867009e75ea6bff03501bc2e7caaf969d6d8ea2085cd760cf60a2",
+    "Games/RowDivers/RowDiversHallway.gd": "01c060ecff743057aeeb27fc01ce4aaa131c7f26f1b064c823372f22f9b99848",
+    "Games/RowDivers/RowDiversHUD.gd": "4c9d977852649133af4fca2203dca8c156b5f326b7b00e2760bc19d359e7cfee",
+    "Games/RowDivers/RowDiversIcons.gd": "31760c01a4117cd7c44dff5d988301f61b654818ce71ec099d264fabe0a02851",
+    "Games/RowDivers/RowDiversIllustrated.gd": "ce729beeed0f81f90f884d44456e2aff4ca3f88ef9da834392ad772963042d93",
+    "Games/RowDivers/RowDiversInputHints.gd": "182af3809aec40a786c663731cca01f139ed457b77aff6c3766d6536cfddbc65",
+    "Games/RowDivers/RowDiversLevelThemes.gd": "5a0575a29cc9c1376ef67db5e2b85d565b55a7056a84124d6d0e55b52578e129",
+    "Games/RowDivers/RowDiversLocalization.gd": "4990169dbc78c02993dc94055cc105b7f1cdef57d5be888504e88d58400ef65f",
+    "Games/RowDivers/RowDiversMenuMusic.gd": "30480ad619f24d21a92a084fba43e3546f3ab9d8a28dfe0c71ec019f1b88295e",
+    "Games/RowDivers/RowDiversOriginalPresentation.gd": "48d05720faada5c7e9e6b1d6549e4c664b8c4a96b06651bc4ba42d3acba1b63c",
+    "Games/RowDivers/RowDiversOtherGames.gd": "59147340ba9c6c528c64f134aadfee565814b7f726abf4732e8e4934a4536439",
+    "Games/RowDivers/RowDiversPowerupEffects.gd": "9cbcda65fc4f1de11af4b8d9361bfad2431c885dc8b9fd0e67f40712845978fe",
+    "Games/RowDivers/RowDiversProgress.gd": "17f870984737b75b6d323830036c446ce3ccfb2c3899e2831d4ff1cfda667dc3",
+    "Games/RowDivers/RowDiversProjectile.gd": "7d7eafd05a521f61fc681d74dd5f4d45ec0a6b9c279dd23c4804c8adc155dd8a",
+    "Games/RowDivers/RowDiversStyle.gd": "6b67520a3387a97dd7e50427fcc720613a53b8f846e24ed64959a683edf3ec21",
+    "Games/RowDivers/RowDiversTiming.gd": "7e007484de1d8b28de69000015d415e2ed8a200501c52b43be162fa3ff3a5089",
+    "Games/RowDivers/RowDiversTracks.gd": "8fe275cbd2ddbcbdec369c523bfb19287383d0699a6b24130ec971edf385ec01",
+    "Games/RowDivers/RowDiversUpgradeTreeAdapter.gd": "970bf0d7c83de992984825a97568891d07d29e37fa4fc903c74510e8ba68ea46",
+    "Games/RowDivers/Scenes/RowDiversBattleScene.gd": "2f371446fb8036790c0faf7723403fecc6a2db6342b90ec052d24debbb65b4e2",
+    "Games/RowDivers/Scenes/RowDiversEnding.gd": "34e140e9c6d306ffaac378b1f35a6c0e9254305946e967fd20fd5959cc7664c3",
+    "Settings.gd": "54daaff52eef5683e4a05518a58a801f0110713435f6ded0f79fd3859b13c5e8",
+    "CustomButton.gd": "c2b01dff1489e1274ede9ab12eaff0d60bf0f39a533eac114fa000b16f0ad709",
+    "Singletons/PauseScreen.gd": "23d7747541d4c20392239bba65e1635908578b6a933cd95a1966313ca604ffe7",
+    "Tech Tree Stuff/TechTreeNode.gd": "f873a570e12c58031823d2782c7f9cc4e59d11e82dfd18a3138ffe23cf4ccf9a",
+    "addons/controller_icons/ControllerIcons.gd": "1b860fb7bc3164aeeba9bb80b379b55930a0329f76698e4415ca6985eb1a6a3a"
+  },
+  "qa_packages": {
+    "Full": {
+      "bytes": 277921168,
+      "sha256": "e3138c6f4760c6690617b10b59580c34745128659c95395556ffc518dba12280",
+      "user_data_folder": "RailwayFuryControllerQA",
+      "note": "Release runtime sources with isolated QA user-folder configuration."
+    },
+    "Demo": {
+      "bytes": 266058476,
+      "sha256": "b4fe08c548acc234abaf44deede0c46c2f5a70ede80d9a3d9040ad550da87caf",
+      "user_data_folder": "RailwayFuryControllerQA",
+      "note": "Release runtime sources with isolated QA user-folder configuration."
+    }
+  },
+  "steam_upload": {
+    "uploaded": true,
+    "set_live": false,
+    "full_build_id": 26717191,
+    "demo_build_id": 26717195
+  }
+}

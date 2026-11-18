@@ -48,6 +48,9 @@ func _verify_speed_clock():
 
 func _initialize(): call_deferred("run")
 func run():
+	root.get_node("GameAnalytics")._enabled = false
+	root.get_node("GameAnalytics")._pending.clear()
+	root.get_node("SteamHandler").steam_enabled = false
 	root.size = Vector2i(1280,720)
 	root.get_node("Util").set_active_game_id("rowdivers")
 	Progress.free_aim_mode = true

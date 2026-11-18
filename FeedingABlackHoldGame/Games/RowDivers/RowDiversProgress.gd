@@ -60,6 +60,7 @@ static func fresh() -> Dictionary:
 	if free_aim_mode:
 		data.flight_pickup_v2 = true
 		data.crown_channels_v3 = true
+	data.shared_demo_migrated_v1 = true
 	preload("res://Games/RowDivers/RowDiversTiming.gd").ensure(data)
 	return data
 
@@ -84,6 +85,9 @@ static func load_data(path = SAVE_PATH) -> Dictionary:
 		Demo.constrain(active_data_cache)
 		return active_data_cache
 	var resolved_path = progress_path() if path == SAVE_PATH else str(path)
+	if path == SAVE_PATH:
+		var shared = preload("res://Games/RowDivers/RowDiversSharedSave.gd")
+		shared.migrate(ProjectSettings.globalize_path(resolved_path), shared.legacy_paths(ProjectSettings.globalize_path(resolved_path)), design().upgrades)
 	if not FileAccess.file_exists(resolved_path):
 		var initial: Dictionary = fresh()
 		if path == SAVE_PATH:
@@ -172,6 +176,7 @@ static func requirement_text(node: Dictionary) -> String:
 	return TranslationServer.translate("Unlock: ") + TranslationServer.translate(" OR ").join(requirements)
 
 static func visible(data: Dictionary, node: Dictionary) -> bool:
+	if Demo.enabled() and int(node.get("minPrestige", 0)) > 0: return false
 	if int(data.max_prestige) < int(node.get("minPrestige", 0)): return false
 	if node.isVisible or level(data, node) > 0:
 		return true

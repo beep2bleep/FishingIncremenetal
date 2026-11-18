@@ -23,6 +23,13 @@ func step(battle, delta: float) -> void:
 
 func plan(battle) -> void:
 	super.plan(battle) # Retain reactive target selection and imperfect shooting.
+	# Enemy origins sit low in the imported sprite rigs. Aim at the visible
+	# torso, using the rendered character bounds instead of that low origin.
+	if not target.is_empty() and is_instance_valid(target.node):
+		var aim_origin: Vector3 = battle._aim_origin()
+		var point: Vector3 = aim_origin + desired_aim * aim_origin.distance_to(target.node.position)
+		point.y = visual_midsection(target).y
+		desired_aim = (point - aim_origin).normalized()
 	var player: Vector3 = battle.player_position
 	var speed: float = battle.s("Horizontal_Speed")
 	var forward: float = maxf(0.1, battle.forward_speed)
@@ -74,3 +81,16 @@ func plan(battle) -> void:
 	steering_reason = "fire" if not hazards.is_empty() else ("loot" if not loot.is_empty() else "cruise")
 	if steering_reason == "fire": fire_decisions += 1
 	elif steering_reason == "loot": loot_decisions += 1
+
+func visual_midsection(enemy: Dictionary) -> Vector3:
+	var rig = enemy.actor.rig
+	if rig != null:
+		var bounds = AABB()
+		var found = false
+		for mesh in rig.find_children("*", "MeshInstance3D", true, false):
+			if mesh.mesh == null or not mesh.is_visible_in_tree(): continue
+			var box: AABB = mesh.global_transform * mesh.mesh.get_aabb()
+			bounds = bounds.merge(box) if found else box
+			found = true
+		if found: return bounds.get_center()
+	return enemy.node.position + Vector3(0, 0.35 if int(enemy.kind) != 7 else 0.0, 0)

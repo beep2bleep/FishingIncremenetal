@@ -1,0 +1,155 @@
+{
+  "itemid": "1410394",
+  "languages": {
+    "english": {
+      "app[content][about]": "[p]Take your first dives into Railway Fury, a first-person incremental action game about pushing farther down a cursed railway. Aim your crossbow, strafe around enemies and fire waves, collect loot, and spend your earnings on permanent upgrades.[/p][p]The demo includes the first railway and its boss. Build up damage, health, armor, and powers over repeated runs, and claim achievements for extra upgrade resources. The demo ends after the first boss; later levels and crown upgrades are reserved for the full game.[/p][p]Move left and right, aim with the mouse, click to shoot, and press Space to activate your next ready power. Hold Shift for double speed when you are ready for the extra risk.[/p][p]DEMO MODE[/p][p]Demo progress uses a separate save from the full game. The full version expands the journey through four themed railways, a larger upgrade tree, tougher bosses, and two endings.[/p]",
+      "app[content][short_description]": "Try the first railway and boss in this first-person incremental action demo. Aim your crossbow, dodge enemies and fire waves, collect loot, and buy permanent upgrades. The demo ends after the first boss and uses a separate save from the full game.",
+      "app[content][sysreqs][windows][min][notes]": "Keyboard and mouse or compatible gamepad."
+    },
+    "french": {
+      "app[content][about]": "[p]Lancez vos premières expéditions dans Railway Fury, un jeu d'action incrémental à la première personne où vous avancez toujours plus loin sur une voie ferrée maudite. Visez avec votre arbalète, esquivez les ennemis et les vagues de feu en vous déplaçant latéralement, récupérez du butin et investissez vos gains dans des améliorations permanentes.[/p][p]La démo comprend la première voie ferrée et son boss. Renforcez vos dégâts, votre santé, votre armure et vos pouvoirs au fil des tentatives. Réclamez les récompenses des succès pour obtenir davantage de ressources d'amélioration. La démo se termine après le premier boss ; les niveaux suivants et les améliorations achetées avec des couronnes sont réservés au jeu complet.[/p][p]Déplacez-vous à gauche et à droite, visez avec la souris, cliquez pour tirer et appuyez sur Espace pour activer votre prochain pouvoir disponible. Maintenez Maj pour doubler la vitesse lorsque vous êtes prêt à prendre ce risque supplémentaire.[/p][p]MODE DÉMO[/p][p]La démo utilise une sauvegarde distincte de celle du jeu complet. La version complète prolonge l'aventure avec quatre voies ferrées thématiques, un arbre d'améliorations plus vaste, des boss plus coriaces et deux fins.[/p]",
+      "app[content][short_description]": "Découvrez la première voie ferrée et son boss dans cette démo d'action incrémentale à la première personne. Tirez à l'arbalète, esquivez les vagues de feu et améliorez-vous. La démo s'arrête après le premier boss et possède sa propre sauvegarde.",
+      "app[content][sysreqs][windows][min][notes]": "Clavier et souris ou manette compatible."
+    },
+    "italian": {
+      "app[content][about]": "[p]Inizia le tue prime spedizioni in Railway Fury, un gioco d'azione incrementale in prima persona in cui ti spingi sempre più lontano lungo una ferrovia maledetta. Mira con la balestra, spostati lateralmente per schivare nemici e ondate di fuoco, raccogli bottino e investi i guadagni in potenziamenti permanenti.[/p][p]La demo include la prima ferrovia e il suo boss. Aumenta danni, salute, armatura e poteri nel corso di più spedizioni e riscatta le ricompense degli obiettivi per ottenere risorse aggiuntive. La demo termina dopo il primo boss; i livelli successivi e i potenziamenti con le corone sono riservati al gioco completo.[/p][p]Muoviti a sinistra e a destra, mira con il mouse, fai clic per sparare e premi Spazio per attivare il prossimo potere disponibile. Tieni premuto Maiusc per raddoppiare la velocità quando sei pronto ad affrontare il rischio aggiuntivo.[/p][p]MODALITÀ DEMO[/p][p]La demo usa un salvataggio separato da quello del gioco completo. La versione completa amplia il viaggio con quattro ferrovie a tema, un albero dei potenziamenti più vasto, boss più difficili e due finali.[/p]",
+      "app[content][short_description]": "Prova la prima ferrovia e il suo boss in questa demo d'azione incrementale in prima persona. Mira con la balestra, schiva ondate di fuoco e compra potenziamenti permanenti. La demo termina dopo il primo boss e usa un salvataggio separato.",
+      "app[content][sysreqs][windows][min][notes]": "Tastiera e mouse o gamepad compatibile."
+    },
+    "german": {
+      "app[content][about]": "[p]Starte deine ersten Durchläufe in Railway Fury, einem inkrementellen Actionspiel aus der Egoperspektive, in dem du immer weiter über eine verfluchte Eisenbahnstrecke vordringst. Ziele mit deiner Armbrust, weiche Gegnern und Feuerwellen seitlich aus, sammle Beute und investiere deine Einnahmen in dauerhafte Upgrades.[/p][p]Die Demo enthält die erste Strecke samt Boss. Steigere über mehrere Durchläufe deinen Schaden, deine Gesundheit, deine Rüstung und deine Kräfte. Hole dir durch Erfolge zusätzliche Ressourcen für Upgrades. Die Demo endet nach dem ersten Boss; spätere Level und Kronen-Upgrades sind der Vollversion vorbehalten.[/p][p]Bewege dich nach links und rechts, ziele mit der Maus, klicke zum Schießen und drücke die Leertaste, um deine nächste bereite Kraft zu aktivieren. Halte die Umschalttaste für doppeltes Tempo gedrückt, wenn du bereit für das zusätzliche Risiko bist.[/p][p]DEMO-MODUS[/p][p]Die Demo verwendet einen eigenen, von der Vollversion getrennten Spielstand. Die Vollversion erweitert die Reise um vier thematische Eisenbahnstrecken, einen größeren Upgrade-Baum, stärkere Bosse und zwei Enden.[/p]",
+      "app[content][short_description]": "Erlebe die erste Bahnstrecke samt Boss in dieser inkrementellen Ego-Action-Demo. Ziele mit der Armbrust, weiche Feuerwellen aus und kaufe dauerhafte Upgrades. Die Demo endet nach dem ersten Boss und nutzt einen eigenen Spielstand.",
+      "app[content][sysreqs][windows][min][notes]": "Tastatur und Maus oder kompatibles Gamepad."
+    },
+    "spanish": {
+      "app[content][about]": "[p]Empieza tus primeras incursiones en Railway Fury, un juego de acción incremental en primera persona donde avanzarás cada vez más por una vía férrea maldita. Apunta con tu ballesta, desplázate lateralmente para esquivar enemigos y oleadas de fuego, recoge botín y gasta tus ganancias en mejoras permanentes.[/p][p]La demo incluye la primera vía férrea y su jefe. Aumenta tu daño, salud, armadura y poderes a lo largo de varias incursiones, y reclama las recompensas de los logros para conseguir más recursos de mejora. La demo termina tras el primer jefe; los niveles posteriores y las mejoras de coronas están reservados al juego completo.[/p][p]Muévete a izquierda y derecha, apunta con el ratón, haz clic para disparar y pulsa Espacio para activar tu siguiente poder disponible. Mantén pulsada Mayús para duplicar la velocidad cuando estés preparado para el riesgo adicional.[/p][p]MODO DEMO[/p][p]La demo utiliza una partida guardada independiente de la del juego completo. La versión completa amplía el viaje con cuatro vías férreas temáticas, un árbol de mejoras más grande, jefes más difíciles y dos finales.[/p]",
+      "app[content][short_description]": "Prueba la primera vía férrea y su jefe en esta demo de acción incremental en primera persona. Apunta con tu ballesta, esquiva oleadas de fuego y compra mejoras permanentes. La demo termina tras el primer jefe y tiene su propia partida guardada.",
+      "app[content][sysreqs][windows][min][notes]": "Teclado y ratón o mando compatible."
+    },
+    "bulgarian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "czech": {
+      "app[content][about]": "[p]Vydej se na první výpravy v Railway Fury, inkrementální akční hře z pohledu první osoby, ve které postupuješ stále dál po prokleté železnici. Miř kuší, pohybem do stran se vyhýbej nepřátelům a ohnivým vlnám, sbírej kořist a investuj výdělky do trvalých vylepšení.[/p][p]Demo obsahuje první železnici a jejího bosse. Při opakovaných výpravách zlepšuj poškození, zdraví, brnění a schopnosti a vyzvedávej odměny za achievementy pro další suroviny na vylepšení. Demo končí po prvním bossovi; další úrovně a vylepšení za koruny jsou vyhrazeny plné hře.[/p][p]Pohybuj se doleva a doprava, miř myší, kliknutím střílej a mezerníkem aktivuj další připravenou schopnost. Podržením klávesy Shift zdvojnásobíš rychlost, až budeš připravený na vyšší riziko.[/p][p]REŽIM DEMA[/p][p]Demo používá vlastní uloženou pozici oddělenou od plné hry. Plná verze rozšiřuje cestu na čtyři tematické železnice, větší strom vylepšení, těžší bossy a dva konce.[/p]",
+      "app[content][short_description]": "Vyzkoušej první železnici a jejího bosse v demu inkrementální akce z pohledu první osoby. Miř kuší, vyhýbej se ohnivým vlnám a kupuj trvalá vylepšení. Demo končí po prvním bossovi a používá vlastní uloženou pozici.",
+      "app[content][sysreqs][windows][min][notes]": "Klávesnice a myš nebo kompatibilní gamepad."
+    },
+    "danish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "dutch": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "finnish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "greek": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "hungarian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "indonesian": {
+      "app[content][about]": "[p]Mulai ekspedisi pertamamu di Railway Fury, game aksi inkremental bersudut pandang orang pertama yang menantangmu menjelajah semakin jauh di jalur kereta terkutuk. Bidik dengan busur silang, bergerak menyamping untuk menghindari musuh dan gelombang api, kumpulkan jarahan, lalu belanjakan hasilnya untuk peningkatan permanen.[/p][p]Demo mencakup jalur kereta pertama beserta bosnya. Tingkatkan daya serang, kesehatan, zirah, dan kekuatan melalui ekspedisi berulang. Klaim hadiah pencapaian untuk memperoleh sumber daya peningkatan tambahan. Demo berakhir setelah bos pertama; level berikutnya dan peningkatan dengan mahkota tersedia dalam game lengkap.[/p][p]Bergerak ke kiri dan kanan, bidik dengan mouse, klik untuk menembak, dan tekan Spasi untuk mengaktifkan kekuatan berikutnya yang siap. Tahan Shift untuk menggandakan kecepatan saat kamu siap menghadapi risiko tambahan.[/p][p]MODE DEMO[/p][p]Progres demo menggunakan berkas simpanan terpisah dari game lengkap. Versi lengkap memperluas perjalanan dengan empat jalur kereta bertema, pohon peningkatan yang lebih besar, bos yang lebih tangguh, dan dua akhir cerita.[/p]",
+      "app[content][short_description]": "Coba jalur kereta pertama dan bosnya dalam demo aksi inkremental orang pertama ini. Bidik dengan busur silang, hindari gelombang api, dan beli peningkatan permanen. Demo berakhir setelah bos pertama dan menggunakan simpanan terpisah dari game lengkap.",
+      "app[content][sysreqs][windows][min][notes]": "Keyboard dan mouse atau gamepad yang kompatibel."
+    },
+    "japanese": {
+      "app[content][about]": "[p]Railway Furyで最初の挑戦を始めましょう。呪われた鉄道をさらに奥へと進む、一人称視点のインクリメンタル・アクションゲームです。クロスボウで狙いを定め、左右に動いて敵や炎の波をかわし、戦利品を回収。獲得した資源を永続強化に使いましょう。[/p][p]体験版では最初の鉄道とそのボスに挑めます。挑戦を繰り返して攻撃力、体力、アーマー、特殊能力を強化し、実績報酬で追加の強化資源を獲得しましょう。体験版は最初のボスを倒すと終了します。それ以降のステージとクラウンを使った強化は製品版で楽しめます。[/p][p]左右に移動し、マウスで狙い、クリックで射撃。スペースキーで次に使用可能な特殊能力を発動します。さらなる危険に挑む準備ができたら、Shiftキーを押し続けると速度が2倍になります。[/p][p]体験版モード[/p][p]体験版のセーブデータは製品版とは別です。製品版では、四つのテーマの鉄道、より大きな強化ツリー、手強いボス、二つのエンディングへと冒険が広がります。[/p]",
+      "app[content][short_description]": "一人称視点のインクリメンタル・アクション体験版で、最初の鉄道とボスに挑戦。クロスボウで狙い、敵や炎の波をかわし、戦利品を永続強化に使いましょう。最初のボスを倒すと体験版は終了します。セーブデータは製品版とは別です。",
+      "app[content][sysreqs][windows][min][notes]": "キーボードとマウス、または対応ゲームパッド。"
+    },
+    "koreana": {
+      "app[content][about]": "[p]Railway Fury에서 첫 출격을 시작하세요. 저주받은 철도를 따라 더 멀리 전진하는 1인칭 점진적 성장 액션 게임입니다. 석궁으로 조준하고, 좌우로 움직여 적과 화염 파도를 피하고, 전리품을 모아 영구 강화에 투자하세요.[/p][p]데모에는 첫 번째 철도와 해당 보스가 포함됩니다. 반복해서 출격하며 공격력, 체력, 방어구, 능력을 강화하고, 도전 과제 보상으로 추가 강화 자원을 얻으세요. 데모는 첫 보스를 물리치면 종료됩니다. 이후 레벨과 왕관 강화는 정식 버전에서 이용할 수 있습니다.[/p][p]좌우로 이동하고, 마우스로 조준하고, 클릭으로 발사하세요. 스페이스 키를 누르면 다음으로 준비된 능력을 발동합니다. 추가 위험을 감수할 준비가 되었다면 Shift 키를 길게 눌러 속도를 두 배로 높이세요.[/p][p]데모 모드[/p][p]데모 진행 상황은 정식 버전과 별도의 저장 파일을 사용합니다. 정식 버전에서는 네 가지 테마의 철도, 더 큰 강화 트리, 더욱 강력한 보스, 두 가지 결말로 여정이 확장됩니다.[/p]",
+      "app[content][short_description]": "1인칭 점진적 성장 액션 데모에서 첫 번째 철도와 보스에 도전하세요. 석궁으로 조준하고, 적과 화염 파도를 피하고, 전리품을 모아 영구 강화를 구매하세요. 첫 보스를 물리치면 종료되며, 정식 버전과 별도의 저장 파일을 사용합니다.",
+      "app[content][sysreqs][windows][min][notes]": "키보드와 마우스 또는 호환 게임패드."
+    },
+    "malay": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "norwegian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "polish": {
+      "app[content][about]": "[p]Rozpocznij pierwsze wyprawy w Railway Fury — pierwszoosobowej grze akcji z przyrostowym rozwojem, w której docierasz coraz dalej wzdłuż przeklętej linii kolejowej. Celuj kuszą, przemieszczaj się na boki, by unikać wrogów i fal ognia, zbieraj łupy i inwestuj zarobki w trwałe ulepszenia.[/p][p]Demo zawiera pierwszą linię kolejową i jej bossa. Podczas kolejnych wypraw rozwijaj obrażenia, zdrowie, pancerz i moce. Odbieraj nagrody za osiągnięcia, by zdobyć dodatkowe zasoby na ulepszenia. Demo kończy się po pierwszym bossie; dalsze poziomy i ulepszenia za korony są dostępne w pełnej grze.[/p][p]Poruszaj się w lewo i w prawo, celuj myszą, klikaj, by strzelać, i naciskaj Spację, aby aktywować kolejną gotową moc. Przytrzymaj Shift, by podwoić prędkość, gdy będziesz gotowy na dodatkowe ryzyko.[/p][p]TRYB DEMO[/p][p]Demo korzysta z osobnego zapisu, niezależnego od pełnej gry. Pełna wersja rozszerza podróż o cztery tematyczne linie kolejowe, większe drzewko ulepszeń, trudniejszych bossów i dwa zakończenia.[/p]",
+      "app[content][short_description]": "Wypróbuj pierwszą linię kolejową i jej bossa w demie pierwszoosobowej gry akcji z przyrostowym rozwojem. Strzelaj z kuszy, unikaj fal ognia i kupuj trwałe ulepszenia. Demo kończy się po pierwszym bossie i ma osobny zapis gry.",
+      "app[content][sysreqs][windows][min][notes]": "Klawiatura i mysz lub kompatybilny gamepad."
+    },
+    "brazilian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "portuguese": {
+      "app[content][about]": "[p]Começa as tuas primeiras incursões em Railway Fury, um jogo de ação incremental na primeira pessoa em que avanças cada vez mais por uma linha férrea amaldiçoada. Aponta com a besta, move-te lateralmente para evitar inimigos e ondas de fogo, recolhe saque e investe os ganhos em melhorias permanentes.[/p][p]A demo inclui a primeira linha férrea e o respetivo boss. Aumenta o dano, a vida, a armadura e os poderes ao longo de várias incursões e reclama as recompensas das proezas para obter mais recursos. A demo termina depois do primeiro boss; os níveis seguintes e as melhorias com coroas estão reservados ao jogo completo.[/p][p]Move-te para a esquerda e para a direita, aponta com o rato, clica para disparar e prime Espaço para ativar o próximo poder disponível. Mantém Shift premido para duplicar a velocidade quando estiveres preparado para o risco adicional.[/p][p]MODO DEMO[/p][p]A demo usa um ficheiro de gravação separado do jogo completo. A versão completa expande a viagem com quatro linhas férreas temáticas, uma árvore de melhorias maior, bosses mais difíceis e dois finais.[/p]",
+      "app[content][short_description]": "Experimenta a primeira linha férrea e o seu boss nesta demo de ação incremental na primeira pessoa. Usa a besta, evita ondas de fogo e compra melhorias permanentes. A demo termina após o primeiro boss e usa um ficheiro de gravação separado.",
+      "app[content][sysreqs][windows][min][notes]": "Teclado e rato ou comando compatível."
+    },
+    "romanian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "russian": {
+      "app[content][about]": "[p]Начните свои первые забеги в Railway Fury — инкрементальной экшен-игре от первого лица, в которой предстоит продвигаться всё дальше по проклятой железной дороге. Цельтесь из арбалета, двигайтесь в стороны, уклоняясь от врагов и огненных волн, собирайте добычу и тратьте заработанное на постоянные улучшения.[/p][p]Демоверсия включает первую железную дорогу и её босса. От забега к забегу повышайте урон, здоровье, броню и способности, а также забирайте награды за достижения, чтобы получить дополнительные ресурсы. Демоверсия заканчивается после первого босса; последующие уровни и улучшения за короны доступны в полной игре.[/p][p]Двигайтесь влево и вправо, цельтесь мышью, нажимайте кнопку мыши для выстрела и Пробел для применения следующей готовой способности. Удерживайте Shift, чтобы удвоить скорость, когда будете готовы к дополнительному риску.[/p][p]ДЕМОРЕЖИМ[/p][p]Прогресс демоверсии хранится отдельно от сохранения полной игры. Полная версия расширяет путешествие до четырёх тематических железных дорог, предлагает большее дерево улучшений, более сильных боссов и две концовки.[/p]",
+      "app[content][short_description]": "Опробуйте первую железную дорогу и её босса в демоверсии инкрементального экшена от первого лица. Стреляйте из арбалета, избегайте огненных волн и покупайте улучшения. Демо заканчивается после первого босса и использует отдельное сохранение.",
+      "app[content][sysreqs][windows][min][notes]": "Клавиатура и мышь или совместимый геймпад."
+    },
+    "schinese": {
+      "app[content][about]": "[p]在 Railway Fury 中开启你的首次出击。这是一款第一人称增量动作游戏，你将沿着被诅咒的铁路不断深入。用弩瞄准，横向移动躲避敌人与火浪，收集战利品，并将所得投入永久强化。[/p][p]试玩版包含第一条铁路及其首领。反复出击，提升伤害、生命值、护甲和技能，领取成就奖励，获得更多强化资源。击败第一位首领后，试玩版即告结束；后续关卡及皇冠强化仅在完整版中开放。[/p][p]左右移动，用鼠标瞄准，点击射击，按空格键发动下一个就绪的技能。准备好承担额外风险后，按住 Shift 键即可将速度提升至两倍。[/p][p]试玩模式[/p][p]试玩版使用独立存档，与完整版分开保存。完整版将旅程扩展至四条不同主题的铁路，并提供更庞大的强化树、更强大的首领和两种结局。[/p]",
+      "app[content][short_description]": "在这款第一人称增量动作试玩版中，挑战第一条铁路及其首领。用弩瞄准，躲避敌人与火浪，收集战利品并购买永久强化。试玩版在击败第一位首领后结束，存档与完整版相互独立。",
+      "app[content][sysreqs][windows][min][notes]": "键盘和鼠标，或兼容的游戏手柄。"
+    },
+    "latam": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "swedish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "thai": {
+      "app[content][about]": "[p]เริ่มออกลุยครั้งแรกใน Railway Fury เกมแอ็กชันมุมมองบุคคลที่หนึ่งที่ให้คุณสะสมพลังและรุกไปตามทางรถไฟต้องคำสาปให้ไกลขึ้นเรื่อย ๆ เล็งด้วยหน้าไม้ เคลื่อนที่ไปด้านข้างเพื่อหลบศัตรูและคลื่นไฟ เก็บของ แล้วนำรายได้ไปซื้ออัปเกรดถาวร[/p][p]เดโมมีทางรถไฟสายแรกพร้อมบอส พัฒนาความเสียหาย พลังชีวิต เกราะ และพลังพิเศษผ่านการออกลุยซ้ำ ๆ พร้อมรับรางวัลจากความสำเร็จเพื่อหาทรัพยากรอัปเกรดเพิ่ม เดโมจะจบหลังปราบบอสตัวแรก ส่วนด่านถัดไปและอัปเกรดด้วยมงกุฎมีให้เล่นในเกมฉบับเต็ม[/p][p]เคลื่อนที่ไปทางซ้ายและขวา เล็งด้วยเมาส์ คลิกเพื่อยิง และกด Space เพื่อใช้พลังพิเศษถัดไปที่พร้อมใช้งาน กด Shift ค้างไว้เพื่อเพิ่มความเร็วเป็นสองเท่า เมื่อคุณพร้อมรับความเสี่ยงที่มากขึ้น[/p][p]โหมดเดโม[/p][p]ความคืบหน้าในเดโมใช้ไฟล์บันทึกแยกจากเกมฉบับเต็ม ฉบับเต็มจะขยายการเดินทางไปยังทางรถไฟสี่ธีม พร้อมผังอัปเกรดที่ใหญ่ขึ้น บอสที่แข็งแกร่งกว่าเดิม และตอนจบสองแบบ[/p]",
+      "app[content][short_description]": "ลองทางรถไฟสายแรกและบอสในเดโมแอ็กชันมุมมองบุคคลที่หนึ่งที่เน้นสะสมพลัง เล็งหน้าไม้ หลบศัตรูและคลื่นไฟ เก็บของและซื้ออัปเกรดถาวร เดโมจบหลังปราบบอสตัวแรก และใช้ไฟล์บันทึกแยกจากฉบับเต็ม",
+      "app[content][sysreqs][windows][min][notes]": "คีย์บอร์ดและเมาส์ หรือเกมแพดที่รองรับ"
+    },
+    "tchinese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "turkish": {
+      "app[content][about]": "[p]Lanetli bir demiryolunda daha da ileri gitmeyi hedeflediğin, birinci şahıs bakış açılı artımlı aksiyon oyunu Railway Fury'de ilk seferlerine çık. Arbaletinle nişan al, düşmanlardan ve ateş dalgalarından kaçmak için yana hareket et, ganimet topla ve kazancını kalıcı yükseltmelere harca.[/p][p]Demo, ilk demiryolunu ve boss'unu içerir. Tekrarlanan seferlerde hasarını, canını, zırhını ve güçlerini geliştir; ek yükseltme kaynakları için başarım ödüllerini al. Demo ilk boss'tan sonra sona erer. Sonraki bölümler ve taç yükseltmeleri tam oyuna ayrılmıştır.[/p][p]Sağa ve sola hareket et, fareyle nişan al, ateş etmek için tıkla ve sıradaki hazır gücünü etkinleştirmek için Boşluk tuşuna bas. Ek riske hazır olduğunda hızı ikiye katlamak için Shift tuşunu basılı tut.[/p][p]DEMO MODU[/p][p]Demo ilerlemesi, tam oyundan ayrı bir kayıt dosyasında tutulur. Tam sürüm; dört temalı demiryolu, daha büyük bir yükseltme ağacı, daha zorlu boss'lar ve iki son ile yolculuğu genişletir.[/p]",
+      "app[content][short_description]": "Birinci şahıs artımlı aksiyon demosunda ilk demiryolunu ve boss'unu dene. Arbaletinle nişan al, ateş dalgalarından kaç ve kalıcı yükseltmeler al. Demo ilk boss'tan sonra biter ve tam oyundan ayrı bir kayıt kullanır.",
+      "app[content][sysreqs][windows][min][notes]": "Klavye ve fare veya uyumlu oyun kumandası."
+    },
+    "ukrainian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "vietnamese": {
+      "app[content][about]": "[p]Bắt đầu những chuyến đi đầu tiên trong Railway Fury, game hành động tăng tiến góc nhìn thứ nhất, nơi bạn tiến ngày càng xa dọc tuyến đường sắt bị nguyền rủa. Ngắm bằng nỏ, di chuyển ngang để né kẻ địch và sóng lửa, thu thập chiến lợi phẩm rồi dùng thu nhập để mua nâng cấp vĩnh viễn.[/p][p]Bản chơi thử gồm tuyến đường sắt đầu tiên và trùm của tuyến đó. Tăng sát thương, máu, giáp và năng lực qua nhiều chuyến đi, đồng thời nhận thưởng thành tựu để có thêm tài nguyên nâng cấp. Bản chơi thử kết thúc sau trùm đầu tiên; các màn tiếp theo và nâng cấp bằng vương miện dành cho bản đầy đủ.[/p][p]Di chuyển sang trái và phải, ngắm bằng chuột, nhấp để bắn và nhấn phím Cách để kích hoạt năng lực sẵn sàng tiếp theo. Giữ Shift để tăng gấp đôi tốc độ khi bạn sẵn sàng chấp nhận rủi ro lớn hơn.[/p][p]CHẾ ĐỘ CHƠI THỬ[/p][p]Tiến trình bản chơi thử dùng tệp lưu riêng, tách biệt với bản đầy đủ. Bản đầy đủ mở rộng hành trình qua bốn tuyến đường sắt theo chủ đề, cây nâng cấp lớn hơn, các trùm khó hơn và hai kết thúc.[/p]",
+      "app[content][short_description]": "Thử tuyến đường sắt đầu tiên và trùm trong bản chơi thử hành động tăng tiến góc nhìn thứ nhất. Ngắm nỏ, né sóng lửa và mua nâng cấp vĩnh viễn. Bản chơi thử kết thúc sau trùm đầu tiên và dùng tệp lưu riêng với bản đầy đủ.",
+      "app[content][sysreqs][windows][min][notes]": "Bàn phím và chuột hoặc tay cầm tương thích."
+    }
+  }
+}

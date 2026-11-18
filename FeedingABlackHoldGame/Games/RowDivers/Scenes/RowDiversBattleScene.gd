@@ -17,6 +17,10 @@ var free_aim_mode = Progress.free_aim_mode
 var corridor_width = 1.0
 var data: Dictionary
 var progress_save_path = ""
+var analytics_heartbeat := 0.0
+var analytics_last_section := 0
+var analytics_finished := false
+var analytics_attempt := 1
 var camera: Camera3D
 var player_position = Vector3(0, 0.9, 0)
 var forward_speed = 1.3
@@ -74,7 +78,7 @@ var pointer_override = Vector2(NAN, NAN)
 var hit_flash = 0.0
 var persist_results = true
 var damage_sources: Dictionary = {}
-var last_damage_source = "the row"
+var last_damage_source = "the railway"
 var footstep_timer = 0.0
 var world_environment: Environment
 var world_light: DirectionalLight3D
@@ -165,9 +169,9 @@ func _ready() -> void:
 	for number in range(1, 4):
 		_build_section(number)
 	if free_aim_mode:
-		fire_waves.setup(int(data.prestige), randi(), Progress.design().settings.get("fire_waves", {}))
+		fire_waves.setup(campaign_level(), randi(), Progress.design().settings.get("fire_waves", {}))
 		fire_visual = preload("res://Games/RowDivers/RowDiversFireWaveVisual.gd").new()
-		fire_visual.level_index = int(data.prestige)
+		fire_visual.level_index = campaign_level()
 		add_child(fire_visual)
 	_build_hud()
 	audio = Audio.new()
@@ -178,15 +182,21 @@ func _ready() -> void:
 	elif not data.controls_seen:
 		presentation.show_tutorial()
 	_update_hud()
+	RailwayController.configure_menu(self)
 	SignalBus.settings_updated.connect(_refresh_graphics)
 	_refresh_graphics()
 	if persist_results:
 		if debug_speed_cheats_enabled() and debug_speed>1: data.leaderboards_assisted = true
+		analytics_attempt = int(data.get("runs",0)) + 1
 		Timing.submit_pending(data)
 		Analytics.started(data, free_aim_mode, Progress.active_tree)
+		Analytics.run_event(self, "start")
+		Analytics.run_event(self, "checkpoint")
+		analytics_last_section = section
 		Progress.save_data(data, progress_save_path)
 
 func _refresh_graphics() -> void:
+	for projectile in projectiles: ProjectileVisual.refresh(projectile.node)
 	for corridor in sections: Hallway.restore(corridor)
 	OriginalPresentation.refresh_materials(self)
 	for corridor in sections:
@@ -371,7 +381,7 @@ func _build_section(number: int) -> void:
 	_build_modern_hallway(modern)
 	modern.scale.x = corridor_width
 	modern.visible = not Graphics.original()
-	var visual_layout: String = "Crownless Boss Section" if number == 15 and data.crowns_dropped.get(str(int(data.prestige)), false) else layout_key
+	var visual_layout: String = "Crownless Boss Section" if number == 15 and data.crowns_dropped.get(str(campaign_level()), false) else layout_key
 	var original := OriginalPresentation.build(visual_layout,true,true)
 	root.add_child(original)
 	original.scale.x = corridor_width
@@ -388,7 +398,7 @@ func _build_section(number: int) -> void:
 		var points: Array = group.left if randi_range(0, 1) == 0 else group.right
 		group_index += 1
 		var allowed: Array = [0, 1, 2, 3].filter(func(kind): return not group.banned.has(float(kind)) and not group.banned.has(kind))
-		for j in range(2 if int(data.prestige) == 3 else 1):
+		for j in range(2 if campaign_level() == 3 else 1):
 			if j >= points.size() or allowed.is_empty(): continue
 			var point: Array = points[j]
 			_spawn_enemy(Vector3((float(point[0]) - 2.5) * corridor_width, float(point[1]), root.position.z - (float(point[2]) + 28.474)), int(allowed.pick_random()))
@@ -429,7 +439,7 @@ func _spawn_enemy(pos: Vector3, kind: int, boss = false) -> void:
 	root.position = pos
 	var actor := Actor.new()
 	root.add_child(actor)
-	actor.setup(kind, boss,int(data.prestige))
+	actor.setup(kind, boss,campaign_level())
 	if boss:
 		var extra_weapon := _weapon_mesh("Crossbow_01", actor, Vector3(0.35, 0.3, 0.18), 0.52)
 		extra_weapon.set_meta("modern_decoration", true)
@@ -448,7 +458,7 @@ func _spawn_enemy(pos: Vector3, kind: int, boss = false) -> void:
 	label.pixel_size = 0.006
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	root.add_child(label)
-	var prestige_level = int(data.prestige)
+	var prestige_level = campaign_level()
 	var health_multiplier = [1.0, 110.0, 100.0, 120.0][prestige_level]
 	if kind == 6 and prestige_level == 3: health_multiplier *= 1.25
 	var base_hp = 80.0 if boss else 40.0
@@ -472,14 +482,25 @@ func _resume() -> void:
 		presentation.settings_panel.hide()
 		return
 	if presentation.advance_tutorial(): return
+	if ended:
+		presentation.show_results()
+		return
 	suspended = false
 	data.controls_seen = true
 	if persist_results: Progress.save_data(data, progress_save_path)
 	overlay.hide()
 	resume.text = "RESUME"
 	VirtualCursor.set_gameplay_pointer_hidden(true)
+	get_viewport().gui_release_focus()
+	RailwayController.sync_menu()
+
+func controller_menu() -> Dictionary:
+	return presentation.controller_menu() if is_instance_valid(presentation) else {}
 
 func _exit_tree() -> void:
+	if persist_results and not ended and not analytics_finished:
+		analytics_finished = true
+		Analytics.run_event(self, "abandoned")
 	if RailwayController.battle == self: RailwayController.battle = null
 	VirtualCursor.set_scene_enabled(false)
 	VirtualCursor.set_gameplay_pointer_hidden(false)
@@ -506,6 +527,10 @@ func _controller_action(action: String) -> void:
 				if unlocked(weapon) and auxiliary_fire_mode in ["Click", "Hold"]: _shoot(weapon)
 		"ability": _activate_next_powerup()
 		"run": running = not running
+		"fire_mode":
+			if unlocked("Auto"):
+				fire_mode = "Hold" if fire_mode == "Auto" else "Auto"
+				presentation.toast("BOW · " + fire_mode.to_upper())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -571,7 +596,7 @@ func _activate_next_powerup() -> void:
 		_activate(key)
 
 func walking_damage() -> float:
-	var amount: float = [5.0, 30.0, 100.0, 300.0][clampi(int(data.prestige), 0, 3)]
+	var amount: float = [5.0, 30.0, 100.0, 300.0][clampi(campaign_level(), 0, 3)]
 	if armor > 0: amount *= maxf(0, 1.0 - s("Armor_Against_Row") / 100.0)
 	return amount
 
@@ -631,6 +656,11 @@ func _auto_activate_abilities() -> void:
 			_activate(key)
 
 func _physics_process(delta: float) -> void:
+	if persist_results and not suspended and not ended:
+		analytics_heartbeat += delta
+		if analytics_heartbeat >= 30.0:
+			analytics_heartbeat = 0.0
+			Analytics.run_event(self, "heartbeat")
 	# Repeat normal-size physics steps rather than increasing delta, preserving
 	# projectile/contact checks, row ticks and all ability durations at fast speed.
 	var steps = (debug_speed if debug_speed_cheats_enabled() else 1) * (2 if running else 1)
@@ -696,12 +726,15 @@ func _simulate_step(delta: float) -> void:
 	_update_shield_presentation()
 	if -player_position.z >= next_section_trigger:
 		section += 1
+		if persist_results and section > analytics_last_section and section <= 15:
+			analytics_last_section = section
+			Analytics.run_event(self, "checkpoint")
 		next_section_trigger += 20.0
 		forward_speed += 0.1333
 		_build_section(section + 2)
 		presentation.toast(tr("SECTION %d") % section)
 	if row_tick:
-		_damage_player(walking_damage(), false, "the row")
+		_damage_player(walking_damage(), false, "the railway")
 	if free_aim_mode: _update_fire_waves(delta)
 	if free_aim_mode:
 		crosshair.position = _aim_pointer() - crosshair.size * 0.5
@@ -738,7 +771,7 @@ func _simulate_step(delta: float) -> void:
 	_update_hud()
 
 func _update_fire_waves(delta: float) -> void:
-	var control = s("Fire_Wave_Control_" + str(int(data.prestige)))
+	var control = s("Fire_Wave_Control_" + str(campaign_level()))
 	var hits = fire_waves.advance(delta, player_position, control, elapsed)
 	for hit in range(hits): _damage_player(fire_waves.damage, false, "fire waves")
 	if fire_visual != null: fire_visual.sync(fire_waves.waves)
@@ -962,7 +995,7 @@ func _update_projectiles(delta: float) -> void:
 						_damage_player(10.0, true, "poison")
 						poison_ticks = 2
 						poison_timer = 1.0
-				_damage_player(float([10, 200, 500, 2000][int(data.prestige)]) * (2.0 if projectile.type == "Critical" else 1.0), false, "enemy arrows")
+				_damage_player(float([10, 200, 500, 2000][campaign_level()]) * (2.0 if projectile.type == "Critical" else 1.0), false, "enemy arrows")
 				projectile.life = 0
 		else:
 			for enemy in enemies.duplicate():
@@ -1036,6 +1069,7 @@ func _hit(enemy: Dictionary, amount: float) -> void:
 	# Boss.Die skips Enemy.Die's dead flag; an in-flight life-steal arrow can reenter it.
 	if not first_death and int(enemy.kind) != 6: return
 	enemy.hp -= amount
+	if Graphics.gothic(): preload("res://Games/RowDivers/RowDiversGothic.gd").splatter(self, enemy.node.position, enemy.hp <= 0)
 	enemy.actor.hit()
 	_floating_text(enemy.node.position + Vector3(0, 0.7, 0), Util.get_number_short_text(amount), Style.GOLD)
 	enemy.label.text = str(maxi(0, int(ceil(enemy.hp))))
@@ -1055,21 +1089,21 @@ func _hit(enemy: Dictionary, amount: float) -> void:
 		if int(enemy.kind) != 6 and armor <= 0 and _roll("HealOnKill_Chance"): _heal(s("HealOnKill_Amount"))
 		if int(enemy.kind) == 6:
 			data.achievements.FirstBoss = true
-			data.achievements["RowDiver" if int(data.prestige) == 0 else "Prestige" + str(int(data.prestige))] = true
-			if int(data.prestige) == 3:
+			data.achievements["RowDiver" if campaign_level() == 0 else "Prestige" + str(campaign_level())] = true
+			if campaign_level() == 3:
 				data.achievements.BossSlayer = true
 				data.achievements.PrestigeMaster = true
-			var key = str(int(data.prestige))
+			var key = str(campaign_level())
 			if not enemy.get("crown_dropped_on_spawn", data.crowns_dropped.get(key, false)):
 				_award_loot(2, 1.0)
 				data.crowns_dropped[key] = true
-				if int(data.prestige) < 3 and not Progress.Demo.enabled(): data.max_prestige = mini(3, int(data.max_prestige) + 1)
+				if campaign_level() < 3: data.max_prestige = maxi(int(data.max_prestige), campaign_level() + 1)
 			Progress.check_achievements(data)
 			_finish(true)
 		else:
 			var currency = 1 if int(enemy.kind) in [3, 4, 5] else 0
 			var value = 1.0
-			if currency == 0: value = [1.0, 10.0, 100.0, 1000.0][int(data.prestige)]
+			if currency == 0: value = [1.0, 10.0, 100.0, 1000.0][campaign_level()]
 			if free_aim_mode: value *= float(Progress.design().settings.get("flight_rewards", {}).get("gold" if currency == 0 else "gems", 1))
 			var loot_position: Vector3 = enemy.node.position
 			if int(enemy.kind) == 7: loot_position.y = 0.65
@@ -1145,7 +1179,7 @@ func _update_enemies(delta: float) -> void:
 			if enemy.hp <= reflected:
 				_hit(enemy, reflected)
 				continue
-			var damage = float([50, 500, 1000, 3000][int(data.prestige)]) * (2.0 if int(enemy.kind) == 2 else 1.0)
+			var damage = float([50, 500, 1000, 3000][campaign_level()]) * (2.0 if int(enemy.kind) == 2 else 1.0)
 			if enemy.boss: damage = 100000.0
 			_damage_player(maxf(0, damage * (1 - s("Impact_Armor") / 100.0)), false, "enemy contact")
 		if offset.z > 15:
@@ -1237,11 +1271,14 @@ func _finish(won: bool) -> void:
 		data.best_distance = maxf(float(data.best_distance), distance)
 	# A reentrant Boss.Die may change crowns/prestige after the first victory.
 	if persist_results:
-		if won: Timing.record(data,tr("boss_%d") % int(data.prestige))
+		if won: Timing.record(data,"boss_%d" % campaign_level())
 		Analytics.finished_run(data, won, free_aim_mode, Progress.active_tree)
+		if first_finish and not analytics_finished:
+			analytics_finished = true
+			Analytics.run_event(self,"complete" if won else "death" if health <= 0 else "abandoned")
 		Progress.save_data(data, progress_save_path)
-	overlay_title.text = "THE ROW IS YOURS" if won else "THE ROW CLAIMED YOU"
-	presentation.overlay_detail.text = tr("Distance %.1f m  |  Kills %d\nGold %s  |  Gems %s  |  Crowns %s\n\n%s") % [distance, run_kills, str(int(coins[0])), str(int(coins[1])), str(int(coins[2])), (tr("Level %d unlocked. Return to upgrades to choose your next railway.") % (int(data.max_prestige)+1)) if won and int(data.prestige) < 3 else ((tr("Level complete. Max %d upgrade nodes to unlock your final choice.") % int(Progress.design().settings.get("ending_maxed_nodes",100))) if won else tr("Your loot is banked. Spend it in Upgrades and come back stronger."))]
+	overlay_title.text = "THE RAILWAY IS YOURS" if won else "THE RAILWAY CLAIMS YOU"
+	presentation.overlay_detail.text = tr("Distance %.1f m  |  Kills %d\nGold %s  |  Gems %s  |  Crowns %s\n\n%s") % [distance, run_kills, str(int(coins[0])), str(int(coins[1])), str(int(coins[2])), (tr("Level %d unlocked. Return to upgrades to choose your next railway.") % (int(data.max_prestige)+1)) if won and campaign_level() < 3 else ((tr("Level complete. Max %d upgrade nodes to unlock your final choice.") % int(Progress.design().settings.get("ending_maxed_nodes",100))) if won else tr("Your loot is banked. Spend it in Upgrades and come back stronger."))]
 	if won and Progress.Demo.enabled():
 		data.demo_completed = true
 		overlay_title.text = tr("DEMO COMPLETE")
@@ -1257,6 +1294,7 @@ func _finish(won: bool) -> void:
 	if first_finish and persist_results and EditorLoop.active(debug_speed):
 		presentation.overlay_detail.text += tr("\nAuto play: returning to upgrades… (F8 to stop)")
 		_auto_return_to_upgrades()
+	presentation.show_results(overlay_title.text, presentation.overlay_detail.text)
 
 func _auto_return_to_upgrades() -> void:
 	var generation = EditorLoop.generation
@@ -1275,3 +1313,6 @@ func _process(_delta: float) -> void:
 	for enemy in enemies:
 		enemy.actor.frozen = ended or suspended
 		enemy.actor.playback_speed = (float(debug_speed) if debug_speed_cheats_enabled() else 1.0) * (2.0 if running else 1.0)
+
+func campaign_level() -> int:
+	return Progress.Demo.playable_level(data)

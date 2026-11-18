@@ -1,0 +1,215 @@
+{
+  "itemid": "1142593",
+  "languages": {
+    "english": {
+      "app[content][about]": "[h2][b]Deepcore[/b][/h2][p]Drive the rig. Bank the ore. Build the next better dive.[/p][p]Deepcore is a run-based mining incremental built around short, high-pressure dives. Steer a drill rig through destructible underground terrain, break open ore, and get the haul back to the base ring before the timer expires, the drill burns out, or cargo pressure ends the push.[/p][h2][b]What You Do[/b][/h2][p][img src=&quot;{STEAM_APP_IMAGE}/extras/067a5a73cd104f7db745a8f086ef2b0d&quot;][/img][/p][p]• Pilot a drill rig through destructible underground routes\r\n• Manage timer pressure, drill depletion, and cargo limits during each dive\r\n• Collect ore and bank it for money and XP\r\n• Unlock deeper depth tiers with tougher layers and better payouts\r\n• Invest returns into permanent upgrades and drone support[/p][h2][b]Key Features[/b][/h2][p]• Fast run-based mining loop with strong repeat-dive momentum\r\n• Permanent upgrades for engine tuning, drill torque, plating, cooling, cargo, ore value, XP, and route efficiency\r\n• Depth-tier progression that steadily raises value, resistance, and risk\r\n• Support automation through salvage drones and delivery drones\r\n• Readable end-of-run summaries with payout, XP, and performance feedback\r\n• Single-player progression built for optimization and long-term growth[/p][h2][b]Why It Feels Good[/b][/h2][p]Every upgrade shows up quickly. The rig moves cleaner, the drill lasts longer, cargo runs get smoother, and deeper layers stop feeling impossible. Deepcore keeps the runs short enough to stay readable while the campaign keeps widening underneath them.[/p][h2][b]Best For Players Who Enjoy[/b][/h2][p]• Mining and drilling games\r\n• Incremental and progression-heavy systems\r\n• Short runs with persistent upgrades\r\n• Optimization-focused single-player loops[/p]",
+      "app[content][short_description]": "A run-based mining incremental where you steer a drill rig, bank ore, unlock deeper tiers, and turn fast dives into permanent upgrades.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "french": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "italian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "german": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "spanish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "bulgarian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "czech": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "danish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "dutch": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "finnish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "greek": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "hungarian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "indonesian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "japanese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "koreana": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "malay": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "norwegian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "polish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "brazilian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "portuguese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "romanian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "russian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "schinese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "latam": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "swedish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "thai": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "tchinese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "turkish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "ukrainian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "vietnamese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    }
+  }
+}

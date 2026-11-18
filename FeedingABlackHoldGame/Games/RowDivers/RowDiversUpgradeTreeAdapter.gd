@@ -17,8 +17,8 @@ static func apply_simulation_upgrades() -> void:
 	PROGRESS.check_achievements(progress)
 	# PanelManager.PrestigePanelVisibility defaults each new dive to the highest
 	# unlocked prestige. The shared scene exposes that choice before PLAY instead.
-	progress.prestige = int(progress.max_prestige)
-	var raw_upgrades: Array = data.get("upgrades", []).filter(func(entry): return int(entry.get("minPrestige", 0)) <= int(progress.max_prestige))
+	if not PROGRESS.Demo.enabled(): progress.prestige = int(progress.max_prestige)
+	var raw_upgrades: Array = data.get("upgrades", []).filter(func(entry): return int(entry.get("minPrestige", 0)) <= PROGRESS.Demo.unlocked_level(progress))
 	var id_to_cell: Dictionary = {}
 	for index in range(raw_upgrades.size()):
 		id_to_cell[str(raw_upgrades[index].get("id", ""))] = Vector2(index + 1, 0)
@@ -79,6 +79,7 @@ static func apply_simulation_upgrades() -> void:
 			Global.game_mode_data_manager.unlocked_upgrades[upgrade.cell] = upgrade.to_dict()
 
 static func _icon_for(entry: Dictionary) -> String:
+	if preload("res://Games/RowDivers/RowDiversGraphics.gd").gothic(): return preload("res://Games/RowDivers/RowDiversGothic.gd").icon(entry)
 	var ability: String = str(entry.get("unlocks", {}).get("abilityType", ""))
 	if ability == "GhostPower": return "res://Games/RowDivers/Art/Powerups/ghost.svg"
 	if ability == "ArrowShield": return "➶"

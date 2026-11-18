@@ -28,19 +28,26 @@ func run():
 	check(fallback.has_char("Р".unicode_at(0)) and fallback.has_char("ấ".unicode_at(0)), "Bundled web fallback covers Russian and Vietnamese")
 	var format := RegEx.create_from_string("%(?:[-+0#]*[0-9]*(?:\\.[0-9]+)?[sdfxX]|%)")
 	var identifier := RegEx.create_from_string("^[A-Z0-9_]+$")
+	var legacy_row := RegEx.create_from_string("(?i)\\brow\\b")
 	for source in catalog.en:
 		check(not ("_" in source and identifier.search(source)!=null), "Shared translation identifiers are not shadowed: "+source)
-	for source in ["RAILWAY FURY · TRACK RUN TIMES","\n\n%s\nPaid with %s","%s ACTIVE", "RUN THE TRACKS", "MAGPIE", "ARROW STORM", "SHIELD", "REGEN", "[SPACE] ", "SPACE: Activate the highlighted power.\nEach press uses one ready power.", "Regenerates %.2f%% of maximum health per second (1.5x walking damage)."]:
+		check(legacy_row.search(source) == null, "Player-facing source copy uses railway wording: " + source)
+	for source in ["THE RAILWAY CLAIMS YOU", "THE RAILWAY IS YOURS", "the railway", "RAILWAY FURY  /  THE END OF THE LINE", "Railway Damage Resistance I", "Railway Damage Resistance II", "Railway Damage Resistance III", "Complete The Railway", "MOVE CURSOR", "PAN", "ZOOM"]:
+		check(catalog.en.has(source), "Reviewed railway and controller copy is covered: " + source)
+	for source in ["RAILWAY FURY · TRACK RUN TIMES","\n\n%s\nPaid with %s","%s ACTIVE", "RAILWAY FURY", "MAGPIE", "ARROW STORM", "SHIELD", "REGEN", "[SPACE] ", "SPACE: Activate the highlighted power.\nEach press uses one ready power.", "Regenerates %.2f%% of maximum health per second (1.5x walking damage)."]:
 		check(catalog.en.has(source), "Dynamic UI copy is covered: "+source)
 	for locale in catalog:
 		TranslationServer.set_locale(locale)
 		check(catalog[locale].size()==catalog.en.size(), "Equal coverage: "+locale)
+		for source in ["%.1f m    SECTION %d / 15    %s", "Click left stick to toggle double speed", "LEFT STICK TO MOVE", "Left trigger / bumper: Activate the highlighted power.\nRight stick: Aim. Menu / Options: Play or pause.", "NEXT · ", "RIGHT TRIGGER / BUMPER TO SHOOT", "Use the left trigger or bumper to activate the highlighted ready power."]:
+			check(catalog[locale].has(source) and TranslationServer.translate(source)==catalog[locale].get(source), "HUD and controller copy registered: "+locale+" / "+source)
 		for source in catalog[locale]:
 			check(not str(catalog[locale][source]).is_empty(), "Nonempty: "+locale+" / "+source)
 			var a = format.search_all(source).map(func(m):return m.get_string())
 			var b = format.search_all(catalog[locale][source]).map(func(m):return m.get_string())
 			check(a==b, "Format placeholders: "+locale+" / "+source)
 		check(TranslationServer.translate("DEMO MODE")==catalog[locale]["DEMO MODE"], "Locale registered: "+locale)
+		check(TranslationServer.translate("THE RAILWAY CLAIMS YOU") == catalog[locale]["THE RAILWAY CLAIMS YOU"], "Railway death heading registered: " + locale)
 	TranslationServer.set_locale("en")
 	ProjectSettings.set_setting("railway_fury/demo/enabled", true)
 	for free_aim in [false,true]:
@@ -80,6 +87,14 @@ func run():
 	ProjectSettings.set_setting("railway_fury/demo/enabled", false)
 	Progress.active_data_cache = {}
 	check(not Progress.progress_path().ends_with("_demo.json") and Timing.configs().size()==5, "Full game behavior restored")
+	var defeated = load("res://Games/RowDivers/Scenes/RowDiversBattleScene.gd").new()
+	defeated.persist_results = false
+	root.add_child(defeated)
+	defeated.set_physics_process(false)
+	defeated._finish(false)
+	check(defeated.overlay_title.text == "THE RAILWAY CLAIMS YOU", "Death screen uses the requested Railway heading")
+	check(defeated.last_damage_source == "the railway" and defeated.presentation.overlay_detail.text.contains("Defeated by the railway."), "Death details use railway damage wording")
+	defeated.free()
 	var full = Progress.fresh()
 	full.max_prestige = 3
 	Progress.active_data_cache = full

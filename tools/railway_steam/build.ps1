@@ -3,6 +3,7 @@ $railwayRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $railwayEngine = Join-Path $railwayRoot 'Godot/Godot_v4.6-stable_win64_console.exe'
 Push-Location $railwayRoot
 try {
+    if (Test-Path -LiteralPath 'FeedingABlackHoldGame/override.cfg') { throw 'Refusing to export while a local override.cfg is active; it can change packaged save locations.' }
     if (-not (Test-Path -LiteralPath 'FeedingABlackHoldGame/railway_analytics.local.cfg')) {
         throw 'Missing ignored railway_analytics.local.cfg. Configure edition analytics before exporting.'
     }

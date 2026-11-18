@@ -22,8 +22,8 @@ static func button_feedback(button: BaseButton) -> void:
 	if button is CustomButton:
 		var motion := button.get_node_or_null("CustomTweenComponent") as CustomTweenComponent
 		if motion != null:
-			motion.do_scale = true
-			motion.do_rotation = true
+			motion.do_scale = false
+			motion.do_rotation = false
 			motion.rotation_amount = 3.0
 			motion.scale_hover_to_width = true
 		return

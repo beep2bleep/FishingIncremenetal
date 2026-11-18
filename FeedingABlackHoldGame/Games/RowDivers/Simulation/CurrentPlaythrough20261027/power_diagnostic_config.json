@@ -1,0 +1,21 @@
+{
+  "free_aim": true,
+  "seed": 2401056,
+  "max_runs": 150,
+  "shortlist": 125,
+  "dt": 0.016666666666666666,
+  "ending_reserve": true,
+  "purchase_buffer": true,
+  "purchase_buffer_min_prestige": 3,
+  "weights": {
+    "distance": 0.6,
+    "gold_rate": 0.28,
+    "gem_rate": 0.12
+  },
+  "pilot": {
+    "reaction": 0.18,
+    "aim_error": 0.012
+  },
+  "mode": "recommend",
+  "input": "C:/Godot Projects/RailwayFury/FeedingABlackHoldGame/Games/RowDivers/Simulation/CurrentPlaythrough20261027/diagnostic_state_after30.json"
+}

@@ -39,6 +39,10 @@ for platform,base,folder,filename in [('Windows',0,'Windows','RailwayFuryDemo.ex
     block=re.sub(r'\[preset\.\d+(\.options)?\]',lambda m:f'[preset.{index}{m[1] or ""}]',block)
     values={'name':f'"Railway Fury Demo {platform}"','custom_features':'"railway_demo"','export_filter':'"resources"','include_filter':'"*.json,*.csv,railway_analytics.local.cfg"','exclude_filter':f'"{exclude}"','export_path':f'"../Build - RailwayFury/Demo/{folder}/{filename}"','encrypt_pck':'false','script_export_mode':'1'}
     for key,value in values.items():block=re.sub(r'^'+re.escape(key)+r'=.*$',key+'='+value,block,flags=re.M)
+    # Gothic artwork/music is a session-only editor preview. Shipping those
+    # unreachable assets pushes the browser PCK over itch.io's 200 MiB limit.
+    if platform=='Web':
+        block=block.replace('exclude_filter="', 'exclude_filter="Games/RowDivers/Art/Gothic/*,Games/RowDivers/Audio/Gothic/*,', 1)
     # Select runtime scenes plus assets loaded by name. Godot includes their
     # recursive dependencies and autoloads; unrelated game artwork is omitted.
     selected={'Core/Boot/AppBootstrap.tscn','Core/Boot/GameLauncher.tscn','UpgradeScreen.tscn','Settings.tscn','Game Modes/Main Mode.tres','default_bus_layout.tres','addons/controller_icons/settings.tres'}
@@ -49,6 +53,7 @@ for platform,base,folder,filename in [('Windows',0,'Windows','RailwayFuryDemo.ex
             if not file.is_file() or file.suffix in ['.import','.uid','.json','.md','.txt','.py','.cs','.log','.csv']:continue
             if any('/'+part+'/' in '/'+rel for part in ['Docs','Tools','Simulation']):continue
             if rel.startswith(('Games/RowDivers/Art/Levels/','Games/RowDivers/Art/Endings/')):continue
+            if platform=='Web' and rel.startswith(('Games/RowDivers/Art/Gothic/','Games/RowDivers/Audio/Gothic/')):continue
             if platform=='Web' and '/Fallbacks/' in rel and file.name!='NotoSans-Regular.ttf':continue
             selected.add(rel)
     selected=dependencies(selected)

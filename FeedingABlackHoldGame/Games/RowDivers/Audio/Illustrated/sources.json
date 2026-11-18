@@ -31,10 +31,19 @@
       "file": "menu.ogg",
       "source": "C:\\Game Assets\\Music\\medievalmusicbundle_volume1_wav\\Taverns - Medieval Inn Music Collection\\2 - Phat Phrog Studios - Taverns Medieval Inn Music Collection.wav",
       "sha256": "3558d87378af681394ea69897ad3a52a1bc9ba2ab58ed3907992c22ae795b429",
-      "duration": 132.0,
+      "duration": 102.0,
       "volume": 0.65,
       "reason": "Acoustic medieval menu contrast",
-      "processing": "Full track; -20 LUFS normalization, -2 dBTP limit, stereo Vorbis q5"
+      "processing": "Sustained section, no authored fade-out; 2-second equal-power loop join; stereo Vorbis q5",
+      "output_sha256": "b8dcf2e75706dc6956b63fcebf6f0c75049debfe1191501eec28cd6e0075dd93",
+      "sustained_loop": {
+        "source_region_seconds": [
+          8,
+          112
+        ],
+        "crossfade_seconds": 2,
+        "sha256": "b8dcf2e75706dc6956b63fcebf6f0c75049debfe1191501eec28cd6e0075dd93"
+      }
     },
     "god": {
       "file": "god.ogg",

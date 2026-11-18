@@ -22,6 +22,9 @@ func run():
 	root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 	root.get_node("Util").set_active_game_id("rowdivers")
 	root.get_node("SteamHandler").steam_enabled = false
+	for edition in ["full", "demo"]: ProjectSettings.set_setting("gameanalytics/railway_" + edition + "_game_key", "")
+	root.get_node("GameAnalytics")._enabled = false
+	root.get_node("GameAnalytics")._pending.clear()
 	ProjectSettings.set_setting("railway_fury/demo/enabled", false)
 	ProjectSettings.set_setting("global/Demo", false)
 	var save = root.get_node("SaveHandler")
@@ -35,7 +38,7 @@ func run():
 	check(Progress.free_aim_mode, "Menu selects the existing Free Aim save profile")
 	check(menu.row_divers_button == null and menu.game_cards_grid.get_children().filter(func(c):return c.visible).size()==1, "One play option")
 	check(menu.row_divers_free_aim_button.get_meta("card_title_label").text=="RAILWAY FURY", "Railway Fury branding")
-	check(menu.get_node("RailwayVersion").text == "v0.2", "Main menu shows release version")
+	check(menu.get_node("RailwayVersion").text == "v" + str(ProjectSettings.get_setting("application/config/version")), "Main menu shows release version")
 	var promo = menu.find_child("PlayMyOtherGames",true,false)
 	check(promo == null, "Full game main menu has no cross-promotion")
 	menu.free()

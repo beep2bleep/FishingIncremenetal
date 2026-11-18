@@ -1,0 +1,144 @@
+{
+  "generator": "Built-in image_gen",
+  "style_reference": "res://Games/RowDivers/Art/Illustrated/enemy_3.png",
+  "textures": {
+    "Enemy1.png": "enemy_0_painted.png",
+    "Enemy2.png": "enemy_1_painted.png",
+    "Enemy3.png": "enemy_2_painted.png",
+    "Enemy4.png": "enemy_3_painted.png",
+    "MiniBoss.png": "enemy_4_painted.png",
+    "MiniBoss2.png": "enemy_5_painted.png",
+    "Boss.png": "enemy_6_painted.png",
+    "Bat.png": "bat_painted.png"
+  },
+  "enemies": [
+    {
+      "kind": 0,
+      "name": "Grave Thrall",
+      "file": "enemy_0_painted.png",
+      "source": "C:\\Users\\stick\\.codex\\generated_images\\01a1adb4-832c-7280-8d19-72fd8d4a2735\\exec-fd016f10-acc2-4678-a9d9-3f3b0ce699dc.png",
+      "prompt": "Grave Thrall: hooded corpse-spirit with cracked pallid skull, red ember eyes, ragged charcoal burial cloth, dried burgundy wrappings, reaching bone claws. Hand-painted dark storybook sprite matching the linen wraith reference; transparent full-body cutout.",
+      "width": 1254,
+      "height": 1254,
+      "alpha_bounds": [
+        0,
+        0,
+        1210,
+        1254
+      ],
+      "sha256": "7d3fcab76d548c6fb6aecbb95f3eeb5e0612421ae374d303f64bb4241d713d85"
+    },
+    {
+      "kind": 1,
+      "name": "Iron Executioner",
+      "file": "enemy_1_painted.png",
+      "source": "C:\\Users\\stick\\.codex\\generated_images\\01a1adb4-832c-7280-8d19-72fd8d4a2735\\exec-c515b03f-eaee-49fa-8770-5237ede86bf5.png",
+      "prompt": "Create ONE production game enemy cutout sprite. The attached linen ghost is a STYLE REFERENCE ONLY: match its high-quality hand-painted dark storybook illustration, thick irregular hand-inked black contours, tactile ragged cloth, broad textured cel shading, oversized expressive head, compact full body and clear silhouette. New enemy for a scarier gothic alternate art style. Rich layered painted texture, restrained deep charcoal / dirty ivory / dried crimson palette, readable lighter edge accents so it stands out in a dark game corridor. Sinister and threatening. THE IRON EXECUTIONER: a broad hulking hooded undead headsman, cracked blackened iron helmet with a pointed crown-like spike and very narrow burning red eye slit, massive battered shoulder armor, ragged oxblood cloth tabard, iron chains and a small bone trophy, both clenched gauntlets visible. Stocky intimidating armored silhouette; no separate oversized weapon obscuring the figure. Front-facing full-body neutral combat pose facing directly at player, all extremities visible, centered square canvas, whole character occupies 82 percent of image height with at least 8 percent empty transparent padding, no crop. Real transparent background including gaps. One character only. No scene, floor, ground, cast shadow, text, labels, border, icons, sheet, schematic/vector geometry, photorealism or 3D rendering. Avoid realistic gore; use stylized small dried blood accents only.",
+      "width": 1254,
+      "height": 1254,
+      "alpha_bounds": [
+        0,
+        11,
+        1228,
+        1254
+      ],
+      "sha256": "64d1b1972d645e540a7a16940e67dbcc33bcefc4cc25a9e0e91bcd6faa3958d3"
+    },
+    {
+      "kind": 2,
+      "name": "Marrow Brute",
+      "file": "enemy_2_painted.png",
+      "source": "C:\\Users\\stick\\.codex\\generated_images\\01a1adb4-832c-7280-8d19-72fd8d4a2735\\exec-3cec031f-045a-4326-af6b-a99226eca40c.png",
+      "prompt": "Create ONE production game enemy cutout sprite. The attached linen ghost is a STYLE REFERENCE ONLY: match its high-quality hand-painted dark storybook illustration, thick irregular hand-inked black contours, tactile ragged cloth, broad textured cel shading, oversized expressive head, compact full body and clear silhouette. New enemy for a scarier gothic alternate art style. Rich layered painted texture, restrained deep charcoal / dirty ivory / dried crimson palette, readable lighter edge accents so it stands out in a dark game corridor. Sinister and threatening. THE MARROW BRUTE: a squat hulking corpse ogre with a huge cracked ivory jaw, pale ash skin, twisted protruding shoulder bones, burgundy burial wraps, broad clawed hands, a small sliver of red light deep in hollow eyes. Frightening heavy silhouette with crooked proportions, uneven teeth, chipped bone plates and a little dried blood, no cartoon grin. Front-facing full-body neutral combat pose facing directly at player, all extremities visible, centered square canvas, whole character occupies 82 percent of image height with at least 8 percent empty transparent padding, no crop. Real transparent background including gaps. One character only. No scene, floor, ground, cast shadow, text, labels, border, icons, sheet, schematic/vector geometry, photorealism or 3D rendering. Avoid realistic gore; use stylized small dried blood accents only.",
+      "width": 1254,
+      "height": 1254,
+      "alpha_bounds": [
+        0,
+        7,
+        1253,
+        1254
+      ],
+      "sha256": "bf61ca50829d05febefca928a46bcf90e32ac715cac413db8bf67047087a0c72"
+    },
+    {
+      "kind": 3,
+      "name": "Mourning Wraith",
+      "file": "enemy_3_painted.png",
+      "source": "C:\\Users\\stick\\.codex\\generated_images\\01a1adb4-832c-7280-8d19-72fd8d4a2735\\exec-595267ef-336a-4c63-a55a-65b0842f7847.png",
+      "prompt": "Create ONE production game enemy cutout sprite. The attached linen ghost is a STYLE REFERENCE ONLY: match its high-quality hand-painted dark storybook illustration, thick irregular hand-inked black contours, tactile ragged cloth, broad textured cel shading, oversized expressive head, compact full body and clear silhouette. New enemy for a scarier gothic alternate art style. Rich layered painted texture, restrained deep charcoal / dirty ivory / dried crimson palette, readable lighter edge accents so it stands out in a dark game corridor. Sinister and threatening. THE MOURNING WRAITH: an especially sinister version of the linen ghost reference, a compact floating spirit swathed in dirty ivory funeral cloth over deep charcoal shrouds, no visible legs, curled tapering ghost tail, ribbon-like torn bandages floating to the sides, black empty face opening and two cold turquoise-blue flame eyes. Long thin reaching hands, cracked bone funerary pendant and restrained dried burgundy stains. Distinct mournful haunted silhouette. Front-facing full-body neutral combat pose facing directly at player, all extremities visible, centered square canvas, whole character occupies 82 percent of image height with at least 8 percent empty transparent padding, no crop. Real transparent background including gaps. One character only. No scene, floor, ground, cast shadow, text, labels, border, icons, sheet, schematic/vector geometry, photorealism or 3D rendering. Avoid realistic gore; use stylized small dried blood accents only.",
+      "width": 1254,
+      "height": 1254,
+      "alpha_bounds": [
+        0,
+        9,
+        1242,
+        1254
+      ],
+      "sha256": "b43090e6aa760456f0703536aee1f7c39122caa303b7bd190246ee985a7d977e"
+    },
+    {
+      "kind": 4,
+      "name": "Plague Confessor",
+      "file": "enemy_4_painted.png",
+      "source": "C:\\Users\\stick\\.codex\\generated_images\\01a1adb4-832c-7280-8d19-72fd8d4a2735\\exec-c4210789-d40f-482b-94a0-868e6bce2a54.png",
+      "prompt": "Create ONE production game enemy cutout sprite. The attached linen ghost is a STYLE REFERENCE ONLY: match its high-quality hand-painted dark storybook illustration, thick irregular hand-inked black contours, tactile ragged cloth, broad textured cel shading, oversized expressive head, compact full body and clear silhouette. New enemy for a scarier gothic alternate art style. Rich layered painted texture, restrained deep charcoal / dirty ivory / dried crimson palette, readable lighter edge accents so it stands out in a dark game corridor. Sinister and threatening. THE PLAGUE CONFESSOR: a menacing hunched hooded plague spirit with a long cracked ivory beaked mask, two tiny sickly green glass eyes, tattered black-grey robes with a burgundy stole, bone amulets and corroded metal buckles, clawed hands clutching a small murky poison vial. The visible body stays broad and compact; creepy ritual doctor, distinct beaked silhouette. Front-facing full-body neutral combat pose facing directly at player, all extremities visible, centered square canvas, whole character occupies 82 percent of image height with at least 8 percent empty transparent padding, no crop. Real transparent background including gaps. One character only. No scene, floor, ground, cast shadow, text, labels, border, icons, sheet, schematic/vector geometry, photorealism or 3D rendering. Avoid realistic gore; use stylized small dried blood accents only.",
+      "width": 1254,
+      "height": 1254,
+      "alpha_bounds": [
+        0,
+        0,
+        1191,
+        1254
+      ],
+      "sha256": "d12068e4188af738489b77d7c8da7508aaef2e9e99ab8d6febdaee887c8daa56"
+    },
+    {
+      "kind": 5,
+      "name": "Thorn Widow",
+      "file": "enemy_5_painted.png",
+      "source": "C:\\Users\\stick\\.codex\\generated_images\\01a1adb4-832c-7280-8d19-72fd8d4a2735\\exec-f339c6d1-a9b4-4915-83ab-fead1c3b856e.png",
+      "prompt": "Create ONE production game enemy cutout sprite. The attached linen ghost is a STYLE REFERENCE ONLY: match its high-quality hand-painted dark storybook illustration, thick irregular hand-inked black contours, tactile ragged cloth, broad textured cel shading, oversized expressive head, compact full body and clear silhouette. New enemy for a scarier gothic alternate art style. Rich layered painted texture, restrained deep charcoal / dirty ivory / dried crimson palette, readable lighter edge accents so it stands out in a dark game corridor. Sinister and threatening. THE THORN WIDOW: a frightening hooded spectral witch in ragged charcoal and faded plum funeral robes, a shattered ivory moth-skull mask framing violet ember eyes, long spidery dark claws, curved thorn-like antler projections, faded bone trinkets and a burgundy waist binding. A compact intimidating ritual silhouette with torn wing-like cloak sleeves, not a cute owl. Front-facing full-body neutral combat pose facing directly at player, all extremities visible, centered square canvas, whole character occupies 82 percent of image height with at least 8 percent empty transparent padding, no crop. Real transparent background including gaps. One character only. No scene, floor, ground, cast shadow, text, labels, border, icons, sheet, schematic/vector geometry, photorealism or 3D rendering. Avoid realistic gore; use stylized small dried blood accents only.",
+      "width": 1254,
+      "height": 1254,
+      "alpha_bounds": [
+        0,
+        0,
+        1240,
+        1254
+      ],
+      "sha256": "f20e9fdac4ae8e27dfeba691e3921874f8b8a93a5f4b6d8e0671b90591185bea"
+    },
+    {
+      "kind": 6,
+      "name": "Ossuary Sovereign",
+      "file": "enemy_6_painted.png",
+      "source": "C:\\Users\\stick\\.codex\\generated_images\\01a1adb4-832c-7280-8d19-72fd8d4a2735\\exec-21019fad-796c-43fb-8210-a3429db8ab7b.png",
+      "prompt": "Create ONE production game enemy cutout sprite. The attached linen ghost is a STYLE REFERENCE ONLY: match its high-quality hand-painted dark storybook illustration, thick irregular hand-inked black contours, tactile ragged cloth, broad textured cel shading, oversized expressive head, compact full body and clear silhouette. New enemy for a scarier gothic alternate art style. Rich layered painted texture, restrained deep charcoal / dirty ivory / dried crimson palette, readable lighter edge accents so it stands out in a dark game corridor. Sinister and threatening. THE OSSUARY SOVEREIGN: final boss, a broad imposing compact undead king, enormous cracked ivory skull face with malevolent red ember eyes under an angular black iron crown and branching antler horns, layered battered charcoal armor, a torn deep burgundy royal cloak, massive clawed gauntlets, bone chains and tarnished small silver clasps. Commanding distinct wide silhouette; detailed haunted gothic ruler, no cheerful expression. Front-facing full-body neutral combat pose facing directly at player, all extremities visible, centered square canvas, whole character occupies 82 percent of image height with at least 8 percent empty transparent padding, no crop. Real transparent background including gaps. One character only. No scene, floor, ground, cast shadow, text, labels, border, icons, sheet, schematic/vector geometry, photorealism or 3D rendering. Avoid realistic gore; use stylized small dried blood accents only.",
+      "width": 1254,
+      "height": 1254,
+      "alpha_bounds": [
+        0,
+        4,
+        1244,
+        1254
+      ],
+      "sha256": "6a818d15cef61042348ed423f3a24d3bdd0cbfc452458d3ed0b3aae17e215b54"
+    },
+    {
+      "kind": 7,
+      "name": "Crypt Bat",
+      "file": "bat_painted.png",
+      "source": "C:\\Users\\stick\\.codex\\generated_images\\01a1adb4-832c-7280-8d19-72fd8d4a2735\\exec-0662ee73-ebff-4c13-8662-dc13a788a367.png",
+      "prompt": "Create ONE production game enemy cutout sprite. The attached linen ghost is a STYLE REFERENCE ONLY: match its high-quality hand-painted dark storybook illustration, thick irregular hand-inked black contours, tactile ragged cloth, broad textured cel shading, oversized expressive head, compact full body and clear silhouette. New enemy for a scarier gothic alternate art style. Rich layered painted texture, restrained deep charcoal / dirty ivory / dried crimson palette, readable lighter edge accents so it stands out in a dark game corridor. Sinister and threatening. THE CRYPT BAT: a single front-facing terrifying spectral bat monster, broad fully spread ragged leathery wings with torn edges, charcoal and dried burgundy membranes, pale elongated skull-like head and pointed ears, tiny crimson eyes and exposed ivory fangs, small clawed feet and bony wing fingers. Horizontal wing silhouette must fit entirely inside the square with 10 percent clear transparent margins. Compact head and body, menacing hand-painted gothic creature, not a mascot. Front-facing full-body neutral combat pose facing directly at player, all extremities visible, centered square canvas, whole character occupies 82 percent of image height with at least 8 percent empty transparent padding, no crop. Real transparent background including gaps. One character only. No scene, floor, ground, cast shadow, text, labels, border, icons, sheet, schematic/vector geometry, photorealism or 3D rendering. Avoid realistic gore; use stylized small dried blood accents only.",
+      "width": 1254,
+      "height": 1254,
+      "alpha_bounds": [
+        0,
+        19,
+        1240,
+        1254
+      ],
+      "sha256": "01474aa2dcca17e787321cdf77b18017dfc6c6bd97e02f4c88d3ce6b67061661"
+    }
+  ]
+}

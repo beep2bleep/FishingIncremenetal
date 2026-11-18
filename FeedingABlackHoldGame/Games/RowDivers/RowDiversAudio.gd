@@ -1,5 +1,6 @@
 extends Node
 const Graphics = preload("res://Games/RowDivers/RowDiversGraphics.gd")
+const GothicMusic = preload("res://Games/RowDivers/RowDiversGothicMusic.gd")
 const Original = preload("res://Games/RowDivers/RowDiversOriginalPresentation.gd")
 const ILLUSTRATED_ROOT = "res://Games/RowDivers/Audio/Illustrated/"
 static var illustrated_sources: Dictionary = {}
@@ -13,6 +14,7 @@ var timers: Dictionary = {}
 var presentation_rng := RandomNumberGenerator.new()
 var music_context = ""
 var presentation_mode = 0
+var gothic_selection = ""
 
 static func illustrated_catalog() -> Dictionary:
 	if illustrated_sources.is_empty(): illustrated_sources = JSON.parse_string(FileAccess.get_file_as_string(ILLUSTRATED_ROOT + "sources.json"))
@@ -39,8 +41,10 @@ func _ready() -> void:
 		effects.append(player)
 
 func _refresh_mode() -> void:
-	if presentation_mode == Graphics.mode(): return
+	var selection := GothicMusic.cue(music_context) if Graphics.gothic() else ""
+	if presentation_mode == Graphics.mode() and gothic_selection == selection: return
 	presentation_mode = Graphics.mode()
+	gothic_selection = selection
 	for player in effects: player.stop()
 	timers.clear()
 	if not music_context.is_empty(): play_context(music_context)
@@ -51,6 +55,7 @@ func play_music(battle: bool) -> void:
 func play_context(context: String) -> void:
 	_remember_music(music)
 	music_context = context
+	gothic_selection = GothicMusic.cue(context) if Graphics.gothic() else ""
 	if _select_music_player(context): return
 	var bookmark: Dictionary = music_bookmarks.get(_music_key(Graphics.mode(), context), {})
 	if not bookmark.is_empty():
@@ -58,6 +63,13 @@ func play_context(context: String) -> void:
 		music.volume_db = bookmark.volume_db
 		music.pitch_scale = bookmark.pitch
 		_start_music(float(bookmark.offset))
+		return
+	if Graphics.gothic():
+		var entry: Dictionary = GothicMusic.catalog().music[GothicMusic.cue(context)]
+		music.stream = load(GothicMusic.ROOT + entry.file)
+		music.volume_linear = float(entry.volume)
+		music.pitch_scale = 1.0
+		_start_music()
 		return
 	if Graphics.illustrated():
 		var catalog := illustrated_catalog()
@@ -93,24 +105,26 @@ func play_context(context: String) -> void:
 func _select_music_player(context: String) -> bool:
 	# The player outlives scene owners, so its offset is still available when
 	# the next scene arrives. Matching contexts keep playing without a restart.
-	if music.playing and int(music.get_meta("presentation_mode", -1)) == Graphics.mode() and str(music.get_meta("music_context", "")) == context:
+	if music.playing and int(music.get_meta("presentation_mode", -1)) == Graphics.mode() and str(music.get_meta("music_context", "")) == context and str(music.get_meta("music_key", "")) == _music_key(Graphics.mode(), context):
 		return true
 	music.stop()
 	return false
 
 static func _music_key(mode: int, context: String) -> String:
-	return str(mode) + ":" + context
+	return str(mode) + ":" + context + (":" + GothicMusic.cue(context) if mode == 3 else "")
 
 static func _remember_music(player: AudioStreamPlayer) -> void:
 	if not is_instance_valid(player) or not player.playing or player.stream == null: return
 	if not player.has_meta("music_context"): return
-	var key := _music_key(int(player.get_meta("presentation_mode")), str(player.get_meta("music_context")))
+	# Retain the key of the playing track, even after the selector has changed.
+	var key: String = player.get_meta("music_key", _music_key(int(player.get_meta("presentation_mode")), str(player.get_meta("music_context"))))
 	music_bookmarks[key] = {"stream": player.stream, "offset": player.get_playback_position(), "volume_db": player.volume_db, "pitch": player.pitch_scale}
 
 func _exit_tree() -> void:
 	_remember_music(music)
 
 func _start_music(offset = 0.0) -> void:
+	music.set_meta("music_key", _music_key(Graphics.mode(), music_context))
 	music.set_meta("presentation_mode", Graphics.mode())
 	music.set_meta("music_context", music_context)
 	# Every restored track loops too; normalize offsets at the loop boundary.

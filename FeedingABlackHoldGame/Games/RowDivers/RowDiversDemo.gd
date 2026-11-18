@@ -6,12 +6,15 @@ static func enabled() -> bool:
 static func locked(entry: Dictionary) -> bool:
 	return enabled() and (int(entry.get("minPrestige", 0)) > 0 or int(entry.get("cost", {}).get("currencyType", 0)) == 2)
 
-static func constrain(data: Dictionary) -> void:
-	if not enabled(): return
-	data.prestige = 0
-	data.max_prestige = 0
-	data.unlocks.erase("GodTab")
-	data.erase("god_panel_unlocked")
+static func constrain(_data: Dictionary) -> void:
+	# Restrictions belong to runtime access checks, never destructive save edits.
+	pass
+
+static func playable_level(data: Dictionary) -> int:
+	return 0 if enabled() else clampi(int(data.get("prestige", 0)), 0, 3)
+
+static func unlocked_level(data: Dictionary) -> int:
+	return 0 if enabled() else clampi(int(data.get("max_prestige", 0)), 0, 3)
 
 static func save_path(path: String) -> String:
-	return path.replace(".json", "_demo.json") if enabled() else path
+	return path

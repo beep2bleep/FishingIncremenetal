@@ -12,7 +12,8 @@ static func catalog() -> Dictionary:
 
 static func material(key: String, environment_level = -1) -> ShaderMaterial:
     var variant: bool = preload("res://Games/RowDivers/RowDiversGraphics.gd").illustrated()
-    var cache_key := key + (":illustrated" if variant else ":original") + ":level"+str(environment_level)
+    var dark: bool = preload("res://Games/RowDivers/RowDiversGraphics.gd").gothic()
+    var cache_key := key + (":gothic" if dark else ":illustrated" if variant else ":original") + ":level"+str(environment_level)
     if materials.has(cache_key): return materials[cache_key]
     var result := ShaderMaterial.new()
     result.shader = preload("res://Games/RowDivers/OriginalSurface.gdshader")
@@ -27,16 +28,22 @@ static func material(key: String, environment_level = -1) -> ShaderMaterial:
     var themes = preload("res://Games/RowDivers/RowDiversLevelThemes.gd")
     if environment_level>0:
         result.set_shader_parameter("tint_color",Color(data.color[0],data.color[1],data.color[2],data.color[3])*themes.environment_tint(environment_level))
+    # Preserve the painted bone/cloth detail against the Gothic corridor's fog.
+    # This is a sprite-only exposure adjustment, independent of world lighting.
+    if dark and data.texture in ["Enemy1.png", "Enemy2.png", "Enemy3.png", "Enemy4.png", "MiniBoss.png", "MiniBoss2.png", "Boss.png"]:
+        var tint: Color = result.get_shader_parameter("tint_color")
+        result.set_shader_parameter("tint_color", tint * Color(1.3, 1.3, 1.3, 1.0))
     if not data.texture.is_empty():
         var path: String = preload("res://Games/RowDivers/RowDiversIllustrated.gd").texture_path(data.texture) if variant else ""
+        if dark: path = preload("res://Games/RowDivers/RowDiversGothic.gd").texture_path(data.texture)
         result.set_shader_parameter("source_texture", load(path if not path.is_empty() else ROOT + data.texture))
-        if environment_level==3 and (data.texture in themes.WALLS or data.texture in themes.FLOORS):
+        if not dark and environment_level==3 and (data.texture in themes.WALLS or data.texture in themes.FLOORS):
             result.set_shader_parameter("source_texture",load(themes.ROOT+"hell_basalt.png"))
     var uv_scale := Vector2(data.uv_scale[0], data.uv_scale[1])
     var uv_offset := Vector2(data.uv_offset[0], data.uv_offset[1])
     # Flip only held weapons. Projectile prefabs already orient their tip-up
     # textures along the shot direction; flipping their UVs makes them fly tail-first.
-    if variant and data.texture in ["1.png", "dagger.png"]:
+    if (variant or dark) and data.texture in ["1.png", "dagger.png"]:
         uv_scale.y = -uv_scale.y
         uv_offset.y = 1.0 - uv_offset.y
     result.set_shader_parameter("source_scale", uv_scale)
@@ -67,7 +74,7 @@ static func refresh_instance(instance: MeshInstance3D) -> void:
         copy.set_shader_parameter("tint_color",base*instance.get_meta("row_enemy_tint"))
         instance.material_override = copy
     instance.scale = Vector3.ONE
-    if not preload("res://Games/RowDivers/RowDiversGraphics.gd").illustrated(): return
+    if not (preload("res://Games/RowDivers/RowDiversGraphics.gd").illustrated() or preload("res://Games/RowDivers/RowDiversGraphics.gd").gothic()): return
     var texture_name: String = catalog().materials.get(key, {}).get("texture", "")
     # The new filled diamond replaces a narrow pole, not a full-size wall panel.
     # Resize only its visual child so mount positions and gate animation stay put.

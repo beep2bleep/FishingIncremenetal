@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dfik1kpbqn3p4"
+
+[deps]
+
+files=["res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.level.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.damage.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.gap.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.gap.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.hit.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.stage.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.time.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.x.translation"]
+
+source_file="res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.csv"
+dest_files=["res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.level.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.damage.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.gap.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.gap.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.hit.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.stage.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.time.translation", "res://Games/RowDivers/Simulation/CurrentPlaythrough20261027/waves.x.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

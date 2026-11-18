@@ -1,0 +1,155 @@
+{
+  "itemid": "1132600",
+  "languages": {
+    "english": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "french": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "italian": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "german": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "spanish": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "bulgarian": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "czech": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "danish": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "dutch": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "finnish": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "greek": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "hungarian": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "indonesian": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "japanese": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "koreana": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "malay": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "norwegian": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "polish": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "brazilian": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "portuguese": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "romanian": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "russian": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "schinese": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "latam": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "swedish": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "thai": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "tchinese": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "turkish": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    },
+    "ukrainian": {
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": ""
+    },
+    "vietnamese": {
+      "app[content][sysreqs][windows][min][osversion]": "Windows 7+",
+      "app[content][sysreqs][windows][min][processor]": "2 Ghz",
+      "app[content][sysreqs][windows][min][graphics]": "128MB, OpenGL 3+"
+    }
+  }
+}

@@ -4,17 +4,23 @@ const ROOT = "res://Games/RowDivers/Art/Original/"
 const ENEMIES = ["Enemy1.png", "Enemy2.png", "Enemy3.png", "Enemy4.png", "MiniBoss.png", "MiniBoss2.png", "Boss.png"]
 static var textures: Dictionary = {}
 static var manifest: Dictionary = {}
+static var gothic_enabled = false
+
+static func gothic() -> bool:
+	return gothic_enabled
 
 static func original() -> bool:
-	return SaveHandler.row_divers_original_graphics
+	return gothic() or SaveHandler.row_divers_original_graphics
 
 static func illustrated() -> bool:
-	return original() and SaveHandler.row_divers_illustrated_graphics
+	return not gothic() and original() and SaveHandler.row_divers_illustrated_graphics
 
 static func mode() -> int:
-	return 2 if illustrated() else 1 if original() else 0
+	return 3 if gothic() else 2 if illustrated() else 1 if original() else 0
 
 static func select_mode(index: int) -> void:
+	gothic_enabled = index == 3
+	if gothic_enabled: return # Session override must not change saved artwork preferences.
 	SaveHandler.row_divers_original_graphics = index != 0
 	SaveHandler.row_divers_illustrated_graphics = index == 2
 
@@ -23,6 +29,9 @@ static func catalog() -> Dictionary:
 	return manifest
 
 static func texture(name: String) -> Texture2D:
+	if gothic():
+		var dark: Texture2D = preload("res://Games/RowDivers/RowDiversGothic.gd").texture(name)
+		if dark != null: return dark
 	if illustrated():
 		var replacement: Texture2D = preload("res://Games/RowDivers/RowDiversIllustrated.gd").texture(name)
 		if replacement != null: return replacement

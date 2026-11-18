@@ -16,7 +16,14 @@ static func fire_tint(index: int, tier: int) -> Color:
 	return FIRE_TINTS[clampi(index,0,3)].lerp(Color("f55a48"),clampf(tier,0,2)*.12)
 
 static func configure_world(battle: Node3D) -> void:
-	var level = int(battle.data.prestige)
+	var level = battle.campaign_level()
+	if battle.Graphics.gothic():
+		battle.world_environment.background_color = Color("070609")
+		battle.world_environment.ambient_light_color = Color("bba8ae")
+		battle.world_environment.ambient_light_energy = .65
+		battle.world_environment.fog_enabled = false
+		battle.world_light.visible = false
+		return
 	if level==0: return
 	battle.world_environment.background_color = [Color.BLACK,Color("191b22"),Color("364f45"),Color("260c13")][level]
 	battle.world_environment.ambient_light_color = [Color.WHITE,Color("ffe1b5"),Color("c1dbc2"),Color("eea38e")][level]
@@ -28,7 +35,7 @@ static func configure_world(battle: Node3D) -> void:
 	battle.world_environment.fog_light_color = Color("364f45")
 
 static func apply_section(section: Node3D, battle: Node3D) -> void:
-	var level = int(battle.data.prestige)
+	var level = battle.campaign_level()
 	var original: Node3D = section.get_node("OriginalHallway")
 	original.set_meta("row_environment_level",level)
 	var source = load("res://Games/RowDivers/RowDiversOriginalPresentation.gd")
@@ -40,6 +47,7 @@ static func apply_section(section: Node3D, battle: Node3D) -> void:
 	section.add_child(scenery)
 	var width: float = battle.corridor_width
 	var floor_y = .52 if battle.Graphics.original() else 0.0
+	if battle.Graphics.gothic(): return
 	if level==2:
 		section.get_node("ModernHallway").hide()
 		original.hide()

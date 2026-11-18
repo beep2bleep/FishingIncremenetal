@@ -22,6 +22,8 @@ func _on_mouse_entered() -> void :
     highlighted = true
 
 func _on_mouse_exited() -> void :
+    if Util.is_row_divers_game_active() and ControllerIcons.get_last_input_type() == ControllerIcons.InputType.CONTROLLER:
+        return
     highlighted = false
     release_focus()
 

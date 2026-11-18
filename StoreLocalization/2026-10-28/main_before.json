@@ -1,0 +1,245 @@
+{
+  "itemid": "1410386",
+  "languages": {
+    "english": {
+      "app[content][about]": "[p]Fight your way down a cursed railway, bank your loot, and come back stronger. Railway Fury is a first-person incremental action game where aiming, strafing, and choosing your next upgrade all matter.[/p][p]Every dive is a push for one more enemy, one more payout, and one more stretch of track. Dodge enemy projectiles and moving fire waves, collect the rewards, and use permanent upgrades to turn a short-lived run into a deeper expedition.[/p][p]BUILD YOUR WAY FORWARD[/p][p]Spend gold, gems, and crowns across a branching upgrade tree. Improve your crossbow, health, armor, collection range, and powers. Unlock returning daggers and supernatural weapons, then decide which upgrades will carry your next run farther.[/p][p]FOUR RAILWAYS TO CONQUER[/p][p]Defeat bosses and advance through a forgotten dungeon, a medieval citadel, a wild forest railway, and an infernal descent. Each level brings a new look and tougher hazards, with fire-control upgrades to help you push through.[/p][p]MAKE EACH DIVE COUNT[/p][p]Claim achievements for extra resources, activate powers when you need them, and balance damage, survival, and income. Your active dive time tracks progress toward boss clears and the ending. Complete the upgrade journey to reach one of two final choices.[/p][p]Controls: move left and right, aim with the mouse, click to shoot, and press Space to use your next ready power. Hold Shift for double speed when you are strong enough to take the risk.[/p]",
+      "app[content][short_description]": "Aim, strafe, and shoot your way down a cursed railway in this incremental action game. Dodge fire waves, collect loot, and buy permanent upgrades between dives. Defeat bosses across four themed levels and build your way toward two endings.",
+      "app[content][sysreqs][windows][min][osversion]": "Windows 10 / 11 (64-bit)",
+      "app[content][sysreqs][windows][min][processor]": "Quad-core processor, 2.5 GHz",
+      "app[content][sysreqs][windows][min][graphics]": "Vulkan 1.2 compatible graphics card, 2 GB VRAM",
+      "app[content][sysreqs][windows][min][notes]": "Keyboard and mouse or compatible gamepad."
+    },
+    "french": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "italian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "german": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "spanish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "bulgarian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "czech": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "danish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "dutch": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "finnish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "greek": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "hungarian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "indonesian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "japanese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "koreana": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "malay": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "norwegian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "polish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "brazilian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "portuguese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "romanian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "russian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "schinese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "latam": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "swedish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "thai": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "tchinese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "turkish": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "ukrainian": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    },
+    "vietnamese": {
+      "app[content][about]": "",
+      "app[content][short_description]": "",
+      "app[content][sysreqs][windows][min][osversion]": "",
+      "app[content][sysreqs][windows][min][processor]": "",
+      "app[content][sysreqs][windows][min][graphics]": "",
+      "app[content][sysreqs][windows][min][notes]": ""
+    }
+  }
+}

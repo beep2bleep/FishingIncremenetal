@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://tnny8qle8hdp"
+
+[deps]
+
+files=["res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.en.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.permission.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.spoiler.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.archived.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.en.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.en.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.en.translation"]
+
+source_file="res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.csv"
+dest_files=["res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.en.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.permission.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.spoiler.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.archived.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.en.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.en.translation", "res://StoreAssets_RailwayFury/steam/achievements/5520300-achievements-definitions.en.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

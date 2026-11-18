@@ -1,0 +1,513 @@
+[
+  {
+    "seed": 2401026,
+    "completed": true,
+    "runs": 37,
+    "levels": [
+      {
+        "level": 1,
+        "attempts_to_first_clear": 8,
+        "first_clear_run": 8,
+        "total_runs": 8,
+        "wins": 1,
+        "kills": 124,
+        "mean_kills": 15.5,
+        "min_kills": 8,
+        "max_kills": 33,
+        "mean_kill_range": 4.453221489104532,
+        "near_max_fraction": 0.024193548387096774,
+        "seconds": 641.4499999999836,
+        "deaths": {
+          "enemy contact": 2,
+          "the row": 3,
+          "fire waves": 2
+        }
+      },
+      {
+        "level": 2,
+        "attempts_to_first_clear": 9,
+        "first_clear_run": 17,
+        "total_runs": 9,
+        "wins": 1,
+        "kills": 281,
+        "mean_kills": 31.22222222222222,
+        "min_kills": 15,
+        "max_kills": 50,
+        "mean_kill_range": 6.311386632855677,
+        "near_max_fraction": 0.19217081850533807,
+        "seconds": 862.6666666666368,
+        "deaths": {
+          "the row": 7,
+          "enemy contact": 1
+        }
+      },
+      {
+        "level": 3,
+        "attempts_to_first_clear": 9,
+        "first_clear_run": 26,
+        "total_runs": 9,
+        "wins": 1,
+        "kills": 226,
+        "mean_kills": 25.11111111111111,
+        "min_kills": 6,
+        "max_kills": 49,
+        "mean_kill_range": 5.929427684869914,
+        "near_max_fraction": 0.22123893805309736,
+        "seconds": 826.6499999999688,
+        "deaths": {
+          "the row": 2,
+          "enemy contact": 2,
+          "fire waves": 3,
+          "enemy arrows": 1
+        }
+      },
+      {
+        "level": 4,
+        "attempts_to_first_clear": 8,
+        "first_clear_run": 34,
+        "total_runs": 11,
+        "wins": 4,
+        "kills": 606,
+        "mean_kills": 55.09090909090909,
+        "min_kills": 7,
+        "max_kills": 80,
+        "mean_kill_range": 7.1893797108639195,
+        "near_max_fraction": 0.30528052805280526,
+        "seconds": 1138.399999999977,
+        "deaths": {
+          "enemy contact": 4,
+          "fire waves": 1,
+          "the row": 2
+        }
+      }
+    ],
+    "seconds": 3469.166666666566,
+    "kills": 1237,
+    "mean_kills_per_run": 33.432432432432435,
+    "mean_kill_range": 6.485459878775702,
+    "median_kill_range": 6.94139003753662,
+    "near_max_fraction": 0.2360549717057397,
+    "close_fraction": 0.04931285367825384,
+    "deaths": {
+      "enemy contact": 9,
+      "the row": 14,
+      "fire waves": 6,
+      "enemy arrows": 1
+    },
+    "row_deaths_with_majority_far_kills": [],
+    "purchases": 321,
+    "claims": 16,
+    "achievement_rewards": [
+      10875.0,
+      20.0,
+      3.0
+    ],
+    "loot": [
+      1466384.0,
+      127.0,
+      4.0
+    ],
+    "total_healing": 64942.84999999958,
+    "powers": [
+      {
+        "power": "Magpie",
+        "key": "Harvester",
+        "after_run": 1,
+        "level": 1,
+        "price": 2.0,
+        "currency": 0
+      },
+      {
+        "power": "Ghost",
+        "key": "GhostPower",
+        "after_run": 20,
+        "level": 3,
+        "price": 220.0,
+        "currency": 0
+      },
+      {
+        "power": "Regen",
+        "key": "SlowDown",
+        "after_run": 24,
+        "level": 3,
+        "price": 3.0,
+        "currency": 1
+      },
+      {
+        "power": "Arrow Storm",
+        "key": "Shuriken",
+        "after_run": 29,
+        "level": 4,
+        "price": 5.0,
+        "currency": 1
+      },
+      {
+        "power": "Shield",
+        "key": "ArrowShield",
+        "after_run": 31,
+        "level": 4,
+        "price": 110.0,
+        "currency": 0
+      }
+    ],
+    "wave_crossings": 1024,
+    "wave_hits": 88,
+    "waves_by_stage": {
+      "0": {
+        "crossings": 388,
+        "hits": 14
+      },
+      "1": {
+        "crossings": 407,
+        "hits": 34
+      },
+      "2": {
+        "crossings": 229,
+        "hits": 40
+      }
+    },
+    "maxed_nodes": 112
+  },
+  {
+    "seed": 2401027,
+    "completed": true,
+    "runs": 33,
+    "levels": [
+      {
+        "level": 1,
+        "attempts_to_first_clear": 6,
+        "first_clear_run": 6,
+        "total_runs": 6,
+        "wins": 1,
+        "kills": 104,
+        "mean_kills": 17.333333333333332,
+        "min_kills": 8,
+        "max_kills": 40,
+        "mean_kill_range": 6.478916387145335,
+        "near_max_fraction": 0.25961538461538464,
+        "seconds": 369.3333333333258,
+        "deaths": {
+          "enemy contact": 2,
+          "the row": 2,
+          "fire waves": 1
+        }
+      },
+      {
+        "level": 2,
+        "attempts_to_first_clear": 9,
+        "first_clear_run": 15,
+        "total_runs": 9,
+        "wins": 1,
+        "kills": 299,
+        "mean_kills": 33.22222222222222,
+        "min_kills": 13,
+        "max_kills": 51,
+        "mean_kill_range": 6.499722205874912,
+        "near_max_fraction": 0.23745819397993312,
+        "seconds": 868.7333333333011,
+        "deaths": {
+          "the row": 2,
+          "fire waves": 3,
+          "enemy contact": 2,
+          "enemy arrows": 1
+        }
+      },
+      {
+        "level": 3,
+        "attempts_to_first_clear": 9,
+        "first_clear_run": 24,
+        "total_runs": 9,
+        "wins": 1,
+        "kills": 225,
+        "mean_kills": 25,
+        "min_kills": 3,
+        "max_kills": 53,
+        "mean_kill_range": 7.118671605719461,
+        "near_max_fraction": 0.38666666666666666,
+        "seconds": 803.3166666666386,
+        "deaths": {
+          "enemy contact": 2,
+          "the row": 3,
+          "fire waves": 2,
+          "enemy arrows": 1
+        }
+      },
+      {
+        "level": 4,
+        "attempts_to_first_clear": 8,
+        "first_clear_run": 32,
+        "total_runs": 9,
+        "wins": 2,
+        "kills": 465,
+        "mean_kills": 51.666666666666664,
+        "min_kills": 11,
+        "max_kills": 79,
+        "mean_kill_range": 7.0180985918609045,
+        "near_max_fraction": 0.2946236559139785,
+        "seconds": 899.1499999999775,
+        "deaths": {
+          "enemy contact": 2,
+          "the row": 2,
+          "fire waves": 2,
+          "enemy arrows": 1
+        }
+      }
+    ],
+    "seconds": 2940.5333333332433,
+    "kills": 1093,
+    "mean_kills_per_run": 33.121212121212125,
+    "mean_kill_range": 6.845691857568081,
+    "median_kill_range": 7.38938856124878,
+    "near_max_fraction": 0.2946020128087832,
+    "close_fraction": 0.04025617566331199,
+    "deaths": {
+      "enemy contact": 8,
+      "the row": 9,
+      "fire waves": 8,
+      "enemy arrows": 3
+    },
+    "row_deaths_with_majority_far_kills": [
+      4
+    ],
+    "purchases": 323,
+    "claims": 16,
+    "achievement_rewards": [
+      10875.0,
+      20.0,
+      3.0
+    ],
+    "loot": [
+      1166644.0,
+      106.0,
+      4.0
+    ],
+    "total_healing": 46661.899999999696,
+    "powers": [
+      {
+        "power": "Magpie",
+        "key": "Harvester",
+        "after_run": 1,
+        "level": 1,
+        "price": 2.0,
+        "currency": 0
+      },
+      {
+        "power": "Ghost",
+        "key": "GhostPower",
+        "after_run": 18,
+        "level": 3,
+        "price": 220.0,
+        "currency": 0
+      },
+      {
+        "power": "Regen",
+        "key": "SlowDown",
+        "after_run": 23,
+        "level": 3,
+        "price": 3.0,
+        "currency": 1
+      },
+      {
+        "power": "Arrow Storm",
+        "key": "Shuriken",
+        "after_run": 27,
+        "level": 4,
+        "price": 5.0,
+        "currency": 1
+      },
+      {
+        "power": "Shield",
+        "key": "ArrowShield",
+        "after_run": 31,
+        "level": 4,
+        "price": 110.0,
+        "currency": 0
+      }
+    ],
+    "wave_crossings": 878,
+    "wave_hits": 59,
+    "waves_by_stage": {
+      "0": {
+        "crossings": 341,
+        "hits": 5
+      },
+      "1": {
+        "crossings": 349,
+        "hits": 18
+      },
+      "2": {
+        "crossings": 188,
+        "hits": 36
+      }
+    },
+    "maxed_nodes": 112
+  },
+  {
+    "seed": 2401028,
+    "completed": true,
+    "runs": 33,
+    "levels": [
+      {
+        "level": 1,
+        "attempts_to_first_clear": 7,
+        "first_clear_run": 7,
+        "total_runs": 7,
+        "wins": 1,
+        "kills": 122,
+        "mean_kills": 17.428571428571427,
+        "min_kills": 8,
+        "max_kills": 39,
+        "mean_kill_range": 6.231126854654218,
+        "near_max_fraction": 0.1721311475409836,
+        "seconds": 428.2166666666563,
+        "deaths": {
+          "enemy contact": 2,
+          "the row": 4
+        }
+      },
+      {
+        "level": 2,
+        "attempts_to_first_clear": 8,
+        "first_clear_run": 15,
+        "total_runs": 8,
+        "wins": 1,
+        "kills": 261,
+        "mean_kills": 32.625,
+        "min_kills": 10,
+        "max_kills": 51,
+        "mean_kill_range": 6.513507813557811,
+        "near_max_fraction": 0.2260536398467433,
+        "seconds": 766.4166666666387,
+        "deaths": {
+          "the row": 3,
+          "enemy contact": 2,
+          "fire waves": 2
+        }
+      },
+      {
+        "level": 3,
+        "attempts_to_first_clear": 8,
+        "first_clear_run": 23,
+        "total_runs": 8,
+        "wins": 1,
+        "kills": 259,
+        "mean_kills": 32.375,
+        "min_kills": 7,
+        "max_kills": 52,
+        "mean_kill_range": 6.831871413528689,
+        "near_max_fraction": 0.305019305019305,
+        "seconds": 773.4333333333049,
+        "deaths": {
+          "enemy contact": 1,
+          "fire waves": 4,
+          "the row": 2
+        }
+      },
+      {
+        "level": 4,
+        "attempts_to_first_clear": 7,
+        "first_clear_run": 30,
+        "total_runs": 10,
+        "wins": 4,
+        "kills": 567,
+        "mean_kills": 56.7,
+        "min_kills": 5,
+        "max_kills": 80,
+        "mean_kill_range": 7.204511122715642,
+        "near_max_fraction": 0.3386243386243386,
+        "seconds": 1071.6333333333137,
+        "deaths": {
+          "the row": 2,
+          "enemy contact": 2,
+          "enemy arrows": 2
+        }
+      }
+    ],
+    "seconds": 3039.699999999914,
+    "kills": 1209,
+    "mean_kills_per_run": 36.63636363636363,
+    "mean_kill_range": 6.877283307105131,
+    "median_kill_range": 7.37244701385498,
+    "near_max_fraction": 0.2903225806451613,
+    "close_fraction": 0.02977667493796526,
+    "deaths": {
+      "enemy contact": 7,
+      "the row": 11,
+      "fire waves": 6,
+      "enemy arrows": 2
+    },
+    "row_deaths_with_majority_far_kills": [],
+    "purchases": 318,
+    "claims": 16,
+    "achievement_rewards": [
+      10875.0,
+      20.0,
+      3.0
+    ],
+    "loot": [
+      1404760.0,
+      143.0,
+      4.0
+    ],
+    "total_healing": 62710.09999999962,
+    "powers": [
+      {
+        "power": "Magpie",
+        "key": "Harvester",
+        "after_run": 1,
+        "level": 1,
+        "price": 2.0,
+        "currency": 0
+      },
+      {
+        "power": "Regen",
+        "key": "SlowDown",
+        "after_run": 22,
+        "level": 3,
+        "price": 3.0,
+        "currency": 1
+      },
+      {
+        "power": "Ghost",
+        "key": "GhostPower",
+        "after_run": 23,
+        "level": 4,
+        "price": 220.0,
+        "currency": 0
+      },
+      {
+        "power": "Arrow Storm",
+        "key": "Shuriken",
+        "after_run": 24,
+        "level": 4,
+        "price": 5.0,
+        "currency": 1
+      },
+      {
+        "power": "Shield",
+        "key": "ArrowShield",
+        "after_run": 30,
+        "level": 4,
+        "price": 110.0,
+        "currency": 0
+      }
+    ],
+    "wave_crossings": 991,
+    "wave_hits": 78,
+    "waves_by_stage": {
+      "0": {
+        "crossings": 334,
+        "hits": 9
+      },
+      "1": {
+        "crossings": 387,
+        "hits": 14
+      },
+      "2": {
+        "crossings": 270,
+        "hits": 55
+      }
+    },
+    "maxed_nodes": 112
+  }
+]

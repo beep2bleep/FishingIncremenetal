@@ -21,6 +21,7 @@ func _on_input_type_changed(input_type: ControllerIcons.InputType, controller: i
 
 
 func _input(event: InputEvent) -> void :
+    if Util.is_row_divers_game_active(): return
     if event.is_action_pressed("escape") or (is_shown and event.is_action_pressed("back")):
         if is_showing_settings == true:
             _on_hide_settings_button_up()

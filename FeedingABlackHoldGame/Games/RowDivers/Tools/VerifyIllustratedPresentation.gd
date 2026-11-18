@@ -191,7 +191,7 @@ func verify_upgrade_icons() -> void:
 		for upgrade in root.get_node("Global").game_mode_data_manager.upgrades.values():
 			icons[upgrade.sim_key] = upgrade.sim_icon
 		if mode == 0: modern = icons
-		check(icons.size() == 112 and icons == modern, "All upgrade icons keep the modern style in presentation %d" % mode)
+		check(icons.size() == Progress.design().upgrades.size() and icons == modern, "All upgrade icons keep the modern style in presentation %d" % mode)
 
 func run() -> void:
 	graphics = load("res://Games/RowDivers/RowDiversGraphics.gd")

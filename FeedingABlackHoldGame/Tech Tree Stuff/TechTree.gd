@@ -66,6 +66,9 @@ var _open_pit_profile_forced_line_frames: int = 0
 func select_node_in_direction(dir_vec: Vector2):
     if selected_node == null:
         return
+    if Util.is_row_divers_game_active():
+        _select_railway_node_in_direction(dir_vec)
+        return
 
 
     for i in range(1, node_search_range):
@@ -100,6 +103,31 @@ func select_node_in_direction(dir_vec: Vector2):
                         selected_node = found_node
                         return
 
+
+func _select_railway_node_in_direction(direction: Vector2) -> void:
+    # Railway's displayed graph uses free positions, rather than cell indices.
+    # Prefer usable upgrades; shadow nodes are inspection fallbacks only.
+    for usable_only in [true, false]:
+        var best: TechTreeNode = null
+        var best_score := INF
+        for candidate: TechTreeNode in node_dict.values():
+            if candidate == selected_node or candidate.upgrade == null or candidate.state == TechTreeNode.STATES.LOCKED:
+                continue
+            if usable_only and candidate.state == TechTreeNode.STATES.SHADOW:
+                continue
+            var offset: Vector2 = candidate.position - selected_node.position
+            var forward := offset.dot(direction)
+            var sideways := absf(offset.cross(direction))
+            if forward <= 0.0 or sideways > forward:
+                continue
+            var score := offset.length() + sideways * 2.0
+            if score < best_score:
+                best = candidate
+                best_score = score
+        if best != null:
+            best.click_mask.grab_focus()
+            selected_node = best
+            return
 
 func move_tech_tree(direction: Vector2):
     kill_tween()
@@ -664,6 +692,8 @@ func _is_simulation_upgrade_tree() -> bool:
 func _on_node_selected(node: TechTreeNode):
     selected_node = node
 
+    if Util.is_row_divers_game_active() and RailwayController.using_controller() and VirtualCursor._virtual_cursor_active:
+        return
     set_tech_tree_pos(-node.position)
 
 func get_owned_nodes_blocked_by_removal(target_node: TechTreeNode) -> Array[TechTreeNode]:

@@ -1,6 +1,25 @@
 # RailwayFury / Row Divers
 
-Steam Windows builds for version **0.2** were uploaded on November 2, 2026: full game **26391624**, demo **26391630**. They were not set live. See [the upload record](FeedingABlackHoldGame/Games/RowDivers/Docs/RELEASE_0.2.md) for validation and reproduction instructions.
+The full Windows itch build 0.9 is uploaded as a private draft at `https://itch.io/game/edit/5397032` (owner preview: `https://beep2bleep.itch.io/railway-fury`). The demo remains public at `https://beep2bleep.itch.io/railway-fury-demo`. Full Steam 0.9 is live; the Steam demo 0.9 activation still requires Steam Mobile confirmation. See the 0.9 manifest for edition-specific upload status.
+
+Version **0.9** adds consistent controller cursor menus and detailed run/section analytics. Steam Full **26767539** is default; Demo **26767544** is uploaded and awaiting Steam Mobile confirmation to replace default 0.8. The Steam demo is released. Itch browser/Windows 0.9 are published with wishlist links. Cloud storage is owned by the released demo, with the full app sharing it. See `FeedingABlackHoldGame/Games/RowDivers/Docs/RELEASE_0.9.md` and `Build - RailwayFury/build_manifest_0.9.json` for status.
+
+Version **0.8** is verified on Steam's default branches: Full **26758129**, Demo **26758130**. Progress and achievement claims share a save; the demo always runs Level 1 without erasing later full-game progress. Demo Cloud now shares full app 5520300. Valve's unreleased-base-app limitation and the local Steam client's No Connection state prevent end-to-end Cloud confirmation yet. See `FeedingABlackHoldGame/Games/RowDivers/Docs/SHARED_PROGRESS_0.8.md` and `RELEASE_0.8.md`. Itch remains 0.6.
+
+Version **0.7** was rebuilt and uploaded November 18, 2026. Steam Full **26757742** and Demo **26757748** are verified live on their **default branches**. Demo wishlist links and the five-second demo completion countdown are included; packaged checks confirm Railway death text and integer achievement rewards. Close the game, let Steam update, and confirm v0.7. Itch remains 0.6. See `FeedingABlackHoldGame/Games/RowDivers/Docs/RELEASE_0.7.md`.
+
+Version **0.6** was rebuilt and uploaded November 17, 2026. Steam Full build **26745603** and Demo build **26745607** remain unassigned. The itch Windows and browser demos are published at https://beep2bleep.itch.io/railway-fury-demo . This release includes whole-number achievement rewards, controller death countdown/cursor choices, the full-width menu image and the complete Railway wording/translation refresh. See `FeedingABlackHoldGame/Games/RowDivers/Docs/RELEASE_0.6.md`.
+
+Version **0.5** local builds include the November 17 controller navigation,
+hover, hint layout, demo label and continuous upgrade music fixes. Run
+`Build - RailwayFury/Steam/Full/RailwayFury.exe` for the full game or
+`Build - RailwayFury/Steam/Demo/RailwayFuryDemo.exe` for the Steam demo.
+Itch Windows/Web ZIPs are under `Build - RailwayFury/Demo`. The 0.5 itch Windows and browser demos were uploaded on November 17, 2026:
+https://beep2bleep.itch.io/railway-fury-demo . Steam 0.5 was uploaded November 17, 2026: full **26739109**, demo **26739113**,
+both unassigned. See `FeedingABlackHoldGame/Games/RowDivers/Docs/RELEASE_0.5.md`.
+The historical Steam upload record below refers to 0.4.
+
+Steam Windows builds for version **0.4** were uploaded on November 16, 2026: full game **26717191**, demo **26717195**. They were not set live. See [the upload record](FeedingABlackHoldGame/Games/RowDivers/Docs/RELEASE_0.4.md) and [controller modality audit](FeedingABlackHoldGame/Games/RowDivers/Docs/CONTROLLER_MODAL_AUDIT_0.4.md). For local controller testing, run `Build - RailwayFury/Steam/Full/RailwayFury.exe` or `Build - RailwayFury/Steam/Demo/RailwayFuryDemo.exe`; the older Windows-QA build is not the 0.4 release.
 
 Open `FeedingABlackHoldGame/project.godot` with Godot 4.6, or run `Launch-RailwayFury.ps1`.
 
@@ -28,7 +47,7 @@ Upgrade prices use `ceil(base * 1.2^level)` after the initial base-price purchas
 - Escape pauses. Loot enters the wallet immediately on pickup, including when quitting mid-run. Upgrades on the pause/end screen returns to the tree.
 - Enter starts a run from the upgrade screen.
 - Controllers: left stick steers, right stick aims in Free Aim, RT/RB (R2/R1) shoots, and LT/LB (L2/L1) activates the next ready power. Holding fire follows the same Hold/Auto upgrade rules as the mouse. Left stick click toggles running. Menu/Options starts a run or pauses/resumes gameplay.
-- In menus, use the left stick or D-pad to select and the right trigger or bumper to buy/confirm/play. Pause and end screens also support the left-stick cursor. Prompts switch automatically to keyboard/mouse, Xbox, or PlayStation artwork when the input method changes.
+- In menus, the left stick moves the cursor; D-pad switches to focused selection. A/Cross, right trigger or bumper buys/confirms/plays. B/Circle backs out one mode or opens settings from the launcher/tree. The right stick pans the upgrade tree; hold LT/L2 and move it vertically to zoom. Hold X/Square and move the left stick on the tree background also pans. In other menus, the right stick scrolls. Y/Triangle selects upgrade menu actions, and switches the unlocked bow's Hold/Auto mode in combat. After a controller-played death, a one-second fading circular countdown blocks choices, then places the cursor over Upgrades. Use the left stick and A/Cross or RT/RB to click a choice; D-pad, Start and B shortcuts are disabled on that death screen. Victory results retain Start/Options replay and B/Circle return to upgrades. Pause/results both offer Quit Game. Prompts follow the active mode and switch to Xbox or PlayStation artwork.
 - Right-drag pans the upgrade tree; mouse wheel zooms. Hover inspects; click buys an affordable upgrade.
 
 The save is `%APPDATA%\RailwayFury\row_divers_progress_v1.json`. Test fixtures do not write gameplay progress. The reference save was backed up before resetting: `%USERPROFILE%\AppData\LocalLow\Hermurx\RowDivers\savefile.before-railwayfury-20261021.json` and `savefile.reset-backup-20261021.json`. Settings were preserved.

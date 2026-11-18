@@ -1,0 +1,105 @@
+{
+  "artist": "Phat Phrog Studio",
+  "music": {
+    "upgrade_sanctum": {
+      "title": "Sanctum Obscura",
+      "collection": "darkarts_rpgmusiccollection",
+      "file": "upgrade_sanctum.ogg",
+      "source": "C:\\Game Assets\\Music\\darkarts_rpgmusiccollection\\3 - Phat Phrog Studio - Dark Arts - Sanctum Obscura.wav",
+      "source_sha256": "7719684647746c7e8db929f2bb315362206ac0381a6d8fb66acf1c3c9bb8db93",
+      "output_sha256": "70b32906572704e20c43a9a9e456d621a907f861485da334c926925f01fa2107",
+      "duration": 106.0,
+      "volume": 0.65,
+      "processing": "Sustained section, no authored fade-out; 2-second equal-power loop join; stereo Vorbis q5",
+      "sustained_loop": {
+        "source_region_seconds": [
+          8,
+          116
+        ],
+        "crossfade_seconds": 2,
+        "sha256": "70b32906572704e20c43a9a9e456d621a907f861485da334c926925f01fa2107"
+      }
+    },
+    "upgrade_grimoire": {
+      "title": "Forbidden Grimoire",
+      "collection": "darkarts_rpgmusiccollection",
+      "file": "upgrade_grimoire.ogg",
+      "source": "C:\\Game Assets\\Music\\darkarts_rpgmusiccollection\\6 - Phat Phrog Studio - Dark Arts - Forbidden Grimoire.wav",
+      "source_sha256": "f7bb7586258e12fd6432fce13a675156ab5ee8e037ab0226e5315221d1716a82",
+      "output_sha256": "ed65bb7ec6934975b2161ae23a9f17d9ed4e6fbc26007ddd133e7080dc716abe",
+      "duration": 110.0,
+      "volume": 0.65,
+      "processing": "Sustained section, no authored fade-out; 2-second equal-power loop join; stereo Vorbis q5",
+      "sustained_loop": {
+        "source_region_seconds": [
+          8,
+          120
+        ],
+        "crossfade_seconds": 2,
+        "sha256": "ed65bb7ec6934975b2161ae23a9f17d9ed4e6fbc26007ddd133e7080dc716abe"
+      }
+    },
+    "upgrade_covenant": {
+      "title": "Dusk Covenant",
+      "collection": "darkarts_rpgmusiccollection",
+      "file": "upgrade_covenant.ogg",
+      "source": "C:\\Game Assets\\Music\\darkarts_rpgmusiccollection\\5 - Phat Phrog Studio - Dark Arts - Dusk Covenant.wav",
+      "source_sha256": "998b51e8cb6f4f956b0bc3324ba9c1c37d7f9723b6c382610fbe30a9aee7eebd",
+      "output_sha256": "7e27ae7f55c2d3733e38459b25fcf2f7f45b24e1fc8548ba0a302058938f2b82",
+      "duration": 98.0,
+      "volume": 0.65,
+      "processing": "Sustained section, no authored fade-out; 2-second equal-power loop join; stereo Vorbis q5",
+      "sustained_loop": {
+        "source_region_seconds": [
+          8,
+          108
+        ],
+        "crossfade_seconds": 2,
+        "sha256": "7e27ae7f55c2d3733e38459b25fcf2f7f45b24e1fc8548ba0a302058938f2b82"
+      }
+    },
+    "combat_slayer": {
+      "title": "Abyssal Slayer",
+      "collection": "hellfirereigns_actionmusiccollection",
+      "file": "combat_slayer.ogg",
+      "source": "C:\\Game Assets\\Music\\hellfirereigns_actionmusiccollection\\1 - Phat Phrog Studio - Hellfire Reigns - Abyssal Slayer.wav",
+      "source_sha256": "199430ccadf590819a0e2041931a427b6392540f41fcac8de75704405568e1eb",
+      "output_sha256": "a5378efd624cb4ac1b1a9eb4c66ef3ec1cc7364f2e1bee9043c99173e6f4adaf",
+      "duration": 147.7,
+      "volume": 0.65,
+      "processing": "Full track; -20 LUFS normalization, -2 dBTP limit, stereo Vorbis q5"
+    },
+    "combat_carnage": {
+      "title": "Carnage Requiem",
+      "collection": "hellfirereigns_actionmusiccollection",
+      "file": "combat_carnage.ogg",
+      "source": "C:\\Game Assets\\Music\\hellfirereigns_actionmusiccollection\\3 - Phat Phrog Studio - Hellfire Reigns - Carnage Requiem.wav",
+      "source_sha256": "d44c4048b1ff8373ae779ddbfe439e089fe4b9d4390b574b360d9cda5d4845f8",
+      "output_sha256": "72db87dbb014a97c6e11bf52ff4e2d373ac04af3af966151d8b78b865778f23a",
+      "duration": 131.5,
+      "volume": 0.65,
+      "processing": "Full track; -20 LUFS normalization, -2 dBTP limit, stereo Vorbis q5"
+    },
+    "combat_crucible": {
+      "title": "Blood Crucible",
+      "collection": "hellfirereigns_actionmusiccollection",
+      "file": "combat_crucible.ogg",
+      "source": "C:\\Game Assets\\Music\\hellfirereigns_actionmusiccollection\\7 - Phat Phrog Studio - Hellfire Reigns - Blood Crucible.wav",
+      "source_sha256": "59e9908bafb4ab24b32dd907eda1207a9eb7abd4502fdb141bf848e63b7f7400",
+      "output_sha256": "a9f48aa3627bfad38fab8a09c550e59fcdb44c3a0e932f18173a3ccd165eed4f",
+      "duration": 137.6,
+      "volume": 0.65,
+      "processing": "Full track; -20 LUFS normalization, -2 dBTP limit, stereo Vorbis q5"
+    }
+  },
+  "upgrade": [
+    "upgrade_sanctum",
+    "upgrade_grimoire",
+    "upgrade_covenant"
+  ],
+  "combat": [
+    "combat_slayer",
+    "combat_carnage",
+    "combat_crucible"
+  ]
+}

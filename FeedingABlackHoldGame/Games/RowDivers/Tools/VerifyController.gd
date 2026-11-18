@@ -79,6 +79,12 @@ func run() -> void:
 		var running: bool = battle.running
 		button(control, JOY_BUTTON_LEFT_STICK)
 		check(battle.running != running, "Left stick click toggles running")
+		battle.data.unlocks.Auto = true
+		battle.fire_mode = "Auto"
+		button(control, JOY_BUTTON_Y)
+		check(battle.fire_mode == "Hold", "Y / Triangle selects Hold fire after unlock")
+		button(control, JOY_BUTTON_Y)
+		check(battle.fire_mode == "Auto", "Y / Triangle restores Auto fire")
 		button(control, JOY_BUTTON_START)
 		check(battle.suspended and battle.overlay.visible, "Menu / Options pauses")
 		var powers: int = battle.projectiles.size()
@@ -111,13 +117,16 @@ func run() -> void:
 	confirm.pressed.connect(func(): clicks += 1)
 	confirm.grab_focus()
 	button(control, JOY_BUTTON_RIGHT_SHOULDER)
+	await process_frame
 	check(clicks == 1, "Bumper activates focused menu / purchase button")
 	axis(control, JOY_AXIS_TRIGGER_RIGHT, 0.0)
 	axis(control, JOY_AXIS_TRIGGER_RIGHT, 0.9)
+	await process_frame
 	check(clicks == 2, "Trigger activates focused menu / purchase button")
 	confirm.disabled = true
 	axis(control, JOY_AXIS_TRIGGER_RIGHT, 0.0)
 	axis(control, JOY_AXIS_TRIGGER_RIGHT, 0.9)
+	await process_frame
 	check(clicks == 2, "Trigger respects disabled purchase button")
 	confirm.free()
 	var start := InputEventJoypadButton.new()

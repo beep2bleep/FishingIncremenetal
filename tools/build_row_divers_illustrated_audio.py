@@ -74,6 +74,8 @@ def run():
         execute(['-ss',str(start),'-i',str(source),'-t',str(duration),'-af',f'volume={gain},afade=t=in:d=0.004,afade=t=out:st={fade}:d=0.065','-ar','44100','-ac','1','-c:a','pcm_s16le',str(output)])
         manifest['effects'][cue]={'file':output.name,'source':str(source),'sha256':hashlib.sha256(source.read_bytes()).hexdigest(),'volume':volume,'pitch':1.0,'duration':sf.info(output).duration,'trim_start':start,'processing':'First audible gesture, peak-normalized to 0.8, short fade in/out, mono PCM16 44.1kHz'}
     (DEST/'sources.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+    from loop_row_divers_upgrade_music import prepare
+    prepare('Illustrated')
     print(f'Built {len(manifest["music"])} music tracks and {len(manifest["effects"])} effect cues in {DEST}')
 
 if __name__=='__main__': run()

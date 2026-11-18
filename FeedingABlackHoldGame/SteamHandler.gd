@@ -135,6 +135,8 @@ func _ready():
         achievements[mode] = false
 
     initialize_steam()
+    if Util.is_row_divers_game_active():
+        add_child(preload("res://Games/RowDivers/RowDiversSteamAchievements.gd").new())
     _setup_leaderboard_support()
     set_process(steam_enabled)
 
