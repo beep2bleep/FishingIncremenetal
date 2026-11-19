@@ -2305,8 +2305,6 @@ func _setup_row_divers_button() -> void:
         row_divers_wishlist_button = preload("res://Games/RowDivers/RowDiversWishlist.gd").make_button()
         game_cards_grid.get_parent().add_child(row_divers_wishlist_button)
         game_cards_grid.get_parent().move_child(row_divers_wishlist_button, game_cards_grid.get_index() + 1)
-        var other_games = preload("res://Games/RowDivers/RowDiversOtherGames.gd").new()
-        game_cards_grid.get_parent().add_child(other_games)
     for button in [vanguard_button, mining_button, open_pit_button, red_sky_button, turkey_button, reel_button, combined_button]:
         if button != null and is_instance_valid(button):
             button.hide()

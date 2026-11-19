@@ -371,7 +371,6 @@ func _ready() -> void :
     demo_mode_label = get_node_or_null("%Demo Mode Label")
     game_mode_label = get_node_or_null("%Game Mode Label")
     _setup_row_divers_wallet_display()
-    _setup_row_divers_other_games()
     _setup_editor_exit_demo_button()
     _setup_mining_time_label()
     ready_step_started_msec = _print_open_pit_ready_step("ready_mining_time_label", ready_step_started_msec)
@@ -706,6 +705,9 @@ func _refresh_bottom_wallet_display() -> void:
 
 func _setup_row_divers_other_games() -> void:
     if not Util.is_row_divers_game_active(): return
+    var previous = get_node("CanvasLayer2").get_node_or_null("PlayMyOtherGames")
+    if previous != null: previous.free()
+    if not preload("res://Games/RowDivers/RowDiversPromotion.gd").visit_upgrades(): return
     if not ROW_DIVERS_PROGRESS_SCRIPT.Demo.enabled(): return
     var promo = preload("res://Games/RowDivers/RowDiversOtherGames.gd").new()
     promo.capsule_count = 1
@@ -1202,6 +1204,7 @@ func show_screen():
         _apply_editor_center_offset()
     _sync_simulation_currency_from_save()
     _refresh_bottom_wallet_display()
+    if not is_active: _setup_row_divers_other_games()
     is_active = true
     if Util.is_row_divers_game_active(): RailwayController.configure_menu(self)
     Global.game_state = Util.GAME_STATES.UPGRADES

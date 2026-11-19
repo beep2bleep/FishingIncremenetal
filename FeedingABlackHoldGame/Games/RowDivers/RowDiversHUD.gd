@@ -37,6 +37,7 @@ var results_initialized := false
 var results_cursor_only := false
 var results_input_locked := false
 var demo_complete_results := false
+var other_games_button: Button
 var wishlist_button: Button
 var choice_countdown
 var debug_speed_label: Label
@@ -300,6 +301,18 @@ func _build_overlay() -> void:
 	row.add_child(menu_button)
 	quit_button = make_button("QUIT GAME", quit_game)
 	box.add_child(quit_button)
+	if preload("res://Games/RowDivers/RowDiversDemo.gd").enabled():
+		other_games_button = preload("res://Games/RowDivers/RowDiversOtherGames.gd").new()
+		other_games_button.capsule_count = 1
+		other_games_button.vertical_layout = true
+		other_games_button.capsule_size = Vector2(246, 115)
+		battle.overlay.add_child(other_games_button)
+		other_games_button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+		other_games_button.offset_left = -300
+		other_games_button.offset_right = -24
+		other_games_button.offset_top = -260
+		other_games_button.offset_bottom = -36
+		other_games_button.hide()
 	battle.overlay.hide()
 
 func _build_settings() -> void:
@@ -325,6 +338,7 @@ func _build_settings() -> void:
 	settings_panel.hide()
 
 func show_settings() -> void:
+	if other_games_button != null: other_games_button.hide()
 	battle.suspended = true
 	VirtualCursor.set_gameplay_pointer_hidden(false)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -399,9 +413,13 @@ func show_results(title := "", detail := "") -> void:
 	settings_button.show()
 	tutorial_button.show()
 	battle.overlay.show()
+	if other_games_button != null:
+		other_games_button.visible = demo_complete_results
+		other_games_button.disabled = results_input_locked
 	wishlist_button.visible = demo_complete_results
 	if first_show and ((results_cursor_only and not battle.victory) or demo_complete_results):
 		results_input_locked = true
+		if other_games_button != null: other_games_button.disabled = true
 		VirtualCursor.release_buttons()
 		for button in [battle.retry, upgrades_button, settings_button, tutorial_button, menu_button, quit_button, wishlist_button]:
 			button.disabled = true
@@ -413,6 +431,7 @@ func show_results(title := "", detail := "") -> void:
 
 func _unlock_result_choices() -> void:
 	results_input_locked = false
+	if other_games_button != null: other_games_button.disabled = false
 	VirtualCursor.release_buttons()
 	for button in [battle.retry, upgrades_button, settings_button, tutorial_button, menu_button, quit_button, wishlist_button]:
 		button.disabled = false
@@ -430,6 +449,7 @@ func _position_result_cursor() -> void:
 		VirtualCursor.move_to_control(wishlist_button if demo_complete_results else upgrades_button)
 
 func show_tutorial() -> void:
+	if other_games_button != null: other_games_button.hide()
 	wishlist_button.hide()
 	tutorial_page = 0
 	battle.suspended = true
@@ -463,6 +483,7 @@ func advance_tutorial() -> bool:
 	return false
 
 func pause() -> void:
+	if other_games_button != null: other_games_button.hide()
 	tutorial_page = -1
 	tutorial_cards.hide()
 	power_hint.hide()

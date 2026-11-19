@@ -657,6 +657,8 @@ func _auto_activate_abilities() -> void:
 
 func _physics_process(delta: float) -> void:
 	if persist_results and not suspended and not ended:
+		# Count real active play once, independent of double-speed simulation steps.
+		data.promotion_play_seconds = float(data.get("promotion_play_seconds", 0)) + delta / maxf(Engine.time_scale, 0.001)
 		analytics_heartbeat += delta
 		if analytics_heartbeat >= 30.0:
 			analytics_heartbeat = 0.0

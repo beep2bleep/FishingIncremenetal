@@ -48,15 +48,7 @@ func run():
 	current_scene = menu
 	for frame in range(20): await process_frame
 	promo = menu.find_child("PlayMyOtherGames",true,false)
-	check(promo != null and promo.FRANCHISE_URL=="https://store.steampowered.com/franchise/Beep2Bleep", "Franchise action")
-	check(promo.capsules.size()==2, "Main menu shows two capsules")
-	var names = {}
-	for i in range(3):
-		for title in promo.game_title.text.split("\n"): names[title] = true
-		check(promo.capsules[0].texture != promo.capsules[1].texture, "Pair contains two different games")
-		promo.advance()
-	check(names.size()==6 and not names.has("Only Jump!") and not names.has("Umpire Simulator"), "Three pairs rotate through all eligible games")
-	check(promo.heading.text=="Play my other games", "Requested button text")
+	check(promo == null, "Demo main menu has no cross-promotion")
 	var settings = menu.settings_content
 	check(settings.find_child("OriginalRowDiversGraphics",true,false)==null, "No art style selector")
 	check(settings.find_child("RowDiversUpgradeTree",true,false)==null, "No tree selector in Railway Fury")
@@ -86,6 +78,8 @@ func run():
 	ProjectSettings.set_setting("railway_fury/demo/enabled", true)
 	Progress.active_data_cache = Progress.fresh()
 	Progress.active_data_cache.controls_seen = true
+	Progress.active_data_cache.promotion_play_seconds = 1200.0
+	Progress.active_data_cache.promotion_upgrade_visits = 2
 	screen = load("res://UpgradeScreen.tscn").instantiate()
 	root.add_child(screen)
 	current_scene = screen
