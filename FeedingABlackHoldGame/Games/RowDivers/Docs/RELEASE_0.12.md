@@ -37,6 +37,8 @@ Itch Windows/Web demos and the revised instructions are published and verified:
 https://beep2bleep.itch.io/railway-fury-demo . Hosted browser entry:
 https://html-classic.itch.zone/html/20694145/index.html . The short tagline was
 trimmed to itch.io's 120-character limit. Proof: Previews/itch-0.12-published.png.
+The hosted browser game was opened and reached v0.12 with the new automatic-fire
+main-menu instructions. Proof: Previews/itch-0.12-browser-menu.png.
 Steamworks requires the user's fresh Steam Mobile sign-in approval. Activating
 the uploaded Steam builds and applying/publishing Steam store text remain pending.
 See StoreAssets_RailwayFury/steam/build-manifest.json for verified status flags.
