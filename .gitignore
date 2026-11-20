@@ -28,3 +28,6 @@ __pycache__/
 
 # Local player-save audit fingerprints are not project sources.
 /tools/rowdivers_balance/*_save_hashes_before.json
+
+# Temporary account sign-in approval captures stay local.
+/FeedingABlackHoldGame/Games/RowDivers/Docs/Previews/steam-*-signin-approval.png

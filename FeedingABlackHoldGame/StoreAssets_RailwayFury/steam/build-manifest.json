@@ -1,6 +1,6 @@
 {
   "version": "0.12",
-  "generated_utc": "2026-11-20T19:32:40.240669+00:00",
+  "generated_utc": "2026-11-20T19:39:50.780576+00:00",
   "qa": {
     "steam_full_pack": 15,
     "steam_demo_pack": 15,
@@ -24,7 +24,7 @@
   "itch": {
     "project_id": 5243421,
     "version": "0.12",
-    "live_verified": false,
+    "live_verified": true,
     "url": "https://beep2bleep.itch.io/railway-fury-demo",
     "platforms": [
       "Windows",

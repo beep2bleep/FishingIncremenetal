@@ -33,6 +33,10 @@ progress, matching the established 0.8 save behavior. Tutorial capture:
 Previews/release-0.12-auto-fire-tutorial.png.
 
 Steam uploads: Full 26820067 and Demo 26820070. Publication is not yet verified.
-Itch Windows/Web ZIPs are ready; upload and public verification remain pending.
-Store text packages are ready; applying and publishing them remain pending.
+Itch Windows/Web demos and the revised instructions are published and verified:
+https://beep2bleep.itch.io/railway-fury-demo . Hosted browser entry:
+https://html-classic.itch.zone/html/20694145/index.html . The short tagline was
+trimmed to itch.io's 120-character limit. Proof: Previews/itch-0.12-published.png.
+Steamworks requires the user's fresh Steam Mobile sign-in approval. Activating
+the uploaded Steam builds and applying/publishing Steam store text remain pending.
 See StoreAssets_RailwayFury/steam/build-manifest.json for verified status flags.
