@@ -32,13 +32,16 @@ was updated to assert runtime demo restrictions while preserving shared full-gam
 progress, matching the established 0.8 save behavior. Tutorial capture:
 Previews/release-0.12-auto-fire-tutorial.png.
 
-Steam uploads: Full 26820067 and Demo 26820070. Publication is not yet verified.
+Steam default builds are verified live: Full 26820067 and Demo 26820070.
+The full game's public release state remains unchanged. Both Steam store pages
+have the updated short and long descriptions published in 16 languages. Fresh
+exports matched all 64 description fields with no unrelated import changes.
+Proof: Previews/steam-0.12-full-live.png, steam-0.12-demo-live.png,
+steam-0.12-full-store-published.png and steam-0.12-demo-store-published.png.
 Itch Windows/Web demos and the revised instructions are published and verified:
 https://beep2bleep.itch.io/railway-fury-demo . Hosted browser entry:
 https://html-classic.itch.zone/html/20694145/index.html . The short tagline was
 trimmed to itch.io's 120-character limit. Proof: Previews/itch-0.12-published.png.
 The hosted browser game was opened and reached v0.12 with the new automatic-fire
 main-menu instructions. Proof: Previews/itch-0.12-browser-menu.png.
-Steamworks requires the user's fresh Steam Mobile sign-in approval. Activating
-the uploaded Steam builds and applying/publishing Steam store text remain pending.
 See StoreAssets_RailwayFury/steam/build-manifest.json for verified status flags.

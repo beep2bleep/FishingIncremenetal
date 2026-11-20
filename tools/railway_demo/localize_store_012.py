@@ -49,12 +49,10 @@ def translate(language, locale):
 with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
     results = dict(pool.map(lambda pair: translate(*pair), LANGUAGES.items()))
 for kind, itemid in [('main', '1410386'), ('demo', '1410394')]:
-    old = json.loads((ROOT / 'StoreLocalization/2026-10-28' / (kind + '_verified.json')).read_text(encoding='utf-8-sig'))
     payload = {'itemid': itemid, 'languages': {}}
     for language in LANGUAGES:
         if language == 'catalan': continue
-        fields = old.get('languages', {}).get(language, {}).copy()
-        fields.update(results[language][kind])
+        fields = results[language][kind].copy()
         payload['languages'][language] = fields
         for key, value in results[language][kind].items():
             assert not re.search(r'RFP\d|RFW|WFR', value), (language, kind, key)

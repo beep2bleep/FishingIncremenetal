@@ -1,0 +1,14 @@
+[
+  {
+    "edition": "main",
+    "description_fields": 32,
+    "mismatches": [],
+    "unrelated_changes": []
+  },
+  {
+    "edition": "demo",
+    "description_fields": 32,
+    "mismatches": [],
+    "unrelated_changes": []
+  }
+]

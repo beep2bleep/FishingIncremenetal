@@ -1,6 +1,6 @@
 {
   "version": "0.12",
-  "generated_utc": "2026-11-20T19:39:50.780576+00:00",
+  "generated_utc": "2026-11-20T20:24:22.235657+00:00",
   "qa": {
     "steam_full_pack": 15,
     "steam_demo_pack": 15,
@@ -18,8 +18,8 @@
   "steam": {
     "full_build": 26820067,
     "demo_build": 26820070,
-    "full_live_verified": false,
-    "demo_live_verified": false
+    "full_live_verified": true,
+    "demo_live_verified": true
   },
   "itch": {
     "project_id": 5243421,
@@ -35,8 +35,8 @@
     "folder": "StoreLocalization/2026-11-20",
     "steam_languages": 16,
     "catalan_local_copy": true,
-    "saved": false,
-    "published": false
+    "saved": true,
+    "published": true
   },
   "binaries": {
     "Steam/Full/RailwayFury.exe": {
