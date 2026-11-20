@@ -1162,7 +1162,7 @@ func _refresh_game_card_text(button: Button, game_id: String) -> void:
     if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
         if title != null: title.text = "RAILWAY FURY"
         if detail != null:
-            detail.text = tr("Aim, strafe and collect loot. Dodge fire waves that intensify after bosses.")
+            detail.text = tr("Aim and strafe. Weapons fire automatically. Dodge fire waves and collect loot.")
     _queue_fit_game_cards()
 
 func _queue_fit_game_cards() -> void:

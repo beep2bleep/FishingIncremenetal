@@ -11,6 +11,9 @@ func check(ok: bool, message: String):
 		failures += 1
 		push_error(message)
 func run():
+	if not OS.get_user_data_dir().ends_with("RailwayFuryControllerQA"):
+		quit(2)
+		return
 	root.get_node("Util").set_active_game_id("rowdivers")
 	root.get_node("SteamHandler").steam_enabled = false
 	var catalog: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://Games/RowDivers/Translations/catalog.json"))
@@ -39,7 +42,7 @@ func run():
 	for locale in catalog:
 		TranslationServer.set_locale(locale)
 		check(catalog[locale].size()==catalog.en.size(), "Equal coverage: "+locale)
-		for source in ["%.1f m    SECTION %d / 15    %s", "Click left stick to toggle double speed", "LEFT STICK TO MOVE", "Left trigger / bumper: Activate the highlighted power.\nRight stick: Aim. Menu / Options: Play or pause.", "NEXT · ", "RIGHT TRIGGER / BUMPER TO SHOOT", "Use the left trigger or bumper to activate the highlighted ready power."]:
+		for source in ["%.1f m    SECTION %d / 15    %s", "Click left stick to toggle double speed", "LEFT STICK TO MOVE", "Left trigger / bumper: Activate the highlighted power.\nRight stick: Aim. Menu / Options: Play or pause.", "NEXT · ", "RIGHT STICK TO AIM — AUTO FIRE", "AIM WITH THE MOUSE — AUTO FIRE", "Use the left trigger or bumper to activate the highlighted ready power."]:
 			check(catalog[locale].has(source) and TranslationServer.translate(source)==catalog[locale].get(source), "HUD and controller copy registered: "+locale+" / "+source)
 		for source in catalog[locale]:
 			check(not str(catalog[locale][source]).is_empty(), "Nonempty: "+locale+" / "+source)
@@ -56,7 +59,7 @@ func run():
 		var data = Progress.fresh()
 		data.wallet = [1e15,1e15,1e15]
 		data.controls_seen = true
-		check(Progress.progress_path().ends_with("_demo.json"), "Demo save separated")
+		check(not Progress.progress_path().ends_with("_demo.json"), "Demo uses shared progress filename")
 		for node in Progress.design().upgrades:
 			if int(node.cost.currencyType)==2 or int(node.get("minPrestige",0))>0:
 				check(not Progress.can_buy(data,node) and not Progress.buy(data,node), "Progression gate: "+node.id)
@@ -67,7 +70,7 @@ func run():
 		data.prestige = 3
 		data.max_prestige = 3
 		Demo.constrain(data)
-		check(data.prestige==0 and data.max_prestige==0, "Loaded demo cannot enter later levels")
+		check(data.prestige==3 and data.max_prestige==3 and Demo.playable_level(data)==0 and Demo.unlocked_level(data)==0, "Demo restricts runtime access without erasing full progress")
 		Progress.active_data_cache = data
 		var battle = load("res://Games/RowDivers/Scenes/RowDiversBattleScene.gd").new()
 		battle.persist_results = false
@@ -80,13 +83,13 @@ func run():
 		var boss: Dictionary = battle.enemies.back()
 		battle._hit(boss,boss.hp+1)
 		check(battle.ended and battle.victory and data.get("demo_completed",false), "First boss completes demo")
-		check(data.max_prestige==0 and data.prestige==0 and battle.overlay_title.text=="DEMO COMPLETE", "Win cannot unlock level 2")
+		check(data.max_prestige==3 and Demo.playable_level(data)==0 and battle.overlay_title.text=="DEMO COMPLETE", "Win retains shared progress but demo stays on Level 1")
 		check(not battle.presentation.overlay_detail.text.contains("Level 2 unlocked"), "Demo completion copy")
 		check(Timing.configs().size()==1 and Timing.board_id("boss_0").contains("demo_"), "Demo leaderboard separated and capped")
 		battle.free()
 	ProjectSettings.set_setting("railway_fury/demo/enabled", false)
 	Progress.active_data_cache = {}
-	check(not Progress.progress_path().ends_with("_demo.json") and Timing.configs().size()==5, "Full game behavior restored")
+	check(not Progress.progress_path().ends_with("_demo.json") and Timing.configs().size()==(1 if OS.has_feature("railway_demo") else 5), "Export feature controls leaderboard access")
 	var defeated = load("res://Games/RowDivers/Scenes/RowDiversBattleScene.gd").new()
 	defeated.persist_results = false
 	root.add_child(defeated)
@@ -101,7 +104,7 @@ func run():
 	Progress.cache_profile_path = Progress.progress_path()
 	ProjectSettings.set_setting("railway_fury/demo/enabled", true)
 	var demo = Progress.load_data()
-	check(full.max_prestige==3 and demo.max_prestige==0, "Toggling demo never constrains the cached full campaign")
+	check(full.max_prestige==3 and demo.max_prestige==3 and Demo.playable_level(demo)==0, "Toggling demo preserves full progress while enforcing runtime restriction")
 	ProjectSettings.set_setting("railway_fury/demo/enabled", false)
 	Progress.active_data_cache = {}
 	Progress.cache_profile_path = ""

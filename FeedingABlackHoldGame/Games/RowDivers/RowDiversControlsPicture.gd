@@ -18,7 +18,7 @@ func _draw() -> void:
 	var center = size.x * .5
 	var gold = Style.GOLD
 	if RailwayController.using_controller():
-		var paths := ["joypad/rt", "joypad/rb"] if shooting else ["joypad/l_stick", "joypad/r_stick"]
+		var paths := ["joypad/r_stick"] if shooting else ["joypad/l_stick"]
 		for i in range(paths.size()):
 			var texture := RailwayController.glyph(paths[i])
 			if texture != null: draw_texture_rect(texture, Rect2(center - 120 + i * 130, 22, 110, 110), false)
@@ -26,11 +26,12 @@ func _draw() -> void:
 	if shooting:
 		var mouse = Rect2(center-38, 16, 76, 116)
 		draw_style_box(Style.panel(Color("263443"), gold), mouse)
-		draw_style_box(Style.panel(gold, gold), Rect2(center-34,20,31,43))
+		# Aim with the mouse; no highlighted click button.
 		draw_line(Vector2(center,20),Vector2(center,68),Color("f3e3c8"),2,true)
 		draw_line(Vector2(center-34,68),Vector2(center+34,68),gold,2,true)
-		draw_line(Vector2(center-20,37),Vector2(center-28,1),gold,3,true)
-		draw_circle(Vector2(center-28,1),4,gold)
+		for side in [-1, 1]:
+			draw_line(Vector2(center + side*53,74),Vector2(center + side*100,74),gold,3,true)
+			draw_polyline(PackedVector2Array([Vector2(center+side*88,64),Vector2(center+side*100,74),Vector2(center+side*88,84)]),gold,3,true)
 	else:
 		_key(Rect2(center-123,34,74,62), "A")
 		_key(Rect2(center+49,34,74,62), "D")

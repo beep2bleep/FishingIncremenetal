@@ -16,7 +16,7 @@ func run():
 	check(not str(credentials.game_key).is_empty() and credentials.game_key == ProjectSettings.get_setting("gameanalytics/railway_demo_game_key", ""), "Demo analytics key is packed and selected")
 	check(not str(credentials.secret_key).is_empty() and credentials.secret_key == ProjectSettings.get_setting("gameanalytics/railway_demo_secret_key", ""), "Demo analytics secret is packed and selected")
 	check(analytics._get_state_path() == "user://gameanalytics_state_rowdivers_demo.cfg", "Demo analytics state is isolated")
-	check(ProjectSettings.get_setting("application/config/version", "") == "0.10", "Pack version is 0.10")
+	check(ProjectSettings.get_setting("application/config/version", "") == "0.12", "Pack version is 0.12")
 	check(load("res://Games/RowDivers/Art/Powerups/ghost.svg") is Texture2D, "Packed Ghost icon loads")
 	check(Progress.Demo.enabled(), "Export forces demo mode")
 	check(OS.get_user_data_dir().ends_with("RailwayFury"), "Steam demo shares the full-game save directory")

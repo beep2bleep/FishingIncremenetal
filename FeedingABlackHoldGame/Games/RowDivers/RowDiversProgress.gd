@@ -60,6 +60,7 @@ static func fresh() -> Dictionary:
 	if free_aim_mode:
 		data.flight_pickup_v2 = true
 		data.crown_channels_v3 = true
+	data.unlocks.Auto = true
 	data.shared_demo_migrated_v1 = true
 	preload("res://Games/RowDivers/RowDiversTiming.gd").ensure(data)
 	return data
@@ -80,6 +81,7 @@ static func load_data(path = SAVE_PATH) -> Dictionary:
 		cache_profile_path = profile_path
 	if path == SAVE_PATH and not active_data_cache.is_empty():
 		preload("res://Games/RowDivers/RowDiversTiming.gd").ensure(active_data_cache)
+		apply_auto_fire_migration(active_data_cache)
 		apply_crown_channel_repairs(active_data_cache)
 		apply_reference_repairs(active_data_cache)
 		Demo.constrain(active_data_cache)
@@ -105,6 +107,7 @@ static func load_data(path = SAVE_PATH) -> Dictionary:
 		loaded.flight_pickup_v2 = true
 	if free_aim_mode and value is Dictionary:
 		loaded.crown_channels_v3 = bool(value.get("crown_channels_v3",false))
+	apply_auto_fire_migration(loaded)
 	apply_reference_repairs(loaded)
 	apply_crown_channel_repairs(loaded)
 	Demo.constrain(loaded)
@@ -112,6 +115,18 @@ static func load_data(path = SAVE_PATH) -> Dictionary:
 		active_data_cache = loaded
 		cache_profile_path = resolved_path
 	return loaded
+
+static func apply_auto_fire_migration(data: Dictionary) -> void:
+	# Retired gem purchases are refunded once by removing their saved ranks.
+	var refund = 0.0
+	for id in {"5853": 3.0, "6469": 5.0}:
+		if int(data.get("levels", {}).get(id, 0)) > 0:
+			refund += {"5853": 3.0, "6469": 5.0}[id]
+		data.levels.erase(id)
+	data.wallet[1] += refund
+	if data.has("spent"): data.spent[1] = maxf(0, float(data.spent[1]) - refund)
+	data.unlocks.erase("Hold")
+	data.unlocks.Auto = true
 
 static func apply_crown_channel_repairs(data: Dictionary) -> void:
 	if not free_aim_mode or data.get("crown_channels_v3", false): return

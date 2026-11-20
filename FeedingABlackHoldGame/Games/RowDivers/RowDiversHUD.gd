@@ -259,7 +259,7 @@ func _build_overlay() -> void:
 		var picture = preload("res://Games/RowDivers/RowDiversControlsPicture.gd").new()
 		picture.shooting = shooting
 		card.add_child(picture)
-		var caption = Style.label("CLICK TO SHOOT" if shooting else "MOVE LEFT / RIGHT", 20, true)
+		var caption = Style.label("AIM — WEAPONS FIRE AUTOMATICALLY" if shooting else "MOVE LEFT / RIGHT", 20, true)
 		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		card.add_child(caption)
 		tutorial_captions.append(caption)
@@ -557,7 +557,7 @@ func _refresh_input_hints(_type = 0, _device = -1) -> void:
 	var controller := RailwayController.using_controller()
 	if tutorial_captions.size() == 2:
 		tutorial_captions[0].text = tr("LEFT STICK TO MOVE" if controller else "MOVE LEFT / RIGHT")
-		tutorial_captions[1].text = tr("RIGHT TRIGGER / BUMPER TO SHOOT" if controller else "CLICK TO SHOOT")
+		tutorial_captions[1].text = tr("RIGHT STICK TO AIM — AUTO FIRE" if controller else "AIM WITH THE MOUSE — AUTO FIRE")
 	if speed_hint != null: speed_hint.text = tr("Click left stick to toggle double speed" if controller else "Press Shift to toggle double speed")
 	if power_hint != null: power_hint.text = tr("Left trigger / bumper: Activate the highlighted power.\nRight stick: Aim. Menu / Options: Play or pause." if controller else "SPACE: Activate the highlighted power.\nEach press uses one ready power.")
 	refresh()

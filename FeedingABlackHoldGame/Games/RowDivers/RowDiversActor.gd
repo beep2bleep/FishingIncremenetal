@@ -18,7 +18,6 @@ var flash = 0.0
 var charge = 0.0
 var time = 0.0
 var frozen = false
-var playback_speed = 1.0
 var rest_rotations: Dictionary = {}
 var skin_meshes: Array[MeshInstance3D] = []
 var status_visual: Node3D
@@ -173,9 +172,8 @@ func windup() -> void:
 	if idle != null: idle.play("attack")
 
 func _process(delta: float) -> void:
-	if idle != null: idle.speed_scale = 0.0 if frozen else playback_speed
+	if idle != null: idle.speed_scale = 0.0 if frozen else 1.0
 	if frozen: return
-	delta *= playback_speed
 	time += delta
 	if status_visual != null: status_visual.advance(delta)
 	var was_flashing: bool = flash > 0

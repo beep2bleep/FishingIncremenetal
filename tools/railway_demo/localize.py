@@ -27,6 +27,16 @@ FORMAT = re.compile(r'%(?:[-+0#]*\d*(?:\.\d+)?[sdfxX]|%)|\{[A-Z][A-Z0-9_]*\}')
 # else must be translated rather than silently retaining an English draft.
 INVARIANT = {'RAILWAY FURY', 'RK ', 'XP '}
 REFRESH = False
+
+def write_cache(path, cache):
+    # The live editor can briefly hold imported JSON files open on Windows.
+    for attempt in range(6):
+        try:
+            path.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding='utf8')
+            return
+        except OSError:
+            if attempt == 5: raise
+            time.sleep(0.5 * (attempt + 1))
 BORROWED = {
     'es': {'CURSOR'},
     'de': {'AUTO', 'GOLD', 'Gold', 'Level %d', 'Modern', 'Original', 'Prestige', 'Shuriken', 'Zombie'},
@@ -147,11 +157,11 @@ def translate(locale, source, reuse):
                 print(locale,'retry',attempt,str(error),flush=True)
                 if attempt==3: raise RuntimeError(locale+': '+str(error)) from error
                 time.sleep(2+attempt*2)
-        path.write_text(json.dumps(cache,ensure_ascii=False,indent=2),encoding='utf8')
+        write_cache(path, cache)
         print(locale,i+1,'/',len(batches),flush=True)
     cache.update(overrides)
     cache = {s: cache[s] for s in source}
-    path.write_text(json.dumps(cache,ensure_ascii=False,indent=2),encoding='utf8')
+    write_cache(path, cache)
     return locale,{s:cache[s] for s in source}
 
 

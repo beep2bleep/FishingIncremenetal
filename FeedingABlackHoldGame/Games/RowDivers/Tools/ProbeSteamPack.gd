@@ -11,7 +11,7 @@ func check(ok, message):
 func run():
 	ProjectSettings.set_setting("railway_fury/debug/enable_speed_cheats", false)
 	var demo = Progress.Demo.enabled()
-	check(ProjectSettings.get_setting("application/config/version", "") == "0.10", "Steam pack version is 0.10")
+	check(ProjectSettings.get_setting("application/config/version", "") == "0.12", "Steam pack version is 0.12")
 	root.get_node("Util").set_active_game_id("rowdivers")
 	var steam = root.get_node("SteamHandler")
 	var analytics = root.get_node("GameAnalytics")

@@ -1594,45 +1594,6 @@
       ]
     },
     {
-      "upgradeName": "Shoot On Hold",
-      "upgradeDescription": "Fire continuously by holding left-click",
-      "maxLevel": 1,
-      "level": 0,
-      "unlockAtParentLevel": 1,
-      "rarity": 2,
-      "isVisible": 0,
-      "isUnlocked": 0,
-      "baseUpgradeCost": 3,
-      "cost": {
-        "amount": 0,
-        "currencyType": 1
-      },
-      "statsToIncrease": [],
-      "id": "5853",
-      "position": [
-        17.001628,
-        16.223446
-      ],
-      "local_position": {
-        "x": -8.563122,
-        "y": 16.476562
-      },
-      "size": {
-        "x": 5,
-        "y": 5
-      },
-      "unlocks": {
-        "fireType": "Hold"
-      },
-      "effects": [],
-      "children": [
-        "6469"
-      ],
-      "parents": [
-        "5860"
-      ]
-    },
-    {
       "upgradeName": "Horizontal Speed I",
       "upgradeDescription": "Increases horizontal movement speed by 20%",
       "maxLevel": 1,
@@ -1677,7 +1638,6 @@
         }
       ],
       "children": [
-        "5853",
         "6552"
       ],
       "parents": [
@@ -4146,43 +4106,6 @@
       "children": [],
       "parents": [
         "6433"
-      ]
-    },
-    {
-      "upgradeName": "Auto Shoot",
-      "upgradeDescription": "Fires Automatically",
-      "maxLevel": 1,
-      "level": 0,
-      "unlockAtParentLevel": 1,
-      "rarity": 3,
-      "isVisible": 0,
-      "isUnlocked": 0,
-      "baseUpgradeCost": 5,
-      "cost": {
-        "amount": 0,
-        "currencyType": 1
-      },
-      "statsToIncrease": [],
-      "id": "6469",
-      "position": [
-        17.001628,
-        24.613446
-      ],
-      "local_position": {
-        "x": -8.563122,
-        "y": 24.866562
-      },
-      "size": {
-        "x": 5,
-        "y": 5
-      },
-      "unlocks": {
-        "fireType": "Auto"
-      },
-      "effects": [],
-      "children": [],
-      "parents": [
-        "5853"
       ]
     },
     {
@@ -7671,7 +7594,8 @@
           "banned": []
         }
       ]
-    }
+    },
+    "ending_maxed_nodes": 98
   },
   "enums": {
     "Stat": {

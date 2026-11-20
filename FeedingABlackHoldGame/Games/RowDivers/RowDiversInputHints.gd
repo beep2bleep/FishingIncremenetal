@@ -40,8 +40,8 @@ func _refresh(_type = 0, _device = -1) -> void:
 				entries += [["PAN", ["joypad/r_stick"]], ["ZOOM", ["joypad/lt", "joypad/r_stick"]]]
 			else: entries += [["SCROLL", ["joypad/r_stick"]]]
 	elif context == "battle":
-		entries = [["MOVE", ["joypad/l_stick"] if controller else ["key/a", "key/d"]], ["AIM", ["joypad/r_stick"] if controller else ["mouse/simple"]], ["SHOOT", ["joypad/rt", "joypad/rb"] if controller else ["mouse/left"]], ["POWER", ["joypad/lt", "joypad/lb"] if controller else ["key/space"]], ["PAUSE", ["joypad/start"] if controller else ["key/esc"]]]
-		if controller: entries += [["RUN", ["joypad/l_stick_click"]], ["BOW MODE", ["joypad/y"]]]
+		entries = [["MOVE", ["joypad/l_stick"] if controller else ["key/a", "key/d"]], ["AIM", ["joypad/r_stick"] if controller else ["mouse/simple"]], ["POWER", ["joypad/lt", "joypad/lb"] if controller else ["key/space"]], ["PAUSE", ["joypad/start"] if controller else ["key/esc"]]]
+		if controller: entries += [["RUN", ["joypad/l_stick_click"]]]
 	elif context == "upgrades":
 		entries = [["SELECT", ["joypad/l_stick"]], ["BUY", ["joypad/a", "joypad/rt"]], ["PAN", ["joypad/r_stick"]], ["ZOOM", ["joypad/lt", "joypad/r_stick"]], ["SETTINGS / BACK", ["joypad/b"]]] if controller else [["BUY", ["mouse/left"]]]
 	else:

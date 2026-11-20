@@ -274,7 +274,6 @@ func _input(event: InputEvent) -> void:
 			JOY_BUTTON_LEFT_SHOULDER: action = "ability"
 			JOY_BUTTON_START: action = "pause"
 			JOY_BUTTON_LEFT_STICK: action = "run"
-			JOY_BUTTON_Y: action = "fire_mode"
 			JOY_BUTTON_B:
 				if is_instance_valid(battle) and not playing(): action = "pause"
 	if action.is_empty(): return

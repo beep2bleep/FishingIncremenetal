@@ -31,7 +31,7 @@ var elapsed = 0.0
 var row_timer = 0.0
 var shot_timer = 0.0
 var extra_timers = {"Dragon": 0.0, "Ghost": 0.0}
-var auxiliary_fire_mode = "Click"
+var auxiliary_fire_mode = "Auto"
 var dagger_timer = 0.0
 var beam_timer = 0.0
 var poison_timer = 0.0
@@ -40,7 +40,7 @@ var poison_hits = 0
 var section = 1
 var next_section_trigger = 3.474
 var group_index = 0
-var fire_mode = "Click"
+var fire_mode = "Auto"
 var ended = false
 var victory = false
 var suspended = false
@@ -115,7 +115,7 @@ func _ready() -> void:
 	health = s("MaxHP")
 	armor = s("Armor")
 	forward_speed = float(Progress.design().settings.movement.forwardSpeed)
-	fire_mode = "Auto" if unlocked("Auto") else ("Hold" if unlocked("Hold") else "Click")
+	fire_mode = "Auto"
 	auxiliary_fire_mode = fire_mode
 	Global.game_state = Util.GAME_STATES.PLAYING
 	MusicPlayer.stop()
@@ -521,16 +521,8 @@ func _controller_action(action: String) -> void:
 		return
 	if suspended or ended: return
 	match action:
-		"fire":
-			if fire_mode in ["Click", "Hold"]: _shoot()
-			for weapon in extra_timers:
-				if unlocked(weapon) and auxiliary_fire_mode in ["Click", "Hold"]: _shoot(weapon)
 		"ability": _activate_next_powerup()
 		"run": running = not running
-		"fire_mode":
-			if unlocked("Auto"):
-				fire_mode = "Hold" if fire_mode == "Auto" else "Auto"
-				presentation.toast("BOW · " + fire_mode.to_upper())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -554,20 +546,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_SHIFT:
 			running = not running
 			presentation.toast("DOUBLE SPEED" if running else "NORMAL SPEED")
-		if unlocked("Auto"):
-			if event.keycode in [KEY_1, KEY_KP_1]:
-				fire_mode = "Hold"
-				presentation.toast("BOW · HOLD FIRE")
-			if event.keycode in [KEY_2, KEY_KP_2]:
-				fire_mode = "Auto"
-				presentation.toast("BOW · AUTO SHOOT")
 		if event.keycode == KEY_SPACE:
 			_activate_next_powerup()
 			get_viewport().set_input_as_handled()
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and not ended and not suspended:
-		if fire_mode in ["Click", "Hold"]: _shoot()
-		for weapon in extra_timers:
-			if unlocked(weapon) and auxiliary_fire_mode in ["Click", "Hold"]: _shoot(weapon)
 
 func _activate(key: String) -> void:
 	if ended or suspended: return
@@ -742,14 +723,12 @@ func _simulate_step(delta: float) -> void:
 		crosshair.position = _aim_pointer() - crosshair.size * 0.5
 	var target = _target(s("Distance_Range"))
 	crosshair.modulate = Color("8fe6a0") if not target.is_empty() else Color("eadbc5")
-	if fire_mode == "Hold" and (Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or RailwayController.firing()): _shoot()
 	if fire_override: _shoot()
-	if (fire_mode == "Auto" or fast_combat_assist_enabled()) and not target.is_empty(): _shoot()
+	if not target.is_empty(): _shoot()
 	for weapon in extra_timers:
 		if not unlocked(weapon): continue
 		if fire_override: _shoot(weapon)
-		if auxiliary_fire_mode == "Hold" and (Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or RailwayController.firing()): _shoot(weapon)
-		if (auxiliary_fire_mode == "Auto" or fast_combat_assist_enabled()) and not target.is_empty(): _shoot(weapon)
+		if not target.is_empty(): _shoot(weapon)
 	if unlocked("Dagger") and dagger_timer <= 0:
 		var near = _dagger_target()
 		if not near.is_empty():
@@ -1314,7 +1293,6 @@ func _update_hud() -> void:
 func _process(_delta: float) -> void:
 	for enemy in enemies:
 		enemy.actor.frozen = ended or suspended
-		enemy.actor.playback_speed = (float(debug_speed) if debug_speed_cheats_enabled() else 1.0) * (2.0 if running else 1.0)
 
 func campaign_level() -> int:
 	return Progress.Demo.playable_level(data)
