@@ -32,10 +32,20 @@ Physical GameSir hardware operation remains for hands-on confirmation.
 
 All four exports were built. Steam uploads succeeded: full 26929190 (depot
 5520301 manifest 8249102668373885464), demo 26929193 (depot 5520331; see upload log).
-Neither new default activation is verified. Steam activation and itch Windows/Web
-demo uploads remain pending after Windows Computer Use stopped because it could
-not confidently determine the active browser URL. No full-game public release was
-performed. Itch remains on 0.12; its 0.13 archives and revised page copy are ready.
+Neither new default activation is verified. Steam activation remains pending after
+Windows Computer Use stopped because it could not confidently determine the active
+browser URL. No full-game public release was performed.
+
+The itch Windows/Web demos and revised page copy are now published and verified
+on the public page: https://beep2bleep.itch.io/railway-fury-demo . Both uploads show
+0.13 after saving/reloading; Windows is a download and Web is browser-playable.
+The browser Run game button opens the new hosted entry:
+https://html-classic.itch.zone/html/20828883/index.html . Publication proof:
+Previews/itch-0.13-published.png.
+The hosted game reached its v0.13 demo main menu, including the automatic-fire
+instructions and wishlist button. Its first cold load showed a missing-pack
+notice immediately after publication; a reload after hosting settled booted
+successfully. Proof: Previews/itch-0.13-browser-menu.png.
 
 Screenshots: Previews/release-0.13-menu.png, release-0.13-upgrades.png and
 release-0.13-tutorial.png. Build hashes and publication flags are recorded in
