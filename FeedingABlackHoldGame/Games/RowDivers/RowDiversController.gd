@@ -15,6 +15,7 @@ var event_axes := {}
 var active_device := -1
 var pointer := Vector2.INF
 const DEADZONE := 0.2
+const UTILITY_BUTTONS := [JOY_BUTTON_START, JOY_BUTTON_BACK, JOY_BUTTON_TOUCHPAD]
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -176,6 +177,16 @@ func _menu_input(event: InputEvent) -> bool:
 	if not is_instance_valid(menu_surface) or native_popup_open(): return false
 	if menu_state.get("input_locked", false):
 		return event is InputEventJoypadButton or event is InputEventMouseButton or event is InputEventAction or event is InputEventKey or (event is InputEventJoypadMotion and event.axis in [JOY_AXIS_TRIGGER_LEFT, JOY_AXIS_TRIGGER_RIGHT])
+	# Start/Select (including Switch +/- and Xbox Menu/View) are explicit
+	# shortcuts. Handle them before the cursor-only navigation guard.
+	if event is InputEventJoypadButton and event.button_index in UTILITY_BUTTONS:
+		if event.pressed:
+			var callback: Callable = menu_state.get("start", Callable())
+			if callback.is_valid():
+				VirtualCursor.release_buttons()
+				callback.call()
+				sync_menu()
+		return true
 	if menu_state.get("cursor_only", false) and event is InputEventJoypadButton and event.button_index in [JOY_BUTTON_DPAD_UP, JOY_BUTTON_DPAD_DOWN, JOY_BUTTON_DPAD_LEFT, JOY_BUTTON_DPAD_RIGHT, JOY_BUTTON_B, JOY_BUTTON_START, JOY_BUTTON_Y]:
 		return true
 	if event is InputEventJoypadButton:
@@ -272,7 +283,7 @@ func _input(event: InputEvent) -> void:
 		match event.button_index:
 			JOY_BUTTON_RIGHT_SHOULDER: action = "fire"
 			JOY_BUTTON_LEFT_SHOULDER: action = "ability"
-			JOY_BUTTON_START: action = "pause"
+			JOY_BUTTON_START, JOY_BUTTON_BACK, JOY_BUTTON_TOUCHPAD: action = "pause"
 			JOY_BUTTON_LEFT_STICK: action = "run"
 			JOY_BUTTON_B:
 				if is_instance_valid(battle) and not playing(): action = "pause"

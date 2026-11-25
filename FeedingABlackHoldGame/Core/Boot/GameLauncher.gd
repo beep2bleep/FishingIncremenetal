@@ -732,6 +732,7 @@ func _show_multi_summary_overlay(summary: Dictionary) -> void:
     title.text = tr("MULTI_MODE_SUMMARY_TITLE_SUCCESS") if success else tr("MULTI_MODE_SUMMARY_TITLE_FAILURE")
     vbox.add_child(title)
 
+
     var summary_label := Label.new()
     summary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1002,7 +1003,18 @@ func _decorate_game_button(button: Button, game_id: String) -> void:
     title.add_theme_color_override("font_color", Color(0.98, 0.98, 0.99, 1.0))
     title.add_theme_constant_override("outline_size", 2)
     title.add_theme_color_override("font_outline_color", Color(0.05, 0.06, 0.08, 0.9))
-    vbox.add_child(title)
+    if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
+        var play_title_row := HBoxContainer.new()
+        play_title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        play_title_row.alignment = BoxContainer.ALIGNMENT_CENTER
+        play_title_row.add_theme_constant_override("separation", 16)
+        title.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+        title.autowrap_mode = TextServer.AUTOWRAP_OFF
+        vbox.add_child(play_title_row)
+        play_title_row.add_child(title)
+        play_title_row.add_child(preload("res://Games/RowDivers/RowDiversUtilityGlyphs.gd").new())
+    else:
+        vbox.add_child(title)
 
     var detail := Label.new()
     detail.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1342,6 +1354,8 @@ func _fit_game_card_content(button: Button) -> void:
     var available_content_height := target_height - 24.0
     var content_padding := 14.0
     var game_id := str(button.get_meta("game_id", ""))
+    if game_id == Util.ACTIVE_GAME_ROW_DIVERS:
+        content_padding += 20.0 # Utility glyphs share the title row.
     if _is_vanguard_launcher_mode() and game_id == Util.ACTIVE_GAME_VANGUARD:
         preview_height = maxf(preview_height, available_content_height - 110.0)
     elif _is_row_divers_launcher_mode() and game_id == Util.ACTIVE_GAME_ROW_DIVERS:

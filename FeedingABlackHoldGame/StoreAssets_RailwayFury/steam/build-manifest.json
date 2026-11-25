@@ -1,30 +1,27 @@
 {
-  "version": "0.12",
-  "generated_utc": "2026-11-20T20:24:22.235657+00:00",
+  "version": "0.13",
+  "generated_utc": "2026-11-25T19:13:21.741649+00:00",
   "qa": {
-    "steam_full_pack": 15,
-    "steam_demo_pack": 15,
+    "steam_full_pack": 17,
+    "steam_demo_pack": 17,
     "itch_windows_pack": 25,
     "autofire_full": 51,
     "autofire_demo": 51,
-    "animation_full": 64,
-    "animation_demo": 64,
-    "shared_progress_full": 39,
-    "shared_progress_demo": 57,
-    "localization_full": 20034,
-    "localization_demo": 20034,
+    "utility_start_full": 39,
+    "utility_start_demo": 39,
+    "physical_gamesir_verified": false,
     "failures": 0
   },
   "steam": {
-    "full_build": 26820067,
-    "demo_build": 26820070,
-    "full_live_verified": true,
-    "demo_live_verified": true
+    "full_build": 26929190,
+    "demo_build": 26929193,
+    "full_live_verified": false,
+    "demo_live_verified": false
   },
   "itch": {
     "project_id": 5243421,
-    "version": "0.12",
-    "live_verified": true,
+    "version": "0.13",
+    "live_verified": false,
     "url": "https://beep2bleep.itch.io/railway-fury-demo",
     "platforms": [
       "Windows",
@@ -41,35 +38,39 @@
   "binaries": {
     "Steam/Full/RailwayFury.exe": {
       "bytes": 104644608,
-      "sha256": "5dc8bdd6c24c94575cc05dd514943291ae5c8440c8b4fdf4de95d896df49cbbe"
+      "sha256": "273e13ee4861cbfef01b4031d85471dd735a75285a50cdd536e148303bf63375"
     },
     "Steam/Full/RailwayFury.pck": {
-      "bytes": 276353216,
-      "sha256": "cb0a85004ddb67106db1527092ff84ffe8a2ecbe7737bf52943886888166c6a7"
+      "bytes": 276360300,
+      "sha256": "740c01b8b75e3a26d1fadc356bd82fb11ab3a75c558ced63958e8adc125fa2e8"
     },
     "Steam/Demo/RailwayFuryDemo.exe": {
       "bytes": 104644608,
-      "sha256": "3e43492bf3df859df4a3c4525c2c9e498996ca41e39536854f2fcf66801fec0c"
+      "sha256": "74d10b0c6664577a9dcfdfd2b6828d851958b282fd98dcb6879773ba094da7f9"
     },
     "Steam/Demo/RailwayFuryDemo.pck": {
-      "bytes": 264490492,
-      "sha256": "56f9c6be49ce1799ab75928b2f87146d991d791d1adadcfb5ce12c0fedc3708a"
+      "bytes": 264497576,
+      "sha256": "60fec6dd58397508e63389c7ff51e02b74f7d1b161f833a89f4f23ba5b8f8c89"
     },
     "Demo/RailwayFuryDemo-Windows.zip": {
-      "bytes": 281921320,
-      "sha256": "879052d6a54d8b8d9ee06b95f7fe76383f872cbbee1232521c1b52fba2b2efc8"
+      "bytes": 281923654,
+      "sha256": "12ce46169f2c69d1edf900db29fa0c86ed4b9d0b98c921c6b11f2fcb0eb02a1a"
     },
     "Demo/RailwayFuryDemo-Web.zip": {
-      "bytes": 175475150,
-      "sha256": "de85140374560db704db04b8f7197397b34bc9233cdc2183da078b8a69c4c22b"
+      "bytes": 175476705,
+      "sha256": "f9e816312da340e41037dfa6502df60b9ca1b5cb10d506c57fa58710e0a19ffe"
     }
   },
   "sources": {
-    "project.godot": "164db8a0ddc9ea4b8393299a1e80ac6d400fbe7cef3f16782ed87e3a3b680d4f",
+    "project.godot": "5e177198b3a3b007c507f7f5ce45c518dfc8fd0a54f389505271f02455af22eb",
     "Games/RowDivers/RowDiversActor.gd": "9105a607c0277cb01f9efe8e33172457f7c0a150fd9ab9076e272a2bcb13b8e4",
     "Games/RowDivers/Scenes/RowDiversBattleScene.gd": "68ee2e7c7f1c2176cd2ac67676e6c994ada848a88007ca1a90726357e5d1a19f",
     "Games/RowDivers/RowDiversProgress.gd": "663610b2749e59be64d9c5e3bc94dc1acc6e6098f1c492773a0a0e367084a6d3",
     "Games/RowDivers/RowDiversHUD.gd": "e5dff3dd4da711582057c8083738036311a232bd560c467e353efd4e82d36e4c",
+    "Games/RowDivers/RowDiversController.gd": "4b96885e6723dd2b26c8266dd5fc4f04a818321c40ef8db2b892480bc712edb1",
+    "Games/RowDivers/RowDiversUtilityGlyphs.gd": "c7e6bb1873e51ee1e525b44cfcb62009f7b53a4d1367ed672d19382a79d98d14",
+    "UpgradeScreen.gd": "33545f1dde902227f0d59a8f2424608a690ae6b91114fb635ebd65d523eb246b",
+    "Core/Boot/GameLauncher.gd": "05cedd4cdcf61422c802e819cb8e214d1be8143850a1a9daba76f1fbd7e0635b",
     "Games/RowDivers/Translations/catalog.json": "f06643f5a35378ee98c38faacc79e6de5f572c3ca9f4849aa4790ca2270b20f7",
     "Games/RowDivers/Data/row_divers.json": "a4eb662499d982ace8ce227372dc3098a45517eb9b08e8adb1429ae041988029",
     "Games/RowDivers/Data/row_divers_previous.json": "e808a068bb34b661f23fc54c29af18205f859b4579c5b3481feec54162247a39",

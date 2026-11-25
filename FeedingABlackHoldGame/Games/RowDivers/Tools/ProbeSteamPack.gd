@@ -11,8 +11,9 @@ func check(ok, message):
 func run():
 	ProjectSettings.set_setting("railway_fury/debug/enable_speed_cheats", false)
 	var demo = Progress.Demo.enabled()
-	check(ProjectSettings.get_setting("application/config/version", "") == "0.12", "Steam pack version is 0.12")
+	check(ProjectSettings.get_setting("application/config/version", "") == "0.13", "Steam pack version is 0.13")
 	root.get_node("Util").set_active_game_id("rowdivers")
+	check(load("res://Core/Boot/GameLauncher.gd").can_instantiate(), "Shipping launcher script parses")
 	var steam = root.get_node("SteamHandler")
 	var analytics = root.get_node("GameAnalytics")
 	var credentials = analytics._get_active_credentials()
@@ -48,6 +49,7 @@ func run():
 	var battle = load("res://Games/RowDivers/Scenes/RowDiversBattleScene.gd").new()
 	battle.persist_results = false
 	root.add_child(battle)
+	check(battle.fire_mode == "Auto" and data.unlocks.get("Auto",false), "Shipping battle starts with automatic firing")
 	battle.set_physics_process(false)
 	battle.set_process(false)
 	check(not battle.debug_speed_cheats_enabled(), "Release build hides editor cheats")

@@ -4001,6 +4001,13 @@ func _update_go_again_button_state() -> void:
     if Util.is_row_divers_game_active():
         go_again_button.disabled = false
         go_again_button.text = "PLAY"
+        var play_row := go_again_button.get_parent()
+        var old_glyph := play_row.get_node_or_null("Controller Glyph")
+        if old_glyph != null: old_glyph.hide()
+        if not play_row.has_node("UtilityPlayGlyphs"):
+            var utility_glyphs = preload("res://Games/RowDivers/RowDiversUtilityGlyphs.gd").new()
+            play_row.add_child(utility_glyphs)
+            play_row.move_child(utility_glyphs, 0)
         go_again_button.tooltip_text = ""
         go_again_button.modulate = Color.WHITE
         return
